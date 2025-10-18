@@ -1,6 +1,7 @@
 package mindustrytool.playerconnect;
 
 import java.nio.ByteBuffer;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 
 import arc.Core;
@@ -232,7 +233,7 @@ public class PlayerConnect {
             stats.locale = Vars.player.locale;
             stats.version = Version.combined();
             stats.players = players;
-            stats.createdAt = System.currentTimeMillis();
+            stats.createdAt = new Date().getTime();
         } catch (Throwable err) {
             Log.err(err);
         }
