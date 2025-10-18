@@ -232,6 +232,7 @@ public class PlayerConnect {
             stats.locale = Vars.player.locale;
             stats.version = Version.combined();
             stats.players = players;
+            stats.createdAt = System.currentTimeMillis();
         } catch (Throwable err) {
             Log.err(err);
         }
