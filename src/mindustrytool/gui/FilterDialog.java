@@ -123,14 +123,14 @@ public class FilterDialog extends BaseDialog {
                     btn.add(mod.name()).fontScale(scale);
                 }, style,
                         () -> {
-                            if (modIds.contains(mod.id())) {
-                                modIds.remove(mod.id());
+                            if (modIds.contains(mod.getId())) {
+                                modIds.remove(mod.getId());
                             } else {
-                                modIds.add(mod.id());
+                                modIds.add(mod.getId());
                             }
                             Core.app.post(() -> show(searchConfig));
                         })//
-                        .checked(modIds.contains(mod.id()))//
+                        .checked(modIds.contains(mod.getId()))//
                         .padRight(CARD_GAP)//
                         .padBottom(CARD_GAP)//
                         .left()//
