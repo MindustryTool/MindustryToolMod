@@ -3,7 +3,6 @@ package mindustrytool.data;
 import arc.struct.Seq;
 import lombok.Data;
 import mindustrytool.config.Config;
-import mindustrytool.data.TagData.TagValue;
 
 public class SearchConfig {
     private Seq<SelectedTag> selectedTags = new Seq<>();
@@ -26,11 +25,12 @@ public class SearchConfig {
         return selectedTags;
     }
 
-    public void setTag(TagData category, TagValue value) {
+    public void setTag(TagCategory category, TagData value) {
         SelectedTag tag = new SelectedTag();
-        tag.name = value.name;
-        tag.categoryName = category.name;
-        tag.icon = value.icon;
+
+        tag.name = value.name();
+        tag.categoryName = category.name();
+        tag.icon = value.icon();
 
         if (selectedTags.contains(tag)) {
             this.selectedTags.remove(tag);
@@ -40,8 +40,8 @@ public class SearchConfig {
         changed = true;
     }
 
-    public boolean containTag(TagData category, TagValue tag) {
-        return selectedTags.contains(v -> v.name.equals(tag.name) && category.name.equals(v.categoryName));
+    public boolean containTag(TagCategory category, TagData tag) {
+        return selectedTags.contains(v -> v.name.equals(tag.name()) && category.name.equals(v.categoryName));
     }
 
     public Sort getSort() {

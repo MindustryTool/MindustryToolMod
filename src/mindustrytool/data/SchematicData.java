@@ -8,11 +8,8 @@ import lombok.experimental.Accessors;
 public class SchematicData {
     String id;
     String itemId;
-    String userId;
     String name;
     Long likes;
-    Long dislikes;
-    Boolean isCurated;
-    Boolean isVerified;
-    Long downloadCount;
+    Long downloads;
+    Long comments;
 }

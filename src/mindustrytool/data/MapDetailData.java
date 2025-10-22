@@ -8,17 +8,14 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true, fluent = true)
 public class MapDetailData {
     String id;
-    String name;
-    String userId;
     String itemId;
+    String createdBy;
+    String name;
+    String description;
     int width;
     int height;
-    String description;
     Seq<TagData> tags;
     Long likes;
-    Long dislikes;
-    String verifierId;
-    Boolean isVerified;
-    Long downloadCount;
-    Boolean isPrivate;
+    Long downloads = 0l;
+    Long comments = 0l;
 }

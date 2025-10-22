@@ -26,6 +26,7 @@ import mindustrytool.config.Debouncer;
 import mindustrytool.data.MapData;
 import mindustrytool.data.SearchConfig;
 import mindustrytool.data.TagService;
+import mindustrytool.data.TagService.TagCategoryEnum;
 import mindustrytool.net.Api;
 import mindustrytool.net.PagingRequest;
 
@@ -47,7 +48,7 @@ public class MapDialog extends BaseDialog {
     private TagService tagService = new TagService();
 
     private final FilterDialog filterDialog = new FilterDialog(tagService, searchConfig,
-            (tag) -> tagService.getTag(group -> tag.get(group.map)));
+            (tag) -> tagService.getTag(TagCategoryEnum.maps, group -> tag.get(group)));
 
     private String search = "";
 
@@ -219,8 +220,8 @@ public class MapDialog extends BaseDialog {
                     })).size(200f);
 
                     mapPreview.row();
-                    mapPreview.table(stats -> DetailStats.draw(stats, mapData.likes(), mapData.dislikes(),
-                            mapData.downloadCount())).margin(8);
+                    mapPreview.table(stats -> DetailStats.draw(stats, mapData.likes(), mapData.comments(),
+                            mapData.downloads())).margin(8);
 
                 }, () -> {
 
