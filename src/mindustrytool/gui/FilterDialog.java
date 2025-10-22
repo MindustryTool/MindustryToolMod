@@ -25,7 +25,7 @@ public class FilterDialog extends BaseDialog {
     private int cols = 1;
     private int cardSize = 0;
     private final int CARD_GAP = 4;
-    private Seq<String> modIds;
+    private Seq<String> modIds = new Seq<>();
 
     private ModService modService = new ModService();
     private final TagService tagService;
