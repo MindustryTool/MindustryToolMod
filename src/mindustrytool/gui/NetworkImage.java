@@ -63,6 +63,10 @@ public class NetworkImage extends Image {
             if (!cache.containsKey(url)) {
                 cache.put(url, Icon.refresh.getRegion());
 
+                if (!url.endsWith("png") && !url.endsWith("jpg") && !url.endsWith("jpeg")) {
+                    return;
+                }
+
                 var file = Main.imageDir.child(url//
                         .replace(":", "-")//
                         .replace("/", "-")//
