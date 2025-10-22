@@ -16,13 +16,13 @@ import mindustrytool.data.UserData;
 public class Api {
 
     public static void downloadSchematic(String id, ConsT<byte[], Exception> c) {
-        Http.get(Config.API_URL + "schematics/" + id + "/download").submit(result -> {
+        Http.get(Config.API_URL + "schematics/" + id + "/data").submit(result -> {
             c.get(result.getResult());
         });
     }
 
     public static void downloadMap(String id, ConsT<byte[], Exception> c) {
-        Http.get(Config.API_URL + "maps/" + id + "/download").submit(result -> {
+        Http.get(Config.API_URL + "maps/" + id + "/data").submit(result -> {
             c.get(result.getResult());
         });
     }
