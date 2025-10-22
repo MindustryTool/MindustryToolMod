@@ -7,6 +7,7 @@ import arc.util.Http;
 import arc.util.Log;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
+import mindustry.editor.MapResizeDialog;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
 import mindustry.mod.*;
@@ -31,6 +32,8 @@ public class Main extends Mod {
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
 
     public Main() {
+        Vars.maxSchematicSize = 1028;
+        MapResizeDialog.maxSize = 4000;
     }
 
     @Override
