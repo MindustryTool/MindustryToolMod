@@ -67,7 +67,7 @@ public class SchematicDialog extends BaseDialog {
         setItemPerPage();
 
         options.put("sort", searchConfig.getSort().getValue());
-        options.put("verification", "PENDING");
+        options.put("verification", "VERIFIED");
 
         request.setOptions(options);
 
