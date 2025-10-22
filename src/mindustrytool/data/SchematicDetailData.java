@@ -8,19 +8,17 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true, fluent = true)
 public class SchematicDetailData {
     String id;
-    String name;
-    String userId;
     String itemId;
+    String createdBy;
+    String name;
+    String description;
     int width;
     int height;
-    String description;
-    SchematicMetadata metadata;
-    Seq<TagData> tags;
     Long likes;
-    Long dislikes;
-    String verifierId;
-    Boolean isVerified;
-    Long downloadCount;
+    Long downloads = 0l;
+    Long comments = 0l;
+    Seq<TagData> tags;
+    SchematicMetadata meta;
 
     @Data
     @Accessors(chain = true, fluent = true)

@@ -29,6 +29,7 @@ import mindustrytool.config.Utils;
 import mindustrytool.data.SchematicData;
 import mindustrytool.data.SearchConfig;
 import mindustrytool.data.TagService;
+import mindustrytool.data.TagService.TagCategoryEnum;
 import mindustrytool.net.Api;
 import mindustrytool.net.PagingRequest;
 
@@ -49,7 +50,7 @@ public class SchematicDialog extends BaseDialog {
     private static SearchConfig searchConfig = new SearchConfig();
     private final TagService tagService = new TagService();
     private final FilterDialog filterDialog = new FilterDialog(tagService, searchConfig,
-            (tag) -> tagService.getTag(group -> tag.get(group.schematic)));
+            (tag) -> tagService.getTag(TagCategoryEnum.schematics, group -> tag.get(group)));
 
     private String search = "";
 
@@ -235,7 +236,7 @@ public class SchematicDialog extends BaseDialog {
 
                         schematicPreview.row();
                         schematicPreview.table(stats -> DetailStats.draw(stats, schematicData.likes(),
-                                schematicData.dislikes(), schematicData.downloadCount())).margin(8);
+                                schematicData.comments(), schematicData.downloads())).margin(8);
 
                     }, () -> {
                         if (button[0].childrenPressed())

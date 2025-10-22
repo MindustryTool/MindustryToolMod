@@ -27,10 +27,10 @@ public class MapInfoDialog extends BaseDialog {
         cont.table(card -> {
             card.left();
             card.add(Core.bundle.format("message.author")).marginRight(4).padRight(4);
-            UserCard.draw(card, data.userId());
+            UserCard.draw(card, data.createdBy());
         }).fillX().left();
         cont.row();
-        cont.table(stats -> DetailStats.draw(stats, data.likes(), data.dislikes(), data.downloadCount()))//
+        cont.table(stats -> DetailStats.draw(stats, data.likes(), data.comments(), data.downloads()))//
                 .fillX()//
                 .left();
         cont.row();
