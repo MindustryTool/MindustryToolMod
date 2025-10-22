@@ -18,7 +18,6 @@ import mindustrytool.gui.JoinRoomDialog;
 import mindustrytool.gui.MapDialog;
 import mindustrytool.gui.PlayerConnectRoomsDialog;
 import mindustrytool.gui.SchematicDialog;
-import mindustrytool.gui.ServerDialog;
 
 public class Main extends Mod {
     public static SchematicDialog schematicDialog;

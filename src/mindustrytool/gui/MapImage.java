@@ -63,8 +63,7 @@ public class MapImage extends Image {
                     });
 
                 } else {
-
-                    Http.get(Config.IMAGE_URL + "map-previews/" + id + ".webp?format=jpeg", res -> {
+                    Http.get(Config.IMAGE_URL + "maps/" + id + ".jpg?varient=preview", res -> {
                         byte[] result = res.getResult();
                         if (result.length == 0)
                             return;

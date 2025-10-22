@@ -81,7 +81,7 @@ public class SchematicImage extends Image {
                         }
                     });
                 } else {
-                    Http.get(Config.IMAGE_URL + "schematic-previews/" + id + ".webp?format=jpeg", res -> {
+                    Http.get(Config.IMAGE_URL + "schematics/" + id + ".jpg?varient=preview", res -> {
                         byte[] result = res.getResult();
                         try {
                             if (result.length == 0)
