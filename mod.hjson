@@ -49,9 +49,9 @@ description:
   [#FAA31B[]]  Reddit: [white[]]r/MindustryTool[[]]
   [#EF4444[]]  YouTube: [white[]]Mindustry Tool[[]]
   '''
-version: v1.16.4-v8
+version: v1.16.5-v8
 
-minGameVersion: 147
+minGameVersion: 146
 
 java: true
 

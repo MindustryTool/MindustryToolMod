@@ -25,7 +25,7 @@ public class FilterDialog extends BaseDialog {
     private int cols = 1;
     private int cardSize = 0;
     private final int CARD_GAP = 4;
-    private String modId;
+    private Seq<String> modIds;
 
     private ModService modService = new ModService();
     private final TagService tagService;
@@ -123,15 +123,14 @@ public class FilterDialog extends BaseDialog {
                     btn.add(mod.getName()).fontScale(scale);
                 }, style,
                         () -> {
-                            if (mod.getId().equals(modId)) {
-                                modId = null;
+                            if (modIds.contains(mod.getId())) {
+                                modIds.remove(mod.getId());
                             } else {
-                                modId = mod.getId();
+                                modIds.add(mod.getId());
                             }
-                            modId = mod.getId();
                             Core.app.post(() -> show(searchConfig));
                         })//
-                        .checked(mod.getId().equals(modId))//
+                        .checked(modIds.contains(mod.getId()))//
                         .padRight(CARD_GAP)//
                         .padBottom(CARD_GAP)//
                         .left()//
@@ -208,27 +207,33 @@ public class FilterDialog extends BaseDialog {
             for (int i = 0; i < category.tags().size; i++) {
                 var value = category.tags().get(i);
 
-                card.button(btn -> {
-                    btn.left();
-                    if (value.icon() != null && !value.icon().isEmpty()) {
-                        btn.add(new NetworkImage(value.icon()))//
-                                .size(40 * scale)//
-                                .padRight(4)//
-                                .marginRight(4);
-                    }
-                    btn.add(formatTag(value.name())).fontScale(scale);
-                }, style, () -> {
-                    searchConfig.setTag(category, value);
-                })//
-                        .checked(searchConfig.containTag(category, value))//
-                        .padRight(CARD_GAP)//
-                        .padBottom(CARD_GAP)//
-                        .left()//
-                        .expandX()
-                        .margin(12);
+                if (value.planetIds() != null //
+                        || value.planetIds().size == 0
+                        || value.planetIds().find(t -> modIds.contains(t)) != null) {
 
-                if (++z % cols == 0) {
-                    card.row();
+                    card.button(btn -> {
+                        btn.left();
+                        if (value.icon() != null && !value.icon().isEmpty()) {
+                            btn.add(new NetworkImage(value.icon()))//
+                                    .size(40 * scale)//
+                                    .padRight(4)//
+                                    .marginRight(4);
+                        }
+                        btn.add(formatTag(value.name())).fontScale(scale);
+
+                    }, style, () -> {
+                        searchConfig.setTag(category, value);
+                    })//
+                            .checked(searchConfig.containTag(category, value))//
+                            .padRight(CARD_GAP)//
+                            .padBottom(CARD_GAP)//
+                            .left()//
+                            .expandX()
+                            .margin(12);
+
+                    if (++z % cols == 0) {
+                        card.row();
+                    }
                 }
             }
         })//

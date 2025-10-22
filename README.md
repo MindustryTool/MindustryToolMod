@@ -1,7 +1,7 @@
 # **[Mindustry Tool](https://mindustry-tool.com)**
 
-![GitHub all releases](https://img.shields.io/github/downloads/MindustryVN/MindustryToolMod/total?style=flat-square)
-![GitHub release (latest by date)](https://img.shields.io/github/downloads/MindustryVN/MindustryToolMod/latest/total?style=flat-square)
+![GitHub all releases](https://img.shields.io/github/downloads/MindustryTool/MindustryToolMod/total?style=flat-square)
+![GitHub release (latest by date)](https://img.shields.io/github/downloads/MindustryTool/MindustryToolMod/latest/total?style=flat-square)
 [![Discord](https://img.shields.io/discord/1295206730925609002.svg?logo=discord&logoColor=white&logoWidth=20&labelColor=7289DA&label=Discord&color=17cf48)](https://discord.gg/YGuBQ3g9fQ)<br>
 
 ![Icon](banner.png)
@@ -42,8 +42,7 @@ access to a wide range of user-generated content that is carefully curated and m
 
 ## **Join the Community:**
 
--  **Discord:** [Mindustry Tool](https://discord.gg/9EMBFt6Z)
--  **Discord:** [MindustryVN](https://discord.gg/nuSYYJbQ52)
+-  **Discord:** [Mindustry TMindustryTool](https://discord.gg/nuSYYJbQ52)
 -  **Web:** [Mindustry Tool](https://mindustry-tool.com)
 
 If you like the mod, please give it a star on GitHub. Thank you for supporting **Mindustry Tool**!

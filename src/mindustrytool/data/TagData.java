@@ -1,5 +1,6 @@
 package mindustrytool.data;
 
+import arc.struct.Seq;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -14,4 +15,5 @@ public class TagData {
 	private String fullTag;
 	private String color;
     private Integer count = 0;
+    private Seq<String> planetIds;
 }
