@@ -109,7 +109,7 @@ public class Main extends Mod {
             }
         });
 
-        Http.get(Config.API_URL + "ping?client=mod").submit(result -> {
+        Http.get(Config.API_URL + "ping?client=mod-v7").submit(result -> {
             Log.info("Ping");
         });
 
