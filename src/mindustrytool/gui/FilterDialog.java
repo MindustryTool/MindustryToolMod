@@ -207,7 +207,7 @@ public class FilterDialog extends BaseDialog {
             for (int i = 0; i < category.tags().sort((a, b) -> a.position() - b.position()).size; i++) {
                 var value = category.tags().get(i);
 
-                if (value.planetIds() != null //
+                if (value.planetIds() == null //
                         || value.planetIds().size == 0
                         || value.planetIds().find(t -> modIds.contains(t)) != null) {
 
