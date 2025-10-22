@@ -14,7 +14,7 @@ public class Config {
     // "https://api.mindustry-tool.com/api/v3/";
     private static final String ENV = System.getenv("ENV");
     public static final boolean DEV = (ENV != null && ENV.equals("DEV"));
-    public static final String API_URL = (DEV ? DEV_URL : PROD_URL) + "v3/";
+    public static final String API_URL = (DEV ? DEV_URL : PROD_URL) + "v4/";
     public static final String API_v4_URL = (DEV ? DEV_URL : PROD_URL) + "v4/";
     public static final String IMAGE_URL = "https://image.mindustry-tool.com/";
 

@@ -9,7 +9,6 @@ import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Log;
 import mindustry.Vars;
-import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.config.Config;
