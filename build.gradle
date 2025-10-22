@@ -40,7 +40,6 @@ dependencies{
     compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"
         
 	compileOnly 'org.projectlombok:lombok:1.18.32'
-    implementation 'com.github.ben-manes.caffeine:caffeine:2.9.3'
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
 
     annotationProcessor 'org.projectlombok:lombok:1.18.32'

@@ -10,6 +10,7 @@ import arc.graphics.g2d.Lines;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Scl;
+import arc.struct.ObjectMap;
 import arc.util.Http;
 import arc.util.Http.HttpStatus;
 import arc.util.Http.HttpStatusException;
@@ -21,11 +22,6 @@ import mindustry.graphics.Pal;
 import mindustrytool.Main;
 import mindustrytool.config.Config;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-
-import java.util.concurrent.TimeUnit;
-
 public class MapImage extends Image {
     public float scaling = 16f;
     public float thickness = 4f;
@@ -33,11 +29,7 @@ public class MapImage extends Image {
 
     private String id;
     private TextureRegion lastTexture;
-
-    private static Cache<String, TextureRegion> textureCache = Caffeine.newBuilder()
-            .maximumSize(200)
-            .expireAfterWrite(10, TimeUnit.MINUTES)
-            .build();
+    private static ObjectMap<String, TextureRegion> textureCache = new ObjectMap<>();
 
     public MapImage(String id) {
         super(Tex.clear);
@@ -51,7 +43,13 @@ public class MapImage extends Image {
         super.draw();
 
         try {
-            if (textureCache.getIfPresent(id) == null) {
+            var next = textureCache.get(id);
+            if (lastTexture != next) {
+                lastTexture = next;
+                setDrawable(next);
+            }
+
+            if (!textureCache.containsKey(id)) {
                 textureCache.put(id, lastTexture = Core.atlas.find("nomap"));
                 var file = Main.mapsDir.child(id + ".jpg");
 
@@ -103,12 +101,6 @@ public class MapImage extends Image {
                         }
                     });
                 }
-            }
-
-            var next = textureCache.getIfPresent(id);
-            if (lastTexture != next) {
-                lastTexture = next;
-                setDrawable(next);
             }
 
             Draw.color(borderColor);
