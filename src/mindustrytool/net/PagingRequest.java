@@ -49,11 +49,13 @@ public class PagingRequest<T> {
                     .setParameter("size", String.valueOf(Math.min(size, 100)));
 
             for (Entry<String, String> entry : options.entries())
-                builder.setParameter(entry.key, entry.value);
+                if (entry.value != null && !entry.value.isEmpty()) {
+                    builder.setParameter(entry.key, entry.value);
+                }
 
             URI uri = builder.build();
             listener.get(null);
-            
+
             Log.info(uri);
 
             Http.get(uri.toString())//
