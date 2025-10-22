@@ -15,12 +15,12 @@ import mindustrytool.config.Config;
 import mindustrytool.data.ModData;
 import mindustrytool.data.ModService;
 import mindustrytool.data.SearchConfig;
-import mindustrytool.data.TagData;
+import mindustrytool.data.TagCategory;
 import mindustrytool.data.TagService;
 
 public class FilterDialog extends BaseDialog {
     private TextButtonStyle style = Styles.togglet;
-    private final Cons<Cons<Seq<TagData>>> tagProvider;
+    private final Cons<Cons<Seq<TagCategory>>> tagProvider;
     private float scale = 1;
     private int cols = 1;
     private int cardSize = 0;
@@ -30,7 +30,7 @@ public class FilterDialog extends BaseDialog {
     private ModService modService = new ModService();
     private final TagService tagService;
 
-    public FilterDialog(TagService tagService, SearchConfig searchConfig, Cons<Cons<Seq<TagData>>> tagProvider) {
+    public FilterDialog(TagService tagService, SearchConfig searchConfig, Cons<Cons<Seq<TagCategory>>> tagProvider) {
         super("");
 
         this.tagService = tagService;
@@ -48,7 +48,6 @@ public class FilterDialog extends BaseDialog {
 
     public void show(SearchConfig searchConfig) {
         modService.onUpdate(() -> {
-            tagService.setModId(modId);
             show(searchConfig);
         });
 
@@ -68,13 +67,13 @@ public class FilterDialog extends BaseDialog {
                 table.row();
                 table.top();
 
-                tagProvider.get(schematicTags -> {
-                    for (var tag : schematicTags) {
-                        if (tag.values().isEmpty())
+                tagProvider.get(categories -> {
+                    for (var category : categories) {
+                        if (category.tags().isEmpty())
                             continue;
 
                         table.row();
-                        TagSelector(table, searchConfig, tag);
+                        TagSelector(table, searchConfig, category);
                     }
                 });
             })//
@@ -129,7 +128,7 @@ public class FilterDialog extends BaseDialog {
                             } else {
                                 modId = mod.getId();
                             }
-                            tagService.setModId(modId);
+                            modId = mod.getId();
                             Core.app.post(() -> show(searchConfig));
                         })//
                         .checked(mod.getId().equals(modId))//
@@ -190,9 +189,9 @@ public class FilterDialog extends BaseDialog {
                 .padBottom(48);
     }
 
-    public void TagSelector(Table table, SearchConfig searchConfig, TagData tag) {
+    public void TagSelector(Table table, SearchConfig searchConfig, TagCategory category) {
         table.table(Styles.flatOver,
-                text -> text.add(tag.name())//
+                text -> text.add(category.name())//
                         .fontScale(scale)//
                         .left()
                         .labelAlign(Align.left))//
@@ -206,8 +205,8 @@ public class FilterDialog extends BaseDialog {
             card.defaults().size(cardSize, 50);
             int z = 0;
 
-            for (int i = 0; i < tag.values().size; i++) {
-                var value = tag.values().get(i);
+            for (int i = 0; i < category.tags().size; i++) {
+                var value = category.tags().get(i);
 
                 card.button(btn -> {
                     btn.left();
@@ -219,9 +218,9 @@ public class FilterDialog extends BaseDialog {
                     }
                     btn.add(formatTag(value.name())).fontScale(scale);
                 }, style, () -> {
-                    searchConfig.setTag(tag, value);
+                    searchConfig.setTag(category, value);
                 })//
-                        .checked(searchConfig.containTag(tag, value))//
+                        .checked(searchConfig.containTag(category, value))//
                         .padRight(CARD_GAP)//
                         .padBottom(CARD_GAP)//
                         .left()//

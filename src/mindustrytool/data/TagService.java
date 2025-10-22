@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import arc.Core;
 import arc.func.Cons;
+import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Http.HttpResponse;
 import arc.util.Log;
@@ -12,45 +13,45 @@ import mindustrytool.config.Config;
 
 public class TagService {
 
-    private Runnable onUpdate = () -> {
-    };
-    private static HashMap<String, TagGroup> group = new HashMap<>();
-
-    private String modId = "";
-
-    public void setModId(String id) {
-        modId = id == null ? "" : id;
-        Core.app.post(onUpdate);
+    public enum TagCategoryEnum {
+        schematics,
+        maps
     }
 
-    public void getTag(Cons<TagGroup> listener) {
-        var item = group.get(modId);
+    private Runnable onUpdate = () -> {
+    };
+    private static HashMap<String, Seq<TagCategory>> categories = new HashMap<>();
+
+    public void getTag(TagCategoryEnum category, Cons<Seq<TagCategory>> listener) {
+        var item = categories.get(category.name());
+
         if (item != null) {
             Core.app.post(() -> listener.get(item));
             return;
         }
 
-        getTagData((tags) -> {
-            group.put(modId, tags);
+        getTagData(category, (tags) -> {
+            categories.put(category.name(), tags);
             Core.app.post(() -> listener.get(tags));
         });
 
     }
 
-    private void getTagData(Cons<TagGroup> listener) {
-        Http.get(Config.API_URL + "tags" + (modId != null && !modId.isEmpty() ? "?modId=" + modId : ""))
+    private void getTagData(TagCategoryEnum category, Cons<Seq<TagCategory>> listener) {
+        Http.get(Config.API_URL + "tags" + "?group=" + category)
                 .error(error -> handleError(listener, error, Config.API_URL + "tags"))
                 .submit(response -> handleResult(response, listener));
     }
 
-    public void handleError(Cons<TagGroup> listener, Throwable error, String url) {
+    public void handleError(Cons<Seq<TagCategory>> listener, Throwable error, String url) {
         Log.err(url, error);
-        Core.app.post(() -> listener.get(new TagGroup()));
+        Core.app.post(() -> listener.get(new Seq<>()));
     }
 
-    private void handleResult(HttpResponse response, Cons<TagGroup> listener) {
+    @SuppressWarnings("unchecked")
+    private void handleResult(HttpResponse response, Cons<Seq<TagCategory>> listener) {
         String data = response.getResultAsString();
-        var tags = JsonIO.json.fromJson(TagGroup.class, data);
+        Seq<TagCategory> tags = JsonIO.json.fromJson(Seq.class, TagCategory.class, data);
         Core.app.post(() -> {
             listener.get(tags);
             onUpdate.run();
