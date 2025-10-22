@@ -10,7 +10,6 @@ import arc.graphics.g2d.Lines;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Scl;
-import arc.struct.ObjectMap;
 import arc.util.Http;
 import arc.util.Http.HttpStatus;
 import arc.util.Http.HttpStatusException;
@@ -22,6 +21,11 @@ import mindustry.graphics.Pal;
 import mindustrytool.Main;
 import mindustrytool.config.Config;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
+import java.util.concurrent.TimeUnit;
+
 public class SchematicImage extends Image {
     public float scaling = 16f;
     public float thickness = 4f;
@@ -31,7 +35,10 @@ public class SchematicImage extends Image {
     private String id;
     private TextureRegion lastTexture;
 
-    private static ObjectMap<String, TextureRegion> textureCache = new ObjectMap<>();
+    private static Cache<String, TextureRegion> textureCache = Caffeine.newBuilder()
+            .maximumSize(200)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .build();
 
     public SchematicImage(String id) {
         super(Tex.clear);
@@ -43,7 +50,7 @@ public class SchematicImage extends Image {
     public void draw() {
         super.draw();
 
-        var next = textureCache.get(id);
+        var next = textureCache.getIfPresent(id);
         if (lastTexture != next) {
             lastTexture = next;
             setDrawable(next);
@@ -61,10 +68,10 @@ public class SchematicImage extends Image {
         // textures are only requested when the rendering happens; this assists with
         // culling
         try {
-            if (!textureCache.containsKey(id)) {
+            if (textureCache.getIfPresent(id) == null) {
                 textureCache.put(id, lastTexture = Core.atlas.find("nomap"));
 
-                var file = Main.schematicDir.child(id + ".jpeg");
+                var file = Main.schematicDir.child(id + ".jpg");
 
                 if (file.exists()) {
                     byte[] result = file.readBytes();
@@ -81,7 +88,7 @@ public class SchematicImage extends Image {
                         }
                     });
                 } else {
-                    Http.get(Config.IMAGE_URL + "schematics/" + id + ".jpg", res -> {
+                    Http.get(Config.IMAGE_URL + "schematics/" + id + ".jpg?variant=preview", res -> {
                         byte[] result = res.getResult();
                         try {
                             if (result.length == 0)
