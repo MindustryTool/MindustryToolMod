@@ -68,7 +68,7 @@ public class FilterDialog extends BaseDialog {
                 table.top();
 
                 tagProvider.get(categories -> {
-                    for (var category : categories) {
+                    for (var category : categories.sort((a, b) -> a.position() - b.position())) {
                         if (category.tags().isEmpty())
                             continue;
 
@@ -111,27 +111,27 @@ public class FilterDialog extends BaseDialog {
         table.pane(card -> {
             card.defaults().size(cardSize, 50);
             int i = 0;
-            for (var mod : mods) {
+            for (var mod : mods.sort((a, b) -> a.position() - b.position())) {
                 card.button(btn -> {
                     btn.left();
-                    if (mod.getIcon() != null && !mod.getIcon().isEmpty()) {
-                        btn.add(new NetworkImage(mod.getIcon()))//
+                    if (mod.icon() != null && !mod.icon().isEmpty()) {
+                        btn.add(new NetworkImage(mod.icon()))//
                                 .size(40 * scale)//
                                 .padRight(4)//
                                 .marginRight(4);
                     }
-                    btn.add(mod.getName()).fontScale(scale);
+                    btn.add(mod.name()).fontScale(scale);
                 }, style,
                         () -> {
-                            if (mod.getId().equals(modId)) {
+                            if (mod.id().equals(modId)) {
                                 modId = null;
                             } else {
-                                modId = mod.getId();
+                                modId = mod.id();
                             }
-                            modId = mod.getId();
+                            modId = mod.id();
                             Core.app.post(() -> show(searchConfig));
                         })//
-                        .checked(mod.getId().equals(modId))//
+                        .checked(mod.id().equals(modId))//
                         .padRight(CARD_GAP)//
                         .padBottom(CARD_GAP)//
                         .left()//
@@ -205,7 +205,7 @@ public class FilterDialog extends BaseDialog {
             card.defaults().size(cardSize, 50);
             int z = 0;
 
-            for (int i = 0; i < category.tags().size; i++) {
+            for (int i = 0; i < category.tags().sort((a, b) -> a.position() - b.position()).size; i++) {
                 var value = category.tags().get(i);
 
                 card.button(btn -> {
