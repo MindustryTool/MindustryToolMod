@@ -13,7 +13,6 @@ import mindustry.Vars;
 import mindustry.core.Version;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
-import mindustry.net.Host;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.config.Debouncer;

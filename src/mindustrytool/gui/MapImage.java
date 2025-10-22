@@ -91,7 +91,8 @@ public class MapImage extends Image {
                         });
 
                     }, error -> {
-                        if (!(error instanceof HttpStatusException requestError) || requestError.status != HttpStatus.NOT_FOUND) {
+                        if (!(error instanceof HttpStatusException requestError)
+                                || requestError.status != HttpStatus.NOT_FOUND) {
                             Log.err(id, error);
                         }
                     });
