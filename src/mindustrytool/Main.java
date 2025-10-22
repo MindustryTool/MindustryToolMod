@@ -32,8 +32,8 @@ public class Main extends Mod {
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
 
     public Main() {
-        Vars.maxSchematicSize = 1028;
-        MapResizeDialog.maxSize = 4000;
+        Vars.maxSchematicSize = 10000;
+        MapResizeDialog.maxSize = 100000;
     }
 
     @Override
