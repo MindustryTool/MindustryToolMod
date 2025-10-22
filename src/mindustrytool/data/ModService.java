@@ -27,8 +27,8 @@ public class ModService {
     }
 
     private void getModData(Cons<Seq<ModData>> listener) {
-        Http.get(Config.API_URL + "mods")
-                .error(error -> handleError(listener, error, Config.API_URL + "mods"))
+        Http.get(Config.API_URL + "planets")
+                .error(error -> handleError(listener, error, Config.API_URL + "planets"))
                 .submit(response -> handleResult(response, listener));
     }
 
