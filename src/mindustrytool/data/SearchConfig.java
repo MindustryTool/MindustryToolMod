@@ -18,6 +18,9 @@ public class SearchConfig {
     }
 
     public String getSelectedTagsString() {
+        if (selectedTags.isEmpty()) {
+            return "";
+        }
         return String.join(",", selectedTags.map(s -> s.categoryName + "_" + s.name));
     }
 

@@ -53,6 +53,8 @@ public class PagingRequest<T> {
 
             URI uri = builder.build();
             listener.get(null);
+            
+            Log.info(uri);
 
             Http.get(uri.toString())//
                     .timeout(1000 * 5)
