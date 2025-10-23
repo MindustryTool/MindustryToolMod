@@ -29,6 +29,6 @@ public class Config {
     public static final List<Sort> sorts = Arrays.asList(//
             new Sort("newest", "time_desc"), //
             new Sort("oldest", "time_asc"), //
-            new Sort("most-download", "download_count_desc"), //
+            new Sort("most-download", "download-count_desc"), //
             new Sort("most-like", "like_desc"));
 }
