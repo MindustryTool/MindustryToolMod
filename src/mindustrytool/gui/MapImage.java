@@ -51,7 +51,7 @@ public class MapImage extends Image {
 
             if (!textureCache.containsKey(id)) {
                 textureCache.put(id, lastTexture = Core.atlas.find("nomap"));
-                var file = Main.mapsDir.child(id + ".jpg");
+                var file = Main.mapsDir.child(id + ".png");
 
                 if (file.exists()) {
                     byte[] result = file.readBytes();
@@ -68,7 +68,7 @@ public class MapImage extends Image {
                     });
 
                 } else {
-                    Http.get(Config.IMAGE_URL + "maps/" + id + ".jpg?variant=preview", res -> {
+                    Http.get(Config.IMAGE_URL + "maps/" + id + ".png?variant=preview", res -> {
                         byte[] result = res.getResult();
                         if (result.length == 0)
                             return;
