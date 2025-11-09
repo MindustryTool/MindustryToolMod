@@ -64,7 +64,7 @@ public class SchematicImage extends Image {
             if (!textureCache.containsKey(id)) {
                 textureCache.put(id, lastTexture = Core.atlas.find("nomap"));
 
-                var file = Main.schematicDir.child(id + ".jpg");
+                var file = Main.schematicDir.child(id + ".png");
 
                 if (file.exists()) {
                     byte[] result = file.readBytes();
@@ -81,7 +81,7 @@ public class SchematicImage extends Image {
                         }
                     });
                 } else {
-                    Http.get(Config.IMAGE_URL + "schematics/" + id + ".jpg?variant=preview", res -> {
+                    Http.get(Config.IMAGE_URL + "schematics/" + id + ".png?variant=preview", res -> {
                         byte[] result = res.getResult();
                         try {
                             if (result.length == 0)

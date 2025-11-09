@@ -23,8 +23,8 @@ public class Config {
     public static final String REPO_URL = "MindustryVN/MindustryToolMod";
 
     public static final String WEB_URL = "https://mindustry-tool.com";
-    public static final String UPLOAD_SCHEMATIC_URL = WEB_URL + "/upload/schematic";
-    public static final String UPLOAD_MAP_URL = WEB_URL + "/upload/map";
+    public static final String UPLOAD_SCHEMATIC_URL = WEB_URL + "/schematics?upload=true";
+    public static final String UPLOAD_MAP_URL = WEB_URL + "/maps?upload=true";
 
     public static final List<Sort> sorts = Arrays.asList(//
             new Sort("newest", "time_desc"), //
