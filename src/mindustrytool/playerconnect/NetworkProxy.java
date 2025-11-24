@@ -27,7 +27,7 @@ import playerconnect.shared.Packets;
 
 public class NetworkProxy extends Client implements NetListener {
     public static String PROTOCOL_VERSION = "1";
-    public static int defaultTimeout = 5000; // ms
+    public static int defaultTimeout = 10000; // ms
 
     private final IntMap<VirtualConnection> connections = new IntMap<>();
     private final Seq<VirtualConnection> orderedConnections = new Seq<>(false);
@@ -42,10 +42,6 @@ public class NetworkProxy extends Client implements NetListener {
     private Cons<String> onRoomCreated;
     private Cons<Packets.RoomClosedPacket.CloseReason> onRoomClosed;
 
-    /**
-     * No-op rate keeper, to avoid the player's server from life blacklisting the
-     * server .
-     */
     private static final Ratekeeper noopRate = new NoopRatekeeper();
 
     public NetworkProxy(String password) {
@@ -161,14 +157,14 @@ public class NetworkProxy extends Client implements NetListener {
                 return;
 
             } else if (object instanceof Packets.MessagePacket) {
-                Call.sendMessage("[scarlet][[CLaJ Server]:[] " + ((Packets.MessagePacket) object).message);
+                Call.sendMessage("[scarlet][[Server]:[] " + ((Packets.MessagePacket) object).message);
 
             } else if (object instanceof Packets.Message2Packet) {
-                Call.sendMessage("[scarlet][[CLaJ Server]:[] " + arc.Core.bundle.get("claj.message." +
+                Call.sendMessage("[scarlet][[Server]:[] " + arc.Core.bundle.get("claj.message." +
                         arc.util.Strings.camelToKebab(((Packets.Message2Packet) object).message.name())));
 
             } else if (object instanceof Packets.PopupPacket) {
-                Vars.ui.showText("[scarlet][[CLaJ Server][] ", ((Packets.PopupPacket) object).message);
+                Vars.ui.showText("[scarlet][[Server][] ", ((Packets.PopupPacket) object).message);
 
             } else if (object instanceof Packets.RoomClosedPacket) {
                 closeReason = ((Packets.RoomClosedPacket) object).reason;

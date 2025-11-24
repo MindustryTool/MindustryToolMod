@@ -90,7 +90,7 @@ public class PlayerConnect {
 
     private static NetworkProxy room;
     private static Client pinger;
-    private static ExecutorService worker = Threads.unboundedExecutor("CLaJ Worker", 1);
+    private static ExecutorService worker = Threads.unboundedExecutor("Worker", 1);
     private static arc.net.NetSerializer tmpSerializer;
     private static ByteBuffer tmpBuffer = ByteBuffer.allocate(256);// we need 16 bytes for the room join packet
     private static Thread roomThread, pingerThread;
@@ -106,7 +106,7 @@ public class PlayerConnect {
             Cons<Packets.RoomClosedPacket.CloseReason> onDisconnected//
     ) {
         if (room == null || roomThread == null || !roomThread.isAlive()) {
-            roomThread = Threads.daemon("CLaJ Proxy", room = new NetworkProxy(password));
+            roomThread = Threads.daemon("Proxy", room = new NetworkProxy(password));
         }
 
         worker.submit(() -> {
@@ -180,7 +180,7 @@ public class PlayerConnect {
         if (tmpSerializer == null)
             tmpSerializer = new NetworkProxy.Serializer();
         if (pinger == null || pingerThread == null || !pingerThread.isAlive())
-            pingerThread = Threads.daemon("CLaJ Pinger", pinger = new Client(8192, 8192, tmpSerializer));
+            pingerThread = Threads.daemon("Pinger", pinger = new Client(8192, 8192, tmpSerializer));
 
         worker.submit(() -> {
             synchronized (pingerThread) {
