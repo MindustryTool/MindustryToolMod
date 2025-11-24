@@ -1,10 +1,8 @@
 name: Release Mod
 on:
-  push:
-    branches:
-      - main
-      - v8
   pull_request:
+    types:
+      - closed
     branches:
       - main
       - v8
