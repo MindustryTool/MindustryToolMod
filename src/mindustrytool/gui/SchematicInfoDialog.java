@@ -28,7 +28,7 @@ public class SchematicInfoDialog extends BaseDialog {
 
         title.setText("[[" + Core.bundle.get("schematic") + "] " + data.name());
 
-        cont.add(new SchematicImage(data.id())).maxWidth(Core.graphics.getWidth() * 2 / 3).row();
+        cont.add(new ImageHandler(data.id(), ImageHandler.ImageType.SCHEMATIC)).maxWidth(Core.graphics.getWidth() * 2 / 3).row();
 
         cont.table(card -> {
             card.left();

@@ -23,7 +23,7 @@ public class MapInfoDialog extends BaseDialog {
         cont.clear();
 
         title.setText("[[" + Core.bundle.get("map") + "] " + data.name());
-        cont.add(new MapImage(data.id())).maxWidth(Core.graphics.getWidth() * 2 / 3).row();
+        cont.add(new ImageHandler(data.id(), ImageHandler.ImageType.MAP)).maxWidth(Core.graphics.getWidth() * 2 / 3).row();
         cont.table(card -> {
             card.left();
             card.add(Core.bundle.format("message.author")).marginRight(4).padRight(4);
