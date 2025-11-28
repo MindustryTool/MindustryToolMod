@@ -214,7 +214,7 @@ public class SchematicDialog extends BaseDialog {
                         }).growX().height(50f);
 
                         schematicPreview.row();
-                        schematicPreview.stack(new SchematicImage(schematicData.id()), new Table(schematicName -> {
+                        schematicPreview.stack(new ImageHandler(schematicData.id(),ImageHandler.ImageType.SCHEMATIC), new Table(schematicName -> {
                             schematicName.top();
                             schematicName.table(Styles.black3, c -> {
                                 Label label = c.add(schematicData.name())//

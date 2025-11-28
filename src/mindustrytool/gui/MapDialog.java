@@ -210,7 +210,7 @@ public class MapDialog extends BaseDialog {
                     }).growX().height(50f);
 
                     mapPreview.row();
-                    mapPreview.stack(new MapImage(mapData.id()), new Table(mapName -> {
+                    mapPreview.stack(new ImageHandler(mapData.id(), ImageHandler.ImageType.MAP), new Table(mapName -> {
                         mapName.top();
                         mapName.table(Styles.black3, c -> {
                             Label label = c.add(mapData.name()).style(Styles.outlineLabel).color(Color.white).top()
