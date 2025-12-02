@@ -13,16 +13,17 @@ import mindustry.gen.Icon;
 import mindustry.mod.*;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.ui.fragments.MenuFragment.MenuButton;
+import mindustry.ui.dialogs.BaseDialog; // <-- Ensure this is imported for the type change
 import mindustrytool.config.Config;
 import mindustrytool.gui.CreateRoomDialog;
 import mindustrytool.gui.JoinRoomDialog;
-import mindustrytool.gui.MapDialog;
+import mindustrytool.gui.ModDialogs;
 import mindustrytool.gui.PlayerConnectRoomsDialog;
-import mindustrytool.gui.SchematicDialog;
 
 public class Main extends Mod {
-    public static SchematicDialog schematicDialog;
-    public static MapDialog mapDialog;
+    // Corrected types to BaseDialog
+    public static BaseDialog schematicDialog; // <-- CHANGED TYPE
+    public static BaseDialog mapDialog;      // <-- CHANGED TYPE
     public static PlayerConnectRoomsDialog playerConnectRoomsDialog;
     public static CreateRoomDialog createRoomDialog;
     public static JoinRoomDialog joinRoomDialog;
@@ -48,8 +49,13 @@ public class Main extends Mod {
     }
 
     private void addCustomButtons() {
-        schematicDialog = new SchematicDialog();
-        mapDialog = new MapDialog();
+        // Initialize the static dialog instances inside ModDialogs.java
+        ModDialogs.init();
+        
+        // Retrieve the instantiated dialogs from ModDialogs
+        schematicDialog = ModDialogs.schematicDialog;
+        mapDialog = ModDialogs.mapDialog;
+        
         playerConnectRoomsDialog = new PlayerConnectRoomsDialog();
         createRoomDialog = new CreateRoomDialog();
         joinRoomDialog = new JoinRoomDialog();

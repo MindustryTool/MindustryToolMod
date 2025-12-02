@@ -1,0 +1,491 @@
+package mindustrytool.gui;
+
+import arc.Core;
+import arc.files.Fi;
+import arc.func.Cons;
+import arc.graphics.Color;
+import arc.graphics.g2d.Draw;
+import arc.scene.ui.Button;
+import arc.scene.ui.Label;
+import arc.scene.ui.ScrollPane;
+import arc.scene.ui.TextButton;
+import arc.scene.ui.TextField;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Scl;
+import arc.scene.ui.layout.Table;
+import arc.struct.ObjectMap;
+import arc.struct.Seq;
+import arc.util.Align;
+import arc.util.Log;
+import arc.util.serialization.Base64Coder;
+import mindustry.Vars;
+import mindustry.game.Schematic;
+import mindustry.gen.Icon;
+import mindustry.gen.Tex;
+import mindustry.ui.Styles;
+import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.config.Config;
+import mindustrytool.config.Debouncer;
+import mindustrytool.config.Utils;
+import mindustrytool.data.SchematicData;
+import mindustrytool.data.MapData;
+import mindustrytool.data.SearchConfig;
+import mindustrytool.data.TagService;
+import mindustrytool.data.TagService.TagCategoryEnum;
+import mindustrytool.net.Api;
+import mindustrytool.net.PagingRequest;
+
+import static mindustry.Vars.*;
+
+import java.util.concurrent.TimeUnit;
+
+/** Base class cho các dialog, không phải public để tuân thủ quy tắc một public class mỗi file. */
+class ModDialog extends BaseDialog {
+    public ModDialog(String title) {
+        super(title);
+    }
+}
+
+/** Main class chứa các tham chiếu static. */
+public class ModDialogs {
+    public static BaseDialog schematicDialog;
+    public static BaseDialog mapDialog;
+
+    public static void init() {
+        // Khởi tạo BrowserDialog với kiểu dữ liệu và InfoDialog tương ứng
+        mapDialog = new BrowserDialog<>(BrowserDialog.BrowserType.MAP, MapData.class, new MapInfoDialog());
+        schematicDialog = new BrowserDialog<>(BrowserDialog.BrowserType.SCHEMATIC, SchematicData.class, new SchematicInfoDialog());
+    }
+}
+
+// ----------------------------------------------------------------------------------------------------
+// BrowserDialog Class (Hợp nhất MapDialog và SchematicDialog)
+// ----------------------------------------------------------------------------------------------------
+
+/**
+ * Lớp generic để duyệt Map hoặc Schematic, hợp nhất logic từ MapDialog và SchematicDialog.
+ * @param <T> Loại dữ liệu (MapData hoặc SchematicData).
+ */
+class BrowserDialog<T> extends ModDialog {
+
+    // Enum giúp phân biệt 2 loại trình duyệt
+    public enum BrowserType {
+        MAP, SCHEMATIC
+    }
+
+    private final BrowserType type;
+    private final BaseDialog infoDialog; // Khai báo BaseDialog, nhưng runtime là MapInfoDialog/SchematicInfoDialog
+
+    // Fields chung
+    private final Debouncer debouncer = new Debouncer(500, TimeUnit.MILLISECONDS);
+    private Seq<T> dataList = new Seq<>();
+    private final ObjectMap<String, String> options = new ObjectMap<>();
+    private final PagingRequest<T> request;
+    private final SearchConfig searchConfig = new SearchConfig();
+    private final TagService tagService = new TagService();
+
+    // Fields riêng biệt
+    private final String searchMessageText;
+    private final TagCategoryEnum tagCategory;
+    private final String uploadUrl;
+    private String search = "";
+    TextField searchField;
+
+    // Hằng số
+    private final float IMAGE_SIZE = 210;
+    private final float INFO_TABLE_HEIGHT = 60;
+
+    private final FilterDialog filterDialog;
+
+
+    public BrowserDialog(BrowserType type, Class<T> dataType, BaseDialog infoDialog) {
+        super(type == BrowserType.MAP ? "Map Browser" : "Schematic Browser");
+
+        this.type = type;
+        this.infoDialog = infoDialog;
+
+        // Cấu hình các trường riêng biệt
+        String endpoint;
+        if (type == BrowserType.MAP) {
+            this.searchMessageText = "@map.search";
+            this.tagCategory = TagCategoryEnum.maps;
+            this.uploadUrl = Config.UPLOAD_MAP_URL;
+            endpoint = "maps";
+        } else { // SCHEMATIC
+            this.searchMessageText = "@schematic.search";
+            this.tagCategory = TagCategoryEnum.schematics;
+            this.uploadUrl = Config.UPLOAD_SCHEMATIC_URL;
+            endpoint = "schematics";
+        }
+
+        // Khởi tạo PagingRequest
+        this.request = new PagingRequest<>(dataType, Config.API_URL + endpoint);
+
+        // Khởi tạo FilterDialog (logic chung, dùng tagCategory đã cấu hình)
+        this.filterDialog = new FilterDialog(tagService, searchConfig,
+            (tag) -> tagService.getTag(tagCategory, group -> tag.get(group)));
+
+        setItemPerPage();
+
+        options.put("sort", searchConfig.getSort().getValue());
+        options.put("verification", "VERIFIED");
+
+        request.setOptions(options);
+
+        filterDialog.hidden(() -> {
+            Core.app.post(() -> {
+                if (searchConfig.isChanged()) {
+                    searchConfig.update();
+                    options.put("tags", searchConfig.getSelectedTagsString());
+                    options.put("sort", searchConfig.getSort().getValue());
+
+                    request.setPage(0);
+                    request.getPage(this::handleResult);
+                }
+            });
+        });
+
+        onResize(() -> {
+            setItemPerPage();
+            Browser();
+            if (filterDialog.isShown()) {
+                filterDialog.show(searchConfig);
+            }
+        });
+        request.getPage(this::handleResult);
+        shown(this::Browser);
+    }
+
+    private void setItemPerPage() {
+        // Logic tính toán columns cho Schematic có Scl.scl(IMAGE_SIZE) nên cần if/else
+        float itemSize = type == BrowserType.MAP ? IMAGE_SIZE : Scl.scl(IMAGE_SIZE);
+        int columns = (int) (Core.graphics.getWidth() / Scl.scl() * 0.9f / itemSize) - 1;
+        int rows = (int) (Core.graphics.getHeight() / Scl.scl(IMAGE_SIZE + INFO_TABLE_HEIGHT * 2));
+        int size = Math.max(columns * rows, 20);
+
+        request.setItemPerPage(size);
+    }
+
+    private void Browser() {
+        clear();
+
+        try {
+            addCloseButton();
+            row();
+            SearchBar();
+            row();
+            DataContainer();
+            row();
+            Footer();
+        } catch (Exception ex) {
+            clear();
+            addCloseButton();
+            table(container -> Error(container, Core.bundle.format("message.error") + "\n Error: " + ex.getMessage()));
+            Log.err(ex);
+        }
+    }
+
+    public void loadingWrapper(Runnable action) {
+        Core.app.post(() -> {
+            if (request.isLoading())
+                ui.showInfoFade("Loading");
+            else
+                action.run();
+        });
+    }
+
+    private void SearchBar() {
+        table(searchBar -> {
+            searchBar.button("@back", Icon.leftSmall, this::hide)
+                    .width(150).padLeft(2).padRight(2);
+
+            searchBar.table(searchBarWrapper -> {
+                searchBarWrapper.left();
+                searchField = searchBarWrapper.field(search, (result) -> {
+                    search = result;
+                    options.put("name", result);
+                    request.setPage(0);
+                    debouncer.debounce(() -> loadingWrapper(() -> request.getPage(this::handleResult)));
+                }).growX().get();
+
+                searchField.setMessageText(searchMessageText); // Dùng text riêng biệt
+            })
+                    .fillX()
+                    .expandX()
+                    .padBottom(2)
+                    .padLeft(2)
+                    .padRight(2);
+
+            searchBar.button(Icon.filterSmall, () -> loadingWrapper(() -> filterDialog.show(searchConfig))).padLeft(2)
+                    .padRight(2).width(60);
+            searchBar.button(Icon.zoomSmall, () -> loadingWrapper(() -> request.getPage(this::handleResult)))
+                    .padLeft(2).padRight(2).width(60);
+
+        }).fillX().expandX();
+
+        row();
+        pane(tagBar -> {
+            TagBar.draw(tagBar, searchConfig, searchConfig -> {
+                options.put("tags", searchConfig.getSelectedTagsString());
+                request.setPage(0);
+                debouncer.debounce(() -> loadingWrapper(() -> request.getPage(this::handleResult)));
+                Browser();
+            });
+        }).scrollY(false);
+    }
+
+    private Cell<TextButton> Error(Table parent, String message) {
+        Cell<TextButton> error = parent.button(message, Styles.nonet, () -> request.getPage(this::handleResult));
+
+        return error.center().labelAlign(0).expand().fill();
+    }
+
+    private Cell<Label> Loading(Table parent) {
+        return parent.labelWrap(Core.bundle.format("message.loading")).center().labelAlign(0).expand().fill();
+    }
+
+    private Cell<ScrollPane> DataScrollContainer(Table parent) {
+        if (dataList.size == 0)
+            return parent.pane(container -> container.add("message.no-result"));
+
+        return parent.pane(container -> {
+            float sum = 0;
+            for (T data : dataList) {
+                if (sum + IMAGE_SIZE * 2 >= Core.graphics.getWidth()) {
+                    container.row();
+                    sum = 0;
+                }
+
+                Button[] button = { null };
+
+                // Logic vẽ preview riêng biệt cho từng loại
+                if (type == BrowserType.SCHEMATIC) {
+                    // Ép kiểu (casting) an toàn vì đã được định nghĩa trong hàm tạo
+                    button[0] = drawSchematicPreview(container, (SchematicData) data);
+                } else { // MAP
+                    button[0] = drawMapPreview(container, (MapData) data);
+                }
+
+                sum += button[0].getPrefWidth();
+            }
+            container.top();
+        }).scrollY(true).expand().fill();
+
+    }
+
+    private void Footer() {
+        table(footer -> {
+            footer.button(Icon.left, () -> request.previousPage(this::handleResult)).margin(4).pad(4).width(100)
+                    .disabled(request.isLoading() || request.getPage() == 0 || request.isError()).height(40);
+
+            footer.table(Tex.buttonDisabled, table -> {
+                table.labelWrap(String.valueOf(request.getPage() + 1)).width(50).style(Styles.defaultLabel)
+                        .labelAlign(0).center().fill();
+            }).pad(4).height(40);
+
+            footer.button(Icon.edit, () -> {
+                ui.showTextInput("@select-page", "", "", input -> {
+                    try {
+                        request.setPage(Integer.parseInt(input));
+                        shown(this::Browser);
+                    } catch (Exception e) {
+                        ui.showInfo("Invalid input");
+                    }
+                });
+            })
+                    .margin(4)
+                    .pad(4)
+                    .width(100)
+                    .disabled(request.isLoading() || request.hasMore() == false || request.isError()).height(40);
+
+            footer.button(Icon.right, () -> request.nextPage(this::handleResult)).margin(4).pad(4).width(100)
+                    .disabled(request.isLoading() || request.hasMore() == false || request.isError()).height(40);
+
+            footer.button("@upload", () -> Core.app.openURI(uploadUrl)).margin(4).pad(4).width(100)
+                    .disabled(request.isLoading() || request.hasMore() == false || request.isError()).height(40);
+
+            footer.bottom();
+        }).expandX().fillX();
+    }
+
+    private Cell<Table> DataContainer() {
+        return table(container -> {
+            if (request.isLoading()) {
+                Loading(container);
+                return;
+            }
+
+            if (request.isError()) {
+                Error(container, String.format("There is an error, reload? (%s)", request.getError()));
+                return;
+            }
+
+            DataScrollContainer(container);
+        }).margin(0).expand().fill().top();
+    }
+
+    private void handleResult(Seq<T> items) {
+        if (items != null)
+            this.dataList = items;
+        else
+            this.dataList.clear();
+
+        Browser();
+    }
+
+    // --- LOGIC RIÊNG BIỆT CHO MAP (Tách ra từ MapDialog) ---
+
+    private Button drawMapPreview(Table container, MapData mapData) {
+        Button[] button = { null };
+        button[0] = container.button(mapPreview -> {
+            mapPreview.top();
+            mapPreview.margin(0f);
+            mapPreview.table(buttons -> {
+                buttons.center();
+                buttons.defaults().size(50f);
+                buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadMap(mapData))
+                        .padLeft(2).padRight(2);
+                
+                // **FIX LỖI MAP DIALOG**
+                // Ép kiểu BaseDialog thành MapInfoDialog để compiler thấy phương thức show(MapDetailData)
+                final MapInfoDialog mapInfo = (MapInfoDialog) infoDialog; 
+                buttons.button(Icon.info, Styles.emptyi, () -> Api.findMapById(mapData.id(), mapInfo::show))
+                        .tooltip("@info.title");
+
+            }).growX().height(50f);
+
+            mapPreview.row();
+            mapPreview.stack(new ImageHandler(mapData.id(), ImageHandler.ImageType.MAP), new Table(mapName -> {
+                mapName.top();
+                mapName.table(Styles.black3, c -> {
+                    Label label = c.add(mapData.name()).style(Styles.outlineLabel).color(Color.white).top()
+                            .growX().width(200f - 8f).get();
+                    label.setEllipsis(true);
+                    label.setAlignment(Align.center);
+                    Draw.reset();
+                }).growX().margin(1).pad(4).maxWidth(Scl.scl(200f - 8f)).padBottom(0);
+            })).size(200f);
+
+            mapPreview.row();
+            mapPreview.table(stats -> DetailStats.draw(stats, mapData.likes(), mapData.comments(),
+                    mapData.downloads())).margin(8);
+
+        }, () -> {
+            // Logic khi click vào Map trống (như ban đầu)
+        }).pad(4).style(Styles.flati).get();
+
+        button[0].getStyle().up = Tex.pane;
+        return button[0];
+    }
+
+    private void handleDownloadMap(MapData map) {
+        Api.downloadMap(map.id(), result -> {
+            Fi mapFile = Vars.customMapDirectory.child(map.id().toString());
+            mapFile.writeBytes(result);
+            Vars.maps.importMap(mapFile);
+            ui.showInfoFade("@map.saved");
+        });
+    }
+
+    // --- LOGIC RIÊNG BIỆT CHO SCHEMATIC (Tách ra từ SchematicDialog) ---
+
+    private Button drawSchematicPreview(Table container, SchematicData schematicData) {
+        Button[] button = { null };
+        
+        // **FIX LỖI SCHEMATIC DIALOG**
+        // Ép kiểu BaseDialog thành SchematicInfoDialog để compiler thấy phương thức show(SchematicDetailData)
+        final SchematicInfoDialog schematicInfo = (SchematicInfoDialog) infoDialog;
+        
+        button[0] = container.button(schematicPreview -> {
+            schematicPreview.top();
+            schematicPreview.margin(0f);
+            schematicPreview.table(buttons -> {
+                buttons.center();
+                buttons.defaults().size(50f);
+                buttons.button(Icon.copy, Styles.emptyi, () -> handleCopySchematic(schematicData))
+                        .padLeft(2).padRight(2);
+                buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadSchematic(schematicData))
+                        .padLeft(2).padRight(2);
+                
+                // FIX LỖI 1 (dùng nút info)
+                buttons.button(Icon.info, Styles.emptyi,
+                        () -> Api.findSchematicById(schematicData.id(), schematicInfo::show))
+                        .tooltip("@info.title");
+
+            }).growX().height(50f);
+
+            schematicPreview.row();
+            schematicPreview.stack(new ImageHandler(schematicData.id(),ImageHandler.ImageType.SCHEMATIC), new Table(schematicName -> {
+                schematicName.top();
+                schematicName.table(Styles.black3, c -> {
+                    Label label = c.add(schematicData.name())
+                            .style(Styles.outlineLabel)
+                            .color(Color.white)
+                            .top()
+                            .growX()
+                            .width(200f - 8f).get();
+                    Draw.reset();
+                    label.setEllipsis(true);
+                    label.setAlignment(Align.center);
+                })
+                        .growX()
+                        .margin(1)
+                        .pad(4)
+                        .maxWidth(Scl.scl(200f - 8f))
+                        .padBottom(0);
+
+            })).size(200f);
+
+            schematicPreview.row();
+            schematicPreview.table(stats -> DetailStats.draw(stats, schematicData.likes(),
+                    schematicData.comments(), schematicData.downloads())).margin(8);
+
+        }, () -> {
+            if (button[0].childrenPressed()) return;
+
+            // Logic khi click vào Schematic (khác biệt)
+            if (state.isMenu()) {
+                // FIX LỖI 2 (dùng click vào item)
+                Api.findSchematicById(schematicData.id(), schematicInfo::show);
+            } else {
+                if (!state.rules.schematicsAllowed) {
+                    ui.showInfo("@schematic.disabled");
+                } else {
+                    handleDownloadSchematicData(schematicData,
+                            data -> control.input.useSchematic(Utils.readSchematic(data)));
+                    hide();
+                }
+            }
+
+        }).pad(4).style(Styles.flati).get();
+
+        button[0].getStyle().up = Tex.pane;
+        return button[0];
+    }
+
+    private void handleCopySchematic(SchematicData schematic) {
+        handleDownloadSchematicData(schematic, data -> {
+            Schematic s = Utils.readSchematic(data);
+            Core.app.setClipboardText(schematics.writeBase64(s));
+            ui.showInfoFade("@copied");
+        });
+    }
+
+    private void handleDownloadSchematic(SchematicData schematic) {
+        handleDownloadSchematicData(schematic, data -> {
+            Schematic s = Utils.readSchematic(data);
+            Api.findSchematicById(schematic.id(), detail -> {
+                s.labels.add(detail.tags().map(i -> i.name()));
+                s.removeSteamID();
+                Vars.schematics.add(s);
+                ui.showInfoFade("@schematic.saved");
+            });
+        });
+    }
+
+    private void handleDownloadSchematicData(SchematicData data, Cons<String> cons) {
+        Api.downloadSchematic(data.id(), result -> {
+            cons.get(new String(Base64Coder.encode(result)));
+        });
+    }
+}

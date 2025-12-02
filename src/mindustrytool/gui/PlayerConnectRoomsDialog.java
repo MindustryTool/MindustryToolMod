@@ -1,17 +1,12 @@
 package mindustrytool.gui;
 
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import arc.Core;
+import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
-import arc.util.Align;
-import arc.util.Log;
 import arc.util.Strings;
+import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.core.Version;
-import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
@@ -21,268 +16,236 @@ import mindustrytool.net.Api;
 import mindustrytool.playerconnect.PlayerConnect;
 import mindustrytool.playerconnect.PlayerConnectLink;
 
-public class PlayerConnectRoomsDialog extends mindustry.ui.dialogs.BaseDialog {
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class PlayerConnectRoomsDialog extends BaseDialog {
+
+    // Lỗi Thread Safety: Cần Core.app.post(listener) để đảm bảo renderUI chạy trên UI thread.
+    private static class State<T> {
+        private T value;
+        private Runnable listener;
+        public State(T initial) { value = initial; }
+        public T get() { return value; }
+        public void set(T newValue) {
+            value = newValue;
+            // FIX: Đảm bảo lắng nghe chạy trên luồng App (UI thread)
+            if (listener != null) Core.app.post(listener); 
+        }
+        public void bind(Runnable r) { listener = r; }
+    }
+
     private final Table roomList = new Table();
     private final Debouncer debouncer = new Debouncer(250, TimeUnit.MILLISECONDS);
-    private String searchTerm = "";
+
+    // STATE
+    private final State<String> search = new State<>("");
+    private final State<Seq<PlayerConnectRoom>> rooms = new State<>(new Seq<>());
+    private final State<Boolean> isLoading = new State<>(false); // Thêm trạng thái Loading
 
     public PlayerConnectRoomsDialog() {
         super("@message.room-list.title");
         addCloseButton();
 
-        try {
-            cont.table(container -> {
-                container.table(topBar -> {
-                    topBar.field(searchTerm, (result) -> {
-                        searchTerm = result;
-                        debouncer.debounce(this::setupPlayerConnect);
-                    })//
-                            .left()
-                            .growX()
-                            .get()
-                            .setMessageText(Core.bundle.format("@map.search"));
+        // 1. SETUP LAYOUT
+        cont.table(root -> {
+            // Search Bar
+            root.table(bar -> {
+                var field = bar.field("", t -> {
+                    search.set(t);
+                    debouncer.debounce(this::fetchRooms);
+                }).growX().get();
+                field.setMessageText(Core.bundle.get("map.search"));
+            }).growX().left().top().padBottom(10f);
+            root.row();
 
-                })
-                        .top()
-                        .left()
-                        .growX();
+            // Room List Container
+            root.add(roomList).grow().left().top();
+        }).grow().left().top();
 
-                container.row();
-                container.add(roomList)
-                        .grow()
-                        .top()
-                        .left();
+        // 2. ACTIONS & EFFECTS
+        buttons.button("" + Iconc.refresh, this::fetchRooms).size(64).padRight(8);
 
-                container.row();
-            })
-                    .top()
-                    .left()
-                    .grow();
-            cont
-                    .top()
-                    .left();
+        // Binding: Thay đổi trạng thái -> Render lại UI
+        rooms.bind(this::renderUI);
+        isLoading.bind(this::renderUI); // Bind trạng thái loading
 
-            buttons
-                    .button(Icon.refresh, Styles.squarei, () -> setupPlayerConnect())
-                    .size(64)
-                    .padRight(8);
-
-            shown(() -> {
-                setupPlayerConnect();
-            });
-        } catch (Throwable e) {
-            Log.err(e);
-        }
+        shown(this::fetchRooms);
     }
 
-    public void setupPlayerConnect() {
-        roomList.clear();
-        roomList.labelWrap(Core.bundle.format("message.loading"))
-                .center()
-                .labelAlign(0)
-                .expand()
-                .fill();
+    // =================== ACTIONS & EFFECTS ===================
 
-        Api.findPlayerConnectRooms(searchTerm, rooms -> {
-            roomList.clear();
+    private void fetchRooms() {
+        isLoading.set(true); // Bắt đầu tải
 
-            roomList.pane(list -> {
-                if (rooms.isEmpty()) {
-                    list.labelWrap(Core.bundle.format("message.no-rooms-found"))
-                            .center()
-                            .labelAlign(0)
-                            .expand()
-                            .fill();
-                    return;
-                }
-
-                for (PlayerConnectRoom room : rooms) {
-                    list.table(Styles.black5, card -> {
-                        card.table(left -> {
-                            left.add(
-                                    room.data().name() + "(" + room.data().locale() + ") [white]"
-                                            + (room.data().isSecured() ? Iconc.lock : "")
-                                            + " " + getVersionString(room.data().version()))
-                                    .fontScale(1.5f)
-                                    .align(Align.left)
-                                    .left();
-
-                            left.row();
-                            left.add(Iconc.map + " " + Core.bundle.format("save.map", room.data().mapName())
-                                    + "[lightgray] / " + room.data().gamemode())
-                                    .align(Align.left).left();
-
-                            left.row();
-                            left.add(
-                                    Iconc.players + " " + Core.bundle.format("players", room.data().players().size))
-                                    .align(Align.left)
-                                    .left();
-
-                            left.row();
-                            left.add(Core.bundle.format("version") + ": " + room.data().version())
-                                    .align(Align.left)
-                                    .left();
-
-                            if (room.data().mods().size > 0) {
-                                left.row();
-                                left.add(Iconc.book + " " + Strings.join(",", room.data().mods())).align(Align.left)
-                                        .left();
-                            }
-                        })
-                                .top()
-                                .left();
-
-                        card.add().growX().width(-1);
-
-                        card.table(right -> {
-                            right.button(Iconc.play + " " + Core.bundle.format("join"), () -> {
-                                if (!room.data().isSecured()) {
-                                    try {
-                                        PlayerConnect.joinRoom(
-                                                PlayerConnectLink.fromString(room.link()), "",
-                                                () -> hide());
-                                    } catch (Throwable e) {
-                                        hide();
-                                        setupPlayerConnect();
-                                        Vars.ui.showException("@message.connect.fail", e);
-                                    }
-
-                                    return;
-                                }
-
-                                BaseDialog connect = new BaseDialog("@message.type-password.title");
-                                String[] password = { "" };
-
-                                connect.cont.table(table -> {
-                                    table.add("@message.password")
-                                            .padRight(5f)
-                                            .right();
-
-                                    table.field(password[0], text -> password[0] = text)
-                                            .size(320f, 54f)
-                                            .valid(t -> t.length() > 0 && t.length() <= 100)
-                                            .maxTextLength(100)
-                                            .left()
-                                            .get();
-                                    table.row().add();
-                                }).row();
-
-                                connect.buttons.button("@cancel", () -> {
-                                    connect.hide();
-                                }).minWidth(210);
-
-                                connect.buttons.button("@ok", () -> {
-                                    try {
-                                        PlayerConnect.joinRoom(
-                                                PlayerConnectLink.fromString(room.link()),
-                                                password[0],
-                                                () -> {
-                                                    hide();
-                                                    connect.hide();
-                                                });
-                                    } catch (Throwable e) {
-                                        hide();
-                                        connect.hide();
-                                        setupPlayerConnect();
-                                        Vars.ui.showException("@message.connect.fail", e);
-                                    }
-                                }).minWidth(210);
-
-                                connect.show();
-                            })
-                                    .minWidth(150);
-                        });
-                    })
-                            .growX()
-                            .left()
-                            .top()
-                            .margin(8)
-                            .pad(8);
-
-                    list.row();
-                }
-            })
-                    .top()
-                    .left()
-                    .fill()
-                    .expandX()
-                    .scrollX(false)
-                    .scrollY(true);
-
-            roomList
-                    .top()
-                    .left()
-                    .marginTop(8)
-                    .marginBottom(8);
-
+        Api.findPlayerConnectRooms(search.get(), found -> {
+            rooms.set(found == null ? new Seq<>() : found);
+            isLoading.set(false); // Kết thúc tải
         });
     }
-
-    private String getVersionString(String versionString) {
-        BuildInfo info = extract(versionString);
-        int version = info.build;
-        String versionType = info.type;
-
-        if (version == -1) {
-            return Core.bundle.format("server.version", Core.bundle.get("server.custombuild"), "");
-        } else if (version == 0) {
-            return Core.bundle.get("server.outdated");
-        } else if (version < Version.build && Version.build != -1) {
-            return Core.bundle.get("server.outdated") + "\n" +
-                    Core.bundle.format("server.version", version, "");
-        } else if (version > Version.build && Version.build != -1) {
-            return Core.bundle.get("server.outdated.client") + "\n" +
-                    Core.bundle.format("server.version", version, "");
-        } else if (version == Version.build && Version.type.equals(versionType)) {
-            // not important
-            return "";
-        } else {
-            return Core.bundle.format("server.version", version, versionType);
+    
+    // Tách logic Join chung
+    private void tryJoin(PlayerConnectRoom room, String password, BaseDialog dialogToHide) {
+        try {
+            PlayerConnect.joinRoom(
+                PlayerConnectLink.fromString(room.link()), 
+                password, 
+                () -> { 
+                    hide(); 
+                    if (dialogToHide != null) dialogToHide.hide(); 
+                }
+            );
+        } catch (Throwable e) {
+            hide();
+            if (dialogToHide != null) dialogToHide.hide();
+            fetchRooms(); // Tải lại danh sách nếu thất bại
+            Vars.ui.showException("@message.connect.fail", e);
         }
     }
+
+    private void join(PlayerConnectRoom room) {
+        if (!room.data().isSecured()) {
+            tryJoin(room, "", null);
+            return;
+        }
+
+        // Dialog Mật khẩu
+        BaseDialog dialog = new BaseDialog("@message.type-password.title");
+        String[] pass = {""};
+
+        dialog.cont.table(tt -> {
+            tt.add("@message.password").padRight(5);
+            
+            // Sử dụng setPasswordMode thay vì maxTextLength/valid cho mật khẩu
+            TextField passField = tt.field(pass[0], t -> pass[0] = t)
+                .size(320, 54).left().get();
+            passField.setPasswordMode(true);
+            passField.setText("");
+        });
+
+        dialog.buttons.button("@cancel", dialog::hide);
+        dialog.buttons.button("@ok", () -> {
+            // Dùng hàm tryJoin chung
+            tryJoin(room, pass[0], dialog);
+        }).disabled(b -> pass[0].isEmpty()); // Rút gọn: Dùng disabled
+
+        dialog.show();
+    }
+
+    // =================== RENDER UI ===================
+
+    private void renderUI() {
+        roomList.clear();
+
+        if (isLoading.get()) {
+            roomList.add(Core.bundle.get("message.loading")).center().pad(20f);
+            roomList.invalidateHierarchy();
+            return;
+        }
+        
+        Seq<PlayerConnectRoom> rs = rooms.get();
+
+        if (rs.isEmpty()) {
+            roomList.add(Core.bundle.get("message.no-rooms-found")).center().pad(20f);
+            roomList.invalidateHierarchy();
+            return;
+        }
+
+        roomList.pane(list -> {
+            for (PlayerConnectRoom room : rs) {
+                list.add(renderRoom(room)).growX().left().top().pad(6);
+                list.row();
+            }
+        }).grow().scrollY(true).scrollX(false);
+        
+        roomList.invalidateHierarchy();
+    }
+
+    // =================== ROOM CARD ===================
+
+    private Table renderRoom(PlayerConnectRoom room) {
+        Table t = new Table(Styles.black5);
+        t.margin(8);
+
+        // LEFT (Info)
+        t.table(left -> {
+            // Rút gọn hiển thị Tiêu đề và Phiên bản
+            String title = Strings.format("@: @", 
+                room.data().name() + " (" + room.data().locale() + ")", 
+                getVersionString(room.data().version())) 
+                + " [white]" + (room.data().isSecured() ? Iconc.lock : "");
+
+            left.add(title).fontScale(1.35f).left().wrap().growX();
+            left.row();
+
+            left.add(Strings.format("@ @[lightgray] / @",
+                Iconc.map, room.data().mapName(), room.data().gamemode())).left();
+            left.row();
+
+            left.add(Strings.format("@ @",
+                Iconc.players, Core.bundle.format("players", room.data().players().size))).left();
+            left.row();
+
+            if (room.data().mods().size > 0) {
+                left.add(Iconc.book + " " + Strings.join(", ", room.data().mods())).left().wrap().growX();
+            }
+
+        }).left().top().growX();
+
+        t.add().growX();
+
+        // RIGHT (Button)
+        t.table(right -> {
+            right.button(Iconc.play + " " + Core.bundle.get("join"), () -> join(room))
+                .size(160f, 60f); // Sử dụng size cố định cho kích thước nút đồng nhất
+        }).right().top();
+
+        return t;
+    }
+
+    // =================== VERSION PARSER (Giữ nguyên) ===================
 
     private static class BuildInfo {
         public String type = "custom";
         public int build = -1;
-        public int revision = -1;
+        @SuppressWarnings("unused")
+        public int revision = 0;
+        @SuppressWarnings("unused")
         public String modifier;
-
-        @Override
-        public String toString() {
-            return "type=" + type + ", build=" + build + ", revision=" + revision + ", modifier=" + modifier;
-        }
     }
 
     private BuildInfo extract(String combined) {
         BuildInfo info = new BuildInfo();
-
-        if ("custom build".equals(combined)) {
-            info.type = "custom";
-            info.build = -1;
-            info.revision = 0;
-            info.modifier = null;
-            return info;
-        }
-
-        Pattern pattern = Pattern.compile("^(.+?) build (\\d+)(?:\\.(\\d+))?$");
-        Matcher matcher = pattern.matcher(combined);
-
-        if (matcher.matches()) {
-            String first = matcher.group(1);
-            info.build = Integer.parseInt(matcher.group(2));
-            info.revision = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
-
-            if ("official".equals(first)) {
-                info.type = "official";
-                info.modifier = first;
-            } else {
-                info.type = first;
-                info.modifier = null;
-            }
-        } else {
-            Log.warn("Invalid combined() format: " + combined);
-        }
-
+        if ("custom build".equals(combined)) return info;
+        Matcher m = Pattern.compile("^(.+?) build (\\d+)(?:\\.(\\d+))?$").matcher(combined);
+        if (!m.matches()) return info;
+        info.type = m.group(1);
+        info.build = Integer.parseInt(m.group(2));
+        info.revision = m.group(3) != null ? Integer.parseInt(m.group(3)) : 0;
+        info.modifier = info.type.equals("official") ? info.type : null;
         return info;
+    }
+
+    private String getVersionString(String s) {
+        BuildInfo i = extract(s);
+        if (i.build == -1) return Core.bundle.format("server.custombuild");
+        if (i.build == 0) return Core.bundle.get("server.outdated");
+
+        // Sử dụng biến cục bộ để dễ đọc
+        int clientBuild = Version.build;
+        String clientType = Version.type;
+
+        if (clientBuild != -1) {
+            if (i.build < clientBuild)
+                return Core.bundle.get("server.outdated") + "\n" + Core.bundle.format("server.version", i.build, "");
+            if (i.build > clientBuild)
+                return Core.bundle.get("server.outdated.client") + "\n" + Core.bundle.format("server.version", i.build, "");
+        }
+
+        if (i.build == clientBuild && clientType.equals(i.type))
+            return "";
+
+        return Core.bundle.format("server.version", i.build, i.type);
     }
 }
