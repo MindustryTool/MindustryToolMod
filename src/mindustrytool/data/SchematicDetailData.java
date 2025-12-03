@@ -6,7 +6,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true, fluent = true)
-public class ContentDetailData {
+public class SchematicDetailData {
     String id;
     String itemId;
     String createdBy;

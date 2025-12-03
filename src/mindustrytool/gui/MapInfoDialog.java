@@ -5,7 +5,7 @@ import java.security.InvalidParameterException;
 import arc.Core;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustrytool.data.ContentDetailData;
+import mindustrytool.data.MapDetailData;
 
 public class MapInfoDialog extends BaseDialog {
 
@@ -16,7 +16,7 @@ public class MapInfoDialog extends BaseDialog {
         addCloseListener();
     }
 
-    public void show(ContentDetailData data) {
+    public void show(MapDetailData data) {
         if (data == null) {
             throw new InvalidParameterException("Map can not be null");
         }

@@ -335,7 +335,7 @@ class BrowserDialog<T> extends ModDialog {
 
                 // Nút Tải xuống
                 if (type == BrowserType.MAP) {
-                    buttons.button(Icon.download, Styles.emptyi, () -> MapHandler.downloadMap(mapData))
+                    buttons.button(Icon.download, Styles.emptyi, () -> MapHandler.Download(mapData))
                             .padLeft(2).padRight(2);
                 } else { // SCHEMATIC
                     buttons.button(Icon.download, Styles.emptyi, () -> SchematicHandler.Download(schematicData))

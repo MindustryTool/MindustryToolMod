@@ -9,7 +9,7 @@ import static mindustry.Vars.ui;
 
 public class MapHandler {
 
-    public static void downloadMap(ContentData map) {
+    public static void Download(ContentData map) {
         Api.downloadMap(map.id(), result -> {
             Fi mapFile = Vars.customMapDirectory.child(map.id().toString());
             mapFile.writeBytes(result);
