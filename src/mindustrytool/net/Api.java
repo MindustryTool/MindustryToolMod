@@ -7,10 +7,9 @@ import arc.struct.Seq;
 import arc.util.Http;
 import mindustry.io.JsonIO;
 import mindustrytool.config.Config;
-import mindustrytool.data.MapDetailData;
 import mindustrytool.data.PlayerConnectProvider;
 import mindustrytool.data.PlayerConnectRoom;
-import mindustrytool.data.SchematicDetailData;
+import mindustrytool.data.ContentDetailData;
 import mindustrytool.data.UserData;
 
 public class Api {
@@ -27,17 +26,17 @@ public class Api {
         });
     }
 
-    public static void findSchematicById(String id, Cons<SchematicDetailData> c) {
+    public static void findSchematicById(String id, Cons<ContentDetailData> c) {
         Http.get(Config.API_URL + "schematics/" + id).submit(response -> {
             String data = response.getResultAsString();
-            Core.app.post(() -> c.get(JsonIO.json.fromJson(SchematicDetailData.class, data)));
+            Core.app.post(() -> c.get(JsonIO.json.fromJson(ContentDetailData.class, data)));
         });
     }
 
-    public static void findMapById(String id, Cons<MapDetailData> c) {
+    public static void findMapById(String id, Cons<ContentDetailData> c) {
         Http.get(Config.API_URL + "maps/" + id).submit(response -> {
             String data = response.getResultAsString();
-            Core.app.post(() -> c.get(JsonIO.json.fromJson(MapDetailData.class, data)));
+            Core.app.post(() -> c.get(JsonIO.json.fromJson(ContentDetailData.class, data)));
         });
     }
 

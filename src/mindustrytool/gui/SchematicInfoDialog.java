@@ -9,8 +9,8 @@ import mindustry.type.ItemSeq;
 import mindustry.type.ItemStack;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.config.Config;
-import mindustrytool.data.SchematicDetailData;
-import mindustrytool.data.SchematicDetailData.SchematicRequirement;
+import mindustrytool.data.ContentDetailData;
+import mindustrytool.data.ContentDetailData.SchematicRequirement;
 
 import static mindustry.Vars.*;
 
@@ -23,7 +23,7 @@ public class SchematicInfoDialog extends BaseDialog {
         addCloseListener();
     }
 
-    public void show(SchematicDetailData data) {
+    public void show(ContentDetailData data) {
         cont.clear();
 
         title.setText("[[" + Core.bundle.get("schematic") + "] " + data.name());

@@ -6,13 +6,13 @@ import arc.util.serialization.Base64Coder;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustrytool.config.Utils;
-import mindustrytool.data.SchematicData;
+import mindustrytool.data.ContentData;
 import mindustrytool.net.Api;
 
 import static mindustry.Vars.ui;
 
 public class SchematicHandler {
-    public static void Copy(SchematicData schematic) {
+    public static void Copy(ContentData schematic) {
         DownloadData(schematic, data -> {
             Schematic s = Utils.readSchematic(data);
             Core.app.setClipboardText(Vars.schematics.writeBase64(s));
@@ -20,7 +20,7 @@ public class SchematicHandler {
         });
     }
 
-    public static void Download(SchematicData schematic) {
+    public static void Download(ContentData schematic) {
         DownloadData(schematic, data -> {
             Schematic s = Utils.readSchematic(data);
             Api.findSchematicById(schematic.id(), detail -> {
@@ -32,7 +32,7 @@ public class SchematicHandler {
         });
     }
 
-    public static void DownloadData(SchematicData data, Cons<String> cons) {
+    public static void DownloadData(ContentData data, Cons<String> cons) {
         Api.downloadSchematic(data.id(), result -> {
             cons.get(new String(Base64Coder.encode(result)));
         });

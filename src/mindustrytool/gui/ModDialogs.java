@@ -22,8 +22,8 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.config.Config;
 import mindustrytool.config.Debouncer;
 import mindustrytool.config.Utils;
-import mindustrytool.data.SchematicData;
-import mindustrytool.data.MapData;
+// Import các lớp dữ liệu
+import mindustrytool.data.ContentData;
 import mindustrytool.data.SearchConfig;
 import mindustrytool.data.TagService;
 import mindustrytool.data.TagService.TagCategoryEnum;
@@ -47,8 +47,9 @@ public class ModDialogs {
     public static BaseDialog mapDialog;
 
     public static void init() {
-        mapDialog = new BrowserDialog<>(BrowserDialog.BrowserType.MAP, MapData.class, new MapInfoDialog());
-        schematicDialog = new BrowserDialog<>(BrowserDialog.BrowserType.SCHEMATIC, SchematicData.class, new SchematicInfoDialog());
+        // T không cần ép kiểu
+        mapDialog = new BrowserDialog<>(BrowserDialog.BrowserType.MAP, ContentData.class, new MapInfoDialog());
+        schematicDialog = new BrowserDialog<>(BrowserDialog.BrowserType.SCHEMATIC, ContentData.class, new SchematicInfoDialog());
     }
 }
 
@@ -102,7 +103,7 @@ class BrowserDialog<T> extends ModDialog {
         this.request = new PagingRequest<>(dataType, Config.API_URL + endpoint);
 
         this.filterDialog = new FilterDialog(tagService, searchConfig,
-            (tag) -> tagService.getTag(tagCategory, group -> tag.get(group)));
+                (tag) -> tagService.getTag(tagCategory, group -> tag.get(group)));
 
         setItemPerPage();
 
@@ -137,7 +138,7 @@ class BrowserDialog<T> extends ModDialog {
 
     private void setItemPerPage() {
         float itemSize = type == BrowserType.MAP ? IMAGE_SIZE : Scl.scl(IMAGE_SIZE);
-        int columns = (int) (Core.graphics.getWidth() / Scl.scl() * 0.9f / itemSize);
+        int columns = (int) (Core.graphics.getWidth() / Scl.scl(itemSize));
         int rows = (int) (Core.graphics.getHeight() / Scl.scl(IMAGE_SIZE + INFO_TABLE_HEIGHT * 2));
         int size = Math.max(columns * rows, 20);
 
@@ -229,18 +230,14 @@ class BrowserDialog<T> extends ModDialog {
         return parent.pane(container -> {
             float sum = 0;
             for (T data : dataList) {
-                if (sum + IMAGE_SIZE * 2 >= Core.graphics.getWidth()) {
+                if (sum + IMAGE_SIZE * 1.25 >= Core.graphics.getWidth()) {
                     container.row();
                     sum = 0;
                 }
 
                 Button[] button = { null };
-
-                if (type == BrowserType.SCHEMATIC) {
-                    button[0] = drawSchematicPreview(container, (SchematicData) data);
-                } else { // MAP
-                    button[0] = drawMapPreview(container, (MapData) data);
-                }
+                // Ép kiểu T thành ContentData đã được tách ra
+                button[0] = drawContentPreview(container, (ContentData) data, type);
 
                 sum += button[0].getPrefWidth();
             }
@@ -309,30 +306,62 @@ class BrowserDialog<T> extends ModDialog {
         Browser();
     }
 
-    // --- LOGIC RIÊNG BIỆT CHO MAP ---
+    // --- LOGIC GỘP CHUNG CHO PREVIEW MAP/SCHEMATIC ---
 
-    private Button drawMapPreview(Table container, MapData mapData) {
+    private Button drawContentPreview(Table container, ContentData data, BrowserType type) {
         Button[] button = { null };
-        button[0] = container.button(mapPreview -> {
-            mapPreview.top();
-            mapPreview.margin(0f);
-            mapPreview.table(buttons -> {
+
+        // Ép kiểu dữ liệu (cast)
+        final ContentData mapData = (type == BrowserType.MAP) ? (ContentData) data : null;
+        final ContentData schematicData = (type == BrowserType.SCHEMATIC) ? (ContentData) data : null;
+
+        // Giả định infoDialog là một trường (field) và cần được ép kiểu
+        final Object infoDialogCasted = (type == BrowserType.MAP) ? (MapInfoDialog) infoDialog : (SchematicInfoDialog) infoDialog;
+
+        button[0] = container.button(preview -> {
+            preview.top();
+            preview.margin(0f);
+
+            // Hàng 1: Các nút hành động
+            preview.table(buttons -> {
                 buttons.center();
                 buttons.defaults().size(50f);
-                buttons.button(Icon.download, Styles.emptyi, () -> MapHandler.downloadMap(mapData))
-                        .padLeft(2).padRight(2);
 
-                final MapInfoDialog mapInfo = (MapInfoDialog) infoDialog;
-                buttons.button(Icon.info, Styles.emptyi, () -> Api.findMapById(mapData.id(), mapInfo::show))
-                        .tooltip("@info.title");
+                // Nút Sao chép (CHỈ CÓ TRONG SCHEMATIC)
+                if (type == BrowserType.SCHEMATIC) {
+                    buttons.button(Icon.copy, Styles.emptyi, () -> SchematicHandler.Copy(schematicData))
+                            .padLeft(2).padRight(2);
+                }
+
+                // Nút Tải xuống
+                if (type == BrowserType.MAP) {
+                    buttons.button(Icon.download, Styles.emptyi, () -> MapHandler.downloadMap(mapData))
+                            .padLeft(2).padRight(2);
+                } else { // SCHEMATIC
+                    buttons.button(Icon.download, Styles.emptyi, () -> SchematicHandler.Download(schematicData))
+                            .padLeft(2).padRight(2);
+                }
+
+                // Nút Thông tin
+                buttons.button(Icon.info, Styles.emptyi, () -> {
+                    if (type == BrowserType.MAP) {
+                        Api.findMapById(mapData.id(), ((MapInfoDialog) infoDialogCasted)::show);
+                    } else { // SCHEMATIC
+                        Api.findSchematicById(schematicData.id(), ((SchematicInfoDialog) infoDialogCasted)::show);
+                    }
+                }).tooltip("@info.title");
 
             }).growX().height(50f);
 
-            mapPreview.row();
-            mapPreview.stack(new ImageHandler(mapData.id(), ImageHandler.ImageType.MAP), new Table(mapName -> {
-                mapName.top();
-                mapName.table(Styles.black3, c -> {
-                    Label label = c.add(mapData.name()).style(Styles.outlineLabel).color(Color.white).top()
+            preview.row();
+
+            // Hàng 2: Hình ảnh và Tên
+            ImageHandler.ImageType imageType = (type == BrowserType.MAP) ? ImageHandler.ImageType.MAP : ImageHandler.ImageType.SCHEMATIC;
+
+            preview.stack(new ImageHandler(data.id(), imageType), new Table(nameTable -> {
+                nameTable.top();
+                nameTable.table(Styles.black3, c -> {
+                    Label label = c.add(data.name()).style(Styles.outlineLabel).color(Color.white).top()
                             .growX().width(200f - 8f).get();
                     label.setEllipsis(true);
                     label.setAlignment(Align.center);
@@ -340,86 +369,48 @@ class BrowserDialog<T> extends ModDialog {
                 }).growX().margin(1).pad(4).maxWidth(Scl.scl(200f - 8f)).padBottom(0);
             })).size(200f);
 
-            mapPreview.row();
-            mapPreview.table(stats -> DetailStats.draw(stats, mapData.likes(), mapData.comments(),
-                    mapData.downloads())).margin(8);
+            preview.row();
 
+            // Hàng 3: Thống kê chi tiết (Đã sửa lỗi ép kiểu sang Long)
+            preview.table(stats -> DetailStats.draw(stats, (long)data.likes(), (long)data.comments(), (long)data.downloads())).margin(8);
+
+        // Hành động Click Chính cho toàn bộ Button
         }, () -> {
-            // Logic khi click vào Map trống (như ban đầu)
+            // Kiểm tra nút con đã được nhấn hay chưa (chỉ áp dụng cho Schematic)
+            if (type == BrowserType.SCHEMATIC && button[0].childrenPressed()) return;
+
+            if (type == BrowserType.MAP) {
+                // Logic khi click vào Map trống (như trong đoạn code Map ban đầu)
+            } else { // SCHEMATIC (Logic phức tạp hơn)
+                final SchematicInfoDialog schematicInfo = (SchematicInfoDialog) infoDialogCasted;
+
+                if (state.isMenu()) {
+                    Api.findSchematicById(schematicData.id(), schematicInfo::show);
+                } else {
+                    if (!state.rules.schematicsAllowed) {
+                        ui.showInfo("@schematic.disabled");
+                    } else {
+                        SchematicHandler.DownloadData(schematicData,
+                                dataReceived -> control.input.useSchematic(Utils.readSchematic(dataReceived)));
+                        hide();
+                    }
+                }
+            }
         }).pad(4).style(Styles.flati).get();
 
         button[0].getStyle().up = Tex.pane;
         return button[0];
     }
 
-    // --- LOGIC RIÊNG BIỆT CHO SCHEMATIC ---
+    // --- Các hàm Gốc được Sửa đổi để gọi hàm Utility ---
 
-    private Button drawSchematicPreview(Table container, SchematicData schematicData) {
-        Button[] button = { null };
+    private Button drawMapPreview(Table container, ContentData mapData) {
+        // Không cần ép kiểu tường minh nếu MapData implement ContentData
+        return drawContentPreview(container, mapData, BrowserType.MAP);
+    }
 
-        final SchematicInfoDialog schematicInfo = (SchematicInfoDialog) infoDialog;
-
-        button[0] = container.button(schematicPreview -> {
-            schematicPreview.top();
-            schematicPreview.margin(0f);
-            schematicPreview.table(buttons -> {
-                buttons.center();
-                buttons.defaults().size(50f);
-                buttons.button(Icon.copy, Styles.emptyi, () -> SchematicHandler.Copy(schematicData))
-                        .padLeft(2).padRight(2);
-                buttons.button(Icon.download, Styles.emptyi, () -> SchematicHandler.Download(schematicData))
-                        .padLeft(2).padRight(2);
-
-                buttons.button(Icon.info, Styles.emptyi,
-                        () -> Api.findSchematicById(schematicData.id(), schematicInfo::show))
-                        .tooltip("@info.title");
-
-            }).growX().height(50f);
-
-            schematicPreview.row();
-            schematicPreview.stack(new ImageHandler(schematicData.id(),ImageHandler.ImageType.SCHEMATIC), new Table(schematicName -> {
-                schematicName.top();
-                schematicName.table(Styles.black3, c -> {
-                    Label label = c.add(schematicData.name())
-                            .style(Styles.outlineLabel)
-                            .color(Color.white)
-                            .top()
-                            .growX()
-                            .width(200f - 8f).get();
-                    Draw.reset();
-                    label.setEllipsis(true);
-                    label.setAlignment(Align.center);
-                })
-                        .growX()
-                        .margin(1)
-                        .pad(4)
-                        .maxWidth(Scl.scl(200f - 8f))
-                        .padBottom(0);
-
-            })).size(200f);
-
-            schematicPreview.row();
-            schematicPreview.table(stats -> DetailStats.draw(stats, schematicData.likes(),
-                    schematicData.comments(), schematicData.downloads())).margin(8);
-
-        }, () -> {
-            if (button[0].childrenPressed()) return;
-
-            if (state.isMenu()) {
-                Api.findSchematicById(schematicData.id(), schematicInfo::show);
-            } else {
-                if (!state.rules.schematicsAllowed) {
-                    ui.showInfo("@schematic.disabled");
-                } else {
-                    SchematicHandler.DownloadData(schematicData,
-                            data -> control.input.useSchematic(Utils.readSchematic(data)));
-                    hide();
-                }
-            }
-
-        }).pad(4).style(Styles.flati).get();
-
-        button[0].getStyle().up = Tex.pane;
-        return button[0];
+    private Button drawSchematicPreview(Table container, ContentData schematicData) {
+        // Không cần ép kiểu tường minh nếu SchematicData implement ContentData
+        return drawContentPreview(container, schematicData, BrowserType.SCHEMATIC);
     }
 }
