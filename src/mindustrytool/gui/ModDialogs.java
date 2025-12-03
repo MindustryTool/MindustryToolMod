@@ -1,8 +1,6 @@
 package mindustrytool.gui;
 
 import arc.Core;
-import arc.files.Fi;
-import arc.func.Cons;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.scene.ui.Button;
@@ -17,9 +15,6 @@ import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Log;
-import arc.util.serialization.Base64Coder;
-import mindustry.Vars;
-import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
@@ -39,44 +34,33 @@ import static mindustry.Vars.*;
 
 import java.util.concurrent.TimeUnit;
 
-/** Base class cho các dialog, không phải public để tuân thủ quy tắc một public class mỗi file. */
+import mindustrytool.handler.*;
+
 class ModDialog extends BaseDialog {
     public ModDialog(String title) {
         super(title);
     }
 }
 
-/** Main class chứa các tham chiếu static. */
 public class ModDialogs {
     public static BaseDialog schematicDialog;
     public static BaseDialog mapDialog;
 
     public static void init() {
-        // Khởi tạo BrowserDialog với kiểu dữ liệu và InfoDialog tương ứng
         mapDialog = new BrowserDialog<>(BrowserDialog.BrowserType.MAP, MapData.class, new MapInfoDialog());
         schematicDialog = new BrowserDialog<>(BrowserDialog.BrowserType.SCHEMATIC, SchematicData.class, new SchematicInfoDialog());
     }
 }
 
-// ----------------------------------------------------------------------------------------------------
-// BrowserDialog Class (Hợp nhất MapDialog và SchematicDialog)
-// ----------------------------------------------------------------------------------------------------
-
-/**
- * Lớp generic để duyệt Map hoặc Schematic, hợp nhất logic từ MapDialog và SchematicDialog.
- * @param <T> Loại dữ liệu (MapData hoặc SchematicData).
- */
 class BrowserDialog<T> extends ModDialog {
 
-    // Enum giúp phân biệt 2 loại trình duyệt
     public enum BrowserType {
         MAP, SCHEMATIC
     }
 
     private final BrowserType type;
-    private final BaseDialog infoDialog; // Khai báo BaseDialog, nhưng runtime là MapInfoDialog/SchematicInfoDialog
+    private final BaseDialog infoDialog;
 
-    // Fields chung
     private final Debouncer debouncer = new Debouncer(500, TimeUnit.MILLISECONDS);
     private Seq<T> dataList = new Seq<>();
     private final ObjectMap<String, String> options = new ObjectMap<>();
@@ -84,14 +68,12 @@ class BrowserDialog<T> extends ModDialog {
     private final SearchConfig searchConfig = new SearchConfig();
     private final TagService tagService = new TagService();
 
-    // Fields riêng biệt
     private final String searchMessageText;
     private final TagCategoryEnum tagCategory;
     private final String uploadUrl;
     private String search = "";
     TextField searchField;
 
-    // Hằng số
     private final float IMAGE_SIZE = 210;
     private final float INFO_TABLE_HEIGHT = 60;
 
@@ -104,7 +86,6 @@ class BrowserDialog<T> extends ModDialog {
         this.type = type;
         this.infoDialog = infoDialog;
 
-        // Cấu hình các trường riêng biệt
         String endpoint;
         if (type == BrowserType.MAP) {
             this.searchMessageText = "@map.search";
@@ -118,10 +99,8 @@ class BrowserDialog<T> extends ModDialog {
             endpoint = "schematics";
         }
 
-        // Khởi tạo PagingRequest
         this.request = new PagingRequest<>(dataType, Config.API_URL + endpoint);
 
-        // Khởi tạo FilterDialog (logic chung, dùng tagCategory đã cấu hình)
         this.filterDialog = new FilterDialog(tagService, searchConfig,
             (tag) -> tagService.getTag(tagCategory, group -> tag.get(group)));
 
@@ -157,9 +136,8 @@ class BrowserDialog<T> extends ModDialog {
     }
 
     private void setItemPerPage() {
-        // Logic tính toán columns cho Schematic có Scl.scl(IMAGE_SIZE) nên cần if/else
         float itemSize = type == BrowserType.MAP ? IMAGE_SIZE : Scl.scl(IMAGE_SIZE);
-        int columns = (int) (Core.graphics.getWidth() / Scl.scl() * 0.9f / itemSize) - 1;
+        int columns = (int) (Core.graphics.getWidth() / Scl.scl() * 0.9f / itemSize);
         int rows = (int) (Core.graphics.getHeight() / Scl.scl(IMAGE_SIZE + INFO_TABLE_HEIGHT * 2));
         int size = Math.max(columns * rows, 20);
 
@@ -208,7 +186,7 @@ class BrowserDialog<T> extends ModDialog {
                     debouncer.debounce(() -> loadingWrapper(() -> request.getPage(this::handleResult)));
                 }).growX().get();
 
-                searchField.setMessageText(searchMessageText); // Dùng text riêng biệt
+                searchField.setMessageText(searchMessageText);
             })
                     .fillX()
                     .expandX()
@@ -258,9 +236,7 @@ class BrowserDialog<T> extends ModDialog {
 
                 Button[] button = { null };
 
-                // Logic vẽ preview riêng biệt cho từng loại
                 if (type == BrowserType.SCHEMATIC) {
-                    // Ép kiểu (casting) an toàn vì đã được định nghĩa trong hàm tạo
                     button[0] = drawSchematicPreview(container, (SchematicData) data);
                 } else { // MAP
                     button[0] = drawMapPreview(container, (MapData) data);
@@ -333,7 +309,7 @@ class BrowserDialog<T> extends ModDialog {
         Browser();
     }
 
-    // --- LOGIC RIÊNG BIỆT CHO MAP (Tách ra từ MapDialog) ---
+    // --- LOGIC RIÊNG BIỆT CHO MAP ---
 
     private Button drawMapPreview(Table container, MapData mapData) {
         Button[] button = { null };
@@ -343,12 +319,10 @@ class BrowserDialog<T> extends ModDialog {
             mapPreview.table(buttons -> {
                 buttons.center();
                 buttons.defaults().size(50f);
-                buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadMap(mapData))
+                buttons.button(Icon.download, Styles.emptyi, () -> MapHandler.downloadMap(mapData))
                         .padLeft(2).padRight(2);
-                
-                // **FIX LỖI MAP DIALOG**
-                // Ép kiểu BaseDialog thành MapInfoDialog để compiler thấy phương thức show(MapDetailData)
-                final MapInfoDialog mapInfo = (MapInfoDialog) infoDialog; 
+
+                final MapInfoDialog mapInfo = (MapInfoDialog) infoDialog;
                 buttons.button(Icon.info, Styles.emptyi, () -> Api.findMapById(mapData.id(), mapInfo::show))
                         .tooltip("@info.title");
 
@@ -378,36 +352,24 @@ class BrowserDialog<T> extends ModDialog {
         return button[0];
     }
 
-    private void handleDownloadMap(MapData map) {
-        Api.downloadMap(map.id(), result -> {
-            Fi mapFile = Vars.customMapDirectory.child(map.id().toString());
-            mapFile.writeBytes(result);
-            Vars.maps.importMap(mapFile);
-            ui.showInfoFade("@map.saved");
-        });
-    }
-
-    // --- LOGIC RIÊNG BIỆT CHO SCHEMATIC (Tách ra từ SchematicDialog) ---
+    // --- LOGIC RIÊNG BIỆT CHO SCHEMATIC ---
 
     private Button drawSchematicPreview(Table container, SchematicData schematicData) {
         Button[] button = { null };
-        
-        // **FIX LỖI SCHEMATIC DIALOG**
-        // Ép kiểu BaseDialog thành SchematicInfoDialog để compiler thấy phương thức show(SchematicDetailData)
+
         final SchematicInfoDialog schematicInfo = (SchematicInfoDialog) infoDialog;
-        
+
         button[0] = container.button(schematicPreview -> {
             schematicPreview.top();
             schematicPreview.margin(0f);
             schematicPreview.table(buttons -> {
                 buttons.center();
                 buttons.defaults().size(50f);
-                buttons.button(Icon.copy, Styles.emptyi, () -> handleCopySchematic(schematicData))
+                buttons.button(Icon.copy, Styles.emptyi, () -> SchematicHandler.Copy(schematicData))
                         .padLeft(2).padRight(2);
-                buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadSchematic(schematicData))
+                buttons.button(Icon.download, Styles.emptyi, () -> SchematicHandler.Download(schematicData))
                         .padLeft(2).padRight(2);
-                
-                // FIX LỖI 1 (dùng nút info)
+
                 buttons.button(Icon.info, Styles.emptyi,
                         () -> Api.findSchematicById(schematicData.id(), schematicInfo::show))
                         .tooltip("@info.title");
@@ -443,15 +405,13 @@ class BrowserDialog<T> extends ModDialog {
         }, () -> {
             if (button[0].childrenPressed()) return;
 
-            // Logic khi click vào Schematic (khác biệt)
             if (state.isMenu()) {
-                // FIX LỖI 2 (dùng click vào item)
                 Api.findSchematicById(schematicData.id(), schematicInfo::show);
             } else {
                 if (!state.rules.schematicsAllowed) {
                     ui.showInfo("@schematic.disabled");
                 } else {
-                    handleDownloadSchematicData(schematicData,
+                    SchematicHandler.DownloadData(schematicData,
                             data -> control.input.useSchematic(Utils.readSchematic(data)));
                     hide();
                 }
@@ -461,31 +421,5 @@ class BrowserDialog<T> extends ModDialog {
 
         button[0].getStyle().up = Tex.pane;
         return button[0];
-    }
-
-    private void handleCopySchematic(SchematicData schematic) {
-        handleDownloadSchematicData(schematic, data -> {
-            Schematic s = Utils.readSchematic(data);
-            Core.app.setClipboardText(schematics.writeBase64(s));
-            ui.showInfoFade("@copied");
-        });
-    }
-
-    private void handleDownloadSchematic(SchematicData schematic) {
-        handleDownloadSchematicData(schematic, data -> {
-            Schematic s = Utils.readSchematic(data);
-            Api.findSchematicById(schematic.id(), detail -> {
-                s.labels.add(detail.tags().map(i -> i.name()));
-                s.removeSteamID();
-                Vars.schematics.add(s);
-                ui.showInfoFade("@schematic.saved");
-            });
-        });
-    }
-
-    private void handleDownloadSchematicData(SchematicData data, Cons<String> cons) {
-        Api.downloadSchematic(data.id(), result -> {
-            cons.get(new String(Base64Coder.encode(result)));
-        });
     }
 }
