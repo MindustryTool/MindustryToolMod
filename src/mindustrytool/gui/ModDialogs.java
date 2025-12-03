@@ -380,6 +380,8 @@ class BrowserDialog<T> extends ModDialog {
             if (type == BrowserType.SCHEMATIC && button[0].childrenPressed()) return;
 
             if (type == BrowserType.MAP) {
+                final MapInfoDialog mapInfo = (MapInfoDialog) infoDialogCasted;
+                Api.findMapById(mapData.id(), mapInfo::show);
                 // Logic khi click vào Map trống (như trong đoạn code Map ban đầu)
             } else { // SCHEMATIC (Logic phức tạp hơn)
                 final SchematicInfoDialog schematicInfo = (SchematicInfoDialog) infoDialogCasted;

@@ -76,11 +76,9 @@ public class SchematicInfoDialog extends BaseDialog {
 
         buttons.clearChildren();
         buttons.defaults().size(Core.graphics.isPortrait() ? 150f : 210f, 64f);
-        buttons.button("@open", Icon.link, () -> Core.app.openURI(Config.WEB_URL + "/schematics/" + data.id())).pad(4);
-        buttons.button("@back", Icon.left, this::hide);
-        // buttons.button("@editor.export", Icon.upload, () -> showExport(schem));
-        // buttons.button("@edit", Icon.edit, () -> showEdit(schem));
-
+        
+        buttons.button("@back", Icon.left, this::hide).pad(4);
+        buttons.button("@open", Icon.link, () -> Core.app.openURI(Config.WEB_URL + "/schematics/" + data.id()));
         show();
     }
 

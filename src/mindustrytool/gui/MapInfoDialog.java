@@ -5,6 +5,7 @@ import java.security.InvalidParameterException;
 import arc.Core;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.config.Config;
 import mindustrytool.data.MapDetailData;
 
 public class MapInfoDialog extends BaseDialog {
@@ -48,9 +49,8 @@ public class MapInfoDialog extends BaseDialog {
 
         buttons.clearChildren();
         buttons.defaults().size(Core.graphics.isPortrait() ? 150f : 210f, 64f);
-        buttons.button("@back", Icon.left, this::hide);
-        // buttons.button("@editor.export", Icon.upload, () -> showExport(schem));
-        // buttons.button("@edit", Icon.edit, () -> showEdit(schem));
+        buttons.button("@back", Icon.left, this::hide).pad(4);
+        buttons.button("@open", Icon.link, () -> Core.app.openURI(Config.WEB_URL + "/maps/" + data.id()));
 
         show();
     }
