@@ -5,7 +5,7 @@ import mindustry.gen.Icon;
 
 public class DetailStats {
     public static void draw(Table table, Long likes, Long comments, Long downloads) {
-        table.left();
+        table.center();
         table.image(Icon.upOpenSmall).padLeft(2).padRight(2);
         table.add(" " + likes.toString() + " ").marginLeft(2);
         table.image(Icon.chatSmall).padLeft(2).padRight(2);
