@@ -16,6 +16,7 @@ public final class SchematicHandler {
     public static void Copy(ContentData s) {
         DownloadData(s, d -> {
             Schematic sc = Utils.readSchematic(d);
+            if (sc == null) { ui.showErrorMessage("@schematic.invalid"); return; }
             Core.app.setClipboardText(Vars.schematics.writeBase64(sc));
             ui.showInfoFade("@copied");
         });
@@ -24,6 +25,7 @@ public final class SchematicHandler {
     public static void Download(ContentData s) {
         DownloadData(s, d -> {
             Schematic sc = Utils.readSchematic(d);
+            if (sc == null) { ui.showErrorMessage("@schematic.invalid"); return; }
             Api.findSchematicById(s.id(), detail -> {
                 sc.labels.add(detail.tags().map(i -> i.name()));
                 sc.removeSteamID();

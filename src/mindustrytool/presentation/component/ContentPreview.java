@@ -30,7 +30,7 @@ public class ContentPreview {
         btn[0] = container.button(p -> {
             p.top().margin(0).add(buttons(infoDialog)).growX().fillX().height(50).row();
             p.add(image()).size(200).row();
-            p.table(s -> DetailStats.draw(s, (long)data.likes(), (long)data.comments(), (long)data.downloads())).margin(8);
+            p.table(s -> DetailStats.draw(s, data.likes(), data.comments(), data.downloads())).margin(8);
         }, () -> { if (!btn[0].childrenPressed()) action.run(); }).pad(4).style(Styles.flati).get();
         btn[0].getStyle().up = Tex.pane;
         return btn[0];

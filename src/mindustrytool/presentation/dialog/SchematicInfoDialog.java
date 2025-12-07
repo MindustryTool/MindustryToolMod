@@ -24,7 +24,7 @@ public class SchematicInfoDialog extends BaseDialog {
         cont.row();
         cont.table(container -> TagContainer.draw(container, data.tags())).fillX().left().row();
         cont.row();
-        ItemSeq arr = RequirementConverter.toItemSeq(data.meta().requirements());
+        ItemSeq arr = data.meta() != null ? RequirementConverter.toItemSeq(data.meta().requirements()) : new ItemSeq();
         cont.table(r -> {
             int i = 0;
             for (ItemStack s : arr) {

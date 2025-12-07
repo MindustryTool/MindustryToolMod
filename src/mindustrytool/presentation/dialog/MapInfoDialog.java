@@ -33,7 +33,7 @@ public class MapInfoDialog extends BaseDialog {
             UserCard.draw(card, data.createdBy());
         }).fillX().left().minWidth(Core.graphics.getHeight() * 2 / 3);
         cont.row();
-        cont.table(stats -> DetailStats.draw(stats, (long)data.likes(), (long)data.comments(), (long)data.downloads())).fillX().center();
+        cont.table(stats -> DetailStats.draw(stats, data.likes(), data.comments(), data.downloads())).fillX().center();
         cont.row();
         cont.table(container -> TagContainer.draw(container, data.tags())).fillX().left().row();
         cont.row();

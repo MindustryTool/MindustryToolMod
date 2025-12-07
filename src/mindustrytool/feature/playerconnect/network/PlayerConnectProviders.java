@@ -23,8 +23,8 @@ public class PlayerConnectProviders {
     @SuppressWarnings("unchecked")
     public static void loadCustom() {
         custom.clear();
-        custom.putAll(Core.settings.getJson(PLAYER_CONNECT_PROVIDER_PERSISTENT_KEY, ArrayMap.class, String.class,
-                ArrayMap::new));
+        ArrayMap<String, String> saved = Core.settings.getJson(PLAYER_CONNECT_PROVIDER_PERSISTENT_KEY, ArrayMap.class, ArrayMap::new);
+        if (saved != null) custom.putAll(saved);
     }
 
     public static void saveCustom() {

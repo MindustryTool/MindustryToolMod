@@ -39,7 +39,7 @@ public class PagingRequest<T> {
         Core.app.post(() -> { var items = JsonIO.json.fromJson(Seq.class, clazz, data); hasMore = items != null && items.size != 0; listener.get(items != null ? items : new Seq<>()); });
     }
 
-    public synchronized void setPage(int p) { page = p; } public synchronized void setOptions(ObjectMap<String, String> o) { options = o; }
+    public synchronized void setPage(int p) { if(p>0){page = p-1;}else{page = 0;} } public synchronized void setOptions(ObjectMap<String, String> o) { options = o; }
     public synchronized int getItemPerPage() { return size; } public synchronized void setItemPerPage(int s) { size = s; }
     public synchronized boolean hasMore() { return hasMore; } public synchronized boolean isLoading() { return isLoading; } public synchronized boolean isError() { return isError; }
     public synchronized String getError() { return error; } public synchronized int getPage() { return page; }
