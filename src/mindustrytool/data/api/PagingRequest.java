@@ -6,7 +6,9 @@ import arc.Core;
 import arc.func.Cons;
 import arc.struct.*;
 import arc.util.*;
+import arc.util.Http.HttpRequest;
 import mindustry.io.JsonIO;
+import mindustrytool.domain.service.AuthService;
 
 public class PagingRequest<T> {
     private volatile boolean isLoading = false;
@@ -23,10 +25,30 @@ public class PagingRequest<T> {
         if (isLoading) return;
         isError = false; isLoading = true;
         try {
-            URIBuilder b = new URIBuilder(url).setParameter("page", String.valueOf(page)).setParameter("size", String.valueOf(Math.min(size, 100)));
-            for (var e : options.entries()) if (e.value != null && !e.value.isEmpty()) b.setParameter(e.key, e.value);
-            URI uri = b.build(); listener.get(null); Log.info(uri);
-            Http.get(uri.toString()).timeout(5000).error(e -> { Log.err(uri.toString(), e); error = e.getMessage(); isLoading = false; isError = true; listener.get(null); }).submit(r -> handleResult(r, listener));
+            URIBuilder b = new URIBuilder(url)
+                .setParameter("page", String.valueOf(page))
+                .setParameter("size", String.valueOf(Math.min(size, 100)));
+            
+            // Add sort parameter before other options
+            if (options.containsKey("sort") && options.get("sort") != null && !options.get("sort").isEmpty()) {
+                b.setParameter("sort", options.get("sort"));
+            }
+            
+            // Add remaining options (excluding sort which was already added)
+            for (var e : options.entries()) {
+                if (!e.key.equals("sort") && e.value != null && !e.value.isEmpty()) {
+                    b.setParameter(e.key, e.value);
+                }
+            }
+            
+            URI uri = b.build();
+            listener.get(null);
+            Log.info(uri);
+            
+            HttpRequest req = Http.get(uri.toString()).timeout(5000);
+            String token = AuthService.getAccessToken();
+            if (token != null) req.header("Authorization", "Bearer " + token);
+            req.error(e -> { Log.err(uri.toString(), e); error = e.getMessage(); isLoading = false; isError = true; listener.get(null); }).submit(r -> handleResult(r, listener));
         } catch (Exception e) { Log.err(url, e); error = e.getMessage(); isLoading = false; isError = true; listener.get(null); }
     }
 
