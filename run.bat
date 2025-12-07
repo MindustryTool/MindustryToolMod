@@ -28,5 +28,4 @@ if not exist "%JAR_PATH%" (
 :: Copy JAR to destination folder
 echo Copying %JAR_PATH% to %DEST_FOLDER%...
 copy "%JAR_PATH%" "%DEST_FOLDER%" /y
-
-echo Done.
+pause
