@@ -5,8 +5,8 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.ui.fragments.MenuFragment.MenuButton;
 import mindustrytool.Main;
-import mindustrytool.domain.service.AuthService;
-import mindustrytool.presentation.dialog.LoginDialog;
+import mindustrytool.service.auth.AuthService;
+import mindustrytool.ui.dialog.LoginDialog;
 
 public class ButtonInit {
     private static LoginDialog loginDialog;

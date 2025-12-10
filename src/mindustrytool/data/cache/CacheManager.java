@@ -1,6 +1,7 @@
 package mindustrytool.data.cache;
 
 import arc.struct.ObjectMap;
+import arc.struct.Seq;
 
 /**
  * Thread-safe cache manager with capacity limits.
@@ -25,7 +26,7 @@ public class CacheManager<K, V> {
     }
 
     private void trim() {
-        var keys = cache.keys().toSeq();
+        Seq<K> keys = cache.keys().toSeq();
         for (int i = 0; i < Math.min(keys.size, cache.size - maxSize / 2); i++) {
             cache.remove(keys.get(i));
         }

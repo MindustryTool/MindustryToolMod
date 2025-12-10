@@ -3,7 +3,7 @@ package mindustrytool.core.util;
 import arc.Events;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustrytool.Main;
-import mindustrytool.presentation.dialog.*;
+import mindustrytool.ui.dialog.*;
 
 public class DialogInit {
     public static void init() {

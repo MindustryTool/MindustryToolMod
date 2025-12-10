@@ -3,8 +3,8 @@ package mindustrytool;
 import arc.files.Fi;
 import mindustry.mod.Mod;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustrytool.domain.service.UpdateChecker;
-import mindustrytool.presentation.dialog.*;
+import mindustrytool.service.content.UpdateChecker;
+import mindustrytool.ui.dialog.*;
 import mindustrytool.core.util.*;
 
 public class Main extends Mod {
