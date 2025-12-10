@@ -80,7 +80,7 @@ public class Utils {
                 Block block = blocks.get(stream.readByte());
                 int position = stream.readInt();
                 Object config = ver == 0 ? mapConfig(block, stream.readInt(), position)
-                        : TypeIO.readObject(Reads.get(stream));
+                        : TypeIO.readObject(new Reads(stream));
                 byte rotation = stream.readByte();
                 if (block != Blocks.air) {
                     tiles.add(new Stile(block, Point2.x(position), Point2.y(position), config, rotation));

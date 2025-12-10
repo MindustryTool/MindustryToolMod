@@ -12,7 +12,7 @@ repositories{
 }
 
 java{
-    sourceCompatibility = "8"
+    sourceCompatibility = "17"
     targetCompatibility = "8"
 }
 
