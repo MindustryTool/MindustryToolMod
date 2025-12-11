@@ -5,7 +5,7 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.ui.fragments.MenuFragment.MenuButton;
 import mindustrytool.Main;
-import mindustrytool.service.auth.AuthService;
+import mindustrytool.ui.browser.JoinDialogInjector;
 import mindustrytool.ui.dialog.LoginDialog;
 
 public class ButtonInit {
@@ -20,18 +20,18 @@ public class ButtonInit {
         });
         
         String map = Core.bundle.format("message.map-browser.title");
-        String pc = Core.bundle.format("message.player-connect.title");
-        String login = Core.bundle.format("login");
         
         if (Vars.mobile) {
             Vars.ui.menufrag.addButton(map, Icon.map, Main.mapDialog::show);
-            Vars.ui.menufrag.addButton(pc, Icon.menu, Main.playerConnectRoomsDialog::show);
-            Vars.ui.menufrag.addButton(login, AuthService.isLoggedIn() ? Icon.ok : Icon.play, loginDialog::show);
         } else {
             Vars.ui.menufrag.addButton(new MenuButton("Tools", Icon.wrench, () -> {},
-                new MenuButton(map, Icon.map, Main.mapDialog::show),
-                new MenuButton(pc, Icon.menu, Main.playerConnectRoomsDialog::show),
-                new MenuButton(login, AuthService.isLoggedIn() ? Icon.ok : Icon.play, loginDialog::show)));
+                new MenuButton(map, Icon.map, Main.mapDialog::show)));
         }
+        
+        // Inject Player Connect section into JoinDialog
+        JoinDialogInjector.inject();
+        
+        // Create Account button table on main menu stage
+        AccountButtonTable.create(loginDialog);
     }
 }

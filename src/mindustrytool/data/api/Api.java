@@ -15,6 +15,13 @@ public class Api {
     public static void findMapById(String id, Cons<MapDetailData> c) { get(Config.API_URL + "maps/" + id, MapDetailData.class, c); }
     public static void findUserById(String id, Cons<UserData> c) { get(Config.API_URL + "users/" + id, UserData.class, c); }
 
+    public static void getSession(Cons<SessionData> ok, Cons<Throwable> err) {
+        AuthHttp.get(Config.API_v4_URL + "auth/session").error(err).submit(r -> {
+            String d = r.getResultAsString();
+            Core.app.post(() -> ok.get(JsonIO.json.fromJson(SessionData.class, d)));
+        });
+    }
+
     @SuppressWarnings("unchecked")
     public static void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> c) {
         String enc = q; try { enc = URLEncoder.encode(q, "UTF-8"); } catch (Exception ignored) {}
