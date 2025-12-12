@@ -13,20 +13,67 @@ import mindustrytool.ui.image.NetworkImageLoader;
 public class NetworkImage extends Image {
     public Color borderColor = Pal.gray;
     public float scaling = 16f, thickness = 1f;
-    private boolean isError = false;
-    private String url;
+    private volatile boolean isError = false;
+    private volatile boolean loadStarted = false;
+    private final String url;
     private TextureRegion lastTexture;
-    private static ObjectMap<String, TextureRegion> cache = new ObjectMap<>(128);
+    private static final Object cacheLock = new Object();
+    private static final ObjectMap<String, TextureRegion> cache = new ObjectMap<>(128);
 
-    public NetworkImage(String url) { super(Tex.clear); this.url = url; setScaling(Scaling.fit); }
+    public NetworkImage(String url) { 
+        super(Tex.clear); 
+        this.url = url; 
+        setScaling(Scaling.fit);
+        // Start loading immediately in constructor, not in draw()
+        startLoad();
+    }
+    
+    private void startLoad() {
+        if (loadStarted || isError) return;
+        synchronized (cacheLock) {
+            if (cache.containsKey(url)) return;
+        }
+        loadStarted = true;
+        try {
+            NetworkImageLoader.load(url, cache, cacheLock, () -> isError = true);
+        } catch (Exception error) { 
+            Log.err(url, error); 
+            isError = true; 
+        }
+    }
 
     @Override public void draw() {
+        // Get texture from cache (thread-safe read)
+        TextureRegion next;
+        synchronized (cacheLock) {
+            next = cache.get(url);
+        }
+        
+        if (next != null && lastTexture != next) {
+            lastTexture = next;
+            setDrawable(next);
+        }
+        
+        // Draw image
         super.draw();
-        TextureRegion next = cache.get(url);
-        if (lastTexture != next) { lastTexture = next; setDrawable(next); Draw.color(borderColor); Lines.stroke(Scl.scl(thickness)); Lines.rect(x, y, width, height); Draw.reset(); }
-        if (isError) return;
-        try {
-            if (!cache.containsKey(url)) NetworkImageLoader.load(url, cache, () -> isError = true);
-        } catch (Exception error) { Log.err(url, error); isError = true; }
+        
+        // Draw border
+        Draw.color(borderColor);
+        Lines.stroke(Scl.scl(thickness));
+        Lines.rect(x, y, width, height);
+        Draw.reset();
+    }
+    
+    public static void clearCache() {
+        synchronized (cacheLock) {
+            // Dispose textures to free GPU memory
+            for (TextureRegion region : cache.values()) {
+                if (region != null && region.texture != null) {
+                    try { region.texture.dispose(); } catch (Exception ignored) {}
+                }
+            }
+            cache.clear();
+        }
+        Log.info("[NetworkImage] Cache cleared");
     }
 }

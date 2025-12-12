@@ -3,12 +3,16 @@ package mindustrytool.ui.common;
 import arc.Core;
 
 public class State<T> {
-    private T value;
-    private Runnable listener;
+    private volatile T value;
+    private volatile Runnable listener;
 
     public State(T initial) { value = initial; }
     public T get() { return value; }
-    public void set(T newValue) { value = newValue; if (listener != null) Core.app.post(listener); }
+    public void set(T newValue) { 
+        value = newValue; 
+        Runnable l = listener;
+        if (l != null) Core.app.post(l); 
+    }
     public void bind(Runnable r) { listener = r; }
     
     public static <T> State<T> of(T initial) { return new State<>(initial); }

@@ -15,9 +15,8 @@ public class ServerCard {
         container.top().left().background(null);
         boolean canConnect = data.mapName() != null && data.address() != null;
         container.button(t -> {
-            t.top().left().setColor(Pal.gray);
-            t.add(data.name()).left().labelAlign(Align.left);
-            Draw.reset();
+            t.top().left();
+            t.add(data.name()).left().labelAlign(Align.left).color(Pal.gray);
             t.row();
             if (data.description() != null && !data.description().isEmpty()) t.add("[gray]" + DescriptionTruncator.truncate(data.description(), 3)).left().wrap().row();
             t.add(Core.bundle.format("players", data.players())).left().labelAlign(Align.left).row();

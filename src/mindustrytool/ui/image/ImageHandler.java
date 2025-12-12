@@ -20,21 +20,38 @@ public class ImageHandler extends Image {
 
     public float thickness = 4f;
     public Color borderColor = Pal.gray;
-    private TextureRegion currentTexture;
+    private volatile TextureRegion currentTexture;
+    private volatile boolean loadStarted = false;
+    private final String id;
+    private final ImageType type;
 
     public ImageHandler(String id, ImageType type) {
         super(Tex.clear);
+        this.id = id;
+        this.type = type;
         setScaling(Scaling.fit);
         currentTexture = ImageCache.get(id);
         setDrawable(currentTexture);
-        if (!ImageCache.has(id)) ImageLoader.load(id, type, type.directory.child(id + ".png"), pix -> Core.app.post(() -> {
-            currentTexture = ImageCache.createAndCache(id, pix);
-            setDrawable(currentTexture);
-        }));
+        // Start loading immediately
+        startLoad();
+    }
+    
+    private void startLoad() {
+        if (loadStarted || ImageCache.has(id)) return;
+        loadStarted = true;
+        ImageLoader.load(id, type, type.directory.child(id + ".png"), pix -> {
+            Core.app.post(() -> {
+                TextureRegion region = ImageCache.createAndCache(id, pix);
+                currentTexture = region;
+                setDrawable(currentTexture);
+            });
+        });
     }
 
     @Override public void draw() {
         super.draw();
+        
+        // Draw border
         Draw.color(borderColor);
         Lines.stroke(Scl.scl(thickness));
         Lines.rect(x, y, width, height);

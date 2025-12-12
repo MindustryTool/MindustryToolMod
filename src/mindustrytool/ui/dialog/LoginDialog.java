@@ -1,8 +1,12 @@
 package mindustrytool.ui.dialog;
 
 import arc.scene.ui.layout.Table;
+import mindustry.Vars;
+import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.service.auth.AuthService;
+import mindustrytool.ui.component.NetworkImage;
+import mindustrytool.ui.image.ImageCache;
 
 /** Dialog for user login/logout functionality. */
 public class LoginDialog extends BaseDialog {
@@ -21,6 +25,22 @@ public class LoginDialog extends BaseDialog {
         if (isLoggingIn) LoginStateViews.showLoggingIn(cont, this::cancelLogin);
         else if (AuthService.isLoggedIn()) LoginStateViews.showLoggedIn(cont, this::doLogout);
         else LoginStateViews.showLoggedOut(cont, this::startLogin);
+        
+        // Add Clear Cache button at bottom
+        cont.row();
+        cont.button("Clear Cache", Icon.trash, this::clearAllCache).size(200f, 50f).pad(10f).padTop(30f);
+    }
+    
+    private void clearAllCache() {
+        // Clear image caches
+        ImageCache.clear();
+        NetworkImage.clearCache();
+        
+        // Logout and clear session
+        AuthService.logout();
+        
+        Vars.ui.showInfoFade("Cache and session cleared");
+        rebuild();
     }
 
     private void startLogin() {

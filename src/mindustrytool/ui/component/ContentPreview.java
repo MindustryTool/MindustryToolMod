@@ -44,6 +44,10 @@ public class ContentPreview {
 
     private Stack image() {
         ImageHandler.ImageType imgType = type == Type.MAP ? ImageHandler.ImageType.MAP : ImageHandler.ImageType.SCHEMATIC;
-        return new Stack(new ImageHandler(data.id(), imgType), new Table(t -> t.top().table(Styles.black3, c -> { Label l = c.add(data.name()).style(Styles.outlineLabel).color(Color.white).top().growX().width(184).get(); l.setEllipsis(true); l.setAlignment(Align.center); Draw.reset(); }).growX().margin(1).pad(4).maxWidth(Scl.scl(184)).padBottom(0)));
+        return new Stack(new ImageHandler(data.id(), imgType), new Table(t -> t.top().table(Styles.black3, c -> { 
+            Label l = c.add(data.name()).style(Styles.outlineLabel).color(Color.white).top().growX().width(184).get(); 
+            l.setEllipsis(true); 
+            l.setAlignment(Align.center);
+        }).growX().margin(1).pad(4).maxWidth(Scl.scl(184)).padBottom(0)));
     }
 }

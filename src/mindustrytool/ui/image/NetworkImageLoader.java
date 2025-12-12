@@ -11,12 +11,14 @@ import mindustrytool.Main;
 public final class NetworkImageLoader {
     private NetworkImageLoader() {}
 
-    public static void load(String url, ObjectMap<String, TextureRegion> cache, Runnable onError) {
-        cache.put(url, Icon.refresh.getRegion());
+    public static void load(String url, ObjectMap<String, TextureRegion> cache, Object cacheLock, Runnable onError) {
+        synchronized (cacheLock) {
+            cache.put(url, Icon.refresh.getRegion());
+        }
         if (!isImage(url)) return;
         Fi file = Main.imageDir.child(sanitize(url));
-        if (file.exists()) loadFromFile(url, file, cache, onError);
-        else loadFromHttp(url, file, cache, onError);
+        if (file.exists()) loadFromFile(url, file, cache, cacheLock, onError);
+        else loadFromHttp(url, file, cache, cacheLock, onError);
     }
 
     private static boolean isImage(String url) {
@@ -27,17 +29,17 @@ public final class NetworkImageLoader {
         return url.replace(":", "-").replace("/", "-").replace("?", "-").replace("&", "-");
     }
 
-    private static void loadFromFile(String url, Fi file, ObjectMap<String, TextureRegion> cache, Runnable onError) {
-        try { TextureCreator.create(file.readBytes(), url, cache, onError); }
+    private static void loadFromFile(String url, Fi file, ObjectMap<String, TextureRegion> cache, Object cacheLock, Runnable onError) {
+        try { TextureCreator.create(file.readBytes(), url, cache, cacheLock, onError); }
         catch (Exception e) { onError.run(); file.delete(); Log.err(url, e); }
     }
 
-    private static void loadFromHttp(String url, Fi file, ObjectMap<String, TextureRegion> cache, Runnable onError) {
+    private static void loadFromHttp(String url, Fi file, ObjectMap<String, TextureRegion> cache, Object cacheLock, Runnable onError) {
         Http.get(url + "?format=jpeg", res -> {
             byte[] data = res.getResult();
             if (data.length == 0) return;
             try { file.writeBytes(data); } catch (Exception e) { Log.err(url, e); }
-            TextureCreator.create(data, url, cache, onError);
+            TextureCreator.create(data, url, cache, cacheLock, onError);
         }, error -> {
             if (!(error instanceof Http.HttpStatusException) ||
                 ((Http.HttpStatusException) error).status != Http.HttpStatus.NOT_FOUND)

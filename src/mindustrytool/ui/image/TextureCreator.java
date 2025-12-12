@@ -11,14 +11,16 @@ import arc.util.Log;
 public final class TextureCreator {
     private TextureCreator() {}
 
-    public static void create(byte[] data, String url, ObjectMap<String, TextureRegion> cache, Runnable onError) {
+    public static void create(byte[] data, String url, ObjectMap<String, TextureRegion> cache, Object cacheLock, Runnable onError) {
         try {
             Pixmap pix = new Pixmap(data);
             Core.app.post(() -> {
                 try {
                     Texture tex = new Texture(pix);
                     tex.setFilter(TextureFilter.linear);
-                    cache.put(url, new TextureRegion(tex));
+                    synchronized (cacheLock) {
+                        cache.put(url, new TextureRegion(tex));
+                    }
                     pix.dispose();
                 } catch (Exception e) { Log.err(url, e); onError.run(); }
             });
