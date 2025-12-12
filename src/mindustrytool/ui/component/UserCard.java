@@ -17,39 +17,19 @@ public final class UserCard {
 
     public static void draw(Table parent, String id) {
         parent.pane(card -> {
-            UserData user;
-            boolean needsLoad = false;
-            
+            UserData user; boolean load;
             synchronized (lock) {
                 user = cache.get(id);
-                if (user == null) {
-                    cache.put(id, new UserData());
-                    listeners.get(id, ArrayList::new).add(data -> Core.app.post(() -> draw(card, data)));
-                    needsLoad = true;
-                } else if (user.id() == null) {
-                    listeners.get(id, ArrayList::new).add(data -> Core.app.post(() -> draw(card, data)));
-                }
+                load = user == null;
+                if (user == null) cache.put(id, new UserData());
+                if (user == null || user.id() == null) listeners.get(id, ArrayList::new).add(d -> Core.app.post(() -> draw(card, d)));
             }
-            
-            if (needsLoad) {
-                Api.findUserById(id, data -> {
-                    List<Cons<UserData>> pending;
-                    synchronized (lock) {
-                        cache.put(id, data);
-                        pending = listeners.remove(id);
-                    }
-                    if (pending != null) {
-                        for (Cons<UserData> c : pending) c.get(data);
-                    }
-                });
-                card.add("Loading...");
-                return;
-            }
-            
-            if (user == null || user.id() == null) {
-                card.add("Loading...");
-                return;
-            }
+            if (load) Api.findUserById(id, data -> {
+                List<Cons<UserData>> pending;
+                synchronized (lock) { cache.put(id, data); pending = listeners.remove(id); }
+                if (pending != null) for (Cons<UserData> c : pending) c.get(data);
+            });
+            if (user == null || user.id() == null) { card.add("Loading..."); return; }
             draw(card, user);
         }).height(50);
     }

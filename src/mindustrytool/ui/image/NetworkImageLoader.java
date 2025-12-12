@@ -1,50 +1,33 @@
 package mindustrytool.ui.image;
 
 import arc.files.Fi;
-import arc.graphics.g2d.TextureRegion;
-import arc.struct.ObjectMap;
 import arc.util.*;
 import mindustry.gen.Icon;
 import mindustrytool.Main;
+import mindustrytool.core.util.ThreadSafeCache;
+import arc.graphics.g2d.TextureRegion;
 
-/** Loads images from cache or network. */
 public final class NetworkImageLoader {
     private NetworkImageLoader() {}
 
-    public static void load(String url, ObjectMap<String, TextureRegion> cache, Object cacheLock, Runnable onError) {
-        synchronized (cacheLock) {
-            cache.put(url, Icon.refresh.getRegion());
-        }
-        if (!isImage(url)) return;
-        Fi file = Main.imageDir.child(sanitize(url));
-        if (file.exists()) loadFromFile(url, file, cache, cacheLock, onError);
-        else loadFromHttp(url, file, cache, cacheLock, onError);
+    public static void load(String url, ThreadSafeCache<String, TextureRegion> cache, Runnable onError) {
+        cache.put(url, Icon.refresh.getRegion());
+        if (!url.endsWith("png") && !url.endsWith("jpg") && !url.endsWith("jpeg")) return;
+        Fi file = Main.imageDir.child(url.replace(":", "-").replace("/", "-").replace("?", "-").replace("&", "-"));
+        if (file.exists()) loadFile(url, file, cache, onError);
+        else loadHttp(url, file, cache, onError);
     }
 
-    private static boolean isImage(String url) {
-        return url.endsWith("png") || url.endsWith("jpg") || url.endsWith("jpeg");
+    private static void loadFile(String url, Fi file, ThreadSafeCache<String, TextureRegion> cache, Runnable onError) {
+        try { TextureCreator.create(file.readBytes(), url, cache, () -> { file.delete(); onError.run(); }); }
+        catch (Exception e) { file.delete(); onError.run(); Log.err(url, e); }
     }
 
-    private static String sanitize(String url) {
-        return url.replace(":", "-").replace("/", "-").replace("?", "-").replace("&", "-");
-    }
-
-    private static void loadFromFile(String url, Fi file, ObjectMap<String, TextureRegion> cache, Object cacheLock, Runnable onError) {
-        try { TextureCreator.create(file.readBytes(), url, cache, cacheLock, onError); }
-        catch (Exception e) { onError.run(); file.delete(); Log.err(url, e); }
-    }
-
-    private static void loadFromHttp(String url, Fi file, ObjectMap<String, TextureRegion> cache, Object cacheLock, Runnable onError) {
+    private static void loadHttp(String url, Fi file, ThreadSafeCache<String, TextureRegion> cache, Runnable onError) {
         Http.get(url + "?format=jpeg", res -> {
-            byte[] data = res.getResult();
-            if (data.length == 0) return;
-            try { file.writeBytes(data); } catch (Exception e) { Log.err(url, e); }
-            TextureCreator.create(data, url, cache, cacheLock, onError);
-        }, error -> {
-            if (!(error instanceof Http.HttpStatusException) ||
-                ((Http.HttpStatusException) error).status != Http.HttpStatus.NOT_FOUND)
-                Log.err(url, error);
-            onError.run();
-        });
+            byte[] d = res.getResult(); if (d.length == 0) return;
+            try { file.writeBytes(d); } catch (Exception ignored) {}
+            TextureCreator.create(d, url, cache, onError);
+        }, e -> onError.run());
     }
 }

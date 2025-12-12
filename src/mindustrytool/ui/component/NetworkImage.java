@@ -1,79 +1,37 @@
 package mindustrytool.ui.component;
 
 import arc.graphics.Color;
-import arc.graphics.g2d.*;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.ui.Image;
-import arc.scene.ui.layout.Scl;
-import arc.struct.ObjectMap;
 import arc.util.*;
 import mindustry.gen.*;
 import mindustry.graphics.Pal;
+import mindustrytool.core.util.*;
 import mindustrytool.ui.image.NetworkImageLoader;
 
 public class NetworkImage extends Image {
     public Color borderColor = Pal.gray;
-    public float scaling = 16f, thickness = 1f;
-    private volatile boolean isError = false;
-    private volatile boolean loadStarted = false;
+    public float thickness = 1f;
+    private volatile boolean isError, loadStarted;
     private final String url;
     private TextureRegion lastTexture;
-    private static final Object cacheLock = new Object();
-    private static final ObjectMap<String, TextureRegion> cache = new ObjectMap<>(128);
+    private static final ThreadSafeCache<String, TextureRegion> cache = new ThreadSafeCache<>(128, null);
 
-    public NetworkImage(String url) { 
-        super(Tex.clear); 
-        this.url = url; 
-        setScaling(Scaling.fit);
-        // Start loading immediately in constructor, not in draw()
-        startLoad();
-    }
-    
+    public NetworkImage(String url) { super(Tex.clear); this.url = url; setScaling(Scaling.fit); startLoad(); }
+
     private void startLoad() {
-        if (loadStarted || isError) return;
-        synchronized (cacheLock) {
-            if (cache.containsKey(url)) return;
-        }
+        if (loadStarted || isError || cache.has(url)) return;
         loadStarted = true;
-        try {
-            NetworkImageLoader.load(url, cache, cacheLock, () -> isError = true);
-        } catch (Exception error) { 
-            Log.err(url, error); 
-            isError = true; 
-        }
+        try { NetworkImageLoader.load(url, cache, () -> isError = true); }
+        catch (Exception e) { Log.err(url, e); isError = true; }
     }
 
     @Override public void draw() {
-        // Get texture from cache (thread-safe read)
-        TextureRegion next;
-        synchronized (cacheLock) {
-            next = cache.get(url);
-        }
-        
-        if (next != null && lastTexture != next) {
-            lastTexture = next;
-            setDrawable(next);
-        }
-        
-        // Draw image
+        TextureRegion next = cache.get(url);
+        if (next != null && lastTexture != next) { lastTexture = next; setDrawable(next); }
         super.draw();
-        
-        // Draw border
-        Draw.color(borderColor);
-        Lines.stroke(Scl.scl(thickness));
-        Lines.rect(x, y, width, height);
-        Draw.reset();
+        BorderDrawer.draw(x, y, width, height, borderColor, thickness);
     }
-    
-    public static void clearCache() {
-        synchronized (cacheLock) {
-            // Dispose textures to free GPU memory
-            for (TextureRegion region : cache.values()) {
-                if (region != null && region.texture != null) {
-                    try { region.texture.dispose(); } catch (Exception ignored) {}
-                }
-            }
-            cache.clear();
-        }
-        Log.info("[NetworkImage] Cache cleared");
-    }
+
+    public static void clearCache() { cache.clear(null); }
 }

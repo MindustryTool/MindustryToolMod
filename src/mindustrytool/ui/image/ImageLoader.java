@@ -1,40 +1,31 @@
 package mindustrytool.ui.image;
 
 import arc.Core;
-import arc.graphics.*;
-import arc.util.*;
+import arc.graphics.Pixmap;
+import arc.util.Http;
 import mindustry.Vars;
 import mindustrytool.core.config.Config;
 
 public class ImageLoader {
-    public static void load(String id, ImageHandler.ImageType type, arc.files.Fi localFile, arc.func.Cons<Pixmap> onSuccess) {
-        // Load async to not block main thread
+    public static void load(String id, ImageHandler.ImageType type, arc.files.Fi file, arc.func.Cons<Pixmap> ok) {
         Vars.mainExecutor.execute(() -> {
-            if (localFile.exists()) loadLocal(id, localFile, onSuccess);
-            else loadHttp(id, type, localFile, onSuccess);
+            if (file.exists()) loadFile(file, ok, () -> { file.delete(); loadHttp(id, type, file, ok); });
+            else loadHttp(id, type, file, ok);
         });
     }
 
-    private static void loadLocal(String id, arc.files.Fi file, arc.func.Cons<Pixmap> onSuccess) {
-        try { 
-            byte[] data = file.readBytes();
-            Pixmap pix = new Pixmap(data);
-            Core.app.post(() -> onSuccess.get(pix)); 
-        } catch (Exception e) { Log.err("Load error: " + id, e); }
+    private static void loadFile(arc.files.Fi file, arc.func.Cons<Pixmap> ok, Runnable onError) {
+        try {
+            byte[] d = file.readBytes();
+            Core.app.post(() -> { try { ok.get(new Pixmap(d)); } catch (Exception e) { onError.run(); } });
+        } catch (Exception e) { onError.run(); }
     }
 
-    private static void loadHttp(String id, ImageHandler.ImageType type, arc.files.Fi localFile, arc.func.Cons<Pixmap> onSuccess) {
+    private static void loadHttp(String id, ImageHandler.ImageType type, arc.files.Fi file, arc.func.Cons<Pixmap> ok) {
         Http.get(Config.IMAGE_URL + type.urlSegment + "/" + id + ".png?variant=preview", res -> {
-            try {
-                byte[] data = res.getResult();
-                Pixmap pix = new Pixmap(data);
-                // Write file async, don't block
-                Vars.mainExecutor.execute(() -> { 
-                    try { localFile.writeBytes(data); } 
-                    catch (Exception e) { Log.err("Write error: " + id, e); } 
-                });
-                Core.app.post(() -> onSuccess.get(pix));
-            } catch (Exception e) { Log.err("HTTP parse error: " + id, e); }
-        }, e -> Log.err("HTTP error: " + id, e));
+            byte[] d = res.getResult();
+            if (d == null || d.length < 8) return;
+            Core.app.post(() -> { try { ok.get(new Pixmap(d)); file.writeBytes(d); } catch (Exception e) { file.delete(); } });
+        }, e -> {});
     }
 }
