@@ -9,7 +9,7 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.core.config.Config;
 import mindustrytool.core.model.ServerData;
 import mindustrytool.ui.server.ServerContentBuilder;
-import mindustrytool.ui.server.ServerFooter;
+import mindustrytool.ui.common.PaginationFooter;
 import mindustrytool.data.api.PagingRequest;
 
 public class ServerDialog extends BaseDialog {
@@ -34,7 +34,7 @@ public class ServerDialog extends BaseDialog {
             row();
             ServerContentBuilder.build(this, request, serversData, this::handleResult);
             row();
-            ServerFooter.render(this, request, this::handleResult);
+            PaginationFooter.render(this, request, this::handleResult, null);
         } catch (Exception ex) {
             clear(); addCloseButton();
             table(c -> c.button(Core.bundle.format("message.error") + "\n" + ex.getMessage(), Styles.nonet, () -> request.getPage(this::handleResult)).center().labelAlign(0).expand().fill());

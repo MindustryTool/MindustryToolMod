@@ -10,7 +10,6 @@ public final class Config {
     private static final String BASE = "https://api.mindustry-tool.com/api/";
 
     public static final String API_URL = BASE + "v4/";
-    public static final String API_v4_URL = BASE + "v4/";
     public static final String IMAGE_URL = "https://image.mindustry-tool.com/";
     public static final String API_REPO_URL = "https://raw.githubusercontent.com/MindustryVN/MindustryToolMod/v8/mod.hjson";
     public static final String REPO_URL = "MindustryVN/MindustryToolMod";

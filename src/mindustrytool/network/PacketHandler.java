@@ -7,7 +7,7 @@ import mindustry.gen.Call;
 import playerconnect.shared.Packets;
 
 public class PacketHandler {
-    public static void handle(Object obj, NetworkProxyCore proxy) {
+    public static void handle(Object obj, NetworkProxy proxy) {
         if (!(obj instanceof Packets.Packet)) return;
         if (obj instanceof Packets.MessagePacket) { Call.sendMessage("[scarlet][[Server]:[] " + ((Packets.MessagePacket) obj).message); return; }
         if (obj instanceof Packets.Message2Packet) { Call.sendMessage("[scarlet][[Server]:[] " + arc.Core.bundle.get("claj.message." + arc.util.Strings.camelToKebab(((Packets.Message2Packet) obj).message.name()))); return; }
@@ -23,7 +23,7 @@ public class PacketHandler {
         if (obj instanceof Packets.ConnectionWrapperPacket) handleConnection((Packets.ConnectionWrapperPacket) obj, proxy);
     }
 
-    private static void handleConnection(Packets.ConnectionWrapperPacket w, NetworkProxyCore p) {
+    private static void handleConnection(Packets.ConnectionWrapperPacket w, NetworkProxy p) {
         if (p.getRoomId() == null) return;
         int id = w.connectionId;
         VirtualConnection con = p.getConnection(id);
@@ -34,7 +34,7 @@ public class PacketHandler {
                     pk.connectionId = id; pk.reason = DcReason.error;
                     p.sendTCP(pk); return;
                 }
-                con = p.addConnection(id, p.getServerDispatcher());
+                con = p.addConnection(id);
                 con.notifyConnected0();
                 ((mindustry.net.NetConnection) con.getArbitraryData()).packetRate = new mindustrytool.core.util.NoopRatekeeper();
                 ((mindustry.net.NetConnection) con.getArbitraryData()).chatRate = new mindustrytool.core.util.NoopRatekeeper();

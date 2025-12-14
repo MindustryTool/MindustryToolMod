@@ -9,17 +9,19 @@ import mindustry.Vars;
 import mindustrytool.core.model.PlayerConnectRoom;
 import mindustrytool.data.api.Api;
 import mindustrytool.ui.common.State;
-import mindustrytool.ui.room.*;
+import mindustrytool.ui.room.RoomCard;
 
 public class JoinDialogInjector {
-    private static Table roomsContainer; private static final State<Seq<PlayerConnectRoom>> rooms = new State<>(new Seq<>());
-    private static final State<Boolean> isLoading = new State<>(false); private static final RoomFilter filter = new RoomFilter();
+    private static Table roomsContainer;
+    private static final State<Seq<PlayerConnectRoom>> rooms = new State<>(new Seq<>());
+    private static final State<Boolean> isLoading = new State<>(false);
+    private static final PlayerConnectUI.Filter filter = new PlayerConnectUI.Filter();
     private static boolean needsRefresh;
 
     public static void inject() {
         Runnable hook = () -> { needsRefresh = true; Core.app.post(JoinDialogInjector::injectSection); };
         Vars.ui.join.shown(hook); Vars.ui.join.resized(hook);
-        Runnable render = () -> RoomRenderer.render(roomsContainer, rooms.get(), isLoading.get(), filter.text);
+        Runnable render = () -> RoomCard.renderList(roomsContainer, rooms.get(), isLoading.get(), filter.text);
         rooms.bind(render); isLoading.bind(render);
     }
 
@@ -37,8 +39,8 @@ public class JoinDialogInjector {
 
     private static void build(Table parent) {
         Collapser coll = new Collapser(new Table(), Core.settings.getBool("collapsed-playerconnect", false)); coll.setDuration(0.1f);
-        PlayerConnectHeader.build(parent, coll, () -> { filter.showHidden = !filter.showHidden; refreshRooms(); });
-        Table section = new Table(); PlayerConnectSearch.build(section, filter, JoinDialogInjector::refreshRooms);
+        PlayerConnectUI.buildHeader(parent, coll, () -> { filter.showHidden = !filter.showHidden; refreshRooms(); });
+        Table section = new Table(); PlayerConnectUI.buildSearch(section, filter, JoinDialogInjector::refreshRooms);
         roomsContainer = section.table().growX().left().top().get(); coll.setTable(section);
         parent.add(coll).width((targetWidth() + 5f) * columns()).row();
     }

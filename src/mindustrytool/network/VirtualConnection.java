@@ -2,15 +2,16 @@ package mindustrytool.network;
 
 import arc.net.*;
 import arc.struct.Seq;
+import java.net.InetSocketAddress;
 import playerconnect.shared.Packets;
 
 public class VirtualConnection extends Connection {
     public final Seq<NetListener> listeners = new Seq<>();
     public final int id;
     public volatile boolean isConnected = true, isIdling = true;
-    private NetworkProxyCore proxy;
+    private NetworkProxy proxy;
 
-    public VirtualConnection(NetworkProxyCore p, int i, NetListener d) { proxy = p; id = i; addListener(d); }
+    public VirtualConnection(NetworkProxy p, int i, NetListener d) { proxy = p; id = i; addListener(d); }
 
     @Override public int sendTCP(Object o) {
         if (o == null) throw new IllegalArgumentException("object cannot be null.");
@@ -33,8 +34,14 @@ public class VirtualConnection extends Connection {
 
     public void closeQuietly(DcReason r) { boolean was = isConnected; isConnected = isIdling = false; if (was) for (NetListener l : listeners) l.disconnected(this, r); }
     @Override public int getID() { return id; } @Override public boolean isConnected() { return isConnected; }
-    public boolean isIdle() { return isIdling; } public void setIdle() { isIdling = true; }
+    @Override public boolean isIdle() { return isIdling; } public void setIdle() { isIdling = true; }
+    @Override public void setKeepAliveTCP(int ms) {} @Override public void setTimeout(int ms) {} @Override public void setIdleThreshold(float t) {}
+    @Override public InetSocketAddress getRemoteAddressTCP() { return isConnected() ? proxy.getRemoteAddressTCP() : null; }
+    @Override public InetSocketAddress getRemoteAddressUDP() { return isConnected() ? proxy.getRemoteAddressUDP() : null; }
+    @Override public int getTcpWriteBufferSize() { return 0; }
+    @Override public void addListener(NetListener l) { if (l == null) throw new IllegalArgumentException("listener cannot be null."); listeners.add(l); }
+    @Override public void removeListener(NetListener l) { if (l == null) throw new IllegalArgumentException("listener cannot be null."); listeners.remove(l); }
     void notifyConnected0() { for (NetListener l : listeners) l.connected(this); }
     void notifyReceived0(Object o) { for (NetListener l : listeners) l.received(this, o); }
-    void notifyIdle0() { for (NetListener l : listeners) l.idle(this); }
+    void notifyIdle0() { for (NetListener l : listeners) if (isIdle()) l.idle(this); }
 }

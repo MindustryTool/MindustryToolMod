@@ -1,14 +1,16 @@
 package mindustrytool.ui.dialog;
 
 import arc.Core;
+import arc.struct.Seq;
+import mindustry.ctype.ContentType;
 import mindustry.gen.*;
 import mindustry.type.*;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.core.config.Config;
 import mindustrytool.core.model.SchematicDetailData;
+import mindustrytool.core.model.SchematicDetailData.SchematicRequirement;
 import mindustrytool.ui.component.*;
 import mindustrytool.ui.image.ImageHandler;
-import mindustrytool.service.schematic.RequirementConverter;
 import static mindustry.Vars.*;
 
 public class SchematicInfoDialog extends BaseDialog {
@@ -24,7 +26,7 @@ public class SchematicInfoDialog extends BaseDialog {
         cont.row();
         cont.table(container -> TagContainer.draw(container, data.tags())).fillX().left().row();
         cont.row();
-        ItemSeq arr = data.meta() != null ? RequirementConverter.toItemSeq(data.meta().requirements()) : new ItemSeq();
+        ItemSeq arr = toItemSeq(data.meta() != null ? data.meta().requirements() : null);
         cont.table(r -> {
             int i = 0;
             for (ItemStack s : arr) {
@@ -40,5 +42,12 @@ public class SchematicInfoDialog extends BaseDialog {
         buttons.button("@back", Icon.left, this::hide).pad(4);
         buttons.button("@open", Icon.link, () -> Core.app.openURI(Config.WEB_URL + "/schematics/" + data.id()));
         show();
+    }
+
+    private static ItemSeq toItemSeq(Seq<SchematicRequirement> requirements) {
+        ItemSeq result = new ItemSeq(); if (requirements == null) return result;
+        for (SchematicRequirement req : requirements) { if (req == null || req.name() == null || req.amount() == null) continue;
+            Item item = (Item) content.getByName(ContentType.item, req.name()); if (item != null) result.add(item, req.amount()); }
+        return result;
     }
 }

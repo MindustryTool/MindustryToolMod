@@ -5,8 +5,8 @@ import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.core.model.ContentData;
+import mindustrytool.service.content.ContentHandler;
 import mindustrytool.service.content.ContentType;
-import mindustrytool.service.content.SchematicHandler;
 import mindustrytool.service.schematic.Utils;
 import mindustrytool.ui.component.ContentPreview;
 
@@ -21,7 +21,7 @@ public class ContentPreviewFactory {
         if (type == ContentType.MAP) { InfoOpener.open(data, type, infoDialog); return; }
         if (Vars.state.isMenu()) { InfoOpener.open(data, type, infoDialog); return; }
         if (!Vars.state.rules.schematicsAllowed) { Vars.ui.showInfo("@schematic.disabled"); return; }
-        SchematicHandler.DownloadData(data, d -> Vars.control.input.useSchematic(Utils.readSchematic(d)));
+        ContentHandler.downloadSchematicData(data, d -> Vars.control.input.useSchematic(Utils.readSchematic(d)));
         hide.run();
     }
 }

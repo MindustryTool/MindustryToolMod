@@ -12,8 +12,8 @@ public class Api {
     public static void findSchematicById(String id, Cons<SchematicDetailData> c) { ApiRequest.get(Config.API_URL + "schematics/" + id, SchematicDetailData.class, c); }
     public static void findMapById(String id, Cons<MapDetailData> c) { ApiRequest.get(Config.API_URL + "maps/" + id, MapDetailData.class, c); }
     public static void findUserById(String id, Cons<UserData> c) { ApiRequest.get(Config.API_URL + "users/" + id, UserData.class, c); }
-    public static void getSession(Cons<SessionData> ok, Cons<Throwable> err) { ApiRequest.getWithError(Config.API_v4_URL + "auth/session", SessionData.class, ok, err); }
-    public static void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> c) { ApiRequest.getList(Config.API_v4_URL + "player-connect/rooms?q=" + encode(q), PlayerConnectRoom.class, c); }
-    public static void findPlayerConnectProvider(Cons<Seq<PlayerConnectProvider>> ok, Cons<Throwable> err) { ApiRequest.getList(Config.API_v4_URL + "player-connect/providers", PlayerConnectProvider.class, ok, err); }
+    public static void getSession(Cons<SessionData> ok, Cons<Throwable> err) { ApiRequest.getWithError(Config.API_URL + "auth/session", SessionData.class, ok, err); }
+    public static void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> c) { ApiRequest.getList(Config.API_URL + "player-connect/rooms?q=" + encode(q), PlayerConnectRoom.class, c); }
+    public static void findPlayerConnectProvider(Cons<Seq<PlayerConnectProvider>> ok, Cons<Throwable> err) { ApiRequest.getList(Config.API_URL + "player-connect/providers", PlayerConnectProvider.class, ok, err); }
     private static String encode(String q) { try { return URLEncoder.encode(q, "UTF-8"); } catch (Exception e) { return q; } }
 }

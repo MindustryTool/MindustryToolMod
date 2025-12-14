@@ -1,11 +1,13 @@
 package mindustrytool.ui.image;
 
+import arc.Core;
 import arc.files.Fi;
-import arc.util.*;
+import arc.graphics.*;
+import arc.graphics.g2d.TextureRegion;
+import arc.util.Http;
 import mindustry.gen.Icon;
 import mindustrytool.Main;
 import mindustrytool.core.util.ThreadSafeCache;
-import arc.graphics.g2d.TextureRegion;
 
 public final class NetworkImageLoader {
     private NetworkImageLoader() {}
@@ -19,15 +21,25 @@ public final class NetworkImageLoader {
     }
 
     private static void loadFile(String url, Fi file, ThreadSafeCache<String, TextureRegion> cache, Runnable onError) {
-        try { TextureCreator.create(file.readBytes(), url, cache, () -> { file.delete(); onError.run(); }); }
-        catch (Exception e) { file.delete(); onError.run(); Log.err(url, e); }
+        try { createTexture(file.readBytes(), url, cache, () -> { file.delete(); onError.run(); }); }
+        catch (Exception e) { file.delete(); onError.run(); }
     }
 
     private static void loadHttp(String url, Fi file, ThreadSafeCache<String, TextureRegion> cache, Runnable onError) {
         Http.get(url + "?format=jpeg", res -> {
             byte[] d = res.getResult(); if (d.length == 0) return;
             try { file.writeBytes(d); } catch (Exception ignored) {}
-            TextureCreator.create(d, url, cache, onError);
+            createTexture(d, url, cache, onError);
         }, e -> onError.run());
+    }
+
+    private static void createTexture(byte[] data, String url, ThreadSafeCache<String, TextureRegion> cache, Runnable onError) {
+        try {
+            Pixmap pix = new Pixmap(data);
+            Core.app.post(() -> {
+                try { Texture t = new Texture(pix); t.setFilter(Texture.TextureFilter.linear); cache.put(url, new TextureRegion(t)); pix.dispose(); }
+                catch (Exception e) { pix.dispose(); onError.run(); }
+            });
+        } catch (Exception e) { onError.run(); }
     }
 }

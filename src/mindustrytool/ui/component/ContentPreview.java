@@ -1,7 +1,6 @@
 package mindustrytool.ui.component;
 
 import arc.graphics.Color;
-import arc.graphics.g2d.Draw;
 import arc.scene.ui.*;
 import arc.scene.ui.layout.*;
 import arc.util.Align;
@@ -36,8 +35,8 @@ public class ContentPreview {
     private Table buttons(BaseDialog dialog) {
         return new Table(t -> {
             t.center().defaults().size(50).pad(2);
-            if (type == Type.SCHEMATIC) t.button(Icon.copy, Styles.emptyi, () -> SchematicHandler.Copy(data));
-            t.button(Icon.download, Styles.emptyi, () -> { if (type == Type.MAP) MapHandler.Download(data); else SchematicHandler.Download(data); });
+            if (type == Type.SCHEMATIC) t.button(Icon.copy, Styles.emptyi, () -> ContentHandler.copySchematic(data));
+            t.button(Icon.download, Styles.emptyi, () -> { if (type == Type.MAP) ContentHandler.downloadMap(data); else ContentHandler.downloadSchematic(data); });
             t.button(Icon.info, Styles.emptyi, () -> { if (type == Type.MAP) Api.findMapById(data.id(), d -> ((MapInfoDialog)dialog).show(d)); else Api.findSchematicById(data.id(), d -> ((SchematicInfoDialog)dialog).show(d)); }).tooltip("@info.title");
         });
     }

@@ -1,10 +1,10 @@
 package mindustrytool.ui.dialog;
 
+import arc.Core;
 import mindustry.Vars;
 import mindustrytool.Main;
 import mindustrytool.network.PlayerConnect;
 import mindustrytool.network.PlayerConnectLink;
-import mindustrytool.ui.common.LinkValidator;
 
 public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
     String lastLink = "player-connect://", password = "", output;
@@ -40,8 +40,8 @@ public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
     public boolean setLink(String link) {
         if (lastLink.equals(link)) return isValid;
         lastLink = link;
-        LinkValidator.Result r = LinkValidator.validate(lastLink);
-        output = r.message;
-        return isValid = r.isValid;
+        try { PlayerConnectLink.fromString(link); output = "@message.join-room.valid"; isValid = true; }
+        catch (Exception e) { output = Core.bundle.get("message.join-room.invalid") + ' ' + e.getLocalizedMessage(); isValid = false; }
+        return isValid;
     }
 }

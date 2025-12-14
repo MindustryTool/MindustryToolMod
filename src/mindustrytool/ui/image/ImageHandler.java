@@ -1,12 +1,14 @@
 package mindustrytool.ui.image;
 
 import arc.Core;
-import arc.graphics.Color;
+import arc.graphics.*;
 import arc.scene.ui.Image;
-import arc.util.Scaling;
+import arc.util.*;
+import mindustry.Vars;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustrytool.Main;
+import mindustrytool.core.config.Config;
 import mindustrytool.core.util.BorderDrawer;
 
 public class ImageHandler extends Image {
@@ -30,8 +32,26 @@ public class ImageHandler extends Image {
     private void startLoad() {
         if (loadStarted || ImageCache.has(id)) return;
         loadStarted = true;
-        ImageLoader.load(id, type, type.directory.child(id + ".png"), pix -> Core.app.post(() -> setDrawable(ImageCache.createAndCache(id, pix))));
+        arc.files.Fi file = type.directory.child(id + ".png");
+        Vars.mainExecutor.execute(() -> {
+            if (file.exists()) loadFile(file, () -> { file.delete(); loadHttp(file); });
+            else loadHttp(file);
+        });
     }
+
+    private void loadFile(arc.files.Fi file, Runnable onError) {
+        try { byte[] d = file.readBytes(); Core.app.post(() -> { try { applyPixmap(new Pixmap(d)); } catch (Exception e) { onError.run(); } }); }
+        catch (Exception e) { onError.run(); }
+    }
+
+    private void loadHttp(arc.files.Fi file) {
+        Http.get(Config.IMAGE_URL + type.urlSegment + "/" + id + ".png?variant=preview", res -> {
+            byte[] d = res.getResult(); if (d == null || d.length < 8) return;
+            Core.app.post(() -> { try { applyPixmap(new Pixmap(d)); file.writeBytes(d); } catch (Exception e) { file.delete(); } });
+        }, e -> {});
+    }
+
+    private void applyPixmap(Pixmap pix) { setDrawable(ImageCache.createAndCache(id, pix)); }
 
     @Override public void draw() { super.draw(); BorderDrawer.draw(x, y, width, height, borderColor, thickness); }
 }
