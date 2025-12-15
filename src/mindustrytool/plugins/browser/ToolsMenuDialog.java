@@ -48,18 +48,6 @@ public class ToolsMenuDialog extends BaseDialog {
                     }).row();
         }
 
-        // Rooms Browser - only show if enabled
-        if (PlayerConnectPlugin.getRoomsDialog().isEnabled()) {
-            hasAnyEnabled = true;
-            cont.button(Core.bundle.get("message.rooms-browser.title", "Rooms Browser"), Icon.host, Styles.flatt,
-                    () -> {
-                        hide();
-                        var dialog = PlayerConnectPlugin.getRoomsDialog().getIfEnabled();
-                        if (dialog != null)
-                            dialog.show();
-                    }).row();
-        }
-
         // Manage Components - always show
         cont.button(Core.bundle.get("message.lazy-components.title", "Manage Components"), Icon.settings, Styles.flatt,
                 () -> {
