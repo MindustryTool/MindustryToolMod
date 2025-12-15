@@ -60,16 +60,14 @@ public class BrowserPlugin implements Plugin {
     private static void addButtons() {
         loadIcon();
 
-        // Add browse button to schematics dialog
-        Vars.ui.schematics.buttons.button("Browse", Icon.menu, () -> {
+        // Add browse button to schematics dialog (visibility synced with enabled state)
+        var browseButton = Vars.ui.schematics.buttons.button("Browse", Icon.menu, () -> {
             Vars.ui.schematics.hide();
             var dialog = schematicDialog.getIfEnabled();
-            if (dialog != null) {
+            if (dialog != null)
                 dialog.show();
-            } else {
-                Vars.ui.showInfo(Core.bundle.get("message.lazy-components.disabled", "This component is disabled"));
-            }
-        });
+        }).get();
+        browseButton.update(() -> browseButton.visible = schematicDialog.isEnabled());
 
         // Add map browser and management to menu
         String map = Core.bundle.format("message.map-browser.title");
