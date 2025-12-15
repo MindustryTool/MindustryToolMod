@@ -5,6 +5,7 @@ import arc.Events;
 import arc.graphics.*;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
+import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
@@ -16,41 +17,69 @@ import mindustrytool.Plugin;
 /**
  * Self-contained Browser plugin for browsing maps and schematics
  * from the MindustryTool website.
+ * Uses lazy loading for dialogs to improve startup performance.
  */
 public class BrowserPlugin implements Plugin {
-    public static BaseDialog mapDialog;
-    public static BaseDialog schematicDialog;
     private static TextureRegionDrawable toolIcon;
-    
-    @Override public String getName() { return "Browser"; }
-    @Override public int getPriority() { return 50; }
-    
-    @Override public void init() {
+
+    /** Registry of all lazy-loaded components in this plugin. */
+    public static final Seq<LazyComponent<?>> lazyComponents = new Seq<>();
+
+    // Lazy-loaded dialogs
+    private static final LazyComponent<BaseDialog> mapDialog = new LazyComponent<>(
+            "MapBrowser",
+            Core.bundle.get("message.lazy.map-browser.desc", "Browse maps from MindustryTool"),
+            () -> new BrowserDialog<>(ContentType.MAP, ContentData.class, new MapInfoDialog()));
+
+    private static final LazyComponent<BaseDialog> schematicDialog = new LazyComponent<>(
+            "SchematicBrowser",
+            Core.bundle.get("message.lazy.schematic-browser.desc", "Browse schematics from MindustryTool"),
+            () -> new BrowserDialog<>(ContentType.SCHEMATIC, ContentData.class, new SchematicInfoDialog()));
+
+    static {
+        lazyComponents.add(mapDialog);
+        lazyComponents.add(schematicDialog);
+    }
+
+    @Override
+    public String getName() {
+        return "Browser";
+    }
+
+    @Override
+    public int getPriority() {
+        return 50;
+    }
+
+    @Override
+    public void init() {
         BrowserDirInit.init();
-        mapDialog = new BrowserDialog<>(ContentType.MAP, ContentData.class, new MapInfoDialog());
-        schematicDialog = new BrowserDialog<>(ContentType.SCHEMATIC, ContentData.class, new SchematicInfoDialog());
         Events.on(ClientLoadEvent.class, e -> addButtons());
     }
-    
+
     private static void addButtons() {
         loadIcon();
-        
+
         // Add browse button to schematics dialog
         Vars.ui.schematics.buttons.button("Browse", Icon.menu, () -> {
             Vars.ui.schematics.hide();
-            schematicDialog.show();
+            schematicDialog.get().show();
         });
-        
-        // Add map browser to menu
+
+        // Add map browser and management to menu
         String map = Core.bundle.format("message.map-browser.title");
+        String manage = Core.bundle.get("message.lazy-components.title", "Manage Components");
+
         if (Vars.mobile) {
-            Vars.ui.menufrag.addButton(map, Icon.map, () -> mapDialog.show());
+            Vars.ui.menufrag.addButton(map, Icon.map, () -> mapDialog.get().show());
         } else {
-            Vars.ui.menufrag.addButton(new MenuButton("Tools", toolIcon, () -> {},
-                new MenuButton(map, Icon.map, () -> mapDialog.show())));
+            Vars.ui.menufrag.addButton(new MenuButton("Tools", toolIcon, () -> {
+            },
+                    new MenuButton(map, Icon.map, () -> mapDialog.get().show()),
+                    new MenuButton(manage, Icon.settings, () -> new LazyComponentDialog(lazyComponents).show())));
         }
     }
-    
+
     private static void loadIcon() {
         try {
             Pixmap original = new Pixmap(Vars.mods.getMod(Main.class).root.child("icon.png"));
@@ -66,14 +95,19 @@ public class BrowserPlugin implements Plugin {
             toolIcon = new TextureRegionDrawable(Icon.menu.getRegion());
         }
     }
-    
-    /** Show the map browser dialog. */
+
+    /** Show the map browser dialog (lazy loads on first call). */
     public static void showMapBrowser() {
-        if (mapDialog != null) mapDialog.show();
+        mapDialog.get().show();
     }
-    
-    /** Show the schematic browser dialog. */
+
+    /** Show the schematic browser dialog (lazy loads on first call). */
     public static void showSchematicBrowser() {
-        if (schematicDialog != null) schematicDialog.show();
+        schematicDialog.get().show();
+    }
+
+    /** Get all lazy components for management. */
+    public static Seq<LazyComponent<?>> getLazyComponents() {
+        return lazyComponents;
     }
 }
