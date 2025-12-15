@@ -25,16 +25,20 @@ public class BrowserPlugin implements Plugin {
     /** Registry of all lazy-loaded components in this plugin. */
     public static final Seq<LazyComponent<?>> lazyComponents = new Seq<>();
 
-    // Lazy-loaded dialogs
+    // Lazy-loaded dialogs with settings
     private static final LazyComponent<BaseDialog> mapDialog = new LazyComponent<>(
             "MapBrowser",
             Core.bundle.get("message.lazy.map-browser.desc", "Browse maps from MindustryTool"),
-            () -> new BrowserDialog<>(ContentType.MAP, ContentData.class, new MapInfoDialog()));
+            (arc.func.Prov<BaseDialog>) () -> new BrowserDialog<>(ContentType.MAP, ContentData.class,
+                    new MapInfoDialog()))
+            .onSettings(() -> new BrowserSettingsDialog(ContentType.MAP, null).show());
 
     private static final LazyComponent<BaseDialog> schematicDialog = new LazyComponent<>(
             "SchematicBrowser",
             Core.bundle.get("message.lazy.schematic-browser.desc", "Browse schematics from MindustryTool"),
-            () -> new BrowserDialog<>(ContentType.SCHEMATIC, ContentData.class, new SchematicInfoDialog()));
+            (arc.func.Prov<BaseDialog>) () -> new BrowserDialog<>(ContentType.SCHEMATIC, ContentData.class,
+                    new SchematicInfoDialog()))
+            .onSettings(() -> new BrowserSettingsDialog(ContentType.SCHEMATIC, null).show());
 
     static {
         lazyComponents.add(mapDialog);

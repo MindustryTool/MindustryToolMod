@@ -1,5 +1,6 @@
 package mindustrytool.plugins.browser;
 
+import arc.Core;
 import arc.func.Prov;
 
 /**
@@ -20,6 +21,8 @@ public class LazyComponent<T> {
         this.name = name;
         this.description = description;
         this.factory = factory;
+        // Load persisted enabled state
+        this.enabled = Core.settings.getBool("lazy." + name + ".enabled", true);
     }
 
     public LazyComponent<T> onSettings(Runnable onSettings) {
@@ -50,9 +53,12 @@ public class LazyComponent<T> {
         return enabled;
     }
 
-    /** Enable or disable the component. Disabling also unloads. */
+    /**
+     * Enable or disable the component. Disabling also unloads. State is persisted.
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+        Core.settings.put("lazy." + name + ".enabled", enabled);
         if (!enabled)
             unload();
     }
