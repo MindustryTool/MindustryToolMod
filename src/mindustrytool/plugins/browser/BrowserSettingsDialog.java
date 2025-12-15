@@ -36,82 +36,96 @@ public class BrowserSettingsDialog extends BaseDialog {
 
     private void rebuild() {
         cont.clear();
-        cont.defaults().pad(10).left();
+        cont.defaults().pad(6).fillX();
 
-        // Items per page
-        cont.add(Core.bundle.get("settings.items-per-page", "Items per page:")).left();
-        cont.table(t -> {
-            int current = getItemsPerPage();
-            t.button("-", () -> {
-                settings.setInt(ITEMS_PER_PAGE, Math.max(5, current - 5));
-                rebuild();
-                notifyChange();
-            }).size(40);
-            t.add(String.valueOf(current)).width(60).center();
-            t.button("+", () -> {
-                settings.setInt(ITEMS_PER_PAGE, Math.min(100, current + 5));
-                rebuild();
-                notifyChange();
-            }).size(40);
-        }).row();
+        // === Display Section ===
+        addSectionHeader(Core.bundle.get("settings.section.display", "Display"));
 
-        // Card width
-        cont.add(Core.bundle.get("settings.card-width", "Card width:")).left();
-        cont.table(t -> {
-            int current = getCardWidth();
-            t.button("-", () -> {
-                settings.setInt(CARD_WIDTH, Math.max(200, current - 20));
-                rebuild();
-                notifyChange();
-            }).size(40);
-            t.add(String.valueOf(current)).width(60).center();
-            t.button("+", () -> {
-                settings.setInt(CARD_WIDTH, Math.min(600, current + 20));
-                rebuild();
-                notifyChange();
-            }).size(40);
-        }).row();
+        // Items per page - slider
+        addSliderRow(
+                Core.bundle.get("settings.items-per-page", "Items per page"),
+                getItemsPerPage(), 5, 100, 5,
+                val -> {
+                    settings.setInt(ITEMS_PER_PAGE, val);
+                    notifyChange();
+                });
 
-        // Card height
-        cont.add(Core.bundle.get("settings.card-height", "Card height:")).left();
-        cont.table(t -> {
-            int current = getCardHeight();
-            t.button("-", () -> {
-                settings.setInt(CARD_HEIGHT, Math.max(100, current - 20));
-                rebuild();
-                notifyChange();
-            }).size(40);
-            t.add(String.valueOf(current)).width(60).center();
-            t.button("+", () -> {
-                settings.setInt(CARD_HEIGHT, Math.min(400, current + 20));
-                rebuild();
-                notifyChange();
-            }).size(40);
-        }).row();
+        // Card width - slider
+        addSliderRow(
+                Core.bundle.get("settings.card-width", "Card width"),
+                getCardWidth(), 200, 600, 20,
+                val -> {
+                    settings.setInt(CARD_WIDTH, val);
+                    notifyChange();
+                });
+
+        // Card height - slider
+        addSliderRow(
+                Core.bundle.get("settings.card-height", "Card height"),
+                getCardHeight(), 100, 400, 20,
+                val -> {
+                    settings.setInt(CARD_HEIGHT, val);
+                    notifyChange();
+                });
 
         // Show preview toggle
-        cont.add(Core.bundle.get("settings.show-preview", "Show preview:")).left();
-        cont.check("", getShowPreview(), val -> {
-            settings.setBool(SHOW_PREVIEW, val);
-            notifyChange();
-        }).row();
+        addCheckRow(
+                Core.bundle.get("settings.show-preview", "Show preview"),
+                getShowPreview(),
+                val -> {
+                    settings.setBool(SHOW_PREVIEW, val);
+                    notifyChange();
+                });
 
-        // Cache size
-        cont.add(Core.bundle.get("settings.cache-size", "Cache size (MB):")).left();
-        cont.table(t -> {
-            int current = getCacheSizeMB();
-            t.button("-", () -> {
-                settings.setInt(CACHE_SIZE_MB, Math.max(10, current - 10));
-                rebuild();
-                notifyChange();
-            }).size(40);
-            t.add(String.valueOf(current)).width(60).center();
-            t.button("+", () -> {
-                settings.setInt(CACHE_SIZE_MB, Math.min(500, current + 10));
-                rebuild();
-                notifyChange();
-            }).size(40);
+        // === Performance Section ===
+        addSectionHeader(Core.bundle.get("settings.section.performance", "Performance"));
+
+        // Cache size - slider
+        addSliderRow(
+                Core.bundle.get("settings.cache-size", "Cache size (MB)"),
+                getCacheSizeMB(), 10, 500, 10,
+                val -> {
+                    settings.setInt(CACHE_SIZE_MB, val);
+                    notifyChange();
+                });
+    }
+
+    /** Add centered section header like Mindustry style */
+    private void addSectionHeader(String title) {
+        cont.add(title).color(arc.graphics.Color.gold).center().padTop(12).padBottom(4).row();
+    }
+
+    /** Add checkbox row */
+    private void addCheckRow(String label, boolean current, arc.func.Boolc onChange) {
+        cont.table(row -> {
+            row.add(label).left().growX();
+            row.check("", current, onChange).right();
         }).row();
+    }
+
+    private void addSliderRow(String label, int current, int min, int max, int step, arc.func.Intc onChange) {
+        // Mindustry style: slider with overlaid label content
+        arc.scene.ui.Slider slider = new arc.scene.ui.Slider(min, max, step, false);
+        slider.setValue(current);
+
+        arc.scene.ui.Label valueLabel = new arc.scene.ui.Label(String.valueOf(current),
+                mindustry.ui.Styles.outlineLabel);
+
+        Table content = new Table();
+        content.add(label, mindustry.ui.Styles.outlineLabel).left().growX().wrap();
+        content.add(valueLabel).padLeft(10f).right();
+        content.margin(3f, 33f, 3f, 33f);
+        content.touchable = arc.scene.event.Touchable.disabled;
+
+        slider.changed(() -> {
+            int intVal = (int) slider.getValue();
+            valueLabel.setText(String.valueOf(intVal));
+            onChange.get(intVal);
+        });
+
+        // Calculate width like Mindustry
+        float width = Math.min(arc.Core.graphics.getWidth() / 1.2f, 460f);
+        cont.stack(slider, content).width(width).left().padTop(4f).row();
     }
 
     private void resetToDefaults() {
