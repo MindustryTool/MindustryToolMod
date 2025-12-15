@@ -34,6 +34,11 @@ public class BrowserDialog<T extends ContentData> extends BaseDialog {
     }
 
     private static int calculateItemsPerPage(ContentType type) {
+        // Use settings value first, fallback to calculated value
+        int settingsValue = BrowserSettingsDialog.getItemsPerPage(type);
+        if (settingsValue > 0)
+            return settingsValue;
+
         float s = type == ContentType.MAP ? IMG_SIZE : Scl.scl(IMG_SIZE);
         return Math.max((int) (Core.graphics.getWidth() / Scl.scl(s))
                 * (int) (Core.graphics.getHeight() / Scl.scl(IMG_SIZE + INFO_H * 2)), 20);

@@ -67,27 +67,6 @@ public class BrowserSettingsDialog extends BaseDialog {
                     settings.setInt(CARD_HEIGHT, val);
                     notifyChange();
                 });
-
-        // Show preview toggle
-        addCheckRow(
-                Core.bundle.get("settings.show-preview", "Show preview"),
-                getShowPreview(),
-                val -> {
-                    settings.setBool(SHOW_PREVIEW, val);
-                    notifyChange();
-                });
-
-        // === Performance Section ===
-        addSectionHeader(Core.bundle.get("settings.section.performance", "Performance"));
-
-        // Cache size - slider
-        addSliderRow(
-                Core.bundle.get("settings.cache-size", "Cache size (MB)"),
-                getCacheSizeMB(), 10, 500, 10,
-                val -> {
-                    settings.setInt(CACHE_SIZE_MB, val);
-                    notifyChange();
-                });
     }
 
     /** Add centered section header like Mindustry style */

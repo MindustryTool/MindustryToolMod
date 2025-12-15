@@ -9,24 +9,36 @@ import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 
 public class ContentPreview {
-    public enum Type { MAP, SCHEMATIC }
+    public enum Type {
+        MAP, SCHEMATIC
+    }
+
     private final Type type;
     private final ContentData data;
     private final Runnable action;
+    private final int cardWidth;
 
-    public ContentPreview(Type type, ContentData data, Runnable action) { 
-        this.type = type; 
-        this.data = data; 
-        this.action = action; 
+    public ContentPreview(Type type, ContentData data, Runnable action) {
+        this(type, data, action, 200);
+    }
+
+    public ContentPreview(Type type, ContentData data, Runnable action, int cardWidth) {
+        this.type = type;
+        this.data = data;
+        this.action = action;
+        this.cardWidth = cardWidth;
     }
 
     public Button create(Table container, BaseDialog infoDialog) {
-        Button[] btn = {null};
+        Button[] btn = { null };
         btn[0] = container.button(p -> {
             p.top().margin(0).add(buttons(infoDialog)).growX().fillX().height(50).row();
-            p.add(image()).size(200).row();
+            p.add(image()).size(cardWidth).row();
             p.table(s -> DetailStats.draw(s, data.likes(), data.comments(), data.downloads())).margin(8);
-        }, () -> { if (!btn[0].childrenPressed()) action.run(); }).pad(4).style(Styles.flati).get();
+        }, () -> {
+            if (!btn[0].childrenPressed())
+                action.run();
+        }).pad(4).style(Styles.flati).get();
         btn[0].getStyle().up = Tex.pane;
         return btn[0];
     }
@@ -34,24 +46,31 @@ public class ContentPreview {
     private Table buttons(BaseDialog dialog) {
         return new Table(t -> {
             t.center().defaults().size(50).pad(2);
-            if (type == Type.SCHEMATIC) t.button(Icon.copy, Styles.emptyi, () -> ContentHandler.copySchematic(data));
-            t.button(Icon.download, Styles.emptyi, () -> { 
-                if (type == Type.MAP) ContentHandler.downloadMap(data); 
-                else ContentHandler.downloadSchematic(data); 
+            if (type == Type.SCHEMATIC)
+                t.button(Icon.copy, Styles.emptyi, () -> ContentHandler.copySchematic(data));
+            t.button(Icon.download, Styles.emptyi, () -> {
+                if (type == Type.MAP)
+                    ContentHandler.downloadMap(data);
+                else
+                    ContentHandler.downloadSchematic(data);
             });
-            t.button(Icon.info, Styles.emptyi, () -> { 
-                if (type == Type.MAP) Api.findMapById(data.id(), d -> ((MapInfoDialog)dialog).show(d)); 
-                else Api.findSchematicById(data.id(), d -> ((SchematicInfoDialog)dialog).show(d)); 
+            t.button(Icon.info, Styles.emptyi, () -> {
+                if (type == Type.MAP)
+                    Api.findMapById(data.id(), d -> ((MapInfoDialog) dialog).show(d));
+                else
+                    Api.findSchematicById(data.id(), d -> ((SchematicInfoDialog) dialog).show(d));
             }).tooltip("@info.title");
         });
     }
 
     private Stack image() {
-        ImageHandler.ImageType imgType = type == Type.MAP ? ImageHandler.ImageType.MAP : ImageHandler.ImageType.SCHEMATIC;
-        return new Stack(new ImageHandler(data.id(), imgType), new Table(t -> t.top().table(Styles.black3, c -> { 
-            Label l = c.add(data.name()).style(Styles.outlineLabel).color(Color.white).top().growX().width(184).get(); 
-            l.setEllipsis(true); 
+        ImageHandler.ImageType imgType = type == Type.MAP ? ImageHandler.ImageType.MAP
+                : ImageHandler.ImageType.SCHEMATIC;
+        return new Stack(new ImageHandler(data.id(), imgType), new Table(t -> t.top().table(Styles.black3, c -> {
+            Label l = c.add(data.name()).style(Styles.outlineLabel).color(Color.white).top().growX()
+                    .width(cardWidth - 16).get();
+            l.setEllipsis(true);
             l.setAlignment(Align.center);
-        }).growX().margin(1).pad(4).maxWidth(Scl.scl(184)).padBottom(0)));
+        }).growX().margin(1).pad(4).maxWidth(Scl.scl(cardWidth - 16)).padBottom(0)));
     }
 }
