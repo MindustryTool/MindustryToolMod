@@ -5,6 +5,7 @@ import arc.func.Prov;
 /**
  * Wrapper for lazy-loaded components.
  * Components are only instantiated when first accessed via get().
+ * Supports proper disposal of resources when unloading.
  */
 public class LazyComponent<T> {
     private final String name;
@@ -12,6 +13,7 @@ public class LazyComponent<T> {
     private final Prov<T> factory;
     private T instance = null;
     private Runnable onSettings;
+    private Runnable onDispose;
 
     public LazyComponent(String name, String description, Prov<T> factory) {
         this.name = name;
@@ -21,6 +23,12 @@ public class LazyComponent<T> {
 
     public LazyComponent<T> onSettings(Runnable onSettings) {
         this.onSettings = onSettings;
+        return this;
+    }
+
+    /** Set dispose callback to clean up resources (threads, listeners, etc.) */
+    public LazyComponent<T> onDispose(Runnable onDispose) {
+        this.onDispose = onDispose;
         return this;
     }
 
@@ -36,9 +44,29 @@ public class LazyComponent<T> {
         return instance != null;
     }
 
-    /** Unloads the component, freeing memory. */
+    /** Unloads the component, disposing resources and freeing memory. */
     public void unload() {
-        instance = null;
+        if (instance != null) {
+            // Auto-detect and call dispose() if available
+            try {
+                java.lang.reflect.Method disposeMethod = instance.getClass().getMethod("dispose");
+                disposeMethod.invoke(instance);
+            } catch (NoSuchMethodException e) {
+                // No dispose method, that's fine
+            } catch (Exception e) {
+                arc.util.Log.err("Failed to dispose: " + name, e);
+            }
+
+            // Also call custom dispose callback if set
+            if (onDispose != null) {
+                try {
+                    onDispose.run();
+                } catch (Exception e) {
+                    arc.util.Log.err("Failed custom dispose: " + name, e);
+                }
+            }
+            instance = null;
+        }
     }
 
     public String getName() {
