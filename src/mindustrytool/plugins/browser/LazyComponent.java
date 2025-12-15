@@ -14,6 +14,7 @@ public class LazyComponent<T> {
     private T instance = null;
     private Runnable onSettings;
     private Runnable onDispose;
+    private boolean enabled = true;
 
     public LazyComponent(String name, String description, Prov<T> factory) {
         this.name = name;
@@ -42,6 +43,25 @@ public class LazyComponent<T> {
     /** Returns true if the component has been loaded. */
     public boolean isLoaded() {
         return instance != null;
+    }
+
+    /** Returns true if the component is enabled. */
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /** Enable or disable the component. Disabling also unloads. */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        if (!enabled)
+            unload();
+    }
+
+    /** Gets instance only if enabled, otherwise returns null. */
+    public T getIfEnabled() {
+        if (!enabled)
+            return null;
+        return get();
     }
 
     /** Unloads the component, disposing resources and freeing memory. */

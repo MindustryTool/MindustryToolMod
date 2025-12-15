@@ -18,7 +18,7 @@ public class LazyComponentDialog extends BaseDialog {
     private FilterMode filterMode = FilterMode.ALL;
 
     private enum FilterMode {
-        ALL, LOADED, UNLOADED
+        ALL, ENABLED, DISABLED
     }
 
     public LazyComponentDialog(Seq<LazyComponent<?>> components) {
@@ -66,8 +66,8 @@ public class LazyComponentDialog extends BaseDialog {
             // Status filter
             return switch (filterMode) {
                 case ALL -> true;
-                case LOADED -> c.isLoaded();
-                case UNLOADED -> !c.isLoaded();
+                case ENABLED -> c.isEnabled();
+                case DISABLED -> !c.isEnabled();
             };
         });
 
@@ -101,17 +101,17 @@ public class LazyComponentDialog extends BaseDialog {
                 header.button(Icon.settings, Styles.emptyi, 28, component::openSettings).right();
             }
 
-            // Load/Unload button
-            if (component.isLoaded()) {
+            // Enable/Disable toggle button
+            if (component.isEnabled()) {
                 header.button(Icon.cancel, Styles.emptyi, 28, () -> {
-                    component.unload();
+                    component.setEnabled(false);
                     rebuildList();
-                }).right().tooltip(Core.bundle.get("message.lazy-components.unload", "Unload"));
+                }).right().tooltip(Core.bundle.get("message.lazy-components.disable", "Disable"));
             } else {
-                header.button(Icon.download, Styles.emptyi, 28, () -> {
-                    component.get();
+                header.button(Icon.ok, Styles.emptyi, 28, () -> {
+                    component.setEnabled(true);
                     rebuildList();
-                }).right().tooltip(Core.bundle.get("message.lazy-components.load", "Load"));
+                }).right().tooltip(Core.bundle.get("message.lazy-components.enable", "Enable"));
             }
         }).fillX().row();
 
@@ -120,9 +120,9 @@ public class LazyComponentDialog extends BaseDialog {
 
         // Status indicator
         card.row();
-        String status = component.isLoaded()
-                ? "[green]" + Core.bundle.get("message.lazy-components.loaded", "Loaded") + "[]"
-                : "[gray]" + Core.bundle.get("message.lazy-components.not-loaded", "Not Loaded") + "[]";
+        String status = component.isEnabled()
+                ? "[green]" + Core.bundle.get("message.lazy-components.enabled", "Enabled") + "[]"
+                : "[red]" + Core.bundle.get("message.lazy-components.disabled-status", "Disabled") + "[]";
         card.add(status).left().padTop(4);
 
         parent.add(card).width(280).pad(4);
@@ -131,8 +131,8 @@ public class LazyComponentDialog extends BaseDialog {
     private String getFilterLabel() {
         return switch (filterMode) {
             case ALL -> Core.bundle.get("message.lazy-components.filter.all", "Show All");
-            case LOADED -> Core.bundle.get("message.lazy-components.filter.loaded", "Loaded");
-            case UNLOADED -> Core.bundle.get("message.lazy-components.filter.unloaded", "Unloaded");
+            case ENABLED -> Core.bundle.get("message.lazy-components.filter.enabled", "Enabled");
+            case DISABLED -> Core.bundle.get("message.lazy-components.filter.disabled", "Disabled");
         };
     }
 }

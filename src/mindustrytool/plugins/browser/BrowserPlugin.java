@@ -63,7 +63,12 @@ public class BrowserPlugin implements Plugin {
         // Add browse button to schematics dialog
         Vars.ui.schematics.buttons.button("Browse", Icon.menu, () -> {
             Vars.ui.schematics.hide();
-            schematicDialog.get().show();
+            var dialog = schematicDialog.getIfEnabled();
+            if (dialog != null) {
+                dialog.show();
+            } else {
+                Vars.ui.showInfo(Core.bundle.get("message.lazy-components.disabled", "This component is disabled"));
+            }
         });
 
         // Add map browser and management to menu
@@ -71,11 +76,26 @@ public class BrowserPlugin implements Plugin {
         String manage = Core.bundle.get("message.lazy-components.title", "Manage Components");
 
         if (Vars.mobile) {
-            Vars.ui.menufrag.addButton(map, Icon.map, () -> mapDialog.get().show());
+            Vars.ui.menufrag.addButton(map, Icon.map, () -> {
+                var dialog = mapDialog.getIfEnabled();
+                if (dialog != null) {
+                    dialog.show();
+                } else {
+                    Vars.ui.showInfo(Core.bundle.get("message.lazy-components.disabled", "This component is disabled"));
+                }
+            });
         } else {
             Vars.ui.menufrag.addButton(new MenuButton("Tools", toolIcon, () -> {
             },
-                    new MenuButton(map, Icon.map, () -> mapDialog.get().show()),
+                    new MenuButton(map, Icon.map, () -> {
+                        var dialog = mapDialog.getIfEnabled();
+                        if (dialog != null) {
+                            dialog.show();
+                        } else {
+                            Vars.ui.showInfo(
+                                    Core.bundle.get("message.lazy-components.disabled", "This component is disabled"));
+                        }
+                    }),
                     new MenuButton(manage, Icon.settings, () -> new LazyComponentDialog(lazyComponents).show())));
         }
     }
