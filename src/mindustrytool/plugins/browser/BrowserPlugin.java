@@ -21,6 +21,7 @@ import mindustrytool.Plugin;
  */
 public class BrowserPlugin implements Plugin {
     private static TextureRegionDrawable toolIcon;
+    private static KeybindHandler keybindHandler;
 
     /** Registry of all lazy-loaded components in this plugin. */
     public static final Seq<LazyComponent<?>> lazyComponents = new Seq<>();
@@ -31,14 +32,14 @@ public class BrowserPlugin implements Plugin {
             Core.bundle.get("message.lazy.map-browser.desc", "Browse maps from MindustryTool"),
             (arc.func.Prov<BaseDialog>) () -> new BrowserDialog<>(ContentType.MAP, ContentData.class,
                     new MapInfoDialog()))
-            .onSettings(() -> new BrowserSettingsDialog(ContentType.MAP, null).show());
+            .onSettings(() -> new BrowserSettingsDialog(ContentType.MAP, BrowserPlugin::reloadKeybinds).show());
 
     private static final LazyComponent<BaseDialog> schematicDialog = new LazyComponent<>(
             "SchematicBrowser",
             Core.bundle.get("message.lazy.schematic-browser.desc", "Browse schematics from MindustryTool"),
             (arc.func.Prov<BaseDialog>) () -> new BrowserDialog<>(ContentType.SCHEMATIC, ContentData.class,
                     new SchematicInfoDialog()))
-            .onSettings(() -> new BrowserSettingsDialog(ContentType.SCHEMATIC, null).show());
+            .onSettings(() -> new BrowserSettingsDialog(ContentType.SCHEMATIC, BrowserPlugin::reloadKeybinds).show());
 
     static {
         lazyComponents.add(mapDialog);
@@ -58,7 +59,52 @@ public class BrowserPlugin implements Plugin {
     @Override
     public void init() {
         BrowserDirInit.init();
-        Events.on(ClientLoadEvent.class, e -> addButtons());
+        Events.on(ClientLoadEvent.class, e -> {
+            addButtons();
+            setupKeyboardShortcuts();
+            addToGameSettings();
+        });
+    }
+
+    private static void setupKeyboardShortcuts() {
+        // Ensure default shortcuts are set
+        KeybindHandler.ensureDefaults();
+
+        // Register global keyboard listener
+        keybindHandler = new KeybindHandler();
+        Core.scene.addListener(keybindHandler);
+    }
+
+    private static void addToGameSettings() {
+        // Add shortcuts to existing Controls settings (not a new category)
+        Core.app.post(() -> {
+            // Find the game controls category and add our keybinds there
+            try {
+                // Access the settings dialog's game section
+                var gameSettings = Vars.ui.settings.game;
+
+                // Add Map Browser keybind row
+                new SettingKeyBind(
+                        "Map Browser",
+                        ContentType.MAP,
+                        BrowserPlugin::reloadKeybinds).addTo(gameSettings);
+
+                // Add Schematic Browser keybind row
+                new SettingKeyBind(
+                        "Schematic Browser",
+                        ContentType.SCHEMATIC,
+                        BrowserPlugin::reloadKeybinds).addTo(gameSettings);
+            } catch (Exception e) {
+                arc.util.Log.err("Failed to add keybinds to settings", e);
+            }
+        });
+    }
+
+    /** Reload keybind handler when settings change */
+    public static void reloadKeybinds() {
+        if (keybindHandler != null) {
+            keybindHandler.reload();
+        }
     }
 
     private static void addButtons() {
