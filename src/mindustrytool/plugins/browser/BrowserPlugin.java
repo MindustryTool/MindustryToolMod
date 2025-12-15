@@ -10,7 +10,7 @@ import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustry.ui.fragments.MenuFragment.MenuButton;
+
 import mindustrytool.Main;
 import mindustrytool.Plugin;
 
@@ -69,32 +69,12 @@ public class BrowserPlugin implements Plugin {
         }).get();
         browseButton.update(() -> browseButton.visible = schematicDialog.isEnabled());
 
-        // Add map browser and management to menu
-        String map = Core.bundle.format("message.map-browser.title");
-        String manage = Core.bundle.get("message.lazy-components.title", "Manage Components");
-
         if (Vars.mobile) {
-            Vars.ui.menufrag.addButton(map, Icon.map, () -> {
-                var dialog = mapDialog.getIfEnabled();
-                if (dialog != null) {
-                    dialog.show();
-                } else {
-                    Vars.ui.showInfo(Core.bundle.get("message.lazy-components.disabled", "This component is disabled"));
-                }
-            });
+            // Mobile: single button opens tools dialog
+            Vars.ui.menufrag.addButton("Tools", Icon.settings, () -> new ToolsMenuDialog().show());
         } else {
-            Vars.ui.menufrag.addButton(new MenuButton("Tools", toolIcon, () -> {
-            },
-                    new MenuButton(map, Icon.map, () -> {
-                        var dialog = mapDialog.getIfEnabled();
-                        if (dialog != null) {
-                            dialog.show();
-                        } else {
-                            Vars.ui.showInfo(
-                                    Core.bundle.get("message.lazy-components.disabled", "This component is disabled"));
-                        }
-                    }),
-                    new MenuButton(manage, Icon.settings, () -> new LazyComponentDialog(lazyComponents).show())));
+            // Desktop: Tools button opens custom dialog with dynamic visibility
+            Vars.ui.menufrag.addButton("Tools", toolIcon, () -> new ToolsMenuDialog().show());
         }
     }
 
@@ -127,5 +107,15 @@ public class BrowserPlugin implements Plugin {
     /** Get all lazy components for management. */
     public static Seq<LazyComponent<?>> getLazyComponents() {
         return lazyComponents;
+    }
+
+    /** Get map dialog lazy component. */
+    public static LazyComponent<BaseDialog> getMapDialog() {
+        return mapDialog;
+    }
+
+    /** Get schematic dialog lazy component. */
+    public static LazyComponent<BaseDialog> getSchematicDialog() {
+        return schematicDialog;
     }
 }
