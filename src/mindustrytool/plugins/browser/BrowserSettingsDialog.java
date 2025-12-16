@@ -14,7 +14,6 @@ public class BrowserSettingsDialog extends BaseDialog {
     private final PluginSettings settings;
     private final ContentType contentType;
     private final Runnable onSettingsChanged;
-    private KeyCaptureDialog keyCaptureDialog;
 
     // Setting keys
     private static final String ITEMS_PER_PAGE = "itemsPerPage";
@@ -28,7 +27,6 @@ public class BrowserSettingsDialog extends BaseDialog {
         this.contentType = type;
         this.settings = new PluginSettings("browser." + type.name().toLowerCase());
         this.onSettingsChanged = onSettingsChanged;
-        this.keyCaptureDialog = new KeyCaptureDialog();
 
         addCloseButton();
         buttons.button("@settings.reset", Icon.refresh, this::resetToDefaults).size(210, 64);
@@ -69,22 +67,6 @@ public class BrowserSettingsDialog extends BaseDialog {
                     settings.setInt(CARD_HEIGHT, val);
                     notifyChange();
                 });
-
-        // === Shortcuts Section ===
-        addSectionHeader(Core.bundle.get("settings.section.shortcuts", "Keyboard Shortcuts"));
-
-        // Shortcut button
-        cont.table(row -> {
-            row.add(Core.bundle.get("settings.shortcut", "Open " + contentType.name() + " Browser"))
-                    .left().growX();
-            row.button(KeybindHandler.getShortcutDisplay(contentType), () -> {
-                keyCaptureDialog.show(data -> {
-                    KeybindHandler.saveShortcut(contentType, data.keycode, data.ctrl, data.shift, data.alt);
-                    rebuild();
-                    notifyChange();
-                });
-            }).width(150).right();
-        }).fillX().padTop(4).row();
     }
 
     /** Add centered section header like Mindustry style */
