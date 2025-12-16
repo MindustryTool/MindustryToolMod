@@ -3,7 +3,6 @@ package mindustrytool.plugins.browser;
 import arc.Core;
 import arc.scene.ui.layout.*;
 import mindustry.gen.Icon;
-import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 
 /**
@@ -12,7 +11,6 @@ import mindustry.ui.dialogs.BaseDialog;
  */
 public class BrowserSettingsDialog extends BaseDialog {
     private final PluginSettings settings;
-    private final ContentType contentType;
     private final Runnable onSettingsChanged;
 
     // Setting keys
@@ -24,7 +22,6 @@ public class BrowserSettingsDialog extends BaseDialog {
 
     public BrowserSettingsDialog(ContentType type, Runnable onSettingsChanged) {
         super(Core.bundle.get("message.lazy-components.settings", "Settings") + " - " + type.name());
-        this.contentType = type;
         this.settings = new PluginSettings("browser." + type.name().toLowerCase());
         this.onSettingsChanged = onSettingsChanged;
 
@@ -72,14 +69,6 @@ public class BrowserSettingsDialog extends BaseDialog {
     /** Add centered section header like Mindustry style */
     private void addSectionHeader(String title) {
         cont.add(title).color(arc.graphics.Color.gold).center().padTop(12).padBottom(4).row();
-    }
-
-    /** Add checkbox row */
-    private void addCheckRow(String label, boolean current, arc.func.Boolc onChange) {
-        cont.table(row -> {
-            row.add(label).left().growX();
-            row.check("", current, onChange).right();
-        }).row();
     }
 
     private void addSliderRow(String label, int current, int min, int max, int step, arc.func.Intc onChange) {
