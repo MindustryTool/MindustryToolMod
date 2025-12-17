@@ -29,13 +29,6 @@ public class ModSelector {
             }
         }
 
-        // Fix bundle key: Use a default if "messagemod" is missing
-        String messageModTitle = Core.bundle.get("messagemod", "Mods");
-        table.table(Styles.flatOver, t -> t.add(messageModTitle)
-                .fontScale(config.scale).left().labelAlign(Align.left))
-                .top().left().expandX().padBottom(4);
-        table.row();
-
         // Use a wrapping table directly instead of a pane to avoid nested scrolling
         // issues if placed in a scroll pane
         // But if this is inside a scroll pane, it's fine.
@@ -58,7 +51,7 @@ public class ModSelector {
             String name = mod.name();
 
             // Conservative estimation
-            float iconWidth = (mod.icon() != null && !mod.icon().isEmpty()) ? 42 * config.scale : 0; // 40 size + 2 pad
+            float iconWidth = (mod.icon() != null && !mod.icon().isEmpty()) ? 34 * config.scale : 0; // 32 size + 2 pad
             float textWidth = name.length() * 10 * config.scale;
             float estimatedWidth = textWidth + iconWidth + 40 * config.scale;
 
@@ -74,10 +67,13 @@ public class ModSelector {
                 btn.left();
                 if (mod.icon() != null && !mod.icon().isEmpty()) {
                     Cell<Image> iconCell = btn.add(new NetworkImage(mod.icon()));
-                    iconCell.size(40 * config.scale).padRight(4).marginRight(4).align(Align.center);
+                    iconCell.size(32 * config.scale).padRight(4).marginRight(4).align(Align.center);
                 }
                 btn.add(name).fontScale(config.scale).align(Align.center);
                 btn.margin(4f).marginLeft(8f).marginRight(8f);
+
+                // Highlight when checked
+                btn.update(() -> btn.setColor(btn.isChecked() ? arc.graphics.Color.gold : arc.graphics.Color.white));
             }, () -> {
                 if (modIds.contains(mod.id()))
                     modIds.remove(mod.id());

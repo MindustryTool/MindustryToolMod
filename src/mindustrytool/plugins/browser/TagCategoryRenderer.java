@@ -93,10 +93,11 @@ public class TagCategoryRenderer {
             FilterConfig config, Seq<String> modIds, Seq<TagData> tags) {
         Table content = new Table();
         // Default to expanded (false means NOT collapsed)
+        // Default to expanded (false means NOT collapsed)
         boolean isCollapsed = arc.Core.settings.getBool("filter.collapse." + category.id(), false);
         Collapser collapser = new Collapser(content, true);
+        collapser.setDuration(0); // Disable animation for initial state
         collapser.setCollapsed(isCollapsed);
-        collapser.setDuration(0);
 
         table.button(b -> {
             b.label(() -> category.name()).fontScale(config.scale).left().growX();
@@ -112,6 +113,9 @@ public class TagCategoryRenderer {
 
         table.row();
         table.add(collapser).growX();
+
+        // Enable animation for future interactions
+        collapser.setDuration(0.4f);
 
         content.left().top(); // Align content top-left
 
