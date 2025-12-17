@@ -193,6 +193,7 @@ public class DetailDialog extends BaseDialog {
     private void buildTabs(Object data, String id) {
         tabsTable.clear();
         tabsTable.left().defaults().height(40f).padRight(0f);
+        tabsTable.background(mindustry.ui.Styles.black6); // Add background to tab bar
 
         // Tab Buttons
         mindustry.ui.Styles.flatTogglet.fontColor = mindustry.graphics.Pal.accent;
@@ -201,10 +202,10 @@ public class DetailDialog extends BaseDialog {
         arc.scene.ui.ButtonGroup<arc.scene.ui.Button> group = new arc.scene.ui.ButtonGroup<>();
 
         tabsTable.button("@details", mindustry.ui.Styles.flatTogglet, () -> showDetails(data, id))
-                .group(group).checked(true).growX();
+                .group(group).checked(true).growX().height(50f); // Taller tabs
 
         tabsTable.button("@comments", mindustry.ui.Styles.flatTogglet, () -> showComments(data, id))
-                .group(group).growX();
+                .group(group).growX().height(50f);
 
         // Initial show
         showDetails(data, id);
@@ -219,8 +220,12 @@ public class DetailDialog extends BaseDialog {
 
             // Show metadata requirements immediately if available
             if (s.meta() != null && s.meta().requirements() != null) {
-                contentTable.add("Requirements (Preview)").color(mindustry.graphics.Pal.accent).left().row();
-                contentTable.table(t -> {
+                // Wrap in panel
+                Table reqTable = new Table();
+                reqTable.background(mindustry.ui.Styles.black6).margin(10f);
+
+                reqTable.add("Requirements (Preview)").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
+                reqTable.table(t -> {
                     t.left();
                     int i = 0;
                     for (mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement req : s.meta()
@@ -234,15 +239,15 @@ public class DetailDialog extends BaseDialog {
                         if (item != null) {
                             t.image(item.uiIcon).size(24f).padRight(4f);
                         } else {
-                            t.image().color(
-                                    arc.graphics.Color.valueOf(req.color() != null ? req.color() : "ffffff"))
+                            t.image().color(arc.graphics.Color.valueOf(req.color() != null ? req.color() : "ffffff"))
                                     .size(10f);
                         }
                         t.add(String.valueOf(req.amount())).color(mindustry.graphics.Pal.lightishGray).padRight(10f);
                         if (++i % 4 == 0)
                             t.row();
                     }
-                }).left().growX().padBottom(10f).row();
+                }).left().growX();
+                contentTable.add(reqTable).growX().padBottom(10f).row();
             }
 
             contentTable.add("Downloading full details...").color(mindustry.graphics.Pal.accent).left().row();
@@ -297,15 +302,15 @@ public class DetailDialog extends BaseDialog {
                                     .color(mindustry.graphics.Pal.remove)
                                     .wrap().growX();
                         } else {
-                            // Soft fail - keep preview, just notify
-                            mindustry.Vars.ui.showInfoFade("Full details unavailable");
+                            // Soft fail - keep preview, just notify via log
+                            // mindustry.Vars.ui.showInfoFade("Full details unavailable");
 
-                            // Try to update the loading label if found at the bottom
+                            // Try to remove the "Downloading..." label if found at the bottom
                             if (contentTable.getChildren().size > 0 &&
                                     contentTable.getChildren().peek() instanceof arc.scene.ui.Label) {
-                                arc.scene.ui.Label label = (arc.scene.ui.Label) contentTable.getChildren().peek();
-                                if (label.getText().toString().contains("Downloading")) {
-                                    label.setText("[lightgray]Full analysis unavailable (Data Error)[]");
+                                arc.scene.Element el = contentTable.getChildren().peek();
+                                if (((arc.scene.ui.Label) el).getText().toString().contains("Downloading")) {
+                                    el.remove();
                                 }
                             }
                         }
@@ -317,24 +322,97 @@ public class DetailDialog extends BaseDialog {
             // This is acceptable for now vs "Length: 0".
         } else {
             // Map details
+            // Map details
             MapDetailData m = (MapDetailData) data;
-            contentTable.add("@description").color(mindustry.graphics.Pal.accent).left().row();
-            contentTable.add(m.description()).wrap().color(mindustry.graphics.Pal.lightishGray).growX().padBottom(10)
-                    .row();
 
-            contentTable.add("@tags").color(mindustry.graphics.Pal.accent).left().row();
-            contentTable.table(t -> {
-                t.left();
-                if (m.tags() != null) {
-                    for (mindustrytool.plugins.browser.TagData tag : m.tags()) {
-                        t.button(tag.name(), mindustry.ui.Styles.flatBordert, () -> {
-                        }).padRight(5).padBottom(5);
+            // Description Panel
+            contentTable.table(d -> {
+                d.background(mindustry.ui.Styles.black6).margin(10f);
+                d.add("@description").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
+                d.add(m.description()).wrap().color(mindustry.graphics.Pal.lightishGray).growX();
+            }).growX().padBottom(10f).row();
+
+            // Tags Panel
+            contentTable.table(tg -> {
+                tg.background(mindustry.ui.Styles.black6).margin(10f);
+                tg.add("@tags").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
+                tg.table(t -> {
+                    t.left();
+                    if (m.tags() != null) {
+                        for (mindustrytool.plugins.browser.TagData tag : m.tags()) {
+                            t.button(tag.name(), mindustry.ui.Styles.flatBordert, () -> {
+                            })
+                                    .padRight(5).padBottom(5).height(30f); // Adjust chip height
+                        }
                     }
-                }
-            }).left().growX().padBottom(20).row();
+                }).left().growX();
+            }).growX().padBottom(10f).row();
 
-            contentTable.add("Map Rules & Wave info coming soon.").color(mindustry.graphics.Pal.gray).fontScale(0.8f);
+            // Rules Panel
+            Table rulesContainer = new Table();
+            rulesContainer.background(mindustry.ui.Styles.black6).margin(10f);
+            rulesContainer.add("Waves & Rules").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
+
+            Table rulesTable = new Table();
+            rulesTable.left();
+            rulesTable.add("Analyzing map data...").color(mindustry.graphics.Pal.accent);
+            rulesContainer.add(rulesTable).growX();
+
+            contentTable.add(rulesContainer).growX().padBottom(10f).row();
+
+            // Download and parse map
+            mindustrytool.plugins.browser.Api.downloadMap(id, bytes -> {
+                try {
+                    mindustry.game.Rules rules = mindustrytool.plugins.browser.MapUtils.readRules(bytes);
+                    Core.app.post(() -> {
+                        rulesTable.clear();
+                        if (rules == null) {
+                            rulesTable.add("Analysis failed.").color(mindustry.graphics.Pal.remove);
+                        } else {
+                            // Win Condition
+                            String mode = rules.attackMode ? "Attack" : (rules.pvp ? "PvP" : "Survival");
+                            rulesTable.add("Mode: " + mode).color(mindustry.graphics.Pal.lightishGray).left()
+                                    .padBottom(5f).row();
+
+                            // Spawns
+                            if (rules.spawns.isEmpty()) {
+                                rulesTable.add("No waves defined.").color(mindustry.graphics.Pal.gray).left();
+                            } else {
+                                rulesTable.add("Waves:").color(mindustry.graphics.Pal.accent).left().padBottom(5f)
+                                        .row();
+                                Table waveList = new Table();
+                                waveList.left();
+                                int i = 0;
+                                for (mindustry.game.SpawnGroup group : rules.spawns) {
+                                    if (group.type == null)
+                                        continue;
+
+                                    waveList.image(group.type.uiIcon).size(24f).padRight(5f);
+                                    waveList.add("x" + group.unitAmount).padRight(5f)
+                                            .color(mindustry.graphics.Pal.lightishGray);
+
+                                    String range = (group.end > 9999) ? (group.begin + "+")
+                                            : (group.begin + "-" + group.end);
+
+                                    waveList.add("[gray]W:[] " + range).padRight(15f)
+                                            .color(mindustry.graphics.Pal.lightishGray);
+
+                                    if (++i % 2 == 0)
+                                        waveList.row();
+                                }
+                                rulesTable.add(waveList).left();
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    Core.app.post(() -> {
+                        rulesTable.clear();
+                        rulesTable.add("Error: " + e.getMessage()).color(mindustry.graphics.Pal.remove);
+                    });
+                }
+            });
         }
+
     }
 
     private void buildSchematicDetails(mindustry.game.Schematic sc) {
@@ -345,6 +423,10 @@ public class DetailDialog extends BaseDialog {
         float produced = sc.powerProduction();
         float consumed = sc.powerConsumption();
         float net = produced - consumed;
+
+        // Power Stats Panel
+        Table powerContainer = new Table();
+        powerContainer.background(mindustry.ui.Styles.black6).margin(10f);
 
         Table powerTable = new Table();
         powerTable.left();
@@ -359,12 +441,16 @@ public class DetailDialog extends BaseDialog {
             powerTable.add((net >= 0 ? "+" : "") + (int) (net * 60))
                     .color(net >= 0 ? mindustry.graphics.Pal.heal : mindustry.graphics.Pal.remove);
         }
-        contentTable.add("Power Analysis").color(mindustry.graphics.Pal.accent).left().row();
-        contentTable.add(powerTable).left().padBottom(20f).row();
+        powerContainer.add("Power Analysis").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
+        powerContainer.add(powerTable).left();
+        contentTable.add(powerContainer).growX().padBottom(10f).row();
 
-        // Requirements
-        contentTable.add("@requirements").color(mindustry.graphics.Pal.accent).left().row();
-        contentTable.table(t -> {
+        // Requirements Panel
+        Table reqContainer = new Table();
+        reqContainer.background(mindustry.ui.Styles.black6).margin(10f);
+        reqContainer.add("@requirements").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
+
+        reqContainer.table(t -> {
             t.left();
             int i = 0;
             for (mindustry.type.ItemStack stack : sc.requirements()) {
@@ -375,6 +461,7 @@ public class DetailDialog extends BaseDialog {
                     t.row();
             }
         }).left().growX();
+        contentTable.add(reqContainer).growX().padBottom(10f).row();
     }
 
     private void showComments(Object data, String id) {
