@@ -180,15 +180,19 @@ public class TagCategoryRenderer {
                 btn.add(btnName).fontScale(config.scale).align(Align.center);
                 btn.margin(4f).marginLeft(8f).marginRight(8f); // Wider horizontal padding
 
-                // Brighter purple highlight when checked (Hex: #9d57ff)
-                btn.update(() -> btn
-                        .setColor(btn.isChecked() ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white));
+                // Reactive state binding: Button state always reflects SearchConfig
+                btn.update(() -> {
+                    boolean isSelected = searchConfig.containTag(category, value);
+                    btn.setChecked(isSelected);
+                    btn.setColor(isSelected ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white);
+                });
             }, () -> searchConfig.setTag(category, value))
                     .get().setStyle(Styles.flatBordert);
 
-            // Re-apply checked state and sizing after getting the button
+            // Re-apply checked state (initial) - though update() covers it, this helps
+            // initial layout?
+            // Actually update() runs before draw, so it's fine.
             arc.scene.ui.Button btn = (arc.scene.ui.Button) currentRow[0].getChildren().peek();
-            btn.setChecked(searchConfig.containTag(category, value));
 
             // Flexible height, increased padding
             currentRow[0].getCell(btn).height(36 * config.scale).pad(4);

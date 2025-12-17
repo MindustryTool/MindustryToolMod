@@ -3,6 +3,7 @@ package mindustrytool.plugins.browser;
 import arc.Core;
 import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.Scl;
+import arc.scene.ui.ScrollPane;
 import arc.struct.*;
 import mindustry.ui.dialogs.BaseDialog;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,8 @@ public class BrowserDialog<T extends ContentData> extends BaseDialog {
     // UI Components
     private Table contentTable;
     private Table footerTable;
+    private Table tagBarTable;
+    private ScrollPane tagPane;
 
     public BrowserDialog(ContentType type, Class<T> dataType, BaseDialog infoDialog) {
         super(type.title);
@@ -85,6 +88,16 @@ public class BrowserDialog<T extends ContentData> extends BaseDialog {
                 this::handleResult, this::hide);
 
         row();
+        // Persistent Tag Bar Table
+        tagBarTable = new Table();
+        tagBarTable.left();
+
+        // Wrap in scroll pane and store reference
+        tagPane = new ScrollPane(tagBarTable);
+        // Increased height to 50 to fit chips comfortably
+        add(tagPane).fillX().expandX().height(50).pad(2);
+
+        row();
         contentTable = new Table();
         add(contentTable).expand().fill();
 
@@ -94,10 +107,17 @@ public class BrowserDialog<T extends ContentData> extends BaseDialog {
     }
 
     private void updateContent() {
-        if (contentTable == null || footerTable == null)
+        if (contentTable == null || footerTable == null || tagBarTable == null)
             return;
 
         String url = type == ContentType.MAP ? Config.UPLOAD_MAP_URL : Config.UPLOAD_SCHEMATIC_URL;
+
+        // Update Tag Bar with double-buffering
+        tagBarTable = TagBar.rebuild(tagPane, searchConfig, sc -> {
+            options.put("tags", sc.getSelectedTagsString());
+            request.setPage(0);
+            debouncer.debounce(() -> request.getPage(this::handleResult));
+        });
 
         BrowserContentBuilder.build(contentTable, request, dataList, type, infoDialog, this::hide, this::handleResult);
         PaginationFooter.build(footerTable, request, this::handleResult, url);

@@ -68,6 +68,8 @@ public class ModSelector {
                     sb.append(id).append(",");
                 Core.settings.put("filter.mods", sb.toString());
 
+                arc.util.Log.info("Mod toggled: " + mod.id() + ". Current: " + modIds);
+
                 Core.app.post(onUpdate);
             }).checked(modIds.contains(mod.id())).get().setStyle(Styles.flatBordert);
 
@@ -80,6 +82,7 @@ public class ModSelector {
         pane.setScrollingDisabled(false, true); // Allow X, Disable Y
         pane.setFadeScrollBars(false);
         pane.setOverscroll(true, false);
+        pane.setCancelTouchFocus(false); // Fix for buttons inside ScrollPane
 
         table.add(pane).growX().height(60 * config.scale).left();
     }
