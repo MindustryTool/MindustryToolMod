@@ -9,7 +9,7 @@ import arc.util.Align;
 
 public class TagCategoryRenderer {
     public static void render(Table table, SearchConfig searchConfig, Seq<TagCategory> categories, FilterConfig config,
-            Seq<String> modIds, String searchQuery) {
+            Seq<String> modIds, String searchQuery, arc.struct.ObjectMap<String, Boolean> collapseState) {
         if (categories == null)
             return;
 
@@ -85,18 +85,25 @@ public class TagCategoryRenderer {
                 continue;
 
             table.row();
-            renderCategory(table, searchConfig, category, config, modIds, filteredTags);
+            renderCategory(table, searchConfig, category, config, modIds, filteredTags, collapseState);
         }
     }
 
     private static void renderCategory(Table table, SearchConfig searchConfig, TagCategory category,
-            FilterConfig config, Seq<String> modIds, Seq<TagData> tags) {
+            FilterConfig config, Seq<String> modIds, Seq<TagData> tags,
+            arc.struct.ObjectMap<String, Boolean> collapseState) {
         Table content = new Table();
         // Default to expanded (false means NOT collapsed)
-        // Default to expanded (false means NOT collapsed)
-        boolean isCollapsed = arc.Core.settings.getBool("filter.collapse." + category.id(), false);
+        boolean isCollapsed;
+        if (collapseState.containsKey(category.id())) {
+            isCollapsed = collapseState.get(category.id());
+        } else {
+            isCollapsed = arc.Core.settings.getBool("filter.collapse." + category.id(), false);
+            collapseState.put(category.id(), isCollapsed);
+        }
+
         Collapser collapser = new Collapser(content, true);
-        collapser.setDuration(0); // Disable animation for initial state
+        collapser.setDuration(0); // Disable animation permanently
         collapser.setCollapsed(isCollapsed);
 
         table.button(b -> {
@@ -105,7 +112,7 @@ public class TagCategoryRenderer {
         }, () -> {
             boolean newState = !collapser.isCollapsed();
             collapser.setCollapsed(newState);
-            arc.Core.settings.put("filter.collapse." + category.id(), newState);
+            collapseState.put(category.id(), newState);
         }).get().setStyle(Styles.cleart);
 
         // Re-apply growX and padBottom after getting the button
@@ -114,8 +121,7 @@ public class TagCategoryRenderer {
         table.row();
         table.add(collapser).growX();
 
-        // Enable animation for future interactions
-        collapser.setDuration(0.4f);
+        // Animation removed as requested
 
         content.left().top(); // Align content top-left
 
@@ -173,6 +179,10 @@ public class TagCategoryRenderer {
                 }
                 btn.add(btnName).fontScale(config.scale).align(Align.center);
                 btn.margin(4f).marginLeft(8f).marginRight(8f); // Wider horizontal padding
+
+                // Brighter purple highlight when checked (Hex: #9d57ff)
+                btn.update(() -> btn
+                        .setColor(btn.isChecked() ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white));
             }, () -> searchConfig.setTag(category, value))
                     .get().setStyle(Styles.flatBordert);
 

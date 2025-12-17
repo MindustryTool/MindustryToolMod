@@ -84,6 +84,22 @@ public class FilterDialog extends BaseDialog {
     }
 
     private arc.scene.ui.layout.Table tagTable;
+    private final arc.struct.ObjectMap<String, Boolean> collapseState = new arc.struct.ObjectMap<>();
+
+    @Override
+    public void hide() {
+        // Save settings on close
+        StringBuilder sb = new StringBuilder();
+        for (String id : modIds)
+            sb.append(id).append(",");
+        Core.settings.put("filter.mods", sb.toString());
+
+        for (String id : collapseState.keys()) {
+            Core.settings.put("filter.collapse." + id, collapseState.get(id));
+        }
+
+        super.hide();
+    }
 
     private void rebuildTags(FilterConfig config, SearchConfig searchConfig, String query) {
         if (tagTable == null)
@@ -100,7 +116,7 @@ public class FilterDialog extends BaseDialog {
                 return;
             tagTable.clear();
             tagTable.top().left();
-            TagCategoryRenderer.render(tagTable, searchConfig, categories, config, modIds, query);
+            TagCategoryRenderer.render(tagTable, searchConfig, categories, config, modIds, query, collapseState);
         });
     }
 }
