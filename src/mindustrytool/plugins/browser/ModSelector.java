@@ -38,32 +38,14 @@ public class ModSelector {
         Table card = new Table();
         card.left().top(); // Align content top-left
 
-        // Exact width calculation
-        float availableWidth = arc.Core.graphics.getWidth() - 60f;
-        float currentWidth = 0;
-
-        // Current row table
-        Table[] currentRow = { new Table() };
-        currentRow[0].left().defaults().pad(1);
-        card.add(currentRow[0]).left().top().row();
+        // Single row table for horizontal scrolling
+        Table rowTable = new Table();
+        rowTable.left().defaults().pad(1);
 
         for (ModData mod : mods.sort((a, b) -> a.position() - b.position())) {
             String name = mod.name();
 
-            // Conservative estimation
-            float iconWidth = (mod.icon() != null && !mod.icon().isEmpty()) ? 34 * config.scale : 0; // 32 size + 2 pad
-            float textWidth = name.length() * 10 * config.scale;
-            float estimatedWidth = textWidth + iconWidth + 40 * config.scale;
-
-            if (currentWidth + estimatedWidth > availableWidth) {
-                // New row
-                currentRow[0] = new Table();
-                currentRow[0].left().defaults().pad(1);
-                card.add(currentRow[0]).left().top().row();
-                currentWidth = 0;
-            }
-
-            currentRow[0].button(btn -> {
+            rowTable.button(btn -> {
                 btn.left();
                 if (mod.icon() != null && !mod.icon().isEmpty()) {
                     Cell<Image> iconCell = btn.add(new NetworkImage(mod.icon()));
@@ -89,12 +71,16 @@ public class ModSelector {
                 Core.app.post(onUpdate);
             }).checked(modIds.contains(mod.id())).get().setStyle(Styles.flatBordert);
 
-            arc.scene.ui.Button btn = (arc.scene.ui.Button) currentRow[0].getChildren().peek();
-            currentRow[0].getCell(btn).height(40 * config.scale).pad(4);
-
-            currentWidth += estimatedWidth;
+            arc.scene.ui.Button btn = (arc.scene.ui.Button) rowTable.getChildren().peek();
+            rowTable.getCell(btn).height(40 * config.scale).pad(4);
         }
 
-        table.add(card).growX().left();
+        // Wrap in ScrollPane
+        arc.scene.ui.ScrollPane pane = new arc.scene.ui.ScrollPane(rowTable);
+        pane.setScrollingDisabled(false, true); // Allow X, Disable Y
+        pane.setFadeScrollBars(false);
+        pane.setOverscroll(true, false);
+
+        table.add(pane).growX().height(60 * config.scale).left();
     }
 }
