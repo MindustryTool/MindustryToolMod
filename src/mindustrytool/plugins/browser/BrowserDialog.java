@@ -1,6 +1,7 @@
 package mindustrytool.plugins.browser;
 
 import arc.Core;
+import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.Scl;
 import arc.struct.*;
 import mindustry.ui.dialogs.BaseDialog;
@@ -18,6 +19,10 @@ public class BrowserDialog<T extends ContentData> extends BaseDialog {
     private Seq<T> dataList = new Seq<>();
     private String search = "";
 
+    // UI Components
+    private Table contentTable;
+    private Table footerTable;
+
     public BrowserDialog(ContentType type, Class<T> dataType, BaseDialog infoDialog) {
         super(type.title);
         this.type = type;
@@ -27,10 +32,12 @@ public class BrowserDialog<T extends ContentData> extends BaseDialog {
                 : TagService.TagCategoryEnum.schematics;
         this.filterDialog = new FilterDialog(new TagService(), searchConfig,
                 t -> new TagService().getTag(tagCategory, t::get));
+
+        setupUI();
+
         initOptions();
         initListeners();
         request.getPage(this::handleResult);
-        shown(this::rebuild);
     }
 
     private static int calculateItemsPerPage(ContentType type) {
@@ -63,34 +70,48 @@ public class BrowserDialog<T extends ContentData> extends BaseDialog {
         }));
         onResize(() -> {
             request.setItemPerPage(calculateItemsPerPage(type));
-            rebuild();
+            updateContent();
             if (filterDialog.isShown())
                 filterDialog.show(searchConfig);
         });
     }
 
-    private void rebuild() {
-        String url = type == ContentType.MAP ? Config.UPLOAD_MAP_URL : Config.UPLOAD_SCHEMATIC_URL;
+    private void setupUI() {
         clear();
         addCloseButton();
+
         row();
         BrowserSearchBarBuilder.build(this, search, options, request, searchConfig, debouncer, filterDialog,
                 this::handleResult, this::hide);
+
         row();
-        BrowserContentBuilder.build(this, request, dataList, type, infoDialog, this::hide, this::handleResult);
+        contentTable = new Table();
+        add(contentTable).expand().fill();
+
         row();
-        PaginationFooter.render(this, request, this::handleResult, url);
+        footerTable = new Table();
+        add(footerTable).expandX().fillX();
+    }
+
+    private void updateContent() {
+        if (contentTable == null || footerTable == null)
+            return;
+
+        String url = type == ContentType.MAP ? Config.UPLOAD_MAP_URL : Config.UPLOAD_SCHEMATIC_URL;
+
+        BrowserContentBuilder.build(contentTable, request, dataList, type, infoDialog, this::hide, this::handleResult);
+        PaginationFooter.build(footerTable, request, this::handleResult, url);
     }
 
     private void handleResult(Seq<T> items) {
         this.dataList = items != null ? items : new Seq<>();
-        rebuild();
+        updateContent();
     }
 
     /** Reload settings and refresh the view. */
     public void reloadSettings() {
         request.setItemPerPage(calculateItemsPerPage(type));
-        rebuild();
+        updateContent();
     }
 
     /** Dispose resources when unloading. */

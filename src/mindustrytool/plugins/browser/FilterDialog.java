@@ -2,6 +2,7 @@ package mindustrytool.plugins.browser;
 
 import arc.Core;
 import arc.func.Cons;
+import arc.scene.ui.ScrollPane;
 import arc.struct.Seq;
 import arc.util.Log;
 import mindustry.ui.dialogs.BaseDialog;
@@ -11,6 +12,10 @@ public class FilterDialog extends BaseDialog {
     private final ModService modService = new ModService();
     private final TagService tagService;
     private final Seq<String> modIds = new Seq<>();
+
+    private arc.scene.ui.layout.Table tagTable;
+    private ScrollPane tagPane;
+    private final arc.struct.ObjectMap<String, Boolean> collapseState = new arc.struct.ObjectMap<>();
 
     public FilterDialog(TagService tagService, SearchConfig searchConfig, Cons<Cons<Seq<TagCategory>>> tagProvider) {
         super("");
@@ -56,9 +61,7 @@ public class FilterDialog extends BaseDialog {
 
             cont.add(header).growX().pad(10).top().row();
 
-            // Mod Selector (Fixed at top, outside scroll pane to prevent
-            // flickering/scrolling issues)
-            // We pass a runnable that ONLY rebuilds tags, not the whole dialog
+            // Mod Selector
             arc.scene.ui.layout.Table modTable = new arc.scene.ui.layout.Table();
             modService.getMod(mods -> new ModSelector(config, modIds).render(modTable, searchConfig, mods, () -> {
                 rebuildTags(config, searchConfig, searchField.getText());
@@ -66,12 +69,12 @@ public class FilterDialog extends BaseDialog {
             cont.add(modTable).growX().padLeft(10).padRight(10).padBottom(10).top().row();
 
             // Tag List (Scrollable)
-            cont.pane(table -> {
+            this.tagPane = cont.pane(table -> {
                 // Store the table to rebuild it later
                 this.tagTable = table;
                 table.top().left(); // Align content to top-left
                 rebuildTags(config, searchConfig, "");
-            }).padLeft(10).padRight(10).scrollY(true).expand().fill().top(); // Align pane to top
+            }).padLeft(10).padRight(10).scrollY(true).expand().fill().top().get(); // Capture ScrollPane
 
             cont.row();
             buttons.clearChildren();
@@ -82,9 +85,6 @@ public class FilterDialog extends BaseDialog {
             Log.err(e);
         }
     }
-
-    private arc.scene.ui.layout.Table tagTable;
-    private final arc.struct.ObjectMap<String, Boolean> collapseState = new arc.struct.ObjectMap<>();
 
     @Override
     public void hide() {
@@ -105,18 +105,28 @@ public class FilterDialog extends BaseDialog {
         if (tagTable == null)
             return;
 
-        // We clear here, but also need to clear inside the callback to be safe against
-        // async race conditions
-        tagTable.clear();
-        tagTable.top().left();
-
         tagProvider.get(categories -> {
-            // Ensure we are working on the current table and it's cleared before adding
-            if (tagTable == null)
-                return;
-            tagTable.clear();
-            tagTable.top().left();
-            TagCategoryRenderer.render(tagTable, searchConfig, categories, config, modIds, query, collapseState);
+            // Build NEW table off-screen
+            arc.scene.ui.layout.Table newTagTable = new arc.scene.ui.layout.Table();
+            newTagTable.top().left();
+
+            // Populate the new table
+            TagCategoryRenderer.render(newTagTable, searchConfig, categories, config, modIds, query, collapseState);
+
+            // Swap atomically
+            if (tagPane != null) {
+                // Capture scroll position
+                float scrollY = tagPane.getScrollY();
+
+                // Swap widget
+                tagPane.setWidget(newTagTable);
+                this.tagTable = newTagTable; // Update reference
+
+                // Force layout and restore scroll immediately (synchronously)
+                tagPane.validate();
+                tagPane.setScrollYForce(scrollY);
+                tagPane.updateVisualScroll();
+            }
         });
     }
 }
