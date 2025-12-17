@@ -55,10 +55,7 @@ public class ContentPreview {
                     ContentHandler.downloadSchematic(data);
             });
             t.button(Icon.info, Styles.emptyi, () -> {
-                if (type == Type.MAP)
-                    Api.findMapById(data.id(), d -> ((MapInfoDialog) dialog).show(d));
-                else
-                    Api.findSchematicById(data.id(), d -> ((SchematicInfoDialog) dialog).show(d));
+                InfoOpener.open(data, type == Type.MAP ? ContentType.MAP : ContentType.SCHEMATIC, dialog);
             }).tooltip("@info.title");
         });
     }

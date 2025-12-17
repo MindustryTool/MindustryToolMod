@@ -44,6 +44,7 @@ public class Api {
                     }
                 })
                 .submit(r -> {
+                    arc.util.Log.info("Api.download: " + url + " Status: " + r.getStatus());
                     if (r.getStatus() == arc.util.Http.HttpStatus.UNAUTHORIZED) {
                         arc.util.Log.info("Access Unauthorized (401), invalidating token and retrying as guest...");
                         BrowserAuthService.invalidateToken();
@@ -55,12 +56,13 @@ public class Api {
                                 } else {
                                     arc.util.Log.info("Guest retry returned status: " + r2.getStatus());
                                     arc.util.Log.err("Guest Retry Failed with Status: " + r2.getStatus());
+                                    // Treat as error, do typically not call c.get()
                                 }
                             } catch (Exception ex) {
                                 arc.util.Log.err(ex);
                             }
                         }));
-                    } else {
+                    } else if (r.getStatus() == arc.util.Http.HttpStatus.OK) {
                         arc.Core.app.post(() -> {
                             try {
                                 c.get(r.getResult());
@@ -68,6 +70,8 @@ public class Api {
                                 arc.util.Log.err(ex);
                             }
                         });
+                    } else {
+                        arc.util.Log.err("Api.download failed: " + r.getStatus() + " for " + url);
                     }
                 });
     }
@@ -82,5 +86,39 @@ public class Api {
 
     public static void findUserById(String id, Cons<UserData> c) {
         ApiRequest.get(Config.API_URL + "users/" + id, UserData.class, c);
+    }
+
+    public static PagingRequest<CommentData> getCommentsRequest(String type, String id) {
+        // Construct URL assuming standard parameter naming
+        String url = Config.API_URL + "comments?targetType=" + type + "&targetId=" + id;
+        // PagingRequest automatically appends &page=...&size=...
+        return new PagingRequest<>(CommentData.class, url);
+    }
+
+    public static void postComment(String type, String id, String content, Cons<Boolean> callback) {
+        String url = Config.API_URL + "comments";
+        // Simple JSON construction
+        String json = "{ \"targetType\": \"" + type + "\", \"targetId\": \"" + id + "\", \"content\": \"" + content
+                + "\" }";
+
+        AuthHttp.post(url, json)
+                .error(e -> {
+                    arc.util.Log.err("Failed to post comment", e);
+                    callback.get(false);
+                })
+                .submit(r -> {
+                    callback.get(r.getStatus() == arc.util.Http.HttpStatus.OK
+                            || r.getStatus() == arc.util.Http.HttpStatus.CREATED);
+                });
+    }
+
+    public static void vote(String type, String id, Cons<Boolean> callback) {
+        // Assume /vote endpoint or similar
+        String url = Config.API_URL + "vote";
+        String json = "{ \"targetType\": \"" + type + "\", \"targetId\": \"" + id + "\" }";
+
+        AuthHttp.post(url, json)
+                .error(e -> callback.get(false))
+                .submit(r -> callback.get(r.getStatus() == arc.util.Http.HttpStatus.OK));
     }
 }
