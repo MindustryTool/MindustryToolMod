@@ -33,4 +33,19 @@ public final class BrowserAuthService {
         String token = Core.settings.getString(ACCESS_KEY, null);
         return (token != null && !token.isEmpty()) ? token : null;
     }
+
+    public static void invalidateToken() {
+        // Clear settings
+        Core.settings.remove(ACCESS_KEY);
+
+        // Also notify AuthService if present
+        if (Main.hasPlugin("mindustrytool.plugins.auth.AuthPlugin")) {
+            try {
+                Class<?> authService = Class.forName("mindustrytool.plugins.auth.AuthService");
+                authService.getMethod("logout").invoke(null);
+            } catch (Exception e) {
+                Log.err("[BrowserAuth] Failed to logout AuthService", e);
+            }
+        }
+    }
 }

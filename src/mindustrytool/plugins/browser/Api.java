@@ -3,23 +3,84 @@ package mindustrytool.plugins.browser;
 import arc.func.*;
 
 public class Api {
-    public static void downloadSchematic(String id, ConsT<byte[], Exception> c) { 
-        AuthHttp.get(Config.API_URL + "schematics/" + id + "/data").submit(r -> c.get(r.getResult())); 
+    public static void downloadSchematic(String id, ConsT<byte[], Exception> c) {
+        download(Config.API_URL + "schematics/" + id + "/data", c);
     }
-    
-    public static void downloadMap(String id, ConsT<byte[], Exception> c) { 
-        AuthHttp.get(Config.API_URL + "maps/" + id + "/data").submit(r -> c.get(r.getResult())); 
+
+    public static void downloadMap(String id, ConsT<byte[], Exception> c) {
+        download(Config.API_URL + "maps/" + id + "/data", c);
     }
-    
-    public static void findSchematicById(String id, Cons<SchematicDetailData> c) { 
-        ApiRequest.get(Config.API_URL + "schematics/" + id, SchematicDetailData.class, c); 
+
+    private static void download(String url, ConsT<byte[], Exception> c) {
+        AuthHttp.get(url)
+                .error(e -> {
+                    String msg = e.getMessage() != null ? e.getMessage() : "";
+                    String str = e.toString();
+                    boolean is401 = msg.contains("401") || str.contains("401") || msg.contains("UNAUTHORIZED")
+                            || str.contains("UNAUTHORIZED");
+
+                    if (is401) {
+                        arc.util.Log.info(
+                                "Access Unauthorized (401) caught in error handler, invalidating token and retrying as guest...");
+                        BrowserAuthService.invalidateToken();
+                        // Retry as Guest
+                        GuestHttp.get(url)
+                                .error(e2 -> arc.util.Log.err("Guest Retry Failed: " + url, e2))
+                                .submit(r2 -> arc.Core.app.post(() -> {
+                                    try {
+                                        if (r2.getStatus() == arc.util.Http.HttpStatus.OK) {
+                                            c.get(r2.getResult());
+                                        } else {
+                                            arc.util.Log.info("Guest retry returned status: " + r2.getStatus());
+                                            // Treat non-200 on retry as failure
+                                            arc.util.Log.err("Guest Retry Failed with Status: " + r2.getStatus());
+                                        }
+                                    } catch (Exception ex) {
+                                        arc.util.Log.err(ex);
+                                    }
+                                }));
+                    } else {
+                        arc.util.Log.err(url, e);
+                    }
+                })
+                .submit(r -> {
+                    if (r.getStatus() == arc.util.Http.HttpStatus.UNAUTHORIZED) {
+                        arc.util.Log.info("Access Unauthorized (401), invalidating token and retrying as guest...");
+                        BrowserAuthService.invalidateToken();
+                        // Retry as Guest
+                        GuestHttp.get(url).submit(r2 -> arc.Core.app.post(() -> {
+                            try {
+                                if (r2.getStatus() == arc.util.Http.HttpStatus.OK) {
+                                    c.get(r2.getResult());
+                                } else {
+                                    arc.util.Log.info("Guest retry returned status: " + r2.getStatus());
+                                    arc.util.Log.err("Guest Retry Failed with Status: " + r2.getStatus());
+                                }
+                            } catch (Exception ex) {
+                                arc.util.Log.err(ex);
+                            }
+                        }));
+                    } else {
+                        arc.Core.app.post(() -> {
+                            try {
+                                c.get(r.getResult());
+                            } catch (Exception ex) {
+                                arc.util.Log.err(ex);
+                            }
+                        });
+                    }
+                });
     }
-    
-    public static void findMapById(String id, Cons<MapDetailData> c) { 
-        ApiRequest.get(Config.API_URL + "maps/" + id, MapDetailData.class, c); 
+
+    public static void findSchematicById(String id, Cons<SchematicDetailData> c) {
+        ApiRequest.get(Config.API_URL + "schematics/" + id, SchematicDetailData.class, c);
     }
-    
-    public static void findUserById(String id, Cons<UserData> c) { 
-        ApiRequest.get(Config.API_URL + "users/" + id, UserData.class, c); 
+
+    public static void findMapById(String id, Cons<MapDetailData> c) {
+        ApiRequest.get(Config.API_URL + "maps/" + id, MapDetailData.class, c);
+    }
+
+    public static void findUserById(String id, Cons<UserData> c) {
+        ApiRequest.get(Config.API_URL + "users/" + id, UserData.class, c);
     }
 }
