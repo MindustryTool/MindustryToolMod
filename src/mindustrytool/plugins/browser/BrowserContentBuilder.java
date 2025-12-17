@@ -29,15 +29,23 @@ public class BrowserContentBuilder {
             return;
         }
         c.pane(p -> {
-            float sum = 0;
+            float availableWidth = Core.graphics.getWidth();
+            // Estimate card width (including padding used in ContentPreviewFactory)
+            float itemWidth = Scl.scl(cardWidth) + Scl.scl(12);
+
+            // Calculate columns: (Screen - DialogMargin) / ItemWidth
+            // Using 60 as safety margin for dialog borders
+            int cols = Math.max(1, (int) ((availableWidth - Scl.scl(60)) / itemWidth));
+
+            int i = 0;
             for (T data : dataList) {
                 if (data == null)
                     continue;
-                Button btn = ContentPreviewFactory.create(p, data, type, infoDialog, hide, cardWidth);
-                sum += btn.getPrefWidth();
-                if (sum >= Core.graphics.getWidth() * 0.8) {
+
+                ContentPreviewFactory.create(p, data, type, infoDialog, hide, cardWidth);
+
+                if (++i % cols == 0) {
                     p.row();
-                    sum = 0;
                 }
             }
             p.top();

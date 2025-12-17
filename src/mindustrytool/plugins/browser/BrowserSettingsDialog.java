@@ -47,21 +47,18 @@ public class BrowserSettingsDialog extends BaseDialog {
                     notifyChange();
                 });
 
-        // Card width - slider
-        addSliderRow(
-                Core.bundle.get("settings.card-width", "Card width"),
-                getCardWidth(), 200, 600, 20,
-                val -> {
-                    settings.setInt(CARD_WIDTH, val);
-                    notifyChange();
-                });
+        // Card Size (Scale) - slider
+        // Calculate current scale based on width (Base 300)
+        int currentScale = (int) ((getCardWidth() / 300f) * 100);
 
-        // Card height - slider
         addSliderRow(
-                Core.bundle.get("settings.card-height", "Card height"),
-                getCardHeight(), 100, 400, 20,
+                Core.bundle.get("settings.card-scale", "Card Size"),
+                currentScale, 50, 200, 10,
+                val -> val + "%",
                 val -> {
-                    settings.setInt(CARD_HEIGHT, val);
+                    // Update both width and height to maintain aspect ratio (300x200 base)
+                    settings.setInt(CARD_WIDTH, (int) (300 * (val / 100f)));
+                    settings.setInt(CARD_HEIGHT, (int) (200 * (val / 100f)));
                     notifyChange();
                 });
     }
@@ -71,12 +68,18 @@ public class BrowserSettingsDialog extends BaseDialog {
         cont.add(title).color(arc.graphics.Color.gold).center().padTop(12).padBottom(4).row();
     }
 
+    // Overload for backward compatibility / simple integers
     private void addSliderRow(String label, int current, int min, int max, int step, arc.func.Intc onChange) {
+        addSliderRow(label, current, min, max, step, String::valueOf, onChange);
+    }
+
+    private void addSliderRow(String label, int current, int min, int max, int step,
+            arc.func.Func<Integer, String> format, arc.func.Intc onChange) {
         // Mindustry style: slider with overlaid label content
         arc.scene.ui.Slider slider = new arc.scene.ui.Slider(min, max, step, false);
         slider.setValue(current);
 
-        arc.scene.ui.Label valueLabel = new arc.scene.ui.Label(String.valueOf(current),
+        arc.scene.ui.Label valueLabel = new arc.scene.ui.Label(format.get(current),
                 mindustry.ui.Styles.outlineLabel);
 
         Table content = new Table();
@@ -87,7 +90,7 @@ public class BrowserSettingsDialog extends BaseDialog {
 
         slider.changed(() -> {
             int intVal = (int) slider.getValue();
-            valueLabel.setText(String.valueOf(intVal));
+            valueLabel.setText(format.get(intVal));
             onChange.get(intVal);
         });
 
