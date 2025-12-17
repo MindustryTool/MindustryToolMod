@@ -60,7 +60,7 @@ public class ModSelector {
             // Conservative estimation
             float iconWidth = (mod.icon() != null && !mod.icon().isEmpty()) ? 42 * config.scale : 0; // 40 size + 2 pad
             float textWidth = name.length() * 10 * config.scale;
-            float estimatedWidth = textWidth + iconWidth + 20 * config.scale;
+            float estimatedWidth = textWidth + iconWidth + 40 * config.scale;
 
             if (currentWidth + estimatedWidth > availableWidth) {
                 // New row
@@ -74,10 +74,10 @@ public class ModSelector {
                 btn.left();
                 if (mod.icon() != null && !mod.icon().isEmpty()) {
                     Cell<Image> iconCell = btn.add(new NetworkImage(mod.icon()));
-                    iconCell.size(40 * config.scale).padRight(2).marginRight(2);
+                    iconCell.size(40 * config.scale).padRight(4).marginRight(4).align(Align.center);
                 }
-                btn.add(name).fontScale(config.scale);
-                btn.margin(2);
+                btn.add(name).fontScale(config.scale).align(Align.center);
+                btn.margin(4f).marginLeft(8f).marginRight(8f);
             }, () -> {
                 if (modIds.contains(mod.id()))
                     modIds.remove(mod.id());
@@ -94,7 +94,7 @@ public class ModSelector {
             }).checked(modIds.contains(mod.id())).get().setStyle(Styles.flatBordert);
 
             arc.scene.ui.Button btn = (arc.scene.ui.Button) currentRow[0].getChildren().peek();
-            currentRow[0].getCell(btn).height(40 * config.scale).pad(1);
+            currentRow[0].getCell(btn).height(40 * config.scale).pad(4);
 
             currentWidth += estimatedWidth;
         }

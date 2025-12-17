@@ -5,6 +5,7 @@ import arc.struct.Seq;
 import mindustry.ui.Styles;
 import mindustry.gen.Icon;
 import arc.scene.ui.layout.Collapser;
+import arc.util.Align;
 
 public class TagCategoryRenderer {
     public static void render(Table table, SearchConfig searchConfig, Seq<TagCategory> categories, FilterConfig config,
@@ -147,7 +148,7 @@ public class TagCategoryRenderer {
             // Conservative estimation
             float iconWidth = (value.icon() != null && !value.icon().isEmpty()) ? 26 * config.scale : 0;
             float textWidth = name.length() * 10 * config.scale;
-            float estimatedWidth = textWidth + iconWidth + 20 * config.scale;
+            float estimatedWidth = textWidth + iconWidth + 40 * config.scale; // Increased buffer for wider padding
 
             if (currentWidth + estimatedWidth > availableWidth) {
                 // New row
@@ -160,14 +161,14 @@ public class TagCategoryRenderer {
             currentRow[0].button(btn -> {
                 btn.left();
                 if (value.icon() != null && !value.icon().isEmpty()) {
-                    btn.add(new NetworkImage(value.icon())).size(24 * config.scale).padRight(2);
+                    btn.add(new NetworkImage(value.icon())).size(24 * config.scale).padRight(4).align(Align.center);
                 }
                 String btnName = value.name();
                 if (value.count() != null) {
                     btnName += " (" + value.count() + ")";
                 }
-                btn.add(btnName).fontScale(config.scale);
-                btn.margin(2); // Minimal internal margin
+                btn.add(btnName).fontScale(config.scale).align(Align.center);
+                btn.margin(4f).marginLeft(8f).marginRight(8f); // Wider horizontal padding
             }, () -> searchConfig.setTag(category, value))
                     .get().setStyle(Styles.flatBordert);
 
@@ -175,8 +176,8 @@ public class TagCategoryRenderer {
             arc.scene.ui.Button btn = (arc.scene.ui.Button) currentRow[0].getChildren().peek();
             btn.setChecked(searchConfig.containTag(category, value));
 
-            // Flexible height, minimal padding
-            currentRow[0].getCell(btn).height(36 * config.scale).pad(1);
+            // Flexible height, increased padding
+            currentRow[0].getCell(btn).height(36 * config.scale).pad(4);
 
             currentWidth += estimatedWidth;
         }
