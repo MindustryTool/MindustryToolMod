@@ -7,13 +7,21 @@ package mindustrytool;
 public interface Plugin {
     /** Plugin name for logging. */
     String getName();
-    
+
     /** Priority for loading order (higher = load first). Default is 0. */
-    default int getPriority() { return 0; }
-    
+    default int getPriority() {
+        return 0;
+    }
+
     /** Initialize the plugin. Called during mod init. */
     void init();
-    
+
+    /** List of plugin names that this plugin depends on. */
+    default String[] getDependencies() {
+        return new String[0];
+    }
+
     /** Dispose plugin resources. Called during mod dispose. */
-    default void dispose() {}
+    default void dispose() {
+    }
 }
