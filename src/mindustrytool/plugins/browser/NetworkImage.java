@@ -15,34 +15,36 @@ public class NetworkImage extends Image {
     private TextureRegion lastTexture;
     private static final ThreadSafeCache<String, TextureRegion> cache = new ThreadSafeCache<>(128, null);
 
-    public NetworkImage(String url) { 
-        super(Tex.clear); 
-        this.url = url; 
-        setScaling(Scaling.fit); 
-        startLoad(); 
+    public NetworkImage(String url) {
+        super(Tex.clear);
+        this.url = url;
+        setScaling(Scaling.fit);
+        startLoad();
     }
 
     private void startLoad() {
-        if (loadStarted || isError || cache.has(url)) return;
+        if (loadStarted || isError || cache.has(url))
+            return;
         loadStarted = true;
-        try { 
-            NetworkImageLoader.load(url, cache, () -> isError = true); 
-        } catch (Exception e) { 
-            Log.err(url, e); 
-            isError = true; 
+        try {
+            NetworkImageLoader.load(url, cache, () -> isError = true);
+        } catch (Exception e) {
+            Log.err(url, e);
+            isError = true;
         }
     }
 
-    @Override 
+    @Override
     public void draw() {
         TextureRegion next = cache.get(url);
-        if (next != null && lastTexture != next) { 
-            lastTexture = next; 
-            setDrawable(next); 
+        if (next != null && lastTexture != next) {
+            lastTexture = next;
+            setDrawable(next);
         }
         super.draw();
-        BorderDrawer.draw(x, y, width, height, borderColor, thickness);
     }
 
-    public static void clearCache() { cache.clear(null); }
+    public static void clearCache() {
+        cache.clear(null);
+    }
 }
