@@ -30,17 +30,27 @@ public class BrowserPlugin implements Plugin {
             "MapBrowser",
             Core.bundle.get("message.lazy.map-browser.desc", "Browse maps from MindustryTool"),
             (arc.func.Prov<BaseDialog>) () -> new BrowserDialog<>(ContentType.MAP, ContentData.class,
-                    new MapInfoDialog()))
-            .onSettings(() -> new BrowserSettingsDialog(ContentType.MAP, null).show());
+                    new MapInfoDialog()));
 
     private static final LazyComponent<BaseDialog> schematicDialog = new LazyComponent<>(
             "SchematicBrowser",
             Core.bundle.get("message.lazy.schematic-browser.desc", "Browse schematics from MindustryTool"),
             (arc.func.Prov<BaseDialog>) () -> new BrowserDialog<>(ContentType.SCHEMATIC, ContentData.class,
-                    new SchematicInfoDialog()))
-            .onSettings(() -> new BrowserSettingsDialog(ContentType.SCHEMATIC, null).show());
+                    new SchematicInfoDialog()));
 
     static {
+        mapDialog.onSettings(() -> new BrowserSettingsDialog(ContentType.MAP, () -> {
+            if (mapDialog.isLoaded()) {
+                ((BrowserDialog<?>) mapDialog.get()).reloadSettings();
+            }
+        }).show());
+
+        schematicDialog.onSettings(() -> new BrowserSettingsDialog(ContentType.SCHEMATIC, () -> {
+            if (schematicDialog.isLoaded()) {
+                ((BrowserDialog<?>) schematicDialog.get()).reloadSettings();
+            }
+        }).show());
+
         lazyComponents.add(mapDialog);
         lazyComponents.add(schematicDialog);
     }

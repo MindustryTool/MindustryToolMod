@@ -87,6 +87,12 @@ public class BrowserDialog<T extends ContentData> extends BaseDialog {
         rebuild();
     }
 
+    /** Reload settings and refresh the view. */
+    public void reloadSettings() {
+        request.setItemPerPage(calculateItemsPerPage(type));
+        rebuild();
+    }
+
     /** Dispose resources when unloading. */
     public void dispose() {
         debouncer.shutdown();
