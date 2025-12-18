@@ -30,6 +30,9 @@ public class CreateRoomDialog extends BaseDialog {
     private int confMaxPlayers;
     private boolean confApproval, confPassword, confAutoHost;
 
+    // State
+    private boolean connecting = false;
+
     // UI References
     private TextField pinField;
 
@@ -101,13 +104,14 @@ public class CreateRoomDialog extends BaseDialog {
         loadConfig();
         if (!confAutoHost)
             return;
-        if (active())
+        if (active() || connecting)
             return;
 
         // Prevent auto-host if we are already connected (Client or Server)
         if (Vars.net.active())
             return;
 
+        connecting = true;
         Vars.ui.hudfrag.showToast("Auto-host: Connecting to Player Network...");
 
         if (selected != null) {
@@ -122,6 +126,7 @@ public class CreateRoomDialog extends BaseDialog {
 
                 if (servers.size == 0) {
                     Vars.ui.hudfrag.showToast("Auto-host: No proxy servers found.");
+                    connecting = false;
                     return;
                 }
 
@@ -140,6 +145,8 @@ public class CreateRoomDialog extends BaseDialog {
                             this.selected = best[0];
                             if (this.selected != null)
                                 performCreateRoom(true);
+                            else
+                                connecting = false;
                         }
                     }, e -> {
                         processed[0]++;
@@ -147,10 +154,15 @@ public class CreateRoomDialog extends BaseDialog {
                             this.selected = best[0];
                             if (this.selected != null)
                                 performCreateRoom(true);
+                            else
+                                connecting = false;
                         }
                     });
                 }
-            }, e -> Vars.ui.hudfrag.showToast("Auto-host failed: Could not fetch servers."));
+            }, e -> {
+                Vars.ui.hudfrag.showToast("Auto-host failed: Could not fetch servers.");
+                connecting = false;
+            });
         }
     }
 
@@ -159,8 +171,10 @@ public class CreateRoomDialog extends BaseDialog {
         approvedUUIDs.add(Vars.player.uuid());
         StatsUpdater.overrideName = confName;
 
-        if (Vars.net.client())
-            return; // Client cannot host
+        if (Vars.net.client()) {
+            connecting = false;
+            return;
+        }
 
         // Ensure server is running
         if (!Vars.net.server()) {
@@ -170,6 +184,7 @@ public class CreateRoomDialog extends BaseDialog {
             } catch (Exception e) {
                 if (!headless)
                     Vars.ui.showException(e);
+                connecting = false;
                 return;
             }
         } else {
@@ -183,6 +198,7 @@ public class CreateRoomDialog extends BaseDialog {
 
         Timer.Task t = Timer.schedule(PlayerConnect::closeRoom, 10);
         PlayerConnect.createRoom(selected.ip, selected.port, finalPwd, l -> {
+            connecting = false;
             if (!headless)
                 Vars.ui.loadfrag.hide();
             else
@@ -191,6 +207,7 @@ public class CreateRoomDialog extends BaseDialog {
             link = l;
         },
                 e -> {
+                    connecting = false;
                     if (!headless)
                         Vars.net.handleException(e);
                     else
@@ -198,6 +215,7 @@ public class CreateRoomDialog extends BaseDialog {
                     t.cancel();
                 },
                 r -> {
+                    connecting = false;
                     if (!headless)
                         Vars.ui.loadfrag.hide();
                     t.cancel();
@@ -323,7 +341,7 @@ public class CreateRoomDialog extends BaseDialog {
 
     private void setupButtons() {
         buttons.button("@message.manage-room.create-room", Icon.play, this::createRoom)
-                .disabled(b -> !PlayerConnect.isRoomClosed() || Vars.net.client()); // Disabled if Room Open OR Client
+                .disabled(b -> connecting || !PlayerConnect.isRoomClosed() || Vars.net.client());
         if (Vars.mobile)
             buttons.row();
         buttons.button("@message.manage-room.close-room", Icon.cancel, this::closeRoom)
@@ -497,9 +515,12 @@ public class CreateRoomDialog extends BaseDialog {
     }
 
     private void createRoom() {
+        if (connecting)
+            return;
         if (!validateSettings())
             return;
         saveConfig();
+        connecting = true; // Manual connect start
         performCreateRoom(false);
     }
 
@@ -507,6 +528,7 @@ public class CreateRoomDialog extends BaseDialog {
         PlayerConnect.closeRoom();
         link = null;
         approvedUUIDs.clear();
+        connecting = false;
     }
 
     public void copyLink() {
