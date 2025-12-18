@@ -28,13 +28,6 @@ public class InfoOpener {
                 dialog.show((MapDetailData) cached);
             else if (cached instanceof SchematicDetailData)
                 dialog.show((SchematicDetailData) cached);
-            return;
-        }
-        // Fallback for legacy (if any)
-        if (type == ContentType.MAP && cached instanceof MapDetailData) {
-            ((MapInfoDialog) infoDialog).show((MapDetailData) cached);
-        } else if (cached instanceof SchematicDetailData) {
-            ((SchematicInfoDialog) infoDialog).show((SchematicDetailData) cached);
         }
     }
 
@@ -45,8 +38,6 @@ public class InfoOpener {
                     cache.put(id, m);
                     if (infoDialog instanceof mindustrytool.plugins.browser.ui.DetailDialog)
                         ((mindustrytool.plugins.browser.ui.DetailDialog) infoDialog).show(m);
-                    else
-                        ((MapInfoDialog) infoDialog).show(m);
                 } else {
                     Vars.ui.showInfo("Failed to load map info.");
                 }
@@ -57,8 +48,6 @@ public class InfoOpener {
                     cache.put(id, s);
                     if (infoDialog instanceof mindustrytool.plugins.browser.ui.DetailDialog)
                         ((mindustrytool.plugins.browser.ui.DetailDialog) infoDialog).show(s);
-                    else
-                        ((SchematicInfoDialog) infoDialog).show(s);
                 } else {
                     Vars.ui.showInfo("Failed to load schematic info.");
                 }
