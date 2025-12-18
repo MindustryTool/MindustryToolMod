@@ -5,9 +5,9 @@ import arc.func.Cons;
 import arc.scene.ui.ScrollPane;
 import arc.struct.Seq;
 import arc.util.Log;
-import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.plugins.browser.ui.BaseBrowserDialog;
 
-public class FilterDialog extends BaseDialog {
+public class FilterDialog extends BaseBrowserDialog {
     private final Cons<Cons<Seq<TagCategory>>> tagProvider;
     private final ModService modService = new ModService();
 
@@ -21,8 +21,6 @@ public class FilterDialog extends BaseDialog {
         super("");
 
         this.tagProvider = tagProvider;
-        setFillParent(true);
-        addCloseListener();
         onResize(() -> {
             if (searchConfig != null)
                 show(searchConfig);

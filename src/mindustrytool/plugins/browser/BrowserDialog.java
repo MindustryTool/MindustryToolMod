@@ -5,10 +5,11 @@ import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.ScrollPane;
 import arc.struct.*;
+import mindustrytool.plugins.browser.ui.BaseBrowserDialog;
 import mindustry.ui.dialogs.BaseDialog;
 import java.util.concurrent.TimeUnit;
 
-public class BrowserDialog<T extends ContentData> extends BaseDialog {
+public class BrowserDialog<T extends ContentData> extends BaseBrowserDialog {
     private static final float IMG_SIZE = 210, INFO_H = 60;
     private final ContentType type;
     private final BaseDialog infoDialog;

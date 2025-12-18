@@ -4,10 +4,9 @@ import arc.*;
 import arc.scene.ui.layout.*;
 import arc.struct.Seq;
 
-import mindustry.ui.dialogs.*;
 import mindustrytool.plugins.browser.*;
 
-public class DetailDialog extends BaseDialog {
+public class DetailDialog extends BaseBrowserDialog {
     private final Table heroTable = new Table();
     private final Table actionTable = new Table();
     private final Table tabsTable = new Table();
@@ -15,8 +14,6 @@ public class DetailDialog extends BaseDialog {
 
     public DetailDialog() {
         super("");
-        addCloseListener();
-        setFillParent(true);
         setupUI();
     }
 
@@ -43,13 +40,6 @@ public class DetailDialog extends BaseDialog {
 
     private float mobileWidth() {
         return Math.min(Core.graphics.getWidth() - 40f, 400f);
-    }
-
-    private void loading(boolean load) {
-        if (load)
-            mindustry.Vars.ui.loadfrag.show("Posting...");
-        else
-            mindustry.Vars.ui.loadfrag.hide();
     }
 
     private Table longIcon(arc.scene.style.TextureRegionDrawable icon, Long value) {
@@ -210,69 +200,13 @@ public class DetailDialog extends BaseDialog {
         // Tags
         if (tags != null && !tags.isEmpty()) {
             // Sort tags by color priority
-            tags.sort((t1, t2) -> {
-                String[] priority = { "#394ba0", "#d54799", "#ef4444", "#faa31b" };
-                int p1 = 100, p2 = 100;
-
-                if (t1.color() != null) {
-                    for (int i = 0; i < priority.length; i++) {
-                        if (t1.color().equalsIgnoreCase(priority[i])) {
-                            p1 = i;
-                            break;
-                        }
-                    }
-                }
-                if (t2.color() != null) {
-                    for (int i = 0; i < priority.length; i++) {
-                        if (t2.color().equalsIgnoreCase(priority[i])) {
-                            p2 = i;
-                            break;
-                        }
-                    }
-                }
-                return Integer.compare(p1, p2);
-            });
+            TagRenderer.sortTags(tags);
 
             Table tagTable = new Table();
             tagTable.left();
             for (TagData t : tags) {
-                if (t == null || t.name() == null)
-                    continue;
-
-                // Rich Tag Rendering (FilterDialog-style with border, icon, and color)
-                try {
-                    String tagName = t.name();
-                    String colorHex = t.color();
-                    String iconUrl = t.icon();
-
-                    // Parse Color (Fallback to Accent)
-                    arc.graphics.Color tagColor = mindustry.graphics.Pal.accent;
-                    if (colorHex != null && !colorHex.isEmpty()) {
-                        try {
-                            tagColor = arc.graphics.Color.valueOf(colorHex);
-                        } catch (Throwable ignored) {
-                        }
-                    }
-
-                    final arc.graphics.Color finalColor = tagColor;
-                    final String finalIconUrl = iconUrl;
-
-                    // FilterDialog-style button with border
-                    tagTable.button(b -> {
-                        b.left();
-                        if (finalIconUrl != null && !finalIconUrl.isEmpty()) {
-                            try {
-                                b.add(new NetworkImage(finalIconUrl)).size(20).padRight(4);
-                            } catch (Throwable ignored) {
-                            }
-                        }
-                        b.add(tagName).color(finalColor).fontScale(0.9f);
-                    }, mindustry.ui.Styles.flatBordert, () -> {
-                    }).height(36).pad(2).padRight(4);
-                } catch (Throwable e) {
-                    // Fallback: just show tag name
-                    tagTable.add("[" + t.name() + "]").color(mindustry.graphics.Pal.accent).padRight(8f);
-                }
+                TagRenderer.render(tagTable, t, 1f, () -> {
+                });
             }
             infoTable.add(tagTable).left().growX().padBottom(10f).row();
         }
@@ -388,7 +322,7 @@ public class DetailDialog extends BaseDialog {
                 return;
             }
 
-            loading(true);
+            loading(true, "Posting...");
             mindustrytool.plugins.browser.Api.postComment(
                     data instanceof MapDetailData ? "map" : "schematic", id, text,
                     success -> {
