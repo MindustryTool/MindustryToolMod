@@ -2,8 +2,7 @@ package mindustrytool.plugins.browser;
 
 public class CommentData {
     private String id;
-    private String userId;
-    private String userParams; // JSON or specialized string? Assuming simple name for now
+
     private String content;
     private long likes;
     private long time;

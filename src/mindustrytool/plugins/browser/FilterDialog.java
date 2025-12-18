@@ -10,7 +10,7 @@ import mindustry.ui.dialogs.BaseDialog;
 public class FilterDialog extends BaseDialog {
     private final Cons<Cons<Seq<TagCategory>>> tagProvider;
     private final ModService modService = new ModService();
-    private final TagService tagService;
+
     private final Seq<String> modIds = new Seq<>();
 
     private arc.scene.ui.layout.Table tagTable;
@@ -19,7 +19,7 @@ public class FilterDialog extends BaseDialog {
 
     public FilterDialog(TagService tagService, SearchConfig searchConfig, Cons<Cons<Seq<TagCategory>>> tagProvider) {
         super("");
-        this.tagService = tagService;
+
         this.tagProvider = tagProvider;
         setFillParent(true);
         addCloseListener();

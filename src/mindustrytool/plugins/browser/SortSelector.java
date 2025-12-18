@@ -2,7 +2,6 @@ package mindustrytool.plugins.browser;
 
 import arc.scene.ui.layout.Table;
 import mindustry.ui.Styles;
-import mindustry.gen.Icon;
 
 public class SortSelector {
     private final FilterConfig config;

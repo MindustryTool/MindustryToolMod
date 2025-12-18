@@ -3,7 +3,7 @@ package mindustrytool.plugins.browser.ui;
 import arc.*;
 import arc.scene.ui.layout.*;
 import arc.struct.Seq;
-import mindustry.gen.*;
+
 import mindustry.ui.dialogs.*;
 import mindustrytool.plugins.browser.*;
 

@@ -3,7 +3,7 @@ package mindustrytool.plugins.browser;
 import arc.func.Cons;
 import arc.scene.ui.layout.Table;
 import arc.util.Strings;
-import mindustry.gen.Icon;
+
 import mindustry.ui.Styles;
 
 public final class TagBar {

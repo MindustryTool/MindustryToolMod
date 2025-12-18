@@ -1,7 +1,7 @@
 package mindustrytool.plugins.browser;
 
 import arc.Core;
-import arc.scene.ui.*;
+
 import arc.scene.ui.layout.*;
 import arc.struct.Seq;
 import mindustry.ui.Styles;
