@@ -75,9 +75,15 @@ public class Api {
                             }
                         }));
                     } else if (r.getStatus() == arc.util.Http.HttpStatus.OK) {
+                        byte[] result = r.getResult();
                         arc.Core.app.post(() -> {
                             try {
-                                c.get(r.getResult());
+                                if (result.length == 0) {
+                                    String debug = "Status: " + r.getStatus() + "\nCL: " + r.getHeader("Content-Length")
+                                            + "\nHeaders: " + r.getHeaders();
+                                    arc.util.Log.err("Zero Bytes Debug: " + debug);
+                                }
+                                c.get(result);
                             } catch (Exception ex) {
                                 arc.util.Log.err(ex);
                             }
@@ -114,30 +120,55 @@ public class Api {
         return new PagingRequest<>(CommentData.class, url);
     }
 
-    public static void postComment(String type, String id, String content, Cons<Boolean> callback) {
+    public static void postComment(String type, String id, String content, Cons<String> callback) {
         String url = Config.API_URL + "comments";
-        // Simple JSON construction
-        String json = "{ \"targetType\": \"" + type + "\", \"targetId\": \"" + id + "\", \"content\": \"" + content
-                + "\" }";
+
+        arc.struct.ObjectMap<String, String> map = new arc.struct.ObjectMap<>();
+        map.put("targetType", type);
+        map.put("targetId", id);
+        map.put("content", content);
+
+        // Ensure standard JSON format
+        arc.util.serialization.Json jsonWriter = new arc.util.serialization.Json();
+        jsonWriter.setOutputType(arc.util.serialization.JsonWriter.OutputType.json);
+        String json = jsonWriter.toJson(map);
 
         AuthHttp.post(url, json)
                 .error(e -> {
                     arc.util.Log.err("Failed to post comment", e);
-                    callback.get(false);
+                    callback.get("Network error: " + (e.getMessage() != null ? e.getMessage() : e.toString()));
                 })
                 .submit(r -> {
-                    callback.get(r.getStatus() == arc.util.Http.HttpStatus.OK
-                            || r.getStatus() == arc.util.Http.HttpStatus.CREATED);
+                    if (r.getStatus() == arc.util.Http.HttpStatus.OK
+                            || r.getStatus() == arc.util.Http.HttpStatus.CREATED) {
+                        callback.get(null); // Success
+                    } else {
+                        callback.get("Server returned: " + r.getStatus().toString());
+                    }
                 });
     }
 
-    public static void vote(String type, String id, Cons<Boolean> callback) {
+    public static void vote(String type, String id, Cons<String> callback) {
         // Assume /vote endpoint or similar
         String url = Config.API_URL + "vote";
-        String json = "{ \"targetType\": \"" + type + "\", \"targetId\": \"" + id + "\" }";
+
+        arc.struct.ObjectMap<String, String> map = new arc.struct.ObjectMap<>();
+        map.put("targetType", type);
+        map.put("targetId", id);
+
+        arc.util.serialization.Json jsonWriter = new arc.util.serialization.Json();
+        jsonWriter.setOutputType(arc.util.serialization.JsonWriter.OutputType.json);
+        String json = jsonWriter.toJson(map);
 
         AuthHttp.post(url, json)
-                .error(e -> callback.get(false))
-                .submit(r -> callback.get(r.getStatus() == arc.util.Http.HttpStatus.OK));
+                .error(e -> callback.get("Network error: " + (e.getMessage() != null ? e.getMessage() : e.toString())))
+                .submit(r -> {
+                    if (r.getStatus() == arc.util.Http.HttpStatus.OK
+                            || r.getStatus() == arc.util.Http.HttpStatus.CREATED) {
+                        callback.get(null);
+                    } else {
+                        callback.get("Server returned: " + r.getStatus());
+                    }
+                });
     }
 }

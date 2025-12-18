@@ -9,7 +9,6 @@ import mindustrytool.plugins.browser.*;
 public class DetailDialog extends BaseBrowserDialog {
     private final Table heroTable = new Table();
     private final Table actionTable = new Table();
-    private final Table tabsTable = new Table();
     private final Table contentTable = new Table();
 
     public DetailDialog() {
@@ -28,12 +27,9 @@ public class DetailDialog extends BaseBrowserDialog {
             // 2. Action Bar
             t.add(actionTable).growX().pad(10f).row();
 
-            // 3. Tabs (Details | Comments)
-            t.add(tabsTable).growX().row();
-
-            // 4. Tab Content
+            // 3. Content (Comments)
             t.add(contentTable).grow().row();
-        }).grow();
+        }).grow().scrollX(false);
 
         addCloseButton();
     }
@@ -83,14 +79,14 @@ public class DetailDialog extends BaseBrowserDialog {
     public void show(SchematicDetailData data) {
         buildHero(data);
         buildActionBar(data, data.id());
-        buildTabs(data, data.id());
+        showComments(data, data.id());
         show();
     }
 
     public void show(MapDetailData data) {
         buildHero(data);
         buildActionBar(data, data.id());
-        buildTabs(data, data.id());
+        showComments(data, data.id());
         show();
     }
 
@@ -136,7 +132,7 @@ public class DetailDialog extends BaseBrowserDialog {
         if (name == null)
             name = "Untitled";
 
-        boolean mobile = Core.graphics.isPortrait();
+        boolean mobile = Core.graphics.isPortrait() || Core.graphics.getWidth() < 800;
 
         Table previewTable = new Table();
         mindustrytool.plugins.browser.ImageHandler.ImageType imgType = (data instanceof MapDetailData)
@@ -148,55 +144,39 @@ public class DetailDialog extends BaseBrowserDialog {
 
         Table infoTable = new Table();
         infoTable.top().left().margin(10f);
+        Table descTable = new Table();
 
-        // --- ROW 1: Header (Name + Actions) ---
+        // --- COMMON COMPONENTS ---
+
+        // 1. Header (Name + Actions)
         Table headerTable = new Table();
         headerTable.left();
-        headerTable.add(name).fontScale(1.3f).color(mindustry.graphics.Pal.accent).left().growX();
+        headerTable.add(name).fontScale(1.3f).color(mindustry.graphics.Pal.accent).left();
 
-        // Copy ID Button (Small)
         headerTable.button(mindustry.gen.Icon.copy, mindustry.ui.Styles.clearNonei, () -> {
             Core.app.setClipboardText(id);
             mindustry.Vars.ui.showInfoFade("ID Copied");
         }).size(32).padLeft(10).tooltip("Copy ID");
 
-        infoTable.add(headerTable).growX().padBottom(5f).row();
+        // Open Web Button
+        headerTable
+                .button(mindustry.gen.Icon.link, mindustry.ui.Styles.clearNonei,
+                        () -> Core.app.openURI(mindustrytool.plugins.browser.Config.WEB_URL +
+                                (data instanceof MapDetailData ? "/maps/" : "/schematics/") + id))
+                .size(32).padLeft(5).tooltip("@open");
 
-        // --- ROW 2: Metadata (Author • Date • Size) ---
-        Table metaTable = new Table();
-        metaTable.left();
+        // 2. Author
+        Table authorTable = createAuthorTable(authorId);
 
-        // Author
-        arc.scene.ui.Image avatarImage = new arc.scene.ui.Image(mindustry.gen.Icon.players);
-        metaTable.add(avatarImage).size(16).padRight(4);
-        arc.scene.ui.Label authorLabel = new arc.scene.ui.Label("...");
-        authorLabel.setColor(mindustry.graphics.Pal.lightishGray); // Light Gray
-        metaTable.add(authorLabel).padRight(10);
-        loadUser(authorId, avatarImage, authorLabel);
+        // 3. Tags
+        Table tagTable = new Table();
+        tagTable.left().defaults().padRight(4);
+        arc.scene.ui.ScrollPane tagPane = new arc.scene.ui.ScrollPane(tagTable);
+        tagPane.setScrollingDisabled(false, true);
+        tagPane.setFadeScrollBars(false);
+        tagPane.setOverscroll(true, false);
 
-        // Date
-        String timeStr = mindustrytool.plugins.browser.SchematicUtils.parseRelativeTime(createdAt);
-        metaTable.add(new arc.scene.ui.Image(mindustry.gen.Icon.info)).size(16).padRight(4)
-                .color(mindustry.graphics.Pal.gray);
-        metaTable.add(timeStr).color(mindustry.graphics.Pal.gray).padRight(10);
-
-        // Size
-        metaTable.add(width + "x" + height).color(mindustry.graphics.Pal.gray);
-
-        infoTable.add(metaTable).left().padBottom(10f).row();
-
-        // --- ROW 3: Description ---
-        if (description != null && !description.isEmpty()) {
-            infoTable.add(description).wrap().color(mindustry.graphics.Pal.lightishGray).growX().padBottom(10f).left()
-                    .row();
-        }
-
-        // --- ROW 4: Tags ---
         if (tags != null && !tags.isEmpty()) {
-            Table tagTable = new Table();
-            tagTable.left();
-            infoTable.add(tagTable).left().growX().padBottom(10f).row();
-
             ensureTagsLoaded(data, () -> {
                 tagTable.clear();
                 TagRenderer.sortTags(tags);
@@ -207,46 +187,25 @@ public class DetailDialog extends BaseBrowserDialog {
             });
         }
 
+        // 4. Requirements & Power
         final Table reqContainer = new Table();
         final Table powerContainer = new Table();
+        reqContainer.left();
+        powerContainer.left();
 
-        // --- ROW 5: Stats & Power ---
+        // Populate Reqs/Power Logic (Common)
         if (data instanceof SchematicDetailData) {
             SchematicDetailData s = (SchematicDetailData) data;
-
-            // Power (Inline with Requirements header? Or separate line?)
-            // Separate line is cleaner.
-            powerContainer.left();
-            infoTable.add(powerContainer).growX().padBottom(5f).row();
-
-            // Requirements
-            // Use Bundle or Hardcoded "Requirements"
-            // reqContainer.add("@requirements") -> No, explicit header logic inside
-            // populateRequirements?
-            // Actually populateRequirements adds the header. We need to fix it there.
-            reqContainer.left();
-            infoTable.add(reqContainer).growX().padBottom(10f).row();
-
-            // Initial Requirement & Power Preview from Metadata
             if (s.meta() != null) {
-                if (s.meta().requirements() != null) {
+                if (s.meta().requirements() != null)
                     populateRequirements(reqContainer, s.meta().requirements());
-                }
-                if (s.meta().powerProduction() != null || s.meta().powerConsumption() != null) {
+                if (s.meta().powerProduction() != null || s.meta().powerConsumption() != null)
                     populatePower(powerContainer, s.meta().powerProduction(), s.meta().powerConsumption());
-                }
             }
-
-            // Async Load Full Details
             mindustrytool.plugins.browser.Api.downloadSchematic(id, bytes -> {
                 try {
-                    if (bytes == null || bytes.length == 0) {
-                        // Warn but don't clear metadata stats
-                        Core.app.post(() -> {
-                            // Only verify we don't duplicate
-                        });
+                    if (bytes == null || bytes.length == 0)
                         return;
-                    }
                     String schemString = new String(arc.util.serialization.Base64Coder.encode(bytes));
                     mindustry.game.Schematic sc = mindustrytool.plugins.browser.SchematicUtils
                             .readSchematic(schemString);
@@ -257,54 +216,121 @@ public class DetailDialog extends BaseBrowserDialog {
                         });
                     }
                 } catch (Exception e) {
-                    // Ignore silent fail on binary if metadata OK?
-                    // Log error
                 }
             });
         }
 
-        // --- ROW 6: Footer (Status + Verifier) ---
+        // 5. Footer (Status + Verifier)
         Table footerTable = new Table();
         footerTable.left();
-
-        // Status Badge
         if (status != null) {
-            // Create a "Badge" look: Label inside a Table with background
             Table statusBadge = new Table();
             statusBadge.background(mindustry.ui.Styles.flatBordert.up);
             statusBadge.add(status.toUpperCase()).color(statusColor(status)).pad(2, 6, 2, 6).fontScale(0.8f);
             footerTable.add(statusBadge).padRight(10);
         }
-
-        // Verified By
         if (verifiedBy != null) {
             footerTable.add("Verified by: ").color(mindustry.graphics.Pal.gray).fontScale(0.9f);
             arc.scene.ui.Image vAvatar = new arc.scene.ui.Image(mindustry.gen.Icon.players);
             footerTable.add(vAvatar).size(16).padRight(4).padLeft(4);
-
             arc.scene.ui.Label vLabel = new arc.scene.ui.Label("...");
             vLabel.setColor(mindustry.graphics.Pal.lightishGray);
             vLabel.setFontScale(0.9f);
             footerTable.add(vLabel).left();
-
             loadUser(verifiedBy, vAvatar, vLabel);
         }
 
-        infoTable.add(footerTable).left().padTop(10f).row();
+        // --- LAYOUT CONSTRUCTION ---
 
-        // Fetch Full Data (Async Update for Tags/Status/etc)
+        if (mobile) {
+            // MOBILE LAYOUT (Vertical Stack)
+
+            // 1. Title
+            infoTable.add(headerTable).growX().left().row();
+
+            // 2. Subtitle: "designed by [Author]"
+            Table subTitle = new Table();
+            subTitle.left();
+            subTitle.add("designed by ").color(mindustry.graphics.Pal.gray).fontScale(0.85f);
+            subTitle.add(authorTable);
+            infoTable.add(subTitle).left().padBottom(10f).row();
+
+            // 3. Size
+            infoTable.add("Size").color(mindustry.graphics.Pal.gray).fontScale(1f).left().padBottom(2f).row();
+            infoTable.add(width + "x" + height).color(mindustry.graphics.Pal.lightishGray).left().padBottom(10f).row();
+
+            // 4. Author (Detailed? No, already in subtitle. Skip or keep brief if needed.
+            // Screenshot showed "Author" header)
+            // Screenshot showed "Author" header then avatar+name.
+            // Let's follow screenshot: "designed by Oct" (subtitle) AND "Author" section?
+            // Actually screenshot says:
+            // "steam gen but not more use"
+            // "designed by Oct"
+            // "Size" -> 10x12
+            // "Author" -> [Avatar] the_oct.
+            // So Author IS repeated. I will replicate this.
+
+            infoTable.add("Author").color(mindustry.graphics.Pal.gray).fontScale(1f).left().padBottom(2f).row();
+            infoTable.add(createAuthorTable(authorId)).left().padBottom(10f).row();
+
+            // Description (Collapsible)
+            infoTable.add(descTable).growX().left().padBottom(10f).row();
+            buildDescription(descTable, description);
+
+            // 5. Tags
+            infoTable.add("Tags").color(mindustry.graphics.Pal.gray).fontScale(1f).left().padBottom(2f).row();
+            infoTable.add(tagPane).growX().left().padBottom(10f).row();
+
+            // 6. Requirements
+            infoTable.add("Requirements").color(mindustry.graphics.Pal.gray).fontScale(1f).left().padBottom(2f).row();
+            infoTable.add(reqContainer).growX().left().padBottom(5f).row();
+            infoTable.add(powerContainer).growX().left().padBottom(10f).row();
+
+            // Footer
+            infoTable.add(footerTable).left().padTop(10f).row();
+
+        } else {
+            // DESKTOP LAYOUT (Compact Grid)
+
+            // Row 1: Header
+            infoTable.add(headerTable).growX().padBottom(5f).row();
+
+            // Row 2: Metadata (Author • Date • Size)
+            Table metaTable = new Table();
+            metaTable.left();
+            metaTable.add(authorTable).padRight(10); // Reusing authorTable instance
+            // Date
+            String timeStr = mindustrytool.plugins.browser.SchematicUtils.parseRelativeTime(createdAt);
+            metaTable.add(new arc.scene.ui.Image(mindustry.gen.Icon.info)).size(16).padRight(4)
+                    .color(mindustry.graphics.Pal.gray);
+            metaTable.add(timeStr).color(mindustry.graphics.Pal.gray).padRight(10);
+            // Size
+            metaTable.add(width + "x" + height).color(mindustry.graphics.Pal.gray);
+            infoTable.add(metaTable).left().padBottom(10f).row();
+
+            // Row 3: Description
+            infoTable.add(descTable).growX().left().padBottom(10f).row();
+            buildDescription(descTable, description);
+
+            // Row 4: Tags
+            infoTable.add(tagPane).left().growX().padBottom(10f).row();
+
+            // Row 5: Reqs + Power
+            infoTable.add(powerContainer).growX().padBottom(5f).row();
+            infoTable.add(reqContainer).growX().padBottom(10f).row();
+
+            // Row 6: Footer
+            infoTable.add(footerTable).left().padTop(10f).row();
+        }
+
+        // Fetch Full Data Listener (Just logical update, UI containers already bound)
         if (data instanceof SchematicDetailData) {
             mindustrytool.plugins.browser.Api.findSchematicById(id, fullData -> {
                 if (fullData != null) {
                     Core.app.post(() -> {
-                        // We might need to refresh labels if they changed.
-                        // Ideally we bind labels to data, but for now just refreshing the containers
-                        // or relying on specific updaters (like loadUser) is fine.
-                        // But we should update Power/Reqs if meta is better.
                         if (fullData.meta() != null) {
                             if (fullData.meta().requirements() != null)
                                 populateRequirements(reqContainer, fullData.meta().requirements());
-
                             if (fullData.meta().powerProduction() != null || fullData.meta().powerConsumption() != null)
                                 populatePower(powerContainer, fullData.meta().powerProduction(),
                                         fullData.meta().powerConsumption());
@@ -406,43 +432,45 @@ public class DetailDialog extends BaseBrowserDialog {
         container.clear();
         container.add(Core.bundle.get("requirements", "Requirements")).color(mindustry.graphics.Pal.accent).left()
                 .padBottom(5f).row();
-        container.table(t -> {
-            t.left();
-            int i = 0;
-            // Handle both SchematicRequirement and ItemStack (bit hacky or use overloads)
-            // Just assume we can iterate and check type or use helpers
-            for (Object o : reqs) {
-                int amount = 0;
-                arc.scene.ui.Image icon = null;
 
-                if (o instanceof mindustry.type.ItemStack) {
-                    mindustry.type.ItemStack stack = (mindustry.type.ItemStack) o;
-                    amount = stack.amount;
-                    icon = new arc.scene.ui.Image(stack.item.uiIcon);
-                } else if (o instanceof mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement) {
-                    mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement r = (mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement) o;
-                    amount = r.amount();
-                    mindustry.type.Item item = mindustry.Vars.content.items()
-                            .find(it -> it.name.equalsIgnoreCase(r.name()));
-                    if (item == null)
-                        item = mindustry.Vars.content.items().find(it -> it.localizedName.equalsIgnoreCase(r.name()));
+        StringBuilder sb = new StringBuilder();
 
-                    if (item != null)
-                        icon = new arc.scene.ui.Image(item.uiIcon);
-                    else {
-                        icon = new arc.scene.ui.Image();
-                        icon.setColor(arc.graphics.Color.valueOf(r.color() != null ? r.color() : "ffffff"));
-                    }
-                }
+        for (Object o : reqs) {
+            int amount = 0;
+            String name = "?";
+            String color = "ffffff";
+            mindustry.type.Item item = null;
 
-                if (icon != null) {
-                    t.add(icon).size(24f).padRight(4f);
-                    t.add(String.valueOf(amount)).color(mindustry.graphics.Pal.lightishGray).padRight(10f);
-                    if (++i % 4 == 0)
-                        t.row();
-                }
+            if (o instanceof mindustry.type.ItemStack) {
+                mindustry.type.ItemStack stack = (mindustry.type.ItemStack) o;
+                amount = stack.amount;
+                item = stack.item;
+            } else if (o instanceof mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement) {
+                mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement r = (mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement) o;
+                amount = r.amount();
+                name = r.name();
+                color = r.color() != null ? r.color() : "ffffff";
+
+                item = mindustry.Vars.content.items().find(it -> it.name.equalsIgnoreCase(r.name()));
+                if (item == null)
+                    item = mindustry.Vars.content.items().find(it -> it.localizedName.equalsIgnoreCase(r.name()));
             }
-        }).left().growX();
+
+            if (item != null) {
+                sb.append(item.emoji()).append("[lightgray]").append(amount).append("[]  ");
+            } else {
+                // Fallback for missing items: Colored Name
+                sb.append("[#").append(color).append("]").append(name).append("[] [lightgray]").append(amount)
+                        .append("[]  ");
+            }
+        }
+
+        arc.scene.ui.Label label = new arc.scene.ui.Label(sb.toString());
+        label.setWrap(true);
+        label.setAlignment(arc.util.Align.left);
+        label.setColor(arc.graphics.Color.white);
+
+        container.add(label).growX().padRight(20f).left();
     }
 
     private void populatePower(Table container, mindustry.game.Schematic sc) {
@@ -483,38 +511,7 @@ public class DetailDialog extends BaseBrowserDialog {
 
     private void buildActionBar(Object data, String id) {
         actionTable.clear();
-        actionTable.left().defaults().size(48).padRight(8f);
-
-        // Open Web
-        actionTable.button(mindustry.gen.Icon.link, mindustry.ui.Styles.defaulti,
-                () -> Core.app.openURI(mindustrytool.plugins.browser.Config.WEB_URL +
-                        (data instanceof MapDetailData ? "/maps/" : "/schematics/") + id))
-                .tooltip("@open");
-
-        // Copy ID
-        actionTable.button(mindustry.gen.Icon.copy, mindustry.ui.Styles.defaulti,
-                () -> {
-                    Core.app.setClipboardText(id);
-                    mindustry.Vars.ui.showInfoFade("ID Copied");
-                })
-                .tooltip("Copy ID");
-
-        // Download / Copy
-        if (data instanceof MapDetailData) {
-            actionTable.button(mindustry.gen.Icon.download, mindustry.ui.Styles.defaulti,
-                    () -> {
-                        mindustrytool.plugins.browser.ContentHandler.downloadMap(
-                                new mindustrytool.plugins.browser.ContentData().id(((MapDetailData) data).id()));
-                    })
-                    .tooltip("@download");
-        } else {
-            actionTable.button(mindustry.gen.Icon.copy, mindustry.ui.Styles.defaulti,
-                    () -> {
-                        mindustrytool.plugins.browser.ContentHandler.copySchematic(
-                                new mindustrytool.plugins.browser.ContentData().id(((SchematicDetailData) data).id()));
-                    })
-                    .tooltip("@schematic.copy");
-        }
+        actionTable.right().defaults().size(48).padLeft(8f);
 
         // Vote Up
         actionTable.button(mindustry.gen.Icon.upOpen, mindustry.ui.Styles.defaulti,
@@ -524,34 +521,46 @@ public class DetailDialog extends BaseBrowserDialog {
                         return;
                     }
                     mindustrytool.plugins.browser.Api.vote(
-                            data instanceof MapDetailData ? "map" : "schematic", id, success -> {
-                                if (success) {
+                            data instanceof MapDetailData ? "map" : "schematic", id, error -> {
+                                if (error == null) {
                                     mindustry.Vars.ui.showInfoFade("Voted!");
                                 } else {
-                                    mindustry.Vars.ui.showInfoFade("Vote failed.");
+                                    mindustry.Vars.ui.showInfo("Vote failed.\n" + error);
                                 }
                             });
                 })
                 .tooltip("Vote Up");
-    }
 
-    private void buildTabs(Object data, String id) {
-        tabsTable.clear();
-        tabsTable.left().defaults().height(40f).padRight(0f);
-        tabsTable.background(mindustry.ui.Styles.black6);
+        // Schematics: Copy -> Download
+        // Maps: Download only
+        if (data instanceof MapDetailData) {
+            actionTable.button(mindustry.gen.Icon.download, mindustry.ui.Styles.defaulti,
+                    () -> {
+                        mindustrytool.plugins.browser.ContentHandler.downloadMap(
+                                new mindustrytool.plugins.browser.ContentData().id(((MapDetailData) data).id()));
+                    })
+                    .tooltip("@download");
+        } else {
+            // Copy Base64
+            actionTable.button(mindustry.gen.Icon.paste, mindustry.ui.Styles.defaulti,
+                    () -> {
+                        mindustrytool.plugins.browser.ContentHandler.copySchematic(
+                                new mindustrytool.plugins.browser.ContentData().id(((SchematicDetailData) data).id()));
+                    })
+                    .tooltip("@schematic.copy");
 
-        // Tab Buttons
-        mindustry.ui.Styles.flatTogglet.fontColor = mindustry.graphics.Pal.accent;
-        arc.scene.ui.ButtonGroup<arc.scene.ui.Button> group = new arc.scene.ui.ButtonGroup<>();
+            // Download / Import
+            actionTable.button(mindustry.gen.Icon.download, mindustry.ui.Styles.defaulti,
+                    () -> {
+                        mindustrytool.plugins.browser.ContentHandler.downloadSchematic(
+                                new mindustrytool.plugins.browser.ContentData().id(((SchematicDetailData) data).id()));
+                    })
+                    .tooltip("@schematic.saved");
+        }
 
-        tabsTable.button("@details", mindustry.ui.Styles.flatTogglet, () -> showDetails(data, id))
-                .group(group).checked(true).growX().height(50f);
-
-        tabsTable.button("@comments", mindustry.ui.Styles.flatTogglet, () -> showComments(data, id))
-                .group(group).growX().height(50f);
-
-        // Initial show
-        showDetails(data, id);
+        // Details Button
+        actionTable.button(mindustry.gen.Icon.info, mindustry.ui.Styles.defaulti, () -> showDetailsPopup(data))
+                .tooltip("Details");
     }
 
     private void showComments(Object data, String id) {
@@ -586,15 +595,15 @@ public class DetailDialog extends BaseBrowserDialog {
             loading(true, "Posting...");
             mindustrytool.plugins.browser.Api.postComment(
                     data instanceof MapDetailData ? "map" : "schematic", id, text,
-                    success -> {
+                    error -> {
                         loading(false);
-                        if (success) {
+                        if (error == null) {
                             area.setText("");
                             mindustry.Vars.ui.showInfoFade("Comment posted!");
                             // Refresh
                             showComments(data, id);
                         } else {
-                            mindustry.Vars.ui.showInfo("Failed to post comment.");
+                            mindustry.Vars.ui.showInfo("Failed to post comment.\n" + error);
                         }
                     });
         }).size(48f);
@@ -625,98 +634,157 @@ public class DetailDialog extends BaseBrowserDialog {
 
     // Removed buildSchematicDetails as it is now integrated into buildHero helpers
 
-    private void showDetails(Object data, String id) {
-        // For Schematics, details are now in Hero.
+    private void showDetailsPopup(Object data) {
         if (data instanceof SchematicDetailData) {
-            // No extra content in details tab for currently.
-            // Maybe show message
-            contentTable.clear();
-            contentTable.add("See info above.").color(mindustry.graphics.Pal.gray);
-        } else {
-            // Map details
-            contentTable.clear();
-            contentTable.top().left().margin(10f);
-
-            // Map details (Rules) - Keep this as it is large
-            // ... (rest of map logic)
-
-            // Rules Panel
-            Table rulesContainer = new Table();
-            rulesContainer.background(mindustry.ui.Styles.black6).margin(10f);
-            rulesContainer.add("Waves & Rules").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
-
-            Table rulesTable = new Table();
-            rulesTable.left();
-            rulesTable.add("Analyzing map data...").color(mindustry.graphics.Pal.accent);
-            rulesContainer.add(rulesTable).growX();
-
-            contentTable.add(rulesContainer).growX().padBottom(10f).row();
-
-            mindustrytool.plugins.browser.Api.downloadMap(id, bytes -> {
-                if (bytes == null || bytes.length == 0) {
-                    Core.app.post(() -> {
-                        rulesTable.clear();
-                        rulesTable.add("Preview unavailable (No Data)").color(mindustry.graphics.Pal.gray);
-                    });
-                    return;
-                }
-
-                try {
-                    mindustry.game.Rules rules = mindustrytool.plugins.browser.MapUtils.readRules(bytes);
-                    Core.app.post(() -> {
-                        rulesTable.clear();
-                        if (rules == null) {
-                            rulesTable.add("Analysis failed.").color(mindustry.graphics.Pal.remove);
-                        } else {
-                            String mode = rules.attackMode ? "Attack" : (rules.pvp ? "PvP" : "Survival");
-                            rulesTable.add("Mode: " + mode).color(mindustry.graphics.Pal.lightishGray).left()
-                                    .padBottom(5f).row();
-
-                            if (rules.spawns.isEmpty()) {
-                                rulesTable.add("No waves defined.").color(mindustry.graphics.Pal.gray).left();
-                            } else {
-                                rulesTable.add("Waves:").color(mindustry.graphics.Pal.accent).left().padBottom(5f)
-                                        .row();
-                                Table waveList = new Table();
-                                waveList.left();
-                                int i = 0;
-                                int count = 0;
-                                for (mindustry.game.SpawnGroup group : rules.spawns) {
-                                    if (group.type == null)
-                                        continue;
-
-                                    if (count++ > 10) {
-                                        if (count == 12) {
-                                            waveList.add("...").color(mindustry.graphics.Pal.gray).colspan(3).left();
-                                        }
-                                        continue;
-                                    }
-
-                                    waveList.image(group.type.uiIcon).size(24f).padRight(5f);
-                                    waveList.add("x" + group.unitAmount).padRight(5f)
-                                            .color(mindustry.graphics.Pal.lightishGray);
-
-                                    String range = (group.end > 9999) ? (group.begin + "+")
-                                            : (group.begin + "-" + group.end);
-
-                                    waveList.add("[gray]W:[] " + range).padRight(15f)
-                                            .color(mindustry.graphics.Pal.lightishGray);
-
-                                    if (++i % 2 == 0)
-                                        waveList.row();
-                                }
-                                rulesTable.add(waveList).left();
-                            }
-                        }
-                    });
-                } catch (Exception e) {
-                    Core.app.post(() -> {
-                        rulesTable.clear();
-                        rulesTable.add("Error: " + e.getMessage()).color(mindustry.graphics.Pal.remove);
-                    });
-                }
-            });
+            mindustry.Vars.ui.showInfo("No additional details for schematics.");
+            return;
         }
+
+        String id = ((MapDetailData) data).id();
+
+        BaseBrowserDialog dialog = new BaseBrowserDialog("Map Details");
+        dialog.addCloseButton();
+
+        Table contentTable = dialog.cont;
+        contentTable.top().left().margin(10f);
+
+        // Map details (Rules) - Keep this as it is large
+        // ... (rest of map logic)
+
+        // Rules Panel
+        Table rulesContainer = new Table();
+        rulesContainer.background(mindustry.ui.Styles.black6).margin(10f);
+        rulesContainer.add("Waves & Rules").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
+
+        Table rulesTable = new Table();
+        rulesTable.left();
+        rulesTable.add("Analyzing map data...").color(mindustry.graphics.Pal.accent);
+        rulesContainer.add(rulesTable).growX();
+
+        contentTable.add(rulesContainer).growX().padBottom(10f).row();
+
+        mindustrytool.plugins.browser.Api.downloadMap(id, bytes -> {
+            if (bytes == null || bytes.length == 0) {
+                Core.app.post(() -> {
+                    rulesTable.clear();
+                    rulesTable.add("Preview unavailable (No Data)").color(mindustry.graphics.Pal.gray);
+                });
+                return;
+            }
+
+            try {
+                mindustry.game.Rules rules = mindustrytool.plugins.browser.MapUtils.readRules(bytes);
+                Core.app.post(() -> {
+                    rulesTable.clear();
+                    if (rules == null) {
+                        rulesTable.add("Analysis failed.").color(mindustry.graphics.Pal.remove);
+                    } else {
+                        String mode = rules.attackMode ? "Attack" : (rules.pvp ? "PvP" : "Survival");
+                        rulesTable.add("Mode: " + mode).color(mindustry.graphics.Pal.lightishGray).left()
+                                .padBottom(5f).row();
+
+                        if (rules.spawns.isEmpty()) {
+                            rulesTable.add("No waves defined.").color(mindustry.graphics.Pal.gray).left();
+                        } else {
+                            rulesTable.add("Waves:").color(mindustry.graphics.Pal.accent).left().padBottom(5f)
+                                    .row();
+                            Table waveList = new Table();
+                            waveList.left();
+                            int i = 0;
+                            int count = 0;
+                            for (mindustry.game.SpawnGroup group : rules.spawns) {
+                                if (group.type == null)
+                                    continue;
+
+                                if (count++ > 10) {
+                                    if (count == 12) {
+                                        waveList.add("...").color(mindustry.graphics.Pal.gray).colspan(3).left();
+                                    }
+                                    continue;
+                                }
+
+                                waveList.image(group.type.uiIcon).size(24f).padRight(5f);
+                                waveList.add("x" + group.unitAmount).padRight(5f)
+                                        .color(mindustry.graphics.Pal.lightishGray);
+
+                                String range = (group.end > 9999) ? (group.begin + "+")
+                                        : (group.begin + "-" + group.end);
+
+                                waveList.add("[gray]W:[] " + range).padRight(15f)
+                                        .color(mindustry.graphics.Pal.lightishGray);
+
+                                if (++i % 2 == 0)
+                                    waveList.row();
+                            }
+                            rulesTable.add(waveList).left();
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                Core.app.post(() -> {
+                    rulesTable.clear();
+                    rulesTable.add("Error: " + e.getMessage()).color(mindustry.graphics.Pal.remove);
+                });
+            }
+        });
+
+        dialog.show();
+    }
+
+    private Table createAuthorTable(String authorId) {
+        Table t = new Table();
+        t.left();
+        arc.scene.ui.Image avatar = new arc.scene.ui.Image(mindustry.gen.Icon.players);
+        arc.scene.ui.Label label = new arc.scene.ui.Label("...");
+        label.setColor(mindustry.graphics.Pal.lightishGray);
+        t.add(avatar).size(16).padRight(4);
+        t.add(label);
+        loadUser(authorId, avatar, label);
+        return t;
+    }
+
+    private void buildDescription(Table container, String description) {
+        container.clear();
+        container.left();
+        if (description == null || description.isEmpty())
+            return;
+
+        int limit = 150;
+        if (description.length() <= limit) {
+            container.add(description).wrap().color(mindustry.graphics.Pal.lightishGray).growX().left();
+            return;
+        }
+
+        String shortDesc = description.substring(0, limit) + "...";
+        showCollapsed(container, description, shortDesc);
+    }
+
+    private void showCollapsed(Table t, String full, String shortText) {
+        t.clear();
+        t.add(shortText).wrap().color(mindustry.graphics.Pal.lightishGray).growX().left().row();
+        t.button("Read More", mindustry.gen.Icon.downOpen, () -> showExpanded(t, full, shortText))
+                .left().padTop(4f).with(b -> {
+                    b.setStyle(mindustry.ui.Styles.flatBordert);
+                    b.getLabel().setFontScale(0.85f);
+                    b.getLabel().setWrap(false);
+                    b.getCells().first().padRight(8f);
+                    b.margin(12f);
+                    b.left();
+                });
+    }
+
+    private void showExpanded(Table t, String full, String shortText) {
+        t.clear();
+        t.add(full).wrap().color(mindustry.graphics.Pal.lightishGray).growX().left().row();
+        t.button("Show Less", mindustry.gen.Icon.upOpen, () -> showCollapsed(t, full, shortText))
+                .left().padTop(4f).with(b -> {
+                    b.setStyle(mindustry.ui.Styles.flatBordert);
+                    b.getLabel().setFontScale(0.85f);
+                    b.getLabel().setWrap(false);
+                    b.getCells().first().padRight(8f);
+                    b.margin(12f);
+                    b.left();
+                });
     }
 
     public void addCloseButton() {

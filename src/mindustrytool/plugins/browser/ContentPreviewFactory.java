@@ -31,8 +31,20 @@ public class ContentPreviewFactory {
             Vars.ui.showInfo("@schematic.disabled");
             return;
         }
-        ContentHandler.downloadSchematicData(data,
-                d -> Vars.control.input.useSchematic(SchematicUtils.readSchematic(d)));
+        ContentHandler.downloadSchematicBytes(data,
+                bytes -> {
+                    if (bytes == null) {
+                        mindustry.Vars.ui.showErrorMessage("@error.network");
+                        return;
+                    }
+                    try {
+                        mindustry.game.Schematic sc = mindustry.game.Schematics
+                                .read(new java.io.ByteArrayInputStream(bytes));
+                        Vars.control.input.useSchematic(sc);
+                    } catch (Throwable e) {
+                        Vars.ui.showException("Schematic Invalid", e);
+                    }
+                });
         hide.run();
     }
 }

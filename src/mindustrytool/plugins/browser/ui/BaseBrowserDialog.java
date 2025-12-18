@@ -3,7 +3,7 @@ package mindustrytool.plugins.browser.ui;
 import arc.Core;
 import mindustry.ui.dialogs.BaseDialog;
 
-public abstract class BaseBrowserDialog extends BaseDialog {
+public class BaseBrowserDialog extends BaseDialog {
     public BaseBrowserDialog(String title) {
         super(title);
         addCloseListener();
