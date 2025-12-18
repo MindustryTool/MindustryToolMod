@@ -4,7 +4,6 @@ import arc.scene.ui.Button;
 import arc.scene.ui.layout.Table;
 import arc.scene.ui.ImageButton;
 import arc.scene.ui.TextButton;
-import arc.scene.Element;
 import mindustry.Vars;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.gen.Icon;
@@ -53,7 +52,11 @@ public class PausedMenuInjector {
                             }
                         });
 
-                        cell.setElement(newBtn);
+                        // Suppress raw type warning for setElement
+                        @SuppressWarnings("unchecked")
+                        arc.scene.ui.layout.Cell<arc.scene.Element> typedCell = (arc.scene.ui.layout.Cell<arc.scene.Element>) cell;
+                        typedCell.setElement(newBtn);
+
                         replaced = true;
                         break;
                     }

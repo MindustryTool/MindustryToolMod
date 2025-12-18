@@ -1,21 +1,15 @@
 package mindustrytool.plugins.playerconnect;
 
 import arc.Core;
+import arc.Events;
 import arc.struct.Seq;
 import arc.util.Log;
+import mindustry.game.EventType;
 import mindustrytool.Plugin;
 import mindustrytool.plugins.browser.LazyComponent;
 
 /**
  * PlayerConnect Plugin - Self-contained multiplayer room system.
- * 
- * This plugin provides Player Connect functionality including:
- * - Creating and hosting rooms via proxy servers
- * - Joining rooms via player-connect:// links
- * - Browsing available rooms
- * - Server provider management
- * 
- * All functionality is self-contained within this package.
  */
 public class PlayerConnectPlugin implements Plugin {
 
@@ -84,6 +78,19 @@ public class PlayerConnectPlugin implements Plugin {
         // Initialize and inject Host dialog
         createRoomDialog = new CreateRoomDialog();
         PausedMenuInjector.inject(createRoomDialog);
+
+        // Auto Host Logic: Delegate to CreateRoomDialog
+        // We use both PlayEvent and WorldLoadEvent to catch all cases (Saved games,
+        // Campaign, New Games)
+        // A small delay ensures the world is fully loaded and 'Vars.state' is correct.
+        Runnable trigger = () -> {
+            if (createRoomDialog != null) {
+                arc.util.Timer.schedule(() -> createRoomDialog.triggerAutoHost(), 2f);
+            }
+        };
+
+        Events.on(EventType.PlayEvent.class, e -> trigger.run());
+        Events.on(EventType.WorldLoadEvent.class, e -> trigger.run());
 
         initialized = true;
     }

@@ -1,16 +1,13 @@
 package mindustrytool.plugins.playerconnect;
 
-import arc.Core;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
 
 public class HostOptionDialog extends BaseDialog {
-    private final BaseDialog createRoomDialog;
 
     public HostOptionDialog(BaseDialog createRoomDialog) {
         super("@message.manage-room.host-title");
-        this.createRoomDialog = createRoomDialog;
 
         addCloseButton();
 
