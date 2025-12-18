@@ -70,6 +70,8 @@ public class PlayerConnectPlugin implements Plugin {
         return 60;
     }
 
+    private static CreateRoomDialog createRoomDialog;
+
     @Override
     public void init() {
         if (initialized)
@@ -78,6 +80,10 @@ public class PlayerConnectPlugin implements Plugin {
         PlayerConnect.init();
         PlayerConnectProviders.loadCustom();
         JoinDialogInjector.inject();
+
+        // Initialize and inject Host dialog
+        createRoomDialog = new CreateRoomDialog();
+        PausedMenuInjector.inject(createRoomDialog);
 
         initialized = true;
     }
@@ -90,6 +96,7 @@ public class PlayerConnectPlugin implements Plugin {
         // Unload lazy components
         roomsDialog.unload();
         joinRoomDialog = null;
+        createRoomDialog = null;
     }
 
     public void showRoomsBrowser() {
@@ -105,6 +112,8 @@ public class PlayerConnectPlugin implements Plugin {
     }
 
     public void showCreateRoomDialog() {
-        new CreateRoomDialog().show();
+        if (createRoomDialog != null) {
+            createRoomDialog.show();
+        }
     }
 }
