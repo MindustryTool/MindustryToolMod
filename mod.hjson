@@ -51,7 +51,7 @@ description:
   '''
 version: v1.16.17-v8
 
-minGameVersion: 152
+minGameVersion: 154
 
 java: true
 
