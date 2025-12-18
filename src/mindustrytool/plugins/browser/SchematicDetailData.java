@@ -14,12 +14,15 @@ public class SchematicDetailData {
     private Long downloads = 0L;
     private Long comments = 0L;
     private Seq<TagData> tags;
-    private String createdAt;
-    private String created_at;
-    private String status;
-    private String verifiedBy;
-    private String verified_by;
-    private SchematicMetadata meta;
+    public String createdAt;
+    public String created_at;
+    public String status;
+    public String verifiedBy;
+    public String verified_by;
+    public String verificationStatus;
+    public String verifierId;
+    public String data; // Potential Base64 payload
+    public SchematicMetadata meta;
 
     public String id() {
         return id;
@@ -124,27 +127,24 @@ public class SchematicDetailData {
         return createdAt != null ? createdAt : created_at;
     }
 
-    public SchematicDetailData createdAt(String createdAt) {
+    public void createdAt(String createdAt) {
         this.createdAt = createdAt;
-        return this;
     }
 
     public String status() {
-        return status;
+        return status != null ? status : verificationStatus;
     }
 
-    public SchematicDetailData status(String status) {
+    public void status(String status) {
         this.status = status;
-        return this;
     }
 
     public String verifiedBy() {
-        return verifiedBy != null ? verifiedBy : verified_by;
+        return verifiedBy != null ? verifiedBy : (verified_by != null ? verified_by : verifierId);
     }
 
-    public SchematicDetailData verifiedBy(String verifiedBy) {
+    public void verifiedBy(String verifiedBy) {
         this.verifiedBy = verifiedBy;
-        return this;
     }
 
     public SchematicMetadata meta() {
@@ -158,6 +158,26 @@ public class SchematicDetailData {
 
     public static class SchematicMetadata {
         private Seq<SchematicRequirement> requirements;
+        public Float powerProduction;
+        public Float powerConsumption;
+
+        public Float powerProduction() {
+            return powerProduction;
+        }
+
+        public SchematicMetadata powerProduction(Float p) {
+            this.powerProduction = p;
+            return this;
+        }
+
+        public Float powerConsumption() {
+            return powerConsumption;
+        }
+
+        public SchematicMetadata powerConsumption(Float p) {
+            this.powerConsumption = p;
+            return this;
+        }
 
         public Seq<SchematicRequirement> requirements() {
             return requirements;

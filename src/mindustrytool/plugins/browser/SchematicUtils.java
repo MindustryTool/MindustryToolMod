@@ -39,4 +39,32 @@ public final class SchematicUtils {
     public static Schematic read(InputStream input) throws IOException {
         return Schematics.read(input);
     }
+
+    public static String parseRelativeTime(String isoDate) {
+        if (isoDate == null)
+            return "Unknown";
+        try {
+            java.time.Instant instant = java.time.Instant.parse(isoDate);
+            long diff = java.time.Duration.between(instant, java.time.Instant.now()).toMillis();
+
+            long seconds = diff / 1000;
+            if (seconds < 60)
+                return "Just now";
+            long minutes = seconds / 60;
+            if (minutes < 60)
+                return minutes + "m ago";
+            long hours = minutes / 60;
+            if (hours < 24)
+                return hours + "h ago";
+            long days = hours / 24;
+            if (days < 30)
+                return days + "d ago";
+            long months = days / 30;
+            if (months < 12)
+                return months + "mo ago";
+            return (months / 12) + "y ago";
+        } catch (Exception e) {
+            return isoDate;
+        }
+    }
 }

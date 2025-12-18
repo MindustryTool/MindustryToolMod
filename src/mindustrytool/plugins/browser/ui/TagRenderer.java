@@ -62,6 +62,16 @@ public class TagRenderer {
                 } catch (Throwable ignored) {
                 }
             }
+
+            // Category Display
+            if (tag.categoryId() != null && !tag.categoryId().isEmpty()) {
+                String cat = mindustrytool.plugins.browser.TagService.getCategoryName(tag.categoryId());
+                // Use same color for category as requested
+                if (cat != null && !cat.isEmpty()) {
+                    b.add(cat).color(finalColor).fontScale(0.9f * scale).padRight(4);
+                }
+            }
+
             b.add(tagName).color(finalColor).fontScale(0.9f * scale).align(Align.center);
         }, Styles.flatBordert, onClick)
                 .height(36 * scale).pad(2).padRight(4);

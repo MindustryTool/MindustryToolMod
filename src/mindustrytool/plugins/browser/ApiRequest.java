@@ -15,7 +15,9 @@ public final class ApiRequest {
             String d = r.getResultAsString();
             if (d != null && !d.isEmpty())
                 Core.app.post(() -> ok.get(JsonIO.json.fromJson(cls, d)));
-        }, null);
+            else
+                Core.app.post(() -> ok.get(null));
+        }, e -> Core.app.post(() -> ok.get(null)));
     }
 
     public static <T> void getWithError(String url, Class<T> cls, Cons<T> ok, Cons<Throwable> err) {
@@ -30,7 +32,7 @@ public final class ApiRequest {
         request(url, r -> {
             String d = r.getResultAsString();
             Core.app.post(() -> ok.get(JsonIO.json.fromJson(Seq.class, cls, d)));
-        }, null);
+        }, e -> Core.app.post(() -> ok.get(null)));
     }
 
     @SuppressWarnings("unchecked")
@@ -39,6 +41,16 @@ public final class ApiRequest {
             String d = r.getResultAsString();
             Core.app.post(() -> ok.get(JsonIO.json.fromJson(Seq.class, cls, d)));
         }, err);
+    }
+
+    public static void getJval(String url, Cons<arc.util.serialization.Jval> ok) {
+        request(url, r -> {
+            String d = r.getResultAsString();
+            if (d != null && !d.isEmpty())
+                Core.app.post(() -> ok.get(arc.util.serialization.Jval.read(d)));
+            else
+                Core.app.post(() -> ok.get(null));
+        }, e -> Core.app.post(() -> ok.get(null)));
     }
 
     private static void request(String url, Cons<arc.util.Http.HttpResponse> ok, Cons<Throwable> err) {

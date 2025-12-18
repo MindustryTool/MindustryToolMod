@@ -25,15 +25,22 @@ public class Api {
                         BrowserAuthService.invalidateToken();
                         // Retry as Guest
                         GuestHttp.get(url)
-                                .error(e2 -> arc.util.Log.err("Guest Retry Failed: " + url, e2))
+                                .error(e2 -> {
+                                    arc.util.Log.err("Guest Retry Failed: " + url, e2);
+                                    try {
+                                        c.get(null);
+                                    } catch (Exception ex) {
+                                        arc.util.Log.err(ex);
+                                    }
+                                })
                                 .submit(r2 -> arc.Core.app.post(() -> {
                                     try {
                                         if (r2.getStatus() == arc.util.Http.HttpStatus.OK) {
                                             c.get(r2.getResult());
                                         } else {
                                             arc.util.Log.info("Guest retry returned status: " + r2.getStatus());
-                                            // Treat non-200 on retry as failure
                                             arc.util.Log.err("Guest Retry Failed with Status: " + r2.getStatus());
+                                            c.get(null);
                                         }
                                     } catch (Exception ex) {
                                         arc.util.Log.err(ex);
@@ -41,6 +48,11 @@ public class Api {
                                 }));
                     } else {
                         arc.util.Log.err(url, e);
+                        try {
+                            c.get(null);
+                        } catch (Exception ex) {
+                            arc.util.Log.err(ex);
+                        }
                     }
                 })
                 .submit(r -> {
@@ -56,7 +68,7 @@ public class Api {
                                 } else {
                                     arc.util.Log.info("Guest retry returned status: " + r2.getStatus());
                                     arc.util.Log.err("Guest Retry Failed with Status: " + r2.getStatus());
-                                    // Treat as error, do typically not call c.get()
+                                    c.get(null);
                                 }
                             } catch (Exception ex) {
                                 arc.util.Log.err(ex);
@@ -72,6 +84,13 @@ public class Api {
                         });
                     } else {
                         arc.util.Log.err("Api.download failed: " + r.getStatus() + " for " + url);
+                        arc.Core.app.post(() -> {
+                            try {
+                                c.get(null);
+                            } catch (Exception ex) {
+                                arc.util.Log.err(ex);
+                            }
+                        });
                     }
                 });
     }
