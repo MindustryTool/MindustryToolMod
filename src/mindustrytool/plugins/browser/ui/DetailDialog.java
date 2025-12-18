@@ -209,6 +209,30 @@ public class DetailDialog extends BaseDialog {
 
         // Tags
         if (tags != null && !tags.isEmpty()) {
+            // Sort tags by color priority
+            tags.sort((t1, t2) -> {
+                String[] priority = { "#394ba0", "#d54799", "#ef4444", "#faa31b" };
+                int p1 = 100, p2 = 100;
+
+                if (t1.color() != null) {
+                    for (int i = 0; i < priority.length; i++) {
+                        if (t1.color().equalsIgnoreCase(priority[i])) {
+                            p1 = i;
+                            break;
+                        }
+                    }
+                }
+                if (t2.color() != null) {
+                    for (int i = 0; i < priority.length; i++) {
+                        if (t2.color().equalsIgnoreCase(priority[i])) {
+                            p2 = i;
+                            break;
+                        }
+                    }
+                }
+                return Integer.compare(p1, p2);
+            });
+
             Table tagTable = new Table();
             tagTable.left();
             for (TagData t : tags) {
