@@ -68,9 +68,10 @@ public class DetailDialog extends BaseBrowserDialog {
 
         Table content = new Table();
         content.left().top();
-        content.add(c.user() != null ? c.user().name() : "Unknown").color(mindustry.graphics.Pal.accent).fontScale(0.9f)
+        content.add(c.user() != null ? c.user().name() + "[]" : "Unknown").color(mindustry.graphics.Pal.accent)
+                .fontScale(0.9f)
                 .left().row();
-        content.add(c.content()).color(mindustry.graphics.Pal.lightishGray).wrap().growX().left();
+        content.add(c.content() + "[]").color(mindustry.graphics.Pal.lightishGray).wrap().growX().left();
 
         row.add(content).growX().top();
         table.add(row).growX().padBottom(5f).row();
@@ -151,7 +152,7 @@ public class DetailDialog extends BaseBrowserDialog {
         // 1. Header (Name + Actions)
         Table headerTable = new Table();
         headerTable.left();
-        headerTable.add(name).fontScale(1.3f).color(mindustry.graphics.Pal.accent).left();
+        headerTable.add(name + "[]").fontScale(1.3f).color(mindustry.graphics.Pal.accent).left();
 
         headerTable.button(mindustry.gen.Icon.copy, mindustry.ui.Styles.clearNonei, () -> {
             Core.app.setClipboardText(id);
@@ -356,7 +357,7 @@ public class DetailDialog extends BaseBrowserDialog {
                 if (user != null) {
                     Core.app.post(() -> {
                         if (user.name() != null && !user.name().isEmpty()) {
-                            nameLabel.setText(user.name());
+                            nameLabel.setText(user.name() + "[]");
                         } else {
                             // Name missing in standard model, likely different JSON key.
                             // Trigger fallback fetch logic below...
@@ -788,8 +789,8 @@ public class DetailDialog extends BaseBrowserDialog {
     }
 
     public void addCloseButton() {
-        actionTable.button(mindustry.gen.Icon.left, mindustry.ui.Styles.defaulti, this::hide)
-                .size(48f).right().padLeft(10f);
+        buttons.clear();
+        buttons.button("@back", mindustry.gen.Icon.left, this::hide).size(210f, 64f);
     }
 
     private void ensureTagsLoaded(Object data, Runnable onDone) {
