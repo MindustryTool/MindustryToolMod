@@ -18,7 +18,6 @@ import mindustry.net.Administration.PlayerAction;
 
 /** Dialog for creating and managing Player Connect rooms. */
 public class CreateRoomDialog extends BaseDialog {
-    // Singleton for ActionFilter access
     public static CreateRoomDialog instance;
 
     private PlayerConnectLink link;
@@ -27,9 +26,12 @@ public class CreateRoomDialog extends BaseDialog {
     private TextButton serverSelectBtn;
 
     // Config values
-    private String confName, confDesc, confPin;
+    private String confName, confDesc, confPin = "";
     private int confMaxPlayers;
     private boolean confApproval, confPassword;
+
+    // UI References
+    private TextField pinField;
 
     // Approval Logic
     private ObjectSet<String> approvedUUIDs = new ObjectSet<>();
@@ -52,8 +54,7 @@ public class CreateRoomDialog extends BaseDialog {
 
         setupUI();
 
-        // Register Global Action Filter (runs once per game session ideally, but safe
-        // here if we check instance)
+        // Global Action Filter
         Vars.netServer.admins.addActionFilter(this::allowAction);
 
         // Events
@@ -64,8 +65,6 @@ public class CreateRoomDialog extends BaseDialog {
                 e.player.team(Team.sharded);
                 return;
             }
-
-            // New unapproved player
             handlePending(e.player);
         });
 
@@ -74,7 +73,6 @@ public class CreateRoomDialog extends BaseDialog {
             if (!active() || !confApproval)
                 return;
             for (Player p : Groups.player) {
-                // Skip local player (host) and already approved players
                 if (p == Vars.player || p.con == null || approvedUUIDs.contains(p.uuid()))
                     continue;
 
@@ -82,11 +80,11 @@ public class CreateRoomDialog extends BaseDialog {
                 if (p.team() != Team.derelict)
                     p.team(Team.derelict);
                 if (p.unit() != null && !p.unit().spawnedByCore)
-                    p.unit().kill(); // Kill non-core units to prevent cheese
+                    p.unit().kill();
             }
         }, 0f, 1f);
 
-        // Inject UI into Player List
+        // Inject UI into Player List/Admin Dialogs
         injectionTask = Timer.schedule(() -> {
             if (!active() || !confApproval)
                 return;
@@ -98,123 +96,97 @@ public class CreateRoomDialog extends BaseDialog {
 
             // 2. Dialog Injection (Admin Menu)
             if (Core.scene != null && Core.scene.root != null) {
-                for (Element e : Core.scene.root.getChildren()) {
-                    if (!(e instanceof BaseDialog))
-                        continue;
-                    BaseDialog dialog = (BaseDialog) e;
-
-                    // Iterate unapproved players to see if this dialog belongs to one
-                    for (Player p : Groups.player) {
-                        if (p == Vars.player || approvedUUIDs.contains(p.uuid()))
-                            continue;
-
-                        // Heuristic: Dialog usually contains the player's name as a Label (title)
-                        // And contains "Kick" button.
-                        boolean hasName = dialog
-                                .find(l -> l instanceof Label && Strings.stripColors(((Label) l).getText().toString())
-                                        .equals(Strings.stripColors(p.name))) != null;
-
-                        if (hasName) {
-                            // Check for "Kick" button to confirm it's the admin menu
-                            boolean isPlayerMenu = dialog.find(b -> b instanceof TextButton &&
-                                    (((TextButton) b).getText().toString().equalsIgnoreCase("Kick")
-                                            || ((TextButton) b).getText().toString().equalsIgnoreCase("Ban"))) != null;
-
-                            if (isPlayerMenu) {
-                                // Inject Approve Button if missing
-                                if (dialog.find("approve-action") == null) {
-                                    // Find the table holding the buttons
-                                    TextButton refBtn = dialog.find(b -> b instanceof TextButton
-                                            && ((TextButton) b).getText().toString().equalsIgnoreCase("Kick")); // Reference
-                                    if (refBtn != null && refBtn.parent instanceof Table) {
-                                        Table btnTable = (Table) refBtn.parent;
-
-                                        btnTable.button("Approve", Icon.ok, () -> {
-                                            approve(p);
-                                            dialog.hide();
-                                        }).name("approve-action").growX().height(50f).row();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                injectAdminDialogs();
             }
         }, 0f, 0.2f);
 
         shown(this::autoSelectServer);
     }
 
-    // ... rest of the content (copying internal methods) ...
+    private void injectAdminDialogs() {
+        for (Element e : Core.scene.root.getChildren()) {
+            if (!(e instanceof BaseDialog))
+                continue;
+            BaseDialog dialog = (BaseDialog) e;
+
+            for (Player p : Groups.player) {
+                if (p == Vars.player || approvedUUIDs.contains(p.uuid()))
+                    continue;
+
+                boolean hasName = dialog.find(l -> l instanceof Label && Strings
+                        .stripColors(((Label) l).getText().toString()).equals(Strings.stripColors(p.name))) != null;
+
+                if (hasName) {
+                    boolean isPlayerMenu = dialog.find(b -> b instanceof TextButton &&
+                            (((TextButton) b).getText().toString().equalsIgnoreCase("Kick")
+                                    || ((TextButton) b).getText().toString().equalsIgnoreCase("Ban"))) != null;
+
+                    if (isPlayerMenu && dialog.find("approve-action") == null) {
+                        TextButton refBtn = dialog.find(b -> b instanceof TextButton
+                                && ((TextButton) b).getText().toString().equalsIgnoreCase("Kick"));
+                        if (refBtn != null && refBtn.parent instanceof Table) {
+                            Table btnTable = (Table) refBtn.parent;
+                            btnTable.button("Approve", Icon.ok, () -> {
+                                approve(p);
+                                dialog.hide();
+                            }).name("approve-action").growX().height(50f).row();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ... Helper Methods ...
     private boolean active() {
         return link != null && !PlayerConnect.isRoomClosed();
     }
 
-    // Action Filter logic
     private boolean allowAction(PlayerAction action) {
         if (!active() || !confApproval)
             return true;
         if (action.player == null)
             return true;
-        // Host/Local player is always allowed
         if (action.player == Vars.player)
             return true;
-
-        // If player is NOT approved, deny all building/config/deposit actions
-        if (!approvedUUIDs.contains(action.player.uuid())) {
+        if (!approvedUUIDs.contains(action.player.uuid()))
             return false;
-        }
         return true;
     }
 
     private void handlePending(Player p) {
         p.team(Team.derelict);
-        // We don't need a queue anymore, just state check
         Call.sendMessage("[accent]" + p.name + " [white]requests to join.");
     }
 
-    // UI Injection Logic
     private void updatePlayerListUI() {
         Table content = Vars.ui.listfrag.content;
         if (content == null)
             return;
 
         SnapshotSeq<Element> children = content.getChildren();
-
-        // Iterate over rows in the player list
         for (Element child : children) {
             if (!(child instanceof Table))
                 continue;
             Table row = (Table) child;
 
-            // Try to find the label with the player name
             Label nameLabel = row.find(e -> e instanceof Label);
             if (nameLabel == null)
                 continue;
+            String rawName = Strings.stripColors(nameLabel.getText().toString());
 
-            String nameText = nameLabel.getText().toString();
-            // Clean up color codes to match
-            String rawName = Strings.stripColors(nameText);
-
-            // Find player by name (imperfect but functional for list UI)
             Player target = Groups.player.find(p -> Strings.stripColors(p.name).equals(rawName));
-
-            // Don't show approve button for self/host or already approved
             if (target != null && target != Vars.player && !approvedUUIDs.contains(target.uuid())) {
-                // Check if we already injected the button
                 if (row.find("approve-btn") != null)
                     continue;
-
                 row.button(Icon.ok, Styles.clearNonei, () -> {
                     approve(target);
-                    // Force rebuild list or it will update on next tick
                     Vars.ui.listfrag.rebuild();
                 }).name("approve-btn").size(45f).padLeft(5f);
             }
         }
     }
 
-    // ... (rest of the file is identical) ...
     private void loadConfig() {
         confName = Core.settings.getString("pc-room-name", Vars.player.name);
         confDesc = Core.settings.getString("pc-room-desc", "A Mindustry Server");
@@ -254,15 +226,12 @@ public class CreateRoomDialog extends BaseDialog {
                 s.top().left();
                 s.defaults().left().padBottom(5);
 
-                // Name
                 s.add("@message.manage-room.server-name").color(Vars.player.color).row();
                 s.field(confName, val -> confName = val).growX().valid(x -> x.length() > 0).row();
 
-                // Desc
                 s.add("@message.manage-room.server-desc").color(Vars.player.color).row();
                 s.area(confDesc, Styles.areaField, val -> confDesc = val).growX().height(80f).row();
 
-                // Max Players
                 s.table(sub -> {
                     sub.add("@message.manage-room.max-players");
                     sub.field(String.valueOf(confMaxPlayers == 0 ? "" : confMaxPlayers), val -> {
@@ -274,10 +243,9 @@ public class CreateRoomDialog extends BaseDialog {
                     sub.add(" (Empty = \u221E)").color(arc.graphics.Color.gray).get().setFontScale(0.8f);
                 }).row();
 
-                // Approval
                 s.check("@message.manage-room.require-approval", confApproval, b -> confApproval = b).row();
-                s.label(() -> confApproval ? "[lightgray](Players join as spectators until approved from Player List)"
-                        : "").padLeft(20f).get().setFontScale(0.8f);
+                s.label(() -> confApproval ? "[lightgray](Spectator until approved)" : "").padLeft(20f).get()
+                        .setFontScale(0.8f);
                 s.row();
 
                 // Password
@@ -290,10 +258,18 @@ public class CreateRoomDialog extends BaseDialog {
                     s.table(p -> {
                         p.left();
                         p.add("PIN (4-6): ");
-                        p.field(confPin, x -> confPin = x).width(150f)
-                                .valid(x -> x.length() >= 4 && x.length() <= 6)
-                                .get().setMaxLength(6);
+                        Cell<TextField> cf = p.field(confPin, val -> confPin = val)
+                                .width(150f);
+
+                        pinField = cf.get();
+                        pinField.setFilter(TextField.TextFieldFilter.digitsOnly);
+                        pinField.setMaxLength(6);
+
+                        // Validator just for visual red border
+                        cf.valid(x -> x.length() >= 4 && x.length() <= 6);
                     }).padLeft(20f).row();
+                } else {
+                    pinField = null;
                 }
 
             }).growX().pad(10f).top();
@@ -301,7 +277,7 @@ public class CreateRoomDialog extends BaseDialog {
             t.row();
             t.image().color(arc.graphics.Color.gray).growX().height(2f).pad(10f).row();
 
-            // Server Selection Button
+            // Server Selection
             t.table(server -> {
                 server.top().left();
                 server.add("Proxy Server:").pad(5).growX().left().row();
@@ -316,6 +292,7 @@ public class CreateRoomDialog extends BaseDialog {
         }).grow();
     }
 
+    // ... server select logic ...
     private void updateServerBtn() {
         if (serverSelectBtn == null)
             return;
@@ -390,12 +367,21 @@ public class CreateRoomDialog extends BaseDialog {
 
     private boolean validateSettings() {
         if (selected == null) {
-            Vars.ui.showInfo("Please select a Proxy Server first.");
+            Vars.ui.showInfo("Error: Please select a Proxy Server first.");
             return false;
         }
-        if (confPassword && (confPin.length() < 4 || confPin.length() > 6)) {
-            Vars.ui.showInfo("PIN must be between 4 and 6 digits.");
-            return false;
+        if (confPassword && pinField != null) {
+            // Read directly from field to ensure sync
+            String p = pinField.getText();
+            if (p == null)
+                p = "";
+            p = p.trim();
+            confPin = p; // Sync back to config var
+
+            if (p.length() < 4 || p.length() > 6) {
+                Vars.ui.showInfo("Error: PIN must be between 4 and 6 digits.\nCurrent length: " + p.length());
+                return false;
+            }
         }
         return true;
     }
@@ -438,7 +424,7 @@ public class CreateRoomDialog extends BaseDialog {
             Vars.netServer.admins.setPlayerLimit(confMaxPlayers);
         }
 
-        String finalPwd = confPassword ? confPin : "";
+        String finalPwd = confPassword ? confPin.trim() : "";
 
         Vars.ui.loadfrag.show("@message.manage-room.create-room");
         Timer.Task t = Timer.schedule(PlayerConnect::closeRoom, 10);
