@@ -42,13 +42,6 @@ public class DetailDialog extends BaseBrowserDialog {
         return Math.min(Core.graphics.getWidth() - 40f, 400f);
     }
 
-    private Table longIcon(arc.scene.style.TextureRegionDrawable icon, Long value) {
-        Table t = new Table();
-        t.add(new arc.scene.ui.Image(icon)).size(20f).padRight(4f).color(mindustry.graphics.Pal.lightishGray);
-        t.add(String.valueOf(value != null ? value : 0)).color(mindustry.graphics.Pal.lightishGray);
-        return t;
-    }
-
     private void loadAvatar(String url, arc.scene.ui.Image image) {
         if (url == null || url.isEmpty())
             return;
@@ -108,32 +101,38 @@ public class DetailDialog extends BaseBrowserDialog {
         // Extract common data
         String id;
         final String authorId;
-        Long likes, downloads;
         String name;
         String description;
         Seq<TagData> tags;
+        int width, height;
+        String createdAt, status, verifiedBy;
 
         if (data instanceof MapDetailData) {
             MapDetailData m = (MapDetailData) data;
             authorId = m.createdBy();
             id = m.id();
-            likes = m.likes();
-            downloads = m.downloads();
             name = m.name();
             description = m.description();
             tags = m.tags();
+            width = m.width();
+            height = m.height();
+            createdAt = m.createdAt();
+            status = m.status();
+            verifiedBy = m.verifiedBy();
         } else {
             SchematicDetailData s = (SchematicDetailData) data;
             authorId = s.createdBy();
             id = s.id();
-            likes = s.likes();
-            downloads = s.downloads();
             name = s.name();
             description = s.description();
             tags = s.tags();
+            width = s.width();
+            height = s.height();
+            createdAt = s.createdAt();
+            status = s.status();
+            verifiedBy = s.verifiedBy();
         }
 
-        // Defensive checks
         if (name == null)
             name = "Untitled";
 
@@ -150,58 +149,32 @@ public class DetailDialog extends BaseBrowserDialog {
         Table infoTable = new Table();
         infoTable.top().left().margin(10f);
 
-        // Name (Title)
-        infoTable.add(name).fontScale(1.2f).color(mindustry.graphics.Pal.accent).left().row();
+        // 1. Name
+        infoTable.add(name).fontScale(1.3f).color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
 
-        // Author Area
+        // 2. Description
+        if (description != null && !description.isEmpty()) {
+            infoTable.add(description).wrap().color(mindustry.graphics.Pal.lightishGray).growX().padBottom(10f).left()
+                    .row();
+        }
+
+        // 3. Size
+        infoTable.add("Size: " + width + "x" + height).color(mindustry.graphics.Pal.gray).left().padBottom(10f).row();
+
+        // 4. Author
         Table authorTable = new Table();
         authorTable.left();
         arc.scene.ui.Image avatarImage = new arc.scene.ui.Image(mindustry.gen.Icon.players);
         authorTable.add(avatarImage).size(24).padRight(5);
-
         arc.scene.ui.Label authorLabel = new arc.scene.ui.Label("Loading...");
         authorLabel.setColor(mindustry.graphics.Pal.lightishGray);
         authorTable.add(authorLabel).left();
-
         infoTable.add(authorTable).left().padBottom(10f).row();
+        loadUser(authorId, avatarImage, authorLabel);
 
-        // Fetch User Data
-        if (authorId != null) {
-            mindustrytool.plugins.browser.Api.findUserById(authorId, user -> {
-                if (user != null) {
-                    Core.app.post(() -> {
-                        authorLabel.setText(user.name());
-                        if (user.imageUrl() != null && !user.imageUrl().isEmpty()) {
-                            loadAvatar(user.imageUrl(), avatarImage);
-                        }
-                    });
-                } else {
-                    Core.app.post(() -> authorLabel.setText("Unknown Author"));
-                }
-            });
-        } else {
-            authorLabel.setText("Unknown");
-        }
-
-        // Stats
-        Table statsGrid = new Table();
-        statsGrid.left().defaults().padRight(20f).left();
-        statsGrid.add(longIcon(mindustry.gen.Icon.download, downloads));
-        statsGrid.add(longIcon(mindustry.gen.Icon.upOpen, likes));
-        infoTable.add(statsGrid).left().padBottom(10f).row();
-
-        // --- NEW: Description & Tags in Hero Section ---
-
-        // Description
-        if (description != null && !description.isEmpty()) {
-            infoTable.add(description).wrap().color(mindustry.graphics.Pal.lightishGray).growX().padBottom(10f).row();
-        }
-
-        // Tags
+        // 5. Tags
         if (tags != null && !tags.isEmpty()) {
-            // Sort tags by color priority
             TagRenderer.sortTags(tags);
-
             Table tagTable = new Table();
             tagTable.left();
             for (TagData t : tags) {
@@ -211,6 +184,97 @@ public class DetailDialog extends BaseBrowserDialog {
             infoTable.add(tagTable).left().growX().padBottom(10f).row();
         }
 
+        // 6 & 7. Requirements & Power (Schematics only)
+        if (data instanceof SchematicDetailData) {
+            SchematicDetailData s = (SchematicDetailData) data;
+
+            // Requirements Container
+            Table reqContainer = new Table();
+            reqContainer.left();
+            infoTable.add(reqContainer).growX().padBottom(10f).row();
+
+            // Power Container
+            Table powerContainer = new Table();
+            powerContainer.left();
+            infoTable.add(powerContainer).growX().padBottom(10f).row();
+
+            // Initial Requirement Preview
+            if (s.meta() != null && s.meta().requirements() != null) {
+                populateRequirements(reqContainer, s.meta().requirements());
+            }
+
+            // Async Load Full Details
+            mindustrytool.plugins.browser.Api.downloadSchematic(id, bytes -> {
+                try {
+                    String schemString = new String(arc.util.serialization.Base64Coder.encode(bytes));
+                    mindustry.game.Schematic sc = mindustrytool.plugins.browser.SchematicUtils
+                            .readSchematic(schemString);
+                    if (sc != null) {
+                        Core.app.post(() -> {
+                            populatePower(powerContainer, sc);
+                            // Also update requirements with exact data if needed, but meta is usually fine.
+                            // If we want to be exact:
+                            populateRequirements(reqContainer, sc.requirements());
+                        });
+                    }
+                } catch (Exception e) {
+                    // ignore or show error in power container
+                }
+            });
+        }
+
+        // 8. Created At
+        arc.scene.ui.Label createdAtLabel = new arc.scene.ui.Label(createdAt != null ? "Created At: " + createdAt : "");
+        createdAtLabel.setColor(mindustry.graphics.Pal.gray);
+        if (createdAt != null)
+            infoTable.add(createdAtLabel).left().padBottom(5f).row();
+        else
+            infoTable.add(createdAtLabel).left().padBottom(5f).row();
+
+        // 9. Status
+        arc.scene.ui.Label statusLabel = new arc.scene.ui.Label(status != null ? "Status: " + status : "");
+        statusLabel.setColor(status != null ? statusColor(status) : mindustry.graphics.Pal.accent);
+        if (status != null)
+            infoTable.add(statusLabel).left().padBottom(5f).row();
+        else
+            infoTable.add(statusLabel).left().padBottom(5f).row();
+
+        // 10. Verified By
+        Table verifierTable = new Table();
+        verifierTable.left();
+        verifierTable.add("Verified By: ").color(mindustry.graphics.Pal.gray).padRight(5f);
+
+        arc.scene.ui.Image vAvatar = new arc.scene.ui.Image(mindustry.gen.Icon.players);
+        verifierTable.add(vAvatar).size(24).padRight(5);
+
+        arc.scene.ui.Label vLabel = new arc.scene.ui.Label("-");
+        vLabel.setColor(mindustry.graphics.Pal.lightishGray);
+        verifierTable.add(vLabel).left();
+
+        infoTable.add(verifierTable).left().padBottom(10f).row();
+        if (verifiedBy != null) {
+            loadUser(verifiedBy, vAvatar, vLabel);
+        }
+
+        // Fetch Full Data to populate missing fields
+        if (data instanceof SchematicDetailData) {
+            mindustrytool.plugins.browser.Api.findSchematicById(id, fullData -> {
+                if (fullData != null) {
+                    Core.app.post(() -> {
+                        if (fullData.createdAt() != null)
+                            createdAtLabel.setText("Created At: " + fullData.createdAt());
+                        if (fullData.status() != null) {
+                            statusLabel.setText("Status: " + fullData.status());
+                            statusLabel.setColor(statusColor(fullData.status()));
+                        }
+                        if (fullData.verifiedBy() != null) {
+                            loadUser(fullData.verifiedBy(), vAvatar, vLabel);
+                        }
+                    });
+                }
+            });
+        }
+
         if (mobile) {
             heroTable.add(previewTable).row();
             heroTable.add(infoTable).growX();
@@ -218,6 +282,98 @@ public class DetailDialog extends BaseBrowserDialog {
             heroTable.add(previewTable).top();
             heroTable.add(infoTable).growX().top();
         }
+    }
+
+    private void loadUser(String userId, arc.scene.ui.Image avatar, arc.scene.ui.Label nameLabel) {
+        if (userId != null) {
+            mindustrytool.plugins.browser.Api.findUserById(userId, user -> {
+                if (user != null) {
+                    Core.app.post(() -> {
+                        nameLabel.setText(user.name());
+                        if (user.imageUrl() != null && !user.imageUrl().isEmpty()) {
+                            loadAvatar(user.imageUrl(), avatar);
+                        }
+                    });
+                } else {
+                    Core.app.post(() -> nameLabel.setText("Unknown"));
+                }
+            });
+        } else {
+            nameLabel.setText("Unknown");
+        }
+    }
+
+    private arc.graphics.Color statusColor(String status) {
+        if ("verified".equalsIgnoreCase(status))
+            return mindustry.graphics.Pal.heal;
+        if ("rejected".equalsIgnoreCase(status))
+            return mindustry.graphics.Pal.remove;
+        return mindustry.graphics.Pal.accent;
+    }
+
+    private void populateRequirements(Table container, Iterable<?> reqs) {
+        container.clear();
+        container.add("@requirements").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
+        container.table(t -> {
+            t.left();
+            int i = 0;
+            // Handle both SchematicRequirement and ItemStack (bit hacky or use overloads)
+            // Just assume we can iterate and check type or use helpers
+            for (Object o : reqs) {
+                int amount = 0;
+                arc.scene.ui.Image icon = null;
+
+                if (o instanceof mindustry.type.ItemStack) {
+                    mindustry.type.ItemStack stack = (mindustry.type.ItemStack) o;
+                    amount = stack.amount;
+                    icon = new arc.scene.ui.Image(stack.item.uiIcon);
+                    // usage of name removed
+                    mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement r = (mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement) o;
+                    amount = r.amount();
+                    mindustry.type.Item item = mindustry.Vars.content.items()
+                            .find(it -> it.name.equalsIgnoreCase(r.name()));
+                    if (item == null)
+                        item = mindustry.Vars.content.items().find(it -> it.localizedName.equalsIgnoreCase(r.name()));
+
+                    if (item != null)
+                        icon = new arc.scene.ui.Image(item.uiIcon);
+                    else {
+                        icon = new arc.scene.ui.Image();
+                        icon.setColor(arc.graphics.Color.valueOf(r.color() != null ? r.color() : "ffffff"));
+                    }
+                }
+
+                if (icon != null) {
+                    t.add(icon).size(24f).padRight(4f);
+                    t.add(String.valueOf(amount)).color(mindustry.graphics.Pal.lightishGray).padRight(10f);
+                    if (++i % 4 == 0)
+                        t.row();
+                }
+            }
+        }).left().growX();
+    }
+
+    private void populatePower(Table container, mindustry.game.Schematic sc) {
+        container.clear();
+        float produced = sc.powerProduction();
+        float consumed = sc.powerConsumption();
+        float net = produced - consumed;
+
+        Table powerTable = new Table();
+        powerTable.left();
+        powerTable.add(new arc.scene.ui.Image(mindustry.gen.Icon.power)).color(mindustry.graphics.Pal.power)
+                .padRight(5f);
+
+        if (produced > 0)
+            powerTable.add("+" + (int) (produced * 60)).color(mindustry.graphics.Pal.heal).padRight(10f);
+        if (consumed > 0)
+            powerTable.add("-" + (int) (consumed * 60)).color(mindustry.graphics.Pal.remove).padRight(10f);
+
+        powerTable.add((net >= 0 ? "+" : "") + (int) (net * 60))
+                .color(net >= 0 ? mindustry.graphics.Pal.heal : mindustry.graphics.Pal.remove);
+
+        container.add("Power Consumption/Production").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
+        container.add(powerTable).left();
     }
 
     private void buildActionBar(Object data, String id) {
@@ -362,164 +518,22 @@ public class DetailDialog extends BaseBrowserDialog {
         contentTable.add(pane).grow().padTop(10f);
     }
 
-    private void buildSchematicDetails(mindustry.game.Schematic sc) {
-        contentTable.clear();
-        contentTable.top().left();
-
-        // Power Stats
-        float produced = sc.powerProduction();
-        float consumed = sc.powerConsumption();
-        float net = produced - consumed;
-
-        // Power Stats Panel
-        Table powerContainer = new Table();
-        powerContainer.background(mindustry.ui.Styles.black6).margin(10f);
-
-        Table powerTable = new Table();
-        powerTable.left();
-        powerTable.add(new arc.scene.ui.Image(mindustry.gen.Icon.power)).color(mindustry.graphics.Pal.power)
-                .padRight(5f);
-
-        if (produced > 0)
-            powerTable.add("+" + (int) (produced * 60)).color(mindustry.graphics.Pal.heal).padRight(10f);
-        if (consumed > 0)
-            powerTable.add("-" + (int) (consumed * 60)).color(mindustry.graphics.Pal.remove).padRight(10f);
-
-        if (produced > 0 || consumed > 0) {
-            powerTable.add((net >= 0 ? "+" : "") + (int) (net * 60)).color(
-                    net >= 0 ? mindustry.graphics.Pal.heal : mindustry.graphics.Pal.remove);
-        } else {
-            powerTable.add("No Power Info").color(mindustry.graphics.Pal.gray);
-        }
-        powerContainer.add(powerTable).left().growX();
-        contentTable.add(powerContainer).growX().padBottom(10f).row();
-
-        // Requirements
-        Table reqContainer = new Table();
-        reqContainer.background(mindustry.ui.Styles.black6).margin(10f);
-        reqContainer.add("@requirements").color(mindustry.graphics.Pal.accent).left().padBottom(5f).row();
-
-        reqContainer.table(t -> {
-            t.left();
-            int i = 0;
-            for (mindustry.type.ItemStack stack : sc.requirements()) {
-                t.image(stack.item.uiIcon).size(24f).padRight(4f);
-                t.add(String.valueOf(stack.amount)).color(mindustry.graphics.Pal.lightishGray).padRight(10f);
-
-                if (++i % 4 == 0)
-                    t.row();
-            }
-        }).left().growX();
-        contentTable.add(reqContainer).growX().padBottom(10f).row();
-    }
+    // Removed buildSchematicDetails as it is now integrated into buildHero helpers
 
     private void showDetails(Object data, String id) {
-        contentTable.clear();
-        contentTable.top().left().margin(10f);
-
+        // For Schematics, details are now in Hero.
         if (data instanceof SchematicDetailData) {
-            SchematicDetailData s = (SchematicDetailData) data;
-
-            // Show metadata requirements immediately if available
-            if (s.meta() != null && s.meta().requirements() != null) {
-                // Wrap in panel
-                Table reqTable = new Table();
-                reqTable.background(mindustry.ui.Styles.black6).margin(10f);
-
-                reqTable.add("Requirements (Preview)").color(mindustry.graphics.Pal.accent).left().row();
-                reqTable.table(t -> {
-                    t.left();
-                    int i = 0;
-                    for (mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement req : s.meta()
-                            .requirements()) {
-                        mindustry.type.Item item = mindustry.Vars.content.items()
-                                .find(it -> it.name.equalsIgnoreCase(req.name()));
-                        if (item == null)
-                            item = mindustry.Vars.content.items()
-                                    .find(it -> it.localizedName.equalsIgnoreCase(req.name()));
-
-                        if (item != null) {
-                            t.image(item.uiIcon).size(24f).padRight(4f);
-                        } else {
-                            t.image().color(arc.graphics.Color.valueOf(req.color() != null ? req.color() : "ffffff"))
-                                    .size(10f);
-                        }
-                        t.add(String.valueOf(req.amount())).color(mindustry.graphics.Pal.lightishGray).padRight(10f);
-                        if (++i % 4 == 0)
-                            t.row();
-                    }
-                }).left().growX().padBottom(5f).row();
-
-                contentTable.add(reqTable).growX().padBottom(10f).row();
-            }
-
-            contentTable.add("Downloading full details...").color(mindustry.graphics.Pal.accent).left().row();
-            mindustrytool.plugins.browser.Api.downloadSchematic(id, bytes -> {
-                try {
-                    String schemString = new String(arc.util.serialization.Base64Coder.encode(bytes));
-                    mindustry.game.Schematic sc = mindustrytool.plugins.browser.SchematicUtils
-                            .readSchematic(schemString);
-                    if (sc != null) {
-                        Core.app.post(() -> buildSchematicDetails(sc));
-                    } else {
-                        Core.app.post(() -> {
-                            contentTable.clear();
-                            contentTable.add("Failed to parse schematic.").color(mindustry.graphics.Pal.remove);
-                        });
-                    }
-                } catch (Exception e) {
-                    StringBuilder hex = new StringBuilder();
-                    for (int i = 0; i < Math.min(bytes.length, 20); i++) {
-                        hex.append(String.format("%02X ", bytes[i]));
-                    }
-                    String headerPreview = hex.toString();
-
-                    String message = "Failed: " + e.getMessage() +
-                            "\nLength: " + bytes.length +
-                            "\nHex: " + headerPreview;
-
-                    Core.app.post(() -> {
-                        contentTable.clear();
-                        if (s.meta() != null && s.meta().requirements() != null) {
-                            Table reqTable = new Table();
-                            reqTable.background(mindustry.ui.Styles.black6).margin(10f);
-                            reqTable.add("Requirements (Preview)").color(mindustry.graphics.Pal.accent).left().row();
-                            reqTable.table(t -> {
-                                t.left();
-                                int i = 0;
-                                for (mindustrytool.plugins.browser.SchematicDetailData.SchematicRequirement req : s
-                                        .meta().requirements()) {
-                                    mindustry.type.Item item = mindustry.Vars.content.items()
-                                            .find(it -> it.name.equalsIgnoreCase(req.name()));
-                                    if (item == null)
-                                        item = mindustry.Vars.content.items()
-                                                .find(it -> it.localizedName.equalsIgnoreCase(req.name()));
-                                    if (item != null) {
-                                        t.image(item.uiIcon).size(24f).padRight(4f);
-                                    } else {
-                                        t.image()
-                                                .color(arc.graphics.Color
-                                                        .valueOf(req.color() != null ? req.color() : "ffffff"))
-                                                .size(10f);
-                                    }
-                                    t.add(String.valueOf(req.amount())).color(mindustry.graphics.Pal.lightishGray)
-                                            .padRight(10f);
-                                    if (++i % 4 == 0)
-                                        t.row();
-                                }
-                            }).left().growX().padBottom(5f).row();
-                            contentTable.add(reqTable).growX().padBottom(10f).row();
-                        } else {
-                            contentTable.add(message)
-                                    .color(mindustry.graphics.Pal.remove)
-                                    .wrap().growX();
-                        }
-                    });
-                }
-            });
+            // No extra content in details tab for currently.
+            // Maybe show message
+            contentTable.clear();
+            contentTable.add("See info above.").color(mindustry.graphics.Pal.gray);
         } else {
             // Map details
-            // REMOVED: Desc and Tags from here (moved to Hero)
+            contentTable.clear();
+            contentTable.top().left().margin(10f);
+
+            // Map details (Rules) - Keep this as it is large
+            // ... (rest of map logic)
 
             // Rules Panel
             Table rulesContainer = new Table();
