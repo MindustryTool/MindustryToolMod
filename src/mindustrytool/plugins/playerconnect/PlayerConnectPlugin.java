@@ -31,9 +31,16 @@ public class PlayerConnectPlugin implements Plugin {
             "Visualizes predicted enemy paths with an organic flow effect.",
             mindustrytool.visuals.PathfindingVisualizer::new);
 
+    // Health Bar Visualization Component
+    private static final LazyComponent<mindustrytool.visuals.HealthBarVisualizer> healthBarVisualizer = new LazyComponent<>(
+            "Health Bars",
+            "Visualizes unit health bars.",
+            mindustrytool.visuals.HealthBarVisualizer::new);
+
     static {
         lazyComponents.add(roomsDialog);
         lazyComponents.add(pathfindingVisualizer);
+        lazyComponents.add(healthBarVisualizer);
     }
 
     /** Gets the singleton instance of the plugin. */
