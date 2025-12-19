@@ -8,6 +8,7 @@ import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
 import arc.util.Time;
 import arc.util.Tmp;
+import arc.math.geom.Point2;
 import mindustry.ai.Pathfinder;
 import mindustry.game.EventType;
 import mindustry.gen.Groups;
@@ -18,13 +19,24 @@ import static mindustry.Vars.*;
 
 public class PathfindingVisualizer {
 
-    private final int MAX_STEPS = 250; // Base length
+    private final int MAX_STEPS = 250;
 
     private static boolean enabled = false;
     private static PathfindingVisualizer instance;
 
+    // Optimization: Staggered Tile Cache with Team Support
+    private static class PathCache {
+        float[] data; // Interleaved x, y
+        int size; // Number of points * 2
+        float lastUpdateTime;
+    }
+
+    // Map: (Packed Pos << 32 | CostType << 8 | Team ID) -> Path Data
+    private final arc.struct.LongMap<PathCache> pathCache = new arc.struct.LongMap<>();
+    // Use LongMap as Set since LongSet is missing
+    private final arc.struct.LongMap<Object> activeTiles = new arc.struct.LongMap<>();
+
     static {
-        // Register ONCE globally
         Events.run(EventType.Trigger.draw, () -> {
             if (enabled && instance != null) {
                 instance.draw();
@@ -48,40 +60,77 @@ public class PathfindingVisualizer {
         if (!state.isGame())
             return;
 
-        Draw.z(mindustry.graphics.Layer.overlayUI); // Draw on top to be sure
+        Draw.z(mindustry.graphics.Layer.overlayUI);
 
-        // ADAPTIVE OPTIMIZATION
+        activeTiles.clear();
+
         int totalUnits = Groups.unit.size();
 
-        // 1. Dynamic Step Reduction: Shorten paths if too many units
-        // < 500 units: 250 steps (Full Quality)
-        // > 1000 units: 100 steps
-        // > 2000 units: 50 steps (Max Performance)
-        int currentMaxSteps = (totalUnits > 2000) ? 50 : (totalUnits > 1000) ? 100 : (totalUnits > 500) ? 150 : 250;
-
-        // 2. Dynamic Culling: Enable Wide Culling only if density is high
+        // Adaptive Config
+        int maxSteps = (totalUnits > 2000) ? 50 : (totalUnits > 1000) ? 100 : (totalUnits > 500) ? 150 : 250;
         boolean useCulling = totalUnits > 300;
-        // Wide bounds: Screen + 500 padding (allows seeing paths slightly off-screen)
         arc.math.geom.Rect cullBounds = useCulling ? Core.camera.bounds(Tmp.r1).grow(500f) : null;
 
+        float now = Time.time;
+        float updateInterval = 15f;
+
         for (Unit unit : Groups.unit) {
-            // FILTER: Don't draw for player's own team
             if (unit.team == player.team())
                 continue;
+            // Removed isGrounded check to allow flying unit visualization
+            // if (!unit.isGrounded()) continue;
 
-            // Only draw if grounded
-            if (!unit.isGrounded())
-                continue;
-
-            // CULLING CHECK
             if (useCulling && !cullBounds.contains(unit.x, unit.y))
                 continue;
 
-            drawUnitPath(unit, currentMaxSteps);
+            // CACHE KEY FIX: Pos(32) + CostType(8) + Team(8)
+            long pos = Point2.pack(unit.tileX(), unit.tileY());
+            long cacheKey = (((long) pos) << 32) | ((long) unit.type.flowfieldPathType << 8) | (long) unit.team.id;
+
+            // Mark as active
+            if (activeTiles.containsKey(cacheKey)) {
+                continue;
+            }
+            activeTiles.put(cacheKey, null);
+
+            // Check Cache
+            PathCache entry = pathCache.get(cacheKey);
+
+            // Recalculate if needed
+            if (entry == null || (now - entry.lastUpdateTime) > updateInterval) {
+                if (entry == null) {
+                    entry = new PathCache();
+                    entry.data = new float[MAX_STEPS * 2];
+                    pathCache.put(cacheKey, entry);
+                }
+                recalculatePath(unit, entry, maxSteps);
+                entry.lastUpdateTime = now + Mathf.random(5f);
+            }
+
+            // CRITICAL FIX: Always update start point
+            if (entry.size >= 2) {
+                entry.data[0] = unit.x;
+                entry.data[1] = unit.y;
+            }
+
+            // Draw from Cache
+            drawFromCache(entry, unit.team.color, maxSteps);
+        }
+
+        // Garbage Collection
+        if (Time.time % 60 == 0) {
+            arc.struct.LongSeq keysToRemove = new arc.struct.LongSeq();
+            for (arc.struct.LongMap.Entry<PathCache> e : pathCache.entries()) {
+                if (!activeTiles.containsKey(e.key)) {
+                    keysToRemove.add(e.key);
+                }
+            }
+            for (int i = 0; i < keysToRemove.size; i++)
+                pathCache.remove(keysToRemove.get(i));
         }
     }
 
-    private void drawUnitPath(Unit unit, int maxSteps) {
+    private void recalculatePath(Unit unit, PathCache entry, int maxSteps) {
         if (pathfinder == null)
             return;
         Tile tile = unit.tileOn();
@@ -91,37 +140,59 @@ public class PathfindingVisualizer {
         int costType = unit.type.flowfieldPathType;
         int fieldType = Pathfinder.fieldCore;
         var field = pathfinder.getField(unit.team, costType, fieldType);
-        if (field == null)
+        if (field == null) {
+            entry.size = 0;
             return;
+        }
 
-        // ULTRA-PERFORMANCE MODE with Dynamic Steps
-
-        Lines.stroke(1f);
         Tile current = tile;
-        float currentX = unit.x;
-        float currentY = unit.y;
-
-        Color col = unit.team.color;
+        // Start point
+        entry.data[0] = unit.x;
+        entry.data[1] = unit.y;
+        int idx = 2;
 
         for (int i = 0; i < maxSteps; i++) {
             Tile next = pathfinder.getTargetTile(current, field);
             if (next == null || next == current)
                 break;
 
-            float nextX = next.worldx();
-            float nextY = next.worldy();
+            if (idx >= entry.data.length - 2)
+                break;
 
-            // Fade out
+            entry.data[idx++] = next.worldx();
+            entry.data[idx++] = next.worldy();
+
+            current = next;
+        }
+        entry.size = idx;
+    }
+
+    private void drawFromCache(PathCache entry, Color col, int maxSteps) {
+        if (entry.size < 4)
+            return;
+
+        Lines.stroke(1f);
+
+        // Iterate through cached points
+        float cx = entry.data[0];
+        float cy = entry.data[1];
+
+        int totalSegments = (entry.size / 2) - 1;
+        if (totalSegments <= 0)
+            return;
+
+        for (int i = 0; i < totalSegments; i++) {
+            float nx = entry.data[(i + 1) * 2];
+            float ny = entry.data[(i + 1) * 2 + 1];
+
             Draw.color(col);
             Draw.alpha(1f - ((float) i / maxSteps));
 
-            Lines.line(currentX, currentY, nextX, nextY);
+            Lines.line(cx, cy, nx, ny);
 
-            current = next;
-            currentX = nextX;
-            currentY = nextY;
+            cx = nx;
+            cy = ny;
         }
-
         Draw.reset();
     }
 }
