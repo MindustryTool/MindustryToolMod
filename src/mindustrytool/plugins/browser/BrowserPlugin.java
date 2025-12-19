@@ -20,6 +20,7 @@ import mindustrytool.Plugin;
  * Uses lazy loading for dialogs to improve startup performance.
  */
 public class BrowserPlugin implements Plugin {
+    @SuppressWarnings("unused")
     private static TextureRegionDrawable toolIcon;
 
     /** Registry of all lazy-loaded components in this plugin. */
@@ -120,13 +121,6 @@ public class BrowserPlugin implements Plugin {
         }).get();
         browseButton.update(() -> browseButton.visible = schematicDialog.isEnabled());
 
-        if (Vars.mobile) {
-            // Mobile: single button opens tools dialog
-            Vars.ui.menufrag.addButton("Tools", Icon.settings, () -> new ToolsMenuDialog().show());
-        } else {
-            // Desktop: Tools button opens custom dialog with dynamic visibility
-            Vars.ui.menufrag.addButton("Tools", toolIcon, () -> new ToolsMenuDialog().show());
-        }
     }
 
     private static void loadIcon() {
@@ -169,4 +163,8 @@ public class BrowserPlugin implements Plugin {
     public static LazyComponent<BaseDialog> getSchematicDialog() {
         return schematicDialog;
     }
-}
+
+    @Override
+    public Seq<LazyComponent<?>> getLazyComponentsInstance() {
+        return lazyComponents;
+    }}

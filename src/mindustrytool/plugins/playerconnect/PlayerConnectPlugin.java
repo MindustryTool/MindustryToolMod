@@ -40,6 +40,11 @@ public class PlayerConnectPlugin implements Plugin {
         return lazyComponents;
     }
 
+    @Override
+    public Seq<LazyComponent<?>> getLazyComponentsInstance() {
+        return lazyComponents;
+    }
+
     public static LazyComponent<PlayerConnectRoomsDialog> getRoomsDialog() {
         return roomsDialog;
     }

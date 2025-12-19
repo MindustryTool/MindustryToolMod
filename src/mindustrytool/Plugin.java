@@ -29,6 +29,24 @@ public interface Plugin {
         return new String[0];
     }
 
+    /**
+     * Optional instance API: return plugin's lazy components for management UIs.
+     * Plugins that expose lazy components should override this to return them.
+     *
+     * Renamed to avoid conflict with existing static accessors `getLazyComponents()`.
+     */
+    default Seq<?> getLazyComponentsInstance() {
+        return new Seq<>();
+    }
+
+    /**
+     * Optional instance API: return plugin-provided settings entries for Tools menu.
+     * Plugins should override to expose settings dialogs/actions.
+     */
+    default Seq<PluginSetting> getSettingsInstance() {
+        return new Seq<>();
+    }
+
     /** Dispose plugin resources. Called during mod dispose. */
     default void dispose() {
     }
