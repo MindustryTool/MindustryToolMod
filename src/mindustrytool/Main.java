@@ -39,53 +39,23 @@ public class Main extends Mod {
         schematicDir.mkdirs();
     }
 
-    /** Load plugins from assets/plugins.txt file. */
-    private void loadPluginsFromConfig() {
-        try {
-            Fi pluginFile = Vars.mods.getMod(Main.class).root.child("plugins.txt");
-            if (!pluginFile.exists()) {
-                Log.warn("[PluginLoader] plugins.txt not found");
-                return;
-            }
-            String content = pluginFile.readString();
-            for (String line : content.split("\n")) {
-                line = line.trim();
-                if (line.isEmpty() || line.startsWith("#"))
-                    continue;
-                tryLoadPlugin(line);
-            }
-            Log.info("[PluginLoader] Found @ plugin(s) in plugins.txt", plugins.size);
-        } catch (Exception e) {
-            Log.err("[PluginLoader] Failed to read plugins.txt");
-            Log.err(e);
-        }
-    }
 
-    /** Try to load a plugin by class name. Returns false if not found. */
-    private static boolean tryLoadPlugin(String className) {
-        try {
-            Class<?> clazz = Class.forName(className);
-            if (Plugin.class.isAssignableFrom(clazz)) {
-                Plugin plugin = (Plugin) clazz.getDeclaredConstructor().newInstance();
-                plugins.add(plugin);
-                Log.info("[PluginLoader] Registered: @", plugin.getName());
-                return true;
-            }
-        } catch (ClassNotFoundException e) {
-            Log.info("[PluginLoader] Plugin not found (skipped): @", className);
-        } catch (Exception e) {
-            Log.err("[PluginLoader] Failed to register: @", className);
-            Log.err(e);
-        }
-        return false;
-    }
+
+
 
     @Override
     public void init() {
         checkForUpdate();
 
-        // Load plugins from assets/plugins.txt
-        loadPluginsFromConfig();
+        // Load plugins via per-plugin meta.txt
+        Seq<Plugin> found = Plugin.loadAll();
+        for (Plugin p : found) {
+            // avoid duplicate registrations by class
+            if (plugins.contains(x -> x.getClass() == p.getClass()))
+                continue;
+            plugins.add(p);
+            Log.info("[PluginLoader] Registered: @", p.getName());
+        }
 
         // Sort plugins by dependency (topological sort) and then priority
         try {

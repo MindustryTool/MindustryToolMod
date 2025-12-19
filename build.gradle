@@ -93,6 +93,12 @@ jar{
     from("assets/"){
         include "**"
     }
+
+    // Include meta.txt files from plugins directory
+    from("src/mindustrytool/plugins") {
+        include "**/meta.txt"
+        into "mindustrytool/plugins"
+    }
 }
 
 task deploy(type: Jar){

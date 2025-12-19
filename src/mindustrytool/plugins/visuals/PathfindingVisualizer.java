@@ -1,4 +1,4 @@
-package mindustrytool.visuals;
+package mindustrytool.plugins.visuals;
 
 import arc.Core;
 import arc.Events;
@@ -77,26 +77,20 @@ public class PathfindingVisualizer {
         for (Unit unit : Groups.unit) {
             if (unit.team == player.team())
                 continue;
-            // Removed isGrounded check to allow flying unit visualization
-            // if (!unit.isGrounded()) continue;
 
             if (useCulling && !cullBounds.contains(unit.x, unit.y))
                 continue;
 
-            // CACHE KEY FIX: Pos(32) + CostType(8) + Team(8)
             long pos = Point2.pack(unit.tileX(), unit.tileY());
             long cacheKey = (((long) pos) << 32) | ((long) unit.type.flowfieldPathType << 8) | (long) unit.team.id;
 
-            // Mark as active
             if (activeTiles.containsKey(cacheKey)) {
                 continue;
             }
             activeTiles.put(cacheKey, null);
 
-            // Check Cache
             PathCache entry = pathCache.get(cacheKey);
 
-            // Recalculate if needed
             if (entry == null || (now - entry.lastUpdateTime) > updateInterval) {
                 if (entry == null) {
                     entry = new PathCache();
@@ -107,17 +101,14 @@ public class PathfindingVisualizer {
                 entry.lastUpdateTime = now + Mathf.random(5f);
             }
 
-            // CRITICAL FIX: Always update start point
             if (entry.size >= 2) {
                 entry.data[0] = unit.x;
                 entry.data[1] = unit.y;
             }
 
-            // Draw from Cache
             drawFromCache(entry, unit.team.color, maxSteps);
         }
 
-        // Garbage Collection
         if (Time.time % 60 == 0) {
             arc.struct.LongSeq keysToRemove = new arc.struct.LongSeq();
             for (arc.struct.LongMap.Entry<PathCache> e : pathCache.entries()) {
@@ -146,7 +137,6 @@ public class PathfindingVisualizer {
         }
 
         Tile current = tile;
-        // Start point
         entry.data[0] = unit.x;
         entry.data[1] = unit.y;
         int idx = 2;
@@ -173,7 +163,6 @@ public class PathfindingVisualizer {
 
         Lines.stroke(1f);
 
-        // Iterate through cached points
         float cx = entry.data[0];
         float cy = entry.data[1];
 

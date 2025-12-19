@@ -7,6 +7,8 @@ import arc.util.Log;
 import mindustry.game.EventType;
 import mindustrytool.Plugin;
 import mindustrytool.plugins.browser.LazyComponent;
+import mindustrytool.plugins.visuals.PathfindingVisualizer;
+import mindustrytool.plugins.visuals.HealthBarVisualizer;
 
 /**
  * PlayerConnect Plugin - Self-contained multiplayer room system.
@@ -26,16 +28,16 @@ public class PlayerConnectPlugin implements Plugin {
             PlayerConnectRoomsDialog::new);
 
     // Enemy Pathfinding Visualization Component
-    private static final LazyComponent<mindustrytool.visuals.PathfindingVisualizer> pathfindingVisualizer = new LazyComponent<>(
+    private static final LazyComponent<PathfindingVisualizer> pathfindingVisualizer = new LazyComponent<>(
             "Enemy Pathfinding",
             "Visualizes predicted enemy paths with an organic flow effect.",
-            mindustrytool.visuals.PathfindingVisualizer::new);
+            PathfindingVisualizer::new);
 
     // Health Bar Visualization Component
-    private static final LazyComponent<mindustrytool.visuals.HealthBarVisualizer> healthBarVisualizer = new LazyComponent<>(
+    private static final LazyComponent<HealthBarVisualizer> healthBarVisualizer = new LazyComponent<>(
             "Health Bars",
             "Visualizes unit health bars.",
-            mindustrytool.visuals.HealthBarVisualizer::new);
+            HealthBarVisualizer::new);
 
     static {
         lazyComponents.add(roomsDialog);

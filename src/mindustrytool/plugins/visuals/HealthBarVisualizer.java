@@ -1,4 +1,4 @@
-package mindustrytool.visuals;
+package mindustrytool.plugins.visuals;
 
 import arc.Core;
 import arc.Events;
@@ -57,9 +57,6 @@ public class HealthBarVisualizer {
         // Draw on overlay layer (above units, below UI)
         Draw.z(mindustry.graphics.Layer.shields + 5f);
 
-        // Access camera directly to avoid Rect allocation if possible,
-        // but Core.camera.bounds(Rect) reuses the Rect passed in.
-        // We can just use the camera fields directly for the Quadtree query.
         float cx = Core.camera.position.x;
         float cy = Core.camera.position.y;
         float cw = Core.camera.width;
