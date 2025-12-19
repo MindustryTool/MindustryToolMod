@@ -82,16 +82,28 @@ public class BrowserPlugin implements Plugin {
     private static void setupKeyboardShortcuts() {
         // Check for keybind presses every frame
         Events.run(mindustry.game.EventType.Trigger.update, () -> {
-            if (Core.input.keyTap(ModKeybinds.mapBrowser)) {
+            boolean noInputFocused = !Core.scene.hasField();
+
+            if (noInputFocused && Core.input.keyTap(ModKeybinds.mapBrowser)) {
                 var dialog = mapDialog.getIfEnabled();
-                if (dialog != null)
-                    dialog.show();
+                if (dialog != null) {
+                    if (dialog.isShown()) {
+                        dialog.hide();
+                    } else {
+                        dialog.show();
+                    }
+                }
             }
 
-            if (Core.input.keyTap(ModKeybinds.schematicBrowser)) {
+            if (noInputFocused && Core.input.keyTap(ModKeybinds.schematicBrowser)) {
                 var dialog = schematicDialog.getIfEnabled();
-                if (dialog != null)
-                    dialog.show();
+                if (dialog != null) {
+                    if (dialog.isShown()) {
+                        dialog.hide();
+                    } else {
+                        dialog.show();
+                    }
+                }
             }
         });
     }
