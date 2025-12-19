@@ -38,33 +38,17 @@ public class DetailDialog extends BaseBrowserDialog {
         return Math.min(Core.graphics.getWidth() - 40f, 400f);
     }
 
-    private void loadAvatar(String url, arc.scene.ui.Image image) {
-        if (url == null || url.isEmpty())
-            return;
-        arc.util.Http.get(url, res -> {
-            byte[] bytes = res.getResult();
-            if (bytes != null && bytes.length > 0) {
-                Core.app.post(() -> {
-                    try {
-                        arc.graphics.Pixmap p = new arc.graphics.Pixmap(bytes);
-                        image.setDrawable(new arc.scene.style.TextureRegionDrawable(
-                                new arc.graphics.g2d.TextureRegion(new arc.graphics.Texture(p))));
-                    } catch (Exception e) {
-                        // ignore invalid images
-                    }
-                });
-            }
-        }, e -> {
-        });
-    }
-
     private void addComment(Table table, mindustrytool.plugins.browser.CommentData c) {
         Table row = new Table();
         row.background(mindustry.gen.Tex.pane).margin(5f);
 
         // Avatar/User
-        row.add(new arc.scene.ui.Image(mindustry.gen.Icon.players)).size(24f).color(mindustry.graphics.Pal.accent)
-                .padRight(10f).top();
+        if (c.user() != null && c.user().imageUrl() != null && !c.user().imageUrl().isEmpty()) {
+            row.add(new NetworkImage(c.user().imageUrl())).size(24f).padRight(10f).top();
+        } else {
+            row.add(new arc.scene.ui.Image(mindustry.gen.Icon.players)).size(24f).color(mindustry.graphics.Pal.accent)
+                    .padRight(10f).top();
+        }
 
         Table content = new Table();
         content.left().top();
@@ -232,13 +216,15 @@ public class DetailDialog extends BaseBrowserDialog {
         }
         if (verifiedBy != null) {
             footerTable.add("Verified by: ").color(mindustry.graphics.Pal.gray).fontScale(0.9f);
-            arc.scene.ui.Image vAvatar = new arc.scene.ui.Image(mindustry.gen.Icon.players);
-            footerTable.add(vAvatar).size(16).padRight(4).padLeft(4);
+            Table vAvatarContainer = new Table();
+            footerTable.add(vAvatarContainer).size(16).padRight(4).padLeft(4);
+            vAvatarContainer.add(new arc.scene.ui.Image(mindustry.gen.Icon.players)).size(16);
+
             arc.scene.ui.Label vLabel = new arc.scene.ui.Label("...");
             vLabel.setColor(mindustry.graphics.Pal.lightishGray);
             vLabel.setFontScale(0.9f);
             footerTable.add(vLabel).left();
-            loadUser(verifiedBy, vAvatar, vLabel);
+            loadUser(verifiedBy, vAvatarContainer, vLabel);
         }
 
         // --- LAYOUT CONSTRUCTION ---
@@ -350,7 +336,7 @@ public class DetailDialog extends BaseBrowserDialog {
         }
     }
 
-    private void loadUser(String userId, arc.scene.ui.Image avatar, arc.scene.ui.Label nameLabel) {
+    private void loadUser(String userId, Table avatarContainer, arc.scene.ui.Label nameLabel) {
         if (userId != null) {
             // First try standard fetch
             mindustrytool.plugins.browser.Api.findUserById(userId, user -> {
@@ -364,7 +350,8 @@ public class DetailDialog extends BaseBrowserDialog {
                             nameLabel.setText("Finding name...");
                         }
                         if (user.imageUrl() != null && !user.imageUrl().isEmpty()) {
-                            loadAvatar(user.imageUrl(), avatar);
+                            avatarContainer.clearChildren();
+                            avatarContainer.add(new NetworkImage(user.imageUrl())).size(16);
                         }
                     });
                 } else {
@@ -735,12 +722,13 @@ public class DetailDialog extends BaseBrowserDialog {
     private Table createAuthorTable(String authorId) {
         Table t = new Table();
         t.left();
-        arc.scene.ui.Image avatar = new arc.scene.ui.Image(mindustry.gen.Icon.players);
+        Table avatarContainer = new Table();
+        avatarContainer.add(new arc.scene.ui.Image(mindustry.gen.Icon.players)).size(16);
         arc.scene.ui.Label label = new arc.scene.ui.Label("...");
         label.setColor(mindustry.graphics.Pal.lightishGray);
-        t.add(avatar).size(16).padRight(4);
+        t.add(avatarContainer).size(16).padRight(4);
         t.add(label);
-        loadUser(authorId, avatar, label);
+        loadUser(authorId, avatarContainer, label);
         return t;
     }
 

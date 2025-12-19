@@ -18,6 +18,12 @@ public class MapDetailData {
     private String status;
     private String verifiedBy;
 
+    // Fallback fields for consistency and different API versions
+    public String verificationStatus;
+    public String verifierId;
+    public String verified_by;
+    public String created_at;
+
     public String id() {
         return id;
     }
@@ -118,7 +124,7 @@ public class MapDetailData {
     }
 
     public String createdAt() {
-        return createdAt;
+        return createdAt != null ? createdAt : created_at;
     }
 
     public MapDetailData createdAt(String createdAt) {
@@ -127,7 +133,7 @@ public class MapDetailData {
     }
 
     public String status() {
-        return status;
+        return status != null ? status : verificationStatus;
     }
 
     public MapDetailData status(String status) {
@@ -136,7 +142,7 @@ public class MapDetailData {
     }
 
     public String verifiedBy() {
-        return verifiedBy;
+        return verifiedBy != null ? verifiedBy : (verified_by != null ? verified_by : verifierId);
     }
 
     public MapDetailData verifiedBy(String verifiedBy) {

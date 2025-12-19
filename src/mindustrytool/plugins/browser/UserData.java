@@ -27,7 +27,14 @@ public class UserData {
     }
 
     public String imageUrl() {
-        return imageUrl != null ? imageUrl : (avatarUrl != null ? avatarUrl : avatar);
+        String url = imageUrl != null ? imageUrl : (avatarUrl != null ? avatarUrl : avatar);
+        if (url != null && !url.isEmpty() && !url.startsWith("http")) {
+            // Relative URL, prefix with IMAGE_URL
+            if (url.startsWith("/"))
+                url = url.substring(1);
+            return Config.IMAGE_URL + url;
+        }
+        return url;
     }
 
     public UserData imageUrl(String imageUrl) {
