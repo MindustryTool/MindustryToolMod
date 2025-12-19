@@ -13,6 +13,7 @@ import mindustry.ui.dialogs.BaseDialog;
 
 import mindustrytool.Main;
 import mindustrytool.Plugin;
+import mindustrytool.plugins.playerconnect.PlayerConnectPlugin;
 
 /**
  * Self-contained Browser plugin for browsing maps and schematics
@@ -20,11 +21,12 @@ import mindustrytool.Plugin;
  * Uses lazy loading for dialogs to improve startup performance.
  */
 public class BrowserPlugin implements Plugin {
-    @SuppressWarnings("unused")
     private static TextureRegionDrawable toolIcon;
 
     /** Registry of all lazy-loaded components in this plugin. */
     public static final Seq<LazyComponent<?>> lazyComponents = new Seq<>();
+
+    private static LazyComponentDialog componentDialog;
 
     // Lazy-loaded dialogs with settings
     // Lazy-loaded dialogs with settings
@@ -106,6 +108,15 @@ public class BrowserPlugin implements Plugin {
                     }
                 }
             }
+
+            if (noInputFocused && Core.input.keyTap(ModKeybinds.manageComponents)) {
+                var dialog = getComponentDialog();
+                if (dialog.isShown()) {
+                    dialog.hide();
+                } else {
+                    dialog.show();
+                }
+            }
         });
     }
 
@@ -121,6 +132,13 @@ public class BrowserPlugin implements Plugin {
         }).get();
         browseButton.update(() -> browseButton.visible = schematicDialog.isEnabled());
 
+        if (Vars.mobile) {
+            // Mobile: single button opens tools dialog
+            Vars.ui.menufrag.addButton("Tools", Icon.settings, () -> new ToolsMenuDialog().show());
+        } else {
+            // Desktop: Tools button opens custom dialog with dynamic visibility
+            Vars.ui.menufrag.addButton("Tools", toolIcon, () -> new ToolsMenuDialog().show());
+        }
     }
 
     private static void loadIcon() {
@@ -164,7 +182,13 @@ public class BrowserPlugin implements Plugin {
         return schematicDialog;
     }
 
-    @Override
-    public Seq<LazyComponent<?>> getLazyComponentsInstance() {
-        return lazyComponents;
-    }}
+    public static LazyComponentDialog getComponentDialog() {
+        if (componentDialog == null) {
+            Seq<LazyComponent<?>> allComponents = new Seq<>();
+            allComponents.addAll(getLazyComponents());
+            allComponents.addAll(PlayerConnectPlugin.getLazyComponents());
+            componentDialog = new LazyComponentDialog(allComponents);
+        }
+        return componentDialog;
+    }
+}

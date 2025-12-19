@@ -112,12 +112,13 @@ public class LazyComponentDialog extends BaseDialog {
 
         // Content area
         card.table(content -> {
+            content.setColor(Color.white); // Reset parent color
             content.margin(12);
             content.defaults().pad(4);
 
             // Header row: Name + icons
             content.table(header -> {
-                header.add(component.getName()).style(Styles.defaultLabel).left().growX();
+                header.add(component.getName()).style(Styles.defaultLabel).color(Color.white).left().growX();
 
                 // Settings button (only if has settings)
                 if (component.hasSettings()) {
@@ -146,9 +147,12 @@ public class LazyComponentDialog extends BaseDialog {
 
             // Status text
             String statusText = component.isEnabled()
-                    ? "[#4CAF50]" + Core.bundle.get("message.lazy-components.enabled") + "[]"
-                    : "[#F44336]" + Core.bundle.get("message.lazy-components.disabled-status") + "[]";
-            content.add(statusText).left().padTop(8);
+                    ? Core.bundle.get("message.lazy-components.enabled")
+                    : Core.bundle.get("message.lazy-components.disabled-status");
+
+            arc.scene.ui.Label label = new arc.scene.ui.Label(statusText);
+            label.setColor(statusColor);
+            content.add(label).left().padTop(8);
         }).grow();
 
         parent.add(card).size(width, CARD_HEIGHT).pad(4);
