@@ -25,8 +25,15 @@ public class PlayerConnectPlugin implements Plugin {
             Core.bundle.get("message.lazy.playerconnect.desc", "Multiplayer rooms - browse, join, and create"),
             PlayerConnectRoomsDialog::new);
 
+    // Enemy Pathfinding Visualization Component
+    private static final LazyComponent<mindustrytool.visuals.PathfindingVisualizer> pathfindingVisualizer = new LazyComponent<>(
+            "Enemy Pathfinding",
+            "Visualizes predicted enemy paths with an organic flow effect.",
+            mindustrytool.visuals.PathfindingVisualizer::new);
+
     static {
         lazyComponents.add(roomsDialog);
+        lazyComponents.add(pathfindingVisualizer);
     }
 
     /** Gets the singleton instance of the plugin. */
@@ -92,6 +99,16 @@ public class PlayerConnectPlugin implements Plugin {
         Events.on(EventType.PlayEvent.class, e -> trigger.run());
         Events.on(EventType.WorldLoadEvent.class, e -> trigger.run());
 
+        // Eagerly load enabled components (crucial for background visualizers)
+        // This ensures PathfindingVisualizer starts if enabled in settings
+        Core.app.post(() -> {
+            for (LazyComponent<?> comp : lazyComponents) {
+                if (comp.isEnabled()) {
+                    comp.get(); // Force instantiation
+                }
+            }
+        });
+
         initialized = true;
     }
 
@@ -102,6 +119,7 @@ public class PlayerConnectPlugin implements Plugin {
         PlayerConnect.disposePinger();
         // Unload lazy components
         roomsDialog.unload();
+        pathfindingVisualizer.unload();
         joinRoomDialog = null;
         createRoomDialog = null;
     }
