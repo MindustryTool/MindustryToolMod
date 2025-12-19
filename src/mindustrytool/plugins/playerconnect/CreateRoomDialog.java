@@ -69,33 +69,41 @@ public class CreateRoomDialog extends BaseDialog {
             handlePending(e.player);
         });
 
-        // Periodic tasks
+        // shown(this::autoSelectServer); // Moved to end of constructor in original
+        // file, keeping it here if needed or relying on original position
+
+        // Periodic tasks for logic (keep low frequency for expensive ops like scene
+        // scan)
         Timer.schedule(() -> {
             if (!active() || !confApproval)
                 return;
+
+            // 1. Enforce Spectator Mode for unapproved players
             for (Player p : Groups.player) {
                 if (p == Vars.player || p.con == null || approvedUUIDs.contains(p.uuid()))
                     continue;
 
-                Call.setHudText(p.con, "[scarlet]Waiting for approval...\n[lightgray]You are in spectator mode.");
                 if (p.team() != Team.derelict)
                     p.team(Team.derelict);
                 if (p.unit() != null && !p.unit().spawnedByCore)
                     p.unit().kill();
             }
-        }, 0f, 1f);
 
-        // Inject UI into Player List/Admin Dialogs
-        Timer.schedule(() -> {
-            if (!active() || !confApproval)
-                return;
-            // 1. List Injection
-            if (Vars.ui.listfrag.content.hasParent())
-                updatePlayerListUI();
-            // 2. Dialog Injection
+            // 2. Dialog Injection (keep this on timer as scanning scene is expensive)
             if (Core.scene != null && Core.scene.root != null)
                 injectAdminDialogs();
         }, 0f, 0.2f);
+
+        // Per-frame UI update for smooth buttons (flicker fix)
+        Events.run(Trigger.update, () -> {
+            if (!active() || !confApproval)
+                return;
+
+            // Only update if player list is actually visible
+            if (Vars.ui.listfrag.content.hasParent()) {
+                updatePlayerListUI();
+            }
+        });
 
         shown(this::autoSelectServer);
     }
@@ -208,10 +216,12 @@ public class CreateRoomDialog extends BaseDialog {
         },
                 e -> {
                     connecting = false;
-                    if (!headless)
-                        Vars.net.handleException(e);
-                    else
+                    if (!headless) {
+                        Vars.ui.loadfrag.hide();
+                        Vars.ui.showException(e);
+                    } else {
                         Vars.ui.hudfrag.showToast("Create Room Error: " + e.getMessage());
+                    }
                     t.cancel();
                 },
                 r -> {
@@ -267,8 +277,14 @@ public class CreateRoomDialog extends BaseDialog {
         }
     }
 
-    // ... active check ...
+    // Check if mod's room management should be active
     private boolean active() {
+        // If approval is required, we consider it active even if just hosting locally
+        // (no proxy link)
+        // provided the server is actually running.
+        if (confApproval && Vars.net.server())
+            return true;
+
         return link != null && !PlayerConnect.isRoomClosed();
     }
 
@@ -288,6 +304,7 @@ public class CreateRoomDialog extends BaseDialog {
     private void handlePending(Player p) {
         p.team(Team.derelict);
         Call.sendMessage("[accent]" + p.name + " [white]requests to join.");
+        Call.infoMessage(p.con, "[scarlet]Waiting for approval...\n[lightgray]You are in spectator mode.");
     }
 
     private void updatePlayerListUI() {
@@ -379,7 +396,10 @@ public class CreateRoomDialog extends BaseDialog {
                 s.label(() -> confAutoHost ? "[lightgray](Automatically starts server on map load)" : "").padLeft(20f)
                         .get().setFontScale(0.8f);
                 s.row();
-                s.check("@message.manage-room.require-approval", confApproval, b -> confApproval = b).row();
+                s.check("@message.manage-room.require-approval", confApproval, b -> {
+                    confApproval = b;
+                    Core.settings.put("pc-room-approval", b);
+                }).row();
                 s.label(() -> confApproval ? "[lightgray](Spectator until approved)" : "").padLeft(20f).get()
                         .setFontScale(0.8f);
                 s.row();
@@ -506,7 +526,7 @@ public class CreateRoomDialog extends BaseDialog {
     void approve(Player p) {
         approvedUUIDs.add(p.uuid());
         p.team(Team.sharded);
-        Call.setHudText(p.con, "");
+        // Removed setHudText ghost box
         Call.sendMessage(p.name + " [lime]has been approved to join!");
         p.unit(UnitTypes.dagger.create(p.team()));
         if (Core.camera != null)
