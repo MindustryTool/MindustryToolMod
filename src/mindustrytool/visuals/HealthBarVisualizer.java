@@ -92,24 +92,22 @@ public class HealthBarVisualizer {
         float x = unit.x;
         float y = unit.y + unit.hitSize * 0.8f + 3f;
 
-        // AESTHETIC: Longer and Thinner
+        // Dimensions: Adjusted for visibility (Wider/Thinner)
         float w = unit.hitSize * 2.5f;
         float h = 2f;
 
-        // Background (Black)
-        Draw.color(Color.black, 0.6f); // Slightly more transparent background
+        // Background (Black with transparency)
+        Draw.color(Color.black, 0.6f);
         Draw.rect(barRegion, x, y, w + 2f, h + 2f);
 
-        // Health (Percentage)
+        // Health Calculation
         float hpPercent = unit.health / unit.maxHealth;
 
-        // COLOR: Use Team Color
-        // TRANSPARENCY: 0.75f (Slightly faded)
+        // Draw Health Bar using Team Color with 75% Opacity
         Draw.color(unit.team.color, 0.75f);
 
         float left = x - w / 2f;
 
-        // HP
         if (hpPercent > 0) {
             float filledW = w * hpPercent;
             float fillCenterX = left + filledW / 2f;

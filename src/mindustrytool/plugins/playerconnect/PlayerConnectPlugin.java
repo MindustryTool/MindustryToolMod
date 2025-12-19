@@ -37,12 +37,44 @@ public class PlayerConnectPlugin implements Plugin {
             "Visualizes unit health bars.",
             mindustrytool.visuals.HealthBarVisualizer::new);
 
+    // Entity Visibility Manager
+    private static final LazyComponent<mindustrytool.visuals.EntityVisibilityManager> entityVisibilityManager = new LazyComponent<>(
+            "Entity Hider",
+            "Hides units/blocks to improve FPS.",
+            mindustrytool.visuals.EntityVisibilityManager::new);
+
     static {
+        // Register Settings for Lazy Component (Settings Gear Icon in Manage
+        // Components)
+        entityVisibilityManager.onSettings(() -> {
+            mindustrytool.visuals.EntityVisibilityManager manager = entityVisibilityManager.getIfEnabled();
+            if (manager != null) {
+                manager.showDialog();
+            } else {
+                arc.Core.app.post(() -> {
+                    mindustry.ui.dialogs.BaseDialog d = new mindustry.ui.dialogs.BaseDialog("Info");
+                    d.cont.add("Please enable 'Entity Hider' first.");
+                    d.addCloseButton();
+                    d.show();
+                });
+            }
+        });
+
         lazyComponents.add(roomsDialog);
         lazyComponents.add(pathfindingVisualizer);
         lazyComponents.add(healthBarVisualizer);
+        lazyComponents.add(entityVisibilityManager);
     }
 
+    // Static Access for UI
+    public static mindustrytool.visuals.EntityVisibilityManager getVisibilityManager() {
+        return entityVisibilityManager.get();
+    }
+
+    // Hook into Tools Menu construction to add the Settings button
+    // This assumes ToolsMenuDialog calls back or we modify ToolsMenuDialog.
+    // Since ToolsMenuDialog is likely generic, I will patch it to check for
+    // 'Configurable' components or just add a hardcoded button for now.
     /** Gets the singleton instance of the plugin. */
     public static PlayerConnectPlugin getInstance() {
         if (instance == null)
