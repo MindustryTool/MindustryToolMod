@@ -226,18 +226,20 @@ public class CreateRoomDialog extends BaseDialog {
                 },
                 r -> {
                     connecting = false;
+                    link = null; // Ensure link is cleared on DC
                     if (!headless)
                         Vars.ui.loadfrag.hide();
                     t.cancel();
                     if (r != null) {
                         String msg = "@message.room." + Strings.camelToKebab(r.name());
+                        msg = Core.bundle.get(msg, msg);
                         if (!headless)
-                            Vars.ui.showText("", msg);
+                            Vars.ui.hudfrag.showToast(msg);
                         else
-                            Vars.ui.hudfrag.showToast(Core.bundle.get(msg, msg));
+                            Vars.ui.hudfrag.showToast(msg);
                     } else if (link == null) {
                         if (!headless)
-                            Vars.ui.showErrorMessage("@message.manage-room.create-room.failed");
+                            Vars.ui.hudfrag.showToast(Core.bundle.get("message.manage-room.create-room.failed"));
                     }
                 });
     }
