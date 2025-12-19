@@ -8,7 +8,6 @@ import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Main;
 import mindustrytool.Plugin;
-import mindustrytool.PluginSetting;
 import mindustrytool.plugins.browser.LazyComponent;
 import mindustrytool.plugins.browser.LazyComponentDialog;
 import mindustrytool.plugins.browser.BrowserPlugin;

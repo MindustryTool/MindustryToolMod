@@ -1,7 +1,6 @@
 package mindustrytool;
 
 import arc.scene.style.Drawable;
-import arc.func.Prov;
 
 /**
  * Lightweight representation of a plugin-provided settings entry.

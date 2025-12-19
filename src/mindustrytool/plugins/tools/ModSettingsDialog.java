@@ -1,8 +1,6 @@
 package mindustrytool.plugins.tools;
 
 import arc.Core;
-import arc.scene.ui.layout.Table;
-import arc.struct.Seq;
 import mindustry.ui.dialogs.BaseDialog;
 
 /**
