@@ -13,6 +13,7 @@ import mindustry.game.EventType.*;
 import mindustry.gen.*;
 import mindustry.content.UnitTypes;
 import mindustry.ui.Styles;
+import mindustry.graphics.Pal;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.net.Administration.PlayerAction;
 
@@ -372,70 +373,92 @@ public class CreateRoomDialog extends BaseDialog {
         cont.clear();
         cont.pane(t -> {
             t.top();
-            // Server Settings
-            t.table(s -> {
-                s.top().left();
+            t.defaults().growX().pad(5);
+
+            // --- SECTION: BASIC INFO ---
+            t.table(Tex.pane, s -> {
+                s.top().left().margin(10);
                 s.defaults().left().padBottom(5);
-                s.add("@message.manage-room.server-name").color(Vars.player.color).row();
+
+                s.table(h -> {
+                    h.image(Icon.info).color(Pal.accent).size(20).padRight(4);
+                    h.add("@message.manage-room.title").color(Pal.accent).fontScale(1.1f);
+                }).growX().padBottom(10).row();
+
+                s.add("@message.manage-room.server-name").color(Pal.accent).row();
                 s.field(confName, val -> confName = val).growX().valid(x -> x.length() > 0).row();
-                s.add("@message.manage-room.server-desc").color(Vars.player.color).row();
+
+                s.add("@message.manage-room.server-desc").color(Pal.accent).padTop(10).row();
                 s.area(confDesc, Styles.areaField, val -> confDesc = val).growX().height(80f).row();
+            }).row();
+
+            // --- SECTION: RULES & SETTINGS ---
+            t.table(Tex.pane, s -> {
+                s.top().left().margin(10);
+                s.defaults().left().padBottom(8);
+
+                s.table(h -> {
+                    h.image(Icon.settings).color(Pal.accent).size(20).padRight(4);
+                    h.add("@message.lazy-components.settings").color(Pal.accent).fontScale(1.1f);
+                }).growX().padBottom(10).row();
+
+                // Max Players
                 s.table(sub -> {
-                    sub.add("@message.manage-room.max-players");
+                    sub.add("@message.manage-room.max-players").padRight(10);
                     sub.field(String.valueOf(confMaxPlayers == 0 ? "" : confMaxPlayers), val -> {
                         if (val.isEmpty())
                             confMaxPlayers = 0;
                         else if (Strings.canParseInt(val))
                             confMaxPlayers = Integer.parseInt(val);
-                    }).width(100f).valid(Strings::canParsePositiveInt);
+                    }).width(80f).valid(Strings::canParsePositiveInt);
                     sub.add(" (Empty = \u221E)").color(arc.graphics.Color.gray).get().setFontScale(0.8f);
                 }).row();
-                // Auto Host Checkbox
-                s.check("Auto host when opening map", confAutoHost, b -> {
+
+                // Checkboxes
+                s.check("@message.manage-room.auto-host", confAutoHost, b -> {
                     confAutoHost = b;
                     Core.settings.put("pc-auto-host", b);
                 }).row();
-                s.label(() -> confAutoHost ? "[lightgray](Automatically starts server on map load)" : "").padLeft(20f)
-                        .get().setFontScale(0.8f);
-                s.row();
+
                 s.check("@message.manage-room.require-approval", confApproval, b -> {
                     confApproval = b;
                     Core.settings.put("pc-room-approval", b);
                 }).row();
-                s.label(() -> confApproval ? "[lightgray](Spectator until approved)" : "").padLeft(20f).get()
-                        .setFontScale(0.8f);
-                s.row();
-                // Password
+
+                // Password / PIN
                 s.check("@message.password", confPassword, b -> {
                     confPassword = b;
                     setupUI();
                 }).row();
+
                 if (confPassword) {
                     s.table(p -> {
                         p.left();
-                        p.add("PIN (4-6): ");
-                        Cell<TextField> cf = p.field(confPin, val -> confPin = val).width(150f);
+                        p.add("PIN (4-6): ").padRight(4);
+                        Cell<TextField> cf = p.field(confPin, val -> confPin = val).width(120f);
                         pinField = cf.get();
                         pinField.setFilter(TextField.TextFieldFilter.digitsOnly);
                         pinField.setMaxLength(6);
                         cf.valid(x -> x.length() >= 4 && x.length() <= 6);
-                    }).padLeft(20f).row();
+                    }).padLeft(32f).row();
                 } else {
                     pinField = null;
                 }
-            }).growX().pad(10f).top();
+            }).row();
 
-            t.row();
-            t.image().color(arc.graphics.Color.gray).growX().height(2f).pad(10f).row();
+            // --- SECTION: CONNECTION ---
+            t.table(Tex.pane, server -> {
+                server.top().left().margin(10);
 
-            // Server Selection
-            t.table(server -> {
-                server.top().left();
-                server.add("Proxy Server:").pad(5).growX().left().row();
+                server.table(h -> {
+                    h.image(Icon.host).color(Pal.accent).size(20).padRight(4);
+                    h.add("@message.manage-room.proxy-server").color(Pal.accent).fontScale(1.1f);
+                }).growX().padBottom(10).row();
+
                 serverSelectBtn = server.button("Select Server", Icon.host, () -> selectDialog.show()).growX()
-                        .height(50f).get();
+                        .height(60f).get();
                 updateServerBtn();
-            }).growX().pad(10f);
+            }).row();
 
         }).grow();
     }
