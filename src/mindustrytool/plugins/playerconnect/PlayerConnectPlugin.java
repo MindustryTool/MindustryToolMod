@@ -7,8 +7,6 @@ import arc.util.Log;
 import mindustry.game.EventType;
 import mindustrytool.Plugin;
 import mindustrytool.plugins.browser.LazyComponent;
-import mindustrytool.plugins.visuals.PathfindingVisualizer;
-import mindustrytool.plugins.visuals.HealthBarVisualizer;
 
 /**
  * PlayerConnect Plugin - Self-contained multiplayer room system.
@@ -27,22 +25,8 @@ public class PlayerConnectPlugin implements Plugin {
             Core.bundle.get("message.lazy.playerconnect.desc", "Multiplayer rooms - browse, join, and create"),
             PlayerConnectRoomsDialog::new);
 
-    // Enemy Pathfinding Visualization Component
-    private static final LazyComponent<PathfindingVisualizer> pathfindingVisualizer = new LazyComponent<>(
-            "Enemy Pathfinding",
-            "Visualizes predicted enemy paths with an organic flow effect.",
-            PathfindingVisualizer::new);
-
-    // Health Bar Visualization Component
-    private static final LazyComponent<HealthBarVisualizer> healthBarVisualizer = new LazyComponent<>(
-            "Health Bars",
-            "Visualizes unit health bars.",
-            HealthBarVisualizer::new);
-
     static {
         lazyComponents.add(roomsDialog);
-        lazyComponents.add(pathfindingVisualizer);
-        lazyComponents.add(healthBarVisualizer);
     }
 
     /** Gets the singleton instance of the plugin. */
@@ -128,7 +112,6 @@ public class PlayerConnectPlugin implements Plugin {
         PlayerConnect.disposePinger();
         // Unload lazy components
         roomsDialog.unload();
-        pathfindingVisualizer.unload();
         joinRoomDialog = null;
         createRoomDialog = null;
     }
