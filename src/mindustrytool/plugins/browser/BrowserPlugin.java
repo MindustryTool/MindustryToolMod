@@ -14,6 +14,7 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Main;
 import mindustrytool.Plugin;
 import mindustrytool.plugins.playerconnect.PlayerConnectPlugin;
+import mindustrytool.plugins.tools.ToolsMenuDialog;
 
 /**
  * Self-contained Browser plugin for browsing maps and schematics
