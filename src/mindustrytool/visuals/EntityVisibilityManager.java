@@ -229,7 +229,7 @@ public class EntityVisibilityManager {
                 && !disableUnit && !disableAllies && !disableEnemies && !dynamicActive)
             return;
 
-        // Unit Restore Logic
+        // Unit Restore Logic - restore units when hide is disabled
         if (!disableUnit && !dynamicActive) {
             for (int i = hiddenUnits.size - 1; i >= 0; i--) {
                 Unit u = hiddenUnits.get(i);
@@ -237,13 +237,8 @@ public class EntityVisibilityManager {
                     hiddenUnits.remove(i);
                     continue;
                 }
-                boolean shouldBeHidden = false;
-                if (hiddenContent.contains(u.type))
-                    shouldBeHidden = true;
-                if (disableAllies && u.team == Vars.player.team())
-                    shouldBeHidden = true;
-                if (disableEnemies && u.team != Vars.player.team())
-                    shouldBeHidden = true;
+                // Only keep unit hidden if in blacklist
+                boolean shouldBeHidden = hiddenContent.contains(u.type);
 
                 if (!shouldBeHidden) {
                     int newIndex = Groups.draw.addIndex(u);
@@ -254,8 +249,7 @@ public class EntityVisibilityManager {
         }
 
         // Processing Groups.draw
-        if (hasHiddenUnits || disableBullet || disableWreck || disableUnit || disableAllies || disableEnemies
-                || dynamicActive) {
+        if (hasHiddenUnits || disableBullet || disableWreck || disableUnit || dynamicActive) {
             Groups.draw.each(entity -> {
                 boolean isWreck = entity instanceof mindustry.gen.Decal;
                 boolean isBullet = entity instanceof mindustry.gen.Bullet;
@@ -264,6 +258,20 @@ public class EntityVisibilityManager {
                 if (isBullet) {
                     if (disableBullet || (dynamicActive && minFps > 0)) {
                         mindustry.gen.Bullet b = (mindustry.gen.Bullet) entity;
+
+                        // Team filter logic for bullets
+                        if (disableBullet && (disableAllies || disableEnemies)) {
+                            // Team filter is active - check bullet team
+                            mindustry.game.Team bulletTeam = b.team;
+                            if (bulletTeam != null) {
+                                boolean isAlly = bulletTeam == Vars.player.team();
+                                if (disableAllies && !isAlly)
+                                    return; // Only hide allies, this is enemy
+                                if (disableEnemies && isAlly)
+                                    return; // Only hide enemies, this is ally
+                            }
+                        }
+                        // No team filter or passed team check - hide bullet
                         int idx = getIndex(b, bulletDrawIndexField);
                         if (idx != -1) {
                             Groups.draw.removeIndex(b, idx);
@@ -275,6 +283,7 @@ public class EntityVisibilityManager {
                 }
 
                 if (isWreck) {
+                    // Wrecks have no team - just hide if toggle is on (ignore team filter)
                     if (disableWreck || (dynamicActive && minFps > 0)) {
                         mindustry.gen.Decal d = (mindustry.gen.Decal) entity;
                         int idx = getIndex(d, decalDrawIndexField);
@@ -290,14 +299,23 @@ public class EntityVisibilityManager {
                 if (isUnit) {
                     Unit u = (Unit) entity;
                     boolean shouldHide = false;
-                    if (disableUnit || dynamicActive)
+
+                    if (dynamicActive) {
                         shouldHide = true;
-                    else if (hasHiddenUnits && hiddenContent.contains(u.type))
-                        shouldHide = true;
-                    else if (disableAllies && u.team == Vars.player.team())
-                        shouldHide = true;
-                    else if (disableEnemies && u.team != Vars.player.team())
-                        shouldHide = true;
+                    } else if (disableUnit && hasHiddenUnits && hiddenContent.contains(u.type)) {
+                        // Hide Units ON: only hide units in blacklist
+                        // Apply team filter if active
+                        if (disableAllies || disableEnemies) {
+                            boolean isAlly = u.team == Vars.player.team();
+                            if (disableAllies && isAlly)
+                                shouldHide = true;
+                            if (disableEnemies && !isAlly)
+                                shouldHide = true;
+                        } else {
+                            // No team filter - hide this blacklisted unit
+                            shouldHide = true;
+                        }
+                    }
 
                     if (shouldHide) {
                         int idx = getIndex(u);
@@ -312,15 +330,35 @@ public class EntityVisibilityManager {
             });
         }
 
-        // Block Logic
+        // Block Logic with team filter
         if (hasHiddenBlocks || disableBuilding || (dynamicActive && minFps > 0)) {
             try {
                 if (blockTileviewField != null) {
                     Seq<mindustry.world.Tile> tileview = (Seq<mindustry.world.Tile>) blockTileviewField
                             .get(Vars.renderer.blocks);
                     if (tileview != null && !tileview.isEmpty()) {
-                        tileview.removeAll(t -> t.build != null
-                                && (disableBuilding || dynamicActive || hiddenContent.contains(t.build.block)));
+                        tileview.removeAll(t -> {
+                            if (t.build == null)
+                                return false;
+
+                            if (dynamicActive)
+                                return true;
+
+                            // Hide Buildings ON: only hide buildings in blacklist
+                            if (disableBuilding && hiddenContent.contains(t.build.block)) {
+                                // Apply team filter if active
+                                if (disableAllies || disableEnemies) {
+                                    boolean isAlly = t.build.team == Vars.player.team();
+                                    if (disableAllies && isAlly)
+                                        return true;
+                                    if (disableEnemies && !isAlly)
+                                        return true;
+                                    return false; // Has team filter but doesn't match
+                                }
+                                return true; // No team filter - hide this blacklisted building
+                            }
+                            return false;
+                        });
                     }
                 }
             } catch (Exception e) {
