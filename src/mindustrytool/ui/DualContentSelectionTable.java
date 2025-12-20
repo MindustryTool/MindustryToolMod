@@ -96,28 +96,33 @@ public class DualContentSelectionTable extends Table {
         t.add(title).color(color).pad(4).labelAlign(arc.util.Align.center).row();
         t.image().color(color).height(3).growX().padBottom(4).row();
 
+        // Use a Table with wrapping for better mobile support
         Table grid = new Table();
-        grid.top(); // Center horizontally (default), aligns top vertically
-
-        // Dynamic Column Calculation with tighter margins
-        // Reducing safety margin from 60 to 30 to fill space better
-        float availableWidth = (Core.graphics.getWidth() / 2f) - 30f;
-        int buttonSize = 46; // 42 size + 4 pad
-        int cols = Math.max(1, (int) (availableWidth / buttonSize));
-
-        int i = 0;
+        grid.top().left();
 
         if (items.isEmpty()) {
             grid.add("<empty>").color(Color.gray).pad(10);
         } else {
+            // Check available width dynamically for responsive layout
+            float screenWidth = Core.graphics.getWidth();
+            // In portrait, we usually stack columns, so full width. In landscape, half
+            // width.
+            boolean isPortrait = Core.graphics.isPortrait();
+            float availableWidth = isPortrait ? screenWidth - 60f : (screenWidth / 2f) - 40f;
+
+            // Calculate columns - button size is 42 + 4 pad
+            int buttonSize = 46;
+            int cols = Math.max(1, (int) (availableWidth / buttonSize));
+
+            int i = 0;
             for (UnlockableContent item : items) {
-                // Use clearTogglei for cleaner look
                 grid.button(new arc.scene.style.TextureRegionDrawable(item.uiIcon), Styles.clearTogglei, 32, () -> {
                     toggle(item);
                 }).size(42).pad(2).tooltip(item.localizedName);
 
-                if (++i % cols == 0)
+                if (++i % cols == 0) {
                     grid.row();
+                }
             }
         }
 

@@ -238,6 +238,11 @@ public class EntityVisibilityManager {
             dialog.show();
     }
 
+    /** Returns the shared hidden content set for other components to use. */
+    public ObjectSet<UnlockableContent> getHiddenContent() {
+        return hiddenContent;
+    }
+
     private void updateVisibility() {
         if (!enabled || !Vars.state.isGame())
             return;

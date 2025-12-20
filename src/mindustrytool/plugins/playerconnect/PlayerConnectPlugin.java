@@ -46,6 +46,13 @@ public class PlayerConnectPlugin implements Plugin {
             mindustrytool.visuals.EntityVisibilityManager::new,
             false);
 
+    // Strategic Overlays
+    private static final LazyComponent<mindustrytool.visuals.VisualOverlayManager> visualOverlayManager = new LazyComponent<>(
+            "Strategic Overlays",
+            "Displays turret ranges, projector zones, and spawn points.",
+            mindustrytool.visuals.VisualOverlayManager::new,
+            false);
+
     static {
         // Register Settings for Lazy Component (Settings Gear Icon in Manage
         // Components)
@@ -67,11 +74,32 @@ public class PlayerConnectPlugin implements Plugin {
         lazyComponents.add(pathfindingVisualizer);
         lazyComponents.add(healthBarVisualizer);
         lazyComponents.add(entityVisibilityManager);
+        lazyComponents.add(visualOverlayManager);
+
+        // Register Settings for Strategic Overlays
+        visualOverlayManager.onSettings(() -> {
+            mindustrytool.visuals.VisualOverlayManager manager = visualOverlayManager.getIfEnabled();
+            if (manager != null) {
+                manager.showDialog();
+            } else {
+                arc.Core.app.post(() -> {
+                    mindustry.ui.dialogs.BaseDialog d = new mindustry.ui.dialogs.BaseDialog("Info");
+                    d.cont.add("Please enable 'Strategic Overlays' first.");
+                    d.addCloseButton();
+                    d.show();
+                });
+            }
+        });
     }
 
     // Static Access for UI
     public static mindustrytool.visuals.EntityVisibilityManager getVisibilityManager() {
         return entityVisibilityManager.get();
+    }
+
+    /** Gets EntityVisibilityManager if enabled, for sharing filter data. */
+    public static mindustrytool.visuals.EntityVisibilityManager getEntityVisibilityManager() {
+        return entityVisibilityManager.getIfEnabled();
     }
 
     // Hook into Tools Menu construction to add the Settings button
