@@ -1,0 +1,82 @@
+package mindustrytool.plugins.quickaccess;
+
+import arc.Core;
+import arc.Events;
+import arc.scene.Element;
+import mindustry.Vars;
+import mindustry.game.EventType.WorldLoadEvent;
+import mindustry.gen.Icon;
+import mindustry.gen.Tex;
+import mindustry.ui.Styles;
+import mindustrytool.Plugin;
+
+public class QuickAccessPlugin implements Plugin {
+
+    private FlipButton flipButton;
+    private Element waveInfoTable;
+
+    @Override
+    public String getName() {
+        return "Quick Access Tools";
+    }
+
+    @Override
+    public void init() {
+        Events.run(WorldLoadEvent.class, this::buildUI);
+    }
+
+    private void buildUI() {
+        // Post to main thread to ensure HUD is initialized
+        Core.app.post(() -> {
+            if (Vars.ui.hudGroup == null)
+                return;
+
+            // Find the wave info table (statustable)
+            waveInfoTable = Vars.ui.hudGroup.find("statustable");
+            if (waveInfoTable == null)
+                return;
+
+            // Avoid recreating if already exists
+            if (Vars.ui.hudGroup.find("quick-access-tools") != null)
+                return;
+
+            flipButton = new FlipButton();
+
+            Vars.ui.hudGroup.fill(cont -> {
+                cont.name = "quick-access-tools";
+                cont.top().left();
+                cont.visible(() -> Vars.ui.hudfrag.shown);
+
+                cont.table(Tex.buttonEdge4, pad -> {
+                    // Row 1 (Always visible): FlipButton + first set of tools
+                    pad.table(row1 -> {
+                        row1.left();
+                        row1.defaults().size(40f);
+                        row1.add(flipButton);
+
+                        // First tool always visible next to FlipButton
+                        row1.button(Icon.settings, Styles.clearNonei, () -> {
+                            mindustrytool.plugins.browser.BrowserPlugin.getComponentDialog().show();
+                        }).tooltip(Core.bundle.get("message.lazy-components.title", "Components"));
+
+                    }).left().row();
+
+                    // Row 2+ (Expandable): Additional tools - only visible when expanded
+                    pad.table(row2 -> {
+                        row2.left();
+                        row2.defaults().size(40f);
+                        // Placeholder for more tools in the future
+                    }).left().visible(() -> flipButton.fliped).row();
+
+                }).margin(0f).update(pad -> {
+                    if (waveInfoTable == null)
+                        return;
+
+                    // Position below wave info (positive Y moves down in top-anchored layout)
+                    float y = waveInfoTable.getHeight();
+                    pad.setTranslation(0f, -y);
+                });
+            });
+        });
+    }
+}
