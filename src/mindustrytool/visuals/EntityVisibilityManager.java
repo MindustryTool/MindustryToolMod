@@ -35,8 +35,11 @@ public class EntityVisibilityManager {
     private boolean dynamicActive = false;
 
     // Stats
+    @SuppressWarnings("unused")
     private int hiddenUnitCount = 0;
+    @SuppressWarnings("unused")
     private int hiddenBulletCount = 0;
+    @SuppressWarnings("unused")
     private int hiddenWreckCount = 0;
 
     // Optimization Flags
@@ -394,6 +397,7 @@ public class EntityVisibilityManager {
         if (!forceShow && (hasHiddenBlocks || disableBuilding || (dynamicActive && minFps > 0))) {
             try {
                 if (blockTileviewField != null) {
+                    @SuppressWarnings("unchecked")
                     Seq<mindustry.world.Tile> tileview = (Seq<mindustry.world.Tile>) blockTileviewField
                             .get(Vars.renderer.blocks);
                     if (tileview != null && !tileview.isEmpty()) {
