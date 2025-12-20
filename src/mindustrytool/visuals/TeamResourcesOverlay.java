@@ -257,162 +257,160 @@ public class TeamResourcesOverlay extends Table {
         }
         final float finalWidth = widthToUse;
 
-        // Use ScrollPane to handle vertical overflow on small screens
+        // Main Layout - Auto-expanding (No Scroll)
         table(bg, t -> {
-            t.pane(main -> {
-                // Apply scale to margin
-                main.margin(Scl.scl(8f * scale));
+            // Apply scale to margin (formerly in scroll pane)
+            t.margin(Scl.scl(8f * scale));
 
-                // 1. Items Grid (Click to Toggle Teams)
-                if (showItems) {
-                    main.table(itemsTable -> {
-                        itemsTable.left();
-                        itemsTable.touchable = arc.scene.event.Touchable.enabled;
-                        itemsTable.addListener(statsListener);
+            // --- TOP: Team Selector ---
+            t.collapser(c -> {
+                c.pane(p -> {
+                    p.left();
 
-                        // Calculate actual cell width: icon + label + padding
-                        float iconSize = Scl.scl(Vars.iconSmall * scale);
-                        float labelWidth = Scl.scl(40f * scale);
-                        float padding = Scl.scl(6f * scale);
-                        float cellWidth = iconSize + labelWidth + padding;
-
-                        // Calculate columns to fill overlay width
-                        int cols = Math.max(2, (int) (finalWidth / cellWidth));
-
-                        int i = 0;
-                        for (Item item : Vars.content.items()) {
-                            if (!usedItems.contains(item))
-                                continue;
-
-                            itemsTable.image(item.uiIcon).size(iconSize).padRight(Scl.scl(3f * scale));
-                            itemsTable.label(() -> formatItem(item)).fontScale(0.8f * scale)
-                                    .padRight(Scl.scl(3f * scale))
-                                    .minWidth(labelWidth).left();
-
-                            if (++i % cols == 0)
-                                itemsTable.row();
+                    // Filter for teams that actually have a core (real teams)
+                    arc.struct.Seq<Team> validTeams = new arc.struct.Seq<>();
+                    for (Team team : Team.all) {
+                        if (team.active() && team.data().hasCore()) {
+                            validTeams.add(team);
                         }
-                    }).growX().row();
-                }
+                    }
 
-                // 2. Team Selector (Collapsible, Horizontal Scroll)
-                main.collapser(c -> {
-                    c.pane(p -> {
-                        p.left();
+                    for (Team team : validTeams) {
+                        p.button(b -> {
+                            b.image().size(24f).color(team.color);
+                        }, Styles.clearTogglei, () -> {
+                            selectedTeam = team;
+                            powerNode = null;
+                            usedUnits.clear();
+                            rebuild();
+                        }).checked(sel -> selectedTeam == team).size(32f).pad(2f);
+                    }
 
-                        // Filter for teams that actually have a core (real teams)
-                        arc.struct.Seq<Team> validTeams = new arc.struct.Seq<>();
-                        for (Team team : Team.all) {
-                            if (team.active() && team.data().hasCore()) {
-                                validTeams.add(team);
-                            }
+                    if (validTeams.size > 5) {
+                        p.button("...", Styles.flatBordert, this::showAllTeamsDialog).size(32f).pad(2f);
+                    }
+
+                }).scrollX(true).scrollY(false).height(40f).growX();
+            }, true, () -> showTeamSelector).growX().row();
+
+            // --- Items Grid ---
+            if (showItems) {
+                t.table(itemsTable -> {
+                    itemsTable.left();
+                    itemsTable.touchable = arc.scene.event.Touchable.enabled;
+                    itemsTable.addListener(statsListener);
+
+                    // Calculate actual cell width: icon + label + padding
+                    float iconSize = Scl.scl(Vars.iconSmall * scale);
+                    float labelWidth = Scl.scl(40f * scale);
+                    float padding = Scl.scl(6f * scale);
+                    float cellWidth = iconSize + labelWidth + padding;
+
+                    // Calculate columns to fill overlay width
+                    int cols = Math.max(2, (int) (finalWidth / cellWidth));
+
+                    int i = 0;
+                    for (Item item : Vars.content.items()) {
+                        if (!usedItems.contains(item))
+                            continue;
+
+                        itemsTable.image(item.uiIcon).size(iconSize).padRight(Scl.scl(3f * scale));
+                        itemsTable.label(() -> formatItem(item)).fontScale(0.8f * scale)
+                                .padRight(Scl.scl(3f * scale))
+                                .minWidth(labelWidth).left();
+
+                        if (++i % cols == 0)
+                            itemsTable.row();
+                    }
+                }).growX().row();
+            }
+
+            // --- Units Grid ---
+            if (showUnits) {
+                t.table(unitsTable -> {
+                    unitsTable.left();
+
+                    // Update used units
+                    for (mindustry.type.UnitType type : Vars.content.units()) {
+                        int count = selectedTeam.data().countType(type);
+                        if (count > 0)
+                            usedUnits.add(type);
+                    }
+
+                    // Calculate unit cell size (icon + padding)
+                    float unitSize = (Vars.iconSmall + 8f) * scale;
+                    float unitPad = Scl.scl(4f * scale);
+                    float cellWidth = Scl.scl(unitSize) + unitPad;
+
+                    // Calculate columns to fill overlay width
+                    int cols = Math.max(2, (int) (finalWidth / cellWidth));
+
+                    int i = 0;
+                    for (mindustry.type.UnitType type : Vars.content.units()) {
+                        if (!usedUnits.contains(type))
+                            continue;
+
+                        unitsTable.stack(
+                                new arc.scene.ui.Image(type.uiIcon).setScaling(arc.util.Scaling.fit),
+                                new Table(lab -> lab.label(() -> {
+                                    int c = selectedTeam.data().countType(type);
+                                    return c > 0 ? UI.formatAmount(c) : "";
+                                }).fontScale(0.72f * scale).style(Styles.outlineLabel)).right().bottom())
+                                .size(unitSize)
+                                .pad(Scl.scl(2f * scale));
+
+                        if (++i % cols == 0)
+                            unitsTable.row();
+                    }
+                }).growX().padTop(Scl.scl(6f * scale)).row();
+            }
+
+            // --- BOTTOM: Power Info (Fixed) ---
+            if (showPower) {
+                t.table(power -> {
+                    // Apply scale to bar height
+                    float barHeight = Scl.scl(18f * scale);
+                    power.defaults().height(barHeight).growX();
+                    power.touchable = arc.scene.event.Touchable.enabled;
+                    power.addListener(new arc.scene.event.ClickListener() {
+                        @Override
+                        public void clicked(arc.scene.event.InputEvent event, float x, float y) {
+                            choosesNode = !choosesNode;
+                            rebuild();
                         }
+                    });
 
-                        for (Team team : validTeams) {
-                            p.button(b -> {
-                                b.image().size(24f).color(team.color);
-                            }, Styles.clearTogglei, () -> {
-                                selectedTeam = team;
-                                powerNode = null;
-                                usedUnits.clear();
-                                rebuild();
-                            }).checked(sel -> selectedTeam == team).size(32f).pad(2f);
-                        }
+                    refreshPowerNode();
 
-                        if (validTeams.size > 5) {
-                            p.button("...", Styles.flatBordert, this::showAllTeamsDialog).size(32f).pad(2f);
-                        }
+                    if (choosesNode) {
+                        power.add(Core.bundle.format("Select Power Node")).fontScale(scale).color(Pal.accent)
+                                .height(barHeight).row();
+                    }
 
-                    }).scrollX(true).scrollY(false).height(40f).growX();
-                }, true, () -> showTeamSelector).growX().row();
+                    // Power Balance Bar with scalable text
+                    power.add(new ScaledBar(
+                            () -> Core.bundle.format("bar.powerbalance",
+                                    (powerGraph.getPowerBalance() >= 0 ? "+" : "")
+                                            + UI.formatAmount((long) (powerGraph.getPowerBalance() * 60))),
+                            () -> Pal.powerBar,
+                            () -> Mathf.clamp(powerGraph.getSatisfaction()),
+                            scale)).row();
 
-                // 3. Units Section (mi2 pattern)
-                if (showUnits) {
-                    main.table(unitsTable -> {
-                        unitsTable.left();
-
-                        // Update used units
-                        for (mindustry.type.UnitType type : Vars.content.units()) {
-                            int count = selectedTeam.data().countType(type);
-                            if (count > 0)
-                                usedUnits.add(type);
-                        }
-
-                        // Calculate unit cell size (icon + padding)
-                        float unitSize = (Vars.iconSmall + 8f) * scale;
-                        float unitPad = Scl.scl(4f * scale);
-                        float cellWidth = Scl.scl(unitSize) + unitPad;
-
-                        // Calculate columns to fill overlay width
-                        int cols = Math.max(2, (int) (finalWidth / cellWidth));
-
-                        int i = 0;
-                        for (mindustry.type.UnitType type : Vars.content.units()) {
-                            if (!usedUnits.contains(type))
-                                continue;
-
-                            unitsTable.stack(
-                                    new arc.scene.ui.Image(type.uiIcon).setScaling(arc.util.Scaling.fit),
-                                    new Table(lab -> lab.label(() -> {
-                                        int c = selectedTeam.data().countType(type);
-                                        return c > 0 ? UI.formatAmount(c) : "";
-                                    }).fontScale(0.72f * scale).style(Styles.outlineLabel)).right().bottom())
-                                    .size(unitSize)
-                                    .pad(Scl.scl(2f * scale));
-
-                            if (++i % cols == 0)
-                                unitsTable.row();
-                        }
-                    }).growX().padTop(Scl.scl(6f * scale)).row();
-                }
-
-                // 4. Power Bars (Click to Select Node)
-                if (showPower) {
-                    main.table(power -> {
-                        // Apply scale to bar height
-                        float barHeight = Scl.scl(18f * scale);
-                        power.defaults().height(barHeight).growX();
-                        power.touchable = arc.scene.event.Touchable.enabled;
-                        power.addListener(new arc.scene.event.ClickListener() {
-                            @Override
-                            public void clicked(arc.scene.event.InputEvent event, float x, float y) {
-                                choosesNode = !choosesNode;
-                                rebuild();
-                            }
-                        });
-
-                        refreshPowerNode();
-
-                        if (choosesNode) {
-                            power.add(Core.bundle.format("Select Power Node")).fontScale(scale).color(Pal.accent)
-                                    .height(barHeight).row();
-                        }
-
-                        // Power Balance Bar with scalable text
+                    // Power Stored Bar with scalable text
+                    if (showStoredPower) {
                         power.add(new ScaledBar(
-                                () -> Core.bundle.format("bar.powerbalance",
-                                        (powerGraph.getPowerBalance() >= 0 ? "+" : "")
-                                                + UI.formatAmount((long) (powerGraph.getPowerBalance() * 60))),
+                                () -> Core.bundle.format("bar.powerstored",
+                                        UI.formatAmount((long) powerGraph.getLastPowerStored()),
+                                        UI.formatAmount((long) powerGraph.getLastCapacity())),
                                 () -> Pal.powerBar,
-                                () -> Mathf.clamp(powerGraph.getSatisfaction()),
-                                scale)).row();
-
-                        // Power Stored Bar with scalable text
-                        if (showStoredPower) {
-                            power.add(new ScaledBar(
-                                    () -> Core.bundle.format("bar.powerstored",
-                                            UI.formatAmount((long) powerGraph.getLastPowerStored()),
-                                            UI.formatAmount((long) powerGraph.getLastCapacity())),
-                                    () -> Pal.powerBar,
-                                    () -> powerGraph.getLastCapacity() > 0
-                                            ? powerGraph.getLastPowerStored() / powerGraph.getLastCapacity()
-                                            : 0,
-                                    scale)).padTop(Scl.scl(4f * scale));
-                        }
-                    }).growX().padTop(Scl.scl(6f * scale));
-                }
-            }).grow().scrollX(false);
-        }).width(finalWidth).maxHeight(Core.graphics.getHeight() * 0.75f);
+                                () -> powerGraph.getLastCapacity() > 0
+                                        ? powerGraph.getLastPowerStored() / powerGraph.getLastCapacity()
+                                        : 0,
+                                scale)).padTop(Scl.scl(4f * scale));
+                    }
+                }).growX().padTop(Scl.scl(6f * scale));
+            }
+        }).width(finalWidth);
     }
 
     // Custom Bar with fontScale support

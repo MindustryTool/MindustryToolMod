@@ -45,7 +45,8 @@ public class QuickAccessPlugin implements Plugin {
             Vars.ui.hudGroup.fill(cont -> {
                 cont.name = "quick-access-tools";
                 cont.top().left();
-                cont.visible(() -> Vars.ui.hudfrag.shown);
+                cont.visible(() -> Vars.ui.hudfrag.shown && !Vars.ui.minimapfrag.shown() && waveInfoTable.hasParent()
+                        && waveInfoTable.visible);
 
                 cont.table(Tex.buttonEdge4, pad -> {
                     // Row 1 (Always visible): FlipButton + first set of tools
@@ -72,9 +73,11 @@ public class QuickAccessPlugin implements Plugin {
                     if (waveInfoTable == null)
                         return;
 
-                    // Position below wave info (positive Y moves down in top-anchored layout)
-                    float y = waveInfoTable.getHeight();
-                    pad.setTranslation(0f, -y);
+                    // Position below wave info (align top to wave info bottom)
+                    // Use .y relative to hudGroup height to account for mobile notches/margins
+                    float targetY = waveInfoTable.y;
+                    float currentTop = Vars.ui.hudGroup.getHeight();
+                    pad.setTranslation(0f, targetY - currentTop);
                 });
             });
         });
