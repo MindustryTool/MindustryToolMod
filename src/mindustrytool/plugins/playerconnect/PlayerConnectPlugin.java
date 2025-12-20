@@ -53,6 +53,13 @@ public class PlayerConnectPlugin implements Plugin {
             mindustrytool.visuals.VisualOverlayManager::new,
             false);
 
+    // Team Resources Overlay
+    private static final LazyComponent<mindustrytool.visuals.TeamResourcesOverlay> teamResourcesOverlay = new LazyComponent<>(
+            "Team Resources",
+            "Display team items and power stats with multi-team support.",
+            mindustrytool.visuals.TeamResourcesOverlay::new,
+            false);
+
     static {
         // Register Settings for Lazy Component (Settings Gear Icon in Manage
         // Components)
@@ -75,6 +82,15 @@ public class PlayerConnectPlugin implements Plugin {
         lazyComponents.add(healthBarVisualizer);
         lazyComponents.add(entityVisibilityManager);
         lazyComponents.add(visualOverlayManager);
+        lazyComponents.add(teamResourcesOverlay);
+
+        // Register Settings for Team Resources
+        teamResourcesOverlay.onSettings(() -> {
+            mindustrytool.visuals.TeamResourcesOverlay overlay = teamResourcesOverlay.getIfEnabled();
+            if (overlay != null) {
+                overlay.showDialog();
+            }
+        });
 
         // Register Settings for Strategic Overlays
         visualOverlayManager.onSettings(() -> {
@@ -102,10 +118,9 @@ public class PlayerConnectPlugin implements Plugin {
         return entityVisibilityManager.getIfEnabled();
     }
 
-    // Hook into Tools Menu construction to add the Settings button
-    // This assumes ToolsMenuDialog calls back or we modify ToolsMenuDialog.
-    // Since ToolsMenuDialog is likely generic, I will patch it to check for
-    // 'Configurable' components or just add a hardcoded button for now.
+    // Hook into Tools Menu construction to add the Settings button.
+    // Patch ToolsMenuDialog to check for 'Configurable' components or add hardcoded
+    // buttons.
     /** Gets the singleton instance of the plugin. */
     public static PlayerConnectPlugin getInstance() {
         if (instance == null)
@@ -156,10 +171,10 @@ public class PlayerConnectPlugin implements Plugin {
         createRoomDialog = new CreateRoomDialog();
         PausedMenuInjector.inject(createRoomDialog);
 
-        // Auto Host Logic: Delegate to CreateRoomDialog
-        // We use both PlayEvent and WorldLoadEvent to catch all cases (Saved games,
-        // Campaign, New Games)
-        // A small delay ensures the world is fully loaded and 'Vars.state' is correct.
+        // Auto Host Logic: Delegate to CreateRoomDialog.
+        // Both PlayEvent and WorldLoadEvent are used to capture all entry points
+        // (Saved games, Campaign, New Games).
+        // Delay ensures world initialization and state verification.
         Runnable trigger = () -> {
             if (createRoomDialog != null) {
                 arc.util.Timer.schedule(() -> createRoomDialog.triggerAutoHost(), 2f);
@@ -190,6 +205,9 @@ public class PlayerConnectPlugin implements Plugin {
             if (paths != null)
                 paths.draw();
         });
+
+        // Initialize Team Resources Overlay immediately if enabled
+        teamResourcesOverlay.getIfEnabled();
 
         initialized = true;
     }
