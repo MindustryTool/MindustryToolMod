@@ -6,7 +6,6 @@ import arc.scene.ui.ScrollPane;
 import arc.struct.Seq;
 import arc.struct.ObjectSet;
 import mindustry.gen.Tex;
-import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustry.ctype.UnlockableContent;
 
