@@ -49,17 +49,23 @@ public class VisualOverlayManager {
     private boolean drawSpawnpoints = true;
     private boolean drawUnitRanges = false;
 
+    // Team filters
+    private boolean showAlliedRanges = true;
+    private boolean showEnemyRanges = true;
+
     // Visual settings
     private float rangeTransparency = 0.3f;
-    private float zoomThreshold = 0.1f; // Stop drawing when zoomed out beyond this (lower = more zoom out allowed)
+    private float zoomThreshold = 1.0f; // Stop drawing when zoomed out beyond this (lower = more zoom out allowed)
     private boolean hideInactiveRanges = false;
-    private boolean fillRanges = false;
+    private float fillOpacity = 0.15f; // Slider 0-100% (0.0 - 1.0)
 
     // Cache for camera bounds
     private final Rect cameraRect = new Rect();
 
     // Own filter data (separate from Entity Hider)
     private final ObjectSet<UnlockableContent> filterContent = new ObjectSet<>();
+    // Cache for reflection-based ranges to avoid expensive lookups per frame
+    private final arc.struct.ObjectMap<mindustry.world.Block, Float> rangeCache = new arc.struct.ObjectMap<>();
 
     private BaseDialog dialog;
 
@@ -73,9 +79,12 @@ public class VisualOverlayManager {
         drawBlockRanges = Core.settings.getBool("mindustrytool.overlay.blockRanges", true);
         drawUnitRanges = Core.settings.getBool("mindustrytool.overlay.unitRanges", false);
         rangeTransparency = Core.settings.getFloat("mindustrytool.overlay.transparency", 0.3f);
-        zoomThreshold = Core.settings.getFloat("mindustrytool.overlay.zoomThreshold", 0.1f);
+        zoomThreshold = Core.settings.getFloat("mindustrytool.overlay.zoomThreshold", 1.0f);
         hideInactiveRanges = Core.settings.getBool("mindustrytool.overlay.hideInactive", false);
-        fillRanges = Core.settings.getBool("mindustrytool.overlay.fillRanges", false);
+        fillOpacity = Core.settings.getFloat("mindustrytool.overlay.fillOpacity", 0.15f); // Default 0 (Off)
+
+        showAlliedRanges = Core.settings.getBool("mindustrytool.overlay.showAllied", true);
+        showEnemyRanges = Core.settings.getBool("mindustrytool.overlay.showEnemy", true);
     }
 
     private void buildDialog() {
@@ -97,37 +106,62 @@ public class VisualOverlayManager {
         Slider transSlider = new Slider(0.1f, 1f, 0.05f, false);
         transSlider.setValue(rangeTransparency);
 
-        Label transLabel = new Label(Math.round(rangeTransparency * 100) + "%", Styles.outlineLabel);
+        Label transValue = new Label(Math.round(rangeTransparency * 100) + "%", Styles.outlineLabel);
+        transValue.setColor(Color.lightGray);
 
         Table transContent = new Table();
-        transContent.add("Transparency", Styles.outlineLabel).left().growX();
-        transContent.add(transLabel).padLeft(10f).right();
-        transContent.margin(3f, 33f, 3f, 33f);
         transContent.touchable = arc.scene.event.Touchable.disabled;
+        transContent.margin(3f, 33f, 3f, 33f);
+        transContent.add("Stroke", Styles.outlineLabel).left().growX();
+        transContent.add(transValue).padLeft(10f).right();
 
         transSlider.changed(() -> {
             rangeTransparency = transSlider.getValue();
-            transLabel.setText(Math.round(rangeTransparency * 100) + "%");
+            transValue.setText(Math.round(rangeTransparency * 100) + "%");
             Core.settings.put("mindustrytool.overlay.transparency", rangeTransparency);
         });
 
         cont.stack(transSlider, transContent).width(width).left().padTop(4f).row();
 
+        // --- Fill Opacity Slider ---
+        Slider fillSlider = new Slider(0f, 1f, 0.05f, false);
+        fillSlider.setValue(fillOpacity);
+
+        Label fillValue = new Label((fillOpacity <= 0.01f ? "Off" : Math.round(fillOpacity * 100) + "%"),
+                Styles.outlineLabel);
+        fillValue.setColor(fillOpacity <= 0.01f ? Color.gray : Color.lightGray);
+
+        Table fillContent = new Table();
+        fillContent.touchable = arc.scene.event.Touchable.disabled;
+        fillContent.margin(3f, 33f, 3f, 33f);
+        fillContent.add("Fill", Styles.outlineLabel).left().growX();
+        fillContent.add(fillValue).padLeft(10f).right();
+
+        fillSlider.changed(() -> {
+            fillOpacity = fillSlider.getValue();
+            fillValue.setText((fillOpacity <= 0.01f ? "Off" : Math.round(fillOpacity * 100) + "%"));
+            fillValue.setColor(fillOpacity <= 0.01f ? Color.gray : Color.lightGray);
+            Core.settings.put("mindustrytool.overlay.fillOpacity", fillOpacity);
+        });
+
+        cont.stack(fillSlider, fillContent).width(width).left().padTop(4f).row();
+
         // --- Zoom Threshold Slider ---
         Slider zoomSlider = new Slider(0.1f, 2f, 0.1f, false);
         zoomSlider.setValue(zoomThreshold);
 
-        Label zoomLabel = new Label(String.format("%.1fx", zoomThreshold), Styles.outlineLabel);
+        Label zoomValue = new Label(String.format("%.1fx", zoomThreshold), Styles.outlineLabel);
+        zoomValue.setColor(Color.lightGray);
 
         Table zoomContent = new Table();
-        zoomContent.add("Zoom Threshold", Styles.outlineLabel).left().growX();
-        zoomContent.add(zoomLabel).padLeft(10f).right();
-        zoomContent.margin(3f, 33f, 3f, 33f);
         zoomContent.touchable = arc.scene.event.Touchable.disabled;
+        zoomContent.margin(3f, 33f, 3f, 33f);
+        zoomContent.add("Min Zoom", Styles.outlineLabel).left().growX();
+        zoomContent.add(zoomValue).padLeft(10f).right();
 
         zoomSlider.changed(() -> {
             zoomThreshold = zoomSlider.getValue();
-            zoomLabel.setText(String.format("%.1fx", zoomThreshold));
+            zoomValue.setText(String.format("%.1fx", zoomThreshold));
             Core.settings.put("mindustrytool.overlay.zoomThreshold", zoomThreshold);
         });
 
@@ -154,9 +188,14 @@ public class VisualOverlayManager {
             Core.settings.put("mindustrytool.overlay.hideInactive", b);
         }).left().padTop(4).row();
 
-        cont.check("Hybrid Fill Ranges", fillRanges, b -> {
-            fillRanges = b;
-            Core.settings.put("mindustrytool.overlay.fillRanges", b);
+        cont.check("Show Allied Ranges", showAlliedRanges, b -> {
+            showAlliedRanges = b;
+            Core.settings.put("mindustrytool.overlay.showAllied", b);
+        }).left().padTop(4).row();
+
+        cont.check("Show Enemy Ranges", showEnemyRanges, b -> {
+            showEnemyRanges = b;
+            Core.settings.put("mindustrytool.overlay.showEnemy", b);
         }).left().padTop(4).row();
 
         // --- Advanced Filters Button ---
@@ -169,28 +208,45 @@ public class VisualOverlayManager {
 
     private void resetToDefaults() {
         drawPlayerCursors = false;
-        drawPlayerCursors = false;
         drawBlockRanges = true;
         drawSpawnpoints = true;
         drawUnitRanges = false;
         rangeTransparency = 0.3f;
-        zoomThreshold = 0.5f;
+        zoomThreshold = 1.0f;
+        hideInactiveRanges = false;
+        fillOpacity = 0.15f;
+        showAlliedRanges = true;
+        showEnemyRanges = true;
 
         Core.settings.put("mindustrytool.overlay.cursors", false);
         Core.settings.put("mindustrytool.overlay.blockRanges", true);
         Core.settings.put("mindustrytool.overlay.spawnpoints", true);
         Core.settings.put("mindustrytool.overlay.unitRanges", false);
         Core.settings.put("mindustrytool.overlay.transparency", 0.3f);
-        Core.settings.put("mindustrytool.overlay.zoomThreshold", 0.1f);
+        Core.settings.put("mindustrytool.overlay.zoomThreshold", 1.0f);
         Core.settings.put("mindustrytool.overlay.hideInactive", false);
-        Core.settings.put("mindustrytool.overlay.fillRanges", false);
-
-        Core.settings.put("mindustrytool.overlay.fillRanges", false);
+        Core.settings.put("mindustrytool.overlay.fillOpacity", 0.15f);
+        Core.settings.put("mindustrytool.overlay.showAllied", true);
+        Core.settings.put("mindustrytool.overlay.showEnemy", true);
 
         filterDialog = null; // Force rebuild dialog
         filterContent.clear();
 
         rebuildCont();
+    }
+
+    /**
+     * Determines whether to draw overlays for a specific team based on user
+     * settings.
+     * Logic: If both settings match (both true or both false), draw everything.
+     * Otherwise, draw based on specific ally/enemy status.
+     */
+    private boolean shouldDrawTeam(mindustry.game.Team team) {
+        if (showAlliedRanges == showEnemyRanges)
+            return true;
+        if (team == Vars.player.team())
+            return showAlliedRanges;
+        return showEnemyRanges;
     }
 
     private void showFilterDialog() {
@@ -218,7 +274,8 @@ public class VisualOverlayManager {
         Table projectorTable = new Table();
         projectorTable.add(new DualContentSelectionTable(
                 Vars.content.blocks().select(b -> b instanceof OverdriveProjector || b instanceof MendProjector
-                        || b instanceof RegenProjector || b instanceof ForceProjector),
+                        || b instanceof RegenProjector || b instanceof ForceProjector
+                        || b.name.contains("shield-projector")),
                 filterContent, "Hidden Projectors", "Visible Projectors", () -> {
                 })).grow();
 
@@ -231,7 +288,8 @@ public class VisualOverlayManager {
                         || b instanceof PayloadMassDriver || b instanceof RepairTower
                         // Safe name checks for modded/specific blocks
                         || b.name.equals("repair-point") || b.name.equals("repair-turret")
-                        || b.name.equals("shockwave-tower")),
+                        || b.name.equals("shockwave-tower")
+                        || b.name.equals("illuminator") || b.name.contains("radar")),
                 filterContent, "Hidden Utilities", "Visible Utilities", () -> {
                 })).grow();
 
@@ -351,6 +409,8 @@ public class VisualOverlayManager {
 
     private void renderProjectorZones() {
         // Use tile iteration for all teams' projectors in camera view
+        // Note: Projector rendering iterates TILES, so checking team must be done
+        // inside the inner loop check
         float padding = 400f;
         Rect queryRect = new Rect(cameraRect.x - padding, cameraRect.y - padding, cameraRect.width + padding * 2,
                 cameraRect.height + padding * 2);
@@ -371,6 +431,10 @@ public class VisualOverlayManager {
                 if (tile.build.tile != tile)
                     continue;
 
+                // Team Check
+                if (!shouldDrawTeam(tile.build.team))
+                    continue;
+
                 if (tile.build instanceof OverdriveProjector.OverdriveBuild ob) {
                     OverdriveProjector block = (OverdriveProjector) ob.block;
                     if (filterContent.contains(block))
@@ -386,8 +450,8 @@ public class VisualOverlayManager {
                         Draw.color(Color.valueOf("feb380"), rangeTransparency); // Overdrive color
                     }
 
-                    if (fillRanges) {
-                        Draw.alpha(rangeTransparency * 0.2f);
+                    if (fillOpacity > 0.001f) {
+                        Draw.alpha(fillOpacity);
                         Fill.circle(ob.x, ob.y, range);
                         Draw.alpha(rangeTransparency); // Reset for stroke
                     }
@@ -409,8 +473,8 @@ public class VisualOverlayManager {
                         Draw.color(Pal.heal, rangeTransparency); // Heal green
                     }
 
-                    if (fillRanges) {
-                        Draw.alpha(rangeTransparency * 0.2f);
+                    if (fillOpacity > 0.001f) {
+                        Draw.alpha(fillOpacity);
                         Fill.circle(mb.x, mb.y, range); // Circle for Mend
                         Draw.alpha(rangeTransparency); // Reset for stroke
                     }
@@ -435,8 +499,8 @@ public class VisualOverlayManager {
                         Draw.color(Color.lime, rangeTransparency);
                     }
 
-                    if (fillRanges) {
-                        Draw.alpha(rangeTransparency * 0.2f);
+                    if (fillOpacity > 0.001f) {
+                        Draw.alpha(fillOpacity);
                         Fill.rect(rb.x, rb.y, range, range);
                         Draw.alpha(rangeTransparency); // Reset for stroke
                     }
@@ -444,13 +508,16 @@ public class VisualOverlayManager {
                     Lines.stroke(1.5f);
                     // Draw box for Regen Projector
                     Lines.rect(rb.x - range / 2f, rb.y - range / 2f, range, range);
-                } else if (tile.build instanceof ForceProjector.ForceBuild fb) {
-                    ForceProjector block = (ForceProjector) fb.block;
+                } else if (tile.build.block instanceof ForceProjector block) {
+                    // Check logic based on Block type, not Build type (fixes Modded shield
+                    // projectors with custom builds)
                     if (filterContent.contains(block))
                         continue; // Filter check
 
                     float range = block.radius;
-                    if (fb.efficiency <= 0 || fb.broken) {
+                    // Use generic building efficiency. Note: 'broken' is not reliably accessible on
+                    // base Building in all versions.
+                    if (tile.build.efficiency <= 0) {
                         if (hideInactiveRanges)
                             continue;
                         Draw.color(Color.gray, rangeTransparency);
@@ -458,18 +525,50 @@ public class VisualOverlayManager {
                         Draw.color(Color.royal, rangeTransparency);
                     }
 
-                    if (fillRanges) {
-                        Draw.alpha(rangeTransparency * 0.2f);
-                        Fill.poly(fb.x, fb.y, 6, range);
+                    boolean isShieldProjector = block.name.contains("shield-projector");
+
+                    if (fillOpacity > 0.001f) {
+                        Draw.alpha(fillOpacity);
+                        if (isShieldProjector) {
+                            Fill.circle(tile.build.x, tile.build.y, range);
+                        } else {
+                            Fill.poly(tile.build.x, tile.build.y, 6, range);
+                        }
                         Draw.alpha(rangeTransparency);
                     }
 
                     Lines.stroke(1.5f);
-                    Lines.poly(fb.x, fb.y, 6, range);
+                    if (isShieldProjector) {
+                        Lines.circle(tile.build.x, tile.build.y, range);
+                    } else {
+                        Lines.poly(tile.build.x, tile.build.y, 6, range);
+                    }
+                } else if (tile.build.block.name.contains("shield-projector")) {
+                    // Fallback for modded/named blocks that might not extend ForceProjector
+                    // directly
+                    // but follow naming convention
+                    if (filterContent.contains(tile.build.block))
+                        continue;
 
-                    // Fallback for Build Tower by name (since class generic unavailable)
-                    // REMOVED: Build Tower manual check (Moved to renderUtilRanges to avoid
-                    // duplication)
+                    float range = getModdedRange(tile.build.block, 0);
+                    if (range <= 0)
+                        range = 100f; // fallback
+
+                    if (tile.build.efficiency <= 0) {
+                        if (hideInactiveRanges)
+                            continue;
+                        Draw.color(Color.gray, rangeTransparency);
+                    } else {
+                        Draw.color(Color.royal, rangeTransparency);
+                    }
+
+                    if (fillOpacity > 0.001f) {
+                        Draw.alpha(fillOpacity);
+                        Fill.circle(tile.build.x, tile.build.y, range);
+                        Draw.alpha(rangeTransparency);
+                    }
+                    Lines.stroke(1.5f);
+                    Lines.circle(tile.build.x, tile.build.y, range);
                 }
             }
         }
@@ -497,6 +596,9 @@ public class VisualOverlayManager {
         for (mindustry.game.Team team : mindustry.game.Team.all) {
             if (team.data().buildings.size == 0)
                 continue; // Skip empty teams
+
+            if (!shouldDrawTeam(team))
+                continue; // Team Filter
 
             Vars.indexer.eachBlock(team, queryRect, b -> b instanceof BaseTurret.BaseTurretBuild, b -> {
                 BaseTurret.BaseTurretBuild tb = (BaseTurret.BaseTurretBuild) b;
@@ -562,8 +664,8 @@ public class VisualOverlayManager {
                     }
                 }
 
-                if (fillRanges) {
-                    Draw.alpha(rangeTransparency * 0.2f); // Faint fill
+                if (fillOpacity > 0.001f) {
+                    Draw.alpha(fillOpacity); // Faint fill
                     Fill.circle(tb.x, tb.y, tb.range());
                     Draw.alpha(rangeTransparency); // Reset for stroke
                 }
@@ -590,6 +692,10 @@ public class VisualOverlayManager {
         Groups.unit.intersect(queryRect.x, queryRect.y, queryRect.width, queryRect.height, u -> {
             if (u.dead())
                 return;
+
+            if (!shouldDrawTeam(u.team))
+                return; // Team Filter
+
             // Skip units that are in our own filter (hidden)
             if (filterContent.contains(u.type))
                 return;
@@ -600,8 +706,8 @@ public class VisualOverlayManager {
 
             Draw.color(u.team.color, rangeTransparency);
 
-            if (fillRanges) {
-                Draw.alpha(rangeTransparency * 0.2f);
+            if (fillOpacity > 0.001f) {
+                Draw.alpha(fillOpacity);
                 Fill.circle(u.x, u.y, u.range());
                 Draw.alpha(rangeTransparency);
             }
@@ -621,6 +727,9 @@ public class VisualOverlayManager {
             if (team.data().buildings.size == 0)
                 continue;
 
+            if (!shouldDrawTeam(team))
+                continue; // Team Filter
+
             Vars.indexer.eachBlock(team, queryRect, b -> b.block instanceof MassDriver ||
                     b.block instanceof LogicBlock ||
                     b.block instanceof ShockMine ||
@@ -629,7 +738,10 @@ public class VisualOverlayManager {
                     (b.block.name.contains("repair") && !(b.block instanceof BaseTurret)) || // Strict BaseTurret
                                                                                              // exclusion
                     (b.block.name.contains("shockwave") && !(b.block instanceof BaseTurret)) ||
-                    b.block.name.equals("build-tower"), b -> { // Explicitly add Build Tower
+                    b.block.name.equals("build-tower") ||
+                    // NEW: Illuminator and Radar
+                    b.block.name.equals("illuminator") ||
+                    b.block.name.contains("radar"), b -> {
 
                         // SAFETY GUARD: Absolutely prevent Turrets from being drawn here
                         if (b instanceof BaseTurret.BaseTurretBuild)
@@ -665,6 +777,10 @@ public class VisualOverlayManager {
                             range = getModdedRange(b.block, 220f);
                         } else if (b.block.name.equals("build-tower")) {
                             range = getModdedRange(b.block, 180f);
+                        } else if (b.block.name.equals("illuminator")) {
+                            range = getModdedRange(b.block, 0); // Use radius
+                        } else if (b.block.name.contains("radar")) {
+                            range = getModdedRange(b.block, 0); // Use fogRadius or range
                         }
                         if (range <= 0)
                             return;
@@ -707,10 +823,14 @@ public class VisualOverlayManager {
                                 Draw.color(Color.white, rangeTransparency);
                             else if (b.block.name.equals("build-tower"))
                                 Draw.color(Color.valueOf("ffd37f"), rangeTransparency);
+                            else if (b.block.name.equals("illuminator"))
+                                Draw.color(Color.gold, rangeTransparency);
+                            else if (b.block.name.contains("radar"))
+                                Draw.color(Color.teal, rangeTransparency);
                         }
 
-                        if (fillRanges) {
-                            Draw.alpha(rangeTransparency * 0.2f); // Faint fill
+                        if (fillOpacity > 0.001f) {
+                            Draw.alpha(fillOpacity); // Faint fill
                             Fill.circle(b.x, b.y, range);
                             Draw.alpha(rangeTransparency); // Reset for stroke
                         }
@@ -723,34 +843,43 @@ public class VisualOverlayManager {
 
     // Helper to safely get 'range' field from modded/unknown blocks using
     // reflection
-    // Helper to safely get 'range' field from modded/unknown blocks using
-    // reflection
     private float getModdedRange(mindustry.world.Block block, float def) {
-        // Priority: repairRadius -> shockRadius -> radius -> range -> def
+        if (rangeCache.containsKey(block)) {
+            float cached = rangeCache.get(block);
+            return cached < 0f ? def : cached;
+        }
+
+        float foundRange = -1f;
+
+        // Priority: repairRadius -> shockRadius -> radius -> range -> fogRadius -> def
         try {
             java.lang.reflect.Field field = block.getClass().getField("repairRadius");
-            return field.getFloat(block);
-        } catch (Exception e) {
+            foundRange = field.getFloat(block);
+        } catch (Exception e1) {
+            try {
+                java.lang.reflect.Field field = block.getClass().getField("shockRadius");
+                foundRange = field.getFloat(block);
+            } catch (Exception e2) {
+                try {
+                    java.lang.reflect.Field field = block.getClass().getField("radius");
+                    foundRange = field.getFloat(block);
+                } catch (Exception e3) {
+                    try {
+                        java.lang.reflect.Field field = block.getClass().getField("range");
+                        foundRange = field.getFloat(block);
+                    } catch (Exception e4) {
+                        try {
+                            java.lang.reflect.Field field = block.getClass().getField("fogRadius");
+                            foundRange = field.getFloat(block);
+                        } catch (Exception e5) {
+                            // Not found
+                        }
+                    }
+                }
+            }
         }
 
-        try {
-            java.lang.reflect.Field field = block.getClass().getField("shockRadius");
-            return field.getFloat(block);
-        } catch (Exception e) {
-        }
-
-        try {
-            java.lang.reflect.Field field = block.getClass().getField("radius");
-            return field.getFloat(block);
-        } catch (Exception e) {
-        }
-
-        try {
-            java.lang.reflect.Field field = block.getClass().getField("range");
-            return field.getFloat(block);
-        } catch (Exception e) {
-        }
-
-        return def;
+        rangeCache.put(block, foundRange);
+        return foundRange < 0f ? def : foundRange;
     }
 }
