@@ -49,7 +49,7 @@ public class LazyComponentDialog extends BaseDialog {
         cont.defaults().pad(8);
 
         // Calculate optimal card width and columns
-        float screenWidth = Core.graphics.getWidth() - 40; // padding
+        float screenWidth = (Core.graphics.getWidth() / Scl.scl(1f)) - 40; // padding
         int columns = Math.max(1, (int) (screenWidth / CARD_MIN_WIDTH));
         float cardWidth = (screenWidth - (columns + 1) * 8) / columns;
 

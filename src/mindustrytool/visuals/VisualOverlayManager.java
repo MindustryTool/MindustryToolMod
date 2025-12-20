@@ -147,11 +147,12 @@ public class VisualOverlayManager {
         cont.stack(fillSlider, fillContent).width(width).left().padTop(4f).row();
 
         // --- Zoom Threshold Slider ---
-        Slider zoomSlider = new Slider(0.1f, 2f, 0.1f, false);
+        Slider zoomSlider = new Slider(0f, 2f, 0.1f, false);
         zoomSlider.setValue(zoomThreshold);
 
-        Label zoomValue = new Label(String.format("%.1fx", zoomThreshold), Styles.outlineLabel);
-        zoomValue.setColor(Color.lightGray);
+        Label zoomValue = new Label(zoomThreshold <= 0.01f ? "Off" : String.format("%.1fx", zoomThreshold),
+                Styles.outlineLabel);
+        zoomValue.setColor(zoomThreshold <= 0.01f ? Color.gray : Color.lightGray);
 
         Table zoomContent = new Table();
         zoomContent.touchable = arc.scene.event.Touchable.disabled;
@@ -161,7 +162,8 @@ public class VisualOverlayManager {
 
         zoomSlider.changed(() -> {
             zoomThreshold = zoomSlider.getValue();
-            zoomValue.setText(String.format("%.1fx", zoomThreshold));
+            zoomValue.setText(zoomThreshold <= 0.01f ? "Off" : String.format("%.1fx", zoomThreshold));
+            zoomValue.setColor(zoomThreshold <= 0.01f ? Color.gray : Color.lightGray);
             Core.settings.put("mindustrytool.overlay.zoomThreshold", zoomThreshold);
         });
 

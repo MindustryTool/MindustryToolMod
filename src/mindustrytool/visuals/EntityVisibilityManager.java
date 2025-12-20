@@ -31,6 +31,7 @@ public class EntityVisibilityManager {
 
     // Dynamic Optimization
     private int minFps = 0;
+    private float minZoom = 0f; // 0 = Off. Higher = Zoomed in.
     private boolean dynamicActive = false;
 
     // Stats
@@ -102,6 +103,7 @@ public class EntityVisibilityManager {
         disableAllies = arc.Core.settings.getBool("mindustrytool.disableAllies", false);
         disableEnemies = arc.Core.settings.getBool("mindustrytool.disableEnemies", false);
         minFps = arc.Core.settings.getInt("mindustrytool.minFps", 0);
+        minZoom = arc.Core.settings.getFloat("mindustrytool.minZoom", 0f);
     }
 
     private void buildDialog() {
@@ -124,20 +126,44 @@ public class EntityVisibilityManager {
         fpsSlider.setValue(minFps);
 
         Label fpsValueLabel = new Label(minFps == 0 ? "Off" : minFps + " FPS", Styles.outlineLabel);
+        fpsValueLabel.setColor(minFps == 0 ? arc.graphics.Color.gray : arc.graphics.Color.lightGray);
 
         Table fpsContent = new Table();
+        fpsContent.margin(3f, 33f, 3f, 33f);
         fpsContent.add("Dynamic Optimization", Styles.outlineLabel).left().growX();
         fpsContent.add(fpsValueLabel).padLeft(10f).right();
-        fpsContent.margin(3f, 33f, 3f, 33f);
         fpsContent.touchable = arc.scene.event.Touchable.disabled;
 
         fpsSlider.changed(() -> {
             minFps = (int) fpsSlider.getValue();
             fpsValueLabel.setText(minFps == 0 ? "Off" : minFps + " FPS");
+            fpsValueLabel.setColor(minFps == 0 ? arc.graphics.Color.gray : arc.graphics.Color.lightGray);
             arc.Core.settings.put("mindustrytool.minFps", minFps);
         });
 
         cont.stack(fpsSlider, fpsContent).width(width).left().padTop(4f).row();
+
+        // --- Min Zoom Slider ---
+        Slider zoomSlider = new Slider(0f, 2f, 0.1f, false);
+        zoomSlider.setValue(minZoom);
+
+        Label zoomValue = new Label(minZoom <= 0.01f ? "Off" : String.format("%.1fx", minZoom), Styles.outlineLabel);
+        zoomValue.setColor(minZoom <= 0.01f ? arc.graphics.Color.gray : arc.graphics.Color.lightGray);
+
+        Table zoomContent = new Table();
+        zoomContent.margin(3f, 33f, 3f, 33f);
+        zoomContent.add("Min Zoom", Styles.outlineLabel).left().growX();
+        zoomContent.add(zoomValue).padLeft(10f).right();
+        zoomContent.touchable = arc.scene.event.Touchable.disabled;
+
+        zoomSlider.changed(() -> {
+            minZoom = zoomSlider.getValue();
+            zoomValue.setText(minZoom <= 0.01f ? "Off" : String.format("%.1fx", minZoom));
+            zoomValue.setColor(minZoom <= 0.01f ? arc.graphics.Color.gray : arc.graphics.Color.lightGray);
+            arc.Core.settings.put("mindustrytool.minZoom", minZoom);
+        });
+
+        cont.stack(zoomSlider, zoomContent).width(width).left().padTop(4f).row();
 
         // --- Checkboxes ---
         cont.check("Hide Wrecks", disableWreck, b -> {
@@ -172,7 +198,7 @@ public class EntityVisibilityManager {
 
         // --- Advanced Filters Button ---
         cont.button("Advanced Filters", this::showFilterDialog)
-                .center().size(220, 50).padTop(20).row();
+                .size(width, 45).left().padTop(10).row();
     }
 
     private void resetToDefaults() {
@@ -183,6 +209,7 @@ public class EntityVisibilityManager {
         disableAllies = false;
         disableEnemies = false;
         minFps = 0;
+        minZoom = 0f;
 
         hiddenContent.clear();
         hiddenUnits.clear();
@@ -198,6 +225,7 @@ public class EntityVisibilityManager {
         arc.Core.settings.put("mindustrytool.disableAllies", false);
         arc.Core.settings.put("mindustrytool.disableEnemies", false);
         arc.Core.settings.put("mindustrytool.minFps", 0);
+        arc.Core.settings.put("mindustrytool.minZoom", 0f);
 
         recalculateFlags();
         rebuildCont();
@@ -260,18 +288,28 @@ public class EntityVisibilityManager {
             dynamicActive = false;
         }
 
-        if (!hasHiddenUnits && !hasHiddenBlocks && hiddenUnits.isEmpty() && !disableWreck && !disableBullet
-                && !disableUnit && !disableAllies && !disableEnemies && !dynamicActive)
+        // Min Zoom Logic: If zoomed in closer than threshold, force show everything
+        boolean forceShow = false;
+        if (minZoom > 0) {
+            float scale = Vars.renderer.getScale(); // 1.0 = Default, Higher = Zoom In
+            if (scale >= minZoom) {
+                forceShow = true;
+                dynamicActive = false; // Disable dynamic hiding too if zoomed in
+            }
+        }
+
+        if (!forceShow && !hasHiddenUnits && !hasHiddenBlocks && hiddenUnits.isEmpty() && !disableWreck
+                && !disableBullet && !disableUnit && !disableAllies && !disableEnemies && !dynamicActive)
             return;
 
-        if (!disableUnit && !dynamicActive) {
+        if (forceShow || !disableUnit && !dynamicActive) {
             for (int i = hiddenUnits.size - 1; i >= 0; i--) {
                 Unit u = hiddenUnits.get(i);
                 if (!u.isValid()) {
                     hiddenUnits.remove(i);
                     continue;
                 }
-                boolean shouldBeHidden = hiddenContent.contains(u.type);
+                boolean shouldBeHidden = !forceShow && hiddenContent.contains(u.type);
                 if (!shouldBeHidden) {
                     int newIndex = Groups.draw.addIndex(u);
                     setIndex(u, newIndex);
@@ -280,7 +318,8 @@ public class EntityVisibilityManager {
             }
         }
 
-        if (hasHiddenUnits || disableBullet || disableWreck || disableUnit || dynamicActive) {
+        if (!forceShow
+                && (hasHiddenUnits || disableBullet || disableWreck || disableUnit || dynamicActive)) {
             Groups.draw.each(entity -> {
                 boolean isWreck = entity instanceof mindustry.gen.Decal;
                 boolean isBullet = entity instanceof mindustry.gen.Bullet;
@@ -352,7 +391,7 @@ public class EntityVisibilityManager {
             });
         }
 
-        if (hasHiddenBlocks || disableBuilding || (dynamicActive && minFps > 0)) {
+        if (!forceShow && (hasHiddenBlocks || disableBuilding || (dynamicActive && minFps > 0))) {
             try {
                 if (blockTileviewField != null) {
                     Seq<mindustry.world.Tile> tileview = (Seq<mindustry.world.Tile>) blockTileviewField
