@@ -169,14 +169,26 @@ public class PlayerConnectPlugin implements Plugin {
         Events.on(EventType.PlayEvent.class, e -> trigger.run());
         Events.on(EventType.WorldLoadEvent.class, e -> trigger.run());
 
-        // Eagerly load enabled components (crucial for background visualizers)
-        // This ensures PathfindingVisualizer starts if enabled in settings
-        Core.app.post(() -> {
-            for (LazyComponent<?> comp : lazyComponents) {
-                if (comp.isEnabled()) {
-                    comp.get(); // Force instantiation
-                }
-            }
+        // Centralized Lazy Triggers: Only run and instantiate if enabled
+        Events.run(EventType.Trigger.draw, () -> {
+            if (!mindustry.Vars.state.isGame())
+                return;
+
+            mindustrytool.visuals.VisualOverlayManager overlays = visualOverlayManager.getIfEnabled();
+            if (overlays != null)
+                overlays.renderOverlays();
+
+            mindustrytool.visuals.EntityVisibilityManager visibility = entityVisibilityManager.getIfEnabled();
+            if (visibility != null)
+                visibility.updateVisibility();
+
+            mindustrytool.visuals.HealthBarVisualizer health = healthBarVisualizer.getIfEnabled();
+            if (health != null)
+                health.draw();
+
+            mindustrytool.visuals.PathfindingVisualizer paths = pathfindingVisualizer.getIfEnabled();
+            if (paths != null)
+                paths.draw();
         });
 
         initialized = true;
@@ -190,6 +202,9 @@ public class PlayerConnectPlugin implements Plugin {
         // Unload lazy components
         roomsDialog.unload();
         pathfindingVisualizer.unload();
+        healthBarVisualizer.unload();
+        entityVisibilityManager.unload();
+        visualOverlayManager.unload();
         joinRoomDialog = null;
         createRoomDialog = null;
     }

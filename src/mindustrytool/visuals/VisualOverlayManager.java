@@ -1,7 +1,7 @@
 package mindustrytool.visuals;
 
 import arc.Core;
-import arc.Events;
+
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
@@ -13,7 +13,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.ObjectSet;
 import mindustry.Vars;
 import mindustry.ctype.UnlockableContent;
-import mindustry.game.EventType;
+
 import mindustry.gen.Groups;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
@@ -64,7 +64,6 @@ public class VisualOverlayManager {
     private BaseDialog dialog;
 
     public VisualOverlayManager() {
-        Events.run(EventType.Trigger.draw, this::renderOverlays);
         loadSettings();
         buildDialog();
     }
@@ -285,7 +284,7 @@ public class VisualOverlayManager {
         renderUtilRanges();
     }
 
-    private void renderOverlays() {
+    public void renderOverlays() {
         if (!Vars.state.isGame())
             return;
 

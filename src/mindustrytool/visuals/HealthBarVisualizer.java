@@ -1,13 +1,10 @@
 package mindustrytool.visuals;
 
 import arc.Core;
-import arc.Events;
+
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
-import arc.math.Mathf;
-import arc.util.Time;
-import arc.util.Tmp;
-import mindustry.game.EventType;
+
 import mindustry.gen.Groups;
 import mindustry.gen.Unit;
 import mindustry.graphics.Pal;
@@ -19,25 +16,12 @@ import arc.func.Cons;
 
 public class HealthBarVisualizer {
 
-    private static boolean enabled = false;
-    private static HealthBarVisualizer instance;
     private static TextureRegion barRegion;
-
-    // Cached callback to avoid allocation per frame
     private final Cons<Unit> drawUnitRef = this::drawCheck;
-
-    static {
-        Events.run(EventType.Trigger.draw, () -> {
-            if (enabled && instance != null) {
-                instance.draw();
-            }
-        });
-    }
 
     public HealthBarVisualizer() {
         arc.util.Log.info("[HealthBarVisualizer] INITIALIZED.");
-        instance = this;
-        enabled = true;
+
         // Cache the region once
         if (barRegion == null) {
             barRegion = Core.atlas.find("white-ui");
@@ -47,13 +31,7 @@ public class HealthBarVisualizer {
         }
     }
 
-    public void dispose() {
-        arc.util.Log.info("[HealthBarVisualizer] DISPOSED.");
-        enabled = false;
-        instance = null;
-    }
-
-    private void draw() {
+    public void draw() {
         if (!state.isGame())
             return;
 

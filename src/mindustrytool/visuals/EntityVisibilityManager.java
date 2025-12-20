@@ -1,6 +1,5 @@
 package mindustrytool.visuals;
 
-import arc.Events;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
@@ -8,7 +7,7 @@ import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.ctype.UnlockableContent;
-import mindustry.game.EventType;
+
 import mindustry.gen.Groups;
 import mindustry.gen.Unit;
 import mindustry.ui.Styles;
@@ -57,7 +56,7 @@ public class EntityVisibilityManager {
 
     public EntityVisibilityManager() {
         initReflection();
-        Events.run(EventType.Trigger.draw, this::updateVisibility);
+
         updateSettings();
         buildDialog();
     }
@@ -243,7 +242,7 @@ public class EntityVisibilityManager {
         return hiddenContent;
     }
 
-    private void updateVisibility() {
+    public void updateVisibility() {
         if (!enabled || !Vars.state.isGame())
             return;
 

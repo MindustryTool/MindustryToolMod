@@ -1,7 +1,7 @@
 package mindustrytool.visuals;
 
 import arc.Core;
-import arc.Events;
+
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
@@ -10,7 +10,7 @@ import arc.util.Time;
 import arc.util.Tmp;
 import arc.math.geom.Point2;
 import mindustry.ai.Pathfinder;
-import mindustry.game.EventType;
+
 import mindustry.gen.Groups;
 import mindustry.gen.Unit;
 import mindustry.world.Tile;
@@ -20,9 +20,6 @@ import static mindustry.Vars.*;
 public class PathfindingVisualizer {
 
     private final int MAX_STEPS = 250;
-
-    private static boolean enabled = false;
-    private static PathfindingVisualizer instance;
 
     // Optimization: Staggered Tile Cache with Team Support
     private static class PathCache {
@@ -36,27 +33,11 @@ public class PathfindingVisualizer {
     // Use LongMap as Set since LongSet is missing
     private final arc.struct.LongMap<Object> activeTiles = new arc.struct.LongMap<>();
 
-    static {
-        Events.run(EventType.Trigger.draw, () -> {
-            if (enabled && instance != null) {
-                instance.draw();
-            }
-        });
-    }
-
     public PathfindingVisualizer() {
         arc.util.Log.info("[PathfindingVisualizer] INITIALIZED. Constructor called.");
-        instance = this;
-        enabled = true;
     }
 
-    public void dispose() {
-        arc.util.Log.info("[PathfindingVisualizer] DISPOSED.");
-        enabled = false;
-        instance = null;
-    }
-
-    private void draw() {
+    public void draw() {
         if (!state.isGame())
             return;
 
