@@ -13,6 +13,7 @@ import mindustry.ui.dialogs.BaseDialog;
 
 import mindustrytool.Main;
 import mindustrytool.Plugin;
+import mindustrytool.plugins.playerconnect.PlayerConnectPlugin;
 
 /**
  * Self-contained Browser plugin for browsing maps and schematics
@@ -24,6 +25,8 @@ public class BrowserPlugin implements Plugin {
 
     /** Registry of all lazy-loaded components in this plugin. */
     public static final Seq<LazyComponent<?>> lazyComponents = new Seq<>();
+
+    private static LazyComponentDialog componentDialog;
 
     // Lazy-loaded dialogs with settings
     // Lazy-loaded dialogs with settings
@@ -105,6 +108,15 @@ public class BrowserPlugin implements Plugin {
                     }
                 }
             }
+
+            if (noInputFocused && Core.input.keyTap(ModKeybinds.manageComponents)) {
+                var dialog = getComponentDialog();
+                if (dialog.isShown()) {
+                    dialog.hide();
+                } else {
+                    dialog.show();
+                }
+            }
         });
     }
 
@@ -168,5 +180,15 @@ public class BrowserPlugin implements Plugin {
     /** Get schematic dialog lazy component. */
     public static LazyComponent<BaseDialog> getSchematicDialog() {
         return schematicDialog;
+    }
+
+    public static LazyComponentDialog getComponentDialog() {
+        if (componentDialog == null) {
+            Seq<LazyComponent<?>> allComponents = new Seq<>();
+            allComponents.addAll(getLazyComponents());
+            allComponents.addAll(PlayerConnectPlugin.getLazyComponents());
+            componentDialog = new LazyComponentDialog(allComponents);
+        }
+        return componentDialog;
     }
 }
