@@ -14,7 +14,6 @@ import mindustry.gen.Unit;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.ui.DualContentSelectionTable;
-import mindustry.gen.Building;
 
 import java.lang.reflect.Field;
 
@@ -35,7 +34,7 @@ public class EntityVisibilityManager {
     private int minFps = 0;
     private boolean dynamicActive = false;
 
-    // Stats (kept for logic, removed from UI)
+    // Stats
     private int hiddenUnitCount = 0;
     private int hiddenBulletCount = 0;
     private int hiddenWreckCount = 0;
@@ -60,7 +59,7 @@ public class EntityVisibilityManager {
         initReflection();
         Events.run(EventType.Trigger.draw, this::updateVisibility);
         updateSettings();
-        setupUI();
+        buildDialog();
     }
 
     private void initReflection() {
@@ -106,16 +105,22 @@ public class EntityVisibilityManager {
         minFps = arc.Core.settings.getInt("mindustrytool.minFps", 0);
     }
 
-    private void setupUI() {
+    private void buildDialog() {
         dialog = new BaseDialog("Entity Visibility");
         dialog.addCloseButton();
+        dialog.buttons.button("Reset to defaults", mindustry.gen.Icon.refresh, this::resetToDefaults).size(250, 64);
 
+        rebuildCont();
+    }
+
+    private void rebuildCont() {
         Table cont = dialog.cont;
+        cont.clear();
         cont.defaults().pad(6).left();
 
         float width = Math.min(arc.Core.graphics.getWidth() / 1.2f, 460f);
 
-        // --- FPS Slider (Native Style using stack - like BrowserSettingsDialog) ---
+        // --- FPS Slider ---
         Slider fpsSlider = new Slider(0, 60, 5, false);
         fpsSlider.setValue(minFps);
 
@@ -135,7 +140,7 @@ public class EntityVisibilityManager {
 
         cont.stack(fpsSlider, fpsContent).width(width).left().padTop(4f).row();
 
-        // --- Checkboxes (Left aligned) ---
+        // --- Checkboxes ---
         cont.check("Hide Wrecks", disableWreck, b -> {
             disableWreck = b;
             arc.Core.settings.put("mindustrytool.disableWreck", disableWreck);
@@ -166,9 +171,37 @@ public class EntityVisibilityManager {
             arc.Core.settings.put("mindustrytool.disableEnemies", disableEnemies);
         }).left().padTop(4).row();
 
-        // --- Advanced Filters Button (Centered) ---
+        // --- Advanced Filters Button ---
         cont.button("Advanced Filters", this::showFilterDialog)
                 .center().size(220, 50).padTop(20).row();
+    }
+
+    private void resetToDefaults() {
+        disableWreck = false;
+        disableBullet = false;
+        disableUnit = false;
+        disableBuilding = false;
+        disableAllies = false;
+        disableEnemies = false;
+        minFps = 0;
+
+        hiddenContent.clear();
+        hiddenUnits.clear();
+        hiddenUnitCount = 0;
+        hiddenBulletCount = 0;
+        hiddenWreckCount = 0;
+
+        // Persist defaults
+        arc.Core.settings.put("mindustrytool.disableWreck", false);
+        arc.Core.settings.put("mindustrytool.disableBullet", false);
+        arc.Core.settings.put("mindustrytool.disableUnit", false);
+        arc.Core.settings.put("mindustrytool.disableBuilding", false);
+        arc.Core.settings.put("mindustrytool.disableAllies", false);
+        arc.Core.settings.put("mindustrytool.disableEnemies", false);
+        arc.Core.settings.put("mindustrytool.minFps", 0);
+
+        recalculateFlags();
+        rebuildCont();
     }
 
     private void showFilterDialog() {
@@ -213,14 +246,12 @@ public class EntityVisibilityManager {
         hiddenWreckCount = 0;
         hiddenUnitCount = hiddenUnits.size;
 
-        // Dynamic FPS Check
         if (minFps > 0) {
             float fps = arc.Core.graphics.getFramesPerSecond();
-            if (fps < minFps) {
+            if (fps < minFps)
                 dynamicActive = true;
-            } else if (fps > minFps + 5) {
+            else if (fps > minFps + 5)
                 dynamicActive = false;
-            }
         } else {
             dynamicActive = false;
         }
@@ -229,7 +260,6 @@ public class EntityVisibilityManager {
                 && !disableUnit && !disableAllies && !disableEnemies && !dynamicActive)
             return;
 
-        // Unit Restore Logic - restore units when hide is disabled
         if (!disableUnit && !dynamicActive) {
             for (int i = hiddenUnits.size - 1; i >= 0; i--) {
                 Unit u = hiddenUnits.get(i);
@@ -237,9 +267,7 @@ public class EntityVisibilityManager {
                     hiddenUnits.remove(i);
                     continue;
                 }
-                // Only keep unit hidden if in blacklist
                 boolean shouldBeHidden = hiddenContent.contains(u.type);
-
                 if (!shouldBeHidden) {
                     int newIndex = Groups.draw.addIndex(u);
                     setIndex(u, newIndex);
@@ -248,7 +276,6 @@ public class EntityVisibilityManager {
             }
         }
 
-        // Processing Groups.draw
         if (hasHiddenUnits || disableBullet || disableWreck || disableUnit || dynamicActive) {
             Groups.draw.each(entity -> {
                 boolean isWreck = entity instanceof mindustry.gen.Decal;
@@ -258,20 +285,16 @@ public class EntityVisibilityManager {
                 if (isBullet) {
                     if (disableBullet || (dynamicActive && minFps > 0)) {
                         mindustry.gen.Bullet b = (mindustry.gen.Bullet) entity;
-
-                        // Team filter logic for bullets
                         if (disableBullet && (disableAllies || disableEnemies)) {
-                            // Team filter is active - check bullet team
                             mindustry.game.Team bulletTeam = b.team;
                             if (bulletTeam != null) {
                                 boolean isAlly = bulletTeam == Vars.player.team();
                                 if (disableAllies && !isAlly)
-                                    return; // Only hide allies, this is enemy
+                                    return;
                                 if (disableEnemies && isAlly)
-                                    return; // Only hide enemies, this is ally
+                                    return;
                             }
                         }
-                        // No team filter or passed team check - hide bullet
                         int idx = getIndex(b, bulletDrawIndexField);
                         if (idx != -1) {
                             Groups.draw.removeIndex(b, idx);
@@ -283,7 +306,6 @@ public class EntityVisibilityManager {
                 }
 
                 if (isWreck) {
-                    // Wrecks have no team - just hide if toggle is on (ignore team filter)
                     if (disableWreck || (dynamicActive && minFps > 0)) {
                         mindustry.gen.Decal d = (mindustry.gen.Decal) entity;
                         int idx = getIndex(d, decalDrawIndexField);
@@ -299,12 +321,9 @@ public class EntityVisibilityManager {
                 if (isUnit) {
                     Unit u = (Unit) entity;
                     boolean shouldHide = false;
-
                     if (dynamicActive) {
                         shouldHide = true;
                     } else if (disableUnit && hasHiddenUnits && hiddenContent.contains(u.type)) {
-                        // Hide Units ON: only hide units in blacklist
-                        // Apply team filter if active
                         if (disableAllies || disableEnemies) {
                             boolean isAlly = u.team == Vars.player.team();
                             if (disableAllies && isAlly)
@@ -312,7 +331,6 @@ public class EntityVisibilityManager {
                             if (disableEnemies && !isAlly)
                                 shouldHide = true;
                         } else {
-                            // No team filter - hide this blacklisted unit
                             shouldHide = true;
                         }
                     }
@@ -330,7 +348,6 @@ public class EntityVisibilityManager {
             });
         }
 
-        // Block Logic with team filter
         if (hasHiddenBlocks || disableBuilding || (dynamicActive && minFps > 0)) {
             try {
                 if (blockTileviewField != null) {
@@ -340,22 +357,18 @@ public class EntityVisibilityManager {
                         tileview.removeAll(t -> {
                             if (t.build == null)
                                 return false;
-
                             if (dynamicActive)
                                 return true;
-
-                            // Hide Buildings ON: only hide buildings in blacklist
                             if (disableBuilding && hiddenContent.contains(t.build.block)) {
-                                // Apply team filter if active
                                 if (disableAllies || disableEnemies) {
                                     boolean isAlly = t.build.team == Vars.player.team();
                                     if (disableAllies && isAlly)
                                         return true;
                                     if (disableEnemies && !isAlly)
                                         return true;
-                                    return false; // Has team filter but doesn't match
+                                    return false;
                                 }
-                                return true; // No team filter - hide this blacklisted building
+                                return true;
                             }
                             return false;
                         });

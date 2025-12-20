@@ -15,14 +15,20 @@ public class LazyComponent<T> {
     private T instance = null;
     private Runnable onSettings;
     private Runnable onDispose;
-    private boolean enabled = true;
+    private boolean enabled;
+    private final boolean defaultEnabled;
 
     public LazyComponent(String name, String description, Prov<T> factory) {
+        this(name, description, factory, true);
+    }
+
+    public LazyComponent(String name, String description, Prov<T> factory, boolean defaultEnabled) {
         this.name = name;
         this.description = description;
         this.factory = factory;
-        // Load persisted enabled state
-        this.enabled = Core.settings.getBool("lazy." + name + ".enabled", true);
+        this.defaultEnabled = defaultEnabled;
+        // Load persisted enabled state with specific default
+        this.enabled = Core.settings.getBool("lazy." + name + ".enabled", defaultEnabled);
     }
 
     public LazyComponent<T> onSettings(Runnable onSettings) {
@@ -61,6 +67,11 @@ public class LazyComponent<T> {
         Core.settings.put("lazy." + name + ".enabled", enabled);
         if (!enabled)
             unload();
+    }
+
+    /** Reset to default enabled state */
+    public void reset() {
+        setEnabled(defaultEnabled);
     }
 
     /** Gets instance only if enabled, otherwise returns null. */

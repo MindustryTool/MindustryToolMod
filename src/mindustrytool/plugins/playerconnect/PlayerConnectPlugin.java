@@ -29,19 +29,22 @@ public class PlayerConnectPlugin implements Plugin {
     private static final LazyComponent<mindustrytool.visuals.PathfindingVisualizer> pathfindingVisualizer = new LazyComponent<>(
             "Enemy Pathfinding",
             "Visualizes predicted enemy paths with an organic flow effect.",
-            mindustrytool.visuals.PathfindingVisualizer::new);
+            mindustrytool.visuals.PathfindingVisualizer::new,
+            false);
 
     // Health Bar Visualization Component
     private static final LazyComponent<mindustrytool.visuals.HealthBarVisualizer> healthBarVisualizer = new LazyComponent<>(
             "Health Bars",
             "Visualizes unit health bars.",
-            mindustrytool.visuals.HealthBarVisualizer::new);
+            mindustrytool.visuals.HealthBarVisualizer::new,
+            false);
 
     // Entity Visibility Manager
     private static final LazyComponent<mindustrytool.visuals.EntityVisibilityManager> entityVisibilityManager = new LazyComponent<>(
             "Entity Hider",
             "Hides units/blocks to improve FPS.",
-            mindustrytool.visuals.EntityVisibilityManager::new);
+            mindustrytool.visuals.EntityVisibilityManager::new,
+            false);
 
     static {
         // Register Settings for Lazy Component (Settings Gear Icon in Manage

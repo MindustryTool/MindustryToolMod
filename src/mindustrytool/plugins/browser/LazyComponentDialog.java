@@ -32,6 +32,13 @@ public class LazyComponentDialog extends BaseDialog {
         setFillParent(true);
 
         addCloseButton();
+        buttons.button("Reset to defaults", Icon.refresh, () -> {
+            for (LazyComponent<?> component : components) {
+                component.reset();
+            }
+            rebuild();
+        }).size(250, 64);
+
         shown(this::rebuild);
         onResize(this::rebuild);
     }
