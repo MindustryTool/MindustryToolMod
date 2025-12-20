@@ -14,7 +14,7 @@ import mindustry.ui.dialogs.BaseDialog;
  */
 public class LazyComponentDialog extends BaseDialog {
     private static final float CARD_MIN_WIDTH = 280f;
-    private static final float CARD_HEIGHT = 120f;
+    private static final float CARD_HEIGHT = 160f;
 
     private final Seq<LazyComponent<?>> components;
     private String searchText = "";
@@ -115,19 +115,20 @@ public class LazyComponentDialog extends BaseDialog {
 
         // Status bar at top (colored indicator)
         Color statusColor = component.isEnabled() ? Color.valueOf("4CAF50") : Color.valueOf("F44336");
-        card.image().color(statusColor).height(4).growX().colspan(3).row();
+        card.image().color(statusColor).height(4).growX().row();
 
         // Content area
         card.table(content -> {
             content.setColor(Color.white); // Reset parent color
             content.margin(12);
-            content.defaults().pad(4);
+            content.top().left();
+            content.defaults().pad(2).left();
 
             // Header row: Name + icons
             content.table(header -> {
                 header.add(component.getName()).style(Styles.defaultLabel).color(Color.white).left().growX();
 
-                // Settings button (only if has settings)
+                // Settings button
                 if (component.hasSettings()) {
                     header.button(Icon.settings, Styles.emptyi, 24, component::openSettings)
                             .size(32).padLeft(8)
@@ -149,17 +150,20 @@ public class LazyComponentDialog extends BaseDialog {
             }).fillX().row();
 
             // Description
-            content.add(component.getDescription()).color(Color.lightGray).wrap().width(width - 40).left().padTop(8)
+            content.add(component.getDescription()).color(Color.lightGray).wrap().width(width - 40).left().padTop(4)
                     .row();
 
-            // Status text
+            // Spacer to push status to bottom
+            content.add().growY().row();
+
+            // Status text at the bottom
             String statusText = component.isEnabled()
                     ? Core.bundle.get("message.lazy-components.enabled")
                     : Core.bundle.get("message.lazy-components.disabled-status");
 
             arc.scene.ui.Label label = new arc.scene.ui.Label(statusText);
             label.setColor(statusColor);
-            content.add(label).left().padTop(8);
+            content.add(label).left().padBottom(4);
         }).grow();
 
         parent.add(card).size(width, CARD_HEIGHT).pad(4);
