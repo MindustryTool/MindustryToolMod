@@ -33,12 +33,13 @@ public class QuickAccessPlugin implements Plugin {
 
             // Find the wave info table (statustable)
             waveInfoTable = Vars.ui.hudGroup.find("statustable");
-            if (waveInfoTable == null)
-                return;
+            // Soft check: if statustable is missing (e.g. main menu), still allow build but
+            // might be hidden
 
-            // Avoid recreating if already exists
-            if (Vars.ui.hudGroup.find("quick-access-tools") != null)
-                return;
+            // Remove old if exists (double check for safety)
+            Element existing = Vars.ui.hudGroup.find("quick-access-tools");
+            if (existing != null)
+                existing.remove();
 
             flipButton = new FlipButton();
 

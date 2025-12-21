@@ -109,3 +109,137 @@ task deploy(type: Jar){
         }
     }
 }
+
+// Advanced HotSwap Configuration (JBR + HotswapAgent)
+ext{
+    // URLs are now handled inside the task for better error handling
+}
+
+task setupDCEVM(type: DefaultTask){
+    doLast{
+        // 1. Download HotswapAgent
+        def haVersion = "2.0.0"
+        def haUrls = [
+            "https://github.com/HotswapProjects/HotswapAgent/releases/download/RELEASE-${haVersion}/hotswap-agent-${haVersion}.jar",
+            "https://github.com/HotswapProjects/HotswapAgent/releases/download/v${haVersion}/hotswap-agent-${haVersion}.jar",
+            "https://github.com/HotswapProjects/HotswapAgent/releases/download/${haVersion}/hotswap-agent-${haVersion}.jar"
+        ]
+        
+        def haFile = new File(projectDir, "run/lib/hotswap-agent.jar")
+        if(!haFile.exists()){
+            println "Downloading HotswapAgent ${haVersion}..."
+            haFile.parentFile.mkdirs()
+            
+            def success = false
+            for(String url : haUrls){
+                try{
+                    println "Trying $url ..."
+                    new URL(url).withInputStream{ i -> haFile.withOutputStream{ it << i } }
+                    success = true
+                    println "Download Success."
+                    break
+                }catch(Exception e){
+                    println "Failed: $e"
+                }
+            }
+            if(!success) throw new GradleException("Failed to download HotswapAgent from any known URL.")
+        }
+
+        // 2. Download and Extract JBR
+        // JBR 17.0.14 SDK with DCEVM bundled (from JetBrains CDN)
+        def jbrUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-17.0.14-windows-x64-b1367.22.tar.gz"
+        
+        def javaExe = new File(projectDir, "run/jbr/bin/java.exe")
+        if(!javaExe.exists()){
+            println "Downloading JetBrains Runtime 17 (DCEVM)..."
+            def tarFile = new File(projectDir, "run/jbr.tar.gz")
+            tarFile.parentFile.mkdirs()
+            
+            try{
+                println "Downloading JBR from $jbrUrl ..."
+                new URL(jbrUrl).withInputStream{ i -> tarFile.withOutputStream{ it << i } }
+            }catch(Exception e){
+                 throw new GradleException("Failed to download JBR", e)
+            }
+            
+            println "Extracting JBR..."
+            copy{
+                from tarTree(resources.gzip(tarFile))
+                into new File(projectDir, "run/jbr")
+                eachFile { file ->
+                    file.path = file.path.replaceFirst("^[^/]+/", "")
+                }
+                includeEmptyDirs = false
+            }
+            tarFile.delete()
+            println "JBR Setup Complete."
+        }
+    }
+}
+
+
+
+task downloadMindustry(type: DefaultTask){
+    doLast{
+        def v = "v154.3"
+        def url = "https://github.com/Anuken/Mindustry/releases/download/$v/Mindustry.jar"
+        def f = new File(projectDir, "run/Mindustry.jar")
+        
+        if(!f.exists()){
+            println "Downloading Mindustry $v..."
+            f.parentFile.mkdirs()
+            new URL(url).withInputStream{ i -> f.withOutputStream{ it << i } }
+            println "Download complete."
+        }
+    }
+}
+
+task runClient(type: JavaExec){
+    dependsOn jar
+    dependsOn downloadMindustry
+    dependsOn setupDCEVM
+    
+    group = "mindustry"
+    description = "Runs the game with JBR DCEVM + HotswapAgent. Debugger port: 5005"
+    
+    // Use JBR java executable
+    executable = new File(projectDir, "run/jbr/bin/java.exe")
+    
+    // Classpath: Game + compiled mod classes (for HotSwap) + dependencies
+    classpath = files(new File(projectDir, "run/Mindustry.jar")) + 
+                files("$buildDir/classes/java/main") +  // Compiled mod classes for HotSwap
+                sourceSets.main.runtimeClasspath
+    main = "mindustry.desktop.DesktopLauncher"
+    
+    workingDir = new File(projectDir, "run")
+    environment "MINDUSTRY_DATA_DIR", new File(projectDir, "run/data").absolutePath
+    
+    // HotswapAgent Arguments
+    jvmArgs "-XX:+AllowEnhancedClassRedefinition"
+    jvmArgs "-XX:HotswapAgent=fatjar"
+    jvmArgs "-javaagent:lib/hotswap-agent.jar"
+    
+    // Debugger (JDK 9+ format)
+    jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    
+    doFirst {
+        // Copy mod JAR to mods folder
+        mkdir new File(projectDir, "run/data/mods")
+        copy {
+            from "$buildDir/libs/${project.archivesBaseName}Desktop.jar"
+            into new File(projectDir, "run/data/mods")
+            rename { "${project.archivesBaseName}.jar" }
+        }
+    }
+}
+
+// Task to recompile without restart - run this then changes apply via HotSwap
+task recompile {
+    dependsOn compileJava
+    group = "mindustry"
+    description = "Recompile Java classes for HotSwap (game must be running with debugger attached)"
+    
+    doLast {
+        println "Classes recompiled! If debugger is attached, changes should apply."
+    }
+}

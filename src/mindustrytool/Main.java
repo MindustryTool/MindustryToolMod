@@ -111,6 +111,35 @@ public class Main extends Mod {
         }
 
         Log.info("[PluginLoader] All @ plugins loaded", plugins.size);
+
+        // Development hot-reload: Press F12 to reload all plugins
+        // Workflow: Edit code -> ./gradlew jar -> Press F12 in game
+        arc.Events.run(mindustry.game.EventType.Trigger.update, () -> {
+            boolean shift = Core.input.keyDown(arc.input.KeyCode.shiftLeft)
+                    || Core.input.keyDown(arc.input.KeyCode.shiftRight);
+            boolean ctrl = Core.input.keyDown(arc.input.KeyCode.controlLeft)
+                    || Core.input.keyDown(arc.input.KeyCode.controlRight);
+            if (!Core.scene.hasField() && shift && ctrl && Core.input.keyTap(arc.input.KeyCode.f12)) {
+                Log.info("[Dev] Ctrl+Shift+F12 pressed - Reloading all plugins...");
+                reloadAllPlugins();
+                Vars.ui.showInfoToast("[accent]Plugins reloaded!", 2f);
+            }
+        });
+        Log.info("[Dev] Ctrl+Shift+F12 hot-reload registered. Edit code -> ./gradlew jar -> Ctrl+Shift+F12");
+    }
+
+    /** Reload all plugins - call this from F12 or other trigger */
+    public static void reloadAllPlugins() {
+        for (Plugin plugin : plugins) {
+            try {
+                Log.info("[Dev] Reloading: @", plugin.getName());
+                plugin.reload();
+            } catch (Exception e) {
+                Log.err("[Dev] Failed to reload: @", plugin.getName());
+                Log.err(e);
+            }
+        }
+        Log.info("[Dev] All @ plugins reloaded", plugins.size);
     }
 
     /**

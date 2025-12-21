@@ -21,6 +21,15 @@ public interface Plugin {
         return new String[0];
     }
 
+    /**
+     * Reload plugin UI/state. Called when dev presses F12 to hot-reload.
+     * Override this to rebuild UI without restarting game.
+     * Default implementation calls init() again.
+     */
+    default void reload() {
+        init();
+    }
+
     /** Dispose plugin resources. Called during mod dispose. */
     default void dispose() {
     }
