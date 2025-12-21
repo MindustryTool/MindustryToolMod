@@ -6,6 +6,8 @@ import mindustry.ui.Styles;
 import mindustry.gen.Icon;
 import arc.scene.ui.layout.Collapser;
 import arc.util.Align;
+import arc.graphics.g2d.GlyphLayout;
+import arc.util.pooling.Pools;
 
 public class TagCategoryRenderer {
     public static void render(Table table, SearchConfig searchConfig, Seq<TagCategory> categories, FilterConfig config,
@@ -121,14 +123,12 @@ public class TagCategoryRenderer {
         table.row();
         table.add(collapser).growX();
 
-        // Animation removed as requested
-
         content.left().top(); // Align content top-left
 
-        // Use exact width calculation based on container padding (10px left + 10px
-        // right + scrollbar)
-        // Core.graphics.getWidth() - 60 should be safe and fill the row.
-        float availableWidth = arc.Core.graphics.getWidth() - 60f;
+        // Use exact width calculation based on container padding
+        // Increased buffer to 100 for maximum safety on all devices (scrollbars,
+        // notches, margins)
+        float availableWidth = arc.Core.graphics.getWidth() - 100f;
         float currentWidth = 0;
 
         // Current row table
@@ -150,46 +150,47 @@ public class TagCategoryRenderer {
                     continue;
             }
 
-            // Actual measurement wrapping logic
-            // Create button detached to measure it
-            arc.scene.ui.Button btn = new arc.scene.ui.Button(Styles.flatBordert);
-            btn.left();
-
-            // Content
-            if (value.icon() != null && !value.icon().isEmpty()) {
-                btn.add(new NetworkImage(value.icon())).size(24 * config.scale).padRight(4).align(Align.center);
-            }
+            // Estimate using accurate Font measurement (No Layout lag)
             String btnName = value.name();
             if (value.count() != null) {
                 btnName += " (" + value.count() + ")";
             }
-            btn.add(btnName).fontScale(config.scale).align(Align.center);
-            btn.margin(4f).marginLeft(8f).marginRight(8f); // Padding
 
-            // Logic
-            btn.clicked(() -> searchConfig.setTag(category, value));
+            GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
+            layout.setText(Styles.flatBordert.font, btnName);
+            float textWidth = layout.width;
+            Pools.free(layout);
 
-            // Initial State (No .update loop for performance)
-            boolean isSelected = searchConfig.containTag(category, value);
-            btn.setChecked(isSelected);
-            btn.setColor(isSelected ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white);
+            // Calculation: Text * Scale + Icon (if any) + Padding/Margins
+            boolean hasIcon = value.icon() != null && !value.icon().isEmpty();
+            // Icon (24) + Spacing (4) + Button Margin (16) + Cell Pad (~8) + extra safety
+            float totalItemWidth = (textWidth * config.scale) + (hasIcon ? 28 * config.scale : 0) + (32 * config.scale);
 
-            // Measure
-            btn.pack();
-            float startWidth = btn.getPrefWidth();
-            // Add cell padding/spacing estimation (pad(4) -> 4 left + 4 right = 8? No,
-            // space between items)
-            // Table .pad(1) default?
-            // Let's assume we add it with .pad(4).
-            float totalItemWidth = startWidth + 8f; // 4px pad * 2
-
-            if (currentWidth + totalItemWidth > availableWidth) {
+            if (currentWidth + totalItemWidth > availableWidth && currentWidth > 0) {
                 // New row
                 currentRow[0] = new Table();
                 currentRow[0].left().defaults().pad(1);
                 content.add(currentRow[0]).left().top().row();
                 currentWidth = 0;
             }
+
+            // Actual Button Creation
+            arc.scene.ui.Button btn = new arc.scene.ui.Button(Styles.flatBordert);
+            btn.left();
+
+            if (hasIcon) {
+                btn.add(new NetworkImage(value.icon())).size(24 * config.scale).padRight(4).align(Align.center);
+            }
+            btn.add(btnName).fontScale(config.scale).align(Align.center);
+            btn.margin(4f).marginLeft(8f).marginRight(8f);
+
+            // Logic
+            btn.clicked(() -> searchConfig.setTag(category, value));
+
+            // Initial State
+            boolean isSelected = searchConfig.containTag(category, value);
+            btn.setChecked(isSelected);
+            btn.setColor(isSelected ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white);
 
             // Add to row
             currentRow[0].add(btn).height(36 * config.scale).pad(4);
