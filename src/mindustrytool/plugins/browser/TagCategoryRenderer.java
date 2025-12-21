@@ -8,6 +8,7 @@ import arc.scene.ui.layout.Collapser;
 import arc.util.Align;
 import arc.graphics.g2d.GlyphLayout;
 import arc.util.pooling.Pools;
+import arc.scene.ui.layout.Scl;
 
 public class TagCategoryRenderer {
     public static void render(Table table, SearchConfig searchConfig, Seq<TagCategory> categories, FilterConfig config,
@@ -126,9 +127,11 @@ public class TagCategoryRenderer {
         content.left().top(); // Align content top-left
 
         // Use exact width calculation based on container padding
-        // Increased buffer to 100 for maximum safety on all devices (scrollbars,
-        // notches, margins)
-        float availableWidth = arc.Core.graphics.getWidth() - 100f;
+        // CORE FIX: Convert Physical Pixels to Logical UI Units using Scl.scl(1f)
+        // This ensures compatibility with Mindustry's UI scaling (e.g. 200% scale on
+        // mobile).
+        // Buffer: 100 units (very safe).
+        float availableWidth = (arc.Core.graphics.getWidth() / Scl.scl(1f)) - 100f;
         float currentWidth = 0;
 
         // Current row table
