@@ -30,12 +30,14 @@ public class BrowserContentBuilder {
         }
         c.pane(p -> {
             float availableWidth = Core.graphics.getWidth();
-            // Estimate card width (including padding used in ContentPreviewFactory)
-            float itemWidth = Scl.scl(cardWidth) + Scl.scl(12);
+            // Estimate card width (Strict cardWidth + 8px padding from
+            // ContentPreview.create .pad(4))
+            float itemWidth = Scl.scl(cardWidth + 8f);
 
             // Calculate columns: (Screen - DialogMargin) / ItemWidth
-            // Using 60 as safety margin for dialog borders
-            int cols = Math.max(1, (int) ((availableWidth - Scl.scl(60)) / itemWidth));
+            // Adjusted safety margin to 80 to account for vertical scrollbar (~20px) +
+            // dialog pads
+            int cols = Math.max(1, (int) ((availableWidth - Scl.scl(80)) / itemWidth));
 
             int i = 0;
             for (T data : dataList) {
@@ -49,6 +51,6 @@ public class BrowserContentBuilder {
                 }
             }
             p.top();
-        }).scrollY(true).expand().fill();
+        }).scrollY(true).scrollX(false).expand().fill();
     }
 }

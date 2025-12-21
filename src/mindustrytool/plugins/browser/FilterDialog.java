@@ -17,8 +17,12 @@ public class FilterDialog extends BaseBrowserDialog {
     private ScrollPane tagPane;
     private final arc.struct.ObjectMap<String, Boolean> collapseState = new arc.struct.ObjectMap<>();
 
+    private final SearchConfig searchConfig;
+    private float lastWidth = -1;
+
     public FilterDialog(TagService tagService, SearchConfig searchConfig, Cons<Cons<Seq<TagCategory>>> tagProvider) {
         super("");
+        this.searchConfig = searchConfig;
 
         this.tagProvider = tagProvider;
         onResize(() -> {
@@ -35,6 +39,20 @@ public class FilterDialog extends BaseBrowserDialog {
             if (searchConfig != null)
                 show(searchConfig);
         });
+    }
+
+    @Override
+    public void act(float delta) {
+        super.act(delta);
+
+        if (lastWidth < 0)
+            lastWidth = Core.graphics.getWidth();
+
+        if (Math.abs(Core.graphics.getWidth() - lastWidth) > 1) {
+            lastWidth = Core.graphics.getWidth();
+            if (searchConfig != null)
+                show(searchConfig);
+        }
     }
 
     public void show(SearchConfig searchConfig) {
