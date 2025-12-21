@@ -45,8 +45,9 @@ public class QuickAccessPlugin implements Plugin {
             Vars.ui.hudGroup.fill(cont -> {
                 cont.name = "quick-access-tools";
                 cont.top().left();
-                cont.visible(() -> Vars.ui.hudfrag.shown && !Vars.ui.minimapfrag.shown() && waveInfoTable.hasParent()
-                        && waveInfoTable.visible);
+                cont.visible(() -> Vars.ui.hudfrag.shown && !Vars.ui.minimapfrag.shown()
+                        && !Vars.state.isEditor() // Hide in map editor
+                        && waveInfoTable.hasParent() && waveInfoTable.visible);
 
                 cont.table(Tex.buttonEdge4, pad -> {
                     // Row 1 (Always visible): FlipButton + first set of tools
@@ -70,14 +71,22 @@ public class QuickAccessPlugin implements Plugin {
                     }).left().visible(() -> flipButton.fliped).row();
 
                 }).margin(0f).update(pad -> {
-                    if (waveInfoTable == null)
+                    if (waveInfoTable == null || !waveInfoTable.hasParent())
                         return;
 
-                    // Position below wave info (align top to wave info bottom)
-                    // Use .y relative to hudGroup height to account for mobile notches/margins
-                    float targetY = waveInfoTable.y;
-                    float currentTop = Vars.ui.hudGroup.getHeight();
-                    pad.setTranslation(0f, targetY - currentTop);
+                    // Get absolute screen coordinates of the Wave Info table (Bottom-Left corner)
+                    // This fixes the issue where local coordinates are 0 or relative to a moving
+                    // parent.
+                    arc.math.geom.Vec2 v = new arc.math.geom.Vec2();
+                    waveInfoTable.localToStageCoordinates(v.set(0, 0));
+                    float absoluteBottomY = v.y;
+
+                    // We want our Top to be at WaveInfo's Bottom.
+                    // Pad is anchored Top-Left in a Full-Screen Group (hudGroup).
+                    // Pad's default Y is ScreenHeight (Top).
+                    // Translation needed = TargetY - ScreenHeight.
+                    float screenHeight = Vars.ui.hudGroup.getHeight();
+                    pad.setTranslation(0f, absoluteBottomY - screenHeight);
                 });
             });
         });

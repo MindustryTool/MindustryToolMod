@@ -29,6 +29,9 @@ public class TeamResourcesOverlay extends Table {
     // Settings keys
     private static final String PREFIX = "teamresources.";
 
+    // DEBUG: Set to true to simulate mobile mode on desktop for testing
+    private static final boolean DEBUG_MOBILE_MODE = false;
+
     // Persistent settings
     private float opacity = Core.settings.getFloat(PREFIX + "opacity", 1f);
     private float scale = Core.settings.getFloat(PREFIX + "scale", 1f);
@@ -243,11 +246,11 @@ public class TeamResourcesOverlay extends Table {
 
         // Calculate max width based on overlayWidth setting, enforce min width (200px)
         // for very small screens
-        boolean mobile = Vars.mobile;
+        boolean mobile = DEBUG_MOBILE_MODE || Vars.mobile; // Use debug flag for testing
         float screenW = Core.graphics.getWidth();
         float calculatedWidth = screenW * overlayWidth;
-        // On mobile portrait, ensure we use at least reasonable width
-        float minWidth = mobile && Core.graphics.getHeight() > screenW ? screenW * 0.8f : 240f;
+        // Minimum width - let Scene2D handle scaling naturally
+        float minWidth = 100f;
 
         float widthToUse;
         if (!mobile) {
@@ -259,8 +262,8 @@ public class TeamResourcesOverlay extends Table {
 
         // Main Layout - Auto-expanding (No Scroll)
         table(bg, t -> {
-            // Apply scale to margin (formerly in scroll pane)
-            t.margin(Scl.scl(8f * scale));
+            // Apply scale to margin - use fixed value, Scene2D handles device scaling
+            t.margin(8f * scale);
 
             // --- TOP: Team Selector ---
             t.collapser(c -> {
@@ -301,9 +304,10 @@ public class TeamResourcesOverlay extends Table {
                     itemsTable.addListener(statsListener);
 
                     // Calculate actual cell width: icon + label + padding
-                    float iconSize = Scl.scl(Vars.iconSmall * scale);
-                    float labelWidth = Scl.scl(40f * scale);
-                    float padding = Scl.scl(6f * scale);
+                    // Use fixed values like scheme-size - Scene2D handles device scaling
+                    float iconSize = 24f * scale;
+                    float labelWidth = 80f * scale;
+                    float padding = 4f * scale;
                     float cellWidth = iconSize + labelWidth + padding;
 
                     // Calculate columns to fill overlay width
@@ -314,9 +318,9 @@ public class TeamResourcesOverlay extends Table {
                         if (!usedItems.contains(item))
                             continue;
 
-                        itemsTable.image(item.uiIcon).size(iconSize).padRight(Scl.scl(3f * scale));
+                        itemsTable.image(item.uiIcon).size(iconSize).padRight(4f * scale);
                         itemsTable.label(() -> formatItem(item)).fontScale(0.8f * scale)
-                                .padRight(Scl.scl(3f * scale))
+                                .padRight(4f * scale)
                                 .minWidth(labelWidth).left();
 
                         if (++i % cols == 0)
@@ -338,9 +342,10 @@ public class TeamResourcesOverlay extends Table {
                     }
 
                     // Calculate unit cell size (icon + padding)
-                    float unitSize = (Vars.iconSmall + 8f) * scale;
-                    float unitPad = Scl.scl(4f * scale);
-                    float cellWidth = Scl.scl(unitSize) + unitPad;
+                    // Use fixed values - Scene2D handles device scaling
+                    float unitSize = 32f * scale;
+                    float unitPad = 4f * scale;
+                    float cellWidth = unitSize + unitPad;
 
                     // Calculate columns to fill overlay width
                     int cols = Math.max(2, (int) (finalWidth / cellWidth));
@@ -357,19 +362,19 @@ public class TeamResourcesOverlay extends Table {
                                     return c > 0 ? UI.formatAmount(c) : "";
                                 }).fontScale(0.72f * scale).style(Styles.outlineLabel)).right().bottom())
                                 .size(unitSize)
-                                .pad(Scl.scl(2f * scale));
+                                .pad(2f * scale);
 
                         if (++i % cols == 0)
                             unitsTable.row();
                     }
-                }).growX().padTop(Scl.scl(6f * scale)).row();
+                }).growX().padTop(6f * scale).row();
             }
 
             // --- BOTTOM: Power Info (Fixed) ---
             if (showPower) {
                 t.table(power -> {
-                    // Apply scale to bar height
-                    float barHeight = Scl.scl(18f * scale);
+                    // Apply scale to bar height - use fixed value like scheme-size
+                    float barHeight = 20f * scale;
                     power.defaults().height(barHeight).growX();
                     power.touchable = arc.scene.event.Touchable.enabled;
                     power.addListener(new arc.scene.event.ClickListener() {
@@ -587,7 +592,7 @@ public class TeamResourcesOverlay extends Table {
                 cont.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
 
                 // --- Size Slider ---
-                arc.scene.ui.Slider sizeSlider = new arc.scene.ui.Slider(0.5f, 2f, 0.1f, false);
+                arc.scene.ui.Slider sizeSlider = new arc.scene.ui.Slider(0.3f, 2f, 0.1f, false);
                 sizeSlider.setValue(scale);
 
                 arc.scene.ui.Label sizeValue = new arc.scene.ui.Label(Math.round(scale * 100) + "%",
@@ -610,7 +615,7 @@ public class TeamResourcesOverlay extends Table {
                 cont.stack(sizeSlider, sizeContent).width(width).left().padTop(4f).row();
 
                 // --- Width Slider ---
-                arc.scene.ui.Slider widthSlider = new arc.scene.ui.Slider(0.3f, 1f, 0.05f, false);
+                arc.scene.ui.Slider widthSlider = new arc.scene.ui.Slider(0.15f, 1f, 0.05f, false);
                 widthSlider.setValue(overlayWidth);
 
                 arc.scene.ui.Label widthValue = new arc.scene.ui.Label(Math.round(overlayWidth * 100) + "%",
