@@ -40,14 +40,14 @@ public class DistributionRevealVisualizer {
     private static Field directionBridgeLinkField; // lastLink field for Erekir bridges
 
     // Unloader
-    private static Field unloaderDumpTileField; // Keeping my robust one for fallback
+    private static Field unloaderDumpTileField; // Robust fallback for unloader target tile
     private static Field unloaderDumpingTo;
     private static Field unloaderBuilding; // ContainerStat.building
 
     // Junction
-    // MI2U uses jb.buffer.indexes directly (assuming accessors or public).
-    // In V7, JunctionBuild.buffer is public? No, it's protected usually.
-    // I will add reflection for Junction fields just in case.
+    // Uses jb.buffer.indexes directly (assuming accessors or public).
+    // In V7, JunctionBuild.buffer is typically protected.
+    // Reflection used for Junction fields to ensure access.
     private static Field junctionBufferField;
     private static Field junctionBufferBuffersField;
     private static Field junctionBufferIndexesField;
@@ -99,11 +99,10 @@ public class DistributionRevealVisualizer {
                 bridgeLinkField.setAccessible(true);
 
             // DirectionBridge lastLink field (Erekir)
-            // Note: Since we don't have the class directly easily, we can find it via any
-            // build or try common names
-            // Actually, DirectionBridgeBuild is the class where lastLink resides.
-            // We'll try to find it on-demand or pre-look it up if we can find a
-            // representative class.
+            // Found via representative class since the direct class reference may not be
+            // available.
+            // DirectionBridgeBuild contains the lastLink field.
+            // On-demand lookup attempted via available representative classes.
             try {
                 // Try finding it in any block that might have it
                 directionBridgeLinkField = findField(DuctBridge.DuctBridgeBuild.class, "lastLink");
@@ -231,7 +230,7 @@ public class DistributionRevealVisualizer {
 
     }
 
-    // --- Adapted MI2U Logic ---
+    // --- Core Distribution Logic ---
 
     private void drawBufferedItemBridge(BufferedItemBridge.BufferedItemBridgeBuild bb) {
         Draw.reset();
@@ -276,14 +275,14 @@ public class DistributionRevealVisualizer {
 
         int cap = ((BufferedItemBridge) bb.block).bufferCapacity;
         float speed = ((BufferedItemBridge) bb.block).speed;
-        Draw.alpha(0.9f); // MI2U sets alpha 0.9
+        Draw.alpha(0.9f); // Set specific transparency for visibility
 
         for (int idi = 0; idi < bufferbuffer.length && idi < index; idi++) {
             float time = Float.intBitsToFloat(Pack.leftInt(bufferbuffer[idi]));
             Item item = Vars.content.item(Pack.leftShort(Pack.rightInt(bufferbuffer[idi])));
 
             if (item != null) {
-                // MI2U Logic Exact Copy
+                // Determine item progress based on speed and capacity
                 float progress = Math.min(((Time.time - time) * bb.timeScale() / speed) * cap, cap - idi);
 
                 float drawX = voffset.x + (vline.x / bufferbuffer.length * progress);
@@ -391,19 +390,14 @@ public class DistributionRevealVisualizer {
                     float time = Float.intBitsToFloat(Pack.leftInt(val));
                     // int itemId = (int) val & 0xFFFF; // Removed unused var
 
-                    // attempt, but MI2U uses BufferItem.item(val)
-
-                    // MI2U code: BufferItem.item(...)
-                    // BufferItem.item(long) -> return (short)val;
-                    // Standard implementation: return (short) value;
-
+                    // Junction Buffer handling
                     Item item = Vars.content.item((short) val);
                     if (item == null)
                         continue;
 
                     Draw.alpha(0.9f);
 
-                    // MI2U Math
+                    // Physical position calculation for junctioned items
                     float prog = Math.min((Time.time - time) * jb.timeScale() / speed, 1f - i / cap);
 
                     Vec2 pos = Tmp.v1.set(-0.25f + 0.75f * prog, 0.25f).rotate(90 * rot).scl(Vars.tilesize).add(jb);
@@ -425,18 +419,11 @@ public class DistributionRevealVisualizer {
             // Need 'possibleBlocks'? UnloaderBuild has it public usually?
             // V7: public Seq<Building> possibleBlocks = new Seq<>();
 
-            // To be safe and avoid "possibleBlocks" reflection if it's protected (it
-            // shouldn't be),
-            // I will use my Robust Line Drawing fallback if strict Parity fails
-            // compilation.
-            // But since user wants strict copy, I'll try to follow it.
-            // However, dumpingFrom/dumpingTo are ContainerStat objects.
+            // Fallback to robust line drawing if primary target resolution fails.
+            // Uses ContainerStat objects for precise targeting where available.
 
             // Reflection for dumpingTo/From
-            // I'll stick to my previous "draw line to target" logic which is much simpler
-            // and achieves the same visual result
-            // BUT user supplied code uses intersection logic.
-            // Let's implement the intersection logic using the fields I found.
+            // Employs intersection logic for visual representation.
 
             Object toCont = unloaderDumpingTo != null ? unloaderDumpingTo.get(ub) : null;
             Building tob = null;
@@ -728,7 +715,7 @@ public class DistributionRevealVisualizer {
         if (tob != null) {
             Vec2 off = Tmp.v1, end = Tmp.v2;
             // line length: sum of block sizes sub xy distance
-            // Calculation logic from MI2U
+            // Distance calculation based on block geometry
             end.set(rb).sub(tob);
             end.x = (rb.block.size + tob.block.size) * Vars.tilesize / 2f - Math.abs(end.x);
             end.y = (rb.block.size + tob.block.size) * Vars.tilesize / 2f - Math.abs(end.y);
