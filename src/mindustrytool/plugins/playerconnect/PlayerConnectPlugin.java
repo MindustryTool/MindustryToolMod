@@ -60,6 +60,13 @@ public class PlayerConnectPlugin implements Plugin {
             mindustrytool.visuals.TeamResourcesOverlay::new,
             false);
 
+    // Distribution Reveal Visualizer
+    private static final LazyComponent<mindustrytool.visuals.DistributionRevealVisualizer> distributionRevealVisualizer = new LazyComponent<>(
+            "Distribution Reveal",
+            "Reveal items inside bridges, junctions, and unloaders.",
+            mindustrytool.visuals.DistributionRevealVisualizer::new,
+            false);
+
     static {
         // Register Settings for Lazy Component (Settings Gear Icon in Manage
         // Components)
@@ -112,7 +119,23 @@ public class PlayerConnectPlugin implements Plugin {
         lazyComponents.add(healthBarVisualizer);
         lazyComponents.add(entityVisibilityManager);
         lazyComponents.add(visualOverlayManager);
+        lazyComponents.add(distributionRevealVisualizer);
         lazyComponents.add(teamResourcesOverlay);
+
+        // Register Settings for Distribution Reveal
+        distributionRevealVisualizer.onSettings(() -> {
+            mindustrytool.visuals.DistributionRevealVisualizer viz = distributionRevealVisualizer.getIfEnabled();
+            if (viz != null) {
+                viz.showSettings();
+            } else {
+                arc.Core.app.post(() -> {
+                    mindustry.ui.dialogs.BaseDialog d = new mindustry.ui.dialogs.BaseDialog("Info");
+                    d.cont.add("Please enable 'Distribution Reveal' first.");
+                    d.addCloseButton();
+                    d.show();
+                });
+            }
+        });
 
         // Register Settings for Team Resources
         teamResourcesOverlay.onSettings(() -> {
@@ -234,6 +257,10 @@ public class PlayerConnectPlugin implements Plugin {
             mindustrytool.visuals.PathfindingVisualizer paths = pathfindingVisualizer.getIfEnabled();
             if (paths != null)
                 paths.draw();
+
+            mindustrytool.visuals.DistributionRevealVisualizer dist = distributionRevealVisualizer.getIfEnabled();
+            if (dist != null)
+                dist.draw();
         });
 
         // Initialize Team Resources Overlay immediately if enabled
@@ -251,6 +278,7 @@ public class PlayerConnectPlugin implements Plugin {
         roomsDialog.unload();
         pathfindingVisualizer.unload();
         healthBarVisualizer.unload();
+        distributionRevealVisualizer.unload();
         entityVisibilityManager.unload();
         visualOverlayManager.unload();
         joinRoomDialog = null;
