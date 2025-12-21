@@ -21,6 +21,9 @@ public class PathfindingVisualizer {
 
     private final int MAX_STEPS = 250;
 
+    // Min Zoom Threshold: Skip rendering when zoomed out beyond this level
+    private float zoomThreshold;
+
     // Optimization: Staggered Tile Cache with Team Support
     private static class PathCache {
         float[] data; // Interleaved x, y
@@ -33,12 +36,22 @@ public class PathfindingVisualizer {
     // Use LongMap as Set since LongSet is missing
     private final arc.struct.LongMap<Object> activeTiles = new arc.struct.LongMap<>();
 
+    private mindustry.ui.dialogs.BaseDialog dialog;
+
     public PathfindingVisualizer() {
         arc.util.Log.info("[PathfindingVisualizer] INITIALIZED. Constructor called.");
+        // Load saved zoom threshold (default 0.5 = auto-disable when zoomed out
+        // significantly)
+        zoomThreshold = Core.settings.getFloat("visualizer.pathfinding.zoomThreshold", 0.5f);
     }
 
     public void draw() {
         if (!state.isGame())
+            return;
+
+        // Min Zoom Check: Skip rendering when zoomed out too far
+        float zoom = renderer.getScale();
+        if (zoomThreshold > 0 && zoom < zoomThreshold)
             return;
 
         Draw.z(mindustry.graphics.Layer.overlayUI);
@@ -175,5 +188,53 @@ public class PathfindingVisualizer {
             cy = ny;
         }
         Draw.reset();
+    }
+
+    /** Opens a settings dialog for this visualizer. */
+    public void showSettings() {
+        if (dialog == null) {
+            dialog = new mindustry.ui.dialogs.BaseDialog("Pathfinding Settings");
+            dialog.addCloseButton();
+            // Standard reset button with @settings.reset bundle key
+            dialog.buttons.button("@settings.reset", mindustry.gen.Icon.refresh, () -> {
+                zoomThreshold = 0.5f;
+                Core.settings.put("visualizer.pathfinding.zoomThreshold", zoomThreshold);
+                rebuild(); // Update UI without closing
+            }).size(250, 64);
+            dialog.shown(this::rebuild);
+        }
+        dialog.show();
+    }
+
+    private void rebuild() {
+        arc.scene.ui.layout.Table cont = dialog.cont;
+        cont.clear();
+        cont.defaults().pad(6).left();
+
+        float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
+
+        // --- Zoom Threshold Slider ---
+        arc.scene.ui.Slider zoomSlider = new arc.scene.ui.Slider(0f, 2f, 0.1f, false);
+        zoomSlider.setValue(zoomThreshold);
+
+        arc.scene.ui.Label zoomValue = new arc.scene.ui.Label(
+                zoomThreshold <= 0.01f ? "Off" : String.format("%.1fx", zoomThreshold),
+                mindustry.ui.Styles.outlineLabel);
+        zoomValue.setColor(zoomThreshold <= 0.01f ? arc.graphics.Color.gray : arc.graphics.Color.lightGray);
+
+        arc.scene.ui.layout.Table zoomContent = new arc.scene.ui.layout.Table();
+        zoomContent.touchable = arc.scene.event.Touchable.disabled;
+        zoomContent.margin(3f, 33f, 3f, 33f);
+        zoomContent.add("Min Zoom", mindustry.ui.Styles.outlineLabel).left().growX();
+        zoomContent.add(zoomValue).padLeft(10f).right();
+
+        zoomSlider.changed(() -> {
+            zoomThreshold = zoomSlider.getValue();
+            zoomValue.setText(zoomThreshold <= 0.01f ? "Off" : String.format("%.1fx", zoomThreshold));
+            zoomValue.setColor(zoomThreshold <= 0.01f ? arc.graphics.Color.gray : arc.graphics.Color.lightGray);
+            Core.settings.put("visualizer.pathfinding.zoomThreshold", zoomThreshold);
+        });
+
+        cont.stack(zoomSlider, zoomContent).width(width).left().padTop(4f).row();
     }
 }

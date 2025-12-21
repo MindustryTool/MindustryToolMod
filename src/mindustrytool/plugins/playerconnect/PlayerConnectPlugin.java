@@ -77,6 +77,36 @@ public class PlayerConnectPlugin implements Plugin {
             }
         });
 
+        // Register Settings for Enemy Pathfinding
+        pathfindingVisualizer.onSettings(() -> {
+            mindustrytool.visuals.PathfindingVisualizer viz = pathfindingVisualizer.getIfEnabled();
+            if (viz != null) {
+                viz.showSettings();
+            } else {
+                arc.Core.app.post(() -> {
+                    mindustry.ui.dialogs.BaseDialog d = new mindustry.ui.dialogs.BaseDialog("Info");
+                    d.cont.add("Please enable 'Enemy Pathfinding' first.");
+                    d.addCloseButton();
+                    d.show();
+                });
+            }
+        });
+
+        // Register Settings for Health Bars
+        healthBarVisualizer.onSettings(() -> {
+            mindustrytool.visuals.HealthBarVisualizer viz = healthBarVisualizer.getIfEnabled();
+            if (viz != null) {
+                viz.showSettings();
+            } else {
+                arc.Core.app.post(() -> {
+                    mindustry.ui.dialogs.BaseDialog d = new mindustry.ui.dialogs.BaseDialog("Info");
+                    d.cont.add("Please enable 'Health Bars' first.");
+                    d.addCloseButton();
+                    d.show();
+                });
+            }
+        });
+
         lazyComponents.add(roomsDialog);
         lazyComponents.add(pathfindingVisualizer);
         lazyComponents.add(healthBarVisualizer);

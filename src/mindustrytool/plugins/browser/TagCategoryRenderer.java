@@ -193,13 +193,13 @@ public class TagCategoryRenderer {
                 // Force update visual state immediately for responsiveness
                 boolean isSelected = searchConfig.containTag(category, value);
                 btn.setChecked(isSelected);
-                btn.setColor(isSelected ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white);
+                btn.setColor(isSelected ? mindustry.graphics.Pal.accent : arc.graphics.Color.white);
             });
 
             // Initial State
             boolean isSelected = searchConfig.containTag(category, value);
             btn.setChecked(isSelected);
-            btn.setColor(isSelected ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white);
+            btn.setColor(isSelected ? mindustry.graphics.Pal.accent : arc.graphics.Color.white);
 
             // Add to row
             currentRow[0].add(btn).height(36 * config.scale).pad(4);

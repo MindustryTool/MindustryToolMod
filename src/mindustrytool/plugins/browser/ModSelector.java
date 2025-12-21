@@ -55,7 +55,8 @@ public class ModSelector {
                 btn.margin(4f).marginLeft(8f).marginRight(8f);
 
                 // Highlight when checked
-                btn.update(() -> btn.setColor(btn.isChecked() ? arc.graphics.Color.gold : arc.graphics.Color.white));
+                btn.update(
+                        () -> btn.setColor(btn.isChecked() ? mindustry.graphics.Pal.accent : arc.graphics.Color.white));
             }, () -> {
                 if (modIds.contains(mod.id()))
                     modIds.remove(mod.id());

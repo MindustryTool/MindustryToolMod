@@ -65,7 +65,7 @@ public class BrowserSettingsDialog extends BaseDialog {
 
     /** Add centered section header like Mindustry style */
     private void addSectionHeader(String title) {
-        cont.add(title).color(arc.graphics.Color.gold).center().padTop(12).padBottom(4).row();
+        cont.add(title).color(mindustry.graphics.Pal.accent).center().padTop(12).padBottom(4).row();
     }
 
     // Overload for backward compatibility / simple integers
