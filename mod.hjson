@@ -11,7 +11,6 @@ description:
 [accent[]] [#FFF000[]]Mindustry Tool  [white[]]- The Ultimate Utility for Every Player[[]]
 
 [white[]]Mindustry Tool is an extended utility that integrates multiple features, including the website [#88C6ED[]]mindustry-tool.com[white[]], allowing players to share and download [#394BA0[]]maps [white[]]and [#D54799[]]schematics [white[]]with just a few simple steps. Most notably, it introduces powerful features that help you play with friends using tools tailored specifically for the game.
-
 
 [accent[]] [#009F75[]]Play With Friends:[[]]
   [white[]] No complicated setup required — a single button is all it takes to host your own server and invite friends.
@@ -49,7 +48,7 @@ description:
   [#FAA31B[]]  Reddit: [white[]]r/MindustryTool[[]]
   [#EF4444[]]  YouTube: [white[]]Mindustry Tool[[]]
   '''
-version: v2.8.3-v8
+version: v2.8.4-v8
 
 minGameVersion: 154.2
 
