@@ -150,17 +150,40 @@ public class TagCategoryRenderer {
                     continue;
             }
 
-            // Estimate button width
-            String name = value.name();
-            if (value.count() != null)
-                name += " (" + value.count() + ")";
+            // Actual measurement wrapping logic
+            // Create button detached to measure it
+            arc.scene.ui.Button btn = new arc.scene.ui.Button(Styles.flatBordert);
+            btn.left();
 
-            // Conservative estimation
-            float iconWidth = (value.icon() != null && !value.icon().isEmpty()) ? 26 * config.scale : 0;
-            float textWidth = name.length() * 10 * config.scale;
-            float estimatedWidth = textWidth + iconWidth + 40 * config.scale; // Increased buffer for wider padding
+            // Content
+            if (value.icon() != null && !value.icon().isEmpty()) {
+                btn.add(new NetworkImage(value.icon())).size(24 * config.scale).padRight(4).align(Align.center);
+            }
+            String btnName = value.name();
+            if (value.count() != null) {
+                btnName += " (" + value.count() + ")";
+            }
+            btn.add(btnName).fontScale(config.scale).align(Align.center);
+            btn.margin(4f).marginLeft(8f).marginRight(8f); // Padding
 
-            if (currentWidth + estimatedWidth > availableWidth) {
+            // Logic
+            btn.clicked(() -> searchConfig.setTag(category, value));
+
+            // Initial State (No .update loop for performance)
+            boolean isSelected = searchConfig.containTag(category, value);
+            btn.setChecked(isSelected);
+            btn.setColor(isSelected ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white);
+
+            // Measure
+            btn.pack();
+            float startWidth = btn.getPrefWidth();
+            // Add cell padding/spacing estimation (pad(4) -> 4 left + 4 right = 8? No,
+            // space between items)
+            // Table .pad(1) default?
+            // Let's assume we add it with .pad(4).
+            float totalItemWidth = startWidth + 8f; // 4px pad * 2
+
+            if (currentWidth + totalItemWidth > availableWidth) {
                 // New row
                 currentRow[0] = new Table();
                 currentRow[0].left().defaults().pad(1);
@@ -168,36 +191,9 @@ public class TagCategoryRenderer {
                 currentWidth = 0;
             }
 
-            currentRow[0].button(btn -> {
-                btn.left();
-                if (value.icon() != null && !value.icon().isEmpty()) {
-                    btn.add(new NetworkImage(value.icon())).size(24 * config.scale).padRight(4).align(Align.center);
-                }
-                String btnName = value.name();
-                if (value.count() != null) {
-                    btnName += " (" + value.count() + ")";
-                }
-                btn.add(btnName).fontScale(config.scale).align(Align.center);
-                btn.margin(4f).marginLeft(8f).marginRight(8f); // Wider horizontal padding
-
-                // Reactive state binding: Button state always reflects SearchConfig
-                btn.update(() -> {
-                    boolean isSelected = searchConfig.containTag(category, value);
-                    btn.setChecked(isSelected);
-                    btn.setColor(isSelected ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white);
-                });
-            }, () -> searchConfig.setTag(category, value))
-                    .get().setStyle(Styles.flatBordert);
-
-            // Re-apply checked state (initial) - though update() covers it, this helps
-            // initial layout?
-            // Actually update() runs before draw, so it's fine.
-            arc.scene.ui.Button btn = (arc.scene.ui.Button) currentRow[0].getChildren().peek();
-
-            // Flexible height, increased padding
-            currentRow[0].getCell(btn).height(36 * config.scale).pad(4);
-
-            currentWidth += estimatedWidth;
+            // Add to row
+            currentRow[0].add(btn).height(36 * config.scale).pad(4);
+            currentWidth += totalItemWidth;
         }
     }
 }
