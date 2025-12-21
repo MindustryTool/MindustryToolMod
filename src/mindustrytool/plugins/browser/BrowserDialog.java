@@ -26,6 +26,24 @@ public class BrowserDialog<T extends ContentData> extends BaseBrowserDialog {
     private Table footerTable;
     private Table tagBarTable;
     private ScrollPane tagPane;
+    private float lastWidth = -1;
+
+    @Override
+    public void act(float delta) {
+        super.act(delta);
+
+        if (lastWidth < 0)
+            lastWidth = Core.graphics.getWidth();
+
+        if (Math.abs(Core.graphics.getWidth() - lastWidth) > 1) {
+            lastWidth = Core.graphics.getWidth();
+            // Trigger resize logic manually
+            request.setItemPerPage(calculateItemsPerPage(type));
+            updateContent();
+            if (filterDialog.isShown())
+                filterDialog.show(searchConfig);
+        }
+    }
 
     public BrowserDialog(ContentType type, Class<T> dataType, BaseDialog infoDialog) {
         super(type.title);

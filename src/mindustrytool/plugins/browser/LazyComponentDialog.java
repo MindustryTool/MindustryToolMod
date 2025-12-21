@@ -43,13 +43,28 @@ public class LazyComponentDialog extends BaseDialog {
         onResize(this::rebuild);
     }
 
+    private float lastWidth = -1;
+
+    @Override
+    public void act(float delta) {
+        super.act(delta);
+        if (lastWidth < 0)
+            lastWidth = Core.graphics.getWidth();
+        if (Math.abs(lastWidth - Core.graphics.getWidth()) > 1) {
+            lastWidth = Core.graphics.getWidth();
+            rebuild();
+        }
+    }
+
     private void rebuild() {
         cont.clear();
         cont.top().left();
         cont.defaults().pad(8);
 
         // Calculate optimal card width and columns
-        float screenWidth = (Core.graphics.getWidth() / Scl.scl(1f)) - 40; // padding
+        // Adjusted padding to 70 to safely account for vertical scrollbar (approx 20px)
+        // + dialog margins
+        float screenWidth = (Core.graphics.getWidth() / Scl.scl(1f)) - 70;
         int columns = Math.max(1, (int) (screenWidth / CARD_MIN_WIDTH));
         float cardWidth = (screenWidth - (columns + 1) * 8) / columns;
 
@@ -105,7 +120,7 @@ public class LazyComponentDialog extends BaseDialog {
             if (filtered.isEmpty()) {
                 pane.add(Core.bundle.get("message.lazy-components.empty")).color(Color.gray).pad(40);
             }
-        }).grow().colspan(columns);
+        }).grow().colspan(columns).scrollX(false); // Force no horizontal scroll
     }
 
     private void buildCard(Table parent, LazyComponent<?> component, float width) {
