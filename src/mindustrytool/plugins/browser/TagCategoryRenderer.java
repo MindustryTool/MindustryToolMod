@@ -130,8 +130,8 @@ public class TagCategoryRenderer {
         // CORE FIX: Convert Physical Pixels to Logical UI Units using Scl.scl(1f)
         // This ensures compatibility with Mindustry's UI scaling (e.g. 200% scale on
         // mobile).
-        // Buffer: 100 units (very safe).
-        float availableWidth = (arc.Core.graphics.getWidth() / Scl.scl(1f)) - 100f;
+        // Buffer: 30 units (Reduced from 100 to fill screen better).
+        float availableWidth = (arc.Core.graphics.getWidth() / Scl.scl(1f)) - 30f;
         float currentWidth = 0;
 
         // Current row table
@@ -187,8 +187,14 @@ public class TagCategoryRenderer {
             btn.add(btnName).fontScale(config.scale).align(Align.center);
             btn.margin(4f).marginLeft(8f).marginRight(8f);
 
-            // Logic
-            btn.clicked(() -> searchConfig.setTag(category, value));
+            // Logic: Immediate visual update + Model update
+            btn.clicked(() -> {
+                searchConfig.setTag(category, value);
+                // Force update visual state immediately for responsiveness
+                boolean isSelected = searchConfig.containTag(category, value);
+                btn.setChecked(isSelected);
+                btn.setColor(isSelected ? arc.graphics.Color.valueOf("9d57ff") : arc.graphics.Color.white);
+            });
 
             // Initial State
             boolean isSelected = searchConfig.containTag(category, value);
