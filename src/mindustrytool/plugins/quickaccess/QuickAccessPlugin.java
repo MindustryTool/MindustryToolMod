@@ -9,6 +9,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustrytool.Plugin;
+import mindustrytool.plugins.browser.BrowserPlugin;
 
 public class QuickAccessPlugin implements Plugin {
 
@@ -59,8 +60,16 @@ public class QuickAccessPlugin implements Plugin {
 
                         // First tool always visible next to FlipButton
                         row1.button(Icon.settings, Styles.clearNonei, () -> {
-                            mindustrytool.plugins.browser.BrowserPlugin.getComponentDialog().show();
+                            BrowserPlugin.getComponentDialog().show();
                         }).tooltip(Core.bundle.get("message.lazy-components.title", "Components"));
+
+                        row1.button(Icon.paste, Styles.clearNonei, () -> {
+                            var dialog = BrowserPlugin.getSchematicDialog().getIfEnabled();
+                            if (dialog != null) {
+                                dialog.show();
+                            }
+                        }).tooltip("Schematic Browser")
+                                .visible(() -> BrowserPlugin.getSchematicDialog().isEnabled());
 
                     }).left().row();
 
