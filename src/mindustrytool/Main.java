@@ -82,7 +82,7 @@ public class Main extends Mod {
 
     @Override
     public void init() {
-        lemmesay.voice.VoiceHandler.getInstance().init();
+
         checkForUpdate();
 
         // Load plugins from assets/plugins.txt

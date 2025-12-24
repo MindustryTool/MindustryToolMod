@@ -46,17 +46,23 @@ public class VoiceChatManager {
         registerPackets();
 
         // Initialize audio components (lazy - only when actually used)
+        initialized = true;
+        Log.info("@ Initialized successfully", TAG);
+    }
+
+    private void ensureAudioInitialized() {
+        if (processor != null && speaker != null)
+            return;
         try {
-            processor = new VoiceProcessor();
-            speaker = new VoiceSpeaker();
+            if (processor == null)
+                processor = new VoiceProcessor();
+            if (speaker == null)
+                speaker = new VoiceSpeaker();
             Log.info("@ Audio components initialized", TAG);
         } catch (Exception e) {
             Log.err("@ Failed to initialize audio components", TAG);
             Log.err(e);
         }
-
-        initialized = true;
-        Log.info("@ Initialized successfully", TAG);
     }
 
     /**
@@ -97,12 +103,15 @@ public class VoiceChatManager {
 
         // Handle incoming audio from other players
         Vars.net.handleClient(MicPacket.class, packet -> {
-            if (speaker != null && processor != null && enabled) {
-                try {
-                    short[] decoded = processor.decode(packet.audioData);
-                    speaker.play(decoded);
-                } catch (Exception e) {
-                    Log.err("@ Failed to play audio: @", TAG, e.getMessage());
+            if (enabled) {
+                ensureAudioInitialized();
+                if (speaker != null && processor != null) {
+                    try {
+                        short[] decoded = processor.decode(packet.audioData);
+                        speaker.play(decoded);
+                    } catch (Exception e) {
+                        Log.err("@ Failed to play audio: @", TAG, e.getMessage());
+                    }
                 }
             }
         });
@@ -115,6 +124,8 @@ public class VoiceChatManager {
         if (captureThread != null && captureThread.isAlive()) {
             return;
         }
+
+        ensureAudioInitialized();
 
         if (microphone == null) {
             try {
