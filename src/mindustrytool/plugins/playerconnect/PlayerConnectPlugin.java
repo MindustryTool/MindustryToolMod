@@ -67,6 +67,17 @@ public class PlayerConnectPlugin implements Plugin {
             mindustrytool.visuals.DistributionRevealVisualizer::new,
             false);
 
+    // Voice Chat Component
+    private static final LazyComponent<mindustrytool.plugins.voicechat.VoiceChatManager> voiceChatManager = new LazyComponent<>(
+            "Voice Chat",
+            "Enable voice communication with other players (Desktop only).",
+            () -> {
+                var manager = new mindustrytool.plugins.voicechat.VoiceChatManager();
+                manager.init();
+                return manager;
+            },
+            false);
+
     static {
         // Register Settings for Lazy Component (Settings Gear Icon in Manage
         // Components)
@@ -121,6 +132,22 @@ public class PlayerConnectPlugin implements Plugin {
         lazyComponents.add(visualOverlayManager);
         // lazyComponents.add(distributionRevealVisualizer);
         lazyComponents.add(teamResourcesOverlay);
+        lazyComponents.add(voiceChatManager);
+
+        // Register Settings for Voice Chat
+        voiceChatManager.onSettings(() -> {
+            mindustrytool.plugins.voicechat.VoiceChatManager vc = voiceChatManager.getIfEnabled();
+            if (vc != null) {
+                vc.showSettings();
+            } else {
+                arc.Core.app.post(() -> {
+                    mindustry.ui.dialogs.BaseDialog d = new mindustry.ui.dialogs.BaseDialog("Info");
+                    d.cont.add("Please enable 'Voice Chat' first.");
+                    d.addCloseButton();
+                    d.show();
+                });
+            }
+        });
 
         /*
          * // Register Settings for Distribution Reveal
