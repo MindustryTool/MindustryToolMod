@@ -3,866 +3,1031 @@ package mindustrytool.visuals;
 import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
+import arc.math.Angles;
 import arc.math.Mathf;
+import arc.math.geom.Rect;
 import arc.math.geom.Vec2;
+import arc.scene.ui.Label;
+import arc.scene.ui.Slider;
+import arc.scene.ui.layout.Table;
+import arc.struct.Seq;
 import arc.util.Log;
-import arc.util.Pack;
-import arc.util.Time;
-import arc.util.Tmp;
-import mindustry.Vars;
+
 import mindustry.gen.Building;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import mindustry.type.Item;
+import mindustry.type.Liquid;
+import mindustry.ui.Styles;
+import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.Tile;
 import mindustry.world.blocks.distribution.BufferedItemBridge;
 import mindustry.world.blocks.distribution.DuctBridge;
-import mindustry.world.blocks.distribution.DirectionalUnloader;
 import mindustry.world.blocks.distribution.ItemBridge;
-import mindustry.world.blocks.distribution.Junction;
 import mindustry.world.blocks.distribution.Router;
 import mindustry.world.blocks.liquid.LiquidBridge;
 import mindustry.world.blocks.storage.Unloader;
-import mindustry.world.blocks.storage.CoreBlock;
+import mindustry.world.modules.ItemModule;
+import mindustry.world.modules.LiquidModule;
 
-import java.lang.reflect.Field;
+import static mindustry.Vars.*;
 
+/**
+ * Visualizes bridge connections with colored lines showing flow status.
+ * 
+ * Features:
+ * - Color-coded lines: Gray (inactive), Light (blocked), Normal (active)
+ * - Striped lines for multi-item bridges
+ * - Arrowhead at line start indicating flow direction
+ * - Bottleneck detection (red warning when near capacity)
+ * - Router and Unloader visualization (showing actual flow)
+ * 
+ * Supports:
+ * - Serpulo: Bridge Conveyor, Phase Conveyor, Bridge Conduit, Phase Conduit,
+ * Router, Distributor, Unloader
+ * - Erekir: Duct Bridge, Reinforced Bridge Conduit
+ */
 public class DistributionRevealVisualizer {
 
-    private boolean reflectionInitialized = false;
+    // === Settings Keys ===
+    private static final String PREFIX = "distribution.";
 
-    // Reflection Fields
-    private static Field itemBridgeBuffer;
-    private static Field itemBridgeBufferBuffer;
-    private static Field itemBridgeBufferIndex;
-    private static Field bridgeLinkField;
-    private static Field directionBridgeLinkField; // lastLink field for Erekir bridges
+    // === Settings (Persisted) ===
+    private boolean showItemBridges;
+    private boolean showLiquidBridges;
+    private boolean showRouters;
+    private boolean showUnloaders;
+    private boolean showArrows;
+    private boolean showBottleneck;
+    private float lineThickness;
+    private float zoomThreshold;
+    private float arrowSize;
 
-    // Unloader
-    private static Field unloaderDumpTileField; // Robust fallback for unloader target tile
-    private static Field unloaderDumpingTo;
-    private static Field unloaderBuilding; // ContainerStat.building
+    // === UI ===
+    private BaseDialog dialog;
 
-    // Junction
-    // Uses jb.buffer.indexes directly (assuming accessors or public).
-    // In V7, JunctionBuild.buffer is typically protected.
-    // Reflection used for Junction fields to ensure access.
-    private static Field junctionBufferField;
-    private static Field junctionBufferBuffersField;
-    private static Field junctionBufferIndexesField;
-
-    // Settings
-    private boolean revealBridge = true;
-    private boolean revealJunction = true;
-    private boolean revealUnloader = true;
-    private boolean revealInventory = false;
-    private float zoomThreshold = 3f;
-
-    private mindustry.ui.dialogs.BaseDialog dialog;
+    // === Cache ===
+    private final Rect viewBounds = new Rect();
+    private final Color tmpColor = new Color();
 
     public DistributionRevealVisualizer() {
+        Log.info("[DistributionRevealVisualizer] INITIALIZED.");
+
         loadSettings();
     }
 
     private void loadSettings() {
-        revealBridge = Core.settings.getBool("dist_reveal_bridge", true);
-        revealJunction = Core.settings.getBool("dist_reveal_junction", true);
-        revealUnloader = Core.settings.getBool("dist_reveal_unloader", true);
-        revealInventory = Core.settings.getBool("dist_reveal_inventory", false);
-        zoomThreshold = (float) Core.settings.getInt("dist_zoom_threshold", 300) / 100f;
-    }
+        showItemBridges = Core.settings.getBool(PREFIX + "showItemBridges", true);
+        showLiquidBridges = Core.settings.getBool(PREFIX + "showLiquidBridges", true);
+        showRouters = Core.settings.getBool(PREFIX + "showRouters", true);
+        showUnloaders = Core.settings.getBool(PREFIX + "showUnloaders", true);
+        showArrows = Core.settings.getBool(PREFIX + "showArrows", true);
+        showBottleneck = Core.settings.getBool(PREFIX + "showBottleneck", true);
+        lineThickness = Core.settings.getFloat(PREFIX + "lineThickness", 1f);
+        zoomThreshold = Core.settings.getFloat(PREFIX + "zoomThreshold", 0.3f);
+        arrowSize = Core.settings.getFloat(PREFIX + "arrowSize", 2.5f);
 
-    private void initReflection() {
-        if (reflectionInitialized)
-            return;
-
-        try {
-            // BufferedItemBridge.buffer
-            itemBridgeBuffer = findField(BufferedItemBridge.BufferedItemBridgeBuild.class, "buffer");
-            if (itemBridgeBuffer != null) {
-                itemBridgeBuffer.setAccessible(true);
-                Class<?> itemBufferClass = itemBridgeBuffer.getType();
-
-                // ItemBuffer.buffer (long[])
-                itemBridgeBufferBuffer = findField(itemBufferClass, "buffer");
-                if (itemBridgeBufferBuffer != null)
-                    itemBridgeBufferBuffer.setAccessible(true);
-
-                // ItemBuffer.index (int)
-                itemBridgeBufferIndex = findField(itemBufferClass, "index");
-                if (itemBridgeBufferIndex != null)
-                    itemBridgeBufferIndex.setAccessible(true);
-            }
-
-            if (bridgeLinkField != null)
-                bridgeLinkField.setAccessible(true);
-
-            // DirectionBridge lastLink field (Erekir)
-            // Found via representative class since the direct class reference may not be
-            // available.
-            // DirectionBridgeBuild contains the lastLink field.
-            // On-demand lookup attempted via available representative classes.
-            try {
-                // Try finding it in any block that might have it
-                directionBridgeLinkField = findField(DuctBridge.DuctBridgeBuild.class, "lastLink");
-                if (directionBridgeLinkField != null)
-                    directionBridgeLinkField.setAccessible(true);
-            } catch (Exception e) {
-            }
-
-            // Junction (Manual Reflection needed if fields strictly private)
-            junctionBufferField = findField(Junction.JunctionBuild.class, "buffer");
-            if (junctionBufferField != null) {
-                junctionBufferField.setAccessible(true);
-                Class<?> junctionBufferClass = junctionBufferField.getType();
-
-                junctionBufferBuffersField = findField(junctionBufferClass, "buffers"); // long[][]
-                if (junctionBufferBuffersField != null)
-                    junctionBufferBuffersField.setAccessible(true);
-
-                junctionBufferIndexesField = findField(junctionBufferClass, "indexes"); // int[]
-                if (junctionBufferIndexesField != null)
-                    junctionBufferIndexesField.setAccessible(true);
-            }
-
-            // Unloader
-            unloaderDumpingTo = findField(Unloader.UnloaderBuild.class, "dumpingTo");
-            if (unloaderDumpingTo != null) {
-                unloaderDumpingTo.setAccessible(true);
-                Class<?> containerStatClass = unloaderDumpingTo.getType();
-                unloaderBuilding = findField(containerStatClass, "building");
-                if (unloaderBuilding != null)
-                    unloaderBuilding.setAccessible(true);
-            }
-            // DumpTile fallback
-            unloaderDumpTileField = findFieldByType(Unloader.UnloaderBuild.class, Tile.class);
-            if (unloaderDumpTileField != null)
-                unloaderDumpTileField.setAccessible(true);
-
-            reflectionInitialized = true;
-            Log.info("[DistReveal] Reflection Initialized.");
-        } catch (Exception e) {
-            Log.err("[DistReveal] Init Error: " + e.getMessage());
+        // Force migrate old thick line to new thin line
+        if (lineThickness >= 2f) {
+            lineThickness = 1f;
+            Core.settings.put(PREFIX + "lineThickness", lineThickness);
+        }
+        // Ensure arrow is visible (restore if too small)
+        if (arrowSize < 2f) {
+            arrowSize = 2.5f;
+            Core.settings.put(PREFIX + "arrowSize", arrowSize);
         }
     }
 
-    private static Field findField(Class<?> type, String name) {
-        try {
-            return type.getDeclaredField(name);
-        } catch (Exception ignored) {
-        }
-        try {
-            return type.getField(name);
-        } catch (Exception ignored) {
-        }
-        return null;
+    private void saveSettings() {
+        Core.settings.put(PREFIX + "showItemBridges", showItemBridges);
+        Core.settings.put(PREFIX + "showLiquidBridges", showLiquidBridges);
+        Core.settings.put(PREFIX + "showRouters", showRouters);
+        Core.settings.put(PREFIX + "showUnloaders", showUnloaders);
+        Core.settings.put(PREFIX + "showArrows", showArrows);
+        Core.settings.put(PREFIX + "showBottleneck", showBottleneck);
+        Core.settings.put(PREFIX + "lineThickness", lineThickness);
+        Core.settings.put(PREFIX + "zoomThreshold", zoomThreshold);
+        Core.settings.put(PREFIX + "arrowSize", arrowSize);
     }
 
-    private static Field findFieldByType(Class<?> type, Class<?> fieldType) {
-        for (Field f : type.getDeclaredFields()) {
-            if (f.getType().equals(fieldType))
-                return f;
-        }
-        for (Field f : type.getFields()) {
-            if (f.getType().equals(fieldType))
-                return f;
-        }
-        return null;
-    }
+    // =============================================
+    // MAIN DRAW METHOD
+    // =============================================
 
     public void draw() {
-        if (!Vars.state.isGame())
-            return;
-        if (!reflectionInitialized)
-            initReflection();
-        if (Vars.renderer.getScale() < zoomThreshold)
+        if (!state.isGame())
             return;
 
-        Draw.z(Layer.power + 1);
+        // Zoom threshold check
+        float zoom = renderer.getScale();
+        if (zoomThreshold > 0 && zoom < zoomThreshold)
+            return;
 
-        arc.math.geom.Rect view = Core.camera.bounds(Tmp.r1);
-        int top = (int) (view.y + view.height) / 8;
-        int bottom = (int) view.y / 8;
-        int left = (int) view.x / 8;
-        int right = (int) (view.x + view.width) / 8;
+        // Get visible area
+        Core.camera.bounds(viewBounds);
 
-        for (int x = left; x <= right; x++) {
-            for (int y = bottom; y <= top; y++) {
-                Tile tile = Vars.world.tile(x, y);
-                if (tile == null)
+        float z = Draw.z();
+        Draw.z(Layer.overlayUI);
+
+        // Iterate visible tiles
+        int minX = Math.max((int) ((viewBounds.x) / tilesize) - 1, 0);
+        int minY = Math.max((int) ((viewBounds.y) / tilesize) - 1, 0);
+        int maxX = Math.min((int) ((viewBounds.x + viewBounds.width) / tilesize) + 1, world.width() - 1);
+        int maxY = Math.min((int) ((viewBounds.y + viewBounds.height) / tilesize) + 1, world.height() - 1);
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                Tile tile = world.tile(x, y);
+                if (tile == null || tile.build == null)
                     continue;
+
                 Building build = tile.build;
-                if (build == null || build.tile != tile)
+
+                // Skip if not our team in fog
+                if (state.rules.fog && build.inFogTo(player.team()))
                     continue;
-                if (build instanceof ItemBridge.ItemBridgeBuild && revealBridge) {
-                    ItemBridge.ItemBridgeBuild ib = (ItemBridge.ItemBridgeBuild) build;
-                    if (ib.block.hasLiquids) {
-                        drawLiquidBridge(build);
-                    } else if (ib instanceof BufferedItemBridge.BufferedItemBridgeBuild) {
-                        drawBufferedItemBridge((BufferedItemBridge.BufferedItemBridgeBuild) ib);
-                    } else {
-                        drawItemBridge(ib);
-                    }
-                } else if (build instanceof DuctBridge.DuctBridgeBuild && revealBridge) {
-                    DuctBridge.DuctBridgeBuild db = (DuctBridge.DuctBridgeBuild) build;
-                    if (db.block.hasLiquids) {
-                        drawLiquidBridge(build);
-                    } else {
-                        drawDuctBridge(db);
-                    }
-                } else if (build instanceof Junction.JunctionBuild && revealJunction) {
-                    drawJunction((Junction.JunctionBuild) build);
-                } else if (build instanceof Unloader.UnloaderBuild && revealUnloader) {
-                    drawUnloader((Unloader.UnloaderBuild) build);
-                } else if (build instanceof Router.RouterBuild && revealJunction) {
-                    drawRouter((Router.RouterBuild) build);
-                } else if (build instanceof DirectionalUnloader.DirectionalUnloaderBuild && revealUnloader) {
-                    drawDirectionalUnloader((DirectionalUnloader.DirectionalUnloaderBuild) build);
-                } // End of Distribution checks
 
-                if (revealInventory) {
-                    drawItemStack(build);
+                // Item Bridges
+                if (showItemBridges) {
+                    if (build instanceof BufferedItemBridge.BufferedItemBridgeBuild bb) {
+                        drawItemBridgeLine(bb);
+                    } else if (build instanceof ItemBridge.ItemBridgeBuild ib) {
+                        drawItemBridgeLine(ib);
+                    } else if (build instanceof DuctBridge.DuctBridgeBuild db) {
+                        drawDuctBridgeLine(db);
+                    }
+                }
+
+                // Liquid Bridges
+                if (showLiquidBridges) {
+                    if (build instanceof LiquidBridge.LiquidBridgeBuild lb) {
+                        drawLiquidBridgeLine(lb);
+                    }
+                    // Reinforced Bridge Conduit (Erekir) - check by class hierarchy
+                    if (build.block.name.contains("reinforced-bridge-conduit") ||
+                            build.block.name.contains("phase-conduit")) {
+                        // These extend LiquidBridge, handled above
+                    }
+                }
+
+                // Routers & Distributors
+                if (showRouters && build instanceof Router.RouterBuild rb) {
+                    drawRouter(rb);
+                }
+
+                // Unloaders
+                if (showUnloaders && build instanceof Unloader.UnloaderBuild ub) {
+                    drawUnloader(ub);
                 }
             }
         }
-        Draw.reset();
 
+        Draw.z(z);
+        Draw.reset();
     }
 
-    // --- Core Distribution Logic ---
+    // =============================================
+    // ITEM BRIDGE DRAWING
+    // =============================================
 
-    private void drawBufferedItemBridge(BufferedItemBridge.BufferedItemBridgeBuild bb) {
-        Draw.reset();
-
-        // Reflection Get
-        Object buffer = null;
-        try {
-            if (itemBridgeBuffer != null)
-                buffer = itemBridgeBuffer.get(bb);
-        } catch (Exception e) {
-        }
-        if (buffer == null)
+    private void drawItemBridgeLine(ItemBridge.ItemBridgeBuild build) {
+        // Get linked building
+        Building linked = world.build(build.link);
+        if (linked == null)
             return;
 
-        long[] bufferbuffer = null;
-        try {
-            if (itemBridgeBufferBuffer != null)
-                bufferbuffer = (long[]) itemBridgeBufferBuffer.get(buffer);
-        } catch (Exception e) {
-        }
-        if (bufferbuffer == null)
+        // Validate link
+        ItemBridge block = (ItemBridge) build.block;
+        if (!block.linkValid(build.tile, linked.tile))
             return;
 
-        int index = 0;
-        try {
-            if (itemBridgeBufferIndex != null)
-                index = itemBridgeBufferIndex.getInt(buffer);
-        } catch (Exception e) {
+        // Get items
+        ItemModule items = build.items;
+        boolean hasItems = items != null && items.total() > 0;
+
+        // Check if can transport
+        boolean canTransport = false;
+        if (hasItems && linked.team == build.team) {
+            if (linked instanceof ItemBridge.ItemBridgeBuild) {
+                canTransport = true;
+            } else {
+                // Check if target can accept
+                Item firstItem = getFirstItem(items);
+                if (firstItem != null) {
+                    canTransport = linked.acceptItem(build, firstItem);
+                }
+            }
         }
 
-        // Vectors
-        Vec2 vline = Tmp.v1;
-        Vec2 voffset = Tmp.v2;
+        // Check bottleneck
+        boolean isBottleneck = hasItems && items.total() >= build.block.itemCapacity * 0.9f;
 
-        if (((ItemBridge) bb.block).linkValid(bb.tile, Vars.world.tile(bb.link))) {
-            vline.set(Vars.world.tile(bb.link)).sub(bb);
-            voffset.set(bb);
+        // Draw
+        float x1 = build.x, y1 = build.y;
+        float x2 = linked.x, y2 = linked.y;
+
+        if (hasItems && items.total() > 0) {
+            Item firstItem = getFirstItem(items);
+            Color color = new Color(firstItem != null ? firstItem.color : Color.gray);
+            color.a(canTransport ? 0.8f : 0.35f);
+
+            // Draw main line
+            Draw.color(color);
+            Lines.stroke(lineThickness);
+            Lines.line(x1, y1, x2, y2);
+
+            // Draw arrow at start
+            if (showArrows) {
+                Color arrowColor = (isBottleneck && showBottleneck)
+                        ? new Color(Pal.remove).a(0.8f)
+                        : color;
+                drawArrowhead(x1, y1, x2, y2, arrowColor);
+            }
+
+            // Draw integrated output extensions from destination bridge (same color,
+            // continuous)
+            if (linked instanceof ItemBridge.ItemBridgeBuild linkedBridge) {
+                drawIntegratedOutputs(linkedBridge, color);
+            }
         } else {
-            vline.set(Vars.tilesize, 0f);
-            voffset.set(bb).sub(Vars.tilesize / 2f, Vars.tilesize / 2f);
-        }
+            // Empty - gray line
+            Draw.color(Color.gray, 0.4f);
+            Lines.stroke(lineThickness);
+            Lines.line(x1, y1, x2, y2);
 
-        int cap = ((BufferedItemBridge) bb.block).bufferCapacity;
-        float speed = ((BufferedItemBridge) bb.block).speed;
-        Draw.alpha(0.9f); // Set specific transparency for visibility
-
-        for (int idi = 0; idi < bufferbuffer.length && idi < index; idi++) {
-            float time = Float.intBitsToFloat(Pack.leftInt(bufferbuffer[idi]));
-            Item item = Vars.content.item(Pack.leftShort(Pack.rightInt(bufferbuffer[idi])));
-
-            if (item != null) {
-                // Determine item progress based on speed and capacity
-                float progress = Math.min(((Time.time - time) * bb.timeScale() / speed) * cap, cap - idi);
-
-                float drawX = voffset.x + (vline.x / bufferbuffer.length * progress);
-                float drawY = voffset.y + (vline.y / bufferbuffer.length * progress);
-
-                // In user code:
-                // voffset.x + (vline.x / bufferbuffer.length * Math.min(...) )
-                // Note that 'bufferbuffer.length' IS 'cap' usually (bufferCapacity).
-
-                Draw.color(Color.white); // FORCE WHITE for visibility
-                Draw.rect(item.fullIcon, drawX, drawY, 4f, 4f);
-                Draw.reset();
+            // Still draw gray output branches when empty
+            if (linked instanceof ItemBridge.ItemBridgeBuild linkedBridge) {
+                Color grayColor = new Color(Color.gray).a(0.4f);
+                drawIntegratedOutputs(linkedBridge, grayColor);
             }
         }
-
-        drawItemBridge(bb);
     }
 
-    private void drawItemBridge(ItemBridge.ItemBridgeBuild ib) {
-        Draw.reset();
-
-        // Draw connection line to linked tile
-        Tile other = Vars.world.tile(ib.link);
-        if (other != null && ((ItemBridge) ib.block).linkValid(ib.tile, other)) {
-            // Dim line if inactive/unpowered
-            float alpha = ib.efficiency > 0 ? 0.6f : 0.2f;
-            Color itemColor = getItemColor(ib);
-            Draw.color(itemColor, alpha);
-            Lines.stroke(1f);
-            Lines.line(ib.x, ib.y, other.drawx(), other.drawy());
-
-            // Animate items "teleporting" - show items moving along the line
-            // ONLY if:
-            // 1. Has items
-            // 2. Is Active (powered/efficient)
-            if (ib.items != null && ib.items.total() > 0 && ib.efficiency > 0) {
-                // Use FASTER cyclic animation based on time to simulate speed
-                // 20 ticks = ~0.33 seconds
-                float cycle = (Time.time % 20f) / 20f;
-
-                // Show 1-3 items moving along the path based on total items
-                int showCount = Math.min(3, ib.items.total());
-                for (int i = 0; i < showCount; i++) {
-                    float offset = i / (float) showCount;
-                    float progress = (cycle + offset) % 1f;
-
-                    float x = ib.x + (other.drawx() - ib.x) * progress;
-                    float y = ib.y + (other.drawy() - ib.y) * progress;
-
-                    // Get the most abundant item to show
-                    Item showItem = null;
-                    int maxAmount = 0;
-                    for (int iid = 0; iid < ib.items.length(); iid++) {
-                        if (ib.items.get(iid) > maxAmount) {
-                            maxAmount = ib.items.get(iid);
-                            showItem = Vars.content.item(iid);
-                        }
-                    }
-
-                    if (showItem != null) {
-                        Draw.color(Color.white, 0.7f * ib.efficiency);
-                        Draw.rect(showItem.fullIcon, x, y, 3f, 3f);
-                    }
-                }
-            }
-        }
-
-        // Draw items at the bridge itself (inventory)
-        if (ib.items != null) {
-            Draw.color(Color.white, 0.8f);
-            int loti = 0;
-            for (int iid = 0; iid < ib.items.length(); iid++) {
-                if (ib.items.get(iid) > 0) {
-                    for (int itemid = 1; itemid <= ib.items.get(iid); itemid++) {
-                        Draw.rect(Vars.content.item(iid).fullIcon, ib.x,
-                                ib.y + Vars.tilesize * (-0.5f + 0.8f * loti / (float) ib.block.itemCapacity) + 1f, 4f,
-                                4f);
-                        loti++;
-                    }
-                }
-            }
-        }
-        Draw.reset();
-    }
-
-    private void drawJunction(Junction.JunctionBuild jb) {
-        if (junctionBufferField == null)
+    private void drawDuctBridgeLine(DuctBridge.DuctBridgeBuild build) {
+        // Duct bridge uses different link mechanism
+        Building linked = build.findLink();
+        if (linked == null)
             return;
 
-        try {
-            Object bufferObj = junctionBufferField.get(jb);
-            if (bufferObj == null)
-                return;
+        ItemModule items = build.items;
+        boolean hasItems = items != null && items.total() > 0;
 
-            long[][] buffers = (long[][]) junctionBufferBuffersField.get(bufferObj);
-            int[] indexes = (int[]) junctionBufferIndexesField.get(bufferObj);
+        boolean canTransport = hasItems && linked.team == build.team;
+        boolean isBottleneck = hasItems && items.total() >= build.block.itemCapacity * 0.9f;
 
-            float cap = ((Junction) jb.block).capacity;
-            float speed = ((Junction) jb.block).speed;
+        float x1 = build.x, y1 = build.y;
+        float x2 = linked.x, y2 = linked.y;
 
-            for (int rot = 0; rot < 4; rot++) {
-                for (int i = 0; i < indexes[rot]; i++) {
-                    // Helper to extract Time and Item from JunctionBuffer (which is just long)
-                    long val = buffers[rot][i];
-                    float time = Float.intBitsToFloat(Pack.leftInt(val));
-                    // int itemId = (int) val & 0xFFFF; // Removed unused var
+        if (hasItems && items.total() > 0) {
+            Item firstItem = getFirstItem(items);
+            Color color = new Color(firstItem != null ? firstItem.color : Color.gray);
+            color.a(canTransport ? 0.8f : 0.35f);
 
-                    // Junction Buffer handling
-                    Item item = Vars.content.item((short) val);
-                    if (item == null)
+            // Draw main line
+            Draw.color(color);
+            Lines.stroke(lineThickness);
+            Lines.line(x1, y1, x2, y2);
+
+            // Draw arrow at start
+            if (showArrows) {
+                Color arrowColor = (isBottleneck && showBottleneck)
+                        ? new Color(Pal.remove).a(0.8f)
+                        : color;
+                drawArrowhead(x1, y1, x2, y2, arrowColor);
+            }
+
+            // Draw integrated output extensions from destination bridge
+            if (linked instanceof DuctBridge.DuctBridgeBuild linkedBridge) {
+                drawDuctIntegratedOutputs(linkedBridge, color);
+            }
+        } else {
+            // Empty - gray line
+            Draw.color(Color.gray, 0.4f);
+            Lines.stroke(lineThickness);
+            Lines.line(x1, y1, x2, y2);
+
+            // Still draw gray output branches when empty
+            if (linked instanceof DuctBridge.DuctBridgeBuild linkedBridge) {
+                Color grayColor = new Color(Color.gray).a(0.4f);
+                drawDuctIntegratedOutputs(linkedBridge, grayColor);
+            }
+        }
+    }
+
+    // =============================================
+    // LIQUID BRIDGE DRAWING
+    // =============================================
+
+    private void drawLiquidBridgeLine(LiquidBridge.LiquidBridgeBuild build) {
+        Building linked = world.build(build.link);
+        if (linked == null)
+            return;
+
+        LiquidBridge block = (LiquidBridge) build.block;
+        if (!block.linkValid(build.tile, linked.tile))
+            return;
+
+        LiquidModule liquids = build.liquids;
+        Liquid currentLiquid = liquids != null ? liquids.current() : null;
+        float liquidAmount = currentLiquid != null ? liquids.get(currentLiquid) : 0f;
+        boolean hasLiquid = liquidAmount > 0.01f;
+
+        boolean canTransport = hasLiquid && linked.team == build.team &&
+                currentLiquid != null && linked.acceptLiquid(build, currentLiquid);
+
+        boolean isBottleneck = hasLiquid && liquidAmount >= block.liquidCapacity * 0.9f;
+
+        float x1 = build.x, y1 = build.y;
+        float x2 = linked.x, y2 = linked.y;
+
+        if (hasLiquid) {
+            Color color = new Color(currentLiquid != null ? currentLiquid.color : Color.gray);
+            // Use fixed alpha to prevent flickering (was: canTransport ? 0.8f : 0.35f)
+            color.a(0.7f);
+
+            // Draw main line
+            Draw.color(color);
+            Lines.stroke(lineThickness);
+            Lines.line(x1, y1, x2, y2);
+
+            // Draw arrow at start
+            if (showArrows) {
+                Color arrowColor = (isBottleneck && showBottleneck)
+                        ? new Color(Pal.remove).a(0.8f)
+                        : color;
+                drawArrowhead(x1, y1, x2, y2, arrowColor);
+            }
+
+            // Draw integrated output extensions from destination bridge
+            if (linked instanceof LiquidBridge.LiquidBridgeBuild linkedBridge) {
+                drawLiquidIntegratedOutputs(linkedBridge, color);
+            }
+        } else {
+            // Empty - gray line
+            Draw.color(Color.gray, 0.4f);
+            Lines.stroke(lineThickness);
+            Lines.line(x1, y1, x2, y2);
+
+            // Still draw gray output branches when empty to prevent flickering
+            if (linked instanceof LiquidBridge.LiquidBridgeBuild linkedBridge) {
+                Color grayColor = new Color(Color.gray).a(0.4f);
+                drawLiquidIntegratedOutputs(linkedBridge, grayColor);
+            }
+        }
+    }
+
+    // =============================================
+    // OUTPUT BRANCH DRAWING
+    // =============================================
+
+    /**
+     * Draw integrated output extensions from bridge to adjacent output buildings
+     * Uses same color as main line for seamless continuous appearance
+     */
+    /**
+     * Draw integrated output extensions from bridge to adjacent output buildings
+     * Uses same color as main line for seamless continuous appearance
+     */
+    private void drawIntegratedOutputs(ItemBridge.ItemBridgeBuild bridge, Color color) {
+        // Skip if bridge has a valid link (items go to linked bridge, not dumped)
+        Tile linkedTile = world.tile(bridge.link);
+        ItemBridge block = (ItemBridge) bridge.block;
+        if (linkedTile != null && block.linkValid(bridge.tile, linkedTile)) {
+            return;
+        }
+
+        // CRITICAL FIX: Only show outputs if there is visibly something to output!
+        // If bridge is empty, show NOTHING.
+        Item item = bridge.items != null ? getFirstItem(bridge.items) : null;
+        if (item == null) {
+            return;
+        }
+
+        // Draw extensions to adjacent output buildings
+        for (Building adj : bridge.proximity) {
+            if (adj == null)
+                continue;
+            if (adj instanceof ItemBridge.ItemBridgeBuild)
+                continue;
+            if (adj.team != bridge.team)
+                continue;
+
+            // Strict check: Can the neighbor accept THIS item?
+            // This handles filters, directionality, and static capability.
+            if (!canBlockAcceptItem(bridge, adj, item)) {
+                continue;
+            }
+
+            // Double check directionality to preventing drawing "backwards" to input
+            // sources
+            // The canBlockAcceptItem already checks if target.front() == source.
+            // But we should also check if the bridge thinks this neighbor is an input?
+            // (bridge.incoming list might be useful but sometimes unreliable for visual
+            // sync)
+
+            // Draw integrated output line - minimal, just the arrow base
+            float branchLength = arrowSize * 0.81f;
+            float rawAngle = Angles.angle(bridge.x, bridge.y, adj.x, adj.y);
+            float angle = Math.round(rawAngle / 90f) * 90f;
+
+            float endX = bridge.x + Angles.trnsx(angle, branchLength);
+            float endY = bridge.y + Angles.trnsy(angle, branchLength);
+
+            // Draw line (always colored, never gray/empty)
+            Draw.color(color);
+            Lines.stroke(lineThickness);
+            Lines.line(bridge.x, bridge.y, endX, endY);
+
+            // Draw arrow at end of branch
+            if (showArrows) {
+                drawArrowhead(bridge.x, bridge.y, endX, endY, color);
+            }
+        }
+    }
+
+    /**
+     * Draw integrated output extensions from duct bridge to adjacent output
+     * buildings
+     */
+    /**
+     * Draw integrated output extensions from duct bridge to adjacent output
+     * buildings
+     */
+    private void drawDuctIntegratedOutputs(DuctBridge.DuctBridgeBuild bridge, Color color) {
+        // STRICT: If no items, show nothing.
+        Item item = bridge.items != null ? getFirstItem(bridge.items) : null;
+        if (item == null) {
+            return;
+        }
+
+        for (Building adj : bridge.proximity) {
+            if (adj == null)
+                continue;
+            if (adj instanceof DuctBridge.DuctBridgeBuild)
+                continue;
+            if (adj.team != bridge.team)
+                continue;
+
+            // Strict check: Can the neighbor accept THIS item?
+            if (!canBlockAcceptItem(bridge, adj, item)) {
+                continue;
+            }
+
+            float branchLength = arrowSize * 0.9f;
+            float rawAngle = Angles.angle(bridge.x, bridge.y, adj.x, adj.y);
+            // Snap to 90 degree increments (perpendicular)
+            float angle = Math.round(rawAngle / 90f) * 90f;
+
+            float endX = bridge.x + Angles.trnsx(angle, branchLength);
+            float endY = bridge.y + Angles.trnsy(angle, branchLength);
+
+            Draw.color(color);
+            Lines.stroke(lineThickness);
+            Lines.line(bridge.x, bridge.y, endX, endY);
+
+            // Draw arrow at end of branch
+            if (showArrows) {
+                drawArrowhead(bridge.x, bridge.y, endX, endY, color);
+            }
+        }
+    }
+
+    /**
+     * Draw integrated output extensions from liquid bridge to adjacent output
+     * buildings
+     */
+    /**
+     * Draw integrated output extensions from liquid bridge to adjacent output
+     * buildings
+     */
+    private void drawLiquidIntegratedOutputs(LiquidBridge.LiquidBridgeBuild bridge, Color color) {
+        Liquid liq = bridge.liquids != null ? bridge.liquids.current() : null;
+        // STRICT: If no liquid, show nothing.
+        if (liq == null || bridge.liquids.get(liq) <= 0.01f) {
+            return;
+        }
+
+        for (Building adj : bridge.proximity) {
+            if (adj == null)
+                continue;
+            if (adj instanceof LiquidBridge.LiquidBridgeBuild)
+                continue;
+            if (adj.team != bridge.team)
+                continue;
+
+            // Check if building CAN accept liquids
+            // Also strictness check: target must accept THIS specific liquid if known?
+            // Usually hasLiquids is enough, but to be safe and avoid showing flow to
+            // non-acceptors:
+            if (!adj.acceptLiquid(bridge, liq)) {
+                // However, acceptLiquid might return false if full.
+                // We want to visualize potential flow.
+                // Revert to: does it have liquids capability AND is not facing us (if
+                // transport)?
+
+                if (!adj.block.hasLiquids)
+                    continue;
+
+                // Directionality check for conduits pointing AT us
+                // Similar to canBlockAcceptItem logic but for liquids
+                if (adj.block instanceof mindustry.world.blocks.liquid.Conduit ||
+                        adj.block instanceof mindustry.world.blocks.liquid.LiquidBridge) { // etc
+                    if (adj.front() == bridge)
                         continue;
-
-                    Draw.alpha(0.9f);
-
-                    // Physical position calculation for junctioned items
-                    float prog = Math.min((Time.time - time) * jb.timeScale() / speed, 1f - i / cap);
-
-                    Vec2 pos = Tmp.v1.set(-0.25f + 0.75f * prog, 0.25f).rotate(90 * rot).scl(Vars.tilesize).add(jb);
-
-                    Draw.color(Color.white);
-                    Draw.rect(item.fullIcon, pos.x, pos.y, 4f, 4f);
-                    Draw.reset();
                 }
             }
-        } catch (Exception e) {
+
+            float branchLength = arrowSize * 0.9f;
+            float rawAngle = Angles.angle(bridge.x, bridge.y, adj.x, adj.y);
+            // Snap to 90 degree increments (perpendicular)
+            float angle = Math.round(rawAngle / 90f) * 90f;
+
+            float endX = bridge.x + Angles.trnsx(angle, branchLength);
+            float endY = bridge.y + Angles.trnsy(angle, branchLength);
+
+            Draw.color(color);
+            Lines.stroke(lineThickness);
+            Lines.line(bridge.x, bridge.y, endX, endY);
+
+            // Draw arrow at end of branch
+            if (showArrows) {
+                drawArrowhead(bridge.x, bridge.y, endX, endY, color);
+            }
         }
     }
 
-    private void drawUnloader(Unloader.UnloaderBuild ub) {
-        try {
-            Unloader block = (Unloader) ub.block;
-            Item drawItem = Vars.content.item(ub.rotations);
+    // =============================================
+    // DRAWING UTILITIES
+    // =============================================
 
-            // Need 'possibleBlocks'? UnloaderBuild has it public usually?
-            // V7: public Seq<Building> possibleBlocks = new Seq<>();
+    /**
+     * Draw a simple line with arrowhead at start
+     * 
+     * @param isBottleneck If true, arrow will be red to indicate bottleneck
+     */
+    private void drawLine(float x1, float y1, float x2, float y2, Color color, boolean isBottleneck) {
+        Draw.color(color);
+        Lines.stroke(lineThickness);
+        Lines.line(x1, y1, x2, y2);
 
-            // Fallback to robust line drawing if primary target resolution fails.
-            // Uses ContainerStat objects for precise targeting where available.
-
-            // Reflection for dumpingTo/From
-            // Employs intersection logic for visual representation.
-
-            Object toCont = unloaderDumpingTo != null ? unloaderDumpingTo.get(ub) : null;
-            Building tob = null;
-            if (toCont != null && unloaderBuilding != null)
-                tob = (Building) unloaderBuilding.get(toCont);
-
-            // Manual fallback for tile
-            if (tob == null && unloaderDumpTileField != null) {
-                Tile t = (Tile) unloaderDumpTileField.get(ub);
-                if (t != null)
-                    tob = t.build;
-            }
-
-            // Logic: Draw line to 'dumpingTo' target or 'dumpTile'
-            if (tob != null) {
-                DrawLineIntersection(ub, tob, block.speed);
-            }
-
-            if (drawItem != null) { // sortItem
-                Draw.color();
-                Draw.rect(drawItem.fullIcon, ub.x, ub.y, 4f, 4f);
-            }
-
-        } catch (Exception e) {
+        // Draw arrowhead at start (pointing toward x2, y2)
+        if (showArrows) {
+            // Arrow is solid red when bottleneck, otherwise same as line
+            Color arrowColor = (isBottleneck && showBottleneck)
+                    ? tmpColor.set(Pal.remove).a(0.8f)
+                    : color;
+            drawArrowhead(x1, y1, x2, y2, arrowColor);
         }
     }
 
-    // Simplified intersection helper from user code
-    private void DrawLineIntersection(Building source, Building target, float speed) {
-        Vec2 off = Tmp.v1;
-        Vec2 end = Tmp.v2;
-
-        end.x = Math.min(source.x + source.block.size * Vars.tilesize / 2f,
-                target.x + target.block.size * Vars.tilesize / 2f);
-        end.y = Math.min(source.y + source.block.size * Vars.tilesize / 2f,
-                target.y + target.block.size * Vars.tilesize / 2f);
-        off.x = Math.max(source.x - source.block.size * Vars.tilesize / 2f,
-                target.x - target.block.size * Vars.tilesize / 2f);
-        off.y = Math.max(source.y - source.block.size * Vars.tilesize / 2f,
-                target.y - target.block.size * Vars.tilesize / 2f);
-
-        // UnloadTimer logic? source is UnloaderBuild. unloadTimer is public.
-        float timer = 0;
-        if (source instanceof Unloader.UnloaderBuild)
-            timer = ((Unloader.UnloaderBuild) source).unloadTimer;
-
-        Draw.color(Pal.placing, timer < speed ? 1f : 0.25f);
-        Lines.stroke(1.5f);
-        Lines.line(off.x, off.y, end.x, end.y);
-        Draw.reset();
-    }
-
-    private void drawDuctBridge(DuctBridge.DuctBridgeBuild ib) {
-        Draw.reset();
-
-        int link = -1;
-        // Try getting link from config() which is standard API
-        try {
-            Object conf = ib.config();
-            if (conf instanceof Integer) {
-                link = (Integer) conf;
-            } else if (conf instanceof Float) { // Sometimes stored as float in save?
-                link = ((Float) conf).intValue();
-            } else {
-                // Fallback to reflection if config isn't the link (e.g. logic controlled)
-                if (bridgeLinkField != null)
-                    link = bridgeLinkField.getInt(ib);
-            }
-        } catch (Exception e) {
-        }
-
-        Tile other = Vars.world.tile(link);
-
-        // Fallback: If link is invalid (-1), scan for target in facing direction
-        // DuctBridge typically auto-connects to the first valid bridge in range
-        if (other == null && ib.block instanceof DuctBridge) {
-            DuctBridge dbBlock = (DuctBridge) ib.block;
-            // Range is in tiles
-            int range = (int) dbBlock.range;
-            int rot = ib.rotation;
-
-            // Standard Mindustry cardinal directions: 0=right, 1=up, 2=left, 3=down
-            // Geometry.d4 gives point delta
-            arc.math.geom.Point2 delta = arc.math.geom.Geometry.d4(rot);
-
-            for (int i = 1; i <= range; i++) {
-                // Calculate target tile
-                // ib.tile.x/y are integers
-                Tile t = Vars.world.tile(ib.tile.x + delta.x * i, ib.tile.y + delta.y * i);
-                if (t != null && t.build != null && t.block() == ib.block && t.team() == ib.team) {
-                    other = t;
-                    break;
+    /**
+     * Draw striped line for multi-item bridges
+     * Each item gets its own colored segment
+     */
+    private void drawStripedItemLine(float x1, float y1, float x2, float y2,
+            ItemModule items, boolean canTransport, boolean isBottleneck) {
+        // Collect all items (with duplicates for count)
+        Seq<Item> itemList = new Seq<>();
+        for (int i = 0; i < content.items().size; i++) {
+            int count = items.get(i);
+            if (count > 0) {
+                Item item = content.item(i);
+                // Add proportionally (but cap to avoid too many segments)
+                int addCount = Math.min(count, 3); // Max 3 segments per item type
+                for (int j = 0; j < addCount; j++) {
+                    itemList.add(item);
                 }
             }
         }
 
-        // Manual validation since linkValid might be unavailable/protected
-        // Use accessor methods: .block() and .team()
-        boolean active = other != null && other.block() == ib.block && other.team() == ib.team;
-
-        if (active) {
-            // Dim line if inactive/unpowered
-            float alpha = ib.efficiency > 0 ? 0.6f : 0.2f;
-            Color itemColor = getItemColor(ib);
-            Draw.color(itemColor, alpha);
-            Lines.stroke(1f);
-            Lines.line(ib.x, ib.y, other.drawx(), other.drawy());
-
-            // Animate items "teleporting"
-            if (ib.items != null && ib.items.total() > 0 && ib.efficiency > 0) {
-                // Faster cycle for instant transport feel
-                float cycle = (Time.time % 20f) / 20f;
-                int showCount = Math.min(3, ib.items.total());
-                for (int i = 0; i < showCount; i++) {
-                    float offset = i / (float) showCount;
-                    float progress = (cycle + offset) % 1f;
-
-                    float x = ib.x + (other.drawx() - ib.x) * progress;
-                    float y = ib.y + (other.drawy() - ib.y) * progress;
-
-                    // Get the most abundant item to show
-                    Item showItem = null;
-                    int maxAmount = 0;
-                    for (Item it : Vars.content.items()) {
-                        if (ib.items.has(it) && ib.items.get(it) > maxAmount) {
-                            maxAmount = ib.items.get(it);
-                            showItem = it;
-                        }
-                    }
-
-                    if (showItem != null) {
-                        Draw.color(Color.white, 0.7f * ib.efficiency);
-                        Draw.rect(showItem.fullIcon, x, y, 3f, 3f);
-                    }
-                }
-            }
-        }
-        Draw.reset();
-    }
-
-    private void drawLiquidBridge(Building lb) {
-        Draw.reset();
-
-        int link = -1;
-        // Link Logic (Robust mix of config, reflection, and scan)
-        try {
-            Object conf = lb.config();
-            if (conf instanceof Integer) {
-                link = (Integer) conf;
-            } else if (conf instanceof Float) {
-                link = ((Float) conf).intValue();
-            } else {
-                if (bridgeLinkField != null && lb instanceof ItemBridge.ItemBridgeBuild)
-                    link = bridgeLinkField.getInt(lb);
-            }
-        } catch (Exception e) {
-        }
-
-        Tile other = null;
-
-        // Try lastLink reflection (DirectionBridge style)
-        if (directionBridgeLinkField != null) {
-            try {
-                Object lastLinkObj = directionBridgeLinkField.get(lb);
-                if (lastLinkObj instanceof Building) {
-                    other = ((Building) lastLinkObj).tile;
-                }
-            } catch (Exception e) {
-            }
-        }
-        if (link != -1) {
-            // Try absolute first (Serpulo)
-            other = Vars.world.tile(link);
-
-            // If absolute looks wrong (too far or null or not the same block),
-            // try relative packed (Erekir style)
-            // Relative links in Mindustry are usually small deltas packed via Pack.pos
-            if (other == null || other.block() != lb.block || Mathf.dst(lb.tile.x, lb.tile.y, other.x, other.y) > 20) {
-                int px = (short) (link >>> 16);
-                int py = (short) (link & 0xFFFF);
-                // Position unpacking for relatives often involves signedness correction if
-                // needed,
-                // but Mindustry's Pack usually handles 16-bit signed shorts.
-                Tile relTile = Vars.world.tile(lb.tile.x + px, lb.tile.y + py);
-                if (relTile != null && relTile.build != null && relTile.block() == lb.block) {
-                    other = relTile;
-                }
-            }
-        }
-
-        // Fallback: Directional Scan (for Erekir Reinforced Conduits if link still
-        // fails)
-        if (other == null || other.block() != lb.block) {
-            // ReinforcedBridgeConduit might be DirectionalLiquidBridge
-            // Try to find range field via reflection
-            int range = 10; // Default fallback
-            try {
-                // Try to get range from block
-                Field f = lb.block.getClass().getField("range");
-                if (f != null) {
-                    Object r = f.get(lb.block);
-                    if (r instanceof Integer)
-                        range = (Integer) r;
-                    else if (r instanceof Float)
-                        range = ((Float) r).intValue();
-                }
-            } catch (Exception e) {
-                // Fallback to LiquidBridge interface if available
-                if (lb.block instanceof LiquidBridge) {
-                    range = ((LiquidBridge) lb.block).range;
-                }
-            }
-
-            int rot = lb.rotation;
-            arc.math.geom.Point2 delta = arc.math.geom.Geometry.d4(rot);
-
-            for (int i = 1; i <= range; i++) {
-                Tile t = Vars.world.tile(lb.tile.x + delta.x * i, lb.tile.y + delta.y * i);
-                if (t != null && t.build != null && t.block() == lb.block && t.team() == lb.team) {
-                    other = t;
-                    break;
-                }
-            }
-        }
-
-        // Validity Check
-        boolean active = other != null && other.block() == lb.block && other.team() == lb.team;
-
-        if (active) {
-            // Use current liquid color or default blue if empty
-            mindustry.type.Liquid currentLiquid = lb.liquids.current();
-            Color liquidColor = currentLiquid != null ? currentLiquid.color : Color.royal;
-            float liquidAmount = currentLiquid != null ? lb.liquids.get(currentLiquid) : 0f;
-
-            if (liquidAmount < 0.01f)
-                liquidColor = Color.gray; // Gray if empty/insignificant
-
-            // Dim line if inactive/unpowered
-            float alpha = lb.efficiency > 0 ? 0.8f : 0.3f;
-            Draw.color(liquidColor, alpha);
-            Lines.stroke(1f); // Match item bridge thickness
-            Lines.line(lb.x, lb.y, other.drawx(), other.drawy());
-
-            // Animate Liquid Flow (Icon + Bubbles)
-            if (liquidAmount > 0.1f && lb.efficiency > 0) {
-                // Slower, smoother flow
-                float cycle = (Time.time % 60f) / 60f;
-
-                // Show 2 icons/bubbles for clarity
-                for (int i = 0; i < 2; i++) {
-                    float offset = i / 2f;
-                    float progress = (cycle + offset) % 1f;
-
-                    float x = lb.x + (other.drawx() - lb.x) * progress;
-                    float y = lb.y + (other.drawy() - lb.y) * progress;
-
-                    // Draw liquid icon
-                    Draw.color(Color.white, 0.8f * lb.efficiency);
-                    Draw.rect(currentLiquid.fullIcon, x, y, 3f, 3f);
-
-                }
-            }
-        }
-        Draw.reset();
-    }
-
-    private Color getItemColor(Building build) {
-        if (build.items == null || build.items.total() == 0)
-            return Pal.accent;
-        Item showItem = null;
-        int maxAmount = 0;
-        for (Item it : Vars.content.items()) {
-            if (build.items.has(it) && build.items.get(it) > maxAmount) {
-                maxAmount = build.items.get(it);
-                showItem = it;
-            }
-        }
-        return showItem != null ? showItem.color : Pal.accent;
-    }
-
-    private void drawRouter(Router.RouterBuild rb) {
-        Building fromb = rb.lastInput == null ? null : rb.lastInput.build;
-        // Logic for target block selection (rotation based)
-        // rb.proximity is Seq<Building>
-        Building tob = rb.proximity.size == 0 ? null
-                : rb.proximity.get(((rb.rotation) % rb.proximity.size - 1 + rb.proximity.size) % rb.proximity.size);
-
-        Draw.color();
-        if (tob != null) {
-            Vec2 off = Tmp.v1, end = Tmp.v2;
-            // line length: sum of block sizes sub xy distance
-            // Distance calculation based on block geometry
-            end.set(rb).sub(tob);
-            end.x = (rb.block.size + tob.block.size) * Vars.tilesize / 2f - Math.abs(end.x);
-            end.y = (rb.block.size + tob.block.size) * Vars.tilesize / 2f - Math.abs(end.y);
-            // line offset
-            off.x = rb.x > tob.x ? rb.x - rb.block.size * Vars.tilesize / 2f
-                    : tob.x - tob.block.size * Vars.tilesize / 2f;
-            off.y = rb.y > tob.y ? rb.y - rb.block.size * Vars.tilesize / 2f
-                    : tob.y - tob.block.size * Vars.tilesize / 2f;
-            end.add(off);
-
-            Draw.color(Pal.placing, 1 - rb.time);
-            Lines.stroke(1.5f);
-            Lines.line(off.x, off.y, end.x, end.y);
-        }
-
-        if (fromb != null) {
-            Vec2 off = Tmp.v1, end = Tmp.v2;
-            end.set(rb).sub(fromb);
-            end.x = (rb.block.size + fromb.block.size) * Vars.tilesize / 2f - Math.abs(end.x);
-            end.y = (rb.block.size + fromb.block.size) * Vars.tilesize / 2f - Math.abs(end.y);
-
-            off.x = rb.x > fromb.x ? rb.x - rb.block.size * Vars.tilesize / 2f
-                    : fromb.x - fromb.block.size * Vars.tilesize / 2f;
-            off.y = rb.y > fromb.y ? rb.y - rb.block.size * Vars.tilesize / 2f
-                    : fromb.y - fromb.block.size * Vars.tilesize / 2f;
-
-            // margin logic using Geometry.d4
-            // Geometry.d4 returns Point2 (x,y) for 0,1,2,3
-            arc.math.geom.Point2 p = arc.math.geom.Geometry
-                    .d4(Mathf.mod(((int) arc.math.Angles.angle(fromb.x - rb.x, fromb.y - rb.y) + 45) / 90, 4));
-
-            // Adjust off and end
-            off.add(p.x * -2f, p.y * -2f).add(p.y == 0f ? 0f : 2f, p.x == 0f ? 0f : 2f);
-            end.add(off).sub(p.y == 0f ? 0f : 4f, p.x == 0f ? 0f : 4f);
-
-            Draw.color(Pal.remove, 1 - rb.time);
-            Lines.stroke(1.5f);
-            Lines.line(off.x, off.y, end.x, end.y);
-        }
-
-        if (rb.lastItem != null) {
-            Draw.color(Color.white);
-            Draw.rect(rb.lastItem.fullIcon, rb.x, rb.y, 4f, 4f);
-        }
-        Draw.reset();
-    }
-
-    private void drawDirectionalUnloader(DirectionalUnloader.DirectionalUnloaderBuild db) {
-        Draw.color();
-        Building front = db.front(), back = db.back();
-        if (front == null || back == null || back.items == null || front.team != db.team || back.team != db.team
-                || !back.canUnload()
-                || !(((DirectionalUnloader) db.block).allowCoreUnload || !(back instanceof CoreBlock.CoreBuild)))
+        if (itemList.isEmpty()) {
+            Draw.color(Color.gray, 0.4f);
+            Lines.stroke(lineThickness);
+            Lines.line(x1, y1, x2, y2);
             return;
+        }
 
-        if (db.unloadItem != null) {
-            Draw.alpha(db.unloadTimer / ((DirectionalUnloader) db.block).speed < 1f && back.items.has(db.unloadItem)
-                    && front.acceptItem(db, db.unloadItem) ? 0.8f : 0f);
-            Draw.rect(db.unloadItem.fullIcon, db.x, db.y, 4f, 4f);
+        // Calculate segment parameters
+        float totalLength = Mathf.dst(x1, y1, x2, y2);
+        float segmentLength = totalLength / itemList.size;
+        float angle = Angles.angle(x1, y1, x2, y2);
+
+        // Alpha based on transport status
+        float alpha = canTransport ? 0.8f : 0.35f;
+
+        // Draw each segment
+        float currentX = x1, currentY = y1;
+        for (int i = 0; i < itemList.size; i++) {
+            Item item = itemList.get(i);
+
+            float nextX = currentX + Angles.trnsx(angle, segmentLength);
+            float nextY = currentY + Angles.trnsy(angle, segmentLength);
+
+            // Bottleneck: solid red for last segment
+            if (isBottleneck && showBottleneck && i == itemList.size - 1) {
+                Draw.color(Pal.remove, 0.8f);
+            } else {
+                Draw.color(item.color, alpha);
+            }
+
+            Lines.stroke(lineThickness);
+            Lines.line(currentX, currentY, nextX, nextY);
+
+            currentX = nextX;
+            currentY = nextY;
+        }
+
+        // Draw arrowhead at start
+        if (showArrows) {
+            Item firstItem = itemList.first();
+            tmpColor.set(firstItem.color).a(alpha);
+            drawArrowhead(x1, y1, x2, y2, tmpColor);
+        }
+    }
+
+    /**
+     * Draw arrowhead at start of line (right after source block)
+     * Format: A▸─────────────B
+     */
+    private void drawArrowhead(float x1, float y1, float x2, float y2, Color color) {
+        float angle = Angles.angle(x1, y1, x2, y2);
+
+        // Position: slightly offset from start point toward target
+        float offset = arrowSize * 1.5f;
+        float tipX = x1 + Angles.trnsx(angle, offset);
+        float tipY = y1 + Angles.trnsy(angle, offset);
+
+        Draw.color(color);
+
+        // Draw small triangle pointing in flow direction
+        Fill.tri(
+                tipX + Angles.trnsx(angle, arrowSize), // Tip (pointing forward)
+                tipY + Angles.trnsy(angle, arrowSize),
+                tipX + Angles.trnsx(angle + 135f, arrowSize * 0.7f), // Left corner
+                tipY + Angles.trnsy(angle + 135f, arrowSize * 0.7f),
+                tipX + Angles.trnsx(angle - 135f, arrowSize * 0.7f), // Right corner
+                tipY + Angles.trnsy(angle - 135f, arrowSize * 0.7f));
+    }
+
+    /**
+     * Get flow color based on status
+     * Line always shows item/liquid color - bottleneck is indicated by arrow
+     * 
+     * @param hasContent   Whether bridge has items/liquid
+     * @param canTransport Whether items can be transported
+     * @param baseColor    The item/liquid color
+     */
+    private Color getFlowColor(boolean hasContent, boolean canTransport, Color baseColor) {
+        if (!hasContent) {
+            // Gray - inactive
+            return tmpColor.set(Color.gray).a(0.4f);
+        } else if (!canTransport) {
+            // Light color - blocked
+            return tmpColor.set(baseColor).a(0.35f);
         } else {
-            var itemseq = Vars.content.items();
-            for (int i = 0; i < itemseq.size; i++) {
-                Item item = itemseq.get((i + db.offset) % itemseq.size);
-                if (back.items.has(item) && front.acceptItem(db, item)) {
-                    Draw.alpha(0.8f);
-                    Draw.rect(item.fullIcon, db.x, db.y, 4f, 4f);
-                    break;
+            // Normal color - active
+            return tmpColor.set(baseColor).a(0.8f);
+        }
+    }
+
+    /**
+     * Draw connections for Routers and Distributors
+     */
+    /**
+     * Draw connections for Routers and Distributors
+     */
+    private void drawRouter(Router.RouterBuild rb) {
+        // Input line: from lastInput to this router
+        Building from = (rb.lastInput != null) ? rb.lastInput.build : null;
+        if (from != null) {
+            drawConnection(from.x, from.y, rb.x, rb.y, Pal.placing, false);
+        }
+
+        // Output line: from this router to current target
+        // Mindustry router logic: target = proximity.get(rotation % proximity.size)
+        if (rb.proximity.size > 0) {
+            int index = (rb.rotation) % rb.proximity.size;
+            // Handle negative modulo if any
+            if (index < 0)
+                index += rb.proximity.size;
+
+            Building to = rb.proximity.get(index);
+            if (to != null) {
+                // Get the item currently in the router, or null if empty
+                Item item = (rb.items != null && rb.items.total() > 0) ? getFirstItem(rb.items) : null;
+
+                // STRICT CHECK: Can the target accept this item?
+                // If item is null (router empty), we check if it accepts ANY item (null check).
+                if (canBlockAcceptItem(rb, to, item)) {
+                    drawConnection(rb.x, rb.y, to.x, to.y, Pal.remove, true);
                 }
             }
         }
-        Draw.color();
-        Draw.reset();
     }
 
-    private void drawItemStack(Building b) {
-        if (b.items == null || b.items.total() == 0)
-            return;
+    /**
+     * Draw connections for Unloader
+     * Visualizes the potential flow: Input from neighbors -> Unloader -> Output
+     * (Front)
+     */
+    /**
+     * Draw connections for Unloader
+     * Visualizes the potential flow: Input from neighbors -> Unloader -> Output
+     * (Front)
+     */
+    private void drawUnloader(Unloader.UnloaderBuild ub) {
+        // Output: The block the unloader is facing
+        Building to = ub.front();
+        if (to != null) {
+            // Unloader output validity check
+            // Pass null item (generic check) because unloader can select different items
+            if (canBlockAcceptItem(ub, to, null)) {
+                drawConnection(ub.x, ub.y, to.x, to.y, Pal.remove, true);
+            }
+        }
 
-        // Simple generic inventory visualization
-        // Draw a small dot or bar for each item type present
-        float startX = b.x - b.block.size * Vars.tilesize / 2f + 2f;
-        float startY = b.y + b.block.size * Vars.tilesize / 2f - 2f;
+        // Inputs: All other neighbors are potential sources
+        for (Building other : ub.proximity) {
+            if (other != to) {
+                // Input validity check:
+                // 1. Source must have items capability
+                // 2. Source must NOT be a transport block pointing elsewhere (handled by
+                // canBlockAcceptItem direction check)
+                // 3. We check if Unloader can "Accept" from other? No, Unloader PULLS.
+                // Reverse check: Can 'other' provide to 'ub'?
+                // canBlockAcceptItem(other, ub, null) checks if 'ub' accepts from 'other'.
+                // But unloader logic is unique. It pulls.
+                // We just need to check if 'other' has items and is a valid storage/source.
 
-        int rows = 0;
-        int cols = 0;
+                if (other.block.hasItems && other.team == ub.team) {
+                    // Don't draw input from a conveyor that is facing away or sideways,
+                    // unless it's a junction/router/bridge that exposes items?
+                    // Actually, unloaders generally pull from STORAGE or FACTORY.
+                    // Pulling from a conveyor is weird but possible if it's a specific type?
+                    // Standard unloader pulls from ANY block with hasItems.
 
-        if (b.block.itemCapacity > 0) {
-            Draw.color(Color.white, 0.7f);
-            // Sort of a mini-bar chart or grid
-            // For now just draw the most abundant item icon?
-            // Or iterate and draw small icons.
+                    // Filter out walls/batteries etc (hasItems=false usually).
+                    // Filter out blocks that don't actually store items (e.g. some logic blocks).
 
-            // Simplest approach: Draw icon of most abundant item and a bar?
-            // MI2U generic is likely more complex.
-            // Let's implement a cycle display of items
-
-            int total = b.items.total();
-            if (total > 0) {
-                Item item = b.items.first(); // Just get one for now? No order in ItemModule
-                // Find max
-                int max = 0;
-                for (Item it : Vars.content.items()) {
-                    if (b.items.has(it) && b.items.get(it) > max) {
-                        max = b.items.get(it);
-                        item = it;
-                    }
-                }
-
-                if (item != null) {
-                    Draw.rect(item.fullIcon, b.x, b.y, 4f, 4f);
-                    // Maybe a small text for amount?
-                    // Font rendering in world is expensive/complex with transform.
+                    drawConnection(other.x, other.y, ub.x, ub.y, Pal.placing, false);
                 }
             }
         }
-        Draw.reset();
     }
+
+    /**
+     * Helper to draw a simple connection line with optional arrow
+     */
+    private void drawConnection(float x1, float y1, float x2, float y2, Color color, boolean arrowAtEnd) {
+        Draw.color(color, 0.6f); // Slightly transparent
+        Lines.stroke(lineThickness);
+        Lines.line(x1, y1, x2, y2);
+
+        if (showArrows) {
+            if (arrowAtEnd) {
+                // Arrow at x2, y2
+                drawArrowhead(x1, y1, x2, y2, color);
+            } else {
+                // Arrow mid-way or at end? Router input usually implies flow towards router.
+                // Let's draw arrow at destination (router) for input line.
+                drawArrowhead(x1, y1, x2, y2, color);
+            }
+        }
+    }
+
+    private Item getFirstItem(ItemModule items) {
+        if (items == null)
+            return null;
+        for (int i = 0; i < content.items().size; i++) {
+            if (items.get(i) > 0) {
+                return content.item(i);
+            }
+        }
+        return null;
+    }
+
+    private int countUniqueItems(ItemModule items) {
+        if (items == null)
+            return 0;
+        int count = 0;
+        for (int i = 0; i < content.items().size; i++) {
+            if (items.get(i) > 0)
+                count++;
+        }
+        return count;
+    }
+
+    /**
+     * Check if a building can accept a specific item type.
+     * Uses block type checks for transport/storage, and checks item requirements
+     * for crafters.
+     * Also checks if transport blocks are facing the right way (not outputting TO
+     * the bridge).
+     */
+    /**
+     * Check if a building can accept a specific item type.
+     * Uses block type checks for transport/storage, and checks item requirements
+     * for crafters.
+     * Also checks if transport blocks are facing the right way (not outputting TO
+     * the bridge).
+     *
+     * @param item The item to check, or null for a generic "can accept any item"
+     *             check
+     */
+    private boolean canBlockAcceptItem(Building source, Building target, Item item) {
+        if (source == null || target == null)
+            return false;
+
+        // 1. Basic Capability Check
+        // If block statically says it doesn't accept items, we trust it.
+        // This handles Drills, Unloaders (usually), Solar Panels, etc.
+        if (!target.block.acceptsItems) {
+            return false;
+        }
+
+        // 2. Team Check
+        if (target.team != source.team) {
+            return false;
+        }
+
+        var block = target.block;
+
+        // 3. Transport Direction Check
+        // If target is a transport block, it must not be pointing AT the source
+        // (This prevents visualizing flow "backwards" into a conveyor)
+        if (block instanceof mindustry.world.blocks.distribution.Conveyor ||
+                block instanceof mindustry.world.blocks.distribution.StackConveyor ||
+                block instanceof mindustry.world.blocks.distribution.Duct ||
+                block instanceof mindustry.world.blocks.distribution.Junction ||
+                block instanceof mindustry.world.blocks.distribution.Router ||
+                block instanceof mindustry.world.blocks.distribution.OverflowGate ||
+                block instanceof mindustry.world.blocks.distribution.ItemBridge ||
+                block instanceof mindustry.world.blocks.distribution.DuctBridge) {
+
+            // If target is facing SOURCE, it is outputting to source, not accepting from it
+            if (target.front() == source) {
+                return false;
+            }
+        }
+
+        // 4. Item Specific Checks
+        // If we know the component item, we can check filters.
+        if (item != null) {
+            // Factories/Crafters with strict item filters
+            if (block.itemFilter != null) {
+                // Return false if item ID is outside filter bounds or filter is false
+                if (item.id >= block.itemFilter.length || !block.itemFilter[item.id]) {
+                    return false;
+                }
+            }
+        }
+
+        // We intentionally DO NOT check target.acceptItem(source, item)
+        // because that often returns false if the block is full, causing flickering.
+        // We only want to visualize the *connection*, not the momentary accept state.
+
+        return true;
+    }
+
+    // =============================================
+    // SETTINGS DIALOG
+    // =============================================
 
     public void showSettings() {
         if (dialog == null) {
-            dialog = new mindustry.ui.dialogs.BaseDialog("Distribution Reveal Settings");
+            dialog = new BaseDialog(Core.bundle.get("distribution.settings.title", "Distribution Reveal Settings"));
             dialog.addCloseButton();
-            rebuildDialog();
+
+            dialog.buttons.button("@settings.reset", mindustry.gen.Icon.refresh, () -> {
+                resetToDefaults();
+                rebuildDialog();
+            }).size(210, 64);
+
+            dialog.shown(this::rebuildDialog);
         }
         dialog.show();
     }
 
-    private void rebuildDialog() {
-        dialog.cont.clear();
-        dialog.cont.add("Scale Threshold").color(Pal.accent).row();
-        dialog.cont.slider(1f, 10f, 0.5f, zoomThreshold, v -> {
-            zoomThreshold = v;
-            Core.settings.put("dist_zoom_threshold", (int) (v * 100));
-        }).row();
-        dialog.cont.label(() -> String.format("%.1fx", zoomThreshold)).row();
+    private void resetToDefaults() {
+        showItemBridges = true;
+        showLiquidBridges = true;
+        showArrows = true;
+        showBottleneck = true;
+        lineThickness = 1f;
+        zoomThreshold = 0.3f;
+        arrowSize = 2.5f;
+        saveSettings();
+    }
 
-        dialog.cont.check("Reveal Bridge", revealBridge, v -> {
-            revealBridge = v;
-            Core.settings.put("dist_reveal_bridge", v);
-        }).row();
-        dialog.cont.check("Reveal Junction", revealJunction, v -> {
-            revealJunction = v;
-            Core.settings.put("dist_reveal_junction", v);
-        }).row();
-        dialog.cont.check("Reveal Unloader", revealUnloader, v -> {
-            revealUnloader = v;
-            Core.settings.put("dist_reveal_unloader", v);
-        }).row();
+    private void rebuildDialog() {
+        Table cont = dialog.cont;
+        cont.clear();
+        cont.defaults().pad(6).left();
+
+        float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
+
+        // Title
+        cont.add(Core.bundle.get("distribution.settings.title", "Distribution Reveal Settings"))
+                .color(Color.white).padBottom(10).row();
+
+        // === Toggles ===
+        cont.check(Core.bundle.get("distribution.showItemBridges", "Show Item Bridges"), showItemBridges, val -> {
+            showItemBridges = val;
+            saveSettings();
+        }).left().padTop(4).row();
+
+        cont.check(Core.bundle.get("distribution.showLiquidBridges", "Show Liquid Bridges"), showLiquidBridges, val -> {
+            showLiquidBridges = val;
+            saveSettings();
+        }).left().padTop(4).row();
+
+        cont.check(Core.bundle.get("distribution.showRouters", "Show Routers & Distributors"), showRouters, val -> {
+            showRouters = val;
+            saveSettings();
+        }).left().padTop(4).row();
+
+        cont.check(Core.bundle.get("distribution.showUnloaders", "Show Unloaders"), showUnloaders, val -> {
+            showUnloaders = val;
+            saveSettings();
+        }).left().padTop(4).row();
+
+        cont.check(Core.bundle.get("distribution.showArrows", "Show Direction Arrows"), showArrows, val -> {
+            showArrows = val;
+            saveSettings();
+        }).left().padTop(4).row();
+
+        cont.check(Core.bundle.get("distribution.showBottleneck", "Highlight Bottlenecks (Red)"), showBottleneck,
+                val -> {
+                    showBottleneck = val;
+                    saveSettings();
+                }).left().padTop(4).row();
+
+        cont.add("").padTop(10).row(); // Spacer
+
+        // === Line Thickness Slider ===
+        Slider thicknessSlider = new Slider(0.5f, 5f, 0.5f, false);
+        thicknessSlider.setValue(lineThickness);
+
+        Label thicknessValue = new Label(String.format("%.1f", lineThickness), Styles.outlineLabel);
+
+        Table thicknessContent = new Table();
+        thicknessContent.touchable = arc.scene.event.Touchable.disabled;
+        thicknessContent.margin(3f, 33f, 3f, 33f);
+        thicknessContent.add(Core.bundle.get("distribution.lineThickness", "Line Thickness"), Styles.outlineLabel)
+                .left().growX();
+        thicknessContent.add(thicknessValue).padLeft(10f).right();
+
+        thicknessSlider.changed(() -> {
+            lineThickness = thicknessSlider.getValue();
+            thicknessValue.setText(String.format("%.1f", lineThickness));
+            saveSettings();
+        });
+
+        cont.stack(thicknessSlider, thicknessContent).width(width).left().padTop(4).row();
+
+        // === Arrow Size Slider ===
+        Slider arrowSlider = new Slider(1f, 5f, 0.5f, false);
+        arrowSlider.setValue(arrowSize);
+
+        Label arrowValue = new Label(String.format("%.1f", arrowSize), Styles.outlineLabel);
+
+        Table arrowContent = new Table();
+        arrowContent.touchable = arc.scene.event.Touchable.disabled;
+        arrowContent.margin(3f, 33f, 3f, 33f);
+        arrowContent.add(Core.bundle.get("distribution.arrowSize", "Arrow Size"), Styles.outlineLabel).left().growX();
+        arrowContent.add(arrowValue).padLeft(10f).right();
+
+        arrowSlider.changed(() -> {
+            arrowSize = arrowSlider.getValue();
+            arrowValue.setText(String.format("%.1f", arrowSize));
+            saveSettings();
+        });
+
+        cont.stack(arrowSlider, arrowContent).width(width).left().padTop(4).row();
+
+        // === Zoom Threshold Slider ===
+        Slider zoomSlider = new Slider(0f, 1f, 0.1f, false);
+        zoomSlider.setValue(zoomThreshold);
+
+        Label zoomValue = new Label(
+                zoomThreshold <= 0.01f ? "Off" : String.format("%.1fx", zoomThreshold),
+                Styles.outlineLabel);
+
+        Table zoomContent = new Table();
+        zoomContent.touchable = arc.scene.event.Touchable.disabled;
+        zoomContent.margin(3f, 33f, 3f, 33f);
+        zoomContent.add(Core.bundle.get("distribution.zoomThreshold", "Min Zoom"), Styles.outlineLabel).left().growX();
+        zoomContent.add(zoomValue).padLeft(10f).right();
+
+        zoomSlider.changed(() -> {
+            zoomThreshold = zoomSlider.getValue();
+            zoomValue.setText(zoomThreshold <= 0.01f ? "Off" : String.format("%.1fx", zoomThreshold));
+            saveSettings();
+        });
+
+        cont.stack(zoomSlider, zoomContent).width(width).left().padTop(4).row();
     }
 }
