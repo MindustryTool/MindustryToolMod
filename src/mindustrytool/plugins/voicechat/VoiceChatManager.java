@@ -73,9 +73,8 @@ public class VoiceChatManager {
             if (speaker == null)
                 speaker = new VoiceSpeaker();
             Log.info("@ Audio components initialized", TAG);
-        } catch (Exception e) {
-            Log.err("@ Failed to initialize audio components", TAG);
-            Log.err(e);
+        } catch (Throwable e) {
+            Log.err("@ Failed to initialize audio components: @", TAG, e.getMessage());
         }
     }
 
@@ -113,6 +112,19 @@ public class VoiceChatManager {
             if (enabled && !muted) {
                 startCapture();
             }
+        });
+
+        // Handle incoming audio on SERVER (Forwarding logic)
+        Vars.net.handleServer(MicPacket.class, (con, packet) -> {
+            if (con.player == null)
+                return;
+
+            // Enforce sender ID from connection to prevent spoofing
+            packet.playerid = con.player.id;
+
+            // Forward to all other clients (UDP)
+            // Ideally we should filter by team/distance here later
+            Vars.net.sendExcept(con, packet, false);
         });
 
         // Handle incoming audio from other players
@@ -169,7 +181,7 @@ public class VoiceChatManager {
         if (microphone == null) {
             try {
                 microphone = new VoiceMicrophone();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Log.warn("@ Failed to create microphone: @. Using Mock Microphone for testing.", TAG, e.getMessage());
             }
         }
