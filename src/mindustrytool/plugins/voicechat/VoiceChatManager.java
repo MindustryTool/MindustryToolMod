@@ -396,7 +396,7 @@ public class VoiceChatManager {
         this.muted = muted;
         if (muted) {
             stopCapture();
-        } else if (enabled && (status == VoiceStatus.READY || status == VoiceStatus.CONNECTED) && Vars.net.client()) {
+        } else if (enabled && (status == VoiceStatus.READY || status == VoiceStatus.CONNECTED) && Vars.net.active()) {
             startCapture();
             status = VoiceStatus.CONNECTED;
         }
