@@ -73,6 +73,10 @@ public class Main extends Mod {
             }
         } catch (ClassNotFoundException e) {
             Log.info("[PluginLoader] Plugin not found (skipped): @", className);
+        } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
+            // This happens when a plugin depends on classes not available on this platform
+            // e.g., VoiceChatPlugin requires javax.sound which is not available on Android
+            Log.info("[PluginLoader] Plugin @ skipped (platform unsupported): @", className, e.getMessage());
         } catch (Exception e) {
             Log.err("[PluginLoader] Failed to register: @", className);
             Log.err(e);
