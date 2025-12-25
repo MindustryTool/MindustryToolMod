@@ -41,7 +41,6 @@ public class VoiceChatPlugin implements Plugin {
             voiceButton.clicked(() -> ((VoiceChatManager) manager).showSettings());
 
             Events.run(EventType.Trigger.update, this::updateUI);
-            VoiceChatOverlay.init();
             Log.info("[VoiceChat] Initialized successfully on @.", isDesktop ? "Desktop" : "Mobile");
         } catch (Throwable e) {
             Log.err("[VoiceChat] Failed to initialize: " + e.getMessage());

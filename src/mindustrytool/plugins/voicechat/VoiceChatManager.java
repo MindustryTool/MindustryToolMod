@@ -46,8 +46,6 @@ public class VoiceChatManager {
     // Per-player settings
     private final ObjectMap<String, Boolean> playerMuted = new ObjectMap<>();
     private final ObjectMap<String, Float> playerVolume = new ObjectMap<>(); // 0.0 - 1.0
-    private final arc.struct.IntMap<Long> lastSpeakingTime = new arc.struct.IntMap<>(); // Player ID -> Last Active Time
-                                                                                        // (ms)
 
     @Nullable
     private VoiceMicrophone microphone;
@@ -238,9 +236,6 @@ public class VoiceChatManager {
         if (forceMock) {
             Log.info("@ Packet received from @, size: @", TAG, packet.playerid, packet.audioData.length);
         }
-
-        // Mark player as speaking
-        lastSpeakingTime.put(packet.playerid, arc.util.Time.millis());
 
         mindustry.gen.Player sender = mindustry.gen.Groups.player.find(p -> p.id == packet.playerid);
         if (sender == null) {
@@ -478,17 +473,6 @@ public class VoiceChatManager {
     public void setMicMode(VoiceMode mode) {
         this.micMode = mode;
         Log.info("@ Mic mode: @", TAG, mode);
-    }
-
-    /**
-     * Check if a player is currently speaking (Packet received recently).
-     * 
-     * @param playerId The player's runtime ID (int).
-     * @return true if audio received within last 400ms.
-     */
-    public boolean isSpeaking(int playerId) {
-        long lastTime = lastSpeakingTime.get(playerId, 0L);
-        return arc.util.Time.timeSinceMillis(lastTime) < 400; // 400ms threshold for visual stability
     }
 
     // Per-player settings
