@@ -59,6 +59,16 @@ public class VoiceChatManager {
 
         registerPackets();
 
+        // Server-side Logic: Handshake with new players
+        arc.Events.on(mindustry.game.EventType.PlayerJoin.class, e -> {
+            if (Vars.net.server()) {
+                VoiceRequestPacket request = new VoiceRequestPacket();
+                request.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
+                Vars.net.send(request, e.player.con);
+                Log.info("@ Sent voice handshake to @", TAG, e.player.name);
+            }
+        });
+
         // Initialize audio components (lazy - only when actually used)
         initialized = true;
         Log.info("@ Initialized successfully", TAG);
