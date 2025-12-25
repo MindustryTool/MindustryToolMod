@@ -3,6 +3,7 @@ package mindustrytool.plugins.voicechat;
 import arc.util.Log;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -12,12 +13,22 @@ import java.util.concurrent.LinkedBlockingQueue;
  * APK.
  * The companion app captures mic audio and sends it via TCP socket.
  * Uses a queue-based buffer for smoother audio playback.
+ * 
+ * Now supports remote control of Companion App's mic:
+ * - CMD_START_MIC: Tell Companion to start recording
+ * - CMD_STOP_MIC: Tell Companion to stop recording (privacy)
+ * - CMD_SHUTDOWN: Tell Companion to close the app
  */
 public class AndroidMicrophone {
 
     private static final String TAG = "[AndroidMic]";
     private static final int PORT = 25566;
     private static final int MAX_QUEUE_SIZE = 10; // Max buffered frames
+
+    // Control commands to send to Companion App
+    public static final byte CMD_START_MIC = 0x01;
+    public static final byte CMD_STOP_MIC = 0x02;
+    public static final byte CMD_SHUTDOWN = 0x03;
 
     private final int sampleRate;
     private final int bufferSize;
@@ -27,6 +38,7 @@ public class AndroidMicrophone {
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private InputStream inputStream;
+    private OutputStream outputStream;
     private Thread serverThread;
 
     // Use a queue for smoother audio buffering
@@ -73,6 +85,12 @@ public class AndroidMicrophone {
                 clientSocket.setTcpNoDelay(true); // Disable Nagle for lower latency
                 clientSocket.setSoTimeout(5000); // 5 second timeout
                 inputStream = clientSocket.getInputStream();
+                outputStream = clientSocket.getOutputStream();
+
+                // If already recording, send START command immediately
+                if (isRecording) {
+                    sendCommand(CMD_START_MIC);
+                }
 
                 // Read audio data continuously
                 readAudioLoop();
@@ -161,29 +179,51 @@ public class AndroidMicrophone {
     }
 
     private void closeClient() {
+        sendCommand(CMD_STOP_MIC); // Tell companion to stop recording
         try {
             if (inputStream != null)
                 inputStream.close();
+            if (outputStream != null)
+                outputStream.close();
             if (clientSocket != null)
                 clientSocket.close();
         } catch (Exception e) {
             // Ignore
         }
         inputStream = null;
+        outputStream = null;
         clientSocket = null;
         audioQueue.clear();
+    }
+
+    /**
+     * Send a control command to the Companion App.
+     */
+    private void sendCommand(byte cmd) {
+        if (outputStream == null)
+            return;
+        try {
+            outputStream.write(cmd);
+            outputStream.flush();
+            Log.info("@ Sent command: @", TAG,
+                    cmd == CMD_START_MIC ? "START_MIC" : cmd == CMD_STOP_MIC ? "STOP_MIC" : "SHUTDOWN");
+        } catch (Exception e) {
+            Log.warn("@ Failed to send command: @", TAG, e.getMessage());
+        }
     }
 
     public void start() {
         isRecording = true;
         audioQueue.clear();
-        Log.info("@ Recording started (waiting for companion app)", TAG);
+        sendCommand(CMD_START_MIC); // Tell companion to start recording
+        Log.info("@ Recording started (companion mic enabled)", TAG);
     }
 
     public void stop() {
         isRecording = false;
+        sendCommand(CMD_STOP_MIC); // Tell companion to stop recording
         audioQueue.clear();
-        Log.info("@ Recording stopped", TAG);
+        Log.info("@ Recording stopped (companion mic disabled)", TAG);
     }
 
     public void close() {
