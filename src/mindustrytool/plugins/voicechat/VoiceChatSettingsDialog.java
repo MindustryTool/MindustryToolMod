@@ -58,24 +58,7 @@ public class VoiceChatSettingsDialog extends BaseDialog {
         scrollContent.defaults().pad(5f);
         scrollContent.left().top();
 
-        // Debug Controls for Mock Mic (Visible for testing)
-        scrollContent.table(t -> {
-            t.left();
-            t.button(manager.isForceMock() ? "[accent]Debug Log: ON" : "[gray]Debug Log: OFF", Styles.flatToggleMenut,
-                    () -> {
-                        manager.setForceMock(!manager.isForceMock());
-                        setup();
-                    }).size(160f, 30f).checked(manager.isForceMock());
-
-            t.label(() -> "[lightgray]Enables Packet Logging & Mock Audio").padLeft(10f);
-        }).padBottom(10f).left().row();
-
-        // === STATUS INDICATOR ===
-        scrollContent.table(t -> {
-            t.left();
-            t.add("[accent]Status: ");
-            t.label(() -> manager.getStatusText()).padLeft(5f);
-        }).left().padBottom(10f).row();
+        // Debug Controls & Status Indicator hidden/removed
 
         // === GLOBAL SETTINGS ===
         scrollContent.add("[accent]Device Controls").left().padBottom(10f).row();

@@ -255,7 +255,7 @@ public class Main extends Mod {
                     // Header
                     dialog.cont.table(t -> {
                         t.image(mindustry.gen.Icon.upload).size(50f).padRight(10f).color(mindustry.graphics.Pal.accent);
-                        t.add("New Version Available").color(mindustry.graphics.Pal.accent).get().setFontScale(1.2f);
+                        t.add("New Version Available").color(mindustry.graphics.Pal.accent);
                     }).row();
 
                     dialog.cont.image().height(4f).color(arc.graphics.Color.gray).growX().pad(10f).row();
