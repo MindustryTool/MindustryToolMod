@@ -60,7 +60,8 @@ public class VoiceChatManager {
         registerPackets();
 
         // Server-side Logic: Handshake with new players (Reverse Ping)
-        final long MAGIC_PING_ID = -291103L;
+        // Check for specific version compatibility using a unique ID
+        final long MAGIC_PING_ID = -291104L; // Changed from -291103L to avoid conflict with older versions
 
         arc.Events.on(mindustry.game.EventType.PlayerJoin.class, e -> {
             if (Vars.net.server()) {
