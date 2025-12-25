@@ -83,28 +83,30 @@ public class VoiceChatPlugin implements Plugin {
             }
         }
 
-        // Navigate up the hierarchy
+        // Try to find the fixed container (Dialog body) to pin the button at the bottom
+        // Logic: content -> ScrollPane -> Table (Dialog Body)
+        Table fixedParent = null;
         Element scrollPane = content.parent;
-        if (scrollPane instanceof ScrollPane) {
-            Element dialogTable = scrollPane.parent;
-            if (dialogTable instanceof Table) {
-                Table parent = (Table) dialogTable;
 
-                // Add button at the bottom
-                parent.row();
-                parent.add(voiceButton).size(200f, 40f).pad(5f).center();
-                buttonAdded = true;
-                Log.info("[VoiceChat] Voice Settings button added to @", parent.getClass().getSimpleName());
-            } else {
-                if (shouldLog)
-                    Log.warn("[VoiceChat] Expected Table parent of ScrollPane, found: @",
-                            (dialogTable == null ? "null" : dialogTable.getClass().getSimpleName()));
-            }
-        } else {
-            if (shouldLog)
-                Log.warn("[VoiceChat] Expected ScrollPane parent of content, found: @",
-                        (scrollPane == null ? "null" : scrollPane.getClass().getSimpleName()));
+        if (scrollPane instanceof ScrollPane && scrollPane.parent instanceof Table) {
+            fixedParent = (Table) scrollPane.parent;
         }
+
+        if (fixedParent != null) {
+            // Desktop/Standard: Pin to bottom of dialog
+            fixedParent.row();
+            fixedParent.add(voiceButton).size(200f, 40f).pad(5f).center();
+            if (shouldLog)
+                Log.info("[VoiceChat] Added fixed button to @", fixedParent.getClass().getSimpleName());
+        } else {
+            // Mobile/Fallback: Add to end of scrolling list
+            content.row();
+            content.add(voiceButton).size(200f, 40f).pad(5f).center();
+            if (shouldLog)
+                Log.info("[VoiceChat] Added fallback button to content list");
+        }
+
+        buttonAdded = true;
     }
 
     @Override

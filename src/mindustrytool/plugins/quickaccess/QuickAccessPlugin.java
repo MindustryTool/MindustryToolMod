@@ -52,11 +52,17 @@ public class QuickAccessPlugin implements Plugin {
                         && waveInfoTable.hasParent() && waveInfoTable.visible);
 
                 cont.table(Tex.buttonEdge4, pad -> {
+                    // Universal adjustments (User requested larger UI for desktop too)
+                    float btnSize = 56f;
+                    float btnPad = 1f;
+
                     // Row 1 (Always visible): FlipButton + first set of tools
                     pad.table(row1 -> {
                         row1.left();
-                        row1.defaults().size(40f);
+                        row1.defaults().size(btnSize).pad(btnPad);
                         row1.add(flipButton);
+
+                        // First tool always visible next to FlipButton
 
                         // First tool always visible next to FlipButton
                         row1.button(Icon.settings, Styles.clearNonei, () -> {
@@ -74,9 +80,9 @@ public class QuickAccessPlugin implements Plugin {
                     }).left().row();
 
                     // Row 2+ (Expandable): Additional tools - only visible when expanded
-                    pad.table(row2 -> {
+                    pad.collapser(row2 -> {
                         row2.left();
-                        row2.defaults().size(40f);
+                        row2.defaults().size(btnSize).pad(btnPad);
 
                         // Voice Settings button
                         row2.button(Icon.chat, Styles.clearNonei, () -> {
@@ -95,7 +101,7 @@ public class QuickAccessPlugin implements Plugin {
                             }
                         }).tooltip("Voice Settings");
 
-                    }).left().visible(() -> flipButton.fliped).row();
+                    }, true, () -> !flipButton.fliped).left().row();
 
                 }).margin(0f).update(pad -> {
                     if (waveInfoTable == null || !waveInfoTable.hasParent())

@@ -26,19 +26,31 @@ public class PausedMenuInjector {
             for (var cell : root.getCells()) {
                 if (cell.get() instanceof Button b) {
                     boolean isHost = false;
-                    // Check by text
-                    if (b instanceof TextButton tb && (tb.getText().toString().contains(hostText)
-                            || tb.getText().toString().contains("Host"))) {
-                        isHost = true;
+
+                    // Check TextButton (Text OR Icon)
+                    if (b instanceof TextButton tb) {
+                        String text = tb.getText().toString();
+                        if (text.contains(hostText) || text.contains("Host")) {
+                            isHost = true;
+                        } else {
+                            // Check if TextButton has the Host icon
+                            for (var child : tb.getChildren()) {
+                                if (child instanceof arc.scene.ui.Image img && img.getDrawable() == Icon.host) {
+                                    isHost = true;
+                                    break;
+                                }
+                            }
+                        }
                     }
-                    // Check by icon
+                    // Check ImageButton (Icon)
                     else if (b instanceof ImageButton ib && ib.getStyle().imageUp == Icon.host) {
                         isHost = true;
                     }
 
                     if (isHost) {
                         arc.util.Log.info(
-                                "[PlayerConnect] Host button found in cell! Replacing with new Multiplayer button.");
+                                "[PlayerConnect] Host button found in "
+                                        + (b instanceof TextButton ? "TextButton" : "ImageButton") + "! Replacing.");
 
                         TextButton newBtn = new TextButton(
                                 Core.bundle.get("message.manage-room.host-title", "Multiplayer"));

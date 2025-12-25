@@ -248,17 +248,50 @@ public class Main extends Mod {
 
             if (!latestVersion.equals(currentVersion)) {
                 Log.info("Mod requires update, current version: @, latest version: @", currentVersion, latestVersion);
-                Vars.ui.showConfirm(Core.bundle.format("message.new-version", currentVersion, latestVersion)
-                        + "\nDiscord: https://discord.gg/72324gpuCd", () -> {
-                            if (currentVersion.endsWith("v8"))
-                                return;
-                            Core.app.post(() -> Vars.ui.mods.githubImportMod(REPO_URL, true, null));
-                        });
+
+                Core.app.post(() -> {
+                    mindustry.ui.dialogs.BaseDialog dialog = new mindustry.ui.dialogs.BaseDialog("Update Available");
+
+                    // Header
+                    dialog.cont.table(t -> {
+                        t.image(mindustry.gen.Icon.upload).size(50f).padRight(10f).color(mindustry.graphics.Pal.accent);
+                        t.add("New Version Available").color(mindustry.graphics.Pal.accent).get().setFontScale(1.2f);
+                    }).row();
+
+                    dialog.cont.image().height(4f).color(arc.graphics.Color.gray).growX().pad(10f).row();
+
+                    // Version Info
+                    dialog.cont.table(t -> {
+                        t.defaults().pad(5f);
+                        t.add("Current:").color(arc.graphics.Color.lightGray);
+                        t.add(currentVersion).color(mindustry.graphics.Pal.remove); // Redish for old
+                        t.row();
+                        t.image(mindustry.gen.Icon.downOpen).color(arc.graphics.Color.gray).row();
+                        t.add("Latest:").color(arc.graphics.Color.lightGray);
+                        t.add(latestVersion).color(mindustry.graphics.Pal.heal); // Green for new
+                    }).pad(10f).row();
+
+                    dialog.cont.labelWrap("A new version of MindustryTool is ready to download!").pad(10f).width(400f)
+                            .center().row();
+
+                    // Buttons
+                    dialog.buttons.defaults().size(160f, 55f).pad(8f);
+                    dialog.buttons.button("@cancel", mindustry.gen.Icon.cancel, dialog::hide);
+                    dialog.buttons.button("GitHub", mindustry.gen.Icon.github, () -> {
+                        Core.app.openURI("https://github.com/" + REPO_URL + "/releases");
+                    });
+
+                    dialog.buttons.button("Update Now", mindustry.gen.Icon.download, () -> {
+                        dialog.hide();
+                        Vars.ui.mods.githubImportMod(REPO_URL, true, null);
+                    }).disabled(b -> currentVersion.equals(latestVersion))
+                            .color(mindustry.graphics.Pal.accent);
+
+                    dialog.show();
+                });
             } else {
                 Log.info("Mod is up to date");
             }
         });
-
-        Http.get(API_URL + "ping?client=mod-v8").submit(result -> Log.info("Ping"));
     }
 }
