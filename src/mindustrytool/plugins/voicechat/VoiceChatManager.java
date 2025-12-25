@@ -124,15 +124,24 @@ public class VoiceChatManager {
 
     /**
      * Register LemmeSay shared packets with Mindustry's network system.
+     * Uses static flag to prevent re-registration causing packet ID mismatch.
      */
+    private static boolean packetsRegistered = false;
+
     private void registerPackets() {
+        if (packetsRegistered) {
+            Log.info("@ Packets already registered, skipping", TAG);
+            return;
+        }
+
         try {
             Net.registerPacket(MicPacket::new);
             Net.registerPacket(VoiceRequestPacket::new);
             Net.registerPacket(VoiceResponsePacket::new);
-            Log.info("@ Packets registered", TAG);
+            packetsRegistered = true;
+            Log.info("@ Packets registered successfully", TAG);
         } catch (Exception e) {
-            Log.warn("@ Packets may already be registered: @", TAG, e.getMessage());
+            Log.warn("@ Packets registration error: @", TAG, e.getMessage());
         }
 
         // Handle incoming voice request from server
@@ -249,12 +258,19 @@ public class VoiceChatManager {
             try {
                 microphone = new VoiceMicrophone();
             } catch (Throwable e) {
-                Log.warn("@ Failed to create microphone: @. Using Mock Microphone for testing.", TAG, e.getMessage());
+                Log.warn("@ Failed to create microphone: @", TAG, e.getMessage());
             }
         }
 
-        // Determine whether to use mock mic
-        final boolean useMock = (microphone == null) || forceMock;
+        // Only use mock mic when EXPLICITLY enabled via Debug Log
+        final boolean useMock = forceMock;
+
+        // If mic unavailable and not using mock, abort capture
+        if (microphone == null && !useMock) {
+            Log.warn("@ No microphone available and Mock Mic is disabled. Voice capture aborted.", TAG);
+            status = VoiceStatus.MIC_ERROR;
+            return;
+        }
 
         captureThread = new Thread(() -> {
             try {
@@ -263,7 +279,7 @@ public class VoiceChatManager {
                     microphone.start();
                     Log.info("@ Microphone capture started", TAG);
                 } else {
-                    Log.info("@ Mock Microphone started (Generating sine wave...)", TAG);
+                    Log.info("@ Mock Microphone started (Debug Log enabled)", TAG);
                 }
 
                 // For mock mic: generating sine wave
@@ -347,9 +363,29 @@ public class VoiceChatManager {
             stopCapture();
             status = VoiceStatus.DISABLED;
         } else {
-            status = VoiceStatus.WAITING_HANDSHAKE;
+            // If already connected (past handshake), start capture immediately
+            if (status == VoiceStatus.READY && !muted && Vars.net.client()) {
+                startCapture();
+                status = VoiceStatus.CONNECTED;
+            } else if (status == VoiceStatus.DISABLED) {
+                status = VoiceStatus.WAITING_HANDSHAKE;
+
+                // If already in a server, request handshake now
+                if (Vars.net.client()) {
+                    Log.info("@ Client requesting voice handshake from server...", TAG);
+                    mindustry.gen.PingResponseCallPacket ping = new mindustry.gen.PingResponseCallPacket();
+                    ping.time = -291104L; // MAGIC_PING_ID
+                    Vars.net.send(ping, true);
+                }
+
+                // If hosting, set status to READY immediately (no handshake needed)
+                if (Vars.net.server() && !Vars.headless) {
+                    status = VoiceStatus.READY;
+                    Log.info("@ Host mode: Status set to READY", TAG);
+                }
+            }
         }
-        Log.info("@ Enabled: @", TAG, enabled);
+        Log.info("@ Enabled: @, Status: @", TAG, enabled, status);
     }
 
     public boolean isMuted() {
@@ -360,8 +396,9 @@ public class VoiceChatManager {
         this.muted = muted;
         if (muted) {
             stopCapture();
-        } else if (enabled && Vars.net.client()) {
+        } else if (enabled && (status == VoiceStatus.READY || status == VoiceStatus.CONNECTED) && Vars.net.client()) {
             startCapture();
+            status = VoiceStatus.CONNECTED;
         }
         Log.info("@ Muted: @", TAG, muted);
     }
@@ -390,12 +427,15 @@ public class VoiceChatManager {
     public void setForceMock(boolean forceMock) {
         this.forceMock = forceMock;
         Log.info("@ Force Mock Mic: @", TAG, forceMock);
-        // Restart capture if currently running to apply change
-        if (captureThread != null && captureThread.isAlive()) {
-            stopCapture();
-            if (enabled && !muted) {
-                startCapture();
-            }
+
+        // Always stop current capture first
+        stopCapture();
+
+        // Only restart if conditions are met
+        if (enabled && !muted && Vars.net.active()
+                && (status == VoiceStatus.READY || status == VoiceStatus.CONNECTED)) {
+            startCapture();
+            status = VoiceStatus.CONNECTED;
         }
     }
 
