@@ -31,6 +31,14 @@ public class AndroidMicrophone {
 
     public void open() {
         try {
+            // Check and request RECORD_AUDIO permission first
+            if (!hasRecordAudioPermission()) {
+                requestRecordAudioPermission();
+                // Note: Permission result is async, may need to retry opening
+                Log.warn("@ RECORD_AUDIO permission not granted. Please allow in Settings.", TAG);
+                throw new IllegalStateException("RECORD_AUDIO permission not granted");
+            }
+
             // Get minimum buffer size
             Class<?> audioRecordClass = Class.forName("android.media.AudioRecord");
             minBufferSize = (int) audioRecordClass.getMethod("getMinBufferSize", int.class, int.class, int.class)
@@ -57,6 +65,118 @@ public class AndroidMicrophone {
         } catch (Exception e) {
             Log.err("@ Failed to open microphone: @", TAG, e.getMessage());
             throw new RuntimeException("Failed to open Android microphone", e);
+        }
+    }
+
+    /**
+     * Check if RECORD_AUDIO permission is granted.
+     */
+    private boolean hasRecordAudioPermission() {
+        try {
+            // Get Android context from Mindustry
+            Object context = Class.forName("mindustry.android.AndroidLauncher")
+                    .getField("context").get(null);
+
+            if (context == null) {
+                // Fallback: try to get from Core.app
+                Object app = arc.Core.app;
+                // AndroidApplication has getContext() method
+                context = app.getClass().getMethod("getContext").invoke(app);
+            }
+
+            if (context == null) {
+                Log.warn("@ Cannot get Android context", TAG);
+                return false;
+            }
+
+            // ContextCompat.checkSelfPermission(context, RECORD_AUDIO)
+            Class<?> contextCompatClass = Class.forName("androidx.core.content.ContextCompat");
+            int result = (int) contextCompatClass.getMethod("checkSelfPermission",
+                    Class.forName("android.content.Context"), String.class)
+                    .invoke(null, context, "android.permission.RECORD_AUDIO");
+
+            // PackageManager.PERMISSION_GRANTED = 0
+            return result == 0;
+        } catch (Exception e) {
+            Log.err("@ Error checking permission: @", TAG, e.getMessage());
+            // Try alternative approach - check via ContextWrapper
+            return hasRecordAudioPermissionAlt();
+        }
+    }
+
+    /**
+     * Alternative permission check without ContextCompat.
+     */
+    private boolean hasRecordAudioPermissionAlt() {
+        try {
+            Object app = arc.Core.app;
+            // AndroidApplication has checkSelfPermission via Context
+            Object context = app.getClass().getMethod("getContext").invoke(app);
+
+            int result = (int) context.getClass()
+                    .getMethod("checkSelfPermission", String.class)
+                    .invoke(context, "android.permission.RECORD_AUDIO");
+
+            return result == 0;
+        } catch (Exception e) {
+            Log.err("@ Alt permission check failed: @", TAG, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Request RECORD_AUDIO permission from user.
+     */
+    private void requestRecordAudioPermission() {
+        try {
+            Object app = arc.Core.app;
+            // AndroidApplication is Activity subclass
+            Object activity = app;
+
+            // ActivityCompat.requestPermissions(activity, permissions, requestCode)
+            Class<?> activityCompatClass = Class.forName("androidx.core.app.ActivityCompat");
+            activityCompatClass.getMethod("requestPermissions",
+                    Class.forName("android.app.Activity"),
+                    String[].class,
+                    int.class)
+                    .invoke(null, activity, new String[] { "android.permission.RECORD_AUDIO" }, 1001);
+
+            Log.info("@ Permission request sent", TAG);
+        } catch (Exception e) {
+            Log.err("@ Failed to request permission: @", TAG, e.getMessage());
+            // Try alternative approach
+            requestPermissionViaIntent();
+        }
+    }
+
+    /**
+     * Open app settings as fallback for permission.
+     */
+    private void requestPermissionViaIntent() {
+        try {
+            Object app = arc.Core.app;
+            Object context = app.getClass().getMethod("getContext").invoke(app);
+
+            // Create intent to app settings
+            Class<?> intentClass = Class.forName("android.content.Intent");
+            Class<?> settingsClass = Class.forName("android.provider.Settings");
+            Class<?> uriClass = Class.forName("android.net.Uri");
+
+            String settingsAction = (String) settingsClass.getField("ACTION_APPLICATION_DETAILS_SETTINGS").get(null);
+            Object intent = intentClass.getConstructor(String.class).newInstance(settingsAction);
+
+            // Get package name
+            String packageName = (String) context.getClass().getMethod("getPackageName").invoke(context);
+            Object uri = uriClass.getMethod("parse", String.class).invoke(null, "package:" + packageName);
+
+            intentClass.getMethod("setData", uriClass).invoke(intent, uri);
+            intentClass.getMethod("addFlags", int.class).invoke(intent, 0x10000000); // FLAG_ACTIVITY_NEW_TASK
+
+            context.getClass().getMethod("startActivity", intentClass).invoke(context, intent);
+
+            Log.info("@ Opened app settings for permission", TAG);
+        } catch (Exception e) {
+            Log.err("@ Failed to open settings: @", TAG, e.getMessage());
         }
     }
 
