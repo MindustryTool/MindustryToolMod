@@ -1,5 +1,6 @@
 package mindustrytool.plugins.voicechat;
 
+import arc.Core;
 import arc.Events;
 import arc.scene.Element;
 import arc.scene.ui.ScrollPane;
@@ -14,10 +15,12 @@ import mindustrytool.Plugin;
 
 public class VoiceChatPlugin implements Plugin {
 
-    private VoiceChatManager manager;
+    // Use Object type to prevent VoiceChatManager class loading on Android
+    private Object manager;
     private boolean buttonAdded = false;
     private TextButton voiceButton;
     private float debugTimer = 0f;
+    private boolean isDesktop = false;
 
     @Override
     public String getName() {
@@ -26,14 +29,28 @@ public class VoiceChatPlugin implements Plugin {
 
     @Override
     public void init() {
-        manager = new VoiceChatManager();
-        manager.init();
+        // Voice Chat only works on Desktop (javax.sound not available on Android/iOS)
+        isDesktop = !Core.app.isMobile();
 
-        // Create a reusable button
-        voiceButton = new TextButton("Voice Settings", Styles.defaultt);
-        voiceButton.clicked(() -> manager.showSettings());
+        if (!isDesktop) {
+            Log.info("[VoiceChat] Mobile platform detected. Voice Chat is disabled (Desktop only).");
+            return;
+        }
 
-        Events.run(EventType.Trigger.update, this::updateUI);
+        try {
+            manager = new VoiceChatManager();
+            ((VoiceChatManager) manager).init();
+
+            // Create a reusable button
+            voiceButton = new TextButton("Voice Settings", Styles.defaultt);
+            voiceButton.clicked(() -> ((VoiceChatManager) manager).showSettings());
+
+            Events.run(EventType.Trigger.update, this::updateUI);
+            Log.info("[VoiceChat] Initialized successfully on Desktop.");
+        } catch (Throwable e) {
+            Log.err("[VoiceChat] Failed to initialize: " + e.getMessage());
+            isDesktop = false; // Disable if initialization fails
+        }
     }
 
     private void updateUI() {
@@ -98,8 +115,8 @@ public class VoiceChatPlugin implements Plugin {
 
     @Override
     public void dispose() {
-        if (manager != null) {
-            manager.dispose();
+        if (isDesktop && manager != null) {
+            ((VoiceChatManager) manager).dispose();
         }
         if (voiceButton != null) {
             voiceButton.remove();
