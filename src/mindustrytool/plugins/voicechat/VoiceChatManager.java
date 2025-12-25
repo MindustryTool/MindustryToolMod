@@ -154,8 +154,8 @@ public class VoiceChatManager {
             // Enforce sender ID from connection to prevent spoofing
             packet.playerid = con.player.id;
 
-            // Forward to all other clients (UDP)
-            Vars.net.sendExcept(con, packet, false);
+            // Forward to all other clients (TCP for testing reliability)
+            Vars.net.sendExcept(con, packet, true);
 
             // If I am the Host Player (not headless), I also need to hear this!
             if (!Vars.headless) {
@@ -173,9 +173,17 @@ public class VoiceChatManager {
         if (!enabled)
             return;
 
+        // Log trace (Debug Mode: forceMock=true)
+        if (forceMock) {
+            Log.info("@ Packet received from @, size: @", TAG, packet.playerid, packet.audioData.length);
+        }
+
         mindustry.gen.Player sender = mindustry.gen.Groups.player.find(p -> p.id == packet.playerid);
-        if (sender == null)
+        if (sender == null) {
+            if (forceMock)
+                Log.warn("@ Unknown sender ID: @", TAG, packet.playerid);
             return;
+        }
 
         // Check per-player mute
         if (playerMuted.get(sender.uuid(), false))

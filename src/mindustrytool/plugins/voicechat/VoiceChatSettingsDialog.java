@@ -61,13 +61,13 @@ public class VoiceChatSettingsDialog extends BaseDialog {
         // Debug Controls for Mock Mic (Visible for testing)
         scrollContent.table(t -> {
             t.left();
-            t.button(manager.isForceMock() ? "[accent]Mock Mic: ON" : "[gray]Mock Mic: OFF", Styles.flatToggleMenut,
+            t.button(manager.isForceMock() ? "[accent]Debug Log: ON" : "[gray]Debug Log: OFF", Styles.flatToggleMenut,
                     () -> {
                         manager.setForceMock(!manager.isForceMock());
                         setup();
                     }).size(160f, 30f).checked(manager.isForceMock());
 
-            t.label(() -> "[lightgray]Simulates audio input").padLeft(10f);
+            t.label(() -> "[lightgray]Enables Packet Logging & Mock Audio").padLeft(10f);
         }).padBottom(10f).left().row();
 
         // === GLOBAL SETTINGS ===
