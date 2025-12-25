@@ -336,4 +336,12 @@ public class PlayerConnectPlugin implements Plugin {
             createRoomDialog.show();
         }
     }
+
+    /**
+     * Get Voice Chat Manager if enabled.
+     * Used by QuickAccessPlugin to show Voice Settings.
+     */
+    public static mindustrytool.plugins.voicechat.VoiceChatManager getVoiceChatManager() {
+        return voiceChatManager.getIfEnabled();
+    }
 }

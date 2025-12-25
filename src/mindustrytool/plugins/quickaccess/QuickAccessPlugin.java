@@ -77,7 +77,24 @@ public class QuickAccessPlugin implements Plugin {
                     pad.table(row2 -> {
                         row2.left();
                         row2.defaults().size(40f);
-                        // Placeholder for more tools in the future
+
+                        // Voice Settings button
+                        row2.button(Icon.chat, Styles.clearNonei, () -> {
+                            try {
+                                // Get VoiceChatManager from PlayerConnectPlugin's lazy component
+                                var vcManager = mindustrytool.plugins.playerconnect.PlayerConnectPlugin
+                                        .getVoiceChatManager();
+                                if (vcManager != null) {
+                                    vcManager.showSettings();
+                                } else {
+                                    Vars.ui.showInfo(
+                                            "Voice Chat is not enabled.\nEnable it in 'Manage Components' first.");
+                                }
+                            } catch (Exception e) {
+                                Vars.ui.showInfo("Voice Chat unavailable: " + e.getMessage());
+                            }
+                        }).tooltip("Voice Settings");
+
                     }).left().visible(() -> flipButton.fliped).row();
 
                 }).margin(0f).update(pad -> {
