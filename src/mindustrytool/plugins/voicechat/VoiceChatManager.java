@@ -207,7 +207,7 @@ public class VoiceChatManager {
             // Enforce sender ID from connection to prevent spoofing
             packet.playerid = con.player.id;
 
-            Log.info("@ [SERVER] Received voice from @, forwarding...", TAG, con.player.name);
+            // Log removed to prevent lag - was running every packet
 
             // Forward to all other clients (TCP for testing reliability)
             Vars.net.sendExcept(con, packet, true);
@@ -352,7 +352,7 @@ public class VoiceChatManager {
                         packet.audioData = encoded;
                         packet.playerid = Vars.player.id;
 
-                        Log.info("@ [CAPTURE] Sending voice packet, size: @ bytes", TAG, encoded.length);
+                        // Log removed to prevent lag - was running every 20ms
                         Vars.net.send(packet, true); // TCP for reliability
                     }
                 }
