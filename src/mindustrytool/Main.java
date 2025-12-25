@@ -63,6 +63,13 @@ public class Main extends Mod {
 
     /** Try to load a plugin by class name. Returns false if not found. */
     private static boolean tryLoadPlugin(String className) {
+        // Skip VoiceChat plugin on mobile platforms (javax.sound not available)
+        // Must check BEFORE Class.forName() to prevent class verification crash
+        if (Core.app.isMobile() && className.contains("VoiceChat")) {
+            Log.info("[PluginLoader] Plugin @ skipped (Desktop only)", className);
+            return false;
+        }
+
         try {
             Class<?> clazz = Class.forName(className);
             if (Plugin.class.isAssignableFrom(clazz)) {
