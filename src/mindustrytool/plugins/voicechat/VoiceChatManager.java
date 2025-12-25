@@ -64,7 +64,7 @@ public class VoiceChatManager {
             if (Vars.net.server()) {
                 VoiceRequestPacket request = new VoiceRequestPacket();
                 request.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
-                Vars.net.send(request, e.player.con);
+                e.player.con.send(request, true);
                 Log.info("@ Sent voice handshake to @", TAG, e.player.name);
             }
         });
@@ -142,7 +142,7 @@ public class VoiceChatManager {
             if (!enabled)
                 return;
 
-            mindustry.gen.Player sender = mindustry.gen.Groups.player.getByID(packet.playerid);
+            mindustry.gen.Player sender = mindustry.gen.Groups.player.find(p -> p.id == packet.playerid);
             if (sender == null)
                 return;
 

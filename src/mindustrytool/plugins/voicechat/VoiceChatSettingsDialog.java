@@ -191,7 +191,7 @@ public class VoiceChatSettingsDialog extends BaseDialog {
             scrollContent.image().color(Color.darkGray).fillX().height(1f).pad(5f).row();
         }
 
-        if (Groups.player.size() == 0) {
+        if (Groups.player.isEmpty()) {
             scrollContent.add("[gray]No players connected").pad(20f).row();
         }
 
