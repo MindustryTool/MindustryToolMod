@@ -1,5 +1,6 @@
 package mindustrytool.plugins.voicechat;
 
+import arc.struct.ObjectMap;
 import arc.util.Log;
 import arc.util.Nullable;
 import lemmesay.shared.LemmeSayConstants;
@@ -18,9 +19,21 @@ public class VoiceChatManager {
 
     private static final String TAG = "[VoiceChat]";
 
+    public enum VoiceMode {
+        ALL, TEAM
+    }
+
     private boolean initialized = false;
-    private boolean enabled = false;
-    private boolean muted = false;
+    private boolean enabled = false; // Speaker enabled
+    private boolean muted = false; // Mic muted (inverse of Mic enabled)
+
+    // Modes
+    private VoiceMode speakerMode = VoiceMode.ALL;
+    private VoiceMode micMode = VoiceMode.ALL;
+
+    // Per-player settings
+    private final ObjectMap<String, Boolean> playerMuted = new ObjectMap<>();
+    private final ObjectMap<String, Float> playerVolume = new ObjectMap<>(); // 0.0 - 1.0
 
     @Nullable
     private VoiceMicrophone microphone;
@@ -103,15 +116,40 @@ public class VoiceChatManager {
 
         // Handle incoming audio from other players
         Vars.net.handleClient(MicPacket.class, packet -> {
-            if (enabled) {
-                ensureAudioInitialized();
-                if (speaker != null && processor != null) {
-                    try {
-                        short[] decoded = processor.decode(packet.audioData);
-                        speaker.play(decoded);
-                    } catch (Exception e) {
-                        Log.err("@ Failed to play audio: @", TAG, e.getMessage());
+            if (!enabled)
+                return;
+
+            mindustry.gen.Player sender = mindustry.gen.Groups.player.getByID(packet.playerid);
+            if (sender == null)
+                return;
+
+            // Check per-player mute
+            if (playerMuted.get(sender.uuid(), false))
+                return;
+
+            // Check Speaker Mode (Receive Filter)
+            if (speakerMode == VoiceMode.TEAM) {
+                if (Vars.player.team() != sender.team())
+                    return;
+            }
+
+            ensureAudioInitialized();
+            if (speaker != null && processor != null) {
+                try {
+                    short[] decoded = processor.decode(packet.audioData);
+
+                    // Apply volume
+                    float volume = playerVolume.get(sender.uuid(), 1f);
+                    if (volume != 1f) {
+                        for (int i = 0; i < decoded.length; i++) {
+                            decoded[i] = (short) Math.max(Short.MIN_VALUE,
+                                    Math.min(Short.MAX_VALUE, decoded[i] * volume));
+                        }
                     }
+
+                    speaker.play(decoded);
+                } catch (Exception e) {
+                    Log.err("@ Failed to play audio: @", TAG, e.getMessage());
                 }
             }
         });
@@ -142,7 +180,7 @@ public class VoiceChatManager {
                 microphone.start();
                 Log.info("@ Microphone capture started", TAG);
 
-                while (enabled && !muted && Vars.net.client()) {
+                while (enabled && !muted && Vars.net.active()) {
                     if (microphone.available() >= VoiceConstants.BUFFER_SIZE) {
                         short[] audio = microphone.read();
                         if (processor != null) {
@@ -151,6 +189,7 @@ public class VoiceChatManager {
 
                             MicPacket packet = new MicPacket();
                             packet.audioData = encoded;
+                            packet.playerid = Vars.player.id; // Set sender ID (important!)
                             Vars.net.send(packet, false);
                         }
                     }
@@ -211,6 +250,44 @@ public class VoiceChatManager {
 
     public void toggleMute() {
         setMuted(!muted);
+    }
+
+    public VoiceMode getSpeakerMode() {
+        return speakerMode;
+    }
+
+    public void setSpeakerMode(VoiceMode mode) {
+        this.speakerMode = mode;
+        Log.info("@ Speaker mode: @", TAG, mode);
+    }
+
+    public VoiceMode getMicMode() {
+        return micMode;
+    }
+
+    public void setMicMode(VoiceMode mode) {
+        this.micMode = mode;
+        Log.info("@ Mic mode: @", TAG, mode);
+    }
+
+    // Per-player settings
+
+    public void setPlayerMuted(String playerId, boolean muted) {
+        playerMuted.put(playerId, muted);
+        Log.info("@ Player @ muted: @", TAG, playerId, muted);
+    }
+
+    public boolean isPlayerMuted(String playerId) {
+        return playerMuted.get(playerId, false);
+    }
+
+    public void setPlayerVolume(String playerId, float volume) {
+        playerVolume.put(playerId, volume);
+        Log.info("@ Player @ volume: @", TAG, playerId, volume);
+    }
+
+    public float getPlayerVolume(String playerId) {
+        return playerVolume.get(playerId, 1f);
     }
 
     /**
