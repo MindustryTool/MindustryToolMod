@@ -82,6 +82,7 @@ public class Main extends Mod {
 
     @Override
     public void init() {
+
         checkForUpdate();
 
         // Load plugins from assets/plugins.txt

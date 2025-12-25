@@ -4,3 +4,4 @@ mindustrytool.plugins.auth.AuthPlugin
 mindustrytool.plugins.browser.BrowserPlugin
 mindustrytool.plugins.playerconnect.PlayerConnectPlugin
 mindustrytool.plugins.quickaccess.QuickAccessPlugin
+mindustrytool.plugins.voicechat.VoiceChatPlugin
