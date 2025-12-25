@@ -2,12 +2,14 @@ package mindustrytool.plugins.voicechat;
 
 import arc.util.Log;
 import arc.util.Nullable;
-import de.maxhenkel.opus4j.OpusDecoder;
-import de.maxhenkel.opus4j.OpusEncoder;
-import de.maxhenkel.rnnoise4j.Denoiser;
+import org.concentus.OpusApplication;
+import org.concentus.OpusDecoder;
+import org.concentus.OpusEncoder;
+import org.concentus.OpusException;
 
 /**
- * Voice audio processor with Opus encoding/decoding and RNNoise denoising.
+ * Cross-platform voice audio processor using Concentus (pure Java Opus).
+ * Works on both Desktop and Android without native libraries.
  */
 public class VoiceProcessor {
 
@@ -17,36 +19,34 @@ public class VoiceProcessor {
     private OpusEncoder encoder;
     @Nullable
     private OpusDecoder decoder;
-    @Nullable
-    private Denoiser denoiser;
 
-    private boolean denoiseEnabled = true;
+    // Denoising disabled for cross-platform (rnnoise4j requires native libs)
+    private boolean denoiseEnabled = false;
 
     public VoiceProcessor() {
         try {
             encoder = new OpusEncoder(
                     VoiceConstants.SAMPLE_RATE,
                     VoiceConstants.CHANNELS,
-                    OpusEncoder.Application.VOIP);
+                    OpusApplication.OPUS_APPLICATION_VOIP);
             decoder = new OpusDecoder(
                     VoiceConstants.SAMPLE_RATE,
                     VoiceConstants.CHANNELS);
-            denoiser = new Denoiser();
-            Log.info("@ Processor initialized", TAG);
-        } catch (Exception e) {
+            Log.info("@ Processor initialized (Concentus pure Java)", TAG);
+        } catch (OpusException e) {
             Log.err("@ Failed to initialize processor: @", TAG, e.getMessage());
             throw new RuntimeException("Failed to initialize voice processor", e);
         }
     }
 
     /**
-     * Denoise audio data using RNNoise.
+     * Denoise audio data.
+     * Note: RNNoise disabled for cross-platform compatibility.
+     * Returns input unchanged.
      */
     public short[] denoise(short[] input) {
-        if (!denoiseEnabled || denoiser == null) {
-            return input;
-        }
-        return denoiser.denoise(input);
+        // Denoising disabled - rnnoise4j requires native libs not available on Android
+        return input;
     }
 
     /**
@@ -56,7 +56,19 @@ public class VoiceProcessor {
         if (encoder == null) {
             throw new IllegalStateException("Encoder not initialized");
         }
-        return encoder.encode(input);
+        try {
+            // Concentus returns encoded bytes - allocate buffer for max frame size
+            byte[] output = new byte[VoiceConstants.BUFFER_SIZE * 2];
+            int encodedLength = encoder.encode(input, 0, VoiceConstants.BUFFER_SIZE, output, 0, output.length);
+
+            // Return only the actual encoded bytes
+            byte[] result = new byte[encodedLength];
+            System.arraycopy(output, 0, result, 0, encodedLength);
+            return result;
+        } catch (OpusException e) {
+            Log.err("@ Encode error: @", TAG, e.getMessage());
+            return new byte[0];
+        }
     }
 
     /**
@@ -66,7 +78,21 @@ public class VoiceProcessor {
         if (decoder == null) {
             throw new IllegalStateException("Decoder not initialized");
         }
-        return decoder.decode(input);
+        try {
+            short[] output = new short[VoiceConstants.BUFFER_SIZE];
+            int decodedSamples = decoder.decode(input, 0, input.length, output, 0, VoiceConstants.BUFFER_SIZE, false);
+
+            // Return only the actual decoded samples
+            if (decodedSamples < VoiceConstants.BUFFER_SIZE) {
+                short[] result = new short[decodedSamples];
+                System.arraycopy(output, 0, result, 0, decodedSamples);
+                return result;
+            }
+            return output;
+        } catch (OpusException e) {
+            Log.err("@ Decode error: @", TAG, e.getMessage());
+            return new short[0];
+        }
     }
 
     public boolean isDenoiseEnabled() {
@@ -74,23 +100,16 @@ public class VoiceProcessor {
     }
 
     public void setDenoiseEnabled(boolean enabled) {
-        this.denoiseEnabled = enabled;
-        Log.info("@ Denoise: @", TAG, enabled);
+        // Denoising is disabled for cross-platform compatibility
+        // Keep this method for API compatibility but don't actually enable it
+        this.denoiseEnabled = false;
+        Log.info("@ Denoise unavailable (cross-platform mode)", TAG);
     }
 
     public void dispose() {
-        if (encoder != null) {
-            encoder.close();
-            encoder = null;
-        }
-        if (decoder != null) {
-            decoder.close();
-            decoder = null;
-        }
-        if (denoiser != null) {
-            denoiser.close();
-            denoiser = null;
-        }
+        // Concentus encoders/decoders don't need explicit close
+        encoder = null;
+        decoder = null;
         Log.info("@ Processor disposed", TAG);
     }
 }

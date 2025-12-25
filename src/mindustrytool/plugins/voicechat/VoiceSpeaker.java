@@ -1,73 +1,87 @@
 package mindustrytool.plugins.voicechat;
 
+import arc.Core;
 import arc.util.Log;
 import arc.util.Nullable;
 
-import javax.sound.sampled.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 /**
- * Voice speaker playback using javax.sound.
- * Desktop-only implementation.
+ * Cross-platform voice speaker interface.
+ * Automatically detects platform and loads correct implementation:
+ * - Desktop: DesktopSpeaker (javax.sound)
+ * - Android: AndroidSpeaker (android.media.AudioTrack)
  */
 public class VoiceSpeaker {
 
     private static final String TAG = "[VoiceSpk]";
 
     @Nullable
-    private SourceDataLine speaker;
+    private Object platformSpeaker; // Platform-specific speaker implementation
     private final int sampleRate;
     private float volume = 0.8f;
+    private boolean isOpen = false;
+    private final boolean isDesktop;
 
     public VoiceSpeaker() {
         this.sampleRate = VoiceConstants.SAMPLE_RATE;
+        this.isDesktop = !Core.app.isMobile();
         open();
     }
 
     public void open() {
-        if (isOpen())
+        if (isOpen)
             return;
 
-        AudioFormat format = new AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                sampleRate, 16, 1, 2, sampleRate, false);
-
         try {
-            DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
-            speaker = (SourceDataLine) AudioSystem.getLine(info);
-            speaker.open(format);
-            speaker.start();
-            Log.info("@ Speaker opened", TAG);
+            if (isDesktop) {
+                // Load Desktop implementation
+                Class<?> implClass = Class.forName("mindustrytool.plugins.voicechat.DesktopSpeaker");
+                platformSpeaker = implClass.getDeclaredConstructor(int.class).newInstance(sampleRate);
+                implClass.getMethod("open").invoke(platformSpeaker);
+                Log.info("@ Speaker opened (Desktop)", TAG);
+            } else {
+                // Load Android implementation
+                Class<?> implClass = Class.forName("mindustrytool.plugins.voicechat.AndroidSpeaker");
+                platformSpeaker = implClass.getDeclaredConstructor(int.class).newInstance(sampleRate);
+                implClass.getMethod("open").invoke(platformSpeaker);
+                Log.info("@ Speaker opened (Android)", TAG);
+            }
+            isOpen = true;
         } catch (Exception e) {
             Log.err("@ Failed to open speaker: @", TAG, e.getMessage());
         }
     }
 
     public void play(short[] audioData) {
-        if (speaker == null || !speaker.isOpen())
+        if (platformSpeaker == null || !isOpen)
             return;
 
         // Apply volume
+        short[] adjustedData = new short[audioData.length];
         for (int i = 0; i < audioData.length; i++) {
-            audioData[i] = (short) (audioData[i] * volume);
+            adjustedData[i] = (short) (audioData[i] * volume);
         }
 
-        byte[] bytes = shortsToBytes(audioData);
-        speaker.write(bytes, 0, bytes.length);
+        try {
+            platformSpeaker.getClass().getMethod("play", short[].class).invoke(platformSpeaker, adjustedData);
+        } catch (Exception e) {
+            Log.err("@ Failed to play audio: @", TAG, e.getMessage());
+        }
     }
 
     public boolean isOpen() {
-        return speaker != null && speaker.isOpen();
+        return isOpen && platformSpeaker != null;
     }
 
     public void close() {
-        if (speaker == null)
+        if (platformSpeaker == null)
             return;
-        speaker.stop();
-        speaker.flush();
-        speaker.close();
-        speaker = null;
+        try {
+            platformSpeaker.getClass().getMethod("close").invoke(platformSpeaker);
+        } catch (Exception e) {
+            Log.err("@ Failed to close speaker: @", TAG, e.getMessage());
+        }
+        isOpen = false;
+        platformSpeaker = null;
         Log.info("@ Speaker closed", TAG);
     }
 
@@ -79,11 +93,7 @@ public class VoiceSpeaker {
         this.volume = Math.max(0f, Math.min(1f, volume));
     }
 
-    private static byte[] shortsToBytes(short[] shorts) {
-        ByteBuffer bb = ByteBuffer.allocate(shorts.length * 2).order(ByteOrder.LITTLE_ENDIAN);
-        for (short s : shorts) {
-            bb.putShort(s);
-        }
-        return bb.array();
+    public boolean isAvailable() {
+        return true; // Now available on both platforms
     }
 }

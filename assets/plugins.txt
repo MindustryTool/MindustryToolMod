@@ -4,5 +4,4 @@ mindustrytool.plugins.auth.AuthPlugin
 mindustrytool.plugins.browser.BrowserPlugin
 mindustrytool.plugins.playerconnect.PlayerConnectPlugin
 mindustrytool.plugins.quickaccess.QuickAccessPlugin
-# VoiceChat temporarily disabled (Desktop only, crashes on Android)
-# mindustrytool.plugins.voicechat.VoiceChatPlugin
+mindustrytool.plugins.voicechat.VoiceChatPlugin

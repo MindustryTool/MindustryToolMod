@@ -1,120 +1,127 @@
 package mindustrytool.plugins.voicechat;
 
+import arc.Core;
 import arc.util.Log;
 import arc.util.Nullable;
 
-import javax.sound.sampled.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 /**
- * Voice microphone capture using javax.sound.
- * Desktop-only implementation.
+ * Cross-platform voice microphone interface.
+ * Automatically detects platform and loads correct implementation:
+ * - Desktop: DesktopMicrophone (javax.sound)
+ * - Android: AndroidMicrophone (android.media.AudioRecord)
  */
 public class VoiceMicrophone {
 
     private static final String TAG = "[VoiceMic]";
 
     @Nullable
-    private TargetDataLine mic;
+    private Object platformMic; // Platform-specific microphone implementation
     private final int sampleRate;
     private final int bufferSize;
+    private boolean isOpen = false;
+    private boolean isRecording = false;
+    private final boolean isDesktop;
 
     public VoiceMicrophone() {
         this.sampleRate = VoiceConstants.SAMPLE_RATE;
         this.bufferSize = VoiceConstants.BUFFER_SIZE;
+        this.isDesktop = !Core.app.isMobile();
     }
 
     public void open() {
-        if (isOpen()) {
+        if (isOpen) {
             throw new IllegalStateException("Microphone is already open");
         }
 
-        AudioFormat format = new AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                sampleRate, 16, 1, 2, sampleRate, false);
-
-        mic = getDefaultMicrophone(format);
-        if (mic == null) {
-            throw new IllegalStateException("No microphone found on this system");
-        }
-
         try {
-            mic.open(format);
-            Log.info("@ Microphone opened", TAG);
-        } catch (LineUnavailableException e) {
+            if (isDesktop) {
+                // Load Desktop implementation
+                Class<?> implClass = Class.forName("mindustrytool.plugins.voicechat.DesktopMicrophone");
+                platformMic = implClass.getDeclaredConstructor(int.class, int.class).newInstance(sampleRate,
+                        bufferSize);
+                implClass.getMethod("open").invoke(platformMic);
+                Log.info("@ Microphone opened (Desktop)", TAG);
+            } else {
+                // Load Android implementation
+                Class<?> implClass = Class.forName("mindustrytool.plugins.voicechat.AndroidMicrophone");
+                platformMic = implClass.getDeclaredConstructor(int.class, int.class).newInstance(sampleRate,
+                        bufferSize);
+                implClass.getMethod("open").invoke(platformMic);
+                Log.info("@ Microphone opened (Android)", TAG);
+            }
+            isOpen = true;
+        } catch (Exception e) {
+            Log.err("@ Failed to open microphone: @", TAG, e.getMessage());
             throw new IllegalStateException("Failed to open microphone", e);
         }
-
-        // Fix accumulating audio issue on some Linux systems
-        mic.start();
-        mic.stop();
-        mic.flush();
     }
 
     public void start() {
-        if (!isOpen() || mic == null)
+        if (!isOpen || platformMic == null)
             return;
-        mic.start();
+        try {
+            platformMic.getClass().getMethod("start").invoke(platformMic);
+            isRecording = true;
+        } catch (Exception e) {
+            Log.err("@ Failed to start recording: @", TAG, e.getMessage());
+        }
     }
 
     public void stop() {
-        if (!isOpen() || mic == null)
+        if (!isOpen || platformMic == null)
             return;
-        mic.stop();
-        mic.flush();
+        try {
+            platformMic.getClass().getMethod("stop").invoke(platformMic);
+            isRecording = false;
+        } catch (Exception e) {
+            Log.err("@ Failed to stop recording: @", TAG, e.getMessage());
+        }
     }
 
     public void close() {
-        if (mic == null)
+        if (platformMic == null)
             return;
-        mic.stop();
-        mic.flush();
-        mic.close();
-        mic = null;
+        try {
+            platformMic.getClass().getMethod("close").invoke(platformMic);
+        } catch (Exception e) {
+            Log.err("@ Failed to close microphone: @", TAG, e.getMessage());
+        }
+        isRecording = false;
+        isOpen = false;
+        platformMic = null;
         Log.info("@ Microphone closed", TAG);
     }
 
     public boolean isOpen() {
-        return mic != null && mic.isOpen();
+        return isOpen && platformMic != null;
     }
 
     public int available() {
-        if (mic == null)
+        if (!isRecording || platformMic == null)
             return 0;
-        return mic.available() / 2;
+        try {
+            return (int) platformMic.getClass().getMethod("available").invoke(platformMic);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public short[] read() {
-        if (mic == null) {
+        if (platformMic == null) {
             throw new IllegalStateException("Microphone is not opened");
         }
-
-        int available = available();
-        if (bufferSize > available) {
-            throw new IllegalStateException("Not enough data. Required: " + bufferSize + ", available: " + available);
+        if (!isRecording) {
+            throw new IllegalStateException("Microphone is not recording");
         }
-
-        byte[] byteBuffer = new byte[bufferSize * 2];
-        mic.read(byteBuffer, 0, byteBuffer.length);
-        return bytesToShorts(byteBuffer);
-    }
-
-    private static short[] bytesToShorts(byte[] bytes) {
-        ByteBuffer bb = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
-        short[] shorts = new short[bytes.length / 2];
-        bb.asShortBuffer().get(shorts);
-        return shorts;
-    }
-
-    @Nullable
-    private static TargetDataLine getDefaultMicrophone(AudioFormat format) {
         try {
-            DataLine.Info lineInfo = new DataLine.Info(TargetDataLine.class, format);
-            return (TargetDataLine) AudioSystem.getLine(lineInfo);
+            return (short[]) platformMic.getClass().getMethod("read").invoke(platformMic);
         } catch (Exception e) {
-            Log.err("@ Failed to get microphone: @", TAG, e.getMessage());
-            return null;
+            Log.err("@ Failed to read audio: @", TAG, e.getMessage());
+            return new short[0];
         }
+    }
+
+    public boolean isAvailable() {
+        return true; // Now available on both platforms
     }
 }
