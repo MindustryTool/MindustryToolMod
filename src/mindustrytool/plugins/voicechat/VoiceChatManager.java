@@ -59,13 +59,35 @@ public class VoiceChatManager {
 
         registerPackets();
 
-        // Server-side Logic: Handshake with new players
+        // Server-side Logic: Handshake with new players (Reverse Ping)
+        final long MAGIC_PING_ID = -291103L;
+
         arc.Events.on(mindustry.game.EventType.PlayerJoin.class, e -> {
             if (Vars.net.server()) {
+                // Send Magic Ping to probe client
+                mindustry.gen.PingCallPacket ping = new mindustry.gen.PingCallPacket();
+                ping.time = MAGIC_PING_ID;
+                if (e.player.con != null)
+                    e.player.con.send(ping, true);
+            }
+        });
+
+        // Client-side Logic: Reply to Magic Ping
+        Vars.net.handleClient(mindustry.gen.PingCallPacket.class, ping -> {
+            if (ping.time == MAGIC_PING_ID) {
+                mindustry.gen.PingResponseCallPacket response = new mindustry.gen.PingResponseCallPacket();
+                response.time = MAGIC_PING_ID;
+                Vars.net.send(response, true);
+            }
+        });
+
+        // Server-side Logic: Receive Reply -> Start Voice
+        Vars.net.handleServer(mindustry.gen.PingResponseCallPacket.class, (con, ping) -> {
+            if (ping.time == MAGIC_PING_ID && con.player != null) {
+                Log.info("@ Client @ verified modded. Sending voice handshake.", TAG, con.player.name);
                 VoiceRequestPacket request = new VoiceRequestPacket();
                 request.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
-                e.player.con.send(request, true);
-                Log.info("@ Sent voice handshake to @", TAG, e.player.name);
+                con.send(request, true);
             }
         });
 
@@ -133,49 +155,57 @@ public class VoiceChatManager {
             packet.playerid = con.player.id;
 
             // Forward to all other clients (UDP)
-            // Ideally we should filter by team/distance here later
             Vars.net.sendExcept(con, packet, false);
+
+            // If I am the Host Player (not headless), I also need to hear this!
+            if (!Vars.headless) {
+                processIncomingVoice(packet);
+            }
         });
 
-        // Handle incoming audio from other players
+        // Handle incoming audio from other players (Client-side)
         Vars.net.handleClient(MicPacket.class, packet -> {
-            if (!enabled)
-                return;
-
-            mindustry.gen.Player sender = mindustry.gen.Groups.player.find(p -> p.id == packet.playerid);
-            if (sender == null)
-                return;
-
-            // Check per-player mute
-            if (playerMuted.get(sender.uuid(), false))
-                return;
-
-            // Check Speaker Mode (Receive Filter)
-            if (speakerMode == VoiceMode.TEAM) {
-                if (Vars.player.team() != sender.team())
-                    return;
-            }
-
-            ensureAudioInitialized();
-            if (speaker != null && processor != null) {
-                try {
-                    short[] decoded = processor.decode(packet.audioData);
-
-                    // Apply volume
-                    float volume = playerVolume.get(sender.uuid(), 1f);
-                    if (volume != 1f) {
-                        for (int i = 0; i < decoded.length; i++) {
-                            decoded[i] = (short) Math.max(Short.MIN_VALUE,
-                                    Math.min(Short.MAX_VALUE, decoded[i] * volume));
-                        }
-                    }
-
-                    speaker.play(decoded);
-                } catch (Exception e) {
-                    Log.err("@ Failed to play audio: @", TAG, e.getMessage());
-                }
-            }
+            processIncomingVoice(packet);
         });
+    }
+
+    private void processIncomingVoice(MicPacket packet) {
+        if (!enabled)
+            return;
+
+        mindustry.gen.Player sender = mindustry.gen.Groups.player.find(p -> p.id == packet.playerid);
+        if (sender == null)
+            return;
+
+        // Check per-player mute
+        if (playerMuted.get(sender.uuid(), false))
+            return;
+
+        // Check Speaker Mode (Receive Filter)
+        if (speakerMode == VoiceMode.TEAM) {
+            if (Vars.player.team() != sender.team())
+                return;
+        }
+
+        ensureAudioInitialized();
+        if (speaker != null && processor != null) {
+            try {
+                short[] decoded = processor.decode(packet.audioData);
+
+                // Apply volume
+                float volume = playerVolume.get(sender.uuid(), 1f);
+                if (volume != 1f) {
+                    for (int i = 0; i < decoded.length; i++) {
+                        decoded[i] = (short) Math.max(Short.MIN_VALUE,
+                                Math.min(Short.MAX_VALUE, decoded[i] * volume));
+                    }
+                }
+
+                speaker.play(decoded);
+            } catch (Throwable e) {
+                // Log.err("@ Failed to play audio: @", TAG, e.getMessage()); // Avoid spam
+            }
+        }
     }
 
     /**
