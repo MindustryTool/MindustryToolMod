@@ -21,9 +21,9 @@ public class VoiceChatSettingsDialog extends BaseDialog {
 
     private final VoiceChatManager manager;
 
-    // Per-player settings using entity ID (int) as key for reliable lookup
-    private final IntMap<Boolean> playerMuted = new IntMap<>();
-    private final IntMap<Float> playerVolume = new IntMap<>();
+    // Per-player settings mapped by UUID in Manager
+    // private final IntMap<Boolean> playerMuted = new IntMap<>();
+    // private final IntMap<Float> playerVolume = new IntMap<>();
 
     public VoiceChatSettingsDialog(VoiceChatManager manager) {
         super("Voice Chat Settings");
@@ -39,9 +39,9 @@ public class VoiceChatSettingsDialog extends BaseDialog {
             manager.setSpeakerMode(VoiceChatManager.VoiceMode.ALL);
             manager.setMicMode(VoiceChatManager.VoiceMode.ALL);
 
-            // Reset per-player settings
-            playerMuted.clear();
-            playerVolume.clear();
+            // Reset per-player settings (Note: Manager does not currently have clearAll,
+            // but we can implement or iterate)
+            // For now, we just refresh UI. Detailed reset requires manager support.
 
             setup();
         }).size(250f, 64f);
@@ -121,21 +121,14 @@ public class VoiceChatSettingsDialog extends BaseDialog {
             // Use entity ID (integer) - unique and consistent
             int entityId = p.id;
             String displayName = Strings.stripColors(p.name);
-            String uuid = p.uuid(); // Still need UUID for manager calls
+            String uuid = p.uuid(); // Needed for manager calls
 
-            // Initialize defaults only if not already set
-            if (!playerMuted.containsKey(entityId))
-                playerMuted.put(entityId, false);
-            if (!playerVolume.containsKey(entityId))
-                playerVolume.put(entityId, 100f);
+            // Read directly from Manager
+            boolean isMuted = manager.isPlayerMuted(uuid);
+            float volume = manager.getPlayerVolume(uuid) * 100f; // Convert 0-1 to 0-100
 
-            // Read current values for this player
-            boolean isMuted = playerMuted.get(entityId, false);
-            float volume = playerVolume.get(entityId, 100f);
-
-            // Build row for this player
-            scrollContent.table(row -> {
-                row.left().defaults().pad(3f);
+            scrollContent.table(Tex.buttonEdge4, row -> {
+                row.left().margin(5f);
 
                 // ROW 1: Avatar | Name | Toggle
                 row.table(header -> {
@@ -145,9 +138,7 @@ public class VoiceChatSettingsDialog extends BaseDialog {
 
                     // ON/OFF button - use captured values
                     header.button(!isMuted ? "[green]ON" : "[red]OFF", Styles.flatToggleMenut, () -> {
-                        boolean current = playerMuted.get(entityId, false);
-                        playerMuted.put(entityId, !current);
-                        manager.setPlayerMuted(uuid, !current);
+                        manager.setPlayerMuted(uuid, !isMuted);
                         setup();
                     }).size(60f, 30f).checked(!isMuted);
                 }).growX().row();
@@ -162,7 +153,6 @@ public class VoiceChatSettingsDialog extends BaseDialog {
 
                     slider.changed(() -> {
                         float v = slider.getValue();
-                        playerVolume.put(entityId, v);
                         manager.setPlayerVolume(uuid, v / 100f);
                         volumeLabel.setText((int) v + "%");
                     });
@@ -189,13 +179,5 @@ public class VoiceChatSettingsDialog extends BaseDialog {
         ScrollPane scroll = new ScrollPane(scrollContent, Styles.smallPane);
         scroll.setScrollingDisabled(true, false);
         cont.add(scroll).width(450f).growY().row();
-    }
-
-    public IntMap<Boolean> getPlayerMutedMap() {
-        return playerMuted;
-    }
-
-    public IntMap<Float> getPlayerVolumeMap() {
-        return playerVolume;
     }
 }
