@@ -5,16 +5,19 @@ import arc.util.Log;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Android microphone implementation that receives audio from VoiceChatCompanion
  * APK.
  * The companion app captures mic audio and sends it via TCP socket.
+ * Uses a queue-based buffer for smoother audio playback.
  */
 public class AndroidMicrophone {
 
     private static final String TAG = "[AndroidMic]";
     private static final int PORT = 25566;
+    private static final int MAX_QUEUE_SIZE = 10; // Max buffered frames
 
     private final int sampleRate;
     private final int bufferSize;
@@ -25,13 +28,15 @@ public class AndroidMicrophone {
     private Socket clientSocket;
     private InputStream inputStream;
     private Thread serverThread;
-    private short[] lastBuffer;
-    private final Object bufferLock = new Object();
+
+    // Use a queue for smoother audio buffering
+    private final LinkedBlockingQueue<short[]> audioQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
+    private int packetsReceived = 0;
+    private int packetsDropped = 0;
 
     public AndroidMicrophone(int sampleRate, int bufferSize) {
         this.sampleRate = sampleRate;
         this.bufferSize = bufferSize;
-        this.lastBuffer = new short[0];
     }
 
     public void open() {
@@ -65,9 +70,11 @@ public class AndroidMicrophone {
                 closeClient();
 
                 clientSocket = socket;
+                clientSocket.setTcpNoDelay(true); // Disable Nagle for lower latency
+                clientSocket.setSoTimeout(5000); // 5 second timeout
                 inputStream = clientSocket.getInputStream();
 
-                // Read audio data
+                // Read audio data continuously
                 readAudioLoop();
 
             } catch (Exception e) {
@@ -80,39 +87,68 @@ public class AndroidMicrophone {
 
     private void readAudioLoop() {
         byte[] lengthBuffer = new byte[2];
+        packetsReceived = 0;
+        packetsDropped = 0;
 
-        while (isOpen && isRecording && inputStream != null && clientSocket != null && clientSocket.isConnected()) {
+        // Read continuously even if not recording - just discard data
+        while (isOpen && inputStream != null && clientSocket != null && clientSocket.isConnected()) {
             try {
                 // Read length prefix (2 bytes, big endian)
-                int bytesRead = inputStream.read(lengthBuffer);
-                if (bytesRead != 2)
-                    break;
+                int bytesRead = 0;
+                while (bytesRead < 2) {
+                    int read = inputStream.read(lengthBuffer, bytesRead, 2 - bytesRead);
+                    if (read < 0) {
+                        Log.warn("@ Connection closed by companion", TAG);
+                        return;
+                    }
+                    bytesRead += read;
+                }
 
                 int length = ((lengthBuffer[0] & 0xFF) << 8) | (lengthBuffer[1] & 0xFF);
-                if (length <= 0 || length > bufferSize * 4)
+
+                // Validate length
+                if (length <= 0 || length > bufferSize * 4) {
+                    Log.warn("@ Invalid packet length: @", TAG, length);
                     continue;
+                }
 
                 // Read audio data
                 byte[] audioData = new byte[length];
                 int totalRead = 0;
                 while (totalRead < length) {
                     int read = inputStream.read(audioData, totalRead, length - totalRead);
-                    if (read < 0)
-                        break;
+                    if (read < 0) {
+                        Log.warn("@ Connection closed during read", TAG);
+                        return;
+                    }
                     totalRead += read;
                 }
 
-                if (totalRead == length) {
+                // Only process if recording is enabled
+                if (isRecording && totalRead == length) {
                     // Convert bytes to shorts (little endian)
                     short[] samples = new short[length / 2];
                     for (int i = 0; i < samples.length; i++) {
-                        samples[i] = (short) ((audioData[i * 2] & 0xFF) | ((audioData[i * 2 + 1] & 0xFF) << 8));
+                        samples[i] = (short) ((audioData[i * 2] & 0xFF) |
+                                ((audioData[i * 2 + 1] & 0xFF) << 8));
                     }
 
-                    synchronized (bufferLock) {
-                        lastBuffer = samples;
+                    // Try to add to queue, drop oldest if full
+                    if (!audioQueue.offer(samples)) {
+                        audioQueue.poll(); // Remove oldest
+                        audioQueue.offer(samples);
+                        packetsDropped++;
+                    }
+                    packetsReceived++;
+
+                    // Log stats periodically
+                    if (packetsReceived % 500 == 0) {
+                        Log.info("@ Received @ packets, dropped @ (queue: @)",
+                                TAG, packetsReceived, packetsDropped, audioQueue.size());
                     }
                 }
+            } catch (java.net.SocketTimeoutException e) {
+                // Timeout is OK, just continue
             } catch (Exception e) {
                 Log.warn("@ Read error: @", TAG, e.getMessage());
                 break;
@@ -120,7 +156,8 @@ public class AndroidMicrophone {
         }
 
         closeClient();
-        Log.info("@ VoiceChatCompanion disconnected", TAG);
+        Log.info("@ VoiceChatCompanion disconnected (received @ packets, dropped @)",
+                TAG, packetsReceived, packetsDropped);
     }
 
     private void closeClient() {
@@ -134,15 +171,18 @@ public class AndroidMicrophone {
         }
         inputStream = null;
         clientSocket = null;
+        audioQueue.clear();
     }
 
     public void start() {
         isRecording = true;
+        audioQueue.clear();
         Log.info("@ Recording started (waiting for companion app)", TAG);
     }
 
     public void stop() {
         isRecording = false;
+        audioQueue.clear();
         Log.info("@ Recording stopped", TAG);
     }
 
@@ -175,20 +215,22 @@ public class AndroidMicrophone {
     public int available() {
         if (!isRecording)
             return 0;
-        synchronized (bufferLock) {
-            return lastBuffer.length;
-        }
+        return audioQueue.isEmpty() ? 0 : bufferSize;
     }
 
     public short[] read() {
-        synchronized (bufferLock) {
-            short[] result = lastBuffer;
-            lastBuffer = new short[0];
-            return result;
+        short[] samples = audioQueue.poll();
+        if (samples == null) {
+            return new short[0];
         }
+        return samples;
     }
 
     public boolean isConnected() {
         return clientSocket != null && clientSocket.isConnected();
+    }
+
+    public int getQueueSize() {
+        return audioQueue.size();
     }
 }

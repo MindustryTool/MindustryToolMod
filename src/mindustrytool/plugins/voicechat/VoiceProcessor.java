@@ -6,14 +6,21 @@ import org.concentus.OpusApplication;
 import org.concentus.OpusDecoder;
 import org.concentus.OpusEncoder;
 import org.concentus.OpusException;
+import org.concentus.OpusSignal;
 
 /**
  * Cross-platform voice audio processor using Concentus (pure Java Opus).
  * Works on both Desktop and Android without native libraries.
+ * Optimized for voice quality with proper bitrate and complexity settings.
  */
 public class VoiceProcessor {
 
     private static final String TAG = "[VoiceProc]";
+
+    // Opus encoder settings for good voice quality
+    private static final int BITRATE = 32000; // 32 kbps - good balance of quality/bandwidth
+    private static final int COMPLEXITY = 8; // 0-10, higher = better quality, more CPU
+    private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 20ms at 48kHz
 
     @Nullable
     private OpusEncoder encoder;
@@ -25,14 +32,30 @@ public class VoiceProcessor {
 
     public VoiceProcessor() {
         try {
+            // Initialize encoder with optimized settings for voice
             encoder = new OpusEncoder(
                     VoiceConstants.SAMPLE_RATE,
                     VoiceConstants.CHANNELS,
                     OpusApplication.OPUS_APPLICATION_VOIP);
+
+            // Configure encoder for better quality
+            encoder.setBitrate(BITRATE);
+            encoder.setComplexity(COMPLEXITY);
+            encoder.setSignalType(OpusSignal.OPUS_SIGNAL_VOICE);
+            encoder.setForceMode(org.concentus.OpusMode.MODE_HYBRID); // Best for voice
+            encoder.setUseVBR(true); // Variable bitrate for better quality
+            encoder.setUseConstrainedVBR(true); // More consistent bitrate
+            encoder.setUseDTX(false); // Disable DTX for continuous transmission
+            encoder.setPacketLossPercent(5); // Optimize for some packet loss
+
+            Log.info("@ Encoder configured: bitrate=@, complexity=@", TAG, BITRATE, COMPLEXITY);
+
+            // Initialize decoder
             decoder = new OpusDecoder(
                     VoiceConstants.SAMPLE_RATE,
                     VoiceConstants.CHANNELS);
-            Log.info("@ Processor initialized (Concentus pure Java)", TAG);
+
+            Log.info("@ Processor initialized (Concentus pure Java, optimized)", TAG);
         } catch (OpusException e) {
             Log.err("@ Failed to initialize processor: @", TAG, e.getMessage());
             throw new RuntimeException("Failed to initialize voice processor", e);
@@ -56,10 +79,23 @@ public class VoiceProcessor {
         if (encoder == null) {
             throw new IllegalStateException("Encoder not initialized");
         }
+
+        // Validate input size
+        if (input == null || input.length == 0) {
+            return new byte[0];
+        }
+
         try {
             // Concentus returns encoded bytes - allocate buffer for max frame size
-            byte[] output = new byte[VoiceConstants.BUFFER_SIZE * 2];
-            int encodedLength = encoder.encode(input, 0, VoiceConstants.BUFFER_SIZE, output, 0, output.length);
+            byte[] output = new byte[FRAME_SIZE * 2];
+            int inputLength = Math.min(input.length, FRAME_SIZE);
+
+            int encodedLength = encoder.encode(input, 0, inputLength, output, 0, output.length);
+
+            if (encodedLength <= 0) {
+                Log.warn("@ Encode returned @ bytes", TAG, encodedLength);
+                return new byte[0];
+            }
 
             // Return only the actual encoded bytes
             byte[] result = new byte[encodedLength];
@@ -78,12 +114,23 @@ public class VoiceProcessor {
         if (decoder == null) {
             throw new IllegalStateException("Decoder not initialized");
         }
+
+        // Validate input
+        if (input == null || input.length == 0) {
+            return new short[0];
+        }
+
         try {
-            short[] output = new short[VoiceConstants.BUFFER_SIZE];
-            int decodedSamples = decoder.decode(input, 0, input.length, output, 0, VoiceConstants.BUFFER_SIZE, false);
+            short[] output = new short[FRAME_SIZE];
+            int decodedSamples = decoder.decode(input, 0, input.length, output, 0, FRAME_SIZE, false);
+
+            if (decodedSamples <= 0) {
+                Log.warn("@ Decode returned @ samples", TAG, decodedSamples);
+                return new short[0];
+            }
 
             // Return only the actual decoded samples
-            if (decodedSamples < VoiceConstants.BUFFER_SIZE) {
+            if (decodedSamples < FRAME_SIZE) {
                 short[] result = new short[decodedSamples];
                 System.arraycopy(output, 0, result, 0, decodedSamples);
                 return result;
