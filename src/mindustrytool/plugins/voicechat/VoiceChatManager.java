@@ -103,6 +103,25 @@ public class VoiceChatManager {
             }
         });
 
+        // Sync voice chat status when world is loaded (joining server)
+        arc.Events.on(mindustry.game.EventType.WorldLoadEvent.class, e -> {
+            if (enabled && status == VoiceStatus.DISABLED && Vars.net.active()) {
+                Log.info("@ WorldLoadEvent: Syncing status (enabled=@ but status=DISABLED)", TAG, enabled);
+                // Trigger status sync
+                if (Vars.net.client()) {
+                    status = VoiceStatus.WAITING_HANDSHAKE;
+                    Log.info("@ Client mode: Waiting for handshake", TAG);
+                    // Request handshake from server
+                    mindustry.gen.PingResponseCallPacket ping = new mindustry.gen.PingResponseCallPacket();
+                    ping.time = MAGIC_PING_ID;
+                    Vars.net.send(ping, true);
+                } else if (Vars.net.server() && !Vars.headless) {
+                    status = VoiceStatus.READY;
+                    Log.info("@ Host mode: Status set to READY", TAG);
+                }
+            }
+        });
+
         // Initialize audio components (lazy - only when actually used)
         initialized = true;
         Log.info("@ Initialized successfully", TAG);
