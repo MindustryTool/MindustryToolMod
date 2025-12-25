@@ -34,6 +34,10 @@ public class AndroidMicrophone {
     private final int bufferSize;
     private boolean isOpen = false;
     private boolean isRecording = false;
+    private boolean launchAttempted = false; // Only try once per session
+
+    // Companion App package name for auto-launch
+    private static final String COMPANION_PACKAGE = "com.mindustrytool.voicechat";
 
     private ServerSocket serverSocket;
     private Socket clientSocket;
@@ -51,6 +55,86 @@ public class AndroidMicrophone {
         this.bufferSize = bufferSize;
     }
 
+    /**
+     * Try to launch VoiceChatCompanion app via Android Intent.
+     * Uses reflection to access Android Context from Arc/libGDX.
+     * 
+     * @return true if launch was attempted (not necessarily successful)
+     */
+    public boolean launchCompanionApp() {
+        if (launchAttempted)
+            return false;
+        launchAttempted = true;
+
+        try {
+            // Get Android Context via reflection from Arc's Core.app
+            Object app = arc.Core.app;
+            if (app == null) {
+                Log.warn("@ Cannot launch: Core.app is null", TAG);
+                return false;
+            }
+
+            // Try to get Context - Arc's AndroidApplication has getContext() or similar
+            Object context = null;
+
+            // Method 1: Try getContext()
+            try {
+                java.lang.reflect.Method getContext = app.getClass().getMethod("getContext");
+                context = getContext.invoke(app);
+            } catch (Exception e1) {
+                // Method 2: Try getApplicationContext()
+                try {
+                    java.lang.reflect.Method getAppContext = app.getClass().getMethod("getApplicationContext");
+                    context = getAppContext.invoke(app);
+                } catch (Exception e2) {
+                    // Method 3: The app object itself might be a Context
+                    if (app.getClass().getName().contains("android")) {
+                        context = app;
+                    }
+                }
+            }
+
+            if (context == null) {
+                Log.warn("@ Cannot launch: Unable to get Android Context", TAG);
+                return false;
+            }
+
+            // Create Intent using reflection (to avoid compile-time Android dependency)
+            Class<?> intentClass = Class.forName("android.content.Intent");
+            Object intent = intentClass.getConstructor().newInstance();
+
+            // intent.setPackage(COMPANION_PACKAGE)
+            java.lang.reflect.Method setPackage = intentClass.getMethod("setPackage", String.class);
+            setPackage.invoke(intent, COMPANION_PACKAGE);
+
+            // intent.setAction("android.intent.action.MAIN")
+            java.lang.reflect.Method setAction = intentClass.getMethod("setAction", String.class);
+            setAction.invoke(intent, "android.intent.action.MAIN");
+
+            // intent.addCategory("android.intent.category.LAUNCHER")
+            java.lang.reflect.Method addCategory = intentClass.getMethod("addCategory", String.class);
+            addCategory.invoke(intent, "android.intent.category.LAUNCHER");
+
+            // intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            java.lang.reflect.Method addFlags = intentClass.getMethod("addFlags", int.class);
+            int FLAG_ACTIVITY_NEW_TASK = 0x10000000; // Intent.FLAG_ACTIVITY_NEW_TASK
+            addFlags.invoke(intent, FLAG_ACTIVITY_NEW_TASK);
+
+            // context.startActivity(intent)
+            java.lang.reflect.Method startActivity = context.getClass().getMethod("startActivity", intentClass);
+            startActivity.invoke(context, intent);
+
+            Log.info("@ Launched VoiceChatCompanion app!", TAG);
+            return true;
+
+        } catch (ClassNotFoundException e) {
+            Log.warn("@ Cannot launch: Not running on Android", TAG);
+        } catch (Exception e) {
+            Log.warn("@ Failed to launch Companion App: @", TAG, e.getMessage());
+        }
+        return false;
+    }
+
     public void open() {
         if (isOpen)
             return;
@@ -60,6 +144,11 @@ public class AndroidMicrophone {
             isOpen = true;
             Log.info("@ Microphone server started on port @", TAG, PORT);
             Log.info("@ Waiting for VoiceChatCompanion app to connect...", TAG);
+
+            // Try to auto-launch companion app on Android
+            if (launchCompanionApp()) {
+                Log.info("@ Companion app launch requested", TAG);
+            }
 
             // Start server thread to accept connections
             serverThread = new Thread(this::serverLoop);
