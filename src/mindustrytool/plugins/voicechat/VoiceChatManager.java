@@ -26,6 +26,7 @@ public class VoiceChatManager {
     private boolean initialized = false;
     private boolean enabled = false; // Speaker enabled
     private boolean muted = false; // Mic muted (inverse of Mic enabled)
+    private boolean forceMock = false; // Force usage of mock microphone
 
     // Modes
     private VoiceMode speakerMode = VoiceMode.ALL;
@@ -169,41 +170,74 @@ public class VoiceChatManager {
             try {
                 microphone = new VoiceMicrophone();
             } catch (Exception e) {
-                Log.err("@ Failed to create microphone: @", TAG, e.getMessage());
-                return;
+                Log.warn("@ Failed to create microphone: @. Using Mock Microphone for testing.", TAG, e.getMessage());
             }
         }
 
+        // Determine whether to use mock mic
+        final boolean useMock = (microphone == null) || forceMock;
+
         captureThread = new Thread(() -> {
             try {
-                microphone.open();
-                microphone.start();
-                Log.info("@ Microphone capture started", TAG);
+                if (!useMock) {
+                    microphone.open();
+                    microphone.start();
+                    Log.info("@ Microphone capture started", TAG);
+                } else {
+                    Log.info("@ Mock Microphone started (Generating sine wave...)", TAG);
+                }
+
+                // For mock mic: generating sine wave
+                long mockTime = 0;
 
                 while (enabled && !muted && Vars.net.active()) {
-                    if (microphone.available() >= VoiceConstants.BUFFER_SIZE) {
-                        short[] audio = microphone.read();
-                        if (processor != null) {
-                            short[] denoised = processor.denoise(audio);
-                            byte[] encoded = processor.encode(denoised);
+                    short[] rawAudio;
 
-                            MicPacket packet = new MicPacket();
-                            packet.audioData = encoded;
-                            packet.playerid = Vars.player.id; // Set sender ID (important!)
-                            Vars.net.send(packet, false);
+                    if (!useMock) {
+                        // Real Mic Logic
+                        if (microphone.available() >= VoiceConstants.BUFFER_SIZE) {
+                            rawAudio = microphone.read();
+                        } else {
+                            Thread.sleep(VoiceConstants.CAPTURE_INTERVAL_MS);
+                            continue;
                         }
+                    } else {
+                        // Mock Mic Logic: Generate 440Hz Sine Wave beep
+                        // Beep for 500ms, silence for 500ms
+                        boolean beep = (System.currentTimeMillis() / 1000) % 2 == 0;
+                        rawAudio = new short[VoiceConstants.BUFFER_SIZE];
+                        if (beep) {
+                            for (int i = 0; i < rawAudio.length; i++) {
+                                // 48000Hz sample rate, 440Hz tone
+                                rawAudio[i] = (short) (Math.sin((mockTime + i) * 2.0 * Math.PI * 440.0 / 48000.0)
+                                        * 10000);
+                            }
+                        }
+                        mockTime += rawAudio.length;
+                        Thread.sleep(20); // Simulate buffer fill time
                     }
-                    Thread.sleep(VoiceConstants.CAPTURE_INTERVAL_MS);
+
+                    if (processor != null) {
+                        // Denoise (skip if mock to preserve pure tone for testing)
+                        short[] processed = useMock ? rawAudio : processor.denoise(rawAudio);
+                        byte[] encoded = processor.encode(processed);
+
+                        MicPacket packet = new MicPacket();
+                        packet.audioData = encoded;
+                        packet.playerid = Vars.player.id;
+                        Vars.net.send(packet, false);
+                    }
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
                 Log.err("@ Capture error: @", TAG, e.getMessage());
+                e.printStackTrace();
             } finally {
-                if (microphone != null) {
+                if (microphone != null && !useMock) {
                     microphone.close();
                 }
-                Log.info("@ Microphone capture stopped", TAG);
+                Log.info("@ Capture stopped", TAG);
             }
         }, "VoiceChat-Capture");
         captureThread.setDaemon(true);
@@ -263,6 +297,22 @@ public class VoiceChatManager {
 
     public VoiceMode getMicMode() {
         return micMode;
+    }
+
+    public boolean isForceMock() {
+        return forceMock;
+    }
+
+    public void setForceMock(boolean forceMock) {
+        this.forceMock = forceMock;
+        Log.info("@ Force Mock Mic: @", TAG, forceMock);
+        // Restart capture if currently running to apply change
+        if (captureThread != null && captureThread.isAlive()) {
+            stopCapture();
+            if (enabled && !muted) {
+                startCapture();
+            }
+        }
     }
 
     public void setMicMode(VoiceMode mode) {

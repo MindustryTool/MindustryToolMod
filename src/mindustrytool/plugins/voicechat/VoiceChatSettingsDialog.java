@@ -58,13 +58,25 @@ public class VoiceChatSettingsDialog extends BaseDialog {
         scrollContent.defaults().pad(5f);
         scrollContent.left().top();
 
+        // Debug Controls for Mock Mic (Visible for testing)
+        scrollContent.table(t -> {
+            t.left();
+            t.button(manager.isForceMock() ? "[accent]Mock Mic: ON" : "[gray]Mock Mic: OFF", Styles.flatToggleMenut,
+                    () -> {
+                        manager.setForceMock(!manager.isForceMock());
+                        setup();
+                    }).size(160f, 30f).checked(manager.isForceMock());
+
+            t.label(() -> "[lightgray]Simulates audio input").padLeft(10f);
+        }).padBottom(10f).left().row();
+
         // === GLOBAL SETTINGS ===
         scrollContent.add("[accent]Device Controls").left().padBottom(10f).row();
 
         // Speaker Controls
         scrollContent.table(t -> {
             t.left().marginBottom(5f);
-            t.add("Speaker: ").color(Color.lightGray);
+            t.add("Volume: ").color(Color.lightGray);
             t.add().growX();
 
             t.button(manager.isEnabled() ? "[green]ON" : "[red]OFF", Styles.flatToggleMenut, () -> {
@@ -168,7 +180,7 @@ public class VoiceChatSettingsDialog extends BaseDialog {
                     Table labelContent = new Table();
                     labelContent.touchable = arc.scene.event.Touchable.disabled;
                     labelContent.margin(3f, 33f, 3f, 33f);
-                    labelContent.add("Speaker", Styles.outlineLabel).left().growX();
+                    labelContent.add("Volume", Styles.outlineLabel).left().growX();
                     labelContent.add(volumeLabel).padLeft(10f).right();
 
                     controls.stack(slider, labelContent).height(40f).growX();
