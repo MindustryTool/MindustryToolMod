@@ -70,6 +70,13 @@ public class VoiceChatSettingsDialog extends BaseDialog {
             t.label(() -> "[lightgray]Enables Packet Logging & Mock Audio").padLeft(10f);
         }).padBottom(10f).left().row();
 
+        // === STATUS INDICATOR ===
+        scrollContent.table(t -> {
+            t.left();
+            t.add("[accent]Status: ");
+            t.label(() -> manager.getStatusText()).padLeft(5f);
+        }).left().padBottom(10f).row();
+
         // === GLOBAL SETTINGS ===
         scrollContent.add("[accent]Device Controls").left().padBottom(10f).row();
 

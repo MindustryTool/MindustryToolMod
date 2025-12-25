@@ -23,6 +23,17 @@ public class VoiceChatManager {
         ALL, TEAM
     }
 
+    public enum VoiceStatus {
+        DISABLED, // Voice off
+        WAITING_HANDSHAKE, // Waiting for server handshake
+        READY, // Ready to transmit/receive
+        MIC_ERROR, // Mic initialization failed
+        SPEAKER_ERROR, // Speaker initialization failed
+        CONNECTED // Actively connected and transmitting
+    }
+
+    private VoiceStatus status = VoiceStatus.DISABLED;
+
     private boolean initialized = false;
     private boolean enabled = false; // Speaker enabled
     private boolean muted = false; // Mic muted (inverse of Mic enabled)
@@ -140,6 +151,7 @@ public class VoiceChatManager {
 
             response.responseCode = LemmeSayConstants.RESPONSE_ACCEPTED;
             Vars.net.send(response, true);
+            status = VoiceStatus.READY; // Handshake successful
 
             // Start voice capture if enabled
             if (enabled && !muted) {
@@ -172,6 +184,10 @@ public class VoiceChatManager {
 
     private void processIncomingVoice(MicPacket packet) {
         if (!enabled)
+            return;
+
+        // Ignore own packets to prevent echo
+        if (Vars.player != null && packet.playerid == Vars.player.id)
             return;
 
         // Log trace (Debug Mode: forceMock=true)
@@ -325,6 +341,9 @@ public class VoiceChatManager {
         this.enabled = enabled;
         if (!enabled) {
             stopCapture();
+            status = VoiceStatus.DISABLED;
+        } else {
+            status = VoiceStatus.WAITING_HANDSHAKE;
         }
         Log.info("@ Enabled: @", TAG, enabled);
     }
@@ -399,6 +418,29 @@ public class VoiceChatManager {
 
     public float getPlayerVolume(String playerId) {
         return playerVolume.get(playerId, 1f);
+    }
+
+    public VoiceStatus getStatus() {
+        return status;
+    }
+
+    public String getStatusText() {
+        switch (status) {
+            case DISABLED:
+                return "[gray]Disabled";
+            case WAITING_HANDSHAKE:
+                return "[yellow]Connecting...";
+            case READY:
+                return "[lime]Ready";
+            case MIC_ERROR:
+                return "[red]Mic Error";
+            case SPEAKER_ERROR:
+                return "[red]Speaker Error";
+            case CONNECTED:
+                return "[green]Connected";
+            default:
+                return "[gray]Unknown";
+        }
     }
 
     /**
