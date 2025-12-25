@@ -105,26 +105,42 @@ public class VoiceChatManager {
 
         // Sync voice chat status when world is loaded (joining server)
         arc.Events.on(mindustry.game.EventType.WorldLoadEvent.class, e -> {
-            if (enabled && status == VoiceStatus.DISABLED && Vars.net.active()) {
-                Log.info("@ WorldLoadEvent: Syncing status (enabled=@ but status=DISABLED)", TAG, enabled);
-                // Trigger status sync
-                if (Vars.net.client()) {
-                    status = VoiceStatus.WAITING_HANDSHAKE;
-                    Log.info("@ Client mode: Waiting for handshake", TAG);
-                    // Request handshake from server
-                    mindustry.gen.PingResponseCallPacket ping = new mindustry.gen.PingResponseCallPacket();
-                    ping.time = MAGIC_PING_ID;
-                    Vars.net.send(ping, true);
-                } else if (Vars.net.server() && !Vars.headless) {
-                    status = VoiceStatus.READY;
-                    Log.info("@ Host mode: Status set to READY", TAG);
-                }
-            }
+            Log.info("@ WorldLoadEvent fired, syncing status", TAG);
+            syncStatusForCurrentConnection();
         });
 
         // Initialize audio components (lazy - only when actually used)
         initialized = true;
         Log.info("@ Initialized successfully", TAG);
+
+        // IMPORTANT: Check if already connected to server when init() is called
+        // This handles the case where Voice Chat is enabled AFTER joining server
+        if (enabled && status == VoiceStatus.DISABLED && Vars.net.active()) {
+            Log.info("@ Already connected to server, syncing status immediately", TAG);
+            syncStatusForCurrentConnection();
+        }
+    }
+
+    /**
+     * Sync voice chat status for current connection.
+     * Called after init() if already in server, or on WorldLoadEvent.
+     */
+    private void syncStatusForCurrentConnection() {
+        if (!enabled || status != VoiceStatus.DISABLED || !Vars.net.active()) {
+            return;
+        }
+
+        if (Vars.net.client()) {
+            status = VoiceStatus.WAITING_HANDSHAKE;
+            Log.info("@ Client mode: Requesting handshake from server", TAG);
+            // Request handshake from server
+            mindustry.gen.PingResponseCallPacket ping = new mindustry.gen.PingResponseCallPacket();
+            ping.time = -291104L; // MAGIC_PING_ID
+            Vars.net.send(ping, true);
+        } else if (Vars.net.server() && !Vars.headless) {
+            status = VoiceStatus.READY;
+            Log.info("@ Host mode: Status set to READY immediately", TAG);
+        }
     }
 
     private void ensureAudioInitialized() {
