@@ -130,16 +130,12 @@ public class VoiceChatManager {
             return;
         }
 
-        if (Vars.net.client()) {
-            status = VoiceStatus.WAITING_HANDSHAKE;
-            Log.info("@ Client mode: Requesting handshake from server", TAG);
-            // Request handshake from server
-            mindustry.gen.PingResponseCallPacket ping = new mindustry.gen.PingResponseCallPacket();
-            ping.time = -291104L; // MAGIC_PING_ID
-            Vars.net.send(ping, true);
-        } else if (Vars.net.server() && !Vars.headless) {
+        // Simplified: Set status to READY immediately when connected
+        // Handshake verification can be reimplemented later if needed
+        if (Vars.net.client() || (Vars.net.server() && !Vars.headless)) {
             status = VoiceStatus.READY;
-            Log.info("@ Host mode: Status set to READY immediately", TAG);
+            Log.info("@ Status set to READY (connected to: @)", TAG,
+                    Vars.net.client() ? "server" : "hosting");
         }
     }
 
