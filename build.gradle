@@ -9,17 +9,25 @@ repositories{
     google()
     maven{ url "https://gh-proxy.com/https://raw.githubusercontent.com/Zelaux/MindustryRepo/master/repository" }
     maven{ url 'https://www.jitpack.io' }
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
 }
 
 java{
     sourceCompatibility = "17"
-    targetCompatibility = "8"
+    targetCompatibility = "17"
 }
 
 allprojects{
     tasks.withType(JavaCompile){
         options.annotationProcessorPath = configurations.annotationProcessor
-        options.compilerArgs.addAll(['--release', '8'])
+        options.compilerArgs.addAll(['--release', '17'])
         options.encoding = 'UTF-8'
     }
 }
@@ -36,12 +44,21 @@ ext{
 
 dependencies{
     implementation files("libs/PlayerConnectShared.jar")
+
     
     compileOnly "com.github.Anuken.Arc:arc-core:$mindustryVersion"
     compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"
         
 	compileOnly 'org.projectlombok:lombok:1.18.32'
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+
+    implementation 'de.maxhenkel.opus4j:opus4j:2.1.3'
+    implementation 'de.maxhenkel.rnnoise4j:rnnoise4j:2.1.3'
+    implementation 'com.github.lostromb.concentus:Concentus:master-SNAPSHOT'
+    
+    // Voice chat audio processing
+    implementation 'de.maxhenkel.opus4j:opus4j:2.1.3'
+    implementation 'de.maxhenkel.rnnoise4j:rnnoise4j:2.1.3'
 
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
     annotationProcessor "com.github.Anuken:jabel:$jabelVersion"
