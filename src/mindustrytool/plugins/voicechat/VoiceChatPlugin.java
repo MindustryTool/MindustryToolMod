@@ -29,13 +29,8 @@ public class VoiceChatPlugin implements Plugin {
 
     @Override
     public void init() {
-        // Voice Chat only works on Desktop (javax.sound not available on Android/iOS)
+        // Voice Chat now supports both Desktop and Android (via VoiceChatCompanion app)
         isDesktop = !Core.app.isMobile();
-
-        if (!isDesktop) {
-            Log.info("[VoiceChat] Mobile platform detected. Voice Chat is disabled (Desktop only).");
-            return;
-        }
 
         try {
             manager = new VoiceChatManager();
@@ -46,10 +41,9 @@ public class VoiceChatPlugin implements Plugin {
             voiceButton.clicked(() -> ((VoiceChatManager) manager).showSettings());
 
             Events.run(EventType.Trigger.update, this::updateUI);
-            Log.info("[VoiceChat] Initialized successfully on Desktop.");
+            Log.info("[VoiceChat] Initialized successfully on @.", isDesktop ? "Desktop" : "Mobile");
         } catch (Throwable e) {
             Log.err("[VoiceChat] Failed to initialize: " + e.getMessage());
-            isDesktop = false; // Disable if initialization fails
         }
     }
 
