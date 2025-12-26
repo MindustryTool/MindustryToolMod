@@ -119,74 +119,55 @@ public class AndroidMicrophone {
                 return false;
             }
 
-            // 2. Get Launch Intent: pm.getLaunchIntentForPackage(COMPANION_PACKAGE)
-            java.lang.reflect.Method getLaunchIntent = packageManager.getClass().getMethod("getLaunchIntentForPackage",
-                    String.class);
-            Object intent = getLaunchIntent.invoke(packageManager, COMPANION_PACKAGE);
+            // Direct Launch of Background Service
+            // This allows the app to start recording without bringing UI to foreground.
 
-            if (intent == null) {
-                // FALLBACK: Android 11+ hides the package, returning null.
-                // We try to guess the Main Activity name and launch it directly by Component.
-                Log.warn("@ Package hidden. Trying direct Component launch...", TAG);
+            // 1. Create Explicit Intent for the Service
+            Class<?> intentClass = Class.forName("android.content.Intent");
+            Object intent = intentClass.getConstructor().newInstance();
 
-                if (mindustry.Vars.ui != null)
-                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Pkg Hidden, trying Direct..."));
+            Class<?> cnClass = Class.forName("android.content.ComponentName");
+            Object cn = cnClass.getConstructor(String.class, String.class)
+                    .newInstance(COMPANION_PACKAGE, COMPANION_PACKAGE + ".AudioCaptureService");
 
-                try {
-                    // Create Intent manualy
-                    Class<?> intentClass = Class.forName("android.content.Intent");
-                    intent = intentClass.getConstructor().newInstance();
+            intentClass.getMethod("setComponent", cnClass).invoke(intent, cn);
 
-                    // ComponentName cn = new ComponentName(PKG, CLS);
-                    Class<?> cnClass = Class.forName("android.content.ComponentName");
-                    Object cn = cnClass.getConstructor(String.class, String.class)
-                            .newInstance(COMPANION_PACKAGE, COMPANION_PACKAGE + ".MainActivity");
-
-                    // intent.setComponent(cn)
-                    intentClass.getMethod("setComponent", cnClass).invoke(intent, cn);
-
-                    // intent.setAction("android.intent.action.MAIN");
-                    intentClass.getMethod("setAction", String.class).invoke(intent, "android.intent.action.MAIN");
-
-                    // intent.addCategory("android.intent.category.LAUNCHER");
-                    intentClass.getMethod("addCategory", String.class).invoke(intent,
-                            "android.intent.category.LAUNCHER");
-
-                    // Add FLAG_ACTIVITY_NEW_TASK
-                    java.lang.reflect.Method addFlags = intentClass.getMethod("addFlags", int.class);
-                    int FLAG_ACTIVITY_NEW_TASK = 0x10000000;
-                    addFlags.invoke(intent, FLAG_ACTIVITY_NEW_TASK);
-
-                    // Start Activity
-                    java.lang.reflect.Method startActivity = context.getClass().getMethod("startActivity", intentClass);
-                    startActivity.invoke(context, intent);
-
-                    Log.info("@ Launched Companion App (Legacy/Direct)!", TAG);
-                    if (mindustry.Vars.ui != null)
-                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Direct Launch Success!"));
-                    return true;
-                } catch (Exception e) {
-                    Log.err("Direct launch attempt failed: " + e.getMessage());
-                    if (mindustry.Vars.ui != null)
-                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App Not Found (Hidden)"));
-                    return false;
-                }
+            // 2. Check Android Version for startForegroundService (>= Android 8.0 / API 26)
+            int sdkInt = 0;
+            try {
+                Class<?> buildVersion = Class.forName("android.os.Build$VERSION");
+                sdkInt = buildVersion.getField("SDK_INT").getInt(null);
+            } catch (Exception e) {
+                // Default to 0 or try to parse from elsewhere? 0 is safe, falls back to
+                // startService
+                Log.warn("Failed to get SDK_INT: " + e.getMessage());
             }
 
-            // 3. Add FLAG_ACTIVITY_NEW_TASK (Required when launching from non-Activity
-            // context)
-            Class<?> intentClass = intent.getClass();
-            java.lang.reflect.Method addFlags = intentClass.getMethod("addFlags", int.class);
-            int FLAG_ACTIVITY_NEW_TASK = 0x10000000;
-            addFlags.invoke(intent, FLAG_ACTIVITY_NEW_TASK);
+            // 3. Start Service
+            if (sdkInt >= 26) {
+                // context.startForegroundService(intent)
+                try {
+                    java.lang.reflect.Method startForegroundService = context.getClass()
+                            .getMethod("startForegroundService", intentClass);
+                    startForegroundService.invoke(context, intent);
+                    Log.info("@ Started Background Service (Foreground mode)", TAG);
+                    if (mindustry.Vars.ui != null)
+                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Background Service Started!"));
+                } catch (Exception e) {
+                    // Fallback to startService if method missing for some reason
+                    Log.warn("startForegroundService failed, trying startService: " + e.getMessage());
+                    java.lang.reflect.Method startService = context.getClass().getMethod("startService", intentClass);
+                    startService.invoke(context, intent);
+                }
+            } else {
+                // context.startService(intent)
+                java.lang.reflect.Method startService = context.getClass().getMethod("startService", intentClass);
+                startService.invoke(context, intent);
+                Log.info("@ Started Background Service (Legacy mode)", TAG);
+                if (mindustry.Vars.ui != null)
+                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Service Started (Legacy)!"));
+            }
 
-            // 4. Start Activity: context.startActivity(intent)
-            java.lang.reflect.Method startActivity = context.getClass().getMethod("startActivity", intentClass);
-            startActivity.invoke(context, intent);
-
-            Log.info("@ Launched VoiceChatCompanion app!", TAG);
-            if (mindustry.Vars.ui != null)
-                arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App Launch Requested!"));
             return true;
 
         } catch (Exception e) {
