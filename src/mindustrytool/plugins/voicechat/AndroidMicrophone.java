@@ -119,54 +119,37 @@ public class AndroidMicrophone {
                 return false;
             }
 
-            // Direct Launch of Background Service
-            // This allows the app to start recording without bringing UI to foreground.
+            // Direct Launch of Activity with Auto-Launch Flag
+            // This bypasses background service restrictions by launching a foreground UI,
+            // which then starts the service and minimizes itself.
 
-            // 1. Create Explicit Intent for the Service
+            // 1. Create Explicit Intent for MainActivity
             Class<?> intentClass = Class.forName("android.content.Intent");
             Object intent = intentClass.getConstructor().newInstance();
 
             Class<?> cnClass = Class.forName("android.content.ComponentName");
             Object cn = cnClass.getConstructor(String.class, String.class)
-                    .newInstance(COMPANION_PACKAGE, COMPANION_PACKAGE + ".AudioCaptureService");
+                    .newInstance(COMPANION_PACKAGE, COMPANION_PACKAGE + ".MainActivity");
 
             intentClass.getMethod("setComponent", cnClass).invoke(intent, cn);
+            intentClass.getMethod("setAction", String.class).invoke(intent, "android.intent.action.MAIN");
+            intentClass.getMethod("addCategory", String.class).invoke(intent, "android.intent.category.LAUNCHER");
 
-            // 2. Check Android Version for startForegroundService (>= Android 8.0 / API 26)
-            int sdkInt = 0;
-            try {
-                Class<?> buildVersion = Class.forName("android.os.Build$VERSION");
-                sdkInt = buildVersion.getField("SDK_INT").getInt(null);
-            } catch (Exception e) {
-                // Default to 0 or try to parse from elsewhere? 0 is safe, falls back to
-                // startService
-                Log.warn("Failed to get SDK_INT: " + e.getMessage());
-            }
+            // 2. Add Extra: intent.putExtra("EXTRA_AUTO_LAUNCH", true)
+            intentClass.getMethod("putExtra", String.class, boolean.class).invoke(intent, "EXTRA_AUTO_LAUNCH", true);
 
-            // 3. Start Service
-            if (sdkInt >= 26) {
-                // context.startForegroundService(intent)
-                try {
-                    java.lang.reflect.Method startForegroundService = context.getClass()
-                            .getMethod("startForegroundService", intentClass);
-                    startForegroundService.invoke(context, intent);
-                    Log.info("@ Started Background Service (Foreground mode)", TAG);
-                    if (mindustry.Vars.ui != null)
-                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Background Service Started!"));
-                } catch (Exception e) {
-                    // Fallback to startService if method missing for some reason
-                    Log.warn("startForegroundService failed, trying startService: " + e.getMessage());
-                    java.lang.reflect.Method startService = context.getClass().getMethod("startService", intentClass);
-                    startService.invoke(context, intent);
-                }
-            } else {
-                // context.startService(intent)
-                java.lang.reflect.Method startService = context.getClass().getMethod("startService", intentClass);
-                startService.invoke(context, intent);
-                Log.info("@ Started Background Service (Legacy mode)", TAG);
-                if (mindustry.Vars.ui != null)
-                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Service Started (Legacy)!"));
-            }
+            // 3. Add Flag: FLAG_ACTIVITY_NEW_TASK (Required for context launch)
+            java.lang.reflect.Method addFlags = intentClass.getMethod("addFlags", int.class);
+            int FLAG_ACTIVITY_NEW_TASK = 0x10000000;
+            addFlags.invoke(intent, FLAG_ACTIVITY_NEW_TASK);
+
+            // 4. Start Activity
+            java.lang.reflect.Method startActivity = context.getClass().getMethod("startActivity", intentClass);
+            startActivity.invoke(context, intent);
+
+            Log.info("@ Launched Companion App (Auto Mode)", TAG);
+            if (mindustry.Vars.ui != null)
+                arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App Auto-Launched!"));
 
             return true;
 
@@ -271,6 +254,7 @@ public class AndroidMicrophone {
                     if (read < 0) {
                         Log.warn("@ Connection closed by companion", TAG);
                         arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Mic Disconnected (EOF)"));
+                        launchAttempted = false; // Reset so we can try relaunching
                         return;
                     }
                     bytesRead += read;
@@ -291,6 +275,7 @@ public class AndroidMicrophone {
                     int read = inputStream.read(audioData, totalRead, length - totalRead);
                     if (read < 0) {
                         Log.warn("@ Connection closed during read", TAG);
+                        launchAttempted = false; // Reset so we can try relaunching
                         return;
                     }
                     totalRead += read;
@@ -386,6 +371,17 @@ public class AndroidMicrophone {
         isOpen = false;
         isRecording = false;
 
+        // Send SHUTDOWN command to kill the Companion App Service completely
+        if (clientSocket != null && clientSocket.isConnected()) {
+            Log.info("@ Sending SHUTDOWN command to Companion App...", TAG);
+            sendCommand(CMD_SHUTDOWN);
+            // Give it a moment to receive the command before we cut the cord
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+            }
+        }
+
         closeClient();
 
         try {
@@ -401,6 +397,7 @@ public class AndroidMicrophone {
             serverThread = null;
         }
 
+        launchAttempted = false; // Allow re-launching if enabled again
         Log.info("@ Microphone closed", TAG);
     }
 
