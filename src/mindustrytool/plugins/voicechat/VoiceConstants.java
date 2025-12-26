@@ -1,4 +1,4 @@
-chpackage mindustrytool.plugins.voicechat;
+package mindustrytool.plugins.voicechat;
 
 /**
  * Voice chat constants.
