@@ -140,10 +140,17 @@ public class AndroidMicrophone {
             // if (mindustry.Vars.ui != null) arc.Core.app.post(() ->
             // mindustry.Vars.ui.hudfrag.showToast("Not Android Platform"));
         } catch (Exception e) {
-            Log.warn("@ Failed to launch Companion App: @", TAG, e.getMessage());
-            final String err = e.getMessage();
-            if (mindustry.Vars.ui != null)
-                arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Launch Error: " + err));
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            String exceptionType = cause.getClass().getSimpleName();
+            String message = cause.getMessage();
+            String fullError = exceptionType + ": " + (message != null ? message : "null");
+
+            Log.warn("@ Failed to launch Companion App: @", TAG, fullError);
+            e.printStackTrace();
+
+            if (mindustry.Vars.ui != null) {
+                arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Launch Err: " + fullError));
+            }
         }
         return false;
     }
