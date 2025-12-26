@@ -11,6 +11,7 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
 import mindustrytool.Plugin;
 import mindustrytool.plugins.playerconnect.PlayerConnectPlugin;
+import mindustry.graphics.Layer;
 
 public class VoiceChatPlugin implements Plugin {
 
@@ -59,15 +60,22 @@ public class VoiceChatPlugin implements Plugin {
 
             // Only show if speaking
             if (isSpeaking) {
+                float iconSize = 8f; // Increased size for visibility
                 float x = player.unit().x;
-                float y = player.unit().y;
+                float y = player.unit().y + player.unit().hitSize + 4f; // Position above unit
 
-                float iconSize = 5f; // Small icon to avoid distraction
+                // Ensure it renders on top of units
+                Draw.z(Layer.overlayUI);
 
-                TextureRegion micIcon = Core.atlas.find("mindustry-tool-mic-on", Icon.chat.getRegion());
+                TextureRegion micIcon = Core.atlas.find("mindustry-tool-mic-on");
+                if (Core.atlas.isFound(micIcon)) {
+                    Draw.color(Color.white); // Normal color
+                } else {
+                    // Fallback: Red Chat Icon if sprite not found
+                    micIcon = Icon.chat.getRegion();
+                    Draw.color(Color.red);
+                }
 
-                // Use a softer green (Pastel)
-                Draw.color(Color.valueOf("88ff88"));
                 Draw.rect(micIcon, x, y, iconSize, iconSize);
                 Draw.reset();
             }

@@ -20,7 +20,7 @@ public class MicPacket extends Packet {
 
     @Override
     public int getPriority() {
-        return priorityLow;
+        return priorityNormal;
     }
 
     @Override

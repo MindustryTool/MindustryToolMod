@@ -66,9 +66,10 @@ public class AndroidMicrophone {
             return false;
         launchAttempted = true;
 
-        if (mindustry.Vars.ui != null) {
-            arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Launching Companion App..."));
-        }
+        // if (mindustry.Vars.ui != null) {
+        // arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Launching
+        // Companion App..."));
+        // }
 
         try {
             // Get Android Context via reflection from Arc's Core.app
@@ -148,8 +149,9 @@ public class AndroidMicrophone {
             startActivity.invoke(context, intent);
 
             Log.info("@ Launched Companion App (Auto Mode)", TAG);
-            if (mindustry.Vars.ui != null)
-                arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App Auto-Launched!"));
+            // if (mindustry.Vars.ui != null)
+            // arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App
+            // Auto-Launched!"));
 
             return true;
 

@@ -1,11 +1,16 @@
 package mindustrytool.plugins.voicechat;
 
 import arc.util.Log;
+import java.lang.reflect.Method;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Android speaker implementation using android.media.AudioTrack.
  * This class should only be loaded on Android platforms.
  * Uses reflection to avoid compile-time dependency on Android SDK.
+ * 
+ * Optimized to prevent Main Thread blocking and Reflection overhead.
  */
 public class AndroidSpeaker {
 
@@ -14,6 +19,17 @@ public class AndroidSpeaker {
     private Object audioTrack; // android.media.AudioTrack
     private final int sampleRate;
     private int minBufferSize;
+
+    // Reflection Cache (Performance Optimization)
+    private Method writeMethod;
+    private Method playMethod;
+    private Method stopMethod;
+    private Method releaseMethod;
+
+    // Threading to avoid blocking Main Thread
+    private final BlockingQueue<short[]> audioQueue = new LinkedBlockingQueue<>(20);
+    private Thread playbackThread;
+    private volatile boolean running = false;
 
     // Android AudioTrack constants (via reflection to avoid compile dependency)
     private static final int CHANNEL_OUT_MONO = 4; // AudioFormat.CHANNEL_OUT_MONO
@@ -27,9 +43,13 @@ public class AndroidSpeaker {
     }
 
     public void open() {
+        if (isOpen())
+            return;
+
         try {
-            // Get minimum buffer size
             Class<?> audioTrackClass = Class.forName("android.media.AudioTrack");
+
+            // Get minimum buffer size
             minBufferSize = (int) audioTrackClass.getMethod("getMinBufferSize", int.class, int.class, int.class)
                     .invoke(null, sampleRate, CHANNEL_OUT_MONO, ENCODING_PCM_16BIT);
 
@@ -52,25 +72,53 @@ public class AndroidSpeaker {
                 throw new IllegalStateException("AudioTrack not initialized. State: " + state);
             }
 
-            // Start playback
-            audioTrack.getClass().getMethod("play").invoke(audioTrack);
+            // Cache methods
+            writeMethod = audioTrackClass.getMethod("write", short[].class, int.class, int.class);
+            playMethod = audioTrackClass.getMethod("play");
+            stopMethod = audioTrackClass.getMethod("stop");
+            releaseMethod = audioTrackClass.getMethod("release");
 
-            Log.info("@ Speaker opened (Android)", TAG);
+            // Start playback
+            playMethod.invoke(audioTrack);
+
+            // Start processing thread
+            running = true;
+            playbackThread = new Thread(this::playbackLoop, "AndroidSpeaker-Thread");
+            playbackThread.setDaemon(true);
+            playbackThread.start();
+
+            Log.info("@ Speaker opened (Android/Optimized)", TAG);
         } catch (Exception e) {
             Log.err("@ Failed to open speaker: @", TAG, e.getMessage());
         }
     }
 
-    public void play(short[] audioData) {
-        if (audioTrack == null)
-            return;
+    private void playbackLoop() {
+        while (running) {
+            try {
+                // Blocking take - waits if empty
+                short[] data = audioQueue.take();
 
-        try {
-            audioTrack.getClass()
-                    .getMethod("write", short[].class, int.class, int.class)
-                    .invoke(audioTrack, audioData, 0, audioData.length);
-        } catch (Exception e) {
-            Log.err("@ Failed to play audio: @", TAG, e.getMessage());
+                if (audioTrack != null && writeMethod != null) {
+                    // This call might block if hardware buffer is full, but it's fine on this
+                    // thread
+                    writeMethod.invoke(audioTrack, data, 0, data.length);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception e) {
+                Log.err("@ Playback error: @", TAG, e.getMessage());
+            }
+        }
+    }
+
+    public void play(short[] audioData) {
+        // Non-blocking offer. Drop if full (better than freezing game)
+        if (!audioQueue.offer(audioData)) {
+            // Optional: Log drop or remove oldest
+            audioQueue.poll();
+            audioQueue.offer(audioData);
         }
     }
 
@@ -78,7 +126,11 @@ public class AndroidSpeaker {
         if (audioTrack == null)
             return false;
         try {
-            int state = (int) audioTrack.getClass().getMethod("getState").invoke(audioTrack);
+            // For checking state, we might still use reflection or just assume valid if not
+            // null
+            // Re-using getState method if cached would be safer but might thread-conflict?
+            // Actually, AudioTrack methods are thread-safe.
+            int state = (int) audioTrack.getClass().getMethod("getState").invoke(audioTrack); // Simple check
             return state == STATE_INITIALIZED;
         } catch (Exception e) {
             return false;
@@ -86,11 +138,19 @@ public class AndroidSpeaker {
     }
 
     public void close() {
+        running = false;
+        if (playbackThread != null) {
+            playbackThread.interrupt();
+            playbackThread = null;
+        }
+
         if (audioTrack == null)
             return;
         try {
-            audioTrack.getClass().getMethod("stop").invoke(audioTrack);
-            audioTrack.getClass().getMethod("release").invoke(audioTrack);
+            if (stopMethod != null)
+                stopMethod.invoke(audioTrack);
+            if (releaseMethod != null)
+                releaseMethod.invoke(audioTrack);
             audioTrack = null;
             Log.info("@ Speaker closed", TAG);
         } catch (Exception e) {

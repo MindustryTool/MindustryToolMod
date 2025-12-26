@@ -242,7 +242,7 @@ public class VoiceChatManager {
             // Forward ONLY to verified modded clients (prevents crash for vanilla clients)
             for (NetConnection other : moddedClients) {
                 if (other != con && other.isConnected()) {
-                    other.send(packet, true);
+                    other.send(packet, false); // Unreliable (UDP) for lower latency
                 }
             }
 
@@ -400,7 +400,7 @@ public class VoiceChatManager {
                             int sentCount = 0;
                             for (NetConnection con : moddedClients) {
                                 if (con.isConnected()) {
-                                    con.send(packet, true);
+                                    con.send(packet, false); // Unreliable (UDP) for lower latency
                                     sentCount++;
                                 }
                             }
@@ -410,7 +410,7 @@ public class VoiceChatManager {
                             }
                         } else {
                             // Client sends to server (server will forward)
-                            Vars.net.send(packet, true);
+                            Vars.net.send(packet, false); // Unreliable (UDP) for lower latency
                         }
                     }
                 }

@@ -18,8 +18,8 @@ public class VoiceProcessor {
     private static final String TAG = "[VoiceProc]";
 
     // Opus encoder settings for good voice quality
-    private static final int BITRATE = 32000; // 32 kbps - good balance of quality/bandwidth
-    private static final int COMPLEXITY = 8; // 0-10, higher = better quality, more CPU
+    private static final int BITRATE = 24000; // 24 kbps - efficient voice quality
+    private static final int COMPLEXITY = 3; // 0-10, lower = less CPU (Critical for Android)
     private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 20ms at 48kHz
 
     @Nullable
