@@ -108,6 +108,7 @@ public class VoiceChatManager {
                 Log.info("@ Client @ verified modded. Sending voice handshake.", TAG, con.player.name);
                 // Add to modded clients set - they can receive voice packets
                 moddedClients.add(con);
+                Log.info("@ Added @ to moddedClients (total: @)", TAG, con.player.name, moddedClients.size);
                 VoiceRequestPacket request = new VoiceRequestPacket();
                 request.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
                 con.send(request, true);
@@ -316,7 +317,9 @@ public class VoiceChatManager {
      * Start voice capture thread.
      */
     public void startCapture() {
+        Log.info("@ startCapture() called. muted=@, enabled=@, status=@", TAG, muted, enabled, status);
         if (captureThread != null && captureThread.isAlive()) {
+            Log.info("@ Capture thread already running, skipping", TAG);
             return;
         }
 
@@ -345,7 +348,8 @@ public class VoiceChatManager {
                 if (!useMock) {
                     microphone.open();
                     microphone.start();
-                    Log.info("@ Microphone capture started", TAG);
+                    Log.info("@ Microphone capture started (isServer=@, moddedClients=@)", TAG, Vars.net.server(),
+                            moddedClients.size);
                 } else {
                     Log.info("@ Mock Microphone started (Debug Log enabled)", TAG);
                 }
@@ -389,8 +393,25 @@ public class VoiceChatManager {
                         packet.audioData = encoded;
                         packet.playerid = Vars.player.id;
 
-                        // Log removed to prevent lag - was running every 20ms
-                        Vars.net.send(packet, true); // TCP for reliability
+                        // Host: Send directly to all modded clients
+                        // Client: Use normal net.send (will be handled by server)
+                        if (Vars.net.server() && !Vars.headless) {
+                            // Host sends directly to all verified modded clients
+                            int sentCount = 0;
+                            for (NetConnection con : moddedClients) {
+                                if (con.isConnected()) {
+                                    con.send(packet, true);
+                                    sentCount++;
+                                }
+                            }
+                            // Debug log every 50 packets (roughly every 1 second)
+                            if (sentCount > 0 && System.currentTimeMillis() % 1000 < 25) {
+                                Log.info("@ Host sent voice to @ modded clients", TAG, sentCount);
+                            }
+                        } else {
+                            // Client sends to server (server will forward)
+                            Vars.net.send(packet, true);
+                        }
                     }
                 }
             } catch (InterruptedException e) {
@@ -464,9 +485,26 @@ public class VoiceChatManager {
         this.muted = muted;
         if (muted) {
             stopCapture();
-        } else if (enabled && (status == VoiceStatus.READY || status == VoiceStatus.CONNECTED) && Vars.net.active()) {
-            startCapture();
-            status = VoiceStatus.CONNECTED;
+        } else {
+            // Check if we can start capture
+            boolean isReady = status == VoiceStatus.READY || status == VoiceStatus.CONNECTED;
+
+            // Special case for Host: If we are server/host and active, we should be ready.
+            // Force status to READY if it seems stuck.
+            if (Vars.net.server() && Vars.net.active() && !Vars.headless && enabled) {
+                isReady = true;
+                if (status != VoiceStatus.CONNECTED)
+                    status = VoiceStatus.READY;
+            }
+
+            if (enabled && isReady && Vars.net.active()) {
+                startCapture();
+                status = VoiceStatus.CONNECTED;
+            } else {
+                // Debug: why startCapture was NOT called
+                Log.info("@ setMuted(false) but startCapture NOT called: enabled=@, status=@, net.active=@, isReady=@",
+                        TAG, enabled, status, Vars.net.active(), isReady);
+            }
         }
         Log.info("@ Muted: @", TAG, muted);
     }
