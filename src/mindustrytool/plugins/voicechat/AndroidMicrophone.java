@@ -125,12 +125,52 @@ public class AndroidMicrophone {
             Object intent = getLaunchIntent.invoke(packageManager, COMPANION_PACKAGE);
 
             if (intent == null) {
-                // If intent is null, the app is not installed or not visible (Android 11+
-                // queries)
-                Log.warn("@ Cannot launch: Companion App package not found: @", TAG, COMPANION_PACKAGE);
+                // FALLBACK: Android 11+ hides the package, returning null.
+                // We try to guess the Main Activity name and launch it directly by Component.
+                Log.warn("@ Package hidden. Trying direct Component launch...", TAG);
+
                 if (mindustry.Vars.ui != null)
-                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App Not Found: " + COMPANION_PACKAGE));
-                return false;
+                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Pkg Hidden, trying Direct..."));
+
+                try {
+                    // Create Intent manualy
+                    Class<?> intentClass = Class.forName("android.content.Intent");
+                    intent = intentClass.getConstructor().newInstance();
+
+                    // ComponentName cn = new ComponentName(PKG, CLS);
+                    Class<?> cnClass = Class.forName("android.content.ComponentName");
+                    Object cn = cnClass.getConstructor(String.class, String.class)
+                            .newInstance(COMPANION_PACKAGE, COMPANION_PACKAGE + ".MainActivity");
+
+                    // intent.setComponent(cn)
+                    intentClass.getMethod("setComponent", cnClass).invoke(intent, cn);
+
+                    // intent.setAction("android.intent.action.MAIN");
+                    intentClass.getMethod("setAction", String.class).invoke(intent, "android.intent.action.MAIN");
+
+                    // intent.addCategory("android.intent.category.LAUNCHER");
+                    intentClass.getMethod("addCategory", String.class).invoke(intent,
+                            "android.intent.category.LAUNCHER");
+
+                    // Add FLAG_ACTIVITY_NEW_TASK
+                    java.lang.reflect.Method addFlags = intentClass.getMethod("addFlags", int.class);
+                    int FLAG_ACTIVITY_NEW_TASK = 0x10000000;
+                    addFlags.invoke(intent, FLAG_ACTIVITY_NEW_TASK);
+
+                    // Start Activity
+                    java.lang.reflect.Method startActivity = context.getClass().getMethod("startActivity", intentClass);
+                    startActivity.invoke(context, intent);
+
+                    Log.info("@ Launched Companion App (Legacy/Direct)!", TAG);
+                    if (mindustry.Vars.ui != null)
+                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Direct Launch Success!"));
+                    return true;
+                } catch (Exception e) {
+                    Log.err("Direct launch attempt failed: " + e.getMessage());
+                    if (mindustry.Vars.ui != null)
+                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App Not Found (Hidden)"));
+                    return false;
+                }
             }
 
             // 3. Add FLAG_ACTIVITY_NEW_TASK (Required when launching from non-Activity
