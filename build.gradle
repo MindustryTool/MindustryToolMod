@@ -25,14 +25,14 @@ repositories{
 }
 
 java{
-    sourceCompatibility = "17"
-    targetCompatibility = "17"
+    sourceCompatibility = "1.8"
+    targetCompatibility = "1.8"
 }
 
 allprojects{
     tasks.withType(JavaCompile){
         options.annotationProcessorPath = configurations.annotationProcessor
-        options.compilerArgs.addAll(['--release', '17'])
+        options.compilerArgs.addAll(['--release', '8'])
         options.encoding = 'UTF-8'
     }
 }

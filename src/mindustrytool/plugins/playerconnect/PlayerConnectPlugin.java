@@ -72,7 +72,7 @@ public class PlayerConnectPlugin implements Plugin {
             "Voice Chat",
             "Enable voice communication with other players.",
             () -> {
-                var manager = new mindustrytool.plugins.voicechat.VoiceChatManager();
+                mindustrytool.plugins.voicechat.VoiceChatManager manager = new mindustrytool.plugins.voicechat.VoiceChatManager();
                 manager.init();
                 return manager;
             },
@@ -222,7 +222,7 @@ public class PlayerConnectPlugin implements Plugin {
 
     public static JoinRoomDialog getJoinRoomDialog() {
         if (joinRoomDialog == null) {
-            var rooms = roomsDialog.getIfEnabled();
+            PlayerConnectRoomsDialog rooms = roomsDialog.getIfEnabled();
             if (rooms != null) {
                 joinRoomDialog = new JoinRoomDialog(rooms);
             }
@@ -320,13 +320,13 @@ public class PlayerConnectPlugin implements Plugin {
     }
 
     public void showRoomsBrowser() {
-        var dialog = roomsDialog.getIfEnabled();
+        PlayerConnectRoomsDialog dialog = roomsDialog.getIfEnabled();
         if (dialog != null)
             dialog.show();
     }
 
     public void showJoinDialog() {
-        var dialog = getJoinRoomDialog();
+        JoinRoomDialog dialog = getJoinRoomDialog();
         if (dialog != null)
             dialog.show();
     }

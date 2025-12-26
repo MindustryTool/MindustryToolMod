@@ -424,7 +424,7 @@ public class VisualOverlayManager {
 
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
-                var tile = Vars.world.tile(x, y);
+                mindustry.world.Tile tile = Vars.world.tile(x, y);
                 if (tile == null || tile.build == null)
                     continue;
 
@@ -581,7 +581,7 @@ public class VisualOverlayManager {
             return;
         Draw.color(Color.scarlet, rangeTransparency);
         Lines.stroke(1.5f);
-        for (var tile : Vars.spawner.getSpawns()) {
+        for (mindustry.world.Tile tile : Vars.spawner.getSpawns()) {
             if (!cameraRect.contains(tile.worldx(), tile.worldy()))
                 continue;
             Lines.dashCircle(tile.worldx(), tile.worldy(), Vars.state.rules.dropZoneRadius);

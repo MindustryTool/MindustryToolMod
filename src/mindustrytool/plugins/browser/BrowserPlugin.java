@@ -88,7 +88,7 @@ public class BrowserPlugin implements Plugin {
             boolean noInputFocused = !Core.scene.hasField();
 
             if (noInputFocused && Core.input.keyTap(ModKeybinds.mapBrowser)) {
-                var dialog = mapDialog.getIfEnabled();
+                BaseDialog dialog = mapDialog.getIfEnabled();
                 if (dialog != null) {
                     if (dialog.isShown()) {
                         dialog.hide();
@@ -99,7 +99,7 @@ public class BrowserPlugin implements Plugin {
             }
 
             if (noInputFocused && Core.input.keyTap(ModKeybinds.schematicBrowser)) {
-                var dialog = schematicDialog.getIfEnabled();
+                BaseDialog dialog = schematicDialog.getIfEnabled();
                 if (dialog != null) {
                     if (dialog.isShown()) {
                         dialog.hide();
@@ -110,7 +110,7 @@ public class BrowserPlugin implements Plugin {
             }
 
             if (noInputFocused && Core.input.keyTap(ModKeybinds.manageComponents)) {
-                var dialog = getComponentDialog();
+                LazyComponentDialog dialog = getComponentDialog();
                 if (dialog.isShown()) {
                     dialog.hide();
                 } else {
@@ -124,9 +124,9 @@ public class BrowserPlugin implements Plugin {
         loadIcon();
 
         // Add browse button to schematics dialog (visibility synced with enabled state)
-        var browseButton = Vars.ui.schematics.buttons.button("Browse", Icon.menu, () -> {
+        arc.scene.ui.TextButton browseButton = Vars.ui.schematics.buttons.button("Browse", Icon.menu, () -> {
             Vars.ui.schematics.hide();
-            var dialog = schematicDialog.getIfEnabled();
+            mindustry.ui.dialogs.BaseDialog dialog = schematicDialog.getIfEnabled();
             if (dialog != null)
                 dialog.show();
         }).get();

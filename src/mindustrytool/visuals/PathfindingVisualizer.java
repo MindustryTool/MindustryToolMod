@@ -133,7 +133,7 @@ public class PathfindingVisualizer {
 
         int costType = unit.type.flowfieldPathType;
         int fieldType = Pathfinder.fieldCore;
-        var field = pathfinder.getField(unit.team, costType, fieldType);
+        mindustry.ai.Pathfinder.Flowfield field = pathfinder.getField(unit.team, costType, fieldType);
         if (field == null) {
             entry.size = 0;
             return;

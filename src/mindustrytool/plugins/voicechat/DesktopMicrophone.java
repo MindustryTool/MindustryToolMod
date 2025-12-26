@@ -17,11 +17,12 @@ public class DesktopMicrophone {
 
     @Nullable
     private TargetDataLine mic;
-    private final int sampleRate;
+    private final int targetSampleRate; // The rate we WANT (48000)
+    private int actualSampleRate; // The rate we GOT
     private final int bufferSize;
 
     public DesktopMicrophone(int sampleRate, int bufferSize) {
-        this.sampleRate = sampleRate;
+        this.targetSampleRate = sampleRate;
         this.bufferSize = bufferSize;
     }
 
@@ -36,37 +37,53 @@ public class DesktopMicrophone {
             Log.info("  - @ (@)", info.getName(), info.getDescription());
         }
 
-        AudioFormat format = new AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                sampleRate, 16, 1, 2, sampleRate, false);
-
-        mic = getDefaultMicrophone(format);
+        // Try 48000Hz first (Best quality, native Opus rate)
+        mic = tryOpen(48000);
         
-        // Fallback to 44100Hz if 48000Hz fails
-        if (mic == null && sampleRate == 48000) {
-             Log.warn("@ 48000Hz not supported, trying 44100Hz...", TAG);
-             AudioFormat fallbackFormat = new AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                44100, 16, 1, 2, 44100, false);
-             mic = getDefaultMicrophone(fallbackFormat);
-        }
+        // Fallback: 44100Hz (Standard CD quality)
+        if (mic == null) mic = tryOpen(44100);
+        
+        // Fallback: 16000Hz (Wideband VoIP)
+        if (mic == null) mic = tryOpen(16000);
+        
+        // Fallback: 8000Hz (Narrowband, last resort)
+        if (mic == null) mic = tryOpen(8000);
 
         if (mic == null) {
-            throw new IllegalStateException("No microphone found on this system");
+            throw new IllegalStateException("No microphone found on this system. Checked 48k, 44.1k, 16k, 8k.");
         }
 
         try {
-            // Ensure we open with the format that worked (or the original if we didn't fallback)
             mic.open(mic.getFormat()); 
+            mic.start(); // Start immediately
             Log.info("@ Microphone opened. Format: @", TAG, mic.getFormat());
+            
+            actualSampleRate = (int) mic.getFormat().getSampleRate();
+            if (actualSampleRate != targetSampleRate) {
+                Log.warn("@ Sample rate mismatch! Target: @, Actual: @. Resampling enabled.", TAG, targetSampleRate, actualSampleRate);
+            }
+            
         } catch (LineUnavailableException e) {
-            throw new IllegalStateException("Failed to open microphone", e);
+            throw new IllegalStateException("Failed to open microphone line", e);
         }
-
-        // Fix accumulating audio issue on some Linux systems
-        mic.start();
-        mic.stop();
-        mic.flush();
+    }
+    
+    private TargetDataLine tryOpen(int rate) {
+        try {
+            AudioFormat format = new AudioFormat(
+                AudioFormat.Encoding.PCM_SIGNED,
+                rate, 16, 1, 2, rate, false); // 16-bit, mono, signed, little-endian
+            
+            DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+            
+            if (AudioSystem.isLineSupported(info)) {
+                Log.info("@ Found supported format: @Hz", TAG, rate);
+                return (TargetDataLine) AudioSystem.getLine(info);
+            }
+        } catch (Exception e) {
+            // Ignore and try next
+        }
+        return null;
     }
 
     public void start() {
@@ -99,9 +116,9 @@ public class DesktopMicrophone {
     public int available() {
         if (mic == null)
             return 0;
-        // Always return bufferSize to force read() to be called.
-        // The read() method will block until data is available.
-        return bufferSize;
+        // If we need to resample, we might need more or less data, 
+        // but for simplicity we just report what the mic has.
+        return mic.available();
     }
 
     public short[] read() {
@@ -109,26 +126,67 @@ public class DesktopMicrophone {
             throw new IllegalStateException("Microphone is not opened");
         }
 
-        byte[] byteBuffer = new byte[bufferSize * 2];
+        // Calculate how many bytes to read to produce 'bufferSize' samples at target rate
+        // If rates match, it's just bufferSize * 2 bytes.
+        // If resampling, we need (actual / target) * bufferSize samples.
+        
+        int samplesNeeded = bufferSize;
+        if (actualSampleRate != targetSampleRate) {
+            samplesNeeded = (int) (bufferSize * ((double) actualSampleRate / targetSampleRate));
+        }
+        
+        // Ensure even number of bytes (16-bit samples)
+        int bytesNeeded = samplesNeeded * 2;
+        if (bytesNeeded % 2 != 0) bytesNeeded++;
+
+        byte[] byteBuffer = new byte[bytesNeeded];
         int totalRead = 0;
         
         // Blocking read loop
-        while (totalRead < byteBuffer.length && isOpen()) {
-            int read = mic.read(byteBuffer, totalRead, byteBuffer.length - totalRead);
+        while (totalRead < bytesNeeded && isOpen()) {
+            int read = mic.read(byteBuffer, totalRead, bytesNeeded - totalRead);
             if (read > 0) {
                 totalRead += read;
             } else {
-                // Avoid busy loop if something is wrong but mic is still open
                 try { Thread.sleep(1); } catch (InterruptedException e) { break; }
             }
         }
         
-        // Debug log (throttled)
-        if (Math.random() < 0.01) { // Log ~1% of reads to avoid spam
-             Log.info("@ Read @ bytes from mic", TAG, totalRead);
+        short[] rawShorts = bytesToShorts(byteBuffer);
+        
+        // Resample if necessary
+        if (actualSampleRate != targetSampleRate) {
+            return resample(rawShorts, actualSampleRate, targetSampleRate);
         }
         
-        return bytesToShorts(byteBuffer);
+        return rawShorts;
+    }
+    
+    /**
+     * Simple linear interpolation resampler.
+     */
+    private short[] resample(short[] input, int fromRate, int toRate) {
+        if (input.length == 0) return input;
+        
+        double ratio = (double) fromRate / toRate;
+        int newLength = (int) (input.length / ratio);
+        short[] output = new short[newLength];
+        
+        for (int i = 0; i < newLength; i++) {
+            double index = i * ratio;
+            int left = (int) index;
+            int right = left + 1;
+            
+            if (left >= input.length) left = input.length - 1;
+            if (right >= input.length) right = input.length - 1;
+            
+            double weight = index - left;
+            
+            // Linear interpolation
+            output[i] = (short) (input[left] * (1.0 - weight) + input[right] * weight);
+        }
+        
+        return output;
     }
 
     private static short[] bytesToShorts(byte[] bytes) {
@@ -136,16 +194,5 @@ public class DesktopMicrophone {
         short[] shorts = new short[bytes.length / 2];
         bb.asShortBuffer().get(shorts);
         return shorts;
-    }
-
-    @Nullable
-    private static TargetDataLine getDefaultMicrophone(AudioFormat format) {
-        try {
-            DataLine.Info lineInfo = new DataLine.Info(TargetDataLine.class, format);
-            return (TargetDataLine) AudioSystem.getLine(lineInfo);
-        } catch (Exception e) {
-            Log.err("@ Failed to get microphone: @", TAG, e.getMessage());
-            return null;
-        }
     }
 }

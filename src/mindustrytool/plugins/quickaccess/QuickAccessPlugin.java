@@ -70,7 +70,7 @@ public class QuickAccessPlugin implements Plugin {
                         }).tooltip(Core.bundle.get("message.lazy-components.title", "Components"));
 
                         row1.button(Icon.paste, Styles.clearNonei, () -> {
-                            var dialog = BrowserPlugin.getSchematicDialog().getIfEnabled();
+                            mindustry.ui.dialogs.BaseDialog dialog = BrowserPlugin.getSchematicDialog().getIfEnabled();
                             if (dialog != null) {
                                 dialog.show();
                             }
@@ -88,7 +88,7 @@ public class QuickAccessPlugin implements Plugin {
                         row2.button(Icon.chat, Styles.clearNonei, () -> {
                             try {
                                 // Get VoiceChatManager from PlayerConnectPlugin's lazy component
-                                var vcManager = mindustrytool.plugins.playerconnect.PlayerConnectPlugin
+                                mindustrytool.plugins.voicechat.VoiceChatManager vcManager = mindustrytool.plugins.playerconnect.PlayerConnectPlugin
                                         .getVoiceChatManager();
                                 if (vcManager != null) {
                                     vcManager.showSettings();

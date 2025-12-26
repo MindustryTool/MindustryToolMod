@@ -23,7 +23,7 @@ public class PausedMenuInjector {
             boolean replaced = false;
             String hostText = Core.bundle.get("server.host");
 
-            for (var cell : root.getCells()) {
+            for (arc.scene.ui.layout.Cell<?> cell : root.getCells()) {
                 if (cell.get() instanceof Button b) {
                     boolean isHost = false;
 
@@ -34,7 +34,7 @@ public class PausedMenuInjector {
                             isHost = true;
                         } else {
                             // Check if TextButton has the Host icon
-                            for (var child : tb.getChildren()) {
+                            for (arc.scene.Element child : tb.getChildren()) {
                                 if (child instanceof arc.scene.ui.Image img && img.getDrawable() == Icon.host) {
                                     isHost = true;
                                     break;

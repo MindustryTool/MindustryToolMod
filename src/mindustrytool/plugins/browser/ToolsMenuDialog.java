@@ -30,7 +30,7 @@ public class ToolsMenuDialog extends BaseDialog {
             hasAnyEnabled = true;
             cont.button(Core.bundle.format("message.map-browser.title"), Icon.map, Styles.flatt, () -> {
                 hide();
-                var dialog = BrowserPlugin.getMapDialog().getIfEnabled();
+                BaseDialog dialog = BrowserPlugin.getMapDialog().getIfEnabled();
                 if (dialog != null)
                     dialog.show();
             }).row();
@@ -42,7 +42,7 @@ public class ToolsMenuDialog extends BaseDialog {
             cont.button(Core.bundle.format("message.schematic-browser.title", "Schematic Browser"), Icon.paste,
                     Styles.flatt, () -> {
                         hide();
-                        var dialog = BrowserPlugin.getSchematicDialog().getIfEnabled();
+                        BaseDialog dialog = BrowserPlugin.getSchematicDialog().getIfEnabled();
                         if (dialog != null)
                             dialog.show();
                     }).row();
