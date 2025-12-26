@@ -23,7 +23,7 @@ public class AndroidMicrophone {
 
     private static final String TAG = "[AndroidMic]";
     private static final int PORT = 25566;
-    private static final int MAX_QUEUE_SIZE = 10; // Max buffered frames
+    private static final int MAX_QUEUE_SIZE = 6; // Reduced latency (10 -> 6)
 
     // Control commands to send to Companion App
     public static final byte CMD_START_MIC = 0x01;
