@@ -374,35 +374,38 @@ public class AndroidMicrophone {
     public void close() {
         isOpen = false;
         isRecording = false;
+        isRecording = false; // Keep this
+        audioQueue.clear(); // Keep this
 
-        // Send SHUTDOWN command to kill the Companion App Service completely
-        if (clientSocket != null && clientSocket.isConnected()) {
-            Log.info("@ Sending SHUTDOWN command to Companion App...", TAG);
-            sendCommand(CMD_SHUTDOWN);
-            // Give it a moment to receive the command before we cut the cord
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-            }
-        }
-
-        closeClient();
+        // Don't kill the app, just stop it from recording if needed?
+        // Actually, if we close the socket, the App detects EOF and goes into Reconnect
+        // mode.
+        // So we don't need to send SHUTDOWN.
+        // sendCommand(CMD_SHUTDOWN); // REMOVED: Keep app alive in background
 
         try {
-            if (serverSocket != null)
+            if (clientSocket != null) {
+                clientSocket.close();
+            }
+            if (serverSocket != null) {
                 serverSocket.close();
+            }
         } catch (Exception e) {
-            // Ignore
+            Log.err("Error closing AndroidMicrophone server: " + e.getMessage());
         }
-        serverSocket = null;
 
-        if (serverThread != null) {
+        clientSocket = null;
+        serverSocket = null;
+        outputStream = null;
+        inputStream = null;
+
+        if (serverThread != null) { // Keep this
             serverThread.interrupt();
             serverThread = null;
         }
 
-        launchAttempted = false; // Allow re-launching if enabled again
-        Log.info("@ Microphone closed", TAG);
+        launchAttempted = false; // Allow re-launch if needed (though app should handle re-focus gracefully now)
+        Log.info("AndroidMicrophone server closed");
     }
 
     public boolean isOpen() {
