@@ -105,28 +105,42 @@ public class AndroidMicrophone {
                 return false;
             }
 
-            // Create Intent using reflection (to avoid compile-time Android dependency)
-            Class<?> intentClass = Class.forName("android.content.Intent");
-            Object intent = intentClass.getConstructor().newInstance();
+            // Method: Use PackageManager.getLaunchIntentForPackage(packageName)
+            // This is cleaner and handles the Intent creation for us.
 
-            // intent.setPackage(COMPANION_PACKAGE)
-            java.lang.reflect.Method setPackage = intentClass.getMethod("setPackage", String.class);
-            setPackage.invoke(intent, COMPANION_PACKAGE);
+            // 1. Get PackageManager: context.getPackageManager()
+            java.lang.reflect.Method getPackageManager = context.getClass().getMethod("getPackageManager");
+            Object packageManager = getPackageManager.invoke(context);
 
-            // intent.setAction("android.intent.action.MAIN")
-            java.lang.reflect.Method setAction = intentClass.getMethod("setAction", String.class);
-            setAction.invoke(intent, "android.intent.action.MAIN");
+            if (packageManager == null) {
+                Log.warn("@ Cannot launch: PackageManager is null", TAG);
+                if (mindustry.Vars.ui != null)
+                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Launch Fail: No PackageManager"));
+                return false;
+            }
 
-            // intent.addCategory("android.intent.category.LAUNCHER")
-            java.lang.reflect.Method addCategory = intentClass.getMethod("addCategory", String.class);
-            addCategory.invoke(intent, "android.intent.category.LAUNCHER");
+            // 2. Get Launch Intent: pm.getLaunchIntentForPackage(COMPANION_PACKAGE)
+            java.lang.reflect.Method getLaunchIntent = packageManager.getClass().getMethod("getLaunchIntentForPackage",
+                    String.class);
+            Object intent = getLaunchIntent.invoke(packageManager, COMPANION_PACKAGE);
 
-            // intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (intent == null) {
+                // If intent is null, the app is not installed or not visible (Android 11+
+                // queries)
+                Log.warn("@ Cannot launch: Companion App package not found: @", TAG, COMPANION_PACKAGE);
+                if (mindustry.Vars.ui != null)
+                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App Not Found: " + COMPANION_PACKAGE));
+                return false;
+            }
+
+            // 3. Add FLAG_ACTIVITY_NEW_TASK (Required when launching from non-Activity
+            // context)
+            Class<?> intentClass = intent.getClass();
             java.lang.reflect.Method addFlags = intentClass.getMethod("addFlags", int.class);
-            int FLAG_ACTIVITY_NEW_TASK = 0x10000000; // Intent.FLAG_ACTIVITY_NEW_TASK
+            int FLAG_ACTIVITY_NEW_TASK = 0x10000000;
             addFlags.invoke(intent, FLAG_ACTIVITY_NEW_TASK);
 
-            // context.startActivity(intent)
+            // 4. Start Activity: context.startActivity(intent)
             java.lang.reflect.Method startActivity = context.getClass().getMethod("startActivity", intentClass);
             startActivity.invoke(context, intent);
 
@@ -135,10 +149,6 @@ public class AndroidMicrophone {
                 arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App Launch Requested!"));
             return true;
 
-        } catch (ClassNotFoundException e) {
-            Log.warn("@ Cannot launch: Not running on Android", TAG);
-            // if (mindustry.Vars.ui != null) arc.Core.app.post(() ->
-            // mindustry.Vars.ui.hudfrag.showToast("Not Android Platform"));
         } catch (Exception e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             String exceptionType = cause.getClass().getSimpleName();
