@@ -167,6 +167,11 @@ public class AndroidMicrophone {
                 Socket socket = serverSocket.accept();
                 Log.info("@ VoiceChatCompanion connected!", TAG);
 
+                // Debug UI: Notify user on screen
+                if (mindustry.Vars.ui != null && mindustry.Vars.ui.hudfrag != null) {
+                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Mic Connected!"));
+                }
+
                 // Close previous connection if any
                 closeClient();
 
@@ -179,6 +184,10 @@ public class AndroidMicrophone {
                 // If already recording, send START command immediately
                 if (isRecording) {
                     sendCommand(CMD_START_MIC);
+                    // Debug UI
+                    if (mindustry.Vars.ui != null) {
+                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Sending START_MIC..."));
+                    }
                 }
 
                 // Read audio data continuously
@@ -187,6 +196,10 @@ public class AndroidMicrophone {
             } catch (Exception e) {
                 if (isOpen) {
                     Log.warn("@ Connection error: @", TAG, e.getMessage());
+                    final String errorMsg = e.getMessage();
+                    if (mindustry.Vars.ui != null) {
+                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Mic Error: " + errorMsg));
+                    }
                 }
             }
         }
@@ -206,6 +219,7 @@ public class AndroidMicrophone {
                     int read = inputStream.read(lengthBuffer, bytesRead, 2 - bytesRead);
                     if (read < 0) {
                         Log.warn("@ Connection closed by companion", TAG);
+                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Mic Disconnected (EOF)"));
                         return;
                     }
                     bytesRead += read;
@@ -249,9 +263,11 @@ public class AndroidMicrophone {
                     packetsReceived++;
 
                     // Log stats periodically
-                    if (packetsReceived % 500 == 0) {
+                    if (packetsReceived % 50 == 0) { // Notify more frequently for debugging
                         Log.info("@ Received @ packets, dropped @ (queue: @)",
                                 TAG, packetsReceived, packetsDropped, audioQueue.size());
+                        arc.Core.app
+                                .post(() -> mindustry.Vars.ui.showLabel("Mic Data: " + packetsReceived, 1f, 0f, 0f));
                     }
                 }
             } catch (java.net.SocketTimeoutException e) {
