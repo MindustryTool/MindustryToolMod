@@ -1,6 +1,7 @@
 package mindustrytool.plugins.voicechat;
 
 import arc.struct.ObjectMap;
+import arc.struct.ObjectSet;
 import arc.util.Log;
 import arc.util.Nullable;
 import lemmesay.shared.LemmeSayConstants;
@@ -9,6 +10,7 @@ import lemmesay.shared.packet.VoiceRequestPacket;
 import lemmesay.shared.packet.VoiceResponsePacket;
 import mindustry.Vars;
 import mindustry.net.Net;
+import mindustry.net.NetConnection;
 import arc.util.Time;
 
 /**
@@ -49,6 +51,10 @@ public class VoiceChatManager {
     private final ObjectMap<String, Float> playerVolume = new ObjectMap<>(); // 0.0 - 1.0
     private final ObjectMap<String, Long> lastSpeakingTime = new ObjectMap<>();
     private static final long SPEAKING_THRESHOLD_MS = 300;
+
+    // Track clients that have been verified to have the mod installed
+    // This prevents crashes when forwarding voice packets to vanilla clients
+    private final ObjectSet<NetConnection> moddedClients = new ObjectSet<>();
 
     @Nullable
     private VoiceMicrophone microphone;
@@ -100,9 +106,20 @@ public class VoiceChatManager {
         Vars.net.handleServer(mindustry.gen.PingResponseCallPacket.class, (con, ping) -> {
             if (ping.time == MAGIC_PING_ID && con.player != null) {
                 Log.info("@ Client @ verified modded. Sending voice handshake.", TAG, con.player.name);
+                // Add to modded clients set - they can receive voice packets
+                moddedClients.add(con);
                 VoiceRequestPacket request = new VoiceRequestPacket();
                 request.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
                 con.send(request, true);
+            }
+        });
+
+        // Cleanup: Remove client from modded set when they disconnect
+        arc.Events.on(mindustry.game.EventType.PlayerLeave.class, e -> {
+            if (Vars.net.server() && e.player.con != null) {
+                if (moddedClients.remove(e.player.con)) {
+                    Log.info("@ Removed @ from modded clients list", TAG, e.player.name);
+                }
             }
         });
 
@@ -139,7 +156,7 @@ public class VoiceChatManager {
             status = VoiceStatus.READY;
             Log.info("@ Status set to READY (connected to: @)", TAG,
                     Vars.net.client() ? "server" : "hosting");
-            
+
             // Auto-start capture if enabled and not muted (Critical for Host)
             if (enabled && !muted) {
                 startCapture();
@@ -213,13 +230,20 @@ public class VoiceChatManager {
             if (con.player == null)
                 return;
 
+            // Only accept voice from verified modded clients
+            if (!moddedClients.contains(con)) {
+                return;
+            }
+
             // Enforce sender ID from connection to prevent spoofing
             packet.playerid = con.player.id;
 
-            // Log removed to prevent lag - was running every packet
-
-            // Forward to all other clients (TCP for testing reliability)
-            Vars.net.sendExcept(con, packet, true);
+            // Forward ONLY to verified modded clients (prevents crash for vanilla clients)
+            for (NetConnection other : moddedClients) {
+                if (other != con && other.isConnected()) {
+                    other.send(packet, true);
+                }
+            }
 
             // If I am the Host Player (not headless), I also need to hear this!
             if (!Vars.headless) {
@@ -250,7 +274,7 @@ public class VoiceChatManager {
         if (sender != null) {
             lastSpeakingTime.put(sender.uuid(), arc.util.Time.millis());
         }
-        
+
         if (sender == null) {
             if (forceMock)
                 Log.warn("@ Unknown sender ID: @", TAG, packet.playerid);
@@ -518,7 +542,7 @@ public class VoiceChatManager {
         // Check if we are capturing audio
         return isRecording() && microphone != null && microphone.available() > 0;
     }
-    
+
     public boolean isRecording() {
         return enabled && !muted && status == VoiceStatus.CONNECTED;
     }
