@@ -201,10 +201,11 @@ public class AndroidMicrophone {
                 Socket socket = serverSocket.accept();
                 Log.info("@ VoiceChatCompanion connected!", TAG);
 
-                // Debug UI: Notify user on screen
-                if (mindustry.Vars.ui != null && mindustry.Vars.ui.hudfrag != null) {
-                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Mic Connected!"));
-                }
+                // Debug UI: Notify user on screen (Removed to reduce spam)
+                // if (mindustry.Vars.ui != null && mindustry.Vars.ui.hudfrag != null) {
+                // arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Mic
+                // Connected!"));
+                // }
 
                 // Close previous connection if any
                 closeClient();
@@ -218,10 +219,11 @@ public class AndroidMicrophone {
                 // If already recording, send START command immediately
                 if (isRecording) {
                     sendCommand(CMD_START_MIC);
-                    // Debug UI
-                    if (mindustry.Vars.ui != null) {
-                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Sending START_MIC..."));
-                    }
+                    // Debug UI (Removed)
+                    // if (mindustry.Vars.ui != null) {
+                    // arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Sending
+                    // START_MIC..."));
+                    // }
                 }
 
                 // Read audio data continuously
