@@ -82,7 +82,9 @@ public class DesktopMicrophone {
     public int available() {
         if (mic == null)
             return 0;
-        return mic.available() / 2;
+        // Always return bufferSize to force read() to be called.
+        // The read() method will block until data is available.
+        return bufferSize;
     }
 
     public short[] read() {
@@ -90,13 +92,20 @@ public class DesktopMicrophone {
             throw new IllegalStateException("Microphone is not opened");
         }
 
-        int available = available();
-        if (bufferSize > available) {
-            throw new IllegalStateException("Not enough data. Required: " + bufferSize + ", available: " + available);
-        }
-
         byte[] byteBuffer = new byte[bufferSize * 2];
-        mic.read(byteBuffer, 0, byteBuffer.length);
+        int totalRead = 0;
+        
+        // Blocking read loop
+        while (totalRead < byteBuffer.length && isOpen()) {
+            int read = mic.read(byteBuffer, totalRead, byteBuffer.length - totalRead);
+            if (read > 0) {
+                totalRead += read;
+            } else {
+                // Avoid busy loop if something is wrong but mic is still open
+                try { Thread.sleep(1); } catch (InterruptedException e) { break; }
+            }
+        }
+        
         return bytesToShorts(byteBuffer);
     }
 
