@@ -20,7 +20,8 @@ public class VoiceProcessor {
     // Opus encoder settings for good voice quality
     private static final int BITRATE = 24000; // 24 kbps - efficient voice quality
     private static final int COMPLEXITY = 3; // 0-10, lower = less CPU (Critical for Android)
-    private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 20ms at 48kHz
+    private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 40ms at 48kHz
+    public static final double VAD_THRESHOLD = 300.0; // RMS Threshold for silence detection
 
     @Nullable
     private OpusEncoder encoder;
@@ -158,5 +159,20 @@ public class VoiceProcessor {
         encoder = null;
         decoder = null;
         Log.info("@ Processor disposed", TAG);
+    }
+
+    /**
+     * Calculate Root Mean Square (RMS) amplitude of audio buffer.
+     * Used for Voice Activity Detection (VAD).
+     */
+    public double calculateRMS(short[] buffer) {
+        if (buffer == null || buffer.length == 0)
+            return 0;
+
+        long sum = 0;
+        for (short sample : buffer) {
+            sum += sample * sample;
+        }
+        return Math.sqrt(sum / (double) buffer.length);
     }
 }

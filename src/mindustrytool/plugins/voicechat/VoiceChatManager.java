@@ -79,39 +79,22 @@ public class VoiceChatManager {
 
         registerPackets();
 
-        // Server-side Logic: Handshake with new players (Reverse Ping)
-        // Check for specific version compatibility using a unique ID
-        final long MAGIC_PING_ID = -291104L; // Changed from -291103L to avoid conflict with older versions
+        // Server-side Logic: Receive Handshake from Client (VoiceResponsePacket)
+        Vars.net.handleServer(VoiceResponsePacket.class, (con, packet) -> {
+            if (con.player != null) {
+                if (packet.protocolVersion == LemmeSayConstants.PROTOCOL_VERSION) {
+                    Log.info("@ Client @ verified modded (Protocol @). Adding to voice recipients.", TAG,
+                            con.player.name, packet.protocolVersion);
+                    moddedClients.add(con);
 
-        arc.Events.on(mindustry.game.EventType.PlayerJoin.class, e -> {
-            if (Vars.net.server()) {
-                // Send Magic Ping to probe client
-                mindustry.gen.PingCallPacket ping = new mindustry.gen.PingCallPacket();
-                ping.time = MAGIC_PING_ID;
-                if (e.player.con != null)
-                    e.player.con.send(ping, true);
-            }
-        });
-
-        // Client-side Logic: Reply to Magic Ping
-        Vars.net.handleClient(mindustry.gen.PingCallPacket.class, ping -> {
-            if (ping.time == MAGIC_PING_ID) {
-                mindustry.gen.PingResponseCallPacket response = new mindustry.gen.PingResponseCallPacket();
-                response.time = MAGIC_PING_ID;
-                Vars.net.send(response, true);
-            }
-        });
-
-        // Server-side Logic: Receive Reply -> Start Voice
-        Vars.net.handleServer(mindustry.gen.PingResponseCallPacket.class, (con, ping) -> {
-            if (ping.time == MAGIC_PING_ID && con.player != null) {
-                Log.info("@ Client @ verified modded. Sending voice handshake.", TAG, con.player.name);
-                // Add to modded clients set - they can receive voice packets
-                moddedClients.add(con);
-                Log.info("@ Added @ to moddedClients (total: @)", TAG, con.player.name, moddedClients.size);
-                VoiceRequestPacket request = new VoiceRequestPacket();
-                request.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
-                con.send(request, true);
+                    // Send Ack back to client
+                    VoiceRequestPacket ack = new VoiceRequestPacket();
+                    ack.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
+                    con.send(ack, true);
+                } else {
+                    Log.warn("@ Client @ protocol mismatch. Server: @, Client: @", TAG, con.player.name,
+                            LemmeSayConstants.PROTOCOL_VERSION, packet.protocolVersion);
+                }
             }
         });
 
@@ -128,6 +111,18 @@ public class VoiceChatManager {
         arc.Events.on(mindustry.game.EventType.WorldLoadEvent.class, e -> {
             Log.info("@ WorldLoadEvent fired, syncing status", TAG);
             syncStatusForCurrentConnection();
+        });
+
+        // Cleanup when returning to menu (Fixes Audio Loop on Disconnect)
+        arc.Events.on(mindustry.game.EventType.StateChangeEvent.class, e -> {
+            if (e.to == mindustry.core.GameState.State.menu) {
+                Log.info("@ Returned to menu, cleaning up voice resources", TAG);
+                stopCapture();
+                if (speaker != null)
+                    speaker.close();
+                status = VoiceStatus.DISABLED;
+                moddedClients.clear();
+            }
         });
 
         // Initialize audio components (lazy - only when actually used)
@@ -151,14 +146,15 @@ public class VoiceChatManager {
             return;
         }
 
-        // Simplified: Set status to READY immediately when connected
-        // Handshake verification can be reimplemented later if needed
-        if (Vars.net.client() || (Vars.net.server() && !Vars.headless)) {
+        // Client: Send handshake to server immediately
+        if (Vars.net.client()) {
+            status = VoiceStatus.WAITING_HANDSHAKE;
+            sendHandshake(); // <--- PROACTIVE HANDSHAKE
+            Log.info("@ Client: Sent handshake to server", TAG);
+        } else if (Vars.net.server() && !Vars.headless) {
+            // Host: Ready immediately
             status = VoiceStatus.READY;
-            Log.info("@ Status set to READY (connected to: @)", TAG,
-                    Vars.net.client() ? "server" : "hosting");
-
-            // Auto-start capture if enabled and not muted (Critical for Host)
+            // Auto-start capture if enabled
             if (enabled && !muted) {
                 startCapture();
                 status = VoiceStatus.CONNECTED;
@@ -202,22 +198,15 @@ public class VoiceChatManager {
             Log.warn("@ Packets registration error: @", TAG, e.getMessage());
         }
 
-        // Handle incoming voice request from server
+        // Handle incoming voice request from server (ACK)
         Vars.net.handleClient(VoiceRequestPacket.class, packet -> {
-            Log.info("@ Received voice request from server (protocol: @)", TAG, packet.protocolVersion);
+            Log.info("@ Received voice ack from server (protocol: @)", TAG, packet.protocolVersion);
 
-            VoiceResponsePacket response = new VoiceResponsePacket();
             if (packet.protocolVersion != LemmeSayConstants.PROTOCOL_VERSION) {
-                response.responseCode = packet.protocolVersion < LemmeSayConstants.PROTOCOL_VERSION
-                        ? LemmeSayConstants.RESPONSE_SERVER_OUTDATED
-                        : LemmeSayConstants.RESPONSE_CLIENT_OUTDATED;
-                Vars.net.send(response, true);
                 Log.warn("@ Protocol mismatch, voice chat disabled", TAG);
                 return;
             }
 
-            response.responseCode = LemmeSayConstants.RESPONSE_ACCEPTED;
-            Vars.net.send(response, true);
             status = VoiceStatus.READY; // Handshake successful
 
             // Start voice capture if enabled
@@ -225,6 +214,17 @@ public class VoiceChatManager {
                 startCapture();
             }
         });
+
+        // Handle incoming audio on SERVER (Forwarding logic) is in init() now?
+        // No, registerPackets() is called BY init().
+        // Wait, handleServer(MicPacket) was in registerPackets in Step 3141 diff?
+        // Step 3137 shows lines 230-253. These were NOT touched in Step 3141. So they
+        // remain.
+        // I need to ensure I don't delete them if I use write_to_file.
+        // Using write_to_file replaces ENTIRE file.
+        // I must be careful.
+
+        // I will copy the logic:
 
         // Handle incoming audio on SERVER (Forwarding logic)
         Vars.net.handleServer(MicPacket.class, (con, packet) -> {
@@ -314,6 +314,20 @@ public class VoiceChatManager {
     }
 
     /**
+     * Send handshake packet to server to register as a modded client.
+     */
+    public void sendHandshake() {
+        if (!Vars.net.client() || !Vars.net.active())
+            return;
+
+        VoiceResponsePacket packet = new VoiceResponsePacket();
+        packet.responseCode = LemmeSayConstants.RESPONSE_ACCEPTED;
+        packet.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
+        Vars.net.send(packet, true);
+        Log.info("@ Sending proactive handshake (Protocol @)", TAG, packet.protocolVersion);
+    }
+
+    /**
      * Start voice capture thread.
      */
     public void startCapture() {
@@ -356,6 +370,8 @@ public class VoiceChatManager {
 
                 // For mock mic: generating sine wave
                 long mockTime = 0;
+                long lastSpeakingTimeVAD = 0;
+                boolean wasSpeaking = false;
 
                 while (enabled && !muted && Vars.net.active()) {
                     short[] rawAudio;
@@ -365,12 +381,16 @@ public class VoiceChatManager {
                         if (microphone.available() >= VoiceConstants.BUFFER_SIZE) {
                             rawAudio = microphone.read();
                         } else {
-                            Thread.sleep(VoiceConstants.CAPTURE_INTERVAL_MS);
+                            // Calculate sleep time properly to avoid busy wait
+                            // But keeping logical simple
+                            try {
+                                Thread.sleep(VoiceConstants.CAPTURE_INTERVAL_MS / 2);
+                            } catch (Exception e) {
+                            }
                             continue;
                         }
                     } else {
                         // Mock Mic Logic: Generate 440Hz Sine Wave beep
-                        // Beep for 500ms, silence for 500ms
                         boolean beep = (System.currentTimeMillis() / 1000) % 2 == 0;
                         rawAudio = new short[VoiceConstants.BUFFER_SIZE];
                         if (beep) {
@@ -381,10 +401,28 @@ public class VoiceChatManager {
                             }
                         }
                         mockTime += rawAudio.length;
-                        Thread.sleep(20); // Simulate buffer fill time
+                        Thread.sleep(VoiceConstants.CAPTURE_INTERVAL_MS);
                     }
 
                     if (processor != null) {
+                        // VAD (Voice Activity Detection) - Skip silence to save bandwidth (Fix Lag)
+                        if (!useMock) {
+                            double rms = processor.calculateRMS(rawAudio);
+                            if (rms > VoiceProcessor.VAD_THRESHOLD) {
+                                lastSpeakingTimeVAD = System.currentTimeMillis();
+                                wasSpeaking = true;
+                            } else {
+                                // 400ms hangover to prevent cut-off words
+                                if (System.currentTimeMillis() - lastSpeakingTimeVAD > 400) {
+                                    wasSpeaking = false;
+                                }
+                            }
+
+                            if (!wasSpeaking) {
+                                continue; // Skip silent packet -> Huge bandwidth saving!
+                            }
+                        }
+
                         // Denoise (skip if mock to preserve pure tone for testing)
                         short[] processed = useMock ? rawAudio : processor.denoise(rawAudio);
                         byte[] encoded = processor.encode(processed);
@@ -417,7 +455,8 @@ public class VoiceChatManager {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
-                Log.err("@ Capture error: @", TAG, e.getMessage());
+                // Catch ALL exceptions to prevent crash from Encoder or Driver issues
+                Log.err("@ Capture loop crashed: @", TAG, e.getMessage());
                 e.printStackTrace();
             } finally {
                 if (microphone != null && !useMock) {
@@ -462,9 +501,8 @@ public class VoiceChatManager {
                 // If already in a server, request handshake now
                 if (Vars.net.client()) {
                     Log.info("@ Client requesting voice handshake from server...", TAG);
-                    mindustry.gen.PingResponseCallPacket ping = new mindustry.gen.PingResponseCallPacket();
-                    ping.time = -291104L; // MAGIC_PING_ID
-                    Vars.net.send(ping, true);
+                    // Use new handshake
+                    sendHandshake();
                 }
 
                 // If hosting, set status to READY immediately (no handshake needed)
