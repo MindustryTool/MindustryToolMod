@@ -148,18 +148,21 @@ public class VoiceChatManager {
     }
 
     private void syncStatusForCurrentConnection() {
-        if (!enabled || status != VoiceStatus.DISABLED || !Vars.net.active())
+        if (!enabled || !Vars.net.active())
             return;
 
+        // Always re-handshake on WorldLoad (fixes rejoin issues)
         if (Vars.net.client()) {
             status = VoiceStatus.WAITING_HANDSHAKE;
             sendHandshake();
+            Log.info("@ Client: Handshake sent to server", TAG);
         } else if (Vars.net.server() && !Vars.headless) {
             status = VoiceStatus.READY;
-            if (enabled && !muted) {
+            if (!muted) {
                 startCapture();
                 status = VoiceStatus.CONNECTED;
             }
+            Log.info("@ Host: Voice ready", TAG);
         }
     }
 
@@ -274,6 +277,7 @@ public class VoiceChatManager {
                 long lastSpeakingTimeVAD = 0;
                 boolean wasSpeaking = false;
                 long mockTime = 0;
+                long lastPacketSentTime = 0; // Rate Limiter
 
                 while (enabled && !muted && Vars.net.active()) {
                     short[] rawAudio;
@@ -316,7 +320,14 @@ public class VoiceChatManager {
                                 continue;
                         }
 
-                        byte[] encoded = processor.encode(rawAudio); // No Denoise
+                        // Rate Limiter: Max ~12 packets/second to prevent CLaJ kick
+                        long now = System.currentTimeMillis();
+                        if (now - lastPacketSentTime < 80) {
+                            continue; // Skip this packet, too fast
+                        }
+                        lastPacketSentTime = now;
+
+                        byte[] encoded = processor.encode(rawAudio);
                         MicPacket packet = new MicPacket();
                         packet.audioData = encoded;
                         packet.playerid = Vars.player.id;
@@ -324,10 +335,10 @@ public class VoiceChatManager {
                         if (Vars.net.server() && !Vars.headless) {
                             for (NetConnection con : moddedClients) {
                                 if (con.isConnected())
-                                    con.send(packet, true); // Reliable TCP
+                                    con.send(packet, true);
                             }
                         } else {
-                            Vars.net.send(packet, true); // Reliable TCP
+                            Vars.net.send(packet, true);
                         }
                     }
                 }
