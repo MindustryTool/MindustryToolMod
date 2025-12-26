@@ -298,8 +298,12 @@ public class AndroidMicrophone {
                     }
                     packetsReceived++;
 
+                    if (packetsReceived == 1) {
+                        arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Mic Data Receiving!"));
+                    }
+
                     // Log stats periodically
-                    if (packetsReceived % 50 == 0) { // Notify more frequently for debugging
+                    if (packetsReceived % 100 == 0) { // Notify less frequently (every ~2s)
                         Log.info("@ Received @ packets, dropped @ (queue: @)",
                                 TAG, packetsReceived, packetsDropped, audioQueue.size());
                         arc.Core.app
