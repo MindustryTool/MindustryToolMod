@@ -277,7 +277,6 @@ public class VoiceChatManager {
                 long lastSpeakingTimeVAD = 0;
                 boolean wasSpeaking = false;
                 long mockTime = 0;
-                long lastPacketSentTime = 0; // Rate Limiter
 
                 while (enabled && !muted && Vars.net.active()) {
                     short[] rawAudio;
@@ -320,12 +319,7 @@ public class VoiceChatManager {
                                 continue;
                         }
 
-                        // Rate Limiter: Max ~12 packets/second to prevent CLaJ kick
-                        long now = System.currentTimeMillis();
-                        if (now - lastPacketSentTime < 80) {
-                            continue; // Skip this packet, too fast
-                        }
-                        lastPacketSentTime = now;
+                        // Rate limiter removed - SPAM_LIMIT increased on server
 
                         byte[] encoded = processor.encode(rawAudio);
                         MicPacket packet = new MicPacket();
