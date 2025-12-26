@@ -14,7 +14,6 @@ public class VoiceResponsePacket extends Packet {
 
     private byte[] DATA;
     public byte responseCode;
-    public int protocolVersion;
 
     public VoiceResponsePacket() {
         this.DATA = NODATA;
@@ -30,16 +29,12 @@ public class VoiceResponsePacket extends Packet {
         this.DATA = read.b(length);
     }
 
-    @Override
     public void write(Writes write) {
         write.b(responseCode);
-        write.i(protocolVersion);
     }
 
-    @Override
     public void handled() {
         BAIS.setBytes(this.DATA);
         this.responseCode = READ.b();
-        this.protocolVersion = READ.i();
     }
 }

@@ -82,19 +82,14 @@ public class VoiceChatManager {
         // Server-side Logic: Receive Handshake from Client (VoiceResponsePacket)
         Vars.net.handleServer(VoiceResponsePacket.class, (con, packet) -> {
             if (con.player != null) {
-                if (packet.protocolVersion == LemmeSayConstants.PROTOCOL_VERSION) {
-                    Log.info("@ Client @ verified modded (Protocol @). Adding to voice recipients.", TAG,
-                            con.player.name, packet.protocolVersion);
-                    moddedClients.add(con);
+                // Handshake accepted (Legacy mode: No protocol check)
+                Log.info("@ Client @ verified modded. Adding to voice recipients.", TAG, con.player.name);
+                moddedClients.add(con);
 
-                    // Send Ack back to client
-                    VoiceRequestPacket ack = new VoiceRequestPacket();
-                    ack.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
-                    con.send(ack, true);
-                } else {
-                    Log.warn("@ Client @ protocol mismatch. Server: @, Client: @", TAG, con.player.name,
-                            LemmeSayConstants.PROTOCOL_VERSION, packet.protocolVersion);
-                }
+                // Send Ack back to client
+                VoiceRequestPacket ack = new VoiceRequestPacket();
+                ack.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
+                con.send(ack, true);
             }
         });
 
@@ -322,9 +317,8 @@ public class VoiceChatManager {
 
         VoiceResponsePacket packet = new VoiceResponsePacket();
         packet.responseCode = LemmeSayConstants.RESPONSE_ACCEPTED;
-        packet.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
         Vars.net.send(packet, true);
-        Log.info("@ Sending proactive handshake (Protocol @)", TAG, packet.protocolVersion);
+        Log.info("@ Sending proactive handshake", TAG);
     }
 
     /**
