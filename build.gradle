@@ -1,8 +1,10 @@
 apply plugin: "java"
+apply plugin: "eclipse"
 
 version '1.0'
 
 sourceSets.main.java.srcDirs = ["src"]
+sourceSets.main.java.exclude "main/**"
 
 // Voice Chat now uses Arc AudioRecorder/AudioDevice (cross-platform)
 // No need to exclude source files anymore
