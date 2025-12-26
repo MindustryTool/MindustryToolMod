@@ -18,6 +18,9 @@ public class DesktopSpeaker {
     @Nullable
     private SourceDataLine speaker;
     private final int sampleRate;
+    private final java.util.concurrent.BlockingQueue<byte[]> audioQueue = new java.util.concurrent.LinkedBlockingQueue<>(20);
+    private Thread playbackThread;
+    private volatile boolean running = false;
 
     public DesktopSpeaker(int sampleRate) {
         this.sampleRate = sampleRate;
@@ -36,9 +39,31 @@ public class DesktopSpeaker {
             speaker = (SourceDataLine) AudioSystem.getLine(info);
             speaker.open(format);
             speaker.start();
+            
+            running = true;
+            playbackThread = new Thread(this::playbackLoop, "VoiceChat-Playback");
+            playbackThread.setDaemon(true);
+            playbackThread.start();
+            
             Log.info("@ Speaker opened", TAG);
         } catch (Exception e) {
             Log.err("@ Failed to open speaker: @", TAG, e.getMessage());
+        }
+    }
+
+    private void playbackLoop() {
+        while (running) {
+            try {
+                byte[] data = audioQueue.take();
+                if (speaker != null && speaker.isOpen()) {
+                    speaker.write(data, 0, data.length);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception e) {
+                Log.err("@ Playback error: @", TAG, e.getMessage());
+            }
         }
     }
 
@@ -47,7 +72,7 @@ public class DesktopSpeaker {
             return;
 
         byte[] bytes = shortsToBytes(audioData);
-        speaker.write(bytes, 0, bytes.length);
+        audioQueue.offer(bytes);
     }
 
     public boolean isOpen() {
@@ -55,6 +80,12 @@ public class DesktopSpeaker {
     }
 
     public void close() {
+        running = false;
+        if (playbackThread != null) {
+            playbackThread.interrupt();
+            playbackThread = null;
+        }
+        
         if (speaker == null)
             return;
         speaker.stop();

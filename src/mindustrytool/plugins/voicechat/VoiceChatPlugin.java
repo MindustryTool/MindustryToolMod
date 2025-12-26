@@ -11,6 +11,12 @@ import arc.util.Time;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.ui.Styles;
+import mindustry.ui.Fonts;
+import mindustry.gen.Icon;
+import arc.graphics.Color;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.TextureRegion;
+import arc.graphics.g2d.GlyphLayout;
 import mindustrytool.Plugin;
 
 public class VoiceChatPlugin implements Plugin {
@@ -20,7 +26,10 @@ public class VoiceChatPlugin implements Plugin {
     private boolean buttonAdded = false;
     private TextButton voiceButton;
     private float debugTimer = 0f;
+
     private boolean isDesktop = false;
+    private static final GlyphLayout layout = new GlyphLayout();
+
 
     @Override
     public String getName() {
@@ -41,6 +50,9 @@ public class VoiceChatPlugin implements Plugin {
             voiceButton.clicked(() -> ((VoiceChatManager) manager).showSettings());
 
             Events.run(EventType.Trigger.update, this::updateUI);
+            
+            Events.run(EventType.Trigger.draw, this::drawWorld);
+
             Log.info("[VoiceChat] Initialized successfully on @.", isDesktop ? "Desktop" : "Mobile");
         } catch (Throwable e) {
             Log.err("[VoiceChat] Failed to initialize: " + e.getMessage());
@@ -107,6 +119,38 @@ public class VoiceChatPlugin implements Plugin {
         }
 
         buttonAdded = true;
+    }
+
+    private void drawWorld() {
+        if (manager == null || !((VoiceChatManager) manager).isEnabled()) return;
+        
+        VoiceChatManager voiceManager = (VoiceChatManager) manager;
+
+        for (mindustry.gen.Player player : mindustry.gen.Groups.player) {
+            if (player.unit() == null) continue;
+
+            boolean isSpeaking = voiceManager.isSpeaking(player.uuid());
+            boolean isSelf = (player == Vars.player);
+            
+            if (isSelf) {
+                 isSpeaking = voiceManager.isSelfSpeaking();
+            }
+
+            // Only show if speaking
+            if (isSpeaking) {
+                float x = player.unit().x;
+                float y = player.unit().y;
+                
+                float iconSize = 5f; // Small icon to avoid distraction
+                
+                TextureRegion micIcon = Core.atlas.find("mindustry-tool-mic-on", Icon.chat.getRegion());
+                
+                // Use a softer green (Pastel)
+                Draw.color(Color.valueOf("88ff88"));
+                Draw.rect(micIcon, x, y, iconSize, iconSize);
+                Draw.reset();
+            }
+        }
     }
 
     @Override

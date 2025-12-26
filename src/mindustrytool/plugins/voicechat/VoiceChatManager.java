@@ -9,6 +9,7 @@ import lemmesay.shared.packet.VoiceRequestPacket;
 import lemmesay.shared.packet.VoiceResponsePacket;
 import mindustry.Vars;
 import mindustry.net.Net;
+import arc.util.Time;
 
 /**
  * VoiceChatManager - Core voice chat logic.
@@ -46,6 +47,8 @@ public class VoiceChatManager {
     // Per-player settings
     private final ObjectMap<String, Boolean> playerMuted = new ObjectMap<>();
     private final ObjectMap<String, Float> playerVolume = new ObjectMap<>(); // 0.0 - 1.0
+    private final ObjectMap<String, Long> lastSpeakingTime = new ObjectMap<>();
+    private static final long SPEAKING_THRESHOLD_MS = 300;
 
     @Nullable
     private VoiceMicrophone microphone;
@@ -136,6 +139,12 @@ public class VoiceChatManager {
             status = VoiceStatus.READY;
             Log.info("@ Status set to READY (connected to: @)", TAG,
                     Vars.net.client() ? "server" : "hosting");
+            
+            // Auto-start capture if enabled and not muted (Critical for Host)
+            if (enabled && !muted) {
+                startCapture();
+                status = VoiceStatus.CONNECTED;
+            }
         }
     }
 
@@ -238,6 +247,10 @@ public class VoiceChatManager {
         }
 
         mindustry.gen.Player sender = mindustry.gen.Groups.player.find(p -> p.id == packet.playerid);
+        if (sender != null) {
+            lastSpeakingTime.put(sender.uuid(), arc.util.Time.millis());
+        }
+        
         if (sender == null) {
             if (forceMock)
                 Log.warn("@ Unknown sender ID: @", TAG, packet.playerid);
@@ -395,7 +408,7 @@ public class VoiceChatManager {
             status = VoiceStatus.DISABLED;
         } else {
             // If already connected (past handshake), start capture immediately
-            if (status == VoiceStatus.READY && !muted && Vars.net.client()) {
+            if (status == VoiceStatus.READY && !muted && Vars.net.active()) {
                 startCapture();
                 status = VoiceStatus.CONNECTED;
             } else if (status == VoiceStatus.DISABLED) {
@@ -493,6 +506,21 @@ public class VoiceChatManager {
 
     public float getPlayerVolume(String playerId) {
         return playerVolume.get(playerId, 1f);
+    }
+
+    public boolean isSpeaking(String playerId) {
+        // Check if player has sent audio recently
+        long lastTime = lastSpeakingTime.get(playerId, 0L);
+        return Time.timeSinceMillis(lastTime) < SPEAKING_THRESHOLD_MS;
+    }
+
+    public boolean isSelfSpeaking() {
+        // Check if we are capturing audio
+        return isRecording() && microphone != null && microphone.available() > 0;
+    }
+    
+    public boolean isRecording() {
+        return enabled && !muted && status == VoiceStatus.CONNECTED;
     }
 
     public VoiceStatus getStatus() {

@@ -30,18 +30,35 @@ public class DesktopMicrophone {
             throw new IllegalStateException("Microphone is already open");
         }
 
+        // List all available mixers for debugging
+        Log.info("@ Available Audio Mixers:", TAG);
+        for (Mixer.Info info : AudioSystem.getMixerInfo()) {
+            Log.info("  - @ (@)", info.getName(), info.getDescription());
+        }
+
         AudioFormat format = new AudioFormat(
                 AudioFormat.Encoding.PCM_SIGNED,
                 sampleRate, 16, 1, 2, sampleRate, false);
 
         mic = getDefaultMicrophone(format);
+        
+        // Fallback to 44100Hz if 48000Hz fails
+        if (mic == null && sampleRate == 48000) {
+             Log.warn("@ 48000Hz not supported, trying 44100Hz...", TAG);
+             AudioFormat fallbackFormat = new AudioFormat(
+                AudioFormat.Encoding.PCM_SIGNED,
+                44100, 16, 1, 2, 44100, false);
+             mic = getDefaultMicrophone(fallbackFormat);
+        }
+
         if (mic == null) {
             throw new IllegalStateException("No microphone found on this system");
         }
 
         try {
-            mic.open(format);
-            Log.info("@ Microphone opened", TAG);
+            // Ensure we open with the format that worked (or the original if we didn't fallback)
+            mic.open(mic.getFormat()); 
+            Log.info("@ Microphone opened. Format: @", TAG, mic.getFormat());
         } catch (LineUnavailableException e) {
             throw new IllegalStateException("Failed to open microphone", e);
         }
@@ -104,6 +121,11 @@ public class DesktopMicrophone {
                 // Avoid busy loop if something is wrong but mic is still open
                 try { Thread.sleep(1); } catch (InterruptedException e) { break; }
             }
+        }
+        
+        // Debug log (throttled)
+        if (Math.random() < 0.01) { // Log ~1% of reads to avoid spam
+             Log.info("@ Read @ bytes from mic", TAG, totalRead);
         }
         
         return bytesToShorts(byteBuffer);
