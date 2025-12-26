@@ -66,6 +66,10 @@ public class AndroidMicrophone {
             return false;
         launchAttempted = true;
 
+        if (mindustry.Vars.ui != null) {
+            arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Launching Companion App..."));
+        }
+
         try {
             // Get Android Context via reflection from Arc's Core.app
             Object app = arc.Core.app;
@@ -96,6 +100,8 @@ public class AndroidMicrophone {
 
             if (context == null) {
                 Log.warn("@ Cannot launch: Unable to get Android Context", TAG);
+                if (mindustry.Vars.ui != null)
+                    arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Launch Failed: No Context"));
                 return false;
             }
 
@@ -125,12 +131,19 @@ public class AndroidMicrophone {
             startActivity.invoke(context, intent);
 
             Log.info("@ Launched VoiceChatCompanion app!", TAG);
+            if (mindustry.Vars.ui != null)
+                arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App Launch Requested!"));
             return true;
 
         } catch (ClassNotFoundException e) {
             Log.warn("@ Cannot launch: Not running on Android", TAG);
+            // if (mindustry.Vars.ui != null) arc.Core.app.post(() ->
+            // mindustry.Vars.ui.hudfrag.showToast("Not Android Platform"));
         } catch (Exception e) {
             Log.warn("@ Failed to launch Companion App: @", TAG, e.getMessage());
+            final String err = e.getMessage();
+            if (mindustry.Vars.ui != null)
+                arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Launch Error: " + err));
         }
         return false;
     }
