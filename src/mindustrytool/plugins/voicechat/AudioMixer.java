@@ -2,26 +2,32 @@ package mindustrytool.plugins.voicechat;
 
 import arc.util.Log;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Discord-style Audio Mixer for multi-stream playback.
- * Combines audio from multiple players into a single output stream.
+ * 120ms-Aware Audio Mixer for multi-speaker support.
  * 
- * Benefits:
- * - No speaker buffer contention when multiple people speak
- * - Consistent timing through central mixer thread
- * - Clipping protection to prevent distortion
+ * Design rationale:
+ * - Packets arrive every 120ms (2 x 60ms frames batched together)
+ * - Each packet results in 2 play() calls (one per frame)
+ * - Mixer accumulates ALL frames from ALL players within a 120ms window
+ * - At end of window, mixes accumulated frames and plays result
+ * 
+ * This prevents interleaving (ABAB) and produces proper mixing (A+B).
  */
 public class AudioMixer {
 
     private static final String TAG = "[AudioMixer]";
-    private static final int MIX_INTERVAL_MS = 60; // Mix every 60ms (matches frame size)
-    private static final int BUFFER_CAPACITY = 8; // Frames per player buffer
-    private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // Samples per frame
 
-    // Per-player audio buffers
-    private final ConcurrentHashMap<String, LinkedBlockingQueue<short[]>> playerBuffers = new ConcurrentHashMap<>();
+    // Match packet timing: 2 frames x 60ms = 120ms
+    private static final int MIX_INTERVAL_MS = 120;
+    private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 2880 samples (60ms)
+    private static final int FRAMES_PER_WINDOW = 2; // 2 frames per 120ms window
+    private static final int WINDOW_SAMPLES = FRAME_SIZE * FRAMES_PER_WINDOW; // 5760 samples (120ms)
+
+    // Per-player frame accumulator
+    private final ConcurrentHashMap<String, List<short[]>> playerFrames = new ConcurrentHashMap<>();
 
     // Output speaker
     private final VoiceSpeaker speaker;
@@ -42,11 +48,11 @@ public class AudioMixer {
             return;
         running = true;
 
-        mixerThread = new Thread(this::mixLoop, "VoiceChat-Mixer");
+        mixerThread = new Thread(this::mixLoop, "VoiceChat-Mixer120");
         mixerThread.setDaemon(true);
         mixerThread.start();
 
-        Log.info("@ Mixer started", TAG);
+        Log.info("@ 120ms Mixer started", TAG);
     }
 
     /**
@@ -58,73 +64,39 @@ public class AudioMixer {
             mixerThread.interrupt();
             mixerThread = null;
         }
-        playerBuffers.clear();
+        playerFrames.clear();
         Log.info("@ Mixer stopped", TAG);
     }
 
     /**
      * Queue decoded audio for a specific player.
-     * Called by VoiceChatManager when receiving voice packets.
+     * Frames are accumulated until next mix window.
      */
     public void queueAudio(String playerId, short[] audioData) {
-        LinkedBlockingQueue<short[]> buffer = playerBuffers.computeIfAbsent(
+        List<short[]> frames = playerFrames.computeIfAbsent(
                 playerId,
-                k -> new LinkedBlockingQueue<>(BUFFER_CAPACITY));
+                k -> new ArrayList<>(4));
 
-        // If buffer is full, drop oldest frame to prevent latency buildup
-        if (!buffer.offer(audioData)) {
-            buffer.poll();
-            buffer.offer(audioData);
+        synchronized (frames) {
+            frames.add(audioData);
         }
     }
 
     /**
-     * Remove a player's buffer (when they disconnect or stop speaking).
+     * Remove a player's buffer.
      */
     public void removePlayer(String playerId) {
-        playerBuffers.remove(playerId);
+        playerFrames.remove(playerId);
     }
 
     /**
-     * Main mixer loop - runs every MIX_INTERVAL_MS.
-     * Reads from all player buffers, mixes, and plays.
+     * Main mixer loop - runs every 120ms to match packet timing.
      */
     private void mixLoop() {
-        long lastMixTime = System.currentTimeMillis();
-
         while (running) {
             try {
-                // Wait for next mix interval
-                long now = System.currentTimeMillis();
-                long elapsed = now - lastMixTime;
-                if (elapsed < MIX_INTERVAL_MS) {
-                    Thread.sleep(MIX_INTERVAL_MS - elapsed);
-                }
-                lastMixTime = System.currentTimeMillis();
-
-                // Collect frames from all players
-                short[][] frames = new short[playerBuffers.size()][];
-                int frameCount = 0;
-
-                for (LinkedBlockingQueue<short[]> buffer : playerBuffers.values()) {
-                    short[] frame = buffer.poll();
-                    if (frame != null && frame.length > 0) {
-                        frames[frameCount++] = frame;
-                    }
-                }
-
-                // If no audio, skip
-                if (frameCount == 0)
-                    continue;
-
-                // Mix all frames into one
-                short[] mixed = mixFrames(frames, frameCount);
-
-                // Play mixed audio
-                if (speaker != null && speaker.isOpen()) {
-                    speaker.play(mixed);
-                }
-
+                Thread.sleep(MIX_INTERVAL_MS);
+                mixAndPlay();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -135,61 +107,69 @@ public class AudioMixer {
     }
 
     /**
-     * Mix multiple audio frames into one.
-     * Uses simple sum with soft clipping to prevent distortion.
+     * Mix all accumulated frames and play.
      */
-    private short[] mixFrames(short[][] frames, int count) {
-        if (count == 0)
-            return new short[0];
-        if (count == 1)
-            return frames[0];
+    private void mixAndPlay() {
+        // Collect all frames from all players
+        List<short[]> allFrames = new ArrayList<>();
 
-        // Find the longest frame
+        for (List<short[]> playerFrameList : playerFrames.values()) {
+            synchronized (playerFrameList) {
+                allFrames.addAll(playerFrameList);
+                playerFrameList.clear();
+            }
+        }
+
+        // No audio received
+        if (allFrames.isEmpty())
+            return;
+
+        // If only one source, play directly (no mixing needed)
+        if (allFrames.size() == 1) {
+            speaker.play(allFrames.get(0));
+            return;
+        }
+
+        // Multiple sources: mix all frames
+        // First, determine output length (longest frame)
         int maxLength = 0;
-        for (int i = 0; i < count; i++) {
-            if (frames[i] != null && frames[i].length > maxLength) {
-                maxLength = frames[i].length;
+        for (short[] frame : allFrames) {
+            if (frame.length > maxLength)
+                maxLength = frame.length;
+        }
+
+        // Mix using int[] to prevent overflow
+        int[] mixed = new int[maxLength];
+        for (short[] frame : allFrames) {
+            for (int i = 0; i < frame.length; i++) {
+                mixed[i] += frame[i];
             }
         }
 
-        short[] result = new short[maxLength];
-
+        // Convert back to short[] with soft clipping
+        short[] output = new short[maxLength];
         for (int i = 0; i < maxLength; i++) {
-            // Sum all samples at this position
-            int sum = 0;
-            for (int j = 0; j < count; j++) {
-                if (frames[j] != null && i < frames[j].length) {
-                    sum += frames[j][i];
-                }
-            }
-
-            // Soft clipping to prevent distortion
-            result[i] = softClip(sum);
+            output[i] = softClip(mixed[i]);
         }
 
-        return result;
+        speaker.play(output);
     }
 
     /**
-     * Soft clip to prevent harsh distortion when mixing.
-     * Uses tanh-like curve for smooth limiting.
+     * Soft clip to prevent distortion when mixing.
      */
     private short softClip(int sample) {
-        // Hard limits
         if (sample >= Short.MAX_VALUE)
             return Short.MAX_VALUE;
         if (sample <= Short.MIN_VALUE)
             return Short.MIN_VALUE;
 
-        // For values within range, apply mild compression if approaching limits
-        final int threshold = 24000; // Start compressing near this level
+        final int threshold = 24000;
         if (Math.abs(sample) > threshold) {
-            // Simple soft knee compression
             double normalized = sample / (double) Short.MAX_VALUE;
             double compressed = Math.tanh(normalized * 1.5) / Math.tanh(1.5);
             return (short) (compressed * Short.MAX_VALUE);
         }
-
         return (short) sample;
     }
 
@@ -198,12 +178,5 @@ public class AudioMixer {
      */
     public boolean isRunning() {
         return running;
-    }
-
-    /**
-     * Get number of active player buffers.
-     */
-    public int getActivePlayerCount() {
-        return playerBuffers.size();
     }
 }
