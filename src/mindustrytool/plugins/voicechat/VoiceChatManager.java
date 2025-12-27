@@ -225,16 +225,28 @@ public class VoiceChatManager {
         ensureAudioInitialized();
         if (speaker != null && processor != null) {
             try {
-                short[] decoded = processor.decode(packet.audioData);
-                // Simple volume control
-                if (sender != null) {
-                    float vol = playerVolume.get(sender.uuid(), 1f);
-                    if (vol != 1f) {
-                        for (int i = 0; i < decoded.length; i++)
-                            decoded[i] = (short) (decoded[i] * vol);
+                byte[] data = packet.audioData;
+                // Check if this is a batched packet (has length prefix)
+                if (data.length > 4) {
+                    int offset = 0;
+                    while (offset < data.length - 2) {
+                        int frameLen = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
+                        if (frameLen <= 0 || offset + 2 + frameLen > data.length)
+                            break;
+                        byte[] frameData = new byte[frameLen];
+                        System.arraycopy(data, offset + 2, frameData, 0, frameLen);
+                        short[] decoded = processor.decode(frameData);
+                        if (sender != null) {
+                            float vol = playerVolume.get(sender.uuid(), 1f);
+                            if (vol != 1f) {
+                                for (int i = 0; i < decoded.length; i++)
+                                    decoded[i] = (short) (decoded[i] * vol);
+                            }
+                        }
+                        speaker.play(decoded);
+                        offset += 2 + frameLen;
                     }
                 }
-                speaker.play(decoded);
             } catch (Throwable e) {
                 // prevent spam Log.err
             }
@@ -277,6 +289,7 @@ public class VoiceChatManager {
                 long lastSpeakingTimeVAD = 0;
                 boolean wasSpeaking = false;
                 long mockTime = 0;
+                byte[] pendingFrame = null; // For true frame batching
 
                 while (enabled && !muted && Vars.net.active()) {
                     short[] rawAudio;
@@ -319,11 +332,26 @@ public class VoiceChatManager {
                                 continue;
                         }
 
-                        // Rate limiter removed - SPAM_LIMIT increased on server
-
+                        // True frame batching: accumulate 2 frames, send together in 1 packet
                         byte[] encoded = processor.encode(rawAudio);
+                        if (pendingFrame == null) {
+                            pendingFrame = encoded; // Store first frame
+                            continue;
+                        }
+
+                        // Second frame ready: combine both with length prefixes
+                        byte[] batchedData = new byte[pendingFrame.length + encoded.length + 4];
+                        batchedData[0] = (byte) ((pendingFrame.length >> 8) & 0xFF);
+                        batchedData[1] = (byte) (pendingFrame.length & 0xFF);
+                        System.arraycopy(pendingFrame, 0, batchedData, 2, pendingFrame.length);
+                        int offset = 2 + pendingFrame.length;
+                        batchedData[offset] = (byte) ((encoded.length >> 8) & 0xFF);
+                        batchedData[offset + 1] = (byte) (encoded.length & 0xFF);
+                        System.arraycopy(encoded, 0, batchedData, offset + 2, encoded.length);
+                        pendingFrame = null;
+
                         MicPacket packet = new MicPacket();
-                        packet.audioData = encoded;
+                        packet.audioData = batchedData;
                         packet.playerid = Vars.player.id;
 
                         if (Vars.net.server() && !Vars.headless) {
