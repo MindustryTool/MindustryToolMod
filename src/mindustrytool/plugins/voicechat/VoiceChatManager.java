@@ -122,6 +122,8 @@ public class VoiceChatManager {
         arc.Events.on(mindustry.game.EventType.PlayerLeave.class, e -> {
             if (Vars.net.server() && e.player.con != null) {
                 moddedClients.remove(e.player.con);
+                if (mixer != null)
+                    mixer.removePlayer(e.player.uuid()); // Fix Memory Leak
             }
         });
 
@@ -183,7 +185,10 @@ public class VoiceChatManager {
             if (mixer == null) {
                 mixer = new AudioMixer();
                 mixer.setProcessor(processor);
-                mixer.setVolumeMap(playerVolume);
+                // Sync initial volumes
+                if (playerVolume != null) {
+                    playerVolume.each((id, vol) -> mixer.setVolume(id, vol));
+                }
 
                 // Inject mixer into speaker for pull-based playback
                 speaker.setMixer(mixer);
@@ -488,6 +493,9 @@ public class VoiceChatManager {
 
     public void setPlayerVolume(String id, float v) {
         playerVolume.put(id, v);
+        if (mixer != null) {
+            mixer.setVolume(id, v); // Forward to Audio Thread
+        }
     }
 
     public float getPlayerVolume(String id) {

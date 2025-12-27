@@ -16,8 +16,8 @@ import java.util.LinkedList;
 public class JitterBuffer {
 
     private static final int TARGET_BUFFER_MS = 80; // Target buffer size in ms
-    private static final int FRAME_DURATION_MS = 60; // Each frame is 60ms
-    private static final int MAX_BUFFER_FRAMES = 4; // Max frames to buffer (~240ms)
+    private static final int FRAME_DURATION_MS = 40; // Each frame is 40ms (Updated)
+    private static final int MAX_BUFFER_FRAMES = 12; // Max frames to buffer (~480ms) to handle TCP bursts
 
     // Frame with timestamp
     private static class TimestampedFrame {
@@ -48,7 +48,8 @@ public class JitterBuffer {
         buffer.addLast(new TimestampedFrame(data, now));
 
         // Prime the buffer: wait until we have enough frames
-        if (!primed && buffer.size() >= 2) {
+        // Increased to 4 frames (160ms) to fix "Fan/Choppy" sound due to network jitter
+        if (!primed && buffer.size() >= 4) {
             primed = true;
             lastOutputTime = now;
         }

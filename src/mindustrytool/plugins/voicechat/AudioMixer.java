@@ -26,7 +26,7 @@ public class AudioMixer {
     private static final long PLC_TIMEOUT_MS = 200; // Stop PLC after 200ms of silence
 
     private VoiceProcessor processor;
-    private arc.struct.ObjectMap<String, Float> volumeMap;
+    private final ConcurrentHashMap<String, Float> playerVolume = new ConcurrentHashMap<>();
 
     public AudioMixer() {
         Log.info("@ Mixer created (Pull-based + PLC)", TAG);
@@ -36,8 +36,8 @@ public class AudioMixer {
         this.processor = processor;
     }
 
-    public void setVolumeMap(arc.struct.ObjectMap<String, Float> volumeMap) {
-        this.volumeMap = volumeMap;
+    public void setVolume(String playerId, float volume) {
+        playerVolume.put(playerId, volume);
     }
 
     /**
@@ -145,30 +145,38 @@ public class AudioMixer {
             short[] frame = activeFrames.get(i);
             String pid = activeIds.get(i);
 
-            // Calculate Pan
-            float pan = 0f; // -1 to 1
+            // Calculate Pan (-1 to 1) and Distance
+            float pan = 0f;
+            float distVol = 1f;
+
             if (playerPositions.containsKey(pid)) {
                 arc.math.geom.Vec2 pos = playerPositions.get(pid);
                 float dx = pos.x - listenerX;
+                float dy = pos.y - listenerY;
+
+                // Panning based on X delta
                 pan = arc.math.Mathf.clamp(dx / PAN_RANGE, -1f, 1f);
+
+                // Distance Attenuation (Linear dropoff)
+                float dist = (float) Math.hypot(dx, dy);
+                float maxDist = PAN_RANGE * 2; // Hear up to ~100 blocks away
+                distVol = arc.math.Mathf.clamp(1f - (dist / maxDist), 0f, 1f);
             }
 
-            // Constant Power Pan Laws
-            // L = cos((pan + 1) * PI / 4)
-            // R = sin((pan + 1) * PI / 4)
-            // Simplified Linear for speed:
-            float gainL = 1.0f - (pan + 1.0f) / 2.0f; // 1 at -1, 0 at 1
-            float gainR = (pan + 1.0f) / 2.0f; // 0 at -1, 1 at 1
+            // Constant Power Pan Laws (Square Root)
+            // Maintains consistent volume level across the stereo field
+            float gainL = (float) Math.sqrt((1.0f - pan) * 0.5f);
+            float gainR = (float) Math.sqrt((1.0f + pan) * 0.5f);
 
-            // Adjust loop for Volume
-            float vol = (volumeMap != null) ? volumeMap.get(pid, 1f) : 1f;
-            gainL *= vol;
-            gainR *= vol;
+            // Apply Master Volume + Distance Volume
+            float masterVol = playerVolume.getOrDefault(pid, 1f);
+            float totalGainL = gainL * masterVol * distVol;
+            float totalGainR = gainR * masterVol * distVol;
 
             for (int s = 0; s < Math.min(frame.length, frameSize); s++) {
                 short sample = frame[s];
-                mixBufferL[s] += (int) (sample * gainL);
-                mixBufferR[s] += (int) (sample * gainR);
+                mixBufferL[s] += (int) (sample * totalGainL);
+                mixBufferR[s] += (int) (sample * totalGainR);
             }
         }
 
@@ -186,6 +194,7 @@ public class AudioMixer {
      * Mix multiple audio frames into one.
      * DEPRECATED: Replaced by inline stereo mixing loop above.
      */
+    @SuppressWarnings("unused") // Method kept for potential mono fallback reference
     private short[] mixFrames(List<short[]> frames) {
         return new short[0];
     }
