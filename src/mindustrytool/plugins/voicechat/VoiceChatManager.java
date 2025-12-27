@@ -133,7 +133,7 @@ public class VoiceChatManager {
 
         // Sync status on World Load
         arc.Events.on(mindustry.game.EventType.WorldLoadEvent.class, e -> {
-            syncStatusForCurrentConnection();
+            syncStatus();
         });
 
         // Cleanup on Menu return
@@ -158,11 +158,11 @@ public class VoiceChatManager {
 
         // Check if already in game
         if (enabled && status == VoiceStatus.DISABLED && Vars.net.active()) {
-            syncStatusForCurrentConnection();
+            syncStatus();
         }
     }
 
-    private void syncStatusForCurrentConnection() {
+    public void syncStatus() {
         if (!enabled || !Vars.net.active()) {
             Log.info("@ Sync skipped: Enabled=@, NetActive=@", TAG, enabled, Vars.net.active());
             return;
@@ -489,7 +489,7 @@ public class VoiceChatManager {
                 if (Vars.net.active() && (status == VoiceStatus.DISABLED || status == VoiceStatus.MIC_ERROR)) {
                     Log.info("@ Unmute forcing status sync (Deep Reset)...", TAG);
                     stopCapture(); // CRITICAL: Force cleanup of any stale/broken mic instance
-                    syncStatusForCurrentConnection();
+                    syncStatus();
                 }
 
                 // If valid state, start

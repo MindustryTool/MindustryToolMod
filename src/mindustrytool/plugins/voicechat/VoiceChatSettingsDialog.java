@@ -61,6 +61,17 @@ public class VoiceChatSettingsDialog extends BaseDialog {
         // Debug Controls & Status Indicator hidden/removed
 
         // === GLOBAL SETTINGS ===
+
+        // Aggressive Wake-up: Force sync whenever UI is rebuilt/shown
+        manager.syncStatus();
+
+        // Status Label (Visual Truth)
+        scrollContent.table(t -> {
+            t.left();
+            t.add("Status: ").color(Color.lightGray);
+            t.add(manager.getStatusText()).padLeft(5f);
+        }).padBottom(10f).row();
+
         scrollContent.add("[accent]Device Controls").left().padBottom(10f).row();
 
         // Speaker Controls
