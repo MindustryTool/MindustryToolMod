@@ -96,4 +96,20 @@ public class VoiceSpeaker {
     public boolean isAvailable() {
         return true; // Now available on both platforms
     }
+
+    /**
+     * Set the audio mixer (Desktop only).
+     * Used for Pull-based architecture.
+     */
+    public void setMixer(AudioMixer mixer) {
+        if (platformSpeaker == null)
+            return;
+
+        try {
+            // Available on both DesktopSpeaker and AndroidSpeaker
+            platformSpeaker.getClass().getMethod("setMixer", AudioMixer.class).invoke(platformSpeaker, mixer);
+        } catch (Exception e) {
+            Log.err("@ Failed to set mixer: @", TAG, e.getMessage());
+        }
+    }
 }

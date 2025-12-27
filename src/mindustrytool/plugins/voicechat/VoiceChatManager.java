@@ -135,7 +135,7 @@ public class VoiceChatManager {
             if (e.to == mindustry.core.GameState.State.menu) {
                 stopCapture();
                 if (mixer != null)
-                    mixer.stop();
+                    mixer.removePlayer("all"); // Clear buffers
                 if (speaker != null)
                     speaker.close();
                 status = VoiceStatus.DISABLED;
@@ -178,9 +178,12 @@ public class VoiceChatManager {
                 processor = new VoiceProcessor();
             if (speaker == null)
                 speaker = new VoiceSpeaker();
+
+            // Enable Mixer on ALL platforms (Android now supports pull-mode)
             if (mixer == null) {
-                mixer = new AudioMixer(speaker);
-                mixer.start();
+                mixer = new AudioMixer();
+                // Inject mixer into speaker for pull-based playback
+                speaker.setMixer(mixer);
             }
         } catch (Throwable e) {
             Log.err("@ Failed to init audio: @", TAG, e.getMessage());

@@ -6,61 +6,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Audio Mixer with per-player Jitter Buffers.
+ * Audio Mixer with per-player Jitter Buffers (Pull-Based).
  * 
- * Architecture (based on WebRTC/Discord):
- * 1. Each player has their own JitterBuffer
- * 2. JitterBuffer stabilizes incoming frames (handles network jitter)
- * 3. Mixer pulls stabilized frames from all buffers at consistent rate
- * 4. Mixes all ready frames and plays result
+ * Architecture:
+ * - Passive component (no thread).
+ * - Driven by the Audio Output thread (DesktopSpeaker).
+ * - Provides 'mixOneChunk()' which returns mixed audio or silence.
  * 
- * This fixes the timing issues with previous fixed-interval approaches.
+ * This ensures perfect synchronization with hardware clock, preventing
+ * drift/looping.
  */
 public class AudioMixer {
 
     private static final String TAG = "[AudioMixer]";
-    private static final int OUTPUT_INTERVAL_MS = 60; // Output every 60ms (matches frame size)
 
     // Per-player jitter buffers
     private final ConcurrentHashMap<String, JitterBuffer> playerBuffers = new ConcurrentHashMap<>();
 
-    // Output speaker
-    private final VoiceSpeaker speaker;
-
-    // Mixer thread
-    private Thread mixerThread;
-    private volatile boolean running = false;
-
-    public AudioMixer(VoiceSpeaker speaker) {
-        this.speaker = speaker;
-    }
-
-    /**
-     * Start the mixer thread.
-     */
-    public void start() {
-        if (running)
-            return;
-        running = true;
-
-        mixerThread = new Thread(this::mixLoop, "VoiceChat-JitterMixer");
-        mixerThread.setDaemon(true);
-        mixerThread.start();
-
-        Log.info("@ Jitter Buffer Mixer started", TAG);
-    }
-
-    /**
-     * Stop the mixer thread.
-     */
-    public void stop() {
-        running = false;
-        if (mixerThread != null) {
-            mixerThread.interrupt();
-            mixerThread = null;
-        }
-        playerBuffers.clear();
-        Log.info("@ Mixer stopped", TAG);
+    public AudioMixer() {
+        Log.info("@ Mixer created (Pull-based)", TAG);
     }
 
     /**
@@ -85,54 +49,31 @@ public class AudioMixer {
     }
 
     /**
-     * Main mixer loop - runs every OUTPUT_INTERVAL_MS.
-     * Pulls stabilized frames from all jitter buffers and mixes.
+     * Pull one chunk of mixed audio (typically 60ms).
+     * Returns null if no audio is available.
      */
-    private void mixLoop() {
-        long lastOutputTime = System.currentTimeMillis();
+    public short[] mixOneChunk() {
+        // Collect ready frames from all player jitter buffers
+        List<short[]> readyFrames = new ArrayList<>();
 
-        while (running) {
-            try {
-                // Sleep to maintain consistent output rate
-                long now = System.currentTimeMillis();
-                long elapsed = now - lastOutputTime;
-                long sleepTime = OUTPUT_INTERVAL_MS - elapsed;
-                if (sleepTime > 0) {
-                    Thread.sleep(sleepTime);
-                }
-                lastOutputTime = System.currentTimeMillis();
-
-                // Collect ready frames from all player jitter buffers
-                List<short[]> readyFrames = new ArrayList<>();
-
-                for (JitterBuffer buffer : playerBuffers.values()) {
-                    short[] frame = buffer.pop();
-                    if (frame != null && frame.length > 0) {
-                        readyFrames.add(frame);
-                    }
-                }
-
-                // No audio ready from any player
-                if (readyFrames.isEmpty())
-                    continue;
-
-                // Single player: play directly (no mixing needed)
-                if (readyFrames.size() == 1) {
-                    speaker.play(readyFrames.get(0));
-                    continue;
-                }
-
-                // Multiple players: mix and play
-                short[] mixed = mixFrames(readyFrames);
-                speaker.play(mixed);
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            } catch (Exception e) {
-                Log.err("@ Mix error: @", TAG, e.getMessage());
+        for (JitterBuffer buffer : playerBuffers.values()) {
+            short[] frame = buffer.pop();
+            if (frame != null && frame.length > 0) {
+                readyFrames.add(frame);
             }
         }
+
+        // No audio ready from any player
+        if (readyFrames.isEmpty())
+            return null;
+
+        // Single player: return directly (no mixing needed)
+        if (readyFrames.size() == 1) {
+            return readyFrames.get(0);
+        }
+
+        // Multiple players: mix
+        return mixFrames(readyFrames);
     }
 
     /**
@@ -144,12 +85,16 @@ public class AudioMixer {
         for (short[] frame : frames) {
             if (frame.length > maxLength)
                 maxLength = frame.length;
+
+            // Safety cap: don't mix huge frames
+            if (maxLength > VoiceConstants.BUFFER_SIZE * 2)
+                maxLength = VoiceConstants.BUFFER_SIZE * 2;
         }
 
         // Sum all samples (using int to prevent overflow)
         int[] mixed = new int[maxLength];
         for (short[] frame : frames) {
-            for (int i = 0; i < frame.length; i++) {
+            for (int i = 0; i < Math.min(frame.length, maxLength); i++) {
                 mixed[i] += frame[i];
             }
         }
@@ -179,19 +124,5 @@ public class AudioMixer {
             return (short) (compressed * Short.MAX_VALUE);
         }
         return (short) sample;
-    }
-
-    /**
-     * Check if mixer is running.
-     */
-    public boolean isRunning() {
-        return running;
-    }
-
-    /**
-     * Get number of active player buffers.
-     */
-    public int getActivePlayerCount() {
-        return playerBuffers.size();
     }
 }

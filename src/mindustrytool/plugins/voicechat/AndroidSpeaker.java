@@ -10,7 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * This class should only be loaded on Android platforms.
  * Uses reflection to avoid compile-time dependency on Android SDK.
  * 
- * Optimized to prevent Main Thread blocking and Reflection overhead.
+ * Update: Supports Pull-Based Mixing.
  */
 public class AndroidSpeaker {
 
@@ -31,6 +31,9 @@ public class AndroidSpeaker {
     private Thread playbackThread;
     private volatile boolean running = false;
 
+    // AudioMixer reference
+    private AudioMixer mixer;
+
     // Android AudioTrack constants (via reflection to avoid compile dependency)
     private static final int CHANNEL_OUT_MONO = 4; // AudioFormat.CHANNEL_OUT_MONO
     private static final int ENCODING_PCM_16BIT = 2; // AudioFormat.ENCODING_PCM_16BIT
@@ -40,6 +43,11 @@ public class AndroidSpeaker {
 
     public AndroidSpeaker(int sampleRate) {
         this.sampleRate = sampleRate;
+    }
+
+    public void setMixer(AudioMixer mixer) {
+        this.mixer = mixer;
+        Log.info("@ Mixer set for Android Speaker", TAG);
     }
 
     public void open() {
@@ -100,14 +108,28 @@ public class AndroidSpeaker {
     private void playbackLoop() {
         while (running) {
             try {
-                // Blocking take - waits if empty
-                short[] data = audioQueue.take();
+                short[] data = null;
 
-                if (audioTrack != null && writeMethod != null) {
-                    // This call might block if hardware buffer is full, but it's fine on this
-                    // thread
-                    writeMethod.invoke(audioTrack, data, 0, data.length);
+                // Priority: Check mixer first (Pull mode)
+                if (mixer != null) {
+                    data = mixer.mixOneChunk();
                 }
+
+                // Fallback: Check queue (Direct mode / Legacy)
+                if (data == null) {
+                    data = audioQueue.poll();
+                }
+
+                if (data != null) {
+                    if (audioTrack != null && writeMethod != null) {
+                        // Blocking write
+                        writeMethod.invoke(audioTrack, data, 0, data.length);
+                    }
+                } else {
+                    // No audio - wait slightly to avoid CPU spin
+                    Thread.sleep(10);
+                }
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -118,12 +140,15 @@ public class AndroidSpeaker {
     }
 
     public void play(short[] audioData) {
-        // Non-blocking offer. Drop if full (better than freezing game)
-        if (!audioQueue.offer(audioData)) {
-            // Optional: Log drop or remove oldest
-            audioQueue.poll();
-            audioQueue.offer(audioData);
+        // Only used if mixer is NOT set (Direct mode)
+        if (mixer == null) {
+            if (!audioQueue.offer(audioData)) {
+                audioQueue.poll();
+                audioQueue.offer(audioData);
+            }
         }
+        // If mixer is set, data goes to mixer via VoiceChatManager, this method is
+        // unused.
     }
 
     public boolean isOpen() {

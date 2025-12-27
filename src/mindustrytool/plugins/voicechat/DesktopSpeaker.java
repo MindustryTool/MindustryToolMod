@@ -6,16 +6,14 @@ import arc.util.Nullable;
 import javax.sound.sampled.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Desktop speaker implementation using javax.sound.
  * 
- * Optimized approach:
- * - Separate high-priority playback thread (doesn't block network)
- * - Explicit buffer size for predictable latency
- * - Small queue to smooth minor jitter
- * - Drops old audio if queue is full (prevents latency buildup)
+ * Optimized Pull-Based Architecture:
+ * - Playback thread polls AudioMixer for data.
+ * - This ensures mixing happens at the exact rate of hardware consumption.
+ * - Prevents drift, looping, and stuttering.
  */
 public class DesktopSpeaker {
 
@@ -23,17 +21,22 @@ public class DesktopSpeaker {
 
     // Buffer size: 80ms for low latency
     private static final int BUFFER_SIZE_MS = 80;
-    private static final int QUEUE_SIZE = 20; // Larger queue, no dropping
 
     @Nullable
     private SourceDataLine speaker;
     private final int sampleRate;
-    private final LinkedBlockingQueue<byte[]> audioQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
     private Thread playbackThread;
     private volatile boolean running = false;
 
+    // Reference to mixer (Source of audio)
+    private AudioMixer mixer;
+
     public DesktopSpeaker(int sampleRate) {
         this.sampleRate = sampleRate;
+    }
+
+    public void setMixer(AudioMixer mixer) {
+        this.mixer = mixer;
     }
 
     public void open() {
@@ -59,7 +62,7 @@ public class DesktopSpeaker {
             playbackThread.setPriority(Thread.MAX_PRIORITY); // High priority for audio
             playbackThread.start();
 
-            Log.info("@ Speaker opened (buffer=@ms, queue=@)", TAG, BUFFER_SIZE_MS, QUEUE_SIZE);
+            Log.info("@ Speaker opened (Pull-mode, buffer=@ms)", TAG, BUFFER_SIZE_MS);
         } catch (Exception e) {
             Log.err("@ Failed to open speaker: @", TAG, e.getMessage());
         }
@@ -68,33 +71,48 @@ public class DesktopSpeaker {
     private void playbackLoop() {
         while (running) {
             try {
-                // Block until audio is available
-                byte[] data = audioQueue.take();
-                if (speaker != null && speaker.isOpen()) {
-                    // Write all data at once
-                    speaker.write(data, 0, data.length);
+                if (speaker == null || !speaker.isOpen()) {
+                    Thread.sleep(100);
+                    continue;
+                }
+
+                short[] data = null;
+
+                // Pull from mixer if available
+                if (mixer != null) {
+                    data = mixer.mixOneChunk();
+                }
+
+                if (data != null) {
+                    // Play mixed chunk
+                    byte[] bytes = shortsToBytes(data);
+                    speaker.write(bytes, 0, bytes.length); // Blocking write
+                } else {
+                    // No audio available - wait a bit to avoid CPU spin
+                    // Small sleep (10ms) allows checking for new audio frequently
+                    Thread.sleep(10);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception e) {
                 Log.err("@ Playback error: @", TAG, e.getMessage());
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {
+                }
             }
         }
     }
 
     /**
-     * Queue audio for playback.
-     * Uses large queue to avoid dropping audio.
+     * Legacy method for direct play (if mixer not used).
+     * Since we switched to pull-based, this does nothing or could be fallback?
+     * Ideally, VoiceChatManager should ONLY use mixer.queueAudio.
      */
     public void play(short[] audioData) {
-        if (speaker == null || !speaker.isOpen())
-            return;
-
-        byte[] bytes = shortsToBytes(audioData);
-
-        // Simple offer - queue is large enough to handle bursts
-        audioQueue.offer(bytes);
+        // Direct queueing is deprecated in Pull-mode.
+        // Data should go to Mixer.
     }
 
     public boolean isOpen() {
@@ -107,7 +125,6 @@ public class DesktopSpeaker {
             playbackThread.interrupt();
             playbackThread = null;
         }
-        audioQueue.clear();
 
         if (speaker == null)
             return;
