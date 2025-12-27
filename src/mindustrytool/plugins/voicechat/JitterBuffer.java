@@ -21,11 +21,11 @@ public class JitterBuffer {
 
     // Frame with timestamp
     private static class TimestampedFrame {
-        final short[] samples;
+        final byte[] data;
         final long arrivalTime;
 
-        TimestampedFrame(short[] samples, long arrivalTime) {
-            this.samples = samples;
+        TimestampedFrame(byte[] data, long arrivalTime) {
+            this.data = data;
             this.arrivalTime = arrivalTime;
         }
     }
@@ -35,9 +35,9 @@ public class JitterBuffer {
     private boolean primed = false; // Has buffer reached target size?
 
     /**
-     * Add a decoded audio frame to the buffer.
+     * Add an encoded Opus frame to the buffer.
      */
-    public synchronized void push(short[] samples) {
+    public synchronized void push(byte[] data) {
         long now = System.currentTimeMillis();
 
         // If buffer is full, drop oldest frame
@@ -45,7 +45,7 @@ public class JitterBuffer {
             buffer.pollFirst();
         }
 
-        buffer.addLast(new TimestampedFrame(samples, now));
+        buffer.addLast(new TimestampedFrame(data, now));
 
         // Prime the buffer: wait until we have enough frames
         if (!primed && buffer.size() >= 2) {
@@ -55,18 +55,10 @@ public class JitterBuffer {
     }
 
     /**
-     * Get the next stabilized frame for playback.
-     * Returns null if buffer is empty or not ready yet.
-     * 
-     * Call this at a consistent rate (e.g., every 60ms).
+     * Get the next frame for decoding.
+     * Returns null if buffer is empty (triggers PLC in mixer).
      */
-    /**
-     * Get the next stabilized frame for playback.
-     * Returns null if buffer is empty or not ready yet.
-     * 
-     * Call this at a consistent rate (e.g., every 60ms).
-     */
-    public synchronized short[] pop() {
+    public synchronized byte[] pop() {
         // Not primed yet - wait for more frames
         if (!primed || buffer.isEmpty()) {
             return null;
@@ -75,7 +67,7 @@ public class JitterBuffer {
         // Return the oldest frame immediately (Mixer thread handles timing)
         TimestampedFrame frame = buffer.pollFirst();
         if (frame != null) {
-            return frame.samples;
+            return frame.data;
         }
 
         return null;

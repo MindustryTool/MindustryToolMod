@@ -155,6 +155,33 @@ public class VoiceProcessor {
         }
     }
 
+    /**
+     * Decode with Packet Loss Concealment (PLC).
+     * Call this when a packet is expected but missing.
+     * Generates a frame based on previous audio state.
+     */
+    public short[] decodePLC(String playerId) {
+        OpusDecoder decoder = decoders.get(playerId);
+        if (decoder == null)
+            return new short[0];
+
+        try {
+            synchronized (decoder) {
+                short[] output = new short[FRAME_SIZE];
+                // Passing null to decode triggers PLC
+                int decodedSamples = decoder.decode(null, 0, 0, output, 0, FRAME_SIZE, false);
+
+                if (decodedSamples <= 0)
+                    return new short[0];
+
+                return output;
+            }
+        } catch (OpusException e) {
+            Log.err("@ PLC error for @: @", TAG, playerId, e.getMessage());
+            return new short[0];
+        }
+    }
+
     public boolean isDenoiseEnabled() {
         return denoiseEnabled;
     }

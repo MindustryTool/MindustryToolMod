@@ -4,17 +4,15 @@ import arc.util.Log;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.ArrayList;
 import java.util.List;
+import arc.util.Time;
 
 /**
- * Audio Mixer with per-player Jitter Buffers (Pull-Based).
+ * Audio Mixer with PLC-enabled Jitter Buffers (Pull-Based).
  * 
  * Architecture:
- * - Passive component (no thread).
- * - Driven by the Audio Output thread (DesktopSpeaker).
- * - Provides 'mixOneChunk()' which returns mixed audio or silence.
- * 
- * This ensures perfect synchronization with hardware clock, preventing
- * drift/looping.
+ * - Stores encoded Opus packets in JitterBuffers.
+ * - Decodes on-demand during mixing (PLC applied if packet missing).
+ * - Driven by DesktopSpeaker thread.
  */
 public class AudioMixer {
 
@@ -23,29 +21,51 @@ public class AudioMixer {
     // Per-player jitter buffers
     private final ConcurrentHashMap<String, JitterBuffer> playerBuffers = new ConcurrentHashMap<>();
 
+    // Track last activity to know when to trigger PLC vs Silence
+    private final ConcurrentHashMap<String, Long> lastActiveTime = new ConcurrentHashMap<>();
+    private static final long PLC_TIMEOUT_MS = 200; // Stop PLC after 200ms of silence
+
+    private VoiceProcessor processor;
+    private arc.struct.ObjectMap<String, Float> volumeMap;
+
     public AudioMixer() {
-        Log.info("@ Mixer created (Pull-based)", TAG);
+        Log.info("@ Mixer created (Pull-based + PLC)", TAG);
+    }
+
+    public void setProcessor(VoiceProcessor processor) {
+        this.processor = processor;
+    }
+
+    public void setVolumeMap(arc.struct.ObjectMap<String, Float> volumeMap) {
+        this.volumeMap = volumeMap;
     }
 
     /**
-     * Queue decoded audio for a specific player.
-     * Audio is added to that player's jitter buffer.
+     * Queue encoded Opus frame for a specific player.
      */
-    public void queueAudio(String playerId, short[] audioData) {
+    public void queueAudio(String playerId, byte[] opusData) {
         JitterBuffer buffer = playerBuffers.computeIfAbsent(
                 playerId,
                 k -> new JitterBuffer());
-        buffer.push(audioData);
+        buffer.push(opusData);
+        lastActiveTime.put(playerId, Time.millis());
     }
 
     /**
      * Remove a player's buffer.
      */
     public void removePlayer(String playerId) {
+        if ("all".equals(playerId)) {
+            playerBuffers.clear();
+            lastActiveTime.clear();
+            return;
+        }
+
         JitterBuffer removed = playerBuffers.remove(playerId);
         if (removed != null) {
             removed.clear();
         }
+        lastActiveTime.remove(playerId);
     }
 
     /**
@@ -53,13 +73,46 @@ public class AudioMixer {
      * Returns null if no audio is available.
      */
     public short[] mixOneChunk() {
-        // Collect ready frames from all player jitter buffers
-        List<short[]> readyFrames = new ArrayList<>();
+        if (processor == null)
+            return null;
 
-        for (JitterBuffer buffer : playerBuffers.values()) {
-            short[] frame = buffer.pop();
-            if (frame != null && frame.length > 0) {
-                readyFrames.add(frame);
+        List<short[]> readyFrames = new ArrayList<>();
+        long now = Time.millis();
+
+        // Iterate keys to handle PLC even if buffer empty
+        for (String playerId : playerBuffers.keySet()) {
+            JitterBuffer buffer = playerBuffers.get(playerId);
+            if (buffer == null)
+                continue;
+
+            byte[] encoded = buffer.pop();
+            short[] decoded = null;
+
+            if (encoded != null) {
+                // Packet available - decode normally
+                decoded = processor.decode(playerId, encoded);
+                lastActiveTime.put(playerId, now);
+            } else {
+                // Packet missing - check if we should do PLC
+                Long lastActive = lastActiveTime.get(playerId);
+                if (lastActive != null && now - lastActive < PLC_TIMEOUT_MS) {
+                    // Generate PLC frame
+                    decoded = processor.decodePLC(playerId);
+                }
+            }
+
+            if (decoded != null && decoded.length > 0) {
+                // Apply Volume (if map available)
+                if (volumeMap != null) {
+                    float vol = volumeMap.get(playerId, 1f);
+                    if (vol != 1f) {
+                        for (int i = 0; i < decoded.length; i++) {
+                            decoded[i] = (short) (decoded[i] * vol);
+                        }
+                    }
+                }
+
+                readyFrames.add(decoded);
             }
         }
 
@@ -67,7 +120,7 @@ public class AudioMixer {
         if (readyFrames.isEmpty())
             return null;
 
-        // Single player: return directly (no mixing needed)
+        // Single player: return directly
         if (readyFrames.size() == 1) {
             return readyFrames.get(0);
         }

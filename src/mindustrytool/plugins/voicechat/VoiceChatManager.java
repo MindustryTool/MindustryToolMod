@@ -182,6 +182,9 @@ public class VoiceChatManager {
             // Enable Mixer on ALL platforms (Android now supports pull-mode)
             if (mixer == null) {
                 mixer = new AudioMixer();
+                mixer.setProcessor(processor);
+                mixer.setVolumeMap(playerVolume);
+
                 // Inject mixer into speaker for pull-based playback
                 speaker.setMixer(mixer);
             }
@@ -251,24 +254,10 @@ public class VoiceChatManager {
                         byte[] frameData = new byte[frameLen];
                         System.arraycopy(data, offset + 2, frameData, 0, frameLen);
 
-                        // Use per-player decoding to maintain Opus state
-                        String decoderId = sender != null ? sender.uuid() : "unknown_" + packet.playerid;
-                        short[] decoded = processor.decode(decoderId, frameData);
-
-                        if (sender != null) {
-                            float vol = playerVolume.get(sender.uuid(), 1f);
-                            if (vol != 1f) {
-                                for (int i = 0; i < decoded.length; i++)
-                                    decoded[i] = (short) (decoded[i] * vol);
-                            }
-                        }
-                        // Route through mixer for proper multi-stream mixing
+                        // Route through mixer (It handles Decoding + PLC + Mixing)
                         if (mixer != null) {
                             String mixId = sender != null ? sender.uuid() : "unknown_" + packet.playerid;
-                            mixer.queueAudio(mixId, decoded);
-                        } else {
-                            // Fallback (should not happen if initialized)
-                            speaker.play(decoded);
+                            mixer.queueAudio(mixId, frameData);
                         }
 
                         offset += 2 + frameLen;
