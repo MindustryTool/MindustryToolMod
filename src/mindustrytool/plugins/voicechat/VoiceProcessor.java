@@ -20,7 +20,7 @@ public class VoiceProcessor {
     // Opus encoder settings for good voice quality
     private static final int BITRATE = 24000; // 24 kbps - efficient voice quality
     private static final int COMPLEXITY = 3; // 0-10, lower = less CPU (Critical for Android)
-    private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 40ms at 48kHz
+    private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 60ms at 48kHz
     public static final double VAD_THRESHOLD = 50.0; // RMS Threshold for silence detection
 
     @Nullable
@@ -110,8 +110,9 @@ public class VoiceProcessor {
 
     /**
      * Decode Opus data to audio.
+     * Synchronized to prevent data race when multiple players speak.
      */
-    public short[] decode(byte[] input) {
+    public synchronized short[] decode(byte[] input) {
         if (decoder == null) {
             throw new IllegalStateException("Decoder not initialized");
         }

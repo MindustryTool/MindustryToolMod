@@ -229,9 +229,11 @@ public class VoiceChatManager {
         if (speaker != null && processor != null) {
             try {
                 byte[] data = packet.audioData;
-                // Check if this is a batched packet (has length prefix)
+                // Batched packet: contains 2 frames with length prefixes
+                // Format: [len1:2bytes][frame1:len1bytes][len2:2bytes][frame2:len2bytes]
                 if (data.length > 4) {
                     int offset = 0;
+                    int frameCount = 0;
                     while (offset < data.length - 2) {
                         int frameLen = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
                         if (frameLen <= 0 || offset + 2 + frameLen > data.length)
@@ -246,13 +248,17 @@ public class VoiceChatManager {
                                     decoded[i] = (short) (decoded[i] * vol);
                             }
                         }
-                        // Direct playback - mixer disabled for research
+                        // Queue frame for playback (speaker handles timing)
                         speaker.play(decoded);
                         offset += 2 + frameLen;
+                        frameCount++;
                     }
                 }
             } catch (Throwable e) {
-                // prevent spam Log.err
+                // Log errors but limit spam (only log occasionally)
+                if (Math.random() < 0.01) { // 1% chance to log
+                    Log.warn("@ Audio processing error: @", TAG, e.getMessage());
+                }
             }
         }
     }
