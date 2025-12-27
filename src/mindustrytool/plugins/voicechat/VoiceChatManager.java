@@ -62,6 +62,8 @@ public class VoiceChatManager {
     @Nullable
     private VoiceProcessor processor;
     @Nullable
+    private AudioMixer mixer;
+    @Nullable
     private Thread captureThread;
 
     public VoiceChatManager() {
@@ -167,13 +169,18 @@ public class VoiceChatManager {
     }
 
     private void ensureAudioInitialized() {
-        if (processor != null && speaker != null)
+        if (processor != null && speaker != null && mixer != null)
             return;
         try {
             if (processor == null)
                 processor = new VoiceProcessor();
             if (speaker == null)
                 speaker = new VoiceSpeaker();
+            if (mixer == null) {
+                mixer = new AudioMixer(speaker);
+                mixer.start();
+                Log.info("@ AudioMixer started", TAG);
+            }
         } catch (Throwable e) {
             Log.err("@ Failed to init audio: @", TAG, e.getMessage());
         }
@@ -243,7 +250,11 @@ public class VoiceChatManager {
                                     decoded[i] = (short) (decoded[i] * vol);
                             }
                         }
-                        speaker.play(decoded);
+                        // Route through mixer instead of direct speaker playback
+                        if (mixer != null) {
+                            String senderId = sender != null ? sender.uuid() : "unknown";
+                            mixer.queueAudio(senderId, decoded);
+                        }
                         offset += 2 + frameLen;
                     }
                 }
