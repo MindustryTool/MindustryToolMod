@@ -484,10 +484,11 @@ public class VoiceChatManager {
             if (enabled) {
                 // If we are active in a game but status is stuck (e.g. Disabled), try to sync
                 // first
+                // If we are active in a game but status is stuck (e.g. Disabled), try to sync
+                // first
                 if (Vars.net.active() && (status == VoiceStatus.DISABLED || status == VoiceStatus.MIC_ERROR)) {
-                    Log.info("@ Unmute forcing status sync...", TAG);
-                    // Assuming syncStatusForCurrentConnection() is defined elsewhere in the class
-                    // or will be added. If not, this line will cause a compilation error.
+                    Log.info("@ Unmute forcing status sync (Deep Reset)...", TAG);
+                    stopCapture(); // CRITICAL: Force cleanup of any stale/broken mic instance
                     syncStatusForCurrentConnection();
                 }
 
