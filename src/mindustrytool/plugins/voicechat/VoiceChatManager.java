@@ -169,18 +169,14 @@ public class VoiceChatManager {
     }
 
     private void ensureAudioInitialized() {
-        if (processor != null && speaker != null && mixer != null)
+        if (processor != null && speaker != null)
             return;
         try {
             if (processor == null)
                 processor = new VoiceProcessor();
             if (speaker == null)
                 speaker = new VoiceSpeaker();
-            if (mixer == null) {
-                mixer = new AudioMixer(speaker);
-                mixer.start();
-                Log.info("@ JitterBuffer Mixer started", TAG);
-            }
+            // Mixer disabled - researching proper implementation
         } catch (Throwable e) {
             Log.err("@ Failed to init audio: @", TAG, e.getMessage());
         }
@@ -250,13 +246,8 @@ public class VoiceChatManager {
                                     decoded[i] = (short) (decoded[i] * vol);
                             }
                         }
-                        // Route through JitterBuffer Mixer for multi-speaker support
-                        if (mixer != null) {
-                            String senderId = sender != null ? sender.uuid() : "unknown";
-                            mixer.queueAudio(senderId, decoded);
-                        } else {
-                            speaker.play(decoded);
-                        }
+                        // Direct playback - mixer disabled for research
+                        speaker.play(decoded);
                         offset += 2 + frameLen;
                     }
                 }

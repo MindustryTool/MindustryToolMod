@@ -9,22 +9,24 @@ import java.nio.ByteOrder;
 
 /**
  * Desktop speaker implementation using javax.sound.
- * This class should only be loaded on Desktop platforms.
  * 
- * Uses simple queue-based playback. For multi-speaker support,
- * mixing should be done at a higher level (VoiceChatManager or AudioMixer).
+ * Simplified direct-write approach:
+ * - No queue, no separate thread
+ * - play() directly calls speaker.write() which is blocking
+ * - SourceDataLine handles timing internally
+ * 
+ * This is simpler and avoids queue-related timing issues.
  */
 public class DesktopSpeaker {
 
     private static final String TAG = "[DesktopSpk]";
 
+    // Buffer size: ~100ms at 48kHz mono 16-bit = 9600 bytes
+    private static final int BUFFER_SIZE_MS = 100;
+
     @Nullable
     private SourceDataLine speaker;
     private final int sampleRate;
-    private final java.util.concurrent.BlockingQueue<byte[]> audioQueue = new java.util.concurrent.LinkedBlockingQueue<>(
-            20);
-    private Thread playbackThread;
-    private volatile boolean running = false;
 
     public DesktopSpeaker(int sampleRate) {
         this.sampleRate = sampleRate;
@@ -41,42 +43,31 @@ public class DesktopSpeaker {
         try {
             DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
             speaker = (SourceDataLine) AudioSystem.getLine(info);
-            speaker.open(format);
+
+            // Calculate buffer size for ~100ms latency
+            int bufferSize = (sampleRate * 2 * BUFFER_SIZE_MS) / 1000;
+            speaker.open(format, bufferSize);
             speaker.start();
 
-            running = true;
-            playbackThread = new Thread(this::playbackLoop, "VoiceChat-Playback");
-            playbackThread.setDaemon(true);
-            playbackThread.start();
-
-            Log.info("@ Speaker opened", TAG);
+            Log.info("@ Speaker opened (direct mode, buffer=@ms)", TAG, BUFFER_SIZE_MS);
         } catch (Exception e) {
             Log.err("@ Failed to open speaker: @", TAG, e.getMessage());
         }
     }
 
-    private void playbackLoop() {
-        while (running) {
-            try {
-                byte[] data = audioQueue.take();
-                if (speaker != null && speaker.isOpen()) {
-                    speaker.write(data, 0, data.length);
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            } catch (Exception e) {
-                Log.err("@ Playback error: @", TAG, e.getMessage());
-            }
-        }
-    }
-
+    /**
+     * Play audio data directly.
+     * This method BLOCKS until data is written to the speaker buffer.
+     * The blocking behavior naturally paces the audio playback.
+     */
     public void play(short[] audioData) {
         if (speaker == null || !speaker.isOpen())
             return;
 
         byte[] bytes = shortsToBytes(audioData);
-        audioQueue.offer(bytes);
+
+        // Direct write - speaker.write() is blocking and handles timing
+        speaker.write(bytes, 0, bytes.length);
     }
 
     public boolean isOpen() {
@@ -84,12 +75,6 @@ public class DesktopSpeaker {
     }
 
     public void close() {
-        running = false;
-        if (playbackThread != null) {
-            playbackThread.interrupt();
-            playbackThread = null;
-        }
-
         if (speaker == null)
             return;
         speaker.stop();
