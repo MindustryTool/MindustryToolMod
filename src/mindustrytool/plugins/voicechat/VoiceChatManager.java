@@ -32,7 +32,11 @@ public class VoiceChatManager {
         READY, // Ready to transmit/receive
         MIC_ERROR, // Mic initialization failed
         SPEAKER_ERROR, // Speaker initialization failed
-        CONNECTED // Actively connected and transmitting
+        CONNECTED; // Actively connected and transmitting
+
+        public boolean isError() {
+            return this == MIC_ERROR || this == SPEAKER_ERROR;
+        }
     }
 
     private VoiceStatus status = VoiceStatus.DISABLED;
@@ -145,6 +149,11 @@ public class VoiceChatManager {
             }
         });
 
+        // Retry Handshake Loop (Fix for Windows Client Connectivity)
+        arc.Events.run(mindustry.game.EventType.Trigger.update, () -> {
+            update();
+        });
+
         initialized = true;
 
         // Check if already in game
@@ -154,8 +163,10 @@ public class VoiceChatManager {
     }
 
     private void syncStatusForCurrentConnection() {
-        if (!enabled || !Vars.net.active())
+        if (!enabled || !Vars.net.active()) {
+            Log.info("@ Sync skipped: Enabled=@, NetActive=@", TAG, enabled, Vars.net.active());
             return;
+        }
 
         // Always re-handshake on WorldLoad (fixes rejoin issues)
         if (Vars.net.client()) {
@@ -164,11 +175,12 @@ public class VoiceChatManager {
             Log.info("@ Client: Handshake sent to server", TAG);
         } else if (Vars.net.server() && !Vars.headless) {
             status = VoiceStatus.READY;
+            Log.info("@ Host: Set status READY. Muted=@", TAG, muted);
             if (!muted) {
                 startCapture();
                 status = VoiceStatus.CONNECTED;
+                Log.info("@ Host: Capture started", TAG);
             }
-            Log.info("@ Host: Voice ready", TAG);
         }
     }
 
@@ -290,25 +302,36 @@ public class VoiceChatManager {
     public void sendHandshake() {
         if (!Vars.net.client() || !Vars.net.active())
             return;
+        Log.info("@ Client: Sending Handshake (VoiceResponsePacket)...", TAG);
         VoiceResponsePacket packet = new VoiceResponsePacket();
         packet.responseCode = LemmeSayConstants.RESPONSE_ACCEPTED;
         Vars.net.send(packet, true);
     }
 
     public void startCapture() {
-        if (captureThread != null && captureThread.isAlive())
+        Log.info("@ startCapture() called. Active=@, Enabled=@, Muted=@", TAG, Vars.net.active(), enabled, muted);
+
+        if (muted) {
+            Log.info("@ Start capture aborted: Player is muted.", TAG);
             return;
+        }
+
+        if (captureThread != null && captureThread.isAlive()) {
+            Log.info("@ Capture thread already alive. Skipping.", TAG);
+            return;
+        }
         ensureAudioInitialized();
 
         if (microphone == null) {
             try {
                 microphone = new VoiceMicrophone();
             } catch (Exception e) {
-                Log.warn(e.getMessage());
+                Log.warn("@ Failed to create VoiceMicrophone: @", TAG, e.getMessage());
             }
         }
 
         if (microphone == null && !forceMock) {
+            Log.err("@ Microphone init failed (null). ForceMock=@", TAG, forceMock);
             status = VoiceStatus.MIC_ERROR;
             return;
         }
@@ -410,6 +433,13 @@ public class VoiceChatManager {
     }
 
     public void stopCapture() {
+        // CRITICAL FIX: Close microphone immediately to unblock the reading thread
+        // TargetDataLine.read is blocking and doesn't respect interruptions.
+        if (microphone != null) {
+            microphone.close();
+            microphone = null; // FORCE NULL: Ensure fresh instance next time
+        }
+
         if (captureThread != null) {
             captureThread.interrupt();
             captureThread = null;
@@ -444,11 +474,34 @@ public class VoiceChatManager {
 
     public void setMuted(boolean muted) {
         this.muted = muted;
-        if (muted)
+        Log.info("@ Muted: @", TAG, muted);
+
+        // Auto-react to mute state change
+        if (muted) {
             stopCapture();
-        else if (status == VoiceStatus.READY || status == VoiceStatus.CONNECTED) {
-            startCapture();
-            status = VoiceStatus.CONNECTED;
+        } else {
+            // If unmuting...
+            if (enabled) {
+                // If we are active in a game but status is stuck (e.g. Disabled), try to sync
+                // first
+                if (Vars.net.active() && (status == VoiceStatus.DISABLED || status == VoiceStatus.MIC_ERROR)) {
+                    Log.info("@ Unmute forcing status sync...", TAG);
+                    // Assuming syncStatusForCurrentConnection() is defined elsewhere in the class
+                    // or will be added. If not, this line will cause a compilation error.
+                    syncStatusForCurrentConnection();
+                }
+
+                // If valid state, start
+                if (status == VoiceStatus.CONNECTED || status == VoiceStatus.READY
+                        || status == VoiceStatus.WAITING_HANDSHAKE) {
+                    // Determine if we should start based on connection type
+                    if (Vars.net.client() && status == VoiceStatus.CONNECTED) {
+                        startCapture();
+                    } else if (Vars.net.server() && !Vars.headless) {
+                        startCapture();
+                    }
+                }
+            }
         }
     }
 
@@ -540,5 +593,23 @@ public class VoiceChatManager {
             microphone.close();
         if (speaker != null)
             speaker.close();
+    }
+
+    private long lastHandshakeTime = 0;
+
+    public void update() {
+        if (!enabled)
+            return;
+
+        // Auto-Retry Handshake for Clients
+        if (Vars.net.client() && Vars.net.active()
+                && (status == VoiceStatus.WAITING_HANDSHAKE || status == VoiceStatus.DISABLED)) {
+            if (arc.util.Time.timeSinceMillis(lastHandshakeTime) > 2000) {
+                status = VoiceStatus.WAITING_HANDSHAKE;
+                sendHandshake();
+                lastHandshakeTime = arc.util.Time.millis();
+                // Log.info("@ Retrying handshake...", TAG); // Debug spam check
+            }
+        }
     }
 }

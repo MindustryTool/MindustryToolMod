@@ -21,7 +21,7 @@ public class VoiceProcessor {
     private static final int BITRATE = 36000; // 36 kbps - Very high voice quality (Crisp)
     private static final int COMPLEXITY = 6; // Balance between quality and CPU (Mobile friendly)
     private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 40ms at 48kHz
-    public static final double VAD_THRESHOLD = 50.0; // RMS Threshold for silence detection
+    public static final double VAD_THRESHOLD = 20.0; // Lowered to 20.0 to fix choppy audio/PC mics
 
     @Nullable
     private OpusEncoder encoder;

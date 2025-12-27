@@ -68,7 +68,8 @@ public class AudioMixer {
         lastActiveTime.remove(playerId);
     }
 
-    private static final float PAN_RANGE = 400f; // Range for full pan (in world units)
+    private static final float PAN_RANGE = 400f; // 50 tiles (Stereo width)
+    private static final float MAX_DISTANCE = 1600f; // 200 tiles (Hearing range)
 
     // Spatial State
     private float listenerX, listenerY;
@@ -154,13 +155,14 @@ public class AudioMixer {
                 float dx = pos.x - listenerX;
                 float dy = pos.y - listenerY;
 
-                // Panning based on X delta
+                // Panning based on X delta (using PAN_RANGE)
                 pan = arc.math.Mathf.clamp(dx / PAN_RANGE, -1f, 1f);
 
-                // Distance Attenuation (Linear dropoff)
+                // Distance Attenuation (Linear dropoff using MAX_DISTANCE)
                 float dist = (float) Math.hypot(dx, dy);
-                float maxDist = PAN_RANGE * 2; // Hear up to ~100 blocks away
-                distVol = arc.math.Mathf.clamp(1f - (dist / maxDist), 0f, 1f);
+
+                // Clamp minimum volume to 0.25 (25%) at max distance
+                distVol = arc.math.Mathf.clamp(1f - (dist / MAX_DISTANCE), 0.25f, 1f);
             }
 
             // Constant Power Pan Laws (Square Root)
@@ -203,17 +205,20 @@ public class AudioMixer {
      * Soft clip to prevent distortion.
      */
     private short softClip(int sample) {
-        if (sample >= Short.MAX_VALUE)
-            return Short.MAX_VALUE;
-        if (sample <= Short.MIN_VALUE)
-            return Short.MIN_VALUE;
+        // Tanh Limiter (Dynamic Range Compression)
+        // Handles huge inputs (Multi-speaker sums) without hard clipping or overflow.
+        // Formula: output = MAX_VALUE * tanh(input / MAX_VALUE)
+        // Since tanh approaches 1.0 asymptotically, output approaching MAX_VALUE but
+        // never exceeds it.
 
-        final int threshold = 20000; // Lower threshold slightly for safer mixing
-        if (Math.abs(sample) > threshold) {
-            double normalized = sample / (double) Short.MAX_VALUE;
-            double compressed = Math.tanh(normalized * 1.5) / Math.tanh(1.5);
-            return (short) (compressed * Short.MAX_VALUE);
+        // Fast path for normal volumes
+        if (sample >= -20000 && sample <= 20000) {
+            return (short) sample;
         }
-        return (short) sample;
+
+        // Limiter for loud sums
+        double normalized = sample / 32768.0;
+        double limited = Math.tanh(normalized);
+        return (short) (limited * 32767.0);
     }
 }

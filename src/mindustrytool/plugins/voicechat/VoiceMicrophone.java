@@ -79,13 +79,15 @@ public class VoiceMicrophone {
     }
 
     public void close() {
-        if (platformMic == null)
+        if (platformMic == null || !isOpen)
             return;
+
         try {
             platformMic.getClass().getMethod("close").invoke(platformMic);
         } catch (Exception e) {
             Log.err("@ Failed to close microphone: @", TAG, e.getMessage());
         }
+
         isRecording = false;
         isOpen = false;
         platformMic = null;
