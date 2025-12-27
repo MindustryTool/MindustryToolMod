@@ -64,19 +64,13 @@ public class AndroidMicrophone {
     public boolean launchCompanionApp() {
         if (launchAttempted)
             return false;
-        launchAttempted = true;
-
-        // if (mindustry.Vars.ui != null) {
-        // arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Launching
-        // Companion App..."));
-        // }
 
         try {
             // Get Android Context via reflection from Arc's Core.app
             Object app = arc.Core.app;
             if (app == null) {
                 Log.warn("@ Cannot launch: Core.app is null", TAG);
-                return false;
+                return false; // Did not attempt
             }
 
             // Try to get Context - Arc's AndroidApplication has getContext() or similar
@@ -149,10 +143,7 @@ public class AndroidMicrophone {
             startActivity.invoke(context, intent);
 
             Log.info("@ Launched Companion App (Auto Mode)", TAG);
-            // if (mindustry.Vars.ui != null)
-            // arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("App
-            // Auto-Launched!"));
-
+            launchAttempted = true; // Mark as attempted ONLY on success
             return true;
 
         } catch (Exception e) {
