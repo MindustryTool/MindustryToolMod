@@ -134,6 +134,8 @@ public class VoiceChatManager {
         arc.Events.on(mindustry.game.EventType.StateChangeEvent.class, e -> {
             if (e.to == mindustry.core.GameState.State.menu) {
                 stopCapture();
+                if (mixer != null)
+                    mixer.stop();
                 if (speaker != null)
                     speaker.close();
                 status = VoiceStatus.DISABLED;
@@ -176,7 +178,10 @@ public class VoiceChatManager {
                 processor = new VoiceProcessor();
             if (speaker == null)
                 speaker = new VoiceSpeaker();
-            // Mixer disabled - researching proper implementation
+            if (mixer == null) {
+                mixer = new AudioMixer(speaker);
+                mixer.start();
+            }
         } catch (Throwable e) {
             Log.err("@ Failed to init audio: @", TAG, e.getMessage());
         }
@@ -254,8 +259,15 @@ public class VoiceChatManager {
                                     decoded[i] = (short) (decoded[i] * vol);
                             }
                         }
-                        // Queue frame for playback (speaker handles timing)
-                        speaker.play(decoded);
+                        // Route through mixer for proper multi-stream mixing
+                        if (mixer != null) {
+                            String mixId = sender != null ? sender.uuid() : "unknown_" + packet.playerid;
+                            mixer.queueAudio(mixId, decoded);
+                        } else {
+                            // Fallback (should not happen if initialized)
+                            speaker.play(decoded);
+                        }
+
                         offset += 2 + frameLen;
                         frameCount++;
                     }

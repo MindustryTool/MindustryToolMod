@@ -60,23 +60,19 @@ public class JitterBuffer {
      * 
      * Call this at a consistent rate (e.g., every 60ms).
      */
+    /**
+     * Get the next stabilized frame for playback.
+     * Returns null if buffer is empty or not ready yet.
+     * 
+     * Call this at a consistent rate (e.g., every 60ms).
+     */
     public synchronized short[] pop() {
         // Not primed yet - wait for more frames
         if (!primed || buffer.isEmpty()) {
             return null;
         }
 
-        long now = System.currentTimeMillis();
-
-        // Check if it's time to output next frame
-        long elapsed = now - lastOutputTime;
-        if (elapsed < FRAME_DURATION_MS - 5) { // Allow 5ms tolerance
-            return null; // Not time yet
-        }
-
-        lastOutputTime = now;
-
-        // Pop and return the oldest frame
+        // Return the oldest frame immediately (Mixer thread handles timing)
         TimestampedFrame frame = buffer.pollFirst();
         if (frame != null) {
             return frame.samples;
