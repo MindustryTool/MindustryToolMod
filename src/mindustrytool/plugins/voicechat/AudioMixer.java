@@ -68,17 +68,40 @@ public class AudioMixer {
         lastActiveTime.remove(playerId);
     }
 
+    private static final float PAN_RANGE = 400f; // Range for full pan (in world units)
+
+    // Spatial State
+    private float listenerX, listenerY;
+    private final ConcurrentHashMap<String, arc.math.geom.Vec2> playerPositions = new ConcurrentHashMap<>();
+
+    // Reusable buffers to avoid allocation
+    // Stereo output is 2x frame size
+    // Using int for mixing to avoid overflow before clipping
+    private int[] mixBufferL;
+    private int[] mixBufferR;
+
+    public void updateListener(float x, float y) {
+        this.listenerX = x;
+        this.listenerY = y;
+    }
+
+    public void updatePosition(String playerId, float x, float y) {
+        playerPositions.computeIfAbsent(playerId, k -> new arc.math.geom.Vec2()).set(x, y);
+    }
+
     /**
-     * Pull one chunk of mixed audio (typically 60ms).
+     * Pull one chunk of mixed audio (Stereo Interleaved).
      * Returns null if no audio is available.
      */
     public short[] mixOneChunk() {
         if (processor == null)
             return null;
 
-        List<short[]> readyFrames = new ArrayList<>();
+        List<short[]> activeFrames = new ArrayList<>();
+        List<String> activeIds = new ArrayList<>();
         long now = Time.millis();
 
+        // 1. Gather all active frames
         // Iterate keys to handle PLC even if buffer empty
         for (String playerId : playerBuffers.keySet()) {
             JitterBuffer buffer = playerBuffers.get(playerId);
@@ -89,76 +112,82 @@ public class AudioMixer {
             short[] decoded = null;
 
             if (encoded != null) {
-                // Packet available - decode normally
                 decoded = processor.decode(playerId, encoded);
                 lastActiveTime.put(playerId, now);
             } else {
-                // Packet missing - check if we should do PLC
                 Long lastActive = lastActiveTime.get(playerId);
                 if (lastActive != null && now - lastActive < PLC_TIMEOUT_MS) {
-                    // Generate PLC frame
                     decoded = processor.decodePLC(playerId);
                 }
             }
 
             if (decoded != null && decoded.length > 0) {
-                // Apply Volume (if map available)
-                if (volumeMap != null) {
-                    float vol = volumeMap.get(playerId, 1f);
-                    if (vol != 1f) {
-                        for (int i = 0; i < decoded.length; i++) {
-                            decoded[i] = (short) (decoded[i] * vol);
-                        }
-                    }
-                }
-
-                readyFrames.add(decoded);
+                activeFrames.add(decoded);
+                activeIds.add(playerId);
             }
         }
 
-        // No audio ready from any player
-        if (readyFrames.isEmpty())
+        if (activeFrames.isEmpty())
             return null;
 
-        // Single player: return directly
-        if (readyFrames.size() == 1) {
-            return readyFrames.get(0);
+        // 2. Prepare Mix Buffers
+        int frameSize = activeFrames.get(0).length;
+        if (mixBufferL == null || mixBufferL.length != frameSize) {
+            mixBufferL = new int[frameSize];
+            mixBufferR = new int[frameSize];
+        } else {
+            java.util.Arrays.fill(mixBufferL, 0);
+            java.util.Arrays.fill(mixBufferR, 0);
         }
 
-        // Multiple players: mix
-        return mixFrames(readyFrames);
+        // 3. Mix into L/R with Panning
+        for (int i = 0; i < activeFrames.size(); i++) {
+            short[] frame = activeFrames.get(i);
+            String pid = activeIds.get(i);
+
+            // Calculate Pan
+            float pan = 0f; // -1 to 1
+            if (playerPositions.containsKey(pid)) {
+                arc.math.geom.Vec2 pos = playerPositions.get(pid);
+                float dx = pos.x - listenerX;
+                pan = arc.math.Mathf.clamp(dx / PAN_RANGE, -1f, 1f);
+            }
+
+            // Constant Power Pan Laws
+            // L = cos((pan + 1) * PI / 4)
+            // R = sin((pan + 1) * PI / 4)
+            // Simplified Linear for speed:
+            float gainL = 1.0f - (pan + 1.0f) / 2.0f; // 1 at -1, 0 at 1
+            float gainR = (pan + 1.0f) / 2.0f; // 0 at -1, 1 at 1
+
+            // Adjust loop for Volume
+            float vol = (volumeMap != null) ? volumeMap.get(pid, 1f) : 1f;
+            gainL *= vol;
+            gainR *= vol;
+
+            for (int s = 0; s < Math.min(frame.length, frameSize); s++) {
+                short sample = frame[s];
+                mixBufferL[s] += (int) (sample * gainL);
+                mixBufferR[s] += (int) (sample * gainR);
+            }
+        }
+
+        // 4. Interleave and Clip to Stereo Output
+        short[] stereoOut = new short[frameSize * 2];
+        for (int i = 0; i < frameSize; i++) {
+            stereoOut[i * 2] = softClip(mixBufferL[i]); // Left
+            stereoOut[i * 2 + 1] = softClip(mixBufferR[i]); // Right
+        }
+
+        return stereoOut;
     }
 
     /**
      * Mix multiple audio frames into one.
+     * DEPRECATED: Replaced by inline stereo mixing loop above.
      */
     private short[] mixFrames(List<short[]> frames) {
-        // Find longest frame
-        int maxLength = 0;
-        for (short[] frame : frames) {
-            if (frame.length > maxLength)
-                maxLength = frame.length;
-
-            // Safety cap: don't mix huge frames
-            if (maxLength > VoiceConstants.BUFFER_SIZE * 2)
-                maxLength = VoiceConstants.BUFFER_SIZE * 2;
-        }
-
-        // Sum all samples (using int to prevent overflow)
-        int[] mixed = new int[maxLength];
-        for (short[] frame : frames) {
-            for (int i = 0; i < Math.min(frame.length, maxLength); i++) {
-                mixed[i] += frame[i];
-            }
-        }
-
-        // Convert back with soft clipping
-        short[] output = new short[maxLength];
-        for (int i = 0; i < maxLength; i++) {
-            output[i] = softClip(mixed[i]);
-        }
-
-        return output;
+        return new short[0];
     }
 
     /**
@@ -170,7 +199,7 @@ public class AudioMixer {
         if (sample <= Short.MIN_VALUE)
             return Short.MIN_VALUE;
 
-        final int threshold = 24000;
+        final int threshold = 20000; // Lower threshold slightly for safer mixing
         if (Math.abs(sample) > threshold) {
             double normalized = sample / (double) Short.MAX_VALUE;
             double compressed = Math.tanh(normalized * 1.5) / Math.tanh(1.5);

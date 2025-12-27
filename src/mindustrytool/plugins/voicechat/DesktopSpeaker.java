@@ -45,7 +45,7 @@ public class DesktopSpeaker {
 
         AudioFormat format = new AudioFormat(
                 AudioFormat.Encoding.PCM_SIGNED,
-                sampleRate, 16, 1, 2, sampleRate, false);
+                sampleRate, 16, 2, 4, sampleRate, false); // 2 Channels (Stereo), 4 bytes/frame
 
         try {
             DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);

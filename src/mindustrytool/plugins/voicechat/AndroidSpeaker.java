@@ -36,6 +36,7 @@ public class AndroidSpeaker {
 
     // Android AudioTrack constants (via reflection to avoid compile dependency)
     private static final int CHANNEL_OUT_MONO = 4; // AudioFormat.CHANNEL_OUT_MONO
+    private static final int CHANNEL_OUT_STEREO = 12; // AudioFormat.CHANNEL_OUT_STEREO
     private static final int ENCODING_PCM_16BIT = 2; // AudioFormat.ENCODING_PCM_16BIT
     private static final int STREAM_MUSIC = 3; // AudioManager.STREAM_MUSIC
     private static final int MODE_STREAM = 1; // AudioTrack.MODE_STREAM
@@ -59,19 +60,20 @@ public class AndroidSpeaker {
 
             // Get minimum buffer size
             minBufferSize = (int) audioTrackClass.getMethod("getMinBufferSize", int.class, int.class, int.class)
-                    .invoke(null, sampleRate, CHANNEL_OUT_MONO, ENCODING_PCM_16BIT);
+                    .invoke(null, sampleRate, CHANNEL_OUT_STEREO, ENCODING_PCM_16BIT);
 
             if (minBufferSize <= 0) {
                 throw new IllegalStateException("Invalid min buffer size: " + minBufferSize);
             }
 
             // Use larger buffer to avoid underruns
-            int actualBufferSize = Math.max(minBufferSize, VoiceConstants.BUFFER_SIZE * 2 * 2);
+            // Stereo = 2x samples, so ensure buffer is adequate
+            int actualBufferSize = Math.max(minBufferSize, VoiceConstants.BUFFER_SIZE * 2 * 4); // x4 factor for safety
 
             // Create AudioTrack instance
             audioTrack = audioTrackClass
                     .getConstructor(int.class, int.class, int.class, int.class, int.class, int.class)
-                    .newInstance(STREAM_MUSIC, sampleRate, CHANNEL_OUT_MONO, ENCODING_PCM_16BIT, actualBufferSize,
+                    .newInstance(STREAM_MUSIC, sampleRate, CHANNEL_OUT_STEREO, ENCODING_PCM_16BIT, actualBufferSize,
                             MODE_STREAM);
 
             // Check if initialized properly

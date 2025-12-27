@@ -257,11 +257,20 @@ public class VoiceChatManager {
                         // Route through mixer (It handles Decoding + PLC + Mixing)
                         if (mixer != null) {
                             String mixId = sender != null ? sender.uuid() : "unknown_" + packet.playerid;
+
+                            // Update positions for Spatial Audio
+                            if (sender != null) {
+                                mixer.updatePosition(mixId, sender.x, sender.y);
+                            }
+                            if (mindustry.Vars.player != null) {
+                                mixer.updateListener(mindustry.Vars.player.x, mindustry.Vars.player.y);
+                            }
+
                             mixer.queueAudio(mixId, frameData);
                         }
 
                         offset += 2 + frameLen;
-                        frameCount++;
+                        // frameCount++; // Unused variable removed
                     }
                 }
             } catch (Throwable e) {
