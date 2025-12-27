@@ -376,26 +376,31 @@ public class AndroidMicrophone {
     }
 
     public void close() {
+        if (!isOpen)
+            return;
         isOpen = false;
-        isRecording = false;
-        isRecording = false; // Keep this
-        audioQueue.clear(); // Keep this
-
-        // Don't kill the app, just stop it from recording if needed?
-        // Actually, if we close the socket, the App detects EOF and goes into Reconnect
-        // mode.
-        // So we don't need to send SHUTDOWN.
-        // sendCommand(CMD_SHUTDOWN); // REMOVED: Keep app alive in background
 
         try {
-            if (clientSocket != null) {
-                clientSocket.close();
-            }
-            if (serverSocket != null) {
-                serverSocket.close();
+            // Try to tell companion to stop first
+            if (outputStream != null) {
+                outputStream.write(CMD_STOP_MIC);
+                outputStream.flush();
             }
         } catch (Exception e) {
-            Log.err("Error closing AndroidMicrophone server: " + e.getMessage());
+        }
+
+        isRecording = false;
+        // isRecording = false; // Duplicate removed
+        audioQueue.clear();
+
+        // Close sockets to release blocks
+        try {
+            if (clientSocket != null)
+                clientSocket.close();
+            if (serverSocket != null)
+                serverSocket.close();
+        } catch (Exception e) {
+            Log.warn("@ Error closing AndroidMic sockets: @", TAG, e.getMessage());
         }
 
         clientSocket = null;
@@ -403,13 +408,13 @@ public class AndroidMicrophone {
         outputStream = null;
         inputStream = null;
 
-        if (serverThread != null) { // Keep this
+        if (serverThread != null) {
             serverThread.interrupt();
             serverThread = null;
         }
 
-        launchAttempted = false; // Allow re-launch if needed (though app should handle re-focus gracefully now)
-        Log.info("AndroidMicrophone server closed");
+        launchAttempted = false;
+        Log.info("@ AndroidMicrophone closed", TAG);
     }
 
     public boolean isOpen() {

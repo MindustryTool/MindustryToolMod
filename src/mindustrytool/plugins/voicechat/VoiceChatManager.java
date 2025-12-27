@@ -41,10 +41,10 @@ public class VoiceChatManager {
 
     private VoiceStatus status = VoiceStatus.DISABLED;
 
-    private boolean initialized = false;
-    private boolean enabled = true; // Speaker enabled by default
-    private boolean muted = true; // Mic muted by default (user must unmute to speak)
-    private boolean forceMock = false; // Force usage of mock microphone
+    private volatile boolean initialized = false;
+    private volatile boolean enabled = true; // Speaker enabled by default
+    private volatile boolean muted = true; // Mic muted by default (user must unmute to speak)
+    private volatile boolean forceMock = false; // Force usage of mock microphone
 
     // Modes
     private VoiceMode speakerMode = VoiceMode.ALL;
