@@ -18,9 +18,9 @@ public class VoiceProcessor {
     private static final String TAG = "[VoiceProc]";
 
     // Opus encoder settings for good voice quality
-    private static final int BITRATE = 24000; // 24 kbps - efficient voice quality
-    private static final int COMPLEXITY = 3; // 0-10, lower = less CPU (Critical for Android)
-    private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 60ms at 48kHz
+    private static final int BITRATE = 36000; // 36 kbps - Very high voice quality (Crisp)
+    private static final int COMPLEXITY = 6; // Balance between quality and CPU (Mobile friendly)
+    private static final int FRAME_SIZE = VoiceConstants.BUFFER_SIZE; // 40ms at 48kHz
     public static final double VAD_THRESHOLD = 50.0; // RMS Threshold for silence detection
 
     @Nullable
@@ -80,6 +80,13 @@ public class VoiceProcessor {
         // Validate input size
         if (input == null || input.length == 0) {
             return new byte[0];
+        }
+
+        // Voice Activity Detection (VAD) - Noise Gate
+        // Filter out silence/static noise to improve clarity and save bandwidth
+        double rms = calculateRMS(input);
+        if (rms < VAD_THRESHOLD) {
+            return new byte[0]; // Send silence (Decoder will generate silence)
         }
 
         try {
