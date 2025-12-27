@@ -213,6 +213,7 @@ public class VoiceChatManager {
     private void processIncomingVoice(MicPacket packet) {
         if (!enabled)
             return;
+        // Check if sender is valid (prevent echo loop)
         if (Vars.player != null && packet.playerid == Vars.player.id)
             return;
 
@@ -238,9 +239,14 @@ public class VoiceChatManager {
                         int frameLen = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
                         if (frameLen <= 0 || offset + 2 + frameLen > data.length)
                             break;
+
                         byte[] frameData = new byte[frameLen];
                         System.arraycopy(data, offset + 2, frameData, 0, frameLen);
-                        short[] decoded = processor.decode(frameData);
+
+                        // Use per-player decoding to maintain Opus state
+                        String decoderId = sender != null ? sender.uuid() : "unknown_" + packet.playerid;
+                        short[] decoded = processor.decode(decoderId, frameData);
+
                         if (sender != null) {
                             float vol = playerVolume.get(sender.uuid(), 1f);
                             if (vol != 1f) {

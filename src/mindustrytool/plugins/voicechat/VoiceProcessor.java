@@ -26,7 +26,8 @@ public class VoiceProcessor {
     @Nullable
     private OpusEncoder encoder;
     @Nullable
-    private OpusDecoder decoder;
+    // Per-player decoders to maintain state
+    private final java.util.concurrent.ConcurrentHashMap<String, OpusDecoder> decoders = new java.util.concurrent.ConcurrentHashMap<>();
 
     // Denoising disabled for cross-platform (rnnoise4j requires native libs)
     private boolean denoiseEnabled = false;
@@ -50,12 +51,7 @@ public class VoiceProcessor {
             encoder.setPacketLossPercent(5); // Optimize for some packet loss
 
             Log.info("@ Encoder configured: bitrate=@, complexity=@", TAG, BITRATE, COMPLEXITY);
-
-            // Initialize decoder
-            decoder = new OpusDecoder(
-                    VoiceConstants.SAMPLE_RATE,
-                    VoiceConstants.CHANNELS);
-
+            // Decoding is now per-player, initialized on demand
             Log.info("@ Processor initialized (Concentus pure Java, optimized)", TAG);
         } catch (OpusException e) {
             Log.err("@ Failed to initialize processor: @", TAG, e.getMessage());
@@ -109,37 +105,52 @@ public class VoiceProcessor {
     }
 
     /**
-     * Decode Opus data to audio.
-     * Synchronized to prevent data race when multiple players speak.
+     * Decode Opus data to audio for specific player.
+     * Synchronized per-decoder via Map.
      */
-    public synchronized short[] decode(byte[] input) {
-        if (decoder == null) {
-            throw new IllegalStateException("Decoder not initialized");
-        }
-
+    public short[] decode(String playerId, byte[] input) {
         // Validate input
         if (input == null || input.length == 0) {
             return new short[0];
         }
 
+        // Get or create decoder for this player
+        OpusDecoder decoder = decoders.computeIfAbsent(playerId, id -> {
+            try {
+                return new OpusDecoder(
+                        VoiceConstants.SAMPLE_RATE,
+                        VoiceConstants.CHANNELS);
+            } catch (OpusException e) {
+                Log.err("@ Failed to create decoder for @: @", TAG, id, e.getMessage());
+                return null;
+            }
+        });
+
+        if (decoder == null)
+            return new short[0];
+
         try {
-            short[] output = new short[FRAME_SIZE];
-            int decodedSamples = decoder.decode(input, 0, input.length, output, 0, FRAME_SIZE, false);
+            // Synchronize on the specific decoder instance
+            synchronized (decoder) {
+                short[] output = new short[FRAME_SIZE];
+                int decodedSamples = decoder.decode(input, 0, input.length, output, 0, FRAME_SIZE, false);
 
-            if (decodedSamples <= 0) {
-                Log.warn("@ Decode returned @ samples", TAG, decodedSamples);
-                return new short[0];
-            }
+                if (decodedSamples <= 0) {
+                    return new short[0];
+                }
 
-            // Return only the actual decoded samples
-            if (decodedSamples < FRAME_SIZE) {
-                short[] result = new short[decodedSamples];
-                System.arraycopy(output, 0, result, 0, decodedSamples);
-                return result;
+                // Return only the actual decoded samples
+                if (decodedSamples < FRAME_SIZE) {
+                    short[] result = new short[decodedSamples];
+                    System.arraycopy(output, 0, result, 0, decodedSamples);
+                    return result;
+                }
+                return output;
             }
-            return output;
         } catch (OpusException e) {
-            Log.err("@ Decode error: @", TAG, e.getMessage());
+            Log.err("@ Decode error for @: @", TAG, playerId, e.getMessage());
+            // Reset decoder on error
+            decoders.remove(playerId);
             return new short[0];
         }
     }
@@ -158,7 +169,7 @@ public class VoiceProcessor {
     public void dispose() {
         // Concentus encoders/decoders don't need explicit close
         encoder = null;
-        decoder = null;
+        decoders.clear();
         Log.info("@ Processor disposed", TAG);
     }
 

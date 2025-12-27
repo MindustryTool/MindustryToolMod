@@ -90,6 +90,10 @@ public class AndroidSpeaker {
             Log.info("@ Speaker opened (Android/Optimized)", TAG);
         } catch (Exception e) {
             Log.err("@ Failed to open speaker: @", TAG, e.getMessage());
+            e.printStackTrace(); // Print stack to console/logcat
+            // Log minBufferSize if available for context
+            if (minBufferSize > 0)
+                Log.err("@ MinBufferSize was: @", TAG, minBufferSize);
         }
     }
 
