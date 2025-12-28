@@ -132,8 +132,10 @@ public class VoiceChatManager {
                 other.send(packet, true); // Reliable (TCP) for delivery guarantee
                 forwardCount++;
             }
-            // Log.info("@ [SERVER] Forwarded audio from @ to @ clients", TAG,
-            // con.player.name, forwardCount);
+            // Log periodically to avoid spam (first packet + every 50 packets)
+            if (forwardCount > 0 && (System.currentTimeMillis() % 5000 < 100)) {
+                Log.info("@ [SERVER] Forwarding audio: @ -> @ clients", TAG, con.player.name, forwardCount);
+            }
 
             // If Host (PC), play audio locally
             if (!Vars.headless) {
