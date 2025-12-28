@@ -12,6 +12,7 @@ import mindustry.Vars;
 import mindustry.net.Net;
 import mindustry.net.NetConnection;
 import arc.util.Time;
+import mindustrytool.plugins.auth.AuthService;
 
 /**
  * VoiceChatManager - Core voice chat logic.
@@ -45,6 +46,8 @@ public class VoiceChatManager {
     private volatile boolean enabled = true; // Speaker enabled by default
     private volatile boolean muted = true; // Mic muted by default (user must unmute to speak)
     private volatile boolean forceMock = false; // Force usage of mock microphone
+    private volatile float masterVolume = 0.8f; // Master volume for output (0.0 - 2.0)
+    private volatile boolean spatialAudioEnabled = true; // Enable 3D audio positioning
 
     // Modes
     private VoiceMode speakerMode = VoiceMode.ALL;
@@ -56,7 +59,8 @@ public class VoiceChatManager {
     private final ObjectMap<String, Long> lastSpeakingTime = new ObjectMap<>();
     private static final long SPEAKING_THRESHOLD_MS = 300;
 
-    // Track clients that have been verified to have the mod installed
+    private int localSequence = 0; // Sequence counter for outgoing packets
+
     private final ObjectSet<NetConnection> moddedClients = new ObjectSet<>();
 
     @Nullable
@@ -121,7 +125,6 @@ public class VoiceChatManager {
 
             // Forward to other verified clients (CRITICAL: Compare by PLAYER ID, not
             // connection object)
-            int forwardCount = 0;
             for (NetConnection other : moddedClients) {
                 // Skip if: not connected, same player, or null player
                 if (!other.isConnected() || other.player == null)
@@ -129,8 +132,7 @@ public class VoiceChatManager {
                 if (other.player.id == senderId)
                     continue; // NEVER send back to sender
 
-                other.send(packet, true); // Reliable (TCP) for delivery guarantee
-                forwardCount++;
+                other.send(packet, false); // Unreliable (UDP) for low latency
             }
             // Log periodically to avoid spam (disabled for production)
             // if (forwardCount > 0 && (System.currentTimeMillis() % 5000 < 100)) {
@@ -149,7 +151,7 @@ public class VoiceChatManager {
             if (Vars.net.server() && e.player.con != null) {
                 moddedClients.remove(e.player.con);
                 if (mixer != null)
-                    mixer.removePlayer(e.player.uuid()); // Fix Memory Leak
+                    mixer.removePlayer(String.valueOf(e.player.id)); // Use ID instead of UUID
             }
         });
 
@@ -190,6 +192,7 @@ public class VoiceChatManager {
 
                 status = VoiceStatus.DISABLED;
                 moddedClients.clear();
+                localSequence = 0; // Reset sequence for next session
                 // Log.info("@ Audio cleanup complete, ready for next session", TAG);
             }
         });
@@ -208,6 +211,12 @@ public class VoiceChatManager {
     }
 
     public void syncStatus() {
+        // Login check: Voice Chat requires authentication
+        if (!AuthService.isLoggedIn()) {
+            status = VoiceStatus.DISABLED;
+            return;
+        }
+
         if (!enabled || !Vars.net.active()) {
             // Log.info("@ Sync skipped: Enabled=@, NetActive=@", TAG, enabled,
             // Vars.net.active());
@@ -252,9 +261,11 @@ public class VoiceChatManager {
             }
 
             // Enable Mixer on ALL platforms (Android now supports pull-mode)
+            // Enable Mixer on ALL platforms (Android now supports pull-mode)
             if (mixer == null) {
                 mixer = new AudioMixer();
                 mixer.setProcessor(processor);
+                mixer.setSpatialEnabled(spatialAudioEnabled);
                 // Sync initial volumes
                 if (playerVolume != null) {
                     playerVolume.each((id, vol) -> mixer.setVolume(id, vol));
@@ -318,8 +329,9 @@ public class VoiceChatManager {
         mindustry.gen.Player sender = mindustry.gen.Groups.player.find(p -> p.id == packet.playerid);
 
         if (sender != null) {
-            lastSpeakingTime.put(sender.uuid(), arc.util.Time.millis());
-            if (playerMuted.get(sender.uuid(), false))
+            // Use ID instead of UUID for consistency
+            lastSpeakingTime.put(String.valueOf(sender.id), arc.util.Time.millis());
+            if (playerMuted.get(String.valueOf(sender.id), false))
                 return;
             if (speakerMode == VoiceMode.TEAM && Vars.player.team() != sender.team())
                 return;
@@ -344,7 +356,7 @@ public class VoiceChatManager {
 
                         // Route through mixer (It handles Decoding + PLC + Mixing)
                         if (mixer != null) {
-                            String mixId = sender != null ? sender.uuid() : "unknown_" + packet.playerid;
+                            String mixId = String.valueOf(packet.playerid); // Always use ID
 
                             // Update positions for Spatial Audio
                             if (sender != null) {
@@ -354,19 +366,14 @@ public class VoiceChatManager {
                                 mixer.updateListener(mindustry.Vars.player.x, mindustry.Vars.player.y);
                             }
 
-                            mixer.queueAudio(mixId, frameData);
-                            // Log first few frames only (disabled for production)
-                            // if (frameCount < 3) {
-                            // Log.info("@ [CLIENT] Queued audio to mixer: @ bytes from @", TAG, frameLen,
-                            // mixId);
-                            // }
+                            // Use packet sequence for first frame, +1 for second
+                            mixer.queueAudio(mixId, frameData, packet.sequence + frameCount);
                             frameCount++;
                         } else {
                             // Log.warn("@ [CLIENT] Mixer is null, cannot queue audio!", TAG);
                         }
 
                         offset += 2 + frameLen;
-                        // frameCount++; // Unused variable removed
                     }
                 }
             } catch (Throwable e) {
@@ -395,15 +402,16 @@ public class VoiceChatManager {
     }
 
     public void startCapture() {
-        Log.info("@ startCapture() called. Active=@, Enabled=@, Muted=@", TAG, Vars.net.active(), enabled, muted);
+        // Log.info("@ startCapture() called. Active=@, Enabled=@, Muted=@", TAG,
+        // Vars.net.active(), enabled, muted);
 
         if (muted) {
-            Log.info("@ Start capture aborted: Player is muted.", TAG);
+            // Log.info("@ Start capture aborted: Player is muted.", TAG);
             return;
         }
 
         if (captureThread != null && captureThread.isAlive()) {
-            Log.info("@ Capture thread already alive. Skipping.", TAG);
+            // Log.info("@ Capture thread already alive. Skipping.", TAG);
             return;
         }
         ensureAudioInitialized();
@@ -496,14 +504,28 @@ public class VoiceChatManager {
                         MicPacket packet = new MicPacket();
                         packet.audioData = batchedData;
                         packet.playerid = Vars.player.id;
+                        packet.sequence = localSequence;
+                        localSequence += 2; // Increment by batch size (2 frames)
 
-                        if (Vars.net.server() && !Vars.headless) {
-                            for (NetConnection con : moddedClients) {
-                                if (con.isConnected())
-                                    con.send(packet, true);
+                        // CRITICAL: Only send if handshake completed (Server supports voice chat)
+                        if (Vars.net.client()) {
+                            if (status == VoiceStatus.CONNECTED) {
+                                try {
+                                    Vars.net.send(packet, false); // Unreliable UDP
+                                } catch (Exception e) {
+                                    // Ignore send errors
+                                }
                             }
-                        } else {
-                            Vars.net.send(packet, true);
+                        } else if (Vars.net.server() && !Vars.headless) {
+                            // Host logic (always supported)
+                            processIncomingVoice(packet);
+
+                            // Forward to others
+                            for (NetConnection con : moddedClients) {
+                                if (con.player == null || con.player.id == Vars.player.id)
+                                    continue;
+                                con.send(packet, false); // Unreliable (UDP)
+                            }
                         }
                     }
                 }
@@ -545,8 +567,9 @@ public class VoiceChatManager {
         } else {
             if (status == VoiceStatus.DISABLED) {
                 if (Vars.net.client()) {
+                    // Protocol Change: Don't send handshake automatically.
+                    // Wait for server to initiate via VoiceRequestPacket.
                     status = VoiceStatus.WAITING_HANDSHAKE;
-                    sendHandshake();
                 } else if (Vars.net.server() && !Vars.headless) {
                     status = VoiceStatus.READY;
                 }
@@ -560,7 +583,7 @@ public class VoiceChatManager {
 
     public void setMuted(boolean muted) {
         this.muted = muted;
-        Log.info("@ Muted: @", TAG, muted);
+        // Log.info("@ Muted: @", TAG, muted);
 
         // Auto-react to mute state change
         if (muted) {
@@ -573,20 +596,28 @@ public class VoiceChatManager {
                 // If we are active in a game but status is stuck (e.g. Disabled), try to sync
                 // first
                 if (Vars.net.active() && (status == VoiceStatus.DISABLED || status == VoiceStatus.MIC_ERROR)) {
-                    Log.info("@ Unmute forcing status sync (Deep Reset)...", TAG);
+                    // Log.info("@ Unmute forcing status sync (Deep Reset)...", TAG);
                     stopCapture(); // CRITICAL: Force cleanup of any stale/broken mic instance
                     syncStatus();
                 }
 
                 // If valid state, start
-                if (status == VoiceStatus.CONNECTED || status == VoiceStatus.READY
-                        || status == VoiceStatus.WAITING_HANDSHAKE) {
+                if (status == VoiceStatus.CONNECTED || status == VoiceStatus.READY) {
                     // Determine if we should start based on connection type
                     if (Vars.net.client() && status == VoiceStatus.CONNECTED) {
                         startCapture();
-                    } else if (Vars.net.server() && !Vars.headless) {
+                    } else if (Vars.net.server()) {
                         startCapture();
                     }
+                } else if (Vars.net.client() && status == VoiceStatus.WAITING_HANDSHAKE) {
+                    // Still waiting for server handshake -> Server likely doesn't support Voice
+                    // Chat
+                    Vars.ui.hudfrag.showToast("Server does not support Voice Chat");
+                    // Re-mute to prevent confusion
+                    this.muted = true;
+                    // Log.info("@ Unmute failed: Server not compatible (Status=@)", TAG, status);
+                } else if (Vars.net.active()) {
+                    // Other states - do nothing
                 }
             }
         }
@@ -598,6 +629,28 @@ public class VoiceChatManager {
 
     public VoiceMode getSpeakerMode() {
         return speakerMode;
+    }
+
+    public void setMasterVolume(float volume) {
+        this.masterVolume = Math.max(0f, Math.min(2.0f, volume)); // Allow up to 200% boost
+        if (speaker != null) {
+            speaker.setVolume(masterVolume);
+        }
+    }
+
+    public float getMasterVolume() {
+        return masterVolume;
+    }
+
+    public void setSpatialAudioEnabled(boolean enabled) {
+        this.spatialAudioEnabled = enabled;
+        if (mixer != null) {
+            mixer.setSpatialEnabled(enabled);
+        }
+    }
+
+    public boolean isSpatialAudioEnabled() {
+        return spatialAudioEnabled;
     }
 
     public void setSpeakerMode(VoiceMode mode) {

@@ -13,6 +13,7 @@ public class MicPacket extends Packet {
     private byte[] DATA;
     public byte[] audioData;
     public int playerid;
+    public int sequence; // Sequence number for jitter buffer reordering
 
     public MicPacket() {
         this.DATA = NODATA;
@@ -26,29 +27,19 @@ public class MicPacket extends Packet {
     @Override
     public void read(Reads read, int length) {
         this.playerid = read.i();
-        this.DATA = read.b(length - 4);
+        this.sequence = read.i();
+        this.DATA = read.b(length - 8); // id(4) + seq(4) = 8 bytes header
     }
 
     @Override
     public void write(Writes write) {
         write.i(this.playerid);
+        write.i(this.sequence);
         TypeIO.writeBytes(write, this.audioData);
     }
 
     @Override
     public void handled() {
-        // Server-side handling: if this is received on server, we might want to relay
-        // it.
-        // But for client, we just play it.
-        // Wait, handleClient parses it? No, Client uses the packet directly or
-        // handleClient lambda.
-        // BAIS.setBytes is used if we parse explicitly?
-        // Let's keep existing handled() logic but aware of reading?
-        // actually handled() is often used for packet logic in standard Mindustry,
-        // but here we use a listener. The read method does the work.
-        // handled() logic in original file was:
-        // BAIS.setBytes(this.DATA); this.audioData = TypeIO.readBytes(READ);
-
         BAIS.setBytes(this.DATA);
         this.audioData = TypeIO.readBytes(READ);
     }

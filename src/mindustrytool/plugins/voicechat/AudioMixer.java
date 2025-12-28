@@ -41,14 +41,15 @@ public class AudioMixer {
     }
 
     /**
-     * Queue encoded Opus frame for a specific player.
+     * Queue a new audio packet for a specific player.
+     * 
+     * @param playerId Unique ID of sender
+     * @param data     Encoded audio frame
+     * @param sequence Packet sequence number for reordering
      */
-    public void queueAudio(String playerId, byte[] opusData) {
-        JitterBuffer buffer = playerBuffers.computeIfAbsent(
-                playerId,
-                k -> new JitterBuffer());
-        buffer.push(opusData);
-        lastActiveTime.put(playerId, Time.millis());
+    public void queueAudio(String playerId, byte[] data, int sequence) {
+        playerBuffers.computeIfAbsent(playerId, k -> new JitterBuffer()).push(data, sequence);
+        lastActiveTime.put(playerId, Time.millis()); // Update for PLC timeout
     }
 
     /**
@@ -78,8 +79,16 @@ public class AudioMixer {
     // Reusable buffers to avoid allocation
     // Stereo output is 2x frame size
     // Using int for mixing to avoid overflow before clipping
+    // Stereo output is 2x frame size
+    // Using int for mixing to avoid overflow before clipping
     private int[] mixBufferL;
     private int[] mixBufferR;
+
+    private boolean spatialEnabled = true;
+
+    public void setSpatialEnabled(boolean enabled) {
+        this.spatialEnabled = enabled;
+    }
 
     public void updateListener(float x, float y) {
         this.listenerX = x;
@@ -150,7 +159,7 @@ public class AudioMixer {
             float pan = 0f;
             float distVol = 1f;
 
-            if (playerPositions.containsKey(pid)) {
+            if (spatialEnabled && playerPositions.containsKey(pid)) {
                 arc.math.geom.Vec2 pos = playerPositions.get(pid);
                 float dx = pos.x - listenerX;
                 float dy = pos.y - listenerY;
@@ -161,8 +170,8 @@ public class AudioMixer {
                 // Distance Attenuation (Linear dropoff using MAX_DISTANCE)
                 float dist = (float) Math.hypot(dx, dy);
 
-                // Clamp minimum volume to 0.25 (25%) at max distance
-                distVol = arc.math.Mathf.clamp(1f - (dist / MAX_DISTANCE), 0.25f, 1f);
+                // Clamp minimum volume to 0.5 (50%) at max distance
+                distVol = arc.math.Mathf.clamp(1f - (dist / MAX_DISTANCE), 0.5f, 1f);
             }
 
             // Constant Power Pan Laws (Square Root)

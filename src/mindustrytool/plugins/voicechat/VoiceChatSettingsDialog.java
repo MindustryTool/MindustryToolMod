@@ -4,14 +4,14 @@ import arc.graphics.Color;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
-import arc.struct.IntMap;
 import arc.util.Strings;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Player;
-import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.plugins.auth.AuthService;
+import mindustrytool.plugins.auth.AuthPlugin;
 
 /**
  * Voice chat settings dialog with per-player controls.
@@ -21,9 +21,7 @@ public class VoiceChatSettingsDialog extends BaseDialog {
 
     private final VoiceChatManager manager;
 
-    // Per-player settings using entity ID (int) as key for reliable lookup
-    private final IntMap<Boolean> playerMuted = new IntMap<>();
-    private final IntMap<Float> playerVolume = new IntMap<>();
+    // Per-player settings removed - we now read directly from manager
 
     public VoiceChatSettingsDialog(VoiceChatManager manager) {
         super("Voice Chat Settings");
@@ -40,8 +38,10 @@ public class VoiceChatSettingsDialog extends BaseDialog {
             manager.setMicMode(VoiceChatManager.VoiceMode.ALL);
 
             // Reset per-player settings
-            playerMuted.clear();
-            playerVolume.clear();
+            Groups.player.each(p -> {
+                manager.setPlayerMuted(String.valueOf(p.id), false);
+                manager.setPlayerVolume(String.valueOf(p.id), 1.0f);
+            });
 
             setup();
         }).size(250f, 64f);
@@ -52,6 +52,17 @@ public class VoiceChatSettingsDialog extends BaseDialog {
     private void setup() {
         cont.clear();
         cont.defaults().pad(5f);
+
+        // Login Check
+        if (!AuthService.isLoggedIn()) {
+            cont.add("[accent]Login Required").pad(20f).row();
+            cont.add("Voice Chat requires you to be logged in.").color(Color.lightGray).pad(10f).row();
+            cont.button("Login", Icon.play, () -> {
+                AuthPlugin.loginDialog.show();
+                hide(); // Close this dialog, user will reopen after login
+            }).size(200f, 50f).pad(10f);
+            return;
+        }
 
         // Create a single scrollable content table
         Table scrollContent = new Table();
@@ -80,11 +91,19 @@ public class VoiceChatSettingsDialog extends BaseDialog {
             t.add("Volume: ").color(Color.lightGray);
             t.add().growX();
 
+            // 1. 3D Audio Toggle (First)
+            t.button(manager.isSpatialAudioEnabled() ? "3D: [green]ON" : "3D: [red]OFF", Styles.flatToggleMenut, () -> {
+                manager.setSpatialAudioEnabled(!manager.isSpatialAudioEnabled());
+                setup();
+            }).size(80f, 36f).checked(manager.isSpatialAudioEnabled());
+
+            // 2. Main Enable Toggle
             t.button(manager.isEnabled() ? "[green]ON" : "[red]OFF", Styles.flatToggleMenut, () -> {
                 manager.setEnabled(!manager.isEnabled());
                 setup();
             }).size(70f, 36f).checked(manager.isEnabled());
 
+            // 3. Team/All Mode
             boolean isTeamSpeaker = manager.getSpeakerMode() == VoiceChatManager.VoiceMode.TEAM;
             String speakerMode = isTeamSpeaker ? "[accent]Team" : "All";
             t.button(speakerMode, Styles.flatBordert, () -> {
@@ -118,6 +137,38 @@ public class VoiceChatSettingsDialog extends BaseDialog {
             }).size(90f, 36f);
         }).growX().row();
 
+        // Master Volume Control
+        // Master Volume Control (Styled)
+        scrollContent.table(t -> {
+            t.left().marginBottom(5f);
+
+            // Container for Slider Stack
+            t.table(controls -> {
+                Slider slider = new Slider(0f, 200f, 5f, false);
+                slider.setValue(manager.getMasterVolume() * 100f);
+
+                // Label for percentage
+                arc.scene.ui.Label volumeLabel = new arc.scene.ui.Label(
+                        (int) (manager.getMasterVolume() * 100f) + "%", Styles.outlineLabel);
+
+                slider.changed(() -> {
+                    float v = slider.getValue();
+                    manager.setMasterVolume(v / 100f);
+                    volumeLabel.setText((int) v + "%");
+                });
+
+                // Overlay Text (Total Volume | XX%)
+                Table labelContent = new Table();
+                labelContent.touchable = arc.scene.event.Touchable.disabled;
+                labelContent.margin(3f, 33f, 3f, 33f); // margin left/right inside slider
+                labelContent.add("Total Volume", Styles.outlineLabel).left().growX();
+                labelContent.add(volumeLabel).padLeft(10f).right();
+
+                controls.stack(slider, labelContent).height(40f).growX();
+            }).growX();
+
+        }).growX().row();
+
         // Separator
         scrollContent.image().color(Color.darkGray).fillX().height(1f).pad(10f).row();
 
@@ -130,19 +181,12 @@ public class VoiceChatSettingsDialog extends BaseDialog {
                 continue;
 
             // Use entity ID (integer) - unique and consistent
-            int entityId = p.id;
+            String playerId = String.valueOf(p.id); // Use ID to fix duplicate UUID issues
             String displayName = Strings.stripColors(p.name);
-            String uuid = p.uuid(); // Still need UUID for manager calls
 
-            // Initialize defaults only if not already set
-            if (!playerMuted.containsKey(entityId))
-                playerMuted.put(entityId, false);
-            if (!playerVolume.containsKey(entityId))
-                playerVolume.put(entityId, 100f);
-
-            // Read current values for this player
-            boolean isMuted = playerMuted.get(entityId, false);
-            float volume = playerVolume.get(entityId, 100f);
+            // Read current values directly from Manager (Source of Truth)
+            boolean isMuted = manager.isPlayerMuted(playerId);
+            float volume = manager.getPlayerVolume(playerId) * 100f; // Convert 0-1.0 to 0-100
 
             // Build row for this player
             scrollContent.table(row -> {
@@ -154,12 +198,10 @@ public class VoiceChatSettingsDialog extends BaseDialog {
                     header.image(Icon.players).size(32f).padRight(10f);
                     header.add(displayName).left().growX();
 
-                    // ON/OFF button - use captured values
+                    // ON/OFF button
                     header.button(!isMuted ? "[green]ON" : "[red]OFF", Styles.flatToggleMenut, () -> {
-                        boolean current = playerMuted.get(entityId, false);
-                        playerMuted.put(entityId, !current);
-                        manager.setPlayerMuted(uuid, !current);
-                        setup();
+                        manager.setPlayerMuted(playerId, !isMuted);
+                        setup(); // Rebuild UI to reflect state
                     }).size(60f, 30f).checked(!isMuted);
                 }).growX().row();
 
@@ -173,8 +215,7 @@ public class VoiceChatSettingsDialog extends BaseDialog {
 
                     slider.changed(() -> {
                         float v = slider.getValue();
-                        playerVolume.put(entityId, v);
-                        manager.setPlayerVolume(uuid, v / 100f);
+                        manager.setPlayerVolume(playerId, v / 100f);
                         volumeLabel.setText((int) v + "%");
                     });
 
@@ -200,13 +241,5 @@ public class VoiceChatSettingsDialog extends BaseDialog {
         ScrollPane scroll = new ScrollPane(scrollContent, Styles.smallPane);
         scroll.setScrollingDisabled(true, false);
         cont.add(scroll).width(450f).growY().row();
-    }
-
-    public IntMap<Boolean> getPlayerMutedMap() {
-        return playerMuted;
-    }
-
-    public IntMap<Float> getPlayerVolumeMap() {
-        return playerVolume;
     }
 }

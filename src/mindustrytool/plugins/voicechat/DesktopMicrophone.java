@@ -32,10 +32,10 @@ public class DesktopMicrophone {
         }
 
         // List all available mixers for debugging
-        Log.info("@ Available Audio Mixers:", TAG);
-        for (Mixer.Info info : AudioSystem.getMixerInfo()) {
-            Log.info("  - @ (@)", info.getName(), info.getDescription());
-        }
+        // Log.info("@ Available Audio Mixers:", TAG);
+        // for (Mixer.Info info : AudioSystem.getMixerInfo()) {
+        // Log.info(" - @ (@)", info.getName(), info.getDescription());
+        // }
 
         // Try 48000Hz first (Best quality, native Opus rate)
         mic = tryOpen(48000);
@@ -81,7 +81,7 @@ public class DesktopMicrophone {
             DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
 
             if (AudioSystem.isLineSupported(info)) {
-                Log.info("@ Found supported format: @Hz", TAG, rate);
+                // Log.info("@ Found supported format: @Hz", TAG, rate);
                 return (TargetDataLine) AudioSystem.getLine(info);
             }
         } catch (Exception e) {
