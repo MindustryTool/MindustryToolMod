@@ -85,12 +85,15 @@ public class PausedMenuInjector {
                         hostReplaced = true;
                     }
 
-                    // Replace Planet Map button with Change Map when in custom game mode
+                    // Replace Planet Map button with Change Map ONLY when in custom game mode
+                    // (Host/Local)
+                    // If in Campaign, we want to Keep Planet Map and Add Change Map separately
                     if (isPlanet && !planetReplaced && Vars.state.isGame() && !Vars.state.isCampaign()) {
                         arc.util.Log.info(
                                 "[PlayerConnect] Planet Map button found in custom game! Replacing with Change Map.");
 
-                        TextButton changeMapBtn = new TextButton("Change Map");
+                        String btnText = Vars.net.client() ? "Play Custom" : "Change Map";
+                        TextButton changeMapBtn = new TextButton(btnText);
                         changeMapBtn.add(new arc.scene.ui.Image(Icon.map)).padLeft(6f);
                         changeMapBtn.getCells().reverse();
                         changeMapBtn.changed(() -> {
@@ -137,10 +140,11 @@ public class PausedMenuInjector {
                 }
             }
 
-            // If in custom game and Planet button wasn't found/replaced, add Change Map
-            // button
-            if (!planetReplaced && Vars.state.isGame() && !Vars.state.isCampaign()) {
-                arc.util.Log.info("[PlayerConnect] Adding Change Map button for custom game mode.");
+            // Add Change Map button if it wasn't replaced (e.g. Campaign or button not
+            // found)
+            // Logic: Always show if in Game.
+            if (!planetReplaced && Vars.state.isGame()) {
+                arc.util.Log.info("[PlayerConnect] Adding Change Map button (Campaign/Fallback).");
 
                 @SuppressWarnings("rawtypes")
                 arc.struct.Seq<arc.scene.ui.layout.Cell> cells = root.getCells();
@@ -160,13 +164,20 @@ public class PausedMenuInjector {
                     }
                 };
 
+                String btnText = Vars.net.client() ? "Play Custom" : "Change Map";
                 if (Vars.mobile) {
-                    root.row().buttonRow("Change Map", Icon.map, showMap).row();
+                    root.row().buttonRow(btnText, Icon.map, showMap).row();
                 } else if (!cells.isEmpty() && cells.size > 2) {
-                    root.row().button("Change Map", Icon.map, showMap).colspan(2)
+                    root.row().button(btnText, Icon.map, showMap).colspan(2)
                             .width(450f).row();
                 } else {
-                    root.row().button("Change Map", Icon.map, showMap).row();
+                    root.row().button(btnText, Icon.map, showMap).row();
+                }
+
+                // Swap with the last button (usually Save & Quit) so this appears above it
+                if (cells.size > 1) {
+                    cells.swap(cells.size - 1, cells.size - 2);
+                    arc.util.Log.info("[PlayerConnect] Swapped Change Map button with previous element.");
                 }
             }
         });

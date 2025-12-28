@@ -277,23 +277,34 @@ public class PlayerConnectPlugin implements Plugin {
             }
         };
 
-        Events.on(EventType.PlayEvent.class, e -> trigger.run());
-        Events.on(EventType.WorldLoadEvent.class, e -> {
+        Events.on(EventType.PlayEvent.class, e -> {
             trigger.run();
 
-            // Sync map to clients when map changes (for "Change Map" feature)
+            // Sync map to clients when game starts (including "Change Map")
+            // Moved from WorldLoadEvent to PlayEvent to ensure game state is ready
             if (mindustry.Vars.net.server()) {
+                Log.info("[PlayerConnect] PlayEvent triggered. Scheduling map sync for clients...");
                 // Delay slightly to ensure world is fully ready
                 arc.util.Timer.schedule(() -> {
+                    int count = 0;
                     for (mindustry.gen.Player p : mindustry.gen.Groups.player) {
                         // Send new map data to all connected clients (exclude local host if con is
                         // null)
                         if (p.con != null) {
+                            Log.info("[PlayerConnect] Sending world data to player: @", p.name);
                             mindustry.Vars.netServer.sendWorldData(p);
+                            count++;
                         }
                     }
+                    Log.info("[PlayerConnect] Sent world data to @ clients.", count);
                 }, 0.5f);
             }
+        });
+
+        Events.on(EventType.WorldLoadEvent.class, e -> {
+            trigger.run();
+            // Logging for debug
+            Log.info("[PlayerConnect] WorldLoadEvent triggered.");
         });
 
         // Centralized Lazy Triggers: Only run and instantiate if enabled
