@@ -132,7 +132,8 @@ public class VoiceChatManager {
                 other.send(packet, true); // Reliable (TCP) for delivery guarantee
                 forwardCount++;
             }
-            Log.info("@ [SERVER] Forwarded audio from @ to @ clients", TAG, con.player.name, forwardCount);
+            // Log.info("@ [SERVER] Forwarded audio from @ to @ clients", TAG,
+            // con.player.name, forwardCount);
 
             // If Host (PC), play audio locally
             if (!Vars.headless) {
@@ -250,7 +251,7 @@ public class VoiceChatManager {
         Vars.net.handleClient(VoiceRequestPacket.class, packet -> {
             Log.info("@ [CLIENT] Received ACK from server! Protocol=@", TAG, packet.protocolVersion);
             status = VoiceStatus.CONNECTED; // Set to CONNECTED, not just READY
-            Log.info("@ [CLIENT] Status set to CONNECTED", TAG);
+            // Log.info("@ [CLIENT] Status set to CONNECTED", TAG);
             if (enabled && !muted)
                 startCapture();
         });
@@ -643,7 +644,7 @@ public class VoiceChatManager {
                 status = VoiceStatus.WAITING_HANDSHAKE;
                 sendHandshake();
                 lastHandshakeTime = arc.util.Time.millis();
-                Log.info("@ [CLIENT] Retrying handshake... (Status=@)", TAG, status);
+                // Log.info("@ [CLIENT] Retrying handshake... (Status=@)", TAG, status);
             }
         }
     }
