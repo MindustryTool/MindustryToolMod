@@ -111,13 +111,19 @@ public class VoiceChatManager {
                 return;
 
             // Enforce sender ID
-            packet.playerid = con.player.id;
+            int senderId = con.player.id;
+            packet.playerid = senderId;
 
-            // Forward to other verified clients
+            // Forward to other verified clients (CRITICAL: Compare by PLAYER ID, not
+            // connection object)
             for (NetConnection other : moddedClients) {
-                if (other != con && other.isConnected()) {
-                    other.send(packet, true); // Reliable (TCP) for delivery guarantee
-                }
+                // Skip if: not connected, same player, or null player
+                if (!other.isConnected() || other.player == null)
+                    continue;
+                if (other.player.id == senderId)
+                    continue; // NEVER send back to sender
+
+                other.send(packet, true); // Reliable (TCP) for delivery guarantee
             }
 
             // If Host (PC), play audio locally
@@ -245,11 +251,22 @@ public class VoiceChatManager {
     private void processIncomingVoice(MicPacket packet) {
         if (!enabled)
             return;
-        // Check if sender is valid (prevent echo loop)
-        if (Vars.player != null && packet.playerid == Vars.player.id)
+
+        // CRITICAL: Triple-check to prevent self-echo
+        // Check 1: Compare player ID directly
+        if (Vars.player != null && packet.playerid == Vars.player.id) {
+            Log.info("@ Blocked self-echo by ID: @", TAG, packet.playerid);
             return;
+        }
 
         mindustry.gen.Player sender = mindustry.gen.Groups.player.find(p -> p.id == packet.playerid);
+
+        // Check 2: Compare UUID (fallback if ID comparison failed somehow)
+        if (sender != null && Vars.player != null && sender.uuid().equals(Vars.player.uuid())) {
+            Log.info("@ Blocked self-echo by UUID: @", TAG, sender.uuid());
+            return;
+        }
+
         if (sender != null) {
             lastSpeakingTime.put(sender.uuid(), arc.util.Time.millis());
             if (playerMuted.get(sender.uuid(), false))
