@@ -86,20 +86,20 @@ public class VoiceChatManager {
         // Server-side Logic: Receive Handshake from Client
         Vars.net.handleServer(VoiceResponsePacket.class, (con, packet) -> {
             if (con.player != null) {
-                Log.info("@ [SERVER] Received handshake from: @", TAG, con.player.name);
+                // Log.info("@ [SERVER] Received handshake from: @", TAG, con.player.name);
 
                 // Handshake accepted (Legacy mode: No protocol check)
                 if (!moddedClients.contains(con)) {
-                    Log.info("@ [SERVER] Adding @ to voice recipients.", TAG, con.player.name);
+                    // Log.info("@ [SERVER] Adding @ to voice recipients.", TAG, con.player.name);
                     moddedClients.add(con);
                 } else {
-                    Log.info("@ [SERVER] @ already in list.", TAG, con.player.name);
+                    // Log.info("@ [SERVER] @ already in list.", TAG, con.player.name);
                 }
 
                 // Send Ack back to client
                 VoiceRequestPacket ack = new VoiceRequestPacket();
                 ack.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
-                Log.info("@ [SERVER] Sending ACK back to: @", TAG, con.player.name);
+                // Log.info("@ [SERVER] Sending ACK back to: @", TAG, con.player.name);
                 con.send(ack, true); // Reliable TCP
             } else {
                 Log.warn("@ [SERVER] Handshake received but con.player is null!", TAG);
@@ -132,10 +132,11 @@ public class VoiceChatManager {
                 other.send(packet, true); // Reliable (TCP) for delivery guarantee
                 forwardCount++;
             }
-            // Log periodically to avoid spam (first packet + every 50 packets)
-            if (forwardCount > 0 && (System.currentTimeMillis() % 5000 < 100)) {
-                Log.info("@ [SERVER] Forwarding audio: @ -> @ clients", TAG, con.player.name, forwardCount);
-            }
+            // Log periodically to avoid spam (disabled for production)
+            // if (forwardCount > 0 && (System.currentTimeMillis() % 5000 < 100)) {
+            // Log.info("@ [SERVER] Forwarding audio: @ -> @ clients", TAG, con.player.name,
+            // forwardCount);
+            // }
 
             // If Host (PC), play audio locally
             if (!Vars.headless) {
@@ -161,7 +162,7 @@ public class VoiceChatManager {
         // session)
         arc.Events.on(mindustry.game.EventType.StateChangeEvent.class, e -> {
             if (e.to == mindustry.core.GameState.State.menu) {
-                Log.info("@ Returning to menu, cleaning up audio...", TAG);
+                // Log.info("@ Returning to menu, cleaning up audio...", TAG);
                 stopCapture();
 
                 // Close and null all audio components so they get re-created next time
@@ -179,7 +180,7 @@ public class VoiceChatManager {
 
                 status = VoiceStatus.DISABLED;
                 moddedClients.clear();
-                Log.info("@ Audio cleanup complete, ready for next session", TAG);
+                // Log.info("@ Audio cleanup complete, ready for next session", TAG);
             }
         });
 
@@ -198,7 +199,8 @@ public class VoiceChatManager {
 
     public void syncStatus() {
         if (!enabled || !Vars.net.active()) {
-            Log.info("@ Sync skipped: Enabled=@, NetActive=@", TAG, enabled, Vars.net.active());
+            // Log.info("@ Sync skipped: Enabled=@, NetActive=@", TAG, enabled,
+            // Vars.net.active());
             return;
         }
 
@@ -206,25 +208,25 @@ public class VoiceChatManager {
         if (Vars.net.client()) {
             // Skip if already in a good state (avoid resetting status)
             if (status == VoiceStatus.READY || status == VoiceStatus.CONNECTED) {
-                Log.info("@ Client: Already connected, skipping handshake", TAG);
+                // Log.info("@ Client: Already connected, skipping handshake", TAG);
                 return;
             }
             status = VoiceStatus.WAITING_HANDSHAKE;
             sendHandshake();
-            Log.info("@ Client: Handshake sent to server", TAG);
+            // Log.info("@ Client: Handshake sent to server", TAG);
 
             // CRITICAL FIX: Start capture immediately, don't wait for ACK
             // The ACK might not arrive due to packet issues, but server already added us
             if (!muted) {
                 startCapture();
-                Log.info("@ Client: Capture started (optimistic)", TAG);
+                // Log.info("@ Client: Capture started (optimistic)", TAG);
             }
         } else if (Vars.net.server() && !Vars.headless) {
             status = VoiceStatus.CONNECTED; // Host is always CONNECTED
-            Log.info("@ Host: Set status CONNECTED. Muted=@", TAG, muted);
+            // Log.info("@ Host: Set status CONNECTED. Muted=@", TAG, muted);
             if (!muted) {
                 startCapture();
-                Log.info("@ Host: Capture started", TAG);
+                // Log.info("@ Host: Capture started", TAG);
             }
         }
     }
@@ -233,15 +235,15 @@ public class VoiceChatManager {
         if (processor != null && speaker != null && mixer != null)
             return;
 
-        Log.info("@ [CLIENT] ensureAudioInitialized called", TAG);
+        // Log.info("@ [CLIENT] ensureAudioInitialized called", TAG);
         try {
             if (processor == null) {
                 processor = new VoiceProcessor();
-                Log.info("@ [CLIENT] Processor created", TAG);
+                // Log.info("@ [CLIENT] Processor created", TAG);
             }
             if (speaker == null) {
                 speaker = new VoiceSpeaker();
-                Log.info("@ [CLIENT] Speaker created", TAG);
+                // Log.info("@ [CLIENT] Speaker created", TAG);
             }
 
             // Enable Mixer on ALL platforms (Android now supports pull-mode)
@@ -255,7 +257,7 @@ public class VoiceChatManager {
 
                 // Inject mixer into speaker for pull-based playback
                 speaker.setMixer(mixer);
-                Log.info("@ [CLIENT] Mixer created and injected into Speaker", TAG);
+                // Log.info("@ [CLIENT] Mixer created and injected into Speaker", TAG);
             }
         } catch (Throwable e) {
             Log.err("@ Failed to init audio: @", TAG, e.getMessage());
@@ -278,23 +280,24 @@ public class VoiceChatManager {
 
         // Client Logic: Receive Ack
         Vars.net.handleClient(VoiceRequestPacket.class, packet -> {
-            Log.info("@ [CLIENT] Received ACK from server! Protocol=@", TAG, packet.protocolVersion);
+            // Log.info("@ [CLIENT] Received ACK from server! Protocol=@", TAG,
+            // packet.protocolVersion);
             status = VoiceStatus.CONNECTED; // Set to CONNECTED, not just READY
-            // Log.info("@ [CLIENT] Status set to CONNECTED", TAG);
             if (enabled && !muted)
                 startCapture();
         });
 
         // Client Logic: Receive Audio
         Vars.net.handleClient(MicPacket.class, packet -> {
-            Log.info("@ [CLIENT] Received audio packet from player @", TAG, packet.playerid);
+            // Log.info("@ [CLIENT] Received audio packet from player @", TAG,
+            // packet.playerid);
             processIncomingVoice(packet);
         });
     }
 
     private void processIncomingVoice(MicPacket packet) {
         if (!enabled) {
-            Log.info("@ processIncomingVoice: skipped (disabled)", TAG);
+            // Log.info("@ processIncomingVoice: skipped (disabled)", TAG);
             return;
         }
 
@@ -346,13 +349,14 @@ public class VoiceChatManager {
                             }
 
                             mixer.queueAudio(mixId, frameData);
-                            // Log first few frames only
-                            if (frameCount < 3) {
-                                Log.info("@ [CLIENT] Queued audio to mixer: @ bytes from @", TAG, frameLen, mixId);
-                            }
+                            // Log first few frames only (disabled for production)
+                            // if (frameCount < 3) {
+                            // Log.info("@ [CLIENT] Queued audio to mixer: @ bytes from @", TAG, frameLen,
+                            // mixId);
+                            // }
                             frameCount++;
                         } else {
-                            Log.warn("@ [CLIENT] Mixer is null, cannot queue audio!", TAG);
+                            // Log.warn("@ [CLIENT] Mixer is null, cannot queue audio!", TAG);
                         }
 
                         offset += 2 + frameLen;
@@ -678,7 +682,7 @@ public class VoiceChatManager {
 
                 // Auto-upgrade to CONNECTED after 5 seconds (ACK might be lost)
                 if (timeSinceHandshake > 5000 && status == VoiceStatus.WAITING_HANDSHAKE) {
-                    Log.info("@ Client: Auto-upgrading to CONNECTED (ACK timeout)", TAG);
+                    // Log.info("@ Client: Auto-upgrading to CONNECTED (ACK timeout)", TAG);
                     status = VoiceStatus.CONNECTED;
                 }
 
