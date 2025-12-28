@@ -297,13 +297,11 @@ public class AndroidMicrophone {
                         arc.Core.app.post(() -> mindustry.Vars.ui.hudfrag.showToast("Mic Data Receiving!"));
                     }
 
-                    // Log stats periodically
-                    if (packetsReceived % 100 == 0) { // Notify less frequently (every ~2s)
-                        Log.info("@ Received @ packets, dropped @ (queue: @)",
-                                TAG, packetsReceived, packetsDropped, audioQueue.size());
-                        arc.Core.app
-                                .post(() -> mindustry.Vars.ui.showLabel("Mic Data: " + packetsReceived, 1f, 0f, 0f));
-                    }
+                    // Log stats periodically (disabled to reduce spam)
+                    // if (packetsReceived % 100 == 0) {
+                    // Log.info("@ Received @ packets, dropped @ (queue: @)",
+                    // TAG, packetsReceived, packetsDropped, audioQueue.size());
+                    // }
                 }
             } catch (java.net.SocketTimeoutException e) {
                 // Timeout is OK, just continue
