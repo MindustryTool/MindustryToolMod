@@ -284,20 +284,33 @@ public class PlayerConnectPlugin implements Plugin {
             // Moved from WorldLoadEvent to PlayEvent to ensure game state is ready
             if (mindustry.Vars.net.server()) {
                 Log.info("[PlayerConnect] PlayEvent triggered. Scheduling map sync for clients...");
-                // Delay slightly to ensure world is fully ready
+                // Delay to ensure world is ready and connections are stable
                 arc.util.Timer.schedule(() -> {
-                    int count = 0;
-                    for (mindustry.gen.Player p : mindustry.gen.Groups.player) {
-                        // Send new map data to all connected clients (exclude local host if con is
-                        // null)
-                        if (p.con != null) {
-                            Log.info("[PlayerConnect] Sending world data to player: @", p.name);
-                            mindustry.Vars.netServer.sendWorldData(p);
-                            count++;
+                    try {
+                        // Use reflection to access connections because direct access failed compilation
+                        // previously
+                        // This is critical because Groups.player is empty right after map reset!
+                        Object connectionsObj = arc.util.Reflect.get(mindustry.Vars.netServer, "connections");
+                        if (connectionsObj instanceof Iterable) {
+                            int count = 0;
+                            for (Object conObj : (Iterable<?>) connectionsObj) {
+                                if (conObj instanceof mindustry.net.NetConnection) {
+                                    mindustry.net.NetConnection con = (mindustry.net.NetConnection) conObj;
+                                    if (con.player != null) {
+                                        Log.info("[PlayerConnect] Sending world data to player: @", con.player.name);
+                                        mindustry.Vars.netServer.sendWorldData(con.player);
+                                        count++;
+                                    }
+                                }
+                            }
+                            Log.info("[PlayerConnect] Sent world data to @ clients via connections list.", count);
+                        } else {
+                            Log.err("[PlayerConnect] Failed to access connections list!");
                         }
+                    } catch (Exception ex) {
+                        Log.err("[PlayerConnect] Error syncing map to clients", ex);
                     }
-                    Log.info("[PlayerConnect] Sent world data to @ clients.", count);
-                }, 0.5f);
+                }, 1f); // Increased delay to 1.0s to be safe
             }
         });
 
