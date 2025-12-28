@@ -265,18 +265,21 @@ public class VoiceChatManager {
 
         // Client Logic: Receive Audio
         Vars.net.handleClient(MicPacket.class, packet -> {
+            Log.info("@ [CLIENT] Received audio packet from player @", TAG, packet.playerid);
             processIncomingVoice(packet);
         });
     }
 
     private void processIncomingVoice(MicPacket packet) {
-        if (!enabled)
+        if (!enabled) {
+            Log.info("@ processIncomingVoice: skipped (disabled)", TAG);
             return;
+        }
 
         // CRITICAL: Triple-check to prevent self-echo
         // Check 1: Compare player ID directly
         if (Vars.player != null && packet.playerid == Vars.player.id) {
-            Log.info("@ Blocked self-echo by ID: @", TAG, packet.playerid);
+            // Log.info("@ Blocked self-echo by ID: @", TAG, packet.playerid);
             return;
         }
 
