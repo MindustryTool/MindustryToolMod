@@ -217,13 +217,19 @@ public class VoiceChatManager {
     }
 
     private void ensureAudioInitialized() {
-        if (processor != null && speaker != null)
+        if (processor != null && speaker != null && mixer != null)
             return;
+
+        Log.info("@ [CLIENT] ensureAudioInitialized called", TAG);
         try {
-            if (processor == null)
+            if (processor == null) {
                 processor = new VoiceProcessor();
-            if (speaker == null)
+                Log.info("@ [CLIENT] Processor created", TAG);
+            }
+            if (speaker == null) {
                 speaker = new VoiceSpeaker();
+                Log.info("@ [CLIENT] Speaker created", TAG);
+            }
 
             // Enable Mixer on ALL platforms (Android now supports pull-mode)
             if (mixer == null) {
@@ -236,6 +242,7 @@ public class VoiceChatManager {
 
                 // Inject mixer into speaker for pull-based playback
                 speaker.setMixer(mixer);
+                Log.info("@ [CLIENT] Mixer created and injected into Speaker", TAG);
             }
         } catch (Throwable e) {
             Log.err("@ Failed to init audio: @", TAG, e.getMessage());
@@ -331,6 +338,13 @@ public class VoiceChatManager {
                             }
 
                             mixer.queueAudio(mixId, frameData);
+                            // Log first few frames only
+                            if (frameCount < 3) {
+                                Log.info("@ [CLIENT] Queued audio to mixer: @ bytes from @", TAG, frameLen, mixId);
+                            }
+                            frameCount++;
+                        } else {
+                            Log.warn("@ [CLIENT] Mixer is null, cannot queue audio!", TAG);
                         }
 
                         offset += 2 + frameLen;
