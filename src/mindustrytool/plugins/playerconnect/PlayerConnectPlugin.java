@@ -287,30 +287,42 @@ public class PlayerConnectPlugin implements Plugin {
                 // Delay to ensure world is ready and connections are stable
                 arc.util.Timer.schedule(() -> {
                     try {
-                        // Use reflection to access connections because direct access failed compilation
-                        // previously
-                        // This is critical because Groups.player is empty right after map reset!
-                        Object connectionsObj = arc.util.Reflect.get(mindustry.Vars.netServer, "connections");
+                        // Use reflection to access connections from Vars.net (Arc backend)
+                        // Vars.netServer is GAME logic, Vars.net is NETWORK logic.
+                        Object connectionsObj = arc.util.Reflect.get(mindustry.Vars.net, "connections");
                         if (connectionsObj instanceof Iterable) {
                             int count = 0;
                             for (Object conObj : (Iterable<?>) connectionsObj) {
                                 if (conObj instanceof mindustry.net.NetConnection) {
                                     mindustry.net.NetConnection con = (mindustry.net.NetConnection) conObj;
+
                                     if (con.player != null) {
                                         Log.info("[PlayerConnect] Sending world data to player: @", con.player.name);
                                         mindustry.Vars.netServer.sendWorldData(con.player);
                                         count++;
+                                    } else {
+                                        Log.warn(
+                                                "[PlayerConnect] Connection found but player is NULL. Cannot send world data. Address: @",
+                                                con.address);
+                                        // If player is null, they might be in the process of joining or stuck.
+                                        // We can't easily force world data without a player entity in V7.
                                     }
                                 }
                             }
-                            Log.info("[PlayerConnect] Sent world data to @ clients via connections list.", count);
+                            Log.info("[PlayerConnect] Sent world data to @ clients via Vars.net.connections coverage.",
+                                    count);
                         } else {
-                            Log.err("[PlayerConnect] Failed to access connections list!");
+                            Log.err("[PlayerConnect] Failed to access connections list in Vars.net!");
+                            // print fields for debugging
+                            Log.info("Vars.net fields: ");
+                            for (java.lang.reflect.Field f : mindustry.Vars.net.getClass().getDeclaredFields()) {
+                                Log.info(" - " + f.getName());
+                            }
                         }
                     } catch (Exception ex) {
-                        Log.err("[PlayerConnect] Error syncing map to clients", ex);
+                        Log.err("[PlayerConnect] Error syncing map to clients (Vars.net)", ex);
                     }
-                }, 1f); // Increased delay to 1.0s to be safe
+                }, 1.5f); // Increased delay to 1.5s to be safe
             }
         });
 
