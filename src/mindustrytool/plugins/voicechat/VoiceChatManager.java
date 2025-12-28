@@ -197,6 +197,13 @@ public class VoiceChatManager {
             status = VoiceStatus.WAITING_HANDSHAKE;
             sendHandshake();
             Log.info("@ Client: Handshake sent to server", TAG);
+
+            // CRITICAL FIX: Start capture immediately, don't wait for ACK
+            // The ACK might not arrive due to packet issues, but server already added us
+            if (!muted) {
+                startCapture();
+                Log.info("@ Client: Capture started (optimistic)", TAG);
+            }
         } else if (Vars.net.server() && !Vars.headless) {
             status = VoiceStatus.CONNECTED; // Host is always CONNECTED
             Log.info("@ Host: Set status CONNECTED. Muted=@", TAG, muted);
@@ -638,13 +645,26 @@ public class VoiceChatManager {
             return;
 
         // Auto-Retry Handshake for Clients
-        if (Vars.net.client() && Vars.net.active()
-                && (status == VoiceStatus.WAITING_HANDSHAKE || status == VoiceStatus.DISABLED)) {
-            if (arc.util.Time.timeSinceMillis(lastHandshakeTime) > 2000) {
-                status = VoiceStatus.WAITING_HANDSHAKE;
-                sendHandshake();
-                lastHandshakeTime = arc.util.Time.millis();
-                // Log.info("@ [CLIENT] Retrying handshake... (Status=@)", TAG, status);
+        if (Vars.net.client() && Vars.net.active()) {
+            if (status == VoiceStatus.WAITING_HANDSHAKE || status == VoiceStatus.DISABLED) {
+                long timeSinceHandshake = arc.util.Time.timeSinceMillis(lastHandshakeTime);
+
+                // Auto-upgrade to CONNECTED after 5 seconds (ACK might be lost)
+                if (timeSinceHandshake > 5000 && status == VoiceStatus.WAITING_HANDSHAKE) {
+                    Log.info("@ Client: Auto-upgrading to CONNECTED (ACK timeout)", TAG);
+                    status = VoiceStatus.CONNECTED;
+                }
+
+                // Retry handshake every 2 seconds
+                if (timeSinceHandshake > 2000) {
+                    sendHandshake();
+                    lastHandshakeTime = arc.util.Time.millis();
+
+                    // Also try to start capture if not already running
+                    if (!muted && (captureThread == null || !captureThread.isAlive())) {
+                        startCapture();
+                    }
+                }
             }
         }
     }
