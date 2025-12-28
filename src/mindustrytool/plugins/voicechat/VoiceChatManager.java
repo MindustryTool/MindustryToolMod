@@ -157,16 +157,29 @@ public class VoiceChatManager {
             syncStatus();
         });
 
-        // Cleanup on Menu return
+        // Cleanup on Menu return (CRITICAL: Reset all audio components for next
+        // session)
         arc.Events.on(mindustry.game.EventType.StateChangeEvent.class, e -> {
             if (e.to == mindustry.core.GameState.State.menu) {
+                Log.info("@ Returning to menu, cleaning up audio...", TAG);
                 stopCapture();
-                if (mixer != null)
-                    mixer.removePlayer("all"); // Clear buffers
-                if (speaker != null)
+
+                // Close and null all audio components so they get re-created next time
+                if (mixer != null) {
+                    mixer.removePlayer("all");
+                    mixer = null; // Force recreation
+                }
+                if (speaker != null) {
                     speaker.close();
+                    speaker = null; // Force recreation
+                }
+                if (processor != null) {
+                    processor = null; // Force recreation
+                }
+
                 status = VoiceStatus.DISABLED;
                 moddedClients.clear();
+                Log.info("@ Audio cleanup complete, ready for next session", TAG);
             }
         });
 
