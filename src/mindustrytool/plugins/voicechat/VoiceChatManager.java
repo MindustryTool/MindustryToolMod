@@ -153,6 +153,16 @@ public class VoiceChatManager {
             }
         });
 
+        // SERVER: Send voice chat request to newly connected players
+        arc.Events.on(mindustry.game.EventType.PlayerJoin.class, e -> {
+            if (Vars.net.server() && !Vars.headless && e.player.con != null) {
+                // Send VoiceRequestPacket to indicate this server supports voice chat
+                VoiceRequestPacket request = new VoiceRequestPacket();
+                request.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
+                e.player.con.send(request, true);
+            }
+        });
+
         // Sync status on World Load
         arc.Events.on(mindustry.game.EventType.WorldLoadEvent.class, e -> {
             syncStatus();
@@ -204,29 +214,24 @@ public class VoiceChatManager {
             return;
         }
 
-        // Client: Only handshake if not already connected
+        // Client: DON'T send handshake automatically - wait for server to initiate
+        // This ensures vanilla servers (without mod) don't receive unknown packets
         if (Vars.net.client()) {
-            // Skip if already in a good state (avoid resetting status)
+            // Skip if already in a good state
             if (status == VoiceStatus.READY || status == VoiceStatus.CONNECTED) {
-                // Log.info("@ Client: Already connected, skipping handshake", TAG);
                 return;
             }
+            // Just set status to WAITING - actual handshake happens when server sends
+            // VoiceRequestPacket
             status = VoiceStatus.WAITING_HANDSHAKE;
-            sendHandshake();
-            // Log.info("@ Client: Handshake sent to server", TAG);
-
-            // CRITICAL FIX: Start capture immediately, don't wait for ACK
-            // The ACK might not arrive due to packet issues, but server already added us
+            // Start capture optimistically (for hosts that support voice chat)
             if (!muted) {
                 startCapture();
-                // Log.info("@ Client: Capture started (optimistic)", TAG);
             }
         } else if (Vars.net.server() && !Vars.headless) {
             status = VoiceStatus.CONNECTED; // Host is always CONNECTED
-            // Log.info("@ Host: Set status CONNECTED. Muted=@", TAG, muted);
             if (!muted) {
                 startCapture();
-                // Log.info("@ Host: Capture started", TAG);
             }
         }
     }
@@ -278,11 +283,12 @@ public class VoiceChatManager {
             Log.warn("@ Packets registration error: @", TAG, e.getMessage());
         }
 
-        // Client Logic: Receive Ack
+        // Client Logic: Receive voice chat request from server (server-initiated
+        // handshake)
         Vars.net.handleClient(VoiceRequestPacket.class, packet -> {
-            // Log.info("@ [CLIENT] Received ACK from server! Protocol=@", TAG,
-            // packet.protocolVersion);
-            status = VoiceStatus.CONNECTED; // Set to CONNECTED, not just READY
+            // Server supports voice chat! Send response and set connected
+            sendHandshake(); // Now safe to send - server definitely supports it
+            status = VoiceStatus.CONNECTED;
             if (enabled && !muted)
                 startCapture();
         });
@@ -375,10 +381,17 @@ public class VoiceChatManager {
     public void sendHandshake() {
         if (!Vars.net.client() || !Vars.net.active())
             return;
-        Log.info("@ Client: Sending Handshake (VoiceResponsePacket)...", TAG);
-        VoiceResponsePacket packet = new VoiceResponsePacket();
-        packet.responseCode = LemmeSayConstants.RESPONSE_ACCEPTED;
-        Vars.net.send(packet, true);
+
+        try {
+            // Log.info("@ Client: Sending Handshake (VoiceResponsePacket)...", TAG);
+            VoiceResponsePacket packet = new VoiceResponsePacket();
+            packet.responseCode = LemmeSayConstants.RESPONSE_ACCEPTED;
+            Vars.net.send(packet, true);
+        } catch (Exception e) {
+            // Vanilla server doesn't support voice chat packets - this is normal
+            // Log.info("@ Handshake failed (server may not support voice chat): @", TAG,
+            // e.getMessage());
+        }
     }
 
     public void startCapture() {
@@ -675,26 +688,19 @@ public class VoiceChatManager {
         if (!enabled)
             return;
 
-        // Auto-Retry Handshake for Clients
+        // Auto-Retry for Clients: Only retry if we have reason to believe server
+        // supports voice chat
+        // (i.e., we received VoiceRequestPacket before)
+        // Don't spam vanilla servers with handshake packets
         if (Vars.net.client() && Vars.net.active()) {
-            if (status == VoiceStatus.WAITING_HANDSHAKE || status == VoiceStatus.DISABLED) {
+            if (status == VoiceStatus.WAITING_HANDSHAKE) {
                 long timeSinceHandshake = arc.util.Time.timeSinceMillis(lastHandshakeTime);
 
-                // Auto-upgrade to CONNECTED after 5 seconds (ACK might be lost)
-                if (timeSinceHandshake > 5000 && status == VoiceStatus.WAITING_HANDSHAKE) {
-                    // Log.info("@ Client: Auto-upgrading to CONNECTED (ACK timeout)", TAG);
-                    status = VoiceStatus.CONNECTED;
-                }
-
-                // Retry handshake every 2 seconds
-                if (timeSinceHandshake > 2000) {
-                    sendHandshake();
-                    lastHandshakeTime = arc.util.Time.millis();
-
-                    // Also try to start capture if not already running
-                    if (!muted && (captureThread == null || !captureThread.isAlive())) {
-                        startCapture();
-                    }
+                // Auto-upgrade to CONNECTED after 10 seconds (for servers that might have
+                // delayed response)
+                if (timeSinceHandshake > 10000) {
+                    // After 10 seconds of waiting, assume server doesn't support voice chat
+                    // Don't upgrade to CONNECTED - just stay in WAITING state silently
                 }
             }
         }
