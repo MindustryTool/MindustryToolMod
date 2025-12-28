@@ -287,38 +287,46 @@ public class PlayerConnectPlugin implements Plugin {
                 // Delay to ensure world is ready and connections are stable
                 arc.util.Timer.schedule(() -> {
                     try {
-                        // Use reflection to access connections from Vars.net (Arc backend)
-                        // Vars.netServer is GAME logic, Vars.net is NETWORK logic.
-                        Object connectionsObj = arc.util.Reflect.get(mindustry.Vars.net, "connections");
-                        if (connectionsObj instanceof Iterable) {
-                            int count = 0;
-                            for (Object conObj : (Iterable<?>) connectionsObj) {
-                                if (conObj instanceof mindustry.net.NetConnection) {
-                                    mindustry.net.NetConnection con = (mindustry.net.NetConnection) conObj;
+                        // Debugging: Print class structure to find where 'connections' is hiding
+                        Class<?> clazz = mindustry.Vars.netServer.getClass();
+                        Log.info("[PlayerConnect] Vars.netServer class: " + clazz.getName());
+                        for (java.lang.reflect.Field f : clazz.getFields()) { // Public fields
+                            Log.info(" - public field: " + f.getName());
+                        }
+                        for (java.lang.reflect.Field f : clazz.getDeclaredFields()) { // All fields
+                            Log.info(" - declared field: " + f.getName());
+                        }
+                        // Retry loop to catch players as they re-login or stabilize
+                        // Reflection was unreliable, so we use the public API with persistence.
+                        arc.util.Timer.schedule(new arc.util.Timer.Task() {
+                            int retries = 0;
+                            // Track players who have already received the map to avoid spamming bandwidth
+                            final arc.struct.ObjectSet<String> sentPlayers = new arc.struct.ObjectSet<>();
 
-                                    if (con.player != null) {
-                                        Log.info("[PlayerConnect] Sending world data to player: @", con.player.name);
-                                        mindustry.Vars.netServer.sendWorldData(con.player);
-                                        count++;
-                                    } else {
-                                        Log.warn(
-                                                "[PlayerConnect] Connection found but player is NULL. Cannot send world data. Address: @",
-                                                con.address);
-                                        // If player is null, they might be in the process of joining or stuck.
-                                        // We can't easily force world data without a player entity in V7.
+                            @Override
+                            public void run() {
+                                if (retries++ > 10) { // Try for 10 seconds (1s interval)
+                                    this.cancel();
+                                    return;
+                                }
+
+                                int count = 0;
+                                if (!mindustry.gen.Groups.player.isEmpty()) {
+                                    for (mindustry.gen.Player p : mindustry.gen.Groups.player) {
+                                        if (p.con != null && !sentPlayers.contains(p.uuid())) {
+                                            Log.info("[PlayerConnect] Sending world data to player: @ (Attempt @)",
+                                                    p.name, retries);
+                                            mindustry.Vars.netServer.sendWorldData(p);
+                                            sentPlayers.add(p.uuid());
+                                            count++;
+                                        }
                                     }
                                 }
+                                if (count > 0) {
+                                    Log.info("[PlayerConnect] Sync Attempt @: Sent to @ NEW clients.", retries, count);
+                                }
                             }
-                            Log.info("[PlayerConnect] Sent world data to @ clients via Vars.net.connections coverage.",
-                                    count);
-                        } else {
-                            Log.err("[PlayerConnect] Failed to access connections list in Vars.net!");
-                            // print fields for debugging
-                            Log.info("Vars.net fields: ");
-                            for (java.lang.reflect.Field f : mindustry.Vars.net.getClass().getDeclaredFields()) {
-                                Log.info(" - " + f.getName());
-                            }
-                        }
+                        }, 1f, 1f); // Start after 1s, repeat every 1s
                     } catch (Exception ex) {
                         Log.err("[PlayerConnect] Error syncing map to clients (Vars.net)", ex);
                     }
