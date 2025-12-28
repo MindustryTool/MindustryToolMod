@@ -18,8 +18,8 @@ public class PausedMenuInjector {
             Table root = Vars.ui.paused.cont;
 
             // Debug logging
-            arc.util.Log.info("[PlayerConnect] Scanning pause menu... isGame=" + Vars.state.isGame() + ", isCampaign="
-                    + Vars.state.isCampaign());
+            // arc.util.Log.info("[PlayerConnect] Scanning pause menu... isGame=" +
+            // Vars.state.isGame() + ", isCampaign=" + Vars.state.isCampaign());
 
             // Search for the cell containing the host button
             boolean hostReplaced = false;
@@ -65,7 +65,8 @@ public class PausedMenuInjector {
 
                     // Replace Host button
                     if (isHost && !hostReplaced) {
-                        arc.util.Log.info("[PlayerConnect] Host button found! Replacing with Multiplayer button.");
+                        // arc.util.Log.info("[PlayerConnect] Host button found! Replacing with
+                        // Multiplayer button.");
 
                         TextButton newBtn = new TextButton(
                                 Core.bundle.get("message.manage-room.host-title", "Multiplayer"));
@@ -89,8 +90,8 @@ public class PausedMenuInjector {
                     // (Host/Local)
                     // If in Campaign, we want to Keep Planet Map and Add Change Map separately
                     if (isPlanet && !planetReplaced && Vars.state.isGame() && !Vars.state.isCampaign()) {
-                        arc.util.Log.info(
-                                "[PlayerConnect] Planet Map button found in custom game! Replacing with Change Map.");
+                        // arc.util.Log.info("[PlayerConnect] Planet Map button found in custom game!
+                        // Replacing with Change Map.");
 
                         String btnText = Vars.net.client() ? "Play Custom" : "Change Map";
                         TextButton changeMapBtn = new TextButton(btnText);
@@ -120,7 +121,8 @@ public class PausedMenuInjector {
             }
 
             if (!hostReplaced) {
-                arc.util.Log.info("[PlayerConnect] Host button NOT found. Adding fallback button.");
+                // arc.util.Log.info("[PlayerConnect] Host button NOT found. Adding fallback
+                // button.");
 
                 @SuppressWarnings("rawtypes")
                 arc.struct.Seq<arc.scene.ui.layout.Cell> cells = root.getCells();
@@ -144,7 +146,8 @@ public class PausedMenuInjector {
             // found)
             // Logic: Always show if in Game.
             if (!planetReplaced && Vars.state.isGame()) {
-                arc.util.Log.info("[PlayerConnect] Adding Change Map button (Campaign/Fallback).");
+                // arc.util.Log.info("[PlayerConnect] Adding Change Map button
+                // (Campaign/Fallback).");
 
                 @SuppressWarnings("rawtypes")
                 arc.struct.Seq<arc.scene.ui.layout.Cell> cells = root.getCells();
@@ -177,7 +180,8 @@ public class PausedMenuInjector {
                 // Swap with the last button (usually Save & Quit) so this appears above it
                 if (cells.size > 1) {
                     cells.swap(cells.size - 1, cells.size - 2);
-                    arc.util.Log.info("[PlayerConnect] Swapped Change Map button with previous element.");
+                    // arc.util.Log.info("[PlayerConnect] Swapped Change Map button with previous
+                    // element.");
                 }
             }
         });

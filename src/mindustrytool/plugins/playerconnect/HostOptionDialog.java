@@ -2,7 +2,6 @@ package mindustrytool.plugins.playerconnect;
 
 import mindustry.Vars;
 import mindustry.gen.Icon;
-import mindustry.maps.Map;
 import mindustry.ui.dialogs.BaseDialog;
 
 public class HostOptionDialog extends BaseDialog {

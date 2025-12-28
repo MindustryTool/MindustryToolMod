@@ -132,6 +132,45 @@ public class BrowserPlugin implements Plugin {
         }).get();
         browseButton.update(() -> browseButton.visible = schematicDialog.isEnabled());
 
+        // Add browse button to Custom Game dialog via Reflection
+        try {
+            Object custom = arc.util.Reflect.get(Vars.ui, "custom");
+            if (custom instanceof BaseDialog) {
+                ((BaseDialog) custom).shown(() -> {
+                    // Check by name to avoid duplicates
+                    if (((BaseDialog) custom).buttons.find("map-browse") == null) {
+                        ((BaseDialog) custom).buttons.button("Browse", Icon.menu, () -> {
+                            ((BaseDialog) custom).hide();
+                            mindustry.ui.dialogs.BaseDialog dialog = mapDialog.getIfEnabled();
+                            if (dialog != null)
+                                dialog.show();
+                        }).size(210f, 64f).name("map-browse");
+                    }
+                });
+            }
+        } catch (Throwable e) {
+            // Ignore if custom dialog not found
+        }
+
+        // Add browse button to Maps dialog via Reflection
+        try {
+            Object maps = arc.util.Reflect.get(Vars.ui, "maps");
+            if (maps instanceof BaseDialog) {
+                ((BaseDialog) maps).shown(() -> {
+                    if (((BaseDialog) maps).buttons.find("map-browse") == null) {
+                        ((BaseDialog) maps).buttons.button("Browse", Icon.menu, () -> {
+                            ((BaseDialog) maps).hide();
+                            mindustry.ui.dialogs.BaseDialog dialog = mapDialog.getIfEnabled();
+                            if (dialog != null)
+                                dialog.show();
+                        }).size(210f, 64f).name("map-browse");
+                    }
+                });
+            }
+        } catch (Throwable e) {
+            // Ignore if maps dialog not found
+        }
+
         if (Vars.mobile) {
             // Mobile: single button opens tools dialog
             Vars.ui.menufrag.addButton("Tools", Icon.settings, () -> new ToolsMenuDialog().show());

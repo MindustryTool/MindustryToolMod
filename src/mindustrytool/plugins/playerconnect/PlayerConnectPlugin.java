@@ -283,61 +283,63 @@ public class PlayerConnectPlugin implements Plugin {
             // Sync map to clients when game starts (including "Change Map")
             // Moved from WorldLoadEvent to PlayEvent to ensure game state is ready
             if (mindustry.Vars.net.server()) {
-                Log.info("[PlayerConnect] PlayEvent triggered. Scheduling map sync for clients...");
+                // Log.info("[PlayerConnect] PlayEvent triggered. Scheduling map sync for
+                // clients...");
+                // Delay to ensure world is ready and connections are stable
                 // Delay to ensure world is ready and connections are stable
                 arc.util.Timer.schedule(() -> {
                     try {
-                        // Debugging: Print class structure to find where 'connections' is hiding
-                        Class<?> clazz = mindustry.Vars.netServer.getClass();
-                        Log.info("[PlayerConnect] Vars.netServer class: " + clazz.getName());
-                        for (java.lang.reflect.Field f : clazz.getFields()) { // Public fields
-                            Log.info(" - public field: " + f.getName());
-                        }
-                        for (java.lang.reflect.Field f : clazz.getDeclaredFields()) { // All fields
-                            Log.info(" - declared field: " + f.getName());
-                        }
-                        // Retry loop to catch players as they re-login or stabilize
-                        // Reflection was unreliable, so we use the public API with persistence.
-                        arc.util.Timer.schedule(new arc.util.Timer.Task() {
-                            int retries = 0;
-                            // Track players who have already received the map to avoid spamming bandwidth
-                            final arc.struct.ObjectSet<String> sentPlayers = new arc.struct.ObjectSet<>();
-
-                            @Override
-                            public void run() {
-                                if (retries++ > 10) { // Try for 10 seconds (1s interval)
-                                    this.cancel();
-                                    return;
-                                }
-
-                                int count = 0;
-                                if (!mindustry.gen.Groups.player.isEmpty()) {
-                                    for (mindustry.gen.Player p : mindustry.gen.Groups.player) {
-                                        if (p.con != null && !sentPlayers.contains(p.uuid())) {
-                                            Log.info("[PlayerConnect] Sending world data to player: @ (Attempt @)",
-                                                    p.name, retries);
-                                            mindustry.Vars.netServer.sendWorldData(p);
-                                            sentPlayers.add(p.uuid());
-                                            count++;
-                                        }
-                                    }
-                                }
-                                if (count > 0) {
-                                    Log.info("[PlayerConnect] Sync Attempt @: Sent to @ NEW clients.", retries, count);
-                                }
+                        // Use public API Vars.net.getConnections() which is reliable in V7
+                        Iterable<? extends mindustry.net.NetConnection> connections = mindustry.Vars.net
+                                .getConnections();
+                        // int count = 0;
+                        for (mindustry.net.NetConnection con : connections) {
+                            // If player is valid, send world data.
+                            // Even if con.player is null, sending WorldData might reset their state?
+                            // But sendWorldData takes a Player object...
+                            if (con.player != null) {
+                                // Log.info("[PlayerConnect] Sending world data to player: @ (Fast Sync)",
+                                // con.player.name);
+                                mindustry.Vars.netServer.sendWorldData(con.player);
+                                // count++;
+                            } else {
+                                // In deep desync, player might be null?
+                                // If so, we are stuck. But usually connection persists.
+                                Log.warn("[PlayerConnect] Fast sync skipped: Player is null for @", con.address);
                             }
-                        }, 1f, 1f); // Start after 1s, repeat every 1s
+                        }
+                        // Log.info("[PlayerConnect] Fast Sync Complete. Sent to @ clients.", count);
                     } catch (Exception ex) {
-                        Log.err("[PlayerConnect] Error syncing map to clients (Vars.net)", ex);
+                        Log.err("[PlayerConnect] Error syncing map to clients", ex);
                     }
-                }, 1.5f); // Increased delay to 1.5s to be safe
+                }, 0.2f); // Reduced to 0.2s to race against Snapshot timeout
             }
         });
 
         Events.on(EventType.WorldLoadEvent.class, e -> {
             trigger.run();
             // Logging for debug
-            Log.info("[PlayerConnect] WorldLoadEvent triggered.");
+            // Log.info("[PlayerConnect] WorldLoadEvent triggered.");
+
+            // Backup Sync: Attempt to sync in WorldLoadEvent too if connections persist.
+            // This happens BEFORE PlayEvent. if connections are alive, this is the BEST
+            // time.
+            if (mindustry.Vars.net.server()) {
+                try {
+                    Iterable<? extends mindustry.net.NetConnection> connections = mindustry.Vars.net.getConnections();
+                    // int c = 0;
+                    for (mindustry.net.NetConnection con : connections) {
+                        if (con.player != null) {
+                            mindustry.Vars.netServer.sendWorldData(con.player);
+                            // c++;
+                        }
+                    }
+                    // if (c > 0)
+                    // Log.info("[PlayerConnect] WorldLoad Sync: Sent to @ clients.", c);
+                } catch (Exception ex) {
+                    // Ignore errors here, main sync is in PlayEvent
+                }
+            }
         });
 
         // Centralized Lazy Triggers: Only run and instantiate if enabled
