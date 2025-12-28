@@ -121,6 +121,7 @@ public class VoiceChatManager {
 
             // Forward to other verified clients (CRITICAL: Compare by PLAYER ID, not
             // connection object)
+            int forwardCount = 0;
             for (NetConnection other : moddedClients) {
                 // Skip if: not connected, same player, or null player
                 if (!other.isConnected() || other.player == null)
@@ -129,7 +130,9 @@ public class VoiceChatManager {
                     continue; // NEVER send back to sender
 
                 other.send(packet, true); // Reliable (TCP) for delivery guarantee
+                forwardCount++;
             }
+            Log.info("@ [SERVER] Forwarded audio from @ to @ clients", TAG, con.player.name, forwardCount);
 
             // If Host (PC), play audio locally
             if (!Vars.headless) {
@@ -183,17 +186,21 @@ public class VoiceChatManager {
             return;
         }
 
-        // Always re-handshake on WorldLoad (fixes rejoin issues)
+        // Client: Only handshake if not already connected
         if (Vars.net.client()) {
+            // Skip if already in a good state (avoid resetting status)
+            if (status == VoiceStatus.READY || status == VoiceStatus.CONNECTED) {
+                Log.info("@ Client: Already connected, skipping handshake", TAG);
+                return;
+            }
             status = VoiceStatus.WAITING_HANDSHAKE;
             sendHandshake();
             Log.info("@ Client: Handshake sent to server", TAG);
         } else if (Vars.net.server() && !Vars.headless) {
-            status = VoiceStatus.READY;
-            Log.info("@ Host: Set status READY. Muted=@", TAG, muted);
+            status = VoiceStatus.CONNECTED; // Host is always CONNECTED
+            Log.info("@ Host: Set status CONNECTED. Muted=@", TAG, muted);
             if (!muted) {
                 startCapture();
-                status = VoiceStatus.CONNECTED;
                 Log.info("@ Host: Capture started", TAG);
             }
         }
@@ -242,8 +249,8 @@ public class VoiceChatManager {
         // Client Logic: Receive Ack
         Vars.net.handleClient(VoiceRequestPacket.class, packet -> {
             Log.info("@ [CLIENT] Received ACK from server! Protocol=@", TAG, packet.protocolVersion);
-            status = VoiceStatus.READY;
-            Log.info("@ [CLIENT] Status set to READY", TAG);
+            status = VoiceStatus.CONNECTED; // Set to CONNECTED, not just READY
+            Log.info("@ [CLIENT] Status set to CONNECTED", TAG);
             if (enabled && !muted)
                 startCapture();
         });
