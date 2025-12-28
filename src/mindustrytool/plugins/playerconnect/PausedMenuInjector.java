@@ -5,6 +5,7 @@ import arc.scene.ui.layout.Table;
 import arc.scene.ui.ImageButton;
 import arc.scene.ui.TextButton;
 import mindustry.Vars;
+import mindustry.maps.Map;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.gen.Icon;
 import arc.Core;
@@ -17,40 +18,54 @@ public class PausedMenuInjector {
             Table root = Vars.ui.paused.cont;
 
             // Debug logging
-            arc.util.Log.info("[PlayerConnect] Scanning pause menu for 'Host' button...");
+            arc.util.Log.info("[PlayerConnect] Scanning pause menu... isGame=" + Vars.state.isGame() + ", isCampaign="
+                    + Vars.state.isCampaign());
 
             // Search for the cell containing the host button
-            boolean replaced = false;
+            boolean hostReplaced = false;
+            boolean planetReplaced = false;
             String hostText = Core.bundle.get("server.host");
+            String planetText = Core.bundle.get("planet.button", "Planet Map"); // Planet Map button text
 
             for (arc.scene.ui.layout.Cell<?> cell : root.getCells()) {
                 if (cell.get() instanceof Button b) {
                     boolean isHost = false;
+                    boolean isPlanet = false;
 
                     // Check TextButton (Text OR Icon)
                     if (b instanceof TextButton tb) {
                         String text = tb.getText().toString();
                         if (text.contains(hostText) || text.contains("Host")) {
                             isHost = true;
+                        } else if (text.contains(planetText) || text.contains("Planet")) {
+                            isPlanet = true;
                         } else {
-                            // Check if TextButton has the Host icon
+                            // Check by icon
                             for (arc.scene.Element child : tb.getChildren()) {
-                                if (child instanceof arc.scene.ui.Image img && img.getDrawable() == Icon.host) {
-                                    isHost = true;
-                                    break;
+                                if (child instanceof arc.scene.ui.Image img) {
+                                    if (img.getDrawable() == Icon.host) {
+                                        isHost = true;
+                                        break;
+                                    } else if (img.getDrawable() == Icon.planet) {
+                                        isPlanet = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
                     // Check ImageButton (Icon)
-                    else if (b instanceof ImageButton ib && ib.getStyle().imageUp == Icon.host) {
-                        isHost = true;
+                    else if (b instanceof ImageButton ib) {
+                        if (ib.getStyle().imageUp == Icon.host) {
+                            isHost = true;
+                        } else if (ib.getStyle().imageUp == Icon.planet) {
+                            isPlanet = true;
+                        }
                     }
 
-                    if (isHost) {
-                        arc.util.Log.info(
-                                "[PlayerConnect] Host button found in "
-                                        + (b instanceof TextButton ? "TextButton" : "ImageButton") + "! Replacing.");
+                    // Replace Host button
+                    if (isHost && !hostReplaced) {
+                        arc.util.Log.info("[PlayerConnect] Host button found! Replacing with Multiplayer button.");
 
                         TextButton newBtn = new TextButton(
                                 Core.bundle.get("message.manage-room.host-title", "Multiplayer"));
@@ -64,21 +79,46 @@ public class PausedMenuInjector {
                             }
                         });
 
-                        // Suppress raw type warning for setElement
                         @SuppressWarnings("unchecked")
                         arc.scene.ui.layout.Cell<arc.scene.Element> typedCell = (arc.scene.ui.layout.Cell<arc.scene.Element>) cell;
                         typedCell.setElement(newBtn);
+                        hostReplaced = true;
+                    }
 
-                        replaced = true;
-                        break;
+                    // Replace Planet Map button with Change Map when in custom game mode
+                    if (isPlanet && !planetReplaced && Vars.state.isGame() && !Vars.state.isCampaign()) {
+                        arc.util.Log.info(
+                                "[PlayerConnect] Planet Map button found in custom game! Replacing with Change Map.");
+
+                        TextButton changeMapBtn = new TextButton("Change Map");
+                        changeMapBtn.add(new arc.scene.ui.Image(Icon.map)).padLeft(6f);
+                        changeMapBtn.getCells().reverse();
+                        changeMapBtn.changed(() -> {
+                            try {
+                                Vars.ui.paused.hide();
+                                // Use reflection to access custom game dialog to avoid compilation issues
+                                Object customDialog = arc.util.Reflect.get(Vars.ui, "custom");
+                                if (customDialog instanceof mindustry.ui.dialogs.BaseDialog) {
+                                    ((mindustry.ui.dialogs.BaseDialog) customDialog).show();
+                                } else {
+                                    Vars.ui.showInfo("Could not find Custom Game dialog.");
+                                }
+                            } catch (Exception e) {
+                                Vars.ui.showException(e);
+                            }
+                        });
+
+                        @SuppressWarnings("unchecked")
+                        arc.scene.ui.layout.Cell<arc.scene.Element> typedCell = (arc.scene.ui.layout.Cell<arc.scene.Element>) cell;
+                        typedCell.setElement(changeMapBtn);
+                        planetReplaced = true;
                     }
                 }
             }
 
-            if (!replaced) {
-                arc.util.Log.info("[PlayerConnect] Host button NOT found. Adding fallback 'Manage room' button.");
+            if (!hostReplaced) {
+                arc.util.Log.info("[PlayerConnect] Host button NOT found. Adding fallback button.");
 
-                // Fallback logic
                 @SuppressWarnings("rawtypes")
                 arc.struct.Seq<arc.scene.ui.layout.Cell> cells = root.getCells();
 
@@ -94,6 +134,39 @@ public class PausedMenuInjector {
 
                 if (cells.size > 2) {
                     cells.swap(cells.size - 1, cells.size - 2);
+                }
+            }
+
+            // If in custom game and Planet button wasn't found/replaced, add Change Map
+            // button
+            if (!planetReplaced && Vars.state.isGame() && !Vars.state.isCampaign()) {
+                arc.util.Log.info("[PlayerConnect] Adding Change Map button for custom game mode.");
+
+                @SuppressWarnings("rawtypes")
+                arc.struct.Seq<arc.scene.ui.layout.Cell> cells = root.getCells();
+
+                Runnable showMap = () -> {
+                    try {
+                        Vars.ui.paused.hide();
+                        // Use reflection to access custom game dialog to avoid compilation issues
+                        Object customDialog = arc.util.Reflect.get(Vars.ui, "custom");
+                        if (customDialog instanceof mindustry.ui.dialogs.BaseDialog) {
+                            ((mindustry.ui.dialogs.BaseDialog) customDialog).show();
+                        } else {
+                            Vars.ui.showInfo("Could not find Custom Game dialog.");
+                        }
+                    } catch (Exception e) {
+                        Vars.ui.showException(e);
+                    }
+                };
+
+                if (Vars.mobile) {
+                    root.row().buttonRow("Change Map", Icon.map, showMap).row();
+                } else if (!cells.isEmpty() && cells.size > 2) {
+                    root.row().button("Change Map", Icon.map, showMap).colspan(2)
+                            .width(450f).row();
+                } else {
+                    root.row().button("Change Map", Icon.map, showMap).row();
                 }
             }
         });
