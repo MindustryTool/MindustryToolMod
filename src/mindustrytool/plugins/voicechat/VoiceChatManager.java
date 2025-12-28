@@ -285,20 +285,15 @@ public class VoiceChatManager {
             return;
         }
 
-        // CRITICAL: Triple-check to prevent self-echo
-        // Check 1: Compare player ID directly
+        // Self-echo prevention: Compare player ID directly
+        // NOTE: UUID comparison removed - it causes false positives on Android
+        // where both sender.uuid() and Vars.player.uuid() return "[LOCAL]"
         if (Vars.player != null && packet.playerid == Vars.player.id) {
             // Log.info("@ Blocked self-echo by ID: @", TAG, packet.playerid);
             return;
         }
 
         mindustry.gen.Player sender = mindustry.gen.Groups.player.find(p -> p.id == packet.playerid);
-
-        // Check 2: Compare UUID (fallback if ID comparison failed somehow)
-        if (sender != null && Vars.player != null && sender.uuid().equals(Vars.player.uuid())) {
-            Log.info("@ Blocked self-echo by UUID: @", TAG, sender.uuid());
-            return;
-        }
 
         if (sender != null) {
             lastSpeakingTime.put(sender.uuid(), arc.util.Time.millis());
