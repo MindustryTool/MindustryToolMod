@@ -86,18 +86,23 @@ public class VoiceChatManager {
         // Server-side Logic: Receive Handshake from Client
         Vars.net.handleServer(VoiceResponsePacket.class, (con, packet) -> {
             if (con.player != null) {
+                Log.info("@ [SERVER] Received handshake from: @", TAG, con.player.name);
+
                 // Handshake accepted (Legacy mode: No protocol check)
                 if (!moddedClients.contains(con)) {
-                    Log.info("@ Client @ verified modded. Adding to voice recipients.", TAG, con.player.name);
+                    Log.info("@ [SERVER] Adding @ to voice recipients.", TAG, con.player.name);
                     moddedClients.add(con);
                 } else {
-                    Log.info("@ Client @ already verified.", TAG, con.player.name);
+                    Log.info("@ [SERVER] @ already in list.", TAG, con.player.name);
                 }
 
                 // Send Ack back to client
                 VoiceRequestPacket ack = new VoiceRequestPacket();
                 ack.protocolVersion = LemmeSayConstants.PROTOCOL_VERSION;
+                Log.info("@ [SERVER] Sending ACK back to: @", TAG, con.player.name);
                 con.send(ack, true); // Reliable TCP
+            } else {
+                Log.warn("@ [SERVER] Handshake received but con.player is null!", TAG);
             }
         });
 
@@ -236,8 +241,9 @@ public class VoiceChatManager {
 
         // Client Logic: Receive Ack
         Vars.net.handleClient(VoiceRequestPacket.class, packet -> {
-            // Protocol check removed for compatibility
+            Log.info("@ [CLIENT] Received ACK from server! Protocol=@", TAG, packet.protocolVersion);
             status = VoiceStatus.READY;
+            Log.info("@ [CLIENT] Status set to READY", TAG);
             if (enabled && !muted)
                 startCapture();
         });
@@ -630,7 +636,7 @@ public class VoiceChatManager {
                 status = VoiceStatus.WAITING_HANDSHAKE;
                 sendHandshake();
                 lastHandshakeTime = arc.util.Time.millis();
-                // Log.info("@ Retrying handshake...", TAG); // Debug spam check
+                Log.info("@ [CLIENT] Retrying handshake... (Status=@)", TAG, status);
             }
         }
     }
