@@ -247,6 +247,18 @@ public class PlayerConnectPlugin implements Plugin {
         if (initialized)
             return;
 
+        // Register events to handle room merging
+        Events.on(EventType.ClientLoadEvent.class, e -> {
+            // Force-load Voice Chat Manager so it's ready for packets immediately
+            // This fixes the "Host must open settings/mic first" bug
+            voiceChatManager.get();
+        });
+
+        Events.on(EventType.HostEvent.class, e -> {
+            // Ensure manager is loaded when hosting
+            voiceChatManager.get();
+        });
+
         PlayerConnect.init();
         PlayerConnectProviders.loadCustom();
         JoinDialogInjector.inject();

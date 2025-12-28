@@ -87,8 +87,12 @@ public class VoiceChatManager {
         Vars.net.handleServer(VoiceResponsePacket.class, (con, packet) -> {
             if (con.player != null) {
                 // Handshake accepted (Legacy mode: No protocol check)
-                Log.info("@ Client @ verified modded. Adding to voice recipients.", TAG, con.player.name);
-                moddedClients.add(con);
+                if (!moddedClients.contains(con)) {
+                    Log.info("@ Client @ verified modded. Adding to voice recipients.", TAG, con.player.name);
+                    moddedClients.add(con);
+                } else {
+                    Log.info("@ Client @ already verified.", TAG, con.player.name);
+                }
 
                 // Send Ack back to client
                 VoiceRequestPacket ack = new VoiceRequestPacket();
