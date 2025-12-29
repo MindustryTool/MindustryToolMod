@@ -1,6 +1,5 @@
 package mindustrytool.plugins.autodrill;
 
-import arc.Core;
 import arc.math.geom.Point2;
 import arc.math.geom.Rect;
 import arc.struct.ObjectIntMap;
@@ -36,7 +35,8 @@ public class DrillUtil {
         Point2[] nearby = Edges.getEdges(size);
         for (Point2 point2 : nearby) {
             Tile t = Vars.world.tile(x + point2.x, y + point2.y);
-            if (t != null) nearbyTiles.add(t);
+            if (t != null)
+                nearbyTiles.add(t);
         }
 
         return nearbyTiles;
@@ -72,9 +72,11 @@ public class DrillUtil {
 
         itemArray.sort((item1, item2) -> {
             int type = Boolean.compare(!item1.lowPriority, !item2.lowPriority);
-            if (type != 0) return type;
+            if (type != 0)
+                return type;
             int amounts = Integer.compare(oreCount.get(item1, 0), oreCount.get(item2, 0));
-            if (amounts != 0) return amounts;
+            if (amounts != 0)
+                return amounts;
             return Integer.compare(item1.id, item2.id);
         });
 
@@ -99,12 +101,14 @@ public class DrillUtil {
         Seq<Tile> expandedTiles = new Seq<>();
 
         for (Tile tile : tiles) {
-            for (int dx = -radius; dx < radius; dx++) {
-                for (int dy = -radius; dy < radius; dy++) {
-                    if (dx == 0 && dy == 0) continue;
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dy = -radius; dy <= radius; dy++) {
+                    if (dx == 0 && dy == 0)
+                        continue;
 
                     Tile nearby = tile.nearby(dx, dy);
-                    if (nearby == null) continue;
+                    if (nearby == null)
+                        continue;
 
                     if (!tiles.contains(nearby) && !expandedTiles.contains(nearby)) {
                         expandedTiles.add(nearby);
@@ -132,7 +136,8 @@ public class DrillUtil {
             Tile currentTile = queue.removeFirst();
 
             Block wallBlock = Blocks.copperWall.environmentBuildable() ? Blocks.copperWall : Blocks.berylliumWall;
-            if (!Build.validPlace(wallBlock, Vars.player.team(), currentTile.x, currentTile.y, 0) || visited.contains(currentTile))
+            if (!Build.validPlace(wallBlock, Vars.player.team(), currentTile.x, currentTile.y, 0)
+                    || visited.contains(currentTile))
                 continue;
 
             if (currentTile.drop() == sourceItem) {
@@ -140,7 +145,8 @@ public class DrillUtil {
                     for (int y = -1; y <= 1; y++) {
                         if (!(x == 0 && y == 0)) {
                             Tile neighbor = currentTile.nearby(x, y);
-                            if (neighbor == null) continue;
+                            if (neighbor == null)
+                                continue;
 
                             if (!visited.contains(neighbor)) {
                                 queue.addLast(neighbor);

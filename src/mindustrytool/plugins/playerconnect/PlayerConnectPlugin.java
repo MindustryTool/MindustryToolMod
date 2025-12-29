@@ -386,16 +386,35 @@ public class PlayerConnectPlugin implements Plugin {
             if (paths != null)
                 paths.draw();
 
-            /*
-             * mindustrytool.visuals.DistributionRevealVisualizer dist =
-             * distributionRevealVisualizer.getIfEnabled();
-             * if (dist != null)
-             * dist.draw();
-             */
+            mindustrytool.plugins.autodrill.SmartDrillManager sm = smartDrillManager.getIfEnabled();
+            if (sm != null)
+                sm.draw();
         });
 
         // Initialize Team Resources Overlay immediately if enabled
         teamResourcesOverlay.getIfEnabled();
+        // Initialize Smart Drill immediately if enabled
+        // smartDrillManager.getIfEnabled();
+
+        // --- Centralized Smart Drill Event Handling (Lazy Loading Optimization) ---
+        // Tap Event: Only runs if manager is enabled and instantiated
+        Events.on(EventType.TapEvent.class, e -> {
+            mindustrytool.plugins.autodrill.SmartDrillManager sm = smartDrillManager.getIfEnabled();
+            if (sm != null) {
+                sm.handleTap(e);
+            }
+        });
+
+        // Update Event: For keybinds
+        Events.run(EventType.Trigger.update, () -> {
+            mindustrytool.plugins.autodrill.SmartDrillManager sm = smartDrillManager.getIfEnabled();
+            if (sm != null) {
+                sm.update();
+            }
+        });
+
+        // Draw Event: Already handled in the Trigger.draw loop above, need to add it
+        // there.
 
         initialized = true;
     }
