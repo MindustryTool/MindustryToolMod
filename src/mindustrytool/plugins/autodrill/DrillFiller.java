@@ -22,9 +22,6 @@ import mindustry.world.meta.Attribute;
  */
 public class DrillFiller {
 
-    private static final String SETTING_MAX_TILES = "smart-drill.max-tiles";
-    private static final String SETTING_MIN_ORES = "smart-drill.min-ores";
-
     /**
      * Fill resource patch with size-2 drills (Mechanical/Pneumatic) and bridge layout.
      */

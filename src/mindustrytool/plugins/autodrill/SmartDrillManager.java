@@ -50,9 +50,7 @@ public class SmartDrillManager {
     public static final String SETTING_PLASMA_MAX_TILES = "smart-drill.plasma.max-tiles";
     
     // Legacy/Global keys (kept for compatibility or general settings)
-    private static final String SETTING_OPTIMIZATION = "smart-drill.optimization";
-    private static final String SETTING_WATER_POWER = "smart-drill.water-power";
-
+    
     private static final int BUTTON_SIZE = 30;
 
     private boolean enabled = true;
@@ -94,9 +92,6 @@ public class SmartDrillManager {
         
         if (!Core.settings.has(SETTING_CLIFF_MAX_TILES)) Core.settings.put(SETTING_CLIFF_MAX_TILES, 100);
         if (!Core.settings.has(SETTING_PLASMA_MAX_TILES)) Core.settings.put(SETTING_PLASMA_MAX_TILES, 100);
-
-        if (!Core.settings.has(SETTING_OPTIMIZATION)) Core.settings.put(SETTING_OPTIMIZATION, 5);
-        if (!Core.settings.has(SETTING_WATER_POWER)) Core.settings.put(SETTING_WATER_POWER, true);
     }
 
     private void registerEvents() {
@@ -334,7 +329,6 @@ public class SmartDrillManager {
         Core.settings.put(SETTING_PNEU_MIN_ORES, 2);
         Core.settings.put(SETTING_CLIFF_MAX_TILES, 100);
         Core.settings.put(SETTING_PLASMA_MAX_TILES, 100);
-        Core.settings.put(SETTING_WATER_POWER, true);
     }
 
     public void showSettings() {
@@ -372,12 +366,6 @@ public class SmartDrillManager {
             addDrillSetting(t, "Plasma Bore", Blocks.plasmaBore, SETTING_PLASMA_MAX_TILES, null);
             t.image().color(Pal.gray).height(2).pad(10, 0, 10, 0).growX().row();
 
-            // General Settings
-            t.add("General Settings").color(Pal.accent).padTop(10).row();
-            t.check("Place Water Extractors & Power Nodes", Core.settings.getBool(SETTING_WATER_POWER, true), checked -> {
-                Core.settings.put(SETTING_WATER_POWER, checked);
-            }).left().padTop(4).row();
-            
         }).width(width).maxHeight(Core.graphics.getHeight() * 0.8f).row();
 
         dialog.show();
