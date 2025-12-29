@@ -26,54 +26,59 @@ public class BrowserSettingsDialog extends BaseDialog {
         this.onSettingsChanged = onSettingsChanged;
 
         addCloseButton();
-        buttons.button("@settings.reset", Icon.refresh, this::resetToDefaults).size(210, 64);
+        buttons.button("@settings.reset", Icon.refresh, this::resetToDefaults).size(250, 64);
 
         shown(this::rebuild);
     }
 
     private void rebuild() {
         cont.clear();
-        cont.defaults().pad(6).fillX();
+        
+        float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
+        
+        cont.pane(t -> {
+            t.defaults().pad(6).growX();
 
-        // === Display Section ===
-        addSectionHeader(Core.bundle.get("settings.section.display", "Display"));
+            // === Display Section ===
+            addSectionHeader(t, Core.bundle.get("settings.section.display", "Display"));
 
-        // Items per page - slider
-        addSliderRow(
-                Core.bundle.get("settings.items-per-page", "Items per page"),
-                getItemsPerPage(), 5, 100, 5,
-                val -> {
-                    settings.setInt(ITEMS_PER_PAGE, val);
-                    notifyChange();
-                });
+            // Items per page - slider
+            addSliderRow(t,
+                    Core.bundle.get("settings.items-per-page", "Items per page"),
+                    getItemsPerPage(), 5, 100, 5,
+                    val -> {
+                        settings.setInt(ITEMS_PER_PAGE, val);
+                        notifyChange();
+                    });
 
-        // Card Size (Scale) - slider
-        // Calculate current scale based on width (Base 300)
-        int currentScale = (int) ((getCardWidth() / 300f) * 100);
+            // Card Size (Scale) - slider
+            // Calculate current scale based on width (Base 300)
+            int currentScale = (int) ((getCardWidth() / 300f) * 100);
 
-        addSliderRow(
-                Core.bundle.get("settings.card-scale", "Card Size"),
-                currentScale, 50, 200, 10,
-                val -> val + "%",
-                val -> {
-                    // Update both width and height to maintain aspect ratio (300x200 base)
-                    settings.setInt(CARD_WIDTH, (int) (300 * (val / 100f)));
-                    settings.setInt(CARD_HEIGHT, (int) (200 * (val / 100f)));
-                    notifyChange();
-                });
+            addSliderRow(t,
+                    Core.bundle.get("settings.card-scale", "Card Size"),
+                    currentScale, 50, 200, 10,
+                    val -> val + "%",
+                    val -> {
+                        // Update both width and height to maintain aspect ratio (300x200 base)
+                        settings.setInt(CARD_WIDTH, (int) (300 * (val / 100f)));
+                        settings.setInt(CARD_HEIGHT, (int) (200 * (val / 100f)));
+                        notifyChange();
+                    });
+        }).width(width).maxHeight(Core.graphics.getHeight() * 0.8f).row();
     }
 
     /** Add centered section header like Mindustry style */
-    private void addSectionHeader(String title) {
-        cont.add(title).color(mindustry.graphics.Pal.accent).center().padTop(12).padBottom(4).row();
+    private void addSectionHeader(Table table, String title) {
+        table.add(title).color(mindustry.graphics.Pal.accent).center().padTop(12).padBottom(4).row();
     }
 
     // Overload for backward compatibility / simple integers
-    private void addSliderRow(String label, int current, int min, int max, int step, arc.func.Intc onChange) {
-        addSliderRow(label, current, min, max, step, String::valueOf, onChange);
+    private void addSliderRow(Table table, String label, int current, int min, int max, int step, arc.func.Intc onChange) {
+        addSliderRow(table, label, current, min, max, step, String::valueOf, onChange);
     }
 
-    private void addSliderRow(String label, int current, int min, int max, int step,
+    private void addSliderRow(Table table, String label, int current, int min, int max, int step,
             arc.func.Func<Integer, String> format, arc.func.Intc onChange) {
         // Mindustry style: slider with overlaid label content
         arc.scene.ui.Slider slider = new arc.scene.ui.Slider(min, max, step, false);
@@ -94,9 +99,11 @@ public class BrowserSettingsDialog extends BaseDialog {
             onChange.get(intVal);
         });
 
-        // Calculate width like Mindustry
-        float width = Math.min(arc.Core.graphics.getWidth() / 1.2f, 460f);
-        cont.stack(slider, content).width(width).left().padTop(4f).row();
+        // Calculate width like Mindustry (passed from parent or recalculated? Recalculated is fine for stack)
+        // But we are inside a table that already has width set.
+        // So we should use growX() on the stack.
+        
+        table.stack(slider, content).height(40f).growX().padTop(4f).row();
     }
 
     private void resetToDefaults() {

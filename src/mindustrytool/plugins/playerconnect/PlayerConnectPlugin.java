@@ -78,6 +78,13 @@ public class PlayerConnectPlugin implements Plugin {
             },
             false);
 
+    // Smart Drill Component - Automated resource mining
+    private static final LazyComponent<mindustrytool.plugins.autodrill.SmartDrillManager> smartDrillManager = new LazyComponent<>(
+            "Smart Drill",
+            "Automatically fill resource patches with drills.",
+            mindustrytool.plugins.autodrill.SmartDrillManager::new,
+            false);
+
     static {
         // Register Settings for Lazy Component (Settings Gear Icon in Manage
         // Components)
@@ -133,6 +140,22 @@ public class PlayerConnectPlugin implements Plugin {
         // lazyComponents.add(distributionRevealVisualizer);
         lazyComponents.add(teamResourcesOverlay);
         lazyComponents.add(voiceChatManager);
+        lazyComponents.add(smartDrillManager);
+
+        // Register Settings for Smart Drill
+        smartDrillManager.onSettings(() -> {
+            mindustrytool.plugins.autodrill.SmartDrillManager sm = smartDrillManager.getIfEnabled();
+            if (sm != null) {
+                sm.showSettings();
+            } else {
+                arc.Core.app.post(() -> {
+                    mindustry.ui.dialogs.BaseDialog d = new mindustry.ui.dialogs.BaseDialog("Info");
+                    d.cont.add("Please enable 'Smart Drill' first.");
+                    d.addCloseButton();
+                    d.show();
+                });
+            }
+        });
 
         // Register Settings for Voice Chat
         voiceChatManager.onSettings(() -> {
