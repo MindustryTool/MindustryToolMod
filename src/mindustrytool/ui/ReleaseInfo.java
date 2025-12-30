@@ -91,12 +91,19 @@ public class ReleaseInfo {
     }
 
     /**
-     * Parse the changelog body into clean lines
+     * Parse the changelog body into formatted lines for Mindustry UI.
+     * Supports:
+     * - Headers (## Section) -> [accent]Section[]
+     * - List items (- item) -> • item
+     * - Bold (**text**) -> [accent]text[]
+     * - Links [text](url) -> text
+     * - Code (`code`) -> [gray]code[]
+     * - Emoji shortcuts
      */
     public Seq<String> getChangelogLines() {
         Seq<String> lines = new Seq<>();
         if (body == null || body.isEmpty()) {
-            lines.add("No changelog available.");
+            lines.add("[gray]No changelog available.[]");
             return lines;
         }
 
@@ -104,17 +111,92 @@ public class ReleaseInfo {
             line = line.trim();
             if (line.isEmpty())
                 continue;
-            // Skip markdown headers for cleaner display
+
+            // Handle headers (## Section)
             if (line.startsWith("#")) {
-                line = line.replaceAll("^#+\\s*", "");
+                String header = line.replaceAll("^#+\\s*", "");
+                header = convertEmoji(header);
+                lines.add(""); // Add spacing before header
+                lines.add("[accent]" + header + "[]");
+                continue;
             }
-            // Convert markdown list items
+
+            // Handle list items
             if (line.startsWith("- ") || line.startsWith("* ")) {
-                line = "• " + line.substring(2);
+                line = "[lightgray]•[] " + line.substring(2);
             }
+
+            // Convert markdown formatting
+            line = convertMarkdownToMindustry(line);
             lines.add(line);
         }
+
+        // If still empty after parsing, add placeholder
+        if (lines.isEmpty()) {
+            lines.add("[gray]No changes documented.[]");
+        }
+
         return lines;
+    }
+
+    /**
+     * Convert GitHub Markdown to Mindustry color tags
+     */
+    private String convertMarkdownToMindustry(String text) {
+        // Bold **text** -> [accent]text[]
+        text = text.replaceAll("\\*\\*([^*]+)\\*\\*", "[accent]$1[]");
+
+        // Italic *text* or _text_ -> [lightgray]text[]
+        text = text.replaceAll("\\*([^*]+)\\*", "[lightgray]$1[]");
+        text = text.replaceAll("_([^_]+)_", "[lightgray]$1[]");
+
+        // Code `text` -> [gray]text[]
+        text = text.replaceAll("`([^`]+)`", "[gray]$1[]");
+
+        // Links [text](url) -> just text (can't click in Mindustry labels)
+        text = text.replaceAll("\\[([^\\]]+)\\]\\([^)]+\\)", "$1");
+
+        // PR/Issue references (#123) -> [accent]#123[]
+        text = text.replaceAll("#(\\d+)", "[accent]#$1[]");
+
+        // Username mentions (@user) -> [sky]@user[]
+        text = text.replaceAll("@(\\w+)", "[sky]@$1[]");
+
+        // Convert common emojis
+        text = convertEmoji(text);
+
+        return text;
+    }
+
+    /**
+     * Convert GitHub emoji shortcuts to unicode or text
+     */
+    private String convertEmoji(String text) {
+        // Common changelog emojis
+        text = text.replace(":rocket:", "🚀");
+        text = text.replace(":bug:", "🐛");
+        text = text.replace(":sparkles:", "✨");
+        text = text.replace(":memo:", "📝");
+        text = text.replace(":art:", "🎨");
+        text = text.replace(":zap:", "⚡");
+        text = text.replace(":fire:", "🔥");
+        text = text.replace(":hammer:", "🔨");
+        text = text.replace(":wrench:", "🔧");
+        text = text.replace(":package:", "📦");
+        text = text.replace(":lock:", "🔒");
+        text = text.replace(":arrow_up:", "⬆️");
+        text = text.replace(":arrow_down:", "⬇️");
+        text = text.replace(":white_check_mark:", "✅");
+        text = text.replace(":x:", "❌");
+        text = text.replace(":warning:", "⚠️");
+        text = text.replace(":boom:", "💥");
+        text = text.replace(":tada:", "🎉");
+        text = text.replace(":construction:", "🚧");
+        text = text.replace(":recycle:", "♻️");
+        text = text.replace(":heavy_plus_sign:", "➕");
+        text = text.replace(":heavy_minus_sign:", "➖");
+
+        return text;
     }
 
     /**
