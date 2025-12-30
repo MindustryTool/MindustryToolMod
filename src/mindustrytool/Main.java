@@ -95,7 +95,8 @@ public class Main extends Mod {
     @Override
     public void init() {
 
-        checkForUpdate(false);
+        // Check for updates silently on startup
+        mindustrytool.ui.UpdateCenterDialog.checkSilent();
 
         // Load plugins from assets/plugins.txt
         loadPluginsFromConfig();

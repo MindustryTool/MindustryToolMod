@@ -59,10 +59,10 @@ public class ToolsMenuDialog extends BaseDialog {
                     new LazyComponentDialog(allComponents).show();
                 }).row();
 
-        // Check for Update
-        cont.button("Check for Updates", Icon.refresh, Styles.flatt, () -> {
+        // Check for Update - Opens the Premium Update Center
+        cont.button("Update Center", Icon.refresh, Styles.flatt, () -> {
             hide();
-            mindustrytool.Main.checkForUpdate(true);
+            mindustrytool.ui.UpdateCenterDialog.open();
         }).row();
 
         // Show message if all components disabled
