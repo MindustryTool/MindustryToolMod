@@ -295,7 +295,7 @@ public class Main extends Mod {
                         dialog.cont.table(t -> {
                             t.image(mindustry.gen.Icon.upload).size(50f).padRight(10f)
                                     .color(mindustry.graphics.Pal.accent);
-                            t.add(finalTitle).scale(1.2f).color(mindustry.graphics.Pal.accent);
+                            t.add(finalTitle).fontScale(1.2f).color(mindustry.graphics.Pal.accent);
                         }).row();
 
                         dialog.cont.image().height(4f).color(arc.graphics.Color.gray).growX().pad(10f).row();
@@ -308,11 +308,11 @@ public class Main extends Mod {
                             t.row();
                             t.image(mindustry.gen.Icon.downOpen).color(arc.graphics.Color.gray).row();
                             t.add("Latest:").color(arc.graphics.Color.lightGray);
-                            t.add(latest.toString()).color(mindustry.graphics.Pal.accent).scale(1.1f);
+                            t.add(latest.toString()).color(mindustry.graphics.Pal.accent).fontScale(1.1f);
 
                             // Tag label
                             if (latest.type == mindustrytool.utils.Version.SuffixType.BETA) {
-                                t.add(" (BETA)").color(java.awt.Color.ORANGE.getRGB());
+                                t.add(" (BETA)").color(arc.graphics.Color.orange);
                             } else if (latest.type == mindustrytool.utils.Version.SuffixType.FIX) {
                                 t.add(" (FIX)").color(mindustry.graphics.Pal.heal);
                             }
