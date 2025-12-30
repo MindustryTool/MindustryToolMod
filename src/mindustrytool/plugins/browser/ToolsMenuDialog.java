@@ -62,7 +62,7 @@ public class ToolsMenuDialog extends BaseDialog {
         // Check for Update
         cont.button("Check for Updates", Icon.refresh, Styles.flatt, () -> {
             hide();
-            mindustrytool.Main.checkForUpdate();
+            mindustrytool.Main.checkForUpdate(true);
         }).row();
 
         // Show message if all components disabled

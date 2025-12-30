@@ -95,7 +95,7 @@ public class Main extends Mod {
     @Override
     public void init() {
 
-        checkForUpdate();
+        checkForUpdate(false);
 
         // Load plugins from assets/plugins.txt
         loadPluginsFromConfig();
@@ -239,7 +239,7 @@ public class Main extends Mod {
         }
     }
 
-    public static void checkForUpdate() {
+    public static void checkForUpdate(boolean manual) {
         LoadedMod mod = Vars.mods.getMod(Main.class);
         String currentStr = mod.meta.version;
 
@@ -338,9 +338,15 @@ public class Main extends Mod {
                     });
                 } else {
                     Log.info("Mod is up to date (@)", current);
+                    if (manual) {
+                        Core.app.post(() -> Vars.ui.showInfo("Mod is up to date.\nCurrent version: " + current));
+                    }
                 }
             } catch (Exception e) {
                 Log.err("Failed to check for updates", e);
+                if (manual) {
+                    Core.app.post(() -> Vars.ui.showException("Failed to check for updates", e));
+                }
             }
         });
     }
