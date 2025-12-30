@@ -325,10 +325,14 @@ public class UpdateCenterDialog extends BaseDialog {
         changelogTable.add(selectedRelease.name).color(Pal.accent).fontScale(1.1f).row();
         changelogTable.add(selectedRelease.getRelativeDate()).color(Color.gray).fontScale(0.9f).padBottom(10f).row();
 
-        // Changelog lines
-        for (String line : selectedRelease.getChangelogLines()) {
-            changelogTable.add(line).wrap().width(280f).color(Color.lightGray).row();
-        }
+        // Separator
+        changelogTable.image().height(1f).color(Color.darkGray).growX().padBottom(10f).row();
+
+        // Use MarkdownRenderer for the body
+        MarkdownRenderer renderer = new MarkdownRenderer()
+                .setContentWidth(280f)
+                .setMaxImageSize(260f, 200f);
+        renderer.render(changelogTable, selectedRelease.body);
     }
 
     private void setFilter(Filter filter) {
