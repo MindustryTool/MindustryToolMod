@@ -59,7 +59,13 @@ public class ToolsMenuDialog extends BaseDialog {
                     new LazyComponentDialog(allComponents).show();
                 }).row();
 
-        // Check for Update - Opens the Premium Update Center
+        // Mod Info - Opens the README documentation
+        cont.button("Mod Info", Icon.info, Styles.flatt, () -> {
+            hide();
+            mindustrytool.ui.ModInfoDialog.open();
+        }).row();
+
+        // Update Center - Opens the Premium Update Center
         cont.button("Update Center", Icon.refresh, Styles.flatt, () -> {
             hide();
             mindustrytool.ui.UpdateCenterDialog.open();
