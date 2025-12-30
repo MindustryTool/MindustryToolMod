@@ -27,8 +27,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew jar --no-daemon --parallel --build-cache
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build with Gradle (Cross-platform)
+        run: ./gradlew deploy --no-daemon --parallel --build-cache
 
       - name: Generate Changelog
         id: changelog
