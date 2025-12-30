@@ -251,51 +251,70 @@ public class Main extends Mod {
                 mindustrytool.utils.Version current = new mindustrytool.utils.Version(currentStr);
                 mindustrytool.utils.Version latest = new mindustrytool.utils.Version(latestStr);
 
-                if (latest.isNewerThan(current)) {
-                    Log.info("Update available: @ -> @", current, latest);
+                boolean updateAvailable = latest.isNewerThan(current);
+
+                if (updateAvailable || manual) {
+                    Log.info("Update check result: Available=@ (Current=@, Latest=@)", updateAvailable, current,
+                            latest);
 
                     // Determine update type
                     String title = "Update Available";
                     String color = "[accent]";
                     String typeClean = "Patch";
 
-                    if (latest.major > current.major) {
-                        title = "[red]MAJOR UPDATE!";
-                        color = "[red]";
-                        typeClean = "Major Update";
-                    } else if (latest.minor > current.minor) {
-                        title = "[gold]New Features!";
-                        color = "[gold]";
-                        typeClean = "Feature Update";
-                    } else if (latest.type == mindustrytool.utils.Version.SuffixType.FIX) {
-                        title = "[green]Bug Fixes";
+                    if (updateAvailable) {
+                        if (latest.major > current.major) {
+                            title = "[red]MAJOR UPDATE!";
+                            color = "[red]";
+                            typeClean = "Major Update";
+                        } else if (latest.minor > current.minor) {
+                            title = "[gold]New Features!";
+                            color = "[gold]";
+                            typeClean = "Feature Update";
+                        } else if (latest.type == mindustrytool.utils.Version.SuffixType.FIX) {
+                            title = "[green]Bug Fixes";
+                            color = "[green]";
+                            typeClean = "Fix";
+                        }
+                    } else {
+                        // Up to date state
+                        title = "[green]Up to Date";
                         color = "[green]";
-                        typeClean = "Fix";
+                        typeClean = "Info";
                     }
 
                     final String finalTitle = title;
                     final String finalColor = color;
                     final String finalType = typeClean;
+                    final boolean finalUpdateAvailable = updateAvailable;
 
                     Core.app.post(() -> {
-                        // For Fix/Dev updates, show Toast first (Passive)
-                        if (latest.type.priority <= mindustrytool.utils.Version.SuffixType.FIX.priority
-                                && latest.major == current.major && latest.minor == current.minor) {
+                        // For auto-check, skip if passive conditions met (optional logic preserved if
+                        // needed)
+                        // But here we simplify: if !manual and !updateAvailable, we wouldn't be in this
+                        // block?
+                        // Actually, if !manual and !updateAvailable, the if condition fails. So we are
+                        // good.
 
-                            // Show a toast that clickable? No, standard toast isn't clickable.
-                            // We'll show a non-intrusive dialog or just a toast instructing to check
-                            // settings?
-                            // User requirement: "Toast... Người dùng phải bấm vào mới hiện".
-                            // For simplicity in this step: Show a smaller, less obtrusive dialog.
-                        }
+                        // Prevent spamming passive toasts? Logic was:
+                        /*
+                         * if (!manual && latest.type.priority <= ... && major==major && minor==minor) {
+                         * // passive toast logic...
+                         * }
+                         */
+                        // We will keep standard dialog for now for simplicity as requested "Open
+                        // interface".
 
                         mindustry.ui.dialogs.BaseDialog dialog = new mindustry.ui.dialogs.BaseDialog(finalType);
 
                         // Header
                         dialog.cont.table(t -> {
-                            t.image(mindustry.gen.Icon.upload).size(50f).padRight(10f)
-                                    .color(mindustry.graphics.Pal.accent);
-                            t.add(finalTitle).fontScale(1.2f).color(mindustry.graphics.Pal.accent);
+                            t.image(finalUpdateAvailable ? mindustry.gen.Icon.upload : mindustry.gen.Icon.ok).size(50f)
+                                    .padRight(10f)
+                                    .color(finalUpdateAvailable ? mindustry.graphics.Pal.accent
+                                            : mindustry.graphics.Pal.heal);
+                            t.add(finalTitle).fontScale(1.2f).color(
+                                    finalUpdateAvailable ? mindustry.graphics.Pal.accent : mindustry.graphics.Pal.heal);
                         }).row();
 
                         dialog.cont.image().height(4f).color(arc.graphics.Color.gray).growX().pad(10f).row();
@@ -318,9 +337,10 @@ public class Main extends Mod {
                             }
                         }).pad(10f).row();
 
-                        // Changelog Placeholder (Will be enhanced later)
-                        dialog.cont.labelWrap("Version " + latest + " is ready to download.").pad(10f).width(400f)
-                                .center().row();
+                        // Changelog Placeholder
+                        String msg = finalUpdateAvailable ? ("Version " + latest + " is ready to download.")
+                                : "You are using the latest version.";
+                        dialog.cont.labelWrap(msg).pad(10f).width(400f).center().row();
 
                         // Buttons
                         dialog.buttons.defaults().size(160f, 55f).pad(8f);
@@ -329,18 +349,24 @@ public class Main extends Mod {
                             Core.app.openURI("https://github.com/" + REPO_URL + "/releases");
                         });
 
-                        dialog.buttons.button("Update Now", mindustry.gen.Icon.download, () -> {
-                            dialog.hide();
-                            Vars.ui.mods.githubImportMod(REPO_URL, true, null);
-                        }).color(mindustry.graphics.Pal.accent);
+                        if (finalUpdateAvailable) {
+                            dialog.buttons.button("Update Now", mindustry.gen.Icon.download, () -> {
+                                dialog.hide();
+                                Vars.ui.mods.githubImportMod(REPO_URL, true, null);
+                            }).color(mindustry.graphics.Pal.accent);
+                        } else {
+                            // Disabled or Re-download button?
+                            dialog.buttons.button("Re-download", mindustry.gen.Icon.refresh, () -> {
+                                dialog.hide();
+                                Vars.ui.mods.githubImportMod(REPO_URL, true, null);
+                            }).disabled(b -> false).color(arc.graphics.Color.gray);
+                        }
 
                         dialog.show();
                     });
                 } else {
+                    // Implicitly: !manual && !updateAvailable
                     Log.info("Mod is up to date (@)", current);
-                    if (manual) {
-                        Core.app.post(() -> Vars.ui.showInfo("Mod is up to date.\nCurrent version: " + current));
-                    }
                 }
             } catch (Exception e) {
                 Log.err("Failed to check for updates", e);
