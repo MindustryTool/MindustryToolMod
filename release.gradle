@@ -1,0 +1,98 @@
+task release {
+    group = "versioning"
+    description = "Automatically bumps version based on conventional commits and creates a Git tag."
+
+    doLast {
+        // 1. Get current git tag
+        def stdout = new ByteArrayOutputStream()
+        try {
+            exec {
+                commandLine 'git', 'describe', '--tags', '--abbrev=0'
+                standardOutput = stdout
+                errorOutput = new ByteArrayOutputStream() // Suppress error if no tags
+                ignoreExitValue = true
+            }
+        } catch (Exception e) {}
+        
+        String currentTag = stdout.toString().trim()
+        if (currentTag.isEmpty()) currentTag = "v0.0.0"
+
+        println "Current Version: ${currentTag}"
+
+        // 2. Scan commits since last tag
+        def logOut = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'log', "${currentTag}..HEAD", '--pretty=format:%s'
+            standardOutput = logOut
+        }
+        List<String> messages = logOut.toString().split("\n").findAll { !it.trim().isEmpty() }
+
+        boolean major = false
+        boolean minor = false
+        boolean patch = false
+
+        println "Analyzing ${messages.size()} commit(s)..."
+        messages.each { msg ->
+            if (msg.contains("BREAKING CHANGE") || msg.contains("feat!")) {
+                major = true
+                println "  [MAJOR] ${msg}"
+            } else if (msg.startsWith("feat")) {
+                minor = true
+                println "  [MINOR] ${msg}"
+            } else if (msg.startsWith("fix")) {
+                patch = true
+                println "  [PATCH] ${msg}"
+            }
+        }
+
+        // 3. Fallback / Interactive
+        if (!major && !minor && !patch) {
+            println "\nNo conventional commits (feat/fix) found."
+            // Simple default to patch if strictly automated, but here we default to PATCH
+            // unless we can ask user (system consle often unavailable in IDE/daemon)
+            println "Defaulting to PATCH update."
+            patch = true
+        }
+
+        // 4. Calculate new version
+        // Strip 'v' and suffix
+        String cleanVer = currentTag.replaceFirst("^v", "").split("-")[0]
+        def parts = cleanVer.split("\\.").collect { it.toInteger() }
+        // Ensure 3 parts
+        while(parts.size() < 3) parts.add(0)
+
+        if (major) {
+            parts[0]++
+            parts[1] = 0
+            parts[2] = 0
+        } else if (minor) {
+            parts[1]++
+            parts[2] = 0
+        } else {
+            parts[2]++
+        }
+
+        String newTag = "v${parts[0]}.${parts[1]}.${parts[2]}"
+        
+        // Handle suffix request?
+        // User asked for v1.2.3-fix only if it is a fix? 
+        // Plan said: "v1.2.3-fix" for 'Fix' type.
+        // But standard automation usually bumps number.
+        // If I make 1.2.0 -> 1.2.1 (Patch/Fix).
+        // If I make 1.2.0 -> 1.2.0-fix (Suffix).
+        // Standard SemVer bumps the number. I will bump the number as agreed in "Smart Versioning" section:
+        // "fix: ... -> Tự tăng số cuối (Z) (1.2.3 -> 1.2.4)."
+        // So I stick to bumping Z.
+
+        println "\n>> Next Version: ${newTag}"
+        
+        // 5. Apply Tag
+        try {
+             exec { commandLine 'git', 'tag', newTag }
+             println "Verified: Git Tag ${newTag} created successfully."
+             println "Now run 'gradlew jar' to build the release."
+        } catch (Exception e) {
+             println "Error creating tag: ${e.message}"
+        }
+    }
+}

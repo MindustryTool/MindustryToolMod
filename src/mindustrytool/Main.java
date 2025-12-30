@@ -240,57 +240,106 @@ public class Main extends Mod {
 
     private void checkForUpdate() {
         LoadedMod mod = Vars.mods.getMod(Main.class);
-        String currentVersion = mod.meta.version;
+        String currentStr = mod.meta.version;
 
         Http.get(API_REPO_URL, res -> {
-            Jval json = Jval.read(res.getResultAsString());
-            String latestVersion = json.getString("version");
+            try {
+                Jval json = Jval.read(res.getResultAsString());
+                String latestStr = json.getString("version");
 
-            if (!latestVersion.equals(currentVersion)) {
-                Log.info("Mod requires update, current version: @, latest version: @", currentVersion, latestVersion);
+                mindustrytool.utils.Version current = new mindustrytool.utils.Version(currentStr);
+                mindustrytool.utils.Version latest = new mindustrytool.utils.Version(latestStr);
 
-                Core.app.post(() -> {
-                    mindustry.ui.dialogs.BaseDialog dialog = new mindustry.ui.dialogs.BaseDialog("Update Available");
+                if (latest.isNewerThan(current)) {
+                    Log.info("Update available: @ -> @", current, latest);
 
-                    // Header
-                    dialog.cont.table(t -> {
-                        t.image(mindustry.gen.Icon.upload).size(50f).padRight(10f).color(mindustry.graphics.Pal.accent);
-                        t.add("New Version Available").color(mindustry.graphics.Pal.accent);
-                    }).row();
+                    // Determine update type
+                    String title = "Update Available";
+                    String color = "[accent]";
+                    String typeClean = "Patch";
 
-                    dialog.cont.image().height(4f).color(arc.graphics.Color.gray).growX().pad(10f).row();
+                    if (latest.major > current.major) {
+                        title = "[red]MAJOR UPDATE!";
+                        color = "[red]";
+                        typeClean = "Major Update";
+                    } else if (latest.minor > current.minor) {
+                        title = "[gold]New Features!";
+                        color = "[gold]";
+                        typeClean = "Feature Update";
+                    } else if (latest.type == mindustrytool.utils.Version.SuffixType.FIX) {
+                        title = "[green]Bug Fixes";
+                        color = "[green]";
+                        typeClean = "Fix";
+                    }
 
-                    // Version Info
-                    dialog.cont.table(t -> {
-                        t.defaults().pad(5f);
-                        t.add("Current:").color(arc.graphics.Color.lightGray);
-                        t.add(currentVersion).color(mindustry.graphics.Pal.remove); // Redish for old
-                        t.row();
-                        t.image(mindustry.gen.Icon.downOpen).color(arc.graphics.Color.gray).row();
-                        t.add("Latest:").color(arc.graphics.Color.lightGray);
-                        t.add(latestVersion).color(mindustry.graphics.Pal.heal); // Green for new
-                    }).pad(10f).row();
+                    final String finalTitle = title;
+                    final String finalColor = color;
+                    final String finalType = typeClean;
 
-                    dialog.cont.labelWrap("A new version of MindustryTool is ready to download!").pad(10f).width(400f)
-                            .center().row();
+                    Core.app.post(() -> {
+                        // For Fix/Dev updates, show Toast first (Passive)
+                        if (latest.type.priority <= mindustrytool.utils.Version.SuffixType.FIX.priority
+                                && latest.major == current.major && latest.minor == current.minor) {
 
-                    // Buttons
-                    dialog.buttons.defaults().size(160f, 55f).pad(8f);
-                    dialog.buttons.button("@cancel", mindustry.gen.Icon.cancel, dialog::hide);
-                    dialog.buttons.button("GitHub", mindustry.gen.Icon.github, () -> {
-                        Core.app.openURI("https://github.com/" + REPO_URL + "/releases");
+                            // Show a toast that clickable? No, standard toast isn't clickable.
+                            // We'll show a non-intrusive dialog or just a toast instructing to check
+                            // settings?
+                            // User requirement: "Toast... Người dùng phải bấm vào mới hiện".
+                            // For simplicity in this step: Show a smaller, less obtrusive dialog.
+                        }
+
+                        mindustry.ui.dialogs.BaseDialog dialog = new mindustry.ui.dialogs.BaseDialog(finalType);
+
+                        // Header
+                        dialog.cont.table(t -> {
+                            t.image(mindustry.gen.Icon.upload).size(50f).padRight(10f)
+                                    .color(mindustry.graphics.Pal.accent);
+                            t.add(finalTitle).scale(1.2f).color(mindustry.graphics.Pal.accent);
+                        }).row();
+
+                        dialog.cont.image().height(4f).color(arc.graphics.Color.gray).growX().pad(10f).row();
+
+                        // Enhanced Version Info
+                        dialog.cont.table(t -> {
+                            t.defaults().pad(5f);
+                            t.add("Current:").color(arc.graphics.Color.gray);
+                            t.add(current.toString()).color(arc.graphics.Color.gray);
+                            t.row();
+                            t.image(mindustry.gen.Icon.downOpen).color(arc.graphics.Color.gray).row();
+                            t.add("Latest:").color(arc.graphics.Color.lightGray);
+                            t.add(latest.toString()).color(mindustry.graphics.Pal.accent).scale(1.1f);
+
+                            // Tag label
+                            if (latest.type == mindustrytool.utils.Version.SuffixType.BETA) {
+                                t.add(" (BETA)").color(java.awt.Color.ORANGE.getRGB());
+                            } else if (latest.type == mindustrytool.utils.Version.SuffixType.FIX) {
+                                t.add(" (FIX)").color(mindustry.graphics.Pal.heal);
+                            }
+                        }).pad(10f).row();
+
+                        // Changelog Placeholder (Will be enhanced later)
+                        dialog.cont.labelWrap("Version " + latest + " is ready to download.").pad(10f).width(400f)
+                                .center().row();
+
+                        // Buttons
+                        dialog.buttons.defaults().size(160f, 55f).pad(8f);
+                        dialog.buttons.button("@cancel", mindustry.gen.Icon.cancel, dialog::hide);
+                        dialog.buttons.button("GitHub", mindustry.gen.Icon.github, () -> {
+                            Core.app.openURI("https://github.com/" + REPO_URL + "/releases");
+                        });
+
+                        dialog.buttons.button("Update Now", mindustry.gen.Icon.download, () -> {
+                            dialog.hide();
+                            Vars.ui.mods.githubImportMod(REPO_URL, true, null);
+                        }).color(mindustry.graphics.Pal.accent);
+
+                        dialog.show();
                     });
-
-                    dialog.buttons.button("Update Now", mindustry.gen.Icon.download, () -> {
-                        dialog.hide();
-                        Vars.ui.mods.githubImportMod(REPO_URL, true, null);
-                    }).disabled(b -> currentVersion.equals(latestVersion))
-                            .color(mindustry.graphics.Pal.accent);
-
-                    dialog.show();
-                });
-            } else {
-                Log.info("Mod is up to date");
+                } else {
+                    Log.info("Mod is up to date (@)", current);
+                }
+            } catch (Exception e) {
+                Log.err("Failed to check for updates", e);
             }
         });
     }

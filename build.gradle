@@ -1,7 +1,24 @@
 apply plugin: "java"
 apply plugin: "eclipse"
+apply from: "release.gradle"
 
-version '1.0'
+
+// Get version from Git
+// Get version from Git
+def getGitVersion() {
+    try {
+        def stdout = new ByteArrayOutputStream()
+        project.exec {
+            commandLine 'git', 'describe', '--tags', '--dirty', '--always'
+            standardOutput = stdout
+        }
+        return stdout.toString().trim().replaceFirst("^v", "")
+    } catch (Exception e) {
+        return "0.0.0-dev" // Fallback if no git/tags
+    }
+}
+
+version = getGitVersion()
 
 sourceSets.main.java.srcDirs = ["src"]
 sourceSets.main.java.exclude "main/**"
@@ -109,6 +126,10 @@ jar{
 
     from(rootDir){
         include "mod.hjson"
+        filter { line ->
+            // Regex to replace version: "anything" with real version
+            line.replaceAll('^\\s*version:.*$', 'version: "' + project.version + '"')
+        }
     }
 
     from("assets/"){
