@@ -18,7 +18,7 @@ import mindustry.mod.Mods.LoadedMod;
  * To add a new plugin: just add its class name to plugins.txt - no code changes
  * needed.
  * Plugins are loaded dynamically - if a plugin is deleted, others still work.
- * (Final Release System Test - Auto Push)
+ * (GitHub Action Trigger Test - v2.18.2)
  */
 public class Main extends Mod {
     public static final Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
