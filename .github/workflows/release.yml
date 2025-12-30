@@ -22,12 +22,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle' # Enables caching of gradle packages
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew jar
+        run: ./gradlew jar --no-daemon --parallel --build-cache
 
       - name: Generate Changelog
         id: changelog
