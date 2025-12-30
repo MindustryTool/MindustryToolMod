@@ -59,6 +59,12 @@ public class ToolsMenuDialog extends BaseDialog {
                     new LazyComponentDialog(allComponents).show();
                 }).row();
 
+        // Check for Update
+        cont.button("Check for Updates", Icon.refresh, Styles.flatt, () -> {
+            hide();
+            mindustrytool.Main.checkForUpdate();
+        }).row();
+
         // Show message if all components disabled
         if (!hasAnyEnabled) {
             cont.add(Core.bundle.get("message.lazy-components.all-disabled", "All components disabled"))

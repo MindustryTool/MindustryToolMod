@@ -239,7 +239,7 @@ public class Main extends Mod {
         }
     }
 
-    private void checkForUpdate() {
+    public static void checkForUpdate() {
         LoadedMod mod = Vars.mods.getMod(Main.class);
         String currentStr = mod.meta.version;
 
