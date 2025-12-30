@@ -90,9 +90,15 @@ task release {
         try {
              exec { commandLine 'git', 'tag', newTag }
              println "Verified: Git Tag ${newTag} created successfully."
+             
+             // 6. Push to GitHub
+             println "Pushing tag to origin..."
+             exec { commandLine 'git', 'push', 'origin', newTag }
+             println "Success: Pushed ${newTag} to GitHub!"
+
              println "Now run 'gradlew jar' to build the release."
         } catch (Exception e) {
-             println "Error creating tag: ${e.message}"
+             println "Error applying/pushing tag: ${e.message}"
         }
     }
 }
