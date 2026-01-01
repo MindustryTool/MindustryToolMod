@@ -63,6 +63,16 @@ public class UpdateCenterDialog extends BaseDialog {
     public UpdateCenterDialog() {
         super("Update Center");
 
+        // Cleanup legacy settings to prevent crashes
+        if (Core.settings.has("mindustrytool-releases-json"))
+            Core.settings.remove("mindustrytool-releases-json");
+        if (Core.settings.has("mindustrytool-tags-json"))
+            Core.settings.remove("mindustrytool-tags-json");
+        if (Core.settings.has("mindustrytool-branches-json"))
+            Core.settings.remove("mindustrytool-branches-json");
+        if (Core.settings.has("mindustrytool-commits-json"))
+            Core.settings.remove("mindustrytool-commits-json");
+
         // Load saved filters
         String savedFilters = Core.settings.getString("mindustrytool-filters", "STABLE");
         String[] parts = savedFilters.split(",");
