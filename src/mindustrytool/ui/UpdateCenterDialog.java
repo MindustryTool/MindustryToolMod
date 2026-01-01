@@ -874,8 +874,19 @@ public class UpdateCenterDialog extends BaseDialog {
                     }
 
                     if (latestStable != null && latestStable.getVersion().isNewerThan(current)) {
-                        Log.info("Stable update available: @ -> @", current, latestStable.tagName);
-                        Core.app.post(() -> new UpdateCenterDialog().show());
+                        // STRICT: Only notify if it is a STABLE release (Main branch)
+                        // This prevents Beta builds on Main from triggering prompts if they are
+                        // accidentally tagged stable?
+                        // Actually, our ReleaseInfo logic sets type based on suffix.
+                        // "v2.23.0" -> STABLE
+                        // "v2.23.0-beta..." -> BETA
+
+                        if (latestStable.getVersion().type == mindustrytool.utils.Version.SuffixType.STABLE) {
+                            Log.info("Stable update available: @ -> @", current, latestStable.tagName);
+                            Core.app.post(() -> new UpdateCenterDialog().show());
+                        } else {
+                            Log.info("Update available (@) but ignored (Pre-release).", latestStable.tagName);
+                        }
                     } else {
                         Log.info("Mod is up to date (@)", current);
                     }

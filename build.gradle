@@ -19,13 +19,36 @@ def getGitBranch() {
 
 // Get version from gradle.properties or environment variable
 def getVersion() {
-    def baseVersion = project.hasProperty("modVersion") ? project.modVersion : "1.0.0"
-    def branch = getGitBranch()
+    // 1. Prioritize environment/cli property (passed by GitHub Actions)
+    if (project.hasProperty("modVersion")) {
+        return project.modVersion
+    }
     
+    // 2. Local fallback with branch suffix
+    def branch = getGitBranch()
+    def baseVersion = "0.0.0" // Default for dev if no tag/property found
+    
+    // Attempt to read from gradle.properties if it still exists for legacy support, but user wants to remove dependency on it
+    // project.hasProperty("modeVersion") handled above covers gradle.properties too if present.
+    // If not present, we can try git describe locally
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'describe', '--tags', '--abbrev=0'
+            standardOutput = stdout
+            ignoreExitValue = true
+        }
+        def tag = stdout.toString().trim()
+        if (tag.startsWith("v")) baseVersion = tag.substring(1)
+    } catch (Exception e) {}
+
     if (branch == "beta") {
         return "${baseVersion}-beta.local"
+    } else if (branch != "main") {
+        return "${baseVersion}-${branch}.local"
     }
-    return baseVersion
+    
+    return "${baseVersion}.dev"
 }
 
 version = getVersion()
