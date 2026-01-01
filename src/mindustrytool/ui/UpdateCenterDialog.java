@@ -104,9 +104,6 @@ public class UpdateCenterDialog extends BaseDialog {
         rebuildUI();
         fetchReleases();
         fetchCommits();
-        rebuildUI();
-        fetchReleases();
-        fetchCommits();
         fetchBranches();
         fetchTags();
     }
@@ -486,6 +483,14 @@ public class UpdateCenterDialog extends BaseDialog {
                     hide();
                     startUpdateProcess(); // Will use fallback URL since selectedRelease is null
                 }).color(Pal.accent);
+            }).row();
+
+            // Additional fallback: Open GitHub in browser
+            t.table(btns2 -> {
+                btns2.defaults().size(300f, 40f).pad(5f);
+                btns2.button("Open GitHub Releases", Icon.link, Styles.flatt, () -> {
+                    Core.app.openURI("https://github.com/" + REPO_URL + "/releases");
+                }).color(Color.sky);
             });
         }).pad(30f);
     }
@@ -1034,10 +1039,33 @@ public class UpdateCenterDialog extends BaseDialog {
 
         Http.get(url)
                 .header("User-Agent", "MindustryToolMod") // Add UA to prevent 403 on some GH asset links
+                .header("Accept", "application/octet-stream") // Required for binary asset downloads
                 .error(e -> {
                     dialog.hide();
-                    Log.err("Direct download failed", e);
-                    Vars.ui.showException("Download Failed", e);
+                    Log.err("Direct download failed from URL: " + url, e);
+                    // Show more helpful error with fallback options
+                    String errorMsg = e.getMessage();
+                    if (errorMsg != null && errorMsg.toLowerCase().contains("forbidden")) {
+                        // Offer fallback options
+                        BaseDialog fallbackDialog = new BaseDialog("Download Failed");
+                        fallbackDialog.cont.add("Direct download blocked.").color(Pal.remove).row();
+                        fallbackDialog.cont.add("Try alternative methods:").color(Color.gray).padTop(10f).row();
+
+                        fallbackDialog.buttons.defaults().size(180f, 50f).pad(5f);
+                        fallbackDialog.buttons.button("@back", Icon.left, fallbackDialog::hide);
+                        fallbackDialog.buttons.button("Use Game Import", Icon.download, () -> {
+                            fallbackDialog.hide();
+                            Vars.ui.mods.githubImportMod(REPO_URL, true, null);
+                        }).color(Pal.accent);
+                        fallbackDialog.buttons.button("Open GitHub", Icon.link, () -> {
+                            fallbackDialog.hide();
+                            Core.app.openURI("https://github.com/" + REPO_URL + "/releases");
+                        }).color(Color.sky);
+
+                        fallbackDialog.show();
+                    } else {
+                        Vars.ui.showException("Download Failed", e);
+                    }
                 })
                 // .block() // remove blocked call as it breaks fluent interface if handled
                 // incorrectly with return types
