@@ -21,27 +21,27 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'gradle'
+          java-version: "17"
+          distribution: "temurin"
+          cache: "gradle"
 
       - name: Calculate Version
         id: version
         run: |
           # 1. Fetch tags to find the latest
           git fetch --tags
-          
+
           # 2. Get latest tag, default to v0.0.0 if none
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "Latest Tag: $LAST_TAG"
-          
+
           # 3. Analyze commits since last tag for bump type
           COMMITS=$(git log "$LAST_TAG..HEAD" --pretty=format:"%s")
-          
+
           MAJOR=false
           MINOR=false
           PATCH=false
-          
+
           # Read commits line by line
           while IFS= read -r line; do
             if [[ "$line" =~ "feat!" ]] || [[ "$line" =~ "BREAKING CHANGE" ]]; then
@@ -55,7 +55,7 @@ jobs:
               echo "  [PATCH] $line"
             fi
           done <<< "$COMMITS"
-          
+
           # 4. Bump logic
           # Remove 'v' prefix
           VERSION_NUM=${LAST_TAG#v}
@@ -63,13 +63,13 @@ jobs:
           IFS='.' read -r -a parts <<< "$VERSION_NUM"
           # Ensure array has 3 parts
           while [ "${#parts[@]}" -lt 3 ]; do parts+=("0"); done
-          
+
           V_MAJOR=${parts[0]}
           V_MINOR=${parts[1]}
           V_PATCH=${parts[2]}
           # Remove any existing suffix from patch (e.g., 2-beta)
           V_PATCH=${V_PATCH%%-*}
-          
+
           if [ "$MAJOR" = true ]; then
             V_MAJOR=$((V_MAJOR + 1))
             V_MINOR=0
@@ -85,13 +85,13 @@ jobs:
              echo "No conventional commits found. Defaulting to PATCH bump."
              V_PATCH=$((V_PATCH + 1))
           fi
-          
+
           BASE_VERSION="$V_MAJOR.$V_MINOR.$V_PATCH"
-          
+
           # 5. Format Final Version based on Branch
           BRANCH_NAME="${{ github.ref_name }}"
           RUN_NUMBER="${{ github.run_number }}"
-          
+
           if [[ "$BRANCH_NAME" == "main" ]]; then
             FINAL_VERSION="v$BASE_VERSION"
             IS_PRERELEASE="false"
@@ -102,7 +102,7 @@ jobs:
             FINAL_VERSION="v$BASE_VERSION-$BRANCH_NAME.$RUN_NUMBER"
             IS_PRERELEASE="true"
           fi
-          
+
           echo "Calculated Version: $FINAL_VERSION"
           echo "version=$FINAL_VERSION" >> $GITHUB_OUTPUT
           echo "prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
@@ -114,7 +114,7 @@ jobs:
           git tag ${{ steps.version.outputs.version }}
           git push origin ${{ steps.version.outputs.version }}
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -134,6 +134,7 @@ jobs:
         uses: mikepenz/release-changelog-builder-action@v4
         with:
           configuration: ".github/changelog-config.json"
+          mode: "COMMIT"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

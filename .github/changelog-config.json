@@ -2,19 +2,57 @@
   "categories": [
     {
       "title": "## 🚀 Features",
-      "labels": ["feat", "feature"]
+      "labels": [
+        "feat",
+        "feature"
+      ]
     },
     {
       "title": "## 🐛 Bug Fixes",
-      "labels": ["fix", "bug"]
+      "labels": [
+        "fix",
+        "bug"
+      ]
     },
     {
-      "title": "## 🧪 Tests & Refactoring",
-      "labels": ["test", "refactor"]
+      "title": "## 📝 Documentation",
+      "labels": [
+        "docs",
+        "documentation"
+      ]
+    },
+    {
+      "title": "## 💄 Styles",
+      "labels": [
+        "style"
+      ]
+    },
+    {
+      "title": "## ♻️ Refactoring",
+      "labels": [
+        "refactor"
+      ]
+    },
+    {
+      "title": "## ⚡ Performance Improvements",
+      "labels": [
+        "perf"
+      ]
+    },
+    {
+      "title": "## 🧪 Tests",
+      "labels": [
+        "test",
+        "tests"
+      ]
     },
     {
       "title": "## 📦 Build & CI",
-      "labels": ["build", "ci", "chore"]
+      "labels": [
+        "build",
+        "ci",
+        "chore"
+      ]
     }
   ],
   "ignore_labels": [
