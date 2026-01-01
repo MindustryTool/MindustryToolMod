@@ -1,6 +1,7 @@
 package mindustrytool.ui;
 
 import arc.Core;
+import arc.files.Fi;
 import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.scene.ui.*;
@@ -148,7 +149,7 @@ public class UpdateCenterDialog extends BaseDialog {
                             tags.putAll(newTags);
 
                             // Save to disk
-                            Core.settings.put("mindustrytool-tags-json", json);
+                            saveStringCacheToFile("tags", json);
 
                             // Rebuild UI if timeline is already visible to show tags
                             if (!loading)
@@ -161,7 +162,7 @@ public class UpdateCenterDialog extends BaseDialog {
     }
 
     private void loadTagsFromDisk() {
-        String json = Core.settings.getString("mindustrytool-tags-json", null);
+        String json = loadStringCacheFromFile("tags");
         if (json == null)
             return;
         try {
@@ -187,60 +188,212 @@ public class UpdateCenterDialog extends BaseDialog {
         if (cachedCommits != null && System.currentTimeMillis() - lastCommitFetch < CACHE_DURATION) {
             commits.clear();
             commits.addAll(cachedCommits);
-            // Ensure UI shows cached commits if already loaded
             if (!loading)
                 Core.app.post(this::rebuildUI);
             return;
         }
 
-        Http.get(COMMITS_API)
+        // Fetch branches first, then commits from all key branches
+        if (activeBranches.isEmpty()) {
+            Http.get(BRANCHES_API)
+                    .header("User-Agent", "MindustryToolMod")
+                    .error(e -> {
+                        handleError(e);
+                        // Fallback to fetch main only if branches fail
+                        fetchBranchCommits("main");
+                    })
+                    .submit(res -> {
+                        try {
+                            Jval val = Jval.read(res.getResultAsString());
+                            if (val.isArray()) {
+                                for (Jval v : val.asArray())
+                                    activeBranches.add(v.getString("name", ""));
+                            }
+                            fetchMultiBranchCommits();
+                        } catch (Exception e) {
+                            Log.err(e);
+                            fetchBranchCommits("main");
+                        }
+                    });
+        } else {
+            fetchMultiBranchCommits();
+        }
+    }
+
+    private void fetchMultiBranchCommits() {
+        // Fetch commits from multiple active branches to expose graph topology
+        ObjectSet<String> branchesToFetch = new ObjectSet<>();
+        branchesToFetch.add("main"); // Always fetch main
+
+        // Add other active branches (limit to 5 to avoid API span)
+        int count = 0;
+        for (String b : activeBranches) {
+            if (!b.equals("main") && count < 4) {
+                branchesToFetch.add(b);
+                count++;
+            }
+        }
+
+        // Log.info("[GitGraph] Fetching commits from branches: @", branchesToFetch);
+
+        // Parallel Fetch
+        Seq<CommitInfo> allCommits = new Seq<>();
+        ObjectSet<String> seenShas = new ObjectSet<>();
+        int[] pending = { branchesToFetch.size };
+
+        for (String branch : branchesToFetch) {
+            Http.get(COMMITS_API + "?sha=" + branch + "&per_page=100") // Increased to 100
+                    .header("User-Agent", "MindustryToolMod")
+                    .error(e -> {
+                        Log.err("Failed to fetch commits for branch: " + branch, e);
+                        synchronized (pending) {
+                            pending[0]--;
+                            if (pending[0] <= 0)
+                                finalizeCommits(allCommits);
+                        }
+                    })
+                    .submit(res -> {
+                        try {
+                            Jval array = Jval.read(res.getResultAsString());
+                            if (array.isArray()) {
+                                synchronized (allCommits) {
+                                    for (Jval item : array.asArray()) {
+                                        String sha = item.getString("sha", "");
+                                        if (seenShas.add(sha)) {
+                                            allCommits.add(new CommitInfo(item));
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.err(e);
+                        }
+
+                        synchronized (pending) {
+                            pending[0]--;
+                            if (pending[0] <= 0)
+                                finalizeCommits(allCommits);
+                        }
+                    });
+        }
+    }
+
+    private void fetchBranchCommits(String branch) {
+        // Fallback for single branch fetch
+        Http.get(COMMITS_API + "?sha=" + branch)
                 .header("User-Agent", "MindustryToolMod")
                 .error(e -> {
                     if (commits.isEmpty())
                         loadCommitsFromDisk();
                     handleError(e);
                 })
-                .submit(response -> {
+                .submit(res -> {
                     try {
-                        String json = response.getResultAsString();
-                        Jval array = Jval.read(json);
+                        Jval array = Jval.read(res.getResultAsString());
                         if (array.isArray()) {
-                            Seq<CommitInfo> newCommits = new Seq<>();
-                            for (Jval item : array.asArray()) {
-                                newCommits.add(new CommitInfo(item));
-                            }
-                            cachedCommits = newCommits;
-                            lastCommitFetch = System.currentTimeMillis();
-
-                            commits.clear();
-                            commits.addAll(newCommits);
-
-                            Core.settings.put("mindustrytool-commits-json", json); // Persist
-                        }
-
-                        // Always trigger rebuild to show the new commits
-                        if (!loading) {
-                            Core.app.post(this::rebuildUI);
+                            Seq<CommitInfo> fetched = new Seq<>();
+                            for (Jval item : array.asArray())
+                                fetched.add(new CommitInfo(item));
+                            finalizeCommits(fetched);
                         }
                     } catch (Exception e) {
-                        Log.err("Failed to parse commits", e);
+                        Log.err(e);
                     }
                 });
     }
 
-    private void loadCommitsFromDisk() {
-        String json = Core.settings.getString("mindustrytool-commits-json", null);
-        if (json == null)
-            return;
+    private void finalizeCommits(Seq<CommitInfo> result) {
+        // Sort descenting by date
+        result.sort(c -> -c.date.compareTo(c.date));
+
+        cachedCommits = result;
+        lastCommitFetch = System.currentTimeMillis();
+
+        Core.app.post(() -> {
+            commits.clear();
+            commits.addAll(result);
+
+            // Save to file instead of settings to avoid UTF limit crash
+            saveCacheToFile("commits", result);
+
+            if (!loading)
+                rebuildUI();
+        });
+    }
+
+    private void saveCacheToFile(String name, Seq<CommitInfo> data) {
         try {
-            Jval array = Jval.read(json);
-            if (array.isArray()) {
-                for (Jval item : array.asArray()) {
-                    commits.add(new CommitInfo(item));
+            Jval array = Jval.newArray();
+            for (CommitInfo c : data) {
+                Jval obj = Jval.newObject();
+                obj.put("sha", c.sha);
+                obj.put("html_url", c.htmlUrl);
+
+                Jval commitObj = Jval.newObject();
+                commitObj.put("message", c.message);
+                Jval authorObj = Jval.newObject();
+                authorObj.put("name", c.authorName);
+                authorObj.put("date", c.date);
+                commitObj.put("author", authorObj);
+                obj.put("commit", commitObj);
+
+                // Parents
+                if (c.parents != null && c.parents.length > 0) {
+                    Jval pArray = Jval.newArray();
+                    for (String p : c.parents) {
+                        Jval pObj = Jval.newObject();
+                        pObj.put("sha", p);
+                        pArray.add(pObj);
+                    }
+                    obj.put("parents", pArray);
+                }
+
+                if (c.avatarUrl != null && !c.avatarUrl.isEmpty()) {
+                    Jval uObj = Jval.newObject();
+                    uObj.put("avatar_url", c.avatarUrl);
+                    obj.put("author", uObj);
+                }
+
+                array.add(obj);
+            }
+            saveStringCacheToFile(name, array.toString());
+        } catch (Exception e) {
+            Log.err("Failed to save cache file " + name, e);
+        }
+    }
+
+    private void saveStringCacheToFile(String name, String data) {
+        try {
+            Core.settings.getDataDirectory().child("mindustrytool-" + name + ".json").writeString(data);
+        } catch (Exception e) {
+            Log.err("Failed to save cache file " + name, e);
+        }
+    }
+
+    private String loadStringCacheFromFile(String name) {
+        try {
+            Fi file = Core.settings.getDataDirectory().child("mindustrytool-" + name + ".json");
+            if (file.exists()) {
+                return file.readString();
+            }
+        } catch (Exception e) {
+            Log.err("Failed to load cache file " + name, e);
+        }
+        return null;
+    }
+
+    private void loadCommitsFromDisk() {
+        try {
+            String json = loadStringCacheFromFile("commits");
+            if (json != null) {
+                Jval val = Jval.read(json);
+                if (val.isArray()) {
+                    for (Jval item : val.asArray())
+                        commits.add(new CommitInfo(item));
                 }
             }
         } catch (Exception e) {
-            Log.err("Failed to load commits cache", e);
+            Log.err("Failed to load commits from disk", e);
         }
     }
 
@@ -248,18 +401,12 @@ public class UpdateCenterDialog extends BaseDialog {
         if (cachedBranches != null && System.currentTimeMillis() - lastBranchFetch < CACHE_DURATION) {
             activeBranches.clear();
             activeBranches.addAll(cachedBranches);
-            // If already loaded (e.g. from cache), we might need to trigger rebuild if
-            // releases are ready
-            // But usually rebuildUI is triggered by release loading finishing.
-            // If we are just refreshing branches, we might want to rebuild.
-            if (!loading)
-                Core.app.post(this::rebuildUI);
             return;
         }
 
         Http.get(BRANCHES_API)
                 .header("User-Agent", "MindustryToolMod")
-                .error(e -> handleError(e))
+                .error(this::handleError)
                 .submit(response -> {
                     try {
                         Jval array = Jval.read(response.getResultAsString());
@@ -274,12 +421,11 @@ public class UpdateCenterDialog extends BaseDialog {
                             activeBranches.clear();
                             activeBranches.addAll(newBranches);
                         }
-                        if (!loading) {
-                            Core.app.post(this::rebuildUI);
-                        }
                     } catch (Exception e) {
                         Log.err("Failed to parse branches", e);
                     }
+                    if (!loading)
+                        Core.app.post(this::rebuildUI);
                 });
     }
 
@@ -377,7 +523,7 @@ public class UpdateCenterDialog extends BaseDialog {
                             releases.clear();
                             releases.addAll(newReleases);
 
-                            Core.settings.put("mindustrytool-releases-json", json); // Persist
+                            saveStringCacheToFile("releases", json); // Persist to file
                         }
 
                         finishReleaseLoading();
@@ -392,7 +538,7 @@ public class UpdateCenterDialog extends BaseDialog {
     }
 
     private void loadReleasesFromDisk() {
-        String json = Core.settings.getString("mindustrytool-releases-json", null);
+        String json = loadStringCacheFromFile("releases");
         if (json == null)
             return;
         try {
@@ -443,7 +589,11 @@ public class UpdateCenterDialog extends BaseDialog {
         }
 
         // Standard buttons
-        buttons.defaults().size(210f, 64f).pad(8f);
+        if (Core.graphics.isPortrait()) {
+            buttons.defaults().growX().height(64f).pad(8f);
+        } else {
+            buttons.defaults().size(210f, 64f).pad(8f);
+        }
         buttons.button("@back", Icon.left, this::hide);
 
         if (!loading && errorMessage == null && selectedRelease != null) {
@@ -499,19 +649,20 @@ public class UpdateCenterDialog extends BaseDialog {
         cont.defaults().pad(5f);
 
         // Dynamic sizing logic
-        float contentWidth = Core.graphics.isPortrait() ? Core.graphics.getWidth() - 60f : 600f;
-        // Calculate available height for both lists
-        // Screen height - padding (increased to 280f to prevent overlap)
-        float totalAvailableHeight = Core.graphics.getHeight() - 280f;
+        boolean isMobile = Core.graphics.isPortrait();
+        float totalAvailableHeight = Core.graphics.getHeight() - (isMobile ? 200f : 280f);
         float splitHeight = Math.max(200f, totalAvailableHeight / 2f);
 
-        float availableHeight = splitHeight;
         float timelineHeight = splitHeight;
+        float listHeight = splitHeight;
 
-        // Wrapper to constrain width on PC
+        // Wrapper to constrain width on PC but fill on Mobile
         cont.table(main -> {
             main.top();
-            main.defaults().width(contentWidth).padBottom(5f);
+            // Use growX with a maxWidth for desktop, so it doesn't stretch too wide
+            // On mobile, it will just fill the available width (controlled by BaseDialog
+            // padding)
+            main.defaults().growX().maxWidth(600f).padBottom(5f);
 
             // 1. Header (Removed)
 
@@ -560,7 +711,7 @@ public class UpdateCenterDialog extends BaseDialog {
             Table items = new Table();
             ScrollPane scroll = new ScrollPane(items, Styles.smallPane);
             scroll.setFadeScrollBars(false);
-            main.add(scroll).height(availableHeight).row();
+            main.add(scroll).height(listHeight).row();
 
             buildReleaseList(items);
 
@@ -574,7 +725,7 @@ public class UpdateCenterDialog extends BaseDialog {
             main.add(timeScroll).height(timelineHeight).row();
 
             buildTimeline(timeline);
-        }).width(contentWidth);
+        }).growX().maxWidth(600f);
     }
 
     private void addFilterButton(Table t, String text, mindustrytool.utils.Version.SuffixType type, Color color) {
@@ -684,9 +835,10 @@ public class UpdateCenterDialog extends BaseDialog {
 
         // Responsive width: On mobile portrait, use nearly full width; on desktop, cap
         // at 500
+        // Responsive width: On mobile portrait, use full width with padding
         float dialogWidth = Core.graphics.isPortrait()
-                ? Core.graphics.getWidth() - 80f
-                : Math.min(500f, Core.graphics.getWidth() * 0.6f);
+                ? Core.graphics.getWidth() - 30f // Reduced margin for mobile
+                : Math.min(600f, Core.graphics.getWidth() * 0.7f); // Increased PC max width slightly
         float contentWidth = dialogWidth - 40f;
 
         ScrollPane pane = dialog.cont.pane(p -> {
@@ -701,7 +853,13 @@ public class UpdateCenterDialog extends BaseDialog {
         pane.setFadeScrollBars(false);
 
         // Custom buttons: Back and Install
-        dialog.buttons.defaults().size(150f, 55f).pad(8f);
+        // Use percentage width for mobile (almost 50% each)
+        if (Core.graphics.isPortrait()) {
+            dialog.buttons.defaults().width(contentWidth / 2f - 10f).height(64f).pad(5f);
+        } else {
+            dialog.buttons.defaults().size(210f, 64f).pad(8f);
+        }
+
         dialog.buttons.button("@back", Icon.left, dialog::hide);
         dialog.buttons.button("Install", Icon.download, () -> {
             dialog.hide();
@@ -770,60 +928,71 @@ public class UpdateCenterDialog extends BaseDialog {
                         float cx = x + 10f + fNode.lane * laneSpacing;
 
                         // Draw connections to parents (downwards)
-                        // Note: Current row is drawn. Parents are in subsequent rows (y + height or
-                        // more).
-                        // Since we don't know exact Y of next row easily, we blindly draw line to
-                        // bottom of cell.
-                        // Actually, simplified graph assumes fixed step.
-
-                        Lines.stroke(2f);
+                        Lines.stroke(2.5f);
                         for (GraphConnection conn : fNode.connections) {
                             float tx = x + 10f + conn.toLane * laneSpacing;
                             float ty = y; // Bottom of this cell
 
                             Draw.color(GRAPH_COLORS[conn.toLane % GRAPH_COLORS.length]);
 
-                            // If changing lanes, curve?
                             if (fNode.lane != conn.toLane) {
-                                // Simple angled line
-                                // Center to bottom-target-x
-                                Lines.line(cx, cy, tx, ty);
+                                // Bezier curve for lane changes
+                                drawBezierCurve(cx, cy, tx, ty, 16);
                             } else {
                                 // Straight down
                                 Lines.line(cx, cy, cx, ty);
                             }
                         }
 
-                        // Draw line from top? (If we are a child of previous)
-                        // Hard to look back.
-                        // Instead, assume continuous lines are drawn by parents?
-                        // No, in standard list view, usually we draw line from Self -> Parents.
-                        // And we expect Parents to draw line from Self -> Parents.
-                        // Wait, a vertical line needs to span from Top to Bottom if it passes through.
-                        // My Simple Algorithm doesn't track "Pass-through" lines in the Node.
-                        // I need to know which lanes are active *passing through* this commit.
-
-                        // FIX: My calculateGraph tracks active lanes. I should snapshot 'openLanes' at
-                        // each step?
-                        // Too complex for now.
-                        // Workaround: Draw line from Top of cell to Center if we are continued?
-                        // Actually, visually acceptable hack:
-                        // Draw line UP from Center to Top (Same Lane) - to connect to child.
-
+                        // Draw vertical line from top to center (connect to child)
                         Draw.color(GRAPH_COLORS[fNode.colorIdx]);
                         Lines.line(cx, y + height, cx, cy);
 
                         Draw.reset();
 
-                        // Draw Node
+                        // Draw Node with glow effect
                         if (isStableTag) {
+                            // Star for stable releases
+                            Draw.color(Pal.accent, 0.3f);
+                            Fill.circle(cx, cy, 12f); // Glow
                             Draw.color(Pal.accent);
                             Icon.star.draw(cx - 8f, cy - 8f, 16f, 16f);
-                        } else {
+                        } else if (isTag) {
+                            // Larger dot for tags (beta/dev)
+                            Draw.color(GRAPH_COLORS[fNode.colorIdx], 0.3f);
+                            Fill.circle(cx, cy, 8f); // Glow
                             Draw.color(GRAPH_COLORS[fNode.colorIdx]);
-                            Fill.circle(cx, cy, isTag ? 5f : 3f);
+                            Fill.circle(cx, cy, 5f);
+                        } else {
+                            // Small dot for regular commits
+                            Draw.color(GRAPH_COLORS[fNode.colorIdx]);
+                            Fill.circle(cx, cy, 3f);
                         }
                         Draw.reset();
+                    }
+
+                    // Draw smooth Bezier curve
+                    private void drawBezierCurve(float x1, float y1, float x2, float y2, int segments) {
+                        // Control points for S-curve
+                        float midY = (y1 + y2) / 2f;
+                        float cx1 = x1;
+                        float cy1 = midY;
+                        float cx2 = x2;
+                        float cy2 = midY;
+
+                        float prevX = x1, prevY = y1;
+                        for (int i = 1; i <= segments; i++) {
+                            float t = (float) i / segments;
+                            float u = 1 - t;
+
+                            // Cubic Bezier formula
+                            float bx = u * u * u * x1 + 3 * u * u * t * cx1 + 3 * u * t * t * cx2 + t * t * t * x2;
+                            float by = u * u * u * y1 + 3 * u * u * t * cy1 + 3 * u * t * t * cy2 + t * t * t * y2;
+
+                            Lines.line(prevX, prevY, bx, by);
+                            prevX = bx;
+                            prevY = by;
+                        }
                     }
                 }).width(graphWidth).growY().padRight(10f);
 
@@ -834,7 +1003,7 @@ public class UpdateCenterDialog extends BaseDialog {
                     if (isStableTag) {
                         content.table(badge -> {
                             badge.background(Styles.black3);
-                            badge.image(Icon.github).size(16f).color(Pal.accent).padRight(4f);
+                            badge.image(Icon.github).size(12f).color(Pal.accent).padRight(4f);
                             badge.add(tagName).color(Pal.accent);
                         }).padBottom(4f).padTop(4f).row();
                     }
@@ -1231,12 +1400,16 @@ public class UpdateCenterDialog extends BaseDialog {
         if (commits.isEmpty())
             return;
 
+        // Log.info("[GitGraph] Starting calculation for @ commits", commits.size);
+
         // "Open Lanes" tracks which SHA is expected at the tip of each lane
         // Lane Index -> SHA
         Seq<String> openLanes = new Seq<>();
 
         // Iterate new to old
         for (CommitInfo c : commits) {
+            // Log.info("[GitGraph] Commit @: @ parents", c.sha.substring(0, 7), c.parents
+            // != null ? c.parents.length : 0);
             GraphNode node = new GraphNode();
 
             // 1. Assign Lane
