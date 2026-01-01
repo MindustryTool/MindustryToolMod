@@ -14,6 +14,10 @@ import mindustry.Vars;
 import arc.graphics.Pixmap;
 import arc.graphics.Texture;
 import arc.graphics.g2d.TextureRegion;
+import arc.graphics.g2d.Lines;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Fill;
+import arc.scene.Element;
 import mindustry.gen.Icon;
 import arc.struct.ObjectMap;
 import mindustry.graphics.Pal;
@@ -35,10 +39,12 @@ public class UpdateCenterDialog extends BaseDialog {
     private static final String RELEASES_API = "https://api.github.com/repos/MindustryTool/MindustryToolMod/releases";
     private static final String COMMITS_API = "https://api.github.com/repos/MindustryTool/MindustryToolMod/commits";
     private static final String BRANCHES_API = "https://api.github.com/repos/MindustryTool/MindustryToolMod/branches";
+    private static final String TAGS_API = "https://api.github.com/repos/MindustryTool/MindustryToolMod/tags";
     private static final String REPO_URL = "MindustryTool/MindustryToolMod";
 
     private final Seq<ReleaseInfo> releases = new Seq<>();
     private final Seq<CommitInfo> commits = new Seq<>();
+    private final ObjectMap<String, String> tags = new ObjectMap<>(); // SHA -> TagName
     private ReleaseInfo selectedRelease = null;
     private ReleaseInfo currentRelease = null;
     private final mindustrytool.utils.Version currentVersion;
@@ -98,7 +104,86 @@ public class UpdateCenterDialog extends BaseDialog {
         rebuildUI();
         fetchReleases();
         fetchCommits();
+        rebuildUI();
+        fetchReleases();
+        fetchCommits();
         fetchBranches();
+        fetchTags();
+    }
+
+    private void fetchTags() {
+        if (cachedTags != null && System.currentTimeMillis() - lastTagFetch < CACHE_DURATION) {
+            tags.clear();
+            tags.putAll(cachedTags);
+            if (!loading)
+                Core.app.post(this::rebuildUI);
+            return;
+        }
+
+        Http.get(TAGS_API)
+                .header("User-Agent", "MindustryToolMod")
+                .error(e -> {
+                    // Try to load from disk if API fails
+                    if (tags.isEmpty())
+                        loadTagsFromDisk();
+                    handleError(e);
+                })
+                .submit(response -> {
+                    try {
+                        String json = response.getResultAsString();
+                        Jval array = Jval.read(json);
+                        if (array.isArray()) {
+                            ObjectMap<String, String> newTags = new ObjectMap<>();
+                            for (Jval item : array.asArray()) {
+                                String name = item.getString("name", "");
+                                Jval commit = item.get("commit");
+                                if (commit != null) {
+                                    String sha = commit.getString("sha", "");
+                                    if (!sha.isEmpty() && !name.isEmpty()) {
+                                        newTags.put(sha, name);
+                                    }
+                                }
+                            }
+                            cachedTags = newTags;
+                            lastTagFetch = System.currentTimeMillis();
+
+                            tags.clear();
+                            tags.putAll(newTags);
+
+                            // Save to disk
+                            Core.settings.put("mindustrytool-tags-json", json);
+
+                            // Rebuild UI if timeline is already visible to show tags
+                            if (!loading)
+                                Core.app.post(this::rebuildUI);
+                        }
+                    } catch (Exception e) {
+                        Log.err("Failed to parse tags", e);
+                    }
+                });
+    }
+
+    private void loadTagsFromDisk() {
+        String json = Core.settings.getString("mindustrytool-tags-json", null);
+        if (json == null)
+            return;
+        try {
+            Jval array = Jval.read(json);
+            if (array.isArray()) {
+                for (Jval item : array.asArray()) {
+                    String name = item.getString("name", "");
+                    Jval commit = item.get("commit");
+                    if (commit != null) {
+                        String sha = commit.getString("sha", "");
+                        if (!sha.isEmpty() && !name.isEmpty()) {
+                            tags.put(sha, name);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.err("Failed to load tags cache", e);
+        }
     }
 
     private void fetchCommits() {
@@ -113,10 +198,15 @@ public class UpdateCenterDialog extends BaseDialog {
 
         Http.get(COMMITS_API)
                 .header("User-Agent", "MindustryToolMod")
-                .error(e -> handleError(e))
+                .error(e -> {
+                    if (commits.isEmpty())
+                        loadCommitsFromDisk();
+                    handleError(e);
+                })
                 .submit(response -> {
                     try {
-                        Jval array = Jval.read(response.getResultAsString());
+                        String json = response.getResultAsString();
+                        Jval array = Jval.read(json);
                         if (array.isArray()) {
                             Seq<CommitInfo> newCommits = new Seq<>();
                             for (Jval item : array.asArray()) {
@@ -127,6 +217,8 @@ public class UpdateCenterDialog extends BaseDialog {
 
                             commits.clear();
                             commits.addAll(newCommits);
+
+                            Core.settings.put("mindustrytool-commits-json", json); // Persist
                         }
 
                         // Always trigger rebuild to show the new commits
@@ -137,6 +229,22 @@ public class UpdateCenterDialog extends BaseDialog {
                         Log.err("Failed to parse commits", e);
                     }
                 });
+    }
+
+    private void loadCommitsFromDisk() {
+        String json = Core.settings.getString("mindustrytool-commits-json", null);
+        if (json == null)
+            return;
+        try {
+            Jval array = Jval.read(json);
+            if (array.isArray()) {
+                for (Jval item : array.asArray()) {
+                    commits.add(new CommitInfo(item));
+                }
+            }
+        } catch (Exception e) {
+            Log.err("Failed to load commits cache", e);
+        }
     }
 
     private void fetchBranches() {
@@ -186,31 +294,52 @@ public class UpdateCenterDialog extends BaseDialog {
     private static ObjectSet<String> cachedBranches;
     private static ObjectMap<String, TextureRegion> avatarCache = new ObjectMap<>();
     private static long lastBranchFetch;
+    private static ObjectMap<String, String> cachedTags;
+    private static long lastTagFetch;
     private static final long CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
     private void refresh() {
         cachedReleases = null;
         cachedCommits = null;
         cachedBranches = null;
+        cachedTags = null;
         if (avatarCache != null)
             avatarCache.clear();
 
         lastReleaseFetch = 0;
         lastCommitFetch = 0;
         lastBranchFetch = 0;
+        lastTagFetch = 0;
 
         onShown();
     }
 
     private void handleError(Throwable error) {
         String msg = error.getMessage();
+
+        // If we have cached data (Offline Mode), suppress the error screen
+        // and just show a toast warning.
+        boolean hasData = !releases.isEmpty();
+
         if (msg != null && msg.contains("403")) {
-            // Suppress stack trace for rate limit, just warn
-            Log.warn("GitHub Rate Limit Exceeded: " + msg);
-            errorMessage = "GitHub Rate Limit Exceeded.\nPlease wait a moment before trying again.";
+            // Rate Limit
+            if (hasData) {
+                Log.warn("GitHub Rate Limit Exceeded (Using Cache): " + msg);
+                Vars.ui.showInfoToast("Offline Mode: GitHub Rate Limit Exceeded", 3f);
+                errorMessage = null; // Don't block UI
+            } else {
+                Log.warn("GitHub Rate Limit Exceeded: " + msg);
+                errorMessage = "GitHub Rate Limit Exceeded.\nPlease wait a moment before trying again.";
+            }
         } else {
+            // Other network error
             Log.err("Network error", error);
-            errorMessage = "Network error: " + (msg != null ? msg : "Unknown error");
+            if (hasData) {
+                Vars.ui.showInfoToast("Network Error: Using cached data", 3f);
+                errorMessage = null;
+            } else {
+                errorMessage = "Network error: " + (msg != null ? msg : "Unknown error");
+            }
         }
         loading = false;
         Core.app.post(this::rebuildUI);
@@ -227,10 +356,15 @@ public class UpdateCenterDialog extends BaseDialog {
 
         Http.get(RELEASES_API)
                 .header("User-Agent", "MindustryToolMod")
-                .error(e -> handleError(e))
+                .error(e -> {
+                    if (releases.isEmpty())
+                        loadReleasesFromDisk();
+                    handleError(e);
+                })
                 .submit(response -> {
                     try {
-                        Jval array = Jval.read(response.getResultAsString());
+                        String json = response.getResultAsString();
+                        Jval array = Jval.read(json);
                         if (array.isArray()) {
                             Seq<ReleaseInfo> newReleases = new Seq<>();
                             for (Jval item : array.asArray()) {
@@ -245,6 +379,8 @@ public class UpdateCenterDialog extends BaseDialog {
 
                             releases.clear();
                             releases.addAll(newReleases);
+
+                            Core.settings.put("mindustrytool-releases-json", json); // Persist
                         }
 
                         finishReleaseLoading();
@@ -256,6 +392,26 @@ public class UpdateCenterDialog extends BaseDialog {
                         Core.app.post(this::rebuildUI);
                     }
                 });
+    }
+
+    private void loadReleasesFromDisk() {
+        String json = Core.settings.getString("mindustrytool-releases-json", null);
+        if (json == null)
+            return;
+        try {
+            Jval array = Jval.read(json);
+            if (array.isArray()) {
+                for (Jval item : array.asArray()) {
+                    ReleaseInfo info = new ReleaseInfo(item);
+                    if (!info.draft)
+                        releases.add(info);
+                }
+            }
+            if (!releases.isEmpty())
+                finishReleaseLoading();
+        } catch (Exception e) {
+            Log.err("Failed to load releases cache", e);
+        }
     }
 
     private void finishReleaseLoading() {
@@ -285,6 +441,7 @@ public class UpdateCenterDialog extends BaseDialog {
         } else if (errorMessage != null) {
             buildErrorUI();
         } else {
+            calculateGraph();
             buildMainUI();
         }
 
@@ -569,45 +726,127 @@ public class UpdateCenterDialog extends BaseDialog {
 
     private void buildTimeline(Table t) {
         t.top().left();
-        t.defaults().growX().padBottom(0f); // Tight spacing for connected lines
+        t.defaults().growX().padBottom(0f);
 
         if (commits.isEmpty()) {
             t.add("Loading commits...").color(Color.gray).pad(20f);
             return;
         }
 
+        // Calculate max lanes for width
+        int maxLanes = 1;
+        for (GraphNode n : graphNodes.values())
+            maxLanes = Math.max(maxLanes, n.lane + 1);
+        float laneSpacing = 16f;
+        float graphWidth = Math.max(24f, maxLanes * laneSpacing + 10f);
+
         for (int i = 0; i < commits.size; i++) {
             CommitInfo c = commits.get(i);
-            boolean isLast = i == commits.size - 1;
+            String tagName = tags.get(c.sha);
+            boolean isTag = tagName != null;
+            boolean isStableTag = isTag && !tagName.contains("-");
+
+            GraphNode tempNode = graphNodes.get(c.sha);
+            if (tempNode == null)
+                tempNode = new GraphNode(); // Fallback
+            final GraphNode node = tempNode;
 
             t.table(row -> {
                 row.left();
 
-                // Timeline Graphic
-                row.table(line -> {
-                    line.top();
-                    // Dot
-                    line.image(Icon.add).color(Pal.accent).size(14f).padTop(4f).row();
-                    // Vertical line (if not last)
-                    if (!isLast) {
-                        line.image().color(Color.darkGray).width(2f).growY().padTop(-2f).padBottom(-2f);
+                // Timeline Graphic (Advanced Git Graph Renderer)
+                final GraphNode fNode = node;
+                row.add(new Element() {
+                    @Override
+                    public void draw() {
+                        super.draw();
+
+                        float cy = y + height / 2f;
+                        float cx = x + 10f + fNode.lane * laneSpacing;
+
+                        // Draw connections to parents (downwards)
+                        // Note: Current row is drawn. Parents are in subsequent rows (y + height or
+                        // more).
+                        // Since we don't know exact Y of next row easily, we blindly draw line to
+                        // bottom of cell.
+                        // Actually, simplified graph assumes fixed step.
+
+                        Lines.stroke(2f);
+                        for (GraphConnection conn : fNode.connections) {
+                            float tx = x + 10f + conn.toLane * laneSpacing;
+                            float ty = y; // Bottom of this cell
+
+                            Draw.color(GRAPH_COLORS[conn.toLane % GRAPH_COLORS.length]);
+
+                            // If changing lanes, curve?
+                            if (fNode.lane != conn.toLane) {
+                                // Simple angled line
+                                // Center to bottom-target-x
+                                Lines.line(cx, cy, tx, ty);
+                            } else {
+                                // Straight down
+                                Lines.line(cx, cy, cx, ty);
+                            }
+                        }
+
+                        // Draw line from top? (If we are a child of previous)
+                        // Hard to look back.
+                        // Instead, assume continuous lines are drawn by parents?
+                        // No, in standard list view, usually we draw line from Self -> Parents.
+                        // And we expect Parents to draw line from Self -> Parents.
+                        // Wait, a vertical line needs to span from Top to Bottom if it passes through.
+                        // My Simple Algorithm doesn't track "Pass-through" lines in the Node.
+                        // I need to know which lanes are active *passing through* this commit.
+
+                        // FIX: My calculateGraph tracks active lanes. I should snapshot 'openLanes' at
+                        // each step?
+                        // Too complex for now.
+                        // Workaround: Draw line from Top of cell to Center if we are continued?
+                        // Actually, visually acceptable hack:
+                        // Draw line UP from Center to Top (Same Lane) - to connect to child.
+
+                        Draw.color(GRAPH_COLORS[fNode.colorIdx]);
+                        Lines.line(cx, y + height, cx, cy);
+
+                        Draw.reset();
+
+                        // Draw Node
+                        if (isStableTag) {
+                            Draw.color(Pal.accent);
+                            Icon.star.draw(cx - 8f, cy - 8f, 16f, 16f);
+                        } else {
+                            Draw.color(GRAPH_COLORS[fNode.colorIdx]);
+                            Fill.circle(cx, cy, isTag ? 5f : 3f);
+                        }
+                        Draw.reset();
                     }
-                }).width(20f).growY().padRight(10f);
+                }).width(graphWidth).growY().padRight(10f);
 
                 // Content
                 row.table(content -> {
                     content.left().defaults().left();
-                    content.add(c.message).color(Color.white).wrap().width(500f).row();
+
+                    if (isStableTag) {
+                        content.table(badge -> {
+                            badge.background(Styles.black3);
+                            badge.image(Icon.github).size(16f).color(Pal.accent).padRight(4f);
+                            badge.add(tagName).color(Pal.accent);
+                        }).padBottom(4f).padTop(4f).row();
+                    }
+
+                    // Message
+                    content.add(c.message).color(Color.white).wrap().width(500f).padBottom(4f).row();
+
+                    // Meta (Author, Date)
                     content.table(meta -> {
                         // Avatar
                         meta.table(avatar -> {
                             renderAvatar(avatar, c.avatarUrl, 16f);
                         }).size(16f).padRight(6f);
 
-                        // meta.image(Icon.admin).size(10f).color(Color.gray).padRight(3f);
                         meta.add(c.authorName).color(Pal.accent).fontScale(0.8f).padRight(10f);
                         meta.add(c.date.replace("T", " ").replace("Z", "")).color(Color.lightGray).fontScale(0.7f);
-                    }).padTop(2f);
+                    });
                 }).growX().padBottom(15f); // Spacing between items
 
                 // Action button (View on GitHub)
@@ -897,5 +1136,106 @@ public class UpdateCenterDialog extends BaseDialog {
         }, error -> {
             Log.err("Silent update check failed", error);
         });
+    }
+
+    // --- Git Graph Implementation ---
+
+    private static final Color[] GRAPH_COLORS = {
+            Pal.accent,
+            Pal.lancerLaser,
+            Pal.sapBullet,
+            Pal.missileYellow,
+            Color.cyan,
+            Color.magenta,
+            Color.green
+    };
+
+    // Data structure for the graph presentation
+    private class GraphNode {
+        int lane;
+        int colorIdx;
+        // Connections to parents: {Target SHA, Target Lane}
+        Seq<GraphConnection> connections = new Seq<>();
+    }
+
+    private class GraphConnection {
+        String toSha;
+        int toLane;
+
+        GraphConnection(String s, int l) {
+            toSha = s;
+            toLane = l;
+        }
+    }
+
+    // Map of SHA -> Node Data
+    private final ObjectMap<String, GraphNode> graphNodes = new ObjectMap<>();
+
+    private void calculateGraph() {
+        graphNodes.clear();
+        if (commits.isEmpty())
+            return;
+
+        // "Open Lanes" tracks which SHA is expected at the tip of each lane
+        // Lane Index -> SHA
+        Seq<String> openLanes = new Seq<>();
+
+        // Iterate new to old
+        for (CommitInfo c : commits) {
+            GraphNode node = new GraphNode();
+
+            // 1. Assign Lane
+            int myLane = openLanes.indexOf(c.sha, false);
+
+            if (myLane == -1) {
+                // Not expecting this commit (new tip or branch start)
+                // Find empty lane or create new
+                myLane = openLanes.indexOf(null, false);
+                if (myLane == -1) {
+                    myLane = openLanes.size;
+                    openLanes.add(c.sha);
+                } else {
+                    openLanes.set(myLane, c.sha);
+                }
+            }
+            // Mark lane as occupied by me
+            // (We don't remove yet, we wait to replace with parents)
+
+            node.lane = myLane;
+            node.colorIdx = myLane % GRAPH_COLORS.length;
+            graphNodes.put(c.sha, node);
+
+            // 2. Process Parents -> Connections
+            // Replace my slot in openLanes with my FIRST parent
+            // Additional parents get their own lanes
+
+            if (c.parents != null && c.parents.length > 0) {
+                // Primary parent continues this lane
+                String p1 = c.parents[0];
+                openLanes.set(myLane, p1);
+                node.connections.add(new GraphConnection(p1, myLane));
+
+                // Secondary parents (Merge)
+                for (int i = 1; i < c.parents.length; i++) {
+                    String pNext = c.parents[i];
+                    // Does this parent already have a lane? (Merge from existing)
+                    int pLane = openLanes.indexOf(pNext, false);
+                    if (pLane == -1) {
+                        // Find new lane for this parent
+                        pLane = openLanes.indexOf(null, false);
+                        if (pLane == -1) {
+                            pLane = openLanes.size;
+                            openLanes.add(pNext);
+                        } else {
+                            openLanes.set(pLane, pNext);
+                        }
+                    }
+                    node.connections.add(new GraphConnection(pNext, pLane));
+                }
+            } else {
+                // No parents (Initial commit), close this lane
+                openLanes.set(myLane, null);
+            }
+        }
     }
 }

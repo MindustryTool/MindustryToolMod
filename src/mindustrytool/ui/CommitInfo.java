@@ -14,8 +14,10 @@ public class CommitInfo {
 
     public final String avatarUrl;
 
+    public final String[] parents;
+
     public CommitInfo(Jval json) {
-        this.sha = json.getString("sha", "").substring(0, 7);
+        this.sha = json.getString("sha", "");
         this.htmlUrl = json.getString("html_url", "");
 
         Jval authorUser = json.get("author");
@@ -25,9 +27,20 @@ public class CommitInfo {
             this.avatarUrl = "";
         }
 
+        // Parse parents
+        Jval parentsJson = json.get("parents");
+        if (parentsJson != null && parentsJson.isArray()) {
+            this.parents = new String[parentsJson.asArray().size];
+            for (int i = 0; i < parentsJson.asArray().size; i++) {
+                this.parents[i] = parentsJson.asArray().get(i).getString("sha", "");
+            }
+        } else {
+            this.parents = new String[0];
+        }
+
         Jval commit = json.get("commit");
         if (commit != null) {
-            this.message = commit.getString("message", "").split("\n")[0]; // Only first line
+            this.message = commit.getString("message", "").split("\n")[0];
 
             Jval author = commit.get("author");
             if (author != null) {
