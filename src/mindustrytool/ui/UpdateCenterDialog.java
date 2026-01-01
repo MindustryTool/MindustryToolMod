@@ -600,7 +600,7 @@ public class UpdateCenterDialog extends BaseDialog {
 
         // Standard buttons
         if (Core.graphics.isPortrait()) {
-            buttons.defaults().growX().height(64f).pad(8f);
+            buttons.defaults().size(210f, 64f).pad(4f);
         } else {
             buttons.defaults().size(210f, 64f).pad(8f);
         }
@@ -660,7 +660,8 @@ public class UpdateCenterDialog extends BaseDialog {
 
         // Dynamic sizing logic
         boolean isMobile = Core.graphics.isPortrait();
-        float totalAvailableHeight = Core.graphics.getHeight() - (isMobile ? 200f : 280f);
+        // Use scene height (UI units) instead of graphics height (raw pixels)
+        float totalAvailableHeight = Core.scene.getHeight() - (isMobile ? 200f : 280f);
         float splitHeight = Math.max(200f, totalAvailableHeight / 2f);
 
         float timelineHeight = splitHeight;
