@@ -68,7 +68,7 @@
     "order": "ASC",
     "on_property": "mergedAt"
   },
-  "template": "#{{CHANGELOG}}\n\n<br>\n\n<div align=\"right\">\n\nFull Changelog: https://github.com/MindustryTool/MindustryToolMod/compare/#{{FROM_TAG}}...#{{TO_TAG}}\n</div>",
+  "template": "#{{CHANGELOG}}\n\n---\n\n*Full Changelog: https://github.com/MindustryTool/MindustryToolMod/compare/#{{FROM_TAG}}...#{{TO_TAG}}*",
   "pr_template": "- #{{TITLE}}   ([`#{{HASH}}`](#{{URL}})) by @#{{AUTHOR}}",
   "empty_template": "- No changes found",
   "label_extractor": [
