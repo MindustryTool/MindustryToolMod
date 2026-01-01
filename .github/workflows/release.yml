@@ -28,63 +28,57 @@ jobs:
       - name: Calculate Version
         id: version
         run: |
-          # 1. Fetch tags to find the latest
-          git fetch --tags
+          # 1. Fetch tags to find the latest (force to ensure we see tags from recent runs)
+          git fetch --tags --force
 
           # 2. Get latest tag, default to v0.0.0 if none
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          echo "Latest Tag: $LAST_TAG"
+          echo "Latest Tag found: $LAST_TAG"
 
-          # 3. Analyze commits since last tag for bump type
+          # 3. Analyze commits since last tag
           COMMITS=$(git log "$LAST_TAG..HEAD" --pretty=format:"%s")
+          echo "Commits analyzed:"
+          echo "$COMMITS"
 
           MAJOR=false
           MINOR=false
           PATCH=false
 
-          # Read commits line by line
           while IFS= read -r line; do
             if [[ "$line" =~ "feat!" ]] || [[ "$line" =~ "BREAKING CHANGE" ]]; then
               MAJOR=true
-              echo "  [MAJOR] $line"
             elif [[ "$line" =~ ^feat ]]; then
               MINOR=true
-              echo "  [MINOR] $line"
-            elif [[ "$line" =~ ^fix ]]; then
+            else
+              # All other types (fix, build, docs, etc) default to PATCH
               PATCH=true
-              echo "  [PATCH] $line"
             fi
           done <<< "$COMMITS"
 
           # 4. Bump logic
-          # Remove 'v' prefix
           VERSION_NUM=${LAST_TAG#v}
-          # Split into array
           IFS='.' read -r -a parts <<< "$VERSION_NUM"
-          # Ensure array has 3 parts
           while [ "${#parts[@]}" -lt 3 ]; do parts+=("0"); done
 
           V_MAJOR=${parts[0]}
           V_MINOR=${parts[1]}
           V_PATCH=${parts[2]}
-          # Remove any existing suffix from patch (e.g., 2-beta)
-          V_PATCH=${V_PATCH%%-*}
+          V_PATCH=${V_PATCH%%-*} # Remove suffix
 
           if [ "$MAJOR" = true ]; then
-            V_MAJOR=$((V_MAJOR + 1))
-            V_MINOR=0
-            V_PATCH=0
+            V_MAJOR=$((V_MAJOR + 1)); V_MINOR=0; V_PATCH=0
           elif [ "$MINOR" = true ]; then
-            V_MINOR=$((V_MINOR + 1))
-            V_PATCH=0
-          elif [ "$PATCH" = true ]; then
-            V_PATCH=$((V_PATCH + 1))
+            V_MINOR=$((V_MINOR + 1)); V_PATCH=0
           else
-             # If no conventional commits, default to PATCH (optional, or keep same if strictly manual bump wanted, 
-             # but user asked for automation, so defaulting to PATCH is safer for new builds)
-             echo "No conventional commits found. Defaulting to PATCH bump."
-             V_PATCH=$((V_PATCH + 1))
+            V_PATCH=$((V_PATCH + 1))
           fi
+
+          # 5. Collision Check Loop
+          # If the calculated version already exists as a tag, keep bumping patch
+          while git rev-parse "v$V_MAJOR.$V_MINOR.$V_PATCH" >/dev/null 2>&1; do
+            echo "Tag v$V_MAJOR.$V_MINOR.$V_PATCH already exists. Bumping patch..."
+            V_PATCH=$((V_PATCH + 1))
+          done
 
           BASE_VERSION="$V_MAJOR.$V_MINOR.$V_PATCH"
 
