@@ -1,15 +1,16 @@
-name: Auto Release
+name: Auto Release from Branches
 
 on:
   push:
-    tags:
-      - 'v*' # Trigger on any tag starting with v
+    branches:
+      - main
+      - beta
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Needed to create releases
+      contents: write # Needed to create releases and tags
 
     steps:
       - name: Checkout Code
@@ -22,7 +23,36 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle' # Enables caching of gradle packages
+          cache: 'gradle'
+
+      - name: Calculate Version
+        id: version
+        run: |
+          MOD_VERSION=$(grep "modVersion=" gradle.properties | cut -d'=' -f2)
+          BRANCH_NAME="${{ github.ref_name }}"
+          RUN_NUMBER="${{ github.run_number }}"
+          
+          if [[ "$BRANCH_NAME" == "main" ]]; then
+            FINAL_VERSION="v$MOD_VERSION"
+            IS_PRERELEASE="false"
+          else
+            # Default to beta for any other branch (which is just 'beta' now)
+            FINAL_VERSION="v$MOD_VERSION-beta.$RUN_NUMBER"
+            IS_PRERELEASE="true"
+          fi
+          
+          echo "Calculated Version: $FINAL_VERSION"
+          echo "version=$FINAL_VERSION" >> $GITHUB_OUTPUT
+          echo "prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Tag Commit
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -30,8 +60,12 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Build with Gradle (Cross-platform)
-        run: ./gradlew deploy --no-daemon --parallel --build-cache
+      # Build passing the version explicitly if needed, but build.gradle reads gradle.properties
+      # We just need to make sure the tag is there if we want git describe to work, BUT
+      # we changed build.gradle to use modVersion property.
+      # To support the calculated version (e.g. beta.1), we can pass it as a property.
+      - name: Build with Gradle
+        run: ./gradlew deploy -PmodVersion=${{ steps.version.outputs.version }} --no-daemon --parallel --build-cache
 
       - name: Generate Changelog
         id: changelog
@@ -44,9 +78,11 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
           body: ${{ steps.changelog.outputs.changelog }}
           files: build/libs/*.jar
           draft: false
-          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'dev') }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

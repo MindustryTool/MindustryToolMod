@@ -47,7 +47,7 @@ public class UpdateCenterDialog extends BaseDialog {
         ALL, STABLE, BETA
     }
 
-    private Filter currentFilter = Filter.ALL;
+    private Filter currentFilter = Filter.STABLE;
 
     public UpdateCenterDialog() {
         super("Update Center");
@@ -181,12 +181,14 @@ public class UpdateCenterDialog extends BaseDialog {
                 // Filter tabs
                 left.table(tabs -> {
                     tabs.defaults().size(70f, 30f);
-                    tabs.button("All", Styles.flatTogglet, () -> setFilter(Filter.ALL))
-                            .checked(currentFilter == Filter.ALL);
                     tabs.button("Stable", Styles.flatTogglet, () -> setFilter(Filter.STABLE))
                             .checked(currentFilter == Filter.STABLE);
                     tabs.button("Beta", Styles.flatTogglet, () -> setFilter(Filter.BETA))
                             .checked(currentFilter == Filter.BETA);
+
+                    // "All" includes Dev, but we hide it if preferred, or keep it last
+                    tabs.button("All", Styles.flatTogglet, () -> setFilter(Filter.ALL))
+                            .checked(currentFilter == Filter.ALL);
                 }).padBottom(5f).row();
 
                 // Version list
@@ -377,8 +379,13 @@ public class UpdateCenterDialog extends BaseDialog {
 
         if (isCurrent)
             return "Re-install";
-        if (isNewer)
+        if (isNewer) {
+            // Check for mandatory update
+            if (selectedRelease.getVersion().major > currentVersion.major) {
+                return "CRITICAL UPDATE";
+            }
             return "Update Now";
+        }
         if (isOlder)
             return "Rollback";
         return "Install";
@@ -395,6 +402,12 @@ public class UpdateCenterDialog extends BaseDialog {
             return Color.gray;
         if (isOlder)
             return Color.orange; // Rollback warning
+
+        // Critical update (Major version)
+        if (selectedRelease.getVersion().major > currentVersion.major) {
+            return Pal.remove; // Red
+        }
+
         return Pal.accent; // Normal update
     }
 
@@ -402,8 +415,26 @@ public class UpdateCenterDialog extends BaseDialog {
         if (selectedRelease == null)
             return;
 
-        hide();
-        Vars.ui.mods.githubImportMod(REPO_URL, true, null);
+        // Check for mandatory update (Major version change)
+        if (selectedRelease.getVersion().major > currentVersion.major) {
+            BaseDialog confirm = new BaseDialog("Critical Update");
+            confirm.cont.add("This is a major update (" + selectedRelease.tagName + ").").row();
+            confirm.cont.add("It may contain breaking changes or new features.").row();
+            confirm.cont.add("You must update to continue using online features.").color(Pal.remove).row();
+
+            confirm.buttons.defaults().size(120f, 50f).pad(10f);
+            confirm.buttons.button("@cancel", Icon.cancel, confirm::hide);
+            confirm.buttons.button("@ok", Icon.ok, () -> {
+                confirm.hide();
+                hide();
+                Vars.ui.mods.githubImportMod(REPO_URL, true, null);
+            }).color(Pal.accent);
+
+            confirm.show();
+        } else {
+            hide();
+            Vars.ui.mods.githubImportMod(REPO_URL, true, null);
+        }
     }
 
     /**
@@ -429,9 +460,18 @@ public class UpdateCenterDialog extends BaseDialog {
             try {
                 Jval array = Jval.read(response.getResultAsString());
                 if (array.isArray() && array.asArray().size > 0) {
-                    ReleaseInfo latest = new ReleaseInfo(array.asArray().first());
-                    if (latest.getVersion().isNewerThan(current)) {
-                        Log.info("Update available: @ -> @", current, latest.tagName);
+                    // Iterate to find the latest STABLE release
+                    ReleaseInfo latestStable = null;
+                    for (Jval val : array.asArray()) {
+                        ReleaseInfo info = new ReleaseInfo(val);
+                        if (info.getVersion().type == mindustrytool.utils.Version.SuffixType.STABLE) {
+                            latestStable = info;
+                            break;
+                        }
+                    }
+
+                    if (latestStable != null && latestStable.getVersion().isNewerThan(current)) {
+                        Log.info("Stable update available: @ -> @", current, latestStable.tagName);
                         Core.app.post(() -> new UpdateCenterDialog().show());
                     } else {
                         Log.info("Mod is up to date (@)", current);

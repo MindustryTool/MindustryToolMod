@@ -3,22 +3,15 @@ apply plugin: "eclipse"
 apply from: "release.gradle"
 
 
-// Get version from Git
-// Get version from Git
-def getGitVersion() {
-    try {
-        def stdout = new ByteArrayOutputStream()
-        project.exec {
-            commandLine 'git', 'describe', '--tags', '--dirty', '--always'
-            standardOutput = stdout
-        }
-        return stdout.toString().trim().replaceFirst("^v", "")
-    } catch (Exception e) {
-        return "0.0.0-dev" // Fallback if no git/tags
+// Get version from gradle.properties or environment variable
+def getVersion() {
+    if (project.hasProperty("modVersion")) {
+        return project.modVersion
     }
+    return "1.0.0" // Fallback
 }
 
-version = getGitVersion()
+version = getVersion()
 
 sourceSets.main.java.srcDirs = ["src"]
 sourceSets.main.java.exclude "main/**"
