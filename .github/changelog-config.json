@@ -64,5 +64,11 @@
   },
   "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
   "pr_template": "- #{{TITLE}}",
-  "empty_template": "- No changes found"
+  "empty_template": "- No changes found",
+  "label_extractor": [
+    {
+      "pattern": "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\(.*\\))?!?: .+$",
+      "target": "$1"
+    }
+  ]
 }
