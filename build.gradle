@@ -3,12 +3,29 @@ apply plugin: "eclipse"
 apply from: "release.gradle"
 
 
+// Get current git branch
+def getGitBranch() {
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'rev-parse', '--abbrev-ref', 'HEAD'
+            standardOutput = stdout
+        }
+        return stdout.toString().trim()
+    } catch (Exception e) {
+        return "unknown"
+    }
+}
+
 // Get version from gradle.properties or environment variable
 def getVersion() {
-    if (project.hasProperty("modVersion")) {
-        return project.modVersion
+    def baseVersion = project.hasProperty("modVersion") ? project.modVersion : "1.0.0"
+    def branch = getGitBranch()
+    
+    if (branch == "beta") {
+        return "${baseVersion}-beta.local"
     }
-    return "1.0.0" // Fallback
+    return baseVersion
 }
 
 version = getVersion()
@@ -258,12 +275,23 @@ task runClient(type: JavaExec){
     jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
     
     doFirst {
-        // Copy mod JAR to mods folder
-        mkdir new File(projectDir, "run/data/mods")
+        // 1. Clean mod folder to remove old update zips/jars that pollute the mod list
+        def modsDir = new File(projectDir, "run/data/mods")
+        if (modsDir.exists()) {
+            println "Cleaning mods folder: ${modsDir.path}"
+            modsDir.listFiles().each { file ->
+                if (file.name.endsWith(".jar") || file.name.endsWith(".zip")) {
+                    file.delete()
+                }
+            }
+        }
+
+        // 2. Copy mod JAR to mods folder
+        mkdir modsDir
         copy {
-            from "$buildDir/libs/${project.archivesBaseName}Desktop.jar"
-            into new File(projectDir, "run/data/mods")
-            rename { "${project.archivesBaseName}.jar" }
+            from "$buildDir/libs/${base.archivesBaseName}Desktop.jar"
+            into modsDir
+            rename { "${base.archivesBaseName}.jar" }
         }
     }
 }
