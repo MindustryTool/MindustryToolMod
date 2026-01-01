@@ -293,7 +293,7 @@ public class UpdateCenterDialog extends BaseDialog {
     private static long lastBranchFetch;
     private static ObjectMap<String, String> cachedTags;
     private static long lastTagFetch;
-    private static final long CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+    private static final long CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
     private void refresh() {
         cachedReleases = null;
@@ -1118,6 +1118,7 @@ public class UpdateCenterDialog extends BaseDialog {
     /**
      * Check for updates silently (for auto-check on startup).
      * Only shows dialog if update is available.
+     * Uses cache to avoid excessive API calls.
      */
     public static void checkSilent() {
         mindustry.mod.Mods.LoadedMod mod = Vars.mods.getMod(mindustrytool.Main.class);
@@ -1126,37 +1127,40 @@ public class UpdateCenterDialog extends BaseDialog {
 
         mindustrytool.utils.Version current = new mindustrytool.utils.Version(mod.meta.version);
 
+        // Check cache first to avoid unnecessary API calls
+        if (cachedReleases != null && System.currentTimeMillis() - lastReleaseFetch < CACHE_DURATION) {
+            Log.info("Silent update check: Using cached releases (saves API quota)");
+            checkReleasesForUpdate(cachedReleases, current);
+            return;
+        }
+
+        // Also check if we already checked recently (even without full cache)
+        long lastCheck = Core.settings.getLong("mindustrytool-last-update-check", 0);
+        if (System.currentTimeMillis() - lastCheck < CACHE_DURATION) {
+            Log.info("Silent update check: Skipped (checked recently)");
+            return;
+        }
+
         Http.get(RELEASES_API, response -> {
             try {
+                Core.settings.put("mindustrytool-last-update-check", System.currentTimeMillis());
+
                 Jval array = Jval.read(response.getResultAsString());
                 if (array.isArray() && array.asArray().size > 0) {
-                    // Iterate to find the latest STABLE release
-                    ReleaseInfo latestStable = null;
+                    // Build cache while checking
+                    Seq<ReleaseInfo> releases = new Seq<>();
                     for (Jval val : array.asArray()) {
                         ReleaseInfo info = new ReleaseInfo(val);
-                        if (info.getVersion().type == mindustrytool.utils.Version.SuffixType.STABLE) {
-                            latestStable = info;
-                            break;
+                        if (!info.draft) {
+                            releases.add(info);
                         }
                     }
 
-                    if (latestStable != null && latestStable.getVersion().isNewerThan(current)) {
-                        // STRICT: Only notify if it is a STABLE release (Main branch)
-                        // This prevents Beta builds on Main from triggering prompts if they are
-                        // accidentally tagged stable?
-                        // Actually, our ReleaseInfo logic sets type based on suffix.
-                        // "v2.23.0" -> STABLE
-                        // "v2.23.0-beta..." -> BETA
+                    // Update cache
+                    cachedReleases = releases;
+                    lastReleaseFetch = System.currentTimeMillis();
 
-                        if (latestStable.getVersion().type == mindustrytool.utils.Version.SuffixType.STABLE) {
-                            Log.info("Stable update available: @ -> @", current, latestStable.tagName);
-                            Core.app.post(() -> new UpdateCenterDialog().show());
-                        } else {
-                            Log.info("Update available (@) but ignored (Pre-release).", latestStable.tagName);
-                        }
-                    } else {
-                        Log.info("Mod is up to date (@)", current);
-                    }
+                    checkReleasesForUpdate(releases, current);
                 }
             } catch (Exception e) {
                 Log.err("Silent update check failed", e);
@@ -1164,6 +1168,29 @@ public class UpdateCenterDialog extends BaseDialog {
         }, error -> {
             Log.err("Silent update check failed", error);
         });
+    }
+
+    /** Helper to check releases for updates (used by checkSilent) */
+    private static void checkReleasesForUpdate(Seq<ReleaseInfo> releases, mindustrytool.utils.Version current) {
+        // Find the latest STABLE release
+        ReleaseInfo latestStable = null;
+        for (ReleaseInfo info : releases) {
+            if (info.getVersion().type == mindustrytool.utils.Version.SuffixType.STABLE) {
+                latestStable = info;
+                break;
+            }
+        }
+
+        if (latestStable != null && latestStable.getVersion().isNewerThan(current)) {
+            if (latestStable.getVersion().type == mindustrytool.utils.Version.SuffixType.STABLE) {
+                Log.info("Stable update available: @ -> @", current, latestStable.tagName);
+                Core.app.post(() -> new UpdateCenterDialog().show());
+            } else {
+                Log.info("Update available (@) but ignored (Pre-release).", latestStable.tagName);
+            }
+        } else {
+            Log.info("Mod is up to date (@)", current);
+        }
     }
 
     // --- Git Graph Implementation ---
