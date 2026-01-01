@@ -599,11 +599,16 @@ public class UpdateCenterDialog extends BaseDialog {
         }
 
         // Standard buttons
+        buttons.clearChildren(); // Ensure clean state
+        buttons.bottom();
         if (Core.graphics.isPortrait()) {
-            buttons.defaults().size(210f, 64f).pad(4f);
+            // Mobile: Centered fixed size to prevent huge separation on wide screens
+            buttons.defaults().size(150f, 64f).pad(4f);
         } else {
+            // Desktop: Fixed width, centered
             buttons.defaults().size(210f, 64f).pad(8f);
         }
+
         buttons.button("@back", Icon.left, this::hide);
 
         if (!loading && errorMessage == null && selectedRelease != null) {
@@ -656,23 +661,15 @@ public class UpdateCenterDialog extends BaseDialog {
     }
 
     private void buildMainUI() {
-        cont.defaults().pad(5f);
-
-        // Dynamic sizing logic
-        boolean isMobile = Core.graphics.isPortrait();
-        // Use scene height (UI units) instead of graphics height (raw pixels)
-        float totalAvailableHeight = Core.scene.getHeight() - (isMobile ? 200f : 280f);
-        float splitHeight = Math.max(200f, totalAvailableHeight / 2f);
-
-        float timelineHeight = splitHeight;
-        float listHeight = splitHeight;
+        cont.defaults().pad(0f); // Reset defaults
+        cont.margin(20f); // Add margin to prevent screen edge touching
 
         // Wrapper to constrain width on PC but fill on Mobile
+        // IMPORTANT: We use grow() here so this table takes all available space in
+        // 'cont'.
+        // 'cont' itself grows in BaseDialog.
         cont.table(main -> {
             main.top();
-            // Use growX with a maxWidth for desktop, so it doesn't stretch too wide
-            // On mobile, it will just fill the available width (controlled by BaseDialog
-            // padding)
             main.defaults().growX().maxWidth(600f).padBottom(5f);
 
             // 1. Header (Removed)
@@ -683,8 +680,6 @@ public class UpdateCenterDialog extends BaseDialog {
 
             // Reload button
             filterRow.button(Icon.refresh, Styles.clearNonei, this::refresh).size(40f).padRight(10f);
-
-            // filterRow.add("Filters:").color(Color.gray).padRight(10f);
 
             // Dynamic Filter Generation
             addFilterButton(filterRow, "Main", mindustrytool.utils.Version.SuffixType.STABLE, Pal.heal);
@@ -719,24 +714,28 @@ public class UpdateCenterDialog extends BaseDialog {
             main.add(filterScroll).height(50f).row();
 
             // 3. List
+            // Using growY() allows it to take available space.
             Table items = new Table();
             ScrollPane scroll = new ScrollPane(items, Styles.smallPane);
             scroll.setFadeScrollBars(false);
-            main.add(scroll).height(listHeight).row();
+            // Add uniformY() to force equal height distribution with other uniformY cells
+            // (the timeline)
+            main.add(scroll).growY().uniformY().minHeight(100f).row();
 
             buildReleaseList(items);
 
             // 4. Timeline
-            main.add("Recent Activity").color(Color.lightGray).left().row();
+            main.add("Recent Activity").color(Color.lightGray).left().padTop(10f).row();
             main.image().height(2f).color(Color.darkGray).fillX().padBottom(5f).row();
 
             Table timeline = new Table();
             ScrollPane timeScroll = new ScrollPane(timeline, Styles.smallPane);
             timeScroll.setFadeScrollBars(false);
-            main.add(timeScroll).height(timelineHeight).row();
+            // growY() + uniformY() here too ensures it matches the list above
+            main.add(timeScroll).growY().uniformY().minHeight(100f).row();
 
             buildTimeline(timeline);
-        }).growX().maxWidth(600f);
+        }).grow().maxWidth(600f);
     }
 
     private void addFilterButton(Table t, String text, mindustrytool.utils.Version.SuffixType type, Color color) {
@@ -1020,7 +1019,9 @@ public class UpdateCenterDialog extends BaseDialog {
                     }
 
                     // Message
-                    content.add(c.message).color(Color.white).wrap().width(500f).padBottom(4f).row();
+                    // Responsive width for message to prevent horizontal overflow on mobile
+                    float availableWidth = Core.graphics.isPortrait() ? Core.scene.getWidth() * 0.7f : 500f;
+                    content.add(c.message).color(Color.white).wrap().width(availableWidth).padBottom(4f).row();
 
                     // Meta (Author, Date)
                     content.table(meta -> {
