@@ -728,14 +728,82 @@ public class UpdateCenterDialog extends BaseDialog {
             confirm.buttons.button("@ok", Icon.ok, () -> {
                 confirm.hide();
                 hide();
-                Vars.ui.mods.githubImportMod(REPO_URL, true, null);
+                startUpdateProcess();
             }).color(Pal.accent);
 
             confirm.show();
         } else {
             hide();
+            startUpdateProcess();
+        }
+    }
+
+    private void startUpdateProcess() {
+        if (selectedRelease != null && !selectedRelease.jarDownloadUrl.isEmpty()) {
+            downloadDirectly(selectedRelease.jarDownloadUrl);
+        } else {
             Vars.ui.mods.githubImportMod(REPO_URL, true, null);
         }
+    }
+
+    private void downloadDirectly(String url) {
+        BaseDialog dialog = new BaseDialog("Downloading");
+        dialog.cont.add("Downloading update...").pad(20f).row();
+        // dialog.cont.image(Icon.refresh).color(Pal.accent).update(i ->
+        // i.setOrigin(Align.center));
+        // Simple progress bar
+        mindustry.ui.Bar bar = new mindustry.ui.Bar();
+        dialog.cont.add(bar).width(400f).height(30f).pad(10f);
+        dialog.buttons.button("@cancel", null).size(0f); // Hide default handle
+        dialog.buttons.button("@cancel", dialog::hide).size(120f, 50f);
+        dialog.show();
+
+        // Use Http directly to file
+        arc.files.Fi tmp = arc.Core.files.cache("mod-update-" + System.currentTimeMillis() + ".jar");
+
+        Http.get(url)
+                .error(e -> {
+                    dialog.hide();
+                    Vars.ui.showException("Download Failed", e);
+                })
+                // .block() // remove blocked call as it breaks fluent interface if handled
+                // incorrectly with return types
+                .submit(response -> {
+                    try {
+                        byte[] data = response.getResult();
+                        // Update bar? We have no progress callback in standard Http.get without content
+                        // length hack
+                        // Just set to 1 after done.
+
+                        tmp.writeBytes(data);
+
+                        dialog.hide();
+
+                        // Import logic similar to ModsDialog.importMod
+                        Core.app.post(() -> {
+                            try {
+                                mindustry.mod.Mods.LoadedMod mod = Vars.mods.importMod(tmp);
+                                if (mod != null) {
+                                    tmp.delete();
+
+                                    // Prompt restart
+                                    Vars.ui.showInfoOnHidden("@mods.reloadexit", () -> {
+                                        Core.app.exit();
+                                    });
+                                } else {
+                                    Vars.ui.showErrorMessage("Failed to import mod.");
+                                }
+                            } catch (Exception e) {
+                                Vars.ui.showException("Import Failed", e);
+                            }
+                        });
+                    } catch (Exception e) {
+                        Core.app.post(() -> {
+                            dialog.hide();
+                            Vars.ui.showException("Write Failed", e);
+                        });
+                    }
+                });
     }
 
     /**
