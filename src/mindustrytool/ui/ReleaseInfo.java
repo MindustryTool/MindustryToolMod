@@ -16,6 +16,7 @@ public class ReleaseInfo {
     public final boolean draft;
     public final int downloadCount; // Total downloads across all assets
     public final String jarDownloadUrl; // Direct download URL for the mod JAR
+    public final String targetBranch; // Branch the release was created from (target_commitish)
 
     public ReleaseInfo(Jval json) {
         this.tagName = json.getString("tag_name", "unknown");
@@ -25,6 +26,7 @@ public class ReleaseInfo {
         this.htmlUrl = json.getString("html_url", "");
         this.prerelease = json.getBool("prerelease", false);
         this.draft = json.getBool("draft", false);
+        this.targetBranch = json.getString("target_commitish", "");
 
         // Calculate total downloads and find JAR asset
         int downloads = 0;
@@ -51,29 +53,21 @@ public class ReleaseInfo {
             return "";
         try {
             // Parse ISO date: 2025-12-30T10:30:00Z
-            String[] parts = publishedAt.split("T")[0].split("-");
-            int year = Integer.parseInt(parts[0]);
-            int month = Integer.parseInt(parts[1]);
-            int day = Integer.parseInt(parts[2]);
+            java.time.Instant releaseTime = java.time.Instant.parse(publishedAt);
+            java.time.Instant now = java.time.Instant.now();
+            long diffSeconds = java.time.Duration.between(releaseTime, now).getSeconds();
 
-            // Simple relative date (good enough for display)
-            java.time.LocalDate releaseDate = java.time.LocalDate.of(year, month, day);
-            java.time.LocalDate today = java.time.LocalDate.now();
-            long daysDiff = java.time.temporal.ChronoUnit.DAYS.between(releaseDate, today);
+            if (diffSeconds < 60)
+                return "Just now";
+            if (diffSeconds < 3600)
+                return (diffSeconds / 60) + "m ago";
+            if (diffSeconds < 86400)
+                return (diffSeconds / 3600) + "h ago";
 
-            if (daysDiff == 0)
-                return "Today";
-            if (daysDiff == 1)
-                return "Yesterday";
-            if (daysDiff < 7)
-                return daysDiff + " days ago";
-            if (daysDiff < 30)
-                return (daysDiff / 7) + " weeks ago";
-            if (daysDiff < 365)
-                return (daysDiff / 30) + " months ago";
-            return (daysDiff / 365) + " years ago";
+            // Fallback to raw date for > 24 hours
+            return publishedAt.split("T")[0];
         } catch (Exception e) {
-            // Fallback to raw date
+            // Fallback
             return publishedAt.split("T")[0];
         }
     }

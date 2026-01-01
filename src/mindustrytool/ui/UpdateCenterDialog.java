@@ -5,12 +5,17 @@ import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.scene.ui.*;
 import arc.scene.ui.layout.*;
+import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
+import arc.graphics.Pixmap;
+import arc.graphics.Texture;
+import arc.graphics.g2d.TextureRegion;
 import mindustry.gen.Icon;
+import arc.struct.ObjectMap;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
@@ -28,32 +33,48 @@ import mindustry.ui.dialogs.BaseDialog;
 public class UpdateCenterDialog extends BaseDialog {
 
     private static final String RELEASES_API = "https://api.github.com/repos/MindustryTool/MindustryToolMod/releases";
+    private static final String COMMITS_API = "https://api.github.com/repos/MindustryTool/MindustryToolMod/commits";
+    private static final String BRANCHES_API = "https://api.github.com/repos/MindustryTool/MindustryToolMod/branches";
     private static final String REPO_URL = "MindustryTool/MindustryToolMod";
 
     private final Seq<ReleaseInfo> releases = new Seq<>();
+    private final Seq<CommitInfo> commits = new Seq<>();
     private ReleaseInfo selectedRelease = null;
     private ReleaseInfo currentRelease = null;
     private final mindustrytool.utils.Version currentVersion;
 
-    private Table versionListTable;
-    private Table changelogTable;
+    // Needed fields
     private TextButton updateButton;
-
     private boolean loading = true;
     private String errorMessage = null;
 
     // Filter state
-    private enum Filter {
-        ALL, STABLE, BETA
-    }
-
-    private Filter currentFilter = Filter.STABLE;
+    private final ObjectSet<mindustrytool.utils.Version.SuffixType> enabledFilters = new ObjectSet<>();
+    private final ObjectSet<String> activeBranches = new ObjectSet<>();
+    private boolean showArchived = false;
 
     public UpdateCenterDialog() {
         super("Update Center");
 
+        // Load saved filters
+        String savedFilters = Core.settings.getString("mindustrytool-filters", "STABLE");
+        String[] parts = savedFilters.split(",");
+        for (String part : parts) {
+            try {
+                if (!part.isEmpty()) {
+                    enabledFilters.add(mindustrytool.utils.Version.SuffixType.valueOf(part));
+                }
+            } catch (Exception e) {
+                // Ignore invalid values
+            }
+        }
+        // Ensure at least STABLE is present if empty (fallback)
+        if (enabledFilters.isEmpty()) {
+            enabledFilters.add(mindustrytool.utils.Version.SuffixType.STABLE);
+        }
+
         // Get current version
-        var mod = Vars.mods.getMod(mindustrytool.Main.class);
+        mindustry.mod.Mods.LoadedMod mod = Vars.mods.getMod(mindustrytool.Main.class);
         currentVersion = new mindustrytool.utils.Version(mod != null ? mod.meta.version : "0.0.0");
 
         // Setup dialog
@@ -69,54 +90,190 @@ public class UpdateCenterDialog extends BaseDialog {
         loading = true;
         errorMessage = null;
         releases.clear();
+        commits.clear();
+        activeBranches.clear();
         selectedRelease = null;
         currentRelease = null;
 
         rebuildUI();
         fetchReleases();
+        fetchCommits();
+        fetchBranches();
+    }
+
+    private void fetchCommits() {
+        if (cachedCommits != null && System.currentTimeMillis() - lastCommitFetch < CACHE_DURATION) {
+            commits.clear();
+            commits.addAll(cachedCommits);
+            // Ensure UI shows cached commits if already loaded
+            if (!loading)
+                Core.app.post(this::rebuildUI);
+            return;
+        }
+
+        Http.get(COMMITS_API)
+                .header("User-Agent", "MindustryToolMod")
+                .error(e -> handleError(e))
+                .submit(response -> {
+                    try {
+                        Jval array = Jval.read(response.getResultAsString());
+                        if (array.isArray()) {
+                            Seq<CommitInfo> newCommits = new Seq<>();
+                            for (Jval item : array.asArray()) {
+                                newCommits.add(new CommitInfo(item));
+                            }
+                            cachedCommits = newCommits;
+                            lastCommitFetch = System.currentTimeMillis();
+
+                            commits.clear();
+                            commits.addAll(newCommits);
+                        }
+
+                        // Always trigger rebuild to show the new commits
+                        if (!loading) {
+                            Core.app.post(this::rebuildUI);
+                        }
+                    } catch (Exception e) {
+                        Log.err("Failed to parse commits", e);
+                    }
+                });
+    }
+
+    private void fetchBranches() {
+        if (cachedBranches != null && System.currentTimeMillis() - lastBranchFetch < CACHE_DURATION) {
+            activeBranches.clear();
+            activeBranches.addAll(cachedBranches);
+            // If already loaded (e.g. from cache), we might need to trigger rebuild if
+            // releases are ready
+            // But usually rebuildUI is triggered by release loading finishing.
+            // If we are just refreshing branches, we might want to rebuild.
+            if (!loading)
+                Core.app.post(this::rebuildUI);
+            return;
+        }
+
+        Http.get(BRANCHES_API)
+                .header("User-Agent", "MindustryToolMod")
+                .error(e -> handleError(e))
+                .submit(response -> {
+                    try {
+                        Jval array = Jval.read(response.getResultAsString());
+                        if (array.isArray()) {
+                            ObjectSet<String> newBranches = new ObjectSet<>();
+                            for (Jval item : array.asArray()) {
+                                newBranches.add(item.getString("name", ""));
+                            }
+                            cachedBranches = newBranches;
+                            lastBranchFetch = System.currentTimeMillis();
+
+                            activeBranches.clear();
+                            activeBranches.addAll(newBranches);
+                        }
+                        if (!loading) {
+                            Core.app.post(this::rebuildUI);
+                        }
+                    } catch (Exception e) {
+                        Log.err("Failed to parse branches", e);
+                    }
+                });
+    }
+
+    // Cache
+    private static Seq<ReleaseInfo> cachedReleases;
+    private static long lastReleaseFetch;
+    private static Seq<CommitInfo> cachedCommits;
+    private static long lastCommitFetch;
+    private static ObjectSet<String> cachedBranches;
+    private static ObjectMap<String, TextureRegion> avatarCache = new ObjectMap<>();
+    private static long lastBranchFetch;
+    private static final long CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+    private void refresh() {
+        cachedReleases = null;
+        cachedCommits = null;
+        cachedBranches = null;
+        if (avatarCache != null)
+            avatarCache.clear();
+
+        lastReleaseFetch = 0;
+        lastCommitFetch = 0;
+        lastBranchFetch = 0;
+
+        onShown();
+    }
+
+    private void handleError(Throwable error) {
+        String msg = error.getMessage();
+        if (msg != null && msg.contains("403")) {
+            // Suppress stack trace for rate limit, just warn
+            Log.warn("GitHub Rate Limit Exceeded: " + msg);
+            errorMessage = "GitHub Rate Limit Exceeded.\nPlease wait a moment before trying again.";
+        } else {
+            Log.err("Network error", error);
+            errorMessage = "Network error: " + (msg != null ? msg : "Unknown error");
+        }
+        loading = false;
+        Core.app.post(this::rebuildUI);
     }
 
     private void fetchReleases() {
-        Http.get(RELEASES_API, response -> {
-            try {
-                Jval array = Jval.read(response.getResultAsString());
-                if (array.isArray()) {
-                    for (Jval item : array.asArray()) {
-                        ReleaseInfo info = new ReleaseInfo(item);
-                        if (!info.draft) { // Skip draft releases
-                            releases.add(info);
+        // Check cache first
+        if (cachedReleases != null && System.currentTimeMillis() - lastReleaseFetch < CACHE_DURATION) {
+            releases.clear();
+            releases.addAll(cachedReleases);
+            finishReleaseLoading();
+            return;
+        }
+
+        Http.get(RELEASES_API)
+                .header("User-Agent", "MindustryToolMod")
+                .error(e -> handleError(e))
+                .submit(response -> {
+                    try {
+                        Jval array = Jval.read(response.getResultAsString());
+                        if (array.isArray()) {
+                            Seq<ReleaseInfo> newReleases = new Seq<>();
+                            for (Jval item : array.asArray()) {
+                                ReleaseInfo info = new ReleaseInfo(item);
+                                if (!info.draft) { // Skip draft releases
+                                    newReleases.add(info);
+                                }
+                            }
+                            // Update cache
+                            cachedReleases = newReleases;
+                            lastReleaseFetch = System.currentTimeMillis();
+
+                            releases.clear();
+                            releases.addAll(newReleases);
                         }
+
+                        finishReleaseLoading();
+
+                    } catch (Exception e) {
+                        Log.err("Failed to parse releases", e);
+                        errorMessage = "Failed to parse release data: " + e.getMessage();
+                        loading = false;
+                        Core.app.post(this::rebuildUI);
                     }
-                }
+                });
+    }
 
-                // Find current release
-                for (ReleaseInfo r : releases) {
-                    if (r.getVersion().equals(currentVersion)) {
-                        currentRelease = r;
-                        break;
-                    }
-                }
-
-                // Auto-select latest if no current found or there's a newer version
-                if (!releases.isEmpty()) {
-                    selectedRelease = releases.first(); // First is latest
-                }
-
-                loading = false;
-                Core.app.post(this::rebuildUI);
-
-            } catch (Exception e) {
-                Log.err("Failed to parse releases", e);
-                errorMessage = "Failed to parse release data: " + e.getMessage();
-                loading = false;
-                Core.app.post(this::rebuildUI);
+    private void finishReleaseLoading() {
+        // Find current release
+        for (ReleaseInfo r : releases) {
+            if (r.getVersion().equals(currentVersion)) {
+                currentRelease = r;
+                break;
             }
-        }, error -> {
-            Log.err("Failed to fetch releases", error);
-            errorMessage = "Network error: " + error.getMessage();
-            loading = false;
-            Core.app.post(this::rebuildUI);
-        });
+        }
+
+        // Auto-select latest if no current found or there's a newer version
+        if (!releases.isEmpty()) {
+            selectedRelease = releases.first(); // First is latest
+        }
+
+        loading = false;
+        Core.app.post(this::rebuildUI);
     }
 
     private void rebuildUI() {
@@ -132,11 +289,8 @@ public class UpdateCenterDialog extends BaseDialog {
         }
 
         // Standard buttons
-        buttons.defaults().size(160f, 55f).pad(8f);
-        buttons.button("@cancel", Icon.cancel, this::hide);
-        buttons.button("GitHub", Icon.github, () -> {
-            Core.app.openURI("https://github.com/" + REPO_URL + "/releases");
-        });
+        buttons.defaults().size(210f, 64f).pad(8f);
+        buttons.button("@back", Icon.left, this::hide);
 
         if (!loading && errorMessage == null && selectedRelease != null) {
             updateButton = buttons.button(getUpdateButtonText(), Icon.download, this::performUpdate)
@@ -145,8 +299,14 @@ public class UpdateCenterDialog extends BaseDialog {
     }
 
     private void buildLoadingUI() {
-        cont.add("Loading releases...").color(Color.lightGray).pad(50f);
-        // TODO: Add spinner animation
+        Table table = new Table();
+        table.image(Icon.refresh).color(Pal.accent).size(50f).with(img -> {
+            img.actions(arc.scene.actions.Actions.forever(arc.scene.actions.Actions.rotateBy(360f, 1f)));
+        });
+        table.row();
+        table.add("Loading releases...").color(Color.lightGray).padTop(10f);
+
+        cont.add(table).center();
     }
 
     private void buildErrorUI() {
@@ -166,190 +326,287 @@ public class UpdateCenterDialog extends BaseDialog {
     private void buildMainUI() {
         cont.defaults().pad(5f);
 
-        // Header: Current vs Latest
-        cont.table(this::buildHeader).growX().padBottom(10f).row();
+        // Dynamic sizing logic
+        float contentWidth = Core.graphics.isPortrait() ? Core.graphics.getWidth() - 60f : 600f;
+        // Calculate available height for both lists
+        // Screen height - padding (increased to 280f to prevent overlap)
+        float totalAvailableHeight = Core.graphics.getHeight() - 280f;
+        float splitHeight = Math.max(200f, totalAvailableHeight / 2f);
 
-        // Separator
-        cont.image().height(2f).color(Color.darkGray).growX().padBottom(5f).row();
+        float availableHeight = splitHeight;
+        float timelineHeight = splitHeight;
 
-        // Main content: Version list + Changelog
+        // Wrapper to constrain width on PC
         cont.table(main -> {
-            main.defaults().top();
+            main.top();
+            main.defaults().width(contentWidth).padBottom(5f);
 
-            // Left: Version List
-            main.table(left -> {
-                // Filter tabs
-                left.table(tabs -> {
-                    tabs.defaults().size(70f, 30f);
-                    tabs.button("Stable", Styles.flatTogglet, () -> setFilter(Filter.STABLE))
-                            .checked(currentFilter == Filter.STABLE);
-                    tabs.button("Beta", Styles.flatTogglet, () -> setFilter(Filter.BETA))
-                            .checked(currentFilter == Filter.BETA);
+            // 1. Header (Removed)
 
-                    // "All" includes Dev, but we hide it if preferred, or keep it last
-                    tabs.button("All", Styles.flatTogglet, () -> setFilter(Filter.ALL))
-                            .checked(currentFilter == Filter.ALL);
-                }).padBottom(5f).row();
+            // 2. Filters (Horizontally scrollable)
+            Table filterRow = new Table();
+            filterRow.left();
 
-                // Version list
-                versionListTable = new Table();
-                ScrollPane scroll = new ScrollPane(versionListTable, Styles.smallPane);
-                scroll.setScrollingDisabled(true, false);
-                left.add(scroll).size(280f, 300f);
+            // Reload button
+            filterRow.button(Icon.refresh, Styles.clearNonei, this::refresh).size(40f).padRight(10f);
 
-                buildVersionList();
-            }).padRight(10f);
+            // filterRow.add("Filters:").color(Color.gray).padRight(10f);
 
-            // Right: Changelog
-            main.table(right -> {
-                right.add("What's New").color(Pal.accent).left().padBottom(5f).row();
-                right.image().height(1f).color(Color.darkGray).growX().padBottom(5f).row();
+            // Dynamic Filter Generation
+            addFilterButton(filterRow, "Main", mindustrytool.utils.Version.SuffixType.STABLE, Pal.heal);
 
-                changelogTable = new Table();
-                ScrollPane scroll = new ScrollPane(changelogTable, Styles.smallPane);
-                scroll.setScrollingDisabled(true, false);
-                right.add(scroll).size(300f, 320f);
+            ObjectSet<mindustrytool.utils.Version.SuffixType> foundTypes = new ObjectSet<>();
+            for (ReleaseInfo r : releases) {
+                foundTypes.add(r.getVersion().type);
+            }
 
-                buildChangelog();
-            });
-        }).grow().row();
+            if (foundTypes.contains(mindustrytool.utils.Version.SuffixType.BETA)) {
+                addFilterButton(filterRow, "Beta", mindustrytool.utils.Version.SuffixType.BETA, Color.orange);
+            }
+
+            if (foundTypes.contains(mindustrytool.utils.Version.SuffixType.DEV)) {
+                addFilterButton(filterRow, "Dev", mindustrytool.utils.Version.SuffixType.DEV, Color.pink);
+            }
+
+            if (foundTypes.contains(mindustrytool.utils.Version.SuffixType.FIX)) {
+                addFilterButton(filterRow, "Hotfix", mindustrytool.utils.Version.SuffixType.FIX, Color.scarlet);
+            }
+
+            // Separator and Archived toggle
+            filterRow.add("|").color(Color.darkGray).padLeft(10f).padRight(10f);
+            filterRow.button("Archived", Styles.flatTogglet, () -> {
+                showArchived = !showArchived;
+                rebuildUI();
+            }).checked(showArchived).size(100f, 40f).color(Color.gray);
+
+            ScrollPane filterScroll = new ScrollPane(filterRow, Styles.smallPane);
+            filterScroll.setScrollingDisabledY(true);
+            filterScroll.setFadeScrollBars(false);
+            main.add(filterScroll).height(50f).row();
+
+            // 3. List
+            Table items = new Table();
+            ScrollPane scroll = new ScrollPane(items, Styles.smallPane);
+            scroll.setFadeScrollBars(false);
+            main.add(scroll).height(availableHeight).row();
+
+            buildReleaseList(items);
+
+            // 4. Timeline
+            main.add("Recent Activity").color(Color.lightGray).left().row();
+            main.image().height(2f).color(Color.darkGray).fillX().padBottom(5f).row();
+
+            Table timeline = new Table();
+            ScrollPane timeScroll = new ScrollPane(timeline, Styles.smallPane);
+            timeScroll.setFadeScrollBars(false);
+            main.add(timeScroll).height(timelineHeight).row();
+
+            buildTimeline(timeline);
+        }).width(contentWidth);
     }
 
-    private void buildHeader(Table t) {
-        t.defaults().pad(10f);
-
-        // Current version
-        t.table(curr -> {
-            curr.add("Current").color(Color.gray).row();
-            curr.add(currentVersion.toString()).fontScale(1.3f)
-                    .color(currentRelease != null ? Pal.heal : Color.lightGray);
-        }).expandX();
-
-        // Arrow
-        t.image(Icon.rightOpen).size(30f).color(Color.gray);
-
-        // Latest version
-        ReleaseInfo latest = releases.isEmpty() ? null : releases.first();
-        t.table(lat -> {
-            lat.add("Latest").color(Color.gray).row();
-            if (latest != null) {
-                Color c = getVersionColor(latest);
-                lat.add(latest.tagName).fontScale(1.3f).color(c);
-                if (latest.prerelease) {
-                    lat.add(" BETA").color(Color.orange).fontScale(0.8f);
+    private void addFilterButton(Table t, String text, mindustrytool.utils.Version.SuffixType type, Color color) {
+        t.button(text, Styles.flatTogglet, () -> {
+            boolean isEnabled = enabledFilters.contains(type);
+            if (isEnabled) {
+                // Prevent disabling if it's the last one
+                if (enabledFilters.size <= 1) {
+                    Vars.ui.showInfoToast("Must have at least one filter enabled.", 2f);
+                    return;
                 }
+                enabledFilters.remove(type);
             } else {
-                lat.add("Unknown").fontScale(1.3f).color(Color.gray);
+                enabledFilters.add(type);
             }
-        }).expandX();
+
+            // Save settings
+            StringBuilder sb = new StringBuilder();
+            int i = 0;
+            for (mindustrytool.utils.Version.SuffixType s : enabledFilters) {
+                sb.append(s.name());
+                if (i++ < enabledFilters.size - 1)
+                    sb.append(",");
+            }
+            Core.settings.put("mindustrytool-filters", sb.toString());
+
+            rebuildUI();
+        }).checked(enabledFilters.contains(type)).size(120f, 40f).color(color).padRight(5f);
     }
 
-    private void buildVersionList() {
-        versionListTable.clear();
-        versionListTable.defaults().growX().pad(2f);
+    private void buildReleaseList(Table table) {
+        table.top().left();
+        table.defaults().growX().padBottom(4f);
 
-        Seq<ReleaseInfo> filtered = getFilteredReleases();
+        // Filter releases based on enabled set and archive status
+        Seq<ReleaseInfo> targetList = releases.select(r -> {
+            if (!enabledFilters.contains(r.getVersion().type))
+                return false;
 
-        ButtonGroup<TextButton> group = new ButtonGroup<>();
+            // Only check for archived status if we actually know what the active branches
+            // are.
+            // If activeBranches is empty (loading failed or not yet loaded), assume it's
+            // NOT archived.
+            boolean isArchived = !activeBranches.isEmpty() && !r.targetBranch.isEmpty()
+                    && !activeBranches.contains(r.targetBranch);
 
-        for (ReleaseInfo release : filtered) {
-            versionListTable.table(row -> {
-                buildVersionRow(row, release, group);
-            }).row();
-        }
-
-        if (filtered.isEmpty()) {
-            versionListTable.add("No releases found").color(Color.gray).pad(20f);
-        }
-    }
-
-    private void buildVersionRow(Table row, ReleaseInfo release, ButtonGroup<TextButton> group) {
-        boolean isCurrent = release.getVersion().equals(currentVersion);
-        boolean isLatest = releases.indexOf(release) == 0;
-        boolean isSelected = release == selectedRelease;
-        Color versionColor = getVersionColor(release);
-
-        // Radio button style selection
-        TextButton btn = new TextButton("", Styles.flatTogglet);
-        btn.clicked(() -> {
-            selectedRelease = release;
-            buildChangelog();
-            if (updateButton != null) {
-                updateButton.setText(getUpdateButtonText());
-                updateButton.setColor(getUpdateButtonColor());
-            }
+            if (isArchived && !showArchived)
+                return false;
+            return true;
         });
-        btn.setChecked(isSelected);
-        group.add(btn);
 
-        btn.table(inner -> {
-            inner.defaults().left();
-
-            // Version tag
-            inner.add(release.tagName).color(versionColor).fontScale(1.1f).width(90f);
-
-            // Tags
-            inner.table(tags -> {
-                if (isLatest && !isCurrent) {
-                    tags.add("[NEW]").color(Pal.accent).fontScale(0.7f).padRight(3f);
-                }
-                if (isCurrent) {
-                    tags.add("[YOU]").color(Pal.heal).fontScale(0.7f).padRight(3f);
-                }
-                if (release.prerelease) {
-                    tags.add("[BETA]").color(Color.orange).fontScale(0.7f);
-                }
-            }).width(80f);
-
-            // Date
-            inner.add(release.getRelativeDate()).color(Color.gray).fontScale(0.8f).width(70f);
-
-            // Download count
-            inner.table(dl -> {
-                dl.image(Icon.download).size(12f).color(Color.gray).padRight(2f);
-                dl.add(release.getFormattedDownloads()).color(Color.gray).fontScale(0.8f);
-            }).width(50f);
-        }).growX().pad(5f);
-
-        row.add(btn).growX();
-    }
-
-    private void buildChangelog() {
-        changelogTable.clear();
-        changelogTable.defaults().left().padBottom(3f);
-
-        if (selectedRelease == null) {
-            changelogTable.add("Select a version to see changelog").color(Color.gray);
+        if (targetList.isEmpty()) {
+            table.add("No releases found matching filters.").color(Color.gray).pad(20f);
+            if (enabledFilters.isEmpty()) {
+                table.row();
+                table.add("(Enable a filter above to see releases)").color(Color.lightGray).fontScale(0.8f);
+            }
             return;
         }
 
-        // Title
-        changelogTable.add(selectedRelease.name).color(Pal.accent).fontScale(1.1f).row();
-        changelogTable.add(selectedRelease.getRelativeDate()).color(Color.gray).fontScale(0.9f).padBottom(10f).row();
+        for (ReleaseInfo r : targetList) {
+            // Re-calc archived status for display
+            boolean isArchived = !activeBranches.isEmpty() && !r.targetBranch.isEmpty()
+                    && !activeBranches.contains(r.targetBranch);
+            boolean isSelected = selectedRelease == r;
+            Color textColor = isArchived ? Color.darkGray : getVersionColor(r);
 
-        // Separator
-        changelogTable.image().height(1f).color(Color.darkGray).growX().padBottom(10f).row();
+            table.table(row -> {
+                row.left();
+                row.setBackground(isSelected ? Styles.flatDown : (Drawable) null);
 
-        // Use MarkdownRenderer for the body
-        MarkdownRenderer renderer = new MarkdownRenderer()
-                .setContentWidth(280f)
-                .setMaxImageSize(260f, 200f);
-        renderer.render(changelogTable, selectedRelease.body);
+                // Combined button for Date + Tag (Clickable Row effect)
+                row.button(b -> {
+                    b.left();
+                    // 1. Date (Relative Time)
+                    String dateText = r.getRelativeDate();
+                    if (isArchived) {
+                        dateText += " [gray](A)[]";
+                    }
+                    b.add(dateText).color(Color.gray).fontScale(0.8f).width(100f).padRight(10f).padLeft(10f);
+
+                    // Critical Update Indicator
+                    boolean isCritical = r.getVersion().major > currentVersion.major;
+                    if (isCritical) {
+                        b.image(Icon.warning).color(Pal.remove).size(20f).padRight(5f);
+                    }
+
+                    // 2. Tag
+                    b.add(r.tagName).color(textColor).growX().left();
+                }, Styles.cleart, () -> {
+                    selectedRelease = r;
+                    rebuildUI();
+                }).growX().height(40f).padRight(5f);
+
+                // 3. Info Icon (only if body has meaningful content)
+                if (hasReleaseNotes(r)) {
+                    row.button(Icon.info, Styles.clearNonei, () -> {
+                        showReleaseNotesDialog(r);
+                    }).size(30f).padLeft(0f);
+                }
+            }).growX().height(40f).padBottom(4f).row();
+        }
     }
 
-    private void setFilter(Filter filter) {
-        currentFilter = filter;
-        buildVersionList();
+    private void showReleaseNotesDialog(ReleaseInfo r) {
+        BaseDialog dialog = new BaseDialog(r.name);
+
+        // Responsive width: On mobile portrait, use nearly full width; on desktop, cap
+        // at 500
+        float dialogWidth = Core.graphics.isPortrait()
+                ? Core.graphics.getWidth() - 80f
+                : Math.min(500f, Core.graphics.getWidth() * 0.6f);
+        float contentWidth = dialogWidth - 40f;
+
+        ScrollPane pane = dialog.cont.pane(p -> {
+            p.top().left();
+            p.defaults().width(contentWidth).left();
+            MarkdownRenderer renderer = new MarkdownRenderer().setContentWidth(contentWidth);
+            renderer.render(p, r.body);
+        }).width(dialogWidth).grow().pad(10f).get();
+
+        // Disable horizontal scroll to force content wrapping
+        pane.setScrollingDisabled(true, false);
+        pane.setFadeScrollBars(false);
+
+        // Custom buttons: Back and Install
+        dialog.buttons.defaults().size(150f, 55f).pad(8f);
+        dialog.buttons.button("@back", Icon.left, dialog::hide);
+        dialog.buttons.button("Install", Icon.download, () -> {
+            dialog.hide();
+            selectedRelease = r;
+            performUpdate();
+        }).color(Pal.accent);
+
+        dialog.show();
     }
 
-    private Seq<ReleaseInfo> getFilteredReleases() {
-        switch (currentFilter) {
-            case STABLE:
-                return releases.select(r -> !r.prerelease);
-            case BETA:
-                return releases.select(r -> r.prerelease);
-            default:
-                return releases;
+    private boolean hasReleaseNotes(ReleaseInfo r) {
+        if (r.body == null)
+            return false;
+        String cleaned = r.body.trim();
+        // Check for truly empty or just common placeholder text
+        if (cleaned.isEmpty())
+            return false;
+        if (cleaned.equals("No changelog available."))
+            return false;
+        if (cleaned.equals("No description provided."))
+            return false;
+        if (cleaned.contains("No changes found"))
+            return false;
+        // Must have at least some meaningful characters (more than 5)
+        return cleaned.length() > 5;
+    }
+
+    private void buildTimeline(Table t) {
+        t.top().left();
+        t.defaults().growX().padBottom(0f); // Tight spacing for connected lines
+
+        if (commits.isEmpty()) {
+            t.add("Loading commits...").color(Color.gray).pad(20f);
+            return;
+        }
+
+        for (int i = 0; i < commits.size; i++) {
+            CommitInfo c = commits.get(i);
+            boolean isLast = i == commits.size - 1;
+
+            t.table(row -> {
+                row.left();
+
+                // Timeline Graphic
+                row.table(line -> {
+                    line.top();
+                    // Dot
+                    line.image(Icon.add).color(Pal.accent).size(14f).padTop(4f).row();
+                    // Vertical line (if not last)
+                    if (!isLast) {
+                        line.image().color(Color.darkGray).width(2f).growY().padTop(-2f).padBottom(-2f);
+                    }
+                }).width(20f).growY().padRight(10f);
+
+                // Content
+                row.table(content -> {
+                    content.left().defaults().left();
+                    content.add(c.message).color(Color.white).wrap().width(500f).row();
+                    content.table(meta -> {
+                        // Avatar
+                        meta.table(avatar -> {
+                            renderAvatar(avatar, c.avatarUrl, 16f);
+                        }).size(16f).padRight(6f);
+
+                        // meta.image(Icon.admin).size(10f).color(Color.gray).padRight(3f);
+                        meta.add(c.authorName).color(Pal.accent).fontScale(0.8f).padRight(10f);
+                        meta.add(c.date.replace("T", " ").replace("Z", "")).color(Color.lightGray).fontScale(0.7f);
+                    }).padTop(2f);
+                }).growX().padBottom(15f); // Spacing between items
+
+                // Action button (View on GitHub)
+                row.button(Icon.link, Styles.clearNonei, () -> {
+                    if (!c.htmlUrl.isEmpty())
+                        Core.app.openURI(c.htmlUrl);
+                }).size(30f).right().top();
+
+            }).padLeft(10f).growX().row();
         }
     }
 
@@ -367,6 +624,50 @@ public class UpdateCenterDialog extends BaseDialog {
             return Color.orange; // Orange for beta
         }
         return Color.lightGray;
+    }
+
+    private void renderAvatar(Table container, String url, float size) {
+        if (url == null || url.isEmpty()) {
+            container.image(Icon.admin).size(size).color(Color.gray);
+            return;
+        }
+
+        if (avatarCache.containsKey(url)) {
+            container.image(avatarCache.get(url)).size(size);
+            return;
+        }
+
+        // Placeholder
+        container.image(Icon.admin).size(size).color(Color.darkGray);
+
+        Http.get(url)
+                // .header("User-Agent", "MindustryToolMod") // Avatar URLs get public access
+                .error(e -> {
+                    // Fail silently or verify connection
+                })
+                .submit(response -> {
+                    try {
+                        byte[] bytes = response.getResult();
+                        Core.app.post(() -> {
+                            try {
+                                Pixmap pixmap = new Pixmap(bytes);
+                                Texture texture = new Texture(pixmap);
+                                texture.setFilter(Texture.TextureFilter.linear);
+                                TextureRegion region = new TextureRegion(texture);
+                                pixmap.dispose();
+
+                                avatarCache.put(url, region);
+
+                                container.clearChildren();
+                                container.image(region).size(size);
+                            } catch (Exception e) {
+                                // ignore
+                            }
+                        });
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                });
     }
 
     private String getUpdateButtonText() {
@@ -450,7 +751,7 @@ public class UpdateCenterDialog extends BaseDialog {
      * Only shows dialog if update is available.
      */
     public static void checkSilent() {
-        var mod = Vars.mods.getMod(mindustrytool.Main.class);
+        mindustry.mod.Mods.LoadedMod mod = Vars.mods.getMod(mindustrytool.Main.class);
         if (mod == null)
             return;
 

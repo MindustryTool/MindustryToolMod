@@ -386,6 +386,14 @@ public class MarkdownRenderer {
                 url = url + ".png";
         }
 
+        // SVG handling: Mindustry doesn't support SVGs natively.
+        // If it's explicitly an SVG URL and not converted to PNG above, show
+        // placeholder.
+        if (url.endsWith(".svg") || url.contains("/svg") || url.contains("type=svg")) {
+            container.add("[gray][SVG not supported][]").pad(10f);
+            return;
+        }
+
         final String finalUrl = url;
 
         // Placeholder
@@ -476,10 +484,10 @@ public class MarkdownRenderer {
         });
     }
 
-    private void renderImage(Table parent, String url, String altText) {
+    private arc.scene.Element renderImage(String url, String altText) {
         Table t = new Table();
         renderImageInto(t, url, altText);
-        parent.add(t).left().pad(5f);
+        return t;
     }
 
     private void renderLineWithLinkedImages(Table parent, String line, boolean centered) {
@@ -549,7 +557,7 @@ public class MarkdownRenderer {
         // Check for images
         Matcher imageMatcher = IMAGE_PATTERN.matcher(line);
         if (imageMatcher.find()) {
-            renderLineWithImages(parent, line);
+            renderLineWithImages(parent, line, centered);
             return;
         }
 
@@ -613,9 +621,8 @@ public class MarkdownRenderer {
         layoutFlow(parent, items, centered);
     }
 
-    private void renderLineWithImages(Table parent, String line) {
-        Table lineTable = new Table();
-        lineTable.left();
+    private void renderLineWithImages(Table parent, String line, boolean centered) {
+        Seq<arc.scene.Element> items = new Seq<>();
 
         Matcher matcher = IMAGE_PATTERN.matcher(line);
         int lastEnd = 0;
@@ -625,14 +632,14 @@ public class MarkdownRenderer {
             if (matcher.start() > lastEnd) {
                 String textBefore = line.substring(lastEnd, matcher.start());
                 if (!textBefore.trim().isEmpty()) {
-                    lineTable.add(processInlineFormatting(textBefore)).left();
+                    items.add(new Label(processInlineFormatting(textBefore)));
                 }
             }
 
             // Render image
             String altText = matcher.group(1);
             String imageUrl = matcher.group(2);
-            renderImage(lineTable, imageUrl, altText);
+            items.add(renderImage(imageUrl, altText));
 
             lastEnd = matcher.end();
         }
@@ -641,11 +648,11 @@ public class MarkdownRenderer {
         if (lastEnd < line.length()) {
             String textAfter = line.substring(lastEnd);
             if (!textAfter.trim().isEmpty()) {
-                lineTable.add(processInlineFormatting(textAfter)).left();
+                items.add(new Label(processInlineFormatting(textAfter)));
             }
         }
 
-        parent.add(lineTable).left().row();
+        layoutFlow(parent, items, centered);
     }
 
     private void addImageToContainer(Table container, TextureRegion region, String altText) {
