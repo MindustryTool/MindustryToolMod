@@ -314,12 +314,22 @@ public class UpdateCenterDialog extends BaseDialog {
             t.image(Icon.warning).size(48f).color(Pal.remove).padBottom(10f).row();
             t.add("Failed to load updates").color(Pal.remove).padBottom(5f).row();
             t.add(errorMessage).color(Color.gray).wrap().width(400f).padBottom(15f).row();
-            t.button("Retry", Icon.refresh, Styles.flatt, () -> {
-                loading = true;
-                errorMessage = null;
-                rebuildUI();
-                fetchReleases();
-            }).size(120f, 40f);
+
+            t.table(btns -> {
+                btns.defaults().size(140f, 40f).pad(5f);
+                btns.button("Retry", Icon.refresh, Styles.flatt, () -> {
+                    loading = true;
+                    errorMessage = null;
+                    rebuildUI();
+                    fetchReleases();
+                });
+
+                // Fallback: Direct download latest even without API
+                btns.button("Get Latest", Icon.download, Styles.flatt, () -> {
+                    hide();
+                    startUpdateProcess(); // Will use fallback URL since selectedRelease is null
+                }).color(Pal.accent);
+            });
         }).pad(30f);
     }
 
@@ -739,9 +749,29 @@ public class UpdateCenterDialog extends BaseDialog {
     }
 
     private void startUpdateProcess() {
-        if (selectedRelease != null && !selectedRelease.jarDownloadUrl.isEmpty()) {
-            downloadDirectly(selectedRelease.jarDownloadUrl);
+        String downloadUrl = null;
+
+        if (selectedRelease != null) {
+            Log.info("Starting update for: " + selectedRelease.tagName);
+            Log.info("Has JAR URL: " + !selectedRelease.jarDownloadUrl.isEmpty());
+            if (!selectedRelease.jarDownloadUrl.isEmpty()) {
+                downloadUrl = selectedRelease.jarDownloadUrl;
+            } else {
+                // Construct URL from tag name (fallback when API didn't return assets)
+                downloadUrl = "https://github.com/" + REPO_URL + "/releases/download/"
+                        + selectedRelease.tagName + "/MindustryToolMod.jar";
+            }
+            Log.info("Download URL: " + downloadUrl);
         } else {
+            // No release selected - try latest release fallback
+            Log.warn("No release selected, attempting to download latest release directly");
+            downloadUrl = "https://github.com/" + REPO_URL + "/releases/latest/download/MindustryToolMod.jar";
+        }
+
+        if (downloadUrl != null) {
+            downloadDirectly(downloadUrl);
+        } else {
+            Log.warn("Unable to determine download URL, falling back to GitHub API import");
             Vars.ui.mods.githubImportMod(REPO_URL, true, null);
         }
     }
@@ -761,9 +791,13 @@ public class UpdateCenterDialog extends BaseDialog {
         // Use Http directly to file
         arc.files.Fi tmp = arc.Core.files.cache("mod-update-" + System.currentTimeMillis() + ".jar");
 
+        Log.info("Attempting direct download from: " + url);
+
         Http.get(url)
+                .header("User-Agent", "MindustryToolMod") // Add UA to prevent 403 on some GH asset links
                 .error(e -> {
                     dialog.hide();
+                    Log.err("Direct download failed", e);
                     Vars.ui.showException("Download Failed", e);
                 })
                 // .block() // remove blocked call as it breaks fluent interface if handled
