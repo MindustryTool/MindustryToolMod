@@ -1,53 +1,59 @@
 {
   "categories": [
     {
-      "title": "## 🚀 Features",
+      "title": "## � Breaking Changes",
+      "labels": [
+        "breaking"
+      ]
+    },
+    {
+      "title": "## Features",
       "labels": [
         "feat",
         "feature"
       ]
     },
     {
-      "title": "## 🐛 Bug Fixes",
+      "title": "## Bug Fixes",
       "labels": [
         "fix",
         "bug"
       ]
     },
     {
-      "title": "## 📝 Documentation",
+      "title": "## Documentation",
       "labels": [
         "docs",
         "documentation"
       ]
     },
     {
-      "title": "## 💄 Styles",
+      "title": "## Styles",
       "labels": [
         "style"
       ]
     },
     {
-      "title": "## ♻️ Refactoring",
+      "title": "## Refactoring",
       "labels": [
         "refactor"
       ]
     },
     {
-      "title": "## ⚡ Performance Improvements",
+      "title": "## Performance Improvements",
       "labels": [
         "perf"
       ]
     },
     {
-      "title": "## 🧪 Tests",
+      "title": "## Tests",
       "labels": [
         "test",
         "tests"
       ]
     },
     {
-      "title": "## 📦 Build & CI",
+      "title": "## Build & CI",
       "labels": [
         "build",
         "ci",
@@ -62,13 +68,27 @@
     "order": "ASC",
     "on_property": "mergedAt"
   },
-  "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
-  "pr_template": "- #{{TITLE}}",
+  "template": "#{{CHANGELOG}}\n\n<br>\n\n<div align=\"right\">\n\nFull Changelog: https://github.com/MindustryTool/MindustryToolMod/compare/#{{FROM_TAG}}...#{{TO_TAG}}\n</div>",
+  "pr_template": "- #{{TITLE}}   ([`#{{HASH}}`](#{{URL}})) by @#{{AUTHOR}}",
   "empty_template": "- No changes found",
   "label_extractor": [
     {
+      "pattern": "^.*(!:|BREAKING CHANGE:).*$",
+      "target": "breaking"
+    },
+    {
       "pattern": "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\(.*\\))?!?: .+$",
       "target": "$1"
+    }
+  ],
+  "transformers": [
+    {
+      "pattern": "^([a-z]+)\\(([^)]+)\\)!?: (.*)$",
+      "target": "**$2:** $3"
+    },
+    {
+      "pattern": "^([a-z]+)!?: (.*)$",
+      "target": "$2"
     }
   ]
 }
