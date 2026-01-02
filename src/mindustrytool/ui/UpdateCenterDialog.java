@@ -235,14 +235,28 @@ public class UpdateCenterDialog extends BaseDialog {
         ObjectSet<String> branchesToFetch = new ObjectSet<>();
         branchesToFetch.add("main"); // Always fetch main
 
-        // Add other active branches (limit to 5 to avoid API span)
-        int count = 0;
-        for (String b : activeBranches) {
-            if (!b.equals("main") && count < 4) {
-                branchesToFetch.add(b);
-                count++;
-            }
+        // Add other active branches based on FILTERS (Smart Fetching)
+        // This prevents fetching unnecessary branches like feature/* unless explicitly
+        // requested or needed.
+
+        // 1. Beta
+        if (enabledFilters.contains(mindustrytool.utils.Version.SuffixType.BETA)) {
+            if (activeBranches.contains("beta"))
+                branchesToFetch.add("beta");
         }
+
+        // 2. Dev
+        if (enabledFilters.contains(mindustrytool.utils.Version.SuffixType.DEV)) {
+            if (activeBranches.contains("dev"))
+                branchesToFetch.add("dev");
+        }
+
+        // 3. Current Branch (if discernable and not main)
+        // If we ever track the current branch in metadata, add it here.
+        // For now, if the user is on a specific version that maps to a branch, we could
+        // try to guess,
+        // but sticking to Main + Filters is the safest and most compliant "User Intent"
+        // logic.
 
         // Log.info("[GitGraph] Fetching commits from branches: @", branchesToFetch);
 
@@ -849,7 +863,7 @@ public class UpdateCenterDialog extends BaseDialog {
         // at 500
         // Responsive width: On mobile portrait, use full width with padding
         float dialogWidth = Core.graphics.isPortrait()
-                ? Core.graphics.getWidth() - 30f // Reduced margin for mobile
+                ? Math.min(Core.graphics.getWidth() - 60f, 600f) // Reduced margin for mobile
                 : Math.min(600f, Core.graphics.getWidth() * 0.7f); // Increased PC max width slightly
         float contentWidth = dialogWidth - 40f;
 
@@ -860,14 +874,19 @@ public class UpdateCenterDialog extends BaseDialog {
             renderer.render(p, r.body);
         }).width(dialogWidth).grow().pad(10f).get();
 
+        // Constrain height on mobile to stop it from filling screen unexpectedly
+        if (Core.graphics.isPortrait()) {
+            dialog.cont.getCell(pane).maxHeight(Core.graphics.getHeight() * 0.8f);
+        }
+
         // Disable horizontal scroll to force content wrapping
         pane.setScrollingDisabled(true, false);
         pane.setFadeScrollBars(false);
 
         // Custom buttons: Back and Install
-        // Use percentage width for mobile (almost 50% each)
+        // Standardized mobile layout: Centered, fixed size (matches main dialog)
         if (Core.graphics.isPortrait()) {
-            dialog.buttons.defaults().width(contentWidth / 2f - 10f).height(64f).pad(5f);
+            dialog.buttons.defaults().size(150f, 64f).pad(4f);
         } else {
             dialog.buttons.defaults().size(210f, 64f).pad(8f);
         }
@@ -1075,12 +1094,32 @@ public class UpdateCenterDialog extends BaseDialog {
             return;
         }
 
+        // 1. Check Memory Cache
         if (avatarCache.containsKey(url)) {
             container.image(avatarCache.get(url)).size(size);
             return;
         }
 
-        // Placeholder
+        // 2. Check Disk Cache
+        // Hash url to get a safe filename
+        String filename = "avatar-" + url.hashCode() + ".png";
+        Fi cacheFile = Core.settings.getDataDirectory().child("avatars").child(filename);
+
+        if (cacheFile.exists()) {
+            try {
+                Texture texture = new Texture(cacheFile);
+                texture.setFilter(Texture.TextureFilter.linear);
+                TextureRegion region = new TextureRegion(texture);
+                avatarCache.put(url, region);
+                container.image(region).size(size);
+                return;
+            } catch (Exception e) {
+                Log.err("Failed to load cached avatar: " + filename, e);
+                // cacheFile.delete(); // Corrupt?
+            }
+        }
+
+        // Placeholder while downloading
         container.image(Icon.admin).size(size).color(Color.darkGray);
 
         Http.get(url)
@@ -1094,6 +1133,15 @@ public class UpdateCenterDialog extends BaseDialog {
                         Core.app.post(() -> {
                             try {
                                 Pixmap pixmap = new Pixmap(bytes);
+
+                                // Save to Disk Cache
+                                try {
+                                    Core.settings.getDataDirectory().child("avatars").mkdirs();
+                                    cacheFile.writePng(pixmap);
+                                } catch (Exception ex) {
+                                    Log.err("Failed to save avatar cache", ex);
+                                }
+
                                 Texture texture = new Texture(pixmap);
                                 texture.setFilter(Texture.TextureFilter.linear);
                                 TextureRegion region = new TextureRegion(texture);
