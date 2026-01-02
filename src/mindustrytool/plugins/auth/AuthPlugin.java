@@ -2,14 +2,15 @@ package mindustrytool.plugins.auth;
 
 import arc.Core;
 import arc.Events;
-import arc.graphics.Color;
-import arc.input.KeyCode;
-import arc.scene.event.*;
-import arc.scene.ui.*;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
+import arc.graphics.Pixmap;
+import arc.graphics.Texture;
+import arc.graphics.g2d.TextureRegion;
+import arc.util.Http;
+import arc.util.Log;
 import mindustry.ui.Styles;
 import mindustrytool.Plugin;
 
@@ -20,10 +21,13 @@ import mindustrytool.Plugin;
  */
 public class AuthPlugin implements Plugin {
     public static LoginDialog loginDialog;
+    public static ProfileDialog profileDialog;
     private static Table accountTable;
-    private static ImageButton accountButton;
     private static SessionData session;
-    private static Label nameLabel, creditLabel, roleLabel;
+
+    public static SessionData getSession() {
+        return session;
+    }
 
     @Override
     public String getName() {
@@ -38,118 +42,93 @@ public class AuthPlugin implements Plugin {
     @Override
     public void init() {
         loginDialog = new LoginDialog();
+        profileDialog = new ProfileDialog();
         Events.on(ClientLoadEvent.class, e -> createAccountButton());
     }
 
     private static void createAccountButton() {
-        accountTable = new Table(Styles.black5) {
-            @Override
-            public void act(float delta) {
-                super.act(delta);
-                updateButtonState();
-                updateSize();
-            }
-        };
-        accountTable.setTransform(true);
-        accountTable.margin(5);
-
-        accountButton = accountTable.button(Icon.ok, Styles.emptyi, 32f, () -> loginDialog.show()).get();
-
-        accountTable.table(info -> {
-            nameLabel = info.add("Account").padLeft(5).left().get();
-            info.row();
-            creditLabel = info.add("").padLeft(5).left().color(new Color(0.8f, 0.8f, 0.2f, 1f)).get();
-            info.row();
-            roleLabel = info.add("").padLeft(5).left().get();
-        }).left().growX();
-
-        AuthService.onLoginStateChanged(AuthPlugin::fetchSession);
-        accountTable.addListener(new DragHandler(accountTable));
-
-        updateSize();
-        accountTable.setPosition(Core.graphics.getWidth() - accountTable.getWidth() - 10, 10);
+        // Init table
+        accountTable = new Table();
         Vars.ui.menuGroup.addChild(accountTable);
 
-        if (AuthService.isLoggedIn())
+        // Update position loop
+        accountTable.update(() -> {
+            accountTable.setPosition(Core.graphics.getWidth() / 2f - accountTable.getWidth() / 2f, 10f);
+        });
+
+        AuthService.onLoginStateChanged(AuthPlugin::rebuildUI);
+
+        // Initial build
+        if (AuthService.isLoggedIn()) {
             fetchSession();
+        } else {
+            rebuildUI();
+        }
+    }
+
+    private static void rebuildUI() {
+        if (accountTable == null)
+            return;
+        accountTable.clear();
+
+        if (!AuthService.isLoggedIn()) {
+            // Not logged in: Show Hologram Login Button
+            HologramButton loginBtn = new HologramButton("LOGIN SYSTEM", () -> {
+                loginDialog.startLogin();
+                Vars.ui.showInfoFade("Initialize Neural Link...");
+            });
+            accountTable.add(loginBtn).size(180f, 60f);
+        } else {
+            // Logged in: Use Hologram Profile Widget
+            accountTable.background(null);
+
+            String name = (session != null && session.name() != null) ? session.name() : "User";
+            TextureRegion avatarRegion = null;
+
+            if (session != null && session.imageUrl != null) {
+                if (ImageCache.has(session.imageUrl)) {
+                    avatarRegion = new TextureRegion(ImageCache.get(session.imageUrl));
+                } else {
+                    // Fetch avatar async
+                    Http.get(session.imageUrl)
+                            .error(e -> Log.err("Failed to fetch avatar", e))
+                            .submit(r -> {
+                                try {
+                                    byte[] bytes = r.getResult();
+                                    Core.app.post(() -> {
+                                        Texture tex = new Texture(new Pixmap(bytes, 0, bytes.length));
+                                        ImageCache.put(session.imageUrl, tex);
+                                        rebuildUI();
+                                    });
+                                } catch (Exception e) {
+                                    Log.err("Error creating texture", e);
+                                }
+                            });
+                }
+            }
+
+            HologramProfileWidget profileWidget = new HologramProfileWidget();
+            profileWidget.build(avatarRegion, name, () -> profileDialog.show(session));
+
+            accountTable.add(profileWidget);
+        }
+
+        // Ensure size is updated for centering logic
+        accountTable.pack();
     }
 
     private static void fetchSession() {
         if (!AuthService.isLoggedIn()) {
             session = null;
-            updateLabels();
+            rebuildUI();
             return;
         }
         Api.getSession(s -> {
             session = s;
-            updateLabels();
+            rebuildUI();
         }, e -> {
             session = null;
-            updateLabels();
+            rebuildUI(); // Or show error?
         });
-    }
-
-    private static void updateLabels() {
-        if (nameLabel == null || creditLabel == null)
-            return;
-        if (session != null && AuthService.isLoggedIn()) {
-            nameLabel.setText(session.name() != null ? session.name() : "User");
-            creditLabel.setText("Credit: " + session.credit());
-            if (roleLabel != null && session.topRole() != null) {
-                String c = session.topRole().color != null ? session.topRole().color.replace("#", "") : "ffffff";
-                roleLabel.setText("[#" + c + "]" + session.topRole().id);
-            } else if (roleLabel != null)
-                roleLabel.setText("");
-        } else {
-            nameLabel.setText("Account");
-            creditLabel.setText("");
-            if (roleLabel != null)
-                roleLabel.setText("");
-        }
-    }
-
-    private static void updateSize() {
-        if (accountTable == null)
-            return;
-        float w = Core.graphics.getWidth(), h = Core.graphics.getHeight();
-        accountTable.setSize(h < w ? w / 5 : w * 4 / 5, h < w ? h / 5 : h / 10);
-    }
-
-    private static void updateButtonState() {
-        if (accountButton != null)
-            accountButton.getStyle().imageUp = AuthService.isLoggedIn() ? Icon.ok : Icon.play;
-    }
-
-    /** Drag handler for account button */
-    private static class DragHandler extends InputListener {
-        private final Table target;
-        private boolean isDragging = false;
-        private float dragStartX, dragStartY;
-
-        DragHandler(Table target) {
-            this.target = target;
-        }
-
-        @Override
-        public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-            if (button == KeyCode.mouseLeft) {
-                isDragging = true;
-                dragStartX = x;
-                dragStartY = y;
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public void touchDragged(InputEvent event, float x, float y, int pointer) {
-            if (isDragging)
-                target.setPosition(event.stageX - dragStartX, event.stageY - dragStartY);
-        }
-
-        @Override
-        public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
-            isDragging = false;
-        }
     }
 }

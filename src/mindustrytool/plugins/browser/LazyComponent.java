@@ -1,6 +1,7 @@
 package mindustrytool.plugins.browser;
 
 import arc.Core;
+import arc.func.Cons;
 import arc.func.Prov;
 
 /**
@@ -15,6 +16,8 @@ public class LazyComponent<T> {
     private T instance = null;
     private Runnable onSettings;
     private Runnable onDispose;
+
+    private Cons<Boolean> onToggle;
     private boolean enabled;
     private final boolean defaultEnabled;
 
@@ -42,6 +45,12 @@ public class LazyComponent<T> {
         return this;
     }
 
+    /** Set callback for when enabled state changes (true/false) */
+    public LazyComponent<T> onToggle(Cons<Boolean> onToggle) {
+        this.onToggle = onToggle;
+        return this;
+    }
+
     /** Gets or creates the component instance. */
     public T get() {
         if (instance == null)
@@ -63,10 +72,16 @@ public class LazyComponent<T> {
      * Enable or disable the component. Disabling also unloads. State is persisted.
      */
     public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-        Core.settings.put("lazy." + name + ".enabled", enabled);
-        if (!enabled)
-            unload();
+        if (this.enabled != enabled) {
+            this.enabled = enabled;
+            Core.settings.put("lazy." + name + ".enabled", enabled);
+            if (!enabled)
+                unload();
+
+            if (onToggle != null) {
+                onToggle.get(enabled);
+            }
+        }
     }
 
     /** Reset to default enabled state */

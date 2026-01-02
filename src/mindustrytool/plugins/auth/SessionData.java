@@ -8,12 +8,24 @@ public class SessionData {
     public String name;
     public String imageUrl;
     public Seq<Role> roles;
+    public Seq<String> authorities;
     public Stats stats;
 
-    public String id() { return id; }
-    public String name() { return name; }
-    public int credit() { return stats != null ? stats.credit : 0; }
-    public Role topRole() { return roles != null && roles.size > 0 ? roles.first() : null; }
+    public String id() {
+        return id;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public int credit() {
+        return stats != null ? stats.credit : 0;
+    }
+
+    public Role topRole() {
+        return roles != null && roles.size > 0 ? roles.first() : null;
+    }
 
     public static class Role {
         public String id;
@@ -21,7 +33,10 @@ public class SessionData {
         public String color;
         public String icon;
         public int level;
+        public Seq<String> authorities;
     }
 
-    public static class Stats { public int credit; }
+    public static class Stats {
+        public int credit;
+    }
 }

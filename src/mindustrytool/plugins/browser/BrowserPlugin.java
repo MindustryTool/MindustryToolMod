@@ -42,6 +42,13 @@ public class BrowserPlugin implements Plugin {
             (arc.func.Prov<BaseDialog>) () -> new BrowserDialog<>(ContentType.SCHEMATIC, ContentData.class,
                     new mindustrytool.plugins.browser.ui.DetailDialog()));
 
+    // Background component - uses Object as it doesn't need a dialog instance
+    private static final LazyComponent<Object> backgroundComponent = new LazyComponent<>(
+            "CustomBackground",
+            Core.bundle.get("message.lazy.custom-background.desc", "Customize the main menu background"),
+            () -> null, // No actual object needed, BackgroundPlugin handles rendering
+            true);
+
     static {
         mapDialog.onSettings(() -> new BrowserSettingsDialog(ContentType.MAP, () -> {
             if (mapDialog.isLoaded()) {
@@ -55,8 +62,13 @@ public class BrowserPlugin implements Plugin {
             }
         }).show());
 
+        backgroundComponent.onSettings(() -> mindustrytool.plugins.background.BackgroundSettingsDialog.open());
+        backgroundComponent.onToggle(
+                enabled -> mindustrytool.plugins.background.BackgroundPlugin.getInstance().setEnabled(enabled));
+
         lazyComponents.add(mapDialog);
         lazyComponents.add(schematicDialog);
+        lazyComponents.add(backgroundComponent);
     }
 
     @Override
