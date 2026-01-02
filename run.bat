@@ -6,6 +6,7 @@ set "TARGET_FILE=%APPDATA%\Mindustry\mods\mindustrytoolmindustrytoolmod.zip"
 set "BUILD_TOOL=./gradlew jar"
 set "JAR_PATH=%~dp0\build\libs\MindustryToolModDesktop.jar"
 set "DEST_FOLDER=%APPDATA%\Mindustry\mods"
+set "GAME_PATH=C:\Users\syste\Desktop\Mindustry.exe.lnk"
 
 :: Remove specific file if it exists
 if exist "%TARGET_FILE%" (
@@ -28,4 +29,14 @@ if not exist "%JAR_PATH%" (
 :: Copy JAR to destination folder
 echo Copying %JAR_PATH% to %DEST_FOLDER%...
 copy "%JAR_PATH%" "%DEST_FOLDER%" /y
+
+:: Run Mindustry
+echo Deployment complete.
+echo Launching Mindustry...
+if exist "%GAME_PATH%" (
+    echo Starting Mindustry...
+    start "" "%GAME_PATH%"
+) else (
+    echo Mindustry executable not found at %GAME_PATH%. Please check the path.
+)
 pause

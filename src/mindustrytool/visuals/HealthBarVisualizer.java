@@ -1,13 +1,19 @@
 package mindustrytool.visuals;
 
 import arc.Core;
+import arc.util.Log;
 
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
+import arc.scene.ui.layout.*;
+import arc.scene.ui.*;
+import arc.scene.event.*;
 
 import mindustry.gen.Groups;
 import mindustry.gen.Unit;
 import mindustry.graphics.Pal;
+import mindustry.ui.dialogs.BaseDialog;
+import mindustry.ui.Styles;
 
 import static mindustry.Vars.*;
 
@@ -21,15 +27,18 @@ public class HealthBarVisualizer {
 
     // Min Zoom Threshold: Skip rendering when zoomed out beyond this level
     private float zoomThreshold;
+    // Zoom Inverted: Skip rendering when zoomed in instead of out
+    private boolean zoomInverted = false;
 
-    private mindustry.ui.dialogs.BaseDialog dialog;
+    private BaseDialog dialog;
 
     public HealthBarVisualizer() {
-        arc.util.Log.info("[HealthBarVisualizer] INITIALIZED.");
+        Log.info("[HealthBarVisualizer] INITIALIZED.");
 
-        // Load saved zoom threshold (default 0.5 = auto-disable when zoomed out
+        // Load saved zoom threshold (default 2 = auto-disable when zoomed out
         // significantly)
-        zoomThreshold = Core.settings.getFloat("visualizer.healthbar.zoomThreshold", 0.5f);
+        zoomThreshold = Core.settings.getFloat("visualizer.healthbar.zoomThreshold", 2f);
+        zoomInverted = Core.settings.getBool("visualizer.healthbar.zoomInverted", false);
 
         // Cache the region once
         if (barRegion == null) {
@@ -44,10 +53,21 @@ public class HealthBarVisualizer {
         if (!state.isGame())
             return;
 
-        // Min Zoom Check: Skip rendering when zoomed out too far
+        // Min Zoom Check
         float zoom = renderer.getScale();
-        if (zoomThreshold > 0 && zoom < zoomThreshold)
-            return;
+        if (zoomThreshold > 0) {
+            if (!zoomInverted && zoom < zoomThreshold) {
+                // Skip rendering when zoomed in beyond threshold
+                Draw.reset();
+                return;
+
+            }
+            if (zoomInverted && zoom > zoomThreshold) {
+                // Skip rendering when zoomed out beyond threshold
+                Draw.reset();
+                return;
+            }
+        }
 
         // Draw on overlay layer (above units, below UI)
         Draw.z(mindustry.graphics.Layer.shields + 5f);
@@ -120,48 +140,63 @@ public class HealthBarVisualizer {
     /** Opens a settings dialog for this visualizer. */
     public void showSettings() {
         if (dialog == null) {
-            dialog = new mindustry.ui.dialogs.BaseDialog("Health Bar Settings");
+            dialog = new BaseDialog("Health Bar Settings");
             dialog.addCloseButton();
             // Standard reset button with @settings.reset bundle key
-            dialog.buttons.button("@settings.reset", mindustry.gen.Icon.refresh, () -> {
-                zoomThreshold = 0.5f;
-                Core.settings.put("visualizer.healthbar.zoomThreshold", zoomThreshold);
-                rebuild(); // Update UI without closing
-            }).size(250, 64);
+            dialog.buttons.button("@settings.reset", mindustry.gen.Icon.refresh, this::resetToDefaults).size(250, 64);
             dialog.shown(this::rebuild);
         }
         dialog.show();
     }
 
+    private void resetToDefaults() {
+        zoomThreshold = 2f;
+        zoomInverted = false;
+
+        Core.settings.put("visualizer.healthbar.zoomInverted", zoomInverted);
+        Core.settings.put("visualizer.healthbar.zoomThreshold", zoomThreshold);
+
+        rebuild(); // Update UI without closing
+    }
+
     private void rebuild() {
-        arc.scene.ui.layout.Table cont = dialog.cont;
+        Table cont = dialog.cont;
         cont.clear();
         cont.defaults().pad(6).left();
 
         float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
 
         // --- Zoom Threshold Slider ---
-        arc.scene.ui.Slider zoomSlider = new arc.scene.ui.Slider(0f, 2f, 0.1f, false);
+        Slider zoomSlider = new Slider(1.5f, 6f, 0.1f, false);
         zoomSlider.setValue(zoomThreshold);
 
-        arc.scene.ui.Label zoomValue = new arc.scene.ui.Label(
-                zoomThreshold <= 0.01f ? "Off" : String.format("%.1fx", zoomThreshold),
-                mindustry.ui.Styles.outlineLabel);
-        zoomValue.setColor(zoomThreshold <= 0.01f ? arc.graphics.Color.gray : arc.graphics.Color.lightGray);
+        Label zoomValue = new Label(
+                zoomThreshold <= 1.5f ? "Off" : String.format("%.1fx", zoomThreshold),
+                Styles.outlineLabel);
+        zoomValue.setColor(zoomThreshold <= 1.5f ? Color.gray : Color.lightGray);
 
-        arc.scene.ui.layout.Table zoomContent = new arc.scene.ui.layout.Table();
-        zoomContent.touchable = arc.scene.event.Touchable.disabled;
+        Table zoomContent = new Table();
+        zoomContent.touchable = Touchable.disabled;
         zoomContent.margin(3f, 33f, 3f, 33f);
-        zoomContent.add("Min Zoom", mindustry.ui.Styles.outlineLabel).left().growX();
+        zoomContent.add("Set Zoom", Styles.outlineLabel).left().growX();
         zoomContent.add(zoomValue).padLeft(10f).right();
 
         zoomSlider.changed(() -> {
             zoomThreshold = zoomSlider.getValue();
-            zoomValue.setText(zoomThreshold <= 0.01f ? "Off" : String.format("%.1fx", zoomThreshold));
-            zoomValue.setColor(zoomThreshold <= 0.01f ? arc.graphics.Color.gray : arc.graphics.Color.lightGray);
+            zoomValue.setText(zoomThreshold <= 1.5f ? "Off" : String.format("%.1fx", zoomThreshold));
+            zoomValue.setColor(zoomThreshold <= 1.5f ? Color.gray : Color.lightGray);
             Core.settings.put("visualizer.healthbar.zoomThreshold", zoomThreshold);
         });
 
         cont.stack(zoomSlider, zoomContent).width(width).left().padTop(4f).row();
+
+        // ---Checkboxes ---
+        // Condition for displaying health bar when zoom (default: false = hide health
+        // bar when zoom in)
+
+        cont.check(!zoomInverted ? "Zoom in" : "Zoom out", zoomInverted, b -> {
+            zoomInverted = b;
+            Core.settings.put("visualizer.healthbar.zoomInverted", zoomInverted);
+        }).width(width).left().padTop(8f).row();
     }
 }
