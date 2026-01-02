@@ -718,6 +718,7 @@ public class UpdateCenterDialog extends BaseDialog {
             Table items = new Table();
             ScrollPane scroll = new ScrollPane(items, Styles.smallPane);
             scroll.setFadeScrollBars(false);
+            scroll.setScrollingDisabled(true, false); // Disable X scroll to force wrap
             // Add uniformY() to force equal height distribution with other uniformY cells
             // (the timeline)
             main.add(scroll).growY().uniformY().minHeight(100f).row();
@@ -731,6 +732,7 @@ public class UpdateCenterDialog extends BaseDialog {
             Table timeline = new Table();
             ScrollPane timeScroll = new ScrollPane(timeline, Styles.smallPane);
             timeScroll.setFadeScrollBars(false);
+            timeScroll.setScrollingDisabled(true, false); // Disable X scroll to force wrap
             // growY() + uniformY() here too ensures it matches the list above
             main.add(timeScroll).growY().uniformY().minHeight(100f).row();
 
