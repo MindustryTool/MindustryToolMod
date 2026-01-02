@@ -4,7 +4,7 @@ cls
 :: Define variables
 set "TARGET_FILE=%APPDATA%\Mindustry\mods\mindustrytoolmindustrytoolmod.zip"
 set "BUILD_TOOL=./gradlew jar"
-set "JAR_PATH=%~dp0\build\libs\MindustryToolModDesktop.jar"
+set "JAR_PATH=%~dp0\build\libs\MindustryToolMod-MizuharaDEVDesktop.jar"
 set "DEST_FOLDER=%APPDATA%\Mindustry\mods"
 set "GAME_PATH=C:\Users\syste\Desktop\Mindustry.exe.lnk"
 
