@@ -559,11 +559,8 @@ public class CreateRoomDialog extends BaseDialog {
         pane.setScrollingDisabled(true, false);
         pane.setFadeScrollBars(false);
 
-        // Responsive width: Full width on portrait mobile, capped on landscape/desktop
-        float w = Core.graphics.getWidth();
-        if (w > Core.graphics.getHeight()) {
-            w = Math.min(w, 480f);
-        }
+        // Responsive width: Match TouchSettingsDialog style for consistent UI
+        float w = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
 
         cont.add(pane).width(w).maxHeight(Core.graphics.getHeight() / Scl.scl() - 120f);
     }
