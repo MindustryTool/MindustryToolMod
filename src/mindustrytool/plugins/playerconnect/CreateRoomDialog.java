@@ -555,7 +555,17 @@ public class CreateRoomDialog extends BaseDialog {
             }).growX();
         }).growX().padBottom(20).row();
 
-        cont.add(settings).width(Vars.mobile ? Core.graphics.getWidth() : 500f);
+        ScrollPane pane = new ScrollPane(settings);
+        pane.setScrollingDisabled(true, false);
+        pane.setFadeScrollBars(false);
+
+        // Responsive width: Full width on portrait mobile, capped on landscape/desktop
+        float w = Core.graphics.getWidth();
+        if (w > Core.graphics.getHeight()) {
+            w = Math.min(w, 480f);
+        }
+
+        cont.add(pane).width(w).maxHeight(Core.graphics.getHeight() / Scl.scl() - 120f);
     }
 
     private void updateServerBtn() {
