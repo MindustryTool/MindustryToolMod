@@ -1,5 +1,8 @@
 package mindustrytool.plugins.playerconnect;
 
+import arc.Core;
+import mindustry.Vars;
+
 import arc.scene.ui.layout.*;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.plugins.playerconnect.ServerUI.SelectCallback;
@@ -22,8 +25,14 @@ public class ServerSelectDialog extends BaseDialog {
 
         cont.pane(t -> {
             t.top();
-            ServerUI.buildCustomSection(t, settingsTable, addDialog, this::refreshCustom, customShown);
-            ServerUI.buildOnlineSection(t, serversTable, this::refreshOnline, onlineShown);
+
+            Table customWrapper = new Table();
+            ServerUI.buildCustomSection(customWrapper, this.settingsTable, addDialog, this::refreshCustom, customShown);
+            t.add(customWrapper).width(Vars.mobile ? Core.graphics.getWidth() : 500f).padBottom(10).row();
+
+            Table onlineWrapper = new Table();
+            ServerUI.buildOnlineSection(onlineWrapper, this.serversTable, this::refreshOnline, onlineShown);
+            t.add(onlineWrapper).width(Vars.mobile ? Core.graphics.getWidth() : 500f).row();
         }).grow();
 
         shown(() -> {

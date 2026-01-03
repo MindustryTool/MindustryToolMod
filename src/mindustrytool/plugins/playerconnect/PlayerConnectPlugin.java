@@ -25,6 +25,10 @@ public class PlayerConnectPlugin implements Plugin {
             Core.bundle.get("message.lazy.playerconnect.desc", "Multiplayer rooms - browse, join, and create"),
             PlayerConnectRoomsDialog::new);
 
+    static {
+        roomsDialog.onSettings(() -> getInstance().showCreateRoomDialog());
+    }
+
     // Enemy Pathfinding Visualization Component
     private static final LazyComponent<mindustrytool.visuals.PathfindingVisualizer> pathfindingVisualizer = new LazyComponent<>(
             "Enemy Pathfinding",
@@ -282,90 +286,63 @@ public class PlayerConnectPlugin implements Plugin {
             voiceChatManager.get();
         });
 
-        PlayerConnect.init();
-        PlayerConnectProviders.loadCustom();
+        // Inject listeners once (they check enabled state internally)
         JoinDialogInjector.inject();
+        PausedMenuInjector.inject();
 
-        // Initialize and inject Host dialog
-        createRoomDialog = new CreateRoomDialog();
-        PausedMenuInjector.inject(createRoomDialog);
+        // Register toggle handler for Core PlayerConnect logic
+        roomsDialog.onToggle(this::onTogglePlayerConnect);
+
+        // Initial state check
+        if (roomsDialog.isEnabled()) {
+            onTogglePlayerConnect(true);
+        }
 
         // Auto Host Logic: Delegate to CreateRoomDialog.
-        // Both PlayEvent and WorldLoadEvent are used to capture all entry points
-        // (Saved games, Campaign, New Games).
-        // Delay ensures world initialization and state verification.
         Runnable trigger = () -> {
-            if (createRoomDialog != null) {
+            if (createRoomDialog != null && roomsDialog.isEnabled()) {
                 arc.util.Timer.schedule(() -> createRoomDialog.triggerAutoHost(), 2f);
             }
         };
 
         Events.on(EventType.PlayEvent.class, e -> {
             trigger.run();
-
-            // Sync map to clients when game starts (including "Change Map")
-            // Moved from WorldLoadEvent to PlayEvent to ensure game state is ready
-            if (mindustry.Vars.net.server()) {
-                // Log.info("[PlayerConnect] PlayEvent triggered. Scheduling map sync for
-                // clients...");
-                // Delay to ensure world is ready and connections are stable
-                // Delay to ensure world is ready and connections are stable
+            // Sync map logic ...
+            if (mindustry.Vars.net.server() && roomsDialog.isEnabled()) {
                 arc.util.Timer.schedule(() -> {
                     try {
-                        // Use public API Vars.net.getConnections() which is reliable in V7
                         Iterable<? extends mindustry.net.NetConnection> connections = mindustry.Vars.net
                                 .getConnections();
-                        // int count = 0;
                         for (mindustry.net.NetConnection con : connections) {
-                            // If player is valid, send world data.
-                            // Even if con.player is null, sending WorldData might reset their state?
-                            // But sendWorldData takes a Player object...
                             if (con.player != null) {
-                                // Log.info("[PlayerConnect] Sending world data to player: @ (Fast Sync)",
-                                // con.player.name);
                                 mindustry.Vars.netServer.sendWorldData(con.player);
-                                // count++;
                             } else {
-                                // In deep desync, player might be null?
-                                // If so, we are stuck. But usually connection persists.
                                 Log.warn("[PlayerConnect] Fast sync skipped: Player is null for @", con.address);
                             }
                         }
-                        // Log.info("[PlayerConnect] Fast Sync Complete. Sent to @ clients.", count);
                     } catch (Exception ex) {
                         Log.err("[PlayerConnect] Error syncing map to clients", ex);
                     }
-                }, 0.2f); // Reduced to 0.2s to race against Snapshot timeout
+                }, 0.2f);
             }
         });
 
         Events.on(EventType.WorldLoadEvent.class, e -> {
             trigger.run();
-            // Logging for debug
-            // Log.info("[PlayerConnect] WorldLoadEvent triggered.");
-
-            // Backup Sync: Attempt to sync in WorldLoadEvent too if connections persist.
-            // This happens BEFORE PlayEvent. if connections are alive, this is the BEST
-            // time.
-            if (mindustry.Vars.net.server()) {
+            if (mindustry.Vars.net.server() && roomsDialog.isEnabled()) {
                 try {
                     Iterable<? extends mindustry.net.NetConnection> connections = mindustry.Vars.net.getConnections();
-                    // int c = 0;
                     for (mindustry.net.NetConnection con : connections) {
                         if (con.player != null) {
                             mindustry.Vars.netServer.sendWorldData(con.player);
-                            // c++;
                         }
                     }
-                    // if (c > 0)
-                    // Log.info("[PlayerConnect] WorldLoad Sync: Sent to @ clients.", c);
                 } catch (Exception ex) {
-                    // Ignore errors here, main sync is in PlayEvent
                 }
             }
         });
 
-        // Centralized Lazy Triggers: Only run and instantiate if enabled
+        // Centralized Lazy Triggers: ... (keep existing)
         Events.run(EventType.Trigger.draw, () -> {
             if (!mindustry.Vars.state.isGame())
                 return;
@@ -391,48 +368,54 @@ public class PlayerConnectPlugin implements Plugin {
                 sm.draw();
         });
 
-        // Initialize Team Resources Overlay immediately if enabled
+        // Initialize immediately if enabled
         teamResourcesOverlay.getIfEnabled();
-        // Initialize Smart Drill immediately if enabled
-        // smartDrillManager.getIfEnabled();
 
-        // --- Centralized Smart Drill Event Handling (Lazy Loading Optimization) ---
-        // Tap Event: Only runs if manager is enabled and instantiated
+        // Smart Drill Events ...
         Events.on(EventType.TapEvent.class, e -> {
             mindustrytool.plugins.autodrill.SmartDrillManager sm = smartDrillManager.getIfEnabled();
-            if (sm != null) {
+            if (sm != null)
                 sm.handleTap(e);
-            }
         });
 
-        // Update Event: For keybinds
         Events.run(EventType.Trigger.update, () -> {
             mindustrytool.plugins.autodrill.SmartDrillManager sm = smartDrillManager.getIfEnabled();
-            if (sm != null) {
+            if (sm != null)
                 sm.update();
-            }
         });
 
-        // Draw Event: Already handled in the Trigger.draw loop above, need to add it
-        // there.
-
         initialized = true;
+    }
+
+    private void onTogglePlayerConnect(boolean enabled) {
+        if (enabled) {
+            Log.info("[PlayerConnect] Enabling...");
+            PlayerConnect.init();
+            PlayerConnectProviders.loadCustom();
+            if (createRoomDialog == null) {
+                createRoomDialog = new CreateRoomDialog();
+            }
+        } else {
+            Log.info("[PlayerConnect] Disabling...");
+            PlayerConnect.disposeRoom();
+            PlayerConnect.disposePinger();
+            createRoomDialog = null; // Release reference
+        }
     }
 
     @Override
     public void dispose() {
         Log.info("[PlayerConnect] Disposing...");
-        PlayerConnect.disposeRoom();
-        PlayerConnect.disposePinger();
+        onTogglePlayerConnect(false);
+
         // Unload lazy components
         roomsDialog.unload();
         pathfindingVisualizer.unload();
         healthBarVisualizer.unload();
-        distributionRevealVisualizer.unload();
+        // distributionRevealVisualizer.unload();
         entityVisibilityManager.unload();
         visualOverlayManager.unload();
         joinRoomDialog = null;
-        createRoomDialog = null;
     }
 
     public void showRoomsBrowser() {

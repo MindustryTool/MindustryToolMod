@@ -13,8 +13,11 @@ import arc.Core;
 /** Injects Player Connect button into the paused menu. */
 public class PausedMenuInjector {
 
-    public static void inject(BaseDialog roomDialog) {
+    public static void inject() {
         Vars.ui.paused.shown(() -> {
+            if (!PlayerConnectPlugin.getRoomsDialog().isEnabled())
+                return;
+
             Table root = Vars.ui.paused.cont;
 
             // Debug logging
@@ -74,7 +77,7 @@ public class PausedMenuInjector {
                         newBtn.getCells().reverse();
                         newBtn.changed(() -> {
                             try {
-                                roomDialog.show();
+                                PlayerConnectPlugin.getInstance().showCreateRoomDialog();
                             } catch (Exception e) {
                                 Vars.ui.showException(e);
                             }
@@ -128,13 +131,18 @@ public class PausedMenuInjector {
                 arc.struct.Seq<arc.scene.ui.layout.Cell> cells = root.getCells();
 
                 if (Vars.mobile) {
-                    root.row().buttonRow("@message.manage-room.title", Icon.planet, roomDialog::show).row();
+                    root.row().buttonRow("@message.manage-room.title", Icon.planet,
+                            () -> PlayerConnectPlugin.getInstance().showCreateRoomDialog()).row();
                 } else if (!cells.isEmpty() && cells.size > 2
                         && arc.util.Reflect.<Integer>get(cells.get(cells.size - 2), "colspan") == 2) {
-                    root.row().button("@message.manage-room.title", Icon.planet, roomDialog::show).colspan(2)
+                    root.row()
+                            .button("@message.manage-room.title", Icon.planet,
+                                    () -> PlayerConnectPlugin.getInstance().showCreateRoomDialog())
+                            .colspan(2)
                             .width(450f).row();
                 } else {
-                    root.row().button("@message.manage-room.title", Icon.planet, roomDialog::show).row();
+                    root.row().button("@message.manage-room.title", Icon.planet,
+                            () -> PlayerConnectPlugin.getInstance().showCreateRoomDialog()).row();
                 }
 
                 if (cells.size > 2) {

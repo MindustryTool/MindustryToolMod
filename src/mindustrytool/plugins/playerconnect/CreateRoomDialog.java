@@ -27,12 +27,14 @@ public class CreateRoomDialog extends BaseDialog {
     private TextButton serverSelectBtn;
 
     // Config values
-    private String confName, confDesc, confPin = "";
+    // Config values
+    private String confName, confDesc, confPin = "", confLogoPath = "";
     private int confMaxPlayers;
-    private boolean confApproval, confPassword, confAutoHost;
+    private boolean confApproval, confPassword, confAutoHost, confAllowFriends;
 
     // State
     private boolean connecting = false;
+    private arc.graphics.Texture logoTexture;
 
     // UI References
     private TextField pinField;
@@ -41,17 +43,28 @@ public class CreateRoomDialog extends BaseDialog {
     private ObjectSet<String> approvedUUIDs = new ObjectSet<>();
 
     public CreateRoomDialog() {
-        super("@message.manage-room.create-room");
+        super("Player Connect Settings");
         instance = this;
 
         loadConfig();
 
-        addCloseButton();
-        setupButtons();
+        // Buttons
+        buttons.defaults().size(210f, 64f).pad(2);
+        buttons.button("@back", Icon.left, this::hide);
+        buttons.button("Reset to defaults", Icon.refresh, this::resetDefaults).size(250f, 64f);
+        // setupButtons();
 
         selectDialog = new ServerSelectDialog((host, btn) -> {
             this.selected = host;
             updateServerBtn();
+        });
+
+        // Ensure texture is cleaned up
+        hidden(() -> {
+            if (logoTexture != null) {
+                logoTexture.dispose();
+                logoTexture = null;
+            }
         });
 
         setupUI();
@@ -66,6 +79,9 @@ public class CreateRoomDialog extends BaseDialog {
             if (approvedUUIDs.contains(e.player.uuid())) {
                 e.player.team(Team.sharded);
                 return;
+            }
+            if (confAllowFriends) {
+                // Placeholder for logic
             }
             handlePending(e.player);
         });
@@ -106,7 +122,10 @@ public class CreateRoomDialog extends BaseDialog {
             }
         });
 
-        shown(this::autoSelectServer);
+        shown(() -> {
+            setupUI();
+            autoSelectServer();
+        });
     }
 
     public void triggerAutoHost() {
@@ -340,127 +359,203 @@ public class CreateRoomDialog extends BaseDialog {
 
     // ... Config ...
     private void loadConfig() {
-        confName = Core.settings.getString("pc-room-name", Vars.player.name);
-        confDesc = Core.settings.getString("pc-room-desc", "A Mindustry Server");
-        confMaxPlayers = Core.settings.getInt("pc-room-max", 0);
+        confName = Core.settings.getString("pc-room-name", "");
+        confDesc = Core.settings.getString("pc-room-desc", "");
+        confMaxPlayers = Core.settings.getInt("pc-room-max-v2", 30);
         confApproval = Core.settings.getBool("pc-room-approval", false);
         confPassword = Core.settings.getBool("pc-room-pwd-enabled", false);
         confPin = Core.settings.getString("pc-room-pin", "");
         confAutoHost = Core.settings.getBool("pc-auto-host", false);
+        confLogoPath = Core.settings.getString("pc-room-logo", "");
+        confAllowFriends = Core.settings.getBool("pc-allow-friends", true);
     }
 
     private void saveConfig() {
         Core.settings.put("pc-room-name", confName);
         Core.settings.put("pc-room-desc", confDesc);
-        Core.settings.put("pc-room-max", confMaxPlayers);
+        Core.settings.put("pc-room-max-v2", confMaxPlayers);
         Core.settings.put("pc-room-approval", confApproval);
         Core.settings.put("pc-room-pwd-enabled", confPassword);
         Core.settings.put("pc-room-pin", confPin);
         Core.settings.put("pc-auto-host", confAutoHost);
-    }
-
-    private void setupButtons() {
-        buttons.button("@message.manage-room.create-room", Icon.play, this::createRoom)
-                .disabled(b -> connecting || !PlayerConnect.isRoomClosed() || Vars.net.client());
-        if (Vars.mobile)
-            buttons.row();
-        buttons.button("@message.manage-room.close-room", Icon.cancel, this::closeRoom)
-                .disabled(b -> PlayerConnect.isRoomClosed());
-        buttons.button("@message.manage-room.copy-link", Icon.copy, this::copyLink).disabled(b -> link == null);
+        Core.settings.put("pc-room-logo", confLogoPath);
+        Core.settings.put("pc-allow-friends", confAllowFriends);
     }
 
     private void setupUI() {
         cont.clear();
-        cont.pane(t -> {
-            t.top();
-            t.defaults().growX().pad(5);
 
-            // --- SECTION: BASIC INFO ---
-            t.table(Tex.pane, s -> {
-                s.top().left().margin(10);
-                s.defaults().left().padBottom(5);
+        // Load Texture if path exists
+        if (logoTexture != null) {
+            logoTexture.dispose();
+            logoTexture = null;
+        }
+        if (confLogoPath != null && !confLogoPath.isEmpty()) {
+            try {
+                arc.files.Fi f = new arc.files.Fi(confLogoPath);
+                if (f.exists()) {
+                    logoTexture = new arc.graphics.Texture(f);
+                    logoTexture.setFilter(arc.graphics.Texture.TextureFilter.linear);
+                }
+            } catch (Exception ignored) {
+            }
+        }
 
-                s.table(h -> {
-                    h.image(Icon.info).color(Pal.accent).size(20).padRight(4);
-                    h.add("@message.manage-room.title").color(Pal.accent).fontScale(1.1f);
-                }).growX().padBottom(10).row();
+        // --- CONTROLS ---
+        Table settings = new Table();
+        settings.defaults().growX().pad(5);
 
-                s.add("@message.manage-room.server-name").color(Pal.accent).row();
-                s.field(confName, val -> confName = val).growX().valid(x -> x.length() > 0).row();
+        // --- BASIC INFO ---
+        settings.table(t -> {
+            t.add("Room Information").color(Pal.accent).left().padBottom(5).row();
+            t.image().color(Pal.accent).height(3f).growX().padBottom(10).row();
 
-                s.add("@message.manage-room.server-desc").color(Pal.accent).padTop(10).row();
-                s.area(confDesc, Styles.areaField, val -> confDesc = val).growX().height(80f).row();
-            }).row();
+            t.table(info -> {
+                info.left();
+                info.add("Name:").left().width(100f);
+                info.field(confName, val -> confName = val).growX().valid(x -> !x.isEmpty()).maxTextLength(50)
+                        .with(tf -> tf.next(false)).height(40f).row();
 
-            // --- SECTION: RULES & SETTINGS ---
-            t.table(Tex.pane, s -> {
-                s.top().left().margin(10);
-                s.defaults().left().padBottom(8);
+                info.add("Description:").left().width(100f).padTop(5);
+                info.area(confDesc, val -> confDesc = val).growX().valid(x -> !x.isEmpty()).maxTextLength(200)
+                        .height(110f).with(ta -> ta.next(false)).padTop(5).row();
 
-                s.table(h -> {
-                    h.image(Icon.settings).color(Pal.accent).size(20).padRight(4);
-                    h.add("@message.lazy-components.settings").color(Pal.accent).fontScale(1.1f);
-                }).growX().padBottom(10).row();
+                info.add("Logo:").left().width(100f).padTop(5)
+                        .color(confLogoPath.isEmpty() ? Pal.remove : arc.graphics.Color.white);
+                info.table(logo -> {
+                    logo.left();
+                    logo.button(Icon.download, () -> {
+                        Vars.platform.showFileChooser(true, "png,jpg,jpeg", f -> {
+                            confLogoPath = f.absolutePath();
+                            setupUI();
+                        });
+                    }).size(40f)
+                            .tooltip(confLogoPath == null || confLogoPath.isEmpty() ? "[red]Required: Import Logo"
+                                    : confLogoPath)
+                            .left();
 
-                // Max Players
-                s.table(sub -> {
-                    sub.add("@message.manage-room.max-players").padRight(10);
-                    sub.field(String.valueOf(confMaxPlayers == 0 ? "" : confMaxPlayers), val -> {
-                        if (val.isEmpty())
-                            confMaxPlayers = 0;
-                        else if (Strings.canParseInt(val))
-                            confMaxPlayers = Integer.parseInt(val);
-                    }).width(80f).valid(Strings::canParsePositiveInt);
-                    sub.add(" (Empty = \u221E)").color(arc.graphics.Color.gray).get().setFontScale(0.8f);
-                }).row();
+                    if (confLogoPath != null && !confLogoPath.isEmpty() && logoTexture != null) {
+                        logo.image(new arc.graphics.g2d.TextureRegion(logoTexture)).size(40f).padLeft(10f)
+                                .tooltip("Path: " + confLogoPath);
+                        logo.button(Icon.cancel, Styles.clearNonei, () -> {
+                            confLogoPath = "";
+                            setupUI();
+                        }).size(40f).padLeft(2f).tooltip("Remove Logo");
+                    }
+                }).growX().padTop(5).row();
+            }).growX().left();
+        }).growX().padBottom(20).row();
 
-                // Checkboxes
-                s.check("@message.manage-room.auto-host", confAutoHost, b -> {
+        // --- SETTINGS ---
+        settings.table(t -> {
+            t.left();
+            t.add("Room Settings").color(Pal.accent).left().padBottom(5).row();
+            t.image().color(Pal.accent).height(3f).growX().padBottom(10).row();
+
+            t.table(opts -> {
+                opts.left().defaults().left().padBottom(5);
+
+                addCheck(opts, "Auto Host", confAutoHost, b -> {
                     confAutoHost = b;
                     Core.settings.put("pc-auto-host", b);
-                }).row();
+                }, "Automatically publishes your room to the global list so others can join without a direct link.");
 
-                s.check("@message.manage-room.require-approval", confApproval, b -> {
+                addCheck(opts, "Allow Friends", confAllowFriends, b -> {
+                    confAllowFriends = b;
+                    Core.settings.put("pc-allow-friends", b);
+                }, "Allow friends to join immediately without waiting for approval.");
+
+                addCheck(opts, "Require Approval", confApproval, b -> {
                     confApproval = b;
                     Core.settings.put("pc-room-approval", b);
-                }).row();
+                }, "Players entering the room will be in spectator mode until you approve them in the player list.");
 
-                // Password / PIN
-                s.check("@message.password", confPassword, b -> {
+                addCheck(opts, "Enable Password", confPassword, b -> {
                     confPassword = b;
                     setupUI();
-                }).row();
+                }, "Require a PIN code to join the room.");
 
                 if (confPassword) {
-                    s.table(p -> {
-                        p.left();
-                        p.add("PIN (4-6): ").padRight(4);
-                        Cell<TextField> cf = p.field(confPin, val -> confPin = val).width(120f);
+                    opts.table(p -> {
+                        p.left().defaults().left().center();
+                        p.add("PIN (4-6): ").color(arc.graphics.Color.lightGray).padRight(10f);
+                        Cell<TextField> cf = p.field(confPin, val -> confPin = val).width(180f);
                         pinField = cf.get();
                         pinField.setFilter(TextField.TextFieldFilter.digitsOnly);
                         pinField.setMaxLength(6);
                         cf.valid(x -> x.length() >= 4 && x.length() <= 6);
-                    }).padLeft(32f).row();
-                } else {
-                    pinField = null;
+                    }).padLeft(40f).padTop(4f).growX().row();
                 }
-            }).row();
 
-            // --- SECTION: CONNECTION ---
-            t.table(Tex.pane, server -> {
-                server.top().left().margin(10);
+                opts.table(m -> {
+                    m.left().defaults().left().center();
+                    m.add("Max Players: ").padRight(10f);
+                    m.field(String.valueOf(confMaxPlayers == 0 ? "" : confMaxPlayers), val -> {
+                        if (val.isEmpty())
+                            confMaxPlayers = 0;
+                        else if (Strings.canParseInt(val))
+                            confMaxPlayers = Integer.parseInt(val);
+                    }).width(100f).valid(Strings::canParsePositiveInt);
+                }).growX().padTop(10f);
+            }).growX();
+        }).growX().padBottom(20).row();
 
-                server.table(h -> {
-                    h.image(Icon.host).color(Pal.accent).size(20).padRight(4);
-                    h.add("@message.manage-room.proxy-server").color(Pal.accent).fontScale(1.1f);
-                }).growX().padBottom(10).row();
+        // --- PROXY SERVER ---
+        settings.table(t -> {
+            t.add("Connection").color(Pal.accent).left().padBottom(5).row();
+            t.image().color(Pal.accent).height(3f).growX().padBottom(10).row();
 
-                serverSelectBtn = server.button("Select Server", Icon.host, () -> selectDialog.show()).growX()
-                        .height(60f).get();
-                updateServerBtn();
-            }).row();
+            serverSelectBtn = t.button("Select Proxy Server", Icon.host, () -> selectDialog.show())
+                    .growX().height(60f).get();
+            updateServerBtn();
+        }).growX().padBottom(20).row();
 
-        }).grow();
+        // --- CONTROLS ---
+        settings.table(t -> {
+            t.add("Server Control").color(Pal.accent).left().padBottom(5).row();
+            t.image().color(Pal.accent).height(3f).growX().padBottom(10).row();
+
+            t.table(ctrl -> {
+                ctrl.defaults().height(60f).pad(5);
+
+                // Pause/Unpause Button
+                ctrl.button("Pause", Icon.pause, () -> {
+                    if (Vars.net.server()) {
+                        if (Vars.state.isPaused()) {
+                            Vars.state.set(mindustry.core.GameState.State.playing);
+                        } else {
+                            Vars.state.set(mindustry.core.GameState.State.paused);
+                        }
+                    }
+                }).growX().update(b -> {
+                    boolean paused = Vars.state.isPaused();
+                    b.setText(paused ? "Unpause" : "Pause");
+                    // Safely update icon
+                    if (b.getChildren().size > 0 && b.getChildren().get(0) instanceof Image) {
+                        ((Image) b.getChildren().get(0)).setDrawable(paused ? Icon.play : Icon.pause);
+                    }
+                    b.setDisabled(!Vars.net.server());
+                });
+
+                // Create/Close Room Button
+                ctrl.button("@message.manage-room.create-room", Icon.play, () -> {
+                    if (PlayerConnect.isRoomClosed()) {
+                        createRoom();
+                    } else {
+                        closeRoom();
+                    }
+                }).growX().update(b -> {
+                    boolean closed = PlayerConnect.isRoomClosed();
+                    b.setText(closed ? "@message.manage-room.create-room" : "@message.manage-room.close-room");
+                    if (b.getChildren().size > 0 && b.getChildren().get(0) instanceof Image) {
+                        ((Image) b.getChildren().get(0)).setDrawable(closed ? Icon.play : Icon.cancel);
+                    }
+                    b.setDisabled(connecting || (closed && (Vars.net.client() || Vars.state.isMenu())));
+                });
+            }).growX();
+        }).growX().padBottom(20).row();
+
+        cont.add(settings).width(Vars.mobile ? Core.graphics.getWidth() : 500f);
     }
 
     private void updateServerBtn() {
@@ -530,6 +625,18 @@ public class CreateRoomDialog extends BaseDialog {
     }
 
     private boolean validateSettings() {
+        if (confName.isEmpty()) {
+            Vars.ui.showInfo("Error: Room Name is required.");
+            return false;
+        }
+        if (confDesc.isEmpty()) {
+            Vars.ui.showInfo("Error: Room Description is required.");
+            return false;
+        }
+        if (confLogoPath.isEmpty()) {
+            Vars.ui.showInfo("Error: Room Logo is required.");
+            return false;
+        }
         if (selected == null) {
             Vars.ui.showInfo("Error: Please select a Proxy Server first.");
             return false;
@@ -562,6 +669,13 @@ public class CreateRoomDialog extends BaseDialog {
     private void createRoom() {
         if (connecting)
             return;
+
+        // Prevent hosting if in menu (must be in a map)
+        if (Vars.state.isMenu()) {
+            Vars.ui.showInfo("You must enter a map before creating a room.");
+            return;
+        }
+
         if (!validateSettings())
             return;
         saveConfig();
@@ -581,5 +695,35 @@ public class CreateRoomDialog extends BaseDialog {
             return;
         Core.app.setClipboardText(link.toString());
         Vars.ui.showInfoFade("@copied");
+    }
+
+    private void addCheck(Table t, String text, boolean val, arc.func.Boolc listener, String info) {
+        t.table(r -> {
+            r.left();
+            r.check(text, val, listener).left();
+            r.add().growX();
+            r.button(Icon.info, Styles.clearNonei, () -> {
+                BaseDialog d = new BaseDialog("Info");
+                d.addCloseButton();
+                d.cont.add(info).width(Math.min(Core.graphics.getWidth() / 1.1f, 600f)).wrap().left();
+                d.show();
+            }).size(32f).padLeft(5f).tooltip(tip -> tip.background(Styles.black6).add(info).width(300f).wrap());
+        }).growX().left().padBottom(5f).row();
+    }
+
+    private void resetDefaults() {
+        confName = "";
+        confDesc = "";
+        confMaxPlayers = 30;
+        confApproval = false;
+        confPassword = false;
+        confPin = "";
+        confAutoHost = false;
+        confLogoPath = "";
+        confAllowFriends = true;
+
+        saveConfig();
+        setupUI();
+        Vars.ui.hudfrag.showToast("Settings reset to defaults");
     }
 }
