@@ -66,7 +66,15 @@ public class QuickAccessPlugin implements Plugin {
 
                         // First tool always visible next to FlipButton
                         row1.button(Icon.settings, Styles.clearNonei, () -> {
-                            BrowserPlugin.getComponentDialog().show();
+                            // Refresh logic could be improved here, currently relying on static dialog in
+                            // BrowserPlugin
+                            // But better to rebuild the list
+                            arc.struct.Seq<mindustrytool.plugins.browser.LazyComponent<?>> allComponents = new arc.struct.Seq<>();
+                            allComponents.addAll(mindustrytool.plugins.browser.BrowserPlugin.getLazyComponents());
+                            allComponents.addAll(
+                                    mindustrytool.plugins.playerconnect.PlayerConnectPlugin.getLazyComponents());
+                            allComponents.addAll(mindustrytool.plugins.controls.TouchPlugin.getLazyComponents());
+                            new mindustrytool.plugins.browser.LazyComponentDialog(allComponents).show();
                         }).tooltip(Core.bundle.get("message.lazy-components.title", "Components"));
 
                         row1.button(Icon.paste, Styles.clearNonei, () -> {

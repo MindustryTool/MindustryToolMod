@@ -6,3 +6,4 @@ mindustrytool.plugins.playerconnect.PlayerConnectPlugin
 mindustrytool.plugins.quickaccess.QuickAccessPlugin
 mindustrytool.plugins.voicechat.VoiceChatPlugin
 mindustrytool.plugins.background.BackgroundPlugin
+mindustrytool.plugins.controls.TouchPlugin

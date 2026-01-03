@@ -27,10 +27,11 @@ public class ToolsMenuDialog extends BaseDialog {
         cont.button(Core.bundle.get("message.lazy-components.title", "Manage Components"), Icon.settings, Styles.flatt,
                 () -> {
                     hide();
-                    // Combine all lazy components from both plugins
+                    // Combine all lazy components from plugins
                     Seq<LazyComponent<?>> allComponents = new Seq<>();
                     allComponents.addAll(BrowserPlugin.getLazyComponents());
                     allComponents.addAll(PlayerConnectPlugin.getLazyComponents());
+                    allComponents.addAll(mindustrytool.plugins.controls.TouchPlugin.getLazyComponents());
                     new LazyComponentDialog(allComponents).show();
                 }).row();
 
