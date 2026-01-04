@@ -1079,14 +1079,13 @@ public class UpdateCenterDialog extends BaseDialog {
                     // Responsive width for message to prevent horizontal overflow on mobile
                     float availableWidth;
                     if (Core.graphics.isPortrait()) {
-                        // Conservative estimate: Screen width - Graph - Container margins - ScrollPane
-                        // padding
-                        availableWidth = Math.min(Core.graphics.getWidth() * 0.85f - graphWidth, 400f);
+                        // Ensure positive width before applying upper bound
+                        float baseWidth = Math.max(150f, Core.graphics.getWidth() * 0.85f - graphWidth);
+                        availableWidth = Math.min(baseWidth, 400f);
                     } else {
                         availableWidth = Math.min(500f, Core.graphics.getWidth() * 0.5f);
                     }
-                    content.add(c.message).color(Color.white).wrap().width(Math.max(150f, availableWidth)).padBottom(4f)
-                            .row();
+                    content.add(c.message).color(Color.white).wrap().width(availableWidth).padBottom(4f).row();
 
                     // Meta (Author, Date)
                     content.table(meta -> {

@@ -62,6 +62,7 @@ public class CreateRoomDialog extends BaseDialog {
 
         // Ensure texture is cleaned up
         hidden(() -> {
+            saveConfig();
             if (logoTexture != null) {
                 logoTexture.dispose();
                 logoTexture = null;
@@ -425,22 +426,14 @@ public class CreateRoomDialog extends BaseDialog {
             t.table(info -> {
                 info.left();
                 info.add("Name:").left().width(100f);
-                info.field(confName, val -> {
-                    confName = val;
-                    Core.settings.put("pc-room-name", val);
-                }).growX().valid(x -> {
+                info.field(confName, val -> confName = val).growX().valid(x -> {
                     confName = x;
-                    Core.settings.put("pc-room-name", x);
                     return !x.isEmpty();
                 }).maxTextLength(50).with(tf -> tf.next(false)).height(40f).row();
 
                 info.add("Description:").left().width(100f).padTop(5);
-                info.area(confDesc, val -> {
-                    confDesc = val;
-                    Core.settings.put("pc-room-desc", val);
-                }).growX().valid(x -> {
+                info.area(confDesc, val -> confDesc = val).growX().valid(x -> {
                     confDesc = x;
-                    Core.settings.put("pc-room-desc", x);
                     return !x.isEmpty();
                 }).maxTextLength(200)
                         .height(110f).with(ta -> ta.next(false)).padTop(5).row();
@@ -451,7 +444,6 @@ public class CreateRoomDialog extends BaseDialog {
                     logo.button(Icon.download, () -> {
                         Vars.platform.showFileChooser(true, "png,jpg,jpeg", f -> {
                             confLogoPath = f.absolutePath();
-                            Core.settings.put("pc-room-logo", confLogoPath);
                             setupUI();
                         });
                     }).size(40f)
@@ -464,7 +456,6 @@ public class CreateRoomDialog extends BaseDialog {
                                 .tooltip("Path: " + confLogoPath);
                         logo.button(Icon.cancel, Styles.clearNonei, () -> {
                             confLogoPath = "";
-                            Core.settings.put("pc-room-logo", "");
                             setupUI();
                         }).size(40f).padLeft(2f).tooltip("Remove Logo");
                     }

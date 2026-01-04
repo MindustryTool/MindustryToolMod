@@ -88,7 +88,7 @@ public class QuickAccessFeature implements Feature {
                         row2.defaults().size(btnSize).pad(btnPad);
 
                         // Smart Drill toggle button
-                        row2.button(Icon.production, Styles.clearTogglei, () -> {
+                        row2.button(Icon.production, Styles.clearNonei, () -> {
                             mindustrytool.features.content.browser.LazyComponent<?> comp = mindustrytool.features.gameplay.GameplayFeature
                                     .getSmartDrillComponent();
                             comp.setEnabled(!comp.isEnabled());
