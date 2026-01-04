@@ -1,9 +1,0 @@
-# Plugin class names - add new plugins here (one per line)
-# Lines starting with # are comments
-mindustrytool.plugins.auth.AuthPlugin
-mindustrytool.plugins.browser.BrowserPlugin
-mindustrytool.plugins.playerconnect.PlayerConnectPlugin
-mindustrytool.plugins.quickaccess.QuickAccessPlugin
-mindustrytool.plugins.voicechat.VoiceChatPlugin
-mindustrytool.plugins.background.BackgroundPlugin
-mindustrytool.plugins.controls.TouchPlugin

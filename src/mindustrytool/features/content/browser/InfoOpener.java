@@ -1,0 +1,57 @@
+package mindustrytool.features.content.browser;
+
+import mindustry.Vars;
+import mindustry.ui.dialogs.BaseDialog;
+
+public class InfoOpener {
+    private static final CacheManager<String, Object> mapCache = new CacheManager<>(128);
+    private static final CacheManager<String, Object> schematicCache = new CacheManager<>(128);
+
+    public static void open(ContentData data, ContentType type, BaseDialog infoDialog) {
+        if (data == null) {
+            Vars.ui.showInfo("Cannot open info: Data is null.");
+            return;
+        }
+        String id = data.id();
+        CacheManager<String, Object> cache = type == ContentType.MAP ? mapCache : schematicCache;
+        if (cache.has(id)) {
+            showCached(cache.get(id), type, infoDialog);
+            return;
+        }
+        fetch(id, type, cache, infoDialog);
+    }
+
+    private static void showCached(Object cached, ContentType type, BaseDialog infoDialog) {
+        if (infoDialog instanceof mindustrytool.features.content.browser.ui.DetailDialog) {
+            mindustrytool.features.content.browser.ui.DetailDialog dialog = (mindustrytool.features.content.browser.ui.DetailDialog) infoDialog;
+            if (cached instanceof MapDetailData)
+                dialog.show((MapDetailData) cached);
+            else if (cached instanceof SchematicDetailData)
+                dialog.show((SchematicDetailData) cached);
+        }
+    }
+
+    private static void fetch(String id, ContentType type, CacheManager<String, Object> cache, BaseDialog infoDialog) {
+        if (type == ContentType.MAP) {
+            Api.findMapById(id, m -> {
+                if (m != null) {
+                    cache.put(id, m);
+                    if (infoDialog instanceof mindustrytool.features.content.browser.ui.DetailDialog)
+                        ((mindustrytool.features.content.browser.ui.DetailDialog) infoDialog).show(m);
+                } else {
+                    Vars.ui.showInfo("Failed to load map info.");
+                }
+            });
+        } else {
+            Api.findSchematicById(id, s -> {
+                if (s != null) {
+                    cache.put(id, s);
+                    if (infoDialog instanceof mindustrytool.features.content.browser.ui.DetailDialog)
+                        ((mindustrytool.features.content.browser.ui.DetailDialog) infoDialog).show(s);
+                } else {
+                    Vars.ui.showInfo("Failed to load schematic info.");
+                }
+            });
+        }
+    }
+}
