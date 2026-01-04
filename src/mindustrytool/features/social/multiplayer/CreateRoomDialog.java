@@ -47,6 +47,7 @@ public class CreateRoomDialog extends BaseDialog {
         instance = this;
 
         loadConfig();
+        addCloseListener();
 
         // Buttons
         buttons.defaults().size(210f, 64f).pad(2);
@@ -129,9 +130,20 @@ public class CreateRoomDialog extends BaseDialog {
     }
 
     public void triggerAutoHost() {
-        loadConfig();
-        if (!confAutoHost)
+        // Fix: Check setting directly to avoid overwriting current UI state with
+        // loadConfig()
+        // unless auto-host is actually enabled.
+        if (!Core.settings.getBool("pc-auto-host", false))
             return;
+
+        loadConfig();
+
+        // Validation Check: If data is missing, skip auto-host but DON'T disable it
+        if (confName == null || confName.trim().isEmpty() || confDesc == null || confDesc.trim().isEmpty()) {
+            Vars.ui.hudfrag.showToast("Auto-Host skipped: Name/Description missing.");
+            return;
+        }
+
         if (active() || connecting)
             return;
 
@@ -413,24 +425,37 @@ public class CreateRoomDialog extends BaseDialog {
             t.table(info -> {
                 info.left();
                 info.add("Name:").left().width(100f);
-                info.field(confName, val -> confName = val).growX().valid(x -> !x.isEmpty()).maxTextLength(50)
-                        .with(tf -> tf.next(false)).height(40f).row();
+                info.field(confName, val -> {
+                    confName = val;
+                    Core.settings.put("pc-room-name", val);
+                }).growX().valid(x -> {
+                    confName = x;
+                    Core.settings.put("pc-room-name", x);
+                    return !x.isEmpty();
+                }).maxTextLength(50).with(tf -> tf.next(false)).height(40f).row();
 
                 info.add("Description:").left().width(100f).padTop(5);
-                info.area(confDesc, val -> confDesc = val).growX().valid(x -> !x.isEmpty()).maxTextLength(200)
+                info.area(confDesc, val -> {
+                    confDesc = val;
+                    Core.settings.put("pc-room-desc", val);
+                }).growX().valid(x -> {
+                    confDesc = x;
+                    Core.settings.put("pc-room-desc", x);
+                    return !x.isEmpty();
+                }).maxTextLength(200)
                         .height(110f).with(ta -> ta.next(false)).padTop(5).row();
 
-                info.add("Logo:").left().width(100f).padTop(5)
-                        .color(confLogoPath.isEmpty() ? Pal.remove : arc.graphics.Color.white);
+                info.add("Logo:").left().width(100f).padTop(5).color(arc.graphics.Color.white);
                 info.table(logo -> {
                     logo.left();
                     logo.button(Icon.download, () -> {
                         Vars.platform.showFileChooser(true, "png,jpg,jpeg", f -> {
                             confLogoPath = f.absolutePath();
+                            Core.settings.put("pc-room-logo", confLogoPath);
                             setupUI();
                         });
                     }).size(40f)
-                            .tooltip(confLogoPath == null || confLogoPath.isEmpty() ? "[red]Required: Import Logo"
+                            .tooltip(confLogoPath == null || confLogoPath.isEmpty() ? "Optional: Import Logo"
                                     : confLogoPath)
                             .left();
 
@@ -439,6 +464,7 @@ public class CreateRoomDialog extends BaseDialog {
                                 .tooltip("Path: " + confLogoPath);
                         logo.button(Icon.cancel, Styles.clearNonei, () -> {
                             confLogoPath = "";
+                            Core.settings.put("pc-room-logo", "");
                             setupUI();
                         }).size(40f).padLeft(2f).tooltip("Remove Logo");
                     }
@@ -640,10 +666,7 @@ public class CreateRoomDialog extends BaseDialog {
             Vars.ui.showInfo("Error: Room Description is required.");
             return false;
         }
-        if (confLogoPath.isEmpty()) {
-            Vars.ui.showInfo("Error: Room Logo is required.");
-            return false;
-        }
+
         if (selected == null) {
             Vars.ui.showInfo("Error: Please select a Proxy Server first.");
             return false;
