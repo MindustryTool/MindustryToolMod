@@ -242,6 +242,10 @@ public class GameplayFeature implements Feature {
         return lazyComponents;
     }
 
+    public static LazyComponent<SmartDrillManager> getSmartDrillComponent() {
+        return smartDrillManager;
+    }
+
     public static EntityVisibilityManager getEntityVisibilityManager() {
         return entityVisibilityManager.getIfEnabled();
     }

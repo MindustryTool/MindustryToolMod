@@ -63,8 +63,6 @@ public class QuickAccessFeature implements Feature {
                         row1.add(flipButton);
 
                         // First tool always visible next to FlipButton
-
-                        // First tool always visible next to FlipButton
                         row1.button(Icon.settings, Styles.clearNonei, () -> {
                             // Refresh logic could be improved here, currently relying on static dialog in
                             // BrowserFeature
@@ -88,6 +86,15 @@ public class QuickAccessFeature implements Feature {
                     pad.collapser(row2 -> {
                         row2.left();
                         row2.defaults().size(btnSize).pad(btnPad);
+
+                        // Smart Drill toggle button
+                        row2.button(Icon.production, Styles.clearTogglei, () -> {
+                            mindustrytool.features.content.browser.LazyComponent<?> comp = mindustrytool.features.gameplay.GameplayFeature
+                                    .getSmartDrillComponent();
+                            comp.setEnabled(!comp.isEnabled());
+                        }).checked(b -> mindustrytool.features.gameplay.GameplayFeature.getSmartDrillComponent()
+                                .isEnabled())
+                                .tooltip("Smart Drill");
 
                         // Voice Settings button
                         row2.button(Icon.chat, Styles.clearNonei, () -> {
