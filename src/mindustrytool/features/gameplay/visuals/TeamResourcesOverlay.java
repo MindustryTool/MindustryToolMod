@@ -560,7 +560,7 @@ public class TeamResourcesOverlay extends Table {
                     // Re-open dialog to refresh UI elements (sliders, checkboxes)
                     hide();
                     showDialog();
-                }).size(210f, 64f);
+                }).size(250f, 64f);
 
                 Table cont = this.cont;
                 cont.clear();
