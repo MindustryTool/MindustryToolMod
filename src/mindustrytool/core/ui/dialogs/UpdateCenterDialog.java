@@ -56,6 +56,8 @@ public class UpdateCenterDialog extends BaseDialog {
     // Needed fields
     private boolean loading = true;
     private String errorMessage = null;
+    private boolean downloading = false;
+    private float downloadProgress = 0f;
 
     // Filter state
     private final ObjectSet<mindustrytool.utils.Version.SuffixType> enabledFilters = new ObjectSet<>();
@@ -606,6 +608,8 @@ public class UpdateCenterDialog extends BaseDialog {
 
         if (loading) {
             buildLoadingUI();
+        } else if (downloading) {
+            buildDownloadingUI();
         } else if (errorMessage != null) {
             buildErrorUI();
         } else {
@@ -626,10 +630,41 @@ public class UpdateCenterDialog extends BaseDialog {
 
         buttons.button("@back", Icon.left, this::hide);
 
-        if (!loading && errorMessage == null && selectedRelease != null) {
+        if (!loading && !downloading && errorMessage == null && selectedRelease != null) {
             buttons.button(getUpdateButtonText(), Icon.download, this::performUpdate)
                     .color(getUpdateButtonColor());
         }
+    }
+
+    private void buildDownloadingUI() {
+        Table table = new Table();
+        table.add("Downloading...").color(Color.lightGray).padBottom(15f).row();
+
+        // Animated progress bar container
+        Table progressContainer = new Table();
+        progressContainer.setBackground(Styles.black3);
+
+        Element progressBar = new Element() {
+            @Override
+            public void draw() {
+                // Animate progress
+                downloadProgress += Core.graphics.getDeltaTime() * 0.5f;
+                if (downloadProgress > 1f)
+                    downloadProgress = 0f;
+
+                float barWidth = getWidth() * 0.3f;
+                float px = x + (getWidth() - barWidth) * downloadProgress;
+
+                Draw.color(Pal.accent);
+                Fill.rect(px + barWidth / 2f, y + getHeight() / 2f, barWidth, getHeight());
+                Draw.color();
+            }
+        };
+
+        progressContainer.add(progressBar).width(300f).height(20f).pad(5f);
+        table.add(progressContainer).width(310f).height(30f);
+
+        cont.add(table).center();
     }
 
     private void buildLoadingUI() {
@@ -1219,13 +1254,11 @@ public class UpdateCenterDialog extends BaseDialog {
             confirm.buttons.button("@cancel", Icon.cancel, confirm::hide);
             confirm.buttons.button("@ok", Icon.ok, () -> {
                 confirm.hide();
-                hide();
                 startUpdateProcess();
             }).color(Pal.accent);
 
             confirm.show();
         } else {
-            hide();
             startUpdateProcess();
         }
     }
@@ -1259,16 +1292,10 @@ public class UpdateCenterDialog extends BaseDialog {
     }
 
     private void downloadDirectly(String url) {
-        BaseDialog dialog = new BaseDialog("Downloading");
-        dialog.cont.add("Downloading update...").pad(20f).row();
-        // dialog.cont.image(Icon.refresh).color(Pal.accent).update(i ->
-        // i.setOrigin(Align.center));
-        // Simple progress bar
-        mindustry.ui.Bar bar = new mindustry.ui.Bar();
-        dialog.cont.add(bar).width(400f).height(30f).pad(10f);
-        dialog.buttons.button("@cancel", null).size(0f); // Hide default handle
-        dialog.buttons.button("@cancel", dialog::hide).size(120f, 50f);
-        dialog.show();
+        // Set downloading state and show inline progress bar
+        downloading = true;
+        downloadProgress = 0f;
+        rebuildUI();
 
         // Use Http directly to file
         arc.files.Fi tmp = arc.Core.files.cache("mod-update-" + System.currentTimeMillis() + ".jar");
@@ -1276,15 +1303,15 @@ public class UpdateCenterDialog extends BaseDialog {
         Log.info("Attempting direct download from: " + url);
 
         Http.get(url)
-                .header("User-Agent", "MindustryToolMod") // Add UA to prevent 403 on some GH asset links
-                .header("Accept", "application/octet-stream") // Required for binary asset downloads
+                .header("User-Agent", "MindustryToolMod")
+                .header("Accept", "application/octet-stream")
                 .error(e -> {
-                    dialog.hide();
+                    downloading = false;
+                    Core.app.post(this::rebuildUI);
                     Log.err("Direct download failed from URL: " + url, e);
-                    // Show more helpful error with fallback options
+
                     String errorMsg = e.getMessage();
                     if (errorMsg != null && errorMsg.toLowerCase().contains("forbidden")) {
-                        // Offer fallback options
                         BaseDialog fallbackDialog = new BaseDialog("Download Failed");
                         fallbackDialog.cont.add("Direct download blocked.").color(Pal.remove).row();
                         fallbackDialog.cont.add("Try alternative methods:").color(Color.gray).padTop(10f).row();
@@ -1305,27 +1332,19 @@ public class UpdateCenterDialog extends BaseDialog {
                         Vars.ui.showException("Download Failed", e);
                     }
                 })
-                // .block() // remove blocked call as it breaks fluent interface if handled
-                // incorrectly with return types
                 .submit(response -> {
                     try {
                         byte[] data = response.getResult();
-                        // Update bar? We have no progress callback in standard Http.get without content
-                        // length hack
-                        // Just set to 1 after done.
-
                         tmp.writeBytes(data);
 
-                        dialog.hide();
+                        downloading = false;
 
-                        // Import logic similar to ModsDialog.importMod
                         Core.app.post(() -> {
+                            rebuildUI();
                             try {
                                 mindustry.mod.Mods.LoadedMod mod = Vars.mods.importMod(tmp);
                                 if (mod != null) {
                                     tmp.delete();
-
-                                    // Prompt restart
                                     Vars.ui.showInfoOnHidden("@mods.reloadexit", () -> {
                                         Core.app.exit();
                                     });
@@ -1337,8 +1356,9 @@ public class UpdateCenterDialog extends BaseDialog {
                             }
                         });
                     } catch (Exception e) {
+                        downloading = false;
                         Core.app.post(() -> {
-                            dialog.hide();
+                            rebuildUI();
                             Vars.ui.showException("Write Failed", e);
                         });
                     }
