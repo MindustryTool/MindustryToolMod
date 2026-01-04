@@ -1079,12 +1079,14 @@ public class UpdateCenterDialog extends BaseDialog {
                     // Responsive width for message to prevent horizontal overflow on mobile
                     float availableWidth;
                     if (Core.graphics.isPortrait()) {
-                        // Screen width - Graph width - Margins/Padding (approx 70f)
-                        availableWidth = Core.graphics.getWidth() - graphWidth - 70f;
+                        // Conservative estimate: Screen width - Graph - Container margins - ScrollPane
+                        // padding
+                        availableWidth = Math.min(Core.graphics.getWidth() * 0.85f - graphWidth, 400f);
                     } else {
-                        availableWidth = 500f;
+                        availableWidth = Math.min(500f, Core.graphics.getWidth() * 0.5f);
                     }
-                    content.add(c.message).color(Color.white).wrap().width(availableWidth).padBottom(4f).row();
+                    content.add(c.message).color(Color.white).wrap().width(Math.max(150f, availableWidth)).padBottom(4f)
+                            .row();
 
                     // Meta (Author, Date)
                     content.table(meta -> {
