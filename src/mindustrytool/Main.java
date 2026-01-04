@@ -26,7 +26,7 @@ public class Main extends Mod {
     public static final Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
 
     private static final String API_REPO_URL = "https://raw.githubusercontent.com/MindustryTool/MindustryToolMod/v8/mod.hjson";
-    private static final String API_URL = "https://api.mindustry-tool.com/api/v4/";
+
     private static final String REPO_URL = "MindustryTool/MindustryToolMod";
 
     /** All loaded features. */
@@ -229,32 +229,27 @@ public class Main extends Mod {
 
                     // Determine update type
                     String title = "Update Available";
-                    String color = "[accent]";
                     String typeClean = "Patch";
 
                     if (updateAvailable) {
                         if (latest.major > current.major) {
                             title = "[red]MAJOR UPDATE!";
-                            color = "[red]";
                             typeClean = "Major Update";
                         } else if (latest.minor > current.minor) {
                             title = "[gold]New Features!";
-                            color = "[gold]";
                             typeClean = "Feature Update";
                         } else if (latest.type == mindustrytool.utils.Version.SuffixType.FIX) {
                             title = "[green]Bug Fixes";
-                            color = "[green]";
                             typeClean = "Fix";
                         }
                     } else {
                         // Up to date state
                         title = "[green]Up to Date";
-                        color = "[green]";
                         typeClean = "Info";
                     }
 
                     final String finalTitle = title;
-                    final String finalColor = color;
+
                     final String finalType = typeClean;
                     final boolean finalUpdateAvailable = updateAvailable;
 

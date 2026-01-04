@@ -20,10 +20,6 @@ public class GameplayFeature implements Feature {
     /** Registry of lazy-loaded components */
     public static final Seq<LazyComponent<?>> lazyComponents = new Seq<>();
 
-    static {
-        arc.util.Log.info("[GameplayFeature] Class Loaded. Static Init Start.");
-    }
-
     // Enemy Pathfinding Visualization Component
     private static final LazyComponent<PathfindingVisualizer> pathfindingVisualizer = new LazyComponent<>(
             "Enemy Pathfinding",
@@ -113,12 +109,12 @@ public class GameplayFeature implements Feature {
         });
 
         distributionRevealVisualizer.onSettings(() -> {
-            // DistributionRevealVisualizer currently doesn't have a public showSettings().
-            // It loads keys from Core.settings directly.
-            // We may need to implement a Settings Dialog for it later.
-            // For now, allow toggle.
-            // TODO: Implement settings dialog for Distribution Viz
-            showEnableFirstDialog("Distribution Viz (No Settings)");
+            DistributionRevealVisualizer viz = distributionRevealVisualizer.getIfEnabled();
+            if (viz != null) {
+                viz.showSettings();
+            } else {
+                showEnableFirstDialog("Distribution Viz");
+            }
         });
 
         teamResourcesOverlay.onSettings(() -> {
@@ -145,10 +141,6 @@ public class GameplayFeature implements Feature {
         lazyComponents.add(smartDrillManager);
         lazyComponents.add(distributionRevealVisualizer);
 
-        arc.util.Log.info("[GameplayFeature] Static Init Complete. Added @ components.", lazyComponents.size);
-        for (LazyComponent<?> c : lazyComponents) {
-            arc.util.Log.info("[GameplayFeature]   - @", c.getName());
-        }
     }
 
     private static void showEnableFirstDialog(String featureName) {

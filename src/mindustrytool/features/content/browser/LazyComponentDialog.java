@@ -96,11 +96,22 @@ public class LazyComponentDialog extends BaseDialog {
             if (!searchText.isEmpty() && !c.getName().toLowerCase().contains(searchText.toLowerCase())) {
                 return false;
             }
-            return switch (filterMode) {
-                case ALL -> true;
-                case ENABLED -> c.isEnabled();
-                case DISABLED -> !c.isEnabled();
-            };
+            boolean matches;
+            switch (filterMode) {
+                case ALL:
+                    matches = true;
+                    break;
+                case ENABLED:
+                    matches = c.isEnabled();
+                    break;
+                case DISABLED:
+                    matches = !c.isEnabled();
+                    break;
+                default:
+                    matches = true;
+                    break;
+            }
+            return matches;
         });
 
         cont.pane(pane -> {
@@ -185,10 +196,15 @@ public class LazyComponentDialog extends BaseDialog {
     }
 
     private String getFilterLabel() {
-        return switch (filterMode) {
-            case ALL -> Core.bundle.get("mdt.message.lazy-components.filter.all");
-            case ENABLED -> Core.bundle.get("mdt.message.lazy-components.filter.enabled");
-            case DISABLED -> Core.bundle.get("mdt.message.lazy-components.filter.disabled");
-        };
+        switch (filterMode) {
+            case ALL:
+                return Core.bundle.get("mdt.message.lazy-components.filter.all");
+            case ENABLED:
+                return Core.bundle.get("mdt.message.lazy-components.filter.enabled");
+            case DISABLED:
+                return Core.bundle.get("mdt.message.lazy-components.filter.disabled");
+            default:
+                return "All";
+        }
     }
 }

@@ -30,7 +30,6 @@ public class AndroidMicrophone {
     public static final byte CMD_STOP_MIC = 0x02;
     public static final byte CMD_SHUTDOWN = 0x03;
 
-    private final int sampleRate;
     private final int bufferSize;
     private boolean isOpen = false;
     private boolean isRecording = false;
@@ -51,7 +50,6 @@ public class AndroidMicrophone {
     private int packetsDropped = 0;
 
     public AndroidMicrophone(int sampleRate, int bufferSize) {
-        this.sampleRate = sampleRate;
         this.bufferSize = bufferSize;
     }
 

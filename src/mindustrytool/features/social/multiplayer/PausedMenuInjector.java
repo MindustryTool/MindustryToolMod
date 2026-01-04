@@ -5,8 +5,7 @@ import arc.scene.ui.layout.Table;
 import arc.scene.ui.ImageButton;
 import arc.scene.ui.TextButton;
 import mindustry.Vars;
-import mindustry.maps.Map;
-import mindustry.ui.dialogs.BaseDialog;
+
 import mindustry.gen.Icon;
 import arc.Core;
 
@@ -31,12 +30,14 @@ public class PausedMenuInjector {
             String planetText = Core.bundle.get("planet.button", "Planet Map"); // Planet Map button text
 
             for (arc.scene.ui.layout.Cell<?> cell : root.getCells()) {
-                if (cell.get() instanceof Button b) {
+                if (cell.get() instanceof Button) {
+                    Button b = (Button) cell.get();
                     boolean isHost = false;
                     boolean isPlanet = false;
 
                     // Check TextButton (Text OR Icon)
-                    if (b instanceof TextButton tb) {
+                    if (b instanceof TextButton) {
+                        TextButton tb = (TextButton) b;
                         String text = tb.getText().toString();
                         if (text.contains(hostText) || text.contains("Host")) {
                             isHost = true;
@@ -45,7 +46,8 @@ public class PausedMenuInjector {
                         } else {
                             // Check by icon
                             for (arc.scene.Element child : tb.getChildren()) {
-                                if (child instanceof arc.scene.ui.Image img) {
+                                if (child instanceof arc.scene.ui.Image) {
+                                    arc.scene.ui.Image img = (arc.scene.ui.Image) child;
                                     if (img.getDrawable() == Icon.host) {
                                         isHost = true;
                                         break;
@@ -58,7 +60,8 @@ public class PausedMenuInjector {
                         }
                     }
                     // Check ImageButton (Icon)
-                    else if (b instanceof ImageButton ib) {
+                    else if (b instanceof ImageButton) {
+                        ImageButton ib = (ImageButton) b;
                         if (ib.getStyle().imageUp == Icon.host) {
                             isHost = true;
                         } else if (ib.getStyle().imageUp == Icon.planet) {

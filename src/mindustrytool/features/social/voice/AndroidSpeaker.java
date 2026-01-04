@@ -35,7 +35,7 @@ public class AndroidSpeaker {
     private AudioMixer mixer;
 
     // Android AudioTrack constants (via reflection to avoid compile dependency)
-    private static final int CHANNEL_OUT_MONO = 4; // AudioFormat.CHANNEL_OUT_MONO
+
     private static final int CHANNEL_OUT_STEREO = 12; // AudioFormat.CHANNEL_OUT_STEREO
     private static final int ENCODING_PCM_16BIT = 2; // AudioFormat.ENCODING_PCM_16BIT
     private static final int STREAM_MUSIC = 3; // AudioManager.STREAM_MUSIC

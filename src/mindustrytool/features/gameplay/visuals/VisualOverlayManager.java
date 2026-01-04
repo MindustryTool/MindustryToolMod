@@ -437,7 +437,8 @@ public class VisualOverlayManager {
                 if (!shouldDrawTeam(tile.build.team))
                     continue;
 
-                if (tile.build instanceof OverdriveProjector.OverdriveBuild ob) {
+                if (tile.build instanceof OverdriveProjector.OverdriveBuild) {
+                    OverdriveProjector.OverdriveBuild ob = (OverdriveProjector.OverdriveBuild) tile.build;
                     OverdriveProjector block = (OverdriveProjector) ob.block;
                     if (filterContent.contains(block))
                         continue; // Filter check
@@ -460,7 +461,8 @@ public class VisualOverlayManager {
 
                     Lines.stroke(1.5f);
                     Lines.circle(ob.x, ob.y, range);
-                } else if (tile.build instanceof MendProjector.MendBuild mb) {
+                } else if (tile.build instanceof MendProjector.MendBuild) {
+                    MendProjector.MendBuild mb = (MendProjector.MendBuild) tile.build;
                     MendProjector block = (MendProjector) mb.block;
                     if (filterContent.contains(block))
                         continue; // Filter check
@@ -484,7 +486,8 @@ public class VisualOverlayManager {
                     Lines.stroke(1.5f);
                     Lines.circle(mb.x, mb.y, range);
 
-                } else if (tile.build instanceof RegenProjector.RegenProjectorBuild rb) {
+                } else if (tile.build instanceof RegenProjector.RegenProjectorBuild) {
+                    RegenProjector.RegenProjectorBuild rb = (RegenProjector.RegenProjectorBuild) tile.build;
                     RegenProjector block = (RegenProjector) rb.block;
                     if (filterContent.contains(block))
                         continue; // Filter check
@@ -510,7 +513,8 @@ public class VisualOverlayManager {
                     Lines.stroke(1.5f);
                     // Draw box for Regen Projector
                     Lines.rect(rb.x - range / 2f, rb.y - range / 2f, range, range);
-                } else if (tile.build.block instanceof ForceProjector block) {
+                } else if (tile.build.block instanceof ForceProjector) {
+                    ForceProjector block = (ForceProjector) tile.build.block;
                     // Check logic based on Block type, not Build type (fixes Modded shield
                     // projectors with custom builds)
                     if (filterContent.contains(block))
@@ -614,11 +618,13 @@ public class VisualOverlayManager {
                     return;
 
                 boolean hasAmmo = true;
-                if (tb instanceof ItemTurret.ItemTurretBuild itb) {
+                if (tb instanceof ItemTurret.ItemTurretBuild) {
+                    ItemTurret.ItemTurretBuild itb = (ItemTurret.ItemTurretBuild) tb;
                     // Check if block actually REQUIRES ammo (non-empty ammoTypes)
                     // Some modded turrets inherit ItemTurret but use no ammo (support/magic)
                     hasAmmo = itb.totalAmmo > 0 || ((ItemTurret) itb.block).ammoTypes.isEmpty();
-                } else if (tb instanceof LiquidTurret.LiquidTurretBuild ltb) {
+                } else if (tb instanceof LiquidTurret.LiquidTurretBuild) {
+                    LiquidTurret.LiquidTurretBuild ltb = (LiquidTurret.LiquidTurretBuild) tb;
                     // Similar check for liquid (though less common to have empty requirements)
                     hasAmmo = ltb.liquids.currentAmount() > 0.01f;
                 }
@@ -762,15 +768,18 @@ public class VisualOverlayManager {
 
                         // Optimization: check if overlap camera
                         float range = 0f;
-                        if (b instanceof MassDriver.MassDriverBuild mdb) {
+                        if (b instanceof MassDriver.MassDriverBuild) {
+                            MassDriver.MassDriverBuild mdb = (MassDriver.MassDriverBuild) b;
                             range = ((MassDriver) mdb.block).range;
-                        } else if (b instanceof LogicBlock.LogicBuild lb) {
+                        } else if (b instanceof LogicBlock.LogicBuild) {
+                            LogicBlock.LogicBuild lb = (LogicBlock.LogicBuild) b;
                             range = ((LogicBlock) lb.block).range;
                         } else if (b instanceof ShockMine.ShockMineBuild) {
                             range = 25f; // Reduced from 10 tiles to ~3 tiles (impact radius)
                         } else if (b.block instanceof PayloadMassDriver) {
                             range = ((PayloadMassDriver) b.block).range;
-                        } else if (b instanceof RepairTower.RepairTowerBuild rtb) {
+                        } else if (b instanceof RepairTower.RepairTowerBuild) {
+                            RepairTower.RepairTowerBuild rtb = (RepairTower.RepairTowerBuild) b;
                             range = ((RepairTower) rtb.block).range;
                         } else if (b.block.name.contains("repair")) {
                             // Try to get range via reflection for dynamic/modded blocks, fallback to 110f

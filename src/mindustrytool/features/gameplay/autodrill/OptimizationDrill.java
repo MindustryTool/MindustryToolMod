@@ -21,9 +21,8 @@ import mindustry.world.blocks.production.Drill;
 public class OptimizationDrill {
 
     // Default settings if not present in Core.settings
-    private static final int DEFAULT_MAX_TRIES = 2000;
+
     private static final String SETTING_QUALITY = "smart-drill.opt.quality";
-    private static final String SETTING_NODES = "smart-drill.opt.nodes";
 
     public static Seq<BuildPlan> getOptimizedPlan(Tile tile, Drill drill) {
         return getOptimizedPlan(tile, drill, true);
@@ -115,56 +114,5 @@ public class OptimizationDrill {
         selection.addAll(maxSelection);
 
         return max;
-    }
-
-    // Placeholder for future implementation of water extraction and power node
-    // placement
-    private static void placeWaterExtractorsAndPowerNodes(Seq<Tile> selection, Drill drill, Seq<BuildPlan> plans) {
-        Seq<Rect> rects = new Seq<>();
-        for (Tile t : selection) {
-            rects.add(DrillUtil.getBlockRect(t, drill));
-        }
-
-        Seq<Tile> waterExtractorTiles = new Seq<>();
-        Seq<Tile> powerNodeTiles = new Seq<>();
-
-        for (Tile t : selection) {
-            Seq<Tile> nearby = DrillUtil.getNearbyTiles(t.x, t.y, drill.size, Blocks.waterExtractor.size);
-
-            for (Tile n : nearby) {
-                Rect waterExtractorRect = DrillUtil.getBlockRect(n, Blocks.waterExtractor);
-                BuildPlan buildPlan = new BuildPlan(n.x, n.y, 0, Blocks.waterExtractor);
-
-                if (buildPlan.placeable(Vars.player.team())
-                        && rects.find(r -> r.overlaps(waterExtractorRect)) == null) {
-                    waterExtractorTiles.add(n);
-                    rects.add(waterExtractorRect);
-                    break;
-                }
-            }
-        }
-
-        for (Tile t : selection) {
-            Seq<Tile> nearby = DrillUtil.getNearbyTiles(t.x, t.y, drill.size, Blocks.powerNode.size);
-
-            for (Tile n : nearby) {
-                Rect powerNodeRect = DrillUtil.getBlockRect(n, Blocks.powerNode);
-                BuildPlan buildPlan = new BuildPlan(n.x, n.y, 0, Blocks.powerNode);
-
-                if (buildPlan.placeable(Vars.player.team()) && rects.find(r -> r.overlaps(powerNodeRect)) == null) {
-                    powerNodeTiles.add(n);
-                    rects.add(powerNodeRect);
-                    break;
-                }
-            }
-        }
-
-        for (Tile waterExtractorTile : waterExtractorTiles) {
-            plans.add(new BuildPlan(waterExtractorTile.x, waterExtractorTile.y, 0, Blocks.waterExtractor));
-        }
-
-        for (Tile powerNodeTile : powerNodeTiles) {
-            plans.add(new BuildPlan(powerNodeTile.x, powerNodeTile.y, 0, Blocks.powerNode));
-        }
     }
 }

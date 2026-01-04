@@ -1,7 +1,6 @@
 package mindustrytool.features.content.browser;
 
 import arc.Core;
-import arc.Core;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;

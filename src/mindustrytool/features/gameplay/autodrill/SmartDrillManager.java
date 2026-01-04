@@ -54,8 +54,6 @@ public class SmartDrillManager {
 
     private boolean enabled = true;
     private Tile selectedTile = null;
-    private Direction selectedDirection = null;
-    private Block selectedDrill = null;
 
     private final Table selectTable = new Table();
     private final Table directionTable = new Table();

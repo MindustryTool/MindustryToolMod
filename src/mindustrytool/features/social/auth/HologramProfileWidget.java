@@ -57,7 +57,6 @@ public class HologramProfileWidget extends Table {
                     // === HOVER EFFECT STATE ===
                     boolean hovered = hasMouse();
                     float hoverScale = hovered ? 1.1f : 1.0f;
-                    float glowIntensity = hovered ? 0.8f : 0.2f; // Much brighter when hovered
 
                     // Lerp pulse speed: Fast pulse when hovered
                     float pulseSpeed = hovered ? 15f : 30f;

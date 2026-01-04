@@ -6,13 +6,10 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
 import arc.math.Angles;
-import arc.math.Mathf;
 import arc.math.geom.Rect;
-import arc.math.geom.Vec2;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
-import arc.struct.Seq;
 import arc.util.Log;
 
 import mindustry.gen.Building;
@@ -70,7 +67,6 @@ public class DistributionRevealVisualizer {
 
     // === Cache ===
     private final Rect viewBounds = new Rect();
-    private final Color tmpColor = new Color();
 
     public DistributionRevealVisualizer() {
         Log.info("[DistributionRevealVisualizer] INITIALIZED.");
@@ -152,19 +148,19 @@ public class DistributionRevealVisualizer {
 
                 // Item Bridges
                 if (showItemBridges) {
-                    if (build instanceof BufferedItemBridge.BufferedItemBridgeBuild bb) {
-                        drawItemBridgeLine(bb);
-                    } else if (build instanceof ItemBridge.ItemBridgeBuild ib) {
-                        drawItemBridgeLine(ib);
-                    } else if (build instanceof DuctBridge.DuctBridgeBuild db) {
-                        drawDuctBridgeLine(db);
+                    if (build instanceof BufferedItemBridge.BufferedItemBridgeBuild) {
+                        drawItemBridgeLine((BufferedItemBridge.BufferedItemBridgeBuild) build);
+                    } else if (build instanceof ItemBridge.ItemBridgeBuild) {
+                        drawItemBridgeLine((ItemBridge.ItemBridgeBuild) build);
+                    } else if (build instanceof DuctBridge.DuctBridgeBuild) {
+                        drawDuctBridgeLine((DuctBridge.DuctBridgeBuild) build);
                     }
                 }
 
                 // Liquid Bridges
                 if (showLiquidBridges) {
-                    if (build instanceof LiquidBridge.LiquidBridgeBuild lb) {
-                        drawLiquidBridgeLine(lb);
+                    if (build instanceof LiquidBridge.LiquidBridgeBuild) {
+                        drawLiquidBridgeLine((LiquidBridge.LiquidBridgeBuild) build);
                     }
                     // Reinforced Bridge Conduit (Erekir) - check by class hierarchy
                     if (build.block.name.contains("reinforced-bridge-conduit") ||
@@ -174,13 +170,13 @@ public class DistributionRevealVisualizer {
                 }
 
                 // Routers & Distributors
-                if (showRouters && build instanceof Router.RouterBuild rb) {
-                    drawRouter(rb);
+                if (showRouters && build instanceof Router.RouterBuild) {
+                    drawRouter((Router.RouterBuild) build);
                 }
 
                 // Unloaders
-                if (showUnloaders && build instanceof Unloader.UnloaderBuild ub) {
-                    drawUnloader(ub);
+                if (showUnloaders && build instanceof Unloader.UnloaderBuild) {
+                    drawUnloader((Unloader.UnloaderBuild) build);
                 }
             }
         }
@@ -249,8 +245,8 @@ public class DistributionRevealVisualizer {
 
             // Draw integrated output extensions from destination bridge (same color,
             // continuous)
-            if (linked instanceof ItemBridge.ItemBridgeBuild linkedBridge) {
-                drawIntegratedOutputs(linkedBridge, color);
+            if (linked instanceof ItemBridge.ItemBridgeBuild) {
+                drawIntegratedOutputs((ItemBridge.ItemBridgeBuild) linked, color);
             }
         } else {
             // Empty - gray line
@@ -259,9 +255,9 @@ public class DistributionRevealVisualizer {
             Lines.line(x1, y1, x2, y2);
 
             // Still draw gray output branches when empty
-            if (linked instanceof ItemBridge.ItemBridgeBuild linkedBridge) {
+            if (linked instanceof ItemBridge.ItemBridgeBuild) {
                 Color grayColor = new Color(Color.gray).a(0.4f);
-                drawIntegratedOutputs(linkedBridge, grayColor);
+                drawIntegratedOutputs((ItemBridge.ItemBridgeBuild) linked, grayColor);
             }
         }
     }
@@ -300,8 +296,8 @@ public class DistributionRevealVisualizer {
             }
 
             // Draw integrated output extensions from destination bridge
-            if (linked instanceof DuctBridge.DuctBridgeBuild linkedBridge) {
-                drawDuctIntegratedOutputs(linkedBridge, color);
+            if (linked instanceof DuctBridge.DuctBridgeBuild) {
+                drawDuctIntegratedOutputs((DuctBridge.DuctBridgeBuild) linked, color);
             }
         } else {
             // Empty - gray line
@@ -310,9 +306,9 @@ public class DistributionRevealVisualizer {
             Lines.line(x1, y1, x2, y2);
 
             // Still draw gray output branches when empty
-            if (linked instanceof DuctBridge.DuctBridgeBuild linkedBridge) {
+            if (linked instanceof DuctBridge.DuctBridgeBuild) {
                 Color grayColor = new Color(Color.gray).a(0.4f);
-                drawDuctIntegratedOutputs(linkedBridge, grayColor);
+                drawDuctIntegratedOutputs((DuctBridge.DuctBridgeBuild) linked, grayColor);
             }
         }
     }
@@ -334,9 +330,6 @@ public class DistributionRevealVisualizer {
         Liquid currentLiquid = liquids != null ? liquids.current() : null;
         float liquidAmount = currentLiquid != null ? liquids.get(currentLiquid) : 0f;
         boolean hasLiquid = liquidAmount > 0.01f;
-
-        boolean canTransport = hasLiquid && linked.team == build.team &&
-                currentLiquid != null && linked.acceptLiquid(build, currentLiquid);
 
         boolean isBottleneck = hasLiquid && liquidAmount >= block.liquidCapacity * 0.9f;
 
@@ -362,8 +355,8 @@ public class DistributionRevealVisualizer {
             }
 
             // Draw integrated output extensions from destination bridge
-            if (linked instanceof LiquidBridge.LiquidBridgeBuild linkedBridge) {
-                drawLiquidIntegratedOutputs(linkedBridge, color);
+            if (linked instanceof LiquidBridge.LiquidBridgeBuild) {
+                drawLiquidIntegratedOutputs((LiquidBridge.LiquidBridgeBuild) linked, color);
             }
         } else {
             // Empty - gray line
@@ -372,9 +365,9 @@ public class DistributionRevealVisualizer {
             Lines.line(x1, y1, x2, y2);
 
             // Still draw gray output branches when empty to prevent flickering
-            if (linked instanceof LiquidBridge.LiquidBridgeBuild linkedBridge) {
+            if (linked instanceof LiquidBridge.LiquidBridgeBuild) {
                 Color grayColor = new Color(Color.gray).a(0.4f);
-                drawLiquidIntegratedOutputs(linkedBridge, grayColor);
+                drawLiquidIntegratedOutputs((LiquidBridge.LiquidBridgeBuild) linked, grayColor);
             }
         }
     }
@@ -564,91 +557,6 @@ public class DistributionRevealVisualizer {
     // =============================================
 
     /**
-     * Draw a simple line with arrowhead at start
-     * 
-     * @param isBottleneck If true, arrow will be red to indicate bottleneck
-     */
-    private void drawLine(float x1, float y1, float x2, float y2, Color color, boolean isBottleneck) {
-        Draw.color(color);
-        Lines.stroke(lineThickness);
-        Lines.line(x1, y1, x2, y2);
-
-        // Draw arrowhead at start (pointing toward x2, y2)
-        if (showArrows) {
-            // Arrow is solid red when bottleneck, otherwise same as line
-            Color arrowColor = (isBottleneck && showBottleneck)
-                    ? tmpColor.set(Pal.remove).a(0.8f)
-                    : color;
-            drawArrowhead(x1, y1, x2, y2, arrowColor);
-        }
-    }
-
-    /**
-     * Draw striped line for multi-item bridges
-     * Each item gets its own colored segment
-     */
-    private void drawStripedItemLine(float x1, float y1, float x2, float y2,
-            ItemModule items, boolean canTransport, boolean isBottleneck) {
-        // Collect all items (with duplicates for count)
-        Seq<Item> itemList = new Seq<>();
-        for (int i = 0; i < content.items().size; i++) {
-            int count = items.get(i);
-            if (count > 0) {
-                Item item = content.item(i);
-                // Add proportionally (but cap to avoid too many segments)
-                int addCount = Math.min(count, 3); // Max 3 segments per item type
-                for (int j = 0; j < addCount; j++) {
-                    itemList.add(item);
-                }
-            }
-        }
-
-        if (itemList.isEmpty()) {
-            Draw.color(Color.gray, 0.4f);
-            Lines.stroke(lineThickness);
-            Lines.line(x1, y1, x2, y2);
-            return;
-        }
-
-        // Calculate segment parameters
-        float totalLength = Mathf.dst(x1, y1, x2, y2);
-        float segmentLength = totalLength / itemList.size;
-        float angle = Angles.angle(x1, y1, x2, y2);
-
-        // Alpha based on transport status
-        float alpha = canTransport ? 0.8f : 0.35f;
-
-        // Draw each segment
-        float currentX = x1, currentY = y1;
-        for (int i = 0; i < itemList.size; i++) {
-            Item item = itemList.get(i);
-
-            float nextX = currentX + Angles.trnsx(angle, segmentLength);
-            float nextY = currentY + Angles.trnsy(angle, segmentLength);
-
-            // Bottleneck: solid red for last segment
-            if (isBottleneck && showBottleneck && i == itemList.size - 1) {
-                Draw.color(Pal.remove, 0.8f);
-            } else {
-                Draw.color(item.color, alpha);
-            }
-
-            Lines.stroke(lineThickness);
-            Lines.line(currentX, currentY, nextX, nextY);
-
-            currentX = nextX;
-            currentY = nextY;
-        }
-
-        // Draw arrowhead at start
-        if (showArrows) {
-            Item firstItem = itemList.first();
-            tmpColor.set(firstItem.color).a(alpha);
-            drawArrowhead(x1, y1, x2, y2, tmpColor);
-        }
-    }
-
-    /**
      * Draw arrowhead at start of line (right after source block)
      * Format: A▸─────────────B
      */
@@ -670,27 +578,6 @@ public class DistributionRevealVisualizer {
                 tipY + Angles.trnsy(angle + 135f, arrowSize * 0.7f),
                 tipX + Angles.trnsx(angle - 135f, arrowSize * 0.7f), // Right corner
                 tipY + Angles.trnsy(angle - 135f, arrowSize * 0.7f));
-    }
-
-    /**
-     * Get flow color based on status
-     * Line always shows item/liquid color - bottleneck is indicated by arrow
-     * 
-     * @param hasContent   Whether bridge has items/liquid
-     * @param canTransport Whether items can be transported
-     * @param baseColor    The item/liquid color
-     */
-    private Color getFlowColor(boolean hasContent, boolean canTransport, Color baseColor) {
-        if (!hasContent) {
-            // Gray - inactive
-            return tmpColor.set(Color.gray).a(0.4f);
-        } else if (!canTransport) {
-            // Light color - blocked
-            return tmpColor.set(baseColor).a(0.35f);
-        } else {
-            // Normal color - active
-            return tmpColor.set(baseColor).a(0.8f);
-        }
     }
 
     /**
@@ -809,17 +696,6 @@ public class DistributionRevealVisualizer {
         return null;
     }
 
-    private int countUniqueItems(ItemModule items) {
-        if (items == null)
-            return 0;
-        int count = 0;
-        for (int i = 0; i < content.items().size; i++) {
-            if (items.get(i) > 0)
-                count++;
-        }
-        return count;
-    }
-
     /**
      * Check if a building can accept a specific item type.
      * Uses block type checks for transport/storage, and checks item requirements
@@ -853,7 +729,7 @@ public class DistributionRevealVisualizer {
             return false;
         }
 
-        var block = target.block;
+        mindustry.world.Block block = target.block;
 
         // 3. Transport Direction Check
         // If target is a transport block, it must not be pointing AT the source

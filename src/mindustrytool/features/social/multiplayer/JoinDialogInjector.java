@@ -35,8 +35,9 @@ public class JoinDialogInjector {
             if (pane != null) {
                 Table hosts = (Table) pane.getWidget();
                 if (hosts != null && !hosts.getChildren().isEmpty()) {
-                    if (hosts.getChildren().first() instanceof Table first && "playerconnect".equals(first.name)) {
-                        first.remove();
+                    if (hosts.getChildren().first() instanceof Table
+                            && "playerconnect".equals(hosts.getChildren().first().name)) {
+                        hosts.getChildren().first().remove();
                         hosts.invalidateHierarchy();
                     }
                 }
@@ -50,7 +51,7 @@ public class JoinDialogInjector {
         Table hosts = (Table) pane.getWidget();
         if (hosts == null || hosts.getChildren().isEmpty())
             return;
-        if (hosts.getChildren().first() instanceof Table first && "playerconnect".equals(first.name)) {
+        if (hosts.getChildren().first() instanceof Table && "playerconnect".equals(hosts.getChildren().first().name)) {
             if (needsRefresh) {
                 needsRefresh = false;
                 refreshRooms();

@@ -12,7 +12,6 @@ import java.util.PriorityQueue;
  */
 public class JitterBuffer {
 
-    private static final int FRAME_DURATION_MS = 20; // Assuming 20ms standard Opus frame
     private static final int MAX_BUFFER_SIZE = 25; // Max 500ms latency cap
     private static final int MIN_BUFFER_SIZE = 2; // Min 40ms latency
 

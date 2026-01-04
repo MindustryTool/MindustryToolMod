@@ -50,11 +50,10 @@ public class UpdateCenterDialog extends BaseDialog {
     private final Seq<CommitInfo> commits = new Seq<>();
     private final ObjectMap<String, String> tags = new ObjectMap<>(); // SHA -> TagName
     private ReleaseInfo selectedRelease = null;
-    private ReleaseInfo currentRelease = null;
+
     private final mindustrytool.utils.Version currentVersion;
 
     // Needed fields
-    private TextButton updateButton;
     private boolean loading = true;
     private String errorMessage = null;
 
@@ -113,7 +112,6 @@ public class UpdateCenterDialog extends BaseDialog {
         commits.clear();
         activeBranches.clear();
         selectedRelease = null;
-        currentRelease = null;
 
         rebuildUI();
         fetchReleases();
@@ -588,7 +586,7 @@ public class UpdateCenterDialog extends BaseDialog {
         // Find current release
         for (ReleaseInfo r : releases) {
             if (r.getVersion().equals(currentVersion)) {
-                currentRelease = r;
+
                 break;
             }
         }
@@ -629,8 +627,8 @@ public class UpdateCenterDialog extends BaseDialog {
         buttons.button("@back", Icon.left, this::hide);
 
         if (!loading && errorMessage == null && selectedRelease != null) {
-            updateButton = buttons.button(getUpdateButtonText(), Icon.download, this::performUpdate)
-                    .color(getUpdateButtonColor()).get();
+            buttons.button(getUpdateButtonText(), Icon.download, this::performUpdate)
+                    .color(getUpdateButtonColor());
         }
     }
 
@@ -1454,11 +1452,11 @@ public class UpdateCenterDialog extends BaseDialog {
     }
 
     private class GraphConnection {
-        String toSha;
+
         int toLane;
 
         GraphConnection(String s, int l) {
-            toSha = s;
+
             toLane = l;
         }
     }

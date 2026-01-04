@@ -520,7 +520,7 @@ public class MarkdownRenderer {
 
             // Wrap if current width + item width exceeds max
             if (currentW + itemW > maxW && currentW > 0) {
-                arc.scene.ui.layout.Cell cell = parent.add(currentRow);
+                arc.scene.ui.layout.Cell<Table> cell = parent.add(currentRow);
                 if (centered)
                     cell.center();
                 else
@@ -537,7 +537,7 @@ public class MarkdownRenderer {
 
         // Add final row
         if (currentRow.getChildren().size > 0) {
-            arc.scene.ui.layout.Cell cell = parent.add(currentRow);
+            arc.scene.ui.layout.Cell<Table> cell = parent.add(currentRow);
             if (centered)
                 cell.center();
             else

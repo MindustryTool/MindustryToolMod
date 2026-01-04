@@ -5,11 +5,9 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
 import arc.scene.ui.Button;
-import arc.scene.ui.Image;
-import arc.scene.ui.Label;
-import arc.scene.ui.layout.Table;
+
 import arc.util.Time;
-import mindustry.gen.Icon;
+
 import mindustry.ui.Styles;
 
 public class HologramButton extends Button {

@@ -5,13 +5,13 @@ import arc.Events;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
-import mindustry.gen.Icon;
+
 import arc.graphics.Pixmap;
 import arc.graphics.Texture;
 import arc.graphics.g2d.TextureRegion;
 import arc.util.Http;
 import arc.util.Log;
-import mindustry.ui.Styles;
+
 import mindustrytool.Feature;
 
 /**
