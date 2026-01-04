@@ -11,12 +11,17 @@ import arc.math.Mathf;
 import arc.math.geom.Vec2;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
-import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
+import arc.scene.ui.Image;
 import arc.scene.ui.ImageButton;
+import arc.scene.ui.Label;
+import arc.scene.event.Touchable;
 import arc.scene.ui.Touchpad;
+import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Disposable;
+import arc.util.Scaling;
 import arc.util.Time;
 import mindustry.Vars;
 import mindustry.game.EventType;
@@ -24,8 +29,6 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
-import arc.scene.ui.Label;
-import arc.util.Align;
 
 public class TouchHandler implements Disposable {
     private boolean enabled;
@@ -112,47 +115,74 @@ public class TouchHandler implements Disposable {
 
         uiTable.color.a = opacity;
 
+        Table content = new Table();
+
         if (style.equals("ROUND")) {
-            buildMindustryJoystick(sizeScale);
+            buildMindustryJoystick(content, sizeScale);
         } else {
-            buildMindustryDPad(sizeScale);
+            buildMindustryDPad(content, sizeScale);
         }
 
-        Vars.ui.hudGroup.addChild(uiTable);
-        uiTable.setPosition(posX, posY);
-        uiTable.pack();
-
-        // Dragging Logic (Edit Mode)
         if (!locked) {
-            uiTable.setBackground(Tex.buttonEdge4);
-            uiTable.color.a = 1.0f;
-            uiTable.getChildren().each(c -> c.touchable = Touchable.disabled);
+            Stack stack = new Stack();
+            stack.add(content);
 
-            uiTable.addListener(new InputListener() {
-                float lastX, lastY;
+            // Use an Image for the blocking layer to ensure it has size and catches input
+            Image blocker = new Image(Tex.whiteui);
+            blocker.setColor(0f, 0f, 0f, 0.5f); // Semi-transparent black
+            blocker.setScaling(Scaling.stretch);
+            blocker.touchable = Touchable.enabled;
+
+            blocker.addListener(new InputListener() {
+                float lastStageX, lastStageY;
+                Vec2 tmp = new Vec2();
 
                 @Override
                 public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                    lastX = x;
-                    lastY = y;
+                    tmp.set(x, y);
+                    blocker.localToStageCoordinates(tmp);
+                    lastStageX = tmp.x;
+                    lastStageY = tmp.y;
                     return true;
                 }
 
                 @Override
                 public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                    uiTable.moveBy(x - lastX, y - lastY);
+                    tmp.set(x, y);
+                    blocker.localToStageCoordinates(tmp);
+
+                    float dx = tmp.x - lastStageX;
+                    float dy = tmp.y - lastStageY;
+
+                    uiTable.moveBy(dx, dy);
                     uiTable.keepInStage();
+
+                    lastStageX = tmp.x;
+                    lastStageY = tmp.y;
+                }
+
+                @Override
+                public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
                     Core.settings.put("touch-x", uiTable.x);
                     Core.settings.put("touch-y", uiTable.y);
                 }
             });
+
+            stack.add(blocker);
+            uiTable.add(stack);
+        } else {
+            uiTable.add(content);
         }
+
+        Vars.ui.hudGroup.addChild(uiTable);
+        uiTable.setPosition(posX, posY);
+        uiTable.pack();
     }
 
     // === MINDUSTRY NATIVE JOYSTICK (PURE CIRCLE MATCHING STYLE) ===
-    private void buildMindustryJoystick(float scale) {
+    private void buildMindustryJoystick(Table parent, float scale) {
         // Remove Tex.buttonEdge4 container (Square Frame) as requested
-        // Direct add to uiTable
+        // Direct add to parent
         MindustryTouchpad pad = new MindustryTouchpad(10f, new Touchpad.TouchpadStyle(), scale);
         touchpad = pad;
 
@@ -216,7 +246,7 @@ public class TouchHandler implements Disposable {
 
         pad.getListeners().insert(0, pad.getListeners().pop());
 
-        uiTable.add(pad).size(180f * scale);
+        parent.add(pad).size(180f * scale);
 
         dUp = dDown = dLeft = dRight = false;
     }
@@ -292,21 +322,21 @@ public class TouchHandler implements Disposable {
     }
 
     // === MINDUSTRY NATIVE D-PAD (SMALL DRILL STYLE) ===
-    private void buildMindustryDPad(float scale) {
+    private void buildMindustryDPad(Table parent, float scale) {
         touchpad = null;
         float btnSize = 60f * scale; // Slightly larger for better touch
         float btnPad = 2f; // Gap between buttons
 
-        // No outer container, just direct buttons on uiTable
-        uiTable.defaults().size(btnSize).pad(btnPad);
+        // No outer container, just direct buttons on parent
+        parent.defaults().size(btnSize).pad(btnPad);
 
         // Row 1: Up
-        uiTable.add();
-        createMindustryBtn(uiTable, Icon.up, () -> dUp = true, () -> dUp = false);
-        uiTable.add().row();
+        parent.add();
+        createMindustryBtn(parent, Icon.up, () -> dUp = true, () -> dUp = false);
+        parent.add().row();
 
         // Row 2: Left, Center (X), Right
-        createMindustryBtn(uiTable, Icon.left, () -> dLeft = true, () -> dLeft = false);
+        createMindustryBtn(parent, Icon.left, () -> dLeft = true, () -> dLeft = false);
 
         // Center "X" Button
         dPadCenterBtn = new ImageButton(Icon.cancel, Styles.clearNonei) {
@@ -375,15 +405,15 @@ public class TouchHandler implements Disposable {
                     holdSource = 0;
             }
         });
-        uiTable.add(dPadCenterBtn);
+        parent.add(dPadCenterBtn);
 
-        createMindustryBtn(uiTable, Icon.right, () -> dRight = true, () -> dRight = false);
-        uiTable.row();
+        createMindustryBtn(parent, Icon.right, () -> dRight = true, () -> dRight = false);
+        parent.row();
 
         // Row 3: Down
-        uiTable.add();
-        createMindustryBtn(uiTable, Icon.down, () -> dDown = true, () -> dDown = false);
-        uiTable.add();
+        parent.add();
+        createMindustryBtn(parent, Icon.down, () -> dDown = true, () -> dDown = false);
+        parent.add();
     }
 
     private void createMindustryBtn(Table parent, Drawable icon, Runnable onPress, Runnable onRelease) {
