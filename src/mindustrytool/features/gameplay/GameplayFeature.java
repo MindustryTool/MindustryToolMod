@@ -7,6 +7,7 @@ import mindustrytool.Feature;
 import mindustrytool.features.content.browser.LazyComponent;
 import mindustrytool.features.gameplay.autodrill.SmartDrillManager;
 import mindustrytool.features.gameplay.visuals.*;
+import mindustrytool.features.gameplay.autoconveyor.AutoConveyorInput;
 
 /**
  * Gameplay Feature - Manages gameplay helpers, visualizers, and overlays.
@@ -69,6 +70,13 @@ public class GameplayFeature implements Feature {
             DistributionRevealVisualizer::new,
             false);
 
+    // Auto Conveyor Pathing
+    private static final LazyComponent<mindustrytool.features.gameplay.autoconveyor.AutoConveyorInput> autoConveyor = new LazyComponent<>(
+            "Auto Conveyor",
+            "Automatically builds conveyor paths between two clicked points.",
+            mindustrytool.features.gameplay.autoconveyor.AutoConveyorInput::new,
+            false);
+
     static {
         // Register Settings for Lazy Components
 
@@ -117,6 +125,17 @@ public class GameplayFeature implements Feature {
             }
         });
 
+        autoConveyor.onSettings(() -> {
+            if (autoConveyor.isEnabled()) {
+                AutoConveyorInput input = autoConveyor.getIfEnabled();
+                if (input != null) {
+                    mindustry.Vars.ui.hudfrag.showToast("Tap start then end point.");
+                }
+            } else {
+                showEnableFirstDialog("Auto Conveyor");
+            }
+        });
+
         teamResourcesOverlay.onSettings(() -> {
             TeamResourcesOverlay overlay = teamResourcesOverlay.getIfEnabled();
             if (overlay != null) {
@@ -140,6 +159,7 @@ public class GameplayFeature implements Feature {
         lazyComponents.add(teamResourcesOverlay);
         lazyComponents.add(smartDrillManager);
         lazyComponents.add(distributionRevealVisualizer);
+        lazyComponents.add(autoConveyor);
 
     }
 
@@ -231,6 +251,7 @@ public class GameplayFeature implements Feature {
         visualOverlayManager.unload();
         smartDrillManager.unload();
         distributionRevealVisualizer.unload();
+        autoConveyor.unload();
         // teamResourcesOverlay doesn't strictly need unload if it just listens to
         // events,
         // but consistent behavior is good.
