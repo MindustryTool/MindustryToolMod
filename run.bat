@@ -2,11 +2,11 @@
 cls
 
 :: Define variables
-set "TARGET_FILE=C:\Users\hau\AppData\Roaming\Mindustry\mods\mindustrytoolmindustrytoolmod.zip"
+set "TARGET_FILE=%APPDATA%\Mindustry\mods\mindustrytoolmindustrytoolmod.zip"
 set "BUILD_TOOL=./gradlew jar"
-set "JAR_PATH=C:\Codes\MindustryTool\MindustryToolMod\build\libs\MindustryToolModDesktop.jar"
-set "DEST_FOLDER=C:\Users\nguyen\AppData\Roaming\Mindustry\mods"
-set "APP_TO_RUN=C:\Games\mindustry-windows-64-bit\Mindustry.exe"
+set "JAR_PATH=%~dp0\build\libs\MindustryToolMod-MizuharaDEVDesktop.jar"
+set "DEST_FOLDER=%APPDATA%\Mindustry\mods"
+set "GAME_PATH=C:\Users\syste\Desktop\Mindustry.exe.lnk"
 
 :: Remove specific file if it exists
 if exist "%TARGET_FILE%" (
@@ -30,8 +30,13 @@ if not exist "%JAR_PATH%" (
 echo Copying %JAR_PATH% to %DEST_FOLDER%...
 copy "%JAR_PATH%" "%DEST_FOLDER%" /y
 
-:: Run the specified application
-echo Running %APP_TO_RUN%...
-start "" "%APP_TO_RUN%"
-
-echo Done.
+:: Run Mindustry
+echo Deployment complete.
+echo Launching Mindustry...
+if exist "%GAME_PATH%" (
+    echo Starting Mindustry...
+    start "" "%GAME_PATH%"
+) else (
+    echo Mindustry executable not found at %GAME_PATH%. Please check the path.
+)
+pause

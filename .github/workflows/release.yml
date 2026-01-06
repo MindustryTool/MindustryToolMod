@@ -1,52 +1,145 @@
-name: Release Mod
+name: Auto Release from Branches
+
 on:
   push:
     branches:
       - main
-      - v8
-  pull_request:
-    branches:
-      - main
-      - v8
+      - beta
 
 jobs:
-  buildJar:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create releases and tags
 
     steps:
-      - uses: actions/checkout@v2
-     
-      - name: Set up PATH
-        run: |
-          echo "${ANDROID_HOME}/build-tools/34.0.0" >> $GITHUB_PATH
-     
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for changelog generation
+
       - name: Set up JDK 17
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v3
         with:
-          java-version: 17
-     
-      - name: Build mod jar
-        run: ./gradlew deploy
-     
-      - name: Upload built jar file
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.event.repository.name }}
-          path: build/libs/${{ github.event.repository.name }}.jar
-     
-      - name: Install hjson
-        run: npm install -g hjson
+          java-version: "17"
+          distribution: "temurin"
+          cache: "gradle"
 
-      - name: Read version
+      - name: Calculate Version
         id: version
-        run: echo "tag=$(hjson -j mod.hjson | jq -r .version)" >> $GITHUB_OUTPUT
+        run: |
+          # 1. Fetch tags to find the latest (force to ensure we see tags from recent runs)
+          git fetch --tags --force
 
+          # 2. Get latest tag, default to v0.0.0 if none
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest Tag found: $LAST_TAG"
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
+          # 3. Analyze commits since last tag
+          COMMITS=$(git log "$LAST_TAG..HEAD" --pretty=format:"%s")
+          echo "Commits analyzed:"
+          echo "$COMMITS"
+
+          MAJOR=false
+          MINOR=false
+          PATCH=false
+
+          while IFS= read -r line; do
+            if [[ "$line" =~ "feat!" ]] || [[ "$line" =~ "BREAKING CHANGE" ]]; then
+              MAJOR=true
+            elif [[ "$line" =~ ^feat ]]; then
+              MINOR=true
+            else
+              # All other types (fix, build, docs, etc) default to PATCH
+              PATCH=true
+            fi
+          done <<< "$COMMITS"
+
+          # 4. Bump logic
+          VERSION_NUM=${LAST_TAG#v}
+          IFS='.' read -r -a parts <<< "$VERSION_NUM"
+          while [ "${#parts[@]}" -lt 3 ]; do parts+=("0"); done
+
+          V_MAJOR=${parts[0]}
+          V_MINOR=${parts[1]}
+          V_PATCH=${parts[2]}
+          V_PATCH=${V_PATCH%%-*} # Remove suffix
+
+          if [ "$MAJOR" = true ]; then
+            V_MAJOR=$((V_MAJOR + 1)); V_MINOR=0; V_PATCH=0
+          elif [ "$MINOR" = true ]; then
+            V_MINOR=$((V_MINOR + 1)); V_PATCH=0
+          else
+            V_PATCH=$((V_PATCH + 1))
+          fi
+
+          # 5. Collision Check Loop
+          # If the calculated version already exists as a tag, keep bumping patch
+          while git rev-parse "v$V_MAJOR.$V_MINOR.$V_PATCH" >/dev/null 2>&1; do
+            echo "Tag v$V_MAJOR.$V_MINOR.$V_PATCH already exists. Bumping patch..."
+            V_PATCH=$((V_PATCH + 1))
+          done
+
+          BASE_VERSION="$V_MAJOR.$V_MINOR.$V_PATCH"
+
+          # 5. Format Final Version based on Branch
+          BRANCH_NAME="${{ github.ref_name }}"
+          RUN_NUMBER="${{ github.run_number }}"
+
+          if [[ "$BRANCH_NAME" == "main" ]]; then
+            FINAL_VERSION="v$BASE_VERSION"
+            IS_PRERELEASE="false"
+          else
+            # Pre-release format: vX.Y.Z.branch.number (e.g., v2.23.0.beta.45)
+            # Or use standard SemVer: vX.Y.Z-beta.45
+            # User example: v1.2.3.branch.number
+            FINAL_VERSION="v$BASE_VERSION-$BRANCH_NAME.$RUN_NUMBER"
+            IS_PRERELEASE="true"
+          fi
+
+          echo "Calculated Version: $FINAL_VERSION"
+          echo "version=$FINAL_VERSION" >> $GITHUB_OUTPUT
+          echo "prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Tag Commit
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # Build passing the version explicitly if needed, but build.gradle reads gradle.properties
+      # We just need to make sure the tag is there if we want git describe to work, BUT
+      # we changed build.gradle to use modVersion property.
+      # To support the calculated version (e.g. beta.1), we can pass it as a property.
+      - name: Build with Gradle
+        run: ./gradlew deploy -PmodVersion=${{ steps.version.outputs.version }} --no-daemon --parallel --build-cache
+
+      - name: Generate Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ steps.version.outputs.tag }}"
-          prerelease: ${{ github.ref_name != 'v8' }}
-          title: "${{ steps.version.outputs.tag }}"
-          files: |
-              build/libs/${{ github.event.repository.name }}.jar
+          configuration: ".github/changelog-config.json"
+          commitMode: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          files: build/libs/*.jar
+          draft: false
+          prerelease: ${{ steps.version.outputs.prerelease }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

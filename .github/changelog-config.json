@@ -1,0 +1,94 @@
+{
+  "categories": [
+    {
+      "title": "## � Breaking Changes",
+      "labels": [
+        "breaking"
+      ]
+    },
+    {
+      "title": "## Features",
+      "labels": [
+        "feat",
+        "feature"
+      ]
+    },
+    {
+      "title": "## Bug Fixes",
+      "labels": [
+        "fix",
+        "bug"
+      ]
+    },
+    {
+      "title": "## Documentation",
+      "labels": [
+        "docs",
+        "documentation"
+      ]
+    },
+    {
+      "title": "## Styles",
+      "labels": [
+        "style"
+      ]
+    },
+    {
+      "title": "## Refactoring",
+      "labels": [
+        "refactor"
+      ]
+    },
+    {
+      "title": "## Performance Improvements",
+      "labels": [
+        "perf"
+      ]
+    },
+    {
+      "title": "## Tests",
+      "labels": [
+        "test",
+        "tests"
+      ]
+    },
+    {
+      "title": "## Build & CI",
+      "labels": [
+        "build",
+        "ci",
+        "chore"
+      ]
+    }
+  ],
+  "ignore_labels": [
+    "ignore"
+  ],
+  "sort": {
+    "order": "ASC",
+    "on_property": "mergedAt"
+  },
+  "template": "#{{CHANGELOG}}\n\n---\n\n*Full Changelog: https://github.com/MindustryTool/MindustryToolMod/compare/#{{FROM_TAG}}...#{{TO_TAG}}*",
+  "pr_template": "- #{{TITLE}}   ([`#{{HASH}}`](#{{URL}})) by @#{{AUTHOR}}",
+  "empty_template": "- No changes found",
+  "label_extractor": [
+    {
+      "pattern": "^.*(!:|BREAKING CHANGE:).*$",
+      "target": "breaking"
+    },
+    {
+      "pattern": "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\(.*\\))?!?: .+$",
+      "target": "$1"
+    }
+  ],
+  "transformers": [
+    {
+      "pattern": "^([a-z]+)\\(([^)]+)\\)!?: (.*)$",
+      "target": "**$2:** $3"
+    },
+    {
+      "pattern": "^([a-z]+)!?: (.*)$",
+      "target": "$2"
+    }
+  ]
+}

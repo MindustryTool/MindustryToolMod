@@ -1,0 +1,26 @@
+package mindustrytool.plugins.browser;
+
+import arc.scene.ui.layout.Table;
+import arc.struct.Seq;
+import arc.util.Align;
+import mindustry.gen.Tex;
+
+public final class TagContainer {
+    private TagContainer() {}
+
+    public static void draw(Table c, Seq<TagData> tags) {
+        c.clearChildren();
+        c.left();
+        if (tags == null || tags.isEmpty()) return;
+        c.add("@schematic.tags").padRight(4);
+        c.pane(p -> {
+            p.left().defaults().pad(4).height(42);
+            int i = 0;
+            for (TagData tag : tags) {
+                if (tag == null || tag.name() == null) continue;
+                p.table(Tex.button, t -> t.add(tag.name()).height(42).fillX().growX().labelAlign(Align.center)).fillX();
+                if (++i % 4 == 0) p.row();
+            }
+        }).fillX().margin(20).left().scrollX(true);
+    }
+}
