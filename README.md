@@ -43,7 +43,7 @@
 
 ## 📖 About
 
-**Mindustry Tool** is a comprehensive mod that integrates with [mindustry-tool.com](https://mindustry-tool.com), transforming your Mindustry experience. Browse thousands of curated **maps** and **schematics**, host multiplayer servers without port forwarding, and connect with a global community of players.
+**Mindustry Tool** is a comprehensive Mod as a service (MaaS) that integrates with [mindustry-tool.com](https://mindustry-tool.com), transforming your Mindustry experience. Browse thousands of curated **maps** and **schematics**, host multiplayer servers without port forwarding, and connect with a global community of players.
 
 <p align="center">
   <img src="https://img.shields.io/badge/🔒_Security-Verified-success?style=flat-square" alt="Security Verified">
