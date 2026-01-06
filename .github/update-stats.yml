@@ -1,0 +1,108 @@
+name: Update README Stats
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Fetch stats from API
+        id: stats
+        run: |
+          # Fetch schematics count (get first page and check total by iterating)
+          echo "Fetching schematics count..."
+          SCHEMATICS_COUNT=0
+          PAGE=0
+          while true; do
+            RESPONSE=$(curl -s "https://api.mindustry-tool.com/api/v4/schematics?page=$PAGE&size=100")
+            COUNT=$(echo "$RESPONSE" | jq 'length')
+            if [ "$COUNT" -eq 0 ]; then
+              break
+            fi
+            SCHEMATICS_COUNT=$((SCHEMATICS_COUNT + COUNT))
+            PAGE=$((PAGE + 1))
+            # Safety limit
+            if [ $PAGE -gt 200 ]; then
+              break
+            fi
+          done
+          echo "schematics=$SCHEMATICS_COUNT" >> $GITHUB_OUTPUT
+          
+          # Fetch maps count
+          echo "Fetching maps count..."
+          MAPS_COUNT=0
+          PAGE=0
+          while true; do
+            RESPONSE=$(curl -s "https://api.mindustry-tool.com/api/v4/maps?page=$PAGE&size=100")
+            COUNT=$(echo "$RESPONSE" | jq 'length')
+            if [ "$COUNT" -eq 0 ]; then
+              break
+            fi
+            MAPS_COUNT=$((MAPS_COUNT + COUNT))
+            PAGE=$((PAGE + 1))
+            # Safety limit
+            if [ $PAGE -gt 100 ]; then
+              break
+            fi
+          done
+          echo "maps=$MAPS_COUNT" >> $GITHUB_OUTPUT
+          
+          # Get GitHub download count
+          echo "Fetching download count..."
+          DOWNLOADS=$(curl -s "https://api.github.com/repos/MindustryVN/MindustryToolMod/releases" | jq '[.[].assets[].download_count] | add // 0')
+          echo "downloads=$DOWNLOADS" >> $GITHUB_OUTPUT
+          
+          # Format numbers with K/M suffix
+          format_number() {
+            local num=$1
+            if [ $num -ge 1000000 ]; then
+              echo "$(echo "scale=1; $num/1000000" | bc)M"
+            elif [ $num -ge 1000 ]; then
+              echo "$(echo "scale=1; $num/1000" | bc)K"
+            else
+              echo "$num"
+            fi
+          }
+          
+          echo "schematics_fmt=$(format_number $SCHEMATICS_COUNT)" >> $GITHUB_OUTPUT
+          echo "maps_fmt=$(format_number $MAPS_COUNT)" >> $GITHUB_OUTPUT
+          echo "downloads_fmt=$(format_number $DOWNLOADS)" >> $GITHUB_OUTPUT
+          
+          echo "Stats: Schematics=$SCHEMATICS_COUNT, Maps=$MAPS_COUNT, Downloads=$DOWNLOADS"
+      
+      - name: Update README
+        run: |
+          # Update stats badges in README
+          sed -i "s/📐_Schematics-[^-]*-blue/📐_Schematics-${{ steps.stats.outputs.schematics_fmt }}+-blue/g" README.md
+          sed -i "s/🗺️_Maps-[^-]*-green/🗺️_Maps-${{ steps.stats.outputs.maps_fmt }}+-green/g" README.md
+          sed -i "s/🎮_Players-[^-]*-orange/🎮_Downloads-${{ steps.stats.outputs.downloads_fmt }}+-orange/g" README.md
+      
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet README.md; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add README.md
+          git commit -m "📊 Update README stats [skip ci]"
+          git push

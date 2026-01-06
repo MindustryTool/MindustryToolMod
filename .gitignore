@@ -158,3 +158,9 @@ android/libs/
 build.bat
 
 .vscode
+
+# Local deployment scripts
+deploy_and_run.ps1
+d.bat
+
+deploy_mod.ps1

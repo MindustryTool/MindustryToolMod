@@ -7,26 +7,27 @@ sourceSets.main.java.srcDirs = ["src"]
 repositories{
     mavenCentral()
     google()
-    maven{ url "https://raw.githubusercontent.com/Zelaux/MindustryRepo/master/repository" }
+    maven{ url "https://gh-proxy.com/https://raw.githubusercontent.com/Zelaux/MindustryRepo/master/repository" }
     maven{ url 'https://www.jitpack.io' }
 }
 
 java{
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = 8
+    sourceCompatibility = "17"
+    targetCompatibility = "8"
 }
 
 allprojects{
     tasks.withType(JavaCompile){
         options.annotationProcessorPath = configurations.annotationProcessor
         options.compilerArgs.addAll(['--release', '8'])
+        options.encoding = 'UTF-8'
     }
 }
 
 
 ext{
     //the build number that this mod is made for
-    mindustryVersion = 'v152'
+    mindustryVersion = 'v154'
     jabelVersion = "93fde537c7"
     //windows sucks
     isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
