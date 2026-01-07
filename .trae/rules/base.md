@@ -22,6 +22,7 @@
       -  `healthbar/`: Health bar.
       -  `range/`: Anything that has range.
       -  `pathfinding/`: Enemy pathfinding
+   -  `chat/`: Chat.
 
 **Group files into folders based on their functionality whenever possible.**
 
@@ -41,6 +42,7 @@
 -  Limit to 4 method parameters
 -  Use/define components for UI elements whenever possible
 -  Avoid large nesting (3 levels or more), eary return whenever possible
+-  Avoid singleton
 
 ## Requirements
 
