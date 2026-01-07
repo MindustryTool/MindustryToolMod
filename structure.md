@@ -5,7 +5,7 @@
 - `Config.java`: Static configuration class.
 - `Main.java`: Mod entry point.
 - `Utils.java`: Static utility methods.
-- `shared/`: Shared resources and utilities.
+- `dto/`: Shared class resources.
 - `ui/`: Shared UI components and dialogs.
 - `events/`: Custom event definitions.
 - `features/`: Core functional modules.
