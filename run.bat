@@ -4,9 +4,9 @@ cls
 :: Define variables
 set "TARGET_FILE=C:\Users\hau\AppData\Roaming\Mindustry\mods\mindustrytoolmindustrytoolmod.zip"
 set "BUILD_TOOL=./gradlew jar"
-set "JAR_PATH=C:\Codes\MindustryTool\MindustryToolMod\build\libs\MindustryToolModDesktop.jar"
+set "JAR_PATH=E:\Codes\MindustryTool\MindustryToolMod\build\libs\MindustryToolModDesktop.jar"
 set "DEST_FOLDER=C:\Users\nguyen\AppData\Roaming\Mindustry\mods"
-set "APP_TO_RUN=C:\Games\mindustry-windows-64-bit\Mindustry.exe"
+set "APP_TO_RUN=E:\Games\mindustry-windows-64-bit-unstable(1)\Mindustry.exe"
 
 :: Remove specific file if it exists
 if exist "%TARGET_FILE%" (
