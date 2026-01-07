@@ -1,6 +1,5 @@
 package mindustrytool.features.browser.schematic;
 
-import arc.Core;
 import arc.Events;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Table;
@@ -17,13 +16,13 @@ public class SchematicBrowserFeature implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Schematic Browser", "Browse and download schematics.", "schematic");
+        return new FeatureMetadata("Schematic Browser", "Browse and download schematics.", "schematic", 2);
     }
 
     @Override
     public void init() {
         schematicDialog = new SchematicDialog();
-        
+
         Events.on(ClientLoadEvent.class, e -> {
             if (FeatureManager.getInstance().isEnabled(this)) {
                 addBrowseButton();
@@ -32,8 +31,9 @@ public class SchematicBrowserFeature implements Feature {
     }
 
     private void addBrowseButton() {
-        if (Vars.ui == null || Vars.ui.schematics == null) return;
-        
+        if (Vars.ui == null || Vars.ui.schematics == null)
+            return;
+
         Table buttons = Vars.ui.schematics.buttons;
         if (browseButton == null || browseButton.parent == null) {
             browseButton = buttons.button("Browse", Icon.menu, () -> {
@@ -58,7 +58,7 @@ public class SchematicBrowserFeature implements Feature {
             browseButton = null;
         }
     }
-    
+
     public SchematicDialog getDialog() {
         return schematicDialog;
     }

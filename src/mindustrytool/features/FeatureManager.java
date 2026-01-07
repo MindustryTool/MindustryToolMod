@@ -16,6 +16,7 @@ public class FeatureManager {
 
     public void register(Feature... feature) {
         features.addAll(feature);
+        features.sort((a, b) -> Integer.compare(a.getMetadata().order(), b.getMetadata().order()));
     }
 
     public void init() {
@@ -28,7 +29,7 @@ public class FeatureManager {
     }
 
     public boolean isEnabled(Feature feature) {
-        return Core.settings.getBool("mindustrytool.feature." + feature.getMetadata().name() + ".enabled", true);
+        return Core.settings.getBool("mindustrytool.feature." + feature.getMetadata().name() + ".enabled", feature.getMetadata().enabledByDefault());
     }
 
     public void setEnabled(Feature feature, boolean enabled) {
