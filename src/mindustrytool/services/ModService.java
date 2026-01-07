@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.browser;
+package mindustrytool.services;
 
 import arc.Core;
 import arc.func.Cons;
@@ -8,7 +8,6 @@ import arc.util.Http.HttpResponse;
 import arc.util.Log;
 import mindustry.io.JsonIO;
 import mindustrytool.Config;
-
 import mindustrytool.dto.ModData;
 
 public class ModService {

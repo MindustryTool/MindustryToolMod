@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.browser;
+package mindustrytool.features.browser;
 
 import arc.Core;
 import arc.func.Cons;
@@ -14,6 +14,8 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
 import mindustrytool.dto.ModData;
 import mindustrytool.dto.TagCategory;
+import mindustrytool.services.ModService;
+import mindustrytool.services.TagService;
 import mindustrytool.ui.NetworkImage;
 
 public class FilterDialog extends BaseDialog {

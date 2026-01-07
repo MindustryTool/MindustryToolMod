@@ -48,7 +48,7 @@ public class SearchConfig {
     }
 
     public boolean containTag(TagCategory category, TagData tag) {
-        return selectedTags.contains(v -> v.name.equals(tag.name()) && category.name.equals(v.categoryName));
+        return selectedTags.contains(v -> v.name.equals(tag.name()) && category.name().equals(v.categoryName));
     }
 
     public Sort getSort() {

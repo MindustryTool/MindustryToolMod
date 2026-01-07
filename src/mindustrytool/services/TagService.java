@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.browser;
+package mindustrytool.services;
 
 import java.util.HashMap;
 
@@ -10,7 +10,6 @@ import arc.util.Http.HttpResponse;
 import arc.util.Log;
 import mindustry.io.JsonIO;
 import mindustrytool.Config;
-
 import mindustrytool.dto.TagCategory;
 
 public class TagService {

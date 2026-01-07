@@ -24,20 +24,20 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
 import mindustrytool.ui.Debouncer;
 import mindustrytool.dto.MapData;
-import mindustrytool.features.browser.TagService.TagCategoryEnum;
+import mindustrytool.services.TagService.TagCategoryEnum;
 import mindustrytool.dto.PagingRequest;
 
 import mindustrytool.ui.DetailStats;
 import mindustrytool.ui.TagBar;
 
-import mindustrytool.features.browser.BrowserApi;
 import mindustrytool.features.browser.FilterDialog;
 import mindustrytool.features.browser.SearchConfig;
-import mindustrytool.features.browser.TagService;
+import mindustrytool.services.TagService;
 
 import static mindustry.Vars.*;
 
 import java.util.concurrent.TimeUnit;
+import mindustrytool.services.MapService;
 
 public class MapDialog extends BaseDialog {
 
@@ -61,6 +61,8 @@ public class MapDialog extends BaseDialog {
 
     private PagingRequest<MapData> request;
     private ObjectMap<String, String> options = new ObjectMap<String, String>();
+
+    private final MapService mapService = new MapService();
 
     public MapDialog() {
         super("Map Browser");
@@ -209,7 +211,7 @@ public class MapDialog extends BaseDialog {
                         buttons.defaults().size(50f);
                         buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadMap(mapData)).padLeft(2)
                                 .padRight(2);
-                        buttons.button(Icon.info, Styles.emptyi, () -> BrowserApi.findMapById(mapData.id(), infoDialog::show))
+                        buttons.button(Icon.info, Styles.emptyi, () -> mapService.findMapById(mapData.id(), infoDialog::show))
                                 .tooltip("@info.title");
 
                     }).growX().height(50f);
@@ -304,7 +306,7 @@ public class MapDialog extends BaseDialog {
     }
 
     private void handleDownloadMap(MapData map) {
-        BrowserApi.downloadMap(map.id(), result -> {
+        mapService.downloadMap(map.id(), result -> {
             Fi mapFile = Vars.customMapDirectory.child(map.id().toString());
             mapFile.writeBytes(result);
             Vars.maps.importMap(mapFile);

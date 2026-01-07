@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.playerconnect;
+package mindustrytool.services;
 
 import arc.Core;
 import arc.func.Cons;
@@ -6,11 +6,13 @@ import arc.struct.Seq;
 import arc.util.Http;
 import mindustry.io.JsonIO;
 import mindustrytool.Config;
+import mindustrytool.features.playerconnect.PlayerConnectRoom;
+import mindustrytool.features.playerconnect.PlayerConnectProvider;
 
-public class PlayerConnectApi {
+public class PlayerConnectService {
 
     @SuppressWarnings("unchecked")
-    public static void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> c) {
+    public void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> c) {
         Http.get(Config.API_v4_URL + "player-connect/rooms?q=" + q)
                 .submit(response -> {
                     String data = response.getResultAsString();
@@ -20,9 +22,9 @@ public class PlayerConnectApi {
     }
 
     @SuppressWarnings("unchecked")
-    public static void findPlayerConnectProvider(
+    public void findPlayerConnectProvider(
             Cons<Seq<PlayerConnectProvider>> providers,
-            Cons<Throwable> onFailed//
+            Cons<Throwable> onFailed
     ) {
         Http.get(Config.API_v4_URL + "player-connect/providers")
                 .error(onFailed)

@@ -27,15 +27,15 @@ import mindustrytool.Config;
 import mindustrytool.ui.Debouncer;
 import mindustrytool.Utils;
 import mindustrytool.dto.SchematicData;
-import mindustrytool.features.browser.TagService.TagCategoryEnum;
+import mindustrytool.services.TagService.TagCategoryEnum;
 import mindustrytool.dto.PagingRequest;
 import mindustrytool.ui.TagBar;
 import mindustrytool.ui.DetailStats;
 
-import mindustrytool.features.browser.BrowserApi;
 import mindustrytool.features.browser.FilterDialog;
 import mindustrytool.features.browser.SearchConfig;
-import mindustrytool.features.browser.TagService;
+import mindustrytool.services.SchematicService;
+import mindustrytool.services.TagService;
 
 import static mindustry.Vars.*;
 
@@ -53,6 +53,7 @@ public class SchematicDialog extends BaseDialog {
 
     private static SearchConfig searchConfig = new SearchConfig();
     private final TagService tagService = new TagService();
+    private final SchematicService schematicService = new SchematicService();
     private final FilterDialog filterDialog = new FilterDialog(tagService, searchConfig,
             (tag) -> tagService.getTag(TagCategoryEnum.schematics, group -> tag.get(group)));
 
@@ -212,7 +213,7 @@ public class SchematicDialog extends BaseDialog {
                             buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadSchematic(schematicData))
                                     .padLeft(2).padRight(2);
                             buttons.button(Icon.info, Styles.emptyi,
-                                    () -> BrowserApi.findSchematicById(schematicData.id(), infoDialog::show))
+                                    () -> schematicService.findSchematicById(schematicData.id(), infoDialog::show))
                                     .tooltip("@info.title");
 
                         }).growX().height(50f);
@@ -249,7 +250,7 @@ public class SchematicDialog extends BaseDialog {
                             return;
 
                         if (state.isMenu()) {
-                            BrowserApi.findSchematicById(schematicData.id(), infoDialog::show);
+                            schematicService.findSchematicById(schematicData.id(), infoDialog::show);
                         } else {
                             if (!state.rules.schematicsAllowed) {
                                 ui.showInfo("@schematic.disabled");
@@ -348,7 +349,7 @@ public class SchematicDialog extends BaseDialog {
     private void handleDownloadSchematic(SchematicData schematic) {
         handleDownloadSchematicData(schematic, data -> {
             Schematic s = Utils.readSchematic(data);
-            BrowserApi.findSchematicById(schematic.id(), detail -> {
+            schematicService.findSchematicById(schematic.id(), detail -> {
                 s.labels.add(detail.tags().map(i -> i.name()));
                 s.removeSteamID();
                 Vars.schematics.add(s);
@@ -358,7 +359,7 @@ public class SchematicDialog extends BaseDialog {
     }
 
     private void handleDownloadSchematicData(SchematicData data, Cons<String> cons) {
-        BrowserApi.downloadSchematic(data.id(), result -> {
+        schematicService.downloadSchematic(data.id(), result -> {
             cons.get(new String(Base64Coder.encode(result)));
         });
     }

@@ -1,6 +1,5 @@
-﻿package mindustrytool.ui;
+package mindustrytool.ui;
 
-import mindustrytool.features.browser.BrowserApi;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,11 +7,13 @@ import arc.func.Cons;
 import arc.scene.ui.layout.Table;
 import arc.struct.ObjectMap;
 import mindustrytool.dto.UserData;
+import mindustrytool.services.UserService;
 
 public class UserCard {
 
     private static final ObjectMap<String, UserData> cache = new ObjectMap<String, UserData>();
     private static final ObjectMap<String, List<Cons<UserData>>> listeners = new ObjectMap<>();
+    private static final UserService userService = new UserService();
 
     public static void draw(Table parent, String id) {
         parent.pane(card -> {
@@ -23,7 +24,7 @@ public class UserCard {
                 cache.put(id, new UserData());
                 listeners.get(id, () -> new ArrayList<>()).add((data) -> draw(card, data));
 
-                BrowserApi.findUserById(id, data -> {
+                userService.findUserById(id, data -> {
                     cache.put(id, data);
 
                     var l = listeners.get(id);

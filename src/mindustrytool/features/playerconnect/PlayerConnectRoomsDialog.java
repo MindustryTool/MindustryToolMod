@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.playerconnect;
+package mindustrytool.features.playerconnect;
 
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -17,10 +17,14 @@ import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.ui.Debouncer;
 
+import mindustrytool.services.PlayerConnectService;
+
 public class PlayerConnectRoomsDialog extends mindustry.ui.dialogs.BaseDialog {
     private final Table roomList = new Table();
     private final Debouncer debouncer = new Debouncer(250, TimeUnit.MILLISECONDS);
     private String searchTerm = "";
+
+    private final PlayerConnectService playerConnectService = new PlayerConnectService();
 
     public PlayerConnectRoomsDialog() {
         super("@message.room-list.title");
@@ -79,7 +83,7 @@ public class PlayerConnectRoomsDialog extends mindustry.ui.dialogs.BaseDialog {
                 .expand()
                 .fill();
 
-        PlayerConnectApi.findPlayerConnectRooms(searchTerm, rooms -> {
+        playerConnectService.findPlayerConnectRooms(searchTerm, rooms -> {
             roomList.clear();
 
             roomList.pane(list -> {
