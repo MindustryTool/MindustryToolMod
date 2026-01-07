@@ -1,13 +1,11 @@
 name: Release Mod
 on:
-  push:
-    branches:
-      - main
-      - v8
+  # push:
+  #   branches:
+  #     - main
   pull_request:
     branches:
       - main
-      - v8
 
 jobs:
   buildJar:
@@ -46,7 +44,7 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "${{ steps.version.outputs.tag }}"
-          prerelease: ${{ github.ref_name != 'v8' }}
+          prerelease: ${{ github.ref_name != 'main' }}
           title: "${{ steps.version.outputs.tag }}"
           files: |
               build/libs/${{ github.event.repository.name }}.jar
