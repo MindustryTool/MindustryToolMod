@@ -10,25 +10,28 @@ import mindustry.Vars;
 import mindustry.editor.MapResizeDialog;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
-import mindustry.mod.*;
 import mindustry.mod.Mods.LoadedMod;
-import mindustry.ui.fragments.MenuFragment.MenuButton;
+import mindustry.mod.Mod;
+import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.features.browser.map.MapDialog;
+import mindustrytool.features.browser.schematic.SchematicDialog;
 import mindustrytool.features.playerconnect.CreateRoomDialog;
 import mindustrytool.features.playerconnect.JoinRoomDialog;
-import mindustrytool.features.browser.map.MapDialog;
 import mindustrytool.features.playerconnect.PlayerConnectRoomsDialog;
-import mindustrytool.features.browser.schematic.SchematicDialog;
+import mindustrytool.features.browser.map.MapBrowserFeature;
+import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
+import mindustrytool.features.playerconnect.PlayerConnectFeature;
+import mindustrytool.features.settings.FeatureSettingDialog;
 
 public class Main extends Mod {
-    public static SchematicDialog schematicDialog;
-    public static MapDialog mapDialog;
-    public static PlayerConnectRoomsDialog playerConnectRoomsDialog;
-    public static CreateRoomDialog createRoomDialog;
-    public static JoinRoomDialog joinRoomDialog;
-
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
     public static Fi mapsDir = Vars.dataDirectory.child("mindustry-tool-maps");
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
+
+    private MapBrowserFeature mapBrowserFeature;
+    private SchematicBrowserFeature schematicBrowserFeature;
+    private PlayerConnectFeature playerConnectFeature;
+    private FeatureSettingDialog featureSettingDialog;
 
     public Main() {
         Vars.maxSchematicSize = 4000;
@@ -43,39 +46,61 @@ public class Main extends Mod {
         mapsDir.mkdirs();
         schematicDir.mkdirs();
 
+        initFeatures();
         addCustomButtons();
     }
 
+    private void initFeatures() {
+        mapBrowserFeature = new MapBrowserFeature();
+        schematicBrowserFeature = new SchematicBrowserFeature();
+        playerConnectFeature = new PlayerConnectFeature();
+
+        FeatureManager.getInstance().register(mapBrowserFeature);
+        FeatureManager.getInstance().register(schematicBrowserFeature);
+        FeatureManager.getInstance().register(playerConnectFeature);
+
+        FeatureManager.getInstance().init();
+    }
+
     private void addCustomButtons() {
-        schematicDialog = new SchematicDialog();
-        mapDialog = new MapDialog();
-        playerConnectRoomsDialog = new PlayerConnectRoomsDialog();
-        createRoomDialog = new CreateRoomDialog();
-        joinRoomDialog = new JoinRoomDialog();
+        featureSettingDialog = new FeatureSettingDialog();
 
         Events.on(ClientLoadEvent.class, (event) -> {
-            Vars.ui.schematics.buttons.button("Browse", Icon.menu, () -> {
-                Vars.ui.schematics.hide();
-                schematicDialog.show();
-            });
+            // Schematic button is handled by SchematicBrowserFeature
 
             if (Vars.mobile) {
-                Vars.ui.menufrag.addButton(Core.bundle.format("message.map-browser.title"), Icon.map, () -> {
-                    mapDialog.show();
-                });
-                Vars.ui.menufrag.addButton(Core.bundle.format("message.player-connect.title"), Icon.menu, () -> {
-                    playerConnectRoomsDialog.show();
-                });
+                // Mobile buttons handled by Features directly
+                // We just need the Settings button
+                Vars.ui.menufrag.addButton("Settings", Icon.settings, () -> featureSettingDialog.show());
             } else {
-                Vars.ui.menufrag.addButton(new MenuButton("Tools", Icon.wrench, () -> {
-                }, //
-                        new MenuButton(Core.bundle.format("message.map-browser.title"), Icon.map, () -> {
-                            mapDialog.show();
-                        }), //
-                        new MenuButton(Core.bundle.format("message.player-connect.title"), Icon.menu, () -> {
-                            playerConnectRoomsDialog.show();
-                        })//
-                ));
+                // Desktop Tools Menu
+                Vars.ui.menufrag.addButton("Mindustry Tool", Icon.wrench, () -> {
+                    BaseDialog toolsMenu = new BaseDialog("Mindustry Tools");
+                    toolsMenu.addCloseButton();
+                    toolsMenu.cont.pane(t -> {
+                        t.defaults().size(220, 60).pad(5);
+
+                        if (FeatureManager.getInstance().isEnabled(mapBrowserFeature)) {
+                            t.button(Core.bundle.format("message.map-browser.title"), Icon.map, () -> {
+                                toolsMenu.hide();
+                                mapBrowserFeature.getDialog().show();
+                            }).row();
+                        }
+
+                        if (FeatureManager.getInstance().isEnabled(playerConnectFeature)) {
+                            t.button(Core.bundle.format("message.player-connect.title"), Icon.host, () -> {
+                                toolsMenu.hide();
+                                playerConnectFeature.getDialog().show();
+                            }).row();
+                        }
+
+                        t.button("Settings", Icon.settings, () -> {
+                            toolsMenu.hide(); // Optional
+                            featureSettingDialog.show();
+                        }).row();
+                    }).grow();
+                    toolsMenu.show();
+                });
             }
         });
     }
