@@ -1,4 +1,4 @@
-package mindustrytool;
+package mindustrytool.features;
 
 import arc.Core;
 import arc.struct.Seq;

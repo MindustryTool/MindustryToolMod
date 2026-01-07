@@ -1,4 +1,6 @@
-package mindustrytool;
+package mindustrytool.features;
+
+import java.util.Optional;
 
 import arc.scene.ui.Dialog;
 
@@ -15,7 +17,7 @@ public interface Feature {
     void onDisable();
 
     /** Return a dialog for that feature setting */
-    default Dialog setting() {
-        return null;
+    default Optional<Dialog> setting() {
+        return Optional.empty();
     }
 }

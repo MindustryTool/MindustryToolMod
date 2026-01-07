@@ -6,8 +6,8 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustrytool.Feature;
-import mindustrytool.FeatureManager;
+import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 
 public class FeatureSettingDialog extends BaseDialog {
 
@@ -49,20 +49,14 @@ public class FeatureSettingDialog extends BaseDialog {
                 header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
 
                 // Settings button
-                if (feature.setting() != null) {
-                    header.button(Icon.settings, Styles.clearNonei, () -> feature.setting().show()).size(32);
+                if (feature.setting().isPresent()) {
+                    header.button(Icon.settings, Styles.clearNonei,
+                            () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32);
                 }
 
-                // Toggle button
-                header.button(enabled ? Icon.eyeSmall : Icon.eyeOffSmall, Styles.clearNonei, () -> {
-                    FeatureManager.getInstance().setEnabled(feature, !enabled);
-                    rebuild();
-                }).size(24).padLeft(4);
-                
-                header.button(enabled ? Icon.settingsSmall : Icon.settingsSmall, Styles.clearNonei, () -> {
-                    FeatureManager.getInstance().setEnabled(feature, !enabled);
-                    rebuild();
-                }).size(24).padLeft(4);
+                // Status icon (visual only)
+                header.image(enabled ? Icon.eyeSmall : Icon.eyeOffSmall).size(24).padLeft(4)
+                        .color(enabled ? Color.white : Color.gray);
             }).growX().row();
 
             // Description
@@ -82,6 +76,9 @@ public class FeatureSettingDialog extends BaseDialog {
                     .color(enabled ? Color.green : Color.red)
                     .left();
 
-        }).size(320f, 180f).pad(10f);
+        }).size(320f, 180f).pad(10f).get().clicked(() -> {
+            FeatureManager.getInstance().setEnabled(feature, !enabled);
+            rebuild();
+        });
     }
 }

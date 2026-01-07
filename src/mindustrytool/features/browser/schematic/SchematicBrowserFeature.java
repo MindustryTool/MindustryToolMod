@@ -7,9 +7,9 @@ import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
-import mindustrytool.Feature;
-import mindustrytool.FeatureMetadata;
-import mindustrytool.FeatureManager;
+import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
+import mindustrytool.features.FeatureMetadata;
 
 public class SchematicBrowserFeature implements Feature {
     private SchematicDialog schematicDialog;

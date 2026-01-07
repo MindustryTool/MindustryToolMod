@@ -12,6 +12,7 @@ import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.mod.Mod;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
