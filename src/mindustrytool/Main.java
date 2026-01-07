@@ -15,9 +15,9 @@ import mindustry.mod.Mods.LoadedMod;
 import mindustry.ui.fragments.MenuFragment.MenuButton;
 import mindustrytool.features.playerconnect.CreateRoomDialog;
 import mindustrytool.features.playerconnect.JoinRoomDialog;
-import mindustrytool.features.browser.MapDialog;
+import mindustrytool.features.browser.map.MapDialog;
 import mindustrytool.features.playerconnect.PlayerConnectRoomsDialog;
-import mindustrytool.features.browser.SchematicDialog;
+import mindustrytool.features.browser.schematic.SchematicDialog;
 
 public class Main extends Mod {
     public static SchematicDialog schematicDialog;
@@ -111,6 +111,5 @@ public class Main extends Mod {
         Http.get(Config.API_URL + "ping?client=mod-v8").submit(result -> {
             Log.info("Ping");
         });
-
     }
 }

@@ -13,6 +13,8 @@
    -  `auth/`: Authentication.
    -  `background/`: Custom background.
    -  `browser/`: Map and schematic browser.
+      -  `map/`: Map browser.
+      -  `schematic/`: Schematic browser.
    -  `playerconnect/`: Player connect.
    -  `settings/`: Settings.
    -  `display/`: Display.

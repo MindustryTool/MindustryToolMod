@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.browser;
+package mindustrytool.features.browser.map;
 
 import java.security.InvalidParameterException;
 

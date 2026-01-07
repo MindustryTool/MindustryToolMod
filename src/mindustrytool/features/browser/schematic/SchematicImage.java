@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.browser;
+package mindustrytool.features.browser.schematic;
 
 import arc.Core;
 import arc.graphics.Color;

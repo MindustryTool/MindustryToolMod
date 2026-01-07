@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.browser;
+package mindustrytool.features.browser.schematic;
 
 import arc.Core;
 import arc.func.Cons;
@@ -31,6 +31,11 @@ import mindustrytool.features.browser.TagService.TagCategoryEnum;
 import mindustrytool.dto.PagingRequest;
 import mindustrytool.ui.TagBar;
 import mindustrytool.ui.DetailStats;
+
+import mindustrytool.features.browser.BrowserApi;
+import mindustrytool.features.browser.FilterDialog;
+import mindustrytool.features.browser.SearchConfig;
+import mindustrytool.features.browser.TagService;
 
 import static mindustry.Vars.*;
 

@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.browser;
+package mindustrytool.features.browser.map;
 
 import arc.Core;
 import arc.files.Fi;
@@ -29,6 +29,11 @@ import mindustrytool.dto.PagingRequest;
 
 import mindustrytool.ui.DetailStats;
 import mindustrytool.ui.TagBar;
+
+import mindustrytool.features.browser.BrowserApi;
+import mindustrytool.features.browser.FilterDialog;
+import mindustrytool.features.browser.SearchConfig;
+import mindustrytool.features.browser.TagService;
 
 import static mindustry.Vars.*;
 
