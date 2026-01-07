@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.settings;
+package mindustrytool.features.settings;
 
 import arc.Core;
 import arc.graphics.Color;

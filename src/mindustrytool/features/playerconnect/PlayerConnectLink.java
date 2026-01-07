@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.playerconnect;
+package mindustrytool.features.playerconnect;
 
 import java.net.URI;
 import java.net.URISyntaxException;

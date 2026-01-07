@@ -1,4 +1,4 @@
-﻿package mindustrytool.ui;
+package mindustrytool.ui;
 
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;

@@ -1,4 +1,4 @@
-﻿package mindustrytool.dto;
+package mindustrytool.dto;
 
 import arc.struct.Seq;
 import lombok.Data;

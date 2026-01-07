@@ -1,4 +1,4 @@
-﻿package mindustrytool;
+package mindustrytool;
 
 import java.io.IOException;
 
@@ -101,7 +101,7 @@ public class Utils {
             return out;
         }
     }
-    
+
     private static Object mapConfig(Block block, int value, int position) {
         if (block instanceof Sorter || block instanceof Unloader || block instanceof ItemSource)
             return content.item(value);

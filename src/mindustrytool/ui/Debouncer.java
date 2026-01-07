@@ -1,4 +1,4 @@
-﻿package mindustrytool.ui;
+package mindustrytool.ui;
 
 import java.util.concurrent.*;
 

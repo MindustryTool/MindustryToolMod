@@ -23,12 +23,12 @@ public class PlayerConnectRoomsDialog extends mindustry.ui.dialogs.BaseDialog {
     private final Table roomList = new Table();
     private final Debouncer debouncer = new Debouncer(250, TimeUnit.MILLISECONDS);
     private final PlayerConnectService playerConnectService = new PlayerConnectService();
-    
+
     private String searchTerm = "";
 
     public PlayerConnectRoomsDialog() {
         super("@message.room-list.title");
-        
+
         addCloseButton();
 
         try {

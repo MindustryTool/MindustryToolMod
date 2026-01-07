@@ -7,13 +7,14 @@ public class FeatureManager {
     private static final FeatureManager instance = new FeatureManager();
     private final Seq<Feature> features = new Seq<>();
 
-    private FeatureManager() {}
+    private FeatureManager() {
+    }
 
     public static FeatureManager getInstance() {
         return instance;
     }
 
-    public void register(Feature ...feature) {
+    public void register(Feature... feature) {
         features.addAll(feature);
     }
 
@@ -32,7 +33,8 @@ public class FeatureManager {
 
     public void setEnabled(Feature feature, boolean enabled) {
         boolean current = isEnabled(feature);
-        if (current == enabled) return;
+        if (current == enabled)
+            return;
 
         Core.settings.put("mindustrytool.feature." + feature.getMetadata().name() + ".enabled", enabled);
         if (enabled) {

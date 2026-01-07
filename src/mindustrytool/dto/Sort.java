@@ -1,4 +1,4 @@
-﻿package mindustrytool.dto;
+package mindustrytool.dto;
 
 public class Sort {
     private final String name;

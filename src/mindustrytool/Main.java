@@ -1,4 +1,4 @@
-﻿package mindustrytool;
+package mindustrytool;
 
 import arc.Core;
 import arc.Events;

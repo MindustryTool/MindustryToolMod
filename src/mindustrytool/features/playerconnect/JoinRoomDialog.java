@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.playerconnect;
+package mindustrytool.features.playerconnect;
 
 import mindustry.Vars;
 

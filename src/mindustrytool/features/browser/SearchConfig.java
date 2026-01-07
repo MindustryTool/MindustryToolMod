@@ -1,4 +1,4 @@
-﻿package mindustrytool.features.browser;
+package mindustrytool.features.browser;
 
 import arc.struct.Seq;
 import lombok.Data;
