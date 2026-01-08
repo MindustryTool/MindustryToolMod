@@ -3,7 +3,6 @@ package mindustrytool.features.settings;
 import arc.graphics.Color;
 import arc.scene.ui.layout.Table;
 import mindustry.gen.Icon;
-import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
@@ -42,42 +41,49 @@ public class FeatureSettingDialog extends BaseDialog {
         boolean enabled = FeatureManager.getInstance().isEnabled(feature);
         var metadata = feature.getMetadata();
 
-        parent.table(Tex.clear, card -> {
-            card.top().left().margin(12);
+        parent.table(Styles.black8, card -> {
+            card.top().left();
 
-            // Header
-            card.table(header -> {
-                header.left();
-                header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
+            // Status border
+            card.image().color(enabled ? Color.green : Color.red).growX().height(4f).row();
 
-                // Settings button
-                if (feature.setting().isPresent()) {
-                    header.button(Icon.settings, Styles.clearNonei,
-                            () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32)
-                            .padLeft(8);
-                }
+            card.table(c -> {
+                c.top().left().margin(12);
 
-                // Status icon (visual only)
-                header.image(enabled ? Icon.eyeSmall : Icon.eyeOffSmall).size(24).padLeft(4)
-                        .color(enabled ? Color.white : Color.gray);
-            }).growX().row();
+                // Header
+                c.table(header -> {
+                    header.left();
+                    header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
 
-            // Description
-            card.add(metadata.description())
-                    .color(Color.lightGray)
-                    .fontScale(0.9f)
-                    .wrap()
-                    .growX()
-                    .padTop(10)
-                    .row();
+                    // Settings button
+                    if (feature.setting().isPresent()) {
+                        header.button(Icon.settings, Styles.clearNonei,
+                                () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32)
+                                .padLeft(8);
+                    }
 
-            // Spacer to push status to bottom
-            card.add().growY().row();
+                    // Status icon (visual only)
+                    header.image(enabled ? Icon.eyeSmall : Icon.eyeOffSmall).size(24).padLeft(4)
+                            .color(enabled ? Color.white : Color.gray);
+                }).growX().row();
 
-            // Status Footer
-            card.add(enabled ? "Enabled" : "Disabled")
-                    .color(enabled ? Color.green : Color.red)
-                    .left();
+                // Description
+                c.add(metadata.description())
+                        .color(Color.lightGray)
+                        .fontScale(0.9f)
+                        .wrap()
+                        .growX()
+                        .padTop(10)
+                        .row();
+
+                // Spacer to push status to bottom
+                c.add().growY().row();
+
+                // Status Footer
+                c.add(enabled ? "Enabled" : "Disabled")
+                        .color(enabled ? Color.green : Color.red)
+                        .left();
+            }).grow();
 
         })
                 .growX()
