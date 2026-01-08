@@ -16,6 +16,7 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
+import mindustrytool.features.display.healthbar.HealthBarVisualizer;
 import mindustrytool.features.settings.FeatureSettingDialog;
 
 public class Main extends Mod {
@@ -26,6 +27,7 @@ public class Main extends Mod {
     private MapBrowserFeature mapBrowserFeature;
     private SchematicBrowserFeature schematicBrowserFeature;
     private PlayerConnectFeature playerConnectFeature;
+    private HealthBarVisualizer healthBarVisualizer;
     private FeatureSettingDialog featureSettingDialog;
 
     public Main() {
@@ -49,10 +51,12 @@ public class Main extends Mod {
         mapBrowserFeature = new MapBrowserFeature();
         schematicBrowserFeature = new SchematicBrowserFeature();
         playerConnectFeature = new PlayerConnectFeature();
+        healthBarVisualizer = new HealthBarVisualizer();
 
         FeatureManager.getInstance().register(mapBrowserFeature);
         FeatureManager.getInstance().register(schematicBrowserFeature);
         FeatureManager.getInstance().register(playerConnectFeature);
+        FeatureManager.getInstance().register(healthBarVisualizer);
 
         FeatureManager.getInstance().init();
     }

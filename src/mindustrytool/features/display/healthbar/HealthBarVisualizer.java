@@ -1,0 +1,176 @@
+package mindustrytool.features.display.healthbar;
+
+import arc.Core;
+import arc.Events;
+import arc.func.Cons;
+import arc.graphics.Color;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.TextureRegion;
+import arc.scene.ui.Dialog;
+import arc.scene.ui.Label;
+import arc.scene.ui.Slider;
+import arc.scene.ui.layout.Table;
+import mindustry.game.EventType.Trigger;
+import mindustry.gen.Groups;
+import mindustry.gen.Icon;
+import mindustry.gen.Unit;
+import mindustry.graphics.Pal;
+import mindustry.ui.Styles;
+import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureMetadata;
+
+import java.util.Optional;
+
+import static mindustry.Vars.*;
+
+public class HealthBarVisualizer implements Feature {
+
+    private static TextureRegion barRegion;
+    private final Cons<Unit> drawUnitRef = this::drawCheck;
+    private BaseDialog dialog;
+    private boolean enabled = false;
+
+    @Override
+    public FeatureMetadata getMetadata() {
+        return new FeatureMetadata("Health Bar", "Display health bars for units.", "health", 4);
+    }
+
+    @Override
+    public void init() {
+        HealthBarConfig.load();
+        Events.run(Trigger.draw, this::draw);
+    }
+
+    @Override
+    public void onEnable() {
+        enabled = true;
+    }
+
+    @Override
+    public void onDisable() {
+        enabled = false;
+    }
+
+    @Override
+    public Optional<Dialog> setting() {
+        if (dialog == null) {
+            initDialog();
+        }
+        return Optional.of(dialog);
+    }
+
+    public void draw() {
+        if (!enabled || !state.isGame())
+            return;
+
+        float zoom = renderer.getScale();
+        if (HealthBarConfig.zoomThreshold > 0 && zoom < HealthBarConfig.zoomThreshold)
+            return;
+
+        if (barRegion == null) {
+            barRegion = Core.atlas.find("white-ui");
+            if (barRegion == null || !barRegion.found()) {
+                barRegion = Core.atlas.white();
+            }
+        }
+
+        Draw.z(mindustry.graphics.Layer.shields + 5f);
+
+        float cx = Core.camera.position.x;
+        float cy = Core.camera.position.y;
+        float cw = Core.camera.width;
+        float ch = Core.camera.height;
+
+        Groups.unit.intersect(cx - cw / 2f, cy - ch / 2f, cw, ch, drawUnitRef);
+
+        Draw.reset();
+    }
+
+    private void drawCheck(Unit unit) {
+        if (!unit.isValid())
+            return;
+
+        boolean damaged = unit.health < unit.maxHealth;
+        boolean shielded = unit.shield > 0;
+
+        if (!damaged && !shielded)
+            return;
+
+        drawBar(unit);
+    }
+
+    private void drawBar(Unit unit) {
+        float x = unit.x;
+        float y = unit.y + unit.hitSize * 0.8f + 3f;
+
+        float w = unit.hitSize * 2.5f;
+        float h = 2f;
+
+        Draw.color(Color.black, 0.6f);
+        Draw.rect(barRegion, x, y, w + 2f, h + 2f);
+
+        float hpPercent = unit.health / unit.maxHealth;
+
+        Draw.color(unit.team.color, 0.75f);
+
+        float left = x - w / 2f;
+
+        if (hpPercent > 0) {
+            float filledW = w * hpPercent;
+            float fillCenterX = left + filledW / 2f;
+            Draw.rect(barRegion, fillCenterX, y, filledW, h);
+        }
+
+        if (unit.shield > 0) {
+            float shieldPercent = Math.min(unit.shield / unit.maxHealth, 1f);
+            float shieldW = w * shieldPercent;
+            float shieldCenterX = left + shieldW / 2f;
+
+            Draw.color(Pal.shield, 0.5f);
+            Draw.rect(barRegion, shieldCenterX, y, shieldW, h);
+        }
+    }
+
+    private void initDialog() {
+        dialog = new BaseDialog("Health Bar Settings");
+        dialog.addCloseButton();
+        dialog.buttons.button("reset", Icon.refresh, () -> {
+            HealthBarConfig.reset();
+            rebuild();
+        }).size(250, 64);
+        dialog.shown(this::rebuild);
+    }
+
+    private void rebuild() {
+        Table cont = dialog.cont;
+        cont.clear();
+        cont.defaults().pad(6).left();
+
+        float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
+
+        Slider zoomSlider = new Slider(0f, 2f, 0.1f, false);
+        zoomSlider.setValue(HealthBarConfig.zoomThreshold);
+
+        Label zoomValue = new Label(
+                HealthBarConfig.zoomThreshold <= 0.01f ? "Off" : String.format("%.1fx", HealthBarConfig.zoomThreshold),
+                Styles.outlineLabel);
+        zoomValue.setColor(HealthBarConfig.zoomThreshold <= 0.01f ? Color.gray : Color.lightGray);
+
+        Table zoomContent = new Table();
+        zoomContent.touchable = arc.scene.event.Touchable.disabled;
+        zoomContent.margin(3f, 33f, 3f, 33f);
+        zoomContent.add("Min Zoom", Styles.outlineLabel).left().growX();
+        zoomContent.add(zoomValue).padLeft(10f).right();
+
+        zoomSlider.changed(() -> {
+            HealthBarConfig.zoomThreshold = zoomSlider.getValue();
+            zoomValue.setText(HealthBarConfig.zoomThreshold <= 0.01f ? "Off"
+                    : String.format("%.1fx", HealthBarConfig.zoomThreshold));
+            zoomValue.setColor(HealthBarConfig.zoomThreshold <= 0.01f ? Color.gray : Color.lightGray);
+            HealthBarConfig.save();
+        });
+
+        cont.stack(zoomSlider, zoomContent).width(width).left().padTop(4f).row();
+    }
+}
