@@ -50,9 +50,6 @@ public class SchematicBrowserFeature implements Feature {
 
     @Override
     public void onDisable() {
-        if (schematicDialog != null) {
-            schematicDialog.hide();
-        }
         if (browseButton != null) {
             browseButton.remove();
             browseButton = null;
