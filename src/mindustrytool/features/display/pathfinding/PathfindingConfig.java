@@ -19,6 +19,8 @@ public class PathfindingConfig {
 
     public void save() {
         Core.settings.put(ZOOM_THRESHOLD_KEY, zoomThreshold);
+        Core.settings.put(DRAW_UNIT_PATH_KEY, drawUnitPath);
+        Core.settings.put(DRAW_SPAWN_POINT_PATH_KEY, drawSpawnPointPath);
     }
 
     public float getZoomThreshold() {
