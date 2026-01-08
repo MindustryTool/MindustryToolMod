@@ -1,11 +1,14 @@
 package mindustrytool.features.browser.schematic;
 
+import arc.Core;
 import arc.Events;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
+import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
+import mindustrytool.MdtKeybinds;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
@@ -26,6 +29,15 @@ public class SchematicBrowserFeature implements Feature {
         Events.on(ClientLoadEvent.class, e -> {
             if (FeatureManager.getInstance().isEnabled(this)) {
                 addBrowseButton();
+            }
+        });
+
+        Events.run(Trigger.update, () -> {
+            boolean noInputFocused = !Core.scene.hasField();
+            boolean enabled = FeatureManager.getInstance().isEnabled(this);
+
+            if (enabled && noInputFocused && Core.input.keyRelease(MdtKeybinds.schematicBrowserKb)) {
+                schematicDialog.show();
             }
         });
     }
