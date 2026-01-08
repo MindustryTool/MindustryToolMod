@@ -42,7 +42,7 @@ public class FeatureSettingDialog extends BaseDialog {
         boolean enabled = FeatureManager.getInstance().isEnabled(feature);
         var metadata = feature.getMetadata();
 
-        parent.table(Tex.button, card -> {
+        parent.table(Tex.clear, card -> {
             card.top().left().margin(12);
 
             // Header
