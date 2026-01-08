@@ -28,7 +28,9 @@
 
 ## Code Style
 
--  Use standard Java naming conventions.
+-  Use standard Java naming conventions, only use meaningful names and avoid abbreviations.
+-  No magic number or string, use constant instead unless its for UI.
+-  Boolean variable should use `is` or `has` prefix.
 -  Apply DRY, KISS, and SOLID principles.
 -  Prefer immutability
 -  No wildcard imports (`*`)

@@ -17,6 +17,7 @@ import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.display.healthbar.HealthBarVisualizer;
+import mindustrytool.features.display.pathfinding.PathfindingDisplay;
 import mindustrytool.features.display.teamresource.TeamResourceFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 
@@ -31,6 +32,7 @@ public class Main extends Mod {
     private HealthBarVisualizer healthBarVisualizer;
     private FeatureSettingDialog featureSettingDialog;
     private TeamResourceFeature teamResourceFeature;
+    private PathfindingDisplay pathfindingDisplay;
 
     public Main() {
         Vars.maxSchematicSize = 4000;
@@ -55,12 +57,14 @@ public class Main extends Mod {
         playerConnectFeature = new PlayerConnectFeature();
         healthBarVisualizer = new HealthBarVisualizer();
         teamResourceFeature = new TeamResourceFeature();
+        pathfindingDisplay = new PathfindingDisplay();
 
         FeatureManager.getInstance().register(mapBrowserFeature);
         FeatureManager.getInstance().register(schematicBrowserFeature);
         FeatureManager.getInstance().register(playerConnectFeature);
         FeatureManager.getInstance().register(healthBarVisualizer);
         FeatureManager.getInstance().register(teamResourceFeature);
+        FeatureManager.getInstance().register(pathfindingDisplay);
 
         FeatureManager.getInstance().init();
     }

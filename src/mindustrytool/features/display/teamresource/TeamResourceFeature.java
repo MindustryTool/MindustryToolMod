@@ -41,18 +41,19 @@ import java.util.Optional;
 public class TeamResourceFeature extends Table implements Feature {
     private final ObjectSet<Item> usedItems = new ObjectSet<>();
     private final ObjectSet<UnitType> usedUnits = new ObjectSet<>();
+    private final Interval timer = new Interval(2);
+
     private Team selectedTeam;
     private ItemModule coreItems;
     private ItemModule lastSnapshot = new ItemModule();
     private ItemModule rateDisplay = new ItemModule();
     private boolean viewingStats = false;
     private boolean holdingForStats = false;
-    private final Interval timer = new Interval(2);
-    private Building powerNode;
+    private Building selectedPowerNode;
     private PowerGraph powerGraph = new PowerGraph();
-    private boolean choosesNode = false;
+    private boolean isChoosingPowerNode = false;
     private boolean showTeamSelector = false;
-    private boolean hovered = false;
+    private boolean isHovered = false;
 
     private final ClickListener statsListener = new ClickListener() {
         @Override
@@ -73,7 +74,7 @@ public class TeamResourceFeature extends Table implements Feature {
         public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
             holdingForStats = false;
             if (!Vars.mobile) {
-                if (!hovered)
+                if (!isHovered)
                     viewingStats = false;
             } else {
                 viewingStats = false;
@@ -84,7 +85,7 @@ public class TeamResourceFeature extends Table implements Feature {
 
         @Override
         public void enter(InputEvent event, float x, float y, int pointer, Element fromActor) {
-            if (pointer == -1 && !holdingForStats && !choosesNode) {
+            if (pointer == -1 && !holdingForStats && !isChoosingPowerNode) {
                 viewingStats = true;
                 lastSnapshot.clear();
             }
@@ -112,8 +113,8 @@ public class TeamResourceFeature extends Table implements Feature {
 
         Events.run(WorldLoadEvent.class, () -> {
             selectedTeam = Vars.player.team();
-            usedItems.clear();
             lastSnapshot.clear();
+            usedItems.clear();
             rebuild();
             refreshPowerNode();
         });
@@ -129,26 +130,28 @@ public class TeamResourceFeature extends Table implements Feature {
 
         setFillParent(true);
         top();
+
         touchable = Touchable.childrenOnly;
 
         visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
 
         update(() -> {
-            if (!visible)
+            if (!visible) {
                 return;
+            }
 
-            if (choosesNode && Core.input.justTouched()) {
-                if (Core.scene.hit(Core.input.mouseX(), Core.input.mouseY(), true) == null) {
-                    float wx = Core.input.mouseWorld().x;
-                    float wy = Core.input.mouseWorld().y;
+            if (isChoosingPowerNode && Core.input.justTouched() && Core.scene.hit(Core.input.mouseX(), Core.input.mouseY(),
+                    true) == null) {
+                float wx = Core.input.mouseWorld().x;
+                float wy = Core.input.mouseWorld().y;
 
-                    Tile t = Vars.world.tileWorld(wx, wy);
-                    if (t != null && t.build != null && t.build.power != null) {
-                        powerNode = t.build;
-                        powerGraph = t.build.power.graph;
-                        choosesNode = false;
-                        rebuild();
-                    }
+                Tile t = Vars.world.tileWorld(wx, wy);
+
+                if (t != null && t.build != null && t.build.power != null) {
+                    selectedPowerNode = t.build;
+                    powerGraph = t.build.power.graph;
+                    isChoosingPowerNode = false;
+                    rebuild();
                 }
             }
 
@@ -156,11 +159,13 @@ public class TeamResourceFeature extends Table implements Feature {
                     ? selectedTeam.core().items
                     : null;
 
-            if (coreItems == null)
+            if (coreItems == null) {
                 return;
+            }
 
-            if (getChildren().isEmpty())
+            if (getChildren().isEmpty()) {
                 rebuild();
+            }
 
             if (Vars.content.items().contains(item -> coreItems.get(item) > 0 && usedItems.add(item))) {
                 rebuild();
@@ -179,6 +184,7 @@ public class TeamResourceFeature extends Table implements Feature {
                 Vars.ui.hudGroup.find("team-resources-overlay").remove();
             }
             Vars.ui.hudGroup.addChild(this);
+
             rebuild();
             refreshPowerNode();
         }
@@ -205,8 +211,9 @@ public class TeamResourceFeature extends Table implements Feature {
         float calculatedWidth = screenW * TeamResourceConfig.overlayWidth();
         float minWidth = 100f;
         float widthToUse = Math.max(calculatedWidth, Vars.mobile ? minWidth : 120f);
-        final float finalWidth = widthToUse;
         float scale = TeamResourceConfig.scale();
+
+        final float finalWidth = widthToUse;
 
         table(bg, t -> {
             t.margin(8f * scale);
@@ -227,7 +234,7 @@ public class TeamResourceFeature extends Table implements Feature {
                             b.image().size(24f).color(team.color);
                         }, Styles.clearTogglei, () -> {
                             selectedTeam = team;
-                            powerNode = null;
+                            selectedPowerNode = null;
                             usedUnits.clear();
                             rebuild();
                         }).checked(sel -> selectedTeam == team).size(32f).pad(2f).margin(2f);
@@ -313,14 +320,14 @@ public class TeamResourceFeature extends Table implements Feature {
                     power.addListener(new ClickListener() {
                         @Override
                         public void clicked(InputEvent event, float x, float y) {
-                            choosesNode = !choosesNode;
+                            isChoosingPowerNode = !isChoosingPowerNode;
                             rebuild();
                         }
                     });
 
                     refreshPowerNode();
 
-                    if (choosesNode) {
+                    if (isChoosingPowerNode) {
                         power.add("Select power node").fontScale(scale).color(Pal.accent)
                                 .height(barHeight).row();
                     }
@@ -360,7 +367,7 @@ public class TeamResourceFeature extends Table implements Feature {
                             b.add(team.localized()).color(team.color);
                         }, Styles.flatTogglet, () -> {
                             selectedTeam = team;
-                            powerNode = null;
+                            selectedPowerNode = null;
                             rebuild();
                             hide();
                         }).checked(team == selectedTeam);
@@ -385,31 +392,36 @@ public class TeamResourceFeature extends Table implements Feature {
     private String formatItem(Item item) {
         if (coreItems == null)
             return "0";
+
         int amount = coreItems.get(item);
 
         if (viewingStats) {
             int rate = rateDisplay.get(item);
+
             if (rate == 0)
                 return "[gray]0/s";
+
             String prefix = rate > 0 ? "[lime]+" : "[scarlet]";
+
             return prefix + rate + "[gray]/s";
         }
+
         return UI.formatAmount(amount);
     }
 
     private void refreshPowerNode() {
-        if (powerNode != null && powerNode.isValid() && powerNode.team == selectedTeam) {
-            if (powerNode.power != null) {
-                powerGraph = powerNode.power.graph;
+        if (selectedPowerNode != null && selectedPowerNode.isValid() && selectedPowerNode.team == selectedTeam) {
+            if (selectedPowerNode.power != null) {
+                powerGraph = selectedPowerNode.power.graph;
                 return;
             }
         }
 
         if (selectedTeam.data().hasCore() && selectedTeam.core() != null && selectedTeam.core().power != null) {
-            powerNode = selectedTeam.core();
+            selectedPowerNode = selectedTeam.core();
             powerGraph = selectedTeam.core().power.graph;
         } else {
-            powerNode = null;
+            selectedPowerNode = null;
             powerGraph = new PowerGraph();
         }
     }
