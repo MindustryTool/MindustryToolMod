@@ -88,4 +88,3 @@ if /I "%ext%"==".jar" (
 )
 
 echo Done.
-pause
