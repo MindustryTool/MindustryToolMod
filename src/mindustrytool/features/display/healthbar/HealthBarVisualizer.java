@@ -2,7 +2,6 @@ package mindustrytool.features.display.healthbar;
 
 import arc.Core;
 import arc.Events;
-import arc.func.Cons;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
@@ -10,6 +9,7 @@ import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
+import arc.util.Log;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
@@ -27,7 +27,6 @@ import static mindustry.Vars.*;
 public class HealthBarVisualizer implements Feature {
 
     private static TextureRegion barRegion;
-    private final Cons<Unit> drawUnitRef = this::drawCheck;
     private BaseDialog dialog;
     private boolean enabled = false;
 
@@ -61,12 +60,15 @@ public class HealthBarVisualizer implements Feature {
     }
 
     public void draw() {
-        if (!enabled || !state.isGame())
+        if (!enabled || !state.isGame()) {
             return;
+        }
 
         float zoom = renderer.getScale();
-        if (HealthBarConfig.zoomThreshold > 0 && zoom < HealthBarConfig.zoomThreshold)
+
+        if (HealthBarConfig.zoomThreshold > 0 && zoom < HealthBarConfig.zoomThreshold) {
             return;
+        }
 
         if (barRegion == null) {
             barRegion = Core.atlas.find("white-ui");
@@ -82,20 +84,22 @@ public class HealthBarVisualizer implements Feature {
         float cw = Core.camera.width;
         float ch = Core.camera.height;
 
-        Groups.unit.intersect(cx - cw / 2f, cy - ch / 2f, cw, ch, drawUnitRef);
+        Groups.unit.intersect(cx - cw / 2f, cy - ch / 2f, cw, ch, this::drawCheck);
 
         Draw.reset();
     }
 
     private void drawCheck(Unit unit) {
-        if (!unit.isValid())
+        if (!unit.isValid()) {
             return;
+        }
 
         boolean damaged = unit.health < unit.maxHealth;
         boolean shielded = unit.shield > 0;
 
-        if (!damaged && !shielded)
+        if (!damaged && !shielded){
             return;
+        }
 
         drawBar(unit);
     }
@@ -139,6 +143,7 @@ public class HealthBarVisualizer implements Feature {
             HealthBarConfig.reset();
             rebuild();
         }).size(250, 64);
+
         dialog.shown(this::rebuild);
     }
 
