@@ -23,12 +23,14 @@ public class FeatureSettingDialog extends BaseDialog {
         cont.pane(table -> {
             table.top().left();
 
-            float cardWidth = 340f;
-            int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / cardWidth));
+            float cardMinWidth = 340f;
+            int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / cardMinWidth));
+            float cardWidth = ((float) arc.Core.graphics.getWidth()) / cols;
+
             int i = 0;
 
             for (Feature feature : FeatureManager.getInstance().getFeatures()) {
-                buildFeatureCard(table, feature);
+                buildFeatureCard(table, feature, cardWidth);
                 if (++i % cols == 0) {
                     table.row();
                 }
@@ -36,7 +38,7 @@ public class FeatureSettingDialog extends BaseDialog {
         }).grow();
     }
 
-    private void buildFeatureCard(Table parent, Feature feature) {
+    private void buildFeatureCard(Table parent, Feature feature, float cardWidth) {
         boolean enabled = FeatureManager.getInstance().isEnabled(feature);
         var metadata = feature.getMetadata();
 
@@ -51,7 +53,8 @@ public class FeatureSettingDialog extends BaseDialog {
                 // Settings button
                 if (feature.setting().isPresent()) {
                     header.button(Icon.settings, Styles.clearNonei,
-                            () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32);
+                            () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32)
+                            .padLeft(8);
                 }
 
                 // Status icon (visual only)
@@ -76,9 +79,12 @@ public class FeatureSettingDialog extends BaseDialog {
                     .color(enabled ? Color.green : Color.red)
                     .left();
 
-        }).size(320f, 180f).pad(10f).get().clicked(() -> {
-            FeatureManager.getInstance().setEnabled(feature, !enabled);
-            rebuild();
-        });
+        })
+                .growX()
+                .minWidth(cardWidth)
+                .height(180f).pad(10f).get().clicked(() -> {
+                    FeatureManager.getInstance().setEnabled(feature, !enabled);
+                    rebuild();
+                });
     }
 }
