@@ -1,0 +1,5 @@
+# PlayerConnect Module Configuration
+# File này khai báo module class để được auto-discovered bởi ModuleLoader
+module.class=mindustrytool.playerconnect.PlayerConnectModule
+module.name=PlayerConnect
+module.description=Kết nối multiplayer qua CLaJ

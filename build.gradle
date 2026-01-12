@@ -33,6 +33,10 @@ ext{
     sdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
 }
 
+// Resolve AppData Mods directory (Windows) so build can install the mod automatically
+def appData = System.getenv('APPDATA') ?: System.getProperty('user.home') + '/AppData/Roaming'
+def appModsDir = file("${appData}/Mindustry/mods")
+
 dependencies{
     implementation files("libs/PlayerConnectShared.jar")
     
@@ -91,6 +95,33 @@ jar{
 
     from("assets/"){
         include "**"
+    }
+
+    // Include META-INF/modules từ mỗi module package
+    // Browser module
+    from("src/mindustrytool/browser/"){
+        include "META-INF/**"
+    }
+    // PlayerConnect module
+    from("src/mindustrytool/playerconnect/"){
+        include "META-INF/**"
+    }
+
+    // After creating the desktop jar, copy it to the user's AppData Mindustry mods folder (Windows)
+    doLast {
+        try {
+            if (!appModsDir.exists()) {
+                appModsDir.mkdirs()
+            }
+            def srcFile = archiveFile.get().asFile
+            copy {
+                from srcFile
+                into appModsDir
+            }
+            println "Copied ${srcFile} to ${appModsDir}"
+        } catch(Exception e) {
+            println "Warning: failed to copy jar to ${appModsDir}: ${e.message}"
+        }
     }
 }
 

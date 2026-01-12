@@ -1,0 +1,5 @@
+# Browser Module Configuration
+# File này khai báo module class để được auto-discovered bởi ModuleLoader
+module.class=mindustrytool.browser.BrowserModule
+module.name=Browser
+module.description=Browse maps và schematics từ server
