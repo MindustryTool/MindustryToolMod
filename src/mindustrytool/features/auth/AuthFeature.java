@@ -46,8 +46,14 @@ public class AuthFeature implements Feature {
 
         // Restore session
         AuthService.getInstance().refreshTokenIfNeeded(() -> {
-            AuthService.getInstance().fetchUserSession();
+            AuthService.getInstance().fetchUserSession(() -> {
+                Core.app.post(this::updateAuthWindow);
+            }, () -> {
+                AuthService.getInstance().logout();
+                Core.app.post(this::updateAuthWindow);
+            });
         }, () -> {
+            AuthService.getInstance().logout();
             Core.app.post(this::updateAuthWindow);
         });
 

@@ -27,6 +27,8 @@ import mindustrytool.features.display.range.RangeDisplay;
 import mindustrytool.features.display.quickaccess.QuickAccessHud;
 import mindustrytool.features.auth.AuthFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
+import mindustrytool.features.chat.ChatFeature;
+import mindustrytool.features.godmode.GodModeFeature;
 
 public class Main extends Mod {
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
@@ -63,8 +65,9 @@ public class Main extends Mod {
                 new PathfindingDisplay(), //
                 new RangeDisplay(), //
                 new QuickAccessHud(), //
-                new AuthFeature()//
-        );
+                new AuthFeature(), //
+                new ChatFeature(),
+                new GodModeFeature());
 
         FeatureManager.getInstance().init();
     }
@@ -103,7 +106,6 @@ public class Main extends Mod {
             if (span) {
                 btn.colspan(2).width(450f);
             }
-
             btn.row();
 
             buttons.swap(buttons.size - 1, buttons.size - 2);

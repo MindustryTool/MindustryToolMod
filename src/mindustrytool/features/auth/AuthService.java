@@ -11,6 +11,7 @@ import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustrytool.Config;
 import mindustrytool.features.auth.dto.UserSession;
+import arc.util.Http.HttpStatusException;
 
 public class AuthService {
     private static AuthService instance;
@@ -96,7 +97,9 @@ public class AuthService {
 
                             saveTokens(accessToken, refreshToken);
 
-                            fetchUserSession();
+                            fetchUserSession(() -> {
+                            }, () -> {
+                            });
                         }
                     } catch (Exception e) {
                         Log.err("Failed to parse login token response", e);
@@ -135,18 +138,21 @@ public class AuthService {
         Log.info("Logged out");
     }
 
-    public void fetchUserSession() {
-        AuthenticatedHttp.get(Config.API_v4_URL + "auth/session", res -> {
+    public void fetchUserSession(Runnable onSuccess, Runnable onFailure) {
+        AuthHttp.get(Config.API_v4_URL + "auth/session", res -> {
             try {
                 Jval json = Jval.read(res.getResultAsString());
                 currentUser = new UserSession(json.getString("name", "Unknown"), json.getString("imageUrl", ""));
 
                 Events.fire(currentUser);
+                onSuccess.run();
             } catch (Exception e) {
                 Log.err("Failed to parse user session", e);
+                onFailure.run();
             }
         }, err -> {
             Log.err("Failed to fetch user session", err);
+            onFailure.run();
         });
     }
 
@@ -163,10 +169,13 @@ public class AuthService {
     }
 
     public boolean isTokenNearExpiry(String token) {
-        if (token == null)
+        if (token == null) {
             return true;
+        }
+
         try {
             String[] parts = token.split("\\.");
+
             if (parts.length < 2)
                 return true;
 
@@ -178,6 +187,7 @@ public class AuthService {
             // "near expire (1 min)" -> 60 seconds
             return (exp - now) < 60;
         } catch (Exception e) {
+            Log.err("Failed to parse token expiry", e);
             return true;
         }
     }
@@ -187,14 +197,17 @@ public class AuthService {
         String refreshToken = getRefreshToken();
 
         if (accessToken == null || refreshToken == null) {
-            if (onFailure != null)
+            if (onFailure != null) {
+                Log.err("No access token or refresh token found");
                 onFailure.run();
+            }
             return;
         }
 
         if (!isTokenNearExpiry(accessToken)) {
-            if (onSuccess != null)
+            if (onSuccess != null) {
                 onSuccess.run();
+            }
             return;
         }
 
@@ -207,18 +220,28 @@ public class AuthService {
 
         isRefreshing = true;
         Jval json = Jval.newObject();
+
         json.put("refreshToken", refreshToken);
 
         Http.post(Config.API_v4_URL + "auth/app/refresh", json.toString())
                 .header("Content-Type", "application/json")
                 .error(err -> {
+                    Log.err("Failed to refresh token", err);
+
                     isRefreshing = false;
                     // If refresh failed (e.g. 401), logout
-                    if (onFailure != null)
+                    if (onFailure != null) {
                         onFailure.run();
+                    }
 
-                    Core.settings.remove(KEY_ACCESS_TOKEN);
-                    Core.settings.remove(KEY_REFRESH_TOKEN);
+                    if (err instanceof HttpStatusException httpError) {
+                        if (httpError.status.code == 401) {
+                            Core.settings.remove(KEY_ACCESS_TOKEN);
+                            Core.settings.remove(KEY_REFRESH_TOKEN);
+                        }
+
+                        Log.info(httpError.response.getResultAsString());
+                    }
                 })
                 .submit(res -> {
                     isRefreshing = false;
@@ -226,17 +249,24 @@ public class AuthService {
                         Jval resJson = Jval.read(res.getResultAsString());
                         if (resJson.has("accessToken") && resJson.has("refreshToken")) {
                             saveTokens(resJson.getString("accessToken"), resJson.getString("refreshToken"));
-                            if (onSuccess != null)
+
+                            if (onSuccess != null) {
                                 onSuccess.run();
+                            }
                         } else {
-                            logout();
-                            if (onFailure != null)
+                            if (onFailure != null) {
                                 onFailure.run();
+                            }
+                            logout();
+
+                            Log.err("Failed to refresh token: response does not contain accessToken or refreshToken");
                         }
                     } catch (Exception e) {
-                        logout();
-                        if (onFailure != null)
+                        if (onFailure != null) {
                             onFailure.run();
+                        }
+                        logout();
+                        Log.err("Failed to refresh token: exception", e);
                     }
                 });
     }
