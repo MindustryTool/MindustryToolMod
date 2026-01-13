@@ -140,10 +140,6 @@ public class Main extends Mod {
                 Vars.ui.showConfirm(Core.bundle.format("message.new-version", currentVersion, latestVersion)
                         + "\nDiscord: https://discord.gg/72324gpuCd",
                         () -> {
-                            if (currentVersion.endsWith("v8")) {
-                                return;
-                            }
-
                             Core.app.post(() -> {
                                 Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
                             });
