@@ -29,7 +29,11 @@ public class QuickAccessHud extends Table implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Quick Access HUD", "Quick access bar for toggling features", Iconc.menu);
+        return FeatureMetadata.builder()
+                .name("Quick Access HUD")
+                .description("Quick access bar for toggling features")
+                .icon(Iconc.menu)
+                .build();
     }
 
     @Override
@@ -112,6 +116,8 @@ public class QuickAccessHud extends Table implements Feature {
                 continue;
 
             FeatureMetadata meta = f.getMetadata();
+            if (!meta.quickAccess())
+                continue;
 
             // Feature Button
             // Using Label for Iconc

@@ -17,7 +17,12 @@ public class PlayerConnectFeature implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Player Connect", "Join and create P2P rooms.", Iconc.host, 3);
+        return FeatureMetadata.builder()
+                .name("Player Connect")
+                .description("Join and create P2P rooms.")
+                .icon(Iconc.host)
+                .order(3)
+                .build();
     }
 
     @Override

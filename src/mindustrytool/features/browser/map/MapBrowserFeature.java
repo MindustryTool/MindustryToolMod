@@ -17,7 +17,12 @@ public class MapBrowserFeature implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Map Browser", "Browse and download maps from the community.", Iconc.map, 1);
+        return FeatureMetadata.builder()
+                .name("Map Browser")
+                .description("Browse and download maps from the community.")
+                .icon(Iconc.map)
+                .order(1)
+                .build();
     }
 
     @Override

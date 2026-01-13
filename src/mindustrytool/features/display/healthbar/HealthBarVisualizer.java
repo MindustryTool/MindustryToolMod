@@ -32,7 +32,14 @@ public class HealthBarVisualizer implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Health Bar", "Display health bars for units.", Iconc.add, 4);
+        return FeatureMetadata.builder()
+                .name("Health Bar")
+                .description("Display health bars for units.")
+                .icon(Iconc.add)
+                .order(4)
+                .enabledByDefault(true)
+                .quickAccess(true)
+                .build();
     }
 
     @Override
@@ -97,7 +104,7 @@ public class HealthBarVisualizer implements Feature {
         boolean damaged = unit.health < unit.maxHealth;
         boolean shielded = unit.shield > 0;
 
-        if (!damaged && !shielded){
+        if (!damaged && !shielded) {
             return;
         }
 

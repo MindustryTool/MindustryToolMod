@@ -105,7 +105,14 @@ public class TeamResourceFeature extends Table implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Team Resources", "Display team resources and power status", Iconc.box);
+        return FeatureMetadata.builder()
+                .name("Team Resources")
+                .description("Display team resources and power status")
+                .icon(Iconc.box)
+                .order(0)
+                .enabledByDefault(true)
+                .quickAccess(true)
+                .build();
     }
 
     @Override

@@ -49,7 +49,14 @@ public class PathfindingDisplay implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Pathfinding Visualizer", "Visualizes unit pathfinding paths.", Iconc.commandRally);
+        return FeatureMetadata.builder()
+                .name("Pathfinding Visualizer")
+                .description("Visualizes unit pathfinding paths.")
+                .icon(Iconc.commandRally)
+                .order(0)
+                .enabledByDefault(true)
+                .quickAccess(true)
+                .build();
     }
 
     @Override
@@ -304,7 +311,7 @@ public class PathfindingDisplay implements Feature {
 
         for (var spawnPoint : Vars.state.rules.spawns) {
             var team = spawnPoint.team == null ? Vars.state.rules.waveTeam : spawnPoint.team;
-            
+
             if (team == player.team()) {
                 continue;
             }

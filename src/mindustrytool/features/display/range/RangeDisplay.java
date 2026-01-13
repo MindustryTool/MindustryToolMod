@@ -32,7 +32,14 @@ public class RangeDisplay implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Range Display", "Display ranges for blocks, units, and turrets.", Iconc.eye, 5);
+        return FeatureMetadata.builder()
+                .name("Range Display")
+                .description("Display ranges for blocks, units, and turrets.")
+                .icon(Iconc.eye)
+                .order(5)
+                .enabledByDefault(true)
+                .quickAccess(true)
+                .build();
     }
 
     @Override
