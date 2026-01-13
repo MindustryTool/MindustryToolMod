@@ -182,7 +182,7 @@ public class PlayerConnect {
         }
 
         if (pinger == null || pingerThread == null || !pingerThread.isAlive()) {
-            Client pinger = new Client(8192, 8192, tmpSerializer);
+            pinger = new Client(8192, 8192, tmpSerializer);
             pingerThread = Threads.daemon("Pinger", pinger);
         }
 

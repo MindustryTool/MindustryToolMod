@@ -8,6 +8,7 @@ import arc.scene.ui.Button;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
+import arc.util.Log;
 import arc.util.Strings;
 import arc.util.Time;
 import arc.util.Timer;
@@ -278,6 +279,7 @@ public class CreateRoomDialog extends BaseDialog {
             }, e -> {
                 ping.clear();
                 ping.image(Icon.cancel).color(Color.red).padLeft(5).padRight(5).left();
+                Log.err(e);
             });
         }
     }
