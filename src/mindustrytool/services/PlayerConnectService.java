@@ -25,6 +25,7 @@ public class PlayerConnectService {
     public void findPlayerConnectProvider(
             Cons<Seq<PlayerConnectProvider>> providers,
             Cons<Throwable> onFailed) {
+
         Http.get(Config.API_v4_URL + "player-connect/providers")
                 .error(onFailed)
                 .submit(response -> {

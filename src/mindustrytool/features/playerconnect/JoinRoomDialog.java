@@ -8,11 +8,8 @@ public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
     boolean isValid;
     String output;
 
-    private final PlayerConnectRoomsDialog playerConnectRoomsDialog;
-
-    public JoinRoomDialog(PlayerConnectRoomsDialog playerConnectRoomsDialog) {
+    public JoinRoomDialog() {
         super("@message.join-room.title");
-        this.playerConnectRoomsDialog = playerConnectRoomsDialog;
 
         cont.defaults().width(Vars.mobile ? 350f : 550f);
 
@@ -53,9 +50,6 @@ public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
 
         buttons.button("@ok", this::joinRoom)
                 .disabled(button -> !isValid || lastLink.isEmpty() || Vars.net.active());
-
-        playerConnectRoomsDialog.buttons
-                .button("@message.join-room.title", mindustry.gen.Icon.play, this::show);
     }
 
     public void joinRoom() {
@@ -80,7 +74,6 @@ public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
         });
 
         arc.util.Time.runTask(2f, () -> PlayerConnect.joinRoom(link, password, () -> {
-            playerConnectRoomsDialog.hide();
             hide();
         }));
     }
