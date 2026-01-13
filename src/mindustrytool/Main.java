@@ -21,6 +21,7 @@ import mindustrytool.features.display.healthbar.HealthBarVisualizer;
 import mindustrytool.features.display.pathfinding.PathfindingDisplay;
 import mindustrytool.features.display.teamresource.TeamResourceFeature;
 import mindustrytool.features.display.range.RangeDisplay;
+import mindustrytool.features.display.quickaccess.QuickAccessHud;
 import mindustrytool.features.settings.FeatureSettingDialog;
 
 public class Main extends Mod {
@@ -36,6 +37,7 @@ public class Main extends Mod {
     private TeamResourceFeature teamResourceFeature;
     private PathfindingDisplay pathfindingDisplay;
     private RangeDisplay rangeDisplay;
+    private QuickAccessHud quickAccessHud;
 
     public Main() {
         Vars.maxSchematicSize = 4000;
@@ -62,6 +64,7 @@ public class Main extends Mod {
         teamResourceFeature = new TeamResourceFeature();
         pathfindingDisplay = new PathfindingDisplay();
         rangeDisplay = new RangeDisplay();
+        quickAccessHud = new QuickAccessHud();
 
         FeatureManager.getInstance().register(mapBrowserFeature);
         FeatureManager.getInstance().register(schematicBrowserFeature);
@@ -70,6 +73,7 @@ public class Main extends Mod {
         FeatureManager.getInstance().register(teamResourceFeature);
         FeatureManager.getInstance().register(pathfindingDisplay);
         FeatureManager.getInstance().register(rangeDisplay);
+        FeatureManager.getInstance().register(quickAccessHud);
 
         FeatureManager.getInstance().init();
     }

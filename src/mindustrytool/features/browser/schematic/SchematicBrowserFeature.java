@@ -8,6 +8,7 @@ import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
 import mindustrytool.MdtKeybinds;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -19,7 +20,7 @@ public class SchematicBrowserFeature implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Schematic Browser", "Browse and download schematics.", "schematic", 2);
+        return new FeatureMetadata("Schematic Browser", "Browse and download schematics.", Iconc.paste, 2);
     }
 
     @Override

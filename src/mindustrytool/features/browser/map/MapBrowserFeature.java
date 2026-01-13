@@ -6,6 +6,7 @@ import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
 import mindustrytool.MdtKeybinds;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -16,7 +17,7 @@ public class MapBrowserFeature implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Map Browser", "Browse and download maps from the community.", "map", 1);
+        return new FeatureMetadata("Map Browser", "Browse and download maps from the community.", Iconc.map, 1);
     }
 
     @Override

@@ -25,6 +25,7 @@ import mindustry.game.EventType.Trigger;
 import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
 import mindustry.gen.Unit;
 import mindustry.graphics.Layer;
 import mindustry.ui.Styles;
@@ -48,7 +49,7 @@ public class PathfindingDisplay implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Pathfinding Visualizer", "Visualizes unit pathfinding paths.", "command-rally");
+        return new FeatureMetadata("Pathfinding Visualizer", "Visualizes unit pathfinding paths.", Iconc.commandRally);
     }
 
     @Override

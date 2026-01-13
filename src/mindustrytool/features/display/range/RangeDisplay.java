@@ -10,6 +10,7 @@ import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Groups;
+import mindustry.gen.Iconc;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.ui.dialogs.BaseDialog;
@@ -31,7 +32,7 @@ public class RangeDisplay implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Range Display", "Display ranges for blocks, units, and turrets.", "eye", 5);
+        return new FeatureMetadata("Range Display", "Display ranges for blocks, units, and turrets.", Iconc.eye, 5);
     }
 
     @Override

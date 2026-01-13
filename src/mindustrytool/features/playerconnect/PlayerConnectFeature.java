@@ -5,6 +5,7 @@ import arc.Events;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
@@ -16,7 +17,7 @@ public class PlayerConnectFeature implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Player Connect", "Join and create P2P rooms.", "host", 3);
+        return new FeatureMetadata("Player Connect", "Join and create P2P rooms.", Iconc.host, 3);
     }
 
     @Override

@@ -26,6 +26,7 @@ import mindustry.game.EventType.*;
 import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
 import mindustry.graphics.Pal;
 import mindustry.type.Item;
 import mindustry.type.UnitType;
@@ -104,7 +105,7 @@ public class TeamResourceFeature extends Table implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Team Resources", "Display team resources and power status", "box");
+        return new FeatureMetadata("Team Resources", "Display team resources and power status", Iconc.box);
     }
 
     @Override
@@ -140,8 +141,9 @@ public class TeamResourceFeature extends Table implements Feature {
                 return;
             }
 
-            if (isChoosingPowerNode && Core.input.justTouched() && Core.scene.hit(Core.input.mouseX(), Core.input.mouseY(),
-                    true) == null) {
+            if (isChoosingPowerNode && Core.input.justTouched()
+                    && Core.scene.hit(Core.input.mouseX(), Core.input.mouseY(),
+                            true) == null) {
                 float wx = Core.input.mouseWorld().x;
                 float wy = Core.input.mouseWorld().y;
 

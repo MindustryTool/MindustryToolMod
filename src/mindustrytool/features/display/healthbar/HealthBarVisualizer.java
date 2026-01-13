@@ -12,6 +12,7 @@ import arc.scene.ui.layout.Table;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
 import mindustry.gen.Unit;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
@@ -31,7 +32,7 @@ public class HealthBarVisualizer implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata("Health Bar", "Display health bars for units.", "health", 4);
+        return new FeatureMetadata("Health Bar", "Display health bars for units.", Iconc.add, 4);
     }
 
     @Override
