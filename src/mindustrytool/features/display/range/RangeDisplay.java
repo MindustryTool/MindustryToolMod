@@ -20,6 +20,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
 import java.lang.reflect.Field;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,7 +29,11 @@ public class RangeDisplay implements Feature {
     private BaseDialog dialog;
     private final RangeDisplayConfig config = new RangeDisplayConfig();
 
-    private final Set<String> blockRangeFields = Set.of("range");
+    private static final Set<String> blockRangeFields = new HashSet<String>();
+
+    static {
+        blockRangeFields.add("range");
+    }
 
     @Override
     public FeatureMetadata getMetadata() {

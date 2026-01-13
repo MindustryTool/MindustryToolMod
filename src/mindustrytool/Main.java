@@ -74,7 +74,7 @@ public class Main extends Mod {
 
         Events.on(ClientLoadEvent.class, (event) -> {
             try {
-                var mod = Vars.mods.getMod(Main.class);
+                var mod = Vars.mods.getMod(this.getClass());
 
                 for (var child : mod.root.child("icons").list()) {
                     Log.info(child.absolutePath());
