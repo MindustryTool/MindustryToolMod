@@ -104,6 +104,8 @@ public class Main extends Mod {
                 btn.colspan(2).width(450f);
             }
 
+            btn.row();
+
             buttons.swap(buttons.size - 1, buttons.size - 2);
         });
 
