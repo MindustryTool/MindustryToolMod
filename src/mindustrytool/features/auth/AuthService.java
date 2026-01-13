@@ -32,6 +32,10 @@ public class AuthService {
     private AuthService() {
         String logindId = Core.settings.getString(KEY_LOGIN_ID);
 
+        if (logindId == null) {
+            return;
+        }
+
         pollLoginToken(logindId);
 
     }
