@@ -10,7 +10,7 @@ import arc.util.Http.HttpMethod;
 import arc.util.Http.HttpRequest;
 import arc.util.Http.HttpResponse;
 
-public class AuthenticatedHttp {
+public class AuthHttp {
 
     public static AuthRequest get(String url) {
         return new AuthRequest(url, HttpMethod.GET);

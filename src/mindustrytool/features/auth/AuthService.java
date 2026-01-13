@@ -136,7 +136,7 @@ public class AuthService {
     }
 
     public void fetchUserSession() {
-        AuthenticatedHttp.get(Config.API_v4_URL + "auth/session", res -> {
+        AuthHttp.get(Config.API_v4_URL + "auth/session", res -> {
             try {
                 Jval json = Jval.read(res.getResultAsString());
                 currentUser = new UserSession(json.getString("name", "Unknown"), json.getString("imageUrl", ""));
