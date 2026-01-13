@@ -2,6 +2,9 @@ package mindustrytool.features.chat;
 
 import arc.Core;
 import arc.graphics.Color;
+import arc.math.Mathf;
+import arc.scene.event.DragListener;
+import arc.scene.event.Touchable;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.TextField;
@@ -9,10 +12,12 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
 import mindustry.Vars;
+import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.ui.UserCard;
+import arc.scene.event.InputEvent;
 
 public class ChatOverlay extends Table {
     private Seq<ChatMessage> messages = new Seq<>();
@@ -22,54 +27,161 @@ public class ChatOverlay extends Table {
     private TextButton sendButton;
     private boolean isSending = false;
 
+    private boolean isCollapsed = false;
+    private float expandedWidth = 400;
+    private float expandedHeight = 300;
+    private String lastInputText = "";
+
     public ChatOverlay() {
+        updateSize();
         setup();
     }
 
+    public void updateSize() {
+        float sW = Core.graphics.getWidth();
+        float sH = Core.graphics.getHeight();
+
+        // Max width 400 or 95% of screen
+        expandedWidth = Math.min(400, sW * 0.95f);
+        // Max height 300 or 60% of screen
+        expandedHeight = Math.min(300, sH * 0.6f);
+
+        if (!isCollapsed) {
+            setSize(expandedWidth, expandedHeight);
+        }
+    }
+
     private void setup() {
-        background(Styles.black6);
+        clear();
 
-        // Header
-        add("Global Chat").style(Styles.outlineLabel).growX().pad(4).center().row();
+        if (isCollapsed) {
+            background(null);
+            setSize(60, 60);
+            touchable = Touchable.enabled;
 
-        // Message List
-        messageTable = new Table();
-        messageTable.top().left();
+            Table buttonTable = new Table();
+            buttonTable.background(Styles.black6);
+            buttonTable.touchable(() -> Touchable.enabled);
 
-        scrollPane = new ScrollPane(messageTable, Styles.noBarPane);
-        scrollPane.setScrollingDisabled(true, false);
-        scrollPane.setFadeScrollBars(true);
+            // Drag listener for the collapsed button
+            buttonTable.addListener(new DragListener() {
+                float startX, startY;
 
-        add(scrollPane).grow().pad(4).row();
+                @Override
+                public void dragStart(InputEvent event, float x, float y, int pointer) {
+                    startX = x;
+                    startY = y;
+                }
 
-        // Input Area
-        Table inputTable = new Table();
-        inputField = new TextField();
-        inputField.setMessageText("Enter message...");
-        inputField.setMaxLength(1024);
+                @Override
+                public void drag(InputEvent event, float x, float y, int pointer) {
+                    ChatOverlay.this.moveBy(x - startX, y - startY);
+                    clamp();
+                }
+            });
 
-        // Send on Enter
-        inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
+            buttonTable.button(Icon.chat, Styles.clearNoneTogglei, () -> {
+                isCollapsed = false;
+                setup();
+            }).grow();
 
-        sendButton = new TextButton("Send", Styles.defaultt);
-        sendButton.clicked(this::sendMessage);
-        sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
+            add(buttonTable).size(60, 60);
+        } else {
+            background(Styles.black6);
+            setSize(expandedWidth, expandedHeight);
+            touchable = Touchable.enabled;
 
-        inputTable.add(inputField).growX().height(40f).padRight(4);
-        inputTable.add(sendButton).width(120f).height(40f);
+            // Header
+            Table header = new Table();
+            header.background(Styles.black8);
+            header.touchable(() ->Touchable.enabled);
 
-        add(inputTable).growX().pad(4).bottom();
+            // Drag listener for header
+            header.addListener(new DragListener() {
+                float startX, startY;
 
-        // Initial population
-        rebuildMessages();
+                @Override
+                public void dragStart(InputEvent event, float x, float y, int pointer) {
+                    startX = x;
+                    startY = y;
+                }
+
+                @Override
+                public void drag(InputEvent event, float x, float y, int pointer) {
+                    ChatOverlay.this.moveBy(x - startX, y - startY);
+                    clamp();
+                }
+            });
+
+            header.add("Global Chat").style(Styles.outlineLabel).growX().padLeft(8);
+            header.button(Icon.down, Styles.clearNonei, () -> {
+                isCollapsed = true;
+                if (inputField != null) {
+                    lastInputText = inputField.getText();
+                }
+                setup();
+            }).size(32);
+
+            add(header).growX().height(32).row();
+
+            // Message List
+            messageTable = new Table();
+            messageTable.top().left();
+
+            scrollPane = new ScrollPane(messageTable, Styles.noBarPane);
+            scrollPane.setScrollingDisabled(true, false);
+            scrollPane.setFadeScrollBars(true);
+
+            add(scrollPane).grow().pad(4).row();
+
+            // Input Area
+            Table inputTable = new Table();
+            inputField = new TextField();
+            inputField.setMessageText("Enter message...");
+            inputField.setText(lastInputText);
+            inputField.setMaxLength(1024);
+
+            // Send on Enter
+            inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
+
+            sendButton = new TextButton("Send", Styles.defaultt);
+            sendButton.clicked(this::sendMessage);
+            sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
+
+            inputTable.add(inputField).growX().height(40f).padRight(4);
+            inputTable.add(sendButton).width(80f).height(40f);
+
+            add(inputTable).growX().pad(4).bottom();
+
+            // Initial population
+            rebuildMessages();
+
+            // Scroll to bottom after layout
+            Core.app.post(() -> {
+                if (scrollPane != null) {
+                    scrollPane.setScrollY(scrollPane.getMaxY());
+                }
+            });
+        }
+
+        clamp();
+    }
+
+    private void clamp() {
+        float w = getWidth();
+        float h = getHeight();
+
+        float sW = Core.graphics.getWidth();
+        float sH = Core.graphics.getHeight();
+
+        x = Mathf.clamp(x, 0, sW - w);
+        y = Mathf.clamp(y, 0, sH - h);
+
+        setPosition(x, y);
     }
 
     public void addMessages(ChatMessage[] newMessages) {
         for (ChatMessage msg : newMessages) {
-            // Check for duplicates if needed, or just append
-            // Assuming stream sends new messages or history?
-            // Usually SSE sends new events.
-            // We might want to limit history size.
             if (messages.contains(m -> m.id.equals(msg.id)))
                 continue;
             messages.add(msg);
@@ -80,13 +192,20 @@ public class ChatOverlay extends Table {
             messages.removeRange(0, messages.size - 100);
         }
 
-        rebuildMessages();
-
-        // Scroll to bottom
-        Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
+        if (messageTable != null) {
+            rebuildMessages();
+            // Scroll to bottom
+            Core.app.post(() -> {
+                if (scrollPane != null)
+                    scrollPane.setScrollY(scrollPane.getMaxY());
+            });
+        }
     }
 
     private void rebuildMessages() {
+        if (messageTable == null)
+            return;
+
         messageTable.clear();
         messageTable.top().left();
 
@@ -113,6 +232,7 @@ public class ChatOverlay extends Table {
         ChatService.getInstance().sendMessage(content, () -> {
             isSending = false;
             inputField.setText("");
+            lastInputText = "";
         }, err -> {
             isSending = false;
             // Handle 409

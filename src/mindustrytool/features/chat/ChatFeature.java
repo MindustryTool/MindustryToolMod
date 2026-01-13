@@ -25,6 +25,10 @@ public class ChatFeature implements Feature {
         ChatService.getInstance().setListener(messages -> {
             if (overlay != null) {
                 overlay.addMessages(messages);
+
+                if (!overlay.visible && messages.length > 0) {
+                    Vars.ui.showInfoFade(messages[0].content);
+                }
             }
         });
     }
@@ -50,7 +54,7 @@ public class ChatFeature implements Feature {
 
             // Layout
             overlay.setPosition(20, 20);
-            overlay.setSize(400, 300);
+            overlay.updateSize();
             overlay.visible(() -> Vars.state.isMenu());
         }
     }

@@ -188,14 +188,17 @@ public class AuthService {
         String refreshToken = getRefreshToken();
 
         if (accessToken == null || refreshToken == null) {
-            if (onFailure != null)
+            if (onFailure != null) {
+                Log.err("No access token or refresh token found");
                 onFailure.run();
+            }
             return;
         }
 
         if (!isTokenNearExpiry(accessToken)) {
-            if (onSuccess != null)
+            if (onSuccess != null) {
                 onSuccess.run();
+            }
             return;
         }
 
@@ -208,20 +211,27 @@ public class AuthService {
 
         isRefreshing = true;
         Jval json = Jval.newObject();
+
         json.put("refreshToken", refreshToken);
 
         Http.post(Config.API_v4_URL + "auth/app/refresh", json.toString())
                 .header("Content-Type", "application/json")
                 .error(err -> {
+                    Log.err("Failed to refresh token", err);
+
                     isRefreshing = false;
                     // If refresh failed (e.g. 401), logout
                     if (onFailure != null) {
                         onFailure.run();
                     }
 
-                    if (err instanceof HttpStatusException httpError && httpError.status.code == 401) {
-                        Core.settings.remove(KEY_ACCESS_TOKEN);
-                        Core.settings.remove(KEY_REFRESH_TOKEN);
+                    if (err instanceof HttpStatusException httpError) {
+                        if (httpError.status.code == 401) {
+                            Core.settings.remove(KEY_ACCESS_TOKEN);
+                            Core.settings.remove(KEY_REFRESH_TOKEN);
+                        }
+
+                        Log.info(httpError.response.getResultAsString());
                     }
                 })
                 .submit(res -> {
@@ -230,17 +240,24 @@ public class AuthService {
                         Jval resJson = Jval.read(res.getResultAsString());
                         if (resJson.has("accessToken") && resJson.has("refreshToken")) {
                             saveTokens(resJson.getString("accessToken"), resJson.getString("refreshToken"));
-                            if (onSuccess != null)
+
+                            if (onSuccess != null) {
                                 onSuccess.run();
+                            }
                         } else {
-                            logout();
-                            if (onFailure != null)
+                            if (onFailure != null) {
                                 onFailure.run();
+                            }
+                            logout();
+
+                            Log.err("Failed to refresh token: response does not contain accessToken or refreshToken");
                         }
                     } catch (Exception e) {
-                        logout();
-                        if (onFailure != null)
+                        if (onFailure != null) {
                             onFailure.run();
+                        }
+                        logout();
+                        Log.err("Failed to refresh token: exception", e);
                     }
                 });
     }

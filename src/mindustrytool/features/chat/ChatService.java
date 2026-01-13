@@ -52,17 +52,6 @@ public class ChatService {
                     conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
                     conn.setRequestProperty("Accept", "text/event-stream");
-
-                    // Optional: If the stream requires auth, add it. The prompt didn't explicitly
-                    // say stream needs auth,
-                    // but usually it might. The prompt said "POST ... req Bearer token", but for
-                    // stream it just said "that is a server-sent-event stream".
-                    // I'll add auth if logged in, just in case.
-                    String token = AuthService.getInstance().getAccessToken();
-                    if (token != null) {
-                        conn.setRequestProperty("Authorization", "Bearer " + token);
-                    }
-
                     conn.setConnectTimeout(10000);
                     conn.setReadTimeout(0); // Infinite read timeout for SSE
 
