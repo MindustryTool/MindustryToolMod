@@ -3,6 +3,7 @@ package mindustrytool;
 import arc.Core;
 import arc.Events;
 import arc.files.Fi;
+import arc.scene.ui.layout.Table;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.serialization.Jval;
@@ -10,26 +11,33 @@ import mindustry.Vars;
 import mindustry.editor.MapResizeDialog;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
-import mindustry.mod.*;
 import mindustry.mod.Mods.LoadedMod;
-import mindustry.ui.fragments.MenuFragment.MenuButton;
-import mindustrytool.config.Config;
-import mindustrytool.gui.CreateRoomDialog;
-import mindustrytool.gui.JoinRoomDialog;
-import mindustrytool.gui.MapDialog;
-import mindustrytool.gui.PlayerConnectRoomsDialog;
-import mindustrytool.gui.SchematicDialog;
+import mindustry.mod.Mod;
+import mindustrytool.features.FeatureManager;
+import mindustrytool.features.browser.map.MapBrowserFeature;
+import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
+import mindustrytool.features.playerconnect.PlayerConnectFeature;
+import mindustrytool.features.display.healthbar.HealthBarVisualizer;
+import mindustrytool.features.display.pathfinding.PathfindingDisplay;
+import mindustrytool.features.display.teamresource.TeamResourceFeature;
+import mindustrytool.features.display.range.RangeDisplay;
+import mindustrytool.features.display.quickaccess.QuickAccessHud;
+import mindustrytool.features.settings.FeatureSettingDialog;
 
 public class Main extends Mod {
-    public static SchematicDialog schematicDialog;
-    public static MapDialog mapDialog;
-    public static PlayerConnectRoomsDialog playerConnectRoomsDialog;
-    public static CreateRoomDialog createRoomDialog;
-    public static JoinRoomDialog joinRoomDialog;
-
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
     public static Fi mapsDir = Vars.dataDirectory.child("mindustry-tool-maps");
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
+
+    private MapBrowserFeature mapBrowserFeature;
+    private SchematicBrowserFeature schematicBrowserFeature;
+    private PlayerConnectFeature playerConnectFeature;
+    private HealthBarVisualizer healthBarVisualizer;
+    private FeatureSettingDialog featureSettingDialog;
+    private TeamResourceFeature teamResourceFeature;
+    private PathfindingDisplay pathfindingDisplay;
+    private RangeDisplay rangeDisplay;
+    private QuickAccessHud quickAccessHud;
 
     public Main() {
         Vars.maxSchematicSize = 4000;
@@ -44,41 +52,58 @@ public class Main extends Mod {
         mapsDir.mkdirs();
         schematicDir.mkdirs();
 
+        initFeatures();
         addCustomButtons();
     }
 
+    private void initFeatures() {
+        mapBrowserFeature = new MapBrowserFeature();
+        schematicBrowserFeature = new SchematicBrowserFeature();
+        playerConnectFeature = new PlayerConnectFeature();
+        healthBarVisualizer = new HealthBarVisualizer();
+        teamResourceFeature = new TeamResourceFeature();
+        pathfindingDisplay = new PathfindingDisplay();
+        rangeDisplay = new RangeDisplay();
+        quickAccessHud = new QuickAccessHud();
+
+        FeatureManager.getInstance().register(mapBrowserFeature);
+        FeatureManager.getInstance().register(schematicBrowserFeature);
+        FeatureManager.getInstance().register(playerConnectFeature);
+        FeatureManager.getInstance().register(healthBarVisualizer);
+        FeatureManager.getInstance().register(teamResourceFeature);
+        FeatureManager.getInstance().register(pathfindingDisplay);
+        FeatureManager.getInstance().register(rangeDisplay);
+        FeatureManager.getInstance().register(quickAccessHud);
+
+        FeatureManager.getInstance().init();
+    }
+
     private void addCustomButtons() {
-        schematicDialog = new SchematicDialog();
-        mapDialog = new MapDialog();
-        playerConnectRoomsDialog = new PlayerConnectRoomsDialog();
-        createRoomDialog = new CreateRoomDialog();
-        joinRoomDialog = new JoinRoomDialog();
+        featureSettingDialog = new FeatureSettingDialog();
 
         Events.on(ClientLoadEvent.class, (event) -> {
-            Vars.ui.schematics.buttons.button("Browse", Icon.menu, () -> {
-                Vars.ui.schematics.hide();
-                schematicDialog.show();
-            });
-
-            if (Vars.mobile) {
-                Vars.ui.menufrag.addButton(Core.bundle.format("message.map-browser.title"), Icon.map, () -> {
-                    mapDialog.show();
-                });
-                Vars.ui.menufrag.addButton(Core.bundle.format("message.player-connect.title"), Icon.menu, () -> {
-                    playerConnectRoomsDialog.show();
-                });
-            } else {
-                Vars.ui.menufrag.addButton(new MenuButton("Tools", Icon.wrench, () -> {
-                }, //
-                        new MenuButton(Core.bundle.format("message.map-browser.title"), Icon.map, () -> {
-                            mapDialog.show();
-                        }), //
-                        new MenuButton(Core.bundle.format("message.player-connect.title"), Icon.menu, () -> {
-                            playerConnectRoomsDialog.show();
-                        })//
-                ));
-            }
+            Vars.ui.menufrag.addButton("Mindustry Tool", Icon.settings, () -> featureSettingDialog.show());
         });
+
+        Vars.ui.paused.shown(() -> {
+            Table root = Vars.ui.paused.cont;
+            @SuppressWarnings("rawtypes")
+            arc.struct.Seq<arc.scene.ui.layout.Cell> buttons = root.getCells();
+
+            var span = !Vars.mobile && arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2;
+
+            var btn = root.row()
+                    .button("MindustryTool", Icon.settings, featureSettingDialog::show);
+
+            if (span) {
+                btn.colspan(2).width(450f);
+            }
+
+            btn.row();
+
+            buttons.swap(buttons.size - 1, buttons.size - 2);
+        });
+
     }
 
     private void checkForUpdate() {
@@ -112,6 +137,5 @@ public class Main extends Mod {
         Http.get(Config.API_URL + "ping?client=mod-v8").submit(result -> {
             Log.info("Ping");
         });
-
     }
 }

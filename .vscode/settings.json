@@ -1,4 +1,7 @@
 {
-	"java.configuration.updateBuildConfiguration": "automatic",
-	"java.project.sourcePaths": ["src/"],
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.project.sourcePaths": [
+        "src/"
+    ],
+    "files.encoding": "utf8"
 }
