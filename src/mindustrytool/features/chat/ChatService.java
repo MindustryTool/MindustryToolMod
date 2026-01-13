@@ -1,0 +1,152 @@
+package mindustrytool.features.chat;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import arc.Core;
+import arc.func.Cons;
+import arc.util.Log;
+import arc.util.serialization.Jval;
+import mindustry.Vars;
+import arc.util.serialization.Json;
+import arc.util.Http.HttpStatusException;
+import mindustrytool.Config;
+import mindustrytool.features.auth.AuthHttp;
+import mindustrytool.features.auth.AuthService;
+import mindustrytool.features.chat.dto.ChatMessage;
+
+public class ChatService {
+    private static ChatService instance;
+    private Thread streamThread;
+    private AtomicBoolean isStreaming = new AtomicBoolean(false);
+    private Cons<ChatMessage[]> messageListener;
+
+    private ChatService() {
+    }
+
+    public static ChatService getInstance() {
+        if (instance == null) {
+            instance = new ChatService();
+        }
+        return instance;
+    }
+
+    public void setListener(Cons<ChatMessage[]> listener) {
+        this.messageListener = listener;
+    }
+
+    public void connectStream() {
+        if (isStreaming.get())
+            return;
+
+        isStreaming.set(true);
+
+        streamThread = new Thread(() -> {
+            while (isStreaming.get()) {
+                HttpURLConnection conn = null;
+                try {
+                    URL url = new URL(Config.API_v4_URL + "chats/stream");
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setRequestProperty("Accept", "text/event-stream");
+
+                    // Optional: If the stream requires auth, add it. The prompt didn't explicitly
+                    // say stream needs auth,
+                    // but usually it might. The prompt said "POST ... req Bearer token", but for
+                    // stream it just said "that is a server-sent-event stream".
+                    // I'll add auth if logged in, just in case.
+                    String token = AuthService.getInstance().getAccessToken();
+                    if (token != null) {
+                        conn.setRequestProperty("Authorization", "Bearer " + token);
+                    }
+
+                    conn.setConnectTimeout(10000);
+                    conn.setReadTimeout(0); // Infinite read timeout for SSE
+
+                    int status = conn.getResponseCode();
+                    if (status != 200) {
+                        Log.err("Chat stream failed: " + status);
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                        continue;
+                    }
+
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    String line;
+                    while (isStreaming.get() && (line = reader.readLine()) != null) {
+                        if (line.startsWith("data:")) {
+                            String data = line.substring(5).trim();
+                            if (!data.isEmpty()) {
+                                try {
+                                    // Parse array of messages
+                                    Jval json = Jval.read(data);
+                                    if (json.isArray()) {
+                                        Json jsonParser = new Json();
+                                        // Jval to Object mapping is manual in Arc usually or use Json
+                                        // Let's manually map for safety or use Json if compatible
+                                        ChatMessage[] messages = jsonParser.fromJson(ChatMessage[].class, data);
+
+                                        if (messageListener != null) {
+                                            Core.app.post(() -> messageListener.get(messages));
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    Log.err("Failed to parse chat message", e);
+                                }
+                            }
+                        }
+                    }
+
+                } catch (Exception e) {
+                    if (isStreaming.get()) {
+                        Log.err("Chat stream error", e);
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException ie) {
+                            break;
+                        }
+                    }
+                } finally {
+                    if (conn != null)
+                        conn.disconnect();
+                }
+            }
+        }, "ChatStreamThread");
+        streamThread.setDaemon(true);
+        streamThread.start();
+    }
+
+    public void disconnectStream() {
+        isStreaming.set(false);
+        if (streamThread != null) {
+            streamThread.interrupt();
+            streamThread = null;
+        }
+    }
+
+    public void sendMessage(String content, Runnable onSuccess, Cons<Throwable> onError) {
+        Jval json = Jval.newObject();
+        json.put("content", content);
+
+        AuthHttp.post(Config.API_v4_URL + "chats/text", json.toString())
+                .header("Content-Type", "application/json")
+                .error(e -> {
+                    if (e instanceof HttpStatusException httpError) {
+                        Vars.ui.showErrorMessage(httpError.getMessage());
+                    }
+
+                    if (onError != null)
+                        onError.get(e);
+                })
+                .submit(res -> {
+                    if (onSuccess != null)
+                        onSuccess.run();
+                });
+    }
+}
