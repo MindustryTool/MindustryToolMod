@@ -2,8 +2,47 @@ package mindustrytool.features;
 
 import mindustry.gen.Iconc;
 
-public record FeatureMetadata(String name, String description, char icon, int order, boolean enabledByDefault,
-        boolean quickAccess) {
+public class FeatureMetadata {
+    String name;
+    String description;
+    char icon;
+    int order;
+    boolean enabledByDefault;
+    boolean quickAccess;
+
+    private FeatureMetadata(String name, String description, char icon, int order, boolean enabledByDefault,
+            boolean quickAccess) {
+        this.name = name;
+        this.description = description;
+        this.icon = icon;
+        this.order = order;
+        this.enabledByDefault = enabledByDefault;
+        this.quickAccess = quickAccess;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public String description() {
+        return description;
+    }
+
+    public char icon() {
+        return icon;
+    }
+
+    public int order() {
+        return order;
+    }
+
+    public boolean enabledByDefault() {
+        return enabledByDefault;
+    }
+
+    public boolean quickAccess() {
+        return quickAccess;
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -52,6 +91,7 @@ public record FeatureMetadata(String name, String description, char icon, int or
                 throw new IllegalStateException("Name is required");
             if (description == null)
                 throw new IllegalStateException("Description is required");
+
             return new FeatureMetadata(name, description, icon, order, enabledByDefault, quickAccess);
         }
     }

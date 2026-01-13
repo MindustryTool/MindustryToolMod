@@ -11,16 +11,20 @@ repositories{
     maven{ url 'https://www.jitpack.io' }
 }
 
+
 java{
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = 16
+    targetCompatibility = 8
+    sourceCompatibility = JavaVersion.VERSION_17
 }
 
 allprojects{
-    tasks.withType(JavaCompile){
-        options.annotationProcessorPath = configurations.annotationProcessor
+    tasks.withType(JavaCompile).tap{
+        configureEach{
+            options.compilerArgs.addAll(['--release', '8'])
+        }
     }
 }
+
 
 
 ext{
