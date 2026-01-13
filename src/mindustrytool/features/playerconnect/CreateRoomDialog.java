@@ -60,7 +60,7 @@ public class CreateRoomDialog extends BaseDialog {
             if (Vars.mobile) {
                 root.row()
                         .buttonRow(buttonTitle, Icon.planet, this::show)
-                        .disabled(button -> !Vars.net.server()).row();
+                        .disabled(button -> !Vars.net.server());
                 return;
 
             } else if (arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2) {
@@ -86,19 +86,22 @@ public class CreateRoomDialog extends BaseDialog {
         mainTable.add("@message.manage-room.title").style(Styles.defaultLabel).padBottom(20f).row();
 
         if (PlayerConnect.isRoomClosed()) {
-            mainTable.add("@message.player-connect.room-closed");
+            mainTable.add("@message.player-connect.room-closed").row();
         } else {
-            mainTable.add("@message.player-connect.room-connected");
+            mainTable.add("@message.player-connect.room-connected").row();
         }
 
         mainTable.button("@message.manage-room.close-room", Icon.cancel, () -> {
             closeRoom();
             hide();
         })
-                .size(250f, 60f).padBottom(10f).row();
+                .size(250f, 60f)
+                .padBottom(10f)
+                .row();
 
         mainTable.button("@message.manage-room.copy-link", Icon.copy, this::copyLink)
-                .size(250f, 60f).row();
+                .size(250f, 60f)
+                .row();
     }
 
     private void setupStep1() {
@@ -106,7 +109,12 @@ public class CreateRoomDialog extends BaseDialog {
         mainTable.add("Step 1: Configure Room").style(Styles.defaultLabel).padBottom(20f).row();
 
         mainTable.table(t -> {
-            t.add(Core.bundle.format("message.create-room.server-name")).padRight(5f).ellipsis(true).left();
+            t.add(Core.bundle.format("message.create-room.server-name"))
+                    .padRight(5f)
+                    .ellipsis(true)
+                    .left()
+                    .row();
+
             t.field(PlayerConnectConfig.getRoomName(), text -> {
                 PlayerConnectConfig.setRoomName(text);
             })
@@ -117,7 +125,12 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .row();
 
-            t.add(Core.bundle.format("message.password")).padRight(5f).ellipsis(true).left();
+            t.add(Core.bundle.format("message.password"))
+                    .padRight(5f)
+                    .ellipsis(true)
+                    .left()
+                    .row();
+
             t.field(PlayerConnectConfig.getPassword(), text -> {
                 PlayerConnectConfig.setPassword(text);
             })

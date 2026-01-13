@@ -1,6 +1,7 @@
 package mindustrytool.features.settings;
 
 import arc.graphics.Color;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
@@ -22,9 +23,8 @@ public class FeatureSettingDialog extends BaseDialog {
         cont.pane(table -> {
             table.top().left();
 
-            float cardMinWidth = 340f;
-            int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / cardMinWidth));
-            float cardWidth = ((float) arc.Core.graphics.getWidth()) / cols;
+            int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / Scl.scl() * 0.9f / 340f));
+            float cardWidth = ((float) arc.Core.graphics.getWidth() / Scl.scl() * 0.9f) / cols;
 
             int i = 0;
 
