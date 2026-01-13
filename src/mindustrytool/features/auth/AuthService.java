@@ -164,10 +164,13 @@ public class AuthService {
     }
 
     public boolean isTokenNearExpiry(String token) {
-        if (token == null)
+        if (token == null) {
             return true;
+        }
+
         try {
             String[] parts = token.split("\\.");
+
             if (parts.length < 2)
                 return true;
 
@@ -177,8 +180,9 @@ public class AuthService {
             long now = System.currentTimeMillis() / 1000;
 
             // "near expire (1 min)" -> 60 seconds
-            return (exp - now) < 60;
+            return (exp - now) > 60;
         } catch (Exception e) {
+            Log.err("Failed to parse token expiry", e);
             return true;
         }
     }
