@@ -34,12 +34,12 @@ public class AuthFeature implements Feature {
     public void init() {
         var wholeViewport = new Table();
         wholeViewport.setFillParent(true);
-        wholeViewport.bottom().right().marginBottom(48f);
+        wholeViewport.top().right();
 
         authWindow = wholeViewport.table()
                 .get();
 
-        authWindow.bottom().right();
+        authWindow.top().right();
         authWindow.touchable = Touchable.childrenOnly;
 
         Core.scene.add(wholeViewport);
@@ -89,8 +89,7 @@ public class AuthFeature implements Feature {
             content.button("Login", Icon.lock, this::startLogin).size(120, 50);
         }
 
-        // Float at bottom right with padding
-        authWindow.add(content).bottom().right().margin(8f);
+        authWindow.add(content).top().right().margin(8f);
     }
 
     private void startLogin() {
