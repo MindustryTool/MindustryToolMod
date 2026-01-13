@@ -1,0 +1,384 @@
+package mindustrytool.features.playerconnect;
+
+import arc.Core;
+import arc.math.Mathf;
+import arc.scene.ui.layout.Scl;
+import arc.scene.Element;
+import arc.scene.Group;
+import arc.scene.ui.Button;
+import arc.scene.ui.Image;
+import arc.scene.ui.ImageButton;
+import arc.scene.ui.layout.Collapser;
+import arc.scene.ui.layout.Table;
+import arc.struct.Seq;
+import arc.util.Align;
+import arc.util.Reflect;
+import arc.util.Strings;
+import mindustry.Vars;
+import mindustry.core.Version;
+import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
+import mindustry.gen.Tex;
+import mindustry.graphics.Pal;
+import mindustry.ui.Styles;
+import mindustry.ui.dialogs.BaseDialog;
+import mindustry.ui.dialogs.JoinDialog;
+import mindustrytool.services.PlayerConnectService;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class PlayerConnectJoinInjector {
+    private final PlayerConnectService playerConnectService = new PlayerConnectService();
+    private final Table playerConnectTable = new Table();
+    private String searchTerm = "";
+    private JoinDialog dialog;
+    private Table hosts;
+
+    private static final String HEADER_NAME = "pc-header";
+    private static final String COLLAPSER_NAME = "pc-collapser";
+
+    public void inject(JoinDialog dialog) {
+        this.dialog = dialog;
+        this.hosts = Reflect.get(dialog, "hosts");
+
+        if (this.hosts == null) {
+            return;
+        }
+
+        // Prepare our section
+        Table header = new Table();
+        header.name = HEADER_NAME;
+        Collapser col = new Collapser(playerConnectTable, false);
+
+        col.name = COLLAPSER_NAME;
+        col.setDuration(0.1f);
+        col.setCollapsed(false);
+
+        // Build Header
+        header.background(Tex.underline);
+        header.button("@message.player-connect.title", Icon.downOpen, Styles.togglet, () -> {
+            col.toggle();
+            Element e = header.getChildren().get(0);
+            if (e instanceof Button) {
+                for (Element child : ((Button) e).getChildren()) {
+                    if (child instanceof Image) {
+                        ((Image) child).setDrawable(col.isCollapsed() ? Icon.rightOpen : Icon.downOpen);
+                    }
+                }
+            }
+        }).growX().left().labelAlign(Align.left).padBottom(3).get().getLabelCell().padLeft(10).growX();
+
+        // Swap Trick:
+        // 1. Get existing children (Snapshot to avoid modification issues)
+        Seq<Element> children = new Seq<>(hosts.getChildren());
+
+        // 2. Clear hosts table
+        hosts.clear();
+
+        // 3. Add our section at the top
+        hosts.add(header).growX().padTop(10).row();
+        hosts.add(col).width((targetWidth() + 5f) * columns());
+        hosts.row();
+        hosts.image().growX().pad(5).padLeft(10).padRight(10).height(3).color(Pal.accent);
+        hosts.row();
+
+        // 4. Add back existing children, skipping our own if they were present
+        for (Element child : children) {
+            if (HEADER_NAME.equals(child.name) || COLLAPSER_NAME.equals(child.name)) {
+                continue;
+            }
+
+            if (child instanceof Table) {
+                // It's likely a header
+                hosts.add(child).growX().padTop(10).row();
+            } else if (child instanceof Collapser) {
+                hosts.add(child).growX().row();
+            } else {
+                // Fallback for other elements
+                hosts.add(child).growX().row();
+            }
+        }
+
+        // Hook into Refresh Button
+        findAndHookRefreshButton();
+
+        // Initial Setup
+        setupPlayerConnect();
+    }
+
+    private void findAndHookRefreshButton() {
+        // Search in the dialog's buttons table first
+        Table buttons = dialog.buttons;
+        Element refreshBtn = findRefreshButton(buttons);
+
+        // If not found, search the whole dialog (less likely but possible)
+        if (refreshBtn == null) {
+            refreshBtn = findRefreshButton(dialog.cont);
+        }
+
+        if (refreshBtn != null && refreshBtn instanceof ImageButton) {
+            ((ImageButton) refreshBtn).clicked(this::setupPlayerConnect);
+        }
+    }
+
+    private Element findRefreshButton(Group parent) {
+        for (Element child : parent.getChildren()) {
+            if (child instanceof ImageButton) {
+                ImageButton btn = (ImageButton) child;
+                // Check if the button uses Icon.refresh
+                if (btn.getStyle().imageUp == Icon.refresh) {
+                    return btn;
+                }
+            } else if (child instanceof Group) {
+                Element found = findRefreshButton((Group) child);
+                if (found != null)
+                    return found;
+            }
+        }
+        return null;
+    }
+
+    private void setupPlayerConnect() {
+        playerConnectTable.clear();
+        playerConnectTable.labelWrap(Core.bundle.format("message.loading"))
+                .center()
+                .labelAlign(0)
+                .expand()
+                .fill();
+
+        playerConnectService.findPlayerConnectRooms(searchTerm, rooms -> {
+            playerConnectTable.clear();
+
+            if (rooms.isEmpty()) {
+                playerConnectTable.labelWrap(Core.bundle.format("message.no-rooms-found"))
+                        .center()
+                        .labelAlign(0)
+                        .expand()
+                        .fill()
+                        .pad(10);
+                return;
+            }
+
+            int i = 0;
+            int cols = columns();
+            for (PlayerConnectRoom room : rooms) {
+                buildPlayerConnectRoom(room);
+                if (++i % cols == 0) {
+                    playerConnectTable.row();
+                }
+            }
+        });
+    }
+
+    private void buildPlayerConnectRoom(PlayerConnectRoom room) {
+        float twidth = targetWidth();
+        float contentWidth = twidth - 40f;
+
+        playerConnectTable.table(Styles.black8, t -> {
+            t.top().left();
+
+            // Header: Name, Version, Lock
+            t.table(header -> {
+                header.left();
+                header.setColor(Pal.gray);
+
+                boolean isSecured = room.data().isSecured();
+
+                header.table(info -> {
+                    info.left();
+
+                    float lockWidth = 16f;
+                    float nameWidth = contentWidth - lockWidth - 10f;
+
+                    info.add((isSecured ? Iconc.lock + " " : "") + room.data().name()).style(Styles.outlineLabel)
+                            .fontScale(1.25f)
+                            .width(nameWidth).left().ellipsis(true);
+
+                }).growX().left().padLeft(10f).padTop(5f);
+
+                // Copy Link Button (Top Right)
+                header.button(Icon.copy, Styles.clearNonei, () -> {
+                    Core.app.setClipboardText(room.link());
+                    Vars.ui.showInfoFade("@copied");
+                }).size(32).padRight(15);
+
+            }).padTop(10f).growX().height(36f).row();
+
+            // Body
+            t.table(body -> {
+                body.top().left();
+                body.setColor(Pal.gray);
+                body.left();
+                body.margin(10);
+
+                // Map & Mode
+                String mapModeString = "[lightgray]" + Core.bundle.format("save.map", room.data().mapName()) +
+                        " [lightgray]/ [accent]" + room.data().gamemode();
+
+                body.add(mapModeString)
+                        .left()
+                        .width(contentWidth)
+                        .padBottom(2)
+                        .ellipsis(true)
+                        .row();
+
+                // Players
+                body.add(Iconc.players + " [accent]" + room.data().players().size)
+                        .padBottom(2)
+                        .left()
+                        .row();
+
+                // Mods
+                if (room.data().mods().size > 0) {
+                    body.add(Iconc.book + " [lightgray]" + Strings.join(", ", room.data().mods())).left()
+                            .padBottom(2)
+                            .width(contentWidth)
+                            .ellipsis(true)
+                            .row();
+                }
+
+                // Locale
+                body.add(Iconc.chat + " [lightgray]" + room.data().locale()).left().padBottom(2)
+                        .row();
+
+                String versionString = getVersionString(room.data().version());
+
+                body.add("[white]" + Iconc.info + " [lightgray]" + versionString).style(Styles.outlineLabel)
+                        .color(Pal.lightishGray)
+                        .width(contentWidth)
+                        .padBottom(2)
+                        .left()
+                        .row();
+                // Spacer
+                body.add().growY().row();
+
+                // Join Button
+                body.button(Core.bundle.format("join"), Icon.play, () -> {
+                    joinRoom(room);
+                }).growX().height(40f).padTop(5);
+
+            }).growY().growX().left().bottom();
+
+        }).minWidth(twidth).padBottom(5).padRight(5).growY();
+    }
+
+    private void joinRoom(PlayerConnectRoom room) {
+        if (!room.data().isSecured()) {
+            try {
+                PlayerConnect.joinRoom(
+                        PlayerConnectLink.fromString(room.link()), "",
+                        () -> {
+                        });
+            } catch (Throwable e) {
+                Vars.ui.showException("@message.connect.fail", e);
+            }
+            return;
+        }
+
+        BaseDialog connect = new BaseDialog("@message.type-password.title");
+        String[] password = { "" };
+
+        connect.cont.table(table -> {
+            table.add("@message.password").padRight(5f).right();
+            table.field(password[0], text -> password[0] = text)
+                    .size(320f, 54f)
+                    .valid(t -> t.length() > 0 && t.length() <= 100)
+                    .maxTextLength(100)
+                    .left()
+                    .get();
+            table.row().add();
+        }).row();
+
+        connect.buttons.button("@cancel", connect::hide).minWidth(210);
+        connect.buttons.button("@ok", () -> {
+            try {
+                PlayerConnect.joinRoom(
+                        PlayerConnectLink.fromString(room.link()),
+                        password[0],
+                        () -> connect.hide());
+            } catch (Throwable e) {
+                connect.hide();
+                Vars.ui.showException("@message.connect.fail", e);
+            }
+        }).minWidth(210);
+
+        connect.show();
+    }
+
+    private int columns() {
+        return Mathf.clamp((int) ((Core.graphics.getWidth() / Scl.scl() * 0.9f) / targetWidth()), 1, 4);
+    }
+
+    float targetWidth() {
+        return Math.min(Core.graphics.getWidth() / Scl.scl() * 0.9f, 550f);
+    }
+
+    private String getVersionString(String versionString) {
+        BuildInfo info = extract(versionString);
+        int version = info.build;
+        String versionType = info.type;
+
+        if (version == -1) {
+            return Core.bundle.format("server.version", Core.bundle.get("server.custombuild"), "");
+        } else if (version == 0) {
+            return Core.bundle.get("server.outdated");
+        } else if (version < Version.build && Version.build != -1) {
+            return Core.bundle.get("server.outdated") + "\n" +
+                    Core.bundle.format("server.version", version, "");
+        } else if (version > Version.build && Version.build != -1) {
+            return Core.bundle.get("server.outdated.client") + "\n" +
+                    Core.bundle.format("server.version", version, "");
+        } else if (version == Version.build && Version.type.equals(versionType)) {
+            return "";
+        } else {
+            return Core.bundle.format("server.version", version, versionType);
+        }
+    }
+
+    private static class BuildInfo {
+        public String type = "custom";
+        public int build = -1;
+        public int revision = -1;
+        public String modifier;
+
+        public String toString() {
+            return "BuildInfo{" +
+                    "type='" + type + '\'' +
+                    ", build=" + build +
+                    ", revision=" + revision +
+                    ", modifier='" + modifier + '\'' +
+                    '}';
+        }
+    }
+
+    private BuildInfo extract(String combined) {
+        BuildInfo info = new BuildInfo();
+
+        if ("custom build".equals(combined)) {
+            info.type = "custom";
+            info.build = -1;
+            info.revision = 0;
+            info.modifier = null;
+            return info;
+        }
+
+        Pattern pattern = Pattern.compile("^(.+?) build (\\d+)(?:\\.(\\d+))?$");
+        Matcher matcher = pattern.matcher(combined);
+
+        if (matcher.matches()) {
+            String first = matcher.group(1);
+            info.build = Integer.parseInt(matcher.group(2));
+            info.revision = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
+
+            if ("official".equals(first)) {
+                info.type = "official";
+                info.modifier = first;
+            } else {
+                info.type = first;
+                info.modifier = null;
+            }
+        }
+        return info;
+    }
+}

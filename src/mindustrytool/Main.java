@@ -3,6 +3,11 @@ package mindustrytool;
 import arc.Core;
 import arc.Events;
 import arc.files.Fi;
+import arc.graphics.Texture;
+import arc.graphics.g2d.TextureAtlas.AtlasRegion;
+import arc.graphics.g2d.TextureRegion;
+import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Http;
 import arc.util.Log;
@@ -82,7 +87,21 @@ public class Main extends Mod {
         featureSettingDialog = new FeatureSettingDialog();
 
         Events.on(ClientLoadEvent.class, (event) -> {
-            Vars.ui.menufrag.addButton("Mindustry Tool", Icon.settings, () -> featureSettingDialog.show());
+            try {
+                var mod = Vars.mods.getMod(Main.class);
+
+                for (var child : mod.root.child("icons").list()) {
+                    Log.info(child.absolutePath());
+                }
+
+                var texture = new TextureRegion(new Texture(mod.root.child("icons").child("mindustry-tool.png")));
+                TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
+
+                Vars.ui.menufrag.addButton("Mindustry Tool", drawable, () -> featureSettingDialog.show());
+            } catch (Exception e) {
+                Log.err(e);
+                Vars.ui.menufrag.addButton("Mindustry Tool", Icon.settings, () -> featureSettingDialog.show());
+            }
         });
 
         Vars.ui.paused.shown(() -> {
@@ -121,10 +140,6 @@ public class Main extends Mod {
                 Vars.ui.showConfirm(Core.bundle.format("message.new-version", currentVersion, latestVersion)
                         + "\nDiscord: https://discord.gg/72324gpuCd",
                         () -> {
-                            if (currentVersion.endsWith("v8")) {
-                                return;
-                            }
-
                             Core.app.post(() -> {
                                 Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
                             });

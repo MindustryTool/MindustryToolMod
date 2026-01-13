@@ -1,19 +1,20 @@
 package mindustrytool.features.playerconnect;
 
-import arc.Core;
+import java.util.Optional;
+
 import arc.Events;
+import arc.scene.ui.Dialog;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
-import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 
 public class PlayerConnectFeature implements Feature {
-    private PlayerConnectRoomsDialog dialog;
     private CreateRoomDialog createRoomDialog;
     private JoinRoomDialog joinRoomDialog;
+    private PlayerConnectJoinInjector injector;
+    private PlayerConnectSettingDialog settingDialog;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -27,50 +28,47 @@ public class PlayerConnectFeature implements Feature {
 
     @Override
     public void init() {
-        dialog = new PlayerConnectRoomsDialog();
         createRoomDialog = new CreateRoomDialog();
-        joinRoomDialog = new JoinRoomDialog(dialog);
-        
+        joinRoomDialog = new JoinRoomDialog();
+        injector = new PlayerConnectJoinInjector();
+        settingDialog = new PlayerConnectSettingDialog();
+
         Events.on(ClientLoadEvent.class, e -> {
-            if (FeatureManager.getInstance().isEnabled(this)) {
-                addButton();
+            if (Vars.ui.join != null) {
+                // Initial injection attempt
+                injector.inject(Vars.ui.join);
+
+                // Re-inject when dialog is shown to handle cases where UI is cleared
+                Vars.ui.join.shown(() -> {
+                    injector.inject(Vars.ui.join);
+                });
             }
         });
-    }
-    
-    private void addButton() {
-        if (Vars.mobile) {
-            Vars.ui.menufrag.addButton(Core.bundle.format("message.player-connect.title"), Icon.menu, () -> {
-                if (FeatureManager.getInstance().isEnabled(this)) {
-                    dialog.show();
-                } else {
-                    Vars.ui.showInfo("Feature is disabled.");
-                }
-            });
-        }
     }
 
     @Override
     public void onEnable() {
-        // Desktop is handled by Main's Tools menu
+        // Feature enabled
     }
 
     @Override
     public void onDisable() {
-        if (dialog != null) dialog.hide();
-        if (createRoomDialog != null) createRoomDialog.hide();
-        if (joinRoomDialog != null) joinRoomDialog.hide();
+        if (createRoomDialog != null)
+            createRoomDialog.hide();
+        if (joinRoomDialog != null)
+            joinRoomDialog.hide();
     }
-    
-    public PlayerConnectRoomsDialog getDialog() {
-        return dialog;
-    }
-    
+
     public CreateRoomDialog getCreateRoomDialog() {
         return createRoomDialog;
     }
-    
+
     public JoinRoomDialog getJoinRoomDialog() {
         return joinRoomDialog;
+    }
+
+    @Override
+    public Optional<Dialog> setting() {
+        return Optional.of(settingDialog);
     }
 }

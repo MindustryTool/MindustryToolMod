@@ -33,6 +33,7 @@ public class PlayerConnect {
                     closeRoom();
             }, 1f);
         });
+
         Events.run(EventType.HostEvent.class, PlayerConnect::closeRoom);
         Events.run(EventType.ClientPreConnectEvent.class, PlayerConnect::closeRoom);
         Events.run(EventType.DisposeEvent.class, () -> {
@@ -64,15 +65,14 @@ public class PlayerConnect {
 
         Core.app.post(() -> {
             try {
+                if (room == null) {
+                    return;
+                }
+
                 Packets.StatsPacket p = new Packets.StatsPacket();
                 Packets.RoomStats stats = PlayerConnect.getRoomStats();
                 p.roomId = room.roomId();
                 p.data = stats;
-
-                if (room == null) {
-                    Log.warn("Room not created yet");
-                    return;
-                }
 
                 if (!room.isConnected()) {
                     Log.warn("Room not connected yet");
@@ -177,16 +177,19 @@ public class PlayerConnect {
      *          progress
      */
     public static void pingHost(String ip, int port, Cons<Long> success, Cons<Exception> onFailed) {
-        if (tmpSerializer == null)
+        if (tmpSerializer == null) {
             tmpSerializer = new NetworkProxy.Serializer();
-        if (pinger == null || pingerThread == null || !pingerThread.isAlive())
-            pingerThread = Threads.daemon("Pinger", pinger = new Client(8192, 8192, tmpSerializer));
+        }
+
+        if (pinger == null || pingerThread == null || !pingerThread.isAlive()) {
+            Client pinger = new Client(8192, 8192, tmpSerializer);
+            pingerThread = Threads.daemon("Pinger", pinger);
+        }
 
         worker.submit(() -> {
             synchronized (pingerThread) {
                 long time = Time.millis();
                 try {
-                    // Connect successfully is enough.
                     pinger.connect(2000, ip, port);
                     time = Time.timeSinceMillis(time);
                     pinger.close();
@@ -219,7 +222,7 @@ public class PlayerConnect {
         try {
             stats.gamemode = Vars.state.rules.mode().name();
             stats.mapName = Vars.state.map.name();
-            stats.name = Vars.player.name();
+            stats.name = PlayerConnectConfig.getRoomName();
             stats.mods = Vars.mods.getModStrings();
 
             Seq<RoomPlayer> players = new Seq<>();
