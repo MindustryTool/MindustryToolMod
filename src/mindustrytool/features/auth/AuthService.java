@@ -11,6 +11,7 @@ import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustrytool.Config;
 import mindustrytool.features.auth.dto.UserSession;
+import arc.util.Http.HttpStatusException;;
 
 public class AuthService {
     private static AuthService instance;
@@ -214,11 +215,14 @@ public class AuthService {
                 .error(err -> {
                     isRefreshing = false;
                     // If refresh failed (e.g. 401), logout
-                    if (onFailure != null)
+                    if (onFailure != null) {
                         onFailure.run();
+                    }
 
-                    Core.settings.remove(KEY_ACCESS_TOKEN);
-                    Core.settings.remove(KEY_REFRESH_TOKEN);
+                    if (err instanceof HttpStatusException httpError && httpError.status.code == 401) {
+                        Core.settings.remove(KEY_ACCESS_TOKEN);
+                        Core.settings.remove(KEY_REFRESH_TOKEN);
+                    }
                 })
                 .submit(res -> {
                     isRefreshing = false;

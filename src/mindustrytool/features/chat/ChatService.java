@@ -141,12 +141,10 @@ public class ChatService {
                         Vars.ui.showErrorMessage(httpError.getMessage());
                     }
 
-                    if (onError != null)
-                        onError.get(e);
+                    onError.get(e);
                 })
                 .submit(res -> {
-                    if (onSuccess != null)
-                        onSuccess.run();
+                    onSuccess.run();
                 });
     }
 }

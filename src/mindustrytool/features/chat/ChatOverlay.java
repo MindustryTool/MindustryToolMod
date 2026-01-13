@@ -12,6 +12,7 @@ import mindustry.Vars;
 import mindustry.ui.Styles;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
+import mindustrytool.ui.UserCard;
 
 public class ChatOverlay extends Table {
     private Seq<ChatMessage> messages = new Seq<>();
@@ -27,18 +28,18 @@ public class ChatOverlay extends Table {
 
     private void setup() {
         background(Styles.black6);
-        
+
         // Header
         add("Global Chat").style(Styles.outlineLabel).growX().pad(4).center().row();
 
         // Message List
         messageTable = new Table();
         messageTable.top().left();
-        
+
         scrollPane = new ScrollPane(messageTable, Styles.noBarPane);
         scrollPane.setScrollingDisabled(true, false);
         scrollPane.setFadeScrollBars(true);
-        
+
         add(scrollPane).grow().pad(4).row();
 
         // Input Area
@@ -46,7 +47,7 @@ public class ChatOverlay extends Table {
         inputField = new TextField();
         inputField.setMessageText("Enter message...");
         inputField.setMaxLength(1024);
-        
+
         // Send on Enter
         inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
 
@@ -55,10 +56,10 @@ public class ChatOverlay extends Table {
         sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
 
         inputTable.add(inputField).growX().height(40f).padRight(4);
-        inputTable.add(sendButton).width(60f).height(40f);
+        inputTable.add(sendButton).width(120f).height(40f);
 
         add(inputTable).growX().pad(4).bottom();
-        
+
         // Initial population
         rebuildMessages();
     }
@@ -69,17 +70,18 @@ public class ChatOverlay extends Table {
             // Assuming stream sends new messages or history?
             // Usually SSE sends new events.
             // We might want to limit history size.
-            if (messages.contains(m -> m.id.equals(msg.id))) continue;
+            if (messages.contains(m -> m.id.equals(msg.id)))
+                continue;
             messages.add(msg);
         }
-        
+
         // Limit to last 100 messages
         if (messages.size > 100) {
             messages.removeRange(0, messages.size - 100);
         }
 
         rebuildMessages();
-        
+
         // Scroll to bottom
         Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
     }
@@ -87,37 +89,25 @@ public class ChatOverlay extends Table {
     private void rebuildMessages() {
         messageTable.clear();
         messageTable.top().left();
-        
+
         for (ChatMessage msg : messages) {
             Table bubble = new Table();
             bubble.background(Styles.grayPanel);
-            
-            // Author? We only have createdBy ID. 
-            // Ideally we need a way to resolve user names or the message should contain it.
-            // The schema has createdBy as UUID.
-            // Without user info, we might just show "User" or truncated ID.
-            // Or maybe the schema provided was incomplete and it has author info?
-            // The provided schema was:
-            // const chatMessageBaseSchema = z.object({ id: z.uuidv7(), createdBy: z.uuidv7(), createdAt: z.date() });
-            // It doesn't seem to have author name.
-            // I'll display truncated ID for now.
-            
-            String author = msg.createdBy != null && msg.createdBy.length() > 8 
-                ? msg.createdBy.substring(0, 8) 
-                : "Unknown";
+            UserCard.draw(bubble, msg.createdBy);
+            bubble.add(": " + msg.content).wrap().color(Color.white).left().growX();
 
-            bubble.add(author).color(Color.lightGray).fontScale(0.75f).left().row();
-            bubble.add(msg.content).wrap().color(Color.white).left().growX();
-            
             messageTable.add(bubble).growX().padBottom(4).left().row();
         }
     }
 
     private void sendMessage() {
         String content = inputField.getText();
-        if (content == null || content.trim().isEmpty()) return;
-        if (!AuthService.getInstance().isLoggedIn()) return;
-        if (isSending) return;
+        if (content == null || content.trim().isEmpty())
+            return;
+        if (!AuthService.getInstance().isLoggedIn())
+            return;
+        if (isSending)
+            return;
 
         isSending = true;
         ChatService.getInstance().sendMessage(content, () -> {
