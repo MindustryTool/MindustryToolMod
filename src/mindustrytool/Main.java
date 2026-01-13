@@ -102,9 +102,9 @@ public class Main extends Mod {
 
             if (span) {
                 btn.colspan(2).width(450f);
+            } else {
+                btn.row();
             }
-
-            btn.row();
 
             buttons.swap(buttons.size - 1, buttons.size - 2);
         });
