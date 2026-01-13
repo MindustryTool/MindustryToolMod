@@ -2,12 +2,13 @@ package mindustrytool.features.chat;
 
 import arc.Core;
 import arc.graphics.Color;
-import arc.math.Mathf;
-import arc.scene.event.DragListener;
 import arc.scene.event.Touchable;
+import arc.scene.ui.Button;
+import arc.scene.ui.Image;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.TextField;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
@@ -18,6 +19,8 @@ import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.ui.UserCard;
 import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
+import arc.input.KeyCode;
 
 public class ChatOverlay extends Table {
     private Seq<ChatMessage> messages = new Seq<>();
@@ -28,91 +31,97 @@ public class ChatOverlay extends Table {
     private boolean isSending = false;
 
     private boolean isCollapsed = false;
-    private float expandedWidth = 400;
-    private float expandedHeight = 300;
     private String lastInputText = "";
+    private Table container;
+    private Cell<Table> containerCell;
 
     public ChatOverlay() {
-        updateSize();
+        touchable = Touchable.childrenOnly;
+        container = new Table();
+
+        setPosition(200, 200);
+
+        container.setPosition(0, 0);
+
+        containerCell = add(container);
+
         setup();
     }
 
-    public void updateSize() {
-        float sW = Core.graphics.getWidth();
-        float sH = Core.graphics.getHeight();
-
-        // Max width 400 or 95% of screen
-        expandedWidth = Math.min(400, sW * 0.95f);
-        // Max height 300 or 60% of screen
-        expandedHeight = Math.min(300, sH * 0.6f);
-
-        if (!isCollapsed) {
-            setSize(expandedWidth, expandedHeight);
-        }
-    }
-
     private void setup() {
-        clear();
+        container.clearChildren();
+        container.touchable = Touchable.enabled;
 
         if (isCollapsed) {
-            background(null);
-            setSize(60, 60);
-            touchable = Touchable.enabled;
+            container.background(null);
+            containerCell.size(60f);
 
             Table buttonTable = new Table();
             buttonTable.background(Styles.black6);
-            buttonTable.touchable(() -> Touchable.enabled);
 
-            // Drag listener for the collapsed button
-            buttonTable.addListener(new DragListener() {
-                float startX, startY;
+            Button btn = new Button(Styles.clearNoneTogglei);
+            btn.add(new Image(Icon.chat));
+            btn.addListener(new InputListener() {
+                float lastX, lastY;
+                boolean wasDragged = false;
 
                 @Override
-                public void dragStart(InputEvent event, float x, float y, int pointer) {
-                    startX = x;
-                    startY = y;
+                public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
+                    lastX = x;
+                    lastY = y;
+                    wasDragged = false;
+                    return true;
                 }
 
                 @Override
-                public void drag(InputEvent event, float x, float y, int pointer) {
-                    ChatOverlay.this.moveBy(x - startX, y - startY);
-                    clamp();
+                public void touchDragged(InputEvent event, float x, float y, int pointer) {
+                    float dx = x - lastX;
+                    float dy = y - lastY;
+                    // Check if actually dragged to avoid sensitive clicks
+                    if (Math.abs(dx) > 0.1f || Math.abs(dy) > 0.1f)
+                        wasDragged = true;
+                    ChatOverlay.this.moveBy(dx, dy);
+                }
+
+                @Override
+                public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
+                    if (!wasDragged) {
+                        isCollapsed = false;
+                        setup();
+                    }
                 }
             });
 
-            buttonTable.button(Icon.chat, Styles.clearNoneTogglei, () -> {
-                isCollapsed = false;
-                setup();
-            }).grow();
-
-            add(buttonTable).size(60, 60);
+            buttonTable.add(btn).grow();
+            container.add(buttonTable).grow();
         } else {
-            background(Styles.black6);
-            setSize(expandedWidth, expandedHeight);
-            touchable = Touchable.enabled;
+            container.background(Styles.black6);
+            containerCell.size(450f, 350f);
 
             // Header
             Table header = new Table();
             header.background(Styles.black8);
-            header.touchable(() ->Touchable.enabled);
+            header.touchable(() -> Touchable.enabled);
 
-            // Drag listener for header
-            header.addListener(new DragListener() {
-                float startX, startY;
+            // Drag handle
+            Image handle = new Image(Icon.move);
+            handle.addListener(new InputListener() {
+                float lastX, lastY;
 
                 @Override
-                public void dragStart(InputEvent event, float x, float y, int pointer) {
-                    startX = x;
-                    startY = y;
+                public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
+                    lastX = x;
+                    lastY = y;
+                    return true;
                 }
 
                 @Override
-                public void drag(InputEvent event, float x, float y, int pointer) {
-                    ChatOverlay.this.moveBy(x - startX, y - startY);
-                    clamp();
+                public void touchDragged(InputEvent event, float x, float y, int pointer) {
+                    ChatOverlay.this.moveBy(x - lastX, y - lastY);
                 }
             });
 
+            header.add(handle).size(32).padLeft(8);
             header.add("Global Chat").style(Styles.outlineLabel).growX().padLeft(8);
             header.button(Icon.down, Styles.clearNonei, () -> {
                 isCollapsed = true;
@@ -122,7 +131,7 @@ public class ChatOverlay extends Table {
                 setup();
             }).size(32);
 
-            add(header).growX().height(32).row();
+            container.add(header).growX().height(32).row();
 
             // Message List
             messageTable = new Table();
@@ -132,7 +141,7 @@ public class ChatOverlay extends Table {
             scrollPane.setScrollingDisabled(true, false);
             scrollPane.setFadeScrollBars(true);
 
-            add(scrollPane).grow().pad(4).row();
+            container.add(scrollPane).grow().pad(4).row();
 
             // Input Area
             Table inputTable = new Table();
@@ -140,6 +149,7 @@ public class ChatOverlay extends Table {
             inputField.setMessageText("Enter message...");
             inputField.setText(lastInputText);
             inputField.setMaxLength(1024);
+            inputField.setValidator(text -> text.length() > 0);
 
             // Send on Enter
             inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
@@ -151,10 +161,10 @@ public class ChatOverlay extends Table {
             inputTable.add(inputField).growX().height(40f).padRight(4);
             inputTable.add(sendButton).width(80f).height(40f);
 
-            add(inputTable).growX().pad(4).bottom();
+            container.add(inputTable).growX().pad(4).bottom();
 
             // Initial population
-            rebuildMessages();
+            rebuildMessages(messageTable);
 
             // Scroll to bottom after layout
             Core.app.post(() -> {
@@ -164,26 +174,34 @@ public class ChatOverlay extends Table {
             });
         }
 
-        clamp();
+        pack();
+        keepInScreen();
     }
 
-    private void clamp() {
+    private void keepInScreen() {
+        if (getScene() == null)
+            return;
+
         float w = getWidth();
         float h = getHeight();
+        float sw = getScene().getWidth();
+        float sh = getScene().getHeight();
 
-        float sW = Core.graphics.getWidth();
-        float sH = Core.graphics.getHeight();
-
-        x = Mathf.clamp(x, 0, sW - w);
-        y = Mathf.clamp(y, 0, sH - h);
-
-        setPosition(x, y);
+        if (x < 0)
+            x = 0;
+        if (y < 0)
+            y = 0;
+        if (x + w > sw)
+            x = sw - w;
+        if (y + h > sh)
+            y = sh - h;
     }
 
     public void addMessages(ChatMessage[] newMessages) {
         for (ChatMessage msg : newMessages) {
-            if (messages.contains(m -> m.id.equals(msg.id)))
+            if (messages.contains(m -> m.id.equals(msg.id))) {
                 continue;
+            }
             messages.add(msg);
         }
 
@@ -193,7 +211,7 @@ public class ChatOverlay extends Table {
         }
 
         if (messageTable != null) {
-            rebuildMessages();
+            rebuildMessages(messageTable);
             // Scroll to bottom
             Core.app.post(() -> {
                 if (scrollPane != null)
@@ -202,10 +220,7 @@ public class ChatOverlay extends Table {
         }
     }
 
-    private void rebuildMessages() {
-        if (messageTable == null)
-            return;
-
+    private void rebuildMessages(Table messageTable) {
         messageTable.clear();
         messageTable.top().left();
 

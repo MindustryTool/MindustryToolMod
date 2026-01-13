@@ -53,8 +53,6 @@ public class ChatFeature implements Feature {
             Vars.ui.menuGroup.addChild(overlay);
 
             // Layout
-            overlay.setPosition(20, 20);
-            overlay.updateSize();
             overlay.visible(() -> Vars.state.isMenu());
         }
     }
