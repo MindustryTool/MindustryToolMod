@@ -76,11 +76,11 @@ public class AuthFeature implements Feature {
 
             if (user != null) {
                 if (user.imageUrl() != null) {
-                    content.add(new NetworkImage(user.imageUrl())).size(64).padRight(8);
+                    content.add(new NetworkImage(user.imageUrl())).size(64);
                 }
 
                 if (!Vars.mobile) {
-                    content.add(user.name()).labelAlign(Align.left);
+                    content.add(user.name()).labelAlign(Align.left).padLeft(8);
                 }
 
                 // Make the whole content area clickable to show profile/logout
