@@ -102,6 +102,7 @@ public class ChatOverlay extends Table {
             Table header = new Table();
             header.background(Styles.black8);
             header.touchable(() -> Touchable.enabled);
+            header.margin(8);
 
             // Drag handle
             Image handle = new Image(Icon.move);
@@ -121,7 +122,7 @@ public class ChatOverlay extends Table {
                 }
             });
 
-            header.add(handle).size(32).padLeft(8);
+            header.add(handle).size(40).padLeft(8);
             header.add("Global Chat").style(Styles.outlineLabel).growX().padLeft(8);
             header.button(Icon.down, Styles.clearNonei, () -> {
                 isCollapsed = true;
@@ -129,9 +130,9 @@ public class ChatOverlay extends Table {
                     lastInputText = inputField.getText();
                 }
                 setup();
-            }).size(32);
+            }).size(40);
 
-            container.add(header).growX().height(32).row();
+            container.add(header).growX().height(40).row();
 
             // Message List
             messageTable = new Table();

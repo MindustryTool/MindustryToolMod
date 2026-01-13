@@ -11,7 +11,7 @@ import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustrytool.Config;
 import mindustrytool.features.auth.dto.UserSession;
-import arc.util.Http.HttpStatusException;;
+import arc.util.Http.HttpStatusException;
 
 public class AuthService {
     private static AuthService instance;
@@ -97,7 +97,9 @@ public class AuthService {
 
                             saveTokens(accessToken, refreshToken);
 
-                            fetchUserSession();
+                            fetchUserSession(() -> {
+                            }, () -> {
+                            });
                         }
                     } catch (Exception e) {
                         Log.err("Failed to parse login token response", e);
@@ -136,18 +138,21 @@ public class AuthService {
         Log.info("Logged out");
     }
 
-    public void fetchUserSession() {
+    public void fetchUserSession(Runnable onSuccess, Runnable onFailure) {
         AuthHttp.get(Config.API_v4_URL + "auth/session", res -> {
             try {
                 Jval json = Jval.read(res.getResultAsString());
                 currentUser = new UserSession(json.getString("name", "Unknown"), json.getString("imageUrl", ""));
 
                 Events.fire(currentUser);
+                onSuccess.run();
             } catch (Exception e) {
                 Log.err("Failed to parse user session", e);
+                onFailure.run();
             }
         }, err -> {
             Log.err("Failed to fetch user session", err);
+            onFailure.run();
         });
     }
 
@@ -180,7 +185,7 @@ public class AuthService {
             long now = System.currentTimeMillis() / 1000;
 
             // "near expire (1 min)" -> 60 seconds
-            return (exp - now) > 60;
+            return (exp - now) < 60;
         } catch (Exception e) {
             Log.err("Failed to parse token expiry", e);
             return true;
