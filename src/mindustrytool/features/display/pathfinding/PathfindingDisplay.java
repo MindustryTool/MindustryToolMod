@@ -207,7 +207,7 @@ public class PathfindingDisplay implements Feature {
             if (cacheEntry == null || (currentTime - cacheEntry.lastUpdateTime) > 15f) {
                 if (cacheEntry == null) {
                     cacheEntry = new PathfindingCache();
-                    cacheEntry.data = new float[maxSteps * 2];
+                    cacheEntry.data = new float[250 * 2];
                     pathCache.put(cacheKey, cacheEntry);
                 }
                 recalculatePath(unit, cacheEntry, maxSteps);
