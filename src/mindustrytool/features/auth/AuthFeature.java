@@ -62,8 +62,10 @@ public class AuthFeature implements Feature {
     }
 
     private void updateAuthWindow() {
-        if (authWindow == null)
+        if (authWindow == null) {
             return;
+        }
+
         authWindow.clear();
 
         Table content = new Table();
@@ -76,7 +78,10 @@ public class AuthFeature implements Feature {
                 if (user.imageUrl() != null) {
                     content.add(new NetworkImage(user.imageUrl())).size(64).padRight(8);
                 }
-                content.add(user.name()).labelAlign(Align.left);
+
+                if (!Vars.mobile) {
+                    content.add(user.name()).labelAlign(Align.left);
+                }
 
                 // Make the whole content area clickable to show profile/logout
                 content.touchable = Touchable.enabled;

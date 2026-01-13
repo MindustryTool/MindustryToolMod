@@ -29,6 +29,17 @@ public class AuthService {
         return instance;
     }
 
+    private AuthService() {
+        String logindId = Core.settings.getString(KEY_LOGIN_ID);
+
+        if (logindId == null) {
+            return;
+        }
+
+        pollLoginToken(logindId);
+
+    }
+
     public boolean isLoggedIn() {
         return Core.settings.has(KEY_ACCESS_TOKEN) && Core.settings.has(KEY_REFRESH_TOKEN);
     }
@@ -49,7 +60,7 @@ public class AuthService {
                         Core.settings.put(KEY_LOGIN_ID, loginId);
 
                         // Start polling for token
-                        pollLoginToken(loginId, onSuccess, onFailure);
+                        pollLoginToken(loginId);
 
                         // Open browser
                         if (!Core.app.openURI(loginUrl)) {
@@ -64,16 +75,19 @@ public class AuthService {
                 });
     }
 
-    private void pollLoginToken(String loginId, Runnable onSuccess, Runnable onFailure) {
+    private void pollLoginToken(String loginId) {
         Http.get(Config.API_v4_URL + "auth/app/login-token?loginId=" + loginId)
                 .error(e -> {
                     if (e instanceof SocketTimeoutException) {
                         return;
                     }
                     Log.err("Failed to get login token", e);
+                    Core.settings.remove(KEY_LOGIN_ID);
                 }) // Ignore errors while polling (404/400 expected until user logs in)
                 .timeout(15000)
                 .submit(res -> {
+                    Core.settings.remove(KEY_LOGIN_ID);
+
                     try {
                         Jval json = Jval.read(res.getResultAsString());
                         if (json.has("accessToken") && json.has("refreshToken")) {
@@ -81,8 +95,6 @@ public class AuthService {
                             String refreshToken = json.getString("refreshToken");
 
                             saveTokens(accessToken, refreshToken);
-                            if (onSuccess != null)
-                                onSuccess.run();
 
                             fetchUserSession();
                         }
@@ -109,6 +121,7 @@ public class AuthService {
 
             Http.post(Config.API_v4_URL + "auth/app/logout", json.toString())
                     .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + accessToken)
                     .submit(res -> {
                         Vars.ui.showInfoFade("Logout successful!");
                     });
@@ -118,6 +131,8 @@ public class AuthService {
         Core.settings.remove(KEY_REFRESH_TOKEN);
         Core.settings.remove(KEY_LOGIN_ID);
         currentUser = null;
+
+        Log.info("Logged out");
     }
 
     public void fetchUserSession() {
@@ -125,7 +140,7 @@ public class AuthService {
             try {
                 Jval json = Jval.read(res.getResultAsString());
                 currentUser = new UserSession(json.getString("name", "Unknown"), json.getString("imageUrl", ""));
-          
+
                 Events.fire(currentUser);
             } catch (Exception e) {
                 Log.err("Failed to parse user session", e);
@@ -199,9 +214,11 @@ public class AuthService {
                 .error(err -> {
                     isRefreshing = false;
                     // If refresh failed (e.g. 401), logout
-                    logout();
                     if (onFailure != null)
                         onFailure.run();
+
+                    Core.settings.remove(KEY_ACCESS_TOKEN);
+                    Core.settings.remove(KEY_REFRESH_TOKEN);
                 })
                 .submit(res -> {
                     isRefreshing = false;
