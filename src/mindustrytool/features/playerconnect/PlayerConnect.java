@@ -64,15 +64,14 @@ public class PlayerConnect {
 
         Core.app.post(() -> {
             try {
+                if (room == null) {
+                    return;
+                }
+
                 Packets.StatsPacket p = new Packets.StatsPacket();
                 Packets.RoomStats stats = PlayerConnect.getRoomStats();
                 p.roomId = room.roomId();
                 p.data = stats;
-
-                if (room == null) {
-                    Log.warn("Room not created yet");
-                    return;
-                }
 
                 if (!room.isConnected()) {
                     Log.warn("Room not connected yet");
@@ -219,7 +218,7 @@ public class PlayerConnect {
         try {
             stats.gamemode = Vars.state.rules.mode().name();
             stats.mapName = Vars.state.map.name();
-            stats.name = Vars.player.name();
+            stats.name = PlayerConnectConfig.getRoomName();
             stats.mods = Vars.mods.getModStrings();
 
             Seq<RoomPlayer> players = new Seq<>();

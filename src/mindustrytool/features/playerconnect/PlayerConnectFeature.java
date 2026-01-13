@@ -1,6 +1,9 @@
 package mindustrytool.features.playerconnect;
 
+import java.util.Optional;
+
 import arc.Events;
+import arc.scene.ui.Dialog;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Iconc;
@@ -11,6 +14,7 @@ public class PlayerConnectFeature implements Feature {
     private CreateRoomDialog createRoomDialog;
     private JoinRoomDialog joinRoomDialog;
     private PlayerConnectJoinInjector injector;
+    private PlayerConnectSettingDialog settingDialog;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -27,12 +31,13 @@ public class PlayerConnectFeature implements Feature {
         createRoomDialog = new CreateRoomDialog();
         joinRoomDialog = new JoinRoomDialog();
         injector = new PlayerConnectJoinInjector();
+        settingDialog = new PlayerConnectSettingDialog();
 
         Events.on(ClientLoadEvent.class, e -> {
             if (Vars.ui.join != null) {
                 // Initial injection attempt
                 injector.inject(Vars.ui.join);
-                
+
                 // Re-inject when dialog is shown to handle cases where UI is cleared
                 Vars.ui.join.shown(() -> {
                     injector.inject(Vars.ui.join);
@@ -60,5 +65,10 @@ public class PlayerConnectFeature implements Feature {
 
     public JoinRoomDialog getJoinRoomDialog() {
         return joinRoomDialog;
+    }
+
+    @Override
+    public Optional<Dialog> setting() {
+        return Optional.of(settingDialog);
     }
 }
