@@ -1,115 +1,70 @@
-package mindustrytool.playerconnect; // Khai báo package playerconnect
+package mindustrytool.playerconnect;
 
-import arc.Core; // Import Core để truy cập bundle
-import arc.struct.Seq; // Import Seq cho danh sách
-import arc.util.Log; // Import Log để ghi log
+import arc.Core;
+import arc.Events;
+import arc.util.Log;
 
-import mindustry.gen.Icon; // Import Icon cho các icon UI
-import mindustry.ui.fragments.MenuFragment.MenuButton; // Import MenuButton cho menu
+import mindustry.Vars;
+import mindustry.game.EventType.ClientLoadEvent;
+import mindustry.gen.Icon;
+import mindustry.ui.fragments.MenuFragment.MenuButton;
 
-import mindustrytool.Module; // Import Module interface
-import mindustrytool.playerconnect.gui.CreateRoomDialog; // Import CreateRoomDialog
-import mindustrytool.playerconnect.gui.JoinRoomDialog; // Import JoinRoomDialog
-import mindustrytool.playerconnect.gui.PlayerConnectRoomsDialog; // Import PlayerConnectRoomsDialog
+import mindustrytool.ModuleLoader.Module;
+import mindustrytool.playerconnect.gui.CreateRoomDialog;
+import mindustrytool.playerconnect.gui.JoinRoomDialog;
+import mindustrytool.playerconnect.gui.PlayerConnectRoomsDialog;
 
 /**
- * PlayerConnect Module - Module để kết nối và chơi multiplayer qua CLaJ.
- * Implements Module interface để được load động bởi ModuleLoader.
- * 
- * Module này có thể được xóa mà không ảnh hưởng đến compile của mod.
+ * PlayerConnect Module - multiplayer via CLaJ.
  */
-public class PlayerConnectModule implements Module { // Class module playerconnect, implement Module interface
+public class PlayerConnectModule implements Module {
 
-    // Tên module
-    public static final String NAME = "PlayerConnect"; // Hằng số tên module
+    public static final String NAME = "PlayerConnect";
 
-    // Dialog danh sách rooms player connect
-    public static PlayerConnectRoomsDialog playerConnectRoomsDialog; // Dialog danh sách rooms
-    // Dialog tạo room mới
-    public static CreateRoomDialog createRoomDialog; // Dialog tạo room
-    // Dialog join room
-    public static JoinRoomDialog joinRoomDialog; // Dialog join room
+    public static PlayerConnectRoomsDialog playerConnectRoomsDialog;
+    public static CreateRoomDialog createRoomDialog;
+    public static JoinRoomDialog joinRoomDialog;
 
-    /**
-     * Lấy tên module.
-     * 
-     * @return Tên module "PlayerConnect"
-     */
     @Override
-    public String getName() { // Override method getName
-        return NAME; // Trả về tên module
+    public String getName() {
+        return NAME;
     }
 
-    /**
-     * Khởi tạo module.
-     * Tạo các dialogs.
-     */
     @Override
-    public void init() { // Override method init
-        Log.info("[PlayerConnectModule] Initializing..."); // Log bắt đầu init
+    public void init() {
+        Log.info("[PlayerConnectModule] Initializing...");
 
-        // Tạo các dialogs
-        playerConnectRoomsDialog = new PlayerConnectRoomsDialog(); // Tạo rooms dialog
-        createRoomDialog = new CreateRoomDialog(); // Tạo create room dialog
-        joinRoomDialog = new JoinRoomDialog(playerConnectRoomsDialog); // Tạo join room dialog
+        // Create dialogs
+        playerConnectRoomsDialog = new PlayerConnectRoomsDialog();
+        createRoomDialog = new CreateRoomDialog();
+        joinRoomDialog = new JoinRoomDialog(playerConnectRoomsDialog);
 
-        Log.info("[PlayerConnectModule] Initialized"); // Log hoàn thành init
+        // Register UI when client loads
+        Events.on(ClientLoadEvent.class, e -> onClientLoad());
+
+        Log.info("[PlayerConnectModule] Initialized");
     }
 
-    /**
-     * Được gọi khi client đã load xong.
-     * Module này không cần thêm UI elements trong onClientLoad.
-     */
-    @Override
-    public void onClientLoad() { // Override method onClientLoad
-        Log.info("[PlayerConnectModule] Client loaded"); // Log client đã load
-        // Không cần thêm gì vào game UI vì menu buttons đã được xử lý bởi ModuleLoader
-    }
+    private void onClientLoad() {
+        Log.info("[PlayerConnectModule] Adding UI...");
 
-    /**
-     * Lấy danh sách menu buttons cho PC.
-     * Trả về button Player Connect.
-     * 
-     * @return Seq chứa MenuButton
-     */
-    @Override
-    public Seq<MenuButton> getMenuButtons() { // Override method getMenuButtons
-        Seq<MenuButton> buttons = new Seq<>(); // Tạo Seq mới
-
-        // Tạo button Player Connect
-        MenuButton playerConnectButton = new MenuButton( // Tạo MenuButton
-                Core.bundle.format("message.player-connect.title"), // Tiêu đề từ bundle
-                Icon.menu, // Icon menu
-                () -> playerConnectRoomsDialog.show() // Action hiển thị rooms dialog
+        MenuButton playerConnectButton = new MenuButton(
+                Core.bundle.format("message.player-connect.title"),
+                Icon.menu,
+                () -> playerConnectRoomsDialog.show()
         );
 
-        buttons.add(playerConnectButton); // Thêm vào danh sách
+        if (Vars.mobile) {
+            Vars.ui.menufrag.addButton(playerConnectButton.text, playerConnectButton.icon, playerConnectButton.runnable);
+        } else {
+            Vars.ui.menufrag.addButton(new MenuButton(
+                    "Player Connect",
+                    Icon.players,
+                    () -> {},
+                    playerConnectButton
+            ));
+        }
 
-        return buttons; // Trả về danh sách buttons
-    }
-
-    /**
-     * Lấy danh sách menu buttons cho Mobile.
-     * Mobile hiển thị button trực tiếp, không dropdown.
-     * 
-     * @return Seq chứa MenuButton cho mobile
-     */
-    @Override
-    public Seq<MenuButton> getMobileMenuButtons() { // Override method getMobileMenuButtons
-        // Mobile dùng cùng buttons với PC
-        return getMenuButtons(); // Trả về buttons giống PC
-    }
-
-    /**
-     * Cleanup khi module bị unload.
-     */
-    @Override
-    public void dispose() { // Override method dispose
-        Log.info("[PlayerConnectModule] Disposing..."); // Log bắt đầu dispose
-        // Có thể cleanup resources ở đây nếu cần
-        playerConnectRoomsDialog = null; // Clear reference
-        createRoomDialog = null; // Clear reference
-        joinRoomDialog = null; // Clear reference
-        Log.info("[PlayerConnectModule] Disposed"); // Log hoàn thành
+        Log.info("[PlayerConnectModule] UI added");
     }
 }

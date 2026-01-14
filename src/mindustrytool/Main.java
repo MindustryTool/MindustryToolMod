@@ -2,7 +2,6 @@ package mindustrytool; // Khai báo package chính của mod
 
 import arc.Core; // Import Core để truy cập bundle, app
 import arc.Events; // Import Events để đăng ký event listeners
-import arc.struct.Seq; // Import Seq cho danh sách
 import arc.util.Http; // Import Http để gọi HTTP requests
 import arc.util.Log; // Import Log để ghi log
 import arc.util.serialization.Jval; // Import Jval để parse JSON
@@ -10,10 +9,8 @@ import arc.util.serialization.Jval; // Import Jval để parse JSON
 import mindustry.Vars; // Import Vars để truy cập game variables
 import mindustry.editor.MapResizeDialog; // Import MapResizeDialog để set maxSize
 import mindustry.game.EventType.ClientLoadEvent; // Import event khi client load xong
-import mindustry.gen.Icon; // Import Icon cho các icon UI
 import mindustry.mod.*; // Import mod classes
 import mindustry.mod.Mods.LoadedMod; // Import LoadedMod để lấy version
-import mindustry.ui.fragments.MenuFragment.MenuButton; // Import MenuButton cho menu
 
 import mindustrytool.config.Config; // Import Config cho API URLs
 // Không còn import trực tiếp browser và playerconnect - chúng được load động qua ModuleLoader
@@ -57,38 +54,7 @@ public class Main extends Mod { // Class chính của mod
 
         // Đăng ký listener khi client load xong
         Events.on(ClientLoadEvent.class, (event) -> {
-            Log.info("[Main] Client loaded, setting up UI..."); // Log client đã load
-
-            // Thông báo cho tất cả modules rằng client đã load
-            ModuleLoader.onClientLoad(); // Gọi onClientLoad cho từng module
-
-            // Lấy menu buttons từ tất cả modules
-            Seq<MenuButton> menuButtons = ModuleLoader.getAllMenuButtons(); // Lấy buttons từ modules
-
-            // Thêm buttons vào menu
-            if (Vars.mobile) {
-                // Mobile: Thêm từng button riêng biệt
-                Seq<MenuButton> mobileButtons = ModuleLoader.getAllMobileMenuButtons(); // Lấy mobile buttons
-                for (MenuButton button : mobileButtons) { // Vòng lặp qua các buttons
-                    Vars.ui.menufrag.addButton(button.text, button.icon, button.runnable); // Thêm button
-                }
-            } else {
-                // PC: Thêm dropdown menu "Tools" chứa tất cả module buttons
-                if (menuButtons.size > 0) { // Kiểm tra có buttons không
-                    // Tạo mảng sub-buttons từ Seq
-                    MenuButton[] subButtons = menuButtons.toArray(MenuButton.class); // Convert sang array
-
-                    // Tạo parent button với sub-buttons
-                    Vars.ui.menufrag.addButton(new MenuButton( // Thêm MenuButton dropdown
-                            "Tools", // Tiêu đề dropdown
-                            Icon.wrench, // Icon
-                            () -> {}, // Parent không có action
-                            subButtons // Sub-buttons từ các modules
-                    ));
-                }
-            }
-
-            Log.info("[Main] UI setup complete"); // Log hoàn thành setup UI
+            Log.info("[Main] Client loaded"); // Log client đã load
         });
 
         Log.info("[Main] MindustryTool mod initialized"); // Log hoàn thành init

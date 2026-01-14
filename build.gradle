@@ -19,6 +19,8 @@ java{
 allprojects{
     tasks.withType(JavaCompile){
         options.annotationProcessorPath = configurations.annotationProcessor
+        // ensure Java compiler uses UTF-8 to avoid unmappable-character warnings
+        options.encoding = 'UTF-8'
         options.compilerArgs.addAll(['--release', '8'])
     }
 }
