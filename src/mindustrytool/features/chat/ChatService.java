@@ -15,6 +15,7 @@ import arc.util.serialization.Json;
 import arc.util.Http.HttpStatusException;
 import mindustrytool.Config;
 import mindustrytool.features.auth.AuthHttp;
+import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
 
@@ -54,6 +55,10 @@ public class ChatService {
                     conn.setRequestProperty("Accept", "text/event-stream");
                     conn.setConnectTimeout(10000);
                     conn.setReadTimeout(0); // Infinite read timeout for SSE
+
+                    if (AuthService.getInstance().getAccessToken() != null){
+                        conn.setRequestProperty("Authorization", "Bearer " + AuthService.getInstance().getAccessToken());
+                    }
 
                     int status = conn.getResponseCode();
                     if (status != 200) {
