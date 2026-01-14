@@ -15,9 +15,12 @@ import arc.struct.Seq;
 import arc.util.Log;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustry.gen.Tex;
 import mindustry.ui.Styles;
+import mindustrytool.dto.UserData;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
+import mindustrytool.features.chat.dto.ChatUser;
 import mindustrytool.ui.UserCard;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
@@ -26,6 +29,7 @@ import arc.input.KeyCode;
 public class ChatOverlay extends Table {
     private Seq<ChatMessage> messages = new Seq<>();
     private Table messageTable;
+    private Table userListTable;
     private ScrollPane scrollPane;
     private TextField inputField;
     private TextButton sendButton;
@@ -50,13 +54,17 @@ public class ChatOverlay extends Table {
         setup();
     }
 
+    public boolean isCollapsed() {
+        return isCollapsed;
+    }
+
     private void setup() {
         container.clearChildren();
         container.touchable = Touchable.enabled;
 
         if (isCollapsed) {
             container.background(null);
-            containerCell.size(60f);
+            containerCell.size(48);
 
             Table buttonTable = new Table();
             buttonTable.background(Styles.black6);
@@ -85,6 +93,8 @@ public class ChatOverlay extends Table {
                     ChatOverlay.this.moveBy(dx, dy);
                     config.x(ChatOverlay.this.x);
                     config.y(ChatOverlay.this.y);
+
+                    keepInScreen();
                 }
 
                 @Override
@@ -110,7 +120,6 @@ public class ChatOverlay extends Table {
             Table header = new Table();
             header.background(Styles.black8);
             header.touchable(() -> Touchable.enabled);
-            header.margin(8);
 
             // Drag handle
             Image handle = new Image(Icon.move);
@@ -146,6 +155,9 @@ public class ChatOverlay extends Table {
 
             container.add(header).growX().height(40).row();
 
+            // Main Content
+            Table mainContent = new Table();
+
             // Message List
             messageTable = new Table();
             messageTable.top().left();
@@ -154,7 +166,27 @@ public class ChatOverlay extends Table {
             scrollPane.setScrollingDisabled(true, false);
             scrollPane.setFadeScrollBars(true);
 
-            container.add(scrollPane).grow().pad(4).row();
+            mainContent.add(scrollPane).grow();
+
+            // User List
+            userListTable = new Table();
+            userListTable.top().left();
+
+            ScrollPane userScrollPane = new ScrollPane(userListTable, Styles.noBarPane);
+            userScrollPane.setScrollingDisabled(true, false);
+            userScrollPane.setFadeScrollBars(true);
+
+            Image sep = new Image(Tex.whiteui);
+            sep.setColor(mindustry.graphics.Pal.accent);
+
+            mainContent.add(sep).width(2f).fillY();
+
+            mainContent.add(userScrollPane).width(150f).growY().padLeft(4);
+
+            container.add(mainContent).grow().row();
+
+            // Fetch users
+            ChatService.getInstance().getUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
 
             // Input Area
             Table inputTable = new Table();
@@ -169,10 +201,19 @@ public class ChatOverlay extends Table {
 
             sendButton = new TextButton("Send", Styles.defaultt);
             sendButton.clicked(this::sendMessage);
-            sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
+            sendButton.setDisabled(
+                    () -> !AuthService.getInstance().isLoggedIn() || isSending);
+
+            Image inputSep = new Image(Tex.whiteui);
+            inputSep.setColor(mindustry.graphics.Pal.accent);
+
+            inputTable.add(inputSep)
+                    .height(2)
+                    .growX()
+                    .row();
 
             inputTable.add(inputField).growX().height(40f).padRight(4);
-            inputTable.add(sendButton).width(80f).height(40f);
+            inputTable.add(sendButton).width(120f).height(40f);
 
             container.add(inputTable).growX().pad(4).bottom();
 
@@ -191,7 +232,7 @@ public class ChatOverlay extends Table {
         keepInScreen();
     }
 
-    private void keepInScreen() {
+    public void keepInScreen() {
         if (getScene() == null)
             return;
 
@@ -254,6 +295,27 @@ public class ChatOverlay extends Table {
             bubble.add(": " + msg.content).wrap().color(Color.white).left().growX();
 
             messageTable.add(bubble).growX().padBottom(4).left().row();
+        }
+    }
+
+    private void rebuildUserList(ChatUser[] users) {
+        if (userListTable == null)
+            return;
+
+        userListTable.clear();
+        userListTable.top().left();
+
+        for (ChatUser user : users) {
+            Table card = new Table();
+
+            card.background(Styles.grayPanel);
+            UserData data = new UserData()
+                    .name(user.name())
+                    .imageUrl(user.imageUrl());
+
+            UserCard.draw(card, data);
+
+            userListTable.add(card).growX().padBottom(4).row();
         }
     }
 

@@ -196,9 +196,17 @@ public class AuthService {
         String accessToken = getAccessToken();
         String refreshToken = getRefreshToken();
 
-        if (accessToken == null || refreshToken == null) {
+        if (accessToken == null) {
             if (onFailure != null) {
-                Log.err("No access token or refresh token found");
+                Log.err("No access token token found");
+                onFailure.run();
+            }
+            return;
+        }
+
+        if (refreshToken == null) {
+            if (onFailure != null) {
+                Log.err("No refresh token found");
                 onFailure.run();
             }
             return;

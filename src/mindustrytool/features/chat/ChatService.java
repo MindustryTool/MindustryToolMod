@@ -16,6 +16,7 @@ import arc.util.Http.HttpStatusException;
 import mindustrytool.Config;
 import mindustrytool.features.auth.AuthHttp;
 import mindustrytool.features.chat.dto.ChatMessage;
+import mindustrytool.features.chat.dto.ChatUser;
 
 public class ChatService {
     private static ChatService instance;
@@ -134,6 +135,20 @@ public class ChatService {
                 })
                 .submit(res -> {
                     onSuccess.run();
+                });
+    }
+
+    public void getUsers(Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {
+        AuthHttp.get(Config.API_v4_URL + "chats/users")
+                .error(onError)
+                .submit(res -> {
+                    try {
+                        Json json = new Json();
+                        ChatUser[] users = json.fromJson(ChatUser[].class, res.getResultAsString());
+                        Core.app.post(() -> onSuccess.get(users));
+                    } catch (Exception e) {
+                        Core.app.post(() -> onError.get(e));
+                    }
                 });
     }
 }
