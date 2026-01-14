@@ -185,10 +185,13 @@ public class ChatOverlay extends Table {
             mainContent.add(stack).grow();
 
             ChatService.getInstance().setConnectionListener(connected -> {
-                if (loadingTable != null)
+                if (loadingTable != null) {
                     loadingTable.visible = !connected;
-                if (scrollPane != null)
+                }
+
+                if (scrollPane != null) {
                     scrollPane.visible = connected;
+                }
             });
 
             // Vertical Separator
@@ -221,12 +224,15 @@ public class ChatOverlay extends Table {
             Table inputTable = new Table();
             inputTable.background(Styles.black6);
 
-            inputField = new TextField();
-            inputField.setMessageText("Enter message...");
+            if (inputField == null) {
+                inputField = new TextField();
+                inputField.setMessageText("Enter message...");
+                inputField.setMaxLength(1024);
+                inputField.setValidator(text -> text.length() > 0);
+                inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
+            }
+
             inputField.setText(lastInputText);
-            inputField.setMaxLength(1024);
-            inputField.setValidator(text -> text.length() > 0);
-            inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
 
             sendButton = new TextButton("Send", Styles.defaultt);
             sendButton.clicked(this::sendMessage);
@@ -246,10 +252,15 @@ public class ChatOverlay extends Table {
                     scrollPane.setScrollY(scrollPane.getMaxY());
                 }
             });
+
+            if (inputField != null && !isCollapsed) {
+                Core.scene.setKeyboardFocus(inputField);
+            }
         }
 
         pack();
         keepInScreen();
+
     }
 
     public void keepInScreen() {
@@ -392,9 +403,11 @@ public class ChatOverlay extends Table {
         isSending = true;
 
         ChatService.getInstance().sendMessage(content, () -> {
-            isSending = false;
-            inputField.setText("");
-            lastInputText = "";
+            Core.app.post(() -> {
+                isSending = false;
+                inputField.setText("");
+                lastInputText = "";
+            });
         }, err -> {
             isSending = false;
             // Handle 409

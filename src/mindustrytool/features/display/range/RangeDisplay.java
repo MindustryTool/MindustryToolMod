@@ -15,6 +15,7 @@ import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.Tile;
+import mindustry.world.blocks.defense.OverdriveProjector;
 import mindustry.world.blocks.defense.turrets.Turret;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -158,6 +159,8 @@ public class RangeDisplay implements Feature {
             float range = 0;
             if (isTurret) {
                 range = ((Turret) build.block).range;
+            } else if (build.block instanceof OverdriveProjector projector) {
+                range = projector.range;
             } else {
                 try {
                     for (String fieldName : blockRangeFields) {
