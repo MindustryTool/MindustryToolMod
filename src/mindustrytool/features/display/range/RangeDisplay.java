@@ -195,42 +195,65 @@ public class RangeDisplay implements Feature {
             config.drawBlockRangeAlly = v;
             config.save();
         });
+
+        if (Vars.mobile) {
+            cont.row();
+        }
+
         addCheck(cont, "Draw Enemy Block Range", config.drawBlockRangeEnemy, v -> {
             config.drawBlockRangeEnemy = v;
             config.save();
         });
+
         cont.row();
 
         addCheck(cont, "Draw Ally Turret Range", config.drawTurretRangeAlly, v -> {
             config.drawTurretRangeAlly = v;
             config.save();
         });
+
+        if (Vars.mobile) {
+            cont.row();
+        }
+
         addCheck(cont, "Draw Enemy Turret Range", config.drawTurretRangeEnemy, v -> {
             config.drawTurretRangeEnemy = v;
             config.save();
         });
+
         cont.row();
 
         addCheck(cont, "Draw Ally Unit Range", config.drawUnitRangeAlly, v -> {
             config.drawUnitRangeAlly = v;
             config.save();
         });
+
+        if (Vars.mobile) {
+            cont.row();
+        }
+
         addCheck(cont, "Draw Enemy Unit Range", config.drawUnitRangeEnemy, v -> {
             config.drawUnitRangeEnemy = v;
             config.save();
         });
+
         cont.row();
 
         addCheck(cont, "Draw Player Range", config.drawPlayerRange, v -> {
             config.drawPlayerRange = v;
             config.save();
         });
+
         cont.row();
 
         addCheck(cont, "Draw Spawner Range", config.drawSpawnerRange, v -> {
             config.drawSpawnerRange = v;
             config.save();
         });
+
+        if (Vars.mobile) {
+            cont.row();
+        }
     }
 
     private void addCheck(Table table, String text, boolean def, arc.func.Boolc listener) {
