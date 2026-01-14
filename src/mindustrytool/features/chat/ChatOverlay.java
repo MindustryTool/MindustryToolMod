@@ -9,6 +9,7 @@ import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
@@ -34,14 +35,15 @@ public class ChatOverlay extends Table {
     private String lastInputText = "";
     private Table container;
     private Cell<Table> containerCell;
+    private final ChatConfig config = new ChatConfig();
 
     public ChatOverlay() {
         touchable = Touchable.childrenOnly;
+
+        isCollapsed = config.collapsed();
+        setPosition(config.x(), config.y());
+
         container = new Table();
-
-        setPosition(200, 200);
-
-        container.setPosition(0, 0);
 
         containerCell = add(container);
 
@@ -81,12 +83,15 @@ public class ChatOverlay extends Table {
                     if (Math.abs(dx) > 0.1f || Math.abs(dy) > 0.1f)
                         wasDragged = true;
                     ChatOverlay.this.moveBy(dx, dy);
+                    config.x(ChatOverlay.this.x);
+                    config.y(ChatOverlay.this.y);
                 }
 
                 @Override
                 public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
                     if (!wasDragged) {
                         isCollapsed = false;
+                        config.collapsed(false);
                         setup();
                     }
                 }
@@ -96,7 +101,10 @@ public class ChatOverlay extends Table {
             container.add(buttonTable).grow();
         } else {
             container.background(Styles.black6);
-            containerCell.size(450f, 350f);
+            float width = Core.graphics.getWidth() / Scl.scl();
+            float height = Core.graphics.getHeight() / Scl.scl();
+
+            containerCell.size(Math.min(width, 800f), Math.min(height, 600f));
 
             // Header
             Table header = new Table();
@@ -119,6 +127,9 @@ public class ChatOverlay extends Table {
                 @Override
                 public void touchDragged(InputEvent event, float x, float y, int pointer) {
                     ChatOverlay.this.moveBy(x - lastX, y - lastY);
+                    keepInScreen();
+                    config.x(ChatOverlay.this.x);
+                    config.y(ChatOverlay.this.y);
                 }
             });
 
@@ -126,6 +137,7 @@ public class ChatOverlay extends Table {
             header.add("Global Chat").style(Styles.outlineLabel).growX().padLeft(8);
             header.button(Icon.down, Styles.clearNonei, () -> {
                 isCollapsed = true;
+                config.collapsed(true);
                 if (inputField != null) {
                     lastInputText = inputField.getText();
                 }
@@ -188,21 +200,30 @@ public class ChatOverlay extends Table {
         float sw = getScene().getWidth();
         float sh = getScene().getHeight();
 
-        if (x < 0)
+        if (x < 0) {
             x = 0;
-        if (y < 0)
+        }
+
+        if (y < 0) {
             y = 0;
-        if (x + w > sw)
+        }
+
+        if (x + w > sw) {
             x = sw - w;
-        if (y + h > sh)
+        }
+
+        if (y + h > sh) {
             y = sh - h;
+        }
     }
 
     public void addMessages(ChatMessage[] newMessages) {
         for (ChatMessage msg : newMessages) {
             if (messages.contains(m -> m.id.equals(msg.id))) {
+                Log.warn("Duplicate message: " + msg.id);
                 continue;
             }
+
             messages.add(msg);
         }
 
@@ -227,6 +248,7 @@ public class ChatOverlay extends Table {
 
         for (ChatMessage msg : messages) {
             Table bubble = new Table();
+
             bubble.background(Styles.grayPanel);
             UserCard.draw(bubble, msg.createdBy);
             bubble.add(": " + msg.content).wrap().color(Color.white).left().growX();
@@ -237,14 +259,24 @@ public class ChatOverlay extends Table {
 
     private void sendMessage() {
         String content = inputField.getText();
-        if (content == null || content.trim().isEmpty())
+
+        if (content == null || content.trim().isEmpty()) {
+            Vars.ui.showInfoFade("Content is empty");
             return;
-        if (!AuthService.getInstance().isLoggedIn())
+        }
+
+        if (!AuthService.getInstance().isLoggedIn()) {
+            Vars.ui.showInfoFade("Your not logged in");
             return;
-        if (isSending)
+        }
+
+        if (isSending) {
+            Vars.ui.showInfoFade("Last message still sending");
             return;
+        }
 
         isSending = true;
+
         ChatService.getInstance().sendMessage(content, () -> {
             isSending = false;
             inputField.setText("");
