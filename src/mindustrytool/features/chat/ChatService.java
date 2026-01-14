@@ -15,13 +15,14 @@ import arc.util.serialization.Json;
 import arc.util.Http.HttpStatusException;
 import mindustrytool.Config;
 import mindustrytool.features.auth.AuthHttp;
+import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
 
 public class ChatService {
     private static ChatService instance;
 
-    private Thread streamThread;
+    private volatile Thread streamThread;
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
     private Cons<ChatMessage[]> messageListener;
 
@@ -48,12 +49,19 @@ public class ChatService {
             while (isStreaming.get()) {
                 HttpURLConnection conn = null;
                 try {
+                    Log.info("Connecting to chat stream...");
+
                     URL url = new URL(Config.API_v4_URL + "chats/stream");
                     conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
                     conn.setRequestProperty("Accept", "text/event-stream");
                     conn.setConnectTimeout(10000);
                     conn.setReadTimeout(0); // Infinite read timeout for SSE
+
+                    if (AuthService.getInstance().getAccessToken() != null) {
+                        conn.setRequestProperty("Authorization",
+                                "Bearer " + AuthService.getInstance().getAccessToken());
+                    }
 
                     int status = conn.getResponseCode();
                     if (status != 200) {
@@ -68,6 +76,7 @@ public class ChatService {
 
                     BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                     String line;
+
                     while (isStreaming.get() && (line = reader.readLine()) != null) {
                         if (line.startsWith("data:")) {
                             String data = line.substring(5).trim();
@@ -111,13 +120,19 @@ public class ChatService {
         streamThread.start();
     }
 
-    public void disconnectStream() {
+    public synchronized void disconnectStream() {
         isStreaming.set(false);
 
-        if (streamThread != null) {
-            streamThread.interrupt();
-            streamThread = null;
+        try {
+            if (streamThread != null) {
+                streamThread.interrupt();
+                streamThread = null;
+            }
+        } catch (Exception e) {
+            Log.err("Failed to disconnect chat stream", e);
         }
+
+        Log.info("Chat stream disconnected.");
     }
 
     public void sendMessage(String content, Runnable onSuccess, Cons<Throwable> onError) {

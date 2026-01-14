@@ -18,7 +18,7 @@ public class UserCard {
         card.clear();
 
         if (data.imageUrl() != null && !data.imageUrl().isEmpty()) {
-            card.add(new NetworkImage(data.imageUrl())).size(24).padRight(4);
+            card.add(new NetworkImage(data.imageUrl())).size(32);
         }
 
         card.add(data.name());

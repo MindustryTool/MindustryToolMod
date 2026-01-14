@@ -3,12 +3,14 @@ package mindustrytool.features.chat;
 import java.util.Optional;
 
 import arc.Core;
+import arc.Events;
 import arc.scene.ui.Dialog;
 import mindustry.Vars;
 import mindustry.gen.Iconc;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.services.UserService;
 
@@ -51,6 +53,11 @@ public class ChatFeature implements Feature {
             }
 
             overlay.addMessages(messages);
+        });
+
+        Events.run(LoginEvent.class, () -> {
+            ChatService.getInstance().disconnectStream();
+            ChatService.getInstance().connectStream();
         });
 
         settingDialog = new BaseDialog("Chat Settings");
