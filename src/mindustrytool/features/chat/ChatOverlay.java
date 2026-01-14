@@ -18,11 +18,11 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
-import mindustrytool.dto.UserData;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
-import mindustrytool.ui.UserCard;
+import mindustrytool.services.UserService;
+import mindustrytool.ui.NetworkImage;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.input.KeyCode;
@@ -88,7 +88,6 @@ public class ChatOverlay extends Table {
                 public void touchDragged(InputEvent event, float x, float y, int pointer) {
                     float dx = x - lastX;
                     float dy = y - lastY;
-                    // Check if actually dragged to avoid sensitive clicks
                     if (Math.abs(dx) > 0.1f || Math.abs(dy) > 0.1f)
                         wasDragged = true;
                     ChatOverlay.this.moveBy(dx, dy);
@@ -111,20 +110,19 @@ public class ChatOverlay extends Table {
             buttonTable.add(btn).grow();
             container.add(buttonTable).grow();
         } else {
-            container.background(Styles.black6);
+            container.background(Styles.black8);
             float width = Core.graphics.getWidth() / Scl.scl();
             float height = Core.graphics.getHeight() / Scl.scl();
 
-            containerCell.size(Math.min(width, 800f), Math.min(height, 600f));
+            containerCell.size(Math.min(width, 900f), Math.min(height, 700f));
 
             // Header
             Table header = new Table();
-            header.background(Styles.black8);
+            header.background(Styles.black6);
             header.touchable(() -> Touchable.enabled);
 
-            // Drag handle
-            Image handle = new Image(Icon.move);
-            handle.addListener(new InputListener() {
+            // Header Drag Listener
+            header.addListener(new InputListener() {
                 float lastX, lastY;
 
                 @Override
@@ -143,8 +141,10 @@ public class ChatOverlay extends Table {
                 }
             });
 
-            header.add(handle).size(40).padLeft(8);
-            header.add("Global Chat").style(Styles.outlineLabel).growX().padLeft(8);
+            header.image(Icon.move).color(Color.gray).size(24).padLeft(8);
+            header.add("Global Chat").style(Styles.outlineLabel).padLeft(8).growX().left();
+
+            // Minimize button
             header.button(Icon.down, Styles.clearNonei, () -> {
                 isCollapsed = true;
                 config.collapsed(true);
@@ -152,37 +152,41 @@ public class ChatOverlay extends Table {
                     lastInputText = inputField.getText();
                 }
                 setup();
-            }).size(40);
+            }).size(40).padRight(4);
 
-            container.add(header).growX().height(40).row();
+            container.add(header).growX().height(46).row();
 
-            // Main Content
+            // Main Content Area
             Table mainContent = new Table();
 
-            // Message List
+            // Messages
             messageTable = new Table();
             messageTable.top().left();
 
             scrollPane = new ScrollPane(messageTable, Styles.noBarPane);
             scrollPane.setScrollingDisabled(true, false);
-            scrollPane.setFadeScrollBars(true);
+            scrollPane.setFadeScrollBars(false);
 
             mainContent.add(scrollPane).grow();
 
-            // User List
+            // Vertical Separator
+            mainContent.image(Tex.whiteui).width(1f).color(Color.darkGray).fillY();
+
+            // User List Sidebar
+            Table rightSide = new Table();
+            rightSide.background(Styles.black3);
+
+            rightSide.add("ONLINE MEMBERS").style(Styles.defaultLabel).color(Color.gray).pad(10).left().row();
+
             userListTable = new Table();
             userListTable.top().left();
 
             ScrollPane userScrollPane = new ScrollPane(userListTable, Styles.noBarPane);
             userScrollPane.setScrollingDisabled(true, false);
-            userScrollPane.setFadeScrollBars(true);
 
-            Image sep = new Image(Tex.whiteui);
-            sep.setColor(mindustry.graphics.Pal.accent);
+            rightSide.add(userScrollPane).grow().row();
 
-            mainContent.add(sep).width(2f).fillY();
-
-            mainContent.add(userScrollPane).width(150f).growY().padLeft(4);
+            mainContent.add(rightSide).width(220f).growY();
 
             container.add(mainContent).grow().row();
 
@@ -193,32 +197,23 @@ public class ChatOverlay extends Table {
 
             // Input Area
             Table inputTable = new Table();
+            inputTable.background(Styles.black6);
+
             inputField = new TextField();
             inputField.setMessageText("Enter message...");
             inputField.setText(lastInputText);
             inputField.setMaxLength(1024);
             inputField.setValidator(text -> text.length() > 0);
-
-            // Send on Enter
             inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
 
             sendButton = new TextButton("Send", Styles.defaultt);
             sendButton.clicked(this::sendMessage);
-            sendButton.setDisabled(
-                    () -> !AuthService.getInstance().isLoggedIn() || isSending);
+            sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
 
-            Image inputSep = new Image(Tex.whiteui);
-            inputSep.setColor(mindustry.graphics.Pal.accent);
+            inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
+            inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
 
-            inputTable.add(inputSep)
-                    .height(2)
-                    .growX()
-                    .row();
-
-            inputTable.add(inputField).growX().height(40f).padRight(4);
-            inputTable.add(sendButton).width(120f).height(40f);
-
-            container.add(inputTable).growX().pad(4).bottom();
+            container.add(inputTable).growX().bottom();
 
             // Initial population
             rebuildMessages(messageTable);
@@ -291,13 +286,34 @@ public class ChatOverlay extends Table {
         messageTable.top().left();
 
         for (ChatMessage msg : messages) {
-            Table bubble = new Table();
+            Table entry = new Table();
+            entry.setBackground(null); // Clear background
 
-            bubble.background(Styles.grayPanel);
-            UserCard.draw(bubble, msg.createdBy);
-            bubble.add(": " + msg.content).wrap().color(Color.white).left().growX();
+            // Avatar Column
+            entry.table(avatar -> {
+                avatar.top();
+                UserService.findUserById(msg.createdBy, data -> {
+                    avatar.clear();
+                    if (data.imageUrl() != null && !data.imageUrl().isEmpty()) {
+                        avatar.add(new NetworkImage(data.imageUrl())).size(40);
+                    }
+                });
+            }).size(48).top().pad(8);
 
-            messageTable.add(bubble).growX().padBottom(4).marginLeft(8).left().row();
+            // Content Column
+            entry.table(content -> {
+                content.top().left();
+                content.add("...").update(label -> {
+                    UserService.findUserById(msg.createdBy, data -> {
+                        label.setText(data.name());
+                        label.setColor(Color.white);
+                    });
+                }).style(Styles.defaultLabel).left().row();
+
+                content.add(msg.content).wrap().color(Color.lightGray).left().growX().padTop(2);
+            }).growX().pad(8).top();
+
+            messageTable.add(entry).growX().padBottom(4).row();
         }
     }
 
@@ -309,16 +325,26 @@ public class ChatOverlay extends Table {
         userListTable.top().left();
 
         for (ChatUser user : users) {
-            Table card = new Table(Styles.black);
+            Table card = new Table();
 
-            card.background(Styles.grayPanel);
-            UserData data = new UserData()
-                    .name(user.name())
-                    .imageUrl(user.imageUrl());
+            // Avatar
+            if (user.imageUrl() != null && !user.imageUrl().isEmpty()) {
+                card.add(new NetworkImage(user.imageUrl())).size(32).padRight(8);
+            }
 
-            UserCard.draw(card, data);
+            // Info Table
+            card.table(info -> {
+                info.left();
+                info.add(user.name()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left().row();
+                // Status
+                info.table(status -> {
+                    status.left();
+                    status.image(Tex.whiteui).size(6).color(Color.green).padRight(4);
+                    status.add("Online").style(Styles.defaultLabel).color(Color.gray).fontScale(0.8f);
+                }).left();
+            }).growX().left();
 
-            userListTable.add(card).growX().padBottom(4).margin(8).row();
+            userListTable.add(card).growX().padBottom(8).padLeft(8).padRight(8).row();
         }
     }
 
