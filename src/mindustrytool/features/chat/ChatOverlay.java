@@ -229,7 +229,7 @@ public class ChatOverlay extends Table {
 
             rightSide.add(userScrollPane).grow().row();
 
-            mainContent.add(rightSide).width(220f).growY();
+            mainContent.add(rightSide).width(280f).growY();
 
             container.add(mainContent).grow().row();
 
@@ -409,8 +409,9 @@ public class ChatOverlay extends Table {
     }
 
     private void rebuildUserList(ChatUser[] users) {
-        if (userListTable == null)
+        if (userListTable == null) {
             return;
+        }
 
         userListTable.clear();
         userListTable.top().left();
@@ -426,7 +427,7 @@ public class ChatOverlay extends Table {
 
             // Avatar
             if (user.imageUrl() != null && !user.imageUrl().isEmpty()) {
-                card.add(new NetworkImage(user.imageUrl())).size(32).padRight(8);
+                card.add(new NetworkImage(user.imageUrl())).size(40).padRight(8);
             }
 
             // Info Table
@@ -435,7 +436,7 @@ public class ChatOverlay extends Table {
                 info.add(user.name()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left().row();
 
                 user.getHighestRole().ifPresent(role -> {
-                    info.add(role.id()).style(Styles.defaultLabel).color(Color.valueOf(role.color())).fontScale(0.75f)
+                    info.add(role.id()).style(Styles.defaultLabel).color(Color.valueOf(role.color()))
                             .left().row();
                 });
             }).growX().left();
