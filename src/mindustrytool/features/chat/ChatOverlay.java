@@ -60,7 +60,7 @@ public class ChatOverlay extends Table {
 
         if (isCollapsed) {
             container.background(null);
-            containerCell.size(60f);
+            containerCell.size(48);
 
             Table buttonTable = new Table();
             buttonTable.background(Styles.black6);

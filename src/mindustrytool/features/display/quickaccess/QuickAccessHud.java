@@ -59,47 +59,51 @@ public class QuickAccessHud extends Table implements Feature {
 
         // 1. Anchor (Draggable only)
         container.button(Icon.move, Styles.clearNonei, () -> {
-        }).size(40f).get().addListener(new InputListener() {
-            float lastX, lastY;
+        })
+                .size(48f)
+                .margin(8)
+                .get()
+                .addListener(new InputListener() {
+                    float lastX, lastY;
 
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                lastX = x;
-                lastY = y;
-                return true;
-            }
+                    @Override
+                    public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
+                        lastX = x;
+                        lastY = y;
+                        return true;
+                    }
 
-            @Override
-            public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                // Move the main table (this)
-                moveBy(x - lastX, y - lastY);
+                    @Override
+                    public void touchDragged(InputEvent event, float x, float y, int pointer) {
+                        // Move the main table (this)
+                        moveBy(x - lastX, y - lastY);
 
-                // Clamp to screen
-                // Ensure the anchor (40f) remains visible
-                float sw = Core.graphics.getWidth();
-                float sh = Core.graphics.getHeight();
-                QuickAccessHud.this.x = Mathf.clamp(QuickAccessHud.this.x, 0, sw - 40f);
-                QuickAccessHud.this.y = Mathf.clamp(QuickAccessHud.this.y, 0, sh - 40f);
+                        // Clamp to screen
+                        // Ensure the anchor (40f) remains visible
+                        float sw = Core.graphics.getWidth();
+                        float sh = Core.graphics.getHeight();
+                        QuickAccessHud.this.x = Mathf.clamp(QuickAccessHud.this.x, 0, sw - 40f);
+                        QuickAccessHud.this.y = Mathf.clamp(QuickAccessHud.this.y, 0, sh - 40f);
 
-                config.x(QuickAccessHud.this.x);
-                config.y(QuickAccessHud.this.y);
+                        config.x(QuickAccessHud.this.x);
+                        config.y(QuickAccessHud.this.y);
 
-                // Close popup if moving
-                closePopup();
-            }
-        });
+                        // Close popup if moving
+                        closePopup();
+                    }
+                });
 
         // 2. Separator
         Image sep = new Image(Tex.whiteui);
         sep.setColor(mindustry.graphics.Pal.accent);
-        container.add(sep).width(2f).fillY().pad(0, 4, 0, 4);
+        container.add(sep).width(2f).fillY();
 
         // 3. Content (Always visible)
         Table content = new Table();
         populateContent(content);
         container.add(content);
 
-        add(container);
+        add(container).pad(0).margin(0);
         pack();
     }
 
@@ -124,13 +128,16 @@ public class QuickAccessHud extends Table implements Feature {
             Button[] btnRef = new Button[1];
             btnRef[0] = t.button(b -> {
                 b.label(() -> String.valueOf(meta.icon()))
-                        .fontScale(1.5f)
                         .update(l -> l
                                 .setColor(FeatureManager.getInstance().isEnabled(f) ? Color.white
                                         : mindustry.graphics.Pal.gray));
             }, Styles.clearNonei, () -> {
                 showPopupFor(btnRef[0], f);
-            }).size(40f).pad(2f).tooltip(meta.name()).get();
+            })
+                    .size(48f)
+                    .margin(8)
+                    .tooltip(meta.name())
+                    .get();
 
             if (++i % cols == 0)
                 t.row();
