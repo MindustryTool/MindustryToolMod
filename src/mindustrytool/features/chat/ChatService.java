@@ -23,11 +23,11 @@ public class ChatService {
     private static ChatService instance;
 
     private volatile Thread streamThread;
+    private volatile Cons<Boolean> connectionListener;
 
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
     private AtomicBoolean isConnected = new AtomicBoolean(false);
     private Cons<ChatMessage[]> messageListener;
-    private Cons<Boolean> connectionListener;
 
     public static ChatService getInstance() {
         if (instance == null) {

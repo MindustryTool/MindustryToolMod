@@ -71,8 +71,9 @@ public class AuthHttp {
 
                         if (token != null) {
                             req.header("Authorization", "Bearer " + token);
-                            headers.forEach(req::header);
                         }
+
+                        headers.forEach(req::header);
 
                         if (errorListener != null)
                             req.error(errorListener);

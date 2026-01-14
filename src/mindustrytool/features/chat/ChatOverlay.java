@@ -456,7 +456,7 @@ public class ChatOverlay extends Table {
         }
 
         if (!AuthService.getInstance().isLoggedIn()) {
-            Vars.ui.showInfoFade("Your not logged in");
+            Vars.ui.showInfoFade("You're not logged in");
             return;
         }
 
