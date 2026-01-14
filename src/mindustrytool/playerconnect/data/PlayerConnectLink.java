@@ -1,5 +1,5 @@
-// Khai báo package cho module kết nối người chơi
-package mindustrytool.playerconnect;
+// Khai báo package cho data classes của module Player Connect
+package mindustrytool.playerconnect.data;
 
 // Import URI để làm việc với URI
 import java.net.URI;

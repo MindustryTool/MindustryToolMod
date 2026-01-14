@@ -12,10 +12,10 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 // Import BaseDialog là lớp cơ sở cho dialog
 import mindustry.ui.dialogs.BaseDialog;
-// Import PlayerConnect để quản lý kết nối phòng
-import mindustrytool.playerconnect.PlayerConnect;
-// Import PlayerConnectLink để xử lý link kết nối
-import mindustrytool.playerconnect.PlayerConnectLink;
+// Import PlayerConnect từ net package
+import mindustrytool.playerconnect.net.PlayerConnect;
+// Import PlayerConnectLink từ data package
+import mindustrytool.playerconnect.data.PlayerConnectLink;
 
 /**
  * Dialog chính để tạo và quản lý phòng Player Connect.
@@ -35,20 +35,19 @@ public class CreateRoomDialog extends BaseDialog {
     public CreateRoomDialog() {
         // Gọi constructor cha với tiêu đề
         super("@message.manage-room.title");
+
+        // Khởi tạo các component UI TRƯỚC khi sử dụng trong lambda
+        serverListPanel = new ServerListPanel();
+        onlineSection = new OnlineServersSection(serverListPanel);
+        createFormDialog = new CreateRoomFormDialog();
+
         // Đăng ký event để đóng phòng khi host game mới
         arc.Events.run(mindustry.game.EventType.HostEvent.class, this::closeRoom);
-
-
 
         // Tạo overlay cho các button
         makeButtonOverlay();
         // Thêm nút đóng dialog
         addCloseButton();
-
-        // Khởi tạo các component UI
-        serverListPanel = new ServerListPanel();
-        onlineSection = new OnlineServersSection(serverListPanel);
-        createFormDialog = new CreateRoomFormDialog();
 
         // Đăng ký listener khi dialog hiển thị
         shown(() -> {
@@ -83,7 +82,6 @@ public class CreateRoomDialog extends BaseDialog {
         cont.pane(hosts -> {
             // Build section online servers
             onlineSection.build(hosts);
-
             // Thêm margin dưới để không bị che bởi buttons
             hosts.marginBottom(Vars.mobile ? 140f : 70f);
         })

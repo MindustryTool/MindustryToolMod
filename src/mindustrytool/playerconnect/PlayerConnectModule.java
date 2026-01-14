@@ -1,18 +1,15 @@
 package mindustrytool.playerconnect;
 
-import arc.Core;
 import arc.Events;
 import arc.util.Log;
 
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
-import mindustry.gen.Icon;
-import mindustry.ui.fragments.MenuFragment.MenuButton;
 
 import mindustrytool.ModuleLoader.Module;
+// Import từ gui package
 import mindustrytool.playerconnect.gui.CreateRoomDialog;
-import mindustrytool.playerconnect.gui.JoinRoomDialog;
-import mindustrytool.playerconnect.gui.PlayerConnectRoomsDialog;
+import mindustrytool.playerconnect.gui.PlayerConnectJoinInjector;
 
 /**
  * PlayerConnect Module - multiplayer via CLaJ.
@@ -21,9 +18,8 @@ public class PlayerConnectModule implements Module {
 
     public static final String NAME = "PlayerConnect";
 
-    public static PlayerConnectRoomsDialog playerConnectRoomsDialog;
     public static CreateRoomDialog createRoomDialog;
-    public static JoinRoomDialog joinRoomDialog;
+    private static PlayerConnectJoinInjector joinInjector;
 
     @Override
     public String getName() {
@@ -35,9 +31,8 @@ public class PlayerConnectModule implements Module {
         Log.info("[PlayerConnectModule] Initializing...");
 
         // Create dialogs
-        playerConnectRoomsDialog = new PlayerConnectRoomsDialog();
         createRoomDialog = new CreateRoomDialog();
-        joinRoomDialog = new JoinRoomDialog(playerConnectRoomsDialog);
+        joinInjector = new PlayerConnectJoinInjector();
 
         // Register UI when client loads
         Events.on(ClientLoadEvent.class, e -> onClientLoad());
@@ -48,23 +43,16 @@ public class PlayerConnectModule implements Module {
     private void onClientLoad() {
         Log.info("[PlayerConnectModule] Adding UI...");
 
-        MenuButton playerConnectButton = new MenuButton(
-                Core.bundle.format("message.player-connect.title"),
-                Icon.menu,
-                () -> playerConnectRoomsDialog.show()
-        );
-
-        if (Vars.mobile) {
-            Vars.ui.menufrag.addButton(playerConnectButton.text, playerConnectButton.icon, playerConnectButton.runnable);
-        } else {
-            Vars.ui.menufrag.addButton(new MenuButton(
-                    "Player Connect",
-                    Icon.players,
-                    () -> {},
-                    playerConnectButton
-            ));
-        }
-
         Log.info("[PlayerConnectModule] UI added");
+
+        // Inject into the game's join dialog
+        if (Vars.ui.join != null) {
+            joinInjector.inject(Vars.ui.join);
+            
+            // Re-inject when dialog is shown to handle UI refreshes
+            Vars.ui.join.shown(() -> {
+                joinInjector.inject(Vars.ui.join);
+            });
+        }
     }
 }

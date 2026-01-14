@@ -12,8 +12,8 @@ import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 // Import Styles chứa các style UI
 import mindustry.ui.Styles;
-// Import PlayerConnectProviders để quản lý danh sách providers
-import mindustrytool.playerconnect.PlayerConnectProviders;
+// Import PlayerConnectProviders từ net package
+import mindustrytool.playerconnect.net.PlayerConnectProviders;
 
 /**
  * UI component cho section danh sách online servers.
@@ -22,8 +22,6 @@ import mindustrytool.playerconnect.PlayerConnectProviders;
 public class OnlineServersSection {
     // Table chứa danh sách online servers
     private Table onlineTable;
-    // Cờ đánh dấu section đang hiển thị
-    private boolean shown = true;
     // Cờ đánh dấu đang refresh
     private boolean refreshing;
     // Panel xử lý server list

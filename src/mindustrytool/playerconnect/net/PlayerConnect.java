@@ -1,5 +1,5 @@
-// Khai báo package cho module kết nối người chơi
-package mindustrytool.playerconnect;
+// Khai báo package cho module networking
+package mindustrytool.playerconnect.net;
 
 // Import ByteBuffer để làm việc với buffer nhị phân
 import java.nio.ByteBuffer;
@@ -42,6 +42,8 @@ import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Groups;
 // Import Player để truy cập thông tin người chơi
 import mindustry.gen.Player;
+// Import PlayerConnectLink từ data package
+import mindustrytool.playerconnect.data.PlayerConnectLink;
 // Import Packets chứa các packet cho Player Connect
 import playerconnect.shared.Packets;
 // Import RoomPlayer đại diện cho thông tin người chơi trong phòng
@@ -146,7 +148,7 @@ public class PlayerConnect {
     // Serializer tạm để serialize packet thủ công
     private static arc.net.NetSerializer tmpSerializer;
     // Buffer tạm để ghi packet (16 bytes cho room join packet)
-    private static ByteBuffer tmpBuffer = ByteBuffer.allocate(256);// chúng ta cần 16 bytes cho room join packet
+    private static ByteBuffer tmpBuffer = ByteBuffer.allocate(256);
     // Thread cho room và pinger
     private static Thread roomThread, pingerThread;
 

@@ -1,5 +1,5 @@
-// Khai báo package cho module kết nối người chơi
-package mindustrytool.playerconnect;
+// Khai báo package cho module networking
+package mindustrytool.playerconnect.net;
 
 // Import IOException để xử lý lỗi I/O
 import java.io.IOException;
@@ -100,7 +100,6 @@ public class NetworkProxy extends Client implements NetListener {
 
         // Lấy server object từ provider
         server = Reflect.get(provider, "server");
-        // connections = Reflect.get(provider, "connections");
         // Lấy dispatcher listener từ server
         serverDispatcher = Reflect.get(server, "dispatchListener");
         // Lưu mật khẩu
@@ -151,7 +150,6 @@ public class NetworkProxy extends Client implements NetListener {
                 // Nếu chưa có roomId thì đóng và throw exception
                 if (roomId == null) {
                     close();
-                    // Reflect.set(Connection.class, this, "lastProtocolError", ex);
                     throw ex;
                 }
             }
@@ -361,7 +359,7 @@ public class NetworkProxy extends Client implements NetListener {
                 // Đọc dữ liệu packet
                 p.read(new ByteBufferInput(buffer));
                 // Xử lý đặc biệt cho ConnectionPacketWrapPacket
-                if (p instanceof Packets.ConnectionPacketWrapPacket) // Loại này đặc biệt
+                if (p instanceof Packets.ConnectionPacketWrapPacket)
                     // Đọc thêm object bên trong
                     ((Packets.ConnectionPacketWrapPacket) p).object = super.read(buffer);
                 return p;
@@ -384,7 +382,7 @@ public class NetworkProxy extends Client implements NetListener {
                 // Ghi dữ liệu packet
                 p.write(new ByteBufferOutput(buffer));
                 // Xử lý đặc biệt cho ConnectionPacketWrapPacket
-                if (p instanceof Packets.ConnectionPacketWrapPacket) // Loại này đặc biệt
+                if (p instanceof Packets.ConnectionPacketWrapPacket)
                     // Ghi thêm object bên trong
                     super.write(buffer, ((Packets.ConnectionPacketWrapPacket) p).object);
                 return;
@@ -439,7 +437,6 @@ public class NetworkProxy extends Client implements NetListener {
 
             // Tạo packet bọc
             Packets.ConnectionPacketWrapPacket p = new Packets.ConnectionPacketWrapPacket();
-            // Gán id kết nối
             // Gán id kết nối
             p.connectionId = id;
             // Đánh dấu gửi qua TCP
@@ -525,12 +522,12 @@ public class NetworkProxy extends Client implements NetListener {
         // Phương thức không sử dụng - keep alive TCP
         @Override
         public void setKeepAliveTCP(int keepAliveMillis) {
-        } // không bao giờ dùng
+        }
 
         // Phương thức không sử dụng - timeout
         @Override
         public void setTimeout(int timeoutMillis) {
-        } // không bao giờ dùng
+        }
 
         // Lấy địa chỉ TCP remote
         @Override
@@ -550,7 +547,7 @@ public class NetworkProxy extends Client implements NetListener {
         @Override
         public int getTcpWriteBufferSize() {
             return 0;
-        } // không bao giờ dùng
+        }
 
         // Kiểm tra có đang idle không
         @Override
@@ -561,7 +558,7 @@ public class NetworkProxy extends Client implements NetListener {
         // Phương thức không sử dụng - idle threshold
         @Override
         public void setIdleThreshold(float idleThreshold) {
-        } // không bao giờ dùng
+        }
 
         // Chuyển đổi thành string
         @Override

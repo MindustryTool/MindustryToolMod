@@ -10,7 +10,8 @@ import arc.util.Time;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
-import mindustrytool.playerconnect.PlayerConnect;
+// Import PlayerConnect từ net package
+import mindustrytool.playerconnect.net.PlayerConnect;
 
 /**
  * UI for a single server row (button + label + ping display).

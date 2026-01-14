@@ -1,8 +1,10 @@
-// Khai báo package cho module kết nối người chơi
-package mindustrytool.playerconnect;
+// Khai báo package cho module networking
+package mindustrytool.playerconnect.net;
 
 // Import Core để truy cập settings
 import arc.Core;
+// Import Cons là functional interface nhận 1 tham số
+import arc.func.Cons;
 // Import ArrayMap là ordered map của Arc
 import arc.struct.ArrayMap;
 
@@ -17,7 +19,7 @@ public class PlayerConnectProviders {
             custom = new ArrayMap<>();
 
     // Phương thức làm mới danh sách provider online từ API
-    public static synchronized void refreshOnline(Runnable onCompleted, arc.func.Cons<Throwable> onFailed) {
+    public static synchronized void refreshOnline(Runnable onCompleted, Cons<Throwable> onFailed) {
         // Gọi API lấy danh sách providers
         PlayerConnectApi.findPlayerConnectProvider(providers -> {
             // Xóa danh sách cũ

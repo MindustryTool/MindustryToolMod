@@ -130,7 +130,7 @@ public class Utils { // Class Utils
                 int position = stream.readInt(); // Position packed
                 // Đọc config tùy theo version
                 Object config = ver == 0 ? mapConfig(block, stream.readInt(), position)
-                        : TypeIO.readObject(Reads.get(stream));
+                        : TypeIO.readObject(new Reads(stream));
                 byte rotation = stream.readByte(); // Rotation
                 // Chỉ thêm nếu không phải air
                 if (block != Blocks.air) {

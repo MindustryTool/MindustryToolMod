@@ -1,5 +1,5 @@
-// Khai báo package cho module kết nối người chơi
-package mindustrytool.playerconnect;
+// Khai báo package cho module networking
+package mindustrytool.playerconnect.net;
 
 // Import Core để chạy callback trên UI thread
 import arc.Core;
@@ -13,6 +13,8 @@ import arc.util.Http;
 import arc.util.Log;
 // Import JsonIO để parse JSON response
 import mindustry.io.JsonIO;
+// Import PlayerConnectConfig cho API URL
+import mindustrytool.playerconnect.PlayerConnectConfig;
 // Import data class đại diện cho provider kết nối
 import mindustrytool.playerconnect.data.PlayerConnectProvider;
 // Import data class đại diện cho phòng kết nối
