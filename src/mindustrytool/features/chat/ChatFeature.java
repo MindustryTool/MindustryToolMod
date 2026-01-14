@@ -4,6 +4,8 @@ import mindustry.Vars;
 import mindustry.gen.Iconc;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.chat.dto.ChatMessage;
+import mindustrytool.services.UserService;
 
 public class ChatFeature implements Feature {
     private ChatOverlay overlay;
@@ -23,12 +25,17 @@ public class ChatFeature implements Feature {
         overlay = new ChatOverlay();
 
         ChatService.getInstance().setListener(messages -> {
+            if (Vars.ui.chatfrag != null) {
+                for (ChatMessage message : messages) {
+                    UserService.findUserById(message.createdBy, (user) -> {
+                        String content = "[cyan][Global][] " + user.name() + "[] " + message.content;
+                        Vars.ui.chatfrag.addMessage(content);
+                    });
+                }
+            }
+
             if (overlay != null) {
                 overlay.addMessages(messages);
-
-                if (!overlay.visible && messages.length > 0) {
-                    Vars.ui.showInfoFade(messages[0].content);
-                }
             }
         });
     }
@@ -52,7 +59,6 @@ public class ChatFeature implements Feature {
             overlay.name = "mdt-chat-overlay";
             Vars.ui.menuGroup.addChild(overlay);
 
-            // Layout
             overlay.visible(() -> Vars.state.isMenu());
         }
     }
@@ -60,6 +66,7 @@ public class ChatFeature implements Feature {
     @Override
     public void onDisable() {
         ChatService.getInstance().disconnectStream();
+
         if (overlay != null) {
             overlay.remove();
         }

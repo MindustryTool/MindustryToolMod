@@ -15,22 +15,20 @@ import arc.util.serialization.Json;
 import arc.util.Http.HttpStatusException;
 import mindustrytool.Config;
 import mindustrytool.features.auth.AuthHttp;
-import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 
 public class ChatService {
     private static ChatService instance;
+
     private Thread streamThread;
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
     private Cons<ChatMessage[]> messageListener;
-
-    private ChatService() {
-    }
 
     public static ChatService getInstance() {
         if (instance == null) {
             instance = new ChatService();
         }
+
         return instance;
     }
 
@@ -39,8 +37,9 @@ public class ChatService {
     }
 
     public void connectStream() {
-        if (isStreaming.get())
+        if (isStreaming.get()) {
             return;
+        }
 
         isStreaming.set(true);
 
@@ -113,6 +112,7 @@ public class ChatService {
 
     public void disconnectStream() {
         isStreaming.set(false);
+
         if (streamThread != null) {
             streamThread.interrupt();
             streamThread = null;
