@@ -2,6 +2,7 @@ package mindustrytool.features.chat;
 
 import mindustry.Vars;
 import mindustry.gen.Iconc;
+import mindustry.ui.fragments.ChatFragment;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.chat.dto.ChatMessage;
@@ -26,6 +27,10 @@ public class ChatFeature implements Feature {
 
         ChatService.getInstance().setListener(messages -> {
             if (Vars.ui.chatfrag != null) {
+                if (!Vars.ui.chatfrag.shown()) {
+                    Vars.ui.chatfrag.toggle();
+                }
+
                 for (ChatMessage message : messages) {
                     UserService.findUserById(message.createdBy, (user) -> {
                         String content = "[cyan][Global][] " + user.name() + "[] " + message.content;
