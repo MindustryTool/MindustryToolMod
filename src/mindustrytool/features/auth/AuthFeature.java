@@ -42,7 +42,7 @@ public class AuthFeature implements Feature {
         authWindow.top().right();
         authWindow.touchable = Touchable.childrenOnly;
 
-        Core.scene.add(wholeViewport);
+        Vars.ui.menuGroup.addChild(wholeViewport);
 
         // Restore session
         AuthService.getInstance().refreshTokenIfNeeded(() -> {

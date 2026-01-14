@@ -1,11 +1,13 @@
 package mindustrytool.features.settings;
 
+import arc.Core;
 import arc.graphics.Color;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.Config;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 
@@ -14,6 +16,10 @@ public class FeatureSettingDialog extends BaseDialog {
     public FeatureSettingDialog() {
         super("Feature Settings");
         addCloseButton();
+
+        buttons.button("Report bug", Icon.infoCircle, () -> {
+            Core.app.openURI(Config.DISCORD_INVITE_URL);
+        });
 
         shown(this::rebuild);
     }

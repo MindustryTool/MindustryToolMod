@@ -1,8 +1,12 @@
 package mindustrytool.features.chat;
 
+import java.util.Optional;
+
+import arc.Core;
+import arc.scene.ui.Dialog;
 import mindustry.Vars;
 import mindustry.gen.Iconc;
-import mindustry.ui.fragments.ChatFragment;
+import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.chat.dto.ChatMessage;
@@ -10,6 +14,8 @@ import mindustrytool.services.UserService;
 
 public class ChatFeature implements Feature {
     private ChatOverlay overlay;
+
+    Dialog settingDialog;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -34,15 +40,34 @@ public class ChatFeature implements Feature {
                 for (ChatMessage message : messages) {
                     UserService.findUserById(message.createdBy, (user) -> {
                         String content = "[cyan][Global][] " + user.name() + "[] " + message.content;
+
                         Vars.ui.chatfrag.addMessage(content);
+
+                        if (overlay.isCollapsed()) {
+                            Vars.ui.showInfoFade(content, 0.5f);
+                        }
                     });
                 }
             }
 
-            if (overlay != null) {
-                overlay.addMessages(messages);
-            }
+            overlay.addMessages(messages);
         });
+
+        settingDialog = new BaseDialog("Chat Settings");
+        settingDialog.cont.button("Reset Overlay Position", () -> {
+            ChatConfig config = new ChatConfig();
+
+            config.x(0);
+            config.y(0);
+
+            if (overlay != null) {
+                overlay.setPosition(0, 0);
+                overlay.keepInScreen();
+            }
+        }).size(240f, 50f);
+
+        settingDialog.addCloseButton();
+        settingDialog.closeOnBack();
     }
 
     @Override
@@ -62,9 +87,7 @@ public class ChatFeature implements Feature {
             }
 
             overlay.name = "mdt-chat-overlay";
-            Vars.ui.menuGroup.addChild(overlay);
-
-            overlay.visible(() -> Vars.state.isMenu());
+            Core.scene.add(overlay);
         }
     }
 
@@ -75,5 +98,10 @@ public class ChatFeature implements Feature {
         if (overlay != null) {
             overlay.remove();
         }
+    }
+
+    @Override
+    public Optional<Dialog> setting() {
+        return Optional.of(settingDialog);
     }
 }

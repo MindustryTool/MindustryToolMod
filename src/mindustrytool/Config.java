@@ -26,6 +26,8 @@ public class Config {
     public static final String UPLOAD_SCHEMATIC_URL = WEB_URL + "/schematics?upload=true";
     public static final String UPLOAD_MAP_URL = WEB_URL + "/maps?upload=true";
 
+    public static final String DISCORD_INVITE_URL = "https://discord.gg/DmjdPCeWPY";
+
     public static final List<Sort> sorts = Arrays.asList(//
             new Sort("newest", "time_desc"), //
             new Sort("oldest", "time_asc"), //

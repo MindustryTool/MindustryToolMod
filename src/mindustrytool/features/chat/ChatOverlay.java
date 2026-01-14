@@ -50,6 +50,10 @@ public class ChatOverlay extends Table {
         setup();
     }
 
+    public boolean isCollapsed() {
+        return isCollapsed;
+    }
+
     private void setup() {
         container.clearChildren();
         container.touchable = Touchable.enabled;
@@ -85,6 +89,8 @@ public class ChatOverlay extends Table {
                     ChatOverlay.this.moveBy(dx, dy);
                     config.x(ChatOverlay.this.x);
                     config.y(ChatOverlay.this.y);
+
+                    keepInScreen();
                 }
 
                 @Override
@@ -169,7 +175,8 @@ public class ChatOverlay extends Table {
 
             sendButton = new TextButton("Send", Styles.defaultt);
             sendButton.clicked(this::sendMessage);
-            sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
+            sendButton.setDisabled(
+                    () -> !AuthService.getInstance().isLoggedIn() || isSending);
 
             inputTable.add(inputField).growX().height(40f).padRight(4);
             inputTable.add(sendButton).width(80f).height(40f);
@@ -191,7 +198,7 @@ public class ChatOverlay extends Table {
         keepInScreen();
     }
 
-    private void keepInScreen() {
+    public void keepInScreen() {
         if (getScene() == null)
             return;
 
