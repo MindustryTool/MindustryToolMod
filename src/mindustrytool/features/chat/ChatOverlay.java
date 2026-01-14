@@ -75,6 +75,8 @@ public class ChatOverlay extends Table {
     }
 
     private void setup() {
+        setPosition(config.x(isCollapsed), config.y(isCollapsed));
+
         container.clearChildren();
         container.touchable = Touchable.enabled;
 
@@ -236,7 +238,7 @@ public class ChatOverlay extends Table {
             // Fetch users
             Timer.schedule(() -> {
                 ChatService.getInstance().getChatUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
-            }, 1);
+            }, 0.25f);
 
             // Input Area
             Table inputTable = new Table();
