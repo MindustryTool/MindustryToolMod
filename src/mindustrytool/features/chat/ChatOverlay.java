@@ -5,19 +5,23 @@ import arc.graphics.Color;
 import arc.scene.event.Touchable;
 import arc.scene.ui.Button;
 import arc.scene.ui.Image;
+import arc.scene.ui.Label;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Scl;
+import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Timer;
 import mindustry.Vars;
+import mindustry.game.EventType;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
+import arc.Events;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
@@ -32,6 +36,7 @@ public class ChatOverlay extends Table {
     private Table messageTable;
     private Table userListTable;
     private ScrollPane scrollPane;
+    private Table loadingTable;
     private TextField inputField;
     private TextButton sendButton;
     private boolean isSending = false;
@@ -53,6 +58,8 @@ public class ChatOverlay extends Table {
         containerCell = add(container);
 
         setup();
+
+        Events.on(EventType.ResizeEvent.class, e -> keepInScreen());
     }
 
     public boolean isCollapsed() {
@@ -167,7 +174,22 @@ public class ChatOverlay extends Table {
             scrollPane.setScrollingDisabled(true, false);
             scrollPane.setFadeScrollBars(false);
 
-            mainContent.add(scrollPane).grow();
+            loadingTable = new Table();
+
+            loadingTable.add("Loading...").style(Styles.defaultLabel).color(Color.gray);
+
+            Stack stack = new Stack();
+            stack.add(loadingTable);
+            stack.add(scrollPane);
+
+            mainContent.add(stack).grow();
+
+            ChatService.getInstance().setConnectionListener(connected -> {
+                if (loadingTable != null)
+                    loadingTable.visible = !connected;
+                if (scrollPane != null)
+                    scrollPane.visible = connected;
+            });
 
             // Vertical Separator
             mainContent.image(Tex.whiteui).width(1f).color(Color.darkGray).fillY();
@@ -303,12 +325,13 @@ public class ChatOverlay extends Table {
             // Content Column
             entry.table(content -> {
                 content.top().left();
-                content.add("...").update(label -> {
-                    UserService.findUserById(msg.createdBy, data -> {
-                        label.setText(data.name());
-                        label.setColor(Color.white);
-                    });
-                }).style(Styles.defaultLabel).left().row();
+                Label label = new Label("...");
+                label.setStyle(Styles.defaultLabel);
+                UserService.findUserById(msg.createdBy, data -> {
+                    label.setText(data.name());
+                    label.setColor(Color.white);
+                });
+                content.add(label).left().row();
 
                 content.add(msg.content).wrap().color(Color.lightGray).left().growX().padTop(2);
             }).growX().pad(8).top();
