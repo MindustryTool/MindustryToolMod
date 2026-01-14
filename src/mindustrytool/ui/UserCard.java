@@ -14,7 +14,7 @@ public class UserCard {
                 .height(50);
     }
 
-    private static void draw(Table card, UserData data) {
+    public static void draw(Table card, UserData data) {
         card.clear();
 
         if (data.imageUrl() != null && !data.imageUrl().isEmpty()) {
