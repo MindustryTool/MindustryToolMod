@@ -30,6 +30,11 @@ import mindustrytool.ui.NetworkImage;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.input.KeyCode;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import mindustrytool.features.chat.dto.ChatUser.SimpleRole;
 
 public class ChatOverlay extends Table {
     private Seq<ChatMessage> messages = new Seq<>();
@@ -206,7 +211,8 @@ public class ChatOverlay extends Table {
             userListTable = new Table();
             userListTable.top().left();
 
-            ScrollPane userScrollPane = new ScrollPane(userListTable, Styles.noBarPane);
+            ScrollPane userScrollPane = new ScrollPane(userListTable,
+                    Styles.noBarPane);
             userScrollPane.setScrollingDisabled(true, false);
 
             rightSide.add(userScrollPane).grow().row();
@@ -259,6 +265,7 @@ public class ChatOverlay extends Table {
         }
 
         pack();
+
         keepInScreen();
 
     }
@@ -338,10 +345,37 @@ public class ChatOverlay extends Table {
                 content.top().left();
                 Label label = new Label("...");
                 label.setStyle(Styles.defaultLabel);
+
                 UserService.findUserById(msg.createdBy, data -> {
-                    label.setText(data.name());
-                    label.setColor(Color.white);
+                    String timeStr = "";
+
+                    if (msg.createdAt != null) {
+                        try {
+                            Instant instant = Instant.parse(msg.createdAt);
+                            timeStr = DateTimeFormatter.ofPattern("HH:mm")
+                                    .withZone(ZoneId.systemDefault())
+                                    .format(instant);
+
+                        } catch (Exception err) {
+                            Log.err(err);
+                        }
+                    }
+
+                    Color color = data.getHighestRole()
+                            .map(r -> {
+                                try {
+                                    return Color.valueOf(r.color());
+                                } catch (Exception err) {
+                                    Log.err(err);
+                                    return Color.white;
+                                }
+                            })
+                            .orElse(Color.white);
+
+                    label.setText("[#" + color.toString() + "]" + data.name() + "[]"
+                            + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
                 });
+
                 content.add(label).left().row();
 
                 content.add(msg.content).wrap().color(Color.lightGray).left().growX().padTop(2);
@@ -358,6 +392,12 @@ public class ChatOverlay extends Table {
         userListTable.clear();
         userListTable.top().left();
 
+        Arrays.sort(users, (u1, u2) -> {
+            int l1 = u1.getHighestRole().map(SimpleRole::level).orElse(0);
+            int l2 = u2.getHighestRole().map(SimpleRole::level).orElse(0);
+            return Integer.compare(l2, l1);
+        });
+
         for (ChatUser user : users) {
             Table card = new Table();
 
@@ -370,12 +410,11 @@ public class ChatOverlay extends Table {
             card.table(info -> {
                 info.left();
                 info.add(user.name()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left().row();
-                // Status
-                info.table(status -> {
-                    status.left();
-                    status.image(Tex.whiteui).size(6).color(Color.green).padRight(4);
-                    status.add("Online").style(Styles.defaultLabel).color(Color.gray).fontScale(0.8f);
-                }).left();
+
+                user.getHighestRole().ifPresent(role -> {
+                    info.add(role.id()).style(Styles.defaultLabel).color(Color.valueOf(role.color())).fontScale(0.75f)
+                            .left().row();
+                });
             }).growX().left();
 
             userListTable.add(card).growX().padBottom(8).padLeft(8).padRight(8).row();
