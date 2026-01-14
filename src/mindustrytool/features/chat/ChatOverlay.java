@@ -52,6 +52,9 @@ public class ChatOverlay extends Table {
     private Cell<Table> containerCell;
     private final ChatConfig config = new ChatConfig();
 
+    private int unreadCount = 0;
+    private Table badgeTable;
+
     public ChatOverlay() {
         touchable = Touchable.childrenOnly;
 
@@ -83,7 +86,14 @@ public class ChatOverlay extends Table {
             buttonTable.background(Styles.black6);
 
             Button btn = new Button(Styles.clearNoneTogglei);
-            btn.add(new Image(Icon.chat));
+            Stack stack = new Stack();
+            stack.add(new Image(Icon.chat));
+
+            badgeTable = new Table();
+            stack.add(badgeTable);
+            updateBadge();
+
+            btn.add(stack);
             btn.addListener(new InputListener() {
                 float lastX, lastY;
                 boolean wasDragged = false;
@@ -114,6 +124,7 @@ public class ChatOverlay extends Table {
                     if (!wasDragged) {
                         isCollapsed = false;
                         config.collapsed(false);
+                        unreadCount = 0;
                         setup();
                     }
                 }
@@ -160,6 +171,7 @@ public class ChatOverlay extends Table {
             header.button(Icon.down, Styles.clearNonei, () -> {
                 isCollapsed = true;
                 config.collapsed(true);
+                unreadCount = 0;
                 if (inputField != null) {
                     lastInputText = inputField.getText();
                 }
@@ -223,7 +235,7 @@ public class ChatOverlay extends Table {
 
             // Fetch users
             Timer.schedule(() -> {
-                ChatService.getInstance().getUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
+                ChatService.getInstance().getChatUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
             }, 1);
 
             // Input Area
@@ -297,6 +309,7 @@ public class ChatOverlay extends Table {
     }
 
     public void addMessages(ChatMessage[] newMessages) {
+        int addedCount = 0;
         for (ChatMessage msg : newMessages) {
             if (messages.contains(m -> m.id.equals(msg.id))) {
                 Log.warn("Duplicate message: " + msg.id);
@@ -304,6 +317,16 @@ public class ChatOverlay extends Table {
             }
 
             messages.add(msg);
+
+            if (isCollapsed) {
+                Vars.ui.showInfoFade(msg.content);
+                addedCount++;
+            }
+        }
+
+        if (isCollapsed && addedCount > 0) {
+            unreadCount += addedCount;
+            updateBadge();
         }
 
         // Limit to last 100 messages
@@ -458,5 +481,28 @@ public class ChatOverlay extends Table {
                 Log.err("Send message failed", err);
             }
         });
+    }
+
+    private void updateBadge() {
+        if (badgeTable == null)
+            return;
+
+        badgeTable.clear();
+        badgeTable.visible = unreadCount > 0;
+        badgeTable.top().right();
+
+        if (unreadCount > 0) {
+            Table badge = new Table();
+            badge.background(Tex.whiteui);
+            badge.setColor(Color.red);
+
+            Label label = new Label(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
+            label.setColor(Color.white);
+            label.setFontScale(0.6f);
+
+            badge.add(label).padLeft(2).padRight(2);
+
+            badgeTable.add(badge).height(16).minWidth(16);
+        }
     }
 }

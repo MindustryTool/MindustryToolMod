@@ -45,17 +45,16 @@ public class AuthFeature implements Feature {
         Vars.ui.menuGroup.addChild(wholeViewport);
 
         // Restore session
-        AuthService.getInstance().refreshTokenIfNeeded(() -> {
-            AuthService.getInstance().fetchUserSession(() -> {
-                Core.app.post(this::updateAuthWindow);
-            }, () -> {
-                AuthService.getInstance().logout();
-                Core.app.post(this::updateAuthWindow);
-            });
-        }, () -> {
-            AuthService.getInstance().logout();
-            Core.app.post(this::updateAuthWindow);
-        });
+        AuthService.getInstance()
+                .refreshTokenIfNeeded()
+                .thenCompose((_void) -> AuthService.getInstance().fetchUserSession())
+                .thenRun(() -> Core.app.post(this::updateAuthWindow))
+                .exceptionally((error) -> {
+                    AuthService.getInstance().logout();
+                    Core.app.post(this::updateAuthWindow);
+
+                    return null;
+                });
 
         Events.on(ClientLoadEvent.class, e -> {
             authWindow.toFront();
@@ -104,12 +103,15 @@ public class AuthFeature implements Feature {
     }
 
     private void startLogin() {
-        AuthService.getInstance().login(
-                () -> {
+        AuthService.getInstance().login()
+                .thenRun(() -> {
                     Vars.ui.showInfo("Login successful!");
                     Core.app.post(this::updateAuthWindow);
-                },
-                () -> Vars.ui.showErrorMessage("Login failed or timed out."));
+                })
+                .exceptionally(e -> {
+                    Vars.ui.showErrorMessage("Login failed or timed out.");
+                    return null;
+                });
     }
 
     private void showProfileDialog() {
