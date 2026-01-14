@@ -51,9 +51,6 @@ public class ChatFeature implements Feature {
 
             overlay.name = "mdt-chat-overlay";
             Vars.ui.menuGroup.addChild(overlay);
-
-            // Layout
-            overlay.visible(() -> Vars.state.isMenu());
         }
     }
 
