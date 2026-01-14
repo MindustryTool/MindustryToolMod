@@ -10,6 +10,7 @@ import arc.util.Log;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustrytool.Config;
+import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.UserSession;
 import arc.util.Http.HttpStatusException;
 
@@ -98,6 +99,7 @@ public class AuthService {
                             saveTokens(accessToken, refreshToken);
 
                             fetchUserSession(() -> {
+                                Events.fire(LoginEvent.class);
                             }, () -> {
                             });
                         }
@@ -260,6 +262,7 @@ public class AuthService {
 
                             if (onSuccess != null) {
                                 onSuccess.run();
+                                Log.info("Token refreshed successfully");
                             }
                         } else {
                             if (onFailure != null) {

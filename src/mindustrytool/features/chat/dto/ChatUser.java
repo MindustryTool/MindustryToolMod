@@ -4,6 +4,9 @@ public class ChatUser {
     String name;
     String imageUrl;
 
+    public ChatUser() {
+    }
+
     public ChatUser(String name, String imageUrl) {
         this.name = name;
         this.imageUrl = imageUrl;

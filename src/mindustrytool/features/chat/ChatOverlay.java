@@ -13,6 +13,7 @@ import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
+import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
@@ -186,7 +187,9 @@ public class ChatOverlay extends Table {
             container.add(mainContent).grow().row();
 
             // Fetch users
-            ChatService.getInstance().getUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
+            Timer.schedule(() -> {
+                ChatService.getInstance().getUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
+            }, 1);
 
             // Input Area
             Table inputTable = new Table();
@@ -294,7 +297,7 @@ public class ChatOverlay extends Table {
             UserCard.draw(bubble, msg.createdBy);
             bubble.add(": " + msg.content).wrap().color(Color.white).left().growX();
 
-            messageTable.add(bubble).growX().padBottom(4).left().row();
+            messageTable.add(bubble).growX().padBottom(4).marginLeft(8).left().row();
         }
     }
 
@@ -306,7 +309,7 @@ public class ChatOverlay extends Table {
         userListTable.top().left();
 
         for (ChatUser user : users) {
-            Table card = new Table();
+            Table card = new Table(Styles.black);
 
             card.background(Styles.grayPanel);
             UserData data = new UserData()
@@ -315,7 +318,7 @@ public class ChatOverlay extends Table {
 
             UserCard.draw(card, data);
 
-            userListTable.add(card).growX().padBottom(4).row();
+            userListTable.add(card).growX().padBottom(4).margin(8).row();
         }
     }
 
