@@ -170,7 +170,7 @@ public class QuickAccessHud extends Table implements Feature {
             popup.button("Settings", Icon.settings, () -> {
                 dialog.show();
                 closePopup();
-            }).fillX().pad(10).padTop(0).left();
+            }).fillX().pad(10).padTop(0).left().minWidth(120);
         });
 
         popup.pack();

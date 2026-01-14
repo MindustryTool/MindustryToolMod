@@ -23,8 +23,11 @@ public class ChatService {
     private static ChatService instance;
 
     private volatile Thread streamThread;
+
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
+    private AtomicBoolean isConnected = new AtomicBoolean(false);
     private Cons<ChatMessage[]> messageListener;
+    private Cons<Boolean> connectionListener;
 
     public static ChatService getInstance() {
         if (instance == null) {
@@ -32,6 +35,16 @@ public class ChatService {
         }
 
         return instance;
+    }
+
+    public void setConnectionListener(Cons<Boolean> listener) {
+        this.connectionListener = listener;
+        // Initial state
+        Core.app.post(() -> listener.get(isConnected.get()));
+    }
+
+    public boolean isConnected() {
+        return isConnected.get();
     }
 
     public void setListener(Cons<ChatMessage[]> listener) {
@@ -66,6 +79,7 @@ public class ChatService {
                     int status = conn.getResponseCode();
                     if (status != 200) {
                         Log.err("Chat stream failed: " + status);
+                        broadcastConnectionStatus(false);
                         try {
                             Thread.sleep(5000);
                         } catch (InterruptedException e) {
@@ -73,6 +87,8 @@ public class ChatService {
                         }
                         continue;
                     }
+
+                    broadcastConnectionStatus(true);
 
                     BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                     String line;
@@ -104,6 +120,7 @@ public class ChatService {
                 } catch (Exception e) {
                     if (isStreaming.get()) {
                         Log.err("Chat stream error", e);
+                        broadcastConnectionStatus(false);
                         try {
                             Thread.sleep(5000);
                         } catch (InterruptedException ie) {
@@ -111,6 +128,7 @@ public class ChatService {
                         }
                     }
                 } finally {
+                    broadcastConnectionStatus(false);
                     if (conn != null)
                         conn.disconnect();
                 }
@@ -120,8 +138,22 @@ public class ChatService {
         streamThread.start();
     }
 
+    private void broadcastConnectionStatus(boolean connected) {
+        if (isConnected.get() == connected) {
+            return;
+        }
+
+        isConnected.set(connected);
+        if (connectionListener != null) {
+            Core.app.post(() -> connectionListener.get(connected));
+        }
+    }
+
     public synchronized void disconnectStream() {
         isStreaming.set(false);
+        messageListener = null;
+
+        broadcastConnectionStatus(false);
 
         try {
             if (streamThread != null) {
@@ -153,7 +185,7 @@ public class ChatService {
                 });
     }
 
-    public void getUsers(Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {
+    public void getChatUsers(Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {
         AuthHttp.get(Config.API_v4_URL + "chats/users")
                 .error(onError)
                 .submit(res -> {

@@ -5,19 +5,23 @@ import arc.graphics.Color;
 import arc.scene.event.Touchable;
 import arc.scene.ui.Button;
 import arc.scene.ui.Image;
+import arc.scene.ui.Label;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Scl;
+import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Timer;
 import mindustry.Vars;
+import mindustry.game.EventType;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
+import arc.Events;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
@@ -26,12 +30,18 @@ import mindustrytool.ui.NetworkImage;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.input.KeyCode;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import mindustrytool.features.chat.dto.ChatUser.SimpleRole;
 
 public class ChatOverlay extends Table {
     private Seq<ChatMessage> messages = new Seq<>();
     private Table messageTable;
     private Table userListTable;
     private ScrollPane scrollPane;
+    private Table loadingTable;
     private TextField inputField;
     private TextButton sendButton;
     private boolean isSending = false;
@@ -41,6 +51,9 @@ public class ChatOverlay extends Table {
     private Table container;
     private Cell<Table> containerCell;
     private final ChatConfig config = new ChatConfig();
+
+    private int unreadCount = 0;
+    private Table badgeTable;
 
     public ChatOverlay() {
         touchable = Touchable.childrenOnly;
@@ -53,6 +66,8 @@ public class ChatOverlay extends Table {
         containerCell = add(container);
 
         setup();
+
+        Events.on(EventType.ResizeEvent.class, e -> keepInScreen());
     }
 
     public boolean isCollapsed() {
@@ -71,7 +86,14 @@ public class ChatOverlay extends Table {
             buttonTable.background(Styles.black6);
 
             Button btn = new Button(Styles.clearNoneTogglei);
-            btn.add(new Image(Icon.chat));
+            Stack stack = new Stack();
+            stack.add(new Image(Icon.chat));
+
+            badgeTable = new Table();
+            stack.add(badgeTable);
+            updateBadge();
+
+            btn.add(stack);
             btn.addListener(new InputListener() {
                 float lastX, lastY;
                 boolean wasDragged = false;
@@ -102,6 +124,7 @@ public class ChatOverlay extends Table {
                     if (!wasDragged) {
                         isCollapsed = false;
                         config.collapsed(false);
+                        unreadCount = 0;
                         setup();
                     }
                 }
@@ -148,6 +171,7 @@ public class ChatOverlay extends Table {
             header.button(Icon.down, Styles.clearNonei, () -> {
                 isCollapsed = true;
                 config.collapsed(true);
+                unreadCount = 0;
                 if (inputField != null) {
                     lastInputText = inputField.getText();
                 }
@@ -167,7 +191,25 @@ public class ChatOverlay extends Table {
             scrollPane.setScrollingDisabled(true, false);
             scrollPane.setFadeScrollBars(false);
 
-            mainContent.add(scrollPane).grow();
+            loadingTable = new Table();
+
+            loadingTable.add("Loading...").style(Styles.defaultLabel).color(Color.gray);
+
+            Stack stack = new Stack();
+            stack.add(loadingTable);
+            stack.add(scrollPane);
+
+            mainContent.add(stack).grow();
+
+            ChatService.getInstance().setConnectionListener(connected -> {
+                if (loadingTable != null) {
+                    loadingTable.visible = !connected;
+                }
+
+                if (scrollPane != null) {
+                    scrollPane.visible = connected;
+                }
+            });
 
             // Vertical Separator
             mainContent.image(Tex.whiteui).width(1f).color(Color.darkGray).fillY();
@@ -181,30 +223,34 @@ public class ChatOverlay extends Table {
             userListTable = new Table();
             userListTable.top().left();
 
-            ScrollPane userScrollPane = new ScrollPane(userListTable, Styles.noBarPane);
+            ScrollPane userScrollPane = new ScrollPane(userListTable,
+                    Styles.noBarPane);
             userScrollPane.setScrollingDisabled(true, false);
 
             rightSide.add(userScrollPane).grow().row();
 
-            mainContent.add(rightSide).width(220f).growY();
+            mainContent.add(rightSide).width(280f).growY();
 
             container.add(mainContent).grow().row();
 
             // Fetch users
             Timer.schedule(() -> {
-                ChatService.getInstance().getUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
+                ChatService.getInstance().getChatUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
             }, 1);
 
             // Input Area
             Table inputTable = new Table();
             inputTable.background(Styles.black6);
 
-            inputField = new TextField();
-            inputField.setMessageText("Enter message...");
+            if (inputField == null) {
+                inputField = new TextField();
+                inputField.setMessageText("Enter message...");
+                inputField.setMaxLength(1024);
+                inputField.setValidator(text -> text.length() > 0);
+                inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
+            }
+
             inputField.setText(lastInputText);
-            inputField.setMaxLength(1024);
-            inputField.setValidator(text -> text.length() > 0);
-            inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
 
             sendButton = new TextButton("Send", Styles.defaultt);
             sendButton.clicked(this::sendMessage);
@@ -224,10 +270,16 @@ public class ChatOverlay extends Table {
                     scrollPane.setScrollY(scrollPane.getMaxY());
                 }
             });
+
+            if (inputField != null && !isCollapsed) {
+                Core.scene.setKeyboardFocus(inputField);
+            }
         }
 
         pack();
+
         keepInScreen();
+
     }
 
     public void keepInScreen() {
@@ -257,6 +309,7 @@ public class ChatOverlay extends Table {
     }
 
     public void addMessages(ChatMessage[] newMessages) {
+        int addedCount = 0;
         for (ChatMessage msg : newMessages) {
             if (messages.contains(m -> m.id.equals(msg.id))) {
                 Log.warn("Duplicate message: " + msg.id);
@@ -264,6 +317,16 @@ public class ChatOverlay extends Table {
             }
 
             messages.add(msg);
+
+            if (isCollapsed) {
+                Vars.ui.showInfoFade(msg.content);
+                addedCount++;
+            }
+        }
+
+        if (isCollapsed && addedCount > 0) {
+            unreadCount += addedCount;
+            updateBadge();
         }
 
         // Limit to last 100 messages
@@ -303,12 +366,40 @@ public class ChatOverlay extends Table {
             // Content Column
             entry.table(content -> {
                 content.top().left();
-                content.add("...").update(label -> {
-                    UserService.findUserById(msg.createdBy, data -> {
-                        label.setText(data.name());
-                        label.setColor(Color.white);
-                    });
-                }).style(Styles.defaultLabel).left().row();
+                Label label = new Label("...");
+                label.setStyle(Styles.defaultLabel);
+
+                UserService.findUserById(msg.createdBy, data -> {
+                    String timeStr = "";
+
+                    if (msg.createdAt != null) {
+                        try {
+                            Instant instant = Instant.parse(msg.createdAt);
+                            timeStr = DateTimeFormatter.ofPattern("HH:mm")
+                                    .withZone(ZoneId.systemDefault())
+                                    .format(instant);
+
+                        } catch (Exception err) {
+                            Log.err(err);
+                        }
+                    }
+
+                    Color color = data.getHighestRole()
+                            .map(r -> {
+                                try {
+                                    return Color.valueOf(r.color());
+                                } catch (Exception err) {
+                                    Log.err(err);
+                                    return Color.white;
+                                }
+                            })
+                            .orElse(Color.white);
+
+                    label.setText("[#" + color.toString() + "]" + data.name() + "[]"
+                            + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
+                });
+
+                content.add(label).left().row();
 
                 content.add(msg.content).wrap().color(Color.lightGray).left().growX().padTop(2);
             }).growX().pad(8).top();
@@ -318,30 +409,36 @@ public class ChatOverlay extends Table {
     }
 
     private void rebuildUserList(ChatUser[] users) {
-        if (userListTable == null)
+        if (userListTable == null) {
             return;
+        }
 
         userListTable.clear();
         userListTable.top().left();
+
+        Arrays.sort(users, (u1, u2) -> {
+            int l1 = u1.getHighestRole().map(SimpleRole::level).orElse(0);
+            int l2 = u2.getHighestRole().map(SimpleRole::level).orElse(0);
+            return Integer.compare(l2, l1);
+        });
 
         for (ChatUser user : users) {
             Table card = new Table();
 
             // Avatar
             if (user.imageUrl() != null && !user.imageUrl().isEmpty()) {
-                card.add(new NetworkImage(user.imageUrl())).size(32).padRight(8);
+                card.add(new NetworkImage(user.imageUrl())).size(40).padRight(8);
             }
 
             // Info Table
             card.table(info -> {
                 info.left();
                 info.add(user.name()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left().row();
-                // Status
-                info.table(status -> {
-                    status.left();
-                    status.image(Tex.whiteui).size(6).color(Color.green).padRight(4);
-                    status.add("Online").style(Styles.defaultLabel).color(Color.gray).fontScale(0.8f);
-                }).left();
+
+                user.getHighestRole().ifPresent(role -> {
+                    info.add(role.id()).style(Styles.defaultLabel).color(Color.valueOf(role.color()))
+                            .left().row();
+                });
             }).growX().left();
 
             userListTable.add(card).growX().padBottom(8).padLeft(8).padRight(8).row();
@@ -369,9 +466,11 @@ public class ChatOverlay extends Table {
         isSending = true;
 
         ChatService.getInstance().sendMessage(content, () -> {
-            isSending = false;
-            inputField.setText("");
-            lastInputText = "";
+            Core.app.post(() -> {
+                isSending = false;
+                inputField.setText("");
+                lastInputText = "";
+            });
         }, err -> {
             isSending = false;
             // Handle 409
@@ -383,5 +482,28 @@ public class ChatOverlay extends Table {
                 Log.err("Send message failed", err);
             }
         });
+    }
+
+    private void updateBadge() {
+        if (badgeTable == null)
+            return;
+
+        badgeTable.clear();
+        badgeTable.visible = unreadCount > 0;
+        badgeTable.top().right();
+
+        if (unreadCount > 0) {
+            Table badge = new Table();
+            badge.background(Tex.whiteui);
+            badge.setColor(Color.red);
+
+            Label label = new Label(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
+            label.setColor(Color.white);
+            label.setFontScale(0.6f);
+
+            badge.add(label).padLeft(2).padRight(2);
+
+            badgeTable.add(badge).height(16).minWidth(16);
+        }
     }
 }

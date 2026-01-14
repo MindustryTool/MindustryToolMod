@@ -57,31 +57,34 @@ public class AuthHttp {
         }
 
         public void submit(ConsT<HttpResponse, Exception> listener, Cons<Throwable> errorListener) {
-            AuthService.getInstance().refreshTokenIfNeeded(() -> {
+            AuthService.getInstance().refreshTokenIfNeeded()
+                    .thenRun(() -> {
 
-                HttpRequest req;
-                if (method == HttpMethod.GET) {
-                    req = Http.get(url);
-                } else {
-                    req = Http.post(url, content);
-                }
+                        HttpRequest req;
+                        if (method == HttpMethod.GET) {
+                            req = Http.get(url);
+                        } else {
+                            req = Http.post(url, content);
+                        }
 
-                String token = AuthService.getInstance().getAccessToken();
+                        String token = AuthService.getInstance().getAccessToken();
 
-                if (token != null) {
-                    req.header("Authorization", "Bearer " + token);
-                    headers.forEach(req::header);
-                }
+                        if (token != null) {
+                            req.header("Authorization", "Bearer " + token);
+                            headers.forEach(req::header);
+                        }
 
-                if (errorListener != null)
-                    req.error(errorListener);
+                        if (errorListener != null)
+                            req.error(errorListener);
 
-                req.submit(listener);
+                        req.submit(listener);
 
-            }, () -> {
-                if (errorListener != null)
-                    errorListener.get(new RuntimeException("Token refresh failed"));
-            });
+                    })
+                    .exceptionally(e -> {
+                        if (errorListener != null)
+                            errorListener.get(e);
+                        return null;
+                    });
         }
     }
 }
