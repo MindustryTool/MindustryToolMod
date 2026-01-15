@@ -287,7 +287,12 @@ public class AuthService {
                         }
                     } catch (Exception e) {
 
-                        logout();
+                        if (e instanceof HttpStatusException httpError) {
+                            if (httpError.status.code == 401 || httpError.status.code == 400) {
+                                logout();
+                            }
+                        }
+
                         Log.err("Failed to refresh token: exception", e);
                         refreshFuture.completeExceptionally(e);
                     }
