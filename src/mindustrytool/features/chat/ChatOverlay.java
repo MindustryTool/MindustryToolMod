@@ -68,6 +68,17 @@ public class ChatOverlay extends Table {
         setup();
 
         Events.on(EventType.ResizeEvent.class, e -> keepInScreen());
+
+        addListener(new InputListener() {
+            @Override
+            public boolean keyDown(InputEvent event, KeyCode keycode) {
+                if (keycode == KeyCode.escape && !isCollapsed) {
+                    collapse();
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     public boolean isCollapsed() {
@@ -75,6 +86,8 @@ public class ChatOverlay extends Table {
     }
 
     private void setup() {
+        setPosition(config.x(isCollapsed), config.y(isCollapsed));
+
         container.clearChildren();
         container.touchable = Touchable.enabled;
 
@@ -168,15 +181,7 @@ public class ChatOverlay extends Table {
             header.add("Global Chat").style(Styles.outlineLabel).padLeft(8).growX().left();
 
             // Minimize button
-            header.button(Icon.down, Styles.clearNonei, () -> {
-                isCollapsed = true;
-                config.collapsed(true);
-                unreadCount = 0;
-                if (inputField != null) {
-                    lastInputText = inputField.getText();
-                }
-                setup();
-            }).size(40).padRight(4);
+            header.button(Icon.down, Styles.clearNonei, this::collapse).size(40).padRight(4);
 
             container.add(header).growX().height(46).row();
 
@@ -236,7 +241,7 @@ public class ChatOverlay extends Table {
             // Fetch users
             Timer.schedule(() -> {
                 ChatService.getInstance().getChatUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
-            }, 1);
+            }, 0.25f);
 
             // Input Area
             Table inputTable = new Table();
@@ -248,6 +253,7 @@ public class ChatOverlay extends Table {
                 inputField.setMaxLength(1024);
                 inputField.setValidator(text -> text.length() > 0);
                 inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
+                inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
             }
 
             inputField.setText(lastInputText);
@@ -445,6 +451,16 @@ public class ChatOverlay extends Table {
         }
     }
 
+    private void collapse() {
+        isCollapsed = true;
+        config.collapsed(true);
+        unreadCount = 0;
+        if (inputField != null) {
+            lastInputText = inputField.getText();
+        }
+        setup();
+    }
+
     private void sendMessage() {
         String content = inputField.getText();
 
@@ -454,7 +470,7 @@ public class ChatOverlay extends Table {
         }
 
         if (!AuthService.getInstance().isLoggedIn()) {
-            Vars.ui.showInfoFade("Your not logged in");
+            Vars.ui.showInfoFade("You're not logged in");
             return;
         }
 
