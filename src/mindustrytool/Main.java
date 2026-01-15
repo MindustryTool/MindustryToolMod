@@ -150,13 +150,18 @@ public class Main extends Mod {
     }
 
     private static int[] extractVersionNumber(String version) {
-        String clean = version.replaceAll("[^0-9.]", "");
-        String[] parts = clean.split("\\.");
-        int[] numbers = new int[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            numbers[i] = Integer.parseInt(parts[i]);
+        try {
+            String clean = version.replaceAll("[^0-9.]", "");
+            String[] parts = clean.split("\\.");
+            int[] numbers = new int[parts.length];
+            for (int i = 0; i < parts.length; i++) {
+                numbers[i] = Integer.parseInt(parts[i]);
+            }
+            return numbers;
+        } catch (Exception e) {
+            Log.err(e);
+            return new int[0];
         }
-        return numbers;
     }
 
     private static boolean isVersionGreater(int[] v1, int[] v2) {
