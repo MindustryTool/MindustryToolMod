@@ -29,6 +29,7 @@ import mindustrytool.features.auth.AuthFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import mindustrytool.features.chat.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
+import mindustrytool.features.autoplay.AutoplayFeature;
 
 public class Main extends Mod {
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
@@ -67,7 +68,8 @@ public class Main extends Mod {
                 new QuickAccessHud(), //
                 new AuthFeature(), //
                 new ChatFeature(),
-                new GodModeFeature());
+                new GodModeFeature(),
+                new AutoplayFeature());
 
         FeatureManager.getInstance().init();
     }
@@ -115,14 +117,14 @@ public class Main extends Mod {
 
     private void checkForUpdate() {
         LoadedMod mod = Vars.mods.getMod(Main.class);
-        String currentVersion = mod.meta.version;
+        int[] currentVersion = extractVersionNumber(mod.meta.version);
 
         Http.get(Config.API_REPO_URL, (res) -> {
             Jval json = Jval.read(res.getResultAsString());
 
-            String latestVersion = json.getString("version");
+            int[] latestVersion = extractVersionNumber(json.getString("version"));
 
-            if (!latestVersion.equals(currentVersion)) {
+            if (isVersionGreater(latestVersion, currentVersion)) {
                 Log.info("Mod require update, current version: @, latest version: @", currentVersion, latestVersion);
 
                 Vars.ui.showConfirm(Core.bundle.format("message.new-version", currentVersion, latestVersion)
@@ -140,5 +142,24 @@ public class Main extends Mod {
         Http.get(Config.API_URL + "ping?client=mod-v8").submit(result -> {
             Log.info("Ping");
         });
+    }
+
+    private static int[] extractVersionNumber(String version) {
+        String clean = version.replaceAll("[^0-9.]", "");
+        String[] parts = clean.split("\\.");
+        int[] numbers = new int[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            numbers[i] = Integer.parseInt(parts[i]);
+        }
+        return numbers;
+    }
+
+    private static boolean isVersionGreater(int[] v1, int[] v2) {
+        for (int i = 0; i < Math.min(v1.length, v2.length); i++) {
+            if (v1[i] > v2[i]) {
+                return true;
+            }
+        }
+        return v1.length > v2.length;
     }
 }
