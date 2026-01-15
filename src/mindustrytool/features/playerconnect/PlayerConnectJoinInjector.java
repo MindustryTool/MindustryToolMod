@@ -4,10 +4,8 @@ import arc.Core;
 import arc.math.Mathf;
 import arc.scene.ui.layout.Scl;
 import arc.scene.Element;
-import arc.scene.Group;
 import arc.scene.ui.Button;
 import arc.scene.ui.Image;
-import arc.scene.ui.ImageButton;
 import arc.scene.ui.layout.Collapser;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
@@ -32,14 +30,12 @@ public class PlayerConnectJoinInjector {
     private final PlayerConnectService playerConnectService = new PlayerConnectService();
     private final Table playerConnectTable = new Table();
     private String searchTerm = "";
-    private JoinDialog dialog;
     private Table hosts;
 
     private static final String HEADER_NAME = "pc-header";
     private static final String COLLAPSER_NAME = "pc-collapser";
 
     public void inject(JoinDialog dialog) {
-        this.dialog = dialog;
         this.hosts = Reflect.get(dialog, "hosts");
 
         if (this.hosts == null) {
@@ -67,7 +63,9 @@ public class PlayerConnectJoinInjector {
                     }
                 }
             }
-        }).growX().left().labelAlign(Align.left).padBottom(3).get().getLabelCell().padLeft(10).growX();
+        }).growX().left().labelAlign(Align.left).padBottom(3).get().getLabelCell().padRight(18).growX();
+
+        header.button(Icon.refresh, Styles.defaulti, this::setupPlayerConnect).size(52f).padBottom(3).right();
 
         // Swap Trick:
         // 1. Get existing children (Snapshot to avoid modification issues)
@@ -100,43 +98,8 @@ public class PlayerConnectJoinInjector {
             }
         }
 
-        // Hook into Refresh Button
-        findAndHookRefreshButton();
-
         // Initial Setup
         setupPlayerConnect();
-    }
-
-    private void findAndHookRefreshButton() {
-        // Search in the dialog's buttons table first
-        Table buttons = dialog.buttons;
-        Element refreshBtn = findRefreshButton(buttons);
-
-        // If not found, search the whole dialog (less likely but possible)
-        if (refreshBtn == null) {
-            refreshBtn = findRefreshButton(dialog.cont);
-        }
-
-        if (refreshBtn != null && refreshBtn instanceof ImageButton) {
-            ((ImageButton) refreshBtn).clicked(this::setupPlayerConnect);
-        }
-    }
-
-    private Element findRefreshButton(Group parent) {
-        for (Element child : parent.getChildren()) {
-            if (child instanceof ImageButton) {
-                ImageButton btn = (ImageButton) child;
-                // Check if the button uses Icon.refresh
-                if (btn.getStyle().imageUp == Icon.refresh) {
-                    return btn;
-                }
-            } else if (child instanceof Group) {
-                Element found = findRefreshButton((Group) child);
-                if (found != null)
-                    return found;
-            }
-        }
-        return null;
     }
 
     private void setupPlayerConnect() {
@@ -236,6 +199,38 @@ public class PlayerConnectJoinInjector {
                             .width(contentWidth)
                             .ellipsis(true)
                             .row();
+                }
+
+                // Mod Conflicts
+                Seq<String> serverMods = room.data().mods();
+                Seq<String> localModNames = Vars.mods.list().select(m -> !m.meta.hidden).map(m -> m.name);
+
+                Seq<String> serverModNames = serverMods
+                        .map(s -> s.indexOf(':') != -1 ? s.substring(0, s.indexOf(':')) : s);
+
+                Seq<String> missing = serverMods.select(s -> {
+                    String name = s.indexOf(':') != -1 ? s.substring(0, s.indexOf(':')) : s;
+                    return !localModNames.contains(name);
+                });
+
+                Seq<String> unneeded = localModNames.select(m -> !serverModNames.contains(m));
+
+                if (!missing.isEmpty()) {
+                    body.labelWrap("[scarlet]Missing: " + Strings.join(", ", missing))
+                            .left()
+                            .labelAlign(Align.left)
+                            .width(contentWidth)
+                            .padBottom(2);
+                    body.row();
+                }
+
+                if (!unneeded.isEmpty()) {
+                    body.labelWrap("[scarlet]Unneeded: " + Strings.join(", ", unneeded))
+                            .left()
+                            .labelAlign(Align.left)
+                            .width(contentWidth)
+                            .padBottom(2);
+                    body.row();
                 }
 
                 // Locale
