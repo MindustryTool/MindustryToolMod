@@ -43,8 +43,6 @@ public class ChatFeature implements Feature {
                     UserService.findUserById(message.createdBy, (user) -> {
                         String content = "[cyan][Global][] " + user.name() + "[] " + message.content;
 
-                        Vars.ui.chatfrag.addMessage(content);
-
                         if (overlay.isCollapsed()) {
                             Vars.ui.showInfoFade(content, 0.5f);
                         }

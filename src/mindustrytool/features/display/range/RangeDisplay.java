@@ -2,18 +2,24 @@ package mindustrytool.features.display.range;
 
 import arc.Core;
 import arc.Events;
+import arc.func.Boolf;
+import arc.func.Cons;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
+import arc.struct.ObjectMap;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
+import mindustry.gen.Building;
 import mindustry.gen.Groups;
 import mindustry.gen.Iconc;
+import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.ui.dialogs.BaseDialog;
+import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.defense.OverdriveProjector;
 import mindustry.world.blocks.defense.turrets.Turret;
@@ -29,6 +35,16 @@ public class RangeDisplay implements Feature {
     private boolean enabled = false;
     private BaseDialog dialog;
     private final RangeDisplayConfig config = new RangeDisplayConfig();
+
+    // Cache for reflection results to avoid overhead per frame
+    private final ObjectMap<Block, Float> blockRangeCache = new ObjectMap<>();
+
+    // In Java, using a method reference like this::drawUnit directly in a loop (or a
+    // method called every frame) creates a new object instance each time because it
+    // captures this .
+    private final Cons<Unit> unitDrawer = this::drawUnit;
+    private final Cons<Building> buildingDrawer = this::drawBuilding;
+    private final Boolf<Building> buildingPredicate = b -> true;
 
     private static final Set<String> blockRangeFields = new HashSet<String>();
 
@@ -73,8 +89,9 @@ public class RangeDisplay implements Feature {
     }
 
     private void draw() {
-        if (!enabled || !Vars.state.isGame())
+        if (!enabled || !Vars.state.isGame()) {
             return;
+        }
 
         Draw.z(Layer.overlayUI);
 
@@ -109,82 +126,100 @@ public class RangeDisplay implements Feature {
         if (config.drawUnitRangeAlly || config.drawUnitRangeEnemy || config.drawPlayerRange) {
             float margin = 2000f; // Increase search area to account for unit range
             Groups.unit.intersect(cx - cw / 2f - margin, cy - ch / 2f - margin, cw + margin * 2, ch + margin * 2,
-                    unit -> {
-                        if (!unit.isValid())
-                            return;
-
-                        boolean isPlayer = unit == Vars.player.unit();
-                        boolean isAlly = unit.team == Vars.player.team();
-
-                        if (isPlayer) {
-                            if (!config.drawPlayerRange)
-                                return;
-                        } else {
-                            if (isAlly && !config.drawUnitRangeAlly)
-                                return;
-                            if (!isAlly && !config.drawUnitRangeEnemy)
-                                return;
-                        }
-
-                        if (unit.range() > 0) {
-                            Draw.color(unit.team.color);
-                            Drawf.dashCircle(unit.x, unit.y, unit.range(), unit.team.color);
-                            Draw.color(unit.team.color);
-                            Lines.line(unit.x, unit.y, unit.x + Mathf.cosDeg(15) * unit.range(),
-                                    unit.y + Mathf.sinDeg(15) * unit.range());
-                        }
-                    });
+                    unitDrawer);
         }
 
         // Draw Buildings
-        Vars.indexer.eachBlock(null, cx, cy, radius, b -> true, build -> {
-            if (!build.isValid())
-                return;
-
-            boolean isAlly = build.team == Vars.player.team();
-            boolean isTurret = build.block instanceof Turret;
-
-            if (isTurret) {
-                if (isAlly && !config.drawTurretRangeAlly)
-                    return;
-                if (!isAlly && !config.drawTurretRangeEnemy)
-                    return;
-            } else {
-                if (isAlly && !config.drawBlockRangeAlly)
-                    return;
-                if (!isAlly && !config.drawBlockRangeEnemy)
-                    return;
-            }
-
-            float range = 0;
-            if (isTurret) {
-                range = ((Turret) build.block).range;
-            } else if (build.block instanceof OverdriveProjector projector) {
-                range = projector.range;
-            } else {
-                try {
-                    for (String fieldName : blockRangeFields) {
-                        Field rangeField = build.block.getClass().getDeclaredField(fieldName);
-                        rangeField.setAccessible(true);
-                        float blockRange = rangeField.getFloat(build.block);
-
-                        if (blockRange > 0) {
-                            range = blockRange;
-                        }
-                    }
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                }
-            }
-
-            if (range > 0) {
-                Draw.color(build.team.color);
-                Drawf.dashCircle(build.x, build.y, range, build.team.color);
-                Draw.color(build.team.color);
-                Lines.line(build.x, build.y, build.x + Mathf.cosDeg(15) * range, build.y + Mathf.sinDeg(15) * range);
-            }
-        });
+        Vars.indexer.eachBlock(null, cx, cy, radius, buildingPredicate, buildingDrawer);
 
         Draw.reset();
+    }
+
+    private void drawUnit(Unit unit) {
+        if (!unit.isValid())
+            return;
+
+        boolean isPlayer = unit == Vars.player.unit();
+        boolean isAlly = unit.team == Vars.player.team();
+
+        if (isPlayer) {
+            if (!config.drawPlayerRange)
+                return;
+        } else {
+            if (isAlly && !config.drawUnitRangeAlly)
+                return;
+            if (!isAlly && !config.drawUnitRangeEnemy)
+                return;
+        }
+
+        if (unit.range() > 0) {
+            Draw.color(unit.team.color);
+            Drawf.dashCircle(unit.x, unit.y, unit.range(), unit.team.color);
+            Draw.color(unit.team.color);
+            Lines.line(unit.x, unit.y, unit.x + Mathf.cosDeg(15) * unit.range(),
+                    unit.y + Mathf.sinDeg(15) * unit.range());
+        }
+    }
+
+    private void drawBuilding(Building build) {
+        if (!build.isValid())
+            return;
+
+        boolean isAlly = build.team == Vars.player.team();
+        boolean isTurret = build.block instanceof Turret;
+
+        if (isTurret) {
+            if (isAlly && !config.drawTurretRangeAlly)
+                return;
+            if (!isAlly && !config.drawTurretRangeEnemy)
+                return;
+        } else {
+            if (isAlly && !config.drawBlockRangeAlly)
+                return;
+            if (!isAlly && !config.drawBlockRangeEnemy)
+                return;
+        }
+
+        float range = 0;
+        if (isTurret) {
+            range = ((Turret) build.block).range;
+        } else if (build.block instanceof OverdriveProjector projector) {
+            range = projector.range;
+        } else {
+            range = getBlockRange(build.block);
+        }
+
+        if (range > 0) {
+            Draw.color(build.team.color);
+            Drawf.dashCircle(build.x, build.y, range, build.team.color);
+            Draw.color(build.team.color);
+            Lines.line(build.x, build.y, build.x + Mathf.cosDeg(15) * range, build.y + Mathf.sinDeg(15) * range);
+        }
+    }
+
+    private float getBlockRange(Block block) {
+        if (blockRangeCache.containsKey(block)) {
+            return blockRangeCache.get(block);
+        }
+
+        float range = 0;
+        for (String fieldName : blockRangeFields) {
+            try {
+                Field rangeField = block.getClass().getDeclaredField(fieldName);
+                rangeField.setAccessible(true);
+                float blockRange = rangeField.getFloat(block);
+
+                if (blockRange > 0) {
+                    range = blockRange;
+                    break;
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                // Ignore
+            }
+        }
+
+        blockRangeCache.put(block, range);
+        return range;
     }
 
     private void initDialog() {
