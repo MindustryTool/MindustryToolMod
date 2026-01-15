@@ -46,7 +46,7 @@ public class ChatOverlay extends Table {
     private TextButton sendButton;
     private boolean isSending = false;
 
-    private boolean isCollapsed = false;
+    private boolean isCollapsed = true;
     private String lastInputText = "";
     private Table container;
     private Cell<Table> containerCell;
@@ -325,7 +325,6 @@ public class ChatOverlay extends Table {
             messages.add(msg);
 
             if (isCollapsed) {
-                Vars.ui.showInfoFade(msg.content);
                 addedCount++;
             }
         }
