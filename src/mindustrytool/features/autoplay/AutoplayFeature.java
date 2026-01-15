@@ -45,6 +45,30 @@ public class AutoplayFeature implements Feature {
         tasks.add(new AssistTask());
         tasks.add(new MiningTask());
 
+        // Load task order
+
+        @SuppressWarnings("unchecked")
+        Seq<String> savedOrder = Core.settings.getJson("mindustrytool.autoplay.taskOrder", Seq.class, Seq::new);
+
+        if (savedOrder != null && savedOrder.size > 0) {
+            Seq<AutoplayTask> ordered = new Seq<>();
+
+            for (String id : savedOrder) {
+                AutoplayTask t = tasks.find(task -> task.getId().equals(id));
+
+                if (t != null) {
+                    ordered.add(t);
+                    tasks.remove(t);
+                }
+            }
+            // Add remaining tasks (newly added ones not in save)
+            ordered.addAll(tasks);
+            tasks.clear();
+            tasks.addAll(ordered);
+        }
+
+        tasks.each(AutoplayTask::init);
+
         dialog = new AutoplaySettingDialog(this);
 
         Events.run(Trigger.update, this::updateUnit);
@@ -146,5 +170,11 @@ public class AutoplayFeature implements Feature {
 
     public Seq<AutoplayTask> getTasks() {
         return tasks;
+    }
+
+    public void saveTaskOrder() {
+        Seq<String> ids = new Seq<>();
+        tasks.each(t -> ids.add(t.getId()));
+        Core.settings.putJson("mindustrytool.autoplay.taskOrder", ids.toArray(String.class));
     }
 }

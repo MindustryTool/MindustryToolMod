@@ -125,10 +125,15 @@ public class Main extends Mod {
             int[] latestVersion = extractVersionNumber(json.getString("version"));
 
             if (isVersionGreater(latestVersion, currentVersion)) {
-                Log.info("Mod require update, current version: @, latest version: @", currentVersion, latestVersion);
+                Log.info("Mod require update, current version: @, latest version: @",
+                        versionToString(currentVersion),
+                        versionToString(latestVersion));
 
-                Vars.ui.showConfirm(Core.bundle.format("message.new-version", currentVersion, latestVersion)
-                        + "\nDiscord: https://discord.gg/72324gpuCd",
+                Vars.ui.showConfirm(
+                        Core.bundle.format("message.new-version",
+                                versionToString(currentVersion),
+                                versionToString(latestVersion))
+                                + "\nDiscord: https://discord.gg/72324gpuCd",
                         () -> {
                             Core.app.post(() -> {
                                 Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
@@ -158,8 +163,22 @@ public class Main extends Mod {
         for (int i = 0; i < Math.min(v1.length, v2.length); i++) {
             if (v1[i] > v2[i]) {
                 return true;
+            } else if (v1[i] < v2[i]) {
+                return false;
             }
         }
-        return v1.length > v2.length;
+
+        return false;
+    }
+
+    private static String versionToString(int[] version) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < version.length; i++) {
+            sb.append(version[i]);
+            if (i < version.length - 1) {
+                sb.append(".");
+            }
+        }
+        return sb.toString();
     }
 }

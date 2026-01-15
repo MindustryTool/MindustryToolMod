@@ -29,16 +29,11 @@ public class AutoplaySettingDialog extends BaseDialog {
 
                     container.table(header -> {
                         header.left();
-                        // Toggle
-                        header.check("", task.isEnabled(), task::setEnabled).padRight(10);
-
-                        // Name
-                        header.label(() -> task.getName()).growX().left();
-
                         // Reorder buttons
                         if (index > 0) {
                             header.button(Icon.up, Styles.clearNonei, () -> {
                                 feature.getTasks().swap(index, index - 1);
+                                feature.saveTaskOrder();
                                 rebuild();
                             }).size(40);
                         } else {
@@ -48,20 +43,30 @@ public class AutoplaySettingDialog extends BaseDialog {
                         if (index < feature.getTasks().size - 1) {
                             header.button(Icon.down, Styles.clearNonei, () -> {
                                 feature.getTasks().swap(index, index + 1);
+                                feature.saveTaskOrder();
                                 rebuild();
                             }).size(40);
                         } else {
                             header.add().size(40);
                         }
+                        // Toggle
+                        header.check("", task.isEnabled(), b -> {
+                            task.setEnabled(b);
+                            task.save();
+                        }).padRight(10);
+
+                        // Name
+                        header.label(() -> task.getName()).growX().left();
+
                     }).growX().row();
 
                     // Settings (if any)
                     if (task.hasSettings()) {
-                        container.image().color(mindustry.graphics.Pal.gray).growX().height(2).pad(5).row();
+                        container.image().color(mindustry.graphics.Pal.gray).growX().height(2).pad(5).padLeft(80).row();
                         container.table(settings -> {
                             settings.left();
                             task.buildSettings(settings);
-                        }).growX().pad(5).left();
+                        }).growX().pad(5).padLeft(80).left();
                     }
 
                 }).growX().pad(5).row();

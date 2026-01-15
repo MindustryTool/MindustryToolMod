@@ -5,6 +5,7 @@ import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.struct.ObjectSet;
+import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.ai.types.MinerAI;
 import mindustry.entities.units.AIController;
@@ -19,11 +20,38 @@ public class MiningTask implements AutoplayTask {
     private final ObjectSet<Item> selectedItems = new ObjectSet<>();
 
     public MiningTask() {
-        for (Item item : Vars.content.items()) {
-            if (Vars.player.unit() != null && Vars.player.unit().canMine(item)) {
-                selectedItems.add(item);
+        // Items will be loaded in load()
+    }
+
+    @Override
+    public void init() {
+        AutoplayTask.super.init();
+
+        @SuppressWarnings("unchecked")
+        Seq<String> saved = Core.settings.getJson("mindustrytool.autoplay.task." + getId() + ".items", Seq.class, Seq::new);
+        selectedItems.clear();
+
+        if (saved != null && saved.size > 0) {
+            for (String name : saved) {
+                Item item = Vars.content.items().find(i -> i.name.equals(name));
+                if (item != null) {
+                    selectedItems.add(item);
+                }
             }
+        } else {
+            // Default to all items
+            selectedItems.addAll(Vars.content.items());
         }
+    }
+
+    @Override
+    public void save() {
+        AutoplayTask.super.save();
+
+        Seq<String> names = new Seq<>();
+        selectedItems.each(i -> names.add(i.name));
+
+        Core.settings.putJson("mindustrytool.autoplay.task." + getId() + ".items", names.toArray(String.class));
     }
 
     @Override
@@ -101,22 +129,25 @@ public class MiningTask implements AutoplayTask {
         int i = 0;
         int width = 300;
 
-        int cols = Math.max((int) (Core.graphics.getWidth() / Scl.scl() / width), 1);
+        int cols = Math.max((int) (Core.graphics.getWidth() / Scl.scl() * 0.9 / width), 1);
 
         for (Item item : Vars.content.items()) {
             if (Vars.player.unit() == null || !Vars.player.unit().canMine(item)) {
                 continue;
             }
             table.table(card -> {
-                card.image(item.uiIcon).size(24).padRight(5).left();
 
-                card.check(item.localizedName, selectedItems.contains(item), b -> {
+                card.check("", selectedItems.contains(item), b -> {
                     if (b) {
                         selectedItems.add(item);
                     } else {
                         selectedItems.remove(item);
                     }
+                    save();
                 }).pad(5).left();
+
+                card.image(item.uiIcon).size(24).padRight(5).left();
+                card.add(item.localizedName).left();
 
                 card.table().growX();
             }).width(width).left();
