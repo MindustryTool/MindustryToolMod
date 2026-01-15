@@ -68,6 +68,17 @@ public class ChatOverlay extends Table {
         setup();
 
         Events.on(EventType.ResizeEvent.class, e -> keepInScreen());
+
+        addListener(new InputListener() {
+            @Override
+            public boolean keyDown(InputEvent event, KeyCode keycode) {
+                if (keycode == KeyCode.escape && !isCollapsed) {
+                    collapse();
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     public boolean isCollapsed() {
@@ -170,15 +181,7 @@ public class ChatOverlay extends Table {
             header.add("Global Chat").style(Styles.outlineLabel).padLeft(8).growX().left();
 
             // Minimize button
-            header.button(Icon.down, Styles.clearNonei, () -> {
-                isCollapsed = true;
-                config.collapsed(true);
-                unreadCount = 0;
-                if (inputField != null) {
-                    lastInputText = inputField.getText();
-                }
-                setup();
-            }).size(40).padRight(4);
+            header.button(Icon.down, Styles.clearNonei, this::collapse).size(40).padRight(4);
 
             container.add(header).growX().height(46).row();
 
@@ -250,6 +253,7 @@ public class ChatOverlay extends Table {
                 inputField.setMaxLength(1024);
                 inputField.setValidator(text -> text.length() > 0);
                 inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
+                inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
             }
 
             inputField.setText(lastInputText);
@@ -445,6 +449,16 @@ public class ChatOverlay extends Table {
 
             userListTable.add(card).growX().padBottom(8).padLeft(8).padRight(8).row();
         }
+    }
+
+    private void collapse() {
+        isCollapsed = true;
+        config.collapsed(true);
+        unreadCount = 0;
+        if (inputField != null) {
+            lastInputText = inputField.getText();
+        }
+        setup();
     }
 
     private void sendMessage() {
