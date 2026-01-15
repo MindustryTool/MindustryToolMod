@@ -7,7 +7,6 @@ import arc.input.KeyCode;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Dialog;
 import arc.struct.Seq;
-import arc.util.Log;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
@@ -86,20 +85,24 @@ public class AutoplayFeature implements Feature {
 
     @Override
     public void onDisable() {
-        if (Vars.player.unit() != null && !Vars.player.unit().dead && currentTask != null) {
-            Vars.player.unit().controller(Vars.player);
+        var unit = Vars.player.unit();
+
+        if (unit != null && !unit.dead && currentTask != null) {
+            unit.controller(Vars.player);
         }
+
         currentTask = null;
     }
 
     private void draw() {
-        if (currentTask == null || Vars.player.unit() == null) {
+        var unit = Vars.player.unit();
+
+        if (currentTask == null || unit == null) {
             return;
         }
 
         var icon = currentTask.getIcon();
         if (icon instanceof TextureRegionDrawable trd) {
-            var unit = Vars.player.unit();
             Draw.z(Layer.overlayUI);
             Draw.rect(trd.getRegion(), unit.x, unit.y + unit.hitSize * 1.5f, 10f, 10f);
             Draw.reset();
@@ -111,13 +114,15 @@ public class AutoplayFeature implements Feature {
             return;
         }
 
-        if (Vars.player.unit() == null) {
+        var unit = Vars.player.unit();
+
+        if (unit == null) {
             currentTask = null;
             return;
         }
 
-        if (Vars.player.unit().dead) {
-            Vars.player.unit().controller(Vars.player);
+        if (unit.dead) {
+            unit.controller(Vars.player);
             currentTask = null;
             return;
         }
@@ -125,7 +130,7 @@ public class AutoplayFeature implements Feature {
         AutoplayTask nextTask = null;
 
         for (AutoplayTask task : tasks) {
-            if (task.isEnabled() && task.shouldRun()) {
+            if (task.isEnabled() && task.shouldRun(unit)) {
                 nextTask = task;
                 break;
             }
@@ -134,12 +139,10 @@ public class AutoplayFeature implements Feature {
         if (nextTask != currentTask) {
             if (nextTask != null) {
                 var ai = nextTask.getAI();
-                ai.unit(Vars.player.unit());
-                Vars.player.unit().controller(ai);
-                Log.info("Switch to task: @", nextTask);
+                ai.unit(unit);
+                unit.controller(ai);
             } else {
-                Vars.player.unit().controller(Vars.player);
-                Log.info("Switch to player controller");
+                unit.controller(Vars.player);
             }
             currentTask = nextTask;
         }
@@ -154,8 +157,14 @@ public class AutoplayFeature implements Feature {
             return;
         }
 
+        var unit = Vars.player.unit();
+
+        if (unit == null) {
+            return;
+        }
+
         if (currentTask != null) {
-            currentTask.update();
+            currentTask.update(unit);
 
             if (Vars.state.isGame()) {
                 currentTask.getAI().updateUnit();

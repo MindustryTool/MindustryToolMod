@@ -1,12 +1,12 @@
 package mindustrytool.features.autoplay.tasks;
 
 import arc.scene.style.Drawable;
-import mindustry.Vars;
 import mindustry.ai.types.RepairAI;
 import mindustry.entities.Units;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
+import mindustry.gen.Unit;
 
 public class RepairTask implements AutoplayTask {
     private boolean enabled = true;
@@ -33,9 +33,7 @@ public class RepairTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun() {
-        var unit = Vars.player.unit();
-
+    public boolean shouldRun(Unit unit) {
         boolean canHeal = unit.type.weapons.contains(w -> w.bullet.heals());
 
         if (!canHeal) {

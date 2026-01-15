@@ -4,6 +4,7 @@ import arc.Core;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
 import mindustry.entities.units.AIController;
+import mindustry.gen.Unit;
 
 public interface AutoplayTask {
     default String getId() {
@@ -27,8 +28,8 @@ public interface AutoplayTask {
     default Drawable getIcon() {
         return null;
     }
-    
-    boolean shouldRun();
+
+    boolean shouldRun(Unit unit);
 
     /**
      * Get the AI controller for this task
@@ -38,7 +39,7 @@ public interface AutoplayTask {
     /**
      * Update task state (called every frame when active)
      */
-    default void update() {
+    default void update(Unit unit) {
     }
 
     /**

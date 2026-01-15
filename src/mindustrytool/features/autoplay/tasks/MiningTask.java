@@ -11,6 +11,7 @@ import mindustry.ai.types.MinerAI;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
+import mindustry.gen.Unit;
 import mindustry.type.Item;
 import mindustry.world.Tile;
 
@@ -75,8 +76,8 @@ public class MiningTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun() {
-        if (!Vars.player.unit().canMine()) {
+    public boolean shouldRun(Unit unit) {
+        if (!unit.canMine()) {
             return false;
         }
 
@@ -91,7 +92,7 @@ public class MiningTask implements AutoplayTask {
     }
 
     @Override
-    public void update() {
+    public void update(Unit unit) {
         if (Vars.player.unit() == null)
             return;
 

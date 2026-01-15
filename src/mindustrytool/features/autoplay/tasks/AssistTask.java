@@ -6,6 +6,7 @@ import mindustry.ai.types.BuilderAI;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
+import mindustry.gen.Unit;
 
 public class AssistTask implements AutoplayTask {
     private boolean enabled = true;
@@ -32,8 +33,8 @@ public class AssistTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun() {
-        if (!Vars.player.unit().canBuild()) {
+    public boolean shouldRun(Unit unit) {
+        if (!unit.canBuild()) {
             return false;
         }
 

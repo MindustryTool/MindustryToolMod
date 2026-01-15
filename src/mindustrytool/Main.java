@@ -173,7 +173,7 @@ public class Main extends Mod {
             }
         }
 
-        return false;
+        return v1.length > v2.length;
     }
 
     private static String versionToString(int[] version) {
