@@ -149,7 +149,24 @@ public class PathfindingDisplay implements Feature {
 
         settingsContainer.check("Draw Spawn Point Path", config.isDrawSpawnPointPath(), (checked) -> {
             config.setDrawSpawnPointPath(checked);
+            rebuildSettings();
         }).left().row();
+
+        if (config.isDrawSpawnPointPath()) {
+            Table costTable = new Table();
+            costTable.left().defaults().left().padLeft(16);
+
+            String[] costNames = { "Ground", "Legs", "Water", "Neoplasm", "Flat", "Hover" };
+
+            for (int i = 0; i < costNames.length; i++) {
+                int index = i;
+                costTable.check(costNames[i], config.isCostTypeEnabled(index), c -> {
+                    config.setCostTypeEnabled(index, c);
+                }).padBottom(4).row();
+            }
+
+            settingsContainer.add(costTable).left().row();
+        }
     }
 
     private void draw() {
@@ -321,6 +338,10 @@ public class PathfindingDisplay implements Feature {
             Lines.stroke(2f);
 
             for (var costType = 0; costType < Pathfinder.costTypes.size; costType++) {
+                if (!config.isCostTypeEnabled(costType)) {
+                    continue;
+                }
+
                 for (var spawnTile : spawns) {
 
                     Lines.line(spawnTile.worldx(), spawnTile.worldy(), player.x, player.y);
