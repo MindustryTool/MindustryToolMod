@@ -35,10 +35,6 @@ public class ChatFeature implements Feature {
 
         ChatService.getInstance().setListener(messages -> {
             if (Vars.ui.chatfrag != null) {
-                if (!Vars.ui.chatfrag.shown()) {
-                    Vars.ui.chatfrag.toggle();
-                }
-
                 for (ChatMessage message : messages) {
                     UserService.findUserById(message.createdBy, (user) -> {
                         String content = "[cyan][Global][] " + user.name() + "[] " + message.content;
