@@ -34,18 +34,6 @@ public class ChatFeature implements Feature {
         overlay = new ChatOverlay();
 
         ChatService.getInstance().setListener(messages -> {
-            if (Vars.ui.chatfrag != null) {
-                for (ChatMessage message : messages) {
-                    UserService.findUserById(message.createdBy, (user) -> {
-                        String content = "[cyan][Global][] " + user.name() + "[] " + message.content;
-
-                        if (overlay.isCollapsed()) {
-                            Vars.ui.showInfoFade(content, 0.5f);
-                        }
-                    });
-                }
-            }
-
             overlay.addMessages(messages);
         });
 

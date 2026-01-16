@@ -29,13 +29,24 @@ public class PlayerConnect {
         // Pretty difficult to know when the player quits the game, there is no event...
         Vars.ui.paused.hidden(() -> {
             arc.util.Timer.schedule(() -> {
-                if (!Vars.net.active() || Vars.state.isMenu())
+                if (!Vars.net.active()) {
+                    Log.info("Close room net not active");
                     closeRoom();
+                } else if (Vars.state.isMenu()) {
+                    Log.info("Close room in menu");
+                    closeRoom();
+                }
             }, 1f);
         });
 
-        Events.run(EventType.HostEvent.class, PlayerConnect::closeRoom);
-        Events.run(EventType.ClientPreConnectEvent.class, PlayerConnect::closeRoom);
+        Events.run(EventType.HostEvent.class, () -> {
+            Log.info("Close room HostEvent");
+            PlayerConnect.closeRoom();
+        });
+        Events.run(EventType.ClientPreConnectEvent.class, () -> {
+            Log.info("Close room ClientPreConnectEvent");
+            PlayerConnect.closeRoom();
+        });
         Events.run(EventType.DisposeEvent.class, () -> {
             disposeRoom();
             disposePinger();
@@ -79,7 +90,7 @@ public class PlayerConnect {
                     return;
                 }
 
-                Log.info("Send room stats update");
+                Log.info("Send room stats update: " + stats);
 
                 room.sendTCP(p);
             } catch (Throwable err) {
@@ -114,7 +125,10 @@ public class PlayerConnect {
                 if (room.isConnected()) {
                     throw new IllegalStateException("Room is already created, please close it before.");
                 }
-                room.connect(ip, port, id -> onSucceed.get(new PlayerConnectLink(ip, port, id)), onDisconnected);
+                room.connect(ip, port, id -> {
+                    Log.info("Created room: " + id);
+                    onSucceed.get(new PlayerConnectLink(ip, port, id));
+                }, onDisconnected);
             } catch (Throwable e) {
                 onFailed.get(e);
             }
@@ -123,8 +137,9 @@ public class PlayerConnect {
 
     /** Just close the room connection, doesn't delete it */
     public static void closeRoom() {
-        if (room != null)
+        if (room != null) {
             room.closeRoom();
+        }
     }
 
     /** Delete properly the room */

@@ -438,7 +438,7 @@ public class ChatOverlay extends Table {
             // Info Table
             card.table(info -> {
                 info.left();
-                info.add(user.name()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left().row();
+                info.add(user.name() + "[]").style(Styles.defaultLabel).color(Color.white).ellipsis(true).left().row();
 
                 user.getHighestRole().ifPresent(role -> {
                     info.add(role.id()).style(Styles.defaultLabel).color(Color.valueOf(role.color()))
