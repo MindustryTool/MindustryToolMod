@@ -318,7 +318,6 @@ public class ChatOverlay extends Table {
         int addedCount = 0;
         for (ChatMessage msg : newMessages) {
             if (messages.contains(m -> m.id.equals(msg.id))) {
-                Log.warn("Duplicate message: " + msg.id);
                 continue;
             }
 

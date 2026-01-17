@@ -182,20 +182,20 @@ public class PlayerConnectJoinInjector {
                 body.add(mapModeString)
                         .left()
                         .width(contentWidth)
-                        .padBottom(2)
+                        .padBottom(6)
                         .ellipsis(true)
                         .row();
 
                 // Players
                 body.add(Iconc.players + " [accent]" + room.data().players().size)
-                        .padBottom(2)
+                        .padBottom(6)
                         .left()
                         .row();
 
                 // Mods
                 if (room.data().mods().size > 0) {
                     body.add(Iconc.book + " [lightgray]" + Strings.join(", ", room.data().mods())).left()
-                            .padBottom(2)
+                            .padBottom(6)
                             .width(contentWidth)
                             .ellipsis(true)
                             .row();
@@ -220,7 +220,7 @@ public class PlayerConnectJoinInjector {
                             .left()
                             .labelAlign(Align.left)
                             .width(contentWidth)
-                            .padBottom(2);
+                            .padBottom(6);
                     body.row();
                 }
 
@@ -229,12 +229,12 @@ public class PlayerConnectJoinInjector {
                             .left()
                             .labelAlign(Align.left)
                             .width(contentWidth)
-                            .padBottom(2);
+                            .padBottom(6);
                     body.row();
                 }
 
                 // Locale
-                body.add(Iconc.chat + " [lightgray]" + room.data().locale()).left().padBottom(2)
+                body.add(Iconc.chat + " [lightgray]" + room.data().locale()).left().padBottom(6)
                         .row();
 
                 String versionString = getVersionString(room.data().version());
@@ -242,7 +242,7 @@ public class PlayerConnectJoinInjector {
                 body.add("[white]" + Iconc.info + " [lightgray]" + versionString).style(Styles.outlineLabel)
                         .color(Pal.lightishGray)
                         .width(contentWidth)
-                        .padBottom(2)
+                        .padBottom(6)
                         .left()
                         .row();
                 // Spacer
