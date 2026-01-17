@@ -232,19 +232,13 @@ public class AuthService {
         String accessToken = getAccessToken();
         String refreshToken = getRefreshToken();
 
-        if (accessToken == null) {
-            Log.err("No access token token found");
-            refreshFuture.completeExceptionally(new RuntimeException("No access token"));
-            return refreshFuture;
-        }
-
         if (refreshToken == null) {
             Log.err("No refresh token found");
             refreshFuture.completeExceptionally(new RuntimeException("No refresh token"));
             return refreshFuture;
         }
 
-        if (!isTokenNearExpiry(accessToken)) {
+        if (accessToken != null && !isTokenNearExpiry(accessToken)) {
             refreshFuture.complete(null);
             return refreshFuture;
         }
@@ -287,7 +281,12 @@ public class AuthService {
                         }
                     } catch (Exception e) {
 
-                        logout();
+                        if (e instanceof HttpStatusException httpError) {
+                            if (httpError.status.code == 401 || httpError.status.code == 400) {
+                                logout();
+                            }
+                        }
+
                         Log.err("Failed to refresh token: exception", e);
                         refreshFuture.completeExceptionally(e);
                     }

@@ -3,6 +3,7 @@ package mindustrytool.features.display.range;
 import arc.Core;
 
 public class RangeDisplayConfig {
+    public float opacity = 1f;
     public boolean drawBlockRangeAlly = true;
     public boolean drawBlockRangeEnemy = true;
     public boolean drawUnitRangeAlly = true;
@@ -13,6 +14,7 @@ public class RangeDisplayConfig {
     public boolean drawSpawnerRange = true;
 
     public void load() {
+        opacity = Core.settings.getFloat("range-opacity", 1f);
         drawBlockRangeAlly = Core.settings.getBool("range-drawBlockRangeAlly", true);
         drawBlockRangeEnemy = Core.settings.getBool("range-drawBlockRangeEnemy", true);
         drawUnitRangeAlly = Core.settings.getBool("range-drawUnitRangeAlly", true);
@@ -24,6 +26,7 @@ public class RangeDisplayConfig {
     }
 
     public void save() {
+        Core.settings.put("range-opacity", opacity);
         Core.settings.put("range-drawBlockRangeAlly", drawBlockRangeAlly);
         Core.settings.put("range-drawBlockRangeEnemy", drawBlockRangeEnemy);
         Core.settings.put("range-drawUnitRangeAlly", drawUnitRangeAlly);

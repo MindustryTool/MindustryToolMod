@@ -318,7 +318,6 @@ public class ChatOverlay extends Table {
         int addedCount = 0;
         for (ChatMessage msg : newMessages) {
             if (messages.contains(m -> m.id.equals(msg.id))) {
-                Log.warn("Duplicate message: " + msg.id);
                 continue;
             }
 
@@ -438,7 +437,7 @@ public class ChatOverlay extends Table {
             // Info Table
             card.table(info -> {
                 info.left();
-                info.add(user.name()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left().row();
+                info.add(user.name() + "[]").style(Styles.defaultLabel).color(Color.white).ellipsis(true).left().row();
 
                 user.getHighestRole().ifPresent(role -> {
                     info.add(role.id()).style(Styles.defaultLabel).color(Color.valueOf(role.color()))

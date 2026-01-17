@@ -29,7 +29,7 @@ allprojects{
 
 ext{
     //the build number that this mod is made for
-    mindustryVersion = 'v152'
+    mindustryVersion = 'v154'
     jabelVersion = "93fde537c7"
     //windows sucks
     isWindows = System.getProperty("os.name").toLowerCase().contains("windows")

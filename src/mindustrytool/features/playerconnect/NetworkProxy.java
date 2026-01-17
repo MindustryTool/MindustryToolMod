@@ -65,6 +65,7 @@ public class NetworkProxy extends Client implements NetListener {
     ) throws IOException {
         this.onRoomCreated = onRoomCreated;
         this.onRoomClosed = onRoomClosed;
+
         connect(defaultTimeout, host, udpTcpPort, udpTcpPort);
     }
 
@@ -119,21 +120,24 @@ public class NetworkProxy extends Client implements NetListener {
     public void closeRoom() {
         roomId = null;
 
-        if (isConnected())
+        if (isConnected()) {
             sendTCP(new Packets.RoomClosureRequestPacket());
+        }
 
         close();
     }
 
     @Override
     public void connected(Connection connection) {
-        // Request the room link
-        Packets.RoomCreationRequestPacket p = new Packets.RoomCreationRequestPacket();
-        p.version = PROTOCOL_VERSION;
-        p.password = password;
+        Log.info("Connected: " + connection.getID());
+
         Core.app.post(() -> {
+            Packets.RoomCreationRequestPacket p = new Packets.RoomCreationRequestPacket();
             Packets.RoomStats stats = PlayerConnect.getRoomStats();
+            p.version = PROTOCOL_VERSION;
+            p.password = password;
             p.data = stats;
+
             sendTCP(p);
         });
     }
@@ -141,17 +145,25 @@ public class NetworkProxy extends Client implements NetListener {
     @Override
     public void disconnected(Connection connection, DcReason reason) {
         roomId = null;
-        if (onRoomClosed != null)
+
+        if (onRoomClosed != null) {
             onRoomClosed.get(closeReason);
+        }
         // We cannot communicate with the server anymore, so close all virtual
         // connections
         orderedConnections.each(c -> c.closeQuietly(reason));
         connections.clear();
         orderedConnections.clear();
+
+        Log.info("Room closed: @ @ @", connection.getID(), reason, closeReason);
+
+        Thread.dumpStack();
     }
 
     @Override
     public void received(Connection connection, Object object) {
+        Log.info("Received: @ @", connection.getID(), object);
+
         try {
             if (!(object instanceof Packets.Packet)) {
                 return;
@@ -241,6 +253,7 @@ public class NetworkProxy extends Client implements NetListener {
                 p.read(new ByteBufferInput(buffer));
                 if (p instanceof Packets.ConnectionPacketWrapPacket) // This one is special
                     ((Packets.ConnectionPacketWrapPacket) p).object = super.read(buffer);
+
                 return p;
             }
 
@@ -256,6 +269,7 @@ public class NetworkProxy extends Client implements NetListener {
                 p.write(new ByteBufferOutput(buffer));
                 if (p instanceof Packets.ConnectionPacketWrapPacket) // This one is special
                     super.write(buffer, ((Packets.ConnectionPacketWrapPacket) p).object);
+
                 return;
             }
 
@@ -403,6 +417,7 @@ public class NetworkProxy extends Client implements NetListener {
         }
 
         public void notifyDisconnected0(DcReason reason) {
+            Log.info("Disconnected connection " + id + " with reason " + reason);
             proxy.removeConnection(this);
             listeners.each(l -> l.disconnected(this, reason));
         }

@@ -9,6 +9,7 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Http;
 import arc.util.Log;
+import arc.util.Log.LogLevel;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustry.editor.MapResizeDialog;
@@ -111,6 +112,8 @@ public class Main extends Mod {
             btn.row();
 
             buttons.swap(buttons.size - 1, buttons.size - 2);
+
+            Log.level = LogLevel.debug;
         });
 
     }

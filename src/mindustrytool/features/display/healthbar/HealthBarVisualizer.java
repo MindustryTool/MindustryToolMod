@@ -73,7 +73,7 @@ public class HealthBarVisualizer implements Feature {
 
         float zoom = renderer.getScale();
 
-        if (HealthBarConfig.zoomThreshold > 0 && zoom < HealthBarConfig.zoomThreshold) {
+        if (-zoom > -HealthBarConfig.zoomThreshold) {
             return;
         }
 
@@ -118,12 +118,12 @@ public class HealthBarVisualizer implements Feature {
         float w = unit.hitSize * 2.5f;
         float h = 2f;
 
-        Draw.color(Color.black, 0.6f);
+        Draw.color(Color.black, 0.6f * HealthBarConfig.opacity);
         Draw.rect(barRegion, x, y, w + 2f, h + 2f);
 
         float hpPercent = unit.health / unit.maxHealth;
 
-        Draw.color(unit.team.color, 0.75f);
+        Draw.color(unit.team.color, 0.75f * HealthBarConfig.opacity);
 
         float left = x - w / 2f;
 
@@ -138,7 +138,7 @@ public class HealthBarVisualizer implements Feature {
             float shieldW = w * shieldPercent;
             float shieldCenterX = left + shieldW / 2f;
 
-            Draw.color(Pal.shield, 0.5f);
+            Draw.color(Pal.shield, 0.5f * HealthBarConfig.opacity);
             Draw.rect(barRegion, shieldCenterX, y, shieldW, h);
         }
     }
@@ -184,5 +184,27 @@ public class HealthBarVisualizer implements Feature {
         });
 
         cont.stack(zoomSlider, zoomContent).width(width).left().padTop(4f).row();
+
+        Slider opacitySlider = new Slider(0f, 1f, 0.05f, false);
+        opacitySlider.setValue(HealthBarConfig.opacity);
+
+        Label opacityValue = new Label(
+                String.format("%.0f%%", HealthBarConfig.opacity * 100),
+                Styles.outlineLabel);
+        opacityValue.setColor(Color.lightGray);
+
+        Table opacityContent = new Table();
+        opacityContent.touchable = arc.scene.event.Touchable.disabled;
+        opacityContent.margin(3f, 33f, 3f, 33f);
+        opacityContent.add("Opacity", Styles.outlineLabel).left().growX();
+        opacityContent.add(opacityValue).padLeft(10f).right();
+
+        opacitySlider.changed(() -> {
+            HealthBarConfig.opacity = opacitySlider.getValue();
+            opacityValue.setText(String.format("%.0f%%", HealthBarConfig.opacity * 100));
+            HealthBarConfig.save();
+        });
+
+        cont.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
     }
 }
