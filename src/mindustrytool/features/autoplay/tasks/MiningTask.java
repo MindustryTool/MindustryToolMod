@@ -7,8 +7,9 @@ import arc.scene.ui.layout.Table;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import mindustry.Vars;
-import mindustry.ai.types.MinerAI;
+import mindustry.ai.types.CommandAI;
 import mindustry.entities.units.AIController;
+import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.gen.Unit;
@@ -29,7 +30,8 @@ public class MiningTask implements AutoplayTask {
         AutoplayTask.super.init();
 
         @SuppressWarnings("unchecked")
-        Seq<String> saved = Core.settings.getJson("mindustrytool.autoplay.task." + getId() + ".items", Seq.class, Seq::new);
+        Seq<String> saved = Core.settings.getJson("mindustrytool.autoplay.task." + getId() + ".items", Seq.class,
+                Seq::new);
         selectedItems.clear();
 
         if (saved != null && saved.size > 0) {
@@ -180,5 +182,83 @@ public class MiningTask implements AutoplayTask {
             }
         }
         return best;
+    }
+
+    public class MinerAI extends AIController {
+        public boolean mining = true;
+        public Item targetItem;
+        public Tile ore;
+
+        @Override
+        public void updateMovement() {
+            Building core = unit.closestCore();
+
+            if (!unit.canMine() || core == null)
+                return;
+
+            if (!unit.validMine(unit.mineTile)) {
+                unit.mineTile(null);
+            }
+
+            if (mining) {
+                if (timer.get(timerTarget2, 60 * 4) || targetItem == null) {
+                    targetItem = unit.type.mineItems.min(
+                            i -> ((unit.type.mineFloor && Vars.indexer.hasOre(i))
+                                    || (unit.type.mineWalls && Vars.indexer.hasWallOre(i))) && unit.canMine(i),
+                            i -> core.items.get(i));
+                }
+
+                // core full of the target item, do nothing
+                if (targetItem != null && core.acceptStack(targetItem, 1, unit) == 0) {
+                    unit.clearItem();
+                    unit.mineTile = null;
+                    return;
+                }
+
+                // if inventory is full, drop it off.
+                if (unit.stack.amount >= unit.type.itemCapacity
+                        || (targetItem != null && !unit.acceptsItem(targetItem))) {
+                    mining = false;
+                } else {
+                    if (timer.get(timerTarget3, 60) && targetItem != null) {
+                        ore = null;
+                        if (unit.type.mineFloor)
+                            ore = Vars.indexer.findClosestOre(core.x, core.y, targetItem);
+                        if (ore == null && unit.type.mineWalls)
+                            ore = Vars.indexer.findClosestWallOre(core.x, core.y, targetItem);
+                    }
+
+                    if (ore != null) {
+                        moveTo(ore, unit.type.mineRange / 2f, 20f);
+
+                        if (unit.within(ore, unit.type.mineRange) && unit.validMine(ore)) {
+                            unit.mineTile = ore;
+                        }
+                    }
+                }
+            } else {
+                unit.mineTile = null;
+
+                if (unit.stack.amount == 0) {
+                    mining = true;
+                    return;
+                }
+
+                if (unit.within(core, unit.type.range)) {
+                    if (core.acceptStack(unit.stack.item, unit.stack.amount, unit) > 0) {
+                        Vars.control.input.droppingItem = true;
+                        Vars.control.input.tryDropItems(core, core.x, core.y);
+                    }
+                    mining = true;
+                }
+
+                circle(core, unit.type.range / 1.8f);
+            }
+
+            if (!unit.type.flying) {
+                unit.updateBoosting(unit.type.boostWhenMining || unit.floorOn().isDuct
+                        || unit.floorOn().damageTaken > 0f || unit.floorOn().isDeep());
+            }
+        }
     }
 }

@@ -253,6 +253,7 @@ public class NetworkProxy extends Client implements NetListener {
                 p.read(new ByteBufferInput(buffer));
                 if (p instanceof Packets.ConnectionPacketWrapPacket) // This one is special
                     ((Packets.ConnectionPacketWrapPacket) p).object = super.read(buffer);
+
                 return p;
             }
 
@@ -268,6 +269,7 @@ public class NetworkProxy extends Client implements NetListener {
                 p.write(new ByteBufferOutput(buffer));
                 if (p instanceof Packets.ConnectionPacketWrapPacket) // This one is special
                     super.write(buffer, ((Packets.ConnectionPacketWrapPacket) p).object);
+
                 return;
             }
 

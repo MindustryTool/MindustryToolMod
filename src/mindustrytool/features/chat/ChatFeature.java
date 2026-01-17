@@ -11,8 +11,6 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.auth.dto.LoginEvent;
-import mindustrytool.features.chat.dto.ChatMessage;
-import mindustrytool.services.UserService;
 
 public class ChatFeature implements Feature {
     private ChatOverlay overlay;

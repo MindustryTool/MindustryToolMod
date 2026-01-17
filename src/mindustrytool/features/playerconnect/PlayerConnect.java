@@ -21,6 +21,7 @@ import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
+import mindustry.net.Net;
 import playerconnect.shared.Packets;
 import playerconnect.shared.Packets.RoomPlayer;
 
@@ -160,19 +161,24 @@ public class PlayerConnect {
     }
 
     public static void joinRoom(PlayerConnectLink link, String password, Runnable success) {
-        if (link == null)
+        if (link == null) {
             return;
+        }
 
         Vars.logic.reset();
         Vars.net.reset();
 
+
+        Log.info("Begin connect: " + link);
         Vars.netClient.beginConnecting();
         Vars.net.connect(link.host, link.port, () -> {
-            if (!Vars.net.client())
+            if (!Vars.net.client()) {
                 return;
+            }
 
-            if (tmpSerializer == null)
+            if (tmpSerializer == null) {
                 tmpSerializer = new NetworkProxy.Serializer();
+            }
 
             // We need to serialize the packet manually
             tmpBuffer.clear();
@@ -183,6 +189,7 @@ public class PlayerConnect {
             tmpBuffer.limit(tmpBuffer.position()).position(0);
             Vars.net.send(tmpBuffer, true);
 
+            Log.info("Join room: " + link);
             success.run();
         });
     }
