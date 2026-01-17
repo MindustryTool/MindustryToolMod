@@ -120,7 +120,7 @@ public class PathfindingDisplay implements Feature {
         float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
         float currentZoom = config.getZoomThreshold();
 
-        Slider zoomSlider = new Slider(0f, 2f, 0.1f, false);
+        Slider zoomSlider = new Slider(0f, 5f, 0.1f, false);
         zoomSlider.setValue(currentZoom);
 
         Label zoomValueLabel = new Label(
@@ -142,6 +142,27 @@ public class PathfindingDisplay implements Feature {
         });
 
         settingsContainer.stack(zoomSlider, zoomContent).width(width).left().padTop(4f).row();
+
+        Slider opacitySlider = new Slider(0f, 1f, 0.05f, false);
+        opacitySlider.setValue(config.getOpacity());
+
+        Label opacityValue = new Label(
+                String.format("%.0f%%", config.getOpacity() * 100),
+                Styles.outlineLabel);
+        opacityValue.setColor(Color.lightGray);
+
+        Table opacityContent = new Table();
+        opacityContent.touchable = arc.scene.event.Touchable.disabled;
+        opacityContent.margin(3f, 33f, 3f, 33f);
+        opacityContent.add("Opacity", Styles.outlineLabel).left().growX();
+        opacityContent.add(opacityValue).padLeft(10f).right();
+
+        opacitySlider.changed(() -> {
+            config.setOpacity(opacitySlider.getValue());
+            opacityValue.setText(String.format("%.0f%%", config.getOpacity() * 100));
+        });
+
+        settingsContainer.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
 
         settingsContainer.check("Draw Unit Path", config.isDrawUnitPath(), (checked) -> {
             config.setDrawUnitPath(checked);
@@ -177,7 +198,7 @@ public class PathfindingDisplay implements Feature {
         float zoomThreshold = config.getZoomThreshold();
         float currentZoom = renderer.getScale();
 
-        if (zoomThreshold > 0 && currentZoom < zoomThreshold) {
+        if (-currentZoom > -zoomThreshold) {
             return;
         }
 
@@ -192,6 +213,7 @@ public class PathfindingDisplay implements Feature {
 
     private void drawUnitPath() {
         Draw.z(Layer.overlayUI);
+
         activeTiles.clear();
 
         int totalUnits = Groups.unit.size();
@@ -241,6 +263,7 @@ public class PathfindingDisplay implements Feature {
 
         if (Time.time % 60 == 0) {
             LongSeq keysToRemove = new LongSeq();
+
             for (LongMap.Entry<PathfindingCache> entry : pathCache.entries()) {
                 if (!activeTiles.containsKey(entry.key)) {
                     keysToRemove.add(entry.key);
@@ -307,8 +330,7 @@ public class PathfindingDisplay implements Feature {
             float nextX = cacheEntry.data[(i + 1) * 2];
             float nextY = cacheEntry.data[(i + 1) * 2 + 1];
 
-            Draw.color(pathColor);
-            Draw.alpha(1f - ((float) i / maxSteps));
+            Draw.color(pathColor, (1f - ((float) i / maxSteps)) * config.getOpacity());
             Lines.line(currentX, currentY, nextX, nextY);
 
             currentX = nextX;
@@ -333,9 +355,7 @@ public class PathfindingDisplay implements Feature {
                 continue;
             }
 
-            Draw.color(team.color);
-            Draw.alpha(0.5f);
-            Lines.stroke(2f);
+            Lines.stroke(1f);
 
             for (var costType = 0; costType < Pathfinder.costTypes.size; costType++) {
                 if (!config.isCostTypeEnabled(costType)) {
@@ -343,14 +363,11 @@ public class PathfindingDisplay implements Feature {
                 }
 
                 for (var spawnTile : spawns) {
-
-                    Lines.line(spawnTile.worldx(), spawnTile.worldy(), player.x, player.y);
-
                     int fieldType = Pathfinder.fieldCore;
                     Pathfinder.Flowfield field = pathfinder.getField(team, costType, fieldType);
 
                     if (field == null) {
-                        return;
+                        continue;
                     }
 
                     Tile currentTile = spawnTile;
@@ -359,10 +376,15 @@ public class PathfindingDisplay implements Feature {
 
                     for (int i = 0; i < MAX_STEPS; i++) {
                         Tile nextTile = pathfinder.getTargetTile(currentTile, field);
-                        if (nextTile == null || nextTile == currentTile) {
+                        if (nextTile == null) {
                             break;
                         }
 
+                        if (nextTile == currentTile) {
+                            break;
+                        }
+
+                        Draw.color(team.color, config.getOpacity());
                         Lines.line(lastX, lastY, nextTile.worldx(), nextTile.worldy());
                         lastX = nextTile.worldx();
                         lastY = nextTile.worldy();

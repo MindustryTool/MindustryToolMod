@@ -7,7 +7,6 @@ import arc.scene.ui.layout.Table;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import mindustry.Vars;
-import mindustry.ai.types.CommandAI;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
