@@ -243,7 +243,7 @@ public class PlayerConnect {
             stats.gamemode = Vars.state.rules.mode().name();
             stats.mapName = Vars.state.map.name();
             stats.name = PlayerConnectConfig.getRoomName();
-            stats.mods = Vars.mods.getModStrings();
+            stats.mods = Vars.mods.getModStrings().list();
 
             Seq<RoomPlayer> players = new Seq<>();
 
@@ -255,7 +255,7 @@ public class PlayerConnect {
             }
             stats.locale = Vars.player.locale;
             stats.version = Version.combined();
-            stats.players = players;
+            stats.players = players.list();
             stats.createdAt = new Date().getTime();
             var mod = Vars.mods.getMod(Main.class);
             stats.modVersion = mod.meta.version;

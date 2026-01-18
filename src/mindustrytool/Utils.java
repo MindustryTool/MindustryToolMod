@@ -22,12 +22,15 @@ import mindustry.world.blocks.storage.*;
 import java.io.*;
 import java.util.zip.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static mindustry.Vars.*;
 
 public class Utils {
 
     public static ObjectMap<String, Schematic> schematicData = new ObjectMap<>();
     private static final byte[] header = { 'm', 's', 'c', 'h' };
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public static synchronized Schematic readSchematic(String data) {
         return schematicData.get(data, () -> readBase64(data));
@@ -113,5 +116,13 @@ public class Utils {
             return value;
 
         return null;
+    }
+
+    public static String toJson(Object object) {
+        try {
+            return mapper.writeValueAsString(object);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

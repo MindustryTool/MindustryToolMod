@@ -162,8 +162,6 @@ public class NetworkProxy extends Client implements NetListener {
 
     @Override
     public void received(Connection connection, Object object) {
-        Log.info("Received: @ @", connection.getID(), object);
-
         try {
             if (!(object instanceof Packets.Packet)) {
                 return;

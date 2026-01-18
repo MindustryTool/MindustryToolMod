@@ -3,13 +3,16 @@ package mindustrytool.features.playerconnect;
 import arc.func.Prov;
 import arc.net.DcReason;
 import arc.struct.ArrayMap;
-import arc.struct.Seq;
 import arc.util.ArcRuntimeException;
 import arc.util.io.ByteBufferInput;
 import arc.util.io.ByteBufferOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
 import mindustry.io.JsonIO;
+import mindustrytool.Utils;
 
 public class Packets {
     public static final byte id = -4;
@@ -71,11 +74,11 @@ public class Packets {
     }
 
     public static class RoomStats {
-        public Seq<RoomPlayer> players = new Seq<>();
+        public List<RoomPlayer> players = new ArrayList<>();
         public String mapName = "";
         public String name = "";
         public String gamemode = "";
-        public Seq<String> mods = new Seq<>();
+        public List<String> mods = new ArrayList<>();
         public String locale;
         public String version;
         public String modVersion;
@@ -104,7 +107,7 @@ public class Packets {
         public void write(ByteBufferOutput write) {
             try {
                 write.writeUTF(this.roomId);
-                write.writeUTF(JsonIO.json.toJson(this.data));
+                write.writeUTF(Utils.toJson(this.data));
             } catch (IOException var3) {
                 throw new RuntimeException(var3);
             }
@@ -267,7 +270,7 @@ public class Packets {
             try {
                 write.writeUTF(this.version);
                 write.writeUTF(this.password);
-                write.writeUTF(JsonIO.write(this.data));
+                write.writeUTF(Utils.toJson(this.data));
             } catch (Exception var3) {
                 throw new RuntimeException(var3);
             }
