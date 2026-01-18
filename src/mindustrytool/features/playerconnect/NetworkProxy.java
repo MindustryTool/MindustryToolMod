@@ -23,7 +23,6 @@ import arc.util.io.ByteBufferOutput;
 import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustrytool.ui.NoopRatekeeper;
-import playerconnect.shared.Packets;
 
 public class NetworkProxy extends Client implements NetListener {
     public static String PROTOCOL_VERSION = "1";
@@ -87,6 +86,7 @@ public class NetworkProxy extends Client implements NetListener {
                         con.notifyIdle0();
                 }
             } catch (IOException ex) {
+                Log.err("IOException in NetworkProxy.run(): @", ex);
                 close();
             } catch (ArcNetException ex) {
                 if (roomId == null) {

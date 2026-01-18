@@ -21,8 +21,7 @@ import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
-import playerconnect.shared.Packets;
-import playerconnect.shared.Packets.RoomPlayer;
+import mindustrytool.features.playerconnect.Packets.RoomPlayer;
 
 public class PlayerConnect {
     static {

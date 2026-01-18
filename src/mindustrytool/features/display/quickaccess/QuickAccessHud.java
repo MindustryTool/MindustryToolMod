@@ -9,6 +9,7 @@ import arc.scene.Element;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.event.Touchable;
+import arc.scene.event.VisibilityListener;
 import arc.scene.ui.Image;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Table;
@@ -47,6 +48,19 @@ public class QuickAccessHud extends Table implements Feature {
 
         // Build UI
         rebuild();
+
+        addListener(new VisibilityListener() {
+            @Override
+            public boolean hidden() {
+                if (currentPopup != null) {
+                    currentPopup.remove();
+                    currentPopup = null;
+                    currentPopupFeature = null;
+                }
+
+                return false;
+            }
+        });
     }
 
     private void rebuild() {
