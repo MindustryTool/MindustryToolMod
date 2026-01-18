@@ -78,6 +78,7 @@ public class Packets {
         public Seq<String> mods = new Seq<>();
         public String locale;
         public String version;
+        public String modVersion;
         public long createdAt;
 
         public RoomStats() {
