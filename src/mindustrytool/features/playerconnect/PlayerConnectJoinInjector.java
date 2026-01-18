@@ -261,10 +261,10 @@ public class PlayerConnectJoinInjector {
     private void joinRoom(PlayerConnectRoom room) {
         if (!room.data().isSecured()) {
             try {
-                arc.util.Time.runTask(2f, () -> PlayerConnect.joinRoom(
+                PlayerConnect.joinRoom(
                         PlayerConnectLink.fromString(room.link()), "",
                         () -> {
-                        }));
+                        });
             } catch (Throwable e) {
                 Vars.ui.showException("@message.connect.fail", e);
             }
@@ -288,10 +288,10 @@ public class PlayerConnectJoinInjector {
         connect.buttons.button("@cancel", connect::hide).minWidth(210);
         connect.buttons.button("@ok", () -> {
             try {
-                arc.util.Time.runTask(2f, () -> PlayerConnect.joinRoom(
+                PlayerConnect.joinRoom(
                         PlayerConnectLink.fromString(room.link()),
                         password[0],
-                        () -> connect.hide()));
+                        () -> connect.hide());
             } catch (Throwable e) {
                 connect.hide();
                 Vars.ui.showException("@message.connect.fail", e);

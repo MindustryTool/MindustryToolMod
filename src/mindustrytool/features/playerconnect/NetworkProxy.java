@@ -23,7 +23,6 @@ import arc.util.io.ByteBufferOutput;
 import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustrytool.ui.NoopRatekeeper;
-import playerconnect.shared.Packets;
 
 public class NetworkProxy extends Client implements NetListener {
     public static String PROTOCOL_VERSION = "1";
