@@ -21,6 +21,7 @@ import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
+import mindustrytool.Main;
 import mindustrytool.features.playerconnect.Packets.RoomPlayer;
 
 public class PlayerConnect {
@@ -166,7 +167,6 @@ public class PlayerConnect {
         Vars.logic.reset();
         Vars.net.reset();
 
-
         Log.info("Begin connect: " + link);
         Vars.netClient.beginConnecting();
         Vars.net.connect(link.host, link.port, () -> {
@@ -257,6 +257,8 @@ public class PlayerConnect {
             stats.version = Version.combined();
             stats.players = players;
             stats.createdAt = new Date().getTime();
+            var mod = Vars.mods.getMod(Main.class);
+            stats.modVersion = mod.meta.version;
         } catch (Throwable err) {
             Log.err(err);
         }
