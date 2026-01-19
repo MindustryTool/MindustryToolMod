@@ -50,7 +50,6 @@ public class AuthFeature implements Feature {
                 .thenCompose((_void) -> AuthService.getInstance().fetchUserSession())
                 .thenRun(() -> Core.app.post(this::updateAuthWindow))
                 .exceptionally((error) -> {
-                    AuthService.getInstance().logout();
                     Core.app.post(this::updateAuthWindow);
 
                     return null;

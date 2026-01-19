@@ -275,15 +275,13 @@ public class AuthService {
                             refreshFuture.complete(null);
                         } else {
 
-                            logout();
-
                             Log.err("Failed to refresh token: response does not contain accessToken or refreshToken");
                             refreshFuture.completeExceptionally(new RuntimeException("Invalid refresh response"));
                         }
                     } catch (Exception e) {
 
                         if (e instanceof HttpStatusException httpError) {
-                            if (httpError.status.code == 401 || httpError.status.code == 400) {
+                            if (httpError.status.code == 401) {
                                 logout();
                             }
                         }
