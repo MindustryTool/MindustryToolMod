@@ -54,6 +54,9 @@ public class Main extends Mod {
 
         initFeatures();
         addCustomButtons();
+
+        Log.level = LogLevel.debug;
+        Log.debug("Debug on");
     }
 
     private void initFeatures() {
@@ -89,7 +92,6 @@ public class Main extends Mod {
                 var texture = new TextureRegion(new Texture(mod.root.child("icons").child("mindustry-tool.png")));
                 TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
 
-
                 Vars.ui.menufrag.addButton("Mindustry Tool", drawable, () -> featureSettingDialog.show());
             } catch (Exception e) {
                 Log.err(e);
@@ -113,8 +115,6 @@ public class Main extends Mod {
             btn.row();
 
             buttons.swap(buttons.size - 1, buttons.size - 2);
-
-            Log.level = LogLevel.debug;
         });
 
     }

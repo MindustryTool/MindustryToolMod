@@ -109,7 +109,7 @@ public class AuthFeature implements Feature {
                     Core.app.post(this::updateAuthWindow);
                 })
                 .exceptionally(e -> {
-                    Vars.ui.showErrorMessage("Login failed or timed out.");
+                    Vars.ui.showException("Login failed or timed out.", e);
                     return null;
                 });
     }

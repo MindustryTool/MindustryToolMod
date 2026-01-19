@@ -86,7 +86,6 @@ public class PlayerConnect {
                 p.data = stats;
 
                 if (!room.isConnected()) {
-                    Log.warn("Room not connected yet");
                     return;
                 }
 

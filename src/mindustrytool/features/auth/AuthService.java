@@ -54,6 +54,7 @@ public class AuthService {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
+                .timeout(5000)
                 .error(err -> {
                     Log.err("Failed to get login URI", err);
                     future.completeExceptionally(err);
