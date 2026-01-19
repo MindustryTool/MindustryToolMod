@@ -134,9 +134,10 @@ public class MiningTask implements AutoplayTask {
         int cols = Math.max((int) (Core.graphics.getWidth() / Scl.scl() * 0.9 / width), 1);
 
         for (Item item : Vars.content.items()) {
-            if (Vars.player.unit() == null || !Vars.player.unit().canMine(item)) {
+            if (Vars.player.unit() == null || !Vars.player.unit().canMine(item) || !item.unlockedNow()) {
                 continue;
             }
+
             table.table(card -> {
 
                 card.check("", selectedItems.contains(item), b -> {
