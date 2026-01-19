@@ -39,9 +39,10 @@ ext{
 dependencies{    
     compileOnly "com.github.Anuken.Arc:arc-core:$mindustryVersion"
     compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"
-        
+      
 	compileOnly 'org.projectlombok:lombok:1.18.32'
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.2'
 
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
     annotationProcessor "com.github.Anuken:jabel:$jabelVersion"

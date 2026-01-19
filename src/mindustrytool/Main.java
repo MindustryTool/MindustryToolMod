@@ -54,6 +54,9 @@ public class Main extends Mod {
 
         initFeatures();
         addCustomButtons();
+
+        Log.level = LogLevel.debug;
+        Log.debug("Debug on");
     }
 
     private void initFeatures() {
@@ -112,8 +115,6 @@ public class Main extends Mod {
             btn.row();
 
             buttons.swap(buttons.size - 1, buttons.size - 2);
-
-            Log.level = LogLevel.debug;
         });
 
     }

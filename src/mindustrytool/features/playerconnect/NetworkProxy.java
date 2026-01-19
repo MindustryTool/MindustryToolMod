@@ -11,6 +11,7 @@ import arc.net.ArcNetException;
 import arc.net.Client;
 import arc.net.Connection;
 import arc.net.DcReason;
+import arc.net.FrameworkMessage;
 import arc.net.NetListener;
 import arc.struct.IntMap;
 import arc.struct.Seq;
@@ -129,7 +130,7 @@ public class NetworkProxy extends Client implements NetListener {
 
     @Override
     public void connected(Connection connection) {
-        Log.info("Connected: " + connection.getID());
+        Log.debug("Connected: " + connection.getID());
 
         Core.app.post(() -> {
             Packets.RoomCreationRequestPacket p = new Packets.RoomCreationRequestPacket();
@@ -155,14 +156,17 @@ public class NetworkProxy extends Client implements NetListener {
         connections.clear();
         orderedConnections.clear();
 
-        Log.info("Room closed: @ @ @", connection.getID(), reason, closeReason);
+        Log.debug("Room closed: @ @ @", connection.getID(), reason, closeReason);
 
         Thread.dumpStack();
     }
 
     @Override
     public void received(Connection connection, Object object) {
-        Log.info("Received: @ @", connection.getID(), object);
+
+        if (!(object instanceof FrameworkMessage)) {
+            Log.debug("Received: " + object);
+        }
 
         try {
             if (!(object instanceof Packets.Packet)) {
@@ -227,11 +231,11 @@ public class NetworkProxy extends Client implements NetListener {
 
                 } else if (object instanceof Packets.ConnectionClosedPacket) {
                     con.closeQuietly(((Packets.ConnectionClosedPacket) object).reason);
-                    Log.info("Close connection from server");
+                    Log.debug("Close connection from server");
                 }
             }
         } catch (Exception error) {
-            Log.info("Failed to handle: " + object);
+            Log.debug("Failed to handle: " + object);
         }
     }
 
@@ -258,7 +262,11 @@ public class NetworkProxy extends Client implements NetListener {
             }
 
             buffer.position(buffer.position() - 1);
-            return super.read(buffer);
+            var result = super.read(buffer);
+
+            Log.debug("Read packet " + result);
+
+            return result;
         }
 
         @Override
@@ -270,7 +278,13 @@ public class NetworkProxy extends Client implements NetListener {
                 if (p instanceof Packets.ConnectionPacketWrapPacket) // This one is special
                     super.write(buffer, ((Packets.ConnectionPacketWrapPacket) p).object);
 
+                Log.debug("Write packet " + p);
+
                 return;
+            }
+
+            if (!(object instanceof FrameworkMessage)) {
+                Log.debug("Write " + object);
             }
 
             super.write(buffer, object);
@@ -306,6 +320,8 @@ public class NetworkProxy extends Client implements NetListener {
                 throw new IllegalArgumentException("object cannot be null.");
             isIdling = false;
 
+            Log.debug("TCP: Send " + object + " to " + id);
+
             Packets.ConnectionPacketWrapPacket p = new Packets.ConnectionPacketWrapPacket();
             p.connectionId = id;
             p.isTCP = true;
@@ -318,6 +334,8 @@ public class NetworkProxy extends Client implements NetListener {
             if (object == null)
                 throw new IllegalArgumentException("object cannot be null.");
             isIdling = false;
+
+            Log.debug("UDP: Send " + object + " to " + id);
 
             Packets.ConnectionPacketWrapPacket p = new Packets.ConnectionPacketWrapPacket();
             p.connectionId = id;
@@ -417,7 +435,7 @@ public class NetworkProxy extends Client implements NetListener {
         }
 
         public void notifyDisconnected0(DcReason reason) {
-            Log.info("Disconnected connection " + id + " with reason " + reason);
+            Log.debug("Disconnected connection " + id + " with reason " + reason);
             proxy.removeConnection(this);
             listeners.each(l -> l.disconnected(this, reason));
         }

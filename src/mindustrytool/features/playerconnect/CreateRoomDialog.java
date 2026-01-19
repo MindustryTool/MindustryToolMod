@@ -212,7 +212,7 @@ public class CreateRoomDialog extends BaseDialog {
             setupServers(PlayerConnectProviders.online, online);
         }, e -> {
             refreshingOnline = false;
-            Vars.ui.showException("@message.room.fetch-failed", e);
+            Vars.ui.showInfoFade("@message.room.fetch-failed");
 
             if (online != null) {
                 online.clear();
@@ -278,7 +278,7 @@ public class CreateRoomDialog extends BaseDialog {
             }, e -> {
                 ping.clear();
                 ping.image(Icon.cancel).color(Color.red).padLeft(5).padRight(5).left();
-                Log.err(e);
+                Log.err(e.getMessage());
             });
         }
     }
