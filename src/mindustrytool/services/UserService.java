@@ -29,17 +29,19 @@ public class UserService {
             final Seq<Cons<UserData>> callbacks = Seq.withArrays(c);
             listeners.put(id, callbacks);
 
-            Http.get(Config.API_URL + "users/" + id).submit(response -> {
-                String data = response.getResultAsString();
-                UserData userData = JsonIO.json.fromJson(UserData.class, data);
+            Http.get(Config.API_URL + "users/" + id)
+                    .timeout(5000)
+                    .submit(response -> {
+                        String data = response.getResultAsString();
+                        UserData userData = JsonIO.json.fromJson(UserData.class, data);
 
-                cache.put(id, userData);
+                        cache.put(id, userData);
 
-                Core.app.post(() -> {
-                    callbacks.each(listener -> listener.get(userData));
-                    listeners.remove(id);
-                });
-            });
+                        Core.app.post(() -> {
+                            callbacks.each(listener -> listener.get(userData));
+                            listeners.remove(id);
+                        });
+                    });
         } else {
             current.add(c);
         }

@@ -62,6 +62,8 @@ public class ChatService {
             while (isStreaming.get()) {
                 HttpURLConnection conn = null;
                 try {
+                    AuthService.getInstance().refreshTokenIfNeeded().get();
+
                     Log.info("Connecting to chat stream...");
 
                     URL url = new URL(Config.API_v4_URL + "chats/stream");

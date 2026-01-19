@@ -95,39 +95,42 @@ public class NetworkImage extends Image {
                     }
 
                 } else {
-                    Http.get(url + "?format=jpeg", res -> {
-                        byte[] result = res.getResult();
-                        if (result.length == 0)
-                            return;
-
-                        try {
-                            file.writeBytes(result);
-                        } catch (Exception error) {
-                            Log.err(url, error);
-                            isError = true;
-                        }
-
-                        Core.app.post(() -> {
-                            try {
-                                Pixmap pix = new Pixmap(result);
-                                var tex = new Texture(pix);
-                                tex.setFilter(TextureFilter.linear);
-                                cache.put(url, new TextureRegion(tex));
-                                pix.dispose();
-
-                            } catch (Exception e) {
-                                Log.err(url, e);
+                    Http.get(url + "?format=jpeg")
+                            .timeout(5000)
+                            .error(error -> {
                                 isError = true;
-                            }
-                        });
+                                if (!(error instanceof HttpStatusException requestError)
+                                        || requestError.status != HttpStatus.NOT_FOUND) {
+                                    Log.err(url, error);
+                                }
+                            })
+                            .submit(res -> {
+                                byte[] result = res.getResult();
+                                if (result.length == 0)
+                                    return;
 
-                    }, error -> {
-                        isError = true;
-                        if (!(error instanceof HttpStatusException requestError)
-                                || requestError.status != HttpStatus.NOT_FOUND) {
-                            Log.err(url, error);
-                        }
-                    });
+                                try {
+                                    file.writeBytes(result);
+                                } catch (Exception error) {
+                                    Log.err(url, error);
+                                    isError = true;
+                                }
+
+                                Core.app.post(() -> {
+                                    try {
+                                        Pixmap pix = new Pixmap(result);
+                                        var tex = new Texture(pix);
+                                        tex.setFilter(TextureFilter.linear);
+                                        cache.put(url, new TextureRegion(tex));
+                                        pix.dispose();
+
+                                    } catch (Exception e) {
+                                        Log.err(url, e);
+                                        isError = true;
+                                    }
+                                });
+
+                            });
                 }
             }
 

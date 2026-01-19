@@ -250,6 +250,7 @@ public class AuthService {
 
         Http.post(Config.API_v4_URL + "auth/app/refresh", json.toString())
                 .header("Content-Type", "application/json")
+                .timeout(5000)
                 .error(err -> {
                     Log.err("Failed to refresh token", err);
 
