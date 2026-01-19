@@ -23,7 +23,7 @@ public class AuthService {
     public static final String KEY_LOGIN_ID = "mindustrytool.auth.loginId";
 
     private UserSession currentUser;
-    private CompletableFuture<Void> refreshFuture;
+    private CompletableFuture<Boolean> refreshFuture;
 
     public static AuthService getInstance() {
         if (instance == null) {
@@ -223,7 +223,7 @@ public class AuthService {
         }
     }
 
-    public synchronized CompletableFuture<Void> refreshTokenIfNeeded() {
+    public synchronized CompletableFuture<Boolean> refreshTokenIfNeeded() {
         if (refreshFuture != null && !refreshFuture.isDone()) {
             return refreshFuture;
         }
@@ -234,13 +234,12 @@ public class AuthService {
         String refreshToken = getRefreshToken();
 
         if (refreshToken == null) {
-            Log.err("No refresh token found");
-            refreshFuture.completeExceptionally(new RuntimeException("No refresh token"));
+            refreshFuture.complete(false);
             return refreshFuture;
         }
 
         if (accessToken != null && !isTokenNearExpiry(accessToken)) {
-            refreshFuture.complete(null);
+            refreshFuture.complete(false);
             return refreshFuture;
         }
 
@@ -273,7 +272,7 @@ public class AuthService {
                             saveTokens(resJson.getString("accessToken"), resJson.getString("refreshToken"));
 
                             Log.info("Token refreshed successfully");
-                            refreshFuture.complete(null);
+                            refreshFuture.complete(true);
                         } else {
 
                             Log.err("Failed to refresh token: response does not contain accessToken or refreshToken");
