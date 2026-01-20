@@ -25,6 +25,10 @@ public class PlayerConnect {
                     close();
                 }
             }, 1f);
+
+            if (Vars.state.isMenu()) {
+                close();
+            }
         });
 
         Events.run(EventType.HostEvent.class, () -> {

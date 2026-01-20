@@ -257,12 +257,14 @@ public class CreateRoomDialog extends BaseDialog {
             }).margin(0).pad(0).left().fillX().get();
 
             inner.add().expandX();
+
             Table label = new Table().center();
             if (Vars.mobile || (servers.getKeyAt(i) + " (" + servers.getValueAt(i) + ')').length() > 54) {
                 label.add(servers.getKeyAt(i)).pad(2, 5, 0, 5).expandX().row();
-                label.add(" [lightgray](" + servers.getValueAt(i) + ')').pad(2, 0, 5, 5).expandX();
-            } else
+                label.add(" [lightgray](" + servers.getValueAt(i) + ')').pad(2, 0, 5, 5).expandX().row();
+            } else {
                 label.add(servers.getKeyAt(i) + " [lightgray](" + servers.getValueAt(i) + ')').pad(2).expandX();
+            }
 
             stack.add(label);
             stack.add(inner);
@@ -270,6 +272,10 @@ public class CreateRoomDialog extends BaseDialog {
             ping.label(() -> Strings.animated(Time.time, 4, 11, ".")).pad(2).color(Pal.accent).left();
 
             PlayerConnect.pingHost(server.ip, server.port, ms -> {
+                if (selected == null) {
+                    selected = server;
+                    selectedButton = button;
+                }
                 ping.clear();
                 ping.image(Icon.ok).color(Color.green).padLeft(5).padRight(5).left();
                 if (Vars.mobile) {
@@ -307,6 +313,7 @@ public class CreateRoomDialog extends BaseDialog {
         }, error -> {
             Vars.net.handleException(error);
             timer.cancel();
+            Vars.ui.showErrorMessage("@message.manage-room.create-room.failed");
         }, closeReason -> {
             Vars.ui.loadfrag.hide();
             link = null;
@@ -314,7 +321,7 @@ public class CreateRoomDialog extends BaseDialog {
             if (closeReason != null) {
                 Vars.ui.showText("", "@message.room." + arc.util.Strings.camelToKebab(closeReason.name()));
             } else if (link == null) {
-                Vars.ui.showErrorMessage("@message.manage-room.create-room.failed");
+                Vars.ui.showErrorMessage("@message.manage-room.room-closed");
             }
         });
     }
