@@ -93,6 +93,10 @@ public class AutoplayFeature implements Feature {
         currentTask = null;
     }
 
+    public AutoplayTask getCurrentTask() {
+        return currentTask;
+    }
+
     private void draw() {
         var unit = Vars.player.unit();
 
@@ -107,7 +111,7 @@ public class AutoplayFeature implements Feature {
         }
 
         Draw.z(Layer.overlayUI);
-        Draw.rect(icon.getRegion(), unit.x, unit.y + unit.hitSize * 1.5f, 10f, 10f);
+        Draw.rect(icon.getRegion(), unit.x, unit.y + unit.hitSize * 2f, 10f, 10f);
         Draw.reset();
     }
 
@@ -124,7 +128,6 @@ public class AutoplayFeature implements Feature {
         }
 
         if (unit.dead) {
-            unit.controller(Vars.player);
             currentTask = null;
             return;
         }
@@ -142,11 +145,11 @@ public class AutoplayFeature implements Feature {
             if (nextTask != null) {
                 var ai = nextTask.getAI();
                 ai.unit(unit);
-                unit.controller(ai);
-            } else {
-                unit.controller(Vars.player);
             }
+
             currentTask = nextTask;
+
+            dialog.rebuild();
         }
     }
 

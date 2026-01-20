@@ -125,4 +125,29 @@ public class Utils {
             throw new RuntimeException(e);
         }
     }
+
+    public static String renderMarkdown(String text) {
+        if (text == null)
+            return "";
+
+        // Links - Run first to avoid matching color tags
+        text = text.replaceAll("\\[(.*?)\\]\\((.*?)\\)", "[sky]$1[]");
+
+        // Headers
+        text = text.replaceAll("(?m)^#{1,6}\\s+(.*)$", "[accent]$1[]");
+
+        // List items
+        text = text.replaceAll("(?m)^\\s*[-*]\\s+(.*)$", "• $1");
+
+        // Bold
+        text = text.replaceAll("\\*\\*(.*?)\\*\\*", "[white]$1[]");
+
+        // Italic
+        text = text.replaceAll("(?<!\\*)\\*(?!\\*)(.*?)(?<!\\*)\\*(?!\\*)", "[lightgray]$1[]");
+
+        // Code
+        text = text.replaceAll("`([^`]*)`", "[cyan]$1[]");
+
+        return text;
+    }
 }

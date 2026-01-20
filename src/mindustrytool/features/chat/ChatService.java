@@ -187,6 +187,24 @@ public class ChatService {
                 });
     }
 
+    public void sendSchematic(String content, Runnable onSuccess, Cons<Throwable> onError) {
+        Jval json = Jval.newObject();
+        json.put("content", content);
+
+        AuthHttp.post(Config.API_v4_URL + "chats/schematic", json.toString())
+                .header("Content-Type", "application/json")
+                .error(e -> {
+                    if (e instanceof HttpStatusException httpError) {
+                        Vars.ui.showErrorMessage(httpError.getMessage());
+                    }
+
+                    onError.get(e);
+                })
+                .submit(res -> {
+                    onSuccess.run();
+                });
+    }
+
     public void getChatUsers(Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {
         AuthHttp.get(Config.API_v4_URL + "chats/users")
                 .error(onError)

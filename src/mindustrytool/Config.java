@@ -18,9 +18,10 @@ public class Config {
     public static final String API_v4_URL = (DEV ? DEV_URL : PROD_URL) + "v4/";
     public static final String IMAGE_URL = "https://image.mindustry-tool.com/";
 
-    public static final String API_REPO_URL = "https://raw.githubusercontent.com/MindustryVN/MindustryToolMod/v8/mod.hjson";
+    public static final String API_REPO_URL = "https://raw.githubusercontent.com/MindustryTool/MindustryToolMod/v8/mod.hjson";
 
-    public static final String REPO_URL = "MindustryVN/MindustryToolMod";
+    public static final String REPO_URL = "MindustryTool/MindustryToolMod";
+    public static final String GITHUB_API_URL = "https://api.github.com/repos/MindustryTool/MindustryToolMod/releases";
 
     public static final String WEB_URL = "https://mindustry-tool.com";
     public static final String UPLOAD_SCHEMATIC_URL = WEB_URL + "/schematics?upload=true";
