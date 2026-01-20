@@ -46,7 +46,7 @@ public class SchematicDialog extends BaseDialog {
     private static final float ICON_BUTTON_WIDTH = 60f;
     private static final float PREVIEW_BUTTON_SIZE = 50f;
     private static final float PREVIEW_NAME_WIDTH = 200f - 8f;
-    private static final float CARD_HEIGHT = 330f; 
+    private static final float CARD_HEIGHT = 330f;
 
     private final SchematicInfoDialog infoDialog = new SchematicInfoDialog();
     private final Debouncer debouncer = new Debouncer(500, TimeUnit.MILLISECONDS);
@@ -145,7 +145,7 @@ public class SchematicDialog extends BaseDialog {
 
         cols = Mathf.clamp((int) (availableWidth / targetW), 1, 20);
 
-        rows = Math.max((int) (Core.graphics.getHeight() / Scl.scl(370)), 1);
+        rows = Math.max((int) (Core.graphics.getHeight() / Scl.scl(370)), 1) + 1;
         cardWidth = availableWidth / cols;
 
         int pageSize = Math.max(cols * rows, 20);
@@ -291,7 +291,7 @@ public class SchematicDialog extends BaseDialog {
 
         }, () -> {
             handleCardClick(buttonRef[0], data);
-        }).pad(CARD_MARGIN).style(Styles.flati).minWidth(cardWidth).height(CARD_HEIGHT).get();
+        }).pad(CARD_MARGIN).style(Styles.flati).width(cardWidth).height(CARD_HEIGHT).get();
 
         buttonRef[0].getStyle().up = Tex.pane;
     }
