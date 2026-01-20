@@ -7,16 +7,12 @@ import arc.graphics.g2d.Draw;
 import arc.math.Mathf;
 import arc.scene.ui.Button;
 import arc.scene.ui.Label;
-import arc.scene.ui.ScrollPane;
-import arc.scene.ui.TextButton;
 import arc.scene.ui.TextField;
-import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Align;
-import arc.util.Log;
 import arc.util.serialization.Base64Coder;
 import mindustry.Vars;
 import mindustry.game.Schematic;
@@ -25,336 +21,377 @@ import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
-import mindustrytool.ui.Debouncer;
 import mindustrytool.Utils;
-import mindustrytool.dto.SchematicData;
-import mindustrytool.services.TagService.TagCategoryEnum;
 import mindustrytool.dto.PagingRequest;
-import mindustrytool.ui.TagBar;
-import mindustrytool.ui.DetailStats;
-
+import mindustrytool.dto.SchematicData;
 import mindustrytool.features.browser.FilterDialog;
 import mindustrytool.features.browser.SearchConfig;
 import mindustrytool.services.SchematicService;
 import mindustrytool.services.TagService;
-
-import static mindustry.Vars.*;
+import mindustrytool.services.TagService.TagCategoryEnum;
+import mindustrytool.ui.Debouncer;
+import mindustrytool.ui.DetailStats;
+import mindustrytool.ui.TagBar;
 
 import java.util.concurrent.TimeUnit;
 
+import static mindustry.Vars.*;
+
 public class SchematicDialog extends BaseDialog {
 
+    private static final float TARGET_WIDTH = 250f;
+    private static final float CARD_MARGIN = 4f;
+    private static final float BUTTON_HEIGHT = 40f;
+    private static final float BUTTON_WIDTH = 100f;
+    private static final float ICON_BUTTON_WIDTH = 60f;
+    private static final float PREVIEW_BUTTON_SIZE = 50f;
+    private static final float PREVIEW_NAME_WIDTH = 200f - 8f;
+    private static final float CARD_HEIGHT = 330f; 
+
     private final SchematicInfoDialog infoDialog = new SchematicInfoDialog();
-
-    private Seq<SchematicData> schematicsData = new Seq<>();
     private final Debouncer debouncer = new Debouncer(500, TimeUnit.MILLISECONDS);
-
-    private final float IMAGE_SIZE = 210;
-    private final float INFO_TABLE_HEIGHT = 60;
-
-    private static SearchConfig searchConfig = new SearchConfig();
     private final TagService tagService = new TagService();
     private final SchematicService schematicService = new SchematicService();
+
+    private static SearchConfig searchConfig = new SearchConfig();
+
     private final FilterDialog filterDialog = new FilterDialog(tagService, searchConfig,
             (tag) -> tagService.getTag(TagCategoryEnum.schematics, group -> tag.get(group)));
 
-    private String search = "";
-
-    TextField searchField;
-
+    private Seq<SchematicData> schematicsData = new Seq<>();
     private PagingRequest<SchematicData> request;
-    private ObjectMap<String, String> options = new ObjectMap<String, String>();
+    private ObjectMap<String, String> options = new ObjectMap<>();
+
+    private Table searchTable;
+    private Table contentTable;
+    private Table footerTable;
+    private TextField searchField;
+
+    private int cols;
+    private int rows;
+    private float cardWidth;
+    private String searchText = "";
 
     public SchematicDialog() {
         super("Schematic Browser");
 
-        request = new PagingRequest<>(SchematicData.class, Config.API_URL + "schematics");
+        initializeRequest();
+        updateLayoutMetrics();
+        initializeUI();
+        setupEventHandlers();
 
-        setItemPerPage();
+        request.getPage(this::handleSchematicResult);
+    }
+
+    private void initializeRequest() {
+        request = new PagingRequest<>(SchematicData.class, Config.API_URL + "schematics");
 
         options.put("sort", searchConfig.getSort().getValue());
         options.put("verification", "VERIFIED");
-
         request.setOptions(options);
+    }
 
+    private void initializeUI() {
+
+        searchTable = new Table();
+        contentTable = new Table();
+        footerTable = new Table();
+
+        clear();
+
+        add(searchTable).fillX().expandX();
+        row();
+        add(contentTable).expand().fill();
+        row();
+        add(footerTable).fillX().expandX();
+
+        rebuildSearch();
+        rebuildFooter();
+    }
+
+    private void setupEventHandlers() {
         filterDialog.hidden(() -> {
             if (searchConfig.isChanged()) {
                 searchConfig.update();
-                options.put("tags", searchConfig.getSelectedTagsString());
-                options.put("sort", searchConfig.getSort().getValue());
-                request.setPage(0);
-                request.getPage(this::handleSchematicResult);
+                updateOptions();
+                reloadSchematics();
             }
         });
 
         onResize(() -> {
-            setItemPerPage();
-            SchematicBrowser();
-
+            updateLayoutMetrics();
+            rebuildSchematics();
             if (filterDialog.isShown()) {
                 filterDialog.show(searchConfig);
             }
         });
-        request.getPage(this::handleSchematicResult);
-        shown(this::SchematicBrowser);
+
+        shown(this::rebuildAll);
     }
 
-    private int columns() {
-        return Mathf.clamp((int) ((Core.graphics.getWidth() / Scl.scl() * 0.9f) / targetWidth()), 1, 4);
-    }
-
-    private int rows() {
-        return Mathf.clamp((int) (Core.graphics.getHeight() / Scl.scl(IMAGE_SIZE + INFO_TABLE_HEIGHT * 2)), 1, 4);
-    }
-
-    float targetWidth() {
-        return Math.min(Core.graphics.getWidth() / Scl.scl() * 0.9f, IMAGE_SIZE);
-    }
-
-    private void setItemPerPage() {
-        int columns = columns();
-        int rows = rows();
-        int size = Math.max(columns * rows, 20);
-
-        request.setItemPerPage(size);
-    }
-
-    private void SchematicBrowser() {
-        clear();
-
-        try {
-            addCloseButton();
-            row();
-            SearchBar();
-            row();
-            SchematicContainer();
-            row();
-            Footer();
-        } catch (Exception ex) {
-            clear();
-            addCloseButton();
-            table(container -> Error(container, Core.bundle.format("message.error") + "\n Error: " + ex.getMessage()));
-            Log.err(ex);
+    private void updateOptions() {
+        options.put("tags", searchConfig.getSelectedTagsString());
+        options.put("sort", searchConfig.getSort().getValue());
+        if (!searchText.isEmpty()) {
+            options.put("name", searchText);
+        } else {
+            options.remove("name");
         }
+    }
+
+    private void updateLayoutMetrics() {
+        float availableWidth = Core.graphics.getWidth() / Scl.scl() * 0.9f;
+        float targetW = Math.min(availableWidth, TARGET_WIDTH);
+
+        cols = Mathf.clamp((int) (availableWidth / targetW), 1, 20);
+
+        rows = Math.max((int) (Core.graphics.getHeight() / Scl.scl(370)), 1);
+        cardWidth = availableWidth / cols;
+
+        int pageSize = Math.max(cols * rows, 20);
+
+        request.setItemPerPage(pageSize);
+    }
+
+    private void rebuildAll() {
+        rebuildSearch();
+        rebuildSchematics();
+        rebuildFooter();
+    }
+
+    private void rebuildSearch() {
+        searchTable.clear();
+
+        searchTable.table(bar -> {
+
+            bar.button("@back", Icon.leftSmall, this::hide)
+                    .width(150).pad(2);
+
+            bar.table(wrapper -> {
+                wrapper.left();
+
+                int lastCursor = searchField == null ? searchText.length() : searchField.getCursorPosition();
+
+                searchField = wrapper.field(searchText, this::handleSearchInput).growX().get();
+                searchField.setMessageText("@schematic.search");
+
+                if (!searchText.isEmpty() && searchField != null) {
+                    searchField.setCursorPosition(lastCursor);
+
+                }
+            }).growX().pad(2);
+
+            bar.button(Icon.filterSmall, () -> loadingWrapper(() -> filterDialog.show(searchConfig)))
+                    .width(ICON_BUTTON_WIDTH).pad(2);
+
+            bar.button(Icon.zoomSmall, () -> loadingWrapper(() -> request.getPage(this::handleSchematicResult)))
+                    .width(ICON_BUTTON_WIDTH).pad(2);
+
+        }).fillX().expandX();
+
+        searchTable.row();
+
+        searchTable.pane(tagBar -> {
+            TagBar.draw(tagBar, searchConfig, (cfg) -> {
+                updateOptions();
+                reloadSchematics();
+                rebuildSearch();
+            });
+        }).scrollY(false).fillX().expandX();
+    }
+
+    private void handleSearchInput(String result) {
+        searchText = result;
+        options.put("name", result);
+        debouncer.debounce(this::reloadSchematics);
+    }
+
+    private void rebuildSchematics() {
+        contentTable.clear();
+
+        if (request.isLoading()) {
+            showLoading(contentTable);
+            return;
+        }
+
+        if (request.isError()) {
+            showError(contentTable, "Error: " + request.getError());
+            return;
+        }
+
+        if (schematicsData.isEmpty()) {
+            contentTable.add("@message.no-result").center();
+            return;
+        }
+
+        buildSchematicGrid(contentTable);
+    }
+
+    private void buildSchematicGrid(Table parent) {
+        parent.pane(container -> {
+            container.top();
+
+            for (int i = 0; i < schematicsData.size; i++) {
+                SchematicData data = schematicsData.get(i);
+                addSchematicCard(container, data);
+
+                if ((i + 1) % cols == 0) {
+                    container.row();
+                }
+            }
+        }).scrollY(true).expand().fill();
+    }
+
+    private void addSchematicCard(Table container, SchematicData data) {
+        Button[] buttonRef = { null };
+
+        buttonRef[0] = container.button(preview -> {
+            preview.top().margin(0f);
+
+            preview.table(buttons -> {
+                buttons.center().defaults().size(PREVIEW_BUTTON_SIZE);
+
+                buttons.button(Icon.copy, Styles.emptyi, () -> handleCopySchematic(data))
+                        .pad(2);
+                buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadSchematic(data))
+                        .pad(2);
+                buttons.button(Icon.info, Styles.emptyi,
+                        () -> schematicService.findSchematicById(data.id(), infoDialog::show))
+                        .tooltip("@info.title");
+            }).growX().height(PREVIEW_BUTTON_SIZE);
+
+            preview.row();
+
+            preview.stack(
+                    new Table(t -> t.add(new SchematicImage(data.id()))),
+                    new Table(nameTable -> {
+                        nameTable.top();
+                        nameTable.table(Styles.black3, c -> {
+                            Label label = c.add(data.name())
+                                    .style(Styles.outlineLabel)
+                                    .color(Color.white)
+                                    .top()
+                                    .growX()
+                                    .width(PREVIEW_NAME_WIDTH).get();
+
+                            Draw.reset();
+                            label.setEllipsis(true);
+                            label.setAlignment(Align.center);
+                        })
+                                .growX()
+                                .margin(1)
+                                .pad(CARD_MARGIN)
+                                .maxWidth(Scl.scl(PREVIEW_NAME_WIDTH))
+                                .padBottom(0);
+                    }));
+
+            preview.row();
+
+            preview.table(stats -> DetailStats.draw(stats, data.likes(), data.comments(), data.downloads())).margin(8);
+
+        }, () -> {
+            handleCardClick(buttonRef[0], data);
+        }).pad(CARD_MARGIN).style(Styles.flati).minWidth(cardWidth).height(CARD_HEIGHT).get();
+
+        buttonRef[0].getStyle().up = Tex.pane;
+    }
+
+    private void handleCardClick(Button button, SchematicData data) {
+        if (button.childrenPressed())
+            return;
+
+        if (state.isMenu()) {
+            schematicService.findSchematicById(data.id(), infoDialog::show);
+        } else {
+            if (!state.rules.schematicsAllowed) {
+                ui.showInfo("@schematic.disabled");
+            } else {
+                handleDownloadSchematicData(data,
+                        content -> control.input.useSchematic(Utils.readSchematic(content)));
+                hide();
+            }
+        }
+    }
+
+    private void rebuildFooter() {
+        footerTable.clear();
+
+        footerTable.defaults().margin(4).pad(4).height(BUTTON_HEIGHT);
+
+        footerTable.button(Icon.left, () -> request.previousPage(this::handleSchematicResult))
+                .width(BUTTON_WIDTH)
+                .disabled(shouldDisableNav() || request.getPage() == 0);
+
+        footerTable.table(Tex.buttonDisabled, t -> t.labelWrap(String.valueOf(request.getPage() + 1))
+                .width(50).style(Styles.defaultLabel)
+                .labelAlign(Align.center).center().fill()).width(60);
+
+        footerTable.button(Icon.edit, this::showPageSelectDialog)
+                .width(BUTTON_WIDTH)
+                .disabled(shouldDisableNav() || !request.hasMore());
+
+        footerTable.button(Icon.right, () -> request.nextPage(this::handleSchematicResult))
+                .width(BUTTON_WIDTH)
+                .disabled(shouldDisableNav() || !request.hasMore());
+
+        footerTable.button("@upload", () -> Core.app.openURI(Config.UPLOAD_SCHEMATIC_URL))
+                .width(BUTTON_WIDTH)
+                .disabled(shouldDisableNav() || !request.hasMore());
+    }
+
+    private boolean shouldDisableNav() {
+        return request.isLoading() || request.isError();
+    }
+
+    private void showPageSelectDialog() {
+        ui.showTextInput("@select-page", "", "", input -> {
+            try {
+                int page = Integer.parseInt(input);
+
+                if (page > 0)
+                    page--;
+                request.setPage(page);
+                reloadSchematics();
+            } catch (NumberFormatException e) {
+                ui.showInfo("Invalid input");
+            }
+        });
+    }
+
+    private void showLoading(Table parent) {
+        parent.labelWrap("@message.loading").labelAlign(Align.center).center().expand().fill();
+    }
+
+    private void showError(Table parent, String message) {
+        parent.button(message, Styles.nonet, () -> request.getPage(this::handleSchematicResult))
+                .center().labelAlign(Align.center).expand().fill();
     }
 
     public void loadingWrapper(Runnable action) {
         Core.app.post(() -> {
-            if (request.isLoading())
+            if (request.isLoading()) {
                 ui.showInfoFade("Loading");
-            else
+            } else {
                 action.run();
+            }
         });
     }
 
-    private void SearchBar() {
-        table(searchBar -> {
-            searchBar.button("@back", Icon.leftSmall, this::hide)//
-                    .width(150).padLeft(2).padRight(2);
-
-            searchBar.table(searchBarWrapper -> {
-                searchBarWrapper.left();
-                searchField = searchBarWrapper.field(search, (result) -> {
-                    search = result;
-                    options.put("name", result);
-                    request.setPage(0);
-                    debouncer.debounce(() -> loadingWrapper(() -> request.getPage(this::handleSchematicResult)));
-
-                }).growX().get();
-
-                searchField.setMessageText("@schematic.search");
-            })//
-                    .fillX()//
-                    .expandX()//
-                    .padBottom(2)//
-                    .padLeft(2)//
-                    .padRight(2);
-
-            searchBar.button(Icon.filterSmall, () -> loadingWrapper(() -> filterDialog.show(searchConfig))).padLeft(2)
-                    .padRight(2).width(60);
-            searchBar.button(Icon.zoomSmall, () -> loadingWrapper(() -> request.getPage(this::handleSchematicResult)))
-                    .padLeft(2).padRight(2).width(60);
-
-        }).fillX().expandX();
-
-        row();
-        pane(tagBar -> {
-            TagBar.draw(tagBar, searchConfig, (searchConfig) -> {
-                options.put("tags", searchConfig.getSelectedTagsString());
-                request.setPage(0);
-                debouncer.debounce(() -> loadingWrapper(() -> request.getPage(this::handleSchematicResult)));
-                SchematicBrowser();
-            });
-        }).scrollY(false);
-    }
-
-    private Cell<TextButton> Error(Table parent, String message) {
-        Cell<TextButton> error = parent.button(message, Styles.nonet,
-                () -> request.getPage(this::handleSchematicResult));
-
-        return error.center().labelAlign(0).expand().fill();
-    }
-
-    private Cell<Label> Loading(Table parent) {
-        return parent.labelWrap(Core.bundle.format("message.loading")).center().labelAlign(0).expand().fill();
-    }
-
-    private Cell<ScrollPane> SchematicScrollContainer(Table parent) {
-        if (schematicsData.size == 0)
-            return parent.pane(container -> container.add("message.no-result"));
-
-        return parent.pane(container -> {
-            float sum = 0;
-
-            for (SchematicData schematicData : schematicsData) {
-                if (sum + IMAGE_SIZE * 2 >= Core.graphics.getWidth()) {
-                    container.row();
-                    sum = 0;
-                }
-
-                try {
-
-                    Button[] button = { null };
-                    button[0] = container.button(schematicPreview -> {
-                        schematicPreview.top();
-                        schematicPreview.margin(0f);
-                        schematicPreview.table(buttons -> {
-                            buttons.center();
-                            buttons.defaults().size(50f);
-                            buttons.button(Icon.copy, Styles.emptyi, () -> handleCopySchematic(schematicData))
-                                    .padLeft(2).padRight(2);
-                            buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadSchematic(schematicData))
-                                    .padLeft(2).padRight(2);
-                            buttons.button(Icon.info, Styles.emptyi,
-                                    () -> schematicService.findSchematicById(schematicData.id(), infoDialog::show))
-                                    .tooltip("@info.title");
-
-                        }).growX().height(50f);
-
-                        schematicPreview.row();
-                        schematicPreview.stack(new SchematicImage(schematicData.id()), new Table(schematicName -> {
-                            schematicName.top();
-                            schematicName.table(Styles.black3, c -> {
-                                Label label = c.add(schematicData.name())//
-                                        .style(Styles.outlineLabel)//
-                                        .color(Color.white)//
-                                        .top()//
-                                        .growX()//
-                                        .width(200f - 8f).get();
-                                Draw.reset();
-
-                                label.setEllipsis(true);
-                                label.setAlignment(Align.center);
-                            })//
-                                    .growX()//
-                                    .margin(1)//
-                                    .pad(4)//
-                                    .maxWidth(Scl.scl(200f - 8f))//
-                                    .padBottom(0);
-
-                        })).size(200f);
-
-                        schematicPreview.row();
-                        schematicPreview.table(stats -> DetailStats.draw(stats, schematicData.likes(),
-                                schematicData.comments(), schematicData.downloads())).margin(8);
-
-                    }, () -> {
-                        if (button[0].childrenPressed())
-                            return;
-
-                        if (state.isMenu()) {
-                            schematicService.findSchematicById(schematicData.id(), infoDialog::show);
-                        } else {
-                            if (!state.rules.schematicsAllowed) {
-                                ui.showInfo("@schematic.disabled");
-                            } else {
-                                handleDownloadSchematicData(schematicData,
-                                        data -> control.input.useSchematic(Utils.readSchematic(data)));
-                                hide();
-                            }
-                        }
-
-                    }).pad(4).style(Styles.flati).get();
-
-                    button[0].getStyle().up = Tex.pane;
-
-                    sum += button[0].getPrefWidth();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            container.top();
-        }).scrollY(true).expand().fill();
-
-    }
-
-    private void Footer() {
-        table(footer -> {
-            footer.button(Icon.left, () -> request.previousPage(this::handleSchematicResult)).margin(4).pad(4)
-                    .width(100).disabled(request.isLoading() || request.getPage() == 0 || request.isError()).height(40);
-
-            footer.table(Tex.buttonDisabled, table -> {
-                table.labelWrap(String.valueOf(request.getPage() + 1)).width(50).style(Styles.defaultLabel)
-                        .labelAlign(0).center().fill();
-            }).pad(4).height(40);
-
-            footer.button(Icon.edit, () -> {
-                ui.showTextInput("@select-page", "", "", input -> {
-                    try {
-                        request.setPage(Integer.parseInt(input));
-                        shown(this::SchematicBrowser);
-                    } catch (Exception e) {
-                        ui.showInfo("Invalid input");
-                    }
-                });
-            })//
-                    .margin(4)//
-                    .pad(4)//
-                    .width(100)//
-                    .disabled(request.isLoading() || request.hasMore() == false || request.isError()).height(40);
-
-            footer.button(Icon.right, () -> request.nextPage(this::handleSchematicResult))//
-                    .margin(4)//
-                    .pad(4)//
-                    .width(100)//
-                    .disabled(request.isLoading() || request.hasMore() == false || request.isError()).height(40);
-
-            footer.button("@upload", () -> Core.app.openURI(Config.UPLOAD_SCHEMATIC_URL)).margin(4).pad(4).width(100)
-                    .disabled(request.isLoading() || request.hasMore() == false || request.isError()).height(40);
-
-            footer.bottom();
-        }).expandX().fillX();
-    }
-
-    private Cell<Table> SchematicContainer() {
-        return table(container -> {
-            if (request.isLoading()) {
-                Loading(container);
-                return;
-            }
-
-            if (request.isError()) {
-                Error(container, String.format("There is an error, reload? (%s)", request.getError()));
-                return;
-            }
-
-            SchematicScrollContainer(container);
-        }).expand().fill().top();
+    private void reloadSchematics() {
+        request.setPage(0);
+        loadingWrapper(() -> request.getPage(this::handleSchematicResult));
     }
 
     private void handleSchematicResult(Seq<SchematicData> schematics) {
-        if (schematics != null)
-            this.schematicsData = schematics;
-        else
-            this.schematicsData.clear();
-
-        SchematicBrowser();
+        this.schematicsData = schematics != null ? schematics : new Seq<>();
+        rebuildSchematics();
+        rebuildFooter();
     }
 
     private void handleCopySchematic(SchematicData schematic) {
         handleDownloadSchematicData(schematic, data -> {
             Schematic s = Utils.readSchematic(data);
-            Core.app.setClipboardText(schematics.writeBase64(s));
+            Core.app.setClipboardText(Vars.schematics.writeBase64(s));
             ui.showInfoFade("@copied");
         });
     }
