@@ -260,9 +260,10 @@ public class PlayerConnectJoinInjector {
     }
 
     private void joinRoom(PlayerConnectRoom room) {
+        var link = PlayerConnectLink.fromString(room.link());
+
         if (!room.data().isSecured()) {
             try {
-                var link = PlayerConnectLink.fromString(room.link());
                 PlayerConnect.join(link, "", () -> Log.info("Joined room: " + link));
             } catch (Throwable e) {
                 Vars.ui.showException("@message.connect.fail", e);
@@ -287,9 +288,7 @@ public class PlayerConnectJoinInjector {
         connect.buttons.button("@cancel", connect::hide).minWidth(210);
         connect.buttons.button("@ok", () -> {
             try {
-                var link = PlayerConnectLink.fromString(room.link());
                 PlayerConnect.join(link, password[0], connect::hide);
-                
             } catch (Throwable e) {
                 connect.hide();
                 Vars.ui.showException("@message.connect.fail", e);

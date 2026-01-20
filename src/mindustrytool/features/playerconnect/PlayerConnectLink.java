@@ -4,7 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 public class PlayerConnectLink {
-    public static final String UriScheme = "pcp";
+    public static final String UriScheme = "player-connect";
 
     public final URI uri;
     public final String host;

@@ -6,7 +6,9 @@ import arc.files.Fi;
 import arc.graphics.Texture;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.serialization.Jval;
@@ -97,19 +99,33 @@ public class Main extends Mod {
 
         Vars.ui.paused.shown(() -> {
             Table root = Vars.ui.paused.cont;
+
             @SuppressWarnings("rawtypes")
-            arc.struct.Seq<arc.scene.ui.layout.Cell> buttons = root.getCells();
+            Seq<Cell> buttons = root.getCells();
 
-            var span = !Vars.mobile && arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2;
+            var buttonTitle = "MindustryTool";
 
-            var btn = root.row()
-                    .button("MindustryTool", Icon.settings, featureSettingDialog::show);
+            if (Vars.mobile) {
+                root.row()
+                        .buttonRow(buttonTitle, Icon.settings, featureSettingDialog::show)
+                        .disabled(button -> !Vars.net.server())
+                        .row();
+                return;
 
-            if (span) {
-                btn.colspan(2).width(450f);
+            } else if (arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2) {
+                root.row()
+                        .button(buttonTitle, Icon.settings, featureSettingDialog::show)
+                        .colspan(2)
+                        .width(450f)
+                        .disabled(button -> !Vars.net.server())
+                        .row();
+
+            } else {
+                root.row()
+                        .button(buttonTitle, Icon.settings, featureSettingDialog::show)
+                        .disabled(button -> !Vars.net.server())
+                        .row();
             }
-            btn.row();
-
             buttons.swap(buttons.size - 1, buttons.size - 2);
         });
 
