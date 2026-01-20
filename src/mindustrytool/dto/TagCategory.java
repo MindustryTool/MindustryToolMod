@@ -1,5 +1,6 @@
 package mindustrytool.dto;
 
+import arc.graphics.Color;
 import arc.struct.Seq;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -15,4 +16,12 @@ public class TagCategory {
     private String createdBy;
     private String updatedBy;
     private Seq<TagData> tags;
+
+    public Color color() {
+        try {
+            return Color.valueOf(color);
+        } catch (Exception ex) {
+            return Color.white;
+        }
+    }
 }
