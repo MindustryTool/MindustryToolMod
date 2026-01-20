@@ -5,8 +5,10 @@ import arc.Events;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.scene.ui.Button;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
+import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Log;
 import arc.util.Strings;
@@ -52,7 +54,7 @@ public class CreateRoomDialog extends BaseDialog {
         Vars.ui.paused.shown(() -> {
             Table root = Vars.ui.paused.cont;
             @SuppressWarnings("rawtypes")
-            arc.struct.Seq<arc.scene.ui.layout.Cell> buttons = root.getCells();
+            Seq<Cell> buttons = root.getCells();
 
             String buttonTitle = PlayerConnect.isRoomClosed() ? "@message.create-room.title"
                     : "@message.manage-room.title";

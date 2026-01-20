@@ -73,7 +73,7 @@ public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
             Vars.netClient.disconnectQuietly();
         });
 
-        arc.util.Time.runTask(2f, () -> PlayerConnect.join(link, password, this::hide));
+        PlayerConnect.join(link, password, this::hide);
     }
 
     public boolean setLink(String link) {
