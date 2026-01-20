@@ -287,6 +287,7 @@ public class SchematicDialog extends BaseDialog {
 
             preview.row();
 
+            preview.table().expandY().row();
             preview.table(stats -> DetailStats.draw(stats, data.likes(), data.comments(), data.downloads())).margin(8);
 
         }, () -> {
