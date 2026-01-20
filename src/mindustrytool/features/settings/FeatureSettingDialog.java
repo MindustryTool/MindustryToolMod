@@ -98,6 +98,11 @@ public class FeatureSettingDialog extends BaseDialog {
 
                 // Spacer to push status to bottom
                 c.add().growY().row();
+                c.add().growX();
+
+                c.button(Icon.linkSmall, () -> {
+                    feature.dialog().get().show();
+                });
 
             }).grow();
 
