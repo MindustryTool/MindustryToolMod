@@ -76,7 +76,7 @@ public class PlayerConnect {
             Cons<Throwable> onFailed,
             Cons<CloseReason> onDisconnected//
     ) {
-        if (room.isConnected()) {
+        if (room != null && room.isConnected()) {
             throw new IllegalStateException("Room is already created, please close it before.");
         }
 

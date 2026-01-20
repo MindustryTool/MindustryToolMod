@@ -185,17 +185,13 @@ public class NetworkProxy extends Client implements NetListener {
         try {
             if (object instanceof Packets.MessagePacket messagePacket) {
                 Call.sendMessage("[scarlet][[Server]:[] " + messagePacket.message);
-
             } else if (object instanceof Packets.Message2Packet message2Packet) {
                 Call.sendMessage("[scarlet][[Server]:[] "
                         + arc.Core.bundle.get("claj.message." + Strings.camelToKebab(message2Packet.message.name())));
-
             } else if (object instanceof Packets.PopupPacket popupPacket) {
                 Vars.ui.showText("[scarlet][[Server][] ", popupPacket.message);
-
             } else if (object instanceof Packets.RoomClosedPacket closedPacket) {
                 closeReason = closedPacket.reason;
-
             } else if (object instanceof Packets.RoomLinkPacket roomLinkPacket) {
                 // Ignore if the room id is received twice
                 if (roomId != null) {
@@ -226,7 +222,7 @@ public class NetworkProxy extends Client implements NetListener {
                     // Create a new connection
                     if (object instanceof Packets.ConnectionJoinPacket joinPacket) {
                         // Check if the link is the right
-                        if (!joinPacket.roomId.equals(roomId)) {
+                        if (!roomId.equals(joinPacket.roomId)) {
 
                             Packets.ConnectionClosedPacket packet = new Packets.ConnectionClosedPacket(id,
                                     DcReason.error);
