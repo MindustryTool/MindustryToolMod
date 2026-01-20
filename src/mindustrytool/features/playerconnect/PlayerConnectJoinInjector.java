@@ -10,6 +10,7 @@ import arc.scene.ui.layout.Collapser;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Align;
+import arc.util.Log;
 import arc.util.Reflect;
 import arc.util.Strings;
 import mindustry.Vars;
@@ -261,10 +262,8 @@ public class PlayerConnectJoinInjector {
     private void joinRoom(PlayerConnectRoom room) {
         if (!room.data().isSecured()) {
             try {
-                PlayerConnect.joinRoom(
-                        PlayerConnectLink.fromString(room.link()), "",
-                        () -> {
-                        });
+                var link = PlayerConnectLink.fromString(room.link());
+                PlayerConnect.join(link, "", () -> Log.info("Joined room: " + link));
             } catch (Throwable e) {
                 Vars.ui.showException("@message.connect.fail", e);
             }
@@ -288,10 +287,9 @@ public class PlayerConnectJoinInjector {
         connect.buttons.button("@cancel", connect::hide).minWidth(210);
         connect.buttons.button("@ok", () -> {
             try {
-                PlayerConnect.joinRoom(
-                        PlayerConnectLink.fromString(room.link()),
-                        password[0],
-                        () -> connect.hide());
+                var link = PlayerConnectLink.fromString(room.link());
+                PlayerConnect.join(link, password[0], connect::hide);
+                
             } catch (Throwable e) {
                 connect.hide();
                 Vars.ui.showException("@message.connect.fail", e);

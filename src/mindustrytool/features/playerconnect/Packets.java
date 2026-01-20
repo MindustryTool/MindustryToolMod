@@ -61,15 +61,17 @@ public class Packets {
     }
 
     public static class PopupPacket extends MessagePacket {
-        public PopupPacket() {
+        private PopupPacket() {
         }
     }
 
     public static class RoomPlayer {
         public String name = "";
         public String locale = "";
-
-        public RoomPlayer() {
+        
+        public RoomPlayer(String name, String locale) {
+            this.name = name;
+            this.locale = locale;
         }
     }
 
@@ -86,13 +88,19 @@ public class Packets {
 
         public RoomStats() {
         }
+
     }
 
     public static class StatsPacket extends Packet {
         public String roomId;
         public RoomStats data;
 
-        public StatsPacket() {
+        private StatsPacket() {
+        }
+
+        public StatsPacket(String roomId, RoomStats data) {
+            this.roomId = roomId;
+            this.data = data;
         }
 
         public void read(ByteBufferInput read) {
@@ -117,7 +125,7 @@ public class Packets {
     public static class Message2Packet extends Packet {
         public MessageType message;
 
-        public Message2Packet() {
+        private Message2Packet() {
         }
 
         public void read(ByteBufferInput read) {
@@ -145,7 +153,7 @@ public class Packets {
     public static class MessagePacket extends Packet {
         public String message;
 
-        public MessagePacket() {
+        private MessagePacket() {
         }
 
         public void read(ByteBufferInput read) {
@@ -168,7 +176,12 @@ public class Packets {
     public static class RoomJoinPacket extends RoomLinkPacket {
         public String password;
 
-        public RoomJoinPacket() {
+        private RoomJoinPacket() {
+        }
+
+        public RoomJoinPacket(String roomId, String password) {
+            this.roomId = roomId;
+            this.password = password;
         }
 
         public void read(ByteBufferInput read) {
@@ -193,7 +206,7 @@ public class Packets {
     public static class RoomLinkPacket extends Packet {
         public String roomId = null;
 
-        public RoomLinkPacket() {
+        private RoomLinkPacket() {
         }
 
         public void read(ByteBufferInput read) {
@@ -216,7 +229,7 @@ public class Packets {
     public static class RoomClosedPacket extends Packet {
         public CloseReason reason;
 
-        public RoomClosedPacket() {
+        private RoomClosedPacket() {
         }
 
         public void read(ByteBufferInput read) {
@@ -250,7 +263,13 @@ public class Packets {
         public String password;
         public RoomStats data;
 
-        public RoomCreationRequestPacket() {
+        private RoomCreationRequestPacket() {
+        }
+
+        public RoomCreationRequestPacket(String version, String password, RoomStats data) {
+            this.version = version;
+            this.password = password;
+            this.data = data;
         }
 
         public void read(ByteBufferInput read) {
@@ -278,14 +297,14 @@ public class Packets {
     }
 
     public static class ConnectionIdlingPacket extends ConnectionWrapperPacket {
-        public ConnectionIdlingPacket() {
+        private ConnectionIdlingPacket() {
         }
     }
 
     public static class ConnectionJoinPacket extends ConnectionWrapperPacket {
         public String roomId = null;
 
-        public ConnectionJoinPacket() {
+        private ConnectionJoinPacket() {
         }
 
         protected void read0(ByteBufferInput read) {
@@ -309,7 +328,12 @@ public class Packets {
         private static final DcReason[] reasons = DcReason.values();
         public DcReason reason;
 
-        public ConnectionClosedPacket() {
+        private ConnectionClosedPacket() {
+        }
+
+        public ConnectionClosedPacket(int connectionId, DcReason reason) {
+            this.connectionId = connectionId;
+            this.reason = reason;
         }
 
         protected void read0(ByteBufferInput read) {
@@ -326,7 +350,13 @@ public class Packets {
         public ByteBuffer buffer;
         public boolean isTCP;
 
-        public ConnectionPacketWrapPacket() {
+        private ConnectionPacketWrapPacket() {
+        }
+
+        public ConnectionPacketWrapPacket(int connectionId, boolean isTCP, Object object) {
+            this.connectionId = connectionId;
+            this.isTCP = isTCP;
+            this.object = object;
         }
 
         protected void read0(ByteBufferInput read) {

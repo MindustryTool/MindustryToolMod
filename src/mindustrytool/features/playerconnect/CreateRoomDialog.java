@@ -292,10 +292,10 @@ public class CreateRoomDialog extends BaseDialog {
 
         Timer.Task timer = Timer.schedule(() -> {
             Log.info("Close room due to timeout 10s");
-            PlayerConnect.closeRoom();
+            PlayerConnect.close();
         }, 10);
 
-        PlayerConnect.createRoom(selected.ip, selected.port, password, link -> {
+        PlayerConnect.create(selected.ip, selected.port, password, link -> {
             Vars.ui.loadfrag.hide();
             timer.cancel();
             this.link = link;
@@ -318,7 +318,7 @@ public class CreateRoomDialog extends BaseDialog {
     }
 
     public void closeRoom() {
-        PlayerConnect.closeRoom();
+        PlayerConnect.close();
         link = null;
         Vars.ui.showInfoFade("@message.player-connect.room-closed");
     }

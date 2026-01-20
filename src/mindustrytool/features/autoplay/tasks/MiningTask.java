@@ -1,7 +1,7 @@
 package mindustrytool.features.autoplay.tasks;
 
 import arc.Core;
-import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.struct.ObjectSet;
@@ -62,7 +62,7 @@ public class MiningTask implements AutoplayTask {
     }
 
     @Override
-    public Drawable getIcon() {
+    public TextureRegionDrawable getIcon() {
         return Icon.filter;
     }
 

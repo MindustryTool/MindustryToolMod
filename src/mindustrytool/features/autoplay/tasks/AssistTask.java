@@ -1,6 +1,6 @@
 package mindustrytool.features.autoplay.tasks;
 
-import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
 import mindustry.Vars;
 import mindustry.ai.types.BuilderAI;
 import mindustry.entities.units.AIController;
@@ -19,7 +19,7 @@ public class AssistTask implements AutoplayTask {
     }
 
     @Override
-    public Drawable getIcon() {
+    public TextureRegionDrawable getIcon() {
         return Icon.players;
     }
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
+import java.util.Date;
 
 import arc.Core;
 import arc.func.Cons;
@@ -11,62 +12,76 @@ import arc.net.ArcNetException;
 import arc.net.Client;
 import arc.net.Connection;
 import arc.net.DcReason;
-import arc.net.FrameworkMessage;
 import arc.net.NetListener;
+import arc.net.Server;
 import arc.struct.IntMap;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Ratekeeper;
 import arc.util.Reflect;
+import arc.util.Strings;
 import arc.util.io.ByteBufferInput;
 import arc.util.io.ByteBufferOutput;
 
 import mindustry.Vars;
+import mindustry.core.Version;
 import mindustry.gen.Call;
+import mindustry.gen.Groups;
+import mindustry.gen.Player;
+import mindustry.net.NetConnection;
+import mindustry.net.Net.NetProvider;
+import mindustrytool.Main;
+import mindustrytool.features.playerconnect.Packets.RoomPlayer;
+import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
 import mindustrytool.ui.NoopRatekeeper;
 
 public class NetworkProxy extends Client implements NetListener {
-    public static String PROTOCOL_VERSION = "1";
-    public static int defaultTimeout = 10000; // ms
-
-    private final IntMap<VirtualConnection> connections = new IntMap<>();
-    private final Seq<VirtualConnection> orderedConnections = new Seq<>(false);
-    private final arc.net.Server server;
-    private final NetListener serverDispatcher;
-
-    private String password = "";
-    private String roomId = null;
-    private volatile boolean isShutdown;
-    private Packets.RoomClosedPacket.CloseReason closeReason;
-
-    private Cons<String> onRoomCreated;
-    private Cons<Packets.RoomClosedPacket.CloseReason> onRoomClosed;
+    public static final String PROTOCOL_VERSION = "1";
+    public static final int defaultTimeout = 10000;
 
     private static final Ratekeeper noopRate = new NoopRatekeeper();
 
+    private final IntMap<VirtualConnection> connections = new IntMap<>();
+    private final Seq<VirtualConnection> orderedConnections = new Seq<>(false);
+    private final Server server;
+    private final NetListener serverDispatcher;
+
+    private volatile boolean isShutdown;
+
+    private String roomId = null;
+    private CloseReason closeReason;
+    private String password = "";
+
+    private Cons<String> onRoomCreated;
+    private Cons<CloseReason> onRoomClosed;
+
     public NetworkProxy(String password) {
         super(32768, 16384, new Serializer());
+
         addListener(this);
 
-        mindustry.net.Net.NetProvider provider = Reflect.get(Vars.net, "provider");
-        if (Vars.steam)
+        NetProvider provider = Reflect.get(Vars.net, "provider");
+
+        if (Vars.steam) {
             provider = Reflect.get(provider, "provider");
+        }
 
         server = Reflect.get(provider, "server");
-        // connections = Reflect.get(provider, "connections");
         serverDispatcher = Reflect.get(server, "dispatchListener");
         this.password = password;
     }
 
-    /** This method must be used instead of others connect methods */
-    public void connect(String host, int udpTcpPort,
-            Cons<String> onRoomCreated,
-            Cons<Packets.RoomClosedPacket.CloseReason> onRoomClosed//
+    public void connect(String host, int udpTcpPort, Cons<String> onRoomCreated,
+            Cons<CloseReason> onRoomClosed//
     ) throws IOException {
         this.onRoomCreated = onRoomCreated;
         this.onRoomClosed = onRoomClosed;
 
         connect(defaultTimeout, host, udpTcpPort, udpTcpPort);
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     /**
@@ -77,14 +92,16 @@ public class NetworkProxy extends Client implements NetListener {
     @Override
     public void run() {
         isShutdown = false;
+
         while (!isShutdown) {
             try {
                 update(250);
                 // update idle
                 for (int i = 0; i < orderedConnections.size; i++) {
                     VirtualConnection con = orderedConnections.get(i);
-                    if (con.isConnected() && con.isIdle())
+                    if (con.isConnected() && con.isIdle()) {
                         con.notifyIdle0();
+                    }
                 }
             } catch (IOException ex) {
                 Log.err("IOException in NetworkProxy.run(): @", ex);
@@ -105,8 +122,9 @@ public class NetworkProxy extends Client implements NetListener {
      */
     @Override
     public void stop() {
-        if (isShutdown)
+        if (isShutdown) {
             return;
+        }
 
         close();
         isShutdown = true;
@@ -130,14 +148,12 @@ public class NetworkProxy extends Client implements NetListener {
 
     @Override
     public void connected(Connection connection) {
-        Log.debug("Connected: " + connection.getID());
-
         Core.app.post(() -> {
-            Packets.RoomCreationRequestPacket p = new Packets.RoomCreationRequestPacket();
-            Packets.RoomStats stats = PlayerConnect.getRoomStats();
-            p.version = PROTOCOL_VERSION;
-            p.password = password;
-            p.data = stats;
+            Packets.RoomStats stats = getStats();
+            Packets.RoomCreationRequestPacket p = new Packets.RoomCreationRequestPacket(
+                    PROTOCOL_VERSION,
+                    password,
+                    stats);
 
             sendTCP(p);
         });
@@ -150,88 +166,88 @@ public class NetworkProxy extends Client implements NetListener {
         if (onRoomClosed != null) {
             onRoomClosed.get(closeReason);
         }
-        // We cannot communicate with the server anymore, so close all virtual
-        // connections
+
         orderedConnections.each(c -> c.closeQuietly(reason));
         connections.clear();
         orderedConnections.clear();
 
         Log.debug("Room closed: @ @ @", connection.getID(), reason, closeReason);
-
-        Thread.dumpStack();
     }
 
     @Override
     public void received(Connection connection, Object object) {
+        var isPcPacket = object instanceof Packets.Packet;
 
-        if (!(object instanceof FrameworkMessage)) {
-            Log.debug("Received: " + object);
+        if (!isPcPacket) {
+            return;
         }
 
         try {
-            if (!(object instanceof Packets.Packet)) {
-                return;
+            if (object instanceof Packets.MessagePacket messagePacket) {
+                Call.sendMessage("[scarlet][[Server]:[] " + messagePacket.message);
 
-            } else if (object instanceof Packets.MessagePacket) {
-                Call.sendMessage("[scarlet][[Server]:[] " + ((Packets.MessagePacket) object).message);
+            } else if (object instanceof Packets.Message2Packet message2Packet) {
+                Call.sendMessage("[scarlet][[Server]:[] "
+                        + arc.Core.bundle.get("claj.message." + Strings.camelToKebab(message2Packet.message.name())));
 
-            } else if (object instanceof Packets.Message2Packet) {
-                Call.sendMessage("[scarlet][[Server]:[] " + arc.Core.bundle.get("claj.message." +
-                        arc.util.Strings.camelToKebab(((Packets.Message2Packet) object).message.name())));
+            } else if (object instanceof Packets.PopupPacket popupPacket) {
+                Vars.ui.showText("[scarlet][[Server][] ", popupPacket.message);
 
-            } else if (object instanceof Packets.PopupPacket) {
-                Vars.ui.showText("[scarlet][[Server][] ", ((Packets.PopupPacket) object).message);
+            } else if (object instanceof Packets.RoomClosedPacket closedPacket) {
+                closeReason = closedPacket.reason;
 
-            } else if (object instanceof Packets.RoomClosedPacket) {
-                closeReason = ((Packets.RoomClosedPacket) object).reason;
-
-            } else if (object instanceof Packets.RoomLinkPacket) {
+            } else if (object instanceof Packets.RoomLinkPacket roomLinkPacket) {
                 // Ignore if the room id is received twice
-                if (roomId != null)
-                    return;
+                if (roomId != null) {
+                    throw new ArcNetException("Room id is received twice");
+                }
 
-                roomId = ((Packets.RoomLinkPacket) object).roomId;
-                // -1 is not allowed since it's used to specify an uncreated room
-                if (roomId != null && onRoomCreated != null)
-                    onRoomCreated.get(roomId);
+                roomId = roomLinkPacket.roomId;
 
-            } else if (object instanceof Packets.ConnectionWrapperPacket) {
+                if (roomId == null) {
+                    throw new ArcNetException("Room id can not be null");
+                }
+
+                if (onRoomCreated == null) {
+                    throw new ArcNetException("onRoomCreated is null");
+                }
+
+                onRoomCreated.get(roomId);
+            } else if (object instanceof Packets.ConnectionWrapperPacket wrapperPacket) {
                 // Ignore packets until the room id is received
-                if (roomId == null)
+                if (roomId == null) {
                     return;
+                }
 
-                int id = ((Packets.ConnectionWrapperPacket) object).connectionId;
+                int id = wrapperPacket.connectionId;
                 VirtualConnection con = connections.get(id);
 
                 if (con == null) {
                     // Create a new connection
-                    if (object instanceof Packets.ConnectionJoinPacket) {
+                    if (object instanceof Packets.ConnectionJoinPacket joinPacket) {
                         // Check if the link is the right
-                        if (!((Packets.ConnectionJoinPacket) object).roomId.equals(roomId)) {
+                        if (!joinPacket.roomId.equals(roomId)) {
 
-                            Packets.ConnectionClosedPacket p = new Packets.ConnectionClosedPacket();
-                            p.connectionId = id;
-                            p.reason = DcReason.error;
-                            sendTCP(p);
+                            Packets.ConnectionClosedPacket packet = new Packets.ConnectionClosedPacket(id,
+                                    DcReason.error);
+                            sendTCP(packet);
+
                             return;
                         }
 
                         addConnection(con = new VirtualConnection(this, id));
                         con.notifyConnected0();
                         // Change the packet rate and chat rate to a no-op version
-                        ((mindustry.net.NetConnection) con.getArbitraryData()).packetRate = noopRate;
-                        ((mindustry.net.NetConnection) con.getArbitraryData()).chatRate = noopRate;
+                        ((NetConnection) con.getArbitraryData()).packetRate = noopRate;
+                        ((NetConnection) con.getArbitraryData()).chatRate = noopRate;
                     }
 
-                } else if (object instanceof Packets.ConnectionPacketWrapPacket) {
-                    con.notifyReceived0(((Packets.ConnectionPacketWrapPacket) object).object);
-
+                } else if (object instanceof Packets.ConnectionPacketWrapPacket packetWrapPacket) {
+                    con.notifyReceived0(packetWrapPacket.object);
                 } else if (object instanceof Packets.ConnectionIdlingPacket) {
                     con.setIdle();
-
-                } else if (object instanceof Packets.ConnectionClosedPacket) {
-                    con.closeQuietly(((Packets.ConnectionClosedPacket) object).reason);
-                    Log.debug("Close connection from server");
+                } else if (object instanceof Packets.ConnectionClosedPacket closedPacket) {
+                    con.closeQuietly(closedPacket.reason);
                 }
             }
         } catch (Exception error) {
@@ -253,56 +269,84 @@ public class NetworkProxy extends Client implements NetListener {
         @Override
         public Object read(ByteBuffer buffer) {
             if (buffer.get() == Packets.id) {
-                Packets.Packet p = Packets.newPacket(buffer.get());
-                p.read(new ByteBufferInput(buffer));
-                if (p instanceof Packets.ConnectionPacketWrapPacket) // This one is special
-                    ((Packets.ConnectionPacketWrapPacket) p).object = super.read(buffer);
+                var packet = Packets.newPacket(buffer.get());
+                packet.read(new ByteBufferInput(buffer));
 
-                return p;
+                if (packet instanceof Packets.ConnectionPacketWrapPacket wrap) {
+                    wrap.object = super.read(buffer);
+                }
+
+                return packet;
             }
 
             buffer.position(buffer.position() - 1);
             var result = super.read(buffer);
-
-            Log.debug("Read packet " + result);
 
             return result;
         }
 
         @Override
         public void write(ByteBuffer buffer, Object object) {
-            if (object instanceof Packets.Packet) {
-                Packets.Packet p = (Packets.Packet) object;
-                buffer.put(Packets.id).put(Packets.getId(p));
-                p.write(new ByteBufferOutput(buffer));
-                if (p instanceof Packets.ConnectionPacketWrapPacket) // This one is special
-                    super.write(buffer, ((Packets.ConnectionPacketWrapPacket) p).object);
+            if (object instanceof Packets.Packet packet) {
+                buffer.put(Packets.id).put(Packets.getId(packet));
+                packet.write(new ByteBufferOutput(buffer));
 
-                Log.debug("Write packet " + p);
+                if (packet instanceof Packets.ConnectionPacketWrapPacket wrap) {
+                    super.write(buffer, wrap.object);
+                }
 
                 return;
-            }
-
-            if (!(object instanceof FrameworkMessage)) {
-                Log.debug("Write " + object);
             }
 
             super.write(buffer, object);
         }
     }
 
-    /**
-     * We can safely remove and hook things, the networking has been reverse
-     * engineered.
-     */
+    public Packets.RoomStats getStats() {
+        Packets.RoomStats stats = new Packets.RoomStats();
+
+        var mod = Vars.mods.getMod(Main.class);
+
+        stats.modVersion = mod.meta.version;
+        stats.gamemode = Vars.state.rules.mode().name();
+        stats.mapName = Vars.state.map.name();
+        stats.name = PlayerConnectConfig.getRoomName();
+        stats.mods = Vars.mods.getModStrings().list();
+
+        Seq<RoomPlayer> players = new Seq<>();
+
+        for (Player player : Groups.player) {
+            players.add(new RoomPlayer(player.name, player.locale));
+        }
+
+        stats.locale = Vars.player.locale;
+        stats.version = Version.combined();
+        stats.players = players.list();
+        stats.createdAt = new Date().getTime();
+
+        return stats;
+    }
+
+    public void updateStats() {
+        Core.app.post(() -> {
+            try {
+                if (!Vars.net.server() || !isConnected()) {
+                    return;
+                }
+
+                var packet = new Packets.StatsPacket(roomId, getStats());
+
+                sendTCP(packet);
+            } catch (Throwable err) {
+                Log.err(err);
+            }
+        });
+    }
+
     public static class VirtualConnection extends Connection {
         final Seq<NetListener> listeners = new Seq<>();
         final int id;
-        /**
-         * A virtual connection is always connected until we closing it,
-         * so the proxy will notify the server to close the connection in turn,
-         * or when the server notifies that the connection has been closed.
-         */
+
         volatile boolean isConnected = true;
         /** The server will notify if the client is idling */
         volatile boolean isIdling = true;
@@ -316,32 +360,28 @@ public class NetworkProxy extends Client implements NetListener {
 
         @Override
         public int sendTCP(Object object) {
-            if (object == null)
+            if (object == null) {
                 throw new IllegalArgumentException("object cannot be null.");
+            }
+
             isIdling = false;
 
-            Log.debug("TCP: Send " + object + " to " + id);
+            var packet = new Packets.ConnectionPacketWrapPacket(id, true, object);
 
-            Packets.ConnectionPacketWrapPacket p = new Packets.ConnectionPacketWrapPacket();
-            p.connectionId = id;
-            p.isTCP = true;
-            p.object = object;
-            return proxy.sendTCP(p);
+            return proxy.sendTCP(packet);
         }
 
         @Override
         public int sendUDP(Object object) {
-            if (object == null)
+            if (object == null) {
                 throw new IllegalArgumentException("object cannot be null.");
+            }
+
             isIdling = false;
 
-            Log.debug("UDP: Send " + object + " to " + id);
+            var packet = new Packets.ConnectionPacketWrapPacket(id, false, object);
 
-            Packets.ConnectionPacketWrapPacket p = new Packets.ConnectionPacketWrapPacket();
-            p.connectionId = id;
-            p.isTCP = false;
-            p.object = object;
-            return proxy.sendUDP(p);
+            return proxy.sendUDP(packet);
         }
 
         @Override
@@ -349,10 +389,9 @@ public class NetworkProxy extends Client implements NetListener {
             boolean wasConnected = isConnected;
             isConnected = isIdling = false;
             if (wasConnected) {
-                Packets.ConnectionClosedPacket p = new Packets.ConnectionClosedPacket();
-                p.connectionId = id;
-                p.reason = reason;
-                proxy.sendTCP(p);
+                var packet = new Packets.ConnectionClosedPacket(id, reason);
+
+                proxy.sendTCP(packet);
 
                 notifyDisconnected0(reason);
             }
@@ -365,8 +404,10 @@ public class NetworkProxy extends Client implements NetListener {
         public void closeQuietly(DcReason reason) {
             boolean wasConnected = isConnected;
             isConnected = isIdling = false;
-            if (wasConnected)
+
+            if (wasConnected) {
                 notifyDisconnected0(reason);
+            }
         }
 
         @Override

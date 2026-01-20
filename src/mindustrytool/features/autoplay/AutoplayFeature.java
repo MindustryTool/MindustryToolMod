@@ -4,7 +4,6 @@ import arc.Core;
 import arc.Events;
 import arc.graphics.g2d.Draw;
 import arc.input.KeyCode;
-import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Dialog;
 import arc.struct.Seq;
 import arc.util.Timer;
@@ -102,11 +101,14 @@ public class AutoplayFeature implements Feature {
         }
 
         var icon = currentTask.getIcon();
-        if (icon instanceof TextureRegionDrawable trd) {
-            Draw.z(Layer.overlayUI);
-            Draw.rect(trd.getRegion(), unit.x, unit.y + unit.hitSize * 1.5f, 10f, 10f);
-            Draw.reset();
+
+        if (icon == null) {
+            return;
         }
+
+        Draw.z(Layer.overlayUI);
+        Draw.rect(icon.getRegion(), unit.x, unit.y + unit.hitSize * 1.5f, 10f, 10f);
+        Draw.reset();
     }
 
     private void updateTask() {

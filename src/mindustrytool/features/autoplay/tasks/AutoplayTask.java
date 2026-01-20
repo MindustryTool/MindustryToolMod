@@ -1,7 +1,7 @@
 package mindustrytool.features.autoplay.tasks;
 
 import arc.Core;
-import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Unit;
@@ -25,7 +25,7 @@ public interface AutoplayTask {
         Core.settings.put("autoplay.task." + getId() + ".enabled", isEnabled());
     }
 
-    default Drawable getIcon() {
+    default TextureRegionDrawable getIcon() {
         return null;
     }
 
