@@ -109,7 +109,7 @@ public class CreateRoomDialog extends BaseDialog {
 
     private void setupStep1() {
         mainTable.clear();
-        mainTable.add("Step 1: Configure Room").style(Styles.defaultLabel).padBottom(20f).row();
+        mainTable.add("@message.create-room.title").style(Styles.defaultLabel).padBottom(20f).row();
 
         mainTable.table(t -> {
             t.add(Core.bundle.format("message.create-room.server-name"))
@@ -128,7 +128,7 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .row();
 
-            t.add(Core.bundle.format("message.password"))
+            t.add(Core.bundle.format("message.create-room.password"))
                     .padRight(5f)
                     .ellipsis(true)
                     .left()
@@ -151,7 +151,7 @@ public class CreateRoomDialog extends BaseDialog {
 
     private void setupStep2() {
         mainTable.clear();
-        mainTable.add("Step 2: Select Provider").style(Styles.defaultLabel).padBottom(10f).row();
+        mainTable.add("@message.create-room.select-provider").style(Styles.defaultLabel).padBottom(10f).row();
 
         mainTable.pane(hosts -> {
             hosts.table(table -> {
@@ -168,7 +168,7 @@ public class CreateRoomDialog extends BaseDialog {
             hosts.image().pad(5).height(3).color(Pal.accent).growX().row();
 
             online = new Table();
-            online.add("loading")
+            online.add("@loading")
                     .color(Pal.accent)
                     .labelAlign(Align.center)
                     .growX()
@@ -178,11 +178,11 @@ public class CreateRoomDialog extends BaseDialog {
 
         Table buttons = new Table();
 
-        buttons.button("Back", Icon.left, () -> {
+        buttons.button("@back", Icon.left, () -> {
             setupStep1();
         }).size(200f, 50f).padRight(10f);
 
-        buttons.button("Create Room", Icon.play, () -> {
+        buttons.button("@message.create-room.create-room", Icon.play, () -> {
             createRoom(PlayerConnectConfig.getPassword());
         }).size(200f, 50f).disabled(b -> selected == null);
 
@@ -202,7 +202,7 @@ public class CreateRoomDialog extends BaseDialog {
 
         if (online != null) {
             online.clear();
-            online.add("loading")
+            online.add("@loading")
                     .color(Pal.accent)
                     .labelAlign(Align.center)
                     .growX()
@@ -329,7 +329,7 @@ public class CreateRoomDialog extends BaseDialog {
     public void closeRoom() {
         PlayerConnect.close();
         link = null;
-        Vars.ui.showInfoFade("@message.player-connect.room-closed");
+        Vars.ui.showInfoFade("@message.manage-room.room-closed");
     }
 
     public void copyLink() {
