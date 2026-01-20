@@ -18,6 +18,9 @@ import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.mod.Mod;
+import mindustry.ui.dialogs.BaseDialog;
+import arc.scene.ui.ScrollPane;
+import arc.graphics.Color;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
@@ -129,32 +132,88 @@ public class Main extends Mod {
         int[] currentVersion = extractVersionNumber(mod.meta.version);
 
         Http.get(Config.API_REPO_URL, (res) -> {
-            Jval json = Jval.read(res.getResultAsString());
+            try {
+                Jval json = Jval.read(res.getResultAsString());
 
-            int[] latestVersion = extractVersionNumber(json.getString("version"));
+                String latestVersionStr = json.getString("version");
+                int[] latestVersion = extractVersionNumber(latestVersionStr);
 
-            if (isVersionGreater(latestVersion, currentVersion)) {
-                Log.info("Mod require update, current version: @, latest version: @",
-                        versionToString(currentVersion),
-                        versionToString(latestVersion));
+                if (isVersionGreater(latestVersion, currentVersion)) {
+                    Log.info("Mod require update, current version: @, latest version: @",
+                            versionToString(currentVersion),
+                            versionToString(latestVersion));
 
-                Vars.ui.showConfirm(
-                        Core.bundle.format("message.new-version",
-                                versionToString(currentVersion),
-                                versionToString(latestVersion))
-                                + "\nDiscord: https://discord.gg/72324gpuCd",
-                        () -> {
-                            Core.app.post(() -> {
-                                Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
-                            });
-                        });
-            } else {
-                Log.info("Mod up to date");
+                    fetchReleasesAndShowDialog(versionToString(currentVersion), versionToString(latestVersion));
+                } else {
+                    Log.info("Mod up to date");
+                }
+            } catch (Exception e) {
+                Log.err("Failed to check update", e);
             }
         });
 
         Http.get(Config.API_URL + "ping?client=mod-v8").submit(result -> {
             Log.info("Ping");
+        });
+    }
+
+    private void fetchReleasesAndShowDialog(String currentVer, String latestVer) {
+        Http.get(Config.GITHUB_API_URL).error(e -> {
+            Log.err("Failed to fetch releases", e);
+            showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+        }).submit(res -> {
+            try {
+                Jval json = Jval.read(res.getResultAsString());
+                if (json.isArray()) {
+                    Seq<Jval> releases = json.asArray();
+                    StringBuilder changelog = new StringBuilder();
+
+                    int count = 0;
+                    for (Jval release : releases) {
+                        if (count >= 20)
+                            break;
+
+                        String tagName = release.getString("tag_name", "");
+                        String body = release.getString("body", "No description provided.");
+
+                        changelog.append("[accent]").append(tagName).append("[]\n");
+                        changelog.append(body).append("\n\n");
+                        count++;
+                    }
+
+                    showUpdateDialog(currentVer, latestVer, changelog.toString());
+                } else {
+                    showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+                }
+            } catch (Exception e) {
+                Log.err("Failed to parse releases", e);
+                showUpdateDialog(currentVer, latestVer, "Could not parse release notes.");
+            }
+        });
+    }
+
+    private void showUpdateDialog(String currentVer, String latestVer, String changelog) {
+        Core.app.post(() -> {
+            BaseDialog dialog = new BaseDialog("Update Available");
+            dialog.cont.add(Core.bundle.format("message.new-version", currentVer, latestVer)).row();
+            dialog.cont.add("Discord: https://discord.gg/72324gpuCd").row();
+
+            dialog.cont.image().height(4f).color(Color.gray).fillX().pad(10f).row();
+
+            Table changelogTable = new Table();
+            changelogTable.top().left();
+            changelogTable.add(changelog).wrap().width(500f).left();
+
+            ScrollPane pane = new ScrollPane(changelogTable);
+            dialog.cont.add(pane).size(500f, 400f).row();
+
+            dialog.buttons.button("Cancel", dialog::hide).size(100f, 50f);
+            dialog.buttons.button("Update", () -> {
+                dialog.hide();
+                Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
+            }).size(100f, 50f);
+
+            dialog.show();
         });
     }
 
