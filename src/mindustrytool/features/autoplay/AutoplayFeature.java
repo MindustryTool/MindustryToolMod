@@ -93,6 +93,10 @@ public class AutoplayFeature implements Feature {
         currentTask = null;
     }
 
+    public AutoplayTask getCurrentTask() {
+        return currentTask;
+    }
+
     private void draw() {
         var unit = Vars.player.unit();
 
@@ -144,6 +148,8 @@ public class AutoplayFeature implements Feature {
             }
 
             currentTask = nextTask;
+
+            dialog.rebuild();
         }
     }
 

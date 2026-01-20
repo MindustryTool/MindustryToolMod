@@ -39,6 +39,10 @@ public class AssistTask implements AutoplayTask {
 
     @Override
     public boolean shouldRun(Unit unit) {
+        if (ai.assistFollowing != null) {
+            return true;
+        }
+
         if (!unit.canBuild()) {
             return false;
         }
@@ -62,9 +66,17 @@ public class AssistTask implements AutoplayTask {
 
     @Override
     public void buildSettings(Table table) {
+        build(table);
+    }
+
+    private void build(Table table) {
+        table.clear();
         table.add("@following").top().left().labelAlign(Align.left).padBottom(5).row();
 
-        table.button("None", Styles.togglet, () -> ai.assistFollowing = null)
+        table.button("None", Styles.togglet, () -> {
+            ai.assistFollowing = null;
+            build(table);
+        })
                 .checked(ai.assistFollowing == null)
                 .growX()
                 .top()
@@ -75,12 +87,16 @@ public class AssistTask implements AutoplayTask {
 
         table.pane(t -> {
             t.top();
+
             for (Player p : Groups.player) {
                 if (p.team() != Vars.player.team() || p == Vars.player) {
                     continue;
                 }
 
-                t.button(p.name, Styles.togglet, () -> ai.assistFollowing = p.unit())
+                t.button(p.name, Styles.togglet, () -> {
+                    ai.assistFollowing = p.unit();
+                    build(table);
+                })
                         .checked(ai.assistFollowing == p.unit())
                         .top()
                         .left()

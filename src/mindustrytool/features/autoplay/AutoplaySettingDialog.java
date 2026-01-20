@@ -16,7 +16,7 @@ public class AutoplaySettingDialog extends BaseDialog {
         shown(this::rebuild);
     }
 
-    private void rebuild() {
+    public void rebuild() {
         cont.clear();
         cont.pane(t -> {
             t.top();
@@ -24,8 +24,9 @@ public class AutoplaySettingDialog extends BaseDialog {
             for (int i = 0; i < feature.getTasks().size; i++) {
                 AutoplayTask task = feature.getTasks().get(i);
                 int index = i;
+                boolean isCurrent = task == feature.getCurrentTask();
 
-                t.table(Tex.pane, container -> {
+                t.table(isCurrent ? Tex.buttonDown : Tex.button, container -> {
                     container.left();
 
                     container.table(header -> {
