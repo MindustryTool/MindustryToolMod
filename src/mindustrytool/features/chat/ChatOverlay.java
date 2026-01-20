@@ -2,26 +2,36 @@ package mindustrytool.features.chat;
 
 import arc.Core;
 import arc.graphics.Color;
+import arc.graphics.Texture;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.event.Touchable;
+import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Button;
 import arc.scene.ui.Image;
 import arc.scene.ui.Label;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.TextField;
+import arc.scene.ui.ImageButton.ImageButtonStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import arc.util.Align;
 import arc.util.Log;
+import arc.util.Scaling;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType;
+import mindustry.game.Schematic;
+import mindustry.game.Schematics;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
+import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import arc.Events;
+import mindustrytool.Main;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
@@ -250,9 +260,24 @@ public class ChatOverlay extends Table {
             if (inputField == null) {
                 inputField = new TextField();
                 inputField.setMessageText("Enter message...");
-                inputField.setMaxLength(1024);
-                inputField.setValidator(text -> text.length() > 0);
-                inputField.keyDown(arc.input.KeyCode.enter, this::sendMessage);
+                inputField.setValidator(text -> text.length() > 0
+                        && (text.startsWith(Vars.schematicBaseStart) && text.endsWith("=") ? text.length() < 1024 * 12
+                                : text.length() < 1024));
+                inputField.keyDown(arc.input.KeyCode.enter, () -> {
+                    boolean isSchematic = false;
+                    try {
+                        inputField.getText().startsWith(Vars.schematicBaseStart);
+                        Schematics.readBase64(inputField.getText());
+                        isSchematic = true;
+                    } catch (Exception _e) {
+                    }
+
+                    if (isSchematic) {
+                        sendSchematic();
+                    } else if (inputField.isValid()) {
+                        sendMessage();
+                    }
+                });
                 inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
             }
 
@@ -263,6 +288,16 @@ public class ChatOverlay extends Table {
             sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
 
             inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
+
+            var mod = Vars.mods.getMod(Main.class);
+
+            var texture = new TextureRegion(new Texture(mod.root.child("icons").child("attach-file.png")));
+            TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
+
+            inputTable.button(drawable, () -> {
+                Vars.ui.showInfoFade("This do nothing :v");
+            }).pad(8);
+
             inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
 
             container.add(inputTable).growX().bottom();
@@ -323,6 +358,7 @@ public class ChatOverlay extends Table {
             }
 
             messages.add(msg);
+
             try {
                 if (isCollapsed && config.lastRead().isBefore(Instant.parse(msg.createdAt))) {
                     addedCount++;
@@ -335,11 +371,6 @@ public class ChatOverlay extends Table {
         if (isCollapsed && addedCount > 0) {
             unreadCount += addedCount;
             updateBadge();
-        }
-
-        // Limit to last 100 messages
-        if (messages.size > 100) {
-            messages.removeRange(0, messages.size - 100);
         }
 
         if (messageTable != null && !isCollapsed) {
@@ -411,7 +442,32 @@ public class ChatOverlay extends Table {
 
                 content.add(label).left().row();
 
-                content.add(msg.content).wrap().color(Color.lightGray).left().growX().padTop(2);
+                int schematicBasePosition = msg.content.indexOf(Vars.schematicBaseStart);
+
+                if (schematicBasePosition != -1) {
+                    int endPosition = msg.content.indexOf(" ", schematicBasePosition) + 1;
+
+                    if (endPosition == 0) {
+                        endPosition = msg.content.length();
+                    }
+
+                    String prev = msg.content.substring(0, schematicBasePosition);
+
+                    content.add(prev).wrap().color(Color.lightGray).left().padTop(2);
+                    String schematicBase64 = msg.content.substring(schematicBasePosition, endPosition);
+                    try {
+                        var schematic = Schematics.readBase64(schematicBase64);
+                        content.row();
+                        renderSchematic(content, schematic);
+                        content.row();
+                    } catch (Exception e) {
+                        content.add(schematicBase64).wrap().color(Color.lightGray).left().padTop(2);
+                    }
+                    String after = msg.content.substring(endPosition);
+                    content.add(after).wrap().color(Color.lightGray).left().growX().padTop(2);
+                } else {
+                    content.add(msg.content).wrap().color(Color.lightGray).left().growX().padTop(2);
+                }
             }).growX().pad(8).top();
 
             messageTable.add(entry).growX().padBottom(4).row();
@@ -491,17 +547,38 @@ public class ChatOverlay extends Table {
                 inputField.setText("");
                 lastInputText = "";
             });
-        }, err -> {
-            isSending = false;
-            // Handle 409
-            String errStr = err.toString();
-            if (errStr.contains("409") || err.getMessage().contains("409")) {
-                Vars.ui.showInfoToast("Rate limited! Please wait.", 3f);
-            } else {
-                Vars.ui.showInfoToast("Failed to send message.", 3f);
-                Log.err("Send message failed", err);
-            }
-        });
+        }, this::handleSendError);
+    }
+
+    private void sendSchematic() {
+        String content = inputField.getText();
+
+        if (isSending) {
+            Vars.ui.showInfoFade("Last message still sending");
+            return;
+        }
+
+        isSending = true;
+
+        ChatService.getInstance().sendSchematic(content, () -> {
+            Core.app.post(() -> {
+                isSending = false;
+                inputField.setText("");
+                lastInputText = "";
+            });
+        }, this::handleSendError);
+    }
+
+    private void handleSendError(Throwable err) {
+        isSending = false;
+
+        String errStr = err.toString();
+        if (errStr.contains("409") || err.getMessage().contains("409")) {
+            Vars.ui.showInfoToast("Rate limited! Please wait.", 3f);
+        } else {
+            Vars.ui.showInfoToast("Failed to send message.", 3f);
+            Log.err("Send message failed", err);
+        }
     }
 
     private void updateBadge() {
@@ -525,5 +602,52 @@ public class ChatOverlay extends Table {
 
             badgeTable.add(badge).height(16).minWidth(16);
         }
+    }
+
+    private void renderSchematic(Table table, Schematic schematic) {
+        Button[] sel = { null };
+        sel[0] = table.button(b -> {
+            b.top();
+            b.margin(0f);
+            b.table(buttons -> {
+                buttons.left();
+                buttons.defaults().size(50f);
+
+                ImageButtonStyle style = Styles.emptyi;
+
+                buttons.button(Icon.info, style, () -> Vars.ui.schematics.showInfo(schematic)).tooltip("@info.title")
+                        .growX();
+                buttons.button(Icon.upload, style, () -> Vars.ui.schematics
+                        .showExport(schematic)).tooltip("@editor.export")
+                        .growX();
+                buttons.button(Icon.pencil, style, () -> Vars.ui.schematics
+                        .showEdit(schematic)).tooltip("@schematic.edit").growX();
+
+            }).growX().height(50f);
+            b.row();
+            b.stack(new SchematicImage(schematic).setScaling(Scaling.fit), new Table(n -> {
+                n.top();
+                n.table(Styles.black3, c -> {
+                    Label label = c.add(schematic.name()).style(Styles.outlineLabel).color(Color.white).top().growX()
+                            .maxWidth(200f - 8f).get();
+                    label.setEllipsis(true);
+                    label.setAlignment(Align.center);
+                }).growX().margin(1).pad(4).maxWidth(Scl.scl(200f - 8f)).padBottom(0);
+            })).size(200f);
+        }, () -> {
+            if (sel[0].childrenPressed())
+                return;
+            if (Vars.state.isMenu()) {
+                Vars.ui.schematics.showInfo(schematic);
+            } else {
+                if (!Vars.state.rules.schematicsAllowed) {
+                    Vars.ui.showInfo("@schematic.disabled");
+                } else {
+                    Vars.control.input.useSchematic(schematic);
+                }
+            }
+        }).top().left().pad(4).style(Styles.flati).get();
+
+        sel[0].getStyle().up = Tex.pane;
     }
 }
