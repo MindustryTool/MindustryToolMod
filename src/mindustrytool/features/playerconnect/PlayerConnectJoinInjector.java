@@ -24,6 +24,7 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.JoinDialog;
 import mindustrytool.services.PlayerConnectService;
 
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -126,10 +127,32 @@ public class PlayerConnectJoinInjector {
 
             int i = 0;
             int cols = columns();
-            for (PlayerConnectRoom room : rooms) {
-                buildPlayerConnectRoom(room);
-                if (++i % cols == 0) {
-                    playerConnectTable.row();
+
+            var groups = new HashMap<String, Seq<PlayerConnectRoom>>();
+
+            rooms.forEach(room -> {
+                var link = PlayerConnectLink.fromString(room.link());
+                var group = link.host;
+
+                if (!groups.containsKey(group)) {
+                    groups.put(group, new Seq<>());
+                }
+                groups.get(group).add(room);
+            });
+
+            for (var host : groups.entrySet()) {
+                playerConnectTable.row();
+                playerConnectTable.table(hostLabel -> {
+                    hostLabel.add(host.getKey()).top().left().padLeft(10).padTop(10).padBottom(10);
+                    hostLabel.image().growX().pad(10).height(3).color(Pal.gray);
+                })
+                        .growX().colspan(cols).row();
+
+                for (var room : host.getValue()) {
+                    buildPlayerConnectRoom(room);
+                    if (++i % cols == 0) {
+                        playerConnectTable.row();
+                    }
                 }
             }
         });
@@ -246,7 +269,9 @@ public class PlayerConnectJoinInjector {
                         .padBottom(6)
                         .left()
                         .row();
+
                 // Spacer
+
                 body.add().growY().row();
 
                 // Join Button
