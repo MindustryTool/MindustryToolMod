@@ -1,7 +1,10 @@
 package mindustrytool.features.browser.schematic;
 
 import arc.Core;
+import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import arc.util.Align;
+import arc.util.Scaling;
 import mindustry.Vars;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
@@ -12,8 +15,8 @@ import mindustrytool.Config;
 import mindustrytool.dto.SchematicDetailData;
 import mindustrytool.dto.SchematicDetailData.SchematicRequirement;
 import mindustrytool.ui.DetailStats;
-import mindustrytool.ui.UserCard;
 import mindustrytool.ui.TagContainer;
+import mindustrytool.ui.UserCard;
 
 import static mindustry.Vars.*;
 
@@ -28,31 +31,68 @@ public class SchematicInfoDialog extends BaseDialog {
 
     public void show(SchematicDetailData data) {
         cont.clear();
+        cont.top().left();
 
         title.setText("[[" + Core.bundle.get("schematic") + "] " + data.name());
 
-        cont.add(new SchematicImage(data.id())).maxWidth(Core.graphics.getWidth() * 2 / 3).row();
+        boolean portrait = Core.graphics.isPortrait();
 
-        cont.table(card -> {
-            card.left();
-            card.add(Core.bundle.format("message.author")).marginRight(4).padRight(4);
-            UserCard.draw(card, data.createdBy());
-        })//
-                .fillX()//
-                .left();
+        if (portrait) {
+            cont.add(new SchematicImage(data.id())).scaling(Scaling.fit)
+                    .maxHeight(Core.graphics.getHeight() * 0.45f)
+                    .growX()
+                    .pad(10f)
+                    .top()
+                    .row();
 
-        cont.row();
-        cont.table(stats -> DetailStats.draw(stats, data.likes(), data.comments(), data.downloads()))//
-                .fillX()//
-                .left();
-        cont.row();
-        cont.table(container -> TagContainer.draw(container, data.tags()))//
-                .fillX()//
-                .left()//
-                .row();
-        cont.row();
+            cont.pane(t -> buildDetails(t, data)).top().left().grow().scrollX(false).pad(10);
+        } else {
+            cont.table(main -> {
+                main.top().left();
+
+                var size = Math.max(Core.graphics.getHeight() * 0.5f, Core.graphics.getWidth() * 0.5f);
+
+                main.add(new SchematicImage(data.id())).scaling(Scaling.fit)
+                        .height(size)
+                        .width(size)
+                        .pad(10f)
+                        .top();
+
+                main.pane(t -> buildDetails(t, data)).grow().scrollX(false).pad(10);
+            }).grow();
+        }
+
+        buttons.clearChildren();
+        buttons.defaults().size(Core.graphics.isPortrait() ? 150f : 210f, 64f);
+        buttons.button("@open", Icon.link, () -> Core.app.openURI(Config.WEB_URL + "/schematics/" + data.id())).pad(4);
+        buttons.button("@back", Icon.left, this::hide);
+
+        show();
+    }
+
+    private void buildDetails(Table card, SchematicDetailData data) {
+        card.top().left().defaults().top().left();
+
+        // Author
+        card.table(t -> {
+            t.left();
+            t.add(Core.bundle.format("message.author")).marginRight(4).padRight(4);
+            UserCard.draw(t, data.createdBy());
+        }).fillX().padBottom(4).top().left().row();
+
+        // Stats
+        card.table(stats -> DetailStats.draw(stats, data.likes(), data.comments(), data.downloads()))
+                .fillX().padBottom(4).top().left().row();
+
+        // Tags
+        if (data.tags() != null && data.tags().size > 0) {
+            card.table(container -> TagContainer.draw(container, data.tags()))
+                    .fillX().padBottom(4).top().left().row();
+        }
+
+        // Requirements
         ItemSeq arr = toItemSeq(data.meta().requirements());
-        cont.table(r -> {
+        card.table(r -> {
             int i = 0;
             for (ItemStack s : arr) {
                 r.image(s.item.uiIcon).left().size(iconMed);
@@ -64,28 +104,22 @@ public class SchematicInfoDialog extends BaseDialog {
 
                     return (core.items.has(s.item, s.amount) ? "[lightgray]" : "[scarlet]")
                             + Math.min(core.items.get(s.item), s.amount) + "[lightgray]/" + s.amount;
-                }).padLeft(2).left().padRight(4);
+                }).padLeft(2).left().padRight(4).top().left();
 
                 if (++i % 4 == 0) {
                     r.row();
                 }
             }
-        });
-        cont.row();
-        cont.add(data.description())//
-                .left()//
-                .wrap()//
-                .wrapLabel(true)//
-                .fillX();
+        }).padBottom(10).top().left().row();
 
-        buttons.clearChildren();
-        buttons.defaults().size(Core.graphics.isPortrait() ? 150f : 210f, 64f);
-        buttons.button("@open", Icon.link, () -> Core.app.openURI(Config.WEB_URL + "/schematics/" + data.id())).pad(4);
-        buttons.button("@back", Icon.left, this::hide);
-        // buttons.button("@editor.export", Icon.upload, () -> showExport(schem));
-        // buttons.button("@edit", Icon.edit, () -> showEdit(schem));
-
-        show();
+        // Description
+        card.add(data.description())
+                .left()
+                .wrap()
+                .wrapLabel(true)
+                .growX()
+                .labelAlign(Align.topLeft)
+                .top().left();
     }
 
     public ItemSeq toItemSeq(Seq<SchematicRequirement> requirement) {

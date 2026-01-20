@@ -98,6 +98,7 @@ public class SchematicDialog extends BaseDialog {
         footerTable = new Table();
 
         clear();
+        addCloseListener();
 
         add(searchTable).fillX().expandX();
         row();
