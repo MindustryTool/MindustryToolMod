@@ -1,7 +1,10 @@
 package mindustrytool.features.browser.map;
 
+import java.util.Optional;
+
 import arc.Core;
 import arc.Events;
+import arc.scene.ui.Dialog;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.game.EventType.Trigger;
@@ -83,7 +86,8 @@ public class MapBrowserFeature implements Feature {
         }
     }
 
-    public MapDialog getDialog() {
-        return mapDialog;
+    @Override
+    public Optional<Dialog> dialog() {
+        return Optional.of(mapDialog);
     }
 }

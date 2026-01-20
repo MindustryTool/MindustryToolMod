@@ -316,15 +316,19 @@ public class ChatOverlay extends Table {
 
     public void addMessages(ChatMessage[] newMessages) {
         int addedCount = 0;
+
         for (ChatMessage msg : newMessages) {
             if (messages.contains(m -> m.id.equals(msg.id))) {
                 continue;
             }
 
             messages.add(msg);
-
-            if (isCollapsed) {
-                addedCount++;
+            try {
+                if (isCollapsed && config.lastRead().isBefore(Instant.parse(msg.createdAt))) {
+                    addedCount++;
+                }
+            } catch (Exception e) {
+                Log.err(e);
             }
         }
 
@@ -338,7 +342,7 @@ public class ChatOverlay extends Table {
             messages.removeRange(0, messages.size - 100);
         }
 
-        if (messageTable != null) {
+        if (messageTable != null && !isCollapsed) {
             rebuildMessages(messageTable);
             // Scroll to bottom
             Core.app.post(() -> {
@@ -351,6 +355,8 @@ public class ChatOverlay extends Table {
     private void rebuildMessages(Table messageTable) {
         messageTable.clear();
         messageTable.top().left();
+
+        config.lastRead(Instant.now());
 
         for (ChatMessage msg : messages) {
             Table entry = new Table();

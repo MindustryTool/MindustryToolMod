@@ -32,7 +32,8 @@ public class FeatureManager {
     }
 
     public boolean isEnabled(Feature feature) {
-        return Core.settings.getBool("mindustrytool.feature." + feature.getMetadata().name() + ".enabled", feature.getMetadata().enabledByDefault());
+        return Core.settings.getBool("mindustrytool.feature." + feature.getMetadata().name() + ".enabled",
+                feature.getMetadata().enabledByDefault());
     }
 
     public void setEnabled(Feature feature, boolean enabled) {
@@ -50,5 +51,9 @@ public class FeatureManager {
 
     public Seq<Feature> getFeatures() {
         return features;
+    }
+
+    public Seq<Feature> getEnableds() {
+        return features.select(f -> isEnabled(f));
     }
 }

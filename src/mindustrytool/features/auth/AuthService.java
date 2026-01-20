@@ -24,6 +24,7 @@ public class AuthService {
 
     private UserSession currentUser;
     private CompletableFuture<Boolean> refreshFuture;
+    private CompletableFuture<Void> loginFuture;
 
     public static AuthService getInstance() {
         if (instance == null) {
@@ -50,14 +51,18 @@ public class AuthService {
         return Core.settings.has(KEY_ACCESS_TOKEN) && Core.settings.has(KEY_REFRESH_TOKEN);
     }
 
-    public CompletableFuture<Void> login() {
-        CompletableFuture<Void> future = new CompletableFuture<>();
+    public synchronized CompletableFuture<Void> login() {
+        if (loginFuture != null && !loginFuture.isDone()) {
+            return loginFuture;
+        }
+
+        loginFuture = new CompletableFuture<>();
 
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
                 .timeout(5000)
                 .error(err -> {
                     Log.err("Failed to get login URI", err);
-                    future.completeExceptionally(err);
+                    loginFuture.completeExceptionally(err);
                 })
                 .submit(res -> {
                     try {
@@ -70,9 +75,9 @@ public class AuthService {
                         // Start polling for token
                         pollLoginToken(loginId).whenComplete((v, e) -> {
                             if (e != null) {
-                                future.completeExceptionally(e);
+                                loginFuture.completeExceptionally(e);
                             } else {
-                                future.complete(null);
+                                loginFuture.complete(null);
                             }
                         });
 
@@ -83,11 +88,11 @@ public class AuthService {
 
                     } catch (Exception e) {
                         Log.err("Failed to start login flow", e);
-                        future.completeExceptionally(e);
+                        loginFuture.completeExceptionally(e);
                     }
                 });
 
-        return future;
+        return loginFuture;
     }
 
     private CompletableFuture<Void> pollLoginToken(String loginId) {

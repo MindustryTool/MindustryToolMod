@@ -20,4 +20,8 @@ public interface Feature {
     default Optional<Dialog> setting() {
         return Optional.empty();
     }
+   
+    default Optional<Dialog> dialog() {
+        return Optional.empty();
+    }
 }
