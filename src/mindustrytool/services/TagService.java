@@ -53,6 +53,11 @@ public class TagService {
     private void handleResult(HttpResponse response, Cons<Seq<TagCategory>> listener) {
         String data = response.getResultAsString();
         Seq<TagCategory> tags = JsonIO.json.fromJson(Seq.class, TagCategory.class, data);
+
+        if (tags == null) {
+            throw new IllegalArgumentException("Tag data is null");
+        }
+
         Core.app.post(() -> {
             listener.get(tags);
             onUpdate.run();

@@ -83,10 +83,6 @@ public class Main extends Mod {
             try {
                 var mod = Vars.mods.getMod(this.getClass());
 
-                for (var child : mod.root.child("icons").list()) {
-                    Log.info(child.absolutePath());
-                }
-
                 var texture = new TextureRegion(new Texture(mod.root.child("icons").child("mindustry-tool.png")));
                 TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
 
@@ -108,7 +104,6 @@ public class Main extends Mod {
             if (Vars.mobile) {
                 root.row()
                         .buttonRow(buttonTitle, Icon.settings, featureSettingDialog::show)
-                        .disabled(button -> !Vars.net.server())
                         .row();
                 return;
 
@@ -117,13 +112,11 @@ public class Main extends Mod {
                         .button(buttonTitle, Icon.settings, featureSettingDialog::show)
                         .colspan(2)
                         .width(450f)
-                        .disabled(button -> !Vars.net.server())
                         .row();
 
             } else {
                 root.row()
                         .button(buttonTitle, Icon.settings, featureSettingDialog::show)
-                        .disabled(button -> !Vars.net.server())
                         .row();
             }
             buttons.swap(buttons.size - 1, buttons.size - 2);

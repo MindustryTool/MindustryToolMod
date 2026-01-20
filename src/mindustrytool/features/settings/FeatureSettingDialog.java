@@ -5,6 +5,7 @@ import arc.graphics.Color;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import mindustry.gen.Icon;
+import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
@@ -14,7 +15,7 @@ import mindustrytool.features.FeatureManager;
 public class FeatureSettingDialog extends BaseDialog {
 
     public FeatureSettingDialog() {
-        super("Feature Settings");
+        super("Feature");
         addCloseButton();
 
         buttons.button("Report bug", Icon.infoCircle, () -> {
@@ -29,10 +30,29 @@ public class FeatureSettingDialog extends BaseDialog {
         cont.pane(table -> {
             table.top().left();
 
+            table.add("@feature").padLeft(10).top().left().row();
+
             int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / Scl.scl() * 0.9f / 340f));
             float cardWidth = ((float) arc.Core.graphics.getWidth() / Scl.scl() * 0.9f) / cols;
 
             int i = 0;
+
+            for (Feature feature : FeatureManager.getInstance().getEnableds().select(f -> f.dialog().isPresent())) {
+                buildFeatureButton(table, feature, cardWidth);
+                if (++i % cols == 0) {
+                    table.row();
+                }
+            }
+
+            table.row();
+            table.image().color(Color.gray).growX().height(4f)
+                    .colspan(cols)
+                    .pad(10)
+                    .row();
+
+            table.add("@settings").padLeft(10).top().left().row();
+
+            i = 0;
 
             for (Feature feature : FeatureManager.getInstance().getFeatures()) {
                 buildFeatureCard(table, feature, cardWidth);
@@ -43,11 +63,62 @@ public class FeatureSettingDialog extends BaseDialog {
         }).grow();
     }
 
+    private void buildFeatureButton(Table parent, Feature feature, float cardWidth) {
+        var metadata = feature.getMetadata();
+
+        parent.table(Tex.button, card -> {
+            card.top().left();
+
+            card.table(c -> {
+                c.top().left().margin(12);
+
+                // Header
+                c.table(header -> {
+                    header.left();
+                    header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
+
+                    // Settings button
+                    if (feature.setting().isPresent()) {
+                        header.button(Icon.settings, Styles.clearNonei,
+                                () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32)
+                                .padLeft(8);
+                    }
+
+                    // Status icon (visual only)
+                }).growX().row();
+
+                // Description
+                c.add(metadata.description())
+                        .color(Color.lightGray)
+                        .fontScale(0.9f)
+                        .wrap()
+                        .growX()
+                        .padTop(10)
+                        .row();
+
+                // Spacer to push status to bottom
+                c.add().growY().row();
+                c.add().growX();
+
+                c.button(Icon.linkSmall, () -> {
+                    feature.dialog().get().show();
+                });
+
+            }).grow();
+
+        })
+                .growX()
+                .minWidth(cardWidth)
+                .height(180f).pad(10f).get().clicked(() -> {
+                    feature.dialog().get().show();
+                });
+    }
+
     private void buildFeatureCard(Table parent, Feature feature, float cardWidth) {
         boolean enabled = FeatureManager.getInstance().isEnabled(feature);
         var metadata = feature.getMetadata();
 
-        parent.table(Styles.black8, card -> {
+        parent.table(Styles.black6, card -> {
             card.top().left();
 
             // Status border

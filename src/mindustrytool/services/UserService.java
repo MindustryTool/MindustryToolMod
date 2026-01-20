@@ -35,6 +35,10 @@ public class UserService {
                         String data = response.getResultAsString();
                         UserData userData = JsonIO.json.fromJson(UserData.class, data);
 
+                        if (userData == null) {
+                            throw new IllegalArgumentException("User data is null");
+                        }
+
                         cache.put(id, userData);
 
                         Core.app.post(() -> {

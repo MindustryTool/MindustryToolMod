@@ -213,7 +213,7 @@ public class QuickAccessHud extends Table implements Feature {
         if (popup.y + popup.getHeight() > Core.graphics.getHeight())
             popup.y = Core.graphics.getHeight() - popup.getHeight();
 
-        Core.scene.add(popup);
+        Vars.ui.hudGroup.addChild(popup);
         currentPopup = popup;
     }
 

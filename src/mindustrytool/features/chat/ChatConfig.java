@@ -1,5 +1,7 @@
 package mindustrytool.features.chat;
 
+import java.time.Instant;
+
 import arc.Core;
 
 public class ChatConfig {
@@ -46,5 +48,13 @@ public class ChatConfig {
 
     public void collapsed(boolean value) {
         Core.settings.put("mindustrytool.chat.collapsed", value);
+    }
+
+    public Instant lastRead() {
+        return Instant.ofEpochMilli(Core.settings.getLong("mindustrytool.chat.lastRead", 0));
+    }
+
+    public void lastRead(Instant value) {
+        Core.settings.put("mindustrytool.chat.lastRead", value.toEpochMilli());
     }
 }

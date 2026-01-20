@@ -14,9 +14,11 @@ public class PlayerConnectProviders {
     public static synchronized void refreshOnline(Runnable onCompleted, arc.func.Cons<Throwable> onFailed) {
         playerConnectService.findPlayerConnectProvider(providers -> {
             online.clear();
+
             for (var provider : providers) {
                 online.put(provider.name(), provider.address());
             }
+
             onCompleted.run();
         }, onFailed);
     }

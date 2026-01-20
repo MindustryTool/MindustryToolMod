@@ -1,8 +1,11 @@
 package mindustrytool.features.browser.schematic;
 
+import java.util.Optional;
+
 import arc.Core;
 import arc.Events;
 import arc.scene.ui.Button;
+import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
@@ -74,7 +77,8 @@ public class SchematicBrowserFeature implements Feature {
         }
     }
 
-    public SchematicDialog getDialog() {
-        return schematicDialog;
+    @Override
+    public Optional<Dialog> dialog() {
+        return Optional.of(schematicDialog);
     }
 }

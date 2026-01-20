@@ -2,8 +2,11 @@ package mindustrytool.features.browser;
 
 import arc.Core;
 import arc.func.Cons;
+import arc.graphics.g2d.GlyphLayout;
+import arc.math.Mathf;
 import arc.scene.ui.ButtonGroup;
 import arc.scene.ui.TextButton.TextButtonStyle;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Align;
@@ -19,51 +22,67 @@ import mindustrytool.services.TagService;
 import mindustrytool.ui.NetworkImage;
 
 public class FilterDialog extends BaseDialog {
+    private static final float TARGET_WIDTH = 250f;
+    private final GlyphLayout layout = new GlyphLayout();
+
     private TextButtonStyle style = Styles.togglet;
     private final Cons<Cons<Seq<TagCategory>>> tagProvider;
     private float scale = 1;
-    private int cols = 1;
-    private int cardSize = 0;
     private final int CARD_GAP = 4;
     private Seq<String> modIds = new Seq<>();
 
     private ModService modService = new ModService();
-    private final TagService tagService;
+    private SearchConfig searchConfig;
 
     public FilterDialog(TagService tagService, SearchConfig searchConfig, Cons<Cons<Seq<TagCategory>>> tagProvider) {
         super("");
 
-        this.tagService = tagService;
+        this.tagProvider = tagProvider;
+        this.searchConfig = searchConfig;
+
         setFillParent(true);
         addCloseListener();
 
-        this.tagProvider = tagProvider;
+        // Register listeners once
+        modService.onUpdate(this::rebuild);
+        tagService.onUpdate(this::rebuild);
 
         onResize(() -> {
-            if (searchConfig != null) {
-                show(searchConfig);
+            if (isShown()) {
+                rebuild();
             }
         });
     }
 
     public void show(SearchConfig searchConfig) {
-        modService.onUpdate(() -> {
-            show(searchConfig);
-        });
+        this.searchConfig = searchConfig;
+        rebuild();
+        super.show();
+    }
 
-        tagService.onUpdate(() -> show(searchConfig));
+    private void rebuild() {
+        if (searchConfig == null)
+            return;
 
         try {
             scale = Vars.mobile ? 0.8f : 1f;
-            cardSize = (int) (300 * scale);
-            cols = (int) Math.max(Math.floor(Core.graphics.getWidth() / (cardSize + CARD_GAP)), 1);
+
+            // Calculate layout metrics based on SchematicDialog logic
+            float availableWidth = Core.graphics.getWidth() / Scl.scl() * 0.9f;
+            float targetW = Math.min(availableWidth, TARGET_WIDTH);
+
+            // For grid-based selectors (Mod, Sort)
+            int cols = Mathf.clamp((int) (availableWidth / targetW), 1, 20);
+            float cardWidth = availableWidth / cols;
 
             cont.clear();
             cont.pane(table -> {
-                modService.getMod(mods -> ModSelector(table, searchConfig, mods));
+                table.top().left();
+
+                modService.getMod(mods -> ModSelector(table, searchConfig, mods, cols, cardWidth));
 
                 table.row();
-                SortSelector(table, searchConfig);
+                SortSelector(table, searchConfig, cols, cardWidth);
                 table.row();
                 table.top();
 
@@ -73,16 +92,16 @@ public class FilterDialog extends BaseDialog {
                             continue;
 
                         table.row();
-                        TagSelector(table, searchConfig, category);
+                        TagSelector(table, searchConfig, category, availableWidth);
                     }
                 });
-            })//
-                    .padLeft(20)//
-                    .padRight(20)//
-                    .scrollY(true)//
-                    .expand()//
-                    .fill()//
-                    .left()//
+            })
+                    .padLeft(20)
+                    .padRight(20)
+                    .scrollY(true)
+                    .expand()
+                    .fill()
+                    .left()
                     .top();
 
             cont.row();
@@ -90,34 +109,33 @@ public class FilterDialog extends BaseDialog {
             buttons.defaults().size(Core.graphics.isPortrait() ? 150f : 210f, 64f);
 
             addCloseButton();
-            show();
         } catch (Exception e) {
             Log.err(e);
         }
     }
 
-    public void ModSelector(Table table, SearchConfig searchConfig, Seq<ModData> mods) {
+    public void ModSelector(Table table, SearchConfig searchConfig, Seq<ModData> mods, int cols, float cardWidth) {
         table.table(Styles.flatOver,
-                text -> text.add(Core.bundle.format("messagemod"))//
-                        .fontScale(scale)//
-                        .left()//
-                        .labelAlign(Align.left))//
-                .top()//
-                .left()//
+                text -> text.add(Core.bundle.format("message.mod"))
+                        .fontScale(scale)
+                        .left()
+                        .labelAlign(Align.left))
+                .top()
+                .left()
                 .expandX()
                 .padBottom(4);
 
         table.row();
         table.pane(card -> {
-            card.defaults().size(cardSize, 50);
+            card.defaults().size(cardWidth, 50); // Use calculated width
             int i = 0;
             for (var mod : mods.sort((a, b) -> a.position() - b.position())) {
                 card.button(btn -> {
                     btn.left();
                     if (mod.icon() != null && !mod.icon().isEmpty()) {
-                        btn.add(new NetworkImage(mod.icon()))//
-                                .size(40 * scale)//
-                                .padRight(4)//
+                        btn.add(new NetworkImage(mod.icon()))
+                                .size(40 * scale)
+                                .padRight(4)
                                 .marginRight(4);
                     }
                     btn.add(mod.name()).fontScale(scale);
@@ -128,123 +146,143 @@ public class FilterDialog extends BaseDialog {
                             } else {
                                 modIds.add(mod.id());
                             }
-                            Core.app.post(() -> show(searchConfig));
-                        })//
-                        .checked(modIds.contains(mod.id()))//
-                        .padRight(CARD_GAP)//
-                        .padBottom(CARD_GAP)//
-                        .left()//
-                        .fillX()//
+                            Core.app.post(this::rebuild);
+                        })
+                        .checked(modIds.contains(mod.id()))
+                        .padRight(CARD_GAP)
+                        .padBottom(CARD_GAP)
+                        .left()
+                        .fillX()
                         .margin(12);
 
                 if (++i % cols == 0) {
                     card.row();
                 }
             }
-        })//
-                .top()//
-                .left()//
+        })
+                .top()
+                .left()
                 .expandX()
-                .scrollY(false)//
+                .scrollY(false)
                 .padBottom(48);
     }
 
-    public void SortSelector(Table table, SearchConfig searchConfig) {
+    public void SortSelector(Table table, SearchConfig searchConfig, int cols, float cardWidth) {
         var buttonGroup = new ButtonGroup<>();
 
         table.table(Styles.flatOver,
-                text -> text.add(Core.bundle.format("message.sort"))//
-                        .fontScale(scale)//
-                        .left()//
-                        .labelAlign(Align.left))//
-                .top()//
-                .left()//
+                text -> text.add(Core.bundle.format("message.sort"))
+                        .fontScale(scale)
+                        .left()
+                        .labelAlign(Align.left))
+                .top()
+                .left()
                 .expandX()
                 .padBottom(4);
 
         table.row();
         table.pane(card -> {
-            card.defaults().size(cardSize, 50);
+            card.defaults().size(cardWidth, 50); // Use calculated width
             int i = 0;
             for (var sort : Config.sorts) {
-                card.button(btn -> btn.add(formatTag(sort.getName())).fontScale(scale)//
-                        , style, () -> {
-                            searchConfig.setSort(sort);
-                        })//
-                        .group(buttonGroup)//
-                        .checked(sort.equals(searchConfig.getSort()))//
-                        .padRight(CARD_GAP)//
+                card.button(btn -> btn.add(formatTag(sort.getName())).fontScale(scale), style, () -> {
+                    searchConfig.setSort(sort);
+                })
+                        .group(buttonGroup)
+                        .checked(sort.equals(searchConfig.getSort()))
+                        .padRight(CARD_GAP)
                         .padBottom(CARD_GAP);
 
                 if (++i % cols == 0) {
                     card.row();
                 }
             }
-        })//
-                .top()//
-                .left()//
+        })
+                .top()
+                .left()
                 .expandX()
-                .scrollY(false)//
+                .scrollY(false)
                 .padBottom(48);
     }
 
-    public void TagSelector(Table table, SearchConfig searchConfig, TagCategory category) {
+    public void TagSelector(Table table, SearchConfig searchConfig, TagCategory category, float availableWidth) {
+        var tags = category.tags()
+                .select(value -> value.planetIds() == null || value.planetIds().size == 0
+                        || value.planetIds().find(t -> modIds.contains(t)) != null)
+                .sort((a, b) -> a.position() - b.position());
+
+        if (tags.size == 0) {
+            return;
+        }
+
         table.table(Styles.flatOver,
-                text -> text.add(category.name())//
-                        .fontScale(scale)//
+                text -> text.add(category.name())
+                        .fontScale(scale)
                         .left()
-                        .labelAlign(Align.left))//
-                .top()//
-                .left()//
+                        .color(category.color())
+                        .labelAlign(Align.left))
+                .top()
+                .left()
                 .padBottom(4);
 
         table.row();
 
-        table.pane(card -> {
-            card.defaults().size(cardSize, 50);
-            int z = 0;
+        // Flex layout using nested tables
+        Table container = new Table();
+        container.left();
 
-            for (int i = 0; i < category.tags().sort((a, b) -> a.position() - b.position()).size; i++) {
-                var value = category.tags().get(i);
+        // Initial row table
+        final Table[] currentRow = { new Table() };
+        currentRow[0].left();
+        container.add(currentRow[0]).left().row();
 
-                if (value.planetIds() == null //
-                        || value.planetIds().size == 0
-                        || value.planetIds().find(t -> modIds.contains(t)) != null) {
+        float currentWidth = 0;
 
-                    card.button(btn -> {
-                        btn.left();
-                        if (value.icon() != null && !value.icon().isEmpty()) {
-                            btn.add(new NetworkImage(value.icon()))//
-                                    .size(40 * scale)//
-                                    .padRight(4)//
-                                    .marginRight(4);
-                        }
-                        btn.add(formatTag(value.name())).fontScale(scale);
+        for (var tag: tags) {
+            String tagName = formatTag(tag.name());
+            float iconSize = (tag.icon() != null && !tag.icon().isEmpty()) ? 40 * scale + 8 : 0;
 
-                    }, style, () -> {
-                        searchConfig.setTag(category, value);
-                    })//
-                            .checked(searchConfig.containTag(category, value))//
-                            .padRight(CARD_GAP)//
-                            .padBottom(CARD_GAP)//
-                            .left()//
-                            .expandX()
-                            .margin(12);
-
-                    if (++z % cols == 0) {
-                        card.row();
-                    }
-                }
+            // Estimate button width
+            float textWidth = 0;
+            try {
+                layout.setText(style.font, tagName);
+                textWidth = layout.width * scale;
+            } catch (Exception e) {
+                textWidth = tagName.length() * 10 * scale; // Fallback
             }
-        })//
-                .growY()//
-                .wrap()//
-                .top()//
-                .left()//
-                .expandX()
-                .scrollX(true)//
-                .scrollY(false)//
-                .padBottom(48);
+
+            float buttonWidth = iconSize + textWidth + 24 + 10; // +24 margin, +10 safety buffer
+
+            if (currentWidth + buttonWidth + CARD_GAP > availableWidth) {
+                currentRow[0] = new Table();
+                currentRow[0].left();
+                container.add(currentRow[0]).left().row();
+                currentWidth = 0;
+            }
+
+            currentRow[0].button(btn -> {
+                btn.left();
+                if (tag.icon() != null && !tag.icon().isEmpty()) {
+                    btn.add(new NetworkImage(tag.icon()))
+                            .size(40 * scale)
+                            .padRight(4)
+                            .marginRight(4);
+                }
+                btn.add(tagName).color(tag.color()).fontScale(scale);
+
+            }, style, () -> {
+                searchConfig.setTag(category, tag);
+            })
+                    .checked(searchConfig.containTag(category, tag))
+                    .padRight(CARD_GAP)
+                    .padBottom(CARD_GAP)
+                    .left()
+                    .margin(12);
+
+            currentWidth += buttonWidth + CARD_GAP;
+        }
+
+        table.add(container).width(availableWidth).left().padBottom(48);
     }
 
     private String formatTag(String name) {
