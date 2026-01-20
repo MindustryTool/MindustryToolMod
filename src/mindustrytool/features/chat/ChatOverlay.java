@@ -160,7 +160,7 @@ public class ChatOverlay extends Table {
             float width = Core.graphics.getWidth() / Scl.scl();
             float height = Core.graphics.getHeight() / Scl.scl();
 
-            containerCell.size(Math.min(width, 900f), Math.min(height, 700f));
+            containerCell.size(Math.min(width, 1400f), Math.min(height, 900f));
 
             // Header
             Table header = new Table();
@@ -261,8 +261,8 @@ public class ChatOverlay extends Table {
                 inputField = new TextField();
                 inputField.setMessageText("Enter message...");
                 inputField.setValidator(text -> text.length() > 0
-                        && (text.startsWith(Vars.schematicBaseStart) && text.endsWith("=") ? text.length() < 1024 * 12
-                                : text.length() < 1024));
+                        && (text.startsWith(Vars.schematicBaseStart) && text.endsWith("=") ? text.length() < 2056 * 12
+                                : text.length() < 2056));
                 inputField.keyDown(arc.input.KeyCode.enter, () -> {
                     boolean isSchematic = false;
                     try {
@@ -405,8 +405,8 @@ public class ChatOverlay extends Table {
             }).size(48).top().pad(8);
 
             // Content Column
-            entry.table(content -> {
-                content.top().left();
+            entry.table(card -> {
+                card.top().left();
                 Label label = new Label("...");
                 label.setStyle(Styles.defaultLabel);
 
@@ -440,34 +440,44 @@ public class ChatOverlay extends Table {
                             + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
                 });
 
-                content.add(label).left().row();
+                card.add(label).left().row();
+                card.table(c -> {
+                    String content = msg.content.trim();
+                    int schematicBasePosition = content.indexOf(Vars.schematicBaseStart);
 
-                int schematicBasePosition = msg.content.indexOf(Vars.schematicBaseStart);
+                    if (schematicBasePosition != -1) {
+                        int endPosition = content.indexOf(" ", schematicBasePosition) + 1;
 
-                if (schematicBasePosition != -1) {
-                    int endPosition = msg.content.indexOf(" ", schematicBasePosition) + 1;
+                        if (endPosition == 0) {
+                            endPosition = content.length();
+                        }
 
-                    if (endPosition == 0) {
-                        endPosition = msg.content.length();
+                        String prev = content.substring(0, schematicBasePosition);
+
+                        c.add(prev).wrap().color(Color.lightGray).left().padTop(2);
+                        String schematicBase64 = content.substring(schematicBasePosition, endPosition);
+
+                        try {
+                            var schematic = Schematics.readBase64(schematicBase64);
+                            c.row();
+                            renderSchematic(card, schematic);
+                            c.row();
+                            String after = content.substring(endPosition);
+                            c.add(after).wrap().color(Color.lightGray).left().growX().padTop(2);
+                        } catch (Exception e) {
+                            c.clear();
+                            c.add(content).wrap().color(Color.lightGray).left().padTop(2);
+                        }
+                    } else {
+                        c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
                     }
+                })
+                        .top().left();
 
-                    String prev = msg.content.substring(0, schematicBasePosition);
-
-                    content.add(prev).wrap().color(Color.lightGray).left().padTop(2);
-                    String schematicBase64 = msg.content.substring(schematicBasePosition, endPosition);
-                    try {
-                        var schematic = Schematics.readBase64(schematicBase64);
-                        content.row();
-                        renderSchematic(content, schematic);
-                        content.row();
-                    } catch (Exception e) {
-                        content.add(schematicBase64).wrap().color(Color.lightGray).left().padTop(2);
-                    }
-                    String after = msg.content.substring(endPosition);
-                    content.add(after).wrap().color(Color.lightGray).left().growX().padTop(2);
-                } else {
-                    content.add(msg.content).wrap().color(Color.lightGray).left().growX().padTop(2);
-                }
+                card.clicked(() -> {
+                    Core.app.setClipboardText(msg.content);
+                    Vars.ui.showInfoFade("@copied");
+                });
             }).growX().pad(8).top();
 
             messageTable.add(entry).growX().padBottom(4).row();
