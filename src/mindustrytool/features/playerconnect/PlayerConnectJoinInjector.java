@@ -115,7 +115,7 @@ public class PlayerConnectJoinInjector {
         playerConnectService.findPlayerConnectRooms(searchTerm, rooms -> {
             playerConnectTable.clear();
 
-            if (rooms.isEmpty()) {
+            if (rooms != null && rooms.isEmpty()) {
                 playerConnectTable.labelWrap(Core.bundle.format("message.no-rooms-found"))
                         .center()
                         .labelAlign(0)
@@ -125,7 +125,6 @@ public class PlayerConnectJoinInjector {
                 return;
             }
 
-            int i = 0;
             int cols = columns();
 
             var groups = new HashMap<String, Seq<PlayerConnectRoom>>();
@@ -141,28 +140,34 @@ public class PlayerConnectJoinInjector {
             });
 
             for (var host : groups.entrySet()) {
-                playerConnectTable.row();
                 playerConnectTable.table(hostLabel -> {
                     hostLabel.add(host.getKey()).top().left().padLeft(10).padTop(10).padBottom(10);
                     hostLabel.image().growX().pad(10).height(3).color(Pal.gray);
                 })
                         .growX().colspan(cols).row();
 
-                for (var room : host.getValue()) {
-                    buildPlayerConnectRoom(room);
-                    if (++i % cols == 0) {
-                        playerConnectTable.row();
+                playerConnectTable.table(container -> {
+                    int i = 0;
+
+                    container.center();
+
+                    for (var room : host.getValue()) {
+                        buildPlayerConnectRoom(container, room);
+                        if (++i % cols == 0) {
+                            container.row();
+                        }
                     }
-                }
+                }).growX();
+                playerConnectTable.row();
             }
         });
     }
 
-    private void buildPlayerConnectRoom(PlayerConnectRoom room) {
+    private void buildPlayerConnectRoom(Table container, PlayerConnectRoom room) {
         float twidth = targetWidth();
         float contentWidth = twidth - 40f;
 
-        playerConnectTable.table(Styles.black8, t -> {
+        container.table(Styles.black8, t -> {
             t.top().left();
 
             // Header: Name, Version, Lock

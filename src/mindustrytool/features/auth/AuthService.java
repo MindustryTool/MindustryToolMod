@@ -264,6 +264,7 @@ public class AuthService {
                         if (httpError.status.code == 401) {
                             Core.settings.remove(KEY_ACCESS_TOKEN);
                             Core.settings.remove(KEY_REFRESH_TOKEN);
+                            Log.info("Remove tokens");
                         }
 
                         Log.info(httpError.response.getResultAsString());
@@ -272,7 +273,8 @@ public class AuthService {
                 })
                 .submit(res -> {
                     try {
-                        Jval resJson = Jval.read(res.getResultAsString());
+                        String str = res.getResultAsString();
+                        Jval resJson = Jval.read(str);
                         if (resJson.has("accessToken") && resJson.has("refreshToken")) {
                             saveTokens(resJson.getString("accessToken"), resJson.getString("refreshToken"));
 
@@ -280,7 +282,8 @@ public class AuthService {
                             refreshFuture.complete(true);
                         } else {
 
-                            Log.err("Failed to refresh token: response does not contain accessToken or refreshToken");
+                            Log.err("Failed to refresh token: response does not contain accessToken or refreshToken: "
+                                    + str);
                             refreshFuture.completeExceptionally(new RuntimeException("Invalid refresh response"));
                         }
                     } catch (Exception e) {

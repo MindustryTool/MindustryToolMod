@@ -4,6 +4,7 @@ import arc.Core;
 import arc.func.Cons;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
+import arc.math.Mathf;
 import arc.scene.ui.Button;
 import arc.scene.ui.Label;
 import arc.scene.ui.ScrollPane;
@@ -98,9 +99,21 @@ public class SchematicDialog extends BaseDialog {
         shown(this::SchematicBrowser);
     }
 
+    private int columns() {
+        return Mathf.clamp((int) ((Core.graphics.getWidth() / Scl.scl() * 0.9f) / targetWidth()), 1, 4);
+    }
+
+    private int rows() {
+        return Mathf.clamp((int) (Core.graphics.getHeight() / Scl.scl(IMAGE_SIZE + INFO_TABLE_HEIGHT * 2)), 1, 4);
+    }
+
+    float targetWidth() {
+        return Math.min(Core.graphics.getWidth() / Scl.scl() * 0.9f, IMAGE_SIZE);
+    }
+
     private void setItemPerPage() {
-        int columns = (int) (Core.graphics.getWidth() / Scl.scl() * 0.9f / Scl.scl(IMAGE_SIZE)) - 1;
-        int rows = (int) (Core.graphics.getHeight() / Scl.scl(IMAGE_SIZE + INFO_TABLE_HEIGHT * 2));
+        int columns = columns();
+        int rows = rows();
         int size = Math.max(columns * rows, 20);
 
         request.setItemPerPage(size);

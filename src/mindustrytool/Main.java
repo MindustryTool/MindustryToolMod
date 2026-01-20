@@ -83,10 +83,6 @@ public class Main extends Mod {
             try {
                 var mod = Vars.mods.getMod(this.getClass());
 
-                for (var child : mod.root.child("icons").list()) {
-                    Log.info(child.absolutePath());
-                }
-
                 var texture = new TextureRegion(new Texture(mod.root.child("icons").child("mindustry-tool.png")));
                 TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
 

@@ -108,7 +108,7 @@ public class ChatService {
                                         // Let's manually map for safety or use Json if compatible
                                         ChatMessage[] messages = jsonParser.fromJson(ChatMessage[].class, data);
 
-                                        if (messageListener != null) {
+                                        if (messageListener != null && messages != null) {
                                             Core.app.post(() -> messageListener.get(messages));
                                         }
                                     }
@@ -194,7 +194,12 @@ public class ChatService {
                     try {
                         Json json = new Json();
                         ChatUser[] users = json.fromJson(ChatUser[].class, res.getResultAsString());
-                        Core.app.post(() -> onSuccess.get(users));
+
+                        if (users == null) {
+                            onSuccess.get(new ChatUser[0]);
+                        } else {
+                            Core.app.post(() -> onSuccess.get(users));
+                        }
                     } catch (Exception e) {
                         Core.app.post(() -> onError.get(e));
                     }
