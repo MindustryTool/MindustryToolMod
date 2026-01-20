@@ -1,6 +1,6 @@
 package mindustrytool.features.autoplay.tasks;
 
-import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
 import mindustry.ai.types.RepairAI;
 import mindustry.entities.Units;
 import mindustry.entities.units.AIController;
@@ -18,7 +18,7 @@ public class RepairTask implements AutoplayTask {
     }
 
     @Override
-    public Drawable getIcon() {
+    public TextureRegionDrawable getIcon() {
         return Icon.hammer;
     }
 

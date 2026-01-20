@@ -1,54 +1,38 @@
 package mindustrytool.features.playerconnect;
 
 import java.nio.ByteBuffer;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 
-import arc.Core;
 import arc.Events;
 import arc.func.Cons;
 import arc.net.Client;
-import arc.struct.Seq;
-import arc.util.Log;
+import arc.net.NetSerializer;
 import arc.util.Threads;
 import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
-import mindustry.core.Version;
 import mindustry.game.EventType;
 import mindustry.game.EventType.PlayerJoin;
 import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
-import mindustry.gen.Groups;
-import mindustry.gen.Player;
-import mindustrytool.Main;
-import mindustrytool.features.playerconnect.Packets.RoomPlayer;
+import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
 
 public class PlayerConnect {
     static {
-        // Pretty difficult to know when the player quits the game, there is no event...
         Vars.ui.paused.hidden(() -> {
             arc.util.Timer.schedule(() -> {
                 if (!Vars.net.active()) {
-                    Log.info("Close room net not active");
-                    closeRoom();
-                } else if (Vars.state.isMenu()) {
-                    Log.info("Close room in menu");
-                    closeRoom();
+                    close();
                 }
             }, 1f);
         });
 
         Events.run(EventType.HostEvent.class, () -> {
-            Log.info("Close room HostEvent");
-            PlayerConnect.closeRoom();
+            close();
         });
-        Events.run(EventType.ClientPreConnectEvent.class, () -> {
-            Log.info("Close room ClientPreConnectEvent");
-            PlayerConnect.closeRoom();
-        });
+
         Events.run(EventType.DisposeEvent.class, () -> {
-            disposeRoom();
+            dispose();
             disposePinger();
         });
 
@@ -69,80 +53,55 @@ public class PlayerConnect {
         }, 60f, 60f);
     }
 
-    private static void updateStats() {
-        if (!Vars.net.server()) {
-            return;
-        }
-
-        Core.app.post(() -> {
-            try {
-                if (room == null) {
-                    return;
-                }
-
-                Packets.StatsPacket p = new Packets.StatsPacket();
-                Packets.RoomStats stats = PlayerConnect.getRoomStats();
-                p.roomId = room.roomId();
-                p.data = stats;
-
-                if (!room.isConnected()) {
-                    return;
-                }
-
-                Log.info("Send room stats update: " + stats);
-
-                room.sendTCP(p);
-            } catch (Throwable err) {
-                Log.err(err);
-            }
-        });
-    }
-
     private static NetworkProxy room;
     private static Client pinger;
     private static ExecutorService worker = Threads.unboundedExecutor("Worker", 1);
-    private static arc.net.NetSerializer tmpSerializer;
-    private static ByteBuffer tmpBuffer = ByteBuffer.allocate(256);// we need 16 bytes for the room join packet
     private static Thread roomThread, pingerThread;
+
+    private static void updateStats() {
+        if (room == null) {
+            return;
+        }
+
+        room.updateStats();
+    }
 
     public static boolean isRoomClosed() {
         return room == null || !room.isConnected();
     }
 
-    public static void createRoom(String ip, int port,
+    public static void create(String ip, int port,
             String password,
             Cons<PlayerConnectLink> onSucceed,
             Cons<Throwable> onFailed,
-            Cons<Packets.RoomClosedPacket.CloseReason> onDisconnected//
+            Cons<CloseReason> onDisconnected//
     ) {
+        if (room.isConnected()) {
+            throw new IllegalStateException("Room is already created, please close it before.");
+        }
+
         if (room == null || roomThread == null || !roomThread.isAlive()) {
-            roomThread = Threads.daemon("Proxy", room = new NetworkProxy(password));
+            room = new NetworkProxy(password);
+            roomThread = Threads.daemon("Proxy", room);
         }
 
         worker.submit(() -> {
             try {
-                if (room.isConnected()) {
-                    throw new IllegalStateException("Room is already created, please close it before.");
-                }
-                room.connect(ip, port, id -> {
-                    Log.info("Created room: " + id);
-                    onSucceed.get(new PlayerConnectLink(ip, port, id));
-                }, onDisconnected);
+                room.connect(ip, port, id -> onSucceed.get(new PlayerConnectLink(ip, port, id)), onDisconnected);
             } catch (Throwable e) {
                 onFailed.get(e);
             }
         });
     }
 
-    /** Just close the room connection, doesn't delete it */
-    public static void closeRoom() {
+    public static void close() {
         if (room != null) {
             room.closeRoom();
         }
     }
 
     /** Delete properly the room */
-    public static void disposeRoom() {
+    public static void dispose() {
         if (room != null) {
             room.stop();
             try {
@@ -158,35 +117,34 @@ public class PlayerConnect {
         }
     }
 
-    public static void joinRoom(PlayerConnectLink link, String password, Runnable success) {
+    public static void join(PlayerConnectLink link, String password, Runnable success) {
         if (link == null) {
-            return;
+            throw new IllegalArgumentException("Link cannot be null.");
         }
+
+        Vars.ui.loadfrag.show("@connecting");
 
         Vars.logic.reset();
         Vars.net.reset();
 
-        Log.info("Begin connect: " + link);
         Vars.netClient.beginConnecting();
         Vars.net.connect(link.host, link.port, () -> {
-            if (!Vars.net.client()) {
-                return;
-            }
+            ByteBuffer tmpBuffer = ByteBuffer.allocate(256);
+            NetSerializer tmpSerializer = new NetworkProxy.Serializer();
 
-            if (tmpSerializer == null) {
-                tmpSerializer = new NetworkProxy.Serializer();
+            if (!Vars.net.client()) {
+                throw new IllegalStateException("Net client is not active.");
             }
 
             // We need to serialize the packet manually
             tmpBuffer.clear();
-            Packets.RoomJoinPacket p = new Packets.RoomJoinPacket();
-            p.password = password;
-            p.roomId = link.roomId;
-            tmpSerializer.write(tmpBuffer, p);
+
+            var packet = new Packets.RoomJoinPacket(link.roomId, password);
+
+            tmpSerializer.write(tmpBuffer, packet);
             tmpBuffer.limit(tmpBuffer.position()).position(0);
             Vars.net.send(tmpBuffer, true);
 
-            Log.info("Join room: " + link);
             success.run();
         });
     }
@@ -196,9 +154,7 @@ public class PlayerConnect {
      *          progress
      */
     public static void pingHost(String ip, int port, Cons<Long> success, Cons<Exception> onFailed) {
-        if (tmpSerializer == null) {
-            tmpSerializer = new NetworkProxy.Serializer();
-        }
+        NetSerializer tmpSerializer = new NetworkProxy.Serializer();
 
         if (pinger == null || pingerThread == null || !pingerThread.isAlive()) {
             pinger = new Client(8192, 8192, tmpSerializer);
@@ -234,33 +190,5 @@ public class PlayerConnect {
             pingerThread = null;
             pinger = null;
         }
-    }
-
-    public static Packets.RoomStats getRoomStats() {
-        Packets.RoomStats stats = new Packets.RoomStats();
-        try {
-            stats.gamemode = Vars.state.rules.mode().name();
-            stats.mapName = Vars.state.map.name();
-            stats.name = PlayerConnectConfig.getRoomName();
-            stats.mods = Vars.mods.getModStrings().list();
-
-            Seq<RoomPlayer> players = new Seq<>();
-
-            for (Player player : Groups.player) {
-                RoomPlayer pl = new RoomPlayer();
-                pl.locale = player.locale;
-                pl.name = player.name();
-                players.add(pl);
-            }
-            stats.locale = Vars.player.locale;
-            stats.version = Version.combined();
-            stats.players = players.list();
-            stats.createdAt = new Date().getTime();
-            var mod = Vars.mods.getMod(Main.class);
-            stats.modVersion = mod.meta.version;
-        } catch (Throwable err) {
-            Log.err(err);
-        }
-        return stats;
     }
 }
