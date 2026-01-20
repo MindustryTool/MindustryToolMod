@@ -15,7 +15,7 @@ public class AssistTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return "Auto Build " + Iconc.unitPoly;
+        return Iconc.players + " Auto Build";
     }
 
     @Override

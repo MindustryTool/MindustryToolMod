@@ -14,7 +14,7 @@ public class RepairTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return "Auto Repair " + Iconc.unitMega;
+        return Iconc.hammer + " Auto Repair";
     }
 
     @Override

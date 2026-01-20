@@ -129,7 +129,7 @@ public class PlayerConnectJoinInjector {
 
             var groups = new HashMap<String, Seq<PlayerConnectRoom>>();
 
-            rooms.forEach(room -> {
+            for (var room : rooms) {
                 var link = PlayerConnectLink.fromString(room.link());
                 var group = link.host;
 
@@ -137,7 +137,7 @@ public class PlayerConnectJoinInjector {
                     groups.put(group, new Seq<>());
                 }
                 groups.get(group).add(room);
-            });
+            }
 
             for (var host : groups.entrySet()) {
                 playerConnectTable.table(hostLabel -> {
