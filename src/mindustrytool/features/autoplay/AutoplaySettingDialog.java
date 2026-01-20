@@ -1,6 +1,7 @@
 package mindustrytool.features.autoplay;
 
 import mindustry.gen.Icon;
+import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
@@ -24,7 +25,7 @@ public class AutoplaySettingDialog extends BaseDialog {
                 AutoplayTask task = feature.getTasks().get(i);
                 int index = i;
 
-                t.table(Styles.black6, container -> {
+                t.table(Tex.pane, container -> {
                     container.left();
 
                     container.table(header -> {

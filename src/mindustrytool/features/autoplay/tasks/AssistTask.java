@@ -1,13 +1,17 @@
 package mindustrytool.features.autoplay.tasks;
 
 import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import mindustry.Vars;
 import mindustry.ai.types.BuilderAI;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
+import mindustry.gen.Player;
 import mindustry.gen.Unit;
+import mindustry.ui.Styles;
 
 public class AssistTask implements AutoplayTask {
     private boolean enabled = true;
@@ -54,5 +58,42 @@ public class AssistTask implements AutoplayTask {
     @Override
     public AIController getAI() {
         return ai;
+    }
+
+    @Override
+    public void buildSettings(Table table) {
+        table.add("@following").top().left().labelAlign(Align.left).padBottom(5).row();
+
+        table.button("None", Styles.togglet, () -> ai.assistFollowing = null)
+                .checked(ai.assistFollowing == null)
+                .growX()
+                .top()
+                .left()
+                .labelAlign(Align.left)
+                .padBottom(5)
+                .row();
+
+        table.pane(t -> {
+            t.top();
+            for (Player p : Groups.player) {
+                if (p.team() != Vars.player.team() || p == Vars.player) {
+                    continue;
+                }
+
+                t.button(p.name, Styles.togglet, () -> ai.assistFollowing = p.unit())
+                        .checked(ai.assistFollowing == p.unit())
+                        .top()
+                        .left()
+                        .labelAlign(Align.left)
+                        .padBottom(5)
+                        .growX()
+                        .row();
+            }
+        }).growX();
+    }
+
+    @Override
+    public boolean hasSettings() {
+        return true;
     }
 }
