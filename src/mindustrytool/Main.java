@@ -177,7 +177,7 @@ public class Main extends Mod {
                         String body = release.getString("body", "No description provided.");
 
                         changelog.append("[accent]").append(tagName).append("[]\n");
-                        changelog.append(body).append("\n\n");
+                        changelog.append(Utils.renderMarkdown(body)).append("\n\n");
                         count++;
                     }
 
@@ -195,17 +195,23 @@ public class Main extends Mod {
     private void showUpdateDialog(String currentVer, String latestVer, String changelog) {
         Core.app.post(() -> {
             BaseDialog dialog = new BaseDialog("Update Available");
-            dialog.cont.add(Core.bundle.format("message.new-version", currentVer, latestVer)).row();
-            dialog.cont.add("Discord: https://discord.gg/72324gpuCd").row();
 
-            dialog.cont.image().height(4f).color(Color.gray).fillX().pad(10f).row();
+            Table table = new Table();
+            table.defaults().left();
+
+            table.add(Core.bundle.format("message.new-version", currentVer, latestVer)).wrap().width(500f).row();
+            table.add("Discord: " + Config.DISCORD_INVITE_URL).color(Color.royal).padTop(5f).row();
+
+            table.image().height(4f).color(Color.gray).fillX().pad(10f).row();
 
             Table changelogTable = new Table();
             changelogTable.top().left();
-            changelogTable.add(changelog).wrap().width(500f).left();
+            changelogTable.add(changelog).wrap().width(480f).left();
 
             ScrollPane pane = new ScrollPane(changelogTable);
-            dialog.cont.add(pane).size(500f, 400f).row();
+            table.add(pane).size(500f, 400f).row();
+
+            dialog.cont.add(table);
 
             dialog.buttons.button("Cancel", dialog::hide).size(100f, 50f);
             dialog.buttons.button("Update", () -> {
@@ -219,6 +225,9 @@ public class Main extends Mod {
 
     private static int[] extractVersionNumber(String version) {
         try {
+            if (version.contains("v")) {
+                version = version.substring(version.indexOf("v"), version.indexOf("-"));
+            }
             String clean = version.replaceAll("[^0-9.]", "");
             String[] parts = clean.split("\\.");
             int[] numbers = new int[parts.length];
