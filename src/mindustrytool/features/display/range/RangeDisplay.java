@@ -100,7 +100,7 @@ public class RangeDisplay implements Feature {
             return;
         }
 
-        if (Vars.player.unit() != null){
+        if (Vars.player.unit() != null) {
             targetX = Vars.player.unit().x;
             targetY = Vars.player.unit().y;
         }
@@ -208,7 +208,7 @@ public class RangeDisplay implements Feature {
 
     private void drawCircle(float x, float y, float range, Color color) {
 
-        var rotation = Mathf.angle(x - targetX, y - targetY);
+        var rotation = Mathf.angle(targetX - x, targetY - y);
 
         Tmp.c2.set(color).a(config.opacity);
         Lines.stroke(1f, Tmp.c2);
