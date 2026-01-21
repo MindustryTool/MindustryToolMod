@@ -49,7 +49,7 @@ public class AuthService {
     }
 
     public boolean isLoggedIn() {
-        return Core.settings.has(KEY_ACCESS_TOKEN) && Core.settings.has(KEY_REFRESH_TOKEN);
+        return currentUser != null || (Core.settings.has(KEY_ACCESS_TOKEN) && Core.settings.has(KEY_REFRESH_TOKEN));
     }
 
     public synchronized CompletableFuture<Void> login() {
@@ -170,7 +170,7 @@ public class AuthService {
         Core.settings.remove(KEY_REFRESH_TOKEN);
         Core.settings.remove(KEY_LOGIN_ID);
         currentUser = null;
-        
+
         Events.fire(new LogoutEvent());
 
         Log.info("Logged out");
