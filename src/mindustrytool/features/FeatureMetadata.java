@@ -1,16 +1,16 @@
 package mindustrytool.features;
 
-import mindustry.gen.Iconc;
+import arc.scene.style.Drawable;
 
 public class FeatureMetadata {
     String name;
     String description;
-    char icon;
+    Drawable icon;
     int order;
     boolean enabledByDefault;
     boolean quickAccess;
 
-    private FeatureMetadata(String name, String description, char icon, int order, boolean enabledByDefault,
+    private FeatureMetadata(String name, String description, Drawable icon, int order, boolean enabledByDefault,
             boolean quickAccess) {
         this.name = name;
         this.description = description;
@@ -28,7 +28,7 @@ public class FeatureMetadata {
         return description;
     }
 
-    public char icon() {
+    public Drawable icon() {
         return icon;
     }
 
@@ -51,7 +51,7 @@ public class FeatureMetadata {
     public static class Builder {
         private String name;
         private String description;
-        private char icon = Iconc.settings;
+        private Drawable icon = null;
         private int order = 0;
         private boolean enabledByDefault = true;
         private boolean quickAccess = false;
@@ -66,7 +66,7 @@ public class FeatureMetadata {
             return this;
         }
 
-        public Builder icon(char icon) {
+        public Builder icon(Drawable icon) {
             this.icon = icon;
             return this;
         }
@@ -91,6 +91,8 @@ public class FeatureMetadata {
                 throw new IllegalStateException("Name is required");
             if (description == null)
                 throw new IllegalStateException("Description is required");
+            if (icon == null)
+                throw new IllegalStateException("Icon is required");
 
             return new FeatureMetadata(name, description, icon, order, enabledByDefault, quickAccess);
         }

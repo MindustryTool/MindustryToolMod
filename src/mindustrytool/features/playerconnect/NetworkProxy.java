@@ -33,7 +33,6 @@ import mindustry.net.Net.NetProvider;
 import mindustrytool.Main;
 import mindustrytool.features.playerconnect.Packets.RoomPlayer;
 import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
-import mindustrytool.ui.NoopRatekeeper;
 
 public class NetworkProxy extends Client implements NetListener {
     public static final String PROTOCOL_VERSION = "1";

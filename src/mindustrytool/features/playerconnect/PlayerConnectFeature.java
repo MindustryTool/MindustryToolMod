@@ -6,7 +6,7 @@ import arc.Events;
 import arc.scene.ui.Dialog;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
-import mindustry.gen.Iconc;
+import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -21,7 +21,7 @@ public class PlayerConnectFeature implements Feature {
         return FeatureMetadata.builder()
                 .name("Player Connect")
                 .description("Join and create P2P rooms.")
-                .icon(Iconc.host)
+                .icon(Icon.planet)
                 .order(3)
                 .build();
     }

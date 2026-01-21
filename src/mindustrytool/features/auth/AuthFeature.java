@@ -8,7 +8,6 @@ import arc.util.Align;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
-import mindustry.gen.Iconc;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -25,7 +24,7 @@ public class AuthFeature implements Feature {
                 .name("Authentication")
                 .description("Login to Mindustry Tool")
                 .enabledByDefault(true)
-                .icon(Iconc.lock)
+                .icon(Icon.lock)
                 .quickAccess(false)
                 .build();
     }

@@ -3,9 +3,6 @@ package mindustrytool;
 import arc.Core;
 import arc.Events;
 import arc.files.Fi;
-import arc.graphics.Texture;
-import arc.graphics.g2d.TextureRegion;
-import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
@@ -84,12 +81,7 @@ public class Main extends Mod {
 
         Events.on(ClientLoadEvent.class, (event) -> {
             try {
-                var mod = Vars.mods.getMod(this.getClass());
-
-                var texture = new TextureRegion(new Texture(mod.root.child("icons").child("mindustry-tool.png")));
-                TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
-
-                Vars.ui.menufrag.addButton("Mindustry Tool", drawable, () -> featureSettingDialog.show());
+                Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
             } catch (Exception e) {
                 Log.err(e);
                 Vars.ui.menufrag.addButton("Mindustry Tool", Icon.settings, () -> featureSettingDialog.show());

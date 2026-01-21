@@ -26,7 +26,6 @@ import mindustry.game.EventType.*;
 import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
-import mindustry.gen.Iconc;
 import mindustry.graphics.Pal;
 import mindustry.type.Item;
 import mindustry.type.UnitType;
@@ -35,6 +34,7 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.Tile;
 import mindustry.world.blocks.power.PowerGraph;
 import mindustry.world.modules.ItemModule;
+import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import java.util.Optional;
@@ -108,7 +108,7 @@ public class TeamResourceFeature extends Table implements Feature {
         return FeatureMetadata.builder()
                 .name("Team Resources")
                 .description("Display team resources and power status")
-                .icon(Iconc.box)
+                .icon(Utils.icons("team-resources.png"))
                 .order(0)
                 .enabledByDefault(true)
                 .quickAccess(true)
@@ -196,12 +196,14 @@ public class TeamResourceFeature extends Table implements Feature {
 
             rebuild();
             refreshPowerNode();
+            Core.settings.put("coreitems", false);
         }
     }
 
     @Override
     public void onDisable() {
         remove();
+        Core.settings.put("coreitems", true);
     }
 
     @Override

@@ -4,6 +4,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
+import arc.util.Scaling;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
@@ -130,6 +131,7 @@ public class FeatureSettingDialog extends BaseDialog {
                 // Header
                 c.table(header -> {
                     header.left();
+                    header.image(metadata.icon()).scaling(Scaling.fill).size(24).padRight(8);
                     header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
 
                     // Settings button

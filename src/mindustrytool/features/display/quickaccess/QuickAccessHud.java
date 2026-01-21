@@ -16,7 +16,6 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
-import mindustry.gen.Iconc;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
@@ -33,7 +32,7 @@ public class QuickAccessHud extends Table implements Feature {
         return FeatureMetadata.builder()
                 .name("Quick Access HUD")
                 .description("Quick access bar for toggling features")
-                .icon(Iconc.menu)
+                .icon(Icon.menu)
                 .build();
     }
 
@@ -141,7 +140,7 @@ public class QuickAccessHud extends Table implements Feature {
             // Using Label for Iconc
             Button[] btnRef = new Button[1];
             btnRef[0] = t.button(b -> {
-                b.label(() -> String.valueOf(meta.icon()))
+                b.image(meta.icon())
                         .update(l -> l
                                 .setColor(FeatureManager.getInstance().isEnabled(f) ? Color.white
                                         : mindustry.graphics.Pal.gray));

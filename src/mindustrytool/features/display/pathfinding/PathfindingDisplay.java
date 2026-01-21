@@ -25,12 +25,12 @@ import mindustry.game.EventType.Trigger;
 import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
-import mindustry.gen.Iconc;
 import mindustry.gen.Unit;
 import mindustry.graphics.Layer;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.Tile;
+import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -52,7 +52,7 @@ public class PathfindingDisplay implements Feature {
         return FeatureMetadata.builder()
                 .name("Pathfinding Visualizer")
                 .description("Visualizes unit pathfinding paths.")
-                .icon(Iconc.commandRally)
+                .icon(Utils.icons("pathfinding.png"))
                 .order(0)
                 .enabledByDefault(true)
                 .quickAccess(true)
