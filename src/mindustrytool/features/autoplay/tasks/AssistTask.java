@@ -14,6 +14,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.gen.Player;
 import mindustry.gen.Unit;
+import mindustry.input.DesktopInput;
 import mindustry.ui.Styles;
 
 public class AssistTask implements AutoplayTask {
@@ -51,6 +52,13 @@ public class AssistTask implements AutoplayTask {
         if (!unit.canBuild()) {
             status = Core.bundle.get("autoplay.status.cannot-build");
             return false;
+        }
+
+        if (Vars.control.input instanceof DesktopInput desktopInput) {
+            if (desktopInput.isBuilding == false) {
+                status = Core.bundle.get("autoplay.status.not-building");
+                return false;
+            }
         }
 
         if (ai.assistFollowing != null) {
