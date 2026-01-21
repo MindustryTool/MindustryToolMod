@@ -1,20 +1,26 @@
 package mindustrytool.features.playerconnect;
 
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 
+import arc.Core;
 import arc.Events;
 import arc.func.Cons;
 import arc.net.Client;
 import arc.net.NetSerializer;
+import arc.util.Log;
 import arc.util.Threads;
 import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType;
+import mindustry.game.Team;
+import mindustry.game.EventType.PlayerIpBanEvent;
 import mindustry.game.EventType.PlayerJoin;
 import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
+import mindustry.gen.Player;
 import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
 
 public class PlayerConnect {
@@ -55,6 +61,37 @@ public class PlayerConnect {
         Timer.schedule(() -> {
             updateStats();
         }, 60f, 60f);
+
+        Events.on(PlayerJoin.class, event -> {
+            if (PlayerConnect.isRoomClosed()) {
+                return;
+            }
+            if (PlayerConnectConfig.isAutoAccept()) {
+                return;
+            }
+
+            if (event.player == Vars.player) {
+                return;
+            }
+
+            var originalTeam = event.player.team();
+
+            event.player.team(Team.derelict);
+
+            if (event.player.unit() != null) {
+                event.player.unit().kill();
+            }
+
+            showAcceptDialog(event.player, originalTeam);
+        });
+
+        Events.on(PlayerIpBanEvent.class, event -> {
+            unbanProxyIp();
+        });
+
+        Events.on(RoomCreatedEvent.class, event -> {
+            unbanProxyIp();
+        });
     }
 
     private static NetworkProxy room;
@@ -74,6 +111,10 @@ public class PlayerConnect {
         return room == null || !room.isConnected();
     }
 
+    public static String getRemoteHost() {
+        return room == null ? null : room.getRemoteHost();
+    }
+
     public static void create(String ip, int port,
             String password,
             Cons<PlayerConnectLink> onSucceed,
@@ -87,11 +128,15 @@ public class PlayerConnect {
         if (room == null || roomThread == null || !roomThread.isAlive()) {
             room = new NetworkProxy(password);
             roomThread = Threads.daemon("Proxy", room);
+
         }
 
         worker.submit(() -> {
             try {
-                room.connect(ip, port, id -> onSucceed.get(new PlayerConnectLink(ip, port, id)), onDisconnected);
+                room.connect(ip, port, id -> {
+                    Events.fire(new RoomCreatedEvent(room));
+                    onSucceed.get(new PlayerConnectLink(ip, port, id));
+                }, onDisconnected);
             } catch (Throwable e) {
                 onFailed.get(e);
             }
@@ -194,5 +239,41 @@ public class PlayerConnect {
             pingerThread = null;
             pinger = null;
         }
+    }
+
+    private static void unbanProxyIp() {
+        if (PlayerConnect.isRoomClosed()) {
+            return;
+        }
+
+        String remoteHost = PlayerConnect.getRemoteHost();
+        if (remoteHost != null) {
+            try {
+                InetAddress address = InetAddress.getByName(remoteHost);
+                Core.app.post(() -> unban(address.getHostAddress()));
+            } catch (Exception e) {
+                Log.err("Failed to check ban IP against remote host", e);
+            }
+        }
+    }
+
+    private static void unban(String ip) {
+        Vars.netServer.admins.unbanPlayerIP(ip);
+        Log.info("PlayerConnect: Unbanned Proxy IP @", ip);
+    }
+
+    private static void showAcceptDialog(Player player, Team originalTeam) {
+
+        Vars.ui.showCustomConfirm(//
+                "@playerconnect.join-request",
+                "Player [accent]\" + player.name + \"[] wants to join.", //
+                "@accept", //
+                "@reject", //
+                () -> {
+                    player.team(originalTeam);
+                }, () -> {
+                    player.sendMessage("You have been rejected to join the game by room host.");
+                    player.con.close();
+                });
     }
 }

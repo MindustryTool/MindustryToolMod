@@ -50,6 +50,7 @@ public class NetworkProxy extends Client implements NetListener {
     private String roomId = null;
     private CloseReason closeReason;
     private String password = "";
+    private String remoteHost = "";
 
     private Cons<String> onRoomCreated;
     private Cons<CloseReason> onRoomClosed;
@@ -73,10 +74,15 @@ public class NetworkProxy extends Client implements NetListener {
     public void connect(String host, int udpTcpPort, Cons<String> onRoomCreated,
             Cons<CloseReason> onRoomClosed//
     ) throws IOException {
+        this.remoteHost = host;
         this.onRoomCreated = onRoomCreated;
         this.onRoomClosed = onRoomClosed;
 
         connect(defaultTimeout, host, udpTcpPort, udpTcpPort);
+    }
+
+    public String getRemoteHost() {
+        return remoteHost;
     }
 
     public void setPassword(String password) {

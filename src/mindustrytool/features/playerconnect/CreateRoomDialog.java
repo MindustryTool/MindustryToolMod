@@ -118,6 +118,13 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .row();
 
+            t.add(Core.bundle.format("message.create-room.server-name.description"))
+                    .color(Color.lightGray)
+                    .fontScale(0.75f)
+                    .left()
+                    .padBottom(5f)
+                    .row();
+
             t.field(PlayerConnectConfig.getRoomName(), text -> {
                 PlayerConnectConfig.setRoomName(text);
             })
@@ -134,6 +141,13 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .row();
 
+            t.add(Core.bundle.format("message.create-room.password.description"))
+                    .color(Color.lightGray)
+                    .fontScale(0.75f)
+                    .left()
+                    .padBottom(5f)
+                    .row();
+
             t.field(PlayerConnectConfig.getPassword(), text -> {
                 PlayerConnectConfig.setPassword(text);
             })
@@ -142,7 +156,44 @@ public class CreateRoomDialog extends BaseDialog {
                     .maxTextLength(100)
                     .left()
                     .row();
-        }).padBottom(20f).row();
+
+            t.add("Max Players")
+                    .padRight(5f)
+                    .ellipsis(true)
+                    .left()
+                    .row();
+
+            t.add(Core.bundle.format("message.create-room.max-player.description"))
+                    .color(Color.lightGray)
+                    .fontScale(0.75f)
+                    .left()
+                    .padBottom(5f)
+                    .row();
+
+            t.field(String.valueOf(PlayerConnectConfig.getMaxPlayer()), text -> {
+                if (Strings.canParseInt(text)) {
+                    PlayerConnectConfig.setMaxPlayer(Strings.parseInt(text));
+                }
+            })
+                    .valid(Strings::canParseInt)
+                    .height(54f)
+                    .growX()
+                    .maxTextLength(3)
+                    .left()
+                    .row();
+
+            t.check("Auto Accept", PlayerConnectConfig.isAutoAccept(), PlayerConnectConfig::setAutoAccept)
+                    .left()
+                    .padTop(10f)
+                    .row();
+
+            t.add(Core.bundle.format("message.create-room.auto-accept.description"))
+                    .color(Color.lightGray)
+                    .fontScale(0.75f)
+                    .left()
+                    .padBottom(5f)
+                    .row();
+        }).width(Math.min(800, Core.scene.getWidth())).padBottom(20f).row();
 
         mainTable.button("Next", Icon.right, () -> {
             setupStep2();
@@ -295,6 +346,8 @@ public class CreateRoomDialog extends BaseDialog {
         if (selected == null)
             return;
 
+        Vars.netServer.admins.setPlayerLimit(PlayerConnectConfig.getMaxPlayer());
+
         link = null;
         Vars.ui.loadfrag.show("@message.manage-room.create-room");
 
@@ -319,9 +372,9 @@ public class CreateRoomDialog extends BaseDialog {
             link = null;
             timer.cancel();
             if (closeReason != null) {
-                Vars.ui.showText("", "@message.room." + arc.util.Strings.camelToKebab(closeReason.name()));
+                Vars.ui.showInfoFade("@message.room." + arc.util.Strings.camelToKebab(closeReason.name()));
             } else if (link == null) {
-                Vars.ui.showErrorMessage("@message.manage-room.room-closed");
+                Vars.ui.showInfoFade("@message.manage-room.room-closed");
             }
         });
     }
