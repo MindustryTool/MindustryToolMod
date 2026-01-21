@@ -157,7 +157,7 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .row();
 
-            t.add("Max Players")
+            t.add(Core.bundle.format("message.create-room.max-player"))
                     .padRight(5f)
                     .ellipsis(true)
                     .left()
@@ -182,7 +182,8 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .row();
 
-            t.check("Auto Accept", PlayerConnectConfig.isAutoAccept(), PlayerConnectConfig::setAutoAccept)
+            t.check(Core.bundle.format("message.create-room.auto-accept"), PlayerConnectConfig.isAutoAccept(),
+                    PlayerConnectConfig::setAutoAccept)
                     .left()
                     .padTop(10f)
                     .row();

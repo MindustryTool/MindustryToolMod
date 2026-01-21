@@ -8,6 +8,7 @@ import arc.Core;
 import arc.Events;
 import arc.func.Cons;
 import arc.net.Client;
+import arc.struct.Seq;
 import arc.net.NetSerializer;
 import arc.util.Log;
 import arc.util.Threads;
@@ -24,6 +25,15 @@ import mindustry.gen.Player;
 import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
 
 public class PlayerConnect {
+
+    private static NetworkProxy room;
+    private static Client pinger;
+    private static ExecutorService worker = Threads.unboundedExecutor("Worker", 1);
+    private static Thread roomThread, pingerThread;
+
+    private static final Seq<Request> requestQueue = new Seq<>();
+    private static boolean isShowingDialog = false;
+
     static {
         Vars.ui.paused.hidden(() -> {
             arc.util.Timer.schedule(() -> {
@@ -74,6 +84,10 @@ public class PlayerConnect {
                 return;
             }
 
+            if (requestQueue.contains(r -> r.player.uuid().equals(event.player.uuid()))) {
+                return;
+            }
+
             var originalTeam = event.player.team();
 
             event.player.team(Team.derelict);
@@ -82,7 +96,11 @@ public class PlayerConnect {
                 event.player.unit().kill();
             }
 
-            showAcceptDialog(event.player, originalTeam);
+            requestQueue.add(new Request(event.player, originalTeam));
+
+            if (!isShowingDialog) {
+                processNextRequest();
+            }
         });
 
         Events.on(PlayerIpBanEvent.class, event -> {
@@ -94,10 +112,15 @@ public class PlayerConnect {
         });
     }
 
-    private static NetworkProxy room;
-    private static Client pinger;
-    private static ExecutorService worker = Threads.unboundedExecutor("Worker", 1);
-    private static Thread roomThread, pingerThread;
+    private static class Request {
+        final Player player;
+        final Team originalTeam;
+
+        public Request(Player player, Team originalTeam) {
+            this.player = player;
+            this.originalTeam = originalTeam;
+        }
+    }
 
     private static void updateStats() {
         if (room == null) {
@@ -262,18 +285,36 @@ public class PlayerConnect {
         Log.info("PlayerConnect: Unbanned Proxy IP @", ip);
     }
 
-    private static void showAcceptDialog(Player player, Team originalTeam) {
+    private static synchronized void processNextRequest() {
+        if (requestQueue.isEmpty()) {
+            isShowingDialog = false;
+            return;
+        }
+
+        isShowingDialog = true;
+        Request req = requestQueue.remove(0);
+
+        if (!req.player.con.isConnected()) {
+            processNextRequest();
+            return;
+        }
 
         Vars.ui.showCustomConfirm(//
                 "@playerconnect.join-request",
-                "Player [accent]\" + player.name + \"[] wants to join.", //
+                "Player [accent]\"" + req.player.name + "\"[] wants to join.", //
                 "@accept", //
                 "@reject", //
                 () -> {
-                    player.team(originalTeam);
+                    if (req.player.con.isConnected()) {
+                        req.player.team(req.originalTeam);
+                    }
+                    processNextRequest();
                 }, () -> {
-                    player.sendMessage("You have been rejected to join the game by room host.");
-                    player.con.close();
+                    if (req.player.con.isConnected()) {
+                        req.player.sendMessage("You have been rejected to join the game by room host.");
+                        req.player.con.close();
+                    }
+                    processNextRequest();
                 });
     }
 }
