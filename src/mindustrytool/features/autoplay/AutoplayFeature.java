@@ -9,6 +9,7 @@ import arc.struct.Seq;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
+import mindustry.gen.Icon;
 import mindustry.graphics.Layer;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
@@ -101,6 +102,10 @@ public class AutoplayFeature implements Feature {
         var unit = Vars.player.unit();
 
         if (currentTask == null || unit == null) {
+            Draw.z(Layer.overlayUI);
+            Draw.rect(Icon.none.getRegion(), unit.x, unit.y + unit.hitSize * 2f, 10f, 10f);
+            Draw.reset();
+
             return;
         }
 
