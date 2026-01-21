@@ -2,6 +2,7 @@ package mindustrytool.features.autoplay.tasks;
 
 import java.util.Optional;
 
+import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
@@ -17,6 +18,7 @@ import mindustry.ui.Styles;
 
 public class AssistTask implements AutoplayTask {
     private boolean enabled = true;
+    private String status = "";
     private final BuilderAI ai = new BuilderAI();
 
     @Override
@@ -40,25 +42,41 @@ public class AssistTask implements AutoplayTask {
     }
 
     @Override
+    public String getStatus() {
+        return status;
+    }
+
+    @Override
     public boolean shouldRun(Unit unit) {
         if (ai.assistFollowing != null) {
+            Player p = Groups.player.find(pl -> pl.unit() == ai.assistFollowing);
+            String name = (p != null) ? p.name : "unit";
+            status = Core.bundle.format("autoplay.status.following", name);
             return true;
         }
 
         if (!unit.canBuild()) {
+            status = Core.bundle.get("autoplay.status.cannot-build");
             return false;
         }
 
         var buildingPlayer = Groups.player
-                .find(p -> p.unit() != null && unit.team() == p.team() && p.unit().buildPlan() != null);
+                .find(p -> p != Vars.player && p.unit() != null && unit.team() == p.team()
+                        && p.unit().buildPlan() != null);
 
         if (buildingPlayer != null) {
             unit.plans.add(buildingPlayer.unit().buildPlan());
-
+            status = Core.bundle.format("autoplay.status.following", buildingPlayer.name);
             return true;
         }
 
-        return !Vars.player.team().data().plans.isEmpty();
+        if (Vars.player.team().data().plans.isEmpty()) {
+            status = Core.bundle.get("autoplay.status.no-build-plans");
+            return false;
+        }
+
+        status = Core.bundle.get("autoplay.status.building");
+        return true;
     }
 
     @Override

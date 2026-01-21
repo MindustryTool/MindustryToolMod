@@ -43,16 +43,14 @@ public class SplitBar extends Element {
         }
 
         if (totalWeight <= 0.0001f) {
-            
-            
-            
+
         } else {
             float currentX = x;
 
             Font font = Fonts.outline;
             float originalScaleX = font.getScaleX();
             float originalScaleY = font.getScaleY();
-            
+
             font.getData().setScale(originalScaleX * fontScale * 0.8f, originalScaleY * fontScale * 0.8f);
 
             for (int i = 0; i < graphs.size; i++) {
@@ -64,29 +62,30 @@ public class SplitBar extends Element {
                 float sectionWidth = width * (weight / totalWeight);
                 float fraction = getFraction(graph);
 
-                
                 if (fraction > 0.01f) {
-                    Draw.color(Pal.powerBar);
+                    if (mode == Mode.SATISFACTION && graph.getPowerBalance() < 0) {
+                        Draw.color(Color.scarlet);
+                    } else {
+                        Draw.color(Pal.powerBar);
+                    }
+
                     float fillWidth = sectionWidth * fraction;
                     if (fillWidth > 0.5f) {
                         Tex.bar.draw(currentX, y, fillWidth, height);
                     }
                 }
 
-                
                 if (i < graphs.size - 1) {
                     Draw.color(Color.black);
                     Draw.alpha(0.5f);
                     Draw.rect("whiteui", currentX + sectionWidth, y + height / 2f, 2f, height);
                 }
 
-                
                 String text = getSectionText(graph);
                 if (!text.isEmpty()) {
                     GlyphLayout layout = new GlyphLayout();
                     layout.setText(font, text);
 
-                    
                     if (layout.width < sectionWidth - 4f) {
                         font.setColor(Color.white);
                         font.draw(text, currentX + sectionWidth / 2f - layout.width / 2f,
@@ -104,7 +103,6 @@ public class SplitBar extends Element {
 
     private float getWeight(PowerGraph graph) {
         if (mode == Mode.SATISFACTION) {
-            
             return Math.max(graph.getLastPowerProduced(), graph.getLastPowerNeeded());
         } else {
             return graph.getLastCapacity();

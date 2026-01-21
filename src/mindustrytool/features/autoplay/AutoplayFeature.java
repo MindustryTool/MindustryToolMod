@@ -149,7 +149,9 @@ public class AutoplayFeature implements Feature {
 
             currentTask = nextTask;
 
-            dialog.rebuild();
+            if (dialog.visible) {
+                dialog.rebuild();
+            }
         }
     }
 

@@ -216,10 +216,13 @@ public class PlayerConnectJoinInjector {
                         .row();
 
                 // Players
-                body.add(Iconc.players + " [accent]" + room.data().players().size)
+                String names = room.data().players().map(n -> n + "[]").toString(", ");
+                body.add(Iconc.players + " [accent]" + names)
                         .padBottom(6)
                         .left()
-                        .row();
+                        .width(contentWidth)
+                        .get().setWrap(true);
+                body.row();
 
                 // Mods
                 if (room.data().mods().size > 0) {
