@@ -3,6 +3,8 @@ package mindustrytool.features.chat;
 import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.Texture;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.event.Touchable;
 import arc.scene.style.TextureRegionDrawable;
@@ -209,7 +211,14 @@ public class ChatOverlay extends Table {
             header.image(Icon.move).color(Color.gray).size(24).padLeft(8);
             header.add("Global Chat").style(Styles.outlineLabel).padLeft(8);
 
-            connectionIndicator = new Image(Tex.whiteui);
+            connectionIndicator = new Image(Tex.whiteui) {
+                @Override
+                public void draw() {
+                    Draw.color(color);
+                    Fill.circle(x + width / 2f, y + height / 2f, Math.min(width, height) / 2f);
+                    Draw.reset();
+                }
+            };
             connectionIndicator.setColor(ChatService.getInstance().isConnected() ? Color.green : Color.yellow);
             header.add(connectionIndicator).size(10).padLeft(8);
 
