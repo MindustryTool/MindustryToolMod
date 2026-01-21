@@ -127,6 +127,11 @@ public class WavePreviewFeature extends Table implements Feature {
 
     private void updateUI() {
         clear();
+
+        if (!Vars.state.rules.waves) {
+            return;
+        }
+
         top().left();
         background(Tex.paneRight);
 

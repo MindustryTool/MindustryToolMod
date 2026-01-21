@@ -3,7 +3,6 @@ package mindustrytool;
 import arc.Core;
 import arc.Events;
 import arc.files.Fi;
-import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Http;
@@ -89,36 +88,6 @@ public class Main extends Mod {
                 Vars.ui.menufrag.addButton("Mindustry Tool", Icon.settings, () -> featureSettingDialog.show());
             }
         });
-
-        Vars.ui.paused.shown(() -> {
-            Table root = Vars.ui.paused.cont;
-
-            @SuppressWarnings("rawtypes")
-            Seq<Cell> buttons = root.getCells();
-
-            var buttonTitle = "MindustryTool";
-
-            if (Vars.mobile) {
-                root.row()
-                        .buttonRow(buttonTitle, Icon.settings, featureSettingDialog::show)
-                        .row();
-                return;
-
-            } else if (arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2) {
-                root.row()
-                        .button(buttonTitle, Icon.settings, featureSettingDialog::show)
-                        .colspan(2)
-                        .width(450f)
-                        .row();
-
-            } else {
-                root.row()
-                        .button(buttonTitle, Icon.settings, featureSettingDialog::show)
-                        .row();
-            }
-            buttons.swap(buttons.size - 1, buttons.size - 2);
-        });
-
     }
 
     private void checkForUpdate() {

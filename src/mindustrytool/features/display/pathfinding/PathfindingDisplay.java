@@ -249,6 +249,7 @@ public class PathfindingDisplay implements Feature {
                     cacheEntry.data = new float[250 * 2];
                     pathCache.put(cacheKey, cacheEntry);
                 }
+                cacheEntry.size = 0;
                 recalculatePath(unit, cacheEntry, maxSteps);
                 cacheEntry.lastUpdateTime = currentTime + Mathf.random(3f, 8f);
             }
@@ -315,16 +316,19 @@ public class PathfindingDisplay implements Feature {
     }
 
     private void drawFromCache(PathfindingCache cacheEntry, Color pathColor, int maxSteps) {
-        if (cacheEntry.size < 4)
+        if (cacheEntry.size < 4) {
             return;
+        }
 
         Lines.stroke(1f);
+
         float currentX = cacheEntry.data[0];
         float currentY = cacheEntry.data[1];
         int totalSegments = (cacheEntry.size / 2) - 1;
 
-        if (totalSegments <= 0)
+        if (totalSegments <= 0) {
             return;
+        }
 
         for (int i = 0; i < totalSegments; i++) {
             float nextX = cacheEntry.data[(i + 1) * 2];

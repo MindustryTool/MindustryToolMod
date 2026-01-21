@@ -64,7 +64,6 @@ public class CreateRoomDialog extends BaseDialog {
                         .buttonRow(buttonTitle, Icon.planet, this::show)
                         .disabled(button -> !Vars.net.server())
                         .row();
-                return;
 
             } else if (arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2) {
                 root.row()
@@ -194,7 +193,7 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .padBottom(5f)
                     .row();
-        }).width(Math.min(800, Core.scene.getWidth())).padBottom(20f).row();
+        }).width(Math.min(800, Core.scene.getWidth() * 0.8f)).padBottom(20f).row();
 
         mainTable.button("Next", Icon.right, () -> {
             setupStep2();

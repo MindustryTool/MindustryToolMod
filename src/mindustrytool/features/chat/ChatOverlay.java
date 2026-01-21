@@ -3,6 +3,8 @@ package mindustrytool.features.chat;
 import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.Texture;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.event.Touchable;
 import arc.scene.style.TextureRegionDrawable;
@@ -26,12 +28,14 @@ import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.game.Schematic;
 import mindustry.game.Schematics;
+import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import arc.Events;
 import mindustrytool.Main;
+import mindustrytool.MdtKeybinds;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
@@ -45,6 +49,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import mindustrytool.features.chat.dto.ChatUser.SimpleRole;
+import mindustrytool.features.playerconnect.PlayerConnectLink;
+import mindustrytool.features.playerconnect.PlayerConnectRenderer;
+import mindustrytool.services.PlayerConnectService;
 
 public class ChatOverlay extends Table {
     private Seq<ChatMessage> messages = new Seq<>();
@@ -56,21 +63,21 @@ public class ChatOverlay extends Table {
     private TextButton sendButton;
     private boolean isSending = false;
 
-    private boolean isCollapsed = true;
     private String lastInputText = "";
     private Table container;
     private Cell<Table> containerCell;
     private final ChatConfig config = new ChatConfig();
+    private final PlayerConnectService playerConnectService = new PlayerConnectService();
 
     private int unreadCount = 0;
     private Table badgeTable;
 
     private boolean isUserListCollapsed;
+    private Image connectionIndicator;
 
     public ChatOverlay() {
         touchable = Touchable.childrenOnly;
 
-        isCollapsed = config.collapsed();
         isUserListCollapsed = Vars.mobile;
         setPosition(config.x(), config.y());
 
@@ -85,10 +92,19 @@ public class ChatOverlay extends Table {
             keepInScreen();
         });
 
+        Events.run(Trigger.update, () -> {
+            boolean noInputFocused = !Core.scene.hasField();
+
+            if (noInputFocused && Core.input.keyRelease(MdtKeybinds.chatKb)) {
+                config.collapsed(!config.collapsed());
+                setup();
+            }
+        });
+
         addListener(new InputListener() {
             @Override
             public boolean keyDown(InputEvent event, KeyCode keycode) {
-                if (keycode == KeyCode.escape && !isCollapsed) {
+                if (keycode == KeyCode.escape && !config.collapsed()) {
                     collapse();
                     return true;
                 }
@@ -98,16 +114,16 @@ public class ChatOverlay extends Table {
     }
 
     public boolean isCollapsed() {
-        return isCollapsed;
+        return config.collapsed();
     }
 
     private void setup() {
-        setPosition(config.x(isCollapsed), config.y(isCollapsed));
+        setPosition(config.x(config.collapsed()), config.y(config.collapsed()));
 
         container.clearChildren();
         container.touchable = Touchable.enabled;
 
-        if (isCollapsed) {
+        if (config.collapsed()) {
             container.background(null);
             containerCell.size(48);
 
@@ -151,7 +167,6 @@ public class ChatOverlay extends Table {
                 @Override
                 public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
                     if (!wasDragged) {
-                        isCollapsed = false;
                         config.collapsed(false);
                         unreadCount = 0;
                         setup();
@@ -194,7 +209,20 @@ public class ChatOverlay extends Table {
             });
 
             header.image(Icon.move).color(Color.gray).size(24).padLeft(8);
-            header.add("Global Chat").style(Styles.outlineLabel).padLeft(8).growX().left();
+            header.add("Global Chat").style(Styles.outlineLabel).padLeft(8);
+
+            connectionIndicator = new Image(Tex.whiteui) {
+                @Override
+                public void draw() {
+                    Draw.color(color);
+                    Fill.circle(x + width / 2f, y + height / 2f, Math.min(width, height) / 2f);
+                    Draw.reset();
+                }
+            };
+            connectionIndicator.setColor(ChatService.getInstance().isConnected() ? Color.green : Color.yellow);
+            header.add(connectionIndicator).size(10).padLeft(8);
+
+            header.add().growX();
 
             // Minimize button
             header.button(Icon.down, Styles.clearNonei, this::collapse).size(40).padRight(4);
@@ -229,6 +257,10 @@ public class ChatOverlay extends Table {
 
                 if (scrollPane != null) {
                     scrollPane.visible = connected;
+                }
+
+                if (connectionIndicator != null) {
+                    connectionIndicator.setColor(connected ? Color.green : Color.yellow);
                 }
             });
 
@@ -293,7 +325,7 @@ public class ChatOverlay extends Table {
 
             inputField.setText(lastInputText);
 
-            sendButton = new TextButton("Send", Styles.defaultt);
+            sendButton = new TextButton(isSending ? "Sending..." : "Send", Styles.defaultt);
             sendButton.clicked(this::sendMessage);
             sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
 
@@ -322,7 +354,7 @@ public class ChatOverlay extends Table {
                 }
             });
 
-            if (inputField != null && !isCollapsed) {
+            if (inputField != null && !config.collapsed()) {
                 Core.scene.setKeyboardFocus(inputField);
             }
         }
@@ -401,7 +433,7 @@ public class ChatOverlay extends Table {
             messages.add(msg);
 
             try {
-                if (isCollapsed && config.lastRead().isBefore(Instant.parse(msg.createdAt))) {
+                if (config.collapsed() && config.lastRead().isBefore(Instant.parse(msg.createdAt))) {
                     addedCount++;
                 }
             } catch (Exception e) {
@@ -409,12 +441,16 @@ public class ChatOverlay extends Table {
             }
         }
 
-        if (isCollapsed && addedCount > 0) {
+        if (config.collapsed() && addedCount > 0) {
             unreadCount += addedCount;
             updateBadge();
         }
 
-        if (messageTable != null && !isCollapsed) {
+        if (messages.size > 1000) {
+            messages.removeRange(0, messages.size - 1000);
+        }
+
+        if (messageTable != null && !config.collapsed()) {
             rebuildMessages(messageTable);
             // Scroll to bottom
             Core.app.post(() -> {
@@ -484,36 +520,43 @@ public class ChatOverlay extends Table {
                 card.add(label).left().row();
                 card.table(c -> {
                     String content = msg.content.trim();
-                    int schematicBasePosition = content.indexOf(Vars.schematicBaseStart);
 
-                    if (schematicBasePosition != -1) {
-                        int endPosition = content.indexOf(" ", schematicBasePosition) + 1;
-
-                        if (endPosition == 0) {
-                            endPosition = content.length();
-                        }
-
-                        String prev = content.substring(0, schematicBasePosition);
-
-                        c.add(prev).wrap().color(Color.lightGray).left().padTop(2);
-                        String schematicBase64 = content.substring(schematicBasePosition, endPosition);
-
-                        try {
-                            var schematic = Schematics.readBase64(schematicBase64);
-                            c.row();
-                            renderSchematic(card, schematic);
-                            c.row();
-                            String after = content.substring(endPosition);
-                            c.add(after).wrap().color(Color.lightGray).left().growX().padTop(2);
-                        } catch (Exception e) {
-                            c.clear();
-                            c.add(content).wrap().color(Color.lightGray).left().padTop(2);
-                        }
-                    } else {
+                    if (PlayerConnectLink.isValid(content)) {
                         c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
+                        c.row();
+                        renderPlayerConnectRoom(c, content);
+                    } else {
+                        int schematicBasePosition = content.indexOf(Vars.schematicBaseStart);
+
+                        if (schematicBasePosition != -1) {
+                            int endPosition = content.indexOf(" ", schematicBasePosition) + 1;
+
+                            if (endPosition == 0) {
+                                endPosition = content.length();
+                            }
+
+                            String prev = content.substring(0, schematicBasePosition);
+
+                            c.add(prev).wrap().color(Color.lightGray).left().growX().padTop(2);
+                            String schematicBase64 = content.substring(schematicBasePosition, endPosition);
+
+                            try {
+                                var schematic = Schematics.readBase64(schematicBase64);
+                                c.row();
+                                renderSchematic(card, schematic);
+                                c.row();
+                                String after = content.substring(endPosition);
+                                c.add(after).wrap().color(Color.lightGray).left().growX().padTop(2);
+                            } catch (Exception e) {
+                                c.clear();
+                                c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
+                            }
+                        } else {
+                            c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
+                        }
                     }
                 })
-                        .top().left();
+                        .top().left().growX();
 
                 card.clicked(() -> {
                     Core.app.setClipboardText(msg.content);
@@ -564,7 +607,6 @@ public class ChatOverlay extends Table {
     }
 
     private void collapse() {
-        isCollapsed = true;
         config.collapsed(true);
         unreadCount = 0;
         if (inputField != null) {
@@ -592,10 +634,14 @@ public class ChatOverlay extends Table {
         }
 
         isSending = true;
+        if (sendButton != null)
+            sendButton.setText("Sending...");
 
         ChatService.getInstance().sendMessage(content, () -> {
             Core.app.post(() -> {
                 isSending = false;
+                if (sendButton != null)
+                    sendButton.setText("Send");
                 inputField.setText("");
                 lastInputText = "";
             });
@@ -611,10 +657,14 @@ public class ChatOverlay extends Table {
         }
 
         isSending = true;
+        if (sendButton != null)
+            sendButton.setText("Sending...");
 
         ChatService.getInstance().sendSchematic(content, () -> {
             Core.app.post(() -> {
                 isSending = false;
+                if (sendButton != null)
+                    sendButton.setText("Send");
                 inputField.setText("");
                 lastInputText = "";
             });
@@ -623,6 +673,8 @@ public class ChatOverlay extends Table {
 
     private void handleSendError(Throwable err) {
         isSending = false;
+        if (sendButton != null)
+            sendButton.setText("Send");
 
         String errStr = err.toString();
         if (errStr.contains("409") || err.getMessage().contains("409")) {
@@ -654,6 +706,23 @@ public class ChatOverlay extends Table {
 
             badgeTable.add(badge).height(16).minWidth(16);
         }
+    }
+
+    private void renderPlayerConnectRoom(Table table, String link) {
+        table.table(t -> {
+            t.left();
+            t.add("Loading room info...").color(Color.gray);
+
+            playerConnectService.getRoomWithCache(link, room -> {
+                t.clear();
+
+                if (room != null) {
+                    PlayerConnectRenderer.render(t, room).grow();
+                } else {
+                    t.add("Room not found or offline").color(Color.gray);
+                }
+            });
+        }).growX().left().padTop(10);
     }
 
     private void renderSchematic(Table table, Schematic schematic) {

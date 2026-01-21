@@ -67,4 +67,13 @@ public class PlayerConnectLink {
 
         return new PlayerConnectLink(uri.getHost(), uri.getPort(), uri.getPath());
     }
+
+    public static boolean isValid(String link) {
+        try {
+            fromString(link);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
 }
