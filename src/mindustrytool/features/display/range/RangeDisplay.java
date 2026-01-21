@@ -205,6 +205,7 @@ public class RangeDisplay implements Feature {
         Lines.dashCircle(x, y, range);
         Draw.color(Tmp.c2);
         Lines.line(x, y, x + Mathf.cosDeg(15) * range, y + Mathf.sinDeg(15) * range);
+        Draw.reset();
     }
 
     private float getBlockRange(Block block) {

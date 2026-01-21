@@ -1,5 +1,7 @@
 package mindustrytool.features.autoplay.tasks;
 
+import java.util.Optional;
+
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
@@ -65,8 +67,11 @@ public class AssistTask implements AutoplayTask {
     }
 
     @Override
-    public void buildSettings(Table table) {
+    public Optional<Table> settings() {
+        Table table = new Table();
         build(table);
+
+        return Optional.of(table);
     }
 
     private void build(Table table) {
@@ -106,10 +111,5 @@ public class AssistTask implements AutoplayTask {
                         .row();
             }
         }).growX();
-    }
-
-    @Override
-    public boolean hasSettings() {
-        return true;
     }
 }

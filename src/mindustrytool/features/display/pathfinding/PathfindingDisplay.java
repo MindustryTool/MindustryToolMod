@@ -393,5 +393,7 @@ public class PathfindingDisplay implements Feature {
                 }
             }
         }
+
+        Draw.reset();
     }
 }

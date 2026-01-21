@@ -141,6 +141,8 @@ public class HealthBarVisualizer implements Feature {
             Draw.color(Pal.shield, 0.5f * HealthBarConfig.opacity);
             Draw.rect(barRegion, shieldCenterX, y, shieldW, h);
         }
+
+        Draw.reset();
     }
 
     private void initDialog() {

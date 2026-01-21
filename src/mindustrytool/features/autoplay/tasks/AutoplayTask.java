@@ -1,5 +1,7 @@
 package mindustrytool.features.autoplay.tasks;
 
+import java.util.Optional;
+
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
@@ -31,24 +33,12 @@ public interface AutoplayTask {
 
     boolean shouldRun(Unit unit);
 
-    /**
-     * Get the AI controller for this task
-     */
     AIController getAI();
 
-    /**
-     * Update task state (called every frame when active)
-     */
     default void update(Unit unit) {
     }
 
-    /**
-     * Build settings UI for this task
-     */
-    default void buildSettings(Table table) {
-    }
-
-    default boolean hasSettings() {
-        return false;
+    default Optional<Table> settings() {
+        return Optional.empty();
     }
 }

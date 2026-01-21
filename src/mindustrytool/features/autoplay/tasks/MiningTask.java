@@ -1,5 +1,7 @@
 package mindustrytool.features.autoplay.tasks;
 
+import java.util.Optional;
+
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Scl;
@@ -138,12 +140,9 @@ public class MiningTask implements AutoplayTask {
     }
 
     @Override
-    public boolean hasSettings() {
-        return true;
-    }
+    public Optional<Table> settings() {
+        Table table = new Table();
 
-    @Override
-    public void buildSettings(Table table) {
         table.top().left();
 
         int i = 0;
@@ -183,6 +182,8 @@ public class MiningTask implements AutoplayTask {
                 table.row();
             }
         }
+
+        return Optional.of(table);
     }
 
     public class MinerAI extends AIController {
@@ -210,8 +211,9 @@ public class MiningTask implements AutoplayTask {
                 }
 
                 // if inventory is full, drop it off.
-                if (unit.stack.amount >= unit.type.itemCapacity
-                        || (targetItem != null && !unit.acceptsItem(targetItem))) {
+                if (unit.stack.amount >= unit.type.itemCapacity) {
+                    mining = false;
+                } else if (timer.get(timerTarget4, 60) && targetItem != null && !unit.acceptsItem(targetItem)) {
                     mining = false;
                 } else {
                     if (timer.get(timerTarget3, 60) && targetItem != null) {

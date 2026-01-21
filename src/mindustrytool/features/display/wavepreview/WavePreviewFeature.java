@@ -6,6 +6,7 @@ import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.struct.ObjectIntMap;
 import arc.util.Align;
+import arc.util.Interval;
 import arc.util.Log;
 import mindustry.Vars;
 import mindustry.game.EventType.WorldLoadEvent;
@@ -25,8 +26,8 @@ public class WavePreviewFeature extends Table implements Feature {
     private final ObjectIntMap<UnitType> currentWaveCounts = new ObjectIntMap<>();
     private final ObjectIntMap<UnitType> nextWaveCounts = new ObjectIntMap<>();
 
-    private Table currentWaveTable;
-    private Table nextWaveTable;
+    private final Interval interval = new Interval();
+    private static final float UPDATE_INTERVAL = 30f;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -49,10 +50,14 @@ public class WavePreviewFeature extends Table implements Feature {
         visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
 
         update(() -> {
-            if (!visible)
+            if (!visible) {
                 return;
-            updateCounts();
-            updateUI();
+            }
+
+            if (interval.get(UPDATE_INTERVAL)) {
+                updateCounts();
+                updateUI();
+            }
         });
 
         rebuild();
@@ -93,29 +98,15 @@ public class WavePreviewFeature extends Table implements Feature {
     }
 
     private void rebuild() {
-        clear();
-        top().left();
-        background(Tex.paneRight);
-
-        add("Waves").top().left().align(Align.left).style(Styles.outlineLabel).pad(4)
-                .color(mindustry.graphics.Pal.accent).row();
-
-        add(new Label(() -> "" + Vars.state.wave)).style(Styles.outlineLabel).left().padLeft(4).row();
-
-        currentWaveTable = new Table();
-        add(currentWaveTable).growX().pad(4).row();
-
-        image().color(mindustry.graphics.Pal.gray).height(2).growX().pad(4).row();
-
-        add(new Label(() -> "" + (Vars.state.wave + 1))).style(Styles.outlineLabel).left().padLeft(4).row();
-
-        nextWaveTable = new Table();
-        add(nextWaveTable).growX().pad(4).row();
-
-        pack();
+        updateCounts();
+        updateUI();
     }
 
     private void updateCounts() {
+        if (!Vars.state.isGame()) {
+            return;
+        }
+
         currentWaveCounts.clear();
         Team enemyTeam = Vars.state.rules.waveTeam;
 
@@ -136,8 +127,29 @@ public class WavePreviewFeature extends Table implements Feature {
     }
 
     private void updateUI() {
+        clear();
+        top().left();
+        background(Tex.paneRight);
+
+        add("Waves").top().left().align(Align.left).style(Styles.outlineLabel).pad(4)
+                .color(mindustry.graphics.Pal.accent).row();
+
+        add(new Label(() -> "" + Vars.state.wave)).style(Styles.outlineLabel).left().padLeft(4).row();
+
+        Table currentWaveTable = new Table();
+        add(currentWaveTable).growX().pad(4).row();
         buildWaveTable(currentWaveTable, currentWaveCounts);
-        buildWaveTable(nextWaveTable, nextWaveCounts);
+
+        if (!nextWaveCounts.isEmpty()) {
+            image().color(mindustry.graphics.Pal.gray).height(2).growX().pad(4).row();
+
+            add(new Label(() -> "" + (Vars.state.wave + 1))).style(Styles.outlineLabel).left().padLeft(4).row();
+
+            Table nextWaveTable = new Table();
+            add(nextWaveTable).growX().pad(4).row();
+            buildWaveTable(nextWaveTable, nextWaveCounts);
+        }
+
         pack();
     }
 
