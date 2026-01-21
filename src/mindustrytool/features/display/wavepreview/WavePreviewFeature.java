@@ -102,7 +102,7 @@ public class WavePreviewFeature extends Table implements Feature {
     }
 
     private void updateCounts() {
-        if (!Vars.state.isGame() || !Vars.state.rules.waves) {
+        if (!Vars.state.isGame()) {
             return;
         }
 
@@ -127,6 +127,11 @@ public class WavePreviewFeature extends Table implements Feature {
 
     private void updateUI() {
         clear();
+
+        if (!Vars.state.rules.waves) {
+            return;
+        }
+
         top().left();
         background(Tex.paneRight);
 

@@ -194,7 +194,7 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .padBottom(5f)
                     .row();
-        }).width(Math.min(800, Core.scene.getWidth())).padBottom(20f).row();
+        }).width(Math.min(800, Core.scene.getWidth() * 0.8f)).padBottom(20f).row();
 
         mainTable.button("Next", Icon.right, () -> {
             setupStep2();
