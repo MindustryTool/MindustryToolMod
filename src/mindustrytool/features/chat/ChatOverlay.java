@@ -278,17 +278,9 @@ public class ChatOverlay extends Table {
             if (inputField == null) {
                 inputField = new TextField();
                 inputField.setMessageText("Enter message...");
-                inputField.setValidator(text -> text.length() > 0
-                        && (text.startsWith(Vars.schematicBaseStart) && text.endsWith("=") ? text.length() < 2056 * 12
-                                : text.length() < 2056));
+                inputField.setValidator(this::isValidInput);
                 inputField.keyDown(arc.input.KeyCode.enter, () -> {
-                    boolean isSchematic = false;
-                    try {
-                        inputField.getText().startsWith(Vars.schematicBaseStart);
-                        Schematics.readBase64(inputField.getText());
-                        isSchematic = true;
-                    } catch (Exception _e) {
-                    }
+                    boolean isSchematic = isSchematic(inputField.getText());
 
                     if (isSchematic) {
                         sendSchematic();
@@ -339,6 +331,37 @@ public class ChatOverlay extends Table {
 
         keepInScreen();
 
+    }
+
+    private boolean isSchematic(String text) {
+        if (!text.startsWith(Vars.schematicBaseStart)) {
+            return false;
+        }
+
+        try {
+            Schematics.readBase64(text);
+            return true;
+        } catch (Exception _e) {
+            return false;
+        }
+    }
+
+    private boolean isValidInput(String text) {
+        if (text.length() <= 0) {
+            return false;
+        }
+
+        if (text.startsWith(Vars.schematicBaseStart)) {
+            if (text.length() > 2056 * 12) {
+                return false;
+            }
+        } else {
+            if (text.length() > 2056) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void keepInScreen() {

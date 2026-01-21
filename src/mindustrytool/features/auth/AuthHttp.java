@@ -9,6 +9,7 @@ import arc.util.Http;
 import arc.util.Http.HttpMethod;
 import arc.util.Http.HttpRequest;
 import arc.util.Http.HttpResponse;
+import arc.util.Http.HttpStatusException;
 
 public class AuthHttp {
 
@@ -83,8 +84,15 @@ public class AuthHttp {
 
                     })
                     .exceptionally(e -> {
-                        if (errorListener != null)
+                        if (e instanceof HttpStatusException httpStatusException) {
+                            if (httpStatusException.status.code == 401) {
+                                AuthService.getInstance().logout();
+                            }
+                        }
+
+                        if (errorListener != null) {
                             errorListener.get(e);
+                        }
                         return null;
                     });
         }
