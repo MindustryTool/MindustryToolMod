@@ -31,7 +31,8 @@ public class SplitBar extends Element {
     @Override
     public void draw() {
         Draw.color(Color.black);
-        Tex.barTop.draw(x, y, width, height);
+        
+        Tex.whiteui.draw(x, y, width, height);
 
         if (graphs.isEmpty()) {
             return;
@@ -71,7 +72,7 @@ public class SplitBar extends Element {
 
                     float fillWidth = sectionWidth * fraction;
                     if (fillWidth > 0.5f) {
-                        Tex.bar.draw(currentX, y, fillWidth, height);
+                        Tex.whiteui.draw(currentX, y, fillWidth, height);
                     }
                 }
 

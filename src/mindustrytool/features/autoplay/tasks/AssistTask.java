@@ -110,7 +110,7 @@ public class AssistTask implements AutoplayTask {
                 .padBottom(5)
                 .row();
 
-        table.pane(t -> {
+        table.table(t -> {
             t.top();
 
             for (Player p : Groups.player) {
