@@ -157,7 +157,7 @@ public class PlayerConnect {
         worker.submit(() -> {
             try {
                 room.connect(ip, port, id -> {
-                    Events.fire(new RoomCreatedEvent(room));
+                    Core.app.post(() -> Events.fire(new RoomCreatedEvent(room)));
                     onSucceed.get(new PlayerConnectLink(ip, port, id));
                 }, onDisconnected);
             } catch (Throwable e) {
