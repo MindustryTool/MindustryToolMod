@@ -49,7 +49,6 @@ import java.util.Arrays;
 import mindustrytool.features.chat.dto.ChatUser.SimpleRole;
 import mindustrytool.features.playerconnect.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectRenderer;
-import mindustrytool.features.playerconnect.PlayerConnectRoom;
 import mindustrytool.services.PlayerConnectService;
 
 public class ChatOverlay extends Table {
@@ -705,16 +704,11 @@ public class ChatOverlay extends Table {
             t.left();
             t.add("Loading room info...").color(Color.gray);
 
-            playerConnectService.findPlayerConnectRooms("", rooms -> {
-                if (t.getScene() == null)
-                    return; // Table removed
-
+            playerConnectService.getRoomWithCache(link, room -> {
                 t.clear();
 
-                PlayerConnectRoom found = rooms.find(r -> r.link().equals(link));
-
-                if (found != null) {
-                    PlayerConnectRenderer.render(t, found).grow();
+                if (room != null) {
+                    PlayerConnectRenderer.render(t, room).grow();
                 } else {
                     t.add("Room not found or offline").color(Color.gray);
                 }
