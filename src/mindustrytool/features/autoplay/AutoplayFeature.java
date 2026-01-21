@@ -109,6 +109,7 @@ public class AutoplayFeature implements Feature {
             Draw.z(Layer.overlayUI);
             Draw.rect(Icon.none.getRegion(), unit.x, unit.y + unit.hitSize * 2f, 10f, 10f);
             Draw.reset();
+            return;
         }
 
         var icon = currentTask.getIcon();
