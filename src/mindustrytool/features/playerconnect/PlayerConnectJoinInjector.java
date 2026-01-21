@@ -10,23 +10,15 @@ import arc.scene.ui.layout.Collapser;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Align;
-import arc.util.Log;
 import arc.util.Reflect;
-import arc.util.Strings;
-import mindustry.Vars;
-import mindustry.core.Version;
 import mindustry.gen.Icon;
-import mindustry.gen.Iconc;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
-import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.JoinDialog;
 import mindustrytool.services.PlayerConnectService;
 
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class PlayerConnectJoinInjector {
     private final PlayerConnectService playerConnectService = new PlayerConnectService();
@@ -152,7 +144,7 @@ public class PlayerConnectJoinInjector {
                     container.center();
 
                     for (var room : host.getValue()) {
-                        buildPlayerConnectRoom(container, room);
+                        PlayerConnectRenderer.render(container, room, targetWidth());
                         if (++i % cols == 0) {
                             container.row();
                         }
@@ -163,247 +155,11 @@ public class PlayerConnectJoinInjector {
         });
     }
 
-    private void buildPlayerConnectRoom(Table container, PlayerConnectRoom room) {
-        float twidth = targetWidth();
-        float contentWidth = twidth - 40f;
-
-        container.table(Styles.black8, t -> {
-            t.top().left();
-
-            // Header: Name, Version, Lock
-            t.table(header -> {
-                header.left();
-                header.setColor(Pal.gray);
-
-                boolean isSecured = room.data().isSecured();
-
-                header.table(info -> {
-                    info.left();
-
-                    float lockWidth = 16f;
-                    float nameWidth = contentWidth - lockWidth - 10f;
-
-                    info.add((isSecured ? Iconc.lock + " " : "") + room.data().name()).style(Styles.outlineLabel)
-                            .fontScale(1.25f)
-                            .width(nameWidth).left().ellipsis(true);
-
-                }).growX().left().padLeft(10f).padTop(5f);
-
-                // Copy Link Button (Top Right)
-                header.button(Icon.copy, Styles.clearNonei, () -> {
-                    Core.app.setClipboardText(room.link());
-                    Vars.ui.showInfoFade("@copied");
-                }).size(32).padRight(15);
-
-            }).padTop(10f).growX().height(36f).row();
-
-            // Body
-            t.table(body -> {
-                body.top().left();
-                body.setColor(Pal.gray);
-                body.left();
-                body.margin(10);
-
-                // Map & Mode
-                String mapModeString = "[lightgray]" + Core.bundle.format("save.map", room.data().mapName()) +
-                        " [lightgray]/ [accent]" + room.data().gamemode();
-
-                body.add(mapModeString)
-                        .left()
-                        .width(contentWidth)
-                        .padBottom(6)
-                        .ellipsis(true)
-                        .row();
-
-                // Players
-                String names = room.data().players().map(n -> n.name() + "[]").toString(", ");
-                body.add(Iconc.players + " [accent]" + names)
-                        .padBottom(6)
-                        .left()
-                        .width(contentWidth)
-                        .get().setWrap(true);
-                body.row();
-
-                // Mods
-                if (room.data().mods().size > 0) {
-                    body.add(Iconc.book + " [lightgray]" + Strings.join(", ", room.data().mods())).left()
-                            .padBottom(6)
-                            .width(contentWidth)
-                            .ellipsis(true)
-                            .row();
-                }
-
-                // Mod Conflicts
-                Seq<String> serverMods = room.data().mods();
-                Seq<String> localModNames = Vars.mods.list().select(m -> !m.meta.hidden).map(m -> m.name);
-
-                Seq<String> serverModNames = serverMods
-                        .map(s -> s.indexOf(':') != -1 ? s.substring(0, s.indexOf(':')) : s);
-
-                Seq<String> missing = serverMods.select(s -> {
-                    String name = s.indexOf(':') != -1 ? s.substring(0, s.indexOf(':')) : s;
-                    return !localModNames.contains(name);
-                });
-
-                Seq<String> unneeded = localModNames.select(m -> !serverModNames.contains(m));
-
-                if (!missing.isEmpty()) {
-                    body.labelWrap("[scarlet]Missing: " + Strings.join(", ", missing))
-                            .left()
-                            .labelAlign(Align.left)
-                            .width(contentWidth)
-                            .padBottom(6);
-                    body.row();
-                }
-
-                if (!unneeded.isEmpty()) {
-                    body.labelWrap("[scarlet]Unneeded: " + Strings.join(", ", unneeded))
-                            .left()
-                            .labelAlign(Align.left)
-                            .width(contentWidth)
-                            .padBottom(6);
-                    body.row();
-                }
-
-                // Locale
-                body.add(Iconc.chat + " [lightgray]" + room.data().locale()).left().padBottom(6)
-                        .row();
-
-                String versionString = getVersionString(room.data().version());
-
-                body.add("[white]" + Iconc.info + " [lightgray]" + versionString).style(Styles.outlineLabel)
-                        .color(Pal.lightishGray)
-                        .width(contentWidth)
-                        .padBottom(6)
-                        .left()
-                        .row();
-
-                // Spacer
-
-                body.add().growY().row();
-
-                // Join Button
-                body.button(Core.bundle.format("join"), Icon.play, () -> {
-                    joinRoom(room);
-                }).growX().height(40f).padTop(5);
-
-            }).growY().growX().left().bottom();
-
-        }).minWidth(twidth).padBottom(5).padRight(5).growY();
-    }
-
-    private void joinRoom(PlayerConnectRoom room) {
-        var link = PlayerConnectLink.fromString(room.link());
-
-        if (!room.data().isSecured()) {
-            try {
-                PlayerConnect.join(link, "", () -> Log.info("Joined room: " + link));
-            } catch (Throwable e) {
-                Vars.ui.showException("@message.connect.fail", e);
-            }
-            return;
-        }
-
-        BaseDialog connect = new BaseDialog("@message.type-password.title");
-        String[] password = { "" };
-
-        connect.cont.table(table -> {
-            table.add("@message.password").padRight(5f).right();
-            table.field(password[0], text -> password[0] = text)
-                    .size(320f, 54f)
-                    .valid(t -> t.length() > 0 && t.length() <= 100)
-                    .maxTextLength(100)
-                    .left()
-                    .get();
-            table.row().add();
-        }).row();
-
-        connect.buttons.button("@cancel", connect::hide).minWidth(210);
-        connect.buttons.button("@ok", () -> {
-            try {
-                PlayerConnect.join(link, password[0], connect::hide);
-            } catch (Throwable e) {
-                connect.hide();
-                Vars.ui.showException("@message.connect.fail", e);
-            }
-        }).minWidth(210);
-
-        connect.show();
-    }
-
     private int columns() {
         return Mathf.clamp((int) ((Core.graphics.getWidth() / Scl.scl() * 0.9f) / targetWidth()), 1, 4);
     }
 
     float targetWidth() {
         return Math.min(Core.graphics.getWidth() / Scl.scl() * 0.9f, 550f);
-    }
-
-    private String getVersionString(String versionString) {
-        BuildInfo info = extract(versionString);
-        int version = info.build;
-        String versionType = info.type;
-
-        if (version == -1) {
-            return Core.bundle.format("server.version", Core.bundle.get("server.custombuild"), "");
-        } else if (version == 0) {
-            return Core.bundle.get("server.outdated");
-        } else if (version < Version.build && Version.build != -1) {
-            return Core.bundle.get("server.outdated") + "\n" +
-                    Core.bundle.format("server.version", version, "");
-        } else if (version > Version.build && Version.build != -1) {
-            return Core.bundle.get("server.outdated.client") + "\n" +
-                    Core.bundle.format("server.version", version, "");
-        } else if (version == Version.build && Version.type.equals(versionType)) {
-            return "";
-        } else {
-            return Core.bundle.format("server.version", version, versionType);
-        }
-    }
-
-    private static class BuildInfo {
-        public String type = "custom";
-        public int build = -1;
-        public int revision = -1;
-        public String modifier;
-
-        public String toString() {
-            return "BuildInfo{" +
-                    "type='" + type + '\'' +
-                    ", build=" + build +
-                    ", revision=" + revision +
-                    ", modifier='" + modifier + '\'' +
-                    '}';
-        }
-    }
-
-    private BuildInfo extract(String combined) {
-        BuildInfo info = new BuildInfo();
-
-        if ("custom build".equals(combined)) {
-            info.type = "custom";
-            info.build = -1;
-            info.revision = 0;
-            info.modifier = null;
-            return info;
-        }
-
-        Pattern pattern = Pattern.compile("^(.+?) build (\\d+)(?:\\.(\\d+))?$");
-        Matcher matcher = pattern.matcher(combined);
-
-        if (matcher.matches()) {
-            String first = matcher.group(1);
-            info.build = Integer.parseInt(matcher.group(2));
-            info.revision = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
-
-            if ("official".equals(first)) {
-                info.type = "official";
-                info.modifier = first;
-            } else {
-                info.type = first;
-                info.modifier = null;
-            }
-        }
-        return info;
     }
 }

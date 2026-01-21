@@ -47,6 +47,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import mindustrytool.features.chat.dto.ChatUser.SimpleRole;
+import mindustrytool.features.playerconnect.PlayerConnectLink;
+import mindustrytool.features.playerconnect.PlayerConnectRenderer;
+import mindustrytool.features.playerconnect.PlayerConnectRoom;
+import mindustrytool.services.PlayerConnectService;
 
 public class ChatOverlay extends Table {
     private Seq<ChatMessage> messages = new Seq<>();
@@ -62,6 +66,7 @@ public class ChatOverlay extends Table {
     private Table container;
     private Cell<Table> containerCell;
     private final ChatConfig config = new ChatConfig();
+    private final PlayerConnectService playerConnectService = new PlayerConnectService();
 
     private int unreadCount = 0;
     private Table badgeTable;
@@ -507,33 +512,40 @@ public class ChatOverlay extends Table {
                 card.add(label).left().row();
                 card.table(c -> {
                     String content = msg.content.trim();
-                    int schematicBasePosition = content.indexOf(Vars.schematicBaseStart);
 
-                    if (schematicBasePosition != -1) {
-                        int endPosition = content.indexOf(" ", schematicBasePosition) + 1;
+                    if (PlayerConnectLink.isValid(content)) {
+                        c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
+                        c.row();
+                        renderPlayerConnectRoom(c, content);
+                    } else {
+                        int schematicBasePosition = content.indexOf(Vars.schematicBaseStart);
 
-                        if (endPosition == 0) {
-                            endPosition = content.length();
-                        }
+                        if (schematicBasePosition != -1) {
+                            int endPosition = content.indexOf(" ", schematicBasePosition) + 1;
 
-                        String prev = content.substring(0, schematicBasePosition);
+                            if (endPosition == 0) {
+                                endPosition = content.length();
+                            }
 
-                        c.add(prev).wrap().color(Color.lightGray).left().growX().padTop(2);
-                        String schematicBase64 = content.substring(schematicBasePosition, endPosition);
+                            String prev = content.substring(0, schematicBasePosition);
 
-                        try {
-                            var schematic = Schematics.readBase64(schematicBase64);
-                            c.row();
-                            renderSchematic(card, schematic);
-                            c.row();
-                            String after = content.substring(endPosition);
-                            c.add(after).wrap().color(Color.lightGray).left().growX().padTop(2);
-                        } catch (Exception e) {
-                            c.clear();
+                            c.add(prev).wrap().color(Color.lightGray).left().growX().padTop(2);
+                            String schematicBase64 = content.substring(schematicBasePosition, endPosition);
+
+                            try {
+                                var schematic = Schematics.readBase64(schematicBase64);
+                                c.row();
+                                renderSchematic(card, schematic);
+                                c.row();
+                                String after = content.substring(endPosition);
+                                c.add(after).wrap().color(Color.lightGray).left().growX().padTop(2);
+                            } catch (Exception e) {
+                                c.clear();
+                                c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
+                            }
+                        } else {
                             c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
                         }
-                    } else {
-                        c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
                     }
                 })
                         .top().left().growX();
@@ -686,6 +698,28 @@ public class ChatOverlay extends Table {
 
             badgeTable.add(badge).height(16).minWidth(16);
         }
+    }
+
+    private void renderPlayerConnectRoom(Table table, String link) {
+        table.table(t -> {
+            t.left();
+            t.add("Loading room info...").color(Color.gray);
+
+            playerConnectService.findPlayerConnectRooms("", rooms -> {
+                if (t.getScene() == null)
+                    return; // Table removed
+
+                t.clear();
+
+                PlayerConnectRoom found = rooms.find(r -> r.link().equals(link));
+
+                if (found != null) {
+                    PlayerConnectRenderer.render(t, found).grow();
+                } else {
+                    t.add("Room not found or offline").color(Color.gray);
+                }
+            });
+        }).growX().left().padTop(10);
     }
 
     private void renderSchematic(Table table, Schematic schematic) {
