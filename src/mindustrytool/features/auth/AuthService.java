@@ -12,6 +12,7 @@ import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustrytool.Config;
 import mindustrytool.features.auth.dto.LoginEvent;
+import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.auth.dto.UserSession;
 import arc.util.Http.HttpStatusException;
 
@@ -125,7 +126,7 @@ public class AuthService {
                                 if (e != null) {
                                     future.completeExceptionally(e);
                                 } else {
-                                    Events.fire(LoginEvent.class);
+                                    Core.app.post(() -> Events.fire(new LoginEvent()));
                                     future.complete(null);
                                 }
                             });
@@ -169,6 +170,8 @@ public class AuthService {
         Core.settings.remove(KEY_REFRESH_TOKEN);
         Core.settings.remove(KEY_LOGIN_ID);
         currentUser = null;
+        
+        Events.fire(new LogoutEvent());
 
         Log.info("Logged out");
     }
@@ -181,7 +184,7 @@ public class AuthService {
                 Jval json = Jval.read(res.getResultAsString());
                 currentUser = new UserSession(json.getString("name", "Unknown"), json.getString("imageUrl", ""));
 
-                Events.fire(currentUser);
+                Core.app.post(() -> Events.fire(currentUser));
                 future.complete(currentUser);
             } catch (Exception e) {
                 Log.err("Failed to parse user session", e);

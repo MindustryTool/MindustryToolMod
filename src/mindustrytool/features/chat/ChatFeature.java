@@ -35,7 +35,7 @@ public class ChatFeature implements Feature {
             overlay.addMessages(messages);
         });
 
-        Events.run(LoginEvent.class, () -> {
+        Events.on(LoginEvent.class, e -> {
             ChatService.getInstance().disconnectStream();
             ChatService.getInstance().connectStream();
         });

@@ -37,6 +37,8 @@ import arc.Events;
 import mindustrytool.Main;
 import mindustrytool.MdtKeybinds;
 import mindustrytool.features.auth.AuthService;
+import mindustrytool.features.auth.dto.LoginEvent;
+import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
 import mindustrytool.services.UserService;
@@ -91,6 +93,9 @@ public class ChatOverlay extends Table {
             setup();
             keepInScreen();
         });
+
+        Events.on(LoginEvent.class, e -> setup());
+        Events.on(LogoutEvent.class, e -> setup());
 
         Events.run(Trigger.update, () -> {
             boolean noInputFocused = !Core.scene.hasField();
@@ -307,40 +312,46 @@ public class ChatOverlay extends Table {
             Table inputTable = new Table();
             inputTable.background(Styles.black6);
 
-            if (inputField == null) {
-                inputField = new TextField();
-                inputField.setMessageText("Enter message...");
-                inputField.setValidator(this::isValidInput);
-                inputField.keyDown(arc.input.KeyCode.enter, () -> {
-                    boolean isSchematic = isSchematic(inputField.getText());
+            if (AuthService.getInstance().isLoggedIn()) {
+                if (inputField == null) {
+                    inputField = new TextField();
+                    inputField.setMessageText("Enter message...");
+                    inputField.setValidator(this::isValidInput);
+                    inputField.keyDown(arc.input.KeyCode.enter, () -> {
+                        boolean isSchematic = isSchematic(inputField.getText());
 
-                    if (isSchematic) {
-                        sendSchematic();
-                    } else if (inputField.isValid()) {
-                        sendMessage();
-                    }
-                });
-                inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
+                        if (isSchematic) {
+                            sendSchematic();
+                        } else if (inputField.isValid()) {
+                            sendMessage();
+                        }
+                    });
+                    inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
+                }
+
+                inputField.setText(lastInputText);
+
+                sendButton = new TextButton(isSending ? "Sending..." : "Send", Styles.defaultt);
+                sendButton.clicked(this::sendMessage);
+                sendButton.setDisabled(() -> isSending);
+
+                inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
+
+                var mod = Vars.mods.getMod(Main.class);
+
+                var texture = new TextureRegion(new Texture(mod.root.child("icons").child("attach-file.png")));
+                TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
+
+                inputTable.button(drawable, () -> {
+                    Vars.ui.showInfoFade("This do nothing :v");
+                }).pad(8);
+
+                inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
+            } else {
+                inputTable.button("Login to Chat", Styles.defaultt, () -> {
+                    AuthService.getInstance().login();
+                }).growX().height(40f).pad(8);
             }
-
-            inputField.setText(lastInputText);
-
-            sendButton = new TextButton(isSending ? "Sending..." : "Send", Styles.defaultt);
-            sendButton.clicked(this::sendMessage);
-            sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
-
-            inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
-
-            var mod = Vars.mods.getMod(Main.class);
-
-            var texture = new TextureRegion(new Texture(mod.root.child("icons").child("attach-file.png")));
-            TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
-
-            inputTable.button(drawable, () -> {
-                Vars.ui.showInfoFade("This do nothing :v");
-            }).pad(8);
-
-            inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
 
             container.add(inputTable).growX().bottom();
 
