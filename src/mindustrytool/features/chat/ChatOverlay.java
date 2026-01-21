@@ -67,6 +67,7 @@ public class ChatOverlay extends Table {
     private Table badgeTable;
 
     private boolean isUserListCollapsed;
+    private Image connectionIndicator;
 
     public ChatOverlay() {
         touchable = Touchable.childrenOnly;
@@ -202,7 +203,13 @@ public class ChatOverlay extends Table {
             });
 
             header.image(Icon.move).color(Color.gray).size(24).padLeft(8);
-            header.add("Global Chat").style(Styles.outlineLabel).padLeft(8).growX().left();
+            header.add("Global Chat").style(Styles.outlineLabel).padLeft(8);
+
+            connectionIndicator = new Image(Tex.whiteui);
+            connectionIndicator.setColor(ChatService.getInstance().isConnected() ? Color.green : Color.yellow);
+            header.add(connectionIndicator).size(10).padLeft(8);
+
+            header.add().growX();
 
             // Minimize button
             header.button(Icon.down, Styles.clearNonei, this::collapse).size(40).padRight(4);
@@ -237,6 +244,10 @@ public class ChatOverlay extends Table {
 
                 if (scrollPane != null) {
                     scrollPane.visible = connected;
+                }
+
+                if (connectionIndicator != null) {
+                    connectionIndicator.setColor(connected ? Color.green : Color.yellow);
                 }
             });
 
@@ -301,7 +312,7 @@ public class ChatOverlay extends Table {
 
             inputField.setText(lastInputText);
 
-            sendButton = new TextButton("Send", Styles.defaultt);
+            sendButton = new TextButton(isSending ? "Sending..." : "Send", Styles.defaultt);
             sendButton.clicked(this::sendMessage);
             sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
 
@@ -507,7 +518,7 @@ public class ChatOverlay extends Table {
 
                         String prev = content.substring(0, schematicBasePosition);
 
-                        c.add(prev).wrap().color(Color.lightGray).left().padTop(2);
+                        c.add(prev).wrap().color(Color.lightGray).left().growX().padTop(2);
                         String schematicBase64 = content.substring(schematicBasePosition, endPosition);
 
                         try {
@@ -519,13 +530,13 @@ public class ChatOverlay extends Table {
                             c.add(after).wrap().color(Color.lightGray).left().growX().padTop(2);
                         } catch (Exception e) {
                             c.clear();
-                            c.add(content).wrap().color(Color.lightGray).left().padTop(2);
+                            c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
                         }
                     } else {
                         c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
                     }
                 })
-                        .top().left();
+                        .top().left().growX();
 
                 card.clicked(() -> {
                     Core.app.setClipboardText(msg.content);
@@ -603,10 +614,14 @@ public class ChatOverlay extends Table {
         }
 
         isSending = true;
+        if (sendButton != null)
+            sendButton.setText("Sending...");
 
         ChatService.getInstance().sendMessage(content, () -> {
             Core.app.post(() -> {
                 isSending = false;
+                if (sendButton != null)
+                    sendButton.setText("Send");
                 inputField.setText("");
                 lastInputText = "";
             });
@@ -622,10 +637,14 @@ public class ChatOverlay extends Table {
         }
 
         isSending = true;
+        if (sendButton != null)
+            sendButton.setText("Sending...");
 
         ChatService.getInstance().sendSchematic(content, () -> {
             Core.app.post(() -> {
                 isSending = false;
+                if (sendButton != null)
+                    sendButton.setText("Send");
                 inputField.setText("");
                 lastInputText = "";
             });
@@ -634,6 +653,8 @@ public class ChatOverlay extends Table {
 
     private void handleSendError(Throwable err) {
         isSending = false;
+        if (sendButton != null)
+            sendButton.setText("Send");
 
         String errStr = err.toString();
         if (errStr.contains("409") || err.getMessage().contains("409")) {

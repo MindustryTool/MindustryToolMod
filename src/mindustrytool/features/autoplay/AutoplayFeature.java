@@ -101,12 +101,14 @@ public class AutoplayFeature implements Feature {
     private void draw() {
         var unit = Vars.player.unit();
 
-        if (currentTask == null || unit == null) {
+        if (unit == null) {
+            return;
+        }
+
+        if (currentTask == null) {
             Draw.z(Layer.overlayUI);
             Draw.rect(Icon.none.getRegion(), unit.x, unit.y + unit.hitSize * 2f, 10f, 10f);
             Draw.reset();
-
-            return;
         }
 
         var icon = currentTask.getIcon();
