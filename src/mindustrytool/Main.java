@@ -102,8 +102,6 @@ public class Main extends Mod {
                 root.row()
                         .buttonRow(buttonTitle, Icon.settings, featureSettingDialog::show)
                         .row();
-                return;
-
             } else if (arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2) {
                 root.row()
                         .button(buttonTitle, Icon.settings, featureSettingDialog::show)

@@ -62,9 +62,7 @@ public class CreateRoomDialog extends BaseDialog {
             if (Vars.mobile) {
                 root.row()
                         .buttonRow(buttonTitle, Icon.planet, this::show)
-                        .disabled(button -> !Vars.net.server())
-                        .row();
-                return;
+                        .disabled(button -> !Vars.net.server());
 
             } else if (arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2) {
                 root.row()

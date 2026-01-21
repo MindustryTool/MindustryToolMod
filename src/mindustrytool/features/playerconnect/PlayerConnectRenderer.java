@@ -190,6 +190,44 @@ public class PlayerConnectRenderer {
     }
 
     public static void joinRoom(PlayerConnectRoom room) {
+        // Check for unneeded mods
+        Seq<String> serverMods = room.data().mods();
+        Seq<String> localModNames = Vars.mods.list().select(m -> !m.meta.hidden).map(m -> m.name);
+        Seq<String> serverModNames = serverMods
+                .map(s -> s.indexOf(':') != -1 ? s.substring(0, s.indexOf(':')) : s);
+
+        Seq<String> unneeded = localModNames.select(m -> !serverModNames.contains(m));
+
+        if (!unneeded.isEmpty()) {
+            BaseDialog dialog = new BaseDialog("@warning");
+            dialog.cont.add("Unneeded mods detected. Disable them?").row();
+            dialog.cont.label(() -> unneeded.toString(", ")).color(Pal.lightishGray).width(400f).wrap().row();
+
+            dialog.buttons.button("@cancel", dialog::hide).size(100, 50);
+
+            dialog.buttons.button("Disable & Join", () -> {
+                unneeded.each(name -> {
+                    var mod = Vars.mods.getMod(name);
+                    if (mod != null) {
+                        Vars.mods.setEnabled(mod, false);
+                    }
+                });
+                dialog.hide();
+                proceedToJoin(room);
+            }).size(150, 50);
+
+            dialog.buttons.button("Ignore", () -> {
+                dialog.hide();
+                proceedToJoin(room);
+            }).size(100, 50);
+
+            dialog.show();
+        } else {
+            proceedToJoin(room);
+        }
+    }
+
+    private static void proceedToJoin(PlayerConnectRoom room) {
         var link = PlayerConnectLink.fromString(room.link());
 
         if (!room.data().isSecured()) {
