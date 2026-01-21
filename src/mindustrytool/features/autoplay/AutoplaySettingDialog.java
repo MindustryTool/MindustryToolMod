@@ -63,13 +63,10 @@ public class AutoplaySettingDialog extends BaseDialog {
                     }).growX().row();
 
                     // Settings (if any)
-                    if (task.hasSettings()) {
+                    task.settings().ifPresent(settingTable -> {
                         container.image().color(mindustry.graphics.Pal.gray).growX().height(2).pad(5).padLeft(80).row();
-                        container.table(settings -> {
-                            settings.left();
-                            task.buildSettings(settings);
-                        }).growX().pad(5).padLeft(80).left();
-                    }
+                        container.add(settingTable).growX().pad(5).padLeft(80).left();
+                    });
 
                 }).growX().pad(5).row();
             }

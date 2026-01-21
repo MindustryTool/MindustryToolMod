@@ -1,23 +1,39 @@
 package mindustrytool.features.playerconnect;
 
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 
+import arc.Core;
 import arc.Events;
 import arc.func.Cons;
 import arc.net.Client;
+import arc.struct.Seq;
 import arc.net.NetSerializer;
+import arc.util.Log;
 import arc.util.Threads;
 import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType;
+import mindustry.game.Team;
+import mindustry.game.EventType.PlayerIpBanEvent;
 import mindustry.game.EventType.PlayerJoin;
 import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
+import mindustry.gen.Player;
 import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
 
 public class PlayerConnect {
+
+    private static NetworkProxy room;
+    private static Client pinger;
+    private static ExecutorService worker = Threads.unboundedExecutor("Worker", 1);
+    private static Thread roomThread, pingerThread;
+
+    private static final Seq<Request> requestQueue = new Seq<>();
+    private static boolean isShowingDialog = false;
+
     static {
         Vars.ui.paused.hidden(() -> {
             arc.util.Timer.schedule(() -> {
@@ -55,12 +71,56 @@ public class PlayerConnect {
         Timer.schedule(() -> {
             updateStats();
         }, 60f, 60f);
+
+        Events.on(PlayerJoin.class, event -> {
+            if (PlayerConnect.isRoomClosed()) {
+                return;
+            }
+            if (PlayerConnectConfig.isAutoAccept()) {
+                return;
+            }
+
+            if (event.player == Vars.player) {
+                return;
+            }
+
+            if (requestQueue.contains(r -> r.player.uuid().equals(event.player.uuid()))) {
+                return;
+            }
+
+            var originalTeam = event.player.team();
+
+            event.player.team(Team.derelict);
+
+            if (event.player.unit() != null) {
+                event.player.unit().kill();
+            }
+
+            requestQueue.add(new Request(event.player, originalTeam));
+
+            if (!isShowingDialog) {
+                processNextRequest();
+            }
+        });
+
+        Events.on(PlayerIpBanEvent.class, event -> {
+            unbanProxyIp();
+        });
+
+        Events.on(RoomCreatedEvent.class, event -> {
+            unbanProxyIp();
+        });
     }
 
-    private static NetworkProxy room;
-    private static Client pinger;
-    private static ExecutorService worker = Threads.unboundedExecutor("Worker", 1);
-    private static Thread roomThread, pingerThread;
+    private static class Request {
+        final Player player;
+        final Team originalTeam;
+
+        public Request(Player player, Team originalTeam) {
+            this.player = player;
+            this.originalTeam = originalTeam;
+        }
+    }
 
     private static void updateStats() {
         if (room == null) {
@@ -72,6 +132,10 @@ public class PlayerConnect {
 
     public static boolean isRoomClosed() {
         return room == null || !room.isConnected();
+    }
+
+    public static String getRemoteHost() {
+        return room == null ? null : room.getRemoteHost();
     }
 
     public static void create(String ip, int port,
@@ -87,11 +151,15 @@ public class PlayerConnect {
         if (room == null || roomThread == null || !roomThread.isAlive()) {
             room = new NetworkProxy(password);
             roomThread = Threads.daemon("Proxy", room);
+
         }
 
         worker.submit(() -> {
             try {
-                room.connect(ip, port, id -> onSucceed.get(new PlayerConnectLink(ip, port, id)), onDisconnected);
+                room.connect(ip, port, id -> {
+                    Events.fire(new RoomCreatedEvent(room));
+                    onSucceed.get(new PlayerConnectLink(ip, port, id));
+                }, onDisconnected);
             } catch (Throwable e) {
                 onFailed.get(e);
             }
@@ -194,5 +262,59 @@ public class PlayerConnect {
             pingerThread = null;
             pinger = null;
         }
+    }
+
+    private static void unbanProxyIp() {
+        if (PlayerConnect.isRoomClosed()) {
+            return;
+        }
+
+        String remoteHost = PlayerConnect.getRemoteHost();
+        if (remoteHost != null) {
+            try {
+                InetAddress address = InetAddress.getByName(remoteHost);
+                Core.app.post(() -> unban(address.getHostAddress()));
+            } catch (Exception e) {
+                Log.err("Failed to check ban IP against remote host", e);
+            }
+        }
+    }
+
+    private static void unban(String ip) {
+        Vars.netServer.admins.unbanPlayerIP(ip);
+        Log.info("PlayerConnect: Unbanned Proxy IP @", ip);
+    }
+
+    private static synchronized void processNextRequest() {
+        if (requestQueue.isEmpty()) {
+            isShowingDialog = false;
+            return;
+        }
+
+        isShowingDialog = true;
+        Request req = requestQueue.remove(0);
+
+        if (!req.player.con.isConnected()) {
+            processNextRequest();
+            return;
+        }
+
+        Vars.ui.showCustomConfirm(//
+                "@playerconnect.join-request",
+                "Player [accent]\"" + req.player.name + "\"[] wants to join.", //
+                "@accept", //
+                "@reject", //
+                () -> {
+                    if (req.player.con.isConnected()) {
+                        req.player.team(req.originalTeam);
+                    }
+                    processNextRequest();
+                }, () -> {
+                    if (req.player.con.isConnected()) {
+                        req.player.sendMessage("You have been rejected to join the game by room host.");
+                        req.player.con.close();
+                    }
+                    processNextRequest();
+                });
     }
 }

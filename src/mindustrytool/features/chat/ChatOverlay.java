@@ -80,7 +80,10 @@ public class ChatOverlay extends Table {
 
         setup();
 
-        Events.on(EventType.ResizeEvent.class, e -> keepInScreen());
+        Events.on(EventType.ResizeEvent.class, e -> {
+            setup();
+            keepInScreen();
+        });
 
         addListener(new InputListener() {
             @Override
@@ -160,8 +163,8 @@ public class ChatOverlay extends Table {
             container.add(buttonTable).grow();
         } else {
             container.background(Styles.black8);
-            float width = Core.graphics.getWidth() / Scl.scl();
-            float height = Core.graphics.getHeight() / Scl.scl();
+            float width = Core.graphics.getWidth() / Scl.scl() * 0.7f;
+            float height = Core.graphics.getHeight() / Scl.scl() * 0.7f;
 
             containerCell.size(Math.min(width, 1400f), Math.min(height, 900f));
 
@@ -524,7 +527,7 @@ public class ChatOverlay extends Table {
             // Info Table
             card.table(info -> {
                 info.left();
-                info.add(user.name() + "[]").style(Styles.defaultLabel).color(Color.white).left().row();
+                info.add(user.name() + "[]").ellipsis(true).style(Styles.defaultLabel).color(Color.white).left().row();
 
                 user.getHighestRole().ifPresent(role -> {
                     info.add(role.id()).style(Styles.defaultLabel).color(Color.valueOf(role.color()))
