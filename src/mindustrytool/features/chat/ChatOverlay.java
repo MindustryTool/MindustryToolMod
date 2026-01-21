@@ -267,6 +267,10 @@ public class ChatOverlay extends Table {
                 if (connectionIndicator != null) {
                     connectionIndicator.setColor(connected ? Color.green : Color.yellow);
                 }
+
+                if (!connected) {
+                    messages.clear();
+                }
             });
 
             // Vertical Separator

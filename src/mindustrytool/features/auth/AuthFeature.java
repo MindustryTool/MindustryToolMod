@@ -114,8 +114,13 @@ public class AuthFeature implements Feature {
 
     private void showProfileDialog() {
         UserSession user = AuthService.getInstance().getCurrentUser();
+        
+        if (user == null) {
+            return;
+        }
+
         Vars.ui.showConfirm("Logout",
-                "Logged in as " + (user != null ? user.name() : "Unknown") + "\nDo you want to logout?", () -> {
+                "Logged in as " + user.name() + "\nDo you want to logout?", () -> {
                     AuthService.getInstance().logout();
                     updateAuthWindow();
                 });
