@@ -13,7 +13,6 @@ import mindustry.gen.Icon;
 import mindustry.graphics.Layer;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.autoplay.tasks.AssistTask;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
@@ -26,6 +25,7 @@ public class AutoplayFeature implements Feature {
     private final Seq<AutoplayTask> tasks = new Seq<>();
     private AutoplaySettingDialog dialog;
     private AutoplayTask currentTask;
+    private boolean isEnabled = false;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -80,11 +80,12 @@ public class AutoplayFeature implements Feature {
 
     @Override
     public void onEnable() {
-        // Nothing to do, update loop checks enabled state
+        isEnabled = true;
     }
 
     @Override
     public void onDisable() {
+        isEnabled = false;
         var unit = Vars.player.unit();
 
         if (unit != null && !unit.dead && currentTask != null) {
@@ -99,6 +100,10 @@ public class AutoplayFeature implements Feature {
     }
 
     private void draw() {
+        if (!isEnabled) {
+            return;
+        }
+
         var unit = Vars.player.unit();
 
         if (unit == null) {
@@ -124,7 +129,7 @@ public class AutoplayFeature implements Feature {
     }
 
     private void updateTask() {
-        if (!FeatureManager.getInstance().isEnabled(this)) {
+        if (!isEnabled) {
             return;
         }
 
@@ -164,7 +169,7 @@ public class AutoplayFeature implements Feature {
     }
 
     private void updateUnit() {
-        if (!FeatureManager.getInstance().isEnabled(this)) {
+        if (!isEnabled) {
             return;
         }
 
