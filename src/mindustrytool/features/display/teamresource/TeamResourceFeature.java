@@ -4,14 +4,13 @@ import arc.Core;
 import arc.Events;
 import arc.graphics.Color;
 import arc.input.KeyCode;
-import arc.math.Mathf;
 import arc.scene.Element;
+import arc.scene.Group;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
 import arc.scene.ui.Dialog;
-import arc.scene.Group;
 import arc.scene.ui.Image;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
@@ -25,14 +24,12 @@ import mindustry.Vars;
 import mindustry.core.UI;
 import mindustry.game.EventType.*;
 import mindustry.game.Team;
-import mindustry.gen.Building;
+import mindustry.gen.Groups;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
 import mindustry.type.Item;
 import mindustry.type.UnitType;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustry.world.Tile;
 import mindustry.world.blocks.power.PowerGraph;
 import mindustry.world.modules.ItemModule;
 import mindustrytool.Utils;
@@ -51,9 +48,9 @@ public class TeamResourceFeature extends Table implements Feature {
     private ItemModule rateDisplay = new ItemModule();
     private boolean viewingStats = false;
     private boolean holdingForStats = false;
-    private Building selectedPowerNode;
-    private PowerGraph powerGraph = new PowerGraph();
-    private boolean isChoosingPowerNode = false;
+
+    private Seq<PowerGraph> teamGraphs = new Seq<>();
+
     private boolean showTeamSelector = false;
     private boolean isHovered = false;
 
@@ -87,7 +84,7 @@ public class TeamResourceFeature extends Table implements Feature {
 
         @Override
         public void enter(InputEvent event, float x, float y, int pointer, Element fromActor) {
-            if (pointer == -1 && !holdingForStats && !isChoosingPowerNode) {
+            if (pointer == -1 && !holdingForStats) {
                 viewingStats = true;
                 lastSnapshot.clear();
             }
@@ -125,11 +122,8 @@ public class TeamResourceFeature extends Table implements Feature {
             lastSnapshot.clear();
             usedItems.clear();
             rebuild();
-            refreshPowerNode();
         });
 
-        Events.run(BlockBuildEndEvent.class, this::refreshPowerNode);
-        Events.run(BlockDestroyEvent.class, this::refreshPowerNode);
         Events.run(ResetEvent.class, () -> {
             usedItems.clear();
             clear();
@@ -149,20 +143,8 @@ public class TeamResourceFeature extends Table implements Feature {
                 return;
             }
 
-            if (isChoosingPowerNode && Core.input.justTouched()
-                    && Core.scene.hit(Core.input.mouseX(), Core.input.mouseY(),
-                            true) == null) {
-                float wx = Core.input.mouseWorld().x;
-                float wy = Core.input.mouseWorld().y;
-
-                Tile t = Vars.world.tileWorld(wx, wy);
-
-                if (t != null && t.build != null && t.build.power != null) {
-                    selectedPowerNode = t.build;
-                    powerGraph = t.build.power.graph;
-                    isChoosingPowerNode = false;
-                    rebuild();
-                }
+            if (!selectedTeam.active()) {
+                selectedTeam = Vars.player.team();
             }
 
             coreItems = (selectedTeam.data().hasCore() && selectedTeam.core() != null)
@@ -181,8 +163,11 @@ public class TeamResourceFeature extends Table implements Feature {
                 rebuild();
             }
 
-            if (viewingStats && timer.get(0, 30f)) {
+            if (timer.get(0, 30f)) {
                 updateRates();
+                if (TeamResourceConfig.showPower()) {
+                    updatePowerStats();
+                }
             }
         });
     }
@@ -202,7 +187,6 @@ public class TeamResourceFeature extends Table implements Feature {
             }
 
             rebuild();
-            refreshPowerNode();
             Core.settings.put("coreitems", false);
         }
     }
@@ -252,7 +236,6 @@ public class TeamResourceFeature extends Table implements Feature {
                             b.image().size(24f).color(team.color);
                         }, Styles.clearTogglei, () -> {
                             selectedTeam = team;
-                            selectedPowerNode = null;
                             usedUnits.clear();
                             rebuild();
                         }).checked(sel -> selectedTeam == team).size(32f).pad(2f).margin(2f);
@@ -333,39 +316,45 @@ public class TeamResourceFeature extends Table implements Feature {
             if (TeamResourceConfig.showPower()) {
                 t.table(power -> {
                     float barHeight = 20f * scale;
-                    power.defaults().height(barHeight).growX();
-                    power.touchable = Touchable.enabled;
-                    power.addListener(new ClickListener() {
-                        @Override
-                        public void clicked(InputEvent event, float x, float y) {
-                            isChoosingPowerNode = !isChoosingPowerNode;
-                            rebuild();
+                    power.defaults().growX();
+
+                    if (teamGraphs.isEmpty()) {
+                        power.add("No Power").fontScale(0.8f * scale).color(Color.gray);
+                    } else {
+                        
+                        power.label(() -> {
+                            float totalBalance = 0;
+                            for (PowerGraph g : teamGraphs)
+                                totalBalance += g.getPowerBalance();
+                            return "Power: " + (totalBalance >= 0 ? "+" : "")
+                                    + UI.formatAmount((long) (totalBalance * 60));
+                        }).fontScale(0.8f * scale).left().padBottom(2f * scale).row();
+
+                        
+                        power.add(new SplitBar(
+                                teamGraphs,
+                                SplitBar.Mode.SATISFACTION,
+                                scale)).height(barHeight).row();
+
+                        if (TeamResourceConfig.showStoredPower()) {
+                            
+                            power.label(() -> {
+                                float totalStored = 0;
+                                float totalCap = 0;
+                                for (PowerGraph g : teamGraphs) {
+                                    totalStored += g.getLastPowerStored();
+                                    totalCap += g.getLastCapacity();
+                                }
+                                return "Stored: " + UI.formatAmount((long) totalStored) + " / "
+                                        + UI.formatAmount((long) totalCap);
+                            }).fontScale(0.8f * scale).left().padTop(4f * scale).padBottom(2f * scale).row();
+
+                            
+                            power.add(new SplitBar(
+                                    teamGraphs,
+                                    SplitBar.Mode.STORED,
+                                    scale)).height(barHeight).row();
                         }
-                    });
-
-                    refreshPowerNode();
-
-                    if (isChoosingPowerNode) {
-                        power.add("Select power node").fontScale(scale).color(Pal.accent)
-                                .height(barHeight).row();
-                    }
-
-                    power.add(new ScaledBar(
-                            () -> "Power: " + (powerGraph.getPowerBalance() >= 0 ? "+" : "")
-                                    + UI.formatAmount((long) (powerGraph.getPowerBalance() * 60)),
-                            () -> Pal.powerBar,
-                            () -> Mathf.clamp(powerGraph.getSatisfaction()),
-                            scale)).row();
-
-                    if (TeamResourceConfig.showStoredPower()) {
-                        power.add(new ScaledBar(
-                                () -> "Stored: " + UI.formatAmount((long) powerGraph.getLastPowerStored()) + " / "
-                                        + UI.formatAmount((long) powerGraph.getLastCapacity()),
-                                () -> Pal.powerBar,
-                                () -> powerGraph.getLastCapacity() > 0
-                                        ? powerGraph.getLastPowerStored() / powerGraph.getLastCapacity()
-                                        : 0,
-                                scale)).padTop(Scl.scl(4f * scale));
                     }
                 }).growX().padTop(Scl.scl(6f * scale));
             }
@@ -385,7 +374,6 @@ public class TeamResourceFeature extends Table implements Feature {
                             b.add(team.localized()).color(team.color);
                         }, Styles.flatTogglet, () -> {
                             selectedTeam = team;
-                            selectedPowerNode = null;
                             rebuild();
                             hide();
                         }).checked(team == selectedTeam);
@@ -407,15 +395,41 @@ public class TeamResourceFeature extends Table implements Feature {
         lastSnapshot.set(coreItems);
     }
 
-    private String formatItem(Item item) {
+    private void updatePowerStats() {
+        ObjectSet<PowerGraph> found = new ObjectSet<>();
+        Groups.build.each(b -> {
+            if (b.team == selectedTeam && b.power != null && b.power.graph != null) {
+                PowerGraph graph = b.power.graph;
+                
+                if (graph.getLastPowerProduced() > 0 || graph.getLastCapacity() > 0
+                        || graph.getLastPowerProduced() > 0) {
+                    found.add(graph);
+                }
+            }
+        });
+
+        Seq<PowerGraph> newGraphs = found.toSeq();
+        newGraphs.sort((a, b) -> {
+            int cap = Float.compare(b.getLastCapacity(), a.getLastCapacity());
+            if (cap != 0)
+                return cap;
+            return Float.compare(b.getLastPowerProduced(), a.getLastPowerProduced());
+        });
+
+        if (!newGraphs.equals(teamGraphs)) {
+            teamGraphs = newGraphs;
+            rebuild();
+        }
+    }
+
+    private CharSequence formatItem(Item item) {
         if (coreItems == null)
             return "0";
 
         int amount = coreItems.get(item);
+        int rate = rateDisplay.get(item);
 
         if (viewingStats) {
-            int rate = rateDisplay.get(item);
-
             if (rate == 0)
                 return "[gray]0/s";
 
@@ -424,24 +438,14 @@ public class TeamResourceFeature extends Table implements Feature {
             return prefix + rate + "[gray]/s";
         }
 
-        return UI.formatAmount(amount);
-    }
-
-    private void refreshPowerNode() {
-        if (selectedPowerNode != null && selectedPowerNode.isValid() && selectedPowerNode.team == selectedTeam) {
-            if (selectedPowerNode.power != null) {
-                powerGraph = selectedPowerNode.power.graph;
-                return;
-            }
+        String color = "[white]";
+        if (rate < 0) {
+            color = "[scarlet]";
+        } else if (rate > 0) {
+            color = "[lime]";
         }
 
-        if (selectedTeam.data().hasCore() && selectedTeam.core() != null && selectedTeam.core().power != null) {
-            selectedPowerNode = selectedTeam.core();
-            powerGraph = selectedTeam.core().power.graph;
-        } else {
-            selectedPowerNode = null;
-            powerGraph = new PowerGraph();
-        }
+        return color + UI.formatAmount(amount);
     }
 
     public class TeamResourceSettingsDialog extends BaseDialog {
