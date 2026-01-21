@@ -211,6 +211,7 @@ public class Main extends Mod {
             dialog.buttons.button("Update", () -> {
                 dialog.hide();
                 Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
+                Vars.ui.mods.show();
             }).size(100f, 50f);
 
             dialog.show();

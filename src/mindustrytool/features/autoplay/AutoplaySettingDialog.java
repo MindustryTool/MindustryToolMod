@@ -1,5 +1,6 @@
 package mindustrytool.features.autoplay;
 
+import arc.Core;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
@@ -58,7 +59,32 @@ public class AutoplaySettingDialog extends BaseDialog {
                         }).padRight(10);
 
                         // Name
-                        header.label(() -> task.getName()).growX().left();
+                        header.label(() -> task.getName()).left();
+                        header.add().growX();
+
+                        header.label(() -> {
+                            if (!task.isEnabled()) {
+                                return Core.bundle.get("autoplay.status.disabled");
+                            }
+
+                            AutoplayTask current = feature.getCurrentTask();
+
+                            if (current == task) {
+                                return task.getStatus();
+                            }
+
+                            if (current == null) {
+                                return task.getStatus();
+                            }
+
+                            int currentIndex = feature.getTasks().indexOf(current);
+
+                            if (index < currentIndex) {
+                                return task.getStatus();
+                            } else {
+                                return Core.bundle.get("autoplay.status.blocked");
+                            }
+                        }).right();
 
                     }).growX().row();
 

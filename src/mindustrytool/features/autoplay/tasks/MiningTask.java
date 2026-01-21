@@ -19,11 +19,17 @@ import mindustry.world.Tile;
 
 public class MiningTask implements AutoplayTask {
     private boolean enabled = true;
+    private String status = "";
     private final MinerAI ai = new MinerAI();
     private final ObjectSet<Item> selectedItems = new ObjectSet<>();
 
     public MiningTask() {
         // Items will be loaded in load()
+    }
+
+    @Override
+    public String getStatus() {
+        return status;
     }
 
     @Override
@@ -83,17 +89,19 @@ public class MiningTask implements AutoplayTask {
     @Override
     public boolean shouldRun(Unit unit) {
         if (!unit.canMine()) {
+            status = Core.bundle.get("autoplay.status.cannot-mine");
             return false;
         }
 
         if (Vars.player.team().core() == null) {
+            status = Core.bundle.get("autoplay.status.no-core");
             return false;
         }
 
         Item best = null;
         int minAmount = Integer.MAX_VALUE;
         int mineTier = Vars.player.unit().type.mineTier;
-        Tile tile = null;
+        Tile bestTile = null;
 
         for (Item item : selectedItems) {
             if (item.hardness > mineTier) {
@@ -103,14 +111,14 @@ public class MiningTask implements AutoplayTask {
             if ((unit.type.mineFloor && Vars.indexer.hasOre(item))
                     || (unit.type.mineWalls && Vars.indexer.hasWallOre(item))) {
 
-                tile = Vars.indexer.findClosestOre(unit.x, unit.y, item);
+                Tile currentTile = Vars.indexer.findClosestOre(unit.x, unit.y, item);
 
-                if (tile == null) {
-                    tile = Vars.indexer.findClosestWallOre(unit.x, unit.y, item);
+                if (currentTile == null) {
+                    currentTile = Vars.indexer.findClosestWallOre(unit.x, unit.y, item);
                 }
 
-                if (tile == null) {
-                    throw new RuntimeException("No ore or wall ore found, howwwwww");
+                if (currentTile == null) {
+                    continue;
                 }
 
                 int amount = Vars.player.team().core().items.get(item);
@@ -118,13 +126,17 @@ public class MiningTask implements AutoplayTask {
                 if (amount < minAmount) {
                     minAmount = amount;
                     best = item;
+                    bestTile = currentTile;
                 }
             }
         }
 
         if (best != null) {
-            unit.mineTile = tile;
+            unit.mineTile = bestTile;
             ai.targetItem = best;
+            status = Core.bundle.format("autoplay.status.mining", best.localizedName);
+        } else {
+            status = Core.bundle.get("autoplay.status.no-ores");
         }
 
         return best != null;

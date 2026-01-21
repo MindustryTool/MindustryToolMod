@@ -38,6 +38,8 @@ public interface AutoplayTask {
     default void update(Unit unit) {
     }
 
+    String getStatus();
+
     default Optional<Table> settings() {
         return Optional.empty();
     }

@@ -27,7 +27,6 @@ public class WavePreviewFeature extends Table implements Feature {
     private final ObjectIntMap<UnitType> nextWaveCounts = new ObjectIntMap<>();
 
     private final Interval interval = new Interval();
-    private static final float UPDATE_INTERVAL = 30f;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -54,7 +53,7 @@ public class WavePreviewFeature extends Table implements Feature {
                 return;
             }
 
-            if (interval.get(UPDATE_INTERVAL)) {
+            if (interval.get(30)) {
                 updateCounts();
                 updateUI();
             }

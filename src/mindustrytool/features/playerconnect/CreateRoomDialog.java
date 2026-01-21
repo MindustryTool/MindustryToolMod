@@ -175,7 +175,7 @@ public class CreateRoomDialog extends BaseDialog {
                     PlayerConnectConfig.setMaxPlayer(Strings.parseInt(text));
                 }
             })
-                    .valid(Strings::canParseInt)
+                    .valid(text -> Strings.canParseInt(text) && Strings.parseInt(text) >= 0)
                     .height(54f)
                     .growX()
                     .maxTextLength(3)
