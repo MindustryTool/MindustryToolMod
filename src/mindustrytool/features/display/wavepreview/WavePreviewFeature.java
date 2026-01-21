@@ -35,6 +35,7 @@ public class WavePreviewFeature extends Table implements Feature {
                 .description("Displays current and next wave composition")
                 .icon(Icon.units)
                 .order(1)
+                .quickAccess(true)
                 .enabledByDefault(true)
                 .build();
     }

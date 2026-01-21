@@ -125,7 +125,7 @@ public class QuickAccessHud extends Table implements Feature {
 
         Seq<Feature> features = FeatureManager.getInstance().getFeatures();
         int i = 0;
-        int cols = 5; // 5 buttons per row
+        int cols = 6; // 5 buttons per row
 
         for (Feature f : features) {
             // Skip this feature itself
