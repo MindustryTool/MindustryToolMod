@@ -19,7 +19,7 @@ public class PlayerConnectService {
     public void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> cons) {
         Http.get(Config.API_v4_URL + "player-connect/rooms?q=" + q)
                 .timeout(5000)
-                .error(_err -> cons.get(new Seq<>()))
+                .error(_err -> Core.app.post(() -> cons.get(new Seq<>())))
                 .submit(response -> {
                     String data = response.getResultAsString();
                     Seq<PlayerConnectRoom> rooms = JsonIO.json.fromJson(Seq.class, PlayerConnectRoom.class, data);
@@ -57,7 +57,7 @@ public class PlayerConnectService {
         var cached = roomCache.get(link);
 
         if (cached != null) {
-            cons.get(cached);
+            Core.app.post(() -> cons.get(cached));
             return;
         }
 
@@ -66,9 +66,9 @@ public class PlayerConnectService {
 
             if (found != null) {
                 roomCache.put(link, found);
-                cons.get(found);
+                Core.app.post(() -> cons.get(found));
             } else {
-                cons.get(null);
+                Core.app.post(() -> cons.get(null));
             }
         });
     }

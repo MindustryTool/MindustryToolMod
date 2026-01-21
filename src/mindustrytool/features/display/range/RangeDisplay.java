@@ -53,6 +53,8 @@ public class RangeDisplay implements Feature {
 
     private static final Set<String> blockRangeFields = new HashSet<String>();
 
+    private float targetX = 0, targetY = 0;
+
     static {
         blockRangeFields.add("range");
     }
@@ -96,6 +98,11 @@ public class RangeDisplay implements Feature {
     private void draw() {
         if (!enabled || !Vars.state.isGame()) {
             return;
+        }
+
+        if (Vars.player.unit() != null){
+            targetX = Vars.player.unit().x;
+            targetY = Vars.player.unit().y;
         }
 
         Draw.z(Layer.overlayUI);
@@ -200,11 +207,14 @@ public class RangeDisplay implements Feature {
     }
 
     private void drawCircle(float x, float y, float range, Color color) {
+
+        var rotation = Mathf.angle(x - targetX, y - targetY);
+
         Tmp.c2.set(color).a(config.opacity);
         Lines.stroke(1f, Tmp.c2);
         Lines.dashCircle(x, y, range);
         Draw.color(Tmp.c2);
-        Lines.line(x, y, x + Mathf.cosDeg(15) * range, y + Mathf.sinDeg(15) * range);
+        Lines.line(x, y, x + Mathf.cosDeg(rotation) * range, y + Mathf.sinDeg(rotation) * range);
         Draw.reset();
     }
 
