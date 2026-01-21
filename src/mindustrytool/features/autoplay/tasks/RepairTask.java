@@ -50,9 +50,9 @@ public class RepairTask implements AutoplayTask {
 
         // Check for damaged buildings within a reasonable range (e.g. 500 blocks
         // radius)
-        boolean found = Units.findDamagedTile(unit.team, unit.x, unit.y) != null;
+        var tile = Units.findDamagedTile(unit.team, unit.x, unit.y);
 
-        if (!found) {
+        if (tile == null) {
             status = Core.bundle.get("autoplay.status.no-damaged-buildings");
             return false;
         }

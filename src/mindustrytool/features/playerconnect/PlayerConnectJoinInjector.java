@@ -216,7 +216,7 @@ public class PlayerConnectJoinInjector {
                         .row();
 
                 // Players
-                String names = room.data().players().map(n -> n + "[]").toString(", ");
+                String names = room.data().players().map(n -> n.name() + "[]").toString(", ");
                 body.add(Iconc.players + " [accent]" + names)
                         .padBottom(6)
                         .left()

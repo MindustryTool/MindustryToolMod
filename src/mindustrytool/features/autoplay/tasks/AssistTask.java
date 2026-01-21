@@ -48,16 +48,16 @@ public class AssistTask implements AutoplayTask {
 
     @Override
     public boolean shouldRun(Unit unit) {
+        if (!unit.canBuild()) {
+            status = Core.bundle.get("autoplay.status.cannot-build");
+            return false;
+        }
+
         if (ai.assistFollowing != null) {
             Player p = Groups.player.find(pl -> pl.unit() == ai.assistFollowing);
             String name = (p != null) ? p.name : "unit";
             status = Core.bundle.format("autoplay.status.following", name);
             return true;
-        }
-
-        if (!unit.canBuild()) {
-            status = Core.bundle.get("autoplay.status.cannot-build");
-            return false;
         }
 
         var buildingPlayer = Groups.player
@@ -70,7 +70,9 @@ public class AssistTask implements AutoplayTask {
             return true;
         }
 
-        if (Vars.player.team().data().plans.isEmpty()) {
+        var plans = Vars.player.team().data().plans;
+
+        if (plans.isEmpty()) {
             status = Core.bundle.get("autoplay.status.no-build-plans");
             return false;
         }

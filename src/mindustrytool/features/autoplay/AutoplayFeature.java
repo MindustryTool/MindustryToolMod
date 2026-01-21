@@ -74,7 +74,7 @@ public class AutoplayFeature implements Feature {
 
         Timer.schedule(() -> {
             updateTask();
-        }, 0, 1);
+        }, 0, 0.2f);
     }
 
     @Override
