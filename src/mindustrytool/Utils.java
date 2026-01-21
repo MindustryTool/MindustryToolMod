@@ -2,7 +2,10 @@ package mindustrytool;
 
 import java.io.IOException;
 
+import arc.graphics.Texture;
+import arc.graphics.g2d.TextureRegion;
 import arc.math.geom.*;
+import arc.scene.style.TextureRegionDrawable;
 import arc.struct.*;
 import arc.util.io.*;
 import arc.util.serialization.*;
@@ -20,6 +23,7 @@ import mindustry.world.blocks.sandbox.*;
 import mindustry.world.blocks.storage.*;
 
 import java.io.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -149,5 +153,20 @@ public class Utils {
         text = text.replaceAll("`([^`]*)`", "[cyan]$1[]");
 
         return text;
+    }
+
+    private static ConcurrentHashMap<String, TextureRegionDrawable> iconCache = new ConcurrentHashMap<>();
+
+    public static TextureRegionDrawable icons(String name) {
+        if (iconCache.containsKey(name)) {
+            return iconCache.get(name);
+        }
+
+        var mod = Vars.mods.getMod(Main.class);
+
+        var texture = new TextureRegion(new Texture(mod.root.child("icons").child(name)));
+        var drawable = new TextureRegionDrawable(texture);
+        iconCache.put(name, drawable);
+        return drawable;
     }
 }

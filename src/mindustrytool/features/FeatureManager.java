@@ -2,7 +2,6 @@ package mindustrytool.features;
 
 import arc.Core;
 import arc.struct.Seq;
-import arc.util.Log;
 
 public class FeatureManager {
     private static final FeatureManager instance = new FeatureManager();
@@ -23,10 +22,8 @@ public class FeatureManager {
     public void init() {
         for (Feature feature : features) {
             feature.init();
-            Log.info("Initialized feature: @", feature.getMetadata().name());
             if (isEnabled(feature)) {
                 feature.onEnable();
-                Log.info("Enabled feature: @", feature.getMetadata().name());
             }
         }
     }

@@ -18,7 +18,6 @@ import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Building;
 import mindustry.gen.Groups;
-import mindustry.gen.Iconc;
 import mindustry.gen.Unit;
 import mindustry.graphics.Layer;
 import mindustry.ui.Styles;
@@ -27,6 +26,7 @@ import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.defense.OverdriveProjector;
 import mindustry.world.blocks.defense.turrets.Turret;
+import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -62,7 +62,7 @@ public class RangeDisplay implements Feature {
         return FeatureMetadata.builder()
                 .name("Range Display")
                 .description("Display ranges for blocks, units, and turrets.")
-                .icon(Iconc.eye)
+                .icon(Utils.icons("range-display.png"))
                 .order(5)
                 .enabledByDefault(true)
                 .quickAccess(true)

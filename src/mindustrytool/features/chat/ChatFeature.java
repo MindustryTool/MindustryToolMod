@@ -6,7 +6,7 @@ import arc.Core;
 import arc.Events;
 import arc.scene.ui.Dialog;
 import mindustry.Vars;
-import mindustry.gen.Iconc;
+import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -22,7 +22,7 @@ public class ChatFeature implements Feature {
         return FeatureMetadata.builder()
                 .name("Chat")
                 .description("Global chat")
-                .icon(Iconc.chat)
+                .icon(Icon.chat)
                 .enabledByDefault(true)
                 .build();
     }

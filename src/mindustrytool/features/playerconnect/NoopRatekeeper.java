@@ -1,4 +1,4 @@
-package mindustrytool.ui;
+package mindustrytool.features.playerconnect;
 
 import arc.util.Ratekeeper;
 

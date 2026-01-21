@@ -1,6 +1,6 @@
 package mindustrytool.features.godmode;
 
-import mindustry.gen.Iconc;
+import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -11,7 +11,7 @@ public class GodModeFeature implements Feature {
         return FeatureMetadata.builder()
                 .name("God Mode")
                 .description("Not coded yet.")
-                .icon(Iconc.defense)
+                .icon(Icon.defense)
                 .build();
     }
 

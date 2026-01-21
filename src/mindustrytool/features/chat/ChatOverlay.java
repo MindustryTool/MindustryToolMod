@@ -65,10 +65,13 @@ public class ChatOverlay extends Table {
     private int unreadCount = 0;
     private Table badgeTable;
 
+    private boolean isUserListCollapsed;
+
     public ChatOverlay() {
         touchable = Touchable.childrenOnly;
 
         isCollapsed = config.collapsed();
+        isUserListCollapsed = Vars.mobile;
         setPosition(config.x(), config.y());
 
         container = new Table();
@@ -233,18 +236,30 @@ public class ChatOverlay extends Table {
             Table rightSide = new Table();
             rightSide.background(Styles.black3);
 
-            rightSide.add("ONLINE MEMBERS").style(Styles.defaultLabel).color(Color.gray).pad(10).left().row();
+            Table titleTable = new Table();
+            if (!isUserListCollapsed) {
+                titleTable.add("ONLINE MEMBERS").style(Styles.defaultLabel).color(Color.gray).pad(10).left().growX();
+            }
 
-            userListTable = new Table();
-            userListTable.top().left();
+            titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
+                isUserListCollapsed = !isUserListCollapsed;
+                setup();
+            }).size(40).pad(4).right();
 
-            ScrollPane userScrollPane = new ScrollPane(userListTable,
-                    Styles.noBarPane);
-            userScrollPane.setScrollingDisabled(true, false);
+            rightSide.add(titleTable).growX().row();
 
-            rightSide.add(userScrollPane).grow().row();
+            if (!isUserListCollapsed) {
+                userListTable = new Table();
+                userListTable.top().left();
 
-            mainContent.add(rightSide).width(280f).growY();
+                ScrollPane userScrollPane = new ScrollPane(userListTable,
+                        Styles.noBarPane);
+                userScrollPane.setScrollingDisabled(true, false);
+
+                rightSide.add(userScrollPane).grow().row();
+            }
+
+            mainContent.add(rightSide).width(isUserListCollapsed ? 50f : 280f).growY();
 
             container.add(mainContent).grow().row();
 

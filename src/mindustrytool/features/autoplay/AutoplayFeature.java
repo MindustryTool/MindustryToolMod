@@ -9,8 +9,8 @@ import arc.struct.Seq;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
-import mindustry.gen.Iconc;
 import mindustry.graphics.Layer;
+import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
@@ -31,7 +31,7 @@ public class AutoplayFeature implements Feature {
         return FeatureMetadata.builder()
                 .name("Autoplay")
                 .description("Automatically control player unit to repair, build, or mine.")
-                .icon(Iconc.play)
+                .icon(Utils.icons("autoplay.png"))
                 .quickAccess(true)
                 .enabledByDefault(false)
                 .build();

@@ -11,7 +11,6 @@ import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
-import mindustry.gen.Iconc;
 import mindustrytool.MdtKeybinds;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -26,7 +25,7 @@ public class SchematicBrowserFeature implements Feature {
         return FeatureMetadata.builder()
                 .name("Schematic Browser")
                 .description("Browse and download schematics.")
-                .icon(Iconc.paste)
+                .icon(Icon.paste)
                 .order(2)
                 .build();
     }
