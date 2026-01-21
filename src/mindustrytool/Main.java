@@ -32,6 +32,7 @@ import mindustrytool.features.settings.FeatureSettingDialog;
 import mindustrytool.features.chat.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.autoplay.AutoplayFeature;
+import mindustrytool.features.display.wavepreview.WavePreviewFeature;
 
 public class Main extends Mod {
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
@@ -71,7 +72,8 @@ public class Main extends Mod {
                 new AuthFeature(), //
                 new ChatFeature(),
                 new GodModeFeature(),
-                new AutoplayFeature());
+                new AutoplayFeature(),
+                new WavePreviewFeature());
 
         FeatureManager.getInstance().init();
     }

@@ -11,6 +11,7 @@ import arc.scene.event.InputEvent;
 import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
 import arc.scene.ui.Dialog;
+import arc.scene.Group;
 import arc.scene.ui.Image;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
@@ -192,7 +193,13 @@ public class TeamResourceFeature extends Table implements Feature {
             if (Vars.ui.hudGroup.find("team-resources-overlay") != null) {
                 Vars.ui.hudGroup.find("team-resources-overlay").remove();
             }
-            Vars.ui.hudGroup.addChild(this);
+
+            Element parent = Vars.ui.hudGroup.find("minimap/position");
+            if (parent != null && parent instanceof Group) {
+                ((Group) parent).addChild(this);
+            } else {
+                Vars.ui.hudGroup.addChild(this);
+            }
 
             rebuild();
             refreshPowerNode();
