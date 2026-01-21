@@ -26,12 +26,14 @@ import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.game.Schematic;
 import mindustry.game.Schematics;
+import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import arc.Events;
 import mindustrytool.Main;
+import mindustrytool.MdtKeybinds;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
@@ -56,7 +58,6 @@ public class ChatOverlay extends Table {
     private TextButton sendButton;
     private boolean isSending = false;
 
-    private boolean isCollapsed = true;
     private String lastInputText = "";
     private Table container;
     private Cell<Table> containerCell;
@@ -70,7 +71,6 @@ public class ChatOverlay extends Table {
     public ChatOverlay() {
         touchable = Touchable.childrenOnly;
 
-        isCollapsed = config.collapsed();
         isUserListCollapsed = Vars.mobile;
         setPosition(config.x(), config.y());
 
@@ -85,10 +85,19 @@ public class ChatOverlay extends Table {
             keepInScreen();
         });
 
+        Events.run(Trigger.update, () -> {
+            boolean noInputFocused = !Core.scene.hasField();
+
+            if (noInputFocused && Core.input.keyRelease(MdtKeybinds.chatKb)) {
+                config.collapsed(!config.collapsed());
+                setup();
+            }
+        });
+
         addListener(new InputListener() {
             @Override
             public boolean keyDown(InputEvent event, KeyCode keycode) {
-                if (keycode == KeyCode.escape && !isCollapsed) {
+                if (keycode == KeyCode.escape && !config.collapsed()) {
                     collapse();
                     return true;
                 }
@@ -98,16 +107,16 @@ public class ChatOverlay extends Table {
     }
 
     public boolean isCollapsed() {
-        return isCollapsed;
+        return config.collapsed();
     }
 
     private void setup() {
-        setPosition(config.x(isCollapsed), config.y(isCollapsed));
+        setPosition(config.x(config.collapsed()), config.y(config.collapsed()));
 
         container.clearChildren();
         container.touchable = Touchable.enabled;
 
-        if (isCollapsed) {
+        if (config.collapsed()) {
             container.background(null);
             containerCell.size(48);
 
@@ -151,7 +160,6 @@ public class ChatOverlay extends Table {
                 @Override
                 public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
                     if (!wasDragged) {
-                        isCollapsed = false;
                         config.collapsed(false);
                         unreadCount = 0;
                         setup();
@@ -322,7 +330,7 @@ public class ChatOverlay extends Table {
                 }
             });
 
-            if (inputField != null && !isCollapsed) {
+            if (inputField != null && !config.collapsed()) {
                 Core.scene.setKeyboardFocus(inputField);
             }
         }
@@ -401,7 +409,7 @@ public class ChatOverlay extends Table {
             messages.add(msg);
 
             try {
-                if (isCollapsed && config.lastRead().isBefore(Instant.parse(msg.createdAt))) {
+                if (config.collapsed() && config.lastRead().isBefore(Instant.parse(msg.createdAt))) {
                     addedCount++;
                 }
             } catch (Exception e) {
@@ -409,12 +417,12 @@ public class ChatOverlay extends Table {
             }
         }
 
-        if (isCollapsed && addedCount > 0) {
+        if (config.collapsed() && addedCount > 0) {
             unreadCount += addedCount;
             updateBadge();
         }
 
-        if (messageTable != null && !isCollapsed) {
+        if (messageTable != null && !config.collapsed()) {
             rebuildMessages(messageTable);
             // Scroll to bottom
             Core.app.post(() -> {
@@ -564,7 +572,6 @@ public class ChatOverlay extends Table {
     }
 
     private void collapse() {
-        isCollapsed = true;
         config.collapsed(true);
         unreadCount = 0;
         if (inputField != null) {
