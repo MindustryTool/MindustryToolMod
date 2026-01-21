@@ -422,6 +422,10 @@ public class ChatOverlay extends Table {
             updateBadge();
         }
 
+        if (messages.size > 1000) {
+            messages.removeRange(0, messages.size - 1000);
+        }
+
         if (messageTable != null && !config.collapsed()) {
             rebuildMessages(messageTable);
             // Scroll to bottom
