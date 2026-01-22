@@ -2,6 +2,7 @@ package mindustrytool.features.chat;
 
 import java.util.Optional;
 
+import arc.ApplicationListener;
 import arc.Core;
 import arc.Events;
 import arc.scene.ui.Dialog;
@@ -55,6 +56,13 @@ public class ChatFeature implements Feature {
 
         settingDialog.addCloseButton();
         settingDialog.closeOnBack();
+
+        Core.app.addListener(new ApplicationListener() {
+            @Override
+            public void exit() {
+                ChatService.getInstance().disconnectStream();
+            }
+        });
     }
 
     @Override
