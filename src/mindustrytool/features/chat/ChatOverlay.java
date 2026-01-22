@@ -709,7 +709,7 @@ public class ChatOverlay extends Table {
                 return null;
             });
 
-        } finally {
+        } catch (Exception _e) {
             isSending.set(false);
         }
     }
