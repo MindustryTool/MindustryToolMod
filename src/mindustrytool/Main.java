@@ -31,6 +31,7 @@ import mindustrytool.features.settings.FeatureSettingDialog;
 import mindustrytool.features.chat.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.autoplay.AutoplayFeature;
+import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.display.wavepreview.WavePreviewFeature;
 
 public class Main extends Mod {
@@ -72,7 +73,8 @@ public class Main extends Mod {
                 new ChatFeature(),
                 new GodModeFeature(),
                 new AutoplayFeature(),
-                new WavePreviewFeature());
+                new WavePreviewFeature(),
+                new BackgroundFeature());
 
         FeatureManager.getInstance().init();
     }

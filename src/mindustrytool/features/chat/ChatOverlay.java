@@ -457,7 +457,7 @@ public class ChatOverlay extends Table {
         }
     }
 
-    public void addMessages(ChatMessage[] newMessages) {
+    public void addMessages(ChatMessage... newMessages) {
         int addedCount = 0;
 
         for (ChatMessage msg : newMessages) {
@@ -629,7 +629,7 @@ public class ChatOverlay extends Table {
             // Info Table
             card.table(info -> {
                 info.left();
-                info.add(user.name() + "[]").ellipsis(true).maxWidth(200).style(Styles.defaultLabel).color(Color.white)
+                info.add(user.name() + "[]").ellipsis(true).maxWidth(160).style(Styles.defaultLabel).color(Color.white)
                         .left().row();
 
                 user.getHighestRole().ifPresent(role -> {
@@ -656,14 +656,14 @@ public class ChatOverlay extends Table {
             return;
         }
 
-        send(() -> ChatService.getInstance().sendMessage(content));
+        send(() -> ChatService.getInstance().sendMessage(content).thenAccept(this::addMessages));
     }
 
     private void sendSchematic() {
-        send(() -> ChatService.getInstance().sendSchematic(inputField.getText()));
+        send(() -> ChatService.getInstance().sendSchematic(inputField.getText()).thenAccept(this::addMessages));
     }
 
-    private void send(Prov<CompletableFuture<Void>> prov) {
+    private <T> void send(Prov<CompletableFuture<T>> prov) {
         if (!AuthService.getInstance().isLoggedIn()) {
             Vars.ui.showInfoFade("@chat.not-logged-in");
             return;
@@ -709,7 +709,7 @@ public class ChatOverlay extends Table {
                 return null;
             });
 
-        } catch (Exception e) {
+        } catch (Exception _e) {
             isSending.set(false);
         }
     }

@@ -4,7 +4,6 @@ import arc.Core;
 import arc.struct.Seq;
 import arc.util.Nullable;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
@@ -95,14 +94,11 @@ public final class ReactiveStore<T> {
     }
 
     private void updateValue(T newValue) {
-        boolean changed = !Objects.equals(value, newValue);
         value = newValue;
         state = LoadState.SUCCESS;
         lastError = null;
 
-        if (changed) {
-            notifyListeners();
-        }
+        notifyListeners();
     }
 
     private void fail(Throwable error) {

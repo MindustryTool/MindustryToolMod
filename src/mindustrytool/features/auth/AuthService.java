@@ -44,7 +44,7 @@ public class AuthService {
             AuthHttp.get(Config.API_v4_URL + "auth/session", res -> future.complete(res.getResultAsString()),
                     err -> future.completeExceptionally(err));
 
-            return future.thenApply(json -> Utils.fromJson(UserSession.class, json));
+            return future.thenApply(json -> json.isEmpty() ? null : Utils.fromJson(UserSession.class, json));
         });
 
         sessionStore.subscribe((value, state, error) -> {

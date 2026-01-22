@@ -3,6 +3,7 @@ package mindustrytool.features.auth;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
+import arc.util.Log;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.gen.Icon;
@@ -49,15 +50,17 @@ public class AuthFeature implements Feature {
         AuthService.getInstance().sessionStore.subscribe((user, state, error) -> {
             if (state == LoadState.LOADING) {
                 content.clear();
-                content.add("@loading").labelAlign(Align.left).padLeft(8);
+                content.add("@loading").wrapLabel(false).labelAlign(Align.left).padLeft(8);
             } else if (error != null) {
                 content.clear();
                 content.add("@error").labelAlign(Align.left).padLeft(8);
                 content.add(error.getLocalizedMessage()).labelAlign(Align.left).padLeft(8).row();
                 content.button("@retry", Icon.refresh, this::startLogin);
+
+                Log.err("Failed to login", error);
             } else if (user == null) {
                 content.clear();
-                content.button("@login", () -> startLogin());
+                content.button("@login", () -> startLogin()).wrapLabel(false);
             } else if (user != null) {
                 content.clear();
 
@@ -75,6 +78,8 @@ public class AuthFeature implements Feature {
                             () -> AuthService.getInstance().logout());
                 });
             }
+
+            content.pack();
         });
 
         AuthService.getInstance()
