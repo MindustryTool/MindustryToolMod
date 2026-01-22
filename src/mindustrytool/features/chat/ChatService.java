@@ -152,9 +152,10 @@ public class ChatService {
 
     public synchronized void disconnectStream() {
         isStreaming.set(false);
-        messageListener = null;
 
         broadcastConnectionStatus(false);
+
+        messageListener = null;
 
         try {
             if (streamThread != null) {
