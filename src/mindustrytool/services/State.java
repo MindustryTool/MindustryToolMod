@@ -34,7 +34,7 @@ public final class State<T> {
         T old = value;
         value = newValue;
 
-        Core.app.post(() -> notifyListeners(newValue, old));
+        notifyListeners(newValue, old);
     }
 
     public void subscribe(Listener<T> listener) {
@@ -47,8 +47,10 @@ public final class State<T> {
     }
 
     private void notifyListeners(T newValue, T oldValue) {
-        for (Listener<T> l : listeners) {
-            l.onChanged(newValue, oldValue);
-        }
+        Core.app.post(() -> {
+            for (Listener<T> l : listeners) {
+                l.onChanged(newValue, oldValue);
+            }
+        });
     }
 }

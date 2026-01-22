@@ -69,11 +69,11 @@ public final class ReactiveStore<T> {
 
         inFlight = fetcher.get()
                 .thenApply(result -> {
-                    Core.app.post(() -> updateValue(result));
+                    updateValue(result);
                     return result;
                 })
                 .exceptionally(err -> {
-                    Core.app.post(() -> fail(err));
+                    fail(err);
                     throw new CompletionException(err);
                 });
 
@@ -81,16 +81,14 @@ public final class ReactiveStore<T> {
     }
 
     public void setValue(T newValue) {
-        Core.app.post(() -> updateValue(newValue));
+        updateValue(newValue);
     }
 
     public void clear() {
-        Core.app.post(() -> {
-            value = null;
-            state = LoadState.IDLE;
-            lastError = null;
-            notifyListeners();
-        });
+        value = null;
+        state = LoadState.IDLE;
+        lastError = null;
+        notifyListeners();
     }
 
     private void updateValue(T newValue) {
@@ -114,8 +112,10 @@ public final class ReactiveStore<T> {
     }
 
     private void notifyListeners() {
-        for (Listener<T> l : listeners) {
-            l.onUpdate(value, state, lastError);
-        }
+        Core.app.post(() -> {
+            for (Listener<T> l : listeners) {
+                l.onUpdate(value, state, lastError);
+            }
+        });
     }
 }
