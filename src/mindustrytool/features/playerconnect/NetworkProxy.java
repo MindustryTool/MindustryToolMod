@@ -335,7 +335,7 @@ public class NetworkProxy extends Client implements NetListener {
                     return;
                 }
 
-                var packet = new Packets.StatsPacket(roomId, getStats());
+                var packet = new Packets.StatsPacket(getStats());
 
                 sendTCP(packet);
             } catch (Throwable err) {

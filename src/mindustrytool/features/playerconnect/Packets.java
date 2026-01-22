@@ -68,7 +68,7 @@ public class Packets {
     public static class RoomPlayer {
         public String name = "";
         public String locale = "";
-        
+
         public RoomPlayer(String name, String locale) {
             this.name = name;
             this.locale = locale;
@@ -98,8 +98,7 @@ public class Packets {
         private StatsPacket() {
         }
 
-        public StatsPacket(String roomId, RoomStats data) {
-            this.roomId = roomId;
+        public StatsPacket(RoomStats data) {
             this.data = data;
         }
 
