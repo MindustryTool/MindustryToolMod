@@ -92,7 +92,6 @@ public class Packets {
     }
 
     public static class StatsPacket extends Packet {
-        public String roomId;
         public RoomStats data;
 
         private StatsPacket() {
@@ -104,7 +103,6 @@ public class Packets {
 
         public void read(ByteBufferInput read) {
             try {
-                this.roomId = read.readUTF();
                 this.data = (RoomStats) JsonIO.read(RoomStats.class, read.readUTF());
             } catch (IOException var3) {
                 throw new RuntimeException(var3);
@@ -113,7 +111,6 @@ public class Packets {
 
         public void write(ByteBufferOutput write) {
             try {
-                write.writeUTF(this.roomId);
                 write.writeUTF(Utils.toJson(this.data));
             } catch (IOException var3) {
                 throw new RuntimeException(var3);

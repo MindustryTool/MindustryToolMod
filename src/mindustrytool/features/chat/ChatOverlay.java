@@ -313,12 +313,13 @@ public class ChatOverlay extends Table {
 
             // User List Sidebar
             Table rightSide = new Table();
+            rightSide.top();
             rightSide.background(Styles.black3);
 
             Table titleTable = new Table();
             if (!isUserListCollapsed) {
                 titleTable.add("@chat.online-members").style(Styles.defaultLabel).color(Color.gray).pad(10).left()
-                        .growX();
+                        .minWidth(0).ellipsis(true).growX();
             }
 
             titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
@@ -337,9 +338,10 @@ public class ChatOverlay extends Table {
                 userScrollPane.setScrollingDisabled(true, false);
 
                 rightSide.add(userScrollPane).grow().row();
+                rightSide.pack();
             }
 
-            mainContent.add(rightSide).width(isUserListCollapsed ? 50f : 280f).growY();
+            mainContent.add(rightSide).width(isUserListCollapsed ? 48f : 280f).growY();
 
             container.add(mainContent).grow().row();
 
@@ -629,16 +631,19 @@ public class ChatOverlay extends Table {
             // Info Table
             card.table(info -> {
                 info.left();
-                info.add(user.name() + "[]").ellipsis(true).maxWidth(160).style(Styles.defaultLabel).color(Color.white)
+                info.add(user.name() + "[]").minWidth(0).ellipsis(true).style(Styles.defaultLabel)
+                        .color(Color.white)
                         .left().row();
 
                 user.getHighestRole().ifPresent(role -> {
-                    info.add(role.id()).style(Styles.defaultLabel).color(Color.valueOf(role.color()))
+                    info.add(role.id()).minWidth(0).ellipsis(true).style(Styles.defaultLabel)
+                            .color(Color.valueOf(role.color()))
                             .left().row();
                 });
             }).growX().left();
 
-            userListTable.add(card).growX().padBottom(8).padLeft(8).padRight(8).row();
+            userListTable.add(card).growX().minWidth(0).padBottom(8).padLeft(8).padRight(8).row();
+            userListTable.pack();
         }
     }
 
