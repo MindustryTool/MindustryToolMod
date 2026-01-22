@@ -13,6 +13,7 @@ import arc.util.Log;
 import arc.util.serialization.Jval;
 import arc.util.serialization.Json;
 import mindustrytool.Config;
+import mindustrytool.Utils;
 import mindustrytool.features.auth.AuthHttp;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.dto.ChatMessage;
@@ -169,8 +170,8 @@ public class ChatService {
         Log.info("Chat stream disconnected.");
     }
 
-    public CompletableFuture<Void> sendMessage(String content) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
+    public CompletableFuture<ChatMessage> sendMessage(String content) {
+        CompletableFuture<ChatMessage> future = new CompletableFuture<>();
 
         Jval json = Jval.newObject();
         json.put("content", content);
@@ -178,13 +179,13 @@ public class ChatService {
         AuthHttp.post(Config.API_v4_URL + "chats/text", json.toString())
                 .header("Content-Type", "application/json")
                 .error(future::completeExceptionally)
-                .submit(res -> future.complete(null));
+                .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
 
         return future;
     }
 
-    public CompletableFuture<Void> sendSchematic(String content) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
+    public CompletableFuture<ChatMessage> sendSchematic(String content) {
+        CompletableFuture<ChatMessage> future = new CompletableFuture<>();
 
         Jval json = Jval.newObject();
         json.put("content", content);
@@ -192,7 +193,7 @@ public class ChatService {
         AuthHttp.post(Config.API_v4_URL + "chats/schematic", json.toString())
                 .header("Content-Type", "application/json")
                 .error(future::completeExceptionally)
-                .submit(res -> future.complete(null));
+                .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
 
         return future;
     }
