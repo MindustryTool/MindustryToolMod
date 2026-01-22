@@ -179,8 +179,9 @@ public class Main extends Mod {
             dialog.buttons.button("Cancel", dialog::hide).size(100f, 50f);
             dialog.buttons.button("Update", () -> {
                 dialog.hide();
-                Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
                 Vars.ui.mods.show();
+                Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
+                Vars.ui.loadfrag.toFront();
             }).size(100f, 50f);
 
             dialog.show();
