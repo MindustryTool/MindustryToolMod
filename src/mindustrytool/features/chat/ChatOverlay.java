@@ -209,7 +209,7 @@ public class ChatOverlay extends Table {
                     if (!wasDragged) {
                         config.collapsed(false);
                         unreadCount = 0;
-                        setup();
+                        Core.app.post(() -> setup());
                     }
                 }
             });
@@ -323,7 +323,7 @@ public class ChatOverlay extends Table {
 
             titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
                 isUserListCollapsed = !isUserListCollapsed;
-                setup();
+                Core.app.post(() -> setup());
             }).size(40).pad(4).right();
 
             rightSide.add(titleTable).growX().row();
@@ -486,9 +486,9 @@ public class ChatOverlay extends Table {
         }
 
         if (messageTable != null && !config.collapsed()) {
-            rebuildMessages(messageTable);
             // Scroll to bottom
             Core.app.post(() -> {
+                rebuildMessages(messageTable);
                 if (scrollPane != null)
                     scrollPane.setScrollY(scrollPane.getMaxY());
             });
@@ -645,7 +645,7 @@ public class ChatOverlay extends Table {
     private void collapse() {
         config.collapsed(true);
         unreadCount = 0;
-        setup();
+        Core.app.post(() -> setup());
     }
 
     private void sendMessage() {
