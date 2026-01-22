@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.*;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static mindustry.Vars.*;
@@ -34,7 +35,9 @@ public class Utils {
 
     public static ObjectMap<String, Schematic> schematicData = new ObjectMap<>();
     private static final byte[] header = { 'm', 's', 'c', 'h' };
-    private static final ObjectMapper mapper = new ObjectMapper();
+
+    private static final ObjectMapper mapper = new ObjectMapper()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
     public static synchronized Schematic readSchematic(String data) {
         return schematicData.get(data, () -> readBase64(data));
@@ -125,6 +128,14 @@ public class Utils {
     public static String toJson(Object object) {
         try {
             return mapper.writeValueAsString(object);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> T fromJson(Class<T> clazz, String json) {
+        try {
+            return mapper.readValue(json, clazz);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

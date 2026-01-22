@@ -1,17 +1,15 @@
 package mindustrytool.features.auth;
 
-import arc.Core;
-import arc.Events;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
+import arc.util.Timer;
 import mindustry.Vars;
-import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.features.auth.dto.UserSession;
+import mindustrytool.services.ReactiveStore.LoadState;
 import mindustrytool.ui.NetworkImage;
 
 public class AuthFeature implements Feature {
@@ -35,49 +33,34 @@ public class AuthFeature implements Feature {
         wholeViewport.setFillParent(true);
         wholeViewport.top().right();
 
-        authWindow = wholeViewport.table()
-                .get();
+        authWindow = wholeViewport.table().get();
 
         authWindow.top().right();
         authWindow.touchable = Touchable.childrenOnly;
 
         Vars.ui.menuGroup.addChild(wholeViewport);
 
-        // Restore session
-        AuthService.getInstance()
-                .refreshTokenIfNeeded()
-                .thenCompose((_void) -> AuthService.getInstance().fetchUserSession())
-                .thenRun(() -> Core.app.post(this::updateAuthWindow))
-                .exceptionally((error) -> {
-                    Core.app.post(this::updateAuthWindow);
-
-                    return null;
-                });
-
-        Events.on(ClientLoadEvent.class, e -> {
-            authWindow.toFront();
-            updateAuthWindow();
-        });
-
-        Events.on(UserSession.class, user -> {
-            Core.app.post(this::updateAuthWindow);
-        });
-    }
-
-    private void updateAuthWindow() {
-        if (authWindow == null) {
-            return;
-        }
-
-        authWindow.clear();
-
         Table content = new Table();
         content.setBackground(Styles.black6);
 
-        if (AuthService.getInstance().isLoggedIn()) {
-            UserSession user = AuthService.getInstance().getCurrentUser();
+        authWindow.add(content).top().right().margin(8f);
+        authWindow.toFront();
 
-            if (user != null) {
+        AuthService.getInstance().sessionStore.subscribe((user, state, error) -> {
+            if (state == LoadState.LOADING) {
+                content.clear();
+                content.add("@loading").labelAlign(Align.left).padLeft(8);
+            } else if (error != null) {
+                content.clear();
+                content.add("@error").labelAlign(Align.left).padLeft(8);
+                content.add(error.getLocalizedMessage()).labelAlign(Align.left).padLeft(8).row();
+                content.button("@retry", Icon.refresh, this::startLogin);
+            } else if (user == null) {
+                content.clear();
+                content.button("@login", () -> startLogin());
+            } else if (user != null) {
+                content.clear();
+
                 if (user.imageUrl() != null) {
                     content.add(new NetworkImage(user.imageUrl())).size(64);
                 }
@@ -86,43 +69,29 @@ public class AuthFeature implements Feature {
                     content.add(user.name()).labelAlign(Align.left).padLeft(8);
                 }
 
-                // Make the whole content area clickable to show profile/logout
                 content.touchable = Touchable.enabled;
-                content.clicked(this::showProfileDialog);
-            } else {
-                content.add("Loading...");
+                content.clicked(() -> {
+                    Vars.ui.showConfirm("Logout", "Logged in as " + user.name() + "\nDo you want to logout?",
+                            () -> AuthService.getInstance().logout());
+                });
             }
-        } else {
-            // If not logged in, just show the button
-            content.button("Login", Icon.lock, this::startLogin).size(120, 50);
-        }
+        });
 
-        authWindow.add(content).top().right().margin(8f);
+        Timer.schedule(() -> {
+            if (AuthService.getInstance().isLoggedIn()) {
+                AuthService.getInstance()
+                        .refreshTokenIfNeeded()
+                        .thenCompose((_void) -> AuthService.getInstance().sessionStore.fetch());
+            }
+        }, 0, 60 * 5);
     }
 
     private void startLogin() {
         AuthService.getInstance().login()
-                .thenRun(() -> {
-                    Vars.ui.showInfo("Login successful!");
-                    Core.app.post(this::updateAuthWindow);
-                })
+                .thenRun(() -> Vars.ui.showInfo("Login successful!"))
                 .exceptionally(e -> {
                     Vars.ui.showException("Login failed or timed out.", e);
                     return null;
-                });
-    }
-
-    private void showProfileDialog() {
-        UserSession user = AuthService.getInstance().getCurrentUser();
-
-        if (user == null) {
-            return;
-        }
-
-        Vars.ui.showConfirm("Logout",
-                "Logged in as " + user.name() + "\nDo you want to logout?", () -> {
-                    AuthService.getInstance().logout();
-                    updateAuthWindow();
                 });
     }
 

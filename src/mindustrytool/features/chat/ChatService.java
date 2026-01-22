@@ -4,15 +4,14 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import arc.Core;
 import arc.func.Cons;
 import arc.util.Log;
 import arc.util.serialization.Jval;
-import mindustry.Vars;
 import arc.util.serialization.Json;
-import arc.util.Http.HttpStatusException;
 import mindustrytool.Config;
 import mindustrytool.features.auth.AuthHttp;
 import mindustrytool.features.auth.AuthService;
@@ -74,8 +73,8 @@ public class ChatService {
                     conn.setReadTimeout(0); // Infinite read timeout for SSE
 
                     if (AuthService.getInstance().getAccessToken() != null) {
-                        conn.setRequestProperty("Authorization",
-                                "Bearer " + AuthService.getInstance().getAccessToken());
+                        var bearer = "Bearer " + AuthService.getInstance().getAccessToken();
+                        conn.setRequestProperty("Authorization", bearer);
                     }
 
                     int status = conn.getResponseCode();
@@ -169,40 +168,32 @@ public class ChatService {
         Log.info("Chat stream disconnected.");
     }
 
-    public void sendMessage(String content, Runnable onSuccess, Cons<Throwable> onError) {
+    public CompletableFuture<Void> sendMessage(String content) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
         Jval json = Jval.newObject();
         json.put("content", content);
 
         AuthHttp.post(Config.API_v4_URL + "chats/text", json.toString())
                 .header("Content-Type", "application/json")
-                .error(e -> {
-                    if (e instanceof HttpStatusException httpError) {
-                        Vars.ui.showErrorMessage(httpError.getMessage());
-                    }
+                .error(future::completeExceptionally)
+                .submit(res -> future.complete(null));
 
-                    onError.get(e);
-                })
-                .submit(res -> {
-                    onSuccess.run();
-                });
+        return future;
     }
 
-    public void sendSchematic(String content, Runnable onSuccess, Cons<Throwable> onError) {
+    public CompletableFuture<Void> sendSchematic(String content) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
         Jval json = Jval.newObject();
         json.put("content", content);
 
         AuthHttp.post(Config.API_v4_URL + "chats/schematic", json.toString())
                 .header("Content-Type", "application/json")
-                .error(e -> {
-                    if (e instanceof HttpStatusException httpError) {
-                        Vars.ui.showErrorMessage(httpError.getMessage());
-                    }
+                .error(future::completeExceptionally)
+                .submit(res -> future.complete(null));
 
-                    onError.get(e);
-                })
-                .submit(res -> {
-                    onSuccess.run();
-                });
+        return future;
     }
 
     public void getChatUsers(Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {
