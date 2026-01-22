@@ -40,8 +40,8 @@ public class ChatFeature implements Feature {
             ChatService.getInstance().connectStream();
         });
 
-        settingDialog = new BaseDialog("Chat Settings");
-        settingDialog.cont.button("Reset Overlay Position", () -> {
+        settingDialog = new BaseDialog("@chat.settings.title");
+        settingDialog.cont.button("@chat.reset-overlay-position", () -> {
             ChatConfig config = new ChatConfig();
 
             config.x(0);

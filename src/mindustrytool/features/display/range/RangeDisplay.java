@@ -244,7 +244,7 @@ public class RangeDisplay implements Feature {
     }
 
     private void initDialog() {
-        dialog = new BaseDialog("Range Display Settings");
+        dialog = new BaseDialog("@range-display.settings.title");
         dialog.addCloseButton();
 
         Table cont = dialog.cont;
@@ -261,7 +261,7 @@ public class RangeDisplay implements Feature {
         Table opacityContent = new Table();
         opacityContent.touchable = arc.scene.event.Touchable.disabled;
         opacityContent.margin(3f, 33f, 3f, 33f);
-        opacityContent.add("Opacity", Styles.outlineLabel).left().growX();
+        opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
         opacityContent.add(opacityValue).padLeft(10f).right();
 
         opacitySlider.changed(() -> {
@@ -273,7 +273,7 @@ public class RangeDisplay implements Feature {
         float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
         cont.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
 
-        addCheck(cont, "Draw Ally Block Range", config.drawBlockRangeAlly, v -> {
+        addCheck(cont, "@range-display.draw-ally-block-range", config.drawBlockRangeAlly, v -> {
             config.drawBlockRangeAlly = v;
             config.save();
         });
@@ -282,14 +282,14 @@ public class RangeDisplay implements Feature {
             cont.row();
         }
 
-        addCheck(cont, "Draw Enemy Block Range", config.drawBlockRangeEnemy, v -> {
+        addCheck(cont, "@range-display.draw-enemy-block-range", config.drawBlockRangeEnemy, v -> {
             config.drawBlockRangeEnemy = v;
             config.save();
         });
 
         cont.row();
 
-        addCheck(cont, "Draw Ally Turret Range", config.drawTurretRangeAlly, v -> {
+        addCheck(cont, "@range-display.draw-ally-turret-range", config.drawTurretRangeAlly, v -> {
             config.drawTurretRangeAlly = v;
             config.save();
         });
@@ -298,14 +298,14 @@ public class RangeDisplay implements Feature {
             cont.row();
         }
 
-        addCheck(cont, "Draw Enemy Turret Range", config.drawTurretRangeEnemy, v -> {
+        addCheck(cont, "@range-display.draw-enemy-turret-range", config.drawTurretRangeEnemy, v -> {
             config.drawTurretRangeEnemy = v;
             config.save();
         });
 
         cont.row();
 
-        addCheck(cont, "Draw Ally Unit Range", config.drawUnitRangeAlly, v -> {
+        addCheck(cont, "@range-display.draw-ally-unit-range", config.drawUnitRangeAlly, v -> {
             config.drawUnitRangeAlly = v;
             config.save();
         });
@@ -314,21 +314,21 @@ public class RangeDisplay implements Feature {
             cont.row();
         }
 
-        addCheck(cont, "Draw Enemy Unit Range", config.drawUnitRangeEnemy, v -> {
+        addCheck(cont, "@range-display.draw-enemy-unit-range", config.drawUnitRangeEnemy, v -> {
             config.drawUnitRangeEnemy = v;
             config.save();
         });
 
         cont.row();
 
-        addCheck(cont, "Draw Player Range", config.drawPlayerRange, v -> {
+        addCheck(cont, "@range-display.draw-player-range", config.drawPlayerRange, v -> {
             config.drawPlayerRange = v;
             config.save();
         });
 
         cont.row();
 
-        addCheck(cont, "Draw Spawner Range", config.drawSpawnerRange, v -> {
+        addCheck(cont, "@range-display.draw-spawner-range", config.drawSpawnerRange, v -> {
             config.drawSpawnerRange = v;
             config.save();
         });

@@ -146,9 +146,9 @@ public class HealthBarVisualizer implements Feature {
     }
 
     private void initDialog() {
-        dialog = new BaseDialog("Health Bar Settings");
+        dialog = new BaseDialog("@health-bar.settings.title");
         dialog.addCloseButton();
-        dialog.buttons.button("reset", Icon.refresh, () -> {
+        dialog.buttons.button("@reset", Icon.refresh, () -> {
             HealthBarConfig.reset();
             rebuild();
         }).size(250, 64);
@@ -174,12 +174,12 @@ public class HealthBarVisualizer implements Feature {
         Table zoomContent = new Table();
         zoomContent.touchable = arc.scene.event.Touchable.disabled;
         zoomContent.margin(3f, 33f, 3f, 33f);
-        zoomContent.add("Min Zoom", Styles.outlineLabel).left().growX();
+        zoomContent.add("@health-bar.min-zoom", Styles.outlineLabel).left().growX();
         zoomContent.add(zoomValue).padLeft(10f).right();
 
         zoomSlider.changed(() -> {
             HealthBarConfig.zoomThreshold = zoomSlider.getValue();
-            zoomValue.setText(HealthBarConfig.zoomThreshold <= 0.01f ? "Off"
+            zoomValue.setText(HealthBarConfig.zoomThreshold <= 0.01f ? "@off"
                     : String.format("%.1fx", HealthBarConfig.zoomThreshold));
             zoomValue.setColor(HealthBarConfig.zoomThreshold <= 0.01f ? Color.gray : Color.lightGray);
             HealthBarConfig.save();
@@ -198,7 +198,7 @@ public class HealthBarVisualizer implements Feature {
         Table opacityContent = new Table();
         opacityContent.touchable = arc.scene.event.Touchable.disabled;
         opacityContent.margin(3f, 33f, 3f, 33f);
-        opacityContent.add("Opacity", Styles.outlineLabel).left().growX();
+        opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
         opacityContent.add(opacityValue).padLeft(10f).right();
 
         opacitySlider.changed(() -> {

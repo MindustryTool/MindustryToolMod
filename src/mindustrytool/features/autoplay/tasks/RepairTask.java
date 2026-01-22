@@ -16,7 +16,7 @@ public class RepairTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return Iconc.hammer + " Auto Repair";
+        return Iconc.hammer + " " + Core.bundle.get("autoplay.task.repair.name");
     }
 
     @Override
