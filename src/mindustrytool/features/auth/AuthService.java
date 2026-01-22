@@ -15,6 +15,7 @@ import mindustrytool.Utils;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.auth.dto.UserSession;
+import mindustrytool.services.ReactiveStore;
 import arc.util.Http.HttpStatusException;
 
 public class AuthService {
@@ -24,7 +25,8 @@ public class AuthService {
     public static final String KEY_REFRESH_TOKEN = "mindustrytool.auth.refreshToken";
     public static final String KEY_LOGIN_ID = "mindustrytool.auth.loginId";
 
-    private UserSession currentUser;
+    public final ReactiveStore<UserSession> sessionStore;
+
     private CompletableFuture<Boolean> refreshFuture;
     private CompletableFuture<Void> loginFuture;
 
@@ -36,6 +38,31 @@ public class AuthService {
     }
 
     private AuthService() {
+        sessionStore = new ReactiveStore<>(() -> {
+            CompletableFuture<UserSession> future = new CompletableFuture<>();
+
+            AuthHttp.get(Config.API_v4_URL + "auth/session", res -> {
+                try {
+                    UserSession session = Utils.fromJson(UserSession.class, res.getResultAsString());
+                    future.complete(session);
+                } catch (Exception e) {
+                    Log.err("Failed to parse user session", e);
+                    future.completeExceptionally(e);
+                }
+            }, err -> {
+                Log.err("Failed to fetch user session", err);
+                future.completeExceptionally(err);
+            });
+
+            return future;
+        });
+
+        sessionStore.subscribe((value, state, error) -> {
+            if (state == ReactiveStore.LoadState.SUCCESS && value != null) {
+                Events.fire(value);
+            }
+        });
+
         String logindId = Core.settings.getString(KEY_LOGIN_ID);
 
         if (logindId == null) {
@@ -50,7 +77,8 @@ public class AuthService {
     }
 
     public boolean isLoggedIn() {
-        return currentUser != null || (Core.settings.has(KEY_ACCESS_TOKEN) && Core.settings.has(KEY_REFRESH_TOKEN));
+        return sessionStore.getValue() != null
+                || (Core.settings.has(KEY_ACCESS_TOKEN) && Core.settings.has(KEY_REFRESH_TOKEN));
     }
 
     public synchronized CompletableFuture<Void> login() {
@@ -123,7 +151,7 @@ public class AuthService {
 
                             saveTokens(accessToken, refreshToken);
 
-                            fetchUserSession().whenComplete((v, e) -> {
+                            sessionStore.fetch().whenComplete((v, e) -> {
                                 if (e != null) {
                                     future.completeExceptionally(e);
                                 } else {
@@ -170,36 +198,16 @@ public class AuthService {
         Core.settings.remove(KEY_ACCESS_TOKEN);
         Core.settings.remove(KEY_REFRESH_TOKEN);
         Core.settings.remove(KEY_LOGIN_ID);
-        currentUser = null;
+
+        sessionStore.clear();
 
         Events.fire(new LogoutEvent());
 
         Log.info("Logged out");
     }
 
-    public CompletableFuture<UserSession> fetchUserSession() {
-        CompletableFuture<UserSession> future = new CompletableFuture<>();
-
-        AuthHttp.get(Config.API_v4_URL + "auth/session", res -> {
-            try {
-                currentUser = Utils.fromJson(UserSession.class, res.getResultAsString());
-
-                Core.app.post(() -> Events.fire(currentUser));
-                future.complete(currentUser);
-            } catch (Exception e) {
-                Log.err("Failed to parse user session", e);
-                future.completeExceptionally(e);
-            }
-        }, err -> {
-            Log.err("Failed to fetch user session", err);
-            future.completeExceptionally(err);
-        });
-
-        return future;
-    }
-
     public UserSession getCurrentUser() {
-        return currentUser;
+        return sessionStore.getValue();
     }
 
     public String getAccessToken() {

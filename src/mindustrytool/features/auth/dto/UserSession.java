@@ -4,12 +4,11 @@ import lombok.Data;
 
 @Data
 public class UserSession {
-    String name;
-    String imageUrl;
+    private String id;
+    private String name;
+    private String imageUrl;
 
-    public UserSession(String name, String imageUrl) {
-        this.name = name;
-        this.imageUrl = imageUrl;
+    public UserSession() {
     }
 
     public String name() {
