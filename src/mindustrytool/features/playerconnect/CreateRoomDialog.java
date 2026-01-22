@@ -114,12 +114,15 @@ public class CreateRoomDialog extends BaseDialog {
             t.add(Core.bundle.format("message.create-room.server-name"))
                     .padRight(5f)
                     .ellipsis(true)
+                    .growX()
                     .left()
                     .row();
 
             t.add(Core.bundle.format("message.create-room.server-name.description"))
                     .color(Color.lightGray)
                     .fontScale(0.75f)
+                    .wrap()
+                    .growX()
                     .left()
                     .padBottom(5f)
                     .row();
@@ -137,12 +140,15 @@ public class CreateRoomDialog extends BaseDialog {
             t.add(Core.bundle.format("message.create-room.password"))
                     .padRight(5f)
                     .ellipsis(true)
+                    .growX()
                     .left()
                     .row();
 
             t.add(Core.bundle.format("message.create-room.password.description"))
                     .color(Color.lightGray)
                     .fontScale(0.75f)
+                    .wrap()
+                    .growX()
                     .left()
                     .padBottom(5f)
                     .row();
@@ -159,12 +165,15 @@ public class CreateRoomDialog extends BaseDialog {
             t.add(Core.bundle.format("message.create-room.max-player"))
                     .padRight(5f)
                     .ellipsis(true)
+                    .growX()
                     .left()
                     .row();
 
             t.add(Core.bundle.format("message.create-room.max-player.description"))
                     .color(Color.lightGray)
                     .fontScale(0.75f)
+                    .wrap()
+                    .growX()
                     .left()
                     .padBottom(5f)
                     .row();
@@ -190,10 +199,12 @@ public class CreateRoomDialog extends BaseDialog {
             t.add(Core.bundle.format("message.create-room.auto-accept.description"))
                     .color(Color.lightGray)
                     .fontScale(0.75f)
+                    .wrap()
+                    .growX()
                     .left()
                     .padBottom(5f)
                     .row();
-        }).width(Math.min(800, Core.scene.getWidth() * 0.8f)).padBottom(20f).row();
+        }).growX().maxWidth(800f).padBottom(20f).row();
 
         mainTable.button("@next", Icon.right, () -> {
             setupStep2();
