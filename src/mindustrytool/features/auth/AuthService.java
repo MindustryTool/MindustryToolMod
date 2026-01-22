@@ -11,6 +11,7 @@ import arc.util.Log;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustrytool.Config;
+import mindustrytool.Utils;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.auth.dto.UserSession;
@@ -181,8 +182,7 @@ public class AuthService {
 
         AuthHttp.get(Config.API_v4_URL + "auth/session", res -> {
             try {
-                Jval json = Jval.read(res.getResultAsString());
-                currentUser = new UserSession(json.getString("name", "Unknown"), json.getString("imageUrl", ""));
+                currentUser = Utils.fromJson(UserSession.class, res.getResultAsString());
 
                 Core.app.post(() -> Events.fire(currentUser));
                 future.complete(currentUser);

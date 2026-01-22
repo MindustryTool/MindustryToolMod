@@ -1,5 +1,8 @@
 package mindustrytool.features.auth.dto;
 
+import lombok.Data;
+
+@Data
 public class UserSession {
     String name;
     String imageUrl;

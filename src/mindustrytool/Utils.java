@@ -130,6 +130,14 @@ public class Utils {
         }
     }
 
+    public static <T> T fromJson(Class<T> clazz, String json) {
+        try {
+            return mapper.readValue(json, clazz);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static String renderMarkdown(String text) {
         if (text == null)
             return "";
