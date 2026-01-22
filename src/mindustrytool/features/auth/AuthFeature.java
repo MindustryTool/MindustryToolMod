@@ -20,7 +20,7 @@ public class AuthFeature implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata.Builder()
+        return FeatureMetadata.builder()
                 .name("Authentication")
                 .description("Login to Mindustry Tool")
                 .enabledByDefault(true)
@@ -114,7 +114,7 @@ public class AuthFeature implements Feature {
 
     private void showProfileDialog() {
         UserSession user = AuthService.getInstance().getCurrentUser();
-        
+
         if (user == null) {
             return;
         }
