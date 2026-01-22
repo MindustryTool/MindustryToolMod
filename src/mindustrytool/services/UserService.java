@@ -1,5 +1,10 @@
 package mindustrytool.services;
 
+import java.time.Duration;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import arc.Core;
 import arc.func.Cons;
 import arc.struct.ObjectMap;
@@ -11,12 +16,15 @@ import mindustrytool.dto.UserData;
 
 public class UserService {
 
-    private static final ObjectMap<String, UserData> cache = new ObjectMap<String, UserData>();
+    private static final Cache<String, UserData> cache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofMinutes(10))
+            .build();
+
     private static final ObjectMap<String, Seq<Cons<UserData>>> listeners = new ObjectMap<>();
 
     public static void findUserById(String id, Cons<UserData> c) {
 
-        UserData cached = cache.get(id);
+        UserData cached = cache.getIfPresent(id);
 
         if (cached != null) {
             c.get(cached);

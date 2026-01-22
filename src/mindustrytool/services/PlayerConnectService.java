@@ -1,6 +1,9 @@
 package mindustrytool.services;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.Duration;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import arc.Core;
 import arc.func.Cons;
@@ -13,7 +16,9 @@ import mindustrytool.features.playerconnect.PlayerConnectProvider;
 
 public class PlayerConnectService {
 
-    private static final ConcurrentHashMap<String, PlayerConnectRoom> roomCache = new ConcurrentHashMap<>();
+    private static final Cache<String, PlayerConnectRoom> roomCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofMinutes(10))
+            .build();
 
     @SuppressWarnings("unchecked")
     public void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> cons) {
@@ -54,7 +59,7 @@ public class PlayerConnectService {
     }
 
     public void getRoomWithCache(String link, Cons<PlayerConnectRoom> cons) {
-        var cached = roomCache.get(link);
+        var cached = roomCache.getIfPresent(link);
 
         if (cached != null) {
             Core.app.post(() -> cons.get(cached));
@@ -74,6 +79,6 @@ public class PlayerConnectService {
     }
 
     public void invalidateRoom(String link) {
-        roomCache.remove(link);
+        roomCache.invalidate(link);
     }
 }

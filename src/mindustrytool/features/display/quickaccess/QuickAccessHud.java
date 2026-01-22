@@ -30,8 +30,8 @@ public class QuickAccessHud extends Table implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Quick Access HUD")
-                .description("Quick access bar for toggling features")
+                .name("@feature.quick-access-hud.name")
+                .description("@feature.quick-access-hud.description")
                 .icon(Icon.menu)
                 .build();
     }
@@ -175,15 +175,15 @@ public class QuickAccessHud extends Table implements Feature {
         popup.touchable = Touchable.enabled;
 
         // Options
-        popup.check("Enabled", FeatureManager.getInstance().isEnabled(f), b -> {
+        popup.check("@enabled", FeatureManager.getInstance().isEnabled(f), b -> {
             FeatureManager.getInstance().setEnabled(f, b);
         }).pad(10).left().row();
 
         f.setting().ifPresent(dialog -> {
-            popup.button("Settings", Icon.settings, () -> {
+            popup.button("@settings", Icon.settings, () -> {
                 dialog.show();
                 closePopup();
-            }).fillX().pad(10).padTop(0).left().minWidth(120);
+            }).fillX().pad(10).padTop(0).left().minWidth(220);
         });
 
         popup.pack();

@@ -9,8 +9,8 @@ public class GodModeFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("God Mode")
-                .description("Not coded yet.")
+                .name("@feature.god-mode.name")
+                .description("@feature.god-mode.description")
                 .icon(Icon.defense)
                 .build();
     }

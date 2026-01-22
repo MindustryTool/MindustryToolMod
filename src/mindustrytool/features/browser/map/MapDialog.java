@@ -70,7 +70,7 @@ public class MapDialog extends BaseDialog {
     private String searchText = "";
 
     public MapDialog() {
-        super("Map Browser");
+        super("@message.map-browser.title");
 
         initializeRequest();
         updateLayoutMetrics();
@@ -213,7 +213,7 @@ public class MapDialog extends BaseDialog {
         }
 
         if (request.isError()) {
-            showError(contentTable, "Error: " + request.getError());
+            showError(contentTable, Core.bundle.format("error.prefix", request.getError()));
             return;
         }
 
@@ -282,7 +282,7 @@ public class MapDialog extends BaseDialog {
                     }));
 
             preview.row();
-            
+
             preview.table().expandY().row();
             preview.table(stats -> DetailStats.draw(stats, data.likes(), data.comments(), data.downloads())).margin(8);
 
@@ -341,7 +341,7 @@ public class MapDialog extends BaseDialog {
                 request.setPage(page);
                 reloadMaps();
             } catch (NumberFormatException e) {
-                ui.showInfo("Invalid input");
+                ui.showInfo("@invalid-input");
             }
         });
     }
@@ -358,7 +358,7 @@ public class MapDialog extends BaseDialog {
     public void loadingWrapper(Runnable action) {
         Core.app.post(() -> {
             if (request.isLoading()) {
-                ui.showInfoFade("Loading");
+                ui.showInfoFade("@loading");
             } else {
                 action.run();
             }

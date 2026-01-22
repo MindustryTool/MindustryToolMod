@@ -31,8 +31,8 @@ public class WavePreviewFeature extends Table implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Wave Preview")
-                .description("Displays current and next wave composition")
+                .name("@feature.wave-preview.name")
+                .description("@feature.wave-preview.description")
                 .icon(Icon.units)
                 .order(1)
                 .quickAccess(true)
@@ -135,7 +135,7 @@ public class WavePreviewFeature extends Table implements Feature {
         top().left();
         background(Tex.paneRight);
 
-        add("Waves").top().left().align(Align.left).style(Styles.outlineLabel).pad(4)
+        add("@wave-preview.title").top().left().align(Align.left).style(Styles.outlineLabel).pad(4)
                 .color(mindustry.graphics.Pal.accent).row();
 
         add(new Label(() -> "" + Vars.state.wave)).style(Styles.outlineLabel).left().padLeft(4).row();

@@ -20,9 +20,9 @@ public class AuthFeature implements Feature {
 
     @Override
     public FeatureMetadata getMetadata() {
-        return new FeatureMetadata.Builder()
-                .name("Authentication")
-                .description("Login to Mindustry Tool")
+        return FeatureMetadata.builder()
+                .name("@feature.authentication.name")
+                .description("@feature.authentication.description")
                 .enabledByDefault(true)
                 .icon(Icon.lock)
                 .quickAccess(false)
@@ -114,8 +114,13 @@ public class AuthFeature implements Feature {
 
     private void showProfileDialog() {
         UserSession user = AuthService.getInstance().getCurrentUser();
+
+        if (user == null) {
+            return;
+        }
+
         Vars.ui.showConfirm("Logout",
-                "Logged in as " + (user != null ? user.name() : "Unknown") + "\nDo you want to logout?", () -> {
+                "Logged in as " + user.name() + "\nDo you want to logout?", () -> {
                     AuthService.getInstance().logout();
                     updateAuthWindow();
                 });

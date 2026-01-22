@@ -195,7 +195,7 @@ public class CreateRoomDialog extends BaseDialog {
                     .row();
         }).width(Math.min(800, Core.scene.getWidth() * 0.8f)).padBottom(20f).row();
 
-        mainTable.button("Next", Icon.right, () -> {
+        mainTable.button("@next", Icon.right, () -> {
             setupStep2();
         }).size(200f, 60f).disabled(b -> PlayerConnectConfig.getRoomName().isEmpty());
     }

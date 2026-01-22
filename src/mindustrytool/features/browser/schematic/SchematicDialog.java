@@ -73,7 +73,7 @@ public class SchematicDialog extends BaseDialog {
     private String searchText = "";
 
     public SchematicDialog() {
-        super("Schematic Browser");
+        super("@message.schematic-browser.title");
 
         initializeRequest();
         updateLayoutMetrics();
@@ -216,7 +216,7 @@ public class SchematicDialog extends BaseDialog {
         }
 
         if (request.isError()) {
-            showError(contentTable, "Error: " + request.getError());
+            showError(contentTable, Core.bundle.format("error.prefix", request.getError()));
             return;
         }
 
@@ -355,7 +355,7 @@ public class SchematicDialog extends BaseDialog {
                 request.setPage(page);
                 reloadSchematics();
             } catch (NumberFormatException e) {
-                ui.showInfo("Invalid input");
+                ui.showInfo("@invalid-input");
             }
         });
     }
@@ -372,7 +372,7 @@ public class SchematicDialog extends BaseDialog {
     public void loadingWrapper(Runnable action) {
         Core.app.post(() -> {
             if (request.isLoading()) {
-                ui.showInfoFade("Loading");
+                ui.showInfoFade("@loading");
             } else {
                 action.run();
             }

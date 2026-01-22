@@ -37,6 +37,8 @@ import arc.Events;
 import mindustrytool.Main;
 import mindustrytool.MdtKeybinds;
 import mindustrytool.features.auth.AuthService;
+import mindustrytool.features.auth.dto.LoginEvent;
+import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.chat.dto.ChatMessage;
 import mindustrytool.features.chat.dto.ChatUser;
 import mindustrytool.services.UserService;
@@ -91,6 +93,9 @@ public class ChatOverlay extends Table {
             setup();
             keepInScreen();
         });
+
+        Events.on(LoginEvent.class, e -> setup());
+        Events.on(LogoutEvent.class, e -> setup());
 
         Events.run(Trigger.update, () -> {
             boolean noInputFocused = !Core.scene.hasField();
@@ -209,7 +214,7 @@ public class ChatOverlay extends Table {
             });
 
             header.image(Icon.move).color(Color.gray).size(24).padLeft(8);
-            header.add("Global Chat").style(Styles.outlineLabel).padLeft(8);
+            header.add("@chat.global-chat").style(Styles.outlineLabel).padLeft(8);
 
             connectionIndicator = new Image(Tex.whiteui) {
                 @Override
@@ -242,7 +247,7 @@ public class ChatOverlay extends Table {
 
             loadingTable = new Table();
 
-            loadingTable.add("Loading...").style(Styles.defaultLabel).color(Color.gray);
+            loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray);
 
             Stack stack = new Stack();
             stack.add(loadingTable);
@@ -262,6 +267,10 @@ public class ChatOverlay extends Table {
                 if (connectionIndicator != null) {
                     connectionIndicator.setColor(connected ? Color.green : Color.yellow);
                 }
+
+                if (!connected) {
+                    messages.clear();
+                }
             });
 
             // Vertical Separator
@@ -273,7 +282,7 @@ public class ChatOverlay extends Table {
 
             Table titleTable = new Table();
             if (!isUserListCollapsed) {
-                titleTable.add("ONLINE MEMBERS").style(Styles.defaultLabel).color(Color.gray).pad(10).left().growX();
+                titleTable.add("@chat.online-members").style(Styles.defaultLabel).color(Color.gray).pad(10).left().growX();
             }
 
             titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
@@ -307,40 +316,46 @@ public class ChatOverlay extends Table {
             Table inputTable = new Table();
             inputTable.background(Styles.black6);
 
-            if (inputField == null) {
-                inputField = new TextField();
-                inputField.setMessageText("Enter message...");
-                inputField.setValidator(this::isValidInput);
-                inputField.keyDown(arc.input.KeyCode.enter, () -> {
-                    boolean isSchematic = isSchematic(inputField.getText());
+            if (AuthService.getInstance().isLoggedIn()) {
+                if (inputField == null) {
+                    inputField = new TextField();
+                    inputField.setMessageText("@chat.enter-message");
+                    inputField.setValidator(this::isValidInput);
+                    inputField.keyDown(arc.input.KeyCode.enter, () -> {
+                        boolean isSchematic = isSchematic(inputField.getText());
 
-                    if (isSchematic) {
-                        sendSchematic();
-                    } else if (inputField.isValid()) {
-                        sendMessage();
-                    }
-                });
-                inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
+                        if (isSchematic) {
+                            sendSchematic();
+                        } else if (inputField.isValid()) {
+                            sendMessage();
+                        }
+                    });
+                    inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
+                }
+
+                inputField.setText(lastInputText);
+
+                sendButton = new TextButton(isSending ? "@sending" : "@chat.send", Styles.defaultt);
+                sendButton.clicked(this::sendMessage);
+                sendButton.setDisabled(() -> isSending);
+
+                inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
+
+                var mod = Vars.mods.getMod(Main.class);
+
+                var texture = new TextureRegion(new Texture(mod.root.child("icons").child("attach-file.png")));
+                TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
+
+                inputTable.button(drawable, () -> {
+                    Vars.ui.showInfoFade("@chat.feature-not-implemented");
+                }).pad(8);
+
+                inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
+            } else {
+                inputTable.button("@chat.login", Styles.defaultt, () -> {
+                    AuthService.getInstance().login();
+                }).growX().height(40f).pad(8);
             }
-
-            inputField.setText(lastInputText);
-
-            sendButton = new TextButton(isSending ? "Sending..." : "Send", Styles.defaultt);
-            sendButton.clicked(this::sendMessage);
-            sendButton.setDisabled(() -> !AuthService.getInstance().isLoggedIn() || isSending);
-
-            inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
-
-            var mod = Vars.mods.getMod(Main.class);
-
-            var texture = new TextureRegion(new Texture(mod.root.child("icons").child("attach-file.png")));
-            TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
-
-            inputTable.button(drawable, () -> {
-                Vars.ui.showInfoFade("This do nothing :v");
-            }).pad(8);
-
-            inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
 
             container.add(inputTable).growX().bottom();
 
@@ -619,29 +634,29 @@ public class ChatOverlay extends Table {
         String content = inputField.getText();
 
         if (content == null || content.trim().isEmpty()) {
-            Vars.ui.showInfoFade("Content is empty");
+            Vars.ui.showInfoFade("@chat.empty-content");
             return;
         }
 
         if (!AuthService.getInstance().isLoggedIn()) {
-            Vars.ui.showInfoFade("You're not logged in");
+            Vars.ui.showInfoFade("@chat.not-logged-in");
             return;
         }
 
         if (isSending) {
-            Vars.ui.showInfoFade("Last message still sending");
+            Vars.ui.showInfoFade("@chat.sending-in-progress");
             return;
         }
 
         isSending = true;
         if (sendButton != null)
-            sendButton.setText("Sending...");
+            sendButton.setText("@sending");
 
         ChatService.getInstance().sendMessage(content, () -> {
             Core.app.post(() -> {
                 isSending = false;
                 if (sendButton != null)
-                    sendButton.setText("Send");
+                    sendButton.setText("@chat.send");
                 inputField.setText("");
                 lastInputText = "";
             });
@@ -652,19 +667,19 @@ public class ChatOverlay extends Table {
         String content = inputField.getText();
 
         if (isSending) {
-            Vars.ui.showInfoFade("Last message still sending");
+            Vars.ui.showInfoFade("@chat.sending-in-progress");
             return;
         }
 
         isSending = true;
         if (sendButton != null)
-            sendButton.setText("Sending...");
+            sendButton.setText("@sending");
 
         ChatService.getInstance().sendSchematic(content, () -> {
             Core.app.post(() -> {
                 isSending = false;
                 if (sendButton != null)
-                    sendButton.setText("Send");
+                    sendButton.setText("@chat.send");
                 inputField.setText("");
                 lastInputText = "";
             });
@@ -674,13 +689,13 @@ public class ChatOverlay extends Table {
     private void handleSendError(Throwable err) {
         isSending = false;
         if (sendButton != null)
-            sendButton.setText("Send");
+            sendButton.setText("@chat.send");
 
         String errStr = err.toString();
         if (errStr.contains("409") || err.getMessage().contains("409")) {
-            Vars.ui.showInfoToast("Rate limited! Please wait.", 3f);
+            Vars.ui.showInfoToast("@chat.rate-limited", 3f);
         } else {
-            Vars.ui.showInfoToast("Failed to send message.", 3f);
+            Vars.ui.showInfoToast("@chat.send-failed", 3f);
             Log.err("Send message failed", err);
         }
     }
@@ -711,7 +726,7 @@ public class ChatOverlay extends Table {
     private void renderPlayerConnectRoom(Table table, String link) {
         table.table(t -> {
             t.left();
-            t.add("Loading room info...").color(Color.gray);
+            t.add("@chat.loading-room-info").color(Color.gray);
 
             playerConnectService.getRoomWithCache(link, room -> {
                 t.clear();
@@ -719,7 +734,7 @@ public class ChatOverlay extends Table {
                 if (room != null) {
                     PlayerConnectRenderer.render(t, room).grow();
                 } else {
-                    t.add("Room not found or offline").color(Color.gray);
+                    t.add("@chat.room-not-found").color(Color.gray);
                 }
             });
         }).growX().left().padTop(10);

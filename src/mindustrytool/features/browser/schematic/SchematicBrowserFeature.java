@@ -23,8 +23,8 @@ public class SchematicBrowserFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Schematic Browser")
-                .description("Browse and download schematics.")
+                .name("@feature.schematic-browser.name")
+                .description("@feature.schematic-browser.description")
                 .icon(Icon.paste)
                 .order(2)
                 .build();
@@ -56,7 +56,7 @@ public class SchematicBrowserFeature implements Feature {
 
         Table buttons = Vars.ui.schematics.buttons;
         if (browseButton == null || browseButton.parent == null) {
-            browseButton = buttons.button("Browse", Icon.menu, () -> {
+            browseButton = buttons.button("@browse", Icon.menu, () -> {
                 Vars.ui.schematics.hide();
                 schematicDialog.show();
             }).get();

@@ -30,8 +30,8 @@ public class AutoplayFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Autoplay")
-                .description("Automatically control player unit to repair, build, or mine.")
+                .name("@feature.autoplay.name")
+                .description("@feature.autoplay.description")
                 .icon(Utils.icons("autoplay.png"))
                 .quickAccess(true)
                 .enabledByDefault(false)

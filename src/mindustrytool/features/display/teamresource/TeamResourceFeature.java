@@ -104,8 +104,8 @@ public class TeamResourceFeature extends Table implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Team Resources")
-                .description("Display team resources and power status")
+                .name("@feature.team-resources.name")
+                .description("@feature.team-resources.description")
                 .icon(Utils.icons("team-resources.png"))
                 .order(0)
                 .enabledByDefault(true)
@@ -319,25 +319,24 @@ public class TeamResourceFeature extends Table implements Feature {
                     power.defaults().growX();
 
                     if (teamGraphs.isEmpty()) {
-                        power.add("No Power").fontScale(0.8f * scale).color(Color.gray);
+                        power.add("@team-resources.no-power").fontScale(0.8f * scale).color(Color.gray);
                     } else {
-                        
+
                         power.label(() -> {
                             float totalBalance = 0;
                             for (PowerGraph g : teamGraphs)
                                 totalBalance += g.getPowerBalance();
-                            return "Power: " + (totalBalance >= 0 ? "+" : "")
+                            return Core.bundle.get("team-resources.power-prefix") + (totalBalance >= 0 ? "+" : "")
                                     + UI.formatAmount((long) (totalBalance * 60));
                         }).fontScale(0.8f * scale).left().padBottom(2f * scale).row();
 
-                        
                         power.add(new SplitBar(
                                 teamGraphs,
                                 SplitBar.Mode.SATISFACTION,
                                 scale)).height(barHeight).row();
 
                         if (TeamResourceConfig.showStoredPower()) {
-                            
+
                             power.label(() -> {
                                 float totalStored = 0;
                                 float totalCap = 0;
@@ -345,11 +344,11 @@ public class TeamResourceFeature extends Table implements Feature {
                                     totalStored += g.getLastPowerStored();
                                     totalCap += g.getLastCapacity();
                                 }
-                                return "Stored: " + UI.formatAmount((long) totalStored) + " / "
+                                return Core.bundle.get("team-resources.stored-prefix")
+                                        + UI.formatAmount((long) totalStored) + " / "
                                         + UI.formatAmount((long) totalCap);
                             }).fontScale(0.8f * scale).left().padTop(4f * scale).padBottom(2f * scale).row();
 
-                            
                             power.add(new SplitBar(
                                     teamGraphs,
                                     SplitBar.Mode.STORED,
@@ -362,7 +361,7 @@ public class TeamResourceFeature extends Table implements Feature {
     }
 
     private void showAllTeamsDialog() {
-        new BaseDialog("All Teams") {
+        new BaseDialog("@team-resources.all-teams") {
             {
                 addCloseButton();
                 cont.pane(p -> {
@@ -400,7 +399,7 @@ public class TeamResourceFeature extends Table implements Feature {
         Groups.build.each(b -> {
             if (b.team == selectedTeam && b.power != null && b.power.graph != null) {
                 PowerGraph graph = b.power.graph;
-                
+
                 if (graph.getLastPowerProduced() > 0 || graph.getLastCapacity() > 0
                         || graph.getLastPowerProduced() > 0) {
                     found.add(graph);
@@ -450,11 +449,11 @@ public class TeamResourceFeature extends Table implements Feature {
 
     public class TeamResourceSettingsDialog extends BaseDialog {
         public TeamResourceSettingsDialog() {
-            super("Team Resources Settings");
+            super("@team-resources.settings.title");
 
-            buttons.button("Back", Icon.left, this::hide).size(210f, 64f);
+            buttons.button("@back", Icon.left, this::hide).size(210f, 64f);
 
-            buttons.button("Reset to Defaults", Icon.refresh, () -> {
+            buttons.button("@reset-to-defaults", Icon.refresh, () -> {
                 TeamResourceConfig.opacity(1f);
                 TeamResourceConfig.scale(1f);
                 TeamResourceConfig.overlayWidth(0.3f);
@@ -484,7 +483,7 @@ public class TeamResourceFeature extends Table implements Feature {
             Table opacityContent = new Table();
             opacityContent.touchable = Touchable.disabled;
             opacityContent.margin(3f, 33f, 3f, 33f);
-            opacityContent.add("Opacity", Styles.outlineLabel).left().growX();
+            opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
             opacityContent.add(opacityValue).padLeft(10f).right();
 
             opacitySlider.changed(() -> {
@@ -504,7 +503,7 @@ public class TeamResourceFeature extends Table implements Feature {
             Table sizeContent = new Table();
             sizeContent.touchable = Touchable.disabled;
             sizeContent.margin(3f, 33f, 3f, 33f);
-            sizeContent.add("Size", Styles.outlineLabel).left().growX();
+            sizeContent.add("@size", Styles.outlineLabel).left().growX();
             sizeContent.add(sizeValue).padLeft(10f).right();
 
             sizeSlider.changed(() -> {
@@ -525,7 +524,7 @@ public class TeamResourceFeature extends Table implements Feature {
             Table widthContent = new Table();
             widthContent.touchable = Touchable.disabled;
             widthContent.margin(3f, 33f, 3f, 33f);
-            widthContent.add("Width", Styles.outlineLabel).left().growX();
+            widthContent.add("@width", Styles.outlineLabel).left().growX();
             widthContent.add(widthValue).padLeft(10f).right();
 
             widthSlider.changed(() -> {
@@ -536,27 +535,27 @@ public class TeamResourceFeature extends Table implements Feature {
 
             cont.stack(widthSlider, widthContent).width(width).left().padTop(4f).row();
 
-            cont.check("Show Items", TeamResourceConfig.showItems(), b -> {
+            cont.check("@team-resources.show-items", TeamResourceConfig.showItems(), b -> {
                 TeamResourceConfig.showItems(b);
                 rebuild();
             }).left().padTop(4).row();
 
-            cont.check("Show Units", TeamResourceConfig.showUnits(), b -> {
+            cont.check("@team-resources.show-units", TeamResourceConfig.showUnits(), b -> {
                 TeamResourceConfig.showUnits(b);
                 rebuild();
             }).left().padTop(4).row();
 
-            cont.check("Show Power", TeamResourceConfig.showPower(), b -> {
+            cont.check("@team-resources.show-power", TeamResourceConfig.showPower(), b -> {
                 TeamResourceConfig.showPower(b);
                 rebuild();
             }).left().padTop(4).row();
 
-            cont.check("Show Stored Power", TeamResourceConfig.showStoredPower(), b -> {
+            cont.check("@team-resources.show-stored-power", TeamResourceConfig.showStoredPower(), b -> {
                 TeamResourceConfig.showStoredPower(b);
                 rebuild();
             }).left().padTop(4).row();
 
-            cont.check("Hide Background", TeamResourceConfig.hideBackground(), b -> {
+            cont.check("@team-resources.hide-background", TeamResourceConfig.hideBackground(), b -> {
                 TeamResourceConfig.hideBackground(b);
                 rebuild();
             }).left().padTop(4).row();

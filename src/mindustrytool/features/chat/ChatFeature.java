@@ -20,8 +20,8 @@ public class ChatFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Chat")
-                .description("Global chat")
+                .name("@feature.chat.name")
+                .description("@feature.chat.description")
                 .icon(Icon.chat)
                 .enabledByDefault(true)
                 .build();
@@ -35,13 +35,13 @@ public class ChatFeature implements Feature {
             overlay.addMessages(messages);
         });
 
-        Events.run(LoginEvent.class, () -> {
+        Events.on(LoginEvent.class, e -> {
             ChatService.getInstance().disconnectStream();
             ChatService.getInstance().connectStream();
         });
 
-        settingDialog = new BaseDialog("Chat Settings");
-        settingDialog.cont.button("Reset Overlay Position", () -> {
+        settingDialog = new BaseDialog("@chat.settings.title");
+        settingDialog.cont.button("@chat.reset-overlay-position", () -> {
             ChatConfig config = new ChatConfig();
 
             config.x(0);

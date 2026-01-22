@@ -50,8 +50,8 @@ public class PathfindingDisplay implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Pathfinding Visualizer")
-                .description("Visualizes unit pathfinding paths.")
+                .name("@feature.pathfinding-visualizer.name")
+                .description("@feature.pathfinding-visualizer.description")
                 .icon(Utils.icons("pathfinding.png"))
                 .order(0)
                 .enabledByDefault(true)
@@ -101,10 +101,10 @@ public class PathfindingDisplay implements Feature {
     @Override
     public Optional<Dialog> setting() {
         if (settingsDialog == null) {
-            settingsDialog = new BaseDialog("Pathfinding Settings");
+            settingsDialog = new BaseDialog("@pathfinding.settings.title");
             settingsDialog.addCloseButton();
             settingsDialog.shown(this::rebuildSettings);
-            settingsDialog.buttons.button("Reset", Icon.refresh, () -> {
+            settingsDialog.buttons.button("@reset", Icon.refresh, () -> {
                 config.setZoomThreshold(0.5f);
                 rebuildSettings();
             }).size(250, 64);
@@ -124,20 +124,20 @@ public class PathfindingDisplay implements Feature {
         zoomSlider.setValue(currentZoom);
 
         Label zoomValueLabel = new Label(
-                currentZoom <= 0.01f ? "Off" : String.format("%.1fx", currentZoom),
+                currentZoom <= 0.01f ? "@off" : String.format("%.1fx", currentZoom),
                 Styles.outlineLabel);
         zoomValueLabel.setColor(currentZoom <= 0.01f ? Color.gray : Color.lightGray);
 
         Table zoomContent = new Table();
         zoomContent.touchable = arc.scene.event.Touchable.disabled;
         zoomContent.margin(3f, 33f, 3f, 33f);
-        zoomContent.add("Min Zoom", Styles.outlineLabel).left().growX();
+        zoomContent.add("@health-bar.min-zoom", Styles.outlineLabel).left().growX();
         zoomContent.add(zoomValueLabel).padLeft(10f).right();
 
         zoomSlider.changed(() -> {
             float newZoomValue = zoomSlider.getValue();
             config.setZoomThreshold(newZoomValue);
-            zoomValueLabel.setText(newZoomValue <= 0.01f ? "Off" : String.format("%.1fx", newZoomValue));
+            zoomValueLabel.setText(newZoomValue <= 0.01f ? "@off" : String.format("%.1fx", newZoomValue));
             zoomValueLabel.setColor(newZoomValue <= 0.01f ? Color.gray : Color.lightGray);
         });
 
@@ -154,7 +154,7 @@ public class PathfindingDisplay implements Feature {
         Table opacityContent = new Table();
         opacityContent.touchable = arc.scene.event.Touchable.disabled;
         opacityContent.margin(3f, 33f, 3f, 33f);
-        opacityContent.add("Opacity", Styles.outlineLabel).left().growX();
+        opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
         opacityContent.add(opacityValue).padLeft(10f).right();
 
         opacitySlider.changed(() -> {
@@ -164,11 +164,11 @@ public class PathfindingDisplay implements Feature {
 
         settingsContainer.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
 
-        settingsContainer.check("Draw Unit Path", config.isDrawUnitPath(), (checked) -> {
+        settingsContainer.check("@pathfinding.draw-unit-path", config.isDrawUnitPath(), (checked) -> {
             config.setDrawUnitPath(checked);
         }).left().row();
 
-        settingsContainer.check("Draw Spawn Point Path", config.isDrawSpawnPointPath(), (checked) -> {
+        settingsContainer.check("@pathfinding.draw-spawn-point-path", config.isDrawSpawnPointPath(), (checked) -> {
             config.setDrawSpawnPointPath(checked);
             rebuildSettings();
         }).left().row();
@@ -177,7 +177,7 @@ public class PathfindingDisplay implements Feature {
             Table costTable = new Table();
             costTable.left().defaults().left().padLeft(16);
 
-            String[] costNames = { "Ground", "Legs", "Water", "Neoplasm", "Flat", "Hover" };
+            String[] costNames = { "@pathfinding.cost.ground", "@pathfinding.cost.legs", "@pathfinding.cost.water", "@pathfinding.cost.neoplasm", "@pathfinding.cost.flat", "@pathfinding.cost.hover" };
 
             for (int i = 0; i < costNames.length; i++) {
                 int index = i;

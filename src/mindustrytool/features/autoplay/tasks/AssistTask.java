@@ -106,7 +106,7 @@ public class AssistTask implements AutoplayTask {
         table.clear();
         table.add("@following").top().left().labelAlign(Align.left).padBottom(5).row();
 
-        table.button("None", Styles.togglet, () -> {
+        table.button("@autoplay.task.assist.none", Styles.togglet, () -> {
             ai.assistFollowing = null;
             build(table);
         })
