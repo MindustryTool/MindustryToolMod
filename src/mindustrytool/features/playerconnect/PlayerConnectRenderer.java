@@ -1,6 +1,7 @@
 package mindustrytool.features.playerconnect;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
@@ -26,9 +27,14 @@ public class PlayerConnectRenderer {
 
     public static Cell<Table> render(Table container, PlayerConnectRoom room, float targetWidth) {
         float contentWidth = targetWidth > 0 ? targetWidth - 40f : 0;
+        boolean matchProtocolVersion = room.data().protocolVersion().equals(NetworkProxy.PROTOCOL_VERSION);
 
         return container.table(Styles.black8, t -> {
             t.top().left();
+
+            if (!matchProtocolVersion) {
+                t.setColor(Color.red);
+            }
 
             // Header: Name, Version, Lock
             t.table(header -> {
@@ -175,14 +181,31 @@ public class PlayerConnectRenderer {
                 }
                 body.row();
 
+                if (!matchProtocolVersion) {
+                    body.add("[red]" + Iconc.info + " [lightgray]Protocol version mismatch, current: "
+                            + NetworkProxy.PROTOCOL_VERSION + ", required: " + room.data().protocolVersion())
+                            .style(Styles.outlineLabel)
+                            .color(Pal.lightishGray)
+                            .padBottom(6)
+                            .left();
+                }
+
                 // Spacer
 
                 body.add().growY().row();
 
                 // Join Button
-                body.button(Core.bundle.format("join"), Icon.play, () -> {
-                    joinRoom(room);
-                }).growX().height(40f).padTop(5);
+                if (matchProtocolVersion) {
+                    body.button(Core.bundle.format("join"), Icon.play, () -> {
+                        joinRoom(room);
+                    }).growX().height(40f).padTop(5);
+                } else {
+                    body.button(Core.bundle.format("player-connect.unmatch-protocol-version"), Icon.play, () -> {
+                        Vars.ui.showInfo("Howw");
+                    })
+                            .disabled(true)
+                            .growX().height(40f).padTop(5);
+                }
 
             }).growY().growX().left().bottom();
 
