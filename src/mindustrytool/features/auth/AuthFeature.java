@@ -77,6 +77,10 @@ public class AuthFeature implements Feature {
             }
         });
 
+        AuthService.getInstance()
+                .refreshTokenIfNeeded()
+                .thenCompose((_void) -> AuthService.getInstance().sessionStore.fetch());
+
         Timer.schedule(() -> {
             if (AuthService.getInstance().isLoggedIn()) {
                 AuthService.getInstance()
