@@ -117,8 +117,10 @@ public class BackgroundFeature implements Feature {
 
         @Override
         public void render() {
+            Draw.reset();
             Draw.rect(region, Core.graphics.getWidth() / 2f, Core.graphics.getHeight() / 2f,
                     Core.graphics.getWidth(), Core.graphics.getHeight());
+            Draw.reset();
         }
 
         @Override
