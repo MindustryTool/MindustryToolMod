@@ -101,13 +101,15 @@ public class ChatOverlay extends Table {
         inputField.setMessageText("@chat.enter-message");
         inputField.setValidator(this::isValidInput);
         inputField.keyDown(arc.input.KeyCode.enter, () -> {
-            boolean isSchematic = isSchematic(inputField.getText());
+            Core.app.post(() -> {
+                boolean isSchematic = isSchematic(inputField.getText());
 
-            if (isSchematic) {
-                sendSchematic();
-            } else if (inputField.isValid()) {
-                sendMessage();
-            }
+                if (isSchematic) {
+                    sendSchematic();
+                } else if (inputField.isValid()) {
+                    sendMessage();
+                }
+            });
         });
 
         inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
