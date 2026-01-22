@@ -20,6 +20,7 @@ import arc.util.Tmp;
 import mindustry.Vars;
 import mindustry.ai.Pathfinder;
 import mindustry.content.Blocks;
+import mindustry.game.Team;
 import mindustry.game.EventType.TileOverlayChangeEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.game.EventType.WorldLoadEvent;
@@ -41,6 +42,7 @@ import static mindustry.Vars.*;
 public class PathfindingDisplay implements Feature {
     private final PathfindingConfig config = new PathfindingConfig();
     private final LongMap<PathfindingCache> pathCache = new LongMap<>();
+    private final LongMap<PathfindingCache> spawnPathCache = new LongMap<>();
     private final LongMap<Object> activeTiles = new LongMap<>();
 
     private Seq<Tile> spawns = new Seq<>(false);
@@ -78,6 +80,7 @@ public class PathfindingDisplay implements Feature {
 
     public void reset() {
         spawns.clear();
+        spawnPathCache.clear();
 
         for (Tile tile : world.tiles) {
             if (tile.overlay() == Blocks.spawn) {
@@ -95,6 +98,7 @@ public class PathfindingDisplay implements Feature {
     public void onDisable() {
         isEnabled = false;
         pathCache.clear();
+        spawnPathCache.clear();
         activeTiles.clear();
     }
 
@@ -351,7 +355,7 @@ public class PathfindingDisplay implements Feature {
 
         Draw.z(Layer.overlayUI);
 
-        final int MAX_STEPS = 1000;
+        float currentTime = Time.time;
 
         for (var spawnPoint : Vars.state.rules.spawns) {
             var team = spawnPoint.team == null ? Vars.state.rules.waveTeam : spawnPoint.team;
@@ -360,57 +364,91 @@ public class PathfindingDisplay implements Feature {
                 continue;
             }
 
-            Lines.stroke(1f);
-
             for (var costType = 0; costType < Pathfinder.costTypes.size; costType++) {
                 if (!config.isCostTypeEnabled(costType)) {
                     continue;
                 }
 
                 for (var spawnTile : spawns) {
-                    int fieldType = Pathfinder.fieldCore;
-                    Pathfinder.Flowfield field = pathfinder.getField(team, costType, fieldType);
+                    long key = ((long) spawnTile.pos() << 32) | ((long) costType << 16) | (long) team.id;
+                    PathfindingCache cache = spawnPathCache.get(key);
 
-                    if (field == null) {
-                        continue;
+                    if (cache == null || (currentTime - cache.lastUpdateTime) > 60f) {
+                        if (cache == null) {
+                            cache = new PathfindingCache();
+                            cache.data = new float[1024];
+                            spawnPathCache.put(key, cache);
+                        }
+                        updateSpawnPathCache(cache, spawnTile, team, costType);
+                        cache.lastUpdateTime = currentTime + Mathf.random(0f, 20f);
                     }
 
-                    Tile currentTile = spawnTile;
-                    float segmentStartX = spawnTile.worldx();
-                    float segmentStartY = spawnTile.worldy();
-                    int lastDx = -2, lastDy = -2;
-
-                    Draw.color(team.color, config.getOpacity());
-
-                    for (int i = 0; i < MAX_STEPS; i++) {
-                        Tile nextTile = pathfinder.getTargetTile(currentTile, field);
-                        if (nextTile == null || nextTile == currentTile) {
-                            break;
-                        }
-
-                        int dx = nextTile.x - currentTile.x;
-                        int dy = nextTile.y - currentTile.y;
-
-                        if (dx != lastDx || dy != lastDy) {
-                            if (i > 0) {
-                                Lines.line(segmentStartX, segmentStartY, currentTile.worldx(), currentTile.worldy());
-                                segmentStartX = currentTile.worldx();
-                                segmentStartY = currentTile.worldy();
-                            }
-                            lastDx = dx;
-                            lastDy = dy;
-                        }
-
-                        currentTile = nextTile;
-                    }
-
-                    if (currentTile.worldx() != segmentStartX || currentTile.worldy() != segmentStartY) {
-                        Lines.line(segmentStartX, segmentStartY, currentTile.worldx(), currentTile.worldy());
+                    if (cache.size > 0) {
+                        drawSpawnPathFromCache(cache, team.color);
                     }
                 }
             }
         }
 
         Draw.reset();
+    }
+
+    private void updateSpawnPathCache(PathfindingCache cache, Tile startTile, Team team, int costType) {
+        int fieldType = Pathfinder.fieldCore;
+        Pathfinder.Flowfield field = pathfinder.getField(team, costType, fieldType);
+        if (field == null) {
+            cache.size = 0;
+            return;
+        }
+
+        Tile currentTile = startTile;
+        float segmentStartX = startTile.worldx();
+        float segmentStartY = startTile.worldy();
+        int lastDx = -2, lastDy = -2;
+        int dataIndex = 0;
+
+        if (dataIndex + 2 > cache.data.length)
+            cache.data = java.util.Arrays.copyOf(cache.data, cache.data.length * 2);
+        cache.data[dataIndex++] = segmentStartX;
+        cache.data[dataIndex++] = segmentStartY;
+
+        for (int i = 0; i < 1000; i++) {
+            Tile nextTile = pathfinder.getTargetTile(currentTile, field);
+            if (nextTile == null || nextTile == currentTile)
+                break;
+
+            int dx = nextTile.x - currentTile.x;
+            int dy = nextTile.y - currentTile.y;
+
+            if (dx != lastDx || dy != lastDy) {
+                if (i > 0) {
+                    if (dataIndex + 2 > cache.data.length)
+                        cache.data = java.util.Arrays.copyOf(cache.data, cache.data.length * 2);
+                    cache.data[dataIndex++] = currentTile.worldx();
+                    cache.data[dataIndex++] = currentTile.worldy();
+                }
+                lastDx = dx;
+                lastDy = dy;
+            }
+            currentTile = nextTile;
+        }
+
+        if (dataIndex + 2 > cache.data.length)
+            cache.data = java.util.Arrays.copyOf(cache.data, cache.data.length * 2);
+        cache.data[dataIndex++] = currentTile.worldx();
+        cache.data[dataIndex++] = currentTile.worldy();
+
+        cache.size = dataIndex;
+    }
+
+    private void drawSpawnPathFromCache(PathfindingCache cache, Color color) {
+        if (cache.size < 4)
+            return;
+        Draw.color(color, config.getOpacity());
+        Lines.stroke(1f);
+
+        for (int i = 0; i < cache.size - 2; i += 2) {
+            Lines.line(cache.data[i], cache.data[i + 1], cache.data[i + 2], cache.data[i + 3]);
+        }
     }
 }
