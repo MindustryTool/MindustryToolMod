@@ -21,6 +21,7 @@ import mindustry.game.EventType.PlayerIpBanEvent;
 import mindustry.game.EventType.PlayerJoin;
 import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
+import mindustry.gen.Call;
 import mindustry.gen.Player;
 import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
 
@@ -95,6 +96,8 @@ public class PlayerConnect {
             if (event.player.unit() != null) {
                 event.player.unit().kill();
             }
+
+            Call.infoMessage(event.player.con(), "Waiting for host to accept...");
 
             requestQueue.add(new Request(event.player, originalTeam));
 
@@ -311,7 +314,7 @@ public class PlayerConnect {
                     processNextRequest();
                 }, () -> {
                     if (req.player.con.isConnected()) {
-                        req.player.sendMessage("You have been rejected to join the game by room host.");
+                        Call.infoMessage(req.player.con, "You have been rejected to join the game by room host.");
                         req.player.con.close();
                     }
                     processNextRequest();

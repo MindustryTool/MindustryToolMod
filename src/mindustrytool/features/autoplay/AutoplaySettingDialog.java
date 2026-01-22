@@ -11,7 +11,7 @@ public class AutoplaySettingDialog extends BaseDialog {
     private final AutoplayFeature feature;
 
     public AutoplaySettingDialog(AutoplayFeature feature) {
-        super("Autoplay Settings");
+        super("@autoplay.settings.title");
         this.feature = feature;
         addCloseButton();
         shown(this::rebuild);

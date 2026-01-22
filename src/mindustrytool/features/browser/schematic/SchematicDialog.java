@@ -372,7 +372,7 @@ public class SchematicDialog extends BaseDialog {
     public void loadingWrapper(Runnable action) {
         Core.app.post(() -> {
             if (request.isLoading()) {
-                ui.showInfoFade("Loading");
+                ui.showInfoFade("@loading");
             } else {
                 action.run();
             }

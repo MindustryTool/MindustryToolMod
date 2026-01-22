@@ -214,7 +214,7 @@ public class ChatOverlay extends Table {
             });
 
             header.image(Icon.move).color(Color.gray).size(24).padLeft(8);
-            header.add("Global Chat").style(Styles.outlineLabel).padLeft(8);
+            header.add("@chat.global-chat").style(Styles.outlineLabel).padLeft(8);
 
             connectionIndicator = new Image(Tex.whiteui) {
                 @Override
@@ -247,7 +247,7 @@ public class ChatOverlay extends Table {
 
             loadingTable = new Table();
 
-            loadingTable.add("Loading...").style(Styles.defaultLabel).color(Color.gray);
+            loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray);
 
             Stack stack = new Stack();
             stack.add(loadingTable);
@@ -282,7 +282,7 @@ public class ChatOverlay extends Table {
 
             Table titleTable = new Table();
             if (!isUserListCollapsed) {
-                titleTable.add("ONLINE MEMBERS").style(Styles.defaultLabel).color(Color.gray).pad(10).left().growX();
+                titleTable.add("@chat.online-members").style(Styles.defaultLabel).color(Color.gray).pad(10).left().growX();
             }
 
             titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
@@ -319,7 +319,7 @@ public class ChatOverlay extends Table {
             if (AuthService.getInstance().isLoggedIn()) {
                 if (inputField == null) {
                     inputField = new TextField();
-                    inputField.setMessageText("Enter message...");
+                    inputField.setMessageText("@chat.enter-message");
                     inputField.setValidator(this::isValidInput);
                     inputField.keyDown(arc.input.KeyCode.enter, () -> {
                         boolean isSchematic = isSchematic(inputField.getText());
@@ -335,7 +335,7 @@ public class ChatOverlay extends Table {
 
                 inputField.setText(lastInputText);
 
-                sendButton = new TextButton(isSending ? "Sending..." : "Send", Styles.defaultt);
+                sendButton = new TextButton(isSending ? "@sending" : "@chat.send", Styles.defaultt);
                 sendButton.clicked(this::sendMessage);
                 sendButton.setDisabled(() -> isSending);
 
@@ -347,12 +347,12 @@ public class ChatOverlay extends Table {
                 TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
 
                 inputTable.button(drawable, () -> {
-                    Vars.ui.showInfoFade("This do nothing :v");
+                    Vars.ui.showInfoFade("@chat.feature-not-implemented");
                 }).pad(8);
 
                 inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
             } else {
-                inputTable.button("Login to Chat", Styles.defaultt, () -> {
+                inputTable.button("@chat.login", Styles.defaultt, () -> {
                     AuthService.getInstance().login();
                 }).growX().height(40f).pad(8);
             }
@@ -634,29 +634,29 @@ public class ChatOverlay extends Table {
         String content = inputField.getText();
 
         if (content == null || content.trim().isEmpty()) {
-            Vars.ui.showInfoFade("Content is empty");
+            Vars.ui.showInfoFade("@chat.empty-content");
             return;
         }
 
         if (!AuthService.getInstance().isLoggedIn()) {
-            Vars.ui.showInfoFade("You're not logged in");
+            Vars.ui.showInfoFade("@chat.not-logged-in");
             return;
         }
 
         if (isSending) {
-            Vars.ui.showInfoFade("Last message still sending");
+            Vars.ui.showInfoFade("@chat.sending-in-progress");
             return;
         }
 
         isSending = true;
         if (sendButton != null)
-            sendButton.setText("Sending...");
+            sendButton.setText("@sending");
 
         ChatService.getInstance().sendMessage(content, () -> {
             Core.app.post(() -> {
                 isSending = false;
                 if (sendButton != null)
-                    sendButton.setText("Send");
+                    sendButton.setText("@chat.send");
                 inputField.setText("");
                 lastInputText = "";
             });
@@ -667,19 +667,19 @@ public class ChatOverlay extends Table {
         String content = inputField.getText();
 
         if (isSending) {
-            Vars.ui.showInfoFade("Last message still sending");
+            Vars.ui.showInfoFade("@chat.sending-in-progress");
             return;
         }
 
         isSending = true;
         if (sendButton != null)
-            sendButton.setText("Sending...");
+            sendButton.setText("@sending");
 
         ChatService.getInstance().sendSchematic(content, () -> {
             Core.app.post(() -> {
                 isSending = false;
                 if (sendButton != null)
-                    sendButton.setText("Send");
+                    sendButton.setText("@chat.send");
                 inputField.setText("");
                 lastInputText = "";
             });
@@ -689,13 +689,13 @@ public class ChatOverlay extends Table {
     private void handleSendError(Throwable err) {
         isSending = false;
         if (sendButton != null)
-            sendButton.setText("Send");
+            sendButton.setText("@chat.send");
 
         String errStr = err.toString();
         if (errStr.contains("409") || err.getMessage().contains("409")) {
-            Vars.ui.showInfoToast("Rate limited! Please wait.", 3f);
+            Vars.ui.showInfoToast("@chat.rate-limited", 3f);
         } else {
-            Vars.ui.showInfoToast("Failed to send message.", 3f);
+            Vars.ui.showInfoToast("@chat.send-failed", 3f);
             Log.err("Send message failed", err);
         }
     }
@@ -726,7 +726,7 @@ public class ChatOverlay extends Table {
     private void renderPlayerConnectRoom(Table table, String link) {
         table.table(t -> {
             t.left();
-            t.add("Loading room info...").color(Color.gray);
+            t.add("@chat.loading-room-info").color(Color.gray);
 
             playerConnectService.getRoomWithCache(link, room -> {
                 t.clear();
@@ -734,7 +734,7 @@ public class ChatOverlay extends Table {
                 if (room != null) {
                     PlayerConnectRenderer.render(t, room).grow();
                 } else {
-                    t.add("Room not found or offline").color(Color.gray);
+                    t.add("@chat.room-not-found").color(Color.gray);
                 }
             });
         }).growX().left().padTop(10);

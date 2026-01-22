@@ -19,7 +19,7 @@ public class FeatureSettingDialog extends BaseDialog {
         super("Feature");
         addCloseButton();
 
-        buttons.button("Report bug", Icon.infoCircle, () -> {
+        buttons.button("@feature.report-bug", Icon.infoCircle, () -> {
             Core.app.openURI(Config.DISCORD_INVITE_URL);
         });
 
@@ -159,7 +159,7 @@ public class FeatureSettingDialog extends BaseDialog {
                 c.add().growY().row();
 
                 // Status Footer
-                c.add(enabled ? "Enabled" : "Disabled")
+                c.add(enabled ? "@enabled" : "@disabled")
                         .color(enabled ? Color.green : Color.red)
                         .left();
             }).grow();

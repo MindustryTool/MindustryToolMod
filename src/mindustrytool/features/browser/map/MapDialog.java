@@ -70,7 +70,7 @@ public class MapDialog extends BaseDialog {
     private String searchText = "";
 
     public MapDialog() {
-        super("Map Browser");
+        super("@message.map-browser.title");
 
         initializeRequest();
         updateLayoutMetrics();
@@ -358,7 +358,7 @@ public class MapDialog extends BaseDialog {
     public void loadingWrapper(Runnable action) {
         Core.app.post(() -> {
             if (request.isLoading()) {
-                ui.showInfoFade("Loading");
+                ui.showInfoFade("@loading");
             } else {
                 action.run();
             }
