@@ -64,7 +64,9 @@ public final class ReactiveStore<T> {
             return inFlight;
         }
 
-        setState(LoadState.LOADING, null);
+        if (state != LoadState.SUCCESS) {
+            setState(LoadState.LOADING, null);
+        }
 
         inFlight = fetcher.get()
                 .thenApply(result -> {

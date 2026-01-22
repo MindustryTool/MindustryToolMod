@@ -34,6 +34,7 @@ import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import arc.Events;
+import arc.func.Prov;
 import mindustrytool.Main;
 import mindustrytool.MdtKeybinds;
 import mindustrytool.features.auth.AuthService;
@@ -46,14 +47,18 @@ import mindustrytool.ui.NetworkImage;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.input.KeyCode;
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+
 import mindustrytool.features.chat.dto.ChatUser.SimpleRole;
 import mindustrytool.features.playerconnect.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectRenderer;
 import mindustrytool.services.PlayerConnectService;
+import mindustrytool.services.State;
 
 public class ChatOverlay extends Table {
     private Seq<ChatMessage> messages = new Seq<>();
@@ -61,12 +66,15 @@ public class ChatOverlay extends Table {
     private Table userListTable;
     private ScrollPane scrollPane;
     private Table loadingTable;
+    private Table inputTable;
     private TextField inputField;
     private TextButton sendButton;
-    private boolean isSending = false;
+
+    private State<Boolean> isSending = new State<>(false);
 
     private String lastInputText = "";
     private Table container;
+
     private Cell<Table> containerCell;
     private final ChatConfig config = new ChatConfig();
     private final PlayerConnectService playerConnectService = new PlayerConnectService();
@@ -81,9 +89,11 @@ public class ChatOverlay extends Table {
         touchable = Touchable.childrenOnly;
 
         isUserListCollapsed = Vars.mobile;
+
         setPosition(config.x(), config.y());
 
         container = new Table();
+        inputTable = new Table();
 
         containerCell = add(container);
 
@@ -115,6 +125,10 @@ public class ChatOverlay extends Table {
                 }
                 return false;
             }
+        });
+
+        AuthService.getInstance().sessionStore.subscribe((value, state, error) -> {
+            buildInputTable(inputTable);
         });
     }
 
@@ -282,7 +296,8 @@ public class ChatOverlay extends Table {
 
             Table titleTable = new Table();
             if (!isUserListCollapsed) {
-                titleTable.add("@chat.online-members").style(Styles.defaultLabel).color(Color.gray).pad(10).left().growX();
+                titleTable.add("@chat.online-members").style(Styles.defaultLabel).color(Color.gray).pad(10).left()
+                        .growX();
             }
 
             titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
@@ -312,50 +327,7 @@ public class ChatOverlay extends Table {
                 ChatService.getInstance().getChatUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
             }, 0.25f);
 
-            // Input Area
-            Table inputTable = new Table();
-            inputTable.background(Styles.black6);
-
-            if (AuthService.getInstance().isLoggedIn()) {
-                if (inputField == null) {
-                    inputField = new TextField();
-                    inputField.setMessageText("@chat.enter-message");
-                    inputField.setValidator(this::isValidInput);
-                    inputField.keyDown(arc.input.KeyCode.enter, () -> {
-                        boolean isSchematic = isSchematic(inputField.getText());
-
-                        if (isSchematic) {
-                            sendSchematic();
-                        } else if (inputField.isValid()) {
-                            sendMessage();
-                        }
-                    });
-                    inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
-                }
-
-                inputField.setText(lastInputText);
-
-                sendButton = new TextButton(isSending ? "@sending" : "@chat.send", Styles.defaultt);
-                sendButton.clicked(this::sendMessage);
-                sendButton.setDisabled(() -> isSending);
-
-                inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
-
-                var mod = Vars.mods.getMod(Main.class);
-
-                var texture = new TextureRegion(new Texture(mod.root.child("icons").child("attach-file.png")));
-                TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
-
-                inputTable.button(drawable, () -> {
-                    Vars.ui.showInfoFade("@chat.feature-not-implemented");
-                }).pad(8);
-
-                inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
-            } else {
-                inputTable.button("@chat.login", Styles.defaultt, () -> {
-                    AuthService.getInstance().login();
-                }).growX().height(40f).pad(8);
-            }
+            buildInputTable(inputTable);
 
             container.add(inputTable).growX().bottom();
 
@@ -377,7 +349,52 @@ public class ChatOverlay extends Table {
         pack();
 
         keepInScreen();
+    }
 
+    private void buildInputTable(Table inputTable) {
+        inputTable.clear();
+        inputTable.background(Styles.black6);
+
+        if (AuthService.getInstance().isLoggedIn()) {
+            if (inputField == null) {
+                inputField = new TextField();
+                inputField.setMessageText("@chat.enter-message");
+                inputField.setValidator(this::isValidInput);
+                inputField.keyDown(arc.input.KeyCode.enter, () -> {
+                    boolean isSchematic = isSchematic(inputField.getText());
+
+                    if (isSchematic) {
+                        sendSchematic();
+                    } else if (inputField.isValid()) {
+                        sendMessage();
+                    }
+                });
+                inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
+            }
+
+            inputField.setText(lastInputText);
+
+            sendButton = new TextButton(isSending.get() ? "@sending" : "@chat.send", Styles.defaultt);
+            sendButton.clicked(this::sendMessage);
+            sendButton.setDisabled(() -> isSending.get());
+
+            inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
+
+            var mod = Vars.mods.getMod(Main.class);
+
+            var texture = new TextureRegion(new Texture(mod.root.child("icons").child("attach-file.png")));
+            TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
+
+            inputTable.button(drawable, () -> {
+                Vars.ui.showInfoFade("feature-not-implemented");
+            }).pad(8);
+
+            inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
+        } else {
+            inputTable.button("@login", Styles.defaultt, () -> {
+                AuthService.getInstance().login();
+            }).growX().height(40f).pad(8);
+        }
     }
 
     private boolean isSchematic(String text) {
@@ -638,66 +655,59 @@ public class ChatOverlay extends Table {
             return;
         }
 
+        send(() -> ChatService.getInstance().sendMessage(content));
+    }
+
+    private void sendSchematic() {
+        send(() -> ChatService.getInstance().sendSchematic(inputField.getText()));
+    }
+
+    private void send(Prov<CompletableFuture<Void>> prov) {
         if (!AuthService.getInstance().isLoggedIn()) {
             Vars.ui.showInfoFade("@chat.not-logged-in");
             return;
         }
 
-        if (isSending) {
+        if (isSending.get()) {
             Vars.ui.showInfoFade("@chat.sending-in-progress");
             return;
         }
 
-        isSending = true;
-        if (sendButton != null)
-            sendButton.setText("@sending");
+        isSending.set(true);
 
-        ChatService.getInstance().sendMessage(content, () -> {
+        if (sendButton != null) {
+            sendButton.setText("@sending");
+        }
+
+        prov.get().thenRun(() -> {
             Core.app.post(() -> {
-                isSending = false;
+                isSending.set(false);
+
                 if (sendButton != null)
                     sendButton.setText("@chat.send");
+
                 inputField.setText("");
                 lastInputText = "";
             });
-        }, this::handleSendError);
-    }
+        }).exceptionally((err) -> {
+            isSending.set(false);
 
-    private void sendSchematic() {
-        String content = inputField.getText();
+            String errStr = err.toString();
 
-        if (isSending) {
-            Vars.ui.showInfoFade("@chat.sending-in-progress");
-            return;
-        }
+            if (errStr.contains("409") || err.getMessage().contains("409")) {
+                Vars.ui.showInfoToast("@chat.rate-limited", 3f);
+            } else {
+                Vars.ui.showInfoToast("@chat.send-failed", 3f);
+                Log.err("Send message failed", err);
+            }
 
-        isSending = true;
-        if (sendButton != null)
-            sendButton.setText("@sending");
+            if (sendButton != null) {
+                sendButton.setText("@chat.send");
+            }
 
-        ChatService.getInstance().sendSchematic(content, () -> {
-            Core.app.post(() -> {
-                isSending = false;
-                if (sendButton != null)
-                    sendButton.setText("@chat.send");
-                inputField.setText("");
-                lastInputText = "";
-            });
-        }, this::handleSendError);
-    }
+            return null;
+        });
 
-    private void handleSendError(Throwable err) {
-        isSending = false;
-        if (sendButton != null)
-            sendButton.setText("@chat.send");
-
-        String errStr = err.toString();
-        if (errStr.contains("409") || err.getMessage().contains("409")) {
-            Vars.ui.showInfoToast("@chat.rate-limited", 3f);
-        } else {
-            Vars.ui.showInfoToast("@chat.send-failed", 3f);
-            Log.err("Send message failed", err);
-        }
     }
 
     private void updateBadge() {

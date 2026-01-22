@@ -39,22 +39,12 @@ public class AuthService {
 
     private AuthService() {
         sessionStore = new ReactiveStore<>(() -> {
-            CompletableFuture<UserSession> future = new CompletableFuture<>();
+            CompletableFuture<String> future = new CompletableFuture<>();
 
-            AuthHttp.get(Config.API_v4_URL + "auth/session", res -> {
-                try {
-                    UserSession session = Utils.fromJson(UserSession.class, res.getResultAsString());
-                    future.complete(session);
-                } catch (Exception e) {
-                    Log.err("Failed to parse user session", e);
-                    future.completeExceptionally(e);
-                }
-            }, err -> {
-                Log.err("Failed to fetch user session", err);
-                future.completeExceptionally(err);
-            });
+            AuthHttp.get(Config.API_v4_URL + "auth/session", res -> future.complete(res.getResultAsString()),
+                    err -> future.completeExceptionally(err));
 
-            return future;
+            return future.thenApply(json -> Utils.fromJson(UserSession.class, json));
         });
 
         sessionStore.subscribe((value, state, error) -> {
@@ -70,15 +60,14 @@ public class AuthService {
         }
 
         pollLoginToken(logindId).exceptionally(e -> {
-            // Background polling failed, just log it
             Log.err("Background login polling failed", e);
             return null;
         });
     }
 
     public boolean isLoggedIn() {
-        return sessionStore.getValue() != null
-                || (Core.settings.has(KEY_ACCESS_TOKEN) && Core.settings.has(KEY_REFRESH_TOKEN));
+        return sessionStore.getValue() != null && Core.settings.has(KEY_ACCESS_TOKEN)
+                && Core.settings.has(KEY_REFRESH_TOKEN);
     }
 
     public synchronized CompletableFuture<Void> login() {
@@ -90,13 +79,11 @@ public class AuthService {
 
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
                 .timeout(5000)
-                .error(err -> {
-                    Log.err("Failed to get login URI", err);
-                    loginFuture.completeExceptionally(err);
-                })
+                .error(err -> loginFuture.completeExceptionally(new RuntimeException("Failed to get login URI", err)))
                 .submit(res -> {
                     try {
                         Jval json = Jval.read(res.getResultAsString());
+
                         String loginUrl = json.getString("loginUrl");
                         String loginId = json.getString("loginId");
 
@@ -111,14 +98,12 @@ public class AuthService {
                             }
                         });
 
-                        // Open browser
                         if (!Core.app.openURI(loginUrl)) {
                             Core.app.setClipboardText(loginUrl);
                         }
 
                     } catch (Exception e) {
-                        Log.err("Failed to start login flow", e);
-                        loginFuture.completeExceptionally(e);
+                        loginFuture.completeExceptionally(new RuntimeException("Failed to start login flow", e));
                     }
                 });
 
@@ -131,40 +116,35 @@ public class AuthService {
         Http.get(Config.API_v4_URL + "auth/app/login-token?loginId=" + loginId)
                 .error(e -> {
                     if (e instanceof SocketTimeoutException) {
-                        // Timeout means user didn't login in time or server slow
                         future.completeExceptionally(e);
                         return;
                     }
-                    Log.err("Failed to get login token", e);
+
                     Core.settings.remove(KEY_LOGIN_ID);
-                    future.completeExceptionally(e);
-                }) // Ignore errors while polling (404/400 expected until user logs in)
+                    future.completeExceptionally(new RuntimeException("Failed to get login token", e));
+                })
                 .timeout(15000)
                 .submit(res -> {
                     Core.settings.remove(KEY_LOGIN_ID);
 
-                    try {
-                        Jval json = Jval.read(res.getResultAsString());
-                        if (json.has("accessToken") && json.has("refreshToken")) {
-                            String accessToken = json.getString("accessToken");
-                            String refreshToken = json.getString("refreshToken");
+                    Jval json = Jval.read(res.getResultAsString());
 
-                            saveTokens(accessToken, refreshToken);
+                    if (json.has("accessToken") && json.has("refreshToken")) {
+                        String accessToken = json.getString("accessToken");
+                        String refreshToken = json.getString("refreshToken");
 
-                            sessionStore.fetch().whenComplete((v, e) -> {
-                                if (e != null) {
-                                    future.completeExceptionally(e);
-                                } else {
-                                    Core.app.post(() -> Events.fire(new LoginEvent()));
-                                    future.complete(null);
-                                }
-                            });
-                        } else {
-                            future.completeExceptionally(new RuntimeException("Invalid response: missing tokens"));
-                        }
-                    } catch (Exception e) {
-                        Log.err("Failed to parse login token response", e);
-                        future.completeExceptionally(e);
+                        saveTokens(accessToken, refreshToken);
+
+                        sessionStore.fetch().whenComplete((v, e) -> {
+                            if (e != null) {
+                                future.completeExceptionally(e);
+                            } else {
+                                Core.app.post(() -> Events.fire(new LoginEvent()));
+                                future.complete(null);
+                            }
+                        });
+                    } else {
+                        future.completeExceptionally(new RuntimeException("Invalid response: missing tokens"));
                     }
                 });
         return future;
@@ -181,6 +161,7 @@ public class AuthService {
 
         if (!accessToken.isEmpty() && !refreshToken.isEmpty()) {
             Jval json = Jval.newObject();
+
             json.put("accessToken", accessToken);
             json.put("refreshToken", refreshToken);
 
@@ -199,15 +180,11 @@ public class AuthService {
         Core.settings.remove(KEY_REFRESH_TOKEN);
         Core.settings.remove(KEY_LOGIN_ID);
 
-        sessionStore.clear();
+        sessionStore.fetch();
 
         Events.fire(new LogoutEvent());
 
         Log.info("Logged out");
-    }
-
-    public UserSession getCurrentUser() {
-        return sessionStore.getValue();
     }
 
     public String getAccessToken() {
@@ -295,21 +272,17 @@ public class AuthService {
                             Log.info("Token refreshed successfully");
                             refreshFuture.complete(true);
                         } else {
-
-                            Log.err("Failed to refresh token: response does not contain accessToken or refreshToken: "
-                                    + str);
-                            refreshFuture.completeExceptionally(new RuntimeException("Invalid refresh response"));
+                            refreshFuture.completeExceptionally(
+                                    new RuntimeException("Invalid refresh response: " + resJson));
                         }
                     } catch (Exception e) {
-
                         if (e instanceof HttpStatusException httpError) {
                             if (httpError.status.code == 401) {
                                 logout();
                             }
                         }
-
-                        Log.err("Failed to refresh token: exception", e);
-                        refreshFuture.completeExceptionally(e);
+                        refreshFuture
+                                .completeExceptionally(new RuntimeException("Failed to refresh token: exception", e));
                     }
                 });
 

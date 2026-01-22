@@ -47,7 +47,7 @@ public class AuthFeature implements Feature {
         authWindow.toFront();
 
         AuthService.getInstance().sessionStore.subscribe((user, state, error) -> {
-            if (state == LoadState.LOADING || state == LoadState.IDLE) {
+            if (state == LoadState.LOADING) {
                 content.clear();
                 content.add("@loading").labelAlign(Align.left).padLeft(8);
             } else if (error != null) {
