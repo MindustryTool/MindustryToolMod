@@ -6,6 +6,7 @@ import arc.graphics.g2d.Font;
 import arc.graphics.g2d.GlyphLayout;
 import arc.scene.Element;
 import arc.struct.Seq;
+import arc.util.Log;
 import mindustry.core.UI;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
@@ -31,7 +32,7 @@ public class SplitBar extends Element {
     @Override
     public void draw() {
         Draw.color(Color.black);
-        
+
         Tex.whiteui.draw(x, y, width, height);
 
         if (graphs.isEmpty()) {
@@ -84,13 +85,17 @@ public class SplitBar extends Element {
 
                 String text = getSectionText(graph);
                 if (!text.isEmpty()) {
-                    GlyphLayout layout = new GlyphLayout();
-                    layout.setText(font, text);
+                    try {
+                        GlyphLayout layout = new GlyphLayout();
+                        layout.setText(font, text);
 
-                    if (layout.width < sectionWidth - 4f) {
-                        font.setColor(Color.white);
-                        font.draw(text, currentX + sectionWidth / 2f - layout.width / 2f,
-                                y + height / 2f + layout.height / 2f);
+                        if (layout.width < sectionWidth - 4f) {
+                            font.setColor(Color.white);
+                            font.draw(text, currentX + sectionWidth / 2f - layout.width / 2f,
+                                    y + height / 2f + layout.height / 2f);
+                        }
+                    } catch (Exception e) {
+                        Log.err(e);
                     }
                 }
 
