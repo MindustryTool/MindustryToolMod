@@ -77,9 +77,13 @@ public class AuthFeature implements Feature {
             }
         });
 
-        Timer.schedule(() -> AuthService.getInstance()
-                .refreshTokenIfNeeded()
-                .thenCompose((_void) -> AuthService.getInstance().sessionStore.fetch()), 0, 60 * 5);
+        Timer.schedule(() -> {
+            if (AuthService.getInstance().isLoggedIn()) {
+                AuthService.getInstance()
+                        .refreshTokenIfNeeded()
+                        .thenCompose((_void) -> AuthService.getInstance().sessionStore.fetch());
+            }
+        }, 0, 60 * 5);
     }
 
     private void startLogin() {
