@@ -7,6 +7,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
+import arc.util.Timer;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustry.editor.MapResizeDialog;
@@ -181,9 +182,9 @@ public class Main extends Mod {
             dialog.buttons.button("Cancel", dialog::hide).size(100f, 50f);
             dialog.buttons.button("Update", () -> {
                 dialog.hide();
-                Vars.ui.mods.show();
                 Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
-                Vars.ui.loadfrag.toFront();
+                Vars.ui.mods.show();
+                Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.5f);
             }).size(100f, 50f);
 
             dialog.show();
