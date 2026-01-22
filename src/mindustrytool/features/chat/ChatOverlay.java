@@ -97,6 +97,21 @@ public class ChatOverlay extends Table {
 
         containerCell = add(container);
 
+        inputField = new TextField();
+        inputField.setMessageText("@chat.enter-message");
+        inputField.setValidator(this::isValidInput);
+        inputField.keyDown(arc.input.KeyCode.enter, () -> {
+            boolean isSchematic = isSchematic(inputField.getText());
+
+            if (isSchematic) {
+                sendSchematic();
+            } else if (inputField.isValid()) {
+                sendMessage();
+            }
+        });
+
+        inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
+
         setup();
 
         Events.on(EventType.ResizeEvent.class, e -> {
@@ -356,22 +371,6 @@ public class ChatOverlay extends Table {
         inputTable.background(Styles.black6);
 
         if (AuthService.getInstance().isLoggedIn()) {
-            if (inputField == null) {
-                inputField = new TextField();
-                inputField.setMessageText("@chat.enter-message");
-                inputField.setValidator(this::isValidInput);
-                inputField.keyDown(arc.input.KeyCode.enter, () -> {
-                    boolean isSchematic = isSchematic(inputField.getText());
-
-                    if (isSchematic) {
-                        sendSchematic();
-                    } else if (inputField.isValid()) {
-                        sendMessage();
-                    }
-                });
-                inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
-            }
-
             inputField.setText(lastInputText);
 
             sendButton = new TextButton(isSending.get() ? "@sending" : "@chat.send", Styles.defaultt);
@@ -673,41 +672,45 @@ public class ChatOverlay extends Table {
             return;
         }
 
-        isSending.set(true);
-
-        if (sendButton != null) {
-            sendButton.setText("@sending");
-        }
-
-        prov.get().thenRun(() -> {
-            Core.app.post(() -> {
-                isSending.set(false);
-
-                if (sendButton != null)
-                    sendButton.setText("@chat.send");
-
-                inputField.setText("");
-                lastInputText = "";
-            });
-        }).exceptionally((err) -> {
-            isSending.set(false);
-
-            String errStr = err.toString();
-
-            if (errStr.contains("409") || err.getMessage().contains("409")) {
-                Vars.ui.showInfoToast("@chat.rate-limited", 3f);
-            } else {
-                Vars.ui.showInfoToast("@chat.send-failed", 3f);
-                Log.err("Send message failed", err);
-            }
+        try {
+            isSending.set(true);
 
             if (sendButton != null) {
-                sendButton.setText("@chat.send");
+                sendButton.setText("@sending");
             }
 
-            return null;
-        });
+            prov.get().thenRun(() -> {
+                Core.app.post(() -> {
+                    isSending.set(false);
 
+                    if (sendButton != null)
+                        sendButton.setText("@chat.send");
+
+                    inputField.setText("");
+                    lastInputText = "";
+                });
+            }).exceptionally((err) -> {
+                isSending.set(false);
+
+                String errStr = err.toString();
+
+                if (errStr.contains("409") || err.getMessage().contains("409")) {
+                    Vars.ui.showInfoToast("@chat.rate-limited", 3f);
+                } else {
+                    Vars.ui.showInfoToast("@chat.send-failed", 3f);
+                    Log.err("Send message failed", err);
+                }
+
+                if (sendButton != null) {
+                    sendButton.setText("@chat.send");
+                }
+
+                return null;
+            });
+
+        } catch (Exception e) {
+            isSending.set(false);
+        }
     }
 
     private void updateBadge() {

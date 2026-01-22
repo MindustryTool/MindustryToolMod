@@ -27,8 +27,9 @@ public final class State<T> {
     }
 
     public void set(@Nullable T newValue) {
-        if (Objects.equals(value, newValue))
+        if (Objects.equals(value, newValue)) {
             return;
+        }
 
         T old = value;
         value = newValue;
@@ -38,7 +39,6 @@ public final class State<T> {
 
     public void subscribe(Listener<T> listener) {
         listeners.add(listener);
-
         listener.onChanged(value, value);
     }
 
