@@ -679,6 +679,8 @@ public class ChatOverlay extends Table {
                 sendButton.setText("@sending");
             }
 
+            inputField.setText("");
+
             prov.get().thenRun(() -> {
                 Core.app.post(() -> {
                     isSending.set(false);
@@ -686,7 +688,6 @@ public class ChatOverlay extends Table {
                     if (sendButton != null)
                         sendButton.setText("@chat.send");
 
-                    inputField.setText("");
                     lastInputText = "";
                 });
             }).exceptionally((err) -> {
