@@ -177,7 +177,8 @@ public class PathfindingDisplay implements Feature {
             Table costTable = new Table();
             costTable.left().defaults().left().padLeft(16);
 
-            String[] costNames = { "@pathfinding.cost.ground", "@pathfinding.cost.legs", "@pathfinding.cost.water", "@pathfinding.cost.neoplasm", "@pathfinding.cost.flat", "@pathfinding.cost.hover" };
+            String[] costNames = { "@pathfinding.cost.ground", "@pathfinding.cost.legs", "@pathfinding.cost.water",
+                    "@pathfinding.cost.neoplasm", "@pathfinding.cost.flat", "@pathfinding.cost.hover" };
 
             for (int i = 0; i < costNames.length; i++) {
                 int index = i;
@@ -375,24 +376,36 @@ public class PathfindingDisplay implements Feature {
                     }
 
                     Tile currentTile = spawnTile;
-                    float lastX = spawnTile.worldx();
-                    float lastY = spawnTile.worldy();
+                    float segmentStartX = spawnTile.worldx();
+                    float segmentStartY = spawnTile.worldy();
+                    int lastDx = -2, lastDy = -2;
+
+                    Draw.color(team.color, config.getOpacity());
 
                     for (int i = 0; i < MAX_STEPS; i++) {
                         Tile nextTile = pathfinder.getTargetTile(currentTile, field);
-                        if (nextTile == null) {
+                        if (nextTile == null || nextTile == currentTile) {
                             break;
                         }
 
-                        if (nextTile == currentTile) {
-                            break;
+                        int dx = nextTile.x - currentTile.x;
+                        int dy = nextTile.y - currentTile.y;
+
+                        if (dx != lastDx || dy != lastDy) {
+                            if (i > 0) {
+                                Lines.line(segmentStartX, segmentStartY, currentTile.worldx(), currentTile.worldy());
+                                segmentStartX = currentTile.worldx();
+                                segmentStartY = currentTile.worldy();
+                            }
+                            lastDx = dx;
+                            lastDy = dy;
                         }
 
-                        Draw.color(team.color, config.getOpacity());
-                        Lines.line(lastX, lastY, nextTile.worldx(), nextTile.worldy());
-                        lastX = nextTile.worldx();
-                        lastY = nextTile.worldy();
                         currentTile = nextTile;
+                    }
+
+                    if (currentTile.worldx() != segmentStartX || currentTile.worldy() != segmentStartY) {
+                        Lines.line(segmentStartX, segmentStartY, currentTile.worldx(), currentTile.worldy());
                     }
                 }
             }
