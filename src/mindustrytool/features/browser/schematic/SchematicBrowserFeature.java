@@ -56,7 +56,7 @@ public class SchematicBrowserFeature implements Feature {
 
         Table buttons = Vars.ui.schematics.buttons;
         if (browseButton == null || browseButton.parent == null) {
-            browseButton = buttons.button("Browse", Icon.menu, () -> {
+            browseButton = buttons.button("@browse", Icon.menu, () -> {
                 Vars.ui.schematics.hide();
                 schematicDialog.show();
             }).get();

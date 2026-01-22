@@ -59,7 +59,7 @@ public class MapBrowserFeature implements Feature {
                 if (FeatureManager.getInstance().isEnabled(this)) {
                     mapDialog.show();
                 } else {
-                    Vars.ui.showInfo("Feature is disabled.");
+                    Vars.ui.showInfo("@feature.disabled");
                 }
             });
         } else {
