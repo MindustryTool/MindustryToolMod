@@ -172,30 +172,38 @@ public class ChatService {
 
     public CompletableFuture<ChatMessage> sendMessage(String content) {
         CompletableFuture<ChatMessage> future = new CompletableFuture<>();
+        try {
+            Jval json = Jval.newObject();
+            json.put("content", content);
 
-        Jval json = Jval.newObject();
-        json.put("content", content);
+            AuthHttp.post(Config.API_v4_URL + "chats/text", json.toString())
+                    .header("Content-Type", "application/json")
+                    .error(future::completeExceptionally)
+                    .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
 
-        AuthHttp.post(Config.API_v4_URL + "chats/text", json.toString())
-                .header("Content-Type", "application/json")
-                .error(future::completeExceptionally)
-                .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
-
-        return future;
+            return future;
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+            return future;
+        }
     }
 
     public CompletableFuture<ChatMessage> sendSchematic(String content) {
         CompletableFuture<ChatMessage> future = new CompletableFuture<>();
+        try {
+            Jval json = Jval.newObject();
+            json.put("content", content);
 
-        Jval json = Jval.newObject();
-        json.put("content", content);
+            AuthHttp.post(Config.API_v4_URL + "chats/schematic", json.toString())
+                    .header("Content-Type", "application/json")
+                    .error(future::completeExceptionally)
+                    .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
 
-        AuthHttp.post(Config.API_v4_URL + "chats/schematic", json.toString())
-                .header("Content-Type", "application/json")
-                .error(future::completeExceptionally)
-                .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
-
-        return future;
+            return future;
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+            return future;
+        }
     }
 
     public void getChatUsers(Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {
