@@ -45,6 +45,7 @@
 - Use/define components for UI elements whenever possible
 - Avoid large nesting (3 levels or more), eary return whenever possible
 - Avoid singleton
+- Use translation key for text and add the key to bundle file
 
 ## Requirements
 
