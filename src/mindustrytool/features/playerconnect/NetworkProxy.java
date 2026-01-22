@@ -35,7 +35,7 @@ import mindustrytool.features.playerconnect.Packets.RoomPlayer;
 import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
 
 public class NetworkProxy extends Client implements NetListener {
-    public static final String PROTOCOL_VERSION = "1";
+    public static final String PROTOCOL_VERSION = "2.0";
     public static final int defaultTimeout = 10000;
 
     private static final Ratekeeper noopRate = new NoopRatekeeper();
@@ -335,7 +335,7 @@ public class NetworkProxy extends Client implements NetListener {
                     return;
                 }
 
-                var packet = new Packets.StatsPacket(roomId, getStats());
+                var packet = new Packets.StatsPacket(getStats());
 
                 sendTCP(packet);
             } catch (Throwable err) {

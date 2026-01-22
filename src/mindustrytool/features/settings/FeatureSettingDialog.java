@@ -1,15 +1,19 @@
 package mindustrytool.features.settings;
 
+import java.util.HashMap;
+
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.util.Scaling;
+import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
+import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 
@@ -21,6 +25,36 @@ public class FeatureSettingDialog extends BaseDialog {
 
         buttons.button("@feature.report-bug", Icon.infoCircle, () -> {
             Core.app.openURI(Config.DISCORD_INVITE_URL);
+        });
+
+        buttons.button("@feature.copy-debug-detail", Icon.export, () -> {
+            try {
+                HashMap<String, Object> json = new HashMap<>();
+
+                String lastLog = Vars.dataDirectory.child("last_log.txt").readString();
+                String type = Core.app.getType().name();
+                float uiScale = Scl.scl();
+                String locale = Core.bundle.getLocale().toLanguageTag();
+                float windowWidth = Core.graphics.getWidth();
+                float windowHeight = Core.graphics.getHeight();
+                boolean fullscreen = Core.graphics.isFullscreen();
+                boolean isPortrait = Core.graphics.isPortrait();
+
+                json.put("window_width", String.valueOf(windowWidth));
+                json.put("window_height", String.valueOf(windowHeight));
+                json.put("fullscreen", String.valueOf(fullscreen));
+                json.put("is_portrait", String.valueOf(isPortrait));
+                json.put("locale", locale);
+                json.put("ui_scale", String.valueOf(uiScale));
+                json.put("type", type);
+                json.put("last_log", lastLog);
+
+                Core.app.setClipboardText(Utils.toJson(json));
+                Vars.ui.showInfoFade("@coppied");
+
+            } catch (Exception err) {
+                Vars.ui.showException(err);
+            }
         });
 
         shown(this::rebuild);

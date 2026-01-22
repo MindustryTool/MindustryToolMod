@@ -24,6 +24,7 @@ public class PlayerConnectRoom {
         private Seq<String> mods;
         private String version;
         private String locale;
+        private String protocolVersion;
     }
 
     @Data
