@@ -5,8 +5,6 @@ import java.util.Optional;
 import arc.Core;
 import arc.Events;
 import arc.scene.ui.Dialog;
-import mindustry.Vars;
-import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.MdtKeybinds;
@@ -31,13 +29,6 @@ public class MapBrowserFeature implements Feature {
     public void init() {
         mapDialog = new MapDialog();
 
-        // We hook into ClientLoadEvent to add the button initially
-        Events.on(ClientLoadEvent.class, e -> {
-            if (FeatureManager.getInstance().isEnabled(this)) {
-                addButton();
-            }
-        });
-
         Events.run(Trigger.update, () -> {
             boolean noInputFocused = !Core.scene.hasField();
             boolean enabled = FeatureManager.getInstance().isEnabled(this);
@@ -46,29 +37,6 @@ public class MapBrowserFeature implements Feature {
                 mapDialog.show();
             }
         });
-    }
-
-    private void addButton() {
-        // Since we cannot easily remove buttons from MenuFragment,
-        // we only add it. If disabled, the action will be blocked or we accept it
-        // stays.
-        // Ideally we would manage a custom menu.
-
-        if (Vars.mobile) {
-            Vars.ui.menufrag.addButton(Core.bundle.format("message.map-browser.title"), Icon.map, () -> {
-                if (FeatureManager.getInstance().isEnabled(this)) {
-                    mapDialog.show();
-                } else {
-                    Vars.ui.showInfo("@feature.disabled");
-                }
-            });
-        } else {
-            // For desktop, Main.java had a complex structure merging buttons.
-            // We might need to coordinate with other features if we want a single "Tools"
-            // menu.
-            // For now, let's add a standalone button or rely on Main to orchestrate the
-            // "Tools" menu.
-        }
     }
 
     @Override

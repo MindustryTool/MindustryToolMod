@@ -28,6 +28,7 @@ import java.util.zip.*;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import static mindustry.Vars.*;
 
@@ -128,6 +129,14 @@ public class Utils {
     public static String toJson(Object object) {
         try {
             return mapper.writeValueAsString(object);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String toJsonPretty(Object object) {
+        try {
+            return mapper.copy().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(object);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

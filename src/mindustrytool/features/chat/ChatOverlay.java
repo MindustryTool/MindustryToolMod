@@ -72,7 +72,6 @@ public class ChatOverlay extends Table {
 
     private State<Boolean> isSending = new State<>(false);
 
-    private String lastInputText = "";
     private Table container;
 
     private Cell<Table> containerCell;
@@ -101,13 +100,15 @@ public class ChatOverlay extends Table {
         inputField.setMessageText("@chat.enter-message");
         inputField.setValidator(this::isValidInput);
         inputField.keyDown(arc.input.KeyCode.enter, () -> {
-            boolean isSchematic = isSchematic(inputField.getText());
+            Core.app.post(() -> {
+                boolean isSchematic = isSchematic(inputField.getText());
 
-            if (isSchematic) {
-                sendSchematic();
-            } else if (inputField.isValid()) {
-                sendMessage();
-            }
+                if (isSchematic) {
+                    sendSchematic();
+                } else if (inputField.isValid()) {
+                    sendMessage();
+                }
+            });
         });
 
         inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
@@ -143,6 +144,11 @@ public class ChatOverlay extends Table {
         });
 
         AuthService.getInstance().sessionStore.subscribe((value, state, error) -> {
+            buildInputTable(inputTable);
+        });
+
+        isSending.subscribe((curr, old) -> {
+            inputField.setDisabled(curr);
             buildInputTable(inputTable);
         });
     }
@@ -371,8 +377,6 @@ public class ChatOverlay extends Table {
         inputTable.background(Styles.black6);
 
         if (AuthService.getInstance().isLoggedIn()) {
-            inputField.setText(lastInputText);
-
             sendButton = new TextButton(isSending.get() ? "@sending" : "@chat.send", Styles.defaultt);
             sendButton.clicked(this::sendMessage);
             sendButton.setDisabled(() -> isSending.get());
@@ -641,9 +645,6 @@ public class ChatOverlay extends Table {
     private void collapse() {
         config.collapsed(true);
         unreadCount = 0;
-        if (inputField != null) {
-            lastInputText = inputField.getText();
-        }
         setup();
     }
 
@@ -680,16 +681,14 @@ public class ChatOverlay extends Table {
                 sendButton.setText("@sending");
             }
 
-            inputField.setText("");
-
             prov.get().thenRun(() -> {
                 Core.app.post(() -> {
                     isSending.set(false);
+                    inputField.setText("");
 
-                    if (sendButton != null)
+                    if (sendButton != null) {
                         sendButton.setText("@chat.send");
-
-                    lastInputText = "";
+                    }
                 });
             }).exceptionally((err) -> {
                 isSending.set(false);

@@ -182,7 +182,7 @@ public class PlayerConnectRenderer {
                 body.row();
 
                 if (!matchProtocolVersion) {
-                    body.add("[red]" + Iconc.info + " [lightgray]Protocol version mismatch, current: "
+                    body.add("[red]" + Iconc.info + " Protocol version mismatch, current: "
                             + NetworkProxy.PROTOCOL_VERSION + ", required: " + room.data().protocolVersion())
                             .style(Styles.outlineLabel)
                             .color(Pal.lightishGray)

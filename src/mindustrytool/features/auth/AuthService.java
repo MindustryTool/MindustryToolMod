@@ -153,6 +153,7 @@ public class AuthService {
     public void saveTokens(String accessToken, String refreshToken) {
         Core.settings.put(KEY_ACCESS_TOKEN, accessToken);
         Core.settings.put(KEY_REFRESH_TOKEN, refreshToken);
+        Core.settings.forceSave();
     }
 
     public void logout() {
