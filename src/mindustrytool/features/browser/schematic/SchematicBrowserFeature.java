@@ -23,8 +23,8 @@ public class SchematicBrowserFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Schematic Browser")
-                .description("Browse and download schematics.")
+                .name("@feature.schematic-browser.name")
+                .description("@feature.schematic-browser.description")
                 .icon(Icon.paste)
                 .order(2)
                 .build();

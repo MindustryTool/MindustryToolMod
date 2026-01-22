@@ -30,8 +30,8 @@ public class QuickAccessHud extends Table implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Quick Access HUD")
-                .description("Quick access bar for toggling features")
+                .name("@feature.quick-access-hud.name")
+                .description("@feature.quick-access-hud.description")
                 .icon(Icon.menu)
                 .build();
     }

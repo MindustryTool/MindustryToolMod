@@ -33,8 +33,8 @@ public class HealthBarVisualizer implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Health Bar")
-                .description("Display health bars for units.")
+                .name("@feature.health-bar.name")
+                .description("@feature.health-bar.description")
                 .icon(Utils.icons("healthbar.png"))
                 .order(4)
                 .enabledByDefault(true)

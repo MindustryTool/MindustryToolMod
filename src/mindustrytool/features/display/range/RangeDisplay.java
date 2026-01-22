@@ -62,8 +62,8 @@ public class RangeDisplay implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Range Display")
-                .description("Display ranges for blocks, units, and turrets.")
+                .name("@feature.range-display.name")
+                .description("@feature.range-display.description")
                 .icon(Utils.icons("range-display.png"))
                 .order(5)
                 .enabledByDefault(true)

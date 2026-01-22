@@ -20,8 +20,8 @@ public class ChatFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Chat")
-                .description("Global chat")
+                .name("@feature.chat.name")
+                .description("@feature.chat.description")
                 .icon(Icon.chat)
                 .enabledByDefault(true)
                 .build();

@@ -21,8 +21,8 @@ public class AuthFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Authentication")
-                .description("Login to Mindustry Tool")
+                .name("@feature.authentication.name")
+                .description("@feature.authentication.description")
                 .enabledByDefault(true)
                 .icon(Icon.lock)
                 .quickAccess(false)

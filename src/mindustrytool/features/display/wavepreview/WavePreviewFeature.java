@@ -31,8 +31,8 @@ public class WavePreviewFeature extends Table implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("Wave Preview")
-                .description("Displays current and next wave composition")
+                .name("@feature.wave-preview.name")
+                .description("@feature.wave-preview.description")
                 .icon(Icon.units)
                 .order(1)
                 .quickAccess(true)
