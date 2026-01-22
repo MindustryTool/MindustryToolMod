@@ -40,16 +40,19 @@ public class FeatureSettingDialog extends BaseDialog {
                 boolean fullscreen = Core.graphics.isFullscreen();
                 boolean isPortrait = Core.graphics.isPortrait();
 
+                String mods = Vars.mods.getModStrings().reduce("", (a, b) -> a + b + "\n");
+
+                json.put("mods", mods);
+                json.put("type", type);
                 json.put("window_width", String.valueOf(windowWidth));
                 json.put("window_height", String.valueOf(windowHeight));
                 json.put("fullscreen", String.valueOf(fullscreen));
                 json.put("is_portrait", String.valueOf(isPortrait));
                 json.put("locale", locale);
                 json.put("ui_scale", String.valueOf(uiScale));
-                json.put("type", type);
                 json.put("last_log", lastLog);
 
-                Core.app.setClipboardText(Utils.toJson(json));
+                Core.app.setClipboardText(Utils.toJsonPretty(json));
                 Vars.ui.showInfoFade("@coppied");
 
             } catch (Exception err) {
