@@ -1,4 +1,4 @@
-package mindustrytool.features.chat;
+package mindustrytool.features.chat.global;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -40,8 +40,8 @@ import mindustrytool.MdtKeybinds;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
-import mindustrytool.features.chat.dto.ChatMessage;
-import mindustrytool.features.chat.dto.ChatUser;
+import mindustrytool.features.chat.global.dto.ChatMessage;
+import mindustrytool.features.chat.global.dto.ChatUser;
 import mindustrytool.services.UserService;
 import mindustrytool.ui.NetworkImage;
 import arc.scene.event.InputEvent;
@@ -54,7 +54,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
-import mindustrytool.features.chat.dto.ChatUser.SimpleRole;
+import mindustrytool.features.chat.global.dto.ChatUser.SimpleRole;
 import mindustrytool.features.playerconnect.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectRenderer;
 import mindustrytool.services.PlayerConnectService;

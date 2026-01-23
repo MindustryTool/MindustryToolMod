@@ -213,7 +213,7 @@ public class PlayerConnectRenderer {
         Seq<String> missing = serverMods.select(s -> localMods.contains(s));
         Seq<String> unneeded = localMods.select(m -> !serverMods.contains(m));
 
-        if (!unneeded.isEmpty() && !missing.isEmpty()) {
+        if (!unneeded.isEmpty() || !missing.isEmpty()) {
             BaseDialog dialog = new BaseDialog("@warning");
 
             if (!missing.isEmpty()) {

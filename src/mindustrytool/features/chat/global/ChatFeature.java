@@ -1,4 +1,4 @@
-package mindustrytool.features.chat;
+package mindustrytool.features.chat.global;
 
 import java.util.Optional;
 

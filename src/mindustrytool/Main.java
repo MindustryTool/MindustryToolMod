@@ -29,11 +29,12 @@ import mindustrytool.features.display.range.RangeDisplay;
 import mindustrytool.features.display.quickaccess.QuickAccessHud;
 import mindustrytool.features.auth.AuthFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
-import mindustrytool.features.chat.ChatFeature;
+import mindustrytool.features.chat.global.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.display.wavepreview.WavePreviewFeature;
+import mindustrytool.features.chat.translation.ChatTranslationFeature;
 
 public class Main extends Mod {
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
@@ -72,6 +73,7 @@ public class Main extends Mod {
                 new QuickAccessHud(), //
                 new AuthFeature(), //
                 new ChatFeature(),
+                new ChatTranslationFeature(),
                 new GodModeFeature(),
                 new AutoplayFeature(),
                 new WavePreviewFeature(),
