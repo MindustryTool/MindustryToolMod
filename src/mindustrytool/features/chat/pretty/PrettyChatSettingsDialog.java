@@ -47,6 +47,7 @@ public class PrettyChatSettingsDialog extends BaseDialog {
         ScrollPane pane = new ScrollPane(cards);
 
         cont.add(pane).grow().row();
+        cont.add("[red]NOT WORK YET");
 
         rebuildCards();
     }

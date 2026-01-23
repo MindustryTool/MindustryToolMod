@@ -5,7 +5,6 @@ import java.util.function.Function;
 
 import arc.scene.ui.Dialog;
 import arc.struct.Seq;
-import arc.util.Log;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import mindustry.gen.Icon;
@@ -57,7 +56,6 @@ public class PrettyChatFeature implements Feature {
     }
 
     public static String transform(String message) {
-        Log.info("transform: " + message);
         if (!enabled) {
             return message;
         }
@@ -65,13 +63,10 @@ public class PrettyChatFeature implements Feature {
         String result = message;
         Seq<String> enabledIds = PrettyChatConfig.getEnabledIds();
 
-        Log.info(enabledIds);
         for (String id : enabledIds) {
-            Log.info(id);
             Prettier p = prettiers.find(x -> x.id.equals(id));
             if (p != null) {
                 result = p.transform.apply(result);
-                Log.info(result);
             }
         }
         return result;
