@@ -229,12 +229,14 @@ public class PlayerConnectRenderer {
             dialog.buttons.button("@cancel", dialog::hide).size(100, 50);
 
             dialog.buttons.button("Disable & Join", () -> {
-                unneeded.each(name -> {
-                    var mod = Vars.mods.getMod(name);
-                    if (mod != null) {
-                        Vars.mods.setEnabled(mod, false);
-                    }
-                });
+                unneeded
+                        .map(mod -> mod.substring(0, mod.indexOf(":")))
+                        .each(name -> {
+                            var mod = Vars.mods.getMod(name);
+                            if (mod != null) {
+                                Vars.mods.setEnabled(mod, false);
+                            }
+                        });
                 dialog.hide();
                 proceedToJoin(room);
             }).size(150, 50);

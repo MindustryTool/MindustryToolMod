@@ -7,6 +7,8 @@ public class ChatTranslationConfig {
     public static final String SHOW_ORIGINAL = PREFIX + "show.original";
     public static final String PROVIDER = PREFIX + "provider";
     public static final String GEMINI_API_KEY = "mindustry-tool.gemini.api.key";
+    public static final String GEMINI_MODEL = "mindustry-tool.gemini.model";
+    public static final String GEMINI_TIMEOUT = "mindustry-tool.gemini.timeout";
 
     public static boolean isShowOriginal() {
         return Core.settings.getBool(SHOW_ORIGINAL, true);

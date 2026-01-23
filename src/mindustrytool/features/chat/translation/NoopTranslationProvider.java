@@ -1,5 +1,6 @@
 package mindustrytool.features.chat.translation;
 
+import arc.Core;
 import arc.scene.ui.layout.Table;
 
 import java.util.concurrent.CompletableFuture;
@@ -21,7 +22,7 @@ public class NoopTranslationProvider implements TranslationProvider {
 
     @Override
     public String getName() {
-        return "None";
+        return Core.bundle.get("chat-translation.provider.none");
     }
 
     @Override

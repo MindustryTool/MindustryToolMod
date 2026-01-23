@@ -16,7 +16,6 @@ import arc.util.Reflect;
 import arc.util.Strings;
 import mindustry.Vars;
 import mindustry.core.NetClient;
-import mindustry.gen.SendChatMessageCallPacket;
 import mindustry.gen.SendMessageCallPacket;
 import mindustry.gen.SendMessageCallPacket2;
 import mindustry.net.Packet;
@@ -41,7 +40,7 @@ public class ChatTranslationFeature implements Feature {
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
                 .name("chat-translation")
-                .description("Translates chat messages using AI.")
+                .description("chat-translation.description")
                 .icon(mindustry.gen.Icon.chat)
                 .build();
     }
@@ -51,8 +50,8 @@ public class ChatTranslationFeature implements Feature {
         Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
 
         packetProvs.replace(packet -> {
-            if (packet.get() instanceof SendChatMessageCallPacket) {
-                Log.info("Replace SendChatMessageCallPacket");
+            if (packet.get() instanceof SendMessageCallPacket) {
+                Log.info("Replace SendMessageCallPacket");
                 return () -> new SendMessageCallPacket() {
                     @Override
                     public void handleClient() {
@@ -60,6 +59,7 @@ public class ChatTranslationFeature implements Feature {
                             Core.app.post(() -> NetClient.sendMessage(translated));
                         });
                     }
+
                 };
             }
 
@@ -95,9 +95,10 @@ public class ChatTranslationFeature implements Feature {
         currentProvider.translate(Strings.stripColors(message))
                 .thenAccept(translated -> {
                     if (ChatTranslationConfig.isShowOriginal()) {
-                        result.get(message + "\n\n[][" + LanguageDialog.getDisplayName(Core.bundle.getLocale()) + "][]   "
-                                + translated
-                                + "\n\n");
+                        result.get(
+                                message + "\n\n[][" + LanguageDialog.getDisplayName(Core.bundle.getLocale()) + "][]   "
+                                        + translated
+                                        + "\n\n");
                     } else {
                         result.get(translated);
                     }
@@ -105,7 +106,7 @@ public class ChatTranslationFeature implements Feature {
                 .exceptionally(e -> {
                     lastError = e.getMessage();
 
-                    result.get("[red]Translation Error[]: " + e.getMessage());
+                    result.get(Core.bundle.get("chat-translation.error.prefix") + e.getMessage());
 
                     Log.err("Translation failed", e);
                     return null;
@@ -134,19 +135,19 @@ public class ChatTranslationFeature implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
-        BaseDialog dialog = new BaseDialog("Chat Translation Settings");
+        BaseDialog dialog = new BaseDialog(Core.bundle.get("chat-translation.settings.title"));
         dialog.addCloseButton();
 
         Table root = new Table();
         root.top().left().defaults().top().left().padBottom(5);
 
-        root.check("Show Original Message", ChatTranslationConfig.isShowOriginal(), val -> {
+        root.check("@chat-translation.settings.show-original", ChatTranslationConfig.isShowOriginal(), val -> {
             ChatTranslationConfig.setShowOriginal(val);
         }).row();
 
         root.image().height(4).color(Color.gray).fillX().pad(10).row();
 
-        root.add("Providers").style(Styles.outlineLabel).padBottom(5).row();
+        root.add("@chat-translation.settings.providers").style(Styles.outlineLabel).padBottom(5).row();
 
         Table providerList = new Table();
         ButtonGroup<Button> group = new ButtonGroup<>();
@@ -190,37 +191,39 @@ public class ChatTranslationFeature implements Feature {
         resultLabel.setWrap(true);
         resultLabel.setAlignment(Align.center);
 
-        TextButton testButton = new TextButton("Test Configuration", Styles.defaultt);
+        TextButton testButton = new TextButton(Core.bundle.get("chat-translation.settings.test-button"),
+                Styles.defaultt);
         testButton.clicked(() -> {
             if (currentProvider == NOOP_PROVIDER)
                 return;
 
             testButton.setDisabled(true);
-            testButton.setText("Testing...");
-            resultLabel.setText("[gray]Testing connection...");
+            testButton.setText(Core.bundle.get("chat-translation.settings.testing"));
+            resultLabel.setText(Core.bundle.get("chat-translation.settings.testing-connection"));
 
             currentProvider.translate("Hello").thenAccept(result -> {
                 Core.app.post(() -> {
                     testButton.setDisabled(false);
-                    testButton.setText("Test Configuration");
-                    resultLabel.setText("[green]Success:[] " + result);
+                    testButton.setText(Core.bundle.get("chat-translation.settings.test-button"));
+                    resultLabel.setText(Core.bundle.get("chat-translation.settings.success") + result);
                 });
             }).exceptionally(e -> {
                 Core.app.post(() -> {
                     testButton.setDisabled(false);
-                    testButton.setText("Test Configuration");
-                    resultLabel.setText("[red]Failed:[] " + e.getMessage());
+                    testButton.setText(Core.bundle.get("chat-translation.settings.test-button"));
+                    resultLabel.setText(Core.bundle.get("chat-translation.settings.failed") + e.getMessage());
                 });
                 return null;
             });
         });
 
         root.add(testButton).size(250, 50).pad(10)
-                .disabled(b -> currentProvider == NOOP_PROVIDER || testButton.getText().toString().equals("Testing..."))
+                .disabled(b -> currentProvider == NOOP_PROVIDER
+                        || testButton.getText().toString().equals(Core.bundle.get("chat-translation.settings.testing")))
                 .row();
         root.add(resultLabel).growX().pad(10).row();
 
-        root.label(() -> lastError == null ? "" : "Error: " + lastError)
+        root.label(() -> lastError == null ? "" : Core.bundle.get("chat-translation.settings.error-prefix") + lastError)
                 .color(Color.red)
                 .visible(() -> lastError != null)
                 .row();
