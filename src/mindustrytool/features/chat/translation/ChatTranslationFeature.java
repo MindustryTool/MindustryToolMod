@@ -8,6 +8,9 @@ import arc.scene.ui.Button;
 import arc.scene.ui.ButtonGroup;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
+import arc.scene.ui.Label;
+import arc.scene.ui.TextButton;
+import arc.util.Align;
 import arc.util.Log;
 import arc.util.Reflect;
 import arc.util.Strings;
@@ -54,7 +57,7 @@ public class ChatTranslationFeature implements Feature {
                     @Override
                     public void handleClient() {
                         handleMessage(this.message, translated -> {
-                            NetClient.sendMessage(translated);
+                            Core.app.post(() -> NetClient.sendMessage(translated));
                         });
                     }
                 };
@@ -66,7 +69,7 @@ public class ChatTranslationFeature implements Feature {
                     @Override
                     public void handleClient() {
                         handleMessage(this.message, translated -> {
-                            NetClient.sendMessage(translated, this.unformatted, this.playersender);
+                            Core.app.post(() -> NetClient.sendMessage(translated, this.unformatted, this.playersender));
                         });
                     }
                 };
@@ -92,7 +95,7 @@ public class ChatTranslationFeature implements Feature {
         currentProvider.translate(Strings.stripColors(message))
                 .thenAccept(translated -> {
                     if (ChatTranslationConfig.isShowOriginal()) {
-                        result.get(message + "\n\n[][" + LanguageDialog.getDisplayName(Core.bundle.getLocale()) + "][] "
+                        result.get(message + "\n\n[][" + LanguageDialog.getDisplayName(Core.bundle.getLocale()) + "][]   "
                                 + translated
                                 + "\n\n");
                     } else {
@@ -180,6 +183,42 @@ public class ChatTranslationFeature implements Feature {
         }
 
         root.add(providerList).growX().row();
+
+        root.image().height(4).color(Color.gray).fillX().pad(10).row();
+
+        Label resultLabel = new Label("");
+        resultLabel.setWrap(true);
+        resultLabel.setAlignment(Align.center);
+
+        TextButton testButton = new TextButton("Test Configuration", Styles.defaultt);
+        testButton.clicked(() -> {
+            if (currentProvider == NOOP_PROVIDER)
+                return;
+
+            testButton.setDisabled(true);
+            testButton.setText("Testing...");
+            resultLabel.setText("[gray]Testing connection...");
+
+            currentProvider.translate("Hello").thenAccept(result -> {
+                Core.app.post(() -> {
+                    testButton.setDisabled(false);
+                    testButton.setText("Test Configuration");
+                    resultLabel.setText("[green]Success:[] " + result);
+                });
+            }).exceptionally(e -> {
+                Core.app.post(() -> {
+                    testButton.setDisabled(false);
+                    testButton.setText("Test Configuration");
+                    resultLabel.setText("[red]Failed:[] " + e.getMessage());
+                });
+                return null;
+            });
+        });
+
+        root.add(testButton).size(250, 50).pad(10)
+                .disabled(b -> currentProvider == NOOP_PROVIDER || testButton.getText().toString().equals("Testing..."))
+                .row();
+        root.add(resultLabel).growX().pad(10).row();
 
         root.label(() -> lastError == null ? "" : "Error: " + lastError)
                 .color(Color.red)
