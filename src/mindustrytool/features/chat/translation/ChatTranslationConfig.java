@@ -10,6 +10,9 @@ public class ChatTranslationConfig {
     public static final String GEMINI_MODEL = "mindustry-tool.gemini.model";
     public static final String GEMINI_TIMEOUT = "mindustry-tool.gemini.timeout";
 
+    public static final String DEEPL_API_KEY = "mindustry-tool.deepl.api.key";
+    public static final String DEEPL_TIMEOUT = "mindustry-tool.deepl.timeout";
+
     public static boolean isShowOriginal() {
         return Core.settings.getBool(SHOW_ORIGINAL, true);
     }

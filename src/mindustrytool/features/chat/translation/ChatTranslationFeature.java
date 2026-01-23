@@ -80,6 +80,7 @@ public class ChatTranslationFeature implements Feature {
 
         providers.add(NOOP_PROVIDER);
         providers.add(new GeminiTranslationProvider());
+        providers.add(new DeepLTranslationProvider());
 
         providers.each(TranslationProvider::init);
 
