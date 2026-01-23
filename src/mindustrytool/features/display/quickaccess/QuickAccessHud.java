@@ -1,5 +1,7 @@
 package mindustrytool.features.display.quickaccess;
 
+import java.util.Optional;
+
 import arc.Core;
 import arc.input.KeyCode;
 import arc.math.Mathf;
@@ -12,12 +14,15 @@ import arc.scene.event.Touchable;
 import arc.scene.event.VisibilityListener;
 import arc.scene.ui.Image;
 import arc.scene.ui.Button;
+import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
+import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.Main;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
@@ -133,11 +138,14 @@ public class QuickAccessHud extends Table implements Feature {
                 continue;
 
             FeatureMetadata meta = f.getMetadata();
-            if (!meta.quickAccess())
+            if (!meta.quickAccess()) {
                 continue;
+            }
 
-            // Feature Button
-            // Using Label for Iconc
+            if (!config.isFeatureVisible(meta.name())) {
+                continue;
+            }
+
             Button[] btnRef = new Button[1];
             btnRef[0] = t.button(b -> {
                 b.image(meta.icon())
@@ -155,6 +163,16 @@ public class QuickAccessHud extends Table implements Feature {
             if (++i % cols == 0)
                 t.row();
         }
+
+        Button[] btnRef = new Button[1];
+        btnRef[0] = t.button(b -> {
+            b.image(Icon.settings);
+        }, Styles.clearNonei, () -> {
+            Main.featureSettingDialog.show();
+        })
+                .size(48f)
+                .margin(8)
+                .get();
     }
 
     // Helper to be used inside populateContent
@@ -162,7 +180,7 @@ public class QuickAccessHud extends Table implements Feature {
         if (currentPopup != null) {
             boolean isSame = (currentPopupFeature == f);
             closePopup();
-            // If clicking same feature, toggle off (already closed above)
+
             if (isSame) {
                 return;
             }
@@ -242,5 +260,42 @@ public class QuickAccessHud extends Table implements Feature {
     public void onDisable() {
         closePopup();
         remove();
+    }
+
+    @Override
+    public Optional<Dialog> setting() {
+        var dialog = new BaseDialog("@settings");
+
+        dialog.addCloseButton();
+        dialog.closeOnBack();
+
+        Table table = new Table();
+
+        dialog.cont.pane(table)
+                .top()
+                .left()
+                .grow();
+
+        Seq<Feature> features = FeatureManager.getInstance().getFeatures();
+        for (Feature f : features) {
+            if (f == QuickAccessHud.this) {
+                continue;
+            }
+
+            FeatureMetadata meta = f.getMetadata();
+
+            if (!meta.quickAccess()) {
+                continue;
+            }
+
+            table.check(meta.name(), config.isFeatureVisible(meta.name()), b -> {
+                config.setFeatureVisible(meta.name(), b);
+                QuickAccessHud.this.rebuild();
+            }).fillX().top().left().pad(5).get().left();
+
+            table.row();
+        }
+
+        return Optional.of(dialog);
     }
 }

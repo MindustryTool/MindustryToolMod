@@ -47,36 +47,46 @@ public class ChatTranslationFeature implements Feature {
 
     @Override
     public void init() {
-        Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
+        try {
+            Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
 
-        packetProvs.replace(packet -> {
-            if (packet.get() instanceof SendMessageCallPacket) {
-                Log.info("Replace SendMessageCallPacket");
-                return () -> new SendMessageCallPacket() {
-                    @Override
-                    public void handleClient() {
-                        handleMessage(this.message, translated -> {
-                            Core.app.post(() -> NetClient.sendMessage(translated));
-                        });
-                    }
+            packetProvs.replace(packet -> {
+                if (packet.get() instanceof SendMessageCallPacket) {
+                    Log.info("Replace SendMessageCallPacket");
+                    return () -> new SendMessageCallPacket() {
+                        @Override
+                        public void handleClient() {
+                            handleMessage(this.message, translated -> {
+                                Core.app.post(() -> NetClient.sendMessage(translated));
+                            });
+                        }
 
-                };
-            }
+                    };
+                }
 
-            if (packet.get() instanceof SendMessageCallPacket2) {
-                Log.info("Replace SendMessageCallPacket2");
-                return () -> new SendMessageCallPacket2() {
-                    @Override
-                    public void handleClient() {
-                        handleMessage(this.message, translated -> {
-                            Core.app.post(() -> NetClient.sendMessage(translated, this.unformatted, this.playersender));
-                        });
-                    }
-                };
-            }
+                if (packet.get() instanceof SendMessageCallPacket2) {
+                    Log.info("Replace SendMessageCallPacket2");
+                    return () -> new SendMessageCallPacket2() {
+                        @Override
+                        public void handleClient() {
+                            handleMessage(this.message, translated -> {
+                                if (Vars.player != this.playersender) {
+                                    Core.app.post(() -> NetClient.sendMessage(translated, this.unformatted,
+                                            this.playersender));
+                                }
+                            });
+                        }
+                    };
+                }
 
-            return packet;
-        });
+                return packet;
+            });
+        } catch (
+
+        Exception e) {
+            lastError = "ChatTranslationFeature init failed";
+            Log.err("ChatTranslationFeature init failed", e);
+        }
 
         providers.add(NOOP_PROVIDER);
         providers.add(new GeminiTranslationProvider());
@@ -85,6 +95,7 @@ public class ChatTranslationFeature implements Feature {
         providers.each(TranslationProvider::init);
 
         loadProvider();
+
     }
 
     public void handleMessage(String message, Cons<String> result) {

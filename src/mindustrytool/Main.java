@@ -35,13 +35,14 @@ import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.display.wavepreview.WavePreviewFeature;
 import mindustrytool.features.chat.translation.ChatTranslationFeature;
+import mindustrytool.features.chat.pretty.PrettyChatFeature;
 
 public class Main extends Mod {
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
     public static Fi mapsDir = Vars.dataDirectory.child("mindustry-tool-maps");
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
 
-    private FeatureSettingDialog featureSettingDialog;
+    public static FeatureSettingDialog featureSettingDialog;
 
     public Main() {
         Vars.maxSchematicSize = 4000;
@@ -61,6 +62,7 @@ public class Main extends Mod {
     }
 
     private void initFeatures() {
+        featureSettingDialog = new FeatureSettingDialog();
 
         FeatureManager.getInstance().register(//
                 new MapBrowserFeature(), //
@@ -74,6 +76,7 @@ public class Main extends Mod {
                 new AuthFeature(), //
                 new ChatFeature(),
                 new ChatTranslationFeature(),
+                new PrettyChatFeature(),
                 new GodModeFeature(),
                 new AutoplayFeature(),
                 new WavePreviewFeature(),
@@ -83,7 +86,6 @@ public class Main extends Mod {
     }
 
     private void addCustomButtons() {
-        featureSettingDialog = new FeatureSettingDialog();
 
         Events.on(ClientLoadEvent.class, (event) -> {
             try {
