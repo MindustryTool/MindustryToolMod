@@ -104,10 +104,7 @@ public class ChatService {
                                     Jval json = Jval.read(data);
                                     if (json.isArray()) {
                                         Json jsonParser = new Json();
-                                        // Jval to Object mapping is manual in Arc usually or use Json
-                                        // Let's manually map for safety or use Json if compatible
                                         ChatMessage[] messages = jsonParser.fromJson(ChatMessage[].class, data);
-
                                         if (messageListener != null && messages != null) {
                                             Core.app.post(() -> messageListener.get(messages));
                                         }

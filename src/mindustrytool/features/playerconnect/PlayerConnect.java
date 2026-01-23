@@ -73,6 +73,11 @@ public class PlayerConnect {
             updateStats();
         }, 60f, 60f);
 
+        Events.on(PlayerLeave.class, event -> {
+            requestQueue.remove(req -> req.player.uuid().equals(event.player.uuid()));
+            processNextRequest();
+        });
+
         Events.on(PlayerJoin.class, event -> {
             if (PlayerConnect.isRoomClosed()) {
                 return;
@@ -82,10 +87,6 @@ public class PlayerConnect {
             }
 
             if (event.player == Vars.player) {
-                return;
-            }
-
-            if (requestQueue.contains(r -> r.player.uuid().equals(event.player.uuid()))) {
                 return;
             }
 

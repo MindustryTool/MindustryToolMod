@@ -459,7 +459,7 @@ public class ChatOverlay extends Table {
         }
     }
 
-    public void addMessages(ChatMessage... newMessages) {
+    public synchronized void addMessages(ChatMessage... newMessages) {
         int addedCount = 0;
 
         for (ChatMessage msg : newMessages) {
