@@ -3,10 +3,13 @@ package mindustrytool;
 import arc.Core;
 import arc.Events;
 import arc.files.Fi;
+import arc.func.Prov;
 import arc.scene.ui.layout.Table;
+import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
+import arc.util.Reflect;
 import arc.util.Timer;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
@@ -14,6 +17,7 @@ import mindustry.editor.MapResizeDialog;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
 import mindustry.mod.Mods.LoadedMod;
+import mindustry.net.Packet;
 import mindustry.mod.Mod;
 import mindustry.ui.dialogs.BaseDialog;
 import arc.scene.ui.ScrollPane;
@@ -42,7 +46,13 @@ public class Main extends Mod {
     public static Fi mapsDir = Vars.dataDirectory.child("mindustry-tool-maps");
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
 
+    private static ObjectMap<Class<?>, Prov<? extends Packet>> packetReplacements = new ObjectMap<>();
+
     public static FeatureSettingDialog featureSettingDialog;
+
+    public static void registerPacketPlacement(Class<?> clazz, Prov<? extends Packet> prov) {
+        packetReplacements.put(clazz, prov);
+    }
 
     public Main() {
         Vars.maxSchematicSize = 4000;
@@ -83,6 +93,20 @@ public class Main extends Mod {
                 new BackgroundFeature());
 
         FeatureManager.getInstance().init();
+
+        Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
+
+        packetProvs.replace(packet -> {
+            Class<?> clazz = packet.get().getClass();
+            if (packetReplacements.containsKey(clazz)) {
+                Log.info("Replace packet @ to @", clazz.getSimpleName(),
+                        packetReplacements.get(clazz).get().getClass().getSimpleName());
+                return packetReplacements.get(clazz);
+            }
+
+            return packet;
+        });
+
     }
 
     private void addCustomButtons() {

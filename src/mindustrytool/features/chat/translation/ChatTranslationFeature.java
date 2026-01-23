@@ -2,7 +2,6 @@ package mindustrytool.features.chat.translation;
 
 import arc.Core;
 import arc.func.Cons;
-import arc.func.Prov;
 import arc.graphics.Color;
 import arc.scene.ui.Button;
 import arc.scene.ui.ButtonGroup;
@@ -12,16 +11,16 @@ import arc.scene.ui.Label;
 import arc.scene.ui.TextButton;
 import arc.util.Align;
 import arc.util.Log;
-import arc.util.Reflect;
 import arc.util.Strings;
 import mindustry.Vars;
 import mindustry.core.NetClient;
+import mindustry.gen.Call;
 import mindustry.gen.SendMessageCallPacket;
 import mindustry.gen.SendMessageCallPacket2;
-import mindustry.net.Packet;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.LanguageDialog;
+import mindustrytool.Main;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
@@ -45,48 +44,36 @@ public class ChatTranslationFeature implements Feature {
                 .build();
     }
 
+    public class SendTranslatedMessageCallPacket extends SendMessageCallPacket {
+
+        @Override
+        public void handleClient() {
+            handleMessage(this.message, translated -> {
+                NetClient.sendMessage(translated);
+            });
+        }
+    }
+
+    public class SendTranslatedMessageCallPacket2 extends SendMessageCallPacket2 {
+        @Override
+        public void handleClient() {
+            if (Vars.player != this.playersender) {
+                handleMessage(this.message, translated -> {
+                    NetClient.sendMessage(translated, this.unformatted,
+                            this.playersender);
+                });
+            } else {
+                Call.sendChatMessage(lastError);
+                NetClient.sendMessage(this.message, this.unformatted,
+                        this.playersender);
+            }
+        }
+    }
+
     @Override
     public void init() {
-        try {
-            Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
-
-            packetProvs.replace(packet -> {
-                if (packet.get() instanceof SendMessageCallPacket) {
-                    Log.info("Replace SendMessageCallPacket");
-                    return () -> new SendMessageCallPacket() {
-                        @Override
-                        public void handleClient() {
-                            handleMessage(this.message, translated -> {
-                                Core.app.post(() -> NetClient.sendMessage(translated));
-                            });
-                        }
-
-                    };
-                }
-
-                if (packet.get() instanceof SendMessageCallPacket2) {
-                    Log.info("Replace SendMessageCallPacket2");
-                    return () -> new SendMessageCallPacket2() {
-                        @Override
-                        public void handleClient() {
-                            handleMessage(this.message, translated -> {
-                                if (Vars.player != this.playersender) {
-                                    Core.app.post(() -> NetClient.sendMessage(translated, this.unformatted,
-                                            this.playersender));
-                                }
-                            });
-                        }
-                    };
-                }
-
-                return packet;
-            });
-        } catch (
-
-        Exception e) {
-            lastError = "ChatTranslationFeature init failed";
-            Log.err("ChatTranslationFeature init failed", e);
-        }
+        Main.registerPacketPlacement(SendMessageCallPacket.class, SendTranslatedMessageCallPacket::new);
+        Main.registerPacketPlacement(SendMessageCallPacket2.class, SendTranslatedMessageCallPacket2::new);
 
         providers.add(NOOP_PROVIDER);
         providers.add(new GeminiTranslationProvider());

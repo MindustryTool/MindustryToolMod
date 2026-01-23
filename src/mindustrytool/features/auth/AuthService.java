@@ -10,6 +10,7 @@ import arc.util.Http;
 import arc.util.Log;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
+import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
 import mindustrytool.Utils;
 import mindustrytool.features.auth.dto.LoginEvent;
@@ -77,15 +78,38 @@ public class AuthService {
 
         loginFuture = new CompletableFuture<>();
 
+        BaseDialog dialog = new BaseDialog("@login");
+
+        dialog.buttons.button("@cancel", () -> {
+            if (!loginFuture.isDone()) {
+                loginFuture.completeExceptionally(new RuntimeException("Login cancelled"));
+            }
+            dialog.hide();
+        }).width(230);
+
+        dialog.cont.add("@generate-loading-link");
+
+        Core.scene.add(dialog);
+
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
                 .timeout(5000)
-                .error(err -> loginFuture.completeExceptionally(new RuntimeException("Failed to get login URI", err)))
+                .error(err -> {
+                    dialog.hide();
+                    dialog.remove();
+                    loginFuture.completeExceptionally(new RuntimeException("Failed to get login URI", err));
+                })
                 .submit(res -> {
                     try {
                         Jval json = Jval.read(res.getResultAsString());
 
                         String loginUrl = json.getString("loginUrl");
                         String loginId = json.getString("loginId");
+
+                        dialog.cont.clear();
+                        dialog.cont.button(loginUrl, () -> {
+                            Core.app.setClipboardText(loginUrl);
+                            Vars.ui.showInfoFade("@copied");
+                        }).margin(40).growX().wrapLabel(true);
 
                         Core.settings.put(KEY_LOGIN_ID, loginId);
 
@@ -96,6 +120,8 @@ public class AuthService {
                             } else {
                                 loginFuture.complete(null);
                             }
+                            dialog.hide();
+                            dialog.remove();
                         });
 
                         if (!Core.app.openURI(loginUrl)) {
@@ -104,6 +130,8 @@ public class AuthService {
 
                     } catch (Exception e) {
                         loginFuture.completeExceptionally(new RuntimeException("Failed to start login flow", e));
+                        dialog.hide();
+                        dialog.remove();
                     }
                 });
 
