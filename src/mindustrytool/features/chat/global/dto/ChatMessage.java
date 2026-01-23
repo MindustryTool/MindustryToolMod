@@ -1,4 +1,4 @@
-package mindustrytool.features.chat.dto;
+package mindustrytool.features.chat.global.dto;
 
 import lombok.Data;
 

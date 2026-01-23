@@ -122,17 +122,10 @@ public class PlayerConnectRenderer {
 
                 // Mod Conflicts
                 Seq<String> serverMods = room.data().mods();
-                Seq<String> localModNames = Vars.mods.list().select(m -> !m.meta.hidden).map(m -> m.name);
+                Seq<String> localMods = Vars.mods.getModStrings();
 
-                Seq<String> serverModNames = serverMods
-                        .map(s -> s.indexOf(':') != -1 ? s.substring(0, s.indexOf(':')) : s);
-
-                Seq<String> missing = serverMods.select(s -> {
-                    String name = s.indexOf(':') != -1 ? s.substring(0, s.indexOf(':')) : s;
-                    return !localModNames.contains(name);
-                });
-
-                Seq<String> unneeded = localModNames.select(m -> !serverModNames.contains(m));
+                Seq<String> missing = serverMods.select(s -> !localMods.contains(s));
+                Seq<String> unneeded = localMods.select(m -> !serverMods.contains(m));
 
                 if (!missing.isEmpty()) {
                     var label = body.labelWrap("[scarlet]Missing: " + Strings.join(", ", missing))
@@ -215,26 +208,35 @@ public class PlayerConnectRenderer {
     public static void joinRoom(PlayerConnectRoom room) {
         // Check for unneeded mods
         Seq<String> serverMods = room.data().mods();
-        Seq<String> localModNames = Vars.mods.list().select(m -> !m.meta.hidden).map(m -> m.name);
-        Seq<String> serverModNames = serverMods
-                .map(s -> s.indexOf(':') != -1 ? s.substring(0, s.indexOf(':')) : s);
+        Seq<String> localMods = Vars.mods.getModStrings();
 
-        Seq<String> unneeded = localModNames.select(m -> !serverModNames.contains(m));
+        Seq<String> missing = serverMods.select(s -> localMods.contains(s));
+        Seq<String> unneeded = localMods.select(m -> !serverMods.contains(m));
 
-        if (!unneeded.isEmpty()) {
+        if (!unneeded.isEmpty() || !missing.isEmpty()) {
             BaseDialog dialog = new BaseDialog("@warning");
-            dialog.cont.add("Unneeded mods detected. Disable them?").row();
-            dialog.cont.label(() -> unneeded.toString(", ")).color(Pal.lightishGray).width(400f).wrap().row();
+
+            if (!missing.isEmpty()) {
+                dialog.cont.add("Missing mods detected. Join anyway?").row();
+                dialog.cont.label(() -> missing.toString(", ")).color(Pal.lightishGray).width(400f).wrap().row();
+            }
+
+            if (!unneeded.isEmpty()) {
+                dialog.cont.add("Unneeded mods detected. Disable them?").row();
+                dialog.cont.label(() -> unneeded.toString(", ")).color(Pal.lightishGray).width(400f).wrap().row();
+            }
 
             dialog.buttons.button("@cancel", dialog::hide).size(100, 50);
 
             dialog.buttons.button("Disable & Join", () -> {
-                unneeded.each(name -> {
-                    var mod = Vars.mods.getMod(name);
-                    if (mod != null) {
-                        Vars.mods.setEnabled(mod, false);
-                    }
-                });
+                unneeded
+                        .map(mod -> mod.substring(0, mod.indexOf(":")))
+                        .each(name -> {
+                            var mod = Vars.mods.getMod(name);
+                            if (mod != null) {
+                                Vars.mods.setEnabled(mod, false);
+                            }
+                        });
                 dialog.hide();
                 proceedToJoin(room);
             }).size(150, 50);

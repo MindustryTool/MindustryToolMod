@@ -1,4 +1,4 @@
-package mindustrytool.features.chat;
+package mindustrytool.features.chat.global;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -16,8 +16,8 @@ import mindustrytool.Config;
 import mindustrytool.Utils;
 import mindustrytool.features.auth.AuthHttp;
 import mindustrytool.features.auth.AuthService;
-import mindustrytool.features.chat.dto.ChatMessage;
-import mindustrytool.features.chat.dto.ChatUser;
+import mindustrytool.features.chat.global.dto.ChatMessage;
+import mindustrytool.features.chat.global.dto.ChatUser;
 
 public class ChatService {
     private static ChatService instance;

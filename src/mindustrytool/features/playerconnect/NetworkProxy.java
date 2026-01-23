@@ -197,6 +197,8 @@ public class NetworkProxy extends Client implements NetListener {
                 Vars.ui.showText("[scarlet][[Server][] ", popupPacket.message);
             } else if (object instanceof Packets.RoomClosedPacket closedPacket) {
                 closeReason = closedPacket.reason;
+                Vars.ui.showText("[scarlet][[Server][] ", closedPacket.reason.toString());
+                close();
             } else if (object instanceof Packets.RoomLinkPacket roomLinkPacket) {
                 // Ignore if the room id is received twice
                 if (roomId != null) {

@@ -5,7 +5,7 @@ import java.util.Optional;
 import arc.struct.Seq;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import mindustrytool.features.chat.dto.ChatUser.SimpleRole;
+import mindustrytool.features.chat.global.dto.ChatUser.SimpleRole;
 
 @Data
 @Accessors(chain = true, fluent = true)
