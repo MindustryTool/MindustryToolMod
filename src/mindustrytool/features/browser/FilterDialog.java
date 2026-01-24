@@ -11,6 +11,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Log;
+import arc.util.pooling.Pools;
 import mindustry.Vars;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
@@ -23,7 +24,6 @@ import mindustrytool.ui.NetworkImage;
 
 public class FilterDialog extends BaseDialog {
     private static final float TARGET_WIDTH = 250f;
-    private final GlyphLayout layout = new GlyphLayout();
 
     private TextButtonStyle style = Styles.togglet;
     private final Cons<Cons<Seq<TagCategory>>> tagProvider;
@@ -238,6 +238,8 @@ public class FilterDialog extends BaseDialog {
 
         float currentWidth = 0;
 
+        GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
+
         for (var tag: tags) {
             String tagName = formatTag(tag.name());
             float iconSize = (tag.icon() != null && !tag.icon().isEmpty()) ? 40 * scale + 8 : 0;
@@ -281,6 +283,8 @@ public class FilterDialog extends BaseDialog {
 
             currentWidth += buttonWidth + CARD_GAP;
         }
+
+        Pools.free(layout);
 
         table.add(container).width(availableWidth).left().padBottom(48);
     }
