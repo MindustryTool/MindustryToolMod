@@ -450,7 +450,7 @@ public class CreateRoomDialog extends BaseDialog {
             if (!wasValid)
                 return "";
             else if (Strings.count(ip, ':') > 1)
-                return "[" + ip + "]:" + port;
+                return "[[" + ip + "]]:" + port;
             else
                 return ip + ":" + port;
         }
