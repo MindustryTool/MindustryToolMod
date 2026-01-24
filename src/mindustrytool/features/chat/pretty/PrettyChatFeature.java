@@ -1,13 +1,19 @@
 package mindustrytool.features.chat.pretty;
 
 import java.util.Optional;
-import java.util.function.Function;
 
+import arc.Core;
+import arc.Events;
 import arc.scene.ui.Dialog;
+import arc.scene.ui.TextField;
 import arc.struct.Seq;
+import arc.util.Reflect;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import mindustry.Vars;
+import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
+import mindustry.input.Binding;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -19,11 +25,53 @@ public class PrettyChatFeature implements Feature {
     private static boolean enabled = false;
 
     static {
-        prettiers.add(new Prettier("default", "Default", s -> s));
-        prettiers.add(new Prettier("uwu", "UwUifier", PrettyChatFeature::uwuify));
-        prettiers.add(new Prettier("caps", "CAPS LOCK", String::toUpperCase));
-        prettiers.add(new Prettier("lowercase", "lowercase", String::toLowerCase));
-        prettiers.add(new Prettier("reverse", "esreveR", s -> new StringBuilder(s).reverse().toString()));
+        prettiers.add(new Prettier(
+                "default",
+                "Default",
+                "<message>"));
+
+        prettiers.add(new Prettier(
+                "uwu",
+                "UwUifier",
+                "<message>"
+                        + ".replace(/r/g,'w').replace(/R/g,'W')"
+                        + ".replace(/l/g,'w').replace(/L/g,'W')"
+                        + ".replace(/ove/g,'uv')"
+                        + " + ' uwu'"));
+
+        prettiers.add(new Prettier(
+                "caps",
+                "CAPS LOCK",
+                "<message>.toUpperCase()"));
+
+        prettiers.add(new Prettier(
+                "lowercase",
+                "lowercase",
+                "<message>.toLowerCase()"));
+
+        prettiers.add(new Prettier(
+                "reverse",
+                "esreveR",
+                "<message>.split('').reverse().join('')"));
+
+        prettiers.add(new Prettier(
+                "rainbow",
+                "rainbow",
+                "(function(){"
+                        + "var c=['red','orange','yellow','green','cyan','blue','purple'];"
+                        + "var o='';"
+                        + "var ci=0;"
+                        + "var words=" + "<message>" + ".split(' ');"
+                        + "for(var j=0;j<words.length;j++){"
+                        + "if(j>0)o+=' ';"
+                        + "var word=words[j];"
+                        + "for(var i=0;i<word.length;i++){"
+                        + "o+='['+c[ci%c.length]+']'+word.charAt(i);"
+                        + "}"
+                        + "ci++;"
+                        + "}"
+                        + "return o+'[]';"
+                        + "})()"));
     }
 
     @Override
@@ -37,7 +85,28 @@ public class PrettyChatFeature implements Feature {
 
     @Override
     public void init() {
+        if (Vars.mobile) {
+            Reflect.set(Vars.ui.chatfrag, "chatfield", new TextField() {
+                @Override
+                public void setText(String text) {
+                    super.setText(transform(text));
+                }
+            });
+        }
 
+        Events.run(Trigger.update, () -> {
+            if (Core.input.keyTap(Binding.chat) && Vars.ui.chatfrag.shown()) {
+                Core.app.post(() -> {
+                    TextField chatfield = Reflect.get(Vars.ui.chatfrag, "chatfield");
+
+                    if (chatfield == null) {
+                        return;
+                    }
+
+                    chatfield.setText(transform(chatfield.getText()));
+                });
+            }
+        });
     }
 
     @Override
@@ -60,24 +129,37 @@ public class PrettyChatFeature implements Feature {
             return message;
         }
 
+        if (message.isEmpty()) {
+            return message;
+        }
+
+        var cmd = "";
+
+        if (message.startsWith("/")) {
+            var spaceIndex = message.indexOf(' ');
+            var subIndex = spaceIndex == -1 ? message.length() : spaceIndex;
+            cmd = message.substring(0, subIndex);
+
+            if (!cmd.equals("/t") && !cmd.equals("/a")) {
+                return message;
+            }
+        }
+
         String result = message;
         Seq<String> enabledIds = PrettyChatConfig.getEnabledIds();
 
         for (String id : enabledIds) {
             Prettier p = prettiers.find(x -> x.id.equals(id));
             if (p != null) {
-                result = p.transform.apply(result);
+                result = transform(result, p);
             }
         }
-        return result;
+
+        return cmd + result;
     }
 
-    private static String uwuify(String text) {
-        return text
-                .replace("r", "w").replace("R", "W")
-                .replace("l", "w").replace("L", "W")
-                .replace("ove", "uv")
-                + " uwu";
+    public static String transform(String message, Prettier prettier) {
+        return Vars.mods.getScripts().runConsole(prettier.getScript().replace("<message>", '"' + message + '"'));
     }
 
     @Getter
@@ -85,6 +167,10 @@ public class PrettyChatFeature implements Feature {
     public static class Prettier {
         private String id;
         private String name;
-        private Function<String, String> transform;
+        private String defaultScript;
+
+        public String getScript() {
+            return PrettyChatConfig.getScript(id, defaultScript);
+        }
     }
 }
