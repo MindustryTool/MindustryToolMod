@@ -44,13 +44,7 @@ public class DeepLTranslationProvider implements TranslationProvider {
 
         String apiUrl = apiKey.endsWith(":fx") ? API_URL_FREE : API_URL_PRO;
         String targetLang = Core.bundle.getLocale().getLanguage().toUpperCase();
-        
-        // DeepL deprecated "EN" and "PT" as target_lang in favor of "EN-GB"/"EN-US" and "PT-PT"/"PT-BR".
-        // However, the API might still accept "EN" and default to one. 
-        // If explicit handling is needed, we might need more complex locale logic.
-        // For now we rely on user's locale language code.
-        // Note: Java's getLanguage() returns "en", "de", etc.
-        
+
         try {
             Jval body = Jval.newObject();
             Jval textArray = Jval.newArray();
@@ -63,7 +57,7 @@ public class DeepLTranslationProvider implements TranslationProvider {
                     .header("Authorization", "DeepL-Auth-Key " + apiKey)
                     .timeout(getTimeout() * 1000)
                     .error(e -> {
-                         if (e instanceof HttpStatusException httpStatusException) {
+                        if (e instanceof HttpStatusException httpStatusException) {
                             future.completeExceptionally(new RuntimeException(
                                     Core.bundle.get("chat-translation.error.prefix")
                                             + httpStatusException.response.getResultAsString()));
@@ -77,7 +71,6 @@ public class DeepLTranslationProvider implements TranslationProvider {
                         String jsonString = res.getResultAsString();
                         try {
                             Jval json = Jval.read(jsonString);
-                            // Response structure: { "translations": [ { "detected_source_language": "EN", "text": "Hallo, Welt!" } ] }
                             if (json.has("translations") && !json.get("translations").asArray().isEmpty()) {
                                 String result = json.get("translations").asArray().get(0)
                                         .getString("text", message).trim();
