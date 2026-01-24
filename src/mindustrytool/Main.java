@@ -220,9 +220,9 @@ public class Main extends Mod {
             dialog.buttons.button("Cancel", dialog::hide).size(100f, 50f);
             dialog.buttons.button("Update", () -> {
                 dialog.hide();
-                Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
                 Vars.ui.mods.show();
-                Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.5f);
+                Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
+                Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
             }).size(100f, 50f);
 
             dialog.show();
