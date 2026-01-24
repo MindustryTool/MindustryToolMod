@@ -7,6 +7,7 @@ import arc.graphics.g2d.GlyphLayout;
 import arc.scene.Element;
 import arc.struct.Seq;
 import arc.util.Log;
+import arc.util.pooling.Pools;
 import mindustry.core.UI;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
@@ -31,8 +32,9 @@ public class SplitBar extends Element {
 
     @Override
     public void draw() {
-        Draw.color(Color.black);
+        Draw.reset();
 
+        Draw.color(Color.black);
         Tex.whiteui.draw(x, y, width, height);
 
         if (graphs.isEmpty()) {
@@ -47,9 +49,11 @@ public class SplitBar extends Element {
         if (totalWeight <= 0.0001f) {
 
         } else {
+            GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
             float currentX = x;
 
             Font font = Fonts.outline;
+
             float originalScaleX = font.getScaleX();
             float originalScaleY = font.getScaleY();
 
@@ -86,7 +90,6 @@ public class SplitBar extends Element {
                 String text = getSectionText(graph);
                 if (!text.isEmpty()) {
                     try {
-                        GlyphLayout layout = new GlyphLayout();
                         layout.setText(font, text);
 
                         if (layout.width < sectionWidth - 4f) {
@@ -103,8 +106,10 @@ public class SplitBar extends Element {
             }
 
             font.getData().setScale(originalScaleX, originalScaleY);
+            Pools.free(layout);
             Draw.reset();
         }
+
     }
 
     private float getWeight(PowerGraph graph) {
