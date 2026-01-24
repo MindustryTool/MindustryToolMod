@@ -42,7 +42,7 @@ public class SchematicBrowserFeature implements Feature {
             boolean enabled = FeatureManager.getInstance().isEnabled(this);
 
             if (enabled && noInputFocused && Core.input.keyRelease(MdtKeybinds.schematicBrowserKb)) {
-                schematicDialog.show();
+                Core.app.post(() -> schematicDialog.show());
             }
         });
     }

@@ -1,5 +1,6 @@
 package mindustrytool.features.chat.pretty;
 
+import arc.Core;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextArea;
 import arc.scene.ui.TextField;
@@ -191,6 +192,6 @@ public class PrettyChatSettingsDialog extends BaseDialog {
             dialog.hide();
         }).size(150, 50).pad(5);
 
-        dialog.show();
+        Core.app.post(() -> dialog.show());
     }
 }

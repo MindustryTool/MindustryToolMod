@@ -134,7 +134,8 @@ public class FeatureSettingDialog extends BaseDialog {
                     // Settings button
                     if (feature.setting().isPresent()) {
                         header.button(Icon.settings, Styles.clearNonei,
-                                () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32)
+                                () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
+                                .size(32)
                                 .padLeft(8);
                     }
 
@@ -190,7 +191,8 @@ public class FeatureSettingDialog extends BaseDialog {
                     // Settings button
                     if (feature.setting().isPresent()) {
                         header.button(Icon.settings, Styles.clearNonei,
-                                () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32)
+                                () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
+                                .size(32)
                                 .padLeft(8);
                     }
 

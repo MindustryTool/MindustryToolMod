@@ -362,7 +362,7 @@ public class TeamResourceFeature extends Table implements Feature {
     }
 
     private void showAllTeamsDialog() {
-        new BaseDialog("@team-resources.all-teams") {
+        var dialog = new BaseDialog("@team-resources.all-teams") {
             {
                 addCloseButton();
                 cont.pane(p -> {
@@ -383,7 +383,9 @@ public class TeamResourceFeature extends Table implements Feature {
                     }
                 }).grow();
             }
-        }.show();
+        };
+
+        Core.app.post(() -> dialog.show());
     }
 
     private void updateRates() {

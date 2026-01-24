@@ -238,7 +238,7 @@ public class PlayerConnectRenderer {
                 proceedToJoin(room);
             }).size(100, 50);
 
-            dialog.show();
+            Core.app.post(() -> dialog.show());
         } else {
             proceedToJoin(room);
         }
@@ -280,7 +280,7 @@ public class PlayerConnectRenderer {
             }
         }).minWidth(210);
 
-        connect.show();
+        Core.app.post(() -> connect.show());
     }
 
     private static String getVersionString(String versionString) {

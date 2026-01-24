@@ -34,7 +34,7 @@ public class MapBrowserFeature implements Feature {
             boolean enabled = FeatureManager.getInstance().isEnabled(this);
 
             if (enabled && noInputFocused && Core.input.keyRelease(MdtKeybinds.mapBrowserKb)) {
-                mapDialog.show();
+                Core.app.post(() -> mapDialog.show());
             }
         });
     }

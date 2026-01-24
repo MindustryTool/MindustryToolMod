@@ -391,6 +391,6 @@ public class Main extends Mod {
             }
         });
 
-        dialog.show();
+        Core.app.post(() -> dialog.show());
     }
 }
