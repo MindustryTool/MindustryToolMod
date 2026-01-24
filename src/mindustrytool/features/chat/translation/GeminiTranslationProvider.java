@@ -2,6 +2,7 @@ package mindustrytool.features.chat.translation;
 
 import arc.Core;
 import arc.util.Http;
+import arc.util.Log;
 import arc.util.Http.HttpStatusException;
 import arc.util.serialization.Jval;
 import arc.scene.ui.layout.Table;
@@ -14,11 +15,13 @@ import java.util.concurrent.CompletableFuture;
 public class GeminiTranslationProvider implements TranslationProvider {
     private static final String API_URL_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
     private static final String[] MODELS = {
-            "gemini-2.0-flash-lite-preview-02-05",
+            "gemini-3-pro-preview",
+            "gemini-3-flash-preview",
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite",
+            "gemini-2.5-pro",
             "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-8b",
-            "gemini-1.5-pro",
+            "gemini-2.0-flash-lite",
     };
 
     private String getApiKey() {
@@ -83,10 +86,22 @@ public class GeminiTranslationProvider implements TranslationProvider {
                     .timeout(getTimeout() * 1000)
                     .error(e -> {
                         if (e instanceof HttpStatusException httpStatusException) {
-                            future.completeExceptionally(new RuntimeException(
-                                    Core.bundle.get("chat-translation.error.prefix")
-                                            + httpStatusException.response.getResultAsString()));
-                            return;
+                            if (httpStatusException.status.code == 429) {
+                                future.complete(Core.bundle.get("chat-translation.gemini.rate-limit"));
+                            } else if (httpStatusException.status.code == 404) {
+                                future.complete(Core.bundle.get("chat-translation.gemini.model-not-found"));
+                            } else if (httpStatusException.status.code == 401) {
+                                future.complete(Core.bundle.get("chat-translation.gemini.invalid-token"));
+                            } else if (httpStatusException.status.code == 409) {
+                                future.complete(Core.bundle.get("chat-translation.gemini.banned"));
+                            } else if (httpStatusException.status.code >= 500) {
+                                future.complete(Core.bundle.get("chat-translation.gemini.server-error"));
+                            } else {
+                                future.completeExceptionally(new RuntimeException(
+                                        Core.bundle.get("chat-translation.error.prefix")
+                                                + httpStatusException.response.getResultAsString()));
+                            }
+                            Log.err(e);
                         }
                         future.completeExceptionally(
                                 new RuntimeException(

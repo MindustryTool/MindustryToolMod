@@ -187,6 +187,12 @@ public class NetworkProxy extends Client implements NetListener {
             return;
         }
 
+        if (object instanceof Packets.ConnectionPacketWrapPacket wrapperPacket) {
+            Log.debug(wrapperPacket.object);
+        } else {
+            Log.debug(object);
+        }
+
         try {
             if (object instanceof Packets.MessagePacket messagePacket) {
                 Call.sendMessage("[scarlet][[Server]:[] " + messagePacket.message);
@@ -198,7 +204,6 @@ public class NetworkProxy extends Client implements NetListener {
             } else if (object instanceof Packets.RoomClosedPacket closedPacket) {
                 closeReason = closedPacket.reason;
                 Vars.ui.showText("[scarlet][[Server][] ", closedPacket.reason.toString());
-                close();
             } else if (object instanceof Packets.RoomLinkPacket roomLinkPacket) {
                 // Ignore if the room id is received twice
                 if (roomId != null) {
@@ -251,6 +256,7 @@ public class NetworkProxy extends Client implements NetListener {
                     con.setIdle();
                 } else if (object instanceof Packets.ConnectionClosedPacket closedPacket) {
                     con.closeQuietly(closedPacket.reason);
+                    Log.debug("Connection closed: @ @ @", con.id, closedPacket.reason, closeReason);
                 }
             }
         } catch (Exception error) {
@@ -359,6 +365,8 @@ public class NetworkProxy extends Client implements NetListener {
             this.proxy = proxy;
             this.id = id;
             addListener(proxy.serverDispatcher);
+
+            Log.info("Client connection created with id: @", id);
         }
 
         @Override
