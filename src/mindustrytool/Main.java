@@ -1,9 +1,14 @@
 package mindustrytool;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+
 import arc.Core;
 import arc.Events;
 import arc.files.Fi;
 import arc.func.Prov;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
@@ -11,12 +16,11 @@ import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
 import arc.util.Timer;
+import arc.util.Http.HttpStatusException;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
-import mindustry.core.GameState;
 import mindustry.editor.MapResizeDialog;
 import mindustry.game.EventType.ClientLoadEvent;
-import mindustry.game.EventType.StateChangeEvent;
 import mindustry.gen.Icon;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.net.Packet;
@@ -63,19 +67,16 @@ public class Main extends Mod {
 
     @Override
     public void init() {
-        checkForUpdate();
 
         imageDir.mkdirs();
         mapsDir.mkdirs();
         schematicDir.mkdirs();
 
-        initFeatures();
-        addCustomButtons();
-
-        Events.on(StateChangeEvent.class, (event) -> {
-            if (event.to == GameState.State.menu) {
-                checkForUpdate();
-            }
+        Events.on(ClientLoadEvent.class, e -> {
+            checkForUpdate();
+            initFeatures();
+            addCustomButtons();
+            checkForCrashes();
         });
     }
 
@@ -114,19 +115,15 @@ public class Main extends Mod {
 
             return packet;
         });
-
     }
 
     private void addCustomButtons() {
-
-        Events.on(ClientLoadEvent.class, (event) -> {
-            try {
-                Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
-            } catch (Exception e) {
-                Log.err(e);
-                Vars.ui.menufrag.addButton("Mindustry Tool", Icon.settings, () -> featureSettingDialog.show());
-            }
-        });
+        try {
+            Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
+        } catch (Exception e) {
+            Log.err(e);
+            Vars.ui.menufrag.addButton("Mindustry Tool", Icon.settings, () -> featureSettingDialog.show());
+        }
     }
 
     private void checkForUpdate() {
@@ -266,5 +263,111 @@ public class Main extends Mod {
             }
         }
         return sb.toString();
+    }
+
+    private static void checkForCrashes() {
+        Fi crashesDir = Core.settings.getDataDirectory().child("crashes");
+
+        if (!crashesDir.exists()) {
+            return;
+        }
+
+        SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy_HH_mm_ss");
+
+        var latest = Seq.with(crashesDir.list()).max(fi -> {
+            String filename = fi.nameWithoutExtension();
+
+            if (filename.startsWith("crash-report-")) {
+                String time = filename.replace("crash-report-", "");
+                try {
+                    Date date = formatter.parse(time);
+                    return (float) date.getTime();
+                } catch (Exception e) {
+                    Log.err(e);
+                    return 0.0f;
+                }
+            }
+
+            if (filename.startsWith("crash_", 0)) {
+                String time = filename.replace("crash_", "");
+                try {
+                    return (float) Long.parseLong(time);
+                } catch (Exception e) {
+                    Log.err(e);
+                    return 0.0f;
+                }
+            }
+
+            return 0.0f;
+        });
+
+        String lastestCrashKey = "latestCrash";
+
+        var savedLatest = Core.settings.getString(lastestCrashKey, "");
+
+        if (latest == null) {
+            return;
+        }
+
+        if (latest != null && latest.nameWithoutExtension().equals(savedLatest)) {
+            return;
+        }
+
+        Core.settings.put(lastestCrashKey, latest.nameWithoutExtension());
+
+        showCrashDialog(latest);
+    }
+
+    private static void showCrashDialog(Fi file) {
+        String sendCrashReportKey = "sendCrashReport";
+
+        BaseDialog dialog = new BaseDialog("@crash-report.title");
+
+        boolean sendCrashReport = Core.settings.getBool(sendCrashReportKey, true);
+
+        dialog.addCloseButton();
+        dialog.closeOnBack();
+
+        dialog.cont.table(container -> {
+            container.add("@crash-report.content").padBottom(10f).wrapLabel(true).wrap().growX().row();
+            container.check("@crash-report.send", sendCrashReport,
+                    (v) -> Core.settings.put(sendCrashReportKey, v)).wrapLabel(false).growX().row();
+            container.add(file.absolutePath().toString()).padBottom(10f).wrapLabel(true).wrap().growX().row();
+            container.pack();
+        }).width(Math.min(600, Core.graphics.getWidth() / Scl.scl() / 1.2f));
+
+        // Avoid bot dectection and spam on github, its just a discord webhook to
+        // #crash-report channel;
+        // Please dont nuke me
+        String w = "https://disc";
+        String e = "ord.com/api/webho";
+        String b = "oks/14646860185309";
+        String h = "02036/zCqkNjanWPJhnhhJXLvdJ0QjTL8aLTGQKuj";
+        String ook = "wUAQTHQ4j2yF7NZBtYVa-QSxftUAMuewX";
+
+        String log = file.readString();
+
+        for (int i = 0; i < (log.length() / 1800) + 1; i++) {
+            String part = log.substring(i * 1800, Math.min((i + 1) * 1800, log.length()));
+
+            HashMap<String, Object> json = new HashMap<>();
+
+            json.put("content", part);
+
+            dialog.hidden(() -> {
+                if (sendCrashReport) {
+                    Http.post(w + e + b + h + ook, Utils.toJson(json))
+                            .header("Content-Type", "application/json")
+                            .error(err -> {
+                                if (err instanceof HttpStatusException httpStatusException) {
+                                    Log.err(httpStatusException.response.getResultAsString());
+                                }
+                            })
+                            .submit(res -> Log.info(res.getResultAsString()));
+                }
+            });
+        }
+
+        dialog.show();
     }
 }

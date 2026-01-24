@@ -8,7 +8,6 @@ import arc.scene.ui.Button;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
-import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.MdtKeybinds;
@@ -34,11 +33,9 @@ public class SchematicBrowserFeature implements Feature {
     public void init() {
         schematicDialog = new SchematicDialog();
 
-        Events.on(ClientLoadEvent.class, e -> {
-            if (FeatureManager.getInstance().isEnabled(this)) {
-                addBrowseButton();
-            }
-        });
+        if (FeatureManager.getInstance().isEnabled(this)) {
+            addBrowseButton();
+        }
 
         Events.run(Trigger.update, () -> {
             boolean noInputFocused = !Core.scene.hasField();

@@ -58,7 +58,8 @@ public class TeamResourceFeature extends Table implements Feature {
         @Override
         public void clicked(InputEvent event, float x, float y) {
             showTeamSelector = !showTeamSelector;
-            rebuild();
+
+            Core.app.post(() -> rebuild());
         }
 
         @Override
