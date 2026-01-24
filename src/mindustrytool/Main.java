@@ -13,8 +13,10 @@ import arc.util.Reflect;
 import arc.util.Timer;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
+import mindustry.core.GameState;
 import mindustry.editor.MapResizeDialog;
 import mindustry.game.EventType.ClientLoadEvent;
+import mindustry.game.EventType.StateChangeEvent;
 import mindustry.gen.Icon;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.net.Packet;
@@ -69,6 +71,13 @@ public class Main extends Mod {
 
         initFeatures();
         addCustomButtons();
+
+        Events.on(StateChangeEvent.class, (event) -> {
+            if (event.to == GameState.State.menu) {
+                checkForUpdate();
+            }
+        });
+
     }
 
     private void initFeatures() {

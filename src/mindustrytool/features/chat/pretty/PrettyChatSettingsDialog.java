@@ -1,6 +1,7 @@
 package mindustrytool.features.chat.pretty;
 
 import arc.scene.ui.ScrollPane;
+import arc.scene.ui.TextArea;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
@@ -47,7 +48,7 @@ public class PrettyChatSettingsDialog extends BaseDialog {
         ScrollPane pane = new ScrollPane(cards);
 
         cont.add(pane).grow().row();
-        cont.add("[red]NOT WORK YET");
+        cont.add("[red]ONLY WORK ON DESKTOP");
 
         rebuildCards();
     }
@@ -100,7 +101,7 @@ public class PrettyChatSettingsDialog extends BaseDialog {
             info.add(p.getName()).left().color(isEnabled ? mindustry.graphics.Pal.accent : arc.graphics.Color.white)
                     .row();
 
-            String transformed = p.getTransform().apply(previewMessage);
+            String transformed = PrettyChatFeature.transform(previewMessage, p);
             info.add(transformed).left().color(arc.graphics.Color.lightGray).ellipsis(true)
                     .labelAlign(arc.util.Align.left)
                     .width(0f).growX();
@@ -133,6 +134,10 @@ public class PrettyChatSettingsDialog extends BaseDialog {
                 }
             }
 
+            card.button(Icon.edit, Styles.emptyi, () -> {
+                showEditDialog(p);
+            }).size(40).padRight(10);
+
             if (isEnabled) {
                 card.setBackground(Tex.buttonOver);
             }
@@ -156,5 +161,36 @@ public class PrettyChatSettingsDialog extends BaseDialog {
                 rebuildCards();
             }
         }
+    }
+
+    private void showEditDialog(Prettier p) {
+        BaseDialog dialog = new BaseDialog("Edit Script");
+
+        TextArea area = new TextArea(p.getScript());
+
+        dialog.cont.add("Script for " + p.getName()).padBottom(10).row();
+        dialog.cont.add(area).size(500, 300).row();
+        dialog.cont.label(() -> "Use <message> as placeholder").color(arc.graphics.Color.lightGray).pad(5).row();
+
+        dialog.buttons.button("@close", () -> {
+            dialog.hide();
+            dialog.remove();
+        }).size(150, 50).pad(5);
+
+        dialog.buttons.button("Reset to Default", () -> {
+            area.setText(p.getDefaultScript());
+        }).size(150, 50).pad(5);
+
+        dialog.buttons.button("Save", () -> {
+            if (area.getText().equals(p.getDefaultScript())) {
+                PrettyChatConfig.resetScript(p.getId());
+            } else {
+                PrettyChatConfig.setScript(p.getId(), area.getText());
+            }
+            rebuildCards();
+            dialog.hide();
+        }).size(150, 50).pad(5);
+
+        dialog.show();
     }
 }
