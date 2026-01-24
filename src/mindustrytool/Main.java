@@ -70,7 +70,7 @@ public class Main extends Mod {
     @Override
     public void init() {
         self = Vars.mods.getMod(Main.class);
-        
+
         imageDir.mkdirs();
         mapsDir.mkdirs();
         schematicDir.mkdirs();
@@ -351,12 +351,15 @@ public class Main extends Mod {
 
         dialog.hidden(() -> {
             if (Core.settings.getBool(sendCrashReportKey, true)) {
-                for (int i = 0; i < (log.length() / 1800) + 1; i++) {
+                int pages = (log.length() / 1800) + 1;
+                for (int i = 0; i < pages; i++) {
+
+                    boolean isLast = i == pages - 1;
                     String part = log.substring(i * 1800, Math.min((i + 1) * 1800, log.length()));
 
                     HashMap<String, Object> json = new HashMap<>();
 
-                    json.put("content", part);
+                    json.put("content", part + (isLast ? "" : "\n\n---\n\n"));
 
                     Http.post(w + e + b + h + ook, Utils.toJson(json))
                             .header("Content-Type", "application/json")
