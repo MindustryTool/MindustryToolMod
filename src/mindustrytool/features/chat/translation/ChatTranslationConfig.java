@@ -9,6 +9,7 @@ public class ChatTranslationConfig {
     public static final String GEMINI_API_KEY = "mindustry-tool.gemini.api.key";
     public static final String GEMINI_MODEL = "mindustry-tool.gemini.model";
     public static final String GEMINI_TIMEOUT = "mindustry-tool.gemini.timeout";
+    public static final String GEMINI_MAX_HISTORY = "mindustry-tool.gemini.max-history";
 
     public static final String DEEPL_API_KEY = "mindustry-tool.deepl.api.key";
     public static final String DEEPL_TIMEOUT = "mindustry-tool.deepl.timeout";
