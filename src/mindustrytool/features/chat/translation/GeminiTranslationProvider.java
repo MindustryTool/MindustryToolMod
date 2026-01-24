@@ -3,6 +3,7 @@ package mindustrytool.features.chat.translation;
 import arc.Core;
 import arc.util.Http;
 import arc.util.Log;
+import arc.util.Http.HttpStatus;
 import arc.util.Http.HttpStatusException;
 import arc.util.serialization.Jval;
 import arc.scene.ui.layout.Table;
@@ -86,7 +87,8 @@ public class GeminiTranslationProvider implements TranslationProvider {
                     .timeout(getTimeout() * 1000)
                     .error(e -> {
                         if (e instanceof HttpStatusException httpStatusException) {
-                            if (httpStatusException.status.code == 429) {
+                            if (httpStatusException.status.code == 429
+                                    || httpStatusException.status == HttpStatus.UNKNOWN_STATUS) {
                                 future.completeExceptionally(new RuntimeException(
                                         Core.bundle.get("chat-translation.gemini.rate-limit")));
                             } else if (httpStatusException.status.code == 404) {
