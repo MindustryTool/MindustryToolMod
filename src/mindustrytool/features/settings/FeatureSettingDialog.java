@@ -73,9 +73,7 @@ public class FeatureSettingDialog extends BaseDialog {
         uiTree.put("type", element.getClass().getSimpleName());
 
         if (element instanceof Group group) {
-            for (Element child : group.getChildren()) {
-                uiTree.put(child.name, getUiTree(child));
-            }
+            uiTree.put("children", group.getChildren().map(child -> getUiTree(child)).list());
         }
 
         return uiTree;
