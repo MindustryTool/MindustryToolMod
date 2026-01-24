@@ -77,7 +77,6 @@ public class Main extends Mod {
                 checkForUpdate();
             }
         });
-
     }
 
     private void initFeatures() {
