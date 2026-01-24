@@ -96,7 +96,7 @@ public class NetworkImage extends Image {
 
                 } else {
                     Http.get(url + "?format=jpeg")
-                            .timeout(5000)
+                            .timeout(10000)
                             .error(error -> {
                                 isError = true;
                                 if (!(error instanceof HttpStatusException requestError)

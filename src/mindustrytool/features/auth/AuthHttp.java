@@ -64,9 +64,9 @@ public class AuthHttp {
                         HttpRequest req;
                         if (method == HttpMethod.GET) {
                             req = Http
-                                    .get(url).timeout(5000);
+                                    .get(url).timeout(10000);
                         } else {
-                            req = Http.post(url, content).timeout(5000);
+                            req = Http.post(url, content).timeout(10000);
                         }
 
                         String token = AuthService.getInstance().getAccessToken();
