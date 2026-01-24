@@ -3,6 +3,8 @@ package mindustrytool;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import arc.Core;
 import arc.Events;
@@ -15,6 +17,7 @@ import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
+import arc.util.Threads;
 import arc.util.Timer;
 import arc.util.Http.HttpStatusException;
 import arc.util.serialization.Jval;
@@ -352,24 +355,39 @@ public class Main extends Mod {
         dialog.hidden(() -> {
             if (Core.settings.getBool(sendCrashReportKey, true)) {
                 int pages = (log.length() / 1800) + 1;
-                for (int i = 0; i < pages; i++) {
 
-                    boolean isLast = i == pages - 1;
-                    String part = log.substring(i * 1800, Math.min((i + 1) * 1800, log.length()));
+                Threads.daemon("Send crash report", () -> {
+                    for (int i = 0; i < pages; i++) {
+                        try {
+                            boolean isLast = i == pages - 1;
+                            String part = log.substring(i * 1800, Math.min((i + 1) * 1800, log.length()));
 
-                    HashMap<String, Object> json = new HashMap<>();
+                            HashMap<String, Object> json = new HashMap<>();
 
-                    json.put("content", part + (isLast ? "" : "\n\n---\n\n"));
+                            json.put("content", part + (isLast ? "" : "\n\n---\n\n"));
 
-                    Http.post(w + e + b + h + ook, Utils.toJson(json))
-                            .header("Content-Type", "application/json")
-                            .error(err -> {
-                                if (err instanceof HttpStatusException httpStatusException) {
-                                    Log.err(httpStatusException.response.getResultAsString());
-                                }
-                            })
-                            .submit(res -> Log.info(res.getResultAsString()));
-                }
+                            CompletableFuture<Void> future = new CompletableFuture<>();
+
+                            Http.post(w + e + b + h + ook, Utils.toJson(json))
+                                    .header("Content-Type", "application/json")
+                                    .error(err -> {
+                                        if (err instanceof HttpStatusException httpStatusException) {
+                                            Log.err(httpStatusException.response.getResultAsString());
+                                        }
+
+                                        future.completeExceptionally(err);
+                                    })
+                                    .submit(res -> {
+                                        Log.info(res.getResultAsString());
+                                        future.complete(null);
+                                    });
+
+                            future.get(10, TimeUnit.SECONDS);
+                        } catch (Exception err) {
+                            Log.err(err);
+                        }
+                    }
+                });
             }
         });
 

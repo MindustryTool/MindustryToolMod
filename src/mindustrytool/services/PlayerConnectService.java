@@ -18,7 +18,7 @@ public class PlayerConnectService {
     @SuppressWarnings("unchecked")
     public void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> cons) {
         Http.get(Config.API_v4_URL + "player-connect/rooms?q=" + q)
-                .timeout(5000)
+                .timeout(10000)
                 .error(_err -> Core.app.post(() -> cons.get(new Seq<>())))
                 .submit(response -> {
                     String data = response.getResultAsString();
@@ -38,7 +38,7 @@ public class PlayerConnectService {
             Cons<Throwable> onFailed) {
 
         Http.get(Config.API_v4_URL + "player-connect/providers")
-                .timeout(5000)
+                .timeout(10000)
                 .error(onFailed)
                 .submit(response -> {
                     String data = response.getResultAsString();

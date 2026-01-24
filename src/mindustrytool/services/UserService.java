@@ -30,7 +30,7 @@ public class UserService {
             listeners.put(id, callbacks);
 
             Http.get(Config.API_URL + "users/" + id)
-                    .timeout(5000)
+                    .timeout(10000)
                     .submit(response -> {
                         String data = response.getResultAsString();
                         UserData userData = JsonIO.json.fromJson(UserData.class, data);

@@ -28,10 +28,10 @@ import arc.struct.Seq;
 import java.util.Optional;
 
 public class ChatTranslationFeature implements Feature {
-    private final TranslationProvider NOOP_PROVIDER = new NoopTranslationProvider();
     private final Seq<TranslationProvider> providers = new Seq<>();
-    private TranslationProvider currentProvider = NOOP_PROVIDER;
+    private final TranslationProvider NOOP_PROVIDER = new NoopTranslationProvider();
     private String lastError = null;
+    private TranslationProvider currentProvider = NOOP_PROVIDER;
     private boolean enabled = false;
 
     @Override
@@ -104,7 +104,7 @@ public class ChatTranslationFeature implements Feature {
                 .exceptionally(e -> {
                     lastError = e.getMessage();
 
-                    String formated = Strings.format("[]@[]\n\n[]@[]\n\n", message,
+                    String formated = Strings.format("@\n\n[scarlet]@[]\n\n", message,
                             Core.bundle.get("chat-translation.error.prefix") + e.getMessage());
 
                     cons.get(formated);
