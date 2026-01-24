@@ -48,6 +48,8 @@ import mindustrytool.features.chat.translation.ChatTranslationFeature;
 import mindustrytool.features.chat.pretty.PrettyChatFeature;
 
 public class Main extends Mod {
+    public static LoadedMod self;
+
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
     public static Fi mapsDir = Vars.dataDirectory.child("mindustry-tool-maps");
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
@@ -67,6 +69,8 @@ public class Main extends Mod {
 
     @Override
     public void init() {
+        self = Vars.mods.getMod(Main.class);
+        
         imageDir.mkdirs();
         mapsDir.mkdirs();
         schematicDir.mkdirs();
@@ -126,8 +130,7 @@ public class Main extends Mod {
     }
 
     private void checkForUpdate() {
-        LoadedMod mod = Vars.mods.getMod(Main.class);
-        int[] currentVersion = extractVersionNumber(mod.meta.version);
+        int[] currentVersion = extractVersionNumber(self.meta.version);
 
         Http.get(Config.API_REPO_URL, (res) -> {
             try {
