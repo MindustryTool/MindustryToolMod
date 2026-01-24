@@ -67,7 +67,6 @@ public class Main extends Mod {
 
     @Override
     public void init() {
-
         imageDir.mkdirs();
         mapsDir.mkdirs();
         schematicDir.mkdirs();
@@ -336,7 +335,7 @@ public class Main extends Mod {
             container.pack();
         }).width(Math.min(600, Core.graphics.getWidth() / Scl.scl() / 1.2f));
 
-        // Avoid bot dectection and spam on github, its just a discord webhook to
+        // Avoid bot dectection and spam on github
         // #crash-report channel;
         // Please dont nuke me
         String w = "https://disc";
@@ -347,15 +346,15 @@ public class Main extends Mod {
 
         String log = file.readString();
 
-        for (int i = 0; i < (log.length() / 1800) + 1; i++) {
-            String part = log.substring(i * 1800, Math.min((i + 1) * 1800, log.length()));
+        dialog.hidden(() -> {
+            if (Core.settings.getBool(sendCrashReportKey, true)) {
+                for (int i = 0; i < (log.length() / 1800) + 1; i++) {
+                    String part = log.substring(i * 1800, Math.min((i + 1) * 1800, log.length()));
 
-            HashMap<String, Object> json = new HashMap<>();
+                    HashMap<String, Object> json = new HashMap<>();
 
-            json.put("content", part);
+                    json.put("content", part);
 
-            dialog.hidden(() -> {
-                if (sendCrashReport) {
                     Http.post(w + e + b + h + ook, Utils.toJson(json))
                             .header("Content-Type", "application/json")
                             .error(err -> {
@@ -365,8 +364,8 @@ public class Main extends Mod {
                             })
                             .submit(res -> Log.info(res.getResultAsString()));
                 }
-            });
-        }
+            }
+        });
 
         dialog.show();
     }
