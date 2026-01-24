@@ -107,10 +107,14 @@ public class GeminiTranslationProvider implements TranslationProvider {
                                                 + httpStatusException.response.getResultAsString()));
                             }
                             Log.err(e);
+
+                            return;
                         }
+
                         future.completeExceptionally(
                                 new RuntimeException(
                                         Core.bundle.get("chat-translation.error.prefix") + e.getMessage()));
+
                     })
                     .submit(res -> {
                         String jsonString = res.getResultAsString();
