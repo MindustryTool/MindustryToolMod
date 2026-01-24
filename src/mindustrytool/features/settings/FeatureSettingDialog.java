@@ -1,6 +1,8 @@
 package mindustrytool.features.settings;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -53,7 +55,9 @@ public class FeatureSettingDialog extends BaseDialog {
                 json.put("locale", locale);
                 json.put("ui_scale", String.valueOf(uiScale));
                 json.put("last_log", lastLog);
-                json.put("ui_tree", Utils.toJsonPretty(getUiTree(Core.scene.root)));
+                var tree = getUiTree(Core.scene.root);
+                json.put("ui_tree", tree);
+                json.put("flatten_ui_tree", flattenUiTree(tree));
 
                 Core.app.setClipboardText(Utils.toJsonPretty(json));
                 Vars.ui.showInfoFade("@coppied");
@@ -66,17 +70,44 @@ public class FeatureSettingDialog extends BaseDialog {
         shown(this::rebuild);
     }
 
-    private HashMap<String, Object> getUiTree(Element element) {
-        HashMap<String, Object> uiTree = new HashMap<>();
-
-        uiTree.put("name", element.name);
-        uiTree.put("type", element.getClass().getSimpleName());
+    private UiTree getUiTree(Element element) {
+        var node = new UiTree(element.name, element.getClass().getSimpleName());
 
         if (element instanceof Group group) {
-            uiTree.put("children", group.getChildren().map(child -> getUiTree(child)).list());
+            node.children = group.getChildren().map(child -> getUiTree(child)).list();
         }
 
-        return uiTree;
+        return node;
+    }
+
+    private List<String> flattenUiTree(UiTree tree) {
+        List<String> result = new ArrayList<>();
+        flatten(tree, tree.name != null ? tree.type + "(" + tree.name + ")" : tree.type, result);
+        result.sort(String::compareTo);
+        return result;
+    }
+
+    private void flatten(UiTree node, String path, List<String> result) {
+        if (node.children == null || node.children.isEmpty()) {
+            result.add(path);
+            return;
+        }
+
+        for (UiTree child : node.children) {
+            flatten(child, path + "." + (child.name != null ? child.type + "(" + child.name + ")" : child.type),
+                    result);
+        }
+    }
+
+    private static class UiTree {
+        public String name;
+        public String type;
+        public List<UiTree> children;
+
+        public UiTree(String name, String type) {
+            this.name = name;
+            this.type = type;
+        }
     }
 
     private void rebuild() {

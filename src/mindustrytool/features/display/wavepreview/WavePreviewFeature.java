@@ -1,5 +1,6 @@
 package mindustrytool.features.display.wavepreview;
 
+import arc.Core;
 import arc.Events;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Stack;
@@ -44,7 +45,7 @@ public class WavePreviewFeature extends Table implements Feature {
     public void init() {
         name = "wave-preview";
 
-        Events.run(WorldLoadEvent.class, this::rebuild);
+        Events.run(WorldLoadEvent.class, () -> Core.app.post(() -> rebuild()));
 
         visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
 
@@ -55,11 +56,11 @@ public class WavePreviewFeature extends Table implements Feature {
 
             if (interval.get(30)) {
                 updateCounts();
-                updateUI();
+                Core.app.post(() -> updateUI());
             }
         });
 
-        rebuild();
+        Core.app.post(() -> rebuild());
     }
 
     @Override
@@ -82,7 +83,7 @@ public class WavePreviewFeature extends Table implements Feature {
             waves.row();
             waves.add(this).growX().padTop(10f);
 
-            rebuild();
+            Core.app.post(() -> rebuild());
         }
     }
 

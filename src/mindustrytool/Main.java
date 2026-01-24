@@ -24,7 +24,6 @@ import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustry.editor.MapResizeDialog;
 import mindustry.game.EventType.ClientLoadEvent;
-import mindustry.gen.Icon;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.net.Packet;
 import mindustry.mod.Mod;
@@ -128,7 +127,6 @@ public class Main extends Mod {
             Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
         } catch (Exception e) {
             Log.err(e);
-            Vars.ui.menufrag.addButton("Mindustry Tool", Icon.settings, () -> featureSettingDialog.show());
         }
     }
 
@@ -200,6 +198,8 @@ public class Main extends Mod {
         Core.app.post(() -> {
             BaseDialog dialog = new BaseDialog("Update Available");
 
+            dialog.name = "updateAvailableDialog";
+
             Table table = new Table();
             table.defaults().left();
 
@@ -220,9 +220,9 @@ public class Main extends Mod {
             dialog.buttons.button("Cancel", dialog::hide).size(100f, 50f);
             dialog.buttons.button("Update", () -> {
                 dialog.hide();
-                Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
                 Vars.ui.mods.show();
-                Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.5f);
+                Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
+                Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
             }).size(100f, 50f);
 
             dialog.show();
@@ -324,9 +324,19 @@ public class Main extends Mod {
     }
 
     private static void showCrashDialog(Fi file) {
+        String log = file.readString();
+
+        boolean hasMindustryTool = log.contains("mindustry-tool");
+
+        if (!hasMindustryTool) {
+            return;
+        }
+
         String sendCrashReportKey = "sendCrashReport";
 
         BaseDialog dialog = new BaseDialog("@crash-report.title");
+
+        dialog.name = "crashReportDialog";
 
         boolean sendCrashReport = Core.settings.getBool(sendCrashReportKey, true);
 
@@ -349,8 +359,6 @@ public class Main extends Mod {
         String b = "oks/14646860185309";
         String h = "02036/zCqkNjanWPJhnhhJXLvdJ0QjTL8aLTGQKuj";
         String ook = "wUAQTHQ4j2yF7NZBtYVa-QSxftUAMuewX";
-
-        String log = file.readString();
 
         dialog.hidden(() -> {
             if (Core.settings.getBool(sendCrashReportKey, true)) {

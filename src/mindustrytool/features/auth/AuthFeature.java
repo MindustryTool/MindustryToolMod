@@ -31,6 +31,7 @@ public class AuthFeature implements Feature {
     @Override
     public void init() {
         var wholeViewport = new Table();
+        wholeViewport.name = "authWindow";
         wholeViewport.setFillParent(true);
         wholeViewport.top().right();
 

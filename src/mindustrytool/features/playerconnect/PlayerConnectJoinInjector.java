@@ -104,10 +104,10 @@ public class PlayerConnectJoinInjector {
                 .expand()
                 .fill();
 
-        playerConnectService.findPlayerConnectRooms(searchTerm, rooms -> {
+        arc.func.Cons<Seq<PlayerConnectRoom>> renderRooms = rooms -> {
             playerConnectTable.clear();
 
-            if (rooms.isEmpty()) {
+            if (rooms == null || rooms.isEmpty()) {
                 playerConnectTable.labelWrap(Core.bundle.format("message.no-rooms-found"))
                         .center()
                         .labelAlign(0)
@@ -121,9 +121,26 @@ public class PlayerConnectJoinInjector {
 
             var groups = new HashMap<String, Seq<PlayerConnectRoom>>();
 
+            // Map provider addresses -> provider names for grouping
+            var addrToName = new HashMap<String, String>();
+            for (int i = 0; i < PlayerConnectProviders.online.size; i++) {
+                String name = PlayerConnectProviders.online.getKeyAt(i);
+                String address = PlayerConnectProviders.online.getValueAt(i);
+                String addrHost = address;
+                // Handle IPv6 like [::1]:1234
+                if (addrHost.startsWith("[") && addrHost.contains("]:")) {
+                    addrHost = addrHost.substring(1, addrHost.indexOf("]:"));
+                } else if (addrHost.contains(":")) {
+                    int idx = addrHost.lastIndexOf(':');
+                    addrHost = addrHost.substring(0, idx);
+                }
+                addrToName.put(addrHost, name);
+            }
+
             for (var room : rooms) {
                 var link = PlayerConnectLink.fromString(room.getLink());
-                var group = link.host;
+                var host = link.host;
+                var group = addrToName.getOrDefault(host, host);
 
                 if (!groups.containsKey(group)) {
                     groups.put(group, new Seq<>());
@@ -152,7 +169,11 @@ public class PlayerConnectJoinInjector {
                 }).growX();
                 playerConnectTable.row();
             }
-        });
+        };
+
+        // Ensure provider names are loaded before grouping so we can show provider.name instead of host when possible
+        PlayerConnectProviders.refreshOnline(() -> playerConnectService.findPlayerConnectRooms(searchTerm, renderRooms),
+                e -> playerConnectService.findPlayerConnectRooms(searchTerm, renderRooms));
     }
 
     private int columns() {

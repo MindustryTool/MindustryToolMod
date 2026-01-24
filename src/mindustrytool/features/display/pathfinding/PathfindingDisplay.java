@@ -106,6 +106,7 @@ public class PathfindingDisplay implements Feature {
     public Optional<Dialog> setting() {
         if (settingsDialog == null) {
             settingsDialog = new BaseDialog("@pathfinding.settings.title");
+            settingsDialog.name = "pathfindingSettingDialog";
             settingsDialog.addCloseButton();
             settingsDialog.shown(this::rebuildSettings);
             settingsDialog.buttons.button("@reset", Icon.refresh, () -> {

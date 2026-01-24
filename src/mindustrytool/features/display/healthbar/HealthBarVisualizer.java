@@ -147,6 +147,7 @@ public class HealthBarVisualizer implements Feature {
 
     private void initDialog() {
         dialog = new BaseDialog("@health-bar.settings.title");
+        dialog.name = "healthBarSettingDialog";
         dialog.addCloseButton();
         dialog.buttons.button("@reset", Icon.refresh, () -> {
             HealthBarConfig.reset();

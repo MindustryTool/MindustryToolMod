@@ -231,6 +231,7 @@ public class QuickAccessHud extends Table implements Feature {
             popup.y = Core.graphics.getHeight() - popup.getHeight();
 
         Vars.ui.hudGroup.addChild(popup);
+        popup.name = "quickAccessPopup";
         currentPopup = popup;
     }
 
@@ -265,6 +266,7 @@ public class QuickAccessHud extends Table implements Feature {
     @Override
     public Optional<Dialog> setting() {
         var dialog = new BaseDialog("@settings");
+        dialog.name = "quickAccessSettingDialog";
 
         dialog.addCloseButton();
         dialog.closeOnBack();

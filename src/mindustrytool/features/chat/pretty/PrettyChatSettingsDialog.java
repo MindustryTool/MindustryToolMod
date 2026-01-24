@@ -167,6 +167,8 @@ public class PrettyChatSettingsDialog extends BaseDialog {
     private void showEditDialog(Prettier p) {
         BaseDialog dialog = new BaseDialog("Edit Script");
 
+        dialog.name = "prettyChatEditDialog";
+
         TextArea area = new TextArea(p.getScript());
 
         dialog.cont.add("Script for " + p.getName()).padBottom(10).row();

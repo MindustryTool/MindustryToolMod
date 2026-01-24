@@ -137,6 +137,7 @@ public class ChatTranslationFeature implements Feature {
     @Override
     public Optional<Dialog> setting() {
         BaseDialog dialog = new BaseDialog(Core.bundle.get("chat-translation.settings.title"));
+        dialog.name = "chatTranslationSettingDialog";
         dialog.addCloseButton();
 
         Table root = new Table();

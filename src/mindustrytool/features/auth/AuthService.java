@@ -80,6 +80,8 @@ public class AuthService {
 
         BaseDialog dialog = new BaseDialog("@login");
 
+        dialog.name = "loginDialog";
+
         dialog.buttons.button("@cancel", () -> {
             if (!loginFuture.isDone()) {
                 loginFuture.completeExceptionally(new RuntimeException("Login cancelled"));

@@ -7,6 +7,7 @@ import arc.graphics.g2d.TextureRegion;
 import arc.math.geom.*;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.*;
+import arc.util.Log;
 import arc.util.io.*;
 import arc.util.serialization.*;
 import mindustry.*;
@@ -14,7 +15,9 @@ import mindustry.content.*;
 import mindustry.ctype.*;
 import mindustry.game.Schematic;
 import mindustry.game.Schematic.*;
+import mindustry.gen.Icon;
 import mindustry.io.*;
+import mindustry.mod.Mods.LoadedMod;
 import mindustry.world.*;
 import mindustry.world.blocks.distribution.*;
 import mindustry.world.blocks.legacy.*;
@@ -34,6 +37,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import static mindustry.Vars.*;
 
 public class Utils {
+    public static LoadedMod mod;
 
     public static ObjectMap<String, Schematic> schematicData = new ObjectMap<>();
     private static final byte[] header = { 'm', 's', 'c', 'h' };
@@ -191,9 +195,14 @@ public class Utils {
             return iconCache.get(name);
         }
 
-        var texture = new TextureRegion(new Texture(Main.self.root.child("icons").child(name)));
-        var drawable = new TextureRegionDrawable(texture);
-        iconCache.put(name, drawable);
-        return drawable;
+        try {
+            var texture = new TextureRegion(new Texture(Main.self.root.child("icons").child(name)));
+            var drawable = new TextureRegionDrawable(texture);
+            iconCache.put(name, drawable);
+            return drawable;
+        } catch (Exception e) {
+            Log.err(e);
+            return Icon.book;
+        }
     }
 }
