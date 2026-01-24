@@ -8,6 +8,8 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.Group;
+import arc.scene.event.ClickListener;
+import arc.scene.event.InputEvent;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.util.Scaling;
@@ -167,7 +169,13 @@ public class FeatureSettingDialog extends BaseDialog {
                         header.button(Icon.settings, Styles.clearNonei,
                                 () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
                                 .size(32)
-                                .padLeft(8);
+                                .padLeft(8)
+                                .get().addListener(new ClickListener() {
+                                    @Override
+                                    public void clicked(InputEvent event, float x, float y) {
+                                        event.stop();
+                                    }
+                                });
                     }
 
                     // Status icon (visual only)
@@ -224,7 +232,13 @@ public class FeatureSettingDialog extends BaseDialog {
                         header.button(Icon.settings, Styles.clearNonei,
                                 () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
                                 .size(32)
-                                .padLeft(8);
+                                .padLeft(8)
+                                .get().addListener(new ClickListener() {
+                                    @Override
+                                    public void clicked(InputEvent event, float x, float y) {
+                                        event.stop();
+                                    }
+                                });
                     }
 
                     // Status icon (visual only)
@@ -253,9 +267,16 @@ public class FeatureSettingDialog extends BaseDialog {
         })
                 .growX()
                 .minWidth(cardWidth)
-                .height(180f).pad(10f).get().clicked(() -> {
-                    FeatureManager.getInstance().setEnabled(feature, !enabled);
-                    rebuild();
+                .height(180f).pad(10f).get().addListener(new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        if (event.stopped) {
+                            return;
+                        }
+
+                        FeatureManager.getInstance().setEnabled(feature, !enabled);
+                        rebuild();
+                    }
                 });
     }
 }
