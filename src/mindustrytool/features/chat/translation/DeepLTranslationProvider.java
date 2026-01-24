@@ -102,7 +102,7 @@ public class DeepLTranslationProvider implements TranslationProvider {
                 .left()
                 .row();
 
-        table.field(getApiKey(), this::setApiKey).growX().row();
+        table.field(getApiKey(), this::setApiKey).valid(text -> text.length() > 0).growX().row();
 
         table.add(Core.bundle.get("chat-translation.deepl.timeout-label") + ": " + getTimeout() + "s").left()
                 .padTop(10)
