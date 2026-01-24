@@ -94,10 +94,10 @@ public class ChatTranslationFeature implements Feature {
         currentProvider.translate(Strings.stripColors(message))
                 .thenAccept(translated -> {
                     if (ChatTranslationConfig.isShowOriginal()) {
-                        result.get(
-                                message + "\n\n[][" + LanguageDialog.getDisplayName(Core.bundle.getLocale()) + "][]   "
-                                        + translated
-                                        + "\n\n");
+                        String locale = LanguageDialog.getDisplayName(Core.bundle.getLocale());
+                        String formated = Strings.format("@\n\n[]@[]@\n\n", message, locale, translated);
+
+                        result.get(formated);
                     } else {
                         result.get(translated);
                     }
@@ -105,7 +105,10 @@ public class ChatTranslationFeature implements Feature {
                 .exceptionally(e -> {
                     lastError = e.getMessage();
 
-                    result.get(Core.bundle.get("chat-translation.error.prefix") + e.getMessage());
+                    String formated = Strings.format("@\n\n@\n\n", message,
+                            Core.bundle.get("chat-translation.error.prefix") + e.getMessage());
+
+                    result.get(formated);
 
                     Log.err("Translation failed", e);
                     return null;

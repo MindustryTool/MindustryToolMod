@@ -87,15 +87,20 @@ public class GeminiTranslationProvider implements TranslationProvider {
                     .error(e -> {
                         if (e instanceof HttpStatusException httpStatusException) {
                             if (httpStatusException.status.code == 429) {
-                                future.complete(Core.bundle.get("chat-translation.gemini.rate-limit"));
+                                future.completeExceptionally(new RuntimeException(
+                                        Core.bundle.get("chat-translation.gemini.rate-limit")));
                             } else if (httpStatusException.status.code == 404) {
-                                future.complete(Core.bundle.get("chat-translation.gemini.model-not-found"));
+                                future.completeExceptionally(new RuntimeException(
+                                        Core.bundle.get("chat-translation.gemini.model-not-found")));
                             } else if (httpStatusException.status.code == 401) {
-                                future.complete(Core.bundle.get("chat-translation.gemini.invalid-token"));
+                                future.completeExceptionally(new RuntimeException(
+                                        Core.bundle.get("chat-translation.gemini.invalid-token")));
                             } else if (httpStatusException.status.code == 409) {
-                                future.complete(Core.bundle.get("chat-translation.gemini.banned"));
+                                future.completeExceptionally(new RuntimeException(
+                                        Core.bundle.get("chat-translation.gemini.banned")));
                             } else if (httpStatusException.status.code >= 500) {
-                                future.complete(Core.bundle.get("chat-translation.gemini.server-error"));
+                                future.completeExceptionally(new RuntimeException(
+                                        Core.bundle.get("chat-translation.gemini.server-error")));
                             } else {
                                 future.completeExceptionally(new RuntimeException(
                                         Core.bundle.get("chat-translation.error.prefix")
