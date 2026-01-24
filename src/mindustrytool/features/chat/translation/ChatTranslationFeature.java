@@ -93,7 +93,7 @@ public class ChatTranslationFeature implements Feature {
                 .thenApply(translated -> {
                     if (ChatTranslationConfig.isShowOriginal()) {
                         String locale = LanguageDialog.getDisplayName(Core.bundle.getLocale());
-                        String formated = Strings.format("@\n\n[]@[]@\n\n", message, locale, translated);
+                        String formated = Strings.format("[]@[]\n\n[]@[]@\n\n", message, locale, translated);
 
                         return formated;
                     }
@@ -104,7 +104,7 @@ public class ChatTranslationFeature implements Feature {
                 .exceptionally(e -> {
                     lastError = e.getMessage();
 
-                    String formated = Strings.format("@\n\n@\n\n", message,
+                    String formated = Strings.format("[]@[]\n\n[]@[]\n\n", message,
                             Core.bundle.get("chat-translation.error.prefix") + e.getMessage());
 
                     cons.get(formated);
