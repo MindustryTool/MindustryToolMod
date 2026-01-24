@@ -7,6 +7,7 @@ import arc.Events;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.TextField;
 import arc.struct.Seq;
+import arc.util.Log;
 import arc.util.Reflect;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -97,13 +98,17 @@ public class PrettyChatFeature implements Feature {
         Events.run(Trigger.update, () -> {
             if (Core.input.keyTap(Binding.chat) && Vars.ui.chatfrag.shown()) {
                 Core.app.post(() -> {
-                    TextField chatfield = Reflect.get(Vars.ui.chatfrag, "chatfield");
+                    try {
+                        TextField chatfield = Reflect.get(Vars.ui.chatfrag, "chatfield");
 
-                    if (chatfield == null) {
-                        return;
+                        if (chatfield == null) {
+                            return;
+                        }
+
+                        chatfield.setText(transform(chatfield.getText()));
+                    } catch (Exception e) {
+                        Log.err(e);
                     }
-
-                    chatfield.setText(transform(chatfield.getText()));
                 });
             }
         });

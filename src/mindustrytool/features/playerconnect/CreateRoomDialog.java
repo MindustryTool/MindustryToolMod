@@ -14,6 +14,7 @@ import arc.util.Log;
 import arc.util.Strings;
 import arc.util.Time;
 import arc.util.Timer;
+import arc.util.Http.HttpStatusException;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Icon;
@@ -278,9 +279,15 @@ public class CreateRoomDialog extends BaseDialog {
             refreshingOnline = false;
             Vars.ui.showInfoFade("@message.room.fetch-failed");
 
+            String message = e.getMessage();
+
+            if (e instanceof HttpStatusException httpStatusException) {
+                message = httpStatusException.response.getResultAsString();
+            }
+
             if (online != null) {
                 online.clear();
-                online.add("fetch failed")
+                online.add(message)
                         .color(Pal.accent)
                         .labelAlign(Align.center)
                         .growX()
