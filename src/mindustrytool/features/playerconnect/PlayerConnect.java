@@ -143,7 +143,6 @@ public class PlayerConnect {
     }
 
     public static void create(String ip, int port,
-            String password,
             Cons<PlayerConnectLink> onSucceed,
             Cons<Throwable> onFailed,
             Cons<RoomCloseReason> onDisconnected//
@@ -153,9 +152,8 @@ public class PlayerConnect {
         }
 
         if (room == null || roomThread == null || !roomThread.isAlive()) {
-            room = new NetworkProxy(password);
+            room = new NetworkProxy();
             roomThread = Threads.daemon("Proxy", room);
-
         }
 
         worker.submit(() -> {
@@ -212,14 +210,13 @@ public class PlayerConnect {
                 throw new IllegalStateException("Net client is not active.");
             }
 
-            // We need to serialize the packet manually
-            tmpBuffer.clear();
-
             var packet = new Packets.RoomJoinPacket(link.roomId, password);
 
             tmpSerializer.write(tmpBuffer, packet);
             tmpBuffer.limit(tmpBuffer.position()).position(0);
             Vars.net.send(tmpBuffer, true);
+
+            Vars.netClient.beginConnecting();
 
             success.run();
         });

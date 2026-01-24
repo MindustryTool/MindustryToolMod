@@ -50,13 +50,12 @@ public class NetworkProxy extends Client implements NetListener {
 
     private String roomId = null;
     private RoomCloseReason closeReason;
-    private String password = "";
     private String remoteHost = "";
 
     private Cons<String> onRoomCreated;
     private Cons<RoomCloseReason> onRoomClosed;
 
-    public NetworkProxy(String password) {
+    public NetworkProxy() {
         super(32768, 16384, new Serializer());
 
         addListener(this);
@@ -69,7 +68,6 @@ public class NetworkProxy extends Client implements NetListener {
 
         server = Reflect.get(provider, "server");
         serverDispatcher = Reflect.get(server, "dispatchListener");
-        this.password = password;
     }
 
     public void connect(String host, int udpTcpPort, Cons<String> onRoomCreated,
@@ -84,10 +82,6 @@ public class NetworkProxy extends Client implements NetListener {
 
     public String getRemoteHost() {
         return remoteHost;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     /**
@@ -158,7 +152,7 @@ public class NetworkProxy extends Client implements NetListener {
             Packets.RoomStats stats = getStats();
             Packets.RoomCreationRequestPacket p = new Packets.RoomCreationRequestPacket(
                     PROTOCOL_VERSION,
-                    password,
+                    PlayerConnectConfig.getPassword(),
                     stats);
 
             sendTCP(p);
@@ -364,6 +358,7 @@ public class NetworkProxy extends Client implements NetListener {
         public VirtualConnection(NetworkProxy proxy, int id) {
             this.proxy = proxy;
             this.id = id;
+
             addListener(proxy.serverDispatcher);
 
             Log.info("Client connection created with id: @", id);

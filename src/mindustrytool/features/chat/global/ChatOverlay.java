@@ -358,11 +358,10 @@ public class ChatOverlay extends Table {
                 if (scrollPane != null) {
                     scrollPane.setScrollY(scrollPane.getMaxY());
                 }
+
+                Core.scene.setKeyboardFocus(inputField);
             });
 
-            if (inputField != null && !config.collapsed()) {
-                Core.scene.setKeyboardFocus(inputField);
-            }
         }
 
         pack();
@@ -477,10 +476,12 @@ public class ChatOverlay extends Table {
         if (config.collapsed() && addedCount > 0) {
             unreadCount += addedCount;
             updateBadge();
+        } else {
+            config.lastRead(Instant.now());
         }
 
         if (messages.size > 1000) {
-            messages.removeRange(0, messages.size - 1000);
+            messages.removeRange(0, messages.size - 1000 - 1);
         }
 
         if (messageTable != null && !config.collapsed()) {
@@ -690,6 +691,8 @@ public class ChatOverlay extends Table {
                     if (sendButton != null) {
                         sendButton.setText("@chat.send");
                     }
+
+                    Core.scene.setKeyboardFocus(inputField);
                 });
             }).exceptionally((err) -> {
                 isSending.set(false);

@@ -204,7 +204,7 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .padBottom(5f)
                     .row();
-        }).growX().maxWidth(800f).padBottom(20f).row();
+        }).growX().maxWidth(800f).padBottom(20f).margin(20).row();
 
         mainTable.button("@next", Icon.right, () -> {
             setupStep2();
@@ -245,7 +245,7 @@ public class CreateRoomDialog extends BaseDialog {
         }).size(200f, 50f).padRight(10f);
 
         buttons.button("@message.create-room.create-room", Icon.play, () -> {
-            createRoom(PlayerConnectConfig.getPassword());
+            createRoom();
         }).size(200f, 50f).disabled(b -> selected == null);
 
         mainTable.add(buttons).row();
@@ -353,9 +353,10 @@ public class CreateRoomDialog extends BaseDialog {
         }
     }
 
-    public void createRoom(String password) {
-        if (selected == null)
+    public void createRoom() {
+        if (selected == null) {
             return;
+        }
 
         Vars.netServer.admins.setPlayerLimit(PlayerConnectConfig.getMaxPlayer());
 
@@ -367,7 +368,7 @@ public class CreateRoomDialog extends BaseDialog {
             PlayerConnect.close();
         }, 10);
 
-        PlayerConnect.create(selected.ip, selected.port, password, link -> {
+        PlayerConnect.create(selected.ip, selected.port, link -> {
             Vars.ui.loadfrag.hide();
             timer.cancel();
             this.link = link;
