@@ -190,7 +190,7 @@ public class PlayerConnectRenderer {
                 // Join Button
                 if (matchProtocolVersion) {
                     body.button(Core.bundle.format("join"), Icon.play, () -> {
-                        joinRoom(room);
+                        joinRoom(room, unneeded, missing);
                     }).growX().height(40f).padTop(5);
                 } else {
                     body.button(Core.bundle.format("player-connect.unmatch-protocol-version"), Icon.play, () -> {
@@ -205,14 +205,7 @@ public class PlayerConnectRenderer {
         }).padBottom(5).padRight(5).growY();
     }
 
-    public static void joinRoom(PlayerConnectRoom room) {
-        // Check for unneeded mods
-        Seq<String> serverMods = room.data().mods();
-        Seq<String> localMods = Vars.mods.getModStrings();
-
-        Seq<String> missing = serverMods.select(s -> localMods.contains(s));
-        Seq<String> unneeded = localMods.select(m -> !serverMods.contains(m));
-
+    public static void joinRoom(PlayerConnectRoom room, Seq<String> unneeded, Seq<String> missing) {
         if (!unneeded.isEmpty() || !missing.isEmpty()) {
             BaseDialog dialog = new BaseDialog("@warning");
 
@@ -239,7 +232,8 @@ public class PlayerConnectRenderer {
                         });
                 dialog.hide();
                 proceedToJoin(room);
-            }).size(150, 50);
+            })
+                    .size(200, 50);
 
             dialog.buttons.button("Ignore", () -> {
                 dialog.hide();
