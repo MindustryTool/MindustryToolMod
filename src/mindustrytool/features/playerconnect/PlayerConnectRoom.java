@@ -2,6 +2,8 @@ package mindustrytool.features.playerconnect;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 @Data
@@ -14,7 +16,10 @@ public class PlayerConnectRoom {
     public static class PlayerConnectRoomData {
         private String name;
         private String status;
+
+        @JsonProperty("isPrivate")
         private boolean isPrivate;
+        @JsonProperty("isSecured")
         private boolean isSecured;
         private List<PlayerConnectRoomPlayer> players;
         private String mapName;

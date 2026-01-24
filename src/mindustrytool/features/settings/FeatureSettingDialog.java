@@ -73,9 +73,7 @@ public class FeatureSettingDialog extends BaseDialog {
         uiTree.put("type", element.getClass().getSimpleName());
 
         if (element instanceof Group group) {
-            for (Element child : group.getChildren()) {
-                uiTree.put(child.name, getUiTree(child));
-            }
+            uiTree.put("children", group.getChildren().map(child -> getUiTree(child)).list());
         }
 
         return uiTree;
@@ -136,7 +134,8 @@ public class FeatureSettingDialog extends BaseDialog {
                     // Settings button
                     if (feature.setting().isPresent()) {
                         header.button(Icon.settings, Styles.clearNonei,
-                                () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32)
+                                () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
+                                .size(32)
                                 .padLeft(8);
                     }
 
@@ -192,7 +191,8 @@ public class FeatureSettingDialog extends BaseDialog {
                     // Settings button
                     if (feature.setting().isPresent()) {
                         header.button(Icon.settings, Styles.clearNonei,
-                                () -> feature.setting().ifPresent(dialog -> dialog.show())).size(32)
+                                () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
+                                .size(32)
                                 .padLeft(8);
                     }
 
