@@ -53,7 +53,7 @@ public class FeatureSettingDialog extends BaseDialog {
                 json.put("locale", locale);
                 json.put("ui_scale", String.valueOf(uiScale));
                 json.put("last_log", lastLog);
-                json.put("ui_tree", Utils.toJsonPretty(getUiTree(Core.scene.root)));
+                json.put("ui_tree", getUiTree(Core.scene.root));
 
                 Core.app.setClipboardText(Utils.toJsonPretty(json));
                 Vars.ui.showInfoFade("@coppied");
