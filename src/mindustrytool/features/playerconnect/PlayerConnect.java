@@ -1,14 +1,15 @@
 package mindustrytool.features.playerconnect;
 
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 
 import arc.Core;
 import arc.Events;
 import arc.func.Cons;
 import arc.net.Client;
-import arc.struct.ObjectMap;
+import arc.net.Connection;
+import arc.net.DcReason;
+import arc.net.NetListener;
 import arc.struct.Seq;
 import arc.net.NetSerializer;
 import arc.util.Log;
@@ -25,7 +26,7 @@ import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
-import mindustry.net.Packets.Disconnect;
+import mindustry.net.Net.NetProvider;
 import mindustrytool.features.playerconnect.Packets.RoomCloseReason;
 
 public class PlayerConnect {
@@ -194,29 +195,31 @@ public class PlayerConnect {
         }
     }
 
-    private static Cons<Disconnect> customDisconnectLisenser;
+    // private static Cons<Disconnect> customDisconnectLisenser;
 
     public static void join(PlayerConnectLink link, String password, Runnable success) {
         if (link == null) {
             throw new IllegalArgumentException("Link cannot be null.");
         }
 
-        if (customDisconnectLisenser == null) {
+        // if (customDisconnectLisenser == null) {
 
-            ObjectMap<Class<?>, Cons<Object>> listeners = Reflect.get(Vars.net, "clientListeners");
+        // ObjectMap<Class<?>, Cons<Object>> listeners = Reflect.get(Vars.net,
+        // "clientListeners");
 
-            var originalDisconnectListener = listeners.get(Disconnect.class);
-            customDisconnectLisenser = (p) -> {
-                Vars.netClient.setQuiet();
-                Time.runTask(3f, () -> {
-                    Vars.ui.loadfrag.hide();
-                    Vars.ui.showErrorMessage("Disconnected from server. Wrong password or room is closed");
-                });
-                originalDisconnectListener.get(p);
-            };
+        // var originalDisconnectListener = listeners.get(Disconnect.class);
+        // customDisconnectLisenser = (p) -> {
+        // Vars.netClient.setQuiet();
+        // Time.runTask(3f, () -> {
+        // Vars.ui.loadfrag.hide();
+        // Vars.ui.showErrorMessage("Disconnected from server. Wrong password or room is
+        // closed");
+        // });
+        // originalDisconnectListener.get(p);
+        // };
 
-            Vars.net.handleClient(Disconnect.class, customDisconnectLisenser);
-        }
+        // Vars.net.handleClient(Disconnect.class, customDisconnectLisenser);
+        // }
 
         Vars.ui.loadfrag.show("@connecting");
 
@@ -225,21 +228,70 @@ public class PlayerConnect {
 
         Vars.netClient.beginConnecting();
 
+        NetProvider provider = Reflect.get(Vars.net, "provider");
+
+        if (Vars.steam) {
+            provider = Reflect.get(provider, "provider");
+        }
+
+        Client client = Reflect.get(provider, "client");
+
+        Reflect.set(client, "serialization", new NetworkProxy.Serializer());
+
+        var tcp = Reflect.get(Connection.class, client, "tcp");
+
+        Reflect.set(tcp, "serialization", new NetworkProxy.Serializer());
+
+        NetListener[] listeners = Reflect.get(Connection.class, client, "listeners");
+
+        NetListener wrap = new NetListener() {
+            @Override
+            public void connected(Connection connection) {
+                for (NetListener listener : listeners) {
+                    listener.connected(connection);
+                }
+            }
+
+            @Override
+            public void disconnected(Connection connection, DcReason reason) {
+                for (NetListener listener : listeners) {
+                    listener.disconnected(connection, reason);
+                }
+            }
+
+            @Override
+            public void received(Connection connection, Object object) {
+                if (object instanceof Packets.MessagePacket messagePacket) {
+                    Vars.ui.showErrorMessage(messagePacket.message);
+                    Vars.netClient.setQuiet();
+                    Vars.ui.loadfrag.hide();
+                    client.close();
+                    return;
+                }
+
+                for (NetListener listener : listeners) {
+                    listener.received(connection, object);
+                }
+            }
+
+            @Override
+            public void idle(Connection connection) {
+                for (NetListener listener : listeners) {
+                    listener.idle(connection);
+                }
+            }
+        };
+
+        Reflect.set(Connection.class, client, "listeners", new NetListener[] { wrap });
+
         Vars.net.connect(link.host, link.port, () -> {
-            ByteBuffer tmpBuffer = ByteBuffer.allocate(256);
-            NetSerializer tmpSerializer = new NetworkProxy.Serializer();
 
             if (!Vars.net.client()) {
                 throw new IllegalStateException("Net client is not active.");
             }
 
             var packet = new Packets.RoomJoinPacket(link.roomId, password);
-
-            tmpSerializer.write(tmpBuffer, packet);
-            tmpBuffer.limit(tmpBuffer.position()).position(0);
-            Vars.net.send(tmpBuffer, true);
-
-            Vars.netClient.beginConnecting();
+            Vars.net.send(packet, true);
 
             success.run();
         });
