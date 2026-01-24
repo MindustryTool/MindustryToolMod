@@ -6,8 +6,10 @@ import arc.Core;
 import arc.func.Cons;
 import arc.struct.Seq;
 import arc.util.Http;
+import arc.util.Log;
 import mindustry.io.JsonIO;
 import mindustrytool.Config;
+import mindustrytool.Utils;
 import mindustrytool.features.playerconnect.PlayerConnectRoom;
 import mindustrytool.features.playerconnect.PlayerConnectProvider;
 
@@ -15,18 +17,14 @@ public class PlayerConnectService {
 
     private static final ConcurrentHashMap<String, PlayerConnectRoom> roomCache = new ConcurrentHashMap<>();
 
-    @SuppressWarnings("unchecked")
     public void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> cons) {
         Http.get(Config.API_v4_URL + "player-connect/rooms?q=" + q)
                 .timeout(10000)
                 .error(_err -> Core.app.post(() -> cons.get(new Seq<>())))
                 .submit(response -> {
                     String data = response.getResultAsString();
-                    Seq<PlayerConnectRoom> rooms = JsonIO.json.fromJson(Seq.class, PlayerConnectRoom.class, data);
 
-                    if (rooms == null) {
-                        throw new IllegalArgumentException("Player connect room data is null");
-                    }
+                    Seq<PlayerConnectRoom> rooms = Seq.with(Utils.fromJsonArray(PlayerConnectRoom.class, data));
 
                     Core.app.post(() -> cons.get(rooms));
                 });
@@ -62,7 +60,7 @@ public class PlayerConnectService {
         }
 
         findPlayerConnectRooms("", rooms -> {
-            PlayerConnectRoom found = rooms.find(r -> r.link().equals(link));
+            PlayerConnectRoom found = rooms.find(r -> r.getLink().equals(link));
 
             if (found != null) {
                 roomCache.put(link, found);

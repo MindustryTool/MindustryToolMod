@@ -107,7 +107,7 @@ public class PlayerConnectJoinInjector {
         playerConnectService.findPlayerConnectRooms(searchTerm, rooms -> {
             playerConnectTable.clear();
 
-            if (rooms != null && rooms.isEmpty()) {
+            if (rooms.isEmpty()) {
                 playerConnectTable.labelWrap(Core.bundle.format("message.no-rooms-found"))
                         .center()
                         .labelAlign(0)
@@ -122,7 +122,7 @@ public class PlayerConnectJoinInjector {
             var groups = new HashMap<String, Seq<PlayerConnectRoom>>();
 
             for (var room : rooms) {
-                var link = PlayerConnectLink.fromString(room.link());
+                var link = PlayerConnectLink.fromString(room.getLink());
                 var group = link.host;
 
                 if (!groups.containsKey(group)) {
