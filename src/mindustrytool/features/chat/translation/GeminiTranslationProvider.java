@@ -69,7 +69,7 @@ public class GeminiTranslationProvider implements TranslationProvider {
         lastMessages.add(message);
 
         if (lastMessages.size > maxHistory()) {
-            lastMessages.removeRange(0, lastMessages.size - maxHistory());
+            lastMessages.removeRange(0, lastMessages.size - maxHistory() - 1);
         }
 
         CompletableFuture<String> future = new CompletableFuture<>();

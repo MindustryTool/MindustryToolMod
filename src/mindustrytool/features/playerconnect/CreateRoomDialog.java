@@ -204,7 +204,7 @@ public class CreateRoomDialog extends BaseDialog {
                     .left()
                     .padBottom(5f)
                     .row();
-        }).growX().maxWidth(800f).padBottom(20f).row();
+        }).growX().maxWidth(800f).padBottom(20f).margin(20).row();
 
         mainTable.button("@next", Icon.right, () -> {
             setupStep2();

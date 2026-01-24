@@ -14,7 +14,6 @@ import arc.util.Log;
 import arc.util.Strings;
 import mindustry.Vars;
 import mindustry.core.NetClient;
-import mindustry.gen.Call;
 import mindustry.gen.SendMessageCallPacket;
 import mindustry.gen.SendMessageCallPacket2;
 import mindustry.ui.Styles;
@@ -63,7 +62,6 @@ public class ChatTranslationFeature implements Feature {
                             this.playersender);
                 });
             } else {
-                Call.sendChatMessage(lastError);
                 NetClient.sendMessage(this.message, this.unformatted,
                         this.playersender);
             }
@@ -85,30 +83,31 @@ public class ChatTranslationFeature implements Feature {
 
     }
 
-    public void handleMessage(String message, Cons<String> result) {
+    public void handleMessage(String message, Cons<String> cons) {
         if (!enabled) {
-            result.get(message);
+            cons.get(message);
             return;
         }
 
         currentProvider.translate(Strings.stripColors(message))
-                .thenAccept(translated -> {
+                .thenApply(translated -> {
                     if (ChatTranslationConfig.isShowOriginal()) {
                         String locale = LanguageDialog.getDisplayName(Core.bundle.getLocale());
                         String formated = Strings.format("@\n\n[]@[]@\n\n", message, locale, translated);
 
-                        result.get(formated);
-                    } else {
-                        result.get(translated);
+                        return formated;
                     }
+
+                    return translated;
                 })
+                .thenAccept(formated -> cons.get(formated))
                 .exceptionally(e -> {
                     lastError = e.getMessage();
 
                     String formated = Strings.format("@\n\n@\n\n", message,
                             Core.bundle.get("chat-translation.error.prefix") + e.getMessage());
 
-                    result.get(formated);
+                    cons.get(formated);
 
                     Log.err("Translation failed", e);
                     return null;

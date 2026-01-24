@@ -480,7 +480,7 @@ public class ChatOverlay extends Table {
         }
 
         if (messages.size > 1000) {
-            messages.removeRange(0, messages.size - 1000);
+            messages.removeRange(0, messages.size - 1000 - 1);
         }
 
         if (messageTable != null && !config.collapsed()) {
