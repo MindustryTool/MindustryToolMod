@@ -23,7 +23,7 @@ import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
-import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
+import mindustrytool.features.playerconnect.Packets.RoomCloseReason;
 
 public class PlayerConnect {
 
@@ -146,7 +146,7 @@ public class PlayerConnect {
             String password,
             Cons<PlayerConnectLink> onSucceed,
             Cons<Throwable> onFailed,
-            Cons<CloseReason> onDisconnected//
+            Cons<RoomCloseReason> onDisconnected//
     ) {
         if (room != null && room.isConnected()) {
             throw new IllegalStateException("Room is already created, please close it before.");
