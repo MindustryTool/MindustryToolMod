@@ -300,9 +300,9 @@ public class Main extends Mod {
             return 0.0f;
         });
 
-        String lastestCrashKey = "latestCrash";
+        String latestCrashKey = "latestCrash";
 
-        var savedLatest = Core.settings.getString(lastestCrashKey, "");
+        var savedLatest = Core.settings.getString(latestCrashKey, "");
 
         if (latest == null) {
             return;
@@ -312,7 +312,7 @@ public class Main extends Mod {
             return;
         }
 
-        Core.settings.put(lastestCrashKey, latest.nameWithoutExtension());
+        Core.settings.put(latestCrashKey, latest.nameWithoutExtension());
 
         showCrashDialog(latest);
     }
