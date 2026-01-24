@@ -27,7 +27,7 @@ public class PlayerConnectRenderer {
 
     public static Cell<Table> render(Table container, PlayerConnectRoom room, float targetWidth) {
         float contentWidth = targetWidth > 0 ? targetWidth - 40f : 0;
-        boolean matchProtocolVersion = room.data().protocolVersion().equals(NetworkProxy.PROTOCOL_VERSION);
+        boolean matchProtocolVersion = room.getData().getProtocolVersion().equals(NetworkProxy.PROTOCOL_VERSION);
 
         return container.table(Styles.black8, t -> {
             t.top().left();
@@ -41,14 +41,14 @@ public class PlayerConnectRenderer {
                 header.left();
                 header.setColor(Pal.gray);
 
-                boolean isSecured = room.data().isSecured();
+                boolean isSecured = room.getData().isSecured();
 
                 header.table(info -> {
                     info.left();
 
                     float lockWidth = 16f;
 
-                    var label = info.add((isSecured ? Iconc.lock + " " : "") + room.data().name())
+                    var label = info.add((isSecured ? Iconc.lock + " " : "") + room.getData().getName())
                             .style(Styles.outlineLabel)
                             .fontScale(1.25f)
                             .left();
@@ -64,7 +64,7 @@ public class PlayerConnectRenderer {
 
                 // Copy Link Button (Top Right)
                 header.button(Icon.copy, Styles.clearNonei, () -> {
-                    Core.app.setClipboardText(room.link());
+                    Core.app.setClipboardText(room.getLink());
                     Vars.ui.showInfoFade("@copied");
                 }).size(32).padRight(15);
 
@@ -78,8 +78,8 @@ public class PlayerConnectRenderer {
                 body.margin(10);
 
                 // Map & Mode
-                String mapModeString = "[lightgray]" + Core.bundle.format("save.map", room.data().mapName()) +
-                        " [lightgray]/ [accent]" + room.data().gamemode();
+                String mapModeString = "[lightgray]" + Core.bundle.format("save.map", room.getData().getMapName()) +
+                        " [lightgray]/ [accent]" + room.getData().getGamemode();
 
                 var mapLabel = body.add(mapModeString)
                         .left()
@@ -93,7 +93,7 @@ public class PlayerConnectRenderer {
                 body.row();
 
                 // Players
-                String names = room.data().players().map(n -> n.name() + "[]").toString(", ");
+                String names = Seq.with(room.getData().getPlayers()).map(n -> n.getName() + "[]").toString(", ");
                 body.add(Iconc.players + " []" + names)
                         .padBottom(6)
                         .left()
@@ -105,8 +105,8 @@ public class PlayerConnectRenderer {
                 body.row();
 
                 // Mods
-                if (room.data().mods().size > 0) {
-                    var modsLabel = body.add(Iconc.book + " [lightgray]" + Strings.join(", ", room.data().mods()))
+                if (room.getData().getMods().size() > 0) {
+                    var modsLabel = body.add(Iconc.book + " [lightgray]" + Strings.join(", ", room.getData().getMods()))
                             .left()
                             .padBottom(6);
 
@@ -119,7 +119,7 @@ public class PlayerConnectRenderer {
                 }
 
                 // Mod Conflicts
-                Seq<String> serverMods = room.data().mods();
+                Seq<String> serverMods = Seq.with(room.getData().getMods());
                 Seq<String> localMods = Vars.mods.getModStrings();
 
                 Seq<String> missing = serverMods.select(s -> !localMods.contains(s));
@@ -154,10 +154,10 @@ public class PlayerConnectRenderer {
                 }
 
                 // Locale
-                body.add(Iconc.chat + " [lightgray]" + room.data().locale()).left().padBottom(6)
+                body.add(Iconc.chat + " [lightgray]" + room.getData().getLocale()).left().padBottom(6)
                         .row();
 
-                String versionString = getVersionString(room.data().version());
+                String versionString = getVersionString(room.getData().getVersion());
 
                 var versionLabel = body.add("[white]" + Iconc.info + " [lightgray]" + versionString)
                         .style(Styles.outlineLabel)
@@ -174,7 +174,7 @@ public class PlayerConnectRenderer {
 
                 if (!matchProtocolVersion) {
                     body.add("[red]" + Iconc.info + " Protocol version mismatch, current: "
-                            + NetworkProxy.PROTOCOL_VERSION + ", required: " + room.data().protocolVersion())
+                            + NetworkProxy.PROTOCOL_VERSION + ", required: " + room.getData().getProtocolVersion())
                             .style(Styles.outlineLabel)
                             .color(Pal.lightishGray)
                             .padBottom(6)
@@ -245,9 +245,9 @@ public class PlayerConnectRenderer {
     }
 
     private static void proceedToJoin(PlayerConnectRoom room) {
-        var link = PlayerConnectLink.fromString(room.link());
+        var link = PlayerConnectLink.fromString(room.getLink());
 
-        if (!room.data().isSecured()) {
+        if (!room.getData().isSecured()) {
             try {
                 PlayerConnect.join(link, "", () -> Log.info("Joined room: " + link));
             } catch (Throwable e) {

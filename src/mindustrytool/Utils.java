@@ -23,6 +23,7 @@ import mindustry.world.blocks.sandbox.*;
 import mindustry.world.blocks.storage.*;
 
 import java.io.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.*;
 
@@ -145,6 +146,14 @@ public class Utils {
     public static <T> T fromJson(Class<T> clazz, String json) {
         try {
             return mapper.readValue(json, clazz);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> List<T> fromJsonArray(Class<T> clazz, String json) {
+        try {
+            return mapper.readerForListOf(clazz).readValue(json);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
