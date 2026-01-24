@@ -6,6 +6,8 @@ import arc.struct.ArrayMap;
 import arc.util.ArcRuntimeException;
 import arc.util.io.ByteBufferInput;
 import arc.util.io.ByteBufferOutput;
+import lombok.Data;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -65,6 +67,7 @@ public class Packets {
         }
     }
 
+    @Data
     public static class RoomPlayer {
         public String name = "";
         public String locale = "";
@@ -75,6 +78,7 @@ public class Packets {
         }
     }
 
+    @Data
     public static class RoomStats {
         public List<RoomPlayer> players = new ArrayList<>();
         public String mapName = "";
@@ -273,7 +277,7 @@ public class Packets {
                 try {
                     this.version = read.readUTF();
                     this.password = read.readUTF();
-                    this.data = (RoomStats) JsonIO.read(RoomStats.class, read.readUTF());
+                    this.data = Utils.fromJson(RoomStats.class, read.readUTF());
                 } catch (Exception var3) {
                     throw new RuntimeException(var3);
                 }

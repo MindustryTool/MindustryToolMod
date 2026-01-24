@@ -1,13 +1,12 @@
 package mindustrytool.services;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import arc.Core;
 import arc.func.Cons;
 import arc.struct.Seq;
 import arc.util.Http;
-import arc.util.Log;
-import mindustry.io.JsonIO;
 import mindustrytool.Config;
 import mindustrytool.Utils;
 import mindustrytool.features.playerconnect.PlayerConnectRoom;
@@ -30,7 +29,6 @@ public class PlayerConnectService {
                 });
     }
 
-    @SuppressWarnings("unchecked")
     public void findPlayerConnectProvider(
             Cons<Seq<PlayerConnectProvider>> cons,
             Cons<Throwable> onFailed) {
@@ -40,14 +38,9 @@ public class PlayerConnectService {
                 .error(onFailed)
                 .submit(response -> {
                     String data = response.getResultAsString();
-                    Seq<PlayerConnectProvider> providers = JsonIO.json.fromJson(Seq.class,
-                            PlayerConnectProvider.class, data);
+                    List<PlayerConnectProvider> providers = Utils.fromJsonArray(PlayerConnectProvider.class, data);
 
-                    if (providers == null) {
-                        throw new IllegalArgumentException("Player connect provider data is null");
-                    }
-
-                    Core.app.post(() -> cons.get(providers));
+                    Core.app.post(() -> cons.get(Seq.with(providers)));
                 });
     }
 

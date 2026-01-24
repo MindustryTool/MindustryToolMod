@@ -4,6 +4,8 @@ import java.util.HashMap;
 
 import arc.Core;
 import arc.graphics.Color;
+import arc.scene.Element;
+import arc.scene.Group;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.util.Scaling;
@@ -51,6 +53,7 @@ public class FeatureSettingDialog extends BaseDialog {
                 json.put("locale", locale);
                 json.put("ui_scale", String.valueOf(uiScale));
                 json.put("last_log", lastLog);
+                json.put("ui_tree", Utils.toJsonPretty(getUiTree(Core.scene.root)));
 
                 Core.app.setClipboardText(Utils.toJsonPretty(json));
                 Vars.ui.showInfoFade("@coppied");
@@ -61,6 +64,21 @@ public class FeatureSettingDialog extends BaseDialog {
         });
 
         shown(this::rebuild);
+    }
+
+    private HashMap<String, Object> getUiTree(Element element) {
+        HashMap<String, Object> uiTree = new HashMap<>();
+
+        uiTree.put("name", element.name);
+        uiTree.put("type", element.getClass().getSimpleName());
+
+        if (element instanceof Group group) {
+            for (Element child : group.getChildren()) {
+                uiTree.put(child.name, getUiTree(child));
+            }
+        }
+
+        return uiTree;
     }
 
     private void rebuild() {

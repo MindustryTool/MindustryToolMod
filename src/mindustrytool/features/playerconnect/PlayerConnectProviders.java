@@ -16,7 +16,7 @@ public class PlayerConnectProviders {
             online.clear();
 
             for (var provider : providers) {
-                online.put(provider.name(), provider.address());
+                online.put(provider.getName(), provider.getAddress());
             }
 
             onCompleted.run();
