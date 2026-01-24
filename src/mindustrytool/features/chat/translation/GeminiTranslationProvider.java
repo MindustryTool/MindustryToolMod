@@ -3,9 +3,11 @@ package mindustrytool.features.chat.translation;
 import arc.Core;
 import arc.util.Http;
 import arc.util.Log;
+import arc.util.Http.HttpStatus;
 import arc.util.Http.HttpStatusException;
 import arc.util.serialization.Jval;
 import arc.scene.ui.layout.Table;
+import arc.struct.Seq;
 import arc.scene.ui.ButtonGroup;
 import arc.scene.ui.CheckBox;
 import arc.scene.ui.Slider;
@@ -23,6 +25,16 @@ public class GeminiTranslationProvider implements TranslationProvider {
             "gemini-2.0-flash",
             "gemini-2.0-flash-lite",
     };
+
+    private Seq<String> lastMessages = new Seq<>();
+
+    private int maxHistory() {
+        return Core.settings.getInt(ChatTranslationConfig.GEMINI_MAX_HISTORY, 0);
+    }
+
+    private void setMaxHistory(int maxHistory) {
+        Core.settings.put(ChatTranslationConfig.GEMINI_MAX_HISTORY, maxHistory);
+    }
 
     private String getApiKey() {
         return Core.settings.getString(ChatTranslationConfig.GEMINI_API_KEY, "");
@@ -54,6 +66,12 @@ public class GeminiTranslationProvider implements TranslationProvider {
 
     @Override
     public CompletableFuture<String> translate(String message) {
+        lastMessages.add(message);
+
+        if (lastMessages.size > maxHistory()) {
+            lastMessages.removeRange(0, lastMessages.size - maxHistory());
+        }
+
         CompletableFuture<String> future = new CompletableFuture<>();
 
         if (getApiKey().isEmpty()) {
@@ -68,10 +86,23 @@ public class GeminiTranslationProvider implements TranslationProvider {
             Jval parts = Jval.newArray();
             Jval part = Jval.newObject();
 
+            StringBuilder history = new StringBuilder();
+            Seq<String> historySnapshot = new Seq<>(lastMessages);
+
+            for (int i = 0; i < Math.min(maxHistory(), historySnapshot.size); i++) {
+                history.append(historySnapshot.get(historySnapshot.size - i - 1)).append("\n");
+            }
+
+            if (history.length() > 0) {
+                history.insert(0, "Previous conversation history:\n");
+            }
+
             String prompt = "Translate the following Mindustry game chat message to "
                     + Core.bundle.getLocale().getDisplayName()
                     + ". If it is already" + Core.bundle.getLocale().getDisplayName()
-                    + ", just return it as is. Message: "
+                    + ", just return it as is." +
+                    history.toString()
+                    + " Message to translate: "
                     + message;
 
             part.put("text", prompt);
@@ -86,7 +117,8 @@ public class GeminiTranslationProvider implements TranslationProvider {
                     .timeout(getTimeout() * 1000)
                     .error(e -> {
                         if (e instanceof HttpStatusException httpStatusException) {
-                            if (httpStatusException.status.code == 429) {
+                            if (httpStatusException.status.code == 429
+                                    || httpStatusException.status == HttpStatus.UNKNOWN_STATUS) {
                                 future.completeExceptionally(new RuntimeException(
                                         Core.bundle.get("chat-translation.gemini.rate-limit")));
                             } else if (httpStatusException.status.code == 404) {
@@ -107,10 +139,14 @@ public class GeminiTranslationProvider implements TranslationProvider {
                                                 + httpStatusException.response.getResultAsString()));
                             }
                             Log.err(e);
+
+                            return;
                         }
+
                         future.completeExceptionally(
                                 new RuntimeException(
                                         Core.bundle.get("chat-translation.error.prefix") + e.getMessage()));
+
                     })
                     .submit(res -> {
                         String jsonString = res.getResultAsString();
@@ -177,12 +213,28 @@ public class GeminiTranslationProvider implements TranslationProvider {
                         .setText(Core.bundle.get("chat-translation.gemini.timeout-label") + ": " + getTimeout() + "s"))
                 .row();
 
-        Slider slider = new Slider(2, 20, 1, false);
+        Slider slider = new Slider(5, 20, 1, false);
         slider.setValue(getTimeout());
         slider.moved(val -> {
             setTimeout((int) val);
         });
+
         table.add(slider).growX().row();
+
+        table.add(Core.bundle.get(Core.bundle.get("chat-translation.gemini.max-histories") + ": "
+                + maxHistory())).left()
+                .padTop(10)
+                .update(l -> l
+                        .setText(Core.bundle.get("chat-translation.gemini.max-histories") + ": " + maxHistory()))
+                .row();
+
+        Slider historySlider = new Slider(0, 10, 1, false);
+        historySlider.setValue(maxHistory());
+        historySlider.moved(val -> {
+            setMaxHistory((int) val);
+        });
+
+        table.add(historySlider).growX().row();
 
         return table;
     }
