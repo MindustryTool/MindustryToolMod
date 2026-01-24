@@ -143,6 +143,7 @@ public class PrettyChatFeature implements Feature {
             if (!cmd.equals("/t") && !cmd.equals("/a")) {
                 return message;
             }
+            message = message.substring(subIndex);
         }
 
         String result = message;
