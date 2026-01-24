@@ -24,7 +24,6 @@ import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustry.editor.MapResizeDialog;
 import mindustry.game.EventType.ClientLoadEvent;
-import mindustry.gen.Icon;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.net.Packet;
 import mindustry.mod.Mod;
@@ -128,7 +127,6 @@ public class Main extends Mod {
             Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
         } catch (Exception e) {
             Log.err(e);
-            Vars.ui.menufrag.addButton("Mindustry Tool", Icon.settings, () -> featureSettingDialog.show());
         }
     }
 
@@ -199,6 +197,8 @@ public class Main extends Mod {
     private void showUpdateDialog(String currentVer, String latestVer, String changelog) {
         Core.app.post(() -> {
             BaseDialog dialog = new BaseDialog("Update Available");
+
+            dialog.name = "updateAvailableDialog";
 
             Table table = new Table();
             table.defaults().left();
@@ -327,6 +327,8 @@ public class Main extends Mod {
         String sendCrashReportKey = "sendCrashReport";
 
         BaseDialog dialog = new BaseDialog("@crash-report.title");
+
+        dialog.name = "crashReportDialog";
 
         boolean sendCrashReport = Core.settings.getBool(sendCrashReportKey, true);
 

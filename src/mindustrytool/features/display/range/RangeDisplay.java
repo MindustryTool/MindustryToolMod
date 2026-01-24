@@ -245,6 +245,7 @@ public class RangeDisplay implements Feature {
 
     private void initDialog() {
         dialog = new BaseDialog("@range-display.settings.title");
+        dialog.name = "rangeDisplaySettingDialog";
         dialog.addCloseButton();
 
         Table cont = dialog.cont;

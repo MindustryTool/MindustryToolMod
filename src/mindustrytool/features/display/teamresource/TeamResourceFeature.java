@@ -185,6 +185,7 @@ public class TeamResourceFeature extends Table implements Feature {
                 ((Group) parent).addChild(this);
             } else {
                 Vars.ui.hudGroup.addChild(this);
+                name = "team-resources-overlay";
             }
 
             rebuild();
@@ -364,6 +365,7 @@ public class TeamResourceFeature extends Table implements Feature {
     private void showAllTeamsDialog() {
         var dialog = new BaseDialog("@team-resources.all-teams") {
             {
+                name = "teamResourceAllTeamsDialog";
                 addCloseButton();
                 cont.pane(p -> {
                     p.defaults().width(150f).height(50f).pad(5f);

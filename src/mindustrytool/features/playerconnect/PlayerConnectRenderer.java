@@ -206,6 +206,7 @@ public class PlayerConnectRenderer {
     public static void joinRoom(PlayerConnectRoom room, Seq<String> unneeded, Seq<String> missing) {
         if (!unneeded.isEmpty() || !missing.isEmpty()) {
             BaseDialog dialog = new BaseDialog("@warning");
+            dialog.name = "playerConnectJoinWarningDialog";
 
             if (!missing.isEmpty()) {
                 dialog.cont.add("Missing mods detected. Join anyway?").row();
@@ -257,6 +258,7 @@ public class PlayerConnectRenderer {
         }
 
         BaseDialog connect = new BaseDialog("@message.type-password.title");
+        connect.name = "playerConnectPasswordDialog";
         String[] password = { "" };
 
         connect.cont.table(table -> {

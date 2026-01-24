@@ -42,6 +42,8 @@ public class ChatFeature implements Feature {
         });
 
         settingDialog = new BaseDialog("@chat.settings.title");
+        settingDialog.name = "chatSettingDialog";
+
         settingDialog.cont.button("@chat.reset-overlay-position", () -> {
             ChatConfig config = new ChatConfig();
 

@@ -89,7 +89,9 @@ public class BackgroundFeature implements Feature {
     @Override
     public Optional<Dialog> setting() {
         BaseDialog dialog = new BaseDialog("Background Settings");
+
         dialog.addCloseButton();
+        dialog.name = "backgroundSettingDialog";
 
         Table table = dialog.cont;
         table.button("Select Background Image", Icon.file, () -> {
