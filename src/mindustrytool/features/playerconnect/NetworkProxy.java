@@ -32,10 +32,11 @@ import mindustry.net.NetConnection;
 import mindustry.net.Net.NetProvider;
 import mindustrytool.Main;
 import mindustrytool.features.playerconnect.Packets.RoomPlayer;
-import mindustrytool.features.playerconnect.Packets.RoomClosedPacket.CloseReason;
+import mindustrytool.features.playerconnect.Packets.ConnectionCloseReason;
+import mindustrytool.features.playerconnect.Packets.RoomCloseReason;
 
 public class NetworkProxy extends Client implements NetListener {
-    public static final String PROTOCOL_VERSION = "2.0";
+    public static final String PROTOCOL_VERSION = "2.1";
     public static final int defaultTimeout = 10000;
 
     private static final Ratekeeper noopRate = new NoopRatekeeper();
@@ -48,12 +49,12 @@ public class NetworkProxy extends Client implements NetListener {
     private volatile boolean isShutdown;
 
     private String roomId = null;
-    private CloseReason closeReason;
+    private RoomCloseReason closeReason;
     private String password = "";
     private String remoteHost = "";
 
     private Cons<String> onRoomCreated;
-    private Cons<CloseReason> onRoomClosed;
+    private Cons<RoomCloseReason> onRoomClosed;
 
     public NetworkProxy(String password) {
         super(32768, 16384, new Serializer());
@@ -72,7 +73,7 @@ public class NetworkProxy extends Client implements NetListener {
     }
 
     public void connect(String host, int udpTcpPort, Cons<String> onRoomCreated,
-            Cons<CloseReason> onRoomClosed//
+            Cons<RoomCloseReason> onRoomClosed//
     ) throws IOException {
         this.remoteHost = host;
         this.onRoomCreated = onRoomCreated;
@@ -235,9 +236,8 @@ public class NetworkProxy extends Client implements NetListener {
                     if (object instanceof Packets.ConnectionJoinPacket joinPacket) {
                         // Check if the link is the right
                         if (!roomId.equals(joinPacket.roomId)) {
-
                             Packets.ConnectionClosedPacket packet = new Packets.ConnectionClosedPacket(id,
-                                    DcReason.error);
+                                    ConnectionCloseReason.error);
                             sendTCP(packet);
 
                             return;
@@ -255,7 +255,7 @@ public class NetworkProxy extends Client implements NetListener {
                 } else if (object instanceof Packets.ConnectionIdlingPacket) {
                     con.setIdle();
                 } else if (object instanceof Packets.ConnectionClosedPacket closedPacket) {
-                    con.closeQuietly(closedPacket.reason);
+                    con.closeQuietly(closedPacket.reason.toDcReason());
                     Log.debug("Connection closed: @ @ @", con.id, closedPacket.reason, closeReason);
                 }
             }
@@ -399,8 +399,9 @@ public class NetworkProxy extends Client implements NetListener {
         public void close(DcReason reason) {
             boolean wasConnected = isConnected;
             isConnected = isIdling = false;
+
             if (wasConnected) {
-                var packet = new Packets.ConnectionClosedPacket(id, reason);
+                var packet = new Packets.ConnectionClosedPacket(id, ConnectionCloseReason.fromDcReason(reason));
 
                 proxy.sendTCP(packet);
 

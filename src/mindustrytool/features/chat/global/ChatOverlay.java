@@ -120,8 +120,8 @@ public class ChatOverlay extends Table {
             keepInScreen();
         });
 
-        Events.on(LoginEvent.class, e -> setup());
-        Events.on(LogoutEvent.class, e -> setup());
+        Events.on(LoginEvent.class, e -> Core.app.post(() -> setup()));
+        Events.on(LogoutEvent.class, e -> Core.app.post(() -> setup()));
 
         Events.run(Trigger.update, () -> {
             boolean noInputFocused = !Core.scene.hasField();

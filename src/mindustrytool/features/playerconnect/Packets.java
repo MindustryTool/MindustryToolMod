@@ -223,29 +223,29 @@ public class Packets {
     }
 
     public static class RoomClosedPacket extends Packet {
-        public CloseReason reason;
+        public RoomCloseReason reason;
 
         private RoomClosedPacket() {
         }
 
         public void read(ByteBufferInput read) {
-            this.reason = Packets.RoomClosedPacket.CloseReason.all[read.readByte()];
+            this.reason = Packets.RoomCloseReason.all[read.readByte()];
         }
 
         public void write(ByteBufferOutput write) {
             write.writeByte(this.reason.ordinal());
         }
 
-        public static enum CloseReason {
-            closed,
-            obsoleteClient,
-            outdatedVersion,
-            serverClosed;
+    }
 
-            public static final CloseReason[] all = values();
+    public static enum RoomCloseReason {
+        closed,
+        outdatedVersion,
+        serverClosed;
 
-            private CloseReason() {
-            }
+        public static final RoomCloseReason[] all = values();
+
+        private RoomCloseReason() {
         }
     }
 
@@ -320,14 +320,54 @@ public class Packets {
         }
     }
 
+    public static enum ConnectionCloseReason {
+        closed,
+        timeout,
+        error,
+        packetSpam;
+
+        public static final ConnectionCloseReason[] all = values();
+
+        private ConnectionCloseReason() {
+        }
+
+        public static ConnectionCloseReason fromDcReason(DcReason reason) {
+            switch (reason) {
+                case closed:
+                    return ConnectionCloseReason.closed;
+                case timeout:
+                    return ConnectionCloseReason.timeout;
+                case error:
+                    return ConnectionCloseReason.error;
+                default:
+                    return ConnectionCloseReason.error;
+            }
+        }
+
+        public DcReason toDcReason() {
+            switch (this) {
+                case closed:
+                    return DcReason.closed;
+                case timeout:
+                    return DcReason.timeout;
+                case error:
+                    return DcReason.error;
+                case packetSpam:
+                    return DcReason.error;
+                default:
+                    return DcReason.error;
+            }
+        }
+    }
+
     public static class ConnectionClosedPacket extends ConnectionWrapperPacket {
-        private static final DcReason[] reasons = DcReason.values();
-        public DcReason reason;
+        private static final ConnectionCloseReason[] reasons = ConnectionCloseReason.values();
+        public ConnectionCloseReason reason;
 
         private ConnectionClosedPacket() {
         }
 
-        public ConnectionClosedPacket(int connectionId, DcReason reason) {
+        public ConnectionClosedPacket(int connectionId, ConnectionCloseReason reason) {
             this.connectionId = connectionId;
             this.reason = reason;
         }
