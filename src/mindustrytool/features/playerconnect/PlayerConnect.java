@@ -8,9 +8,11 @@ import arc.Core;
 import arc.Events;
 import arc.func.Cons;
 import arc.net.Client;
+import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.net.NetSerializer;
 import arc.util.Log;
+import arc.util.Reflect;
 import arc.util.Threads;
 import arc.util.Time;
 import arc.util.Timer;
@@ -23,6 +25,7 @@ import mindustry.game.EventType.PlayerLeave;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
+import mindustry.net.Packets.Disconnect;
 import mindustrytool.features.playerconnect.Packets.RoomCloseReason;
 
 public class PlayerConnect {
@@ -191,9 +194,28 @@ public class PlayerConnect {
         }
     }
 
+    private static Cons<Disconnect> customDisconnectLisenser;
+
     public static void join(PlayerConnectLink link, String password, Runnable success) {
         if (link == null) {
             throw new IllegalArgumentException("Link cannot be null.");
+        }
+
+        if (customDisconnectLisenser == null) {
+
+            ObjectMap<Class<?>, Cons<Object>> listeners = Reflect.get(Vars.net, "clientListeners");
+
+            var originalDisconnectListener = listeners.get(Disconnect.class);
+            customDisconnectLisenser = (p) -> {
+                Vars.netClient.setQuiet();
+                Time.runTask(3f, () -> {
+                    Vars.ui.loadfrag.hide();
+                    Vars.ui.showErrorMessage("Disconnected from server. Wrong password or room is closed");
+                });
+                originalDisconnectListener.get(p);
+            };
+
+            Vars.net.handleClient(Disconnect.class, customDisconnectLisenser);
         }
 
         Vars.ui.loadfrag.show("@connecting");
@@ -202,6 +224,7 @@ public class PlayerConnect {
         Vars.net.reset();
 
         Vars.netClient.beginConnecting();
+
         Vars.net.connect(link.host, link.port, () -> {
             ByteBuffer tmpBuffer = ByteBuffer.allocate(256);
             NetSerializer tmpSerializer = new NetworkProxy.Serializer();

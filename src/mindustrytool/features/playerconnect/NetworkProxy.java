@@ -109,7 +109,6 @@ public class NetworkProxy extends Client implements NetListener {
             } catch (ArcNetException ex) {
                 if (roomId == null) {
                     close();
-                    // Reflect.set(Connection.class, this, "lastProtocolError", ex);
                     throw ex;
                 }
             }
