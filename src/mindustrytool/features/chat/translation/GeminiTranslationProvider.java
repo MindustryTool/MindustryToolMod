@@ -75,7 +75,9 @@ public class GeminiTranslationProvider implements TranslationProvider {
         CompletableFuture<String> future = new CompletableFuture<>();
 
         if (getApiKey().isEmpty()) {
-            future.complete(Core.bundle.get("chat-translation.gemini.no-api-key"));
+            future.completeExceptionally(
+                    new IllegalArgumentException(Core.bundle.get("chat-translation.gemini.no-api-key")));
+
             return future;
         }
 

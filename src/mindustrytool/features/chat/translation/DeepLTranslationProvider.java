@@ -35,10 +35,12 @@ public class DeepLTranslationProvider implements TranslationProvider {
     @Override
     public CompletableFuture<String> translate(String message) {
         CompletableFuture<String> future = new CompletableFuture<>();
+
         String apiKey = getApiKey();
 
         if (apiKey.isEmpty()) {
-            future.complete(Core.bundle.get("chat-translation.deepl.no-api-key"));
+            future.completeExceptionally(
+                    new IllegalArgumentException(Core.bundle.get("chat-translation.deepl.no-api-key")));
             return future;
         }
 
