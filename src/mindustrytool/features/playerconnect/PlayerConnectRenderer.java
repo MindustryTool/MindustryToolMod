@@ -94,15 +94,13 @@ public class PlayerConnectRenderer {
 
                 // Players
                 String names = room.data().players().map(n -> n.name() + "[]").toString(", ");
-                var playersLabel = body.add(Iconc.players + " [accent]" + names)
+                body.add(Iconc.players + " []" + names)
                         .padBottom(6)
                         .left()
+                        .wrap()
+                        .wrapLabel(true)
+                        .growX()
                         .get();
-
-                if (targetWidth > 0) {
-                    playersLabel.setWidth(contentWidth);
-                }
-                playersLabel.setWrap(true);
 
                 body.row();
 

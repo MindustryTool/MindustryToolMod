@@ -23,6 +23,7 @@ import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Log;
 import arc.util.Scaling;
+import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType;
@@ -362,6 +363,12 @@ public class ChatOverlay extends Table {
                 Core.scene.setKeyboardFocus(inputField);
             });
 
+            Time.runTask(60, () -> {
+                if (scrollPane != null) {
+                    Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
+                }
+            });
+
         }
 
         pack();
@@ -486,10 +493,14 @@ public class ChatOverlay extends Table {
 
         if (messageTable != null && !config.collapsed()) {
             // Scroll to bottom
+            Time.runTask(60, () -> {
+                if (scrollPane != null) {
+                    Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
+                }
+            });
+
             Core.app.post(() -> {
                 rebuildMessages(messageTable);
-                if (scrollPane != null)
-                    scrollPane.setScrollY(scrollPane.getMaxY());
             });
         }
     }

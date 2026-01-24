@@ -2,10 +2,8 @@ package mindustrytool.features.playerconnect;
 
 import java.util.Optional;
 
-import arc.Events;
 import arc.scene.ui.Dialog;
 import mindustry.Vars;
-import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -33,17 +31,15 @@ public class PlayerConnectFeature implements Feature {
         injector = new PlayerConnectJoinInjector();
         settingDialog = new PlayerConnectSettingDialog();
 
-        Events.on(ClientLoadEvent.class, e -> {
-            if (Vars.ui.join != null) {
-                // Initial injection attempt
-                injector.inject(Vars.ui.join);
+        if (Vars.ui.join != null) {
+            // Initial injection attempt
+            injector.inject(Vars.ui.join);
 
-                // Re-inject when dialog is shown to handle cases where UI is cleared
-                Vars.ui.join.shown(() -> {
-                    injector.inject(Vars.ui.join);
-                });
-            }
-        });
+            // Re-inject when dialog is shown to handle cases where UI is cleared
+            Vars.ui.join.shown(() -> {
+                injector.inject(Vars.ui.join);
+            });
+        }
     }
 
     @Override
