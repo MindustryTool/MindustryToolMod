@@ -182,9 +182,7 @@ public class Utils {
             return iconCache.get(name);
         }
 
-        var mod = Vars.mods.getMod(Main.class);
-
-        var texture = new TextureRegion(new Texture(mod.root.child("icons").child(name)));
+        var texture = new TextureRegion(new Texture(Main.self.root.child("icons").child(name)));
         var drawable = new TextureRegionDrawable(texture);
         iconCache.put(name, drawable);
         return drawable;

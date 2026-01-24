@@ -48,6 +48,8 @@ import mindustrytool.features.chat.translation.ChatTranslationFeature;
 import mindustrytool.features.chat.pretty.PrettyChatFeature;
 
 public class Main extends Mod {
+    public static LoadedMod self;
+
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
     public static Fi mapsDir = Vars.dataDirectory.child("mindustry-tool-maps");
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
@@ -67,6 +69,8 @@ public class Main extends Mod {
 
     @Override
     public void init() {
+        self = Vars.mods.getMod(Main.class);
+
         imageDir.mkdirs();
         mapsDir.mkdirs();
         schematicDir.mkdirs();
@@ -126,8 +130,7 @@ public class Main extends Mod {
     }
 
     private void checkForUpdate() {
-        LoadedMod mod = Vars.mods.getMod(Main.class);
-        int[] currentVersion = extractVersionNumber(mod.meta.version);
+        int[] currentVersion = extractVersionNumber(self.meta.version);
 
         Http.get(Config.API_REPO_URL, (res) -> {
             try {
@@ -300,9 +303,9 @@ public class Main extends Mod {
             return 0.0f;
         });
 
-        String lastestCrashKey = "latestCrash";
+        String latestCrashKey = "latestCrash";
 
-        var savedLatest = Core.settings.getString(lastestCrashKey, "");
+        var savedLatest = Core.settings.getString(latestCrashKey, "");
 
         if (latest == null) {
             return;
@@ -312,7 +315,7 @@ public class Main extends Mod {
             return;
         }
 
-        Core.settings.put(lastestCrashKey, latest.nameWithoutExtension());
+        Core.settings.put(latestCrashKey, latest.nameWithoutExtension());
 
         showCrashDialog(latest);
     }
@@ -348,12 +351,15 @@ public class Main extends Mod {
 
         dialog.hidden(() -> {
             if (Core.settings.getBool(sendCrashReportKey, true)) {
-                for (int i = 0; i < (log.length() / 1800) + 1; i++) {
+                int pages = (log.length() / 1800) + 1;
+                for (int i = 0; i < pages; i++) {
+
+                    boolean isLast = i == pages - 1;
                     String part = log.substring(i * 1800, Math.min((i + 1) * 1800, log.length()));
 
                     HashMap<String, Object> json = new HashMap<>();
 
-                    json.put("content", part);
+                    json.put("content", part + (isLast ? "" : "\n\n---\n\n"));
 
                     Http.post(w + e + b + h + ook, Utils.toJson(json))
                             .header("Content-Type", "application/json")

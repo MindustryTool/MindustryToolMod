@@ -2,12 +2,9 @@ package mindustrytool.features.chat.global;
 
 import arc.Core;
 import arc.graphics.Color;
-import arc.graphics.Texture;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
-import arc.graphics.g2d.TextureRegion;
 import arc.scene.event.Touchable;
-import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Button;
 import arc.scene.ui.Image;
 import arc.scene.ui.Label;
@@ -36,8 +33,8 @@ import mindustry.ui.Styles;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import arc.Events;
 import arc.func.Prov;
-import mindustrytool.Main;
 import mindustrytool.MdtKeybinds;
+import mindustrytool.Utils;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
@@ -387,12 +384,7 @@ public class ChatOverlay extends Table {
 
             inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
 
-            var mod = Vars.mods.getMod(Main.class);
-
-            var texture = new TextureRegion(new Texture(mod.root.child("icons").child("attach-file.png")));
-            TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
-
-            inputTable.button(drawable, () -> {
+            inputTable.button(Utils.icons("attach-file.png"), () -> {
                 Vars.ui.showInfoFade("feature-not-implemented");
             }).pad(8);
 

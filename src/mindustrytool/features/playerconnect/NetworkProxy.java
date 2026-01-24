@@ -307,9 +307,7 @@ public class NetworkProxy extends Client implements NetListener {
     public Packets.RoomStats getStats() {
         Packets.RoomStats stats = new Packets.RoomStats();
 
-        var mod = Vars.mods.getMod(Main.class);
-
-        stats.modVersion = mod.meta.version;
+        stats.modVersion = Main.self.meta.version;
         stats.gamemode = Vars.state.rules.mode().name();
         stats.mapName = Vars.state.map.name();
         stats.name = PlayerConnectConfig.getRoomName();
