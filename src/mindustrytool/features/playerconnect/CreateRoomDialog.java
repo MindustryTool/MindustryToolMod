@@ -328,6 +328,8 @@ public class CreateRoomDialog extends BaseDialog {
                 label.add(servers.getKeyAt(i) + " [lightgray](" + servers.getValueAt(i) + ')').pad(2).expandX();
             }
 
+            label.marginLeft(10).marginRight(10);
+
             stack.add(label);
             stack.add(inner);
 
