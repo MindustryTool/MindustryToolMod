@@ -324,6 +324,14 @@ public class Main extends Mod {
     }
 
     private static void showCrashDialog(Fi file) {
+        String log = file.readString();
+
+        boolean hasMindustryTool = log.contains("mindustry-tool");
+
+        if (!hasMindustryTool) {
+            return;
+        }
+
         String sendCrashReportKey = "sendCrashReport";
 
         BaseDialog dialog = new BaseDialog("@crash-report.title");
@@ -351,8 +359,6 @@ public class Main extends Mod {
         String b = "oks/14646860185309";
         String h = "02036/zCqkNjanWPJhnhhJXLvdJ0QjTL8aLTGQKuj";
         String ook = "wUAQTHQ4j2yF7NZBtYVa-QSxftUAMuewX";
-
-        String log = file.readString();
 
         dialog.hidden(() -> {
             if (Core.settings.getBool(sendCrashReportKey, true)) {
