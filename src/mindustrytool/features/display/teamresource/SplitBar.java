@@ -57,57 +57,62 @@ public class SplitBar extends Element {
             float originalScaleX = font.getScaleX();
             float originalScaleY = font.getScaleY();
 
-            font.getData().setScale(originalScaleX * fontScale * 0.8f, originalScaleY * fontScale * 0.8f);
+            try {
 
-            for (int i = 0; i < graphs.size; i++) {
-                PowerGraph graph = graphs.get(i);
-                float weight = getWeight(graph);
-                if (weight <= 0)
-                    continue;
+                font.getData().setScale(originalScaleX * fontScale * 0.8f, originalScaleY * fontScale * 0.8f);
 
-                float sectionWidth = width * (weight / totalWeight);
-                float fraction = getFraction(graph);
+                for (int i = 0; i < graphs.size; i++) {
+                    PowerGraph graph = graphs.get(i);
+                    float weight = getWeight(graph);
+                    if (weight <= 0)
+                        continue;
 
-                if (fraction > 0.01f) {
-                    if (mode == Mode.SATISFACTION && graph.getPowerBalance() < 0) {
-                        Draw.color(Color.scarlet);
-                    } else {
-                        Draw.color(Pal.powerBar);
-                    }
+                    float sectionWidth = width * (weight / totalWeight);
+                    float fraction = getFraction(graph);
 
-                    float fillWidth = sectionWidth * fraction;
-                    if (fillWidth > 0.5f) {
-                        Tex.whiteui.draw(currentX, y, fillWidth, height);
-                    }
-                }
-
-                if (i < graphs.size - 1) {
-                    Draw.color(Color.black);
-                    Draw.alpha(0.5f);
-                    Draw.rect("whiteui", currentX + sectionWidth, y + height / 2f, 2f, height);
-                }
-
-                String text = getSectionText(graph);
-                if (!text.isEmpty()) {
-                    try {
-                        layout.setText(font, text);
-
-                        if (layout.width < sectionWidth - 4f) {
-                            font.setColor(Color.white);
-                            font.draw(text, currentX + sectionWidth / 2f - layout.width / 2f,
-                                    y + height / 2f + layout.height / 2f);
+                    if (fraction > 0.01f) {
+                        if (mode == Mode.SATISFACTION && graph.getPowerBalance() < 0) {
+                            Draw.color(Color.scarlet);
+                        } else {
+                            Draw.color(Pal.powerBar);
                         }
-                    } catch (Exception e) {
-                        Log.err(e);
+
+                        float fillWidth = sectionWidth * fraction;
+                        if (fillWidth > 0.5f) {
+                            Tex.whiteui.draw(currentX, y, fillWidth, height);
+                        }
                     }
+
+                    if (i < graphs.size - 1) {
+                        Draw.color(Color.black);
+                        Draw.alpha(0.5f);
+                        Draw.rect("whiteui", currentX + sectionWidth, y + height / 2f, 2f, height);
+                    }
+
+                    String text = getSectionText(graph);
+                    if (!text.isEmpty()) {
+                        try {
+                            layout.setText(font, text);
+
+                            if (layout.width < sectionWidth - 4f) {
+                                font.setColor(Color.white);
+                                font.draw(text, currentX + sectionWidth / 2f - layout.width / 2f,
+                                        y + height / 2f + layout.height / 2f);
+                            }
+                        } catch (Exception e) {
+                            Log.err(e);
+                        }
+                    }
+
+                    currentX += sectionWidth;
                 }
 
-                currentX += sectionWidth;
+            } finally {
+                font.getData().setScale(originalScaleX, originalScaleY);
+                Pools.free(layout);
+                Draw.reset();
             }
 
-            font.getData().setScale(originalScaleX, originalScaleY);
-            Pools.free(layout);
-            Draw.reset();
         }
 
     }

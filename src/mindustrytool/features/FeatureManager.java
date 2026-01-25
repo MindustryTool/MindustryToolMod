@@ -35,10 +35,12 @@ public class FeatureManager {
 
     public void setEnabled(Feature feature, boolean enabled) {
         boolean current = isEnabled(feature);
-        if (current == enabled)
+        if (current == enabled) {
             return;
+        }
 
         Core.settings.put("mindustrytool.feature." + feature.getMetadata().name() + ".enabled", enabled);
+
         if (enabled) {
             feature.onEnable();
         } else {

@@ -105,7 +105,8 @@ public class PrettyChatFeature implements Feature {
                             return;
                         }
 
-                        chatfield.setText(transform(chatfield.getText()));
+                        String formatted = transform(chatfield.getText());
+                        chatfield.setText(formatted.substring(0, Math.min(Vars.maxTextLength, formatted.length())));
                     } catch (Exception e) {
                         Log.err(e);
                     }

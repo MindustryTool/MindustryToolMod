@@ -44,8 +44,17 @@ public class FilterDialog extends BaseDialog {
         addCloseListener();
 
         // Register listeners once
-        modService.onUpdate(this::rebuild);
-        tagService.onUpdate(this::rebuild);
+        modService.onUpdate(() -> {
+            if (isShown()) {
+                rebuild();
+            }
+        });
+
+        tagService.onUpdate(() -> {
+            if (isShown()) {
+                rebuild();
+            }
+        });
 
         onResize(() -> {
             if (isShown()) {
@@ -61,8 +70,9 @@ public class FilterDialog extends BaseDialog {
     }
 
     private void rebuild() {
-        if (searchConfig == null)
+        if (searchConfig == null) {
             return;
+        }
 
         try {
             scale = Vars.mobile ? 0.8f : 1f;
@@ -240,7 +250,7 @@ public class FilterDialog extends BaseDialog {
 
         GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
 
-        for (var tag: tags) {
+        for (var tag : tags) {
             String tagName = formatTag(tag.name());
             float iconSize = (tag.icon() != null && !tag.icon().isEmpty()) ? 40 * scale + 8 : 0;
 

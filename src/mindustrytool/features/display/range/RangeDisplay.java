@@ -40,13 +40,8 @@ public class RangeDisplay implements Feature {
     private BaseDialog dialog;
     private final RangeDisplayConfig config = new RangeDisplayConfig();
 
-    // Cache for reflection results to avoid overhead per frame
     private final ObjectMap<Block, Float> blockRangeCache = new ObjectMap<>();
 
-    // In Java, using a method reference like this::drawUnit directly in a loop (or
-    // a
-    // method called every frame) creates a new object instance each time because it
-    // captures this .
     private final Cons<Unit> unitDrawer = this::drawUnit;
     private final Cons<Building> buildingDrawer = this::drawBuilding;
     private final Boolf<Building> buildingPredicate = b -> true;
@@ -112,9 +107,8 @@ public class RangeDisplay implements Feature {
         float cw = Core.camera.width;
         float ch = Core.camera.height;
         float maxDimension = Math.max(cw, ch);
-        float radius = maxDimension * 0.75f; // Slightly larger to cover corners
+        float radius = maxDimension * 0.75f;
 
-        // Draw Spawners
         if (config.drawSpawnerRange) {
             if (Vars.spawner.getSpawns() != null) {
                 float dropRadius = Vars.state.rules.dropZoneRadius;
@@ -123,7 +117,7 @@ public class RangeDisplay implements Feature {
                         continue;
                     float x = tile.worldx();
                     float y = tile.worldy();
-                    // Check visibility
+
                     if (Mathf.dst(cx, cy, x, y) - dropRadius < radius) {
                         Color color = Vars.state.rules.waveTeam.color;
 
@@ -134,14 +128,12 @@ public class RangeDisplay implements Feature {
             }
         }
 
-        // Draw Units
         if (config.drawUnitRangeAlly || config.drawUnitRangeEnemy || config.drawPlayerRange) {
-            float margin = 2000f; // Increase search area to account for unit range
+            float margin = 2000f;
             Groups.unit.intersect(cx - cw / 2f - margin, cy - ch / 2f - margin, cw + margin * 2, ch + margin * 2,
                     unitDrawer);
         }
 
-        // Draw Buildings
         Vars.indexer.eachBlock(null, cx, cy, radius, buildingPredicate, buildingDrawer);
 
         Draw.reset();
@@ -173,8 +165,9 @@ public class RangeDisplay implements Feature {
     }
 
     private void drawBuilding(Building build) {
-        if (!build.isValid())
+        if (!build.isValid()) {
             return;
+        }
 
         boolean isAlly = build.team == Vars.player.team();
         boolean isTurret = build.block instanceof Turret;
@@ -235,7 +228,7 @@ public class RangeDisplay implements Feature {
                     break;
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
-                // Ignore
+
             }
         }
 

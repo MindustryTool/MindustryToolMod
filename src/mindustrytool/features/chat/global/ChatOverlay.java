@@ -111,8 +111,6 @@ public class ChatOverlay extends Table {
 
         inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
 
-        setup();
-
         Events.on(EventType.ResizeEvent.class, e -> {
             setup();
             keepInScreen();
@@ -133,9 +131,13 @@ public class ChatOverlay extends Table {
         addListener(new InputListener() {
             @Override
             public boolean keyDown(InputEvent event, KeyCode keycode) {
-                if (keycode == KeyCode.escape && !config.collapsed()) {
-                    collapse();
-                    return true;
+                try {
+                    if (keycode == KeyCode.escape && !config.collapsed()) {
+                        collapse();
+                        return true;
+                    }
+                } catch (Exception e) {
+                    Log.err(e);
                 }
                 return false;
             }
@@ -149,13 +151,14 @@ public class ChatOverlay extends Table {
             inputField.setDisabled(curr);
             buildInputTable(inputTable);
         });
+        Core.app.post(() -> setup());
     }
 
     public boolean isCollapsed() {
         return config.collapsed();
     }
 
-    private void setup() {
+    private synchronized void setup() {
         setPosition(config.x(config.collapsed()), config.y(config.collapsed()));
 
         container.clearChildren();
@@ -191,23 +194,36 @@ public class ChatOverlay extends Table {
 
                 @Override
                 public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                    float dx = x - lastX;
-                    float dy = y - lastY;
-                    if (Math.abs(dx) > 0.1f || Math.abs(dy) > 0.1f)
-                        wasDragged = true;
-                    ChatOverlay.this.moveBy(dx, dy);
-                    config.x(ChatOverlay.this.x);
-                    config.y(ChatOverlay.this.y);
+                    try {
+                        float dx = x - lastX;
+                        float dy = y - lastY;
 
-                    keepInScreen();
+                        if (Math.abs(dx) > 0.1f || Math.abs(dy) > 0.1f) {
+                            wasDragged = true;
+                        }
+
+                        ChatOverlay.this.moveBy(dx, dy);
+                        config.x(ChatOverlay.this.x);
+                        config.y(ChatOverlay.this.y);
+
+                        keepInScreen();
+                    } catch (Exception e) {
+                        Log.err(e);
+                    }
                 }
 
                 @Override
                 public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                    if (!wasDragged) {
+                    if (wasDragged) {
+                        return;
+                    }
+
+                    try {
                         config.collapsed(false);
                         unreadCount = 0;
                         Core.app.post(() -> setup());
+                    } catch (Exception e) {
+                        Log.err(e);
                     }
                 }
             });
@@ -239,10 +255,14 @@ public class ChatOverlay extends Table {
 
                 @Override
                 public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                    ChatOverlay.this.moveBy(x - lastX, y - lastY);
-                    keepInScreen();
-                    config.x(ChatOverlay.this.x);
-                    config.y(ChatOverlay.this.y);
+                    try {
+                        ChatOverlay.this.moveBy(x - lastX, y - lastY);
+                        keepInScreen();
+                        config.x(ChatOverlay.this.x);
+                        config.y(ChatOverlay.this.y);
+                    } catch (Exception e) {
+                        Log.info(e);
+                    }
                 }
             });
 
@@ -318,7 +338,7 @@ public class ChatOverlay extends Table {
 
             titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
                 isUserListCollapsed = !isUserListCollapsed;
-                Core.app.post(() -> setup());
+                setup();
             }).size(40).pad(4).right();
 
             rightSide.add(titleTable).growX().row();
@@ -356,8 +376,6 @@ public class ChatOverlay extends Table {
                 if (scrollPane != null) {
                     scrollPane.setScrollY(scrollPane.getMaxY());
                 }
-
-                Core.scene.setKeyboardFocus(inputField);
             });
 
             Time.runTask(60, () -> {
@@ -371,6 +389,7 @@ public class ChatOverlay extends Table {
         pack();
 
         keepInScreen();
+
     }
 
     private void buildInputTable(Table inputTable) {
@@ -428,8 +447,9 @@ public class ChatOverlay extends Table {
     }
 
     public void keepInScreen() {
-        if (getScene() == null)
+        if (getScene() == null) {
             return;
+        }
 
         float w = getWidth();
         float h = getHeight();
@@ -650,7 +670,7 @@ public class ChatOverlay extends Table {
     private void collapse() {
         config.collapsed(true);
         unreadCount = 0;
-        Core.app.post(() -> setup());
+        setup();
     }
 
     private void sendMessage() {
@@ -683,7 +703,7 @@ public class ChatOverlay extends Table {
             isSending.set(true);
 
             if (sendButton != null) {
-                sendButton.setText("@sending");
+                Core.app.post(() -> sendButton.setText("@sending"));
             }
 
             prov.get().thenRun(() -> {
@@ -694,25 +714,25 @@ public class ChatOverlay extends Table {
                     if (sendButton != null) {
                         sendButton.setText("@chat.send");
                     }
-
-                    Core.scene.setKeyboardFocus(inputField);
                 });
             }).exceptionally((err) -> {
-                isSending.set(false);
+                Core.app.post(() -> {
+                    isSending.set(false);
 
-                String errStr = err.toString();
+                    String errStr = err.toString();
 
-                if (errStr.contains("409") || err.getMessage().contains("409")) {
-                    Vars.ui.showInfoToast("@chat.rate-limited", 3f);
-                } else {
-                    Vars.ui.showInfoToast("@chat.send-failed", 3f);
-                    Log.err("Send message failed", err);
-                }
+                    if (errStr.contains("409") || err.getMessage().contains("409")) {
+                        Vars.ui.showInfoToast("@chat.rate-limited", 3f);
+                    } else {
+                        Vars.ui.showInfoToast("@chat.send-failed", 3f);
+                        Log.err("Send message failed", err);
+                    }
 
-                if (sendButton != null) {
-                    sendButton.setText("@chat.send");
-                }
+                    if (sendButton != null) {
+                        sendButton.setText("@chat.send");
+                    }
 
+                });
                 return null;
             });
 

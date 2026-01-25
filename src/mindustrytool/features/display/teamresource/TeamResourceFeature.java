@@ -19,6 +19,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Interval;
+import arc.util.Log;
 import arc.util.Scaling;
 import mindustry.Vars;
 import mindustry.core.UI;
@@ -57,30 +58,43 @@ public class TeamResourceFeature extends Table implements Feature {
     private final ClickListener statsListener = new ClickListener() {
         @Override
         public void clicked(InputEvent event, float x, float y) {
-            showTeamSelector = !showTeamSelector;
-
-            Core.app.post(() -> rebuild());
+            try {
+                showTeamSelector = !showTeamSelector;
+                rebuild();
+            } catch (Exception e) {
+                Log.err(e);
+            }
         }
 
         @Override
         public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-            holdingForStats = true;
-            viewingStats = true;
-            lastSnapshot.clear();
-            return super.touchDown(event, x, y, pointer, button);
+            try {
+                holdingForStats = true;
+                viewingStats = true;
+                lastSnapshot.clear();
+                return super.touchDown(event, x, y, pointer, button);
+            } catch (Exception e) {
+                Log.err(e);
+            }
+
+            return false;
         }
 
         @Override
         public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
-            holdingForStats = false;
-            if (!Vars.mobile) {
-                if (!isHovered)
+            try {
+                holdingForStats = false;
+                if (!Vars.mobile) {
+                    if (!isHovered)
+                        viewingStats = false;
+                } else {
                     viewingStats = false;
-            } else {
-                viewingStats = false;
+                }
+                lastSnapshot.clear();
+                super.touchUp(event, x, y, pointer, button);
+            } catch (Exception e) {
+                Log.err(e);
             }
-            lastSnapshot.clear();
-            super.touchUp(event, x, y, pointer, button);
         }
 
         @Override

@@ -17,6 +17,7 @@ import arc.scene.ui.Button;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import arc.util.Log;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
@@ -93,21 +94,21 @@ public class QuickAccessHud extends Table implements Feature {
 
                     @Override
                     public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                        // Move the main table (this)
-                        moveBy(x - lastX, y - lastY);
+                        try {
+                            moveBy(x - lastX, y - lastY);
 
-                        // Clamp to screen
-                        // Ensure the anchor (40f) remains visible
-                        float sw = Core.graphics.getWidth();
-                        float sh = Core.graphics.getHeight();
-                        QuickAccessHud.this.x = Mathf.clamp(QuickAccessHud.this.x, 0, sw - 40f);
-                        QuickAccessHud.this.y = Mathf.clamp(QuickAccessHud.this.y, 0, sh - 40f);
+                            float sw = Core.graphics.getWidth();
+                            float sh = Core.graphics.getHeight();
+                            QuickAccessHud.this.x = Mathf.clamp(QuickAccessHud.this.x, 0, sw - 40f);
+                            QuickAccessHud.this.y = Mathf.clamp(QuickAccessHud.this.y, 0, sh - 40f);
 
-                        config.x(QuickAccessHud.this.x);
-                        config.y(QuickAccessHud.this.y);
+                            config.x(QuickAccessHud.this.x);
+                            config.y(QuickAccessHud.this.y);
 
-                        // Close popup if moving
-                        closePopup();
+                            closePopup();
+                        } catch (Exception e) {
+                            Log.err(e);
+                        }
                     }
                 });
 
