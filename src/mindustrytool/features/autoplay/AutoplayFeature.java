@@ -160,7 +160,7 @@ public class AutoplayFeature implements Feature {
 
             currentTask = nextTask;
 
-            if (dialog.visible) {
+            if (dialog != null && dialog.visible) {
                 dialog.rebuild();
             }
         }
