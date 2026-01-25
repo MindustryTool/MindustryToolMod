@@ -147,17 +147,17 @@ public class PagingRequest<T> {
             return;
         }
 
-        Core.app.post(() -> {
-            try {
-                String data = response.getResultAsString();
-                var items = Utils.fromJsonArray(clazz, data);
+        try {
+            String data = response.getResultAsString();
+            var items = Utils.fromJsonArray(clazz, data);
 
-                hasMore = items.size() != 0;
+            hasMore = items.size() != 0;
 
+            Core.app.post(() -> {
                 listener.get(Seq.with(items));
-            } catch (Exception e) {
-                handleError(listener, e, url);
-            }
-        });
+            });
+        } catch (Exception e) {
+            handleError(listener, e, url);
+        }
     }
 }

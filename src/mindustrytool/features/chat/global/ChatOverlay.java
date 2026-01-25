@@ -508,7 +508,7 @@ public class ChatOverlay extends Table {
 
             Core.app.post(() -> {
                 rebuildMessages(messageTable);
-            });
+        });
         
             Time.runTask(60 * 3, () -> {
                 if (scrollPane != null) {
