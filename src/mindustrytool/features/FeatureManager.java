@@ -19,6 +19,10 @@ public class FeatureManager {
         features.sort((a, b) -> Integer.compare(a.getMetadata().order(), b.getMetadata().order()));
     }
 
+    public <T extends Feature> T getFeature(Class<T> featureClass) {
+        return featureClass.cast(features.find(f -> f.getClass() == featureClass));
+    }
+
     public void init() {
         for (Feature feature : features) {
             feature.init();
