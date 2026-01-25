@@ -1,10 +1,9 @@
 package mindustrytool.services;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-import arc.Core;
-import arc.func.Cons;
 import arc.struct.Seq;
 import arc.util.Http;
 import mindustrytool.Config;
@@ -13,55 +12,67 @@ import mindustrytool.features.playerconnect.PlayerConnectRoom;
 import mindustrytool.features.playerconnect.PlayerConnectProvider;
 
 public class PlayerConnectService {
-
     private static final ConcurrentHashMap<String, PlayerConnectRoom> roomCache = new ConcurrentHashMap<>();
 
-    public void findPlayerConnectRooms(String q, Cons<Seq<PlayerConnectRoom>> cons) {
+    public CompletableFuture<Seq<PlayerConnectRoom>> findPlayerConnectRooms(String q) {
+        CompletableFuture<Seq<PlayerConnectRoom>> future = new CompletableFuture<>();
+
         Http.get(Config.API_v4_URL + "player-connect/rooms?q=" + q)
-                .timeout(10000)
-                .error(_err -> Core.app.post(() -> cons.get(new Seq<>())))
+                .timeout(20000)
+                .error(future::completeExceptionally)
                 .submit(response -> {
-                    String data = response.getResultAsString();
-
-                    Seq<PlayerConnectRoom> rooms = Seq.with(Utils.fromJsonArray(PlayerConnectRoom.class, data));
-
-                    Core.app.post(() -> cons.get(rooms));
+                    try {
+                        String data = response.getResultAsString();
+                        Seq<PlayerConnectRoom> rooms = Seq.with(Utils.fromJsonArray(PlayerConnectRoom.class, data));
+                        future.complete(rooms);
+                    } catch (Exception e) {
+                        future.completeExceptionally(e);
+                    }
                 });
+
+        return future;
     }
 
-    public void findPlayerConnectProvider(
-            Cons<Seq<PlayerConnectProvider>> cons,
-            Cons<Throwable> onFailed) {
+    public CompletableFuture<Seq<PlayerConnectProvider>> findPlayerConnectProvider() {
+        CompletableFuture<Seq<PlayerConnectProvider>> future = new CompletableFuture<>();
 
         Http.get(Config.API_v4_URL + "player-connect/providers")
                 .timeout(10000)
-                .error(onFailed)
+                .error(future::completeExceptionally)
                 .submit(response -> {
-                    String data = response.getResultAsString();
-                    List<PlayerConnectProvider> providers = Utils.fromJsonArray(PlayerConnectProvider.class, data);
-
-                    Core.app.post(() -> cons.get(Seq.with(providers)));
+                    try {
+                        String data = response.getResultAsString();
+                        List<PlayerConnectProvider> providers = Utils.fromJsonArray(PlayerConnectProvider.class, data);
+                        future.complete(Seq.with(providers));
+                    } catch (Exception e) {
+                        future.completeExceptionally(e);
+                    }
                 });
+
+        return future;
     }
 
-    public void getRoomWithCache(String link, Cons<PlayerConnectRoom> cons) {
+    public CompletableFuture<PlayerConnectRoom> getRoomWithCache(String link) {
+        CompletableFuture<PlayerConnectRoom> future = new CompletableFuture<>();
         var cached = roomCache.get(link);
 
         if (cached != null) {
-            Core.app.post(() -> cons.get(cached));
-            return;
+            future.complete(cached);
+            return future;
         }
 
-        findPlayerConnectRooms("", rooms -> {
+        findPlayerConnectRooms("").thenAccept(rooms -> {
             PlayerConnectRoom found = rooms.find(r -> r.getLink().equals(link));
 
             if (found != null) {
                 roomCache.put(link, found);
-                Core.app.post(() -> cons.get(found));
+                future.complete(found);
             } else {
-                Core.app.post(() -> cons.get(null));
+                future.complete(null);
             }
         });
+
+        return future;
     }
 
     public void invalidateRoom(String link) {

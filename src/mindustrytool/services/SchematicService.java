@@ -1,8 +1,7 @@
 package mindustrytool.services;
 
-import arc.Core;
-import arc.func.Cons;
-import arc.func.ConsT;
+import java.util.concurrent.CompletableFuture;
+
 import arc.util.Http;
 import mindustrytool.Config;
 import mindustrytool.Utils;
@@ -10,16 +9,32 @@ import mindustrytool.dto.SchematicDetailData;
 
 public class SchematicService {
 
-    public void downloadSchematic(String id, ConsT<byte[], Exception> c) {
-        Http.get(Config.API_URL + "schematics/" + id + "/data").submit(result -> {
-            c.get(result.getResult());
-        });
+    public CompletableFuture<byte[]> downloadSchematic(String id) {
+        CompletableFuture<byte[]> future = new CompletableFuture<>();
+
+        Http.get(Config.API_URL + "schematics/" + id + "/data")
+                .error(future::completeExceptionally)
+                .submit(result -> {
+                    future.complete(result.getResult());
+                });
+
+        return future;
     }
 
-    public void findSchematicById(String id, Cons<SchematicDetailData> c) {
-        Http.get(Config.API_URL + "schematics/" + id).submit(response -> {
-            String data = response.getResultAsString();
-            Core.app.post(() -> c.get(Utils.fromJson(SchematicDetailData.class, data)));
-        });
+    public CompletableFuture<SchematicDetailData> findSchematicById(String id) {
+        CompletableFuture<SchematicDetailData> future = new CompletableFuture<>();
+
+        Http.get(Config.API_URL + "schematics/" + id)
+                .error(future::completeExceptionally)
+                .submit(response -> {
+                    try {
+                        String data = response.getResultAsString();
+                        future.complete(Utils.fromJson(SchematicDetailData.class, data));
+                    } catch (Exception e) {
+                        future.completeExceptionally(e);
+                    }
+                });
+
+        return future;
     }
 }

@@ -12,15 +12,20 @@ public class PlayerConnectProviders {
     private static final PlayerConnectService playerConnectService = new PlayerConnectService();
 
     public static synchronized void refreshOnline(Runnable onCompleted, arc.func.Cons<Throwable> onFailed) {
-        playerConnectService.findPlayerConnectProvider(providers -> {
-            online.clear();
+        playerConnectService.findPlayerConnectProvider().thenAccept(providers -> {
+            Core.app.post(() -> {
+                online.clear();
 
-            for (var provider : providers) {
-                online.put(provider.getName(), provider.getAddress());
-            }
+                for (var provider : providers) {
+                    online.put(provider.getName(), provider.getAddress());
+                }
 
-            onCompleted.run();
-        }, onFailed);
+                onCompleted.run();
+            });
+        }).exceptionally(error -> {
+            onFailed.get(error);
+            return null;
+        });
     }
 
     @SuppressWarnings("unchecked")
