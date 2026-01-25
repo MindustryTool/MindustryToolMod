@@ -31,8 +31,6 @@ public class SchematicBrowserFeature implements Feature {
 
     @Override
     public void init() {
-        schematicDialog = new SchematicDialog();
-
         if (FeatureManager.getInstance().isEnabled(this)) {
             addBrowseButton();
         }
@@ -75,6 +73,10 @@ public class SchematicBrowserFeature implements Feature {
 
     @Override
     public Optional<Dialog> dialog() {
+        if (schematicDialog == null) {
+            schematicDialog = new SchematicDialog();
+        }
+
         return Optional.of(schematicDialog);
     }
 }

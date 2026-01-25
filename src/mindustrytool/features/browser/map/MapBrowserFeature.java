@@ -27,8 +27,6 @@ public class MapBrowserFeature implements Feature {
 
     @Override
     public void init() {
-        mapDialog = new MapDialog();
-
         Events.run(Trigger.update, () -> {
             boolean noInputFocused = !Core.scene.hasField();
             boolean enabled = FeatureManager.getInstance().isEnabled(this);
@@ -55,6 +53,10 @@ public class MapBrowserFeature implements Feature {
 
     @Override
     public Optional<Dialog> dialog() {
+        if (mapDialog == null) {
+            mapDialog = new MapDialog();
+        }
+
         return Optional.of(mapDialog);
     }
 }
