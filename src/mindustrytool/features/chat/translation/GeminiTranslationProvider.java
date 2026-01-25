@@ -67,9 +67,8 @@ public class GeminiTranslationProvider implements TranslationProvider {
     @Override
     public synchronized CompletableFuture<String> translate(String message) {
         lastMessages.add(message);
-
         if (lastMessages.size > maxHistory()) {
-            lastMessages.removeRange(0, lastMessages.size - maxHistory() - 1);
+            lastMessages.remove(0);
         }
 
         CompletableFuture<String> future = new CompletableFuture<>();

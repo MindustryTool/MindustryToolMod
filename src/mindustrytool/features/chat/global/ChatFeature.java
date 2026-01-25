@@ -84,7 +84,7 @@ public class ChatFeature implements Feature {
             }
 
             overlay.name = "mdt-chat-overlay";
-            Core.scene.add(overlay);
+            Core.app.post(() -> Core.scene.add(overlay));
         }
     }
 

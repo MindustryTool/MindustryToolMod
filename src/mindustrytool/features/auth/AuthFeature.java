@@ -1,5 +1,6 @@
 package mindustrytool.features.auth;
 
+import arc.Core;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
@@ -40,7 +41,7 @@ public class AuthFeature implements Feature {
         authWindow.top().right();
         authWindow.touchable = Touchable.childrenOnly;
 
-        Vars.ui.menuGroup.addChild(wholeViewport);
+        Core.app.post(() -> Vars.ui.menuGroup.addChild(wholeViewport));
 
         Table content = new Table();
         content.setBackground(Styles.black6);

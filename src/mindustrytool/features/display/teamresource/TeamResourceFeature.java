@@ -198,7 +198,7 @@ public class TeamResourceFeature extends Table implements Feature {
             if (parent != null && parent instanceof Group) {
                 ((Group) parent).addChild(this);
             } else {
-                Vars.ui.hudGroup.addChild(this);
+                Core.app.post(() -> Vars.ui.hudGroup.addChild(this));
                 name = "team-resources-overlay";
             }
 

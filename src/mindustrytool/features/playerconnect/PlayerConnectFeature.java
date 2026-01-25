@@ -32,10 +32,6 @@ public class PlayerConnectFeature implements Feature {
         settingDialog = new PlayerConnectSettingDialog();
 
         if (Vars.ui.join != null) {
-            // Initial injection attempt
-            injector.inject(Vars.ui.join);
-
-            // Re-inject when dialog is shown to handle cases where UI is cleared
             Vars.ui.join.shown(() -> {
                 injector.inject(Vars.ui.join);
             });

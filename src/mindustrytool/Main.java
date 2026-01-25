@@ -162,7 +162,9 @@ public class Main extends Mod {
     private void fetchReleasesAndShowDialog(String currentVer, String latestVer) {
         Http.get(Config.GITHUB_API_URL).error(e -> {
             Log.err("Failed to fetch releases", e);
-            showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+            Core.app.post(() -> {
+                showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+            });
         }).submit(res -> {
             try {
                 Jval json = Jval.read(res.getResultAsString());
@@ -183,13 +185,19 @@ public class Main extends Mod {
                         count++;
                     }
 
-                    showUpdateDialog(currentVer, latestVer, changelog.toString());
+                    Core.app.post(() -> {
+                        showUpdateDialog(currentVer, latestVer, changelog.toString());
+                    });
                 } else {
-                    showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+                    Core.app.post(() -> {
+                        showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+                    });
                 }
             } catch (Exception e) {
                 Log.err("Failed to parse releases", e);
-                showUpdateDialog(currentVer, latestVer, "Could not parse release notes.");
+                Core.app.post(() -> {
+                    showUpdateDialog(currentVer, latestVer, "Could not parse release notes.");
+                });
             }
         });
     }
