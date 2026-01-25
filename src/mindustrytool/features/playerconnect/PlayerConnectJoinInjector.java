@@ -1,6 +1,7 @@
 package mindustrytool.features.playerconnect;
 
 import arc.Core;
+import arc.func.Cons;
 import arc.math.Mathf;
 import arc.scene.ui.layout.Scl;
 import arc.scene.Element;
@@ -11,6 +12,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Reflect;
+import arc.util.Http.HttpStatusException;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
@@ -104,7 +106,7 @@ public class PlayerConnectJoinInjector {
                 .expand()
                 .fill();
 
-        arc.func.Cons<Seq<PlayerConnectRoom>> renderRooms = rooms -> {
+        Cons<Seq<PlayerConnectRoom>> renderRooms = rooms -> {
             playerConnectTable.clear();
 
             if (rooms == null || rooms.isEmpty()) {
@@ -171,9 +173,35 @@ public class PlayerConnectJoinInjector {
             }
         };
 
-        // Ensure provider names are loaded before grouping so we can show provider.name instead of host when possible
-        PlayerConnectProviders.refreshOnline(() -> playerConnectService.findPlayerConnectRooms(searchTerm, renderRooms),
-                e -> playerConnectService.findPlayerConnectRooms(searchTerm, renderRooms));
+        Cons<Throwable> renderError = error -> {
+            String message = error.getMessage();
+
+            if (error instanceof HttpStatusException httpStatusException) {
+                message = httpStatusException.response.getResultAsString();
+            }
+
+            playerConnectTable.clear();
+            playerConnectTable.labelWrap(message)
+                    .center()
+                    .labelAlign(0)
+                    .expand()
+                    .fill()
+                    .pad(10);
+        };
+
+        PlayerConnectProviders.refreshOnline(
+                () -> playerConnectService.findPlayerConnectRooms(searchTerm)
+                        .thenAccept(data -> Core.app.post(() -> renderRooms.get(data)))
+                        .exceptionally(error -> {
+                            Core.app.post(() -> renderError.get(error));
+                            return null;
+                        }),
+                e -> playerConnectService.findPlayerConnectRooms(searchTerm)
+                        .thenAccept(data -> Core.app.post(() -> renderRooms.get(data)))
+                        .exceptionally(error -> {
+                            Core.app.post(() -> renderError.get(error));
+                            return null;
+                        }));
     }
 
     private int columns() {

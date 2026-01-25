@@ -252,7 +252,8 @@ public class MapDialog extends BaseDialog {
                 buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadMap(data))
                         .pad(2);
                 buttons.button(Icon.info, Styles.emptyi,
-                        () -> mapService.findMapById(data.getId(), infoDialog::show))
+                        () -> mapService.findMapById(data.getId())
+                                .thenAccept(m -> Core.app.post(() -> infoDialog.show(m))))
                         .tooltip("@info.title");
             }).growX().height(PREVIEW_BUTTON_SIZE);
 
@@ -295,11 +296,11 @@ public class MapDialog extends BaseDialog {
     }
 
     private void handleCardClick(Button button, MapData data) {
-        if (button.childrenPressed())
+        if (button.childrenPressed()) {
             return;
+        }
 
-        // Default action on click: show info
-        mapService.findMapById(data.getId(), infoDialog::show);
+        mapService.findMapById(data.getId()).thenAccept(m -> Core.app.post(() -> infoDialog.show(m)));
     }
 
     private void rebuildFooter() {
@@ -378,11 +379,20 @@ public class MapDialog extends BaseDialog {
     }
 
     private void handleDownloadMap(MapData map) {
-        mapService.downloadMap(map.getId(), result -> {
-            Fi mapFile = Vars.customMapDirectory.child(map.getId());
-            mapFile.writeBytes(result);
-            Vars.maps.importMap(mapFile);
-            ui.showInfoFade("@map.saved");
+        mapService.downloadMap(map.getId()).thenAccept(result -> {
+            Core.app.post(() -> {
+                try {
+                    Fi mapFile = Vars.customMapDirectory.child(map.getId());
+                    mapFile.writeBytes(result);
+                    Vars.maps.importMap(mapFile);
+                    ui.showInfoFade("@map.saved");
+                } catch (Exception e) {
+                    ui.showInfoFade(e.getMessage());
+                }
+            });
+        }).exceptionally(error -> {
+            ui.showInfoFade(error.getMessage());
+            return null;
         });
     }
 }

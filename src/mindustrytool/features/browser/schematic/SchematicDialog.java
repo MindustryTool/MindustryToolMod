@@ -257,7 +257,8 @@ public class SchematicDialog extends BaseDialog {
                 buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadSchematic(data))
                         .pad(2);
                 buttons.button(Icon.info, Styles.emptyi,
-                        () -> schematicService.findSchematicById(data.getId(), infoDialog::show))
+                        () -> schematicService.findSchematicById(data.getId())
+                                .thenAccept(schem -> Core.app.post(() -> infoDialog.show(schem))))
                         .tooltip("@info.title");
             }).growX().height(PREVIEW_BUTTON_SIZE);
 
@@ -300,11 +301,13 @@ public class SchematicDialog extends BaseDialog {
     }
 
     private void handleCardClick(Button button, SchematicData data) {
-        if (button.childrenPressed())
+        if (button.childrenPressed()) {
             return;
+        }
 
         if (state.isMenu()) {
-            schematicService.findSchematicById(data.getId(), infoDialog::show);
+            schematicService.findSchematicById(data.getId())
+                    .thenAccept(schem -> Core.app.post(() -> infoDialog.show(schem)));
         } else {
             if (!state.rules.schematicsAllowed) {
                 ui.showInfo("@schematic.disabled");
@@ -393,27 +396,35 @@ public class SchematicDialog extends BaseDialog {
 
     private void handleCopySchematic(SchematicData schematic) {
         handleDownloadSchematicData(schematic, data -> {
-            Schematic s = Utils.readSchematic(data);
-            Core.app.setClipboardText(Vars.schematics.writeBase64(s));
-            ui.showInfoFade("@copied");
+            Core.app.post(() -> {
+                Schematic s = Utils.readSchematic(data);
+                Core.app.setClipboardText(Vars.schematics.writeBase64(s));
+                ui.showInfoFade("@copied");
+            });
         });
     }
 
     private void handleDownloadSchematic(SchematicData schematic) {
         handleDownloadSchematicData(schematic, data -> {
-            Schematic s = Utils.readSchematic(data);
-            schematicService.findSchematicById(schematic.getId(), detail -> {
-                s.labels.add(Seq.with(detail.getTags().stream().map(i -> i.getName()).toArray(String[]::new)));
-                s.removeSteamID();
-                Vars.schematics.add(s);
-                ui.showInfoFade("@schematic.saved");
+            schematicService.findSchematicById(schematic.getId()).thenAccept(detail -> {
+                Schematic s = Utils.readSchematic(data);
+                Core.app.post(() -> {
+                    s.labels.add(Seq.with(detail.getTags().stream().map(i -> i.getName()).toArray(String[]::new)));
+                    s.removeSteamID();
+                    Vars.schematics.add(s);
+                    ui.showInfoFade("@schematic.saved");
+                });
             });
         });
     }
 
     private void handleDownloadSchematicData(SchematicData data, Cons<String> cons) {
-        schematicService.downloadSchematic(data.getId(), result -> {
+        schematicService.downloadSchematic(data.getId()).thenAccept(result -> {
             cons.get(new String(Base64Coder.encode(result)));
-        });
+        })
+                .exceptionally((err) -> {
+                    ui.showInfoFade(err.getMessage());
+                    return null;
+                });
     }
 }

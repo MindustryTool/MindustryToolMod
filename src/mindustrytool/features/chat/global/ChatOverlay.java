@@ -530,11 +530,13 @@ public class ChatOverlay extends Table {
             // Avatar Column
             entry.table(avatar -> {
                 avatar.top();
-                UserService.findUserById(msg.createdBy, data -> {
-                    avatar.clear();
-                    if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
-                        avatar.add(new NetworkImage(data.getImageUrl())).size(40);
-                    }
+                UserService.findUserById(msg.createdBy).thenAccept(data -> {
+                    Core.app.post(() -> {
+                        avatar.clear();
+                        if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
+                            avatar.add(new NetworkImage(data.getImageUrl())).size(40);
+                        }
+                    });
                 });
             }).size(48).top().pad(8);
 
@@ -544,34 +546,36 @@ public class ChatOverlay extends Table {
                 Label label = new Label("...");
                 label.setStyle(Styles.defaultLabel);
 
-                UserService.findUserById(msg.createdBy, data -> {
-                    String timeStr = "";
+                UserService.findUserById(msg.createdBy).thenAccept(data -> {
+                    Core.app.post(() -> {
+                        String timeStr = "";
 
-                    if (msg.createdAt != null) {
-                        try {
-                            Instant instant = Instant.parse(msg.createdAt);
-                            timeStr = DateTimeFormatter.ofPattern("HH:mm")
-                                    .withZone(ZoneId.systemDefault())
-                                    .format(instant);
+                        if (msg.createdAt != null) {
+                            try {
+                                Instant instant = Instant.parse(msg.createdAt);
+                                timeStr = DateTimeFormatter.ofPattern("HH:mm")
+                                        .withZone(ZoneId.systemDefault())
+                                        .format(instant);
 
-                        } catch (Exception err) {
-                            Log.err(err);
+                            } catch (Exception err) {
+                                Log.err(err);
+                            }
                         }
-                    }
 
-                    Color color = data.getHighestRole()
-                            .map(r -> {
-                                try {
-                                    return Color.valueOf(r.getColor());
-                                } catch (Exception err) {
-                                    Log.err(err);
-                                    return Color.white;
-                                }
-                            })
-                            .orElse(Color.white);
+                        Color color = data.getHighestRole()
+                                .map(r -> {
+                                    try {
+                                        return Color.valueOf(r.getColor());
+                                    } catch (Exception err) {
+                                        Log.err(err);
+                                        return Color.white;
+                                    }
+                                })
+                                .orElse(Color.white);
 
-                    label.setText("[#" + color.toString() + "]" + data.getName() + "[]"
-                            + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
+                        label.setText("[#" + color.toString() + "]" + data.getName() + "[]"
+                                + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
+                    });
                 });
 
                 card.add(label).left().row();
@@ -769,14 +773,16 @@ public class ChatOverlay extends Table {
             t.left();
             t.add("@chat.loading-room-info").color(Color.gray);
 
-            playerConnectService.getRoomWithCache(link, room -> {
-                t.clear();
+            playerConnectService.getRoomWithCache(link).thenAccept(room -> {
+                Core.app.post(() -> {
+                    t.clear();
 
-                if (room != null) {
-                    PlayerConnectRenderer.render(t, room).grow();
-                } else {
-                    t.add("@chat.room-not-found").color(Color.gray);
-                }
+                    if (room != null) {
+                        PlayerConnectRenderer.render(t, room).grow();
+                    } else {
+                        t.add("@chat.room-not-found").color(Color.gray);
+                    }
+                });
             });
         }).growX().left().padTop(10);
     }

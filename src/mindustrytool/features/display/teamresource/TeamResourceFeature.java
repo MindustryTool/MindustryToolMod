@@ -74,6 +74,8 @@ public class TeamResourceFeature extends Table implements Feature {
                 lastSnapshot.clear();
                 return super.touchDown(event, x, y, pointer, button);
             } catch (Exception e) {
+                viewingStats = false;
+                holdingForStats = false;
                 Log.err(e);
             }
 

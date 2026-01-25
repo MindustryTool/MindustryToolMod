@@ -1,7 +1,7 @@
 package mindustrytool.services;
 
-import arc.Core;
-import arc.func.Cons;
+import java.util.concurrent.CompletableFuture;
+
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Http;
@@ -12,21 +12,23 @@ import mindustrytool.dto.UserData;
 public class UserService {
 
     private static final ObjectMap<String, UserData> cache = new ObjectMap<String, UserData>();
-    private static final ObjectMap<String, Seq<Cons<UserData>>> listeners = new ObjectMap<>();
+    private static final ObjectMap<String, Seq<CompletableFuture<UserData>>> listeners = new ObjectMap<>();
 
-    public static void findUserById(String id, Cons<UserData> c) {
+    public static synchronized CompletableFuture<UserData> findUserById(String id) {
+        CompletableFuture<UserData> future = new CompletableFuture<>();
 
         UserData cached = cache.get(id);
 
         if (cached != null) {
-            c.get(cached);
-            return;
+            future.complete(cached);
+            return future;
         }
 
         var current = listeners.get(id);
 
         if (current == null) {
-            final Seq<Cons<UserData>> callbacks = Seq.withArrays(c);
+            final Seq<CompletableFuture<UserData>> callbacks = Seq.withArrays(future);
+
             listeners.put(id, callbacks);
 
             Http.get(Config.API_URL + "users/" + id)
@@ -41,14 +43,13 @@ public class UserService {
 
                         cache.put(id, userData);
 
-                        Core.app.post(() -> {
-                            callbacks.each(listener -> listener.get(userData));
-                            listeners.remove(id);
-                        });
+                        callbacks.each(listener -> listener.complete(userData));
+                        listeners.remove(id);
                     });
         } else {
-            current.add(c);
+            current.add(future);
         }
 
+        return future;
     }
 }
