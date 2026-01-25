@@ -78,33 +78,39 @@ public class Main extends Mod {
         schematicDir.mkdirs();
 
         Events.on(ClientLoadEvent.class, e -> {
+            featureSettingDialog = new FeatureSettingDialog();
+
+            FeatureManager.getInstance().register(//
+                    new MapBrowserFeature(), //
+                    new SchematicBrowserFeature(), //
+                    new PlayerConnectFeature(), //
+                    new HealthBarVisualizer(), //
+                    new TeamResourceFeature(),
+                    new PathfindingDisplay(), //
+                    new RangeDisplay(), //
+                    new QuickAccessHud(), //
+                    new AuthFeature(), //
+                    new ChatFeature(),
+                    new ChatTranslationFeature(),
+                    new PrettyChatFeature(),
+                    new GodModeFeature(),
+                    new AutoplayFeature(),
+                    new WavePreviewFeature(),
+                    new BackgroundFeature());
+
+            boolean hasCrashed = checkForCrashes();
+            if (hasCrashed) {
+                // Try to disable all feature
+                FeatureManager.getInstance().disableAll();
+            } else {
+                initFeatures();
+            }
             checkForUpdate();
-            initFeatures();
             addCustomButtons();
-            checkForCrashes();
         });
     }
 
     private void initFeatures() {
-        featureSettingDialog = new FeatureSettingDialog();
-
-        FeatureManager.getInstance().register(//
-                new MapBrowserFeature(), //
-                new SchematicBrowserFeature(), //
-                new PlayerConnectFeature(), //
-                new HealthBarVisualizer(), //
-                new TeamResourceFeature(),
-                new PathfindingDisplay(), //
-                new RangeDisplay(), //
-                new QuickAccessHud(), //
-                new AuthFeature(), //
-                new ChatFeature(),
-                new ChatTranslationFeature(),
-                new PrettyChatFeature(),
-                new GodModeFeature(),
-                new AutoplayFeature(),
-                new WavePreviewFeature(),
-                new BackgroundFeature());
 
         FeatureManager.getInstance().init();
 
@@ -284,11 +290,11 @@ public class Main extends Mod {
         return sb.toString();
     }
 
-    private static void checkForCrashes() {
+    private static boolean checkForCrashes() {
         Fi crashesDir = Core.settings.getDataDirectory().child("crashes");
 
         if (!crashesDir.exists()) {
-            return;
+            return false;
         }
 
         SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy_HH_mm_ss");
@@ -325,16 +331,18 @@ public class Main extends Mod {
         var savedLatest = Core.settings.getString(latestCrashKey, "");
 
         if (latest == null) {
-            return;
+            return false;
         }
 
         if (latest != null && latest.nameWithoutExtension().equals(savedLatest)) {
-            return;
+            return false;
         }
 
         Core.settings.put(latestCrashKey, latest.nameWithoutExtension());
 
         showCrashDialog(latest);
+
+        return true;
     }
 
     private static void showCrashDialog(Fi file) {
