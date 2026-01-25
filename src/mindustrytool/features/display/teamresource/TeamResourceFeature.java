@@ -136,7 +136,7 @@ public class TeamResourceFeature extends Table implements Feature {
             selectedTeam = Vars.player.team();
             lastSnapshot.clear();
             usedItems.clear();
-            rebuild();
+            Core.app.post(() -> rebuild());
         });
 
         Events.run(ResetEvent.class, () -> {
@@ -202,8 +202,8 @@ public class TeamResourceFeature extends Table implements Feature {
                 name = "team-resources-overlay";
             }
 
-            rebuild();
             Core.settings.put("coreitems", false);
+            Core.app.post(() -> rebuild());
         }
     }
 
@@ -436,7 +436,8 @@ public class TeamResourceFeature extends Table implements Feature {
 
         if (!newGraphs.equals(teamGraphs)) {
             teamGraphs = newGraphs;
-            rebuild();
+
+            Core.app.post(() -> rebuild());
         }
     }
 
