@@ -157,7 +157,13 @@ public class PrettyChatFeature implements Feature {
     }
 
     public static String transform(String message, Prettier prettier) {
-        return Vars.mods.getScripts().runConsole(prettier.getScript().replace("<message>", '"' + message + '"'));
+        var result = Vars.mods.getScripts().runConsole(prettier.getScript().replace("<message>", '"' + message + '"'));
+
+        if (result == null) {
+            return "Script: " + prettier.getScript() + "\nreturn null";
+        }
+
+        return result;
     }
 
     @Getter
