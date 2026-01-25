@@ -86,15 +86,6 @@ public class PrettyChatFeature implements Feature {
 
     @Override
     public void init() {
-        if (Vars.mobile) {
-            Reflect.set(Vars.ui.chatfrag, "chatfield", new TextField() {
-                @Override
-                public void setText(String text) {
-                    super.setText(transform(text));
-                }
-            });
-        }
-
         Events.run(Trigger.update, () -> {
             if (Core.input.keyTap(Binding.chat) && Vars.ui.chatfrag.shown()) {
                 Core.app.post(() -> {
