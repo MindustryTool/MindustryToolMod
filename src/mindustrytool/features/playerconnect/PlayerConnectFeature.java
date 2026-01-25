@@ -29,7 +29,6 @@ public class PlayerConnectFeature implements Feature {
         createRoomDialog = new CreateRoomDialog();
         joinRoomDialog = new JoinRoomDialog();
         injector = new PlayerConnectJoinInjector();
-        settingDialog = new PlayerConnectSettingDialog();
 
         if (Vars.ui.join != null) {
             Vars.ui.join.shown(() -> {
@@ -61,6 +60,9 @@ public class PlayerConnectFeature implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
+        if (settingDialog == null) {
+            settingDialog = new PlayerConnectSettingDialog();
+        }
         return Optional.of(settingDialog);
     }
 }

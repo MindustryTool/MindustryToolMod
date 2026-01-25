@@ -68,8 +68,6 @@ public class AutoplayFeature implements Feature {
 
         tasks.each(AutoplayTask::init);
 
-        dialog = new AutoplaySettingDialog(this);
-
         Events.run(Trigger.update, this::updateUnit);
         Events.run(Trigger.draw, this::draw);
 
@@ -194,6 +192,9 @@ public class AutoplayFeature implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
+        if (dialog == null) {
+            dialog = new AutoplaySettingDialog(this);
+        }
         return Optional.of(dialog);
     }
 

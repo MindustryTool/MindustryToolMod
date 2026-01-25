@@ -42,24 +42,6 @@ public class ChatFeature implements Feature {
             ChatService.getInstance().connectStream();
         });
 
-        settingDialog = new BaseDialog("@chat.settings.title");
-        settingDialog.name = "chatSettingDialog";
-
-        settingDialog.cont.button("@chat.reset-overlay-position", () -> {
-            ChatConfig config = new ChatConfig();
-
-            config.x(0);
-            config.y(0);
-
-            if (overlay != null) {
-                overlay.setPosition(0, 0);
-                overlay.keepInScreen();
-            }
-        }).size(240f, 50f);
-
-        settingDialog.addCloseButton();
-        settingDialog.closeOnBack();
-
         Core.app.addListener(new ApplicationListener() {
             @Override
             public void exit() {
@@ -100,6 +82,26 @@ public class ChatFeature implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
+        if (settingDialog == null) {
+
+            settingDialog = new BaseDialog("@chat.settings.title");
+            settingDialog.name = "chatSettingDialog";
+
+            settingDialog.cont.button("@chat.reset-overlay-position", () -> {
+                ChatConfig config = new ChatConfig();
+
+                config.x(0);
+                config.y(0);
+
+                if (overlay != null) {
+                    overlay.setPosition(0, 0);
+                    overlay.keepInScreen();
+                }
+            }).size(240f, 50f);
+
+            settingDialog.addCloseButton();
+            settingDialog.closeOnBack();
+        }
         return Optional.of(settingDialog);
     }
 }
