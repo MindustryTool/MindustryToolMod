@@ -14,6 +14,12 @@ public class FeatureManager {
         return instance;
     }
 
+    public void disableAll() {
+        for (Feature feature : features) {
+            setEnabled(feature, false);
+        }
+    }
+
     public void register(Feature... feature) {
         features.addAll(feature);
         features.sort((a, b) -> Integer.compare(a.getMetadata().order(), b.getMetadata().order()));
