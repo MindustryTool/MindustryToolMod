@@ -1,56 +1,26 @@
 package mindustrytool.features.chat.global.dto;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
-import arc.struct.Seq;
+import lombok.Data;
 
+@Data
 public class ChatUser {
-    String name;
-    String imageUrl;
-    Seq<SimpleRole> roles;
-
-    public ChatUser() {
-    }
-
-    public String name() {
-        return name;
-    }
-
-    public String imageUrl() {
-        return imageUrl;
-    }
-
-    public Seq<SimpleRole> roles() {
-        return roles;
-    }
+    private String name;
+    private String imageUrl;
+    private List<SimpleRole> roles;
 
     public Optional<SimpleRole> getHighestRole() {
-        return Optional.ofNullable(roles().max(SimpleRole::level));
+        return getRoles().stream().max(Comparator.comparingInt(SimpleRole::getLevel));
     }
 
+    @Data
     public static class SimpleRole {
         String id;
         String color;
         String icon;
         int level;
-
-        public SimpleRole() {
-        }
-
-        public String id() {
-            return id;
-        }
-
-        public String color() {
-            return color;
-        }
-
-        public String icon() {
-            return icon;
-        }
-
-        public int level() {
-            return level;
-        }
     }
 }

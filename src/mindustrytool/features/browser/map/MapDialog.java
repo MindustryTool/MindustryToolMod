@@ -252,18 +252,18 @@ public class MapDialog extends BaseDialog {
                 buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadMap(data))
                         .pad(2);
                 buttons.button(Icon.info, Styles.emptyi,
-                        () -> mapService.findMapById(data.id(), infoDialog::show))
+                        () -> mapService.findMapById(data.getId(), infoDialog::show))
                         .tooltip("@info.title");
             }).growX().height(PREVIEW_BUTTON_SIZE);
 
             preview.row();
 
             preview.stack(
-                    new Table(t -> t.add(new MapImage(data.id()))),
+                    new Table(t -> t.add(new MapImage(data.getId()))),
                     new Table(nameTable -> {
                         nameTable.top();
                         nameTable.table(Styles.black3, c -> {
-                            Label label = c.add(data.name())
+                            Label label = c.add(data.getName())
                                     .style(Styles.outlineLabel)
                                     .color(Color.white)
                                     .top()
@@ -284,7 +284,8 @@ public class MapDialog extends BaseDialog {
             preview.row();
 
             preview.table().expandY().row();
-            preview.table(stats -> DetailStats.draw(stats, data.likes(), data.comments(), data.downloads())).margin(8);
+            preview.table(stats -> DetailStats.draw(stats, data.getLikes(), data.getComments(), data.getDownloads()))
+                    .margin(8);
 
         }, () -> {
             handleCardClick(buttonRef[0], data);
@@ -298,7 +299,7 @@ public class MapDialog extends BaseDialog {
             return;
 
         // Default action on click: show info
-        mapService.findMapById(data.id(), infoDialog::show);
+        mapService.findMapById(data.getId(), infoDialog::show);
     }
 
     private void rebuildFooter() {
@@ -377,8 +378,8 @@ public class MapDialog extends BaseDialog {
     }
 
     private void handleDownloadMap(MapData map) {
-        mapService.downloadMap(map.id(), result -> {
-            Fi mapFile = Vars.customMapDirectory.child(map.id().toString());
+        mapService.downloadMap(map.getId(), result -> {
+            Fi mapFile = Vars.customMapDirectory.child(map.getId().toString());
             mapFile.writeBytes(result);
             Vars.maps.importMap(mapFile);
             ui.showInfoFade("@map.saved");

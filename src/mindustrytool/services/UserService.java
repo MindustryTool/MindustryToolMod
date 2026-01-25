@@ -5,8 +5,8 @@ import arc.func.Cons;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Http;
-import mindustry.io.JsonIO;
 import mindustrytool.Config;
+import mindustrytool.Utils;
 import mindustrytool.dto.UserData;
 
 public class UserService {
@@ -33,7 +33,7 @@ public class UserService {
                     .timeout(10000)
                     .submit(response -> {
                         String data = response.getResultAsString();
-                        UserData userData = JsonIO.json.fromJson(UserData.class, data);
+                        UserData userData = Utils.fromJson(UserData.class, data);
 
                         if (userData == null) {
                             throw new IllegalArgumentException("User data is null");

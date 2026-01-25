@@ -257,18 +257,18 @@ public class SchematicDialog extends BaseDialog {
                 buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadSchematic(data))
                         .pad(2);
                 buttons.button(Icon.info, Styles.emptyi,
-                        () -> schematicService.findSchematicById(data.id(), infoDialog::show))
+                        () -> schematicService.findSchematicById(data.getId(), infoDialog::show))
                         .tooltip("@info.title");
             }).growX().height(PREVIEW_BUTTON_SIZE);
 
             preview.row();
 
             preview.stack(
-                    new Table(t -> t.add(new SchematicImage(data.id()))),
+                    new Table(t -> t.add(new SchematicImage(data.getId()))),
                     new Table(nameTable -> {
                         nameTable.top();
                         nameTable.table(Styles.black3, c -> {
-                            Label label = c.add(data.name())
+                            Label label = c.add(data.getName())
                                     .style(Styles.outlineLabel)
                                     .color(Color.white)
                                     .top()
@@ -289,7 +289,8 @@ public class SchematicDialog extends BaseDialog {
             preview.row();
 
             preview.table().expandY().row();
-            preview.table(stats -> DetailStats.draw(stats, data.likes(), data.comments(), data.downloads())).margin(8);
+            preview.table(stats -> DetailStats.draw(stats, data.getLikes(), data.getComments(), data.getDownloads()))
+                    .margin(8);
 
         }, () -> {
             handleCardClick(buttonRef[0], data);
@@ -303,7 +304,7 @@ public class SchematicDialog extends BaseDialog {
             return;
 
         if (state.isMenu()) {
-            schematicService.findSchematicById(data.id(), infoDialog::show);
+            schematicService.findSchematicById(data.getId(), infoDialog::show);
         } else {
             if (!state.rules.schematicsAllowed) {
                 ui.showInfo("@schematic.disabled");
@@ -401,8 +402,8 @@ public class SchematicDialog extends BaseDialog {
     private void handleDownloadSchematic(SchematicData schematic) {
         handleDownloadSchematicData(schematic, data -> {
             Schematic s = Utils.readSchematic(data);
-            schematicService.findSchematicById(schematic.id(), detail -> {
-                s.labels.add(detail.tags().map(i -> i.name()));
+            schematicService.findSchematicById(schematic.getId(), detail -> {
+                s.labels.add(Seq.with(detail.getTags().stream().map(i -> i.getName()).toArray(String[]::new)));
                 s.removeSteamID();
                 Vars.schematics.add(s);
                 ui.showInfoFade("@schematic.saved");
@@ -411,7 +412,7 @@ public class SchematicDialog extends BaseDialog {
     }
 
     private void handleDownloadSchematicData(SchematicData data, Cons<String> cons) {
-        schematicService.downloadSchematic(data.id(), result -> {
+        schematicService.downloadSchematic(data.getId(), result -> {
             cons.get(new String(Base64Coder.encode(result)));
         });
     }

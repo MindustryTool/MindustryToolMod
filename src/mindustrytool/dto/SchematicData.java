@@ -1,15 +1,13 @@
 package mindustrytool.dto;
 
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 @Data
-@Accessors(chain = true, fluent = true)
 public class SchematicData {
     String id;
     String itemId;
     String name;
-    Long likes;
-    Long downloads;
-    Long comments;
+    Long likes = 0l;
+    Long downloads = 0l;
+    Long comments = 0l;
 }

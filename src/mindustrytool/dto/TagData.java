@@ -1,12 +1,11 @@
 package mindustrytool.dto;
 
+import java.util.List;
+
 import arc.graphics.Color;
-import arc.struct.Seq;
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 @Data
-@Accessors(chain = true, fluent = true)
 public class TagData {
     private String id;
     private String name;
@@ -16,7 +15,7 @@ public class TagData {
     private String fullTag;
     private String color;
     private Integer count = 0;
-    private Seq<String> planetIds;
+    private List<String> planetIds;
 
     public Color color() {
         try {

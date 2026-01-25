@@ -30,9 +30,10 @@ public class ChatFeature implements Feature {
 
     @Override
     public void init() {
-        overlay = new ChatOverlay();
-
         ChatService.getInstance().setListener(messages -> {
+            if (overlay == null) {
+                return;
+            }
             overlay.addMessages(messages);
         });
 
@@ -69,6 +70,7 @@ public class ChatFeature implements Feature {
 
     @Override
     public void onEnable() {
+        overlay = new ChatOverlay();
         ChatService.getInstance().connectStream();
 
         // Add to menu group
@@ -83,7 +85,6 @@ public class ChatFeature implements Feature {
                 Vars.ui.menuGroup.find("mdt-chat-overlay").remove();
             }
 
-            overlay.name = "mdt-chat-overlay";
             Core.app.post(() -> Core.scene.add(overlay));
         }
     }

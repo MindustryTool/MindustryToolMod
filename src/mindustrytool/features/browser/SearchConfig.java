@@ -35,9 +35,9 @@ public class SearchConfig {
     public void setTag(TagCategory category, TagData value) {
         SelectedTag tag = new SelectedTag();
 
-        tag.name = value.name();
-        tag.categoryName = category.name();
-        tag.icon = value.icon();
+        tag.name = value.getName();
+        tag.categoryName = category.getName();
+        tag.icon = value.getIcon();
 
         if (selectedTags.contains(tag)) {
             this.selectedTags.remove(tag);
@@ -48,7 +48,7 @@ public class SearchConfig {
     }
 
     public boolean containTag(TagCategory category, TagData tag) {
-        return selectedTags.contains(v -> v.name.equals(tag.name()) && category.name().equals(v.categoryName));
+        return selectedTags.contains(v -> v.name.equals(tag.getName()) && category.getName().equals(v.categoryName));
     }
 
     public Sort getSort() {

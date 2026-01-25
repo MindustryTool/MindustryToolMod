@@ -252,9 +252,8 @@ public class QuickAccessHud extends Table implements Feature {
                 Vars.ui.hudGroup.find("quick-access-hud").remove();
             }
             name = "quick-access-hud";
-            Core.app.post(() -> Vars.ui.hudGroup.addChild(this));
-            // Ensure visible only in game
             visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
+            Core.app.post(() -> Vars.ui.hudGroup.addChild(this));
         }
     }
 

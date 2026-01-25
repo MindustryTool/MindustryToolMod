@@ -1,5 +1,7 @@
 package mindustrytool.features.browser;
 
+import java.util.stream.Collectors;
+
 import arc.Core;
 import arc.func.Cons;
 import arc.graphics.g2d.GlyphLayout;
@@ -97,8 +99,8 @@ public class FilterDialog extends BaseDialog {
                 table.top();
 
                 tagProvider.get(categories -> {
-                    for (var category : categories.sort((a, b) -> a.position() - b.position())) {
-                        if (category.tags().isEmpty())
+                    for (var category : categories.sort((a, b) -> a.getPosition() - b.getPosition())) {
+                        if (category.getTags().isEmpty())
                             continue;
 
                         table.row();
@@ -139,26 +141,26 @@ public class FilterDialog extends BaseDialog {
         table.pane(card -> {
             card.defaults().size(cardWidth, 50); // Use calculated width
             int i = 0;
-            for (var mod : mods.sort((a, b) -> a.position() - b.position())) {
+            for (var mod : mods.sort((a, b) -> a.getPosition() - b.getPosition())) {
                 card.button(btn -> {
                     btn.left();
-                    if (mod.icon() != null && !mod.icon().isEmpty()) {
-                        btn.add(new NetworkImage(mod.icon()))
+                    if (mod.getIcon() != null && !mod.getIcon().isEmpty()) {
+                        btn.add(new NetworkImage(mod.getIcon()))
                                 .size(40 * scale)
                                 .padRight(4)
                                 .marginRight(4);
                     }
-                    btn.add(mod.name()).fontScale(scale);
+                    btn.add(mod.getName()).fontScale(scale);
                 }, style,
                         () -> {
-                            if (modIds.contains(mod.id())) {
-                                modIds.remove(mod.id());
+                            if (modIds.contains(mod.getId())) {
+                                modIds.remove(mod.getId());
                             } else {
-                                modIds.add(mod.id());
+                                modIds.add(mod.getId());
                             }
                             Core.app.post(this::rebuild);
                         })
-                        .checked(modIds.contains(mod.id()))
+                        .checked(modIds.contains(mod.getId()))
                         .padRight(CARD_GAP)
                         .padBottom(CARD_GAP)
                         .left()
@@ -216,17 +218,18 @@ public class FilterDialog extends BaseDialog {
     }
 
     public void TagSelector(Table table, SearchConfig searchConfig, TagCategory category, float availableWidth) {
-        var tags = category.tags()
-                .select(value -> value.planetIds() == null || value.planetIds().size == 0
-                        || value.planetIds().find(t -> modIds.contains(t)) != null)
-                .sort((a, b) -> a.position() - b.position());
+        var tags = category.getTags()
+                .stream().filter(value -> value.getPlanetIds() == null || value.getPlanetIds().size() == 0
+                        || value.getPlanetIds().stream().anyMatch(t -> modIds.contains(t)))
+                .sorted((a, b) -> a.getPosition() - b.getPosition())
+                .collect(Collectors.toList());
 
-        if (tags.size == 0) {
+        if (tags.isEmpty()) {
             return;
         }
 
         table.table(Styles.flatOver,
-                text -> text.add(category.name())
+                text -> text.add(category.getName())
                         .fontScale(scale)
                         .left()
                         .color(category.color())
@@ -251,8 +254,8 @@ public class FilterDialog extends BaseDialog {
         GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
 
         for (var tag : tags) {
-            String tagName = formatTag(tag.name());
-            float iconSize = (tag.icon() != null && !tag.icon().isEmpty()) ? 40 * scale + 8 : 0;
+            String tagName = formatTag(tag.getName());
+            float iconSize = (tag.getIcon() != null && !tag.getIcon().isEmpty()) ? 40 * scale + 8 : 0;
 
             // Estimate button width
             float textWidth = 0;
@@ -274,8 +277,8 @@ public class FilterDialog extends BaseDialog {
 
             currentRow[0].button(btn -> {
                 btn.left();
-                if (tag.icon() != null && !tag.icon().isEmpty()) {
-                    btn.add(new NetworkImage(tag.icon()))
+                if (tag.getIcon() != null && !tag.getIcon().isEmpty()) {
+                    btn.add(new NetworkImage(tag.getIcon()))
                             .size(40 * scale)
                             .padRight(4)
                             .marginRight(4);

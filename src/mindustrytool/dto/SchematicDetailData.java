@@ -1,11 +1,10 @@
 package mindustrytool.dto;
 
-import arc.struct.Seq;
+import java.util.List;
+
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 @Data
-@Accessors(chain = true, fluent = true)
 public class SchematicDetailData {
     String id;
     String itemId;
@@ -14,20 +13,18 @@ public class SchematicDetailData {
     String description;
     int width;
     int height;
-    Long likes;
+    Long likes = 0l;
     Long downloads = 0l;
     Long comments = 0l;
-    Seq<TagData> tags;
+    List<TagData> tags;
     SchematicMetadata meta;
 
     @Data
-    @Accessors(chain = true, fluent = true)
     public static class SchematicMetadata {
-        Seq<SchematicRequirement> requirements;
+        List<SchematicRequirement> requirements;
     }
 
     @Data
-    @Accessors(chain = true, fluent = true)
     public static class SchematicRequirement {
         String name;
         String color;

@@ -83,8 +83,8 @@ public class ChatOverlay extends Table {
     private Image connectionIndicator;
 
     public ChatOverlay() {
+        name = "mdt-chat-overlay";
         touchable = Touchable.childrenOnly;
-
         isUserListCollapsed = Vars.mobile;
 
         setPosition(config.x(), config.y());
@@ -532,8 +532,8 @@ public class ChatOverlay extends Table {
                 avatar.top();
                 UserService.findUserById(msg.createdBy, data -> {
                     avatar.clear();
-                    if (data.imageUrl() != null && !data.imageUrl().isEmpty()) {
-                        avatar.add(new NetworkImage(data.imageUrl())).size(40);
+                    if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
+                        avatar.add(new NetworkImage(data.getImageUrl())).size(40);
                     }
                 });
             }).size(48).top().pad(8);
@@ -562,7 +562,7 @@ public class ChatOverlay extends Table {
                     Color color = data.getHighestRole()
                             .map(r -> {
                                 try {
-                                    return Color.valueOf(r.color());
+                                    return Color.valueOf(r.getColor());
                                 } catch (Exception err) {
                                     Log.err(err);
                                     return Color.white;
@@ -570,7 +570,7 @@ public class ChatOverlay extends Table {
                             })
                             .orElse(Color.white);
 
-                    label.setText("[#" + color.toString() + "]" + data.name() + "[]"
+                    label.setText("[#" + color.toString() + "]" + data.getName() + "[]"
                             + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
                 });
 
@@ -634,8 +634,8 @@ public class ChatOverlay extends Table {
         userListTable.top().left();
 
         Arrays.sort(users, (u1, u2) -> {
-            int l1 = u1.getHighestRole().map(SimpleRole::level).orElse(u1.name().startsWith("Anno") ? -1 : 0);
-            int l2 = u2.getHighestRole().map(SimpleRole::level).orElse(u2.name().startsWith("Anno") ? -1 : 0);
+            int l1 = u1.getHighestRole().map(SimpleRole::getLevel).orElse(0);
+            int l2 = u2.getHighestRole().map(SimpleRole::getLevel).orElse(0);
 
             return Integer.compare(l2, l1);
         });
@@ -644,20 +644,20 @@ public class ChatOverlay extends Table {
             Table card = new Table();
 
             // Avatar
-            if (user.imageUrl() != null && !user.imageUrl().isEmpty()) {
-                card.add(new NetworkImage(user.imageUrl())).size(40).padRight(8);
+            if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
+                card.add(new NetworkImage(user.getImageUrl())).size(40).padRight(8);
             }
 
             // Info Table
             card.table(info -> {
                 info.left();
-                info.add(user.name() + "[]").minWidth(0).ellipsis(true).style(Styles.defaultLabel)
+                info.add(user.getName() + "[]").minWidth(0).ellipsis(true).style(Styles.defaultLabel)
                         .color(Color.white)
                         .left().row();
 
                 user.getHighestRole().ifPresent(role -> {
-                    info.add(role.id()).minWidth(0).ellipsis(true).style(Styles.defaultLabel)
-                            .color(Color.valueOf(role.color()))
+                    info.add(role.getId()).minWidth(0).ellipsis(true).style(Styles.defaultLabel)
+                            .color(Color.valueOf(role.getColor()))
                             .left().row();
                 });
             }).growX().left();
