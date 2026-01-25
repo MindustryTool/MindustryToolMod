@@ -505,14 +505,15 @@ public class ChatOverlay extends Table {
 
         if (messageTable != null && !config.collapsed()) {
             // Scroll to bottom
-            Time.runTask(60, () -> {
-                if (scrollPane != null) {
-                    Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
-                }
-            });
 
             Core.app.post(() -> {
                 rebuildMessages(messageTable);
+            });
+        
+            Time.runTask(60 * 3, () -> {
+                if (scrollPane != null) {
+                    Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
+                }
             });
         }
     }
