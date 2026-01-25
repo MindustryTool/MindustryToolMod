@@ -61,7 +61,15 @@ public class HealthBarVisualizer implements Feature {
     @Override
     public Optional<Dialog> setting() {
         if (dialog == null) {
-            initDialog();
+            dialog = new BaseDialog("@health-bar.settings.title");
+            dialog.name = "healthBarSettingDialog";
+            dialog.addCloseButton();
+            dialog.buttons.button("@reset", Icon.refresh, () -> {
+                HealthBarConfig.reset();
+                rebuild();
+            }).size(250, 64);
+
+            dialog.shown(this::rebuild);
         }
         return Optional.of(dialog);
     }
@@ -143,18 +151,6 @@ public class HealthBarVisualizer implements Feature {
         }
 
         Draw.reset();
-    }
-
-    private void initDialog() {
-        dialog = new BaseDialog("@health-bar.settings.title");
-        dialog.name = "healthBarSettingDialog";
-        dialog.addCloseButton();
-        dialog.buttons.button("@reset", Icon.refresh, () -> {
-            HealthBarConfig.reset();
-            rebuild();
-        }).size(250, 64);
-
-        dialog.shown(this::rebuild);
     }
 
     private void rebuild() {

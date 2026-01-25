@@ -85,7 +85,99 @@ public class RangeDisplay implements Feature {
     @Override
     public Optional<Dialog> setting() {
         if (dialog == null) {
-            initDialog();
+            dialog = new BaseDialog("@range-display.settings.title");
+            dialog.name = "rangeDisplaySettingDialog";
+            dialog.addCloseButton();
+
+            Table cont = dialog.cont;
+            cont.defaults().left().pad(5);
+
+            Slider opacitySlider = new Slider(0f, 1f, 0.05f, false);
+            opacitySlider.setValue(config.opacity);
+
+            Label opacityValue = new Label(
+                    String.format("%.0f%%", config.opacity * 100),
+                    Styles.outlineLabel);
+            opacityValue.setColor(Color.lightGray);
+
+            Table opacityContent = new Table();
+            opacityContent.touchable = arc.scene.event.Touchable.disabled;
+            opacityContent.margin(3f, 33f, 3f, 33f);
+            opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
+            opacityContent.add(opacityValue).padLeft(10f).right();
+
+            opacitySlider.changed(() -> {
+                config.opacity = opacitySlider.getValue();
+                opacityValue.setText(String.format("%.0f%%", config.opacity * 100));
+                config.save();
+            });
+
+            float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
+            cont.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
+
+            addCheck(cont, "@range-display.draw-ally-block-range", config.drawBlockRangeAlly, v -> {
+                config.drawBlockRangeAlly = v;
+                config.save();
+            });
+
+            if (Vars.mobile) {
+                cont.row();
+            }
+
+            addCheck(cont, "@range-display.draw-enemy-block-range", config.drawBlockRangeEnemy, v -> {
+                config.drawBlockRangeEnemy = v;
+                config.save();
+            });
+
+            cont.row();
+
+            addCheck(cont, "@range-display.draw-ally-turret-range", config.drawTurretRangeAlly, v -> {
+                config.drawTurretRangeAlly = v;
+                config.save();
+            });
+
+            if (Vars.mobile) {
+                cont.row();
+            }
+
+            addCheck(cont, "@range-display.draw-enemy-turret-range", config.drawTurretRangeEnemy, v -> {
+                config.drawTurretRangeEnemy = v;
+                config.save();
+            });
+
+            cont.row();
+
+            addCheck(cont, "@range-display.draw-ally-unit-range", config.drawUnitRangeAlly, v -> {
+                config.drawUnitRangeAlly = v;
+                config.save();
+            });
+
+            if (Vars.mobile) {
+                cont.row();
+            }
+
+            addCheck(cont, "@range-display.draw-enemy-unit-range", config.drawUnitRangeEnemy, v -> {
+                config.drawUnitRangeEnemy = v;
+                config.save();
+            });
+
+            cont.row();
+
+            addCheck(cont, "@range-display.draw-player-range", config.drawPlayerRange, v -> {
+                config.drawPlayerRange = v;
+                config.save();
+            });
+
+            cont.row();
+
+            addCheck(cont, "@range-display.draw-spawner-range", config.drawSpawnerRange, v -> {
+                config.drawSpawnerRange = v;
+                config.save();
+            });
+
+            if (Vars.mobile) {
+                cont.row();
+            }
         }
         return Optional.of(dialog);
     }
@@ -234,102 +326,6 @@ public class RangeDisplay implements Feature {
 
         blockRangeCache.put(block, range);
         return range;
-    }
-
-    private void initDialog() {
-        dialog = new BaseDialog("@range-display.settings.title");
-        dialog.name = "rangeDisplaySettingDialog";
-        dialog.addCloseButton();
-
-        Table cont = dialog.cont;
-        cont.defaults().left().pad(5);
-
-        Slider opacitySlider = new Slider(0f, 1f, 0.05f, false);
-        opacitySlider.setValue(config.opacity);
-
-        Label opacityValue = new Label(
-                String.format("%.0f%%", config.opacity * 100),
-                Styles.outlineLabel);
-        opacityValue.setColor(Color.lightGray);
-
-        Table opacityContent = new Table();
-        opacityContent.touchable = arc.scene.event.Touchable.disabled;
-        opacityContent.margin(3f, 33f, 3f, 33f);
-        opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
-        opacityContent.add(opacityValue).padLeft(10f).right();
-
-        opacitySlider.changed(() -> {
-            config.opacity = opacitySlider.getValue();
-            opacityValue.setText(String.format("%.0f%%", config.opacity * 100));
-            config.save();
-        });
-
-        float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
-        cont.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
-
-        addCheck(cont, "@range-display.draw-ally-block-range", config.drawBlockRangeAlly, v -> {
-            config.drawBlockRangeAlly = v;
-            config.save();
-        });
-
-        if (Vars.mobile) {
-            cont.row();
-        }
-
-        addCheck(cont, "@range-display.draw-enemy-block-range", config.drawBlockRangeEnemy, v -> {
-            config.drawBlockRangeEnemy = v;
-            config.save();
-        });
-
-        cont.row();
-
-        addCheck(cont, "@range-display.draw-ally-turret-range", config.drawTurretRangeAlly, v -> {
-            config.drawTurretRangeAlly = v;
-            config.save();
-        });
-
-        if (Vars.mobile) {
-            cont.row();
-        }
-
-        addCheck(cont, "@range-display.draw-enemy-turret-range", config.drawTurretRangeEnemy, v -> {
-            config.drawTurretRangeEnemy = v;
-            config.save();
-        });
-
-        cont.row();
-
-        addCheck(cont, "@range-display.draw-ally-unit-range", config.drawUnitRangeAlly, v -> {
-            config.drawUnitRangeAlly = v;
-            config.save();
-        });
-
-        if (Vars.mobile) {
-            cont.row();
-        }
-
-        addCheck(cont, "@range-display.draw-enemy-unit-range", config.drawUnitRangeEnemy, v -> {
-            config.drawUnitRangeEnemy = v;
-            config.save();
-        });
-
-        cont.row();
-
-        addCheck(cont, "@range-display.draw-player-range", config.drawPlayerRange, v -> {
-            config.drawPlayerRange = v;
-            config.save();
-        });
-
-        cont.row();
-
-        addCheck(cont, "@range-display.draw-spawner-range", config.drawSpawnerRange, v -> {
-            config.drawSpawnerRange = v;
-            config.save();
-        });
-
-        if (Vars.mobile) {
-            cont.row();
-        }
     }
 
     private void addCheck(Table table, String text, boolean def, arc.func.Boolc listener) {
