@@ -391,7 +391,9 @@ public class MapDialog extends BaseDialog {
                 }
             });
         }).exceptionally(error -> {
-            ui.showInfoFade(error.getMessage());
+            Core.app.post(() -> {
+                ui.showInfoFade(error.getMessage());
+            });
             return null;
         });
     }
