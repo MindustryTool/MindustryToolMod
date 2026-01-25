@@ -109,7 +109,7 @@ public class ChatTranslationFeature implements Feature {
 
                     cons.get(formated);
 
-                    Log.err("Translation failed", e);
+                    Log.err(e.getMessage());
                     return null;
                 });
 

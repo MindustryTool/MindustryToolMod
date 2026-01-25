@@ -16,6 +16,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +28,8 @@ public class PlayerConnectRenderer {
 
     public static Cell<Table> render(Table container, PlayerConnectRoom room, float targetWidth) {
         float contentWidth = targetWidth > 0 ? targetWidth - 40f : 0;
-        boolean matchProtocolVersion = room.getData().getProtocolVersion().equals(NetworkProxy.PROTOCOL_VERSION);
+        boolean matchProtocolVersion = Objects.equals(room.getData().getProtocolVersion(),
+                NetworkProxy.PROTOCOL_VERSION);
 
         return container.table(Styles.black8, t -> {
             t.top().left();

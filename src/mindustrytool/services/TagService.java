@@ -8,8 +8,8 @@ import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Http.HttpResponse;
 import arc.util.Log;
-import mindustry.io.JsonIO;
 import mindustrytool.Config;
+import mindustrytool.Utils;
 import mindustrytool.dto.TagCategory;
 
 public class TagService {
@@ -49,17 +49,12 @@ public class TagService {
         Core.app.post(() -> listener.get(new Seq<>()));
     }
 
-    @SuppressWarnings("unchecked")
     private void handleResult(HttpResponse response, Cons<Seq<TagCategory>> listener) {
         String data = response.getResultAsString();
-        Seq<TagCategory> tags = JsonIO.json.fromJson(Seq.class, TagCategory.class, data);
-
-        if (tags == null) {
-            throw new IllegalArgumentException("Tag data is null");
-        }
+        var tags = Utils.fromJsonArray(TagCategory.class, data);
 
         Core.app.post(() -> {
-            listener.get(tags);
+            listener.get(Seq.with(tags));
             onUpdate.run();
         });
     }

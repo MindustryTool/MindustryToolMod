@@ -162,7 +162,9 @@ public class Main extends Mod {
     private void fetchReleasesAndShowDialog(String currentVer, String latestVer) {
         Http.get(Config.GITHUB_API_URL).error(e -> {
             Log.err("Failed to fetch releases", e);
-            showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+            Core.app.post(() -> {
+                showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+            });
         }).submit(res -> {
             try {
                 Jval json = Jval.read(res.getResultAsString());
@@ -183,48 +185,60 @@ public class Main extends Mod {
                         count++;
                     }
 
-                    showUpdateDialog(currentVer, latestVer, changelog.toString());
+                    Core.app.post(() -> {
+                        showUpdateDialog(currentVer, latestVer, changelog.toString());
+                    });
                 } else {
-                    showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+                    Core.app.post(() -> {
+                        showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+                    });
                 }
             } catch (Exception e) {
                 Log.err("Failed to parse releases", e);
-                showUpdateDialog(currentVer, latestVer, "Could not parse release notes.");
+                Core.app.post(() -> {
+                    showUpdateDialog(currentVer, latestVer, "Could not parse release notes.");
+                });
             }
         });
     }
 
     private void showUpdateDialog(String currentVer, String latestVer, String changelog) {
-        Core.app.post(() -> {
-            BaseDialog dialog = new BaseDialog("Update Available");
+        BaseDialog dialog = new BaseDialog("Update Available");
 
-            dialog.name = "updateAvailableDialog";
+        dialog.name = "updateAvailableDialog";
 
-            Table table = new Table();
-            table.defaults().left();
+        Table table = new Table();
+        table.defaults().left();
 
-            table.add(Core.bundle.format("message.new-version", currentVer, latestVer)).wrap().width(500f).row();
-            table.add("Discord: " + Config.DISCORD_INVITE_URL).color(Color.royal).padTop(5f).row();
+        table.add(Core.bundle.format("message.new-version", currentVer, latestVer)).wrap().width(500f).row();
+        table.add("Discord: " + Config.DISCORD_INVITE_URL).color(Color.royal).padTop(5f).row();
 
-            table.image().height(4f).color(Color.gray).fillX().pad(10f).row();
+        table.image().height(4f).color(Color.gray).fillX().pad(10f).row();
 
-            Table changelogTable = new Table();
-            changelogTable.top().left();
-            changelogTable.add(changelog).wrap().width(480f).left();
+        Table changelogTable = new Table();
+        changelogTable.top().left();
+        changelogTable.add(changelog).wrap().width(480f).left();
 
-            ScrollPane pane = new ScrollPane(changelogTable);
-            table.add(pane).size(500f, 400f).row();
+        ScrollPane pane = new ScrollPane(changelogTable);
+        table.add(pane).size(500f, 400f).row();
 
-            dialog.cont.add(table);
+        dialog.cont.add(table);
 
-            dialog.buttons.button("Cancel", dialog::hide).size(100f, 50f);
-            dialog.buttons.button("Update", () -> {
+        dialog.buttons.button("Cancel", dialog::hide).size(100f, 50f);
+        dialog.buttons.button("Update", () -> {
+            try {
                 dialog.hide();
                 Vars.ui.mods.show();
                 Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
+                Vars.ui.mods.toFront();
                 Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
-            }).size(100f, 50f);
+            } catch (Exception e) {
+                Log.err(e);
+                Vars.ui.showException(e);
+            }
+        }).size(100f, 50f);
 
+        Core.app.post(() -> {
             dialog.show();
         });
     }
@@ -372,7 +386,7 @@ public class Main extends Mod {
 
                             HashMap<String, Object> json = new HashMap<>();
 
-                            json.put("content", part + (isLast ? "" : "\n\n---\n\n"));
+                            json.put("content", "\n\n`" + part + (isLast ? "==================\n\n" : "") + "`");
 
                             CompletableFuture<Void> future = new CompletableFuture<>();
 

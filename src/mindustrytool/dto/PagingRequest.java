@@ -13,7 +13,7 @@ import arc.util.Http;
 import arc.util.Http.HttpResponse;
 import arc.util.Http.HttpStatus;
 import arc.util.Log;
-import mindustry.io.JsonIO;
+import mindustrytool.Utils;
 
 public class PagingRequest<T> {
 
@@ -136,7 +136,6 @@ public class PagingRequest<T> {
         getPage(listener);
     }
 
-    @SuppressWarnings("unchecked")
     private synchronized void handleResult(HttpResponse response, int size, Cons<Seq<T>> listener) {
         isLoading = false;
         isError = false;
@@ -150,15 +149,11 @@ public class PagingRequest<T> {
 
         String data = response.getResultAsString();
         Core.app.post(() -> {
-            var items = JsonIO.json.fromJson(Seq.class, clazz, data);
+            var items = Utils.fromJsonArray(clazz, data);
 
-            if (items == null) {
-                items = new Seq<>();
-            }
+            hasMore = items.size() != 0;
 
-            hasMore = items.size != 0;
-
-            listener.get(items);
+            listener.get(Seq.with(items));
         });
     }
 }

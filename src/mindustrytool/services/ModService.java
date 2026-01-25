@@ -6,8 +6,8 @@ import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Http.HttpResponse;
 import arc.util.Log;
-import mindustry.io.JsonIO;
 import mindustrytool.Config;
+import mindustrytool.Utils;
 import mindustrytool.dto.ModData;
 
 public class ModService {
@@ -40,11 +40,10 @@ public class ModService {
 
     private void handleResult(HttpResponse response, Cons<Seq<ModData>> listener) {
         String data = response.getResultAsString();
-        @SuppressWarnings("unchecked")
-        Seq<ModData> mods = JsonIO.json.fromJson(Seq.class, ModData.class, data);
+        var mods = Utils.fromJsonArray(ModData.class, data);
 
         Core.app.post(() -> {
-            listener.get(mods);
+            listener.get(Seq.with(mods));
             onUpdate.run();
         });
     }

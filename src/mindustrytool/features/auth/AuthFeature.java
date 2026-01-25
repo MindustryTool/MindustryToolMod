@@ -1,5 +1,6 @@
 package mindustrytool.features.auth;
 
+import arc.Core;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
@@ -40,7 +41,7 @@ public class AuthFeature implements Feature {
         authWindow.top().right();
         authWindow.touchable = Touchable.childrenOnly;
 
-        Vars.ui.menuGroup.addChild(wholeViewport);
+        Core.app.post(() -> Vars.ui.menuGroup.addChild(wholeViewport));
 
         Table content = new Table();
         content.setBackground(Styles.black6);
@@ -65,17 +66,17 @@ public class AuthFeature implements Feature {
             } else if (user != null) {
                 content.clear();
 
-                if (user.imageUrl() != null) {
-                    content.add(new NetworkImage(user.imageUrl())).size(64);
+                if (user.getImageUrl() != null) {
+                    content.add(new NetworkImage(user.getImageUrl())).size(64);
                 }
 
                 if (!Vars.mobile) {
-                    content.add(user.name()).labelAlign(Align.left).padLeft(8);
+                    content.add(user.getName()).labelAlign(Align.left).padLeft(8);
                 }
 
                 content.touchable = Touchable.enabled;
                 content.clicked(() -> {
-                    Vars.ui.showConfirm("Logout", "Logged in as " + user.name() + "\nDo you want to logout?",
+                    Vars.ui.showConfirm("Logout", "Logged in as " + user.getName() + "\nDo you want to logout?",
                             () -> AuthService.getInstance().logout());
                 });
             }

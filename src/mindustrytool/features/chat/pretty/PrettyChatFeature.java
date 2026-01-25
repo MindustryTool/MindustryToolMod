@@ -86,15 +86,6 @@ public class PrettyChatFeature implements Feature {
 
     @Override
     public void init() {
-        if (Vars.mobile) {
-            Reflect.set(Vars.ui.chatfrag, "chatfield", new TextField() {
-                @Override
-                public void setText(String text) {
-                    super.setText(transform(text));
-                }
-            });
-        }
-
         Events.run(Trigger.update, () -> {
             if (Core.input.keyTap(Binding.chat) && Vars.ui.chatfrag.shown()) {
                 Core.app.post(() -> {
@@ -105,7 +96,8 @@ public class PrettyChatFeature implements Feature {
                             return;
                         }
 
-                        chatfield.setText(transform(chatfield.getText()));
+                        String formatted = transform(chatfield.getText());
+                        chatfield.setText(formatted.substring(0, Math.min(Vars.maxTextLength, formatted.length())));
                     } catch (Exception e) {
                         Log.err(e);
                     }
@@ -165,7 +157,13 @@ public class PrettyChatFeature implements Feature {
     }
 
     public static String transform(String message, Prettier prettier) {
-        return Vars.mods.getScripts().runConsole(prettier.getScript().replace("<message>", '"' + message + '"'));
+        var result = Vars.mods.getScripts().runConsole(prettier.getScript().replace("<message>", '"' + message + '"'));
+
+        if (result == null) {
+            return "Script: " + prettier.getScript() + "\nreturn null";
+        }
+
+        return result;
     }
 
     @Getter

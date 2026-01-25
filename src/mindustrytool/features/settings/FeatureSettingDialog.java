@@ -12,6 +12,7 @@ import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
+import arc.util.Log;
 import arc.util.Scaling;
 import mindustry.Vars;
 import mindustry.gen.Icon;
@@ -274,8 +275,12 @@ public class FeatureSettingDialog extends BaseDialog {
                             return;
                         }
 
-                        FeatureManager.getInstance().setEnabled(feature, !enabled);
-                        rebuild();
+                        try {
+                            FeatureManager.getInstance().setEnabled(feature, !enabled);
+                            rebuild();
+                        } catch (Exception e) {
+                            Log.err(e);
+                        }
                     }
                 });
     }

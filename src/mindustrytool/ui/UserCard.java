@@ -17,10 +17,10 @@ public class UserCard {
     public static void draw(Table card, UserData data) {
         card.clear();
 
-        if (data.imageUrl() != null && !data.imageUrl().isEmpty()) {
-            card.add(new NetworkImage(data.imageUrl())).size(32);
+        if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
+            card.add(new NetworkImage(data.getImageUrl())).size(32);
         }
 
-        card.add(data.name());
+        card.add(data.getName());
     }
 }

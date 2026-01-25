@@ -91,7 +91,7 @@ public class AuthService {
 
         dialog.cont.add("@generate-loading-link");
 
-        Core.scene.add(dialog);
+        Core.app.post(() -> Core.scene.add(dialog));
 
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
                 .timeout(10000)
