@@ -379,7 +379,7 @@ public class MapDialog extends BaseDialog {
 
     private void handleDownloadMap(MapData map) {
         mapService.downloadMap(map.getId(), result -> {
-            Fi mapFile = Vars.customMapDirectory.child(map.getId().toString());
+            Fi mapFile = Vars.customMapDirectory.child(map.getId());
             mapFile.writeBytes(result);
             Vars.maps.importMap(mapFile);
             ui.showInfoFade("@map.saved");
