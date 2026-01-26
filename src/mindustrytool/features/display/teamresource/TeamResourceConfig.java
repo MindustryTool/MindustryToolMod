@@ -6,7 +6,8 @@ public class TeamResourceConfig {
     private static final String PREFIX = "mindustrytool.teamresources.";
 
     public static float x() {
-        return Core.settings.getFloat(PREFIX + "x", Core.graphics.getWidth() / 2 - overlayWidth() / 2);
+        return Core.settings.getFloat(PREFIX + "x",
+                Core.graphics.getWidth() / 2 - Core.graphics.getWidth() * overlayWidth() / 2);
     }
 
     public static void x(float value) {
