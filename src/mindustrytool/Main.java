@@ -41,6 +41,8 @@ import mindustrytool.features.display.range.RangeDisplay;
 import mindustrytool.features.display.quickaccess.QuickAccessHud;
 import mindustrytool.features.auth.AuthFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
+import mindustrytool.features.smartconveyor.SmartConveyorFeature;
+import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.features.chat.global.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.autoplay.AutoplayFeature;
@@ -96,6 +98,8 @@ public class Main extends Mod {
                     new GodModeFeature(),
                     new AutoplayFeature(),
                     new WavePreviewFeature(),
+                    new SmartDrillFeature(),
+                    new SmartConveyorFeature(),
                     new BackgroundFeature());
 
             boolean hasCrashed = checkForCrashes();

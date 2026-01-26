@@ -5,8 +5,9 @@ import arc.Events;
 import arc.graphics.Color;
 import arc.input.KeyCode;
 import arc.scene.Element;
-import arc.scene.Group;
 import arc.scene.event.ClickListener;
+import arc.math.Mathf;
+import arc.scene.event.InputListener;
 import arc.scene.event.InputEvent;
 import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
@@ -146,19 +147,12 @@ public class TeamResourceFeature extends Table implements Feature {
 
         name = "team-resources-overlay";
 
-        setFillParent(true);
-        top();
-
-        touchable = Touchable.childrenOnly;
+        touchable = Touchable.enabled;
 
         visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
 
         update(() -> {
             if (!visible) {
-                return;
-            }
-
-            if (Vars.mobile) {
                 return;
             }
 
@@ -184,6 +178,7 @@ public class TeamResourceFeature extends Table implements Feature {
 
             if (timer.get(0, 30f)) {
                 updateRates();
+
                 if (TeamResourceConfig.showPower()) {
                     updatePowerStats();
                 }
@@ -193,22 +188,17 @@ public class TeamResourceFeature extends Table implements Feature {
 
     @Override
     public void onEnable() {
-        if (Vars.ui != null && Vars.ui.hudGroup != null) {
-            if (Vars.ui.hudGroup.find("team-resources-overlay") != null) {
-                Vars.ui.hudGroup.find("team-resources-overlay").remove();
-            }
+        remove();
 
-            Element parent = Vars.ui.hudGroup.find("minimap/position");
-            if (parent != null && parent instanceof Group) {
-                ((Group) parent).addChild(this);
-            } else {
-                Core.app.post(() -> Vars.ui.hudGroup.addChild(this));
-                name = "team-resources-overlay";
-            }
+        name = "team-resources-overlay";
 
-            Core.settings.put("coreitems", false);
-            Core.app.post(() -> rebuild());
-        }
+        Vars.ui.hudGroup.addChild(this);
+
+        Core.settings.put("coreitems", false);
+
+        setPosition(TeamResourceConfig.x(), TeamResourceConfig.y());
+
+        Core.app.post(() -> rebuild());
     }
 
     @Override
@@ -224,10 +214,11 @@ public class TeamResourceFeature extends Table implements Feature {
 
     public void rebuild() {
         clear();
-        top();
 
         this.color.a = TeamResourceConfig.opacity();
-        Drawable bg = TeamResourceConfig.hideBackground() ? null : Styles.black3;
+        Drawable bg = TeamResourceConfig.hideBackground() ? null : Styles.black6;
+
+        setBackground(bg);
 
         float screenW = Core.graphics.getWidth();
         float calculatedWidth = screenW * TeamResourceConfig.overlayWidth();
@@ -237,149 +228,198 @@ public class TeamResourceFeature extends Table implements Feature {
 
         final float finalWidth = widthToUse;
 
-        table(bg, t -> {
-            t.margin(8f * scale);
+        table(content -> {
+            content.table(header -> {
+                header.left();
+                header.button(Icon.move, Styles.clearNonei, () -> {
+                })
+                        .size(42f)
+                        .margin(4)
+                        .get().addListener(new InputListener() {
+                            float lastX, lastY;
 
-            t.collapser(c -> {
-                c.pane(p -> {
-                    p.left();
+                            @Override
+                            public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
+                                lastX = x;
+                                lastY = y;
+                                return true;
+                            }
 
-                    Seq<Team> validTeams = new Seq<>();
-                    for (Team team : Team.all) {
-                        if (team.active() && team.data().hasCore()) {
-                            validTeams.add(team);
-                        }
-                    }
+                            @Override
+                            public void touchDragged(InputEvent event, float x, float y, int pointer) {
+                                moveBy(x - lastX, y - lastY);
 
-                    for (Team team : validTeams) {
-                        p.button(b -> {
-                            b.image().size(24f).color(team.color);
-                        }, Styles.clearTogglei, () -> {
-                            selectedTeam = team;
-                            usedUnits.clear();
-                            rebuild();
-                        }).checked(sel -> selectedTeam == team).size(32f).pad(2f).margin(2f);
-                    }
+                                keepInScreen();
 
-                    if (validTeams.size > 5) {
-                        p.button("...", Styles.flatBordert, this::showAllTeamsDialog).size(32f).pad(2f);
-                    }
+                                TeamResourceConfig.x(TeamResourceFeature.this.x);
+                                TeamResourceConfig.y(TeamResourceFeature.this.y);
 
-                }).scrollX(true).scrollY(false).height(40f).growX();
-            }, true, () -> showTeamSelector).growX().row();
+                            }
+                        });
 
-            if (TeamResourceConfig.showItems()) {
-                t.table(itemsTable -> {
-                    itemsTable.left();
-                    itemsTable.touchable = Touchable.enabled;
-                    itemsTable.addListener(statsListener);
+                header.collapser(c -> {
+                    c.pane(p -> {
+                        p.left();
 
-                    float iconSize = 24f * scale;
-                    float labelWidth = 80f * scale;
-                    float padding = 4f * scale;
-                    float cellWidth = iconSize + labelWidth + padding;
-
-                    int cols = Math.max(2, (int) (finalWidth / cellWidth));
-
-                    int i = 0;
-                    for (Item item : Vars.content.items()) {
-                        if (!usedItems.contains(item))
-                            continue;
-
-                        itemsTable.image(item.uiIcon).size(iconSize).padRight(4f * scale);
-                        itemsTable.label(() -> formatItem(item)).fontScale(0.8f * scale)
-                                .padRight(4f * scale)
-                                .minWidth(labelWidth).left();
-
-                        if (++i % cols == 0)
-                            itemsTable.row();
-                    }
-                }).growX().row();
-            }
-
-            if (TeamResourceConfig.showUnits() && selectedTeam != null) {
-                t.table(unitsTable -> {
-                    unitsTable.left();
-
-                    for (UnitType type : Vars.content.units()) {
-                        int count = selectedTeam.data().countType(type);
-                        if (count > 0) {
-                            usedUnits.add(type);
-                        }
-                    }
-
-                    float unitSize = 32f * scale;
-                    float unitPad = 4f * scale;
-                    float cellWidth = unitSize + unitPad;
-
-                    int cols = Math.max(2, (int) (finalWidth / cellWidth));
-
-                    int i = 0;
-                    for (UnitType type : Vars.content.units()) {
-                        if (!usedUnits.contains(type)) {
-                            continue;
+                        Seq<Team> validTeams = new Seq<>();
+                        for (Team team : Team.all) {
+                            if (team.active() && team.data().hasCore()) {
+                                validTeams.add(team);
+                            }
                         }
 
-                        unitsTable.stack(
-                                new Image(type.uiIcon).setScaling(Scaling.fit),
-                                new Table(lab -> lab.label(() -> {
-                                    int c = selectedTeam.data().countType(type);
-                                    return c > 0 ? UI.formatAmount(c) : "";
-                                }).fontScale(0.72f * scale).style(Styles.outlineLabel)).right().bottom())
-                                .size(unitSize)
-                                .pad(2f * scale);
+                        for (Team team : validTeams) {
+                            p.button(b -> {
+                                b.image().size(24f).color(team.color);
+                            }, Styles.clearTogglei, () -> {
+                                selectedTeam = team;
+                                usedUnits.clear();
+                                rebuild();
+                            }).checked(sel -> selectedTeam == team).size(32f).pad(2f).margin(2f);
+                        }
 
-                        if (++i % cols == 0)
-                            unitsTable.row();
-                    }
-                }).growX().padTop(6f * scale).row();
-            }
+                        if (validTeams.size > 5) {
+                            p.button("...", Styles.flatBordert, this::showAllTeamsDialog).size(32f).pad(2f);
+                        }
 
-            if (TeamResourceConfig.showPower()) {
-                t.table(power -> {
-                    float barHeight = 20f * scale;
-                    power.defaults().growX();
+                    }).scrollX(true).scrollY(false).height(40f).growX();
+                }, true, () -> showTeamSelector).growX().row();
+            })
+                    .padBottom(8)
+                    .top().left().row();
 
-                    if (teamGraphs.isEmpty()) {
-                        power.add("@team-resources.no-power").fontScale(0.8f * scale).color(Color.gray);
-                    } else {
+            content.table(stats -> {
+                stats.top().left();
+                if (TeamResourceConfig.showItems()) {
+                    stats.table(itemsTable -> {
+                        itemsTable.left();
+                        itemsTable.touchable = Touchable.enabled;
+                        itemsTable.addListener(statsListener);
 
-                        power.label(() -> {
-                            float totalBalance = 0;
-                            for (PowerGraph g : teamGraphs)
-                                totalBalance += g.getPowerBalance();
-                            return Core.bundle.get("team-resources.power-prefix") + (totalBalance >= 0 ? "+" : "")
-                                    + UI.formatAmount((long) (totalBalance * 60));
-                        }).fontScale(0.8f * scale).left().padBottom(2f * scale).row();
+                        float iconSize = 24f * scale;
+                        float labelWidth = 80f * scale;
+                        float padding = 4f * scale;
+                        float cellWidth = iconSize + labelWidth + padding;
 
-                        power.add(new SplitBar(
-                                teamGraphs,
-                                SplitBar.Mode.SATISFACTION,
-                                scale)).height(barHeight).row();
+                        int cols = Math.max(2, (int) (finalWidth / cellWidth));
 
-                        if (TeamResourceConfig.showStoredPower()) {
+                        int i = 0;
+                        for (Item item : Vars.content.items()) {
+                            if (!usedItems.contains(item))
+                                continue;
+
+                            itemsTable.image(item.uiIcon).size(iconSize).padRight(4f * scale);
+                            itemsTable.label(() -> formatItem(item)).fontScale(0.8f * scale)
+                                    .padRight(4f * scale)
+                                    .minWidth(labelWidth).left();
+
+                            if (++i % cols == 0)
+                                itemsTable.row();
+                        }
+                    }).growX().row();
+                }
+
+                if (TeamResourceConfig.showUnits() && selectedTeam != null) {
+                    stats.table(unitsTable -> {
+                        unitsTable.left();
+
+                        for (UnitType type : Vars.content.units()) {
+                            int count = selectedTeam.data().countType(type);
+                            if (count > 0) {
+                                usedUnits.add(type);
+                            }
+                        }
+
+                        float unitSize = 32f * scale;
+                        float unitPad = 4f * scale;
+                        float cellWidth = unitSize + unitPad;
+
+                        int cols = Math.max(2, (int) (finalWidth / cellWidth));
+
+                        int i = 0;
+                        for (UnitType type : Vars.content.units()) {
+                            if (!usedUnits.contains(type)) {
+                                continue;
+                            }
+
+                            unitsTable.stack(
+                                    new Image(type.uiIcon).setScaling(Scaling.fit),
+                                    new Table(lab -> lab.label(() -> {
+                                        int c = selectedTeam.data().countType(type);
+                                        return c > 0 ? UI.formatAmount(c) : "";
+                                    }).fontScale(0.72f * scale).style(Styles.outlineLabel)).right().bottom())
+                                    .size(unitSize)
+                                    .pad(2f * scale);
+
+                            if (++i % cols == 0)
+                                unitsTable.row();
+                        }
+                    }).growX().padTop(6f * scale).row();
+                }
+
+                if (TeamResourceConfig.showPower()) {
+                    stats.table(power -> {
+                        float barHeight = 20f * scale;
+                        power.defaults().growX();
+
+                        if (teamGraphs.isEmpty()) {
+                            power.add("@team-resources.no-power").fontScale(0.8f * scale).color(Color.gray);
+                        } else {
 
                             power.label(() -> {
-                                float totalStored = 0;
-                                float totalCap = 0;
-                                for (PowerGraph g : teamGraphs) {
-                                    totalStored += g.getLastPowerStored();
-                                    totalCap += g.getLastCapacity();
-                                }
-                                return Core.bundle.get("team-resources.stored-prefix")
-                                        + UI.formatAmount((long) totalStored) + " / "
-                                        + UI.formatAmount((long) totalCap);
-                            }).fontScale(0.8f * scale).left().padTop(4f * scale).padBottom(2f * scale).row();
+                                float totalBalance = 0;
+                                for (PowerGraph g : teamGraphs)
+                                    totalBalance += g.getPowerBalance();
+                                return Core.bundle.get("team-resources.power-prefix") + (totalBalance >= 0 ? "+" : "")
+                                        + UI.formatAmount((long) (totalBalance * 60));
+                            }).fontScale(0.8f * scale).left().padBottom(2f * scale).row();
 
                             power.add(new SplitBar(
                                     teamGraphs,
-                                    SplitBar.Mode.STORED,
+                                    SplitBar.Mode.SATISFACTION,
                                     scale)).height(barHeight).row();
+
+                            if (TeamResourceConfig.showStoredPower()) {
+
+                                power.label(() -> {
+                                    float totalStored = 0;
+                                    float totalCap = 0;
+                                    for (PowerGraph g : teamGraphs) {
+                                        totalStored += g.getLastPowerStored();
+                                        totalCap += g.getLastCapacity();
+                                    }
+                                    return Core.bundle.get("team-resources.stored-prefix")
+                                            + UI.formatAmount((long) totalStored) + " / "
+                                            + UI.formatAmount((long) totalCap);
+                                }).fontScale(0.8f * scale).left().padTop(4f * scale).padBottom(2f * scale).row();
+
+                                power.add(new SplitBar(
+                                        teamGraphs,
+                                        SplitBar.Mode.STORED,
+                                        scale)).height(barHeight).row();
+                            }
                         }
-                    }
-                }).growX().padTop(Scl.scl(6f * scale));
-            }
-        }).width(finalWidth);
+                    }).growX().padTop(Scl.scl(6f * scale));
+                }
+            }).top().left().growX().margin(8);
+        }).width(finalWidth).top().left();
+
+        pack();
+        keepInScreen();
+    }
+
+    private void keepInScreen() {
+        if (getScene() == null) {
+            return;
+        }
+
+        float w = getWidth();
+        float h = getHeight();
+        float sw = getScene().getWidth();
+        float sh = getScene().getHeight();
+
+        x = Mathf.clamp(x, 0, sw - w);
+        y = Mathf.clamp(y, 0, sh - h);
     }
 
     private void showAllTeamsDialog() {
