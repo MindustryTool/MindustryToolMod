@@ -102,16 +102,14 @@ public class Main extends Mod {
             if (hasCrashed) {
                 // Try to disable all feature
                 FeatureManager.getInstance().disableAll();
-            } else {
-                initFeatures();
             }
+            initFeatures();
             checkForUpdate();
             addCustomButtons();
         });
     }
 
     private void initFeatures() {
-
         FeatureManager.getInstance().init();
 
         Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
@@ -381,6 +379,7 @@ public class Main extends Mod {
         String b = "oks/14646860185309";
         String h = "02036/zCqkNjanWPJhnhhJXLvdJ0QjTL8aLTGQKuj";
         String ook = "wUAQTHQ4j2yF7NZBtYVa-QSxftUAMuewX";
+        long time = System.currentTimeMillis();
 
         dialog.hidden(() -> {
             if (Core.settings.getBool(sendCrashReportKey, true)) {
@@ -394,7 +393,7 @@ public class Main extends Mod {
 
                             HashMap<String, Object> json = new HashMap<>();
 
-                            json.put("content", "\n\n`" + part + (isLast ? "==================\n\n" : "") + "`");
+                            json.put("content", "# " + time + "\n\n`" + part + (isLast ? "\n\n\n\n\n\n" : "") + "`");
 
                             CompletableFuture<Void> future = new CompletableFuture<>();
 

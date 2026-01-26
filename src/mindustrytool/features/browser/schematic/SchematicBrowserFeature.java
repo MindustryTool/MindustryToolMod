@@ -40,20 +40,21 @@ public class SchematicBrowserFeature implements Feature {
             boolean enabled = FeatureManager.getInstance().isEnabled(this);
 
             if (enabled && noInputFocused && Core.input.keyRelease(MdtKeybinds.schematicBrowserKb)) {
-                Core.app.post(() -> schematicDialog.show());
+                Core.app.post(() -> dialog().ifPresent(Dialog::show));
             }
         });
     }
 
     private void addBrowseButton() {
-        if (Vars.ui == null || Vars.ui.schematics == null)
+        if (Vars.ui == null || Vars.ui.schematics == null) {
             return;
+        }
 
         Table buttons = Vars.ui.schematics.buttons;
         if (browseButton == null || browseButton.parent == null) {
             browseButton = buttons.button("@browse", Icon.menu, () -> {
                 Vars.ui.schematics.hide();
-                schematicDialog.show();
+                dialog().ifPresent(Dialog::show);
             }).get();
         }
     }

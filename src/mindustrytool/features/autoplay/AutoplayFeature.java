@@ -4,6 +4,7 @@ import arc.Core;
 import arc.Events;
 import arc.graphics.g2d.Draw;
 import arc.input.KeyCode;
+import arc.math.Mathf;
 import arc.scene.ui.Dialog;
 import arc.struct.Seq;
 import arc.util.Timer;
@@ -70,6 +71,34 @@ public class AutoplayFeature implements Feature {
 
         Events.run(Trigger.update, this::updateUnit);
         Events.run(Trigger.draw, this::draw);
+
+        if (Vars.mobile) {
+            Events.run(Trigger.update, () -> {
+                if (isEnabled == false) {
+                    return;
+                }
+
+                var unit = Vars.player.unit();
+
+                if (unit != null) {
+                    // if (Core.camera.position.within(unit, 1)) {
+                    //     return;
+                    // }
+
+                    // Core.camera.position.x = Mathf.lerpDelta(
+                    //         Core.camera.position.x,
+                    //         unit.x,
+                    //         unit.type.accel);
+
+                    // Core.camera.position.y = Mathf.lerpDelta(
+                    //         Core.camera.position.y,
+                    //         unit.y,
+                    //         unit.type.accel);
+
+                    Core.camera.position.set(unit.x, unit.y);
+                }
+            });
+        }
 
         Timer.schedule(() -> {
             updateTask();
