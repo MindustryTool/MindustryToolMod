@@ -4,13 +4,13 @@ import arc.Core;
 import arc.Events;
 import arc.graphics.g2d.Draw;
 import arc.input.KeyCode;
-import arc.math.Mathf;
 import arc.scene.ui.Dialog;
 import arc.struct.Seq;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
+import mindustry.gen.Unit;
 import mindustry.graphics.Layer;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
@@ -27,6 +27,8 @@ public class AutoplayFeature implements Feature {
     private AutoplaySettingDialog dialog;
     private AutoplayTask currentTask;
     private boolean isEnabled = false;
+    private float unitX = 0;
+    private float unitY = 0;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -69,11 +71,32 @@ public class AutoplayFeature implements Feature {
 
         tasks.each(AutoplayTask::init);
 
-        Events.run(Trigger.update, this::updateUnit);
+        Events.run(Trigger.beforeGameUpdate, () -> {
+            var unit = Vars.player.unit();
+
+            if (unit == null) {
+                return;
+            }
+            this.updateUnit(unit);
+
+            unitX = unit.x;
+            unitY = unit.y;
+        });
+        Events.run(Trigger.update, () -> {
+            var unit = Vars.player.unit();
+
+            if (unit == null) {
+                return;
+            }
+
+            unit.x(unitX);
+            unit.y(unitY);
+        });
+
         Events.run(Trigger.draw, this::draw);
 
         if (Vars.mobile) {
-            Events.run(Trigger.update, () -> {
+            Events.run(Trigger.beforeGameUpdate, () -> {
                 if (isEnabled == false) {
                     return;
                 }
@@ -82,18 +105,18 @@ public class AutoplayFeature implements Feature {
 
                 if (unit != null) {
                     // if (Core.camera.position.within(unit, 1)) {
-                    //     return;
+                    // return;
                     // }
 
                     // Core.camera.position.x = Mathf.lerpDelta(
-                    //         Core.camera.position.x,
-                    //         unit.x,
-                    //         unit.type.accel);
+                    // Core.camera.position.x,
+                    // unit.x,
+                    // unit.type.accel);
 
                     // Core.camera.position.y = Mathf.lerpDelta(
-                    //         Core.camera.position.y,
-                    //         unit.y,
-                    //         unit.type.accel);
+                    // Core.camera.position.y,
+                    // unit.y,
+                    // unit.type.accel);
 
                     Core.camera.position.set(unit.x, unit.y);
                 }
@@ -195,18 +218,12 @@ public class AutoplayFeature implements Feature {
         }
     }
 
-    private void updateUnit() {
+    private void updateUnit(Unit unit) {
         if (!isEnabled) {
             return;
         }
 
         if (Core.input.isTouched() || Core.input.keyDown(KeyCode.anyKey)) {
-            return;
-        }
-
-        var unit = Vars.player.unit();
-
-        if (unit == null) {
             return;
         }
 
