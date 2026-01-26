@@ -89,12 +89,12 @@ public class AutoplayFeature implements Feature {
                     Core.camera.position.x = Mathf.lerpDelta(
                             Core.camera.position.x,
                             unit.x,
-                            unit.type.speed);
+                            unit.type.accel);
 
                     Core.camera.position.y = Mathf.lerpDelta(
                             Core.camera.position.y,
                             unit.y,
-                            unit.type.speed);
+                            unit.type.accel);
 
                 }
             });
