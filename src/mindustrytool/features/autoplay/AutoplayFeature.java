@@ -4,7 +4,6 @@ import arc.Core;
 import arc.Events;
 import arc.graphics.g2d.Draw;
 import arc.input.KeyCode;
-import arc.math.Mathf;
 import arc.scene.ui.Dialog;
 import arc.struct.Seq;
 import arc.util.Timer;

@@ -158,6 +158,10 @@ public class TeamResourceFeature extends Table implements Feature {
                 return;
             }
 
+            if (Vars.mobile) {
+                return;
+            }
+
             if (!selectedTeam.active()) {
                 selectedTeam = Vars.player.team();
             }
