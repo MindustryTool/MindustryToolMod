@@ -249,9 +249,8 @@ public class QuickAccessHud extends Table implements Feature {
     public void onEnable() {
         if (Vars.ui != null && Vars.ui.hudGroup != null) {
             // Remove existing if any
-            if (Vars.ui.hudGroup.find("quick-access-hud") != null) {
-                Vars.ui.hudGroup.find("quick-access-hud").remove();
-            }
+            remove();
+
             name = "quick-access-hud";
             visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
             Core.app.post(() -> Vars.ui.hudGroup.addChild(this));
