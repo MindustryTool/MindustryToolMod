@@ -99,6 +99,7 @@ public class QuickAccessHud extends Table implements Feature {
 
                             float sw = Core.graphics.getWidth();
                             float sh = Core.graphics.getHeight();
+
                             QuickAccessHud.this.x = Mathf.clamp(QuickAccessHud.this.x, 0, sw - 40f);
                             QuickAccessHud.this.y = Mathf.clamp(QuickAccessHud.this.y, 0, sh - 40f);
 

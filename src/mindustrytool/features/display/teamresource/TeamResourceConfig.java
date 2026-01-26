@@ -5,6 +5,22 @@ import arc.Core;
 public class TeamResourceConfig {
     private static final String PREFIX = "mindustrytool.teamresources.";
 
+    public static float x() {
+        return Core.settings.getFloat(PREFIX + "x", Core.graphics.getWidth() / 2 - overlayWidth() / 2);
+    }
+
+    public static void x(float value) {
+        Core.settings.put(PREFIX + "x", value);
+    }
+
+    public static float y() {
+        return Core.settings.getFloat(PREFIX + "y", Core.graphics.getHeight());
+    }
+
+    public static void y(float value) {
+        Core.settings.put(PREFIX + "y", value);
+    }
+
     public static float opacity() {
         return Core.settings.getFloat(PREFIX + "opacity", 1f);
     }
