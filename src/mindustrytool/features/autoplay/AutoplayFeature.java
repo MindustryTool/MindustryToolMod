@@ -81,20 +81,21 @@ public class AutoplayFeature implements Feature {
                 var unit = Vars.player.unit();
 
                 if (unit != null) {
-                    if (Core.camera.position.within(unit, 1)) {
-                        return;
-                    }
+                    // if (Core.camera.position.within(unit, 1)) {
+                    //     return;
+                    // }
 
-                    Core.camera.position.x = Mathf.lerpDelta(
-                            Core.camera.position.x,
-                            unit.x,
-                            unit.type.accel);
+                    // Core.camera.position.x = Mathf.lerpDelta(
+                    //         Core.camera.position.x,
+                    //         unit.x,
+                    //         unit.type.accel);
 
-                    Core.camera.position.y = Mathf.lerpDelta(
-                            Core.camera.position.y,
-                            unit.y,
-                            unit.type.accel);
+                    // Core.camera.position.y = Mathf.lerpDelta(
+                    //         Core.camera.position.y,
+                    //         unit.y,
+                    //         unit.type.accel);
 
+                    Core.camera.position.set(unit.x, unit.y);
                 }
             });
         }
