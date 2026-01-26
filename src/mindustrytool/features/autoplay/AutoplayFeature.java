@@ -98,7 +98,7 @@ public class AutoplayFeature implements Feature {
                     // unit.y,
                     // unit.type.accel);
 
-                    Core.camera.position.set(unit.x, unit.y);
+                    // Core.camera.position.set(unit.x, unit.y);
                 }
             });
         }
