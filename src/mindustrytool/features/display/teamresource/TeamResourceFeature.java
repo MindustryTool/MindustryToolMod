@@ -56,68 +56,7 @@ public class TeamResourceFeature extends Table implements Feature {
     private boolean showTeamSelector = false;
     private boolean isHovered = false;
 
-    private final ClickListener statsListener = new ClickListener() {
-        @Override
-        public void clicked(InputEvent event, float x, float y) {
-            try {
-                showTeamSelector = !showTeamSelector;
-                rebuild();
-            } catch (Exception e) {
-                Log.err(e);
-            }
-        }
-
-        @Override
-        public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-            try {
-                holdingForStats = true;
-                viewingStats = true;
-                lastSnapshot.clear();
-                return super.touchDown(event, x, y, pointer, button);
-            } catch (Exception e) {
-                viewingStats = false;
-                holdingForStats = false;
-                Log.err(e);
-            }
-
-            return false;
-        }
-
-        @Override
-        public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
-            try {
-                holdingForStats = false;
-                if (!Vars.mobile) {
-                    if (!isHovered)
-                        viewingStats = false;
-                } else {
-                    viewingStats = false;
-                }
-                lastSnapshot.clear();
-                super.touchUp(event, x, y, pointer, button);
-            } catch (Exception e) {
-                Log.err(e);
-            }
-        }
-
-        @Override
-        public void enter(InputEvent event, float x, float y, int pointer, Element fromActor) {
-            if (pointer == -1 && !holdingForStats) {
-                viewingStats = true;
-                lastSnapshot.clear();
-            }
-            super.enter(event, x, y, pointer, fromActor);
-        }
-
-        @Override
-        public void exit(InputEvent event, float x, float y, int pointer, Element toActor) {
-            if (pointer == -1 && !holdingForStats) {
-                viewingStats = false;
-                lastSnapshot.clear();
-            }
-            super.exit(event, x, y, pointer, toActor);
-        }
-    };
+    private final TeamResourceInputListener statsListener = new TeamResourceInputListener();
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -149,27 +88,27 @@ public class TeamResourceFeature extends Table implements Feature {
 
         touchable = Touchable.enabled;
 
-        visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
+        visible(() -> Vars.state.isGame());
 
         update(() -> {
             if (!visible) {
                 return;
             }
 
+            if (selectedTeam == null) {
+                selectedTeam = Vars.player.team();
+            }
+
             if (!selectedTeam.active()) {
                 selectedTeam = Vars.player.team();
             }
 
-            coreItems = (selectedTeam.data().hasCore() && selectedTeam.core() != null)
+            coreItems = selectedTeam.core() != null
                     ? selectedTeam.core().items
                     : null;
 
             if (coreItems == null) {
                 return;
-            }
-
-            if (getChildren().isEmpty()) {
-                rebuild();
             }
 
             if (Vars.content.items().contains(item -> coreItems.get(item) > 0 && usedItems.add(item))) {
@@ -193,6 +132,7 @@ public class TeamResourceFeature extends Table implements Feature {
         name = "team-resources-overlay";
 
         Vars.ui.hudGroup.addChild(this);
+        this.toFront();
 
         Core.settings.put("coreitems", false);
 
@@ -625,6 +565,69 @@ public class TeamResourceFeature extends Table implements Feature {
                 TeamResourceConfig.hideBackground(b);
                 rebuild();
             }).left().padTop(4).row();
+        }
+    }
+
+    private class TeamResourceInputListener extends ClickListener {
+        @Override
+        public void clicked(InputEvent event, float x, float y) {
+            try {
+                showTeamSelector = !showTeamSelector;
+                rebuild();
+            } catch (Exception e) {
+                Log.err(e);
+            }
+        }
+
+        @Override
+        public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
+            try {
+                holdingForStats = true;
+                viewingStats = true;
+                lastSnapshot.clear();
+                return super.touchDown(event, x, y, pointer, button);
+            } catch (Exception e) {
+                viewingStats = false;
+                holdingForStats = false;
+                Log.err(e);
+            }
+
+            return false;
+        }
+
+        @Override
+        public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
+            try {
+                holdingForStats = false;
+                if (!Vars.mobile) {
+                    if (!isHovered)
+                        viewingStats = false;
+                } else {
+                    viewingStats = false;
+                }
+                lastSnapshot.clear();
+                super.touchUp(event, x, y, pointer, button);
+            } catch (Exception e) {
+                Log.err(e);
+            }
+        }
+
+        @Override
+        public void enter(InputEvent event, float x, float y, int pointer, Element fromActor) {
+            if (pointer == -1 && !holdingForStats) {
+                viewingStats = true;
+                lastSnapshot.clear();
+            }
+            super.enter(event, x, y, pointer, fromActor);
+        }
+
+        @Override
+        public void exit(InputEvent event, float x, float y, int pointer, Element toActor) {
+            if (pointer == -1 && !holdingForStats) {
+                viewingStats = false;
+                lastSnapshot.clear();
+            }
+            super.exit(event, x, y, pointer, toActor);
         }
     }
 }

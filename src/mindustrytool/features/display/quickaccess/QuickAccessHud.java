@@ -29,7 +29,6 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 
 public class QuickAccessHud extends Table implements Feature {
-    private final QuickAccessConfig config = new QuickAccessConfig();
     private Table currentPopup;
     private Feature currentPopupFeature;
 
@@ -49,7 +48,7 @@ public class QuickAccessHud extends Table implements Feature {
         touchable = Touchable.childrenOnly;
 
         // Initial position
-        setPosition(config.x(), config.y());
+        setPosition(QuickAccessConfig.x(), QuickAccessConfig.y());
 
         // Build UI
         rebuild();
@@ -103,8 +102,8 @@ public class QuickAccessHud extends Table implements Feature {
                             QuickAccessHud.this.x = Mathf.clamp(QuickAccessHud.this.x, 0, sw - 40f);
                             QuickAccessHud.this.y = Mathf.clamp(QuickAccessHud.this.y, 0, sh - 40f);
 
-                            config.x(QuickAccessHud.this.x);
-                            config.y(QuickAccessHud.this.y);
+                            QuickAccessConfig.x(QuickAccessHud.this.x);
+                            QuickAccessConfig.y(QuickAccessHud.this.y);
 
                             closePopup();
                         } catch (Exception e) {
@@ -144,7 +143,7 @@ public class QuickAccessHud extends Table implements Feature {
                 continue;
             }
 
-            if (!config.isFeatureVisible(meta.name())) {
+            if (!QuickAccessConfig.isFeatureVisible(meta.name())) {
                 continue;
             }
 
@@ -249,9 +248,8 @@ public class QuickAccessHud extends Table implements Feature {
     public void onEnable() {
         if (Vars.ui != null && Vars.ui.hudGroup != null) {
             // Remove existing if any
-            if (Vars.ui.hudGroup.find("quick-access-hud") != null) {
-                Vars.ui.hudGroup.find("quick-access-hud").remove();
-            }
+            remove();
+
             name = "quick-access-hud";
             visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
             Core.app.post(() -> Vars.ui.hudGroup.addChild(this));
@@ -291,8 +289,8 @@ public class QuickAccessHud extends Table implements Feature {
                 continue;
             }
 
-            table.check(meta.name(), config.isFeatureVisible(meta.name()), b -> {
-                config.setFeatureVisible(meta.name(), b);
+            table.check(meta.name(), QuickAccessConfig.isFeatureVisible(meta.name()), b -> {
+                QuickAccessConfig.setFeatureVisible(meta.name(), b);
                 QuickAccessHud.this.rebuild();
             }).fillX().top().left().pad(5).get().left();
 

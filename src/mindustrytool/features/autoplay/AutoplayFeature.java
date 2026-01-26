@@ -98,6 +98,8 @@ public class AutoplayFeature implements Feature {
                 public void update() {
                     super.update();
 
+                    movement.setZero();
+
                     boolean locked = locked();
 
                     if (!commandMode) {

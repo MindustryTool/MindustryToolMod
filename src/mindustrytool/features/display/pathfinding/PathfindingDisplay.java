@@ -40,7 +40,6 @@ import java.util.Optional;
 import static mindustry.Vars.*;
 
 public class PathfindingDisplay implements Feature {
-    private final PathfindingConfig config = new PathfindingConfig();
     private final LongMap<PathfindingCache> pathCache = new LongMap<>();
     private final LongMap<PathfindingCache> spawnPathCache = new LongMap<>();
     private final LongMap<Object> activeTiles = new LongMap<>();
@@ -63,7 +62,7 @@ public class PathfindingDisplay implements Feature {
 
     @Override
     public void init() {
-        config.load();
+        PathfindingConfig.load();
         Events.run(Trigger.draw, this::draw);
 
         Events.on(WorldLoadEvent.class, e -> reset());
@@ -110,7 +109,7 @@ public class PathfindingDisplay implements Feature {
             settingsDialog.addCloseButton();
             settingsDialog.shown(this::rebuildSettings);
             settingsDialog.buttons.button("@reset", Icon.refresh, () -> {
-                config.setZoomThreshold(0.5f);
+                PathfindingConfig.setZoomThreshold(0.5f);
                 rebuildSettings();
             }).size(250, 64);
         }
@@ -123,7 +122,7 @@ public class PathfindingDisplay implements Feature {
         settingsContainer.defaults().pad(6).left();
 
         float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
-        float currentZoom = config.getZoomThreshold();
+        float currentZoom = PathfindingConfig.getZoomThreshold();
 
         Slider zoomSlider = new Slider(0f, 5f, 0.1f, false);
         zoomSlider.setValue(currentZoom);
@@ -141,7 +140,7 @@ public class PathfindingDisplay implements Feature {
 
         zoomSlider.changed(() -> {
             float newZoomValue = zoomSlider.getValue();
-            config.setZoomThreshold(newZoomValue);
+            PathfindingConfig.setZoomThreshold(newZoomValue);
             zoomValueLabel.setText(newZoomValue <= 0.01f ? "@off" : String.format("%.1fx", newZoomValue));
             zoomValueLabel.setColor(newZoomValue <= 0.01f ? Color.gray : Color.lightGray);
         });
@@ -149,10 +148,10 @@ public class PathfindingDisplay implements Feature {
         settingsContainer.stack(zoomSlider, zoomContent).width(width).left().padTop(4f).row();
 
         Slider opacitySlider = new Slider(0f, 1f, 0.05f, false);
-        opacitySlider.setValue(config.getOpacity());
+        opacitySlider.setValue(PathfindingConfig.getOpacity());
 
         Label opacityValue = new Label(
-                String.format("%.0f%%", config.getOpacity() * 100),
+                String.format("%.0f%%", PathfindingConfig.getOpacity() * 100),
                 Styles.outlineLabel);
         opacityValue.setColor(Color.lightGray);
 
@@ -163,22 +162,22 @@ public class PathfindingDisplay implements Feature {
         opacityContent.add(opacityValue).padLeft(10f).right();
 
         opacitySlider.changed(() -> {
-            config.setOpacity(opacitySlider.getValue());
-            opacityValue.setText(String.format("%.0f%%", config.getOpacity() * 100));
+            PathfindingConfig.setOpacity(opacitySlider.getValue());
+            opacityValue.setText(String.format("%.0f%%", PathfindingConfig.getOpacity() * 100));
         });
 
         settingsContainer.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
 
-        settingsContainer.check("@pathfinding.draw-unit-path", config.isDrawUnitPath(), (checked) -> {
-            config.setDrawUnitPath(checked);
+        settingsContainer.check("@pathfinding.draw-unit-path", PathfindingConfig.isDrawUnitPath(), (checked) -> {
+            PathfindingConfig.setDrawUnitPath(checked);
         }).left().row();
 
-        settingsContainer.check("@pathfinding.draw-spawn-point-path", config.isDrawSpawnPointPath(), (checked) -> {
-            config.setDrawSpawnPointPath(checked);
+        settingsContainer.check("@pathfinding.draw-spawn-point-path", PathfindingConfig.isDrawSpawnPointPath(), (checked) -> {
+            PathfindingConfig.setDrawSpawnPointPath(checked);
             rebuildSettings();
         }).left().row();
 
-        if (config.isDrawSpawnPointPath()) {
+        if (PathfindingConfig.isDrawSpawnPointPath()) {
             Table costTable = new Table();
             costTable.left().defaults().left().padLeft(16);
 
@@ -187,8 +186,8 @@ public class PathfindingDisplay implements Feature {
 
             for (int i = 0; i < costNames.length; i++) {
                 int index = i;
-                costTable.check(costNames[i], config.isCostTypeEnabled(index), c -> {
-                    config.setCostTypeEnabled(index, c);
+                costTable.check(costNames[i], PathfindingConfig.isCostTypeEnabled(index), c -> {
+                    PathfindingConfig.setCostTypeEnabled(index, c);
                 }).padBottom(4).row();
             }
 
@@ -201,18 +200,18 @@ public class PathfindingDisplay implements Feature {
             return;
         }
 
-        float zoomThreshold = config.getZoomThreshold();
+        float zoomThreshold = PathfindingConfig.getZoomThreshold();
         float currentZoom = renderer.getScale();
 
         if (-currentZoom > -zoomThreshold) {
             return;
         }
 
-        if (config.isDrawSpawnPointPath()) {
+        if (PathfindingConfig.isDrawSpawnPointPath()) {
             drawSpawnPointPath();
         }
 
-        if (config.isDrawUnitPath()) {
+        if (PathfindingConfig.isDrawUnitPath()) {
             drawUnitPath();
         }
     }
@@ -340,7 +339,7 @@ public class PathfindingDisplay implements Feature {
             float nextX = cacheEntry.data[(i + 1) * 2];
             float nextY = cacheEntry.data[(i + 1) * 2 + 1];
 
-            Draw.color(pathColor, (1f - ((float) i / maxSteps)) * config.getOpacity());
+            Draw.color(pathColor, (1f - ((float) i / maxSteps)) * PathfindingConfig.getOpacity());
             Lines.line(currentX, currentY, nextX, nextY);
 
             currentX = nextX;
@@ -366,7 +365,7 @@ public class PathfindingDisplay implements Feature {
             }
 
             for (var costType = 0; costType < Pathfinder.costTypes.size; costType++) {
-                if (!config.isCostTypeEnabled(costType)) {
+                if (!PathfindingConfig.isCostTypeEnabled(costType)) {
                     continue;
                 }
 
@@ -445,7 +444,7 @@ public class PathfindingDisplay implements Feature {
     private void drawSpawnPathFromCache(PathfindingCache cache, Color color) {
         if (cache.size < 4)
             return;
-        Draw.color(color, config.getOpacity());
+        Draw.color(color, PathfindingConfig.getOpacity());
         Lines.stroke(1f);
 
         for (int i = 0; i < cache.size - 2; i += 2) {

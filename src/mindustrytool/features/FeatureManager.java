@@ -51,11 +51,13 @@ public class FeatureManager {
 
         Core.settings.put("mindustrytool.feature." + feature.getMetadata().name() + ".enabled", enabled);
 
-        if (enabled) {
-            feature.onEnable();
-        } else {
-            feature.onDisable();
-        }
+        Core.app.post(() -> {
+            if (enabled) {
+                feature.onEnable();
+            } else {
+                feature.onDisable();
+            }
+        });
     }
 
     public Seq<Feature> getFeatures() {

@@ -55,18 +55,7 @@ public class ChatFeature implements Feature {
         overlay = new ChatOverlay();
         ChatService.getInstance().connectStream();
 
-        // Add to menu group
-        // We want it to be visible only in menu
         if (Vars.ui.menuGroup != null) {
-            // Position it on the left or right?
-            // Let's put it on the bottom left, but above other buttons if possible.
-            // Or maybe a fixed size window on the right.
-
-            // Check if already added
-            if (Vars.ui.menuGroup.find("mdt-chat-overlay") != null) {
-                Vars.ui.menuGroup.find("mdt-chat-overlay").remove();
-            }
-
             Core.app.post(() -> Core.scene.add(overlay));
         }
     }
@@ -88,10 +77,8 @@ public class ChatFeature implements Feature {
             settingDialog.name = "chatSettingDialog";
 
             settingDialog.cont.button("@chat.reset-overlay-position", () -> {
-                ChatConfig config = new ChatConfig();
-
-                config.x(0);
-                config.y(0);
+                ChatConfig.x(0);
+                ChatConfig.y(0);
 
                 if (overlay != null) {
                     overlay.setPosition(0, 0);

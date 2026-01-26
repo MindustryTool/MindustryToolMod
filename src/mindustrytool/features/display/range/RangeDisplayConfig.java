@@ -3,17 +3,17 @@ package mindustrytool.features.display.range;
 import arc.Core;
 
 public class RangeDisplayConfig {
-    public float opacity = 1f;
-    public boolean drawBlockRangeAlly = true;
-    public boolean drawBlockRangeEnemy = true;
-    public boolean drawUnitRangeAlly = true;
-    public boolean drawUnitRangeEnemy = true;
-    public boolean drawTurretRangeAlly = true;
-    public boolean drawTurretRangeEnemy = true;
-    public boolean drawPlayerRange = true;
-    public boolean drawSpawnerRange = true;
+    public static float opacity = 1f;
+    public static boolean drawBlockRangeAlly = true;
+    public static boolean drawBlockRangeEnemy = true;
+    public static boolean drawUnitRangeAlly = true;
+    public static boolean drawUnitRangeEnemy = true;
+    public static boolean drawTurretRangeAlly = true;
+    public static boolean drawTurretRangeEnemy = true;
+    public static boolean drawPlayerRange = true;
+    public static boolean drawSpawnerRange = true;
 
-    public void load() {
+    public static void load() {
         opacity = Core.settings.getFloat("range-opacity", 1f);
         drawBlockRangeAlly = Core.settings.getBool("range-drawBlockRangeAlly", true);
         drawBlockRangeEnemy = Core.settings.getBool("range-drawBlockRangeEnemy", true);
@@ -25,7 +25,7 @@ public class RangeDisplayConfig {
         drawSpawnerRange = Core.settings.getBool("range-drawSpawnerRange", true);
     }
 
-    public void save() {
+    public static void save() {
         Core.settings.put("range-opacity", opacity);
         Core.settings.put("range-drawBlockRangeAlly", drawBlockRangeAlly);
         Core.settings.put("range-drawBlockRangeEnemy", drawBlockRangeEnemy);
