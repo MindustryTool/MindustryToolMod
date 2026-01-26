@@ -52,21 +52,12 @@ public class ChatFeature implements Feature {
 
     @Override
     public void onEnable() {
+        overlay.remove();
+
         overlay = new ChatOverlay();
         ChatService.getInstance().connectStream();
 
-        // Add to menu group
-        // We want it to be visible only in menu
         if (Vars.ui.menuGroup != null) {
-            // Position it on the left or right?
-            // Let's put it on the bottom left, but above other buttons if possible.
-            // Or maybe a fixed size window on the right.
-
-            // Check if already added
-            if (overlay != null) {
-                overlay.remove();
-            }
-
             Core.app.post(() -> Core.scene.add(overlay));
         }
     }
