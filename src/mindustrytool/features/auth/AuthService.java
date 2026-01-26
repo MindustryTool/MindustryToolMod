@@ -30,6 +30,7 @@ public class AuthService {
 
     private CompletableFuture<Boolean> refreshFuture;
     private CompletableFuture<Void> loginFuture;
+    private BaseDialog loginDialog;
 
     public static AuthService getInstance() {
         if (instance == null) {
@@ -78,27 +79,26 @@ public class AuthService {
 
         loginFuture = new CompletableFuture<>();
 
-        BaseDialog dialog = new BaseDialog("@login");
+        if (loginDialog == null) {
+            loginDialog = new BaseDialog("@login");
+        }
 
-        dialog.name = "loginDialog";
+        loginDialog.name = "loginDialog";
 
-        dialog.buttons.button("@cancel", () -> {
+        loginDialog.buttons.button("@cancel", () -> {
             if (!loginFuture.isDone()) {
                 loginFuture.completeExceptionally(new RuntimeException("Login cancelled"));
             }
-            dialog.hide();
+            loginDialog.hide();
         }).width(230);
 
-        dialog.cont.add("@generate-loading-link");
-
-        Core.app.post(() -> Core.scene.add(dialog));
+        loginDialog.cont.add("@generate-loading-link");
 
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
                 .timeout(10000)
                 .error(err -> {
                     Core.app.post(() -> {
-                        dialog.hide();
-                        dialog.remove();
+                        loginDialog.hide();
                         loginFuture.completeExceptionally(new RuntimeException("Failed to get login URI", err));
                     });
                 })
@@ -109,8 +109,8 @@ public class AuthService {
                         String loginUrl = json.getString("loginUrl");
                         String loginId = json.getString("loginId");
 
-                        dialog.cont.clear();
-                        dialog.cont.button(loginUrl, () -> {
+                        loginDialog.cont.clear();
+                        loginDialog.cont.button(loginUrl, () -> {
                             Core.app.setClipboardText(loginUrl);
                             Vars.ui.showInfoFade("@copied");
                         }).margin(40).growX().wrapLabel(true);
@@ -124,8 +124,7 @@ public class AuthService {
                             } else {
                                 loginFuture.complete(null);
                             }
-                            dialog.hide();
-                            dialog.remove();
+                            Core.app.post(() -> loginDialog.hide());
                         });
 
                         if (!Core.app.openURI(loginUrl)) {
@@ -134,8 +133,7 @@ public class AuthService {
 
                     } catch (Exception e) {
                         loginFuture.completeExceptionally(new RuntimeException("Failed to start login flow", e));
-                        dialog.hide();
-                        dialog.remove();
+                        Core.app.post(() -> loginDialog.hide());
                     }
                 });
 

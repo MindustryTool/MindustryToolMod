@@ -38,7 +38,6 @@ import java.util.Set;
 public class RangeDisplay implements Feature {
     private boolean enabled = false;
     private BaseDialog dialog;
-    private final RangeDisplayConfig config = new RangeDisplayConfig();
 
     private final ObjectMap<Block, Float> blockRangeCache = new ObjectMap<>();
 
@@ -68,7 +67,7 @@ public class RangeDisplay implements Feature {
 
     @Override
     public void init() {
-        config.load();
+        RangeDisplayConfig.load();
         Events.run(Trigger.draw, this::draw);
     }
 
@@ -93,10 +92,10 @@ public class RangeDisplay implements Feature {
             cont.defaults().left().pad(5);
 
             Slider opacitySlider = new Slider(0f, 1f, 0.05f, false);
-            opacitySlider.setValue(config.opacity);
+            opacitySlider.setValue(RangeDisplayConfig.opacity);
 
             Label opacityValue = new Label(
-                    String.format("%.0f%%", config.opacity * 100),
+                    String.format("%.0f%%", RangeDisplayConfig.opacity * 100),
                     Styles.outlineLabel);
             opacityValue.setColor(Color.lightGray);
 
@@ -107,72 +106,72 @@ public class RangeDisplay implements Feature {
             opacityContent.add(opacityValue).padLeft(10f).right();
 
             opacitySlider.changed(() -> {
-                config.opacity = opacitySlider.getValue();
-                opacityValue.setText(String.format("%.0f%%", config.opacity * 100));
-                config.save();
+                RangeDisplayConfig.opacity = opacitySlider.getValue();
+                opacityValue.setText(String.format("%.0f%%", RangeDisplayConfig.opacity * 100));
+                RangeDisplayConfig.save();
             });
 
             float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
             cont.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
 
-            addCheck(cont, "@range-display.draw-ally-block-range", config.drawBlockRangeAlly, v -> {
-                config.drawBlockRangeAlly = v;
-                config.save();
+            addCheck(cont, "@range-display.draw-ally-block-range", RangeDisplayConfig.drawBlockRangeAlly, v -> {
+                RangeDisplayConfig.drawBlockRangeAlly = v;
+                RangeDisplayConfig.save();
             });
 
             if (Vars.mobile) {
                 cont.row();
             }
 
-            addCheck(cont, "@range-display.draw-enemy-block-range", config.drawBlockRangeEnemy, v -> {
-                config.drawBlockRangeEnemy = v;
-                config.save();
+            addCheck(cont, "@range-display.draw-enemy-block-range", RangeDisplayConfig.drawBlockRangeEnemy, v -> {
+                RangeDisplayConfig.drawBlockRangeEnemy = v;
+                RangeDisplayConfig.save();
             });
 
             cont.row();
 
-            addCheck(cont, "@range-display.draw-ally-turret-range", config.drawTurretRangeAlly, v -> {
-                config.drawTurretRangeAlly = v;
-                config.save();
+            addCheck(cont, "@range-display.draw-ally-turret-range", RangeDisplayConfig.drawTurretRangeAlly, v -> {
+                RangeDisplayConfig.drawTurretRangeAlly = v;
+                RangeDisplayConfig.save();
             });
 
             if (Vars.mobile) {
                 cont.row();
             }
 
-            addCheck(cont, "@range-display.draw-enemy-turret-range", config.drawTurretRangeEnemy, v -> {
-                config.drawTurretRangeEnemy = v;
-                config.save();
+            addCheck(cont, "@range-display.draw-enemy-turret-range", RangeDisplayConfig.drawTurretRangeEnemy, v -> {
+                RangeDisplayConfig.drawTurretRangeEnemy = v;
+                RangeDisplayConfig.save();
             });
 
             cont.row();
 
-            addCheck(cont, "@range-display.draw-ally-unit-range", config.drawUnitRangeAlly, v -> {
-                config.drawUnitRangeAlly = v;
-                config.save();
+            addCheck(cont, "@range-display.draw-ally-unit-range", RangeDisplayConfig.drawUnitRangeAlly, v -> {
+                RangeDisplayConfig.drawUnitRangeAlly = v;
+                RangeDisplayConfig.save();
             });
 
             if (Vars.mobile) {
                 cont.row();
             }
 
-            addCheck(cont, "@range-display.draw-enemy-unit-range", config.drawUnitRangeEnemy, v -> {
-                config.drawUnitRangeEnemy = v;
-                config.save();
+            addCheck(cont, "@range-display.draw-enemy-unit-range", RangeDisplayConfig.drawUnitRangeEnemy, v -> {
+                RangeDisplayConfig.drawUnitRangeEnemy = v;
+                RangeDisplayConfig.save();
             });
 
             cont.row();
 
-            addCheck(cont, "@range-display.draw-player-range", config.drawPlayerRange, v -> {
-                config.drawPlayerRange = v;
-                config.save();
+            addCheck(cont, "@range-display.draw-player-range", RangeDisplayConfig.drawPlayerRange, v -> {
+                RangeDisplayConfig.drawPlayerRange = v;
+                RangeDisplayConfig.save();
             });
 
             cont.row();
 
-            addCheck(cont, "@range-display.draw-spawner-range", config.drawSpawnerRange, v -> {
-                config.drawSpawnerRange = v;
-                config.save();
+            addCheck(cont, "@range-display.draw-spawner-range", RangeDisplayConfig.drawSpawnerRange, v -> {
+                RangeDisplayConfig.drawSpawnerRange = v;
+                RangeDisplayConfig.save();
             });
 
             if (Vars.mobile) {
@@ -201,7 +200,7 @@ public class RangeDisplay implements Feature {
         float maxDimension = Math.max(cw, ch);
         float radius = maxDimension * 0.75f;
 
-        if (config.drawSpawnerRange) {
+        if (RangeDisplayConfig.drawSpawnerRange) {
             if (Vars.spawner.getSpawns() != null) {
                 float dropRadius = Vars.state.rules.dropZoneRadius;
                 for (Tile tile : Vars.spawner.getSpawns()) {
@@ -220,7 +219,7 @@ public class RangeDisplay implements Feature {
             }
         }
 
-        if (config.drawUnitRangeAlly || config.drawUnitRangeEnemy || config.drawPlayerRange) {
+        if (RangeDisplayConfig.drawUnitRangeAlly || RangeDisplayConfig.drawUnitRangeEnemy || RangeDisplayConfig.drawPlayerRange) {
             float margin = 2000f;
             Groups.unit.intersect(cx - cw / 2f - margin, cy - ch / 2f - margin, cw + margin * 2, ch + margin * 2,
                     unitDrawer);
@@ -239,12 +238,12 @@ public class RangeDisplay implements Feature {
         boolean isAlly = unit.team == Vars.player.team();
 
         if (isPlayer) {
-            if (!config.drawPlayerRange)
+            if (!RangeDisplayConfig.drawPlayerRange)
                 return;
         } else {
-            if (isAlly && !config.drawUnitRangeAlly)
+            if (isAlly && !RangeDisplayConfig.drawUnitRangeAlly)
                 return;
-            if (!isAlly && !config.drawUnitRangeEnemy)
+            if (!isAlly && !RangeDisplayConfig.drawUnitRangeEnemy)
                 return;
         }
 
@@ -265,14 +264,14 @@ public class RangeDisplay implements Feature {
         boolean isTurret = build.block instanceof Turret;
 
         if (isTurret) {
-            if (isAlly && !config.drawTurretRangeAlly)
+            if (isAlly && !RangeDisplayConfig.drawTurretRangeAlly)
                 return;
-            if (!isAlly && !config.drawTurretRangeEnemy)
+            if (!isAlly && !RangeDisplayConfig.drawTurretRangeEnemy)
                 return;
         } else {
-            if (isAlly && !config.drawBlockRangeAlly)
+            if (isAlly && !RangeDisplayConfig.drawBlockRangeAlly)
                 return;
-            if (!isAlly && !config.drawBlockRangeEnemy)
+            if (!isAlly && !RangeDisplayConfig.drawBlockRangeEnemy)
                 return;
         }
 
@@ -295,7 +294,7 @@ public class RangeDisplay implements Feature {
 
         var rotation = Mathf.angle(targetX - x, targetY - y);
 
-        Tmp.c2.set(color).a(config.opacity);
+        Tmp.c2.set(color).a(RangeDisplayConfig.opacity);
         Lines.stroke(1f, Tmp.c2);
         Lines.dashCircle(x, y, range);
         Draw.color(Tmp.c2);

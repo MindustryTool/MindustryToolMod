@@ -88,10 +88,8 @@ public class ChatFeature implements Feature {
             settingDialog.name = "chatSettingDialog";
 
             settingDialog.cont.button("@chat.reset-overlay-position", () -> {
-                ChatConfig config = new ChatConfig();
-
-                config.x(0);
-                config.y(0);
+                ChatConfig.x(0);
+                ChatConfig.y(0);
 
                 if (overlay != null) {
                     overlay.setPosition(0, 0);

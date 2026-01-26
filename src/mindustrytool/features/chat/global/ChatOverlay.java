@@ -73,7 +73,6 @@ public class ChatOverlay extends Table {
     private Table container;
 
     private Cell<Table> containerCell;
-    private final ChatConfig config = new ChatConfig();
     private final PlayerConnectService playerConnectService = new PlayerConnectService();
 
     private int unreadCount = 0;
@@ -87,7 +86,7 @@ public class ChatOverlay extends Table {
         touchable = Touchable.childrenOnly;
         isUserListCollapsed = Vars.mobile;
 
-        setPosition(config.x(), config.y());
+        setPosition(ChatConfig.x(), ChatConfig.y());
 
         container = new Table();
         inputTable = new Table();
@@ -123,7 +122,7 @@ public class ChatOverlay extends Table {
             boolean noInputFocused = !Core.scene.hasField();
 
             if (noInputFocused && Core.input.keyRelease(MdtKeybinds.chatKb)) {
-                config.collapsed(!config.collapsed());
+                ChatConfig.collapsed(!ChatConfig.collapsed());
                 setup();
             }
         });
@@ -132,7 +131,7 @@ public class ChatOverlay extends Table {
             @Override
             public boolean keyDown(InputEvent event, KeyCode keycode) {
                 try {
-                    if (keycode == KeyCode.escape && !config.collapsed()) {
+                    if (keycode == KeyCode.escape && !ChatConfig.collapsed()) {
                         collapse();
                         return true;
                     }
@@ -155,16 +154,16 @@ public class ChatOverlay extends Table {
     }
 
     public boolean isCollapsed() {
-        return config.collapsed();
+        return ChatConfig.collapsed();
     }
 
     private synchronized void setup() {
-        setPosition(config.x(config.collapsed()), config.y(config.collapsed()));
+        setPosition(ChatConfig.x(ChatConfig.collapsed()), ChatConfig.y(ChatConfig.collapsed()));
 
         container.clearChildren();
         container.touchable = Touchable.enabled;
 
-        if (config.collapsed()) {
+        if (ChatConfig.collapsed()) {
             container.background(null);
             containerCell.size(48);
 
@@ -203,8 +202,8 @@ public class ChatOverlay extends Table {
                         }
 
                         ChatOverlay.this.moveBy(dx, dy);
-                        config.x(ChatOverlay.this.x);
-                        config.y(ChatOverlay.this.y);
+                        ChatConfig.x(ChatOverlay.this.x);
+                        ChatConfig.y(ChatOverlay.this.y);
 
                         keepInScreen();
                     } catch (Exception e) {
@@ -219,7 +218,7 @@ public class ChatOverlay extends Table {
                     }
 
                     try {
-                        config.collapsed(false);
+                        ChatConfig.collapsed(false);
                         unreadCount = 0;
                         Core.app.post(() -> setup());
                     } catch (Exception e) {
@@ -258,8 +257,8 @@ public class ChatOverlay extends Table {
                     try {
                         ChatOverlay.this.moveBy(x - lastX, y - lastY);
                         keepInScreen();
-                        config.x(ChatOverlay.this.x);
-                        config.y(ChatOverlay.this.y);
+                        ChatConfig.x(ChatOverlay.this.x);
+                        ChatConfig.y(ChatOverlay.this.y);
                     } catch (Exception e) {
                         Log.info(e);
                     }
@@ -484,7 +483,7 @@ public class ChatOverlay extends Table {
             messages.add(msg);
 
             try {
-                if (config.collapsed() && config.lastRead().isBefore(Instant.parse(msg.createdAt))) {
+                if (ChatConfig.collapsed() && ChatConfig.lastRead().isBefore(Instant.parse(msg.createdAt))) {
                     addedCount++;
                 }
             } catch (Exception e) {
@@ -492,24 +491,24 @@ public class ChatOverlay extends Table {
             }
         }
 
-        if (config.collapsed() && addedCount > 0) {
+        if (ChatConfig.collapsed() && addedCount > 0) {
             unreadCount += addedCount;
             updateBadge();
         } else {
-            config.lastRead(Instant.now());
+            ChatConfig.lastRead(Instant.now());
         }
 
         if (messages.size > 1000) {
             messages.remove(0);
         }
 
-        if (messageTable != null && !config.collapsed()) {
+        if (messageTable != null && !ChatConfig.collapsed()) {
             // Scroll to bottom
 
             Core.app.post(() -> {
                 rebuildMessages(messageTable);
-        });
-        
+            });
+
             Time.runTask(60 * 3, () -> {
                 if (scrollPane != null) {
                     Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
@@ -522,7 +521,7 @@ public class ChatOverlay extends Table {
         messageTable.clear();
         messageTable.top().left();
 
-        config.lastRead(Instant.now());
+        ChatConfig.lastRead(Instant.now());
 
         for (ChatMessage msg : messages) {
             Table entry = new Table();
@@ -673,7 +672,7 @@ public class ChatOverlay extends Table {
     }
 
     private void collapse() {
-        config.collapsed(true);
+        ChatConfig.collapsed(true);
         unreadCount = 0;
         setup();
     }

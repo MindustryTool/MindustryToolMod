@@ -6,23 +6,23 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class QuickAccessConfig {
-    public float x() {
+    public static float x() {
         return Core.settings.getFloat("mindustrytool.quickaccess.x", 0);
     }
 
-    public void x(float value) {
+    public static void x(float value) {
         Core.settings.put("mindustrytool.quickaccess.x", value);
     }
 
-    public float y() {
+    public static float y() {
         return Core.settings.getFloat("mindustrytool.quickaccess.y", Core.graphics.getHeight() / 2f);
     }
 
-    public void y(float value) {
+    public static void y(float value) {
         Core.settings.put("mindustrytool.quickaccess.y", value);
     }
 
-    public boolean isFeatureVisible(String name) {
+    public static boolean isFeatureVisible(String name) {
         String hidden = Core.settings.getString("mindustrytool.quickaccess.hidden", "");
         if (hidden.isEmpty())
             return true;
@@ -33,7 +33,7 @@ public class QuickAccessConfig {
         return true;
     }
 
-    public void setFeatureVisible(String name, boolean visible) {
+    public static void setFeatureVisible(String name, boolean visible) {
         String hiddenStr = Core.settings.getString("mindustrytool.quickaccess.hidden", "");
         Set<String> hidden = new HashSet<>();
         if (!hiddenStr.isEmpty()) {
