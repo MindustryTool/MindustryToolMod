@@ -44,10 +44,6 @@ public class AutoplayFeature implements Feature {
         tasks.add(new AssistTask());
         tasks.add(new MiningTask());
 
-        if (Vars.mobile) {
-            Vars.control.input.addLock(() -> isEnabled);
-        }
-
         // Load task order
 
         @SuppressWarnings("unchecked")
@@ -76,7 +72,7 @@ public class AutoplayFeature implements Feature {
         Events.run(Trigger.draw, this::draw);
 
         if (Vars.mobile) {
-            Events.run(Trigger.beforeGameUpdate, () -> {
+            Events.run(Trigger.update, () -> {
                 if (isEnabled == false) {
                     return;
                 }
@@ -85,20 +81,20 @@ public class AutoplayFeature implements Feature {
 
                 if (unit != null) {
                     // if (Core.camera.position.within(unit, 1)) {
-                    // return;
+                    //     return;
                     // }
 
                     // Core.camera.position.x = Mathf.lerpDelta(
-                    // Core.camera.position.x,
-                    // unit.x,
-                    // unit.type.accel);
+                    //         Core.camera.position.x,
+                    //         unit.x,
+                    //         unit.type.accel);
 
                     // Core.camera.position.y = Mathf.lerpDelta(
-                    // Core.camera.position.y,
-                    // unit.y,
-                    // unit.type.accel);
+                    //         Core.camera.position.y,
+                    //         unit.y,
+                    //         unit.type.accel);
 
-                    // Core.camera.position.set(unit.x, unit.y);
+                    Core.camera.position.set(unit.x, unit.y);
                 }
             });
         }
