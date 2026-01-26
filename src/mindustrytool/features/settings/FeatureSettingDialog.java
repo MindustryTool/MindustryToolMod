@@ -118,37 +118,45 @@ public class FeatureSettingDialog extends BaseDialog {
         cont.pane(table -> {
             table.top().left();
 
-            table.add("@feature").padLeft(10).top().left().row();
-
             int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / Scl.scl() * 0.9f / 340f));
             float cardWidth = ((float) arc.Core.graphics.getWidth() / Scl.scl() * 0.9f) / cols;
 
-            int i = 0;
+            var featureWithDialog = FeatureManager.getInstance().getEnableds().select(f -> f.dialog().isPresent());
 
-            for (Feature feature : FeatureManager.getInstance().getEnableds().select(f -> f.dialog().isPresent())) {
-                buildFeatureButton(table, feature, cardWidth);
-                if (++i % cols == 0) {
-                    table.row();
+            if (featureWithDialog.size > 0) {
+                table.add("@feature").padLeft(10).top().left().row();
+
+                int i = 0;
+
+                for (Feature feature : featureWithDialog) {
+                    buildFeatureButton(table, feature, cardWidth);
+                    if (++i % cols == 0) {
+                        table.row();
+                    }
                 }
-            }
 
-            table.row();
-            table.image().color(Color.gray).growX().height(4f)
-                    .colspan(cols)
-                    .pad(10)
-                    .row();
+                table.row();
+                table.image().color(Color.gray).growX().height(4f)
+                        .colspan(cols)
+                        .pad(10)
+                        .row();
+            }
 
             table.add("@settings").padLeft(10).top().left().row();
 
-            i = 0;
+            int i = 0;
 
             for (Feature feature : FeatureManager.getInstance().getFeatures()) {
-                buildFeatureCard(table, feature, cardWidth);
+                table.table(parent -> buildFeatureCard(parent, feature, cardWidth))
+                        .growX();
+
                 if (++i % cols == 0) {
                     table.row();
                 }
             }
-        }).grow();
+        })
+                .scrollX(false)
+                .grow();
     }
 
     private void buildFeatureButton(Table parent, Feature feature, float cardWidth) {
@@ -160,12 +168,10 @@ public class FeatureSettingDialog extends BaseDialog {
             card.table(c -> {
                 c.top().left().margin(12);
 
-                // Header
                 c.table(header -> {
                     header.left();
                     header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
 
-                    // Settings button
                     if (feature.setting().isPresent()) {
                         header.button(Icon.settings, Styles.clearNonei,
                                 () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
@@ -179,10 +185,8 @@ public class FeatureSettingDialog extends BaseDialog {
                                 });
                     }
 
-                    // Status icon (visual only)
                 }).growX().row();
 
-                // Description
                 c.add(metadata.description())
                         .color(Color.lightGray)
                         .fontScale(0.9f)
@@ -191,7 +195,6 @@ public class FeatureSettingDialog extends BaseDialog {
                         .padTop(10)
                         .row();
 
-                // Spacer to push status to bottom
                 c.add().growY().row();
                 c.add().growX();
 
@@ -213,22 +216,40 @@ public class FeatureSettingDialog extends BaseDialog {
         boolean enabled = FeatureManager.getInstance().isEnabled(feature);
         var metadata = feature.getMetadata();
 
-        parent.table(Styles.black6, card -> {
-            card.top().left();
+        var card = parent.button(Styles.black6, null)
+                .growX()
+                .minWidth(cardWidth)
+                .height(180f).pad(10f).grow().get();
 
-            // Status border
-            card.image().color(enabled ? Color.green : Color.red).growX().height(4f).row();
+        card.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (event.stopped) {
+                    return;
+                }
 
-            card.table(c -> {
+                try {
+                    FeatureManager.getInstance().setEnabled(feature, !enabled);
+                    parent.clear();
+                    buildFeatureCard(parent, feature, cardWidth);
+                } catch (Exception e) {
+                    Log.err(e);
+                }
+            }
+        });
+
+        card.top().left();
+        card.table(inner -> {
+            inner.image().color(enabled ? Color.green : Color.red).growX().height(4f).row();
+
+            inner.table(c -> {
                 c.top().left().margin(12);
 
-                // Header
                 c.table(header -> {
                     header.left();
                     header.image(metadata.icon()).scaling(Scaling.fill).size(24).padRight(8);
                     header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
 
-                    // Settings button
                     if (feature.setting().isPresent()) {
                         header.button(Icon.settings, Styles.clearNonei,
                                 () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
@@ -242,12 +263,10 @@ public class FeatureSettingDialog extends BaseDialog {
                                 });
                     }
 
-                    // Status icon (visual only)
                     header.image(enabled ? Icon.eyeSmall : Icon.eyeOffSmall).size(24).padLeft(4)
                             .color(enabled ? Color.white : Color.gray);
                 }).growX().row();
 
-                // Description
                 c.add(metadata.description())
                         .color(Color.lightGray)
                         .fontScale(0.9f)
@@ -256,32 +275,13 @@ public class FeatureSettingDialog extends BaseDialog {
                         .padTop(10)
                         .row();
 
-                // Spacer to push status to bottom
                 c.add().growY().row();
 
-                // Status Footer
                 c.add(enabled ? "@enabled" : "@disabled")
                         .color(enabled ? Color.green : Color.red)
                         .left();
-            }).grow();
+            }).grow().top().left();
+        }).grow();
 
-        })
-                .growX()
-                .minWidth(cardWidth)
-                .height(180f).pad(10f).get().addListener(new ClickListener() {
-                    @Override
-                    public void clicked(InputEvent event, float x, float y) {
-                        if (event.stopped) {
-                            return;
-                        }
-
-                        try {
-                            FeatureManager.getInstance().setEnabled(feature, !enabled);
-                            rebuild();
-                        } catch (Exception e) {
-                            Log.err(e);
-                        }
-                    }
-                });
     }
 }
