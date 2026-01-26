@@ -96,9 +96,11 @@ public class AuthService {
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
                 .timeout(10000)
                 .error(err -> {
-                    dialog.hide();
-                    dialog.remove();
-                    loginFuture.completeExceptionally(new RuntimeException("Failed to get login URI", err));
+                    Core.app.post(() -> {
+                        dialog.hide();
+                        dialog.remove();
+                        loginFuture.completeExceptionally(new RuntimeException("Failed to get login URI", err));
+                    });
                 })
                 .submit(res -> {
                     try {

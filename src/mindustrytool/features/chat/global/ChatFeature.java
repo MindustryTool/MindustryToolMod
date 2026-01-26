@@ -63,8 +63,8 @@ public class ChatFeature implements Feature {
             // Or maybe a fixed size window on the right.
 
             // Check if already added
-            if (Vars.ui.menuGroup.find("mdt-chat-overlay") != null) {
-                Vars.ui.menuGroup.find("mdt-chat-overlay").remove();
+            if (overlay != null) {
+                overlay.remove();
             }
 
             Core.app.post(() -> Core.scene.add(overlay));
