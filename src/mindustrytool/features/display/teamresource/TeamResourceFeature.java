@@ -132,8 +132,6 @@ public class TeamResourceFeature extends Table implements Feature {
 
     @Override
     public void init() {
-        selectedTeam = Vars.player.team();
-
         Events.run(WorldLoadEvent.class, () -> {
             selectedTeam = Vars.player.team();
             lastSnapshot.clear();
@@ -295,14 +293,15 @@ public class TeamResourceFeature extends Table implements Feature {
                 }).growX().row();
             }
 
-            if (TeamResourceConfig.showUnits()) {
+            if (TeamResourceConfig.showUnits() && selectedTeam != null) {
                 t.table(unitsTable -> {
                     unitsTable.left();
 
                     for (UnitType type : Vars.content.units()) {
                         int count = selectedTeam.data().countType(type);
-                        if (count > 0)
+                        if (count > 0) {
                             usedUnits.add(type);
+                        }
                     }
 
                     float unitSize = 32f * scale;
@@ -313,8 +312,9 @@ public class TeamResourceFeature extends Table implements Feature {
 
                     int i = 0;
                     for (UnitType type : Vars.content.units()) {
-                        if (!usedUnits.contains(type))
+                        if (!usedUnits.contains(type)) {
                             continue;
+                        }
 
                         unitsTable.stack(
                                 new Image(type.uiIcon).setScaling(Scaling.fit),

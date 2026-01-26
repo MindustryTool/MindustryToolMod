@@ -4,8 +4,11 @@ import arc.Core;
 import arc.Events;
 import arc.graphics.g2d.Draw;
 import arc.input.KeyCode;
+import arc.math.Mathf;
+import arc.math.geom.Vec2;
 import arc.scene.ui.Dialog;
 import arc.struct.Seq;
+import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
@@ -70,6 +73,33 @@ public class AutoplayFeature implements Feature {
 
         Events.run(Trigger.update, this::updateUnit);
         Events.run(Trigger.draw, this::draw);
+
+        if (Vars.mobile) {
+            Events.run(Trigger.update, () -> {
+                if (isEnabled == false) {
+                    return;
+                }
+
+                var unit = Vars.player.unit();
+
+                if (unit != null) {
+
+                    if (Core.camera.position.within(unit, 10)) {
+                        return;
+                    }
+
+                    Vec2 movement = new Vec2();
+                    movement.set(unit.x, unit.y).sub(Core.camera.position).limit(1);
+                    movement.setAngle(Mathf.slerp(movement.angle(), unit.vel.angle(), 0.05f));
+
+                    Vec2 t = new Vec2(movement);
+                    Vec2 tmp2 = new Vec2().set(t).sub(Core.camera.position)
+                            .limit(unit.type.accel * movement.len() * Time.delta);
+
+                    Core.camera.position.add(tmp2);
+                }
+            });
+        }
 
         Timer.schedule(() -> {
             updateTask();
