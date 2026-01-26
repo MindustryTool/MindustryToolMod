@@ -77,51 +77,31 @@ public class AutoplayFeature implements Feature {
             if (unit == null) {
                 return;
             }
-            this.updateUnit(unit);
 
             unitX = unit.x;
             unitY = unit.y;
         });
+
         Events.run(Trigger.update, () -> {
+            if (isEnabled == false) {
+                return;
+            }
+
             var unit = Vars.player.unit();
 
             if (unit == null) {
                 return;
             }
 
-            unit.x(unitX);
-            unit.y(unitY);
+            if (Vars.mobile) {
+                unit.x(unitX);
+                unit.y(unitY);
+            }
+
+            this.updateUnit(unit);
         });
 
         Events.run(Trigger.draw, this::draw);
-
-        if (Vars.mobile) {
-            Events.run(Trigger.beforeGameUpdate, () -> {
-                if (isEnabled == false) {
-                    return;
-                }
-
-                var unit = Vars.player.unit();
-
-                if (unit != null) {
-                    // if (Core.camera.position.within(unit, 1)) {
-                    // return;
-                    // }
-
-                    // Core.camera.position.x = Mathf.lerpDelta(
-                    // Core.camera.position.x,
-                    // unit.x,
-                    // unit.type.accel);
-
-                    // Core.camera.position.y = Mathf.lerpDelta(
-                    // Core.camera.position.y,
-                    // unit.y,
-                    // unit.type.accel);
-
-                    Core.camera.position.set(unit.x, unit.y);
-                }
-            });
-        }
 
         Timer.schedule(() -> {
             updateTask();
