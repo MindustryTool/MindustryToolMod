@@ -52,8 +52,6 @@ public class ChatFeature implements Feature {
 
     @Override
     public void onEnable() {
-        overlay.remove();
-
         overlay = new ChatOverlay();
         ChatService.getInstance().connectStream();
 
