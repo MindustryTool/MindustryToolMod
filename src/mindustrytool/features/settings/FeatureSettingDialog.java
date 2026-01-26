@@ -148,7 +148,9 @@ public class FeatureSettingDialog extends BaseDialog {
                     table.row();
                 }
             }
-        }).grow();
+        })
+                .scrollX(false)
+                .grow();
     }
 
     private void buildFeatureButton(Table parent, Feature feature, float cardWidth) {
@@ -160,12 +162,10 @@ public class FeatureSettingDialog extends BaseDialog {
             card.table(c -> {
                 c.top().left().margin(12);
 
-                // Header
                 c.table(header -> {
                     header.left();
                     header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
 
-                    // Settings button
                     if (feature.setting().isPresent()) {
                         header.button(Icon.settings, Styles.clearNonei,
                                 () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
@@ -179,10 +179,8 @@ public class FeatureSettingDialog extends BaseDialog {
                                 });
                     }
 
-                    // Status icon (visual only)
                 }).growX().row();
 
-                // Description
                 c.add(metadata.description())
                         .color(Color.lightGray)
                         .fontScale(0.9f)
@@ -191,7 +189,6 @@ public class FeatureSettingDialog extends BaseDialog {
                         .padTop(10)
                         .row();
 
-                // Spacer to push status to bottom
                 c.add().growY().row();
                 c.add().growX();
 
@@ -216,19 +213,16 @@ public class FeatureSettingDialog extends BaseDialog {
         parent.table(Styles.black6, card -> {
             card.top().left();
 
-            // Status border
             card.image().color(enabled ? Color.green : Color.red).growX().height(4f).row();
 
             card.table(c -> {
                 c.top().left().margin(12);
 
-                // Header
                 c.table(header -> {
                     header.left();
                     header.image(metadata.icon()).scaling(Scaling.fill).size(24).padRight(8);
                     header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
 
-                    // Settings button
                     if (feature.setting().isPresent()) {
                         header.button(Icon.settings, Styles.clearNonei,
                                 () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
@@ -242,12 +236,10 @@ public class FeatureSettingDialog extends BaseDialog {
                                 });
                     }
 
-                    // Status icon (visual only)
                     header.image(enabled ? Icon.eyeSmall : Icon.eyeOffSmall).size(24).padLeft(4)
                             .color(enabled ? Color.white : Color.gray);
                 }).growX().row();
 
-                // Description
                 c.add(metadata.description())
                         .color(Color.lightGray)
                         .fontScale(0.9f)
@@ -256,10 +248,8 @@ public class FeatureSettingDialog extends BaseDialog {
                         .padTop(10)
                         .row();
 
-                // Spacer to push status to bottom
                 c.add().growY().row();
 
-                // Status Footer
                 c.add(enabled ? "@enabled" : "@disabled")
                         .color(enabled ? Color.green : Color.red)
                         .left();
@@ -277,7 +267,7 @@ public class FeatureSettingDialog extends BaseDialog {
 
                         try {
                             FeatureManager.getInstance().setEnabled(feature, !enabled);
-                            rebuild();
+                            buildFeatureCard(parent, feature, cardWidth);
                         } catch (Exception e) {
                             Log.err(e);
                         }
