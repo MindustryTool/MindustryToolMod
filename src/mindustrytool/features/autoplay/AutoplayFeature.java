@@ -81,8 +81,7 @@ public class AutoplayFeature implements Feature {
                 var unit = Vars.player.unit();
 
                 if (unit != null) {
-
-                    if (Core.camera.position.within(unit, 5)) {
+                    if (Core.camera.position.within(unit, 3)) {
                         return;
                     }
 
