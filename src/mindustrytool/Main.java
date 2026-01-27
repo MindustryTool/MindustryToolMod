@@ -1,6 +1,8 @@
 package mindustrytool;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -58,6 +60,7 @@ public class Main extends Mod {
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
     public static Fi mapsDir = Vars.dataDirectory.child("mindustry-tool-maps");
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
+    private static SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy_HH_mm_ss");
 
     private static ObjectMap<Class<?>, Prov<? extends Packet>> packetReplacements = new ObjectMap<>();
 
@@ -294,6 +297,33 @@ public class Main extends Mod {
         return sb.toString();
     }
 
+    private static long parseCrashTime(Fi file) {
+        String filename = file.nameWithoutExtension();
+
+        if (filename.startsWith("crash-report-")) {
+            String time = filename.replace("crash-report-", "");
+            try {
+                Date date = formatter.parse(time);
+                return date.getTime();
+            } catch (Exception e) {
+                Log.err(e);
+                return 0;
+            }
+        }
+
+        if (filename.startsWith("crash_", 0)) {
+            String time = filename.replace("crash_", "");
+            try {
+                return Long.parseLong(time);
+            } catch (Exception e) {
+                Log.err(e);
+                return 0;
+            }
+        }
+
+        return 0;
+    }
+
     private static boolean checkForCrashes() {
         Fi crashesDir = Core.settings.getDataDirectory().child("crashes");
 
@@ -301,34 +331,15 @@ public class Main extends Mod {
             return false;
         }
 
-        SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy_HH_mm_ss");
+        var latest = Seq.with(crashesDir.list()).max(fi -> parseCrashTime(fi));
 
-        var latest = Seq.with(crashesDir.list()).max(fi -> {
-            String filename = fi.nameWithoutExtension();
+        long epoch = LocalDate.of(2026, 1, 25)
+                .atStartOfDay(ZoneOffset.UTC)
+                .toEpochSecond() * 1000;
 
-            if (filename.startsWith("crash-report-")) {
-                String time = filename.replace("crash-report-", "");
-                try {
-                    Date date = formatter.parse(time);
-                    return (float) date.getTime();
-                } catch (Exception e) {
-                    Log.err(e);
-                    return 0.0f;
-                }
-            }
-
-            if (filename.startsWith("crash_", 0)) {
-                String time = filename.replace("crash_", "");
-                try {
-                    return (float) Long.parseLong(time);
-                } catch (Exception e) {
-                    Log.err(e);
-                    return 0.0f;
-                }
-            }
-
-            return 0.0f;
-        });
+        if (parseCrashTime(latest) < epoch) {
+            return false;
+        }
 
         String latestCrashKey = "latestCrash";
 
