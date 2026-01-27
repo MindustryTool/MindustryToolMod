@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import arc.Core;
+import arc.Events;
 import arc.func.Cons;
 import arc.util.Log;
 import arc.util.serialization.Jval;
@@ -17,17 +18,17 @@ import mindustrytool.Utils;
 import mindustrytool.features.auth.AuthHttp;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.global.dto.ChatMessage;
+import mindustrytool.features.chat.global.dto.ChatMessageReceive;
+import mindustrytool.features.chat.global.dto.ChatStateChange;
 import mindustrytool.features.chat.global.dto.ChatUser;
 
 public class ChatService {
     private static ChatService instance;
 
     private volatile Thread streamThread;
-    private volatile Cons<Boolean> connectionListener;
 
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
     private AtomicBoolean isConnected = new AtomicBoolean(false);
-    private Cons<ChatMessage[]> messageListener;
 
     public static ChatService getInstance() {
         if (instance == null) {
@@ -37,18 +38,8 @@ public class ChatService {
         return instance;
     }
 
-    public void setConnectionListener(Cons<Boolean> listener) {
-        this.connectionListener = listener;
-        // Initial state
-        Core.app.post(() -> listener.get(isConnected.get()));
-    }
-
     public boolean isConnected() {
         return isConnected.get();
-    }
-
-    public void setListener(Cons<ChatMessage[]> listener) {
-        this.messageListener = listener;
     }
 
     public void connectStream() {
@@ -102,12 +93,11 @@ public class ChatService {
                                 try {
                                     // Parse array of messages
                                     Jval json = Jval.read(data);
+
                                     if (json.isArray()) {
                                         Json jsonParser = new Json();
                                         ChatMessage[] messages = jsonParser.fromJson(ChatMessage[].class, data);
-                                        if (messageListener != null && messages != null) {
-                                            Core.app.post(() -> messageListener.get(messages));
-                                        }
+                                        Core.app.post(() -> Events.fire(new ChatMessageReceive(messages)));
                                     }
                                 } catch (Exception e) {
                                     Log.err("Failed to parse chat message", e);
@@ -143,17 +133,14 @@ public class ChatService {
         }
 
         isConnected.set(connected);
-        if (connectionListener != null) {
-            Core.app.post(() -> connectionListener.get(connected));
-        }
+
+        Events.fire(new ChatStateChange(connected));
     }
 
     public synchronized void disconnectStream() {
         isStreaming.set(false);
 
         broadcastConnectionStatus(false);
-
-        messageListener = null;
 
         try {
             if (streamThread != null) {
