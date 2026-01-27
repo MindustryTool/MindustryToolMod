@@ -53,7 +53,7 @@ public class PlayerConnectFeature implements Feature {
 
             IntFormat ping = new IntFormat("ping");
 
-            parent.label(() -> ping.get(PlayerConnect.ping))
+            parent.label(() -> pingColor() + ping.get(PlayerConnect.ping))
                     .visible(() -> PlayerConnect.isHosting())
                     .left()
                     .style(Styles.outlineLabel)
@@ -61,6 +61,18 @@ public class PlayerConnectFeature implements Feature {
 
             parent.row();
         }
+    }
+
+    private String pingColor() {
+        if (PlayerConnect.ping <= 200) {
+            return "";
+        }
+
+        if (PlayerConnect.ping <= 500) {
+            return "[yellow]";
+        }
+
+        return "red";
     }
 
     @Override
