@@ -9,7 +9,6 @@ import arc.scene.ui.layout.Table;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Align;
-import arc.util.Log;
 import mindustry.Vars;
 import mindustry.core.GameState.State;
 import mindustry.entities.units.BuildPlan;
@@ -40,6 +39,7 @@ public class SmartConveyorFeature implements Feature {
     private boolean enabled = false;
     private Table currentMenu;
     private Tile selectedTile;
+    private Tile lastClick;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -61,7 +61,12 @@ public class SmartConveyorFeature implements Feature {
                 return;
             }
 
-            Log.info("Tap event at @,@ block: @", e.tile.x, e.tile.y, e.tile.block());
+            if (e.tile != lastClick && lastClick != null) {
+                lastClick = e.tile;
+                return;
+            }
+
+            lastClick = e.tile;
 
             if (currentMenu != null) {
 
