@@ -134,7 +134,7 @@ public class WavePreviewFeature extends Table implements Feature {
         }
 
         top().left();
-        background(Tex.paneRight);
+        background(Tex.pane);
 
         add("@wave-preview.title").top().left().align(Align.left).style(Styles.outlineLabel).pad(4)
                 .color(mindustry.graphics.Pal.accent).row();

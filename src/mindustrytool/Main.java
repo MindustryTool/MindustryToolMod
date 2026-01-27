@@ -48,6 +48,7 @@ import mindustrytool.features.smartconveyor.SmartConveyorFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.features.chat.global.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
+import mindustrytool.features.godmode.TapListener;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.display.wavepreview.WavePreviewFeature;
@@ -83,6 +84,8 @@ public class Main extends Mod {
         mapsDir.mkdirs();
         schematicDir.mkdirs();
 
+        TapListener.init();
+
         Events.on(ClientLoadEvent.class, e -> {
             featureSettingDialog = new FeatureSettingDialog();
 
@@ -99,9 +102,9 @@ public class Main extends Mod {
                     new ChatFeature(),
                     new ChatTranslationFeature(),
                     new PrettyChatFeature(),
-                    new GodModeFeature(),
                     new AutoplayFeature(),
                     new WavePreviewFeature(),
+                    new GodModeFeature(),
                     new SmartDrillFeature(),
                     new SmartConveyorFeature(),
                     new BackgroundFeature(),
