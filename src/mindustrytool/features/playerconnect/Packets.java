@@ -4,6 +4,7 @@ import arc.func.Prov;
 import arc.net.DcReason;
 import arc.struct.ArrayMap;
 import arc.util.ArcRuntimeException;
+import arc.util.Time;
 import arc.util.io.ByteBufferInput;
 import arc.util.io.ByteBufferOutput;
 import lombok.Data;
@@ -60,6 +61,31 @@ public class Packets {
         register(Message2Packet::new);
         register(PopupPacket::new);
         register(StatsPacket::new);
+        register(PingPacket::new);
+    }
+
+    public static class PingPacket extends Packet {
+        public long sendAt;
+
+        public PingPacket() {
+            this.sendAt = Time.millis();
+        }
+
+        public void read(ByteBufferInput read) {
+            try {
+                this.sendAt = read.readLong();
+            } catch (Exception var3) {
+                throw new RuntimeException(var3);
+            }
+        }
+
+        public void write(ByteBufferOutput write) {
+            try {
+                write.writeLong(this.sendAt);
+            } catch (Exception var3) {
+                throw new RuntimeException(var3);
+            }
+        }
     }
 
     public static class PopupPacket extends MessagePacket {

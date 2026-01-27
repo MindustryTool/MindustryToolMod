@@ -20,6 +20,7 @@ import arc.util.Log;
 import arc.util.Ratekeeper;
 import arc.util.Reflect;
 import arc.util.Strings;
+import arc.util.Time;
 import arc.util.io.ByteBufferInput;
 import arc.util.io.ByteBufferOutput;
 
@@ -96,7 +97,6 @@ public class NetworkProxy extends Client implements NetListener {
         while (!isShutdown) {
             try {
                 update(250);
-                // update idle
                 for (int i = 0; i < orderedConnections.size; i++) {
                     VirtualConnection con = orderedConnections.get(i);
                     if (con.isConnected() && con.isIdle()) {
@@ -188,7 +188,10 @@ public class NetworkProxy extends Client implements NetListener {
         }
 
         try {
-            if (object instanceof Packets.MessagePacket messagePacket) {
+            if (object instanceof Packets.PingPacket pingPacket) {
+                long latency = Time.millis() - pingPacket.sendAt;
+                PlayerConnect.ping = (int) latency;
+            } else if (object instanceof Packets.MessagePacket messagePacket) {
                 Call.sendMessage("[scarlet][[Server]:[] " + messagePacket.message);
             } else if (object instanceof Packets.Message2Packet message2Packet) {
                 Call.sendMessage("[scarlet][[Server]:[] "
