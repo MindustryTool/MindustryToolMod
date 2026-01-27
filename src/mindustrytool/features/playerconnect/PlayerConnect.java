@@ -18,11 +18,13 @@ import arc.util.Threads;
 import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
+import mindustry.core.GameState;
 import mindustry.game.EventType;
 import mindustry.game.Team;
 import mindustry.game.EventType.PlayerIpBanEvent;
 import mindustry.game.EventType.PlayerJoin;
 import mindustry.game.EventType.PlayerLeave;
+import mindustry.game.EventType.StateChangeEvent;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
@@ -42,25 +44,16 @@ public class PlayerConnect {
     public static int ping;
 
     static {
-        Vars.ui.paused.hidden(() -> {
-            arc.util.Timer.schedule(() -> {
-                if (!Vars.net.active()) {
-                    close();
-                }
-            }, 1f);
-
-            if (Vars.state.isMenu()) {
+        Events.on(StateChangeEvent.class, event -> {
+            if (event.to == GameState.State.menu) {
                 close();
+                Log.info("Close room when changed to menu");
             }
         });
 
         Events.run(EventType.HostEvent.class, () -> {
             close();
-        });
-
-        Events.run(EventType.DisposeEvent.class, () -> {
-            dispose();
-            disposePinger();
+            Log.info("Close room on host event");
         });
 
         Events.run(PlayerJoin.class, () -> {

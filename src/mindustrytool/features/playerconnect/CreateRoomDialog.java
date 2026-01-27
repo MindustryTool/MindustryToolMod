@@ -378,9 +378,9 @@ public class CreateRoomDialog extends BaseDialog {
         Vars.ui.loadfrag.show("@message.manage-room.create-room");
 
         Timer.Task timer = Timer.schedule(() -> {
-            Log.info("Close room due to timeout 10s");
+            Log.info("Close room due to timeout 30s");
             PlayerConnect.close();
-        }, 10);
+        }, 30);
 
         PlayerConnect.create(selected.ip, selected.port, link -> {
             Vars.ui.loadfrag.hide();
@@ -409,6 +409,7 @@ public class CreateRoomDialog extends BaseDialog {
         PlayerConnect.close();
         link = null;
         Vars.ui.showInfoFade("@message.manage-room.room-closed");
+        Log.info("Close room on close button click");
     }
 
     public void copyLink() {
