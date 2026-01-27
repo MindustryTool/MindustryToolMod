@@ -261,10 +261,10 @@ public class Main extends Mod {
 
         dialog.cont.add(table);
 
-        dialog.buttons.button("Cancel", dialog::hide).size(100f, 50f);
+        dialog.buttons.button("Cancel", () -> dialog.remove()).size(100f, 50f);
         dialog.buttons.button("Update", () -> {
             try {
-                dialog.hide();
+                dialog.remove();
                 Vars.ui.mods.show();
                 Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
                 Vars.ui.mods.toFront();
