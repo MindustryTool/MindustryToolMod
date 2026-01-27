@@ -46,6 +46,7 @@ import mindustrytool.features.auth.AuthFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import mindustrytool.features.smartconveyor.SmartConveyorFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
+import mindustrytool.services.ServerService;
 import mindustrytool.features.chat.global.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.godmode.TapListener;
@@ -85,6 +86,7 @@ public class Main extends Mod {
         schematicDir.mkdirs();
 
         TapListener.init();
+        ServerService.init();
 
         Events.on(ClientLoadEvent.class, e -> {
             featureSettingDialog = new FeatureSettingDialog();

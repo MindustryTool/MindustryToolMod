@@ -80,7 +80,11 @@ public class FeatureSettingDialog extends BaseDialog {
         addCloseButton();
 
         buttons.button("@feature.report-bug", Icon.infoCircle, () -> {
-            Core.app.openURI(Config.DISCORD_INVITE_URL);
+            if (!Core.app.openURI(Config.DISCORD_INVITE_URL)) {
+                Core.app.setClipboardText(Config.DISCORD_INVITE_URL);
+                Vars.ui.showInfoFade("@copied");
+            }
+
         });
 
         buttons.button("@feature.copy-debug-detail", Icon.export, () -> {
@@ -253,7 +257,10 @@ public class FeatureSettingDialog extends BaseDialog {
                 c.add().growX();
 
                 c.button(Icon.linkSmall, () -> {
-                    Core.app.openURI(feature.getUrl());
+                    if (!Core.app.openURI(feature.getUrl())) {
+                        Core.app.setClipboardText(feature.getUrl());
+                        Vars.ui.showInfoFade("@copied");
+                    }
                 });
 
             }).grow();
