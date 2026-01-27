@@ -169,7 +169,7 @@ public class QuickAccessHud extends Table implements Feature {
         btnRef[0] = t.button(b -> {
             b.image(Icon.settings);
         }, Styles.clearNonei, () -> {
-            Main.featureSettingDialog.show();
+            Main.featureSettingDialog.show(false);
         })
                 .size(48f)
                 .margin(8)
