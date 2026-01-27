@@ -123,30 +123,13 @@ public class PlayerConnectJoinInjector {
 
             var groups = new HashMap<String, Seq<PlayerConnectRoom>>();
 
-            // Map provider addresses -> provider names for grouping
-            var addrToName = new HashMap<String, String>();
-            for (int i = 0; i < PlayerConnectProviders.online.size; i++) {
-                String name = PlayerConnectProviders.online.getKeyAt(i);
-                String address = PlayerConnectProviders.online.getValueAt(i);
-                String addrHost = address;
-                // Handle IPv6 like [::1]:1234
-                if (addrHost.startsWith("[") && addrHost.contains("]:")) {
-                    addrHost = addrHost.substring(1, addrHost.indexOf("]:"));
-                } else if (addrHost.contains(":")) {
-                    int idx = addrHost.lastIndexOf(':');
-                    addrHost = addrHost.substring(0, idx);
-                }
-                addrToName.put(addrHost, name);
-            }
-
             for (var room : rooms) {
-                var link = PlayerConnectLink.fromString(room.getLink());
-                var host = link.host;
-                var group = addrToName.getOrDefault(host, host);
+                var group = room.getName();
 
                 if (!groups.containsKey(group)) {
                     groups.put(group, new Seq<>());
                 }
+
                 groups.get(group).add(room);
             }
 
@@ -189,19 +172,12 @@ public class PlayerConnectJoinInjector {
                     .pad(10);
         };
 
-        PlayerConnectProviders.refreshOnline(
-                () -> playerConnectService.findPlayerConnectRooms(searchTerm)
-                        .thenAccept(data -> Core.app.post(() -> renderRooms.get(data)))
-                        .exceptionally(error -> {
-                            Core.app.post(() -> renderError.get(error));
-                            return null;
-                        }),
-                e -> playerConnectService.findPlayerConnectRooms(searchTerm)
-                        .thenAccept(data -> Core.app.post(() -> renderRooms.get(data)))
-                        .exceptionally(error -> {
-                            Core.app.post(() -> renderError.get(error));
-                            return null;
-                        }));
+        playerConnectService.findPlayerConnectRooms(searchTerm)
+                .thenAccept(data -> Core.app.post(() -> renderRooms.get(data)))
+                .exceptionally(error -> {
+                    Core.app.post(() -> renderError.get(error));
+                    return null;
+                });
     }
 
     private int columns() {

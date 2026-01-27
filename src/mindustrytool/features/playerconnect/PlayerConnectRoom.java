@@ -10,17 +10,14 @@ import lombok.Data;
 public class PlayerConnectRoom {
     private String roomId;
     private String link;
+    private String name;
+    private String address;
     private PlayerConnectRoomData data;
 
     @Data
     public static class PlayerConnectRoomData {
         private String name;
         private String status;
-
-        @JsonProperty("isPrivate")
-        private boolean isPrivate;
-        @JsonProperty("isSecured")
-        private boolean isSecured;
         private List<PlayerConnectRoomPlayer> players;
         private String mapName;
         private String gamemode;
@@ -28,6 +25,11 @@ public class PlayerConnectRoom {
         private String version;
         private String locale;
         private String protocolVersion;
+        
+        @JsonProperty("isPrivate")
+        private boolean isPrivate;
+        @JsonProperty("isSecured")
+        private boolean isSecured;
     }
 
     @Data
