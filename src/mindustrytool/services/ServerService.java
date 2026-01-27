@@ -5,6 +5,7 @@ import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
+import arc.util.Timer;
 import lombok.Data;
 import mindustry.Vars;
 import mindustry.ui.dialogs.JoinDialog.Server;
@@ -19,8 +20,12 @@ public class ServerService {
         private int port, status;
     }
 
-    @SuppressWarnings("unchecked")
     public static void init() {
+        Timer.schedule(() -> fetchServers(), 0, 60 * 5);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void fetchServers() {
         Seq<Server> servers = Core.settings.getJson("servers", Seq.class, Server.class, Seq::new);
 
         servers.removeAll(server -> server.ip == null || server.ip.contains("mindustry-tool.com"));
