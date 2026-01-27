@@ -104,6 +104,7 @@ public class Main extends Mod {
                     new PrettyChatFeature(),
                     new AutoplayFeature(),
                     new WavePreviewFeature(),
+                    // new ItemVisualizerFeature(),
                     new GodModeFeature(),
                     new SmartDrillFeature(),
                     new SmartConveyorFeature(),

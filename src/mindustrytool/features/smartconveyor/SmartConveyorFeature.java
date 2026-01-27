@@ -63,6 +63,7 @@ public class SmartConveyorFeature implements Feature {
 
             if (e.tile != lastClick && lastClick != null) {
                 lastClick = e.tile;
+                closeMenu();
                 return;
             }
 
