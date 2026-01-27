@@ -8,6 +8,7 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.math.Mathf;
+import arc.util.Align;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Building;
@@ -114,7 +115,7 @@ public class ProgressDisplay implements Feature {
     private void drawBar(float x, float y, float size, float fraction, Color color, float remainingTime) {
         float width = size;
         float height = 3f;
-        float yOffset = size / 2f + 2f;
+        float yOffset = size / 2f - 1;
 
         Draw.color(Color.black);
         Draw.alpha(0.8f);
@@ -125,8 +126,7 @@ public class ProgressDisplay implements Feature {
 
         if (remainingTime > 0) {
             String text = String.format("%.1fs", remainingTime);
-            Fonts.outline.draw(text, x + width / 2f + 2f, y + yOffset + height / 2f + 1.5f, Color.white, 0.25f, false,
-                    Core.graphics.isPortrait() ? 2 : 4);
+            Fonts.outline.draw(text, x, y, Color.white, 0.25f, false, Align.center);
         }
 
         Draw.reset();
