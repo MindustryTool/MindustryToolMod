@@ -302,10 +302,12 @@ public class ChatOverlay extends Table {
             scrollPane = new ScrollPane(messageTable, Styles.noBarPane);
             scrollPane.setScrollingDisabled(true, false);
             scrollPane.setFadeScrollBars(false);
+            scrollPane.visible(() -> ChatService.getInstance().isConnected());
 
             loadingTable = new Table();
 
-            loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray);
+            loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray)
+                    .visible(() -> !ChatService.getInstance().isConnected());
 
             Stack stack = new Stack();
             stack.add(loadingTable);
@@ -315,14 +317,6 @@ public class ChatOverlay extends Table {
 
             Events.on(ChatStateChange.class, event -> {
                 var connected = event.connected;
-
-                if (loadingTable != null) {
-                    loadingTable.visible = !connected;
-                }
-
-                if (scrollPane != null) {
-                    scrollPane.visible = connected;
-                }
 
                 if (connectionIndicator != null) {
                     connectionIndicator.setColor(connected ? Color.green : Color.yellow);
