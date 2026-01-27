@@ -1,5 +1,7 @@
 package mindustrytool.ui;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
@@ -10,7 +12,6 @@ import arc.graphics.g2d.Lines;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Scl;
-import arc.struct.ObjectMap;
 import arc.util.Http;
 import arc.util.Http.HttpStatus;
 import arc.util.Http.HttpStatusException;
@@ -30,7 +31,7 @@ public class NetworkImage extends Image {
     private String url;
     private TextureRegion lastTexture;
 
-    private static ObjectMap<String, TextureRegion> cache = new ObjectMap<>();
+    private static ConcurrentHashMap<String, TextureRegion> cache = new ConcurrentHashMap<>();
 
     public NetworkImage(String url) {
         super(Tex.clear);
