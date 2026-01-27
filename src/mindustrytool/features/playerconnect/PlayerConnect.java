@@ -262,7 +262,7 @@ public class PlayerConnect {
             @Override
             public void received(Connection connection, Object object) {
                 if (object instanceof Packets.MessagePacket messagePacket) {
-                    Vars.ui.showErrorMessage(messagePacket.message);
+                    Core.app.post(() -> Vars.ui.showErrorMessage(messagePacket.message));
                     Vars.netClient.setQuiet();
                     Vars.ui.loadfrag.hide();
                     client.close();

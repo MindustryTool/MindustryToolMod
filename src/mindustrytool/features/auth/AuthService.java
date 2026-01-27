@@ -93,6 +93,7 @@ public class AuthService {
         }).width(230);
 
         loginDialog.cont.add("@generate-loading-link");
+        Core.app.post(() -> loginDialog.show());
 
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
                 .timeout(10000)
@@ -200,10 +201,10 @@ public class AuthService {
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer " + accessToken)
                     .error(err -> {
-                        Vars.ui.showInfo("Logout failed: " + err.getMessage());
+                        Core.app.post(() -> Vars.ui.showInfo("Logout failed: " + err.getMessage()));
                     })
                     .submit(res -> {
-                        Vars.ui.showInfoFade("Logout successful!");
+                        Core.app.post(() -> Vars.ui.showInfoFade("Logout successful!"));
                     });
         }
 

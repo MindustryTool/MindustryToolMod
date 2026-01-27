@@ -219,7 +219,9 @@ public class FeatureSettingDialog extends BaseDialog {
         var card = parent.button(Styles.black6, null)
                 .growX()
                 .minWidth(cardWidth)
-                .height(180f).pad(10f).grow().get();
+                .height(180f).pad(10f).grow()
+                .color(enabled ? Color.green : Color.red)
+                .get();
 
         card.addListener(new ClickListener() {
             @Override

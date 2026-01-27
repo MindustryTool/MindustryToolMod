@@ -1,10 +1,25 @@
 package mindustrytool.features.godmode;
 
+import arc.scene.ui.ButtonGroup;
+import arc.scene.ui.Dialog;
+import arc.scene.ui.TextButton;
+import arc.scene.ui.layout.Stack;
+import arc.scene.ui.layout.Table;
+import arc.util.Log;
+import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustry.gen.Tex;
+import mindustry.ui.Styles;
+import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
-public class GodModeFeature implements Feature {
+import java.util.Optional;
+
+public class GodModeFeature extends Table implements Feature {
+
+    private GodModeProvider provider = new InternalGodModeProvider();
+    private boolean useJS = false;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -17,13 +32,69 @@ public class GodModeFeature implements Feature {
 
     @Override
     public void init() {
+        rebuild();
     }
 
     @Override
     public void onEnable() {
+        if (Vars.ui.hudGroup != null) {
+            Stack parent = Vars.ui.hudGroup.find("waves/editor");
+
+            if (parent == null) {
+                Log.err("GodModeFeature: waves/editor not found");
+                return;
+            }
+
+            Table waves = parent.find("waves");
+
+            if (waves == null) {
+                Log.err("GodModeFeature: waves not found");
+                return;
+            }
+
+            waves.row();
+            waves.add(this).growX().padTop(10f);
+        }
     }
 
     @Override
     public void onDisable() {
+        remove();
+    }
+
+    @Override
+    public Optional<Dialog> setting() {
+        BaseDialog dialog = new BaseDialog("@feature.god-mode.settings");
+        dialog.addCloseButton();
+
+        dialog.cont.table(t -> {
+            t.add("Provider: ").padRight(10);
+
+            ButtonGroup<TextButton> group = new ButtonGroup<>();
+
+            t.button("Internal", Styles.togglet, () -> {
+                useJS = false;
+                provider = new InternalGodModeProvider();
+                rebuild();
+            }).group(group).checked(!useJS).disabled(b -> Vars.net.active() && !Vars.net.server()).size(120, 50);
+
+            t.button("JS", Styles.togglet, () -> {
+                useJS = true;
+                provider = new JSGodModeProvider();
+                rebuild();
+            }).group(group).checked(useJS).size(120, 50);
+
+        }).row();
+
+        return Optional.of(dialog);
+    }
+
+    private void rebuild() {
+        clear();
+        background(Tex.pane);
+
+        if (provider != null) {
+            provider.build(this);
+        }
     }
 }

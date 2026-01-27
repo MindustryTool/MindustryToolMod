@@ -1,8 +1,8 @@
 package mindustrytool.services;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
-import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Http;
 import mindustrytool.Config;
@@ -11,8 +11,8 @@ import mindustrytool.dto.UserData;
 
 public class UserService {
 
-    private static final ObjectMap<String, UserData> cache = new ObjectMap<String, UserData>();
-    private static final ObjectMap<String, Seq<CompletableFuture<UserData>>> listeners = new ObjectMap<>();
+    private static final ConcurrentHashMap<String, UserData> cache = new ConcurrentHashMap<String, UserData>();
+    private static final ConcurrentHashMap<String, Seq<CompletableFuture<UserData>>> listeners = new ConcurrentHashMap<>();
 
     public static synchronized CompletableFuture<UserData> findUserById(String id) {
         CompletableFuture<UserData> future = new CompletableFuture<>();
