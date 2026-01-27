@@ -192,8 +192,20 @@ public class Main extends Mod {
 
                         String tagName = release.getString("tag_name", "");
                         String body = release.getString("body", "No description provided.");
+                        int downloadCount = 0;
+                        if (release.has("assets")) {
+                            Jval assets = release.get("assets");
+                            try {
+                                for (Jval asset : assets.asArray()) {
+                                    downloadCount += asset.getInt("download_count", 0);
+                                }
+                            } catch (Exception e) {
+                                Log.err("Failed to parse assets", e);
+                            }
+                        }
 
                         changelog.append("[accent]").append(tagName).append("[]\n");
+                        changelog.append("Download count: ").append(downloadCount).append("\n");
                         changelog.append(Utils.renderMarkdown(body)).append("\n\n");
                         count++;
                     }

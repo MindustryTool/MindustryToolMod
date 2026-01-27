@@ -41,7 +41,6 @@ public class ProgressDisplay implements Feature {
                 .icon(Utils.icons("progress-display.png"))
                 .order(10)
                 .enabledByDefault(true)
-                .quickAccess(true)
                 .build();
     }
 
