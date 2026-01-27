@@ -3,7 +3,6 @@ package mindustrytool.features.godmode;
 import arc.scene.ui.layout.Table;
 import mindustry.gen.Call;
 import mindustry.gen.Icon;
-import mindustry.ui.Styles;
 
 public class JSGodModeProvider implements GodModeProvider {
 
@@ -15,13 +14,13 @@ public class JSGodModeProvider implements GodModeProvider {
     public void build(Table table) {
         table.defaults().size(40, 40).pad(2);
 
-        table.button(Icon.players, Styles.cleari, () -> {
+        table.button(Icon.players, () -> {
             GodModeDialogs.showTeamDialog((player, team) -> {
                 js("Groups.player.find(p => p.name == \"" + player.name + "\").team(Team.get(" + team.id + "))");
             });
         }).tooltip("Change Team");
 
-        table.button(Icon.box, Styles.cleari, () -> {
+        table.button(Icon.box, () -> {
             GodModeDialogs.showItemDialog((item, amount, team) -> {
                 js("var team = Team.get(" + team.id
                         + "); if(team.core() != null) team.core().items.add(Vars.content.items.find(i => i.name == \""
@@ -29,7 +28,7 @@ public class JSGodModeProvider implements GodModeProvider {
             });
         }).tooltip("Items");
 
-        table.button(Icon.units, Styles.cleari, () -> {
+        table.button(Icon.units, () -> {
             GodModeDialogs.showUnitDialog(
                     (unit, amount, team, x, y) -> {
                         js("for(var i=0;i<" + amount + ";i++){ Vars.content.units.find(u => u.name == \"" + unit.name
@@ -41,7 +40,7 @@ public class JSGodModeProvider implements GodModeProvider {
                     });
         }).tooltip("Units");
 
-        table.button(Icon.effect, Styles.cleari, () -> {
+        table.button(Icon.effect, () -> {
             GodModeDialogs.showEffectDialog(
                     (effect, duration) -> {
                         js("if(Vars.player.unit() != null) Vars.player.unit().apply(Vars.content.statusEffects.find(s => s.name == \""
@@ -53,7 +52,7 @@ public class JSGodModeProvider implements GodModeProvider {
                     });
         }).tooltip("Effects");
 
-        table.button(Icon.hammer, Styles.cleari, () -> {
+        table.button(Icon.hammer, () -> {
             GodModeDialogs.showCoreDialog((coreBlock, team, x, y) -> {
                 js("Vars.world.tileWorld(" + x + ", " + y + ").setNet(Vars.content.block(\"" + coreBlock.name
                         + "\"), Team.get(" + team.id + "), 0)");
