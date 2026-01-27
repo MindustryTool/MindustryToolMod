@@ -209,7 +209,7 @@ public class Main extends Mod {
                         }
 
                         changelog.append("[accent]").append(tagName).append("[]\n");
-                        changelog.append("Download count: ").append(downloadCount).append("\n");
+                        changelog.append("[gold]Download count: ").append(downloadCount).append("\n");
                         changelog.append(Utils.renderMarkdown(body)).append("\n\n");
                         count++;
                     }
@@ -239,17 +239,25 @@ public class Main extends Mod {
         Table table = new Table();
         table.defaults().left();
 
-        table.add(Core.bundle.format("message.new-version", currentVer, latestVer)).wrap().width(500f).row();
+        table.add(Core.bundle.format("message.new-version", "[" + Color.crimson.toString() + "]" + currentVer,
+                "[" + Color.green.toString() + "]" + latestVer))
+                .wrap()
+                .width(500f)
+                .padBottom(20)
+                .row();
+
         table.add("Discord: " + Config.DISCORD_INVITE_URL).color(Color.royal).padTop(5f).row();
 
         table.image().height(4f).color(Color.gray).fillX().pad(10f).row();
 
         Table changelogTable = new Table();
         changelogTable.top().left();
-        changelogTable.add(changelog).wrap().width(480f).left();
+        changelogTable.add(changelog).growX().wrap().width(480f).left();
 
         ScrollPane pane = new ScrollPane(changelogTable);
-        table.add(pane).size(500f, 400f).row();
+        table.add(pane).size(500f, 400f)
+                .scrollX(false)
+                .row();
 
         dialog.cont.add(table);
 

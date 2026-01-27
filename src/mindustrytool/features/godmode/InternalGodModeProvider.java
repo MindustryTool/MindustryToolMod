@@ -1,5 +1,6 @@
 package mindustrytool.features.godmode;
 
+import arc.math.Mathf;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.gen.Groups;
@@ -33,7 +34,8 @@ public class InternalGodModeProvider implements GodModeProvider {
             GodModeDialogs.showUnitDialog(
                     (unit, amount, team, x, y) -> {
                         for (int i = 0; i < amount; i++) {
-                            unit.spawn(team, x, y);
+                            unit.spawn(team, x + Mathf.range(unit.hitSize * 2),
+                                    y + Mathf.range(unit.hitSize * 2));
                         }
                     },
                     (unit, team) -> {

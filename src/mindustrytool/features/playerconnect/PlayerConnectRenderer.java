@@ -28,8 +28,13 @@ public class PlayerConnectRenderer {
 
     public static Cell<Table> render(Table container, PlayerConnectRoom room, float targetWidth) {
         float contentWidth = targetWidth > 0 ? targetWidth - 40f : 0;
+
         boolean matchProtocolVersion = Objects.equals(room.getData().getProtocolVersion(),
                 NetworkProxy.PROTOCOL_VERSION);
+
+        if (contentWidth > 0) {
+            container.setWidth(contentWidth);
+        }
 
         return container.table(Styles.black8, t -> {
             t.top().left();
@@ -50,7 +55,7 @@ public class PlayerConnectRenderer {
 
                     float lockWidth = 16f;
 
-                    var label = info.add((isSecured ? Iconc.lock + " " : "") + room.getData().getName())
+                    var label = info.add((isSecured ? "[accent]" + Iconc.lock + "[] " : "") + room.getData().getName())
                             .style(Styles.outlineLabel)
                             .fontScale(1.25f)
                             .left();
@@ -94,17 +99,21 @@ public class PlayerConnectRenderer {
                 }
                 body.row();
 
-                // Players
-                String names = Seq.with(room.getData().getPlayers()).map(n -> n.getName() + "[]").toString(", ");
-                body.add(Iconc.players + " []" + names)
+                body.add(Iconc.players + ": " + room.getData().getPlayers().size() + "(" + room.getData().getLocale()
+                        + ")")
                         .padBottom(6)
                         .left()
                         .wrap()
                         .wrapLabel(true)
                         .growX()
-                        .get();
+                        .row();
 
-                body.row();
+                for (var player : room.getData().getPlayers()) {
+                    body.add("- " + player.getName())
+                            .left()
+                            .padBottom(6)
+                            .row();
+                }
 
                 // Mods
                 if (room.getData().getMods().size() > 0) {
@@ -154,10 +163,6 @@ public class PlayerConnectRenderer {
                     }
                     body.row();
                 }
-
-                // Locale
-                body.add(Iconc.chat + " [lightgray]" + room.getData().getLocale()).left().padBottom(6)
-                        .row();
 
                 String versionString = getVersionString(room.getData().getVersion());
 

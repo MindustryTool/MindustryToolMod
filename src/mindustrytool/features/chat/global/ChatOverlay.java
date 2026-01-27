@@ -39,6 +39,7 @@ import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.chat.global.dto.ChatMessage;
+import mindustrytool.features.chat.global.dto.ChatStateChange;
 import mindustrytool.features.chat.global.dto.ChatUser;
 import mindustrytool.services.UserService;
 import mindustrytool.ui.NetworkImage;
@@ -282,6 +283,11 @@ public class ChatOverlay extends Table {
             header.add().growX();
 
             // Minimize button
+            header.button(Icon.refresh, Styles.clearNonei, () -> {
+                messages.clear();
+                ChatService.getInstance().disconnectStream();
+                ChatService.getInstance().connectStream();
+            }).size(40).padRight(4);
             header.button(Icon.down, Styles.clearNonei, this::collapse).size(40).padRight(4);
 
             container.add(header).growX().height(46).row();
@@ -296,10 +302,12 @@ public class ChatOverlay extends Table {
             scrollPane = new ScrollPane(messageTable, Styles.noBarPane);
             scrollPane.setScrollingDisabled(true, false);
             scrollPane.setFadeScrollBars(false);
+            scrollPane.visible(() -> ChatService.getInstance().isConnected());
 
             loadingTable = new Table();
 
-            loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray);
+            loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray)
+                    .visible(() -> !ChatService.getInstance().isConnected());
 
             Stack stack = new Stack();
             stack.add(loadingTable);
@@ -307,14 +315,8 @@ public class ChatOverlay extends Table {
 
             mainContent.add(stack).grow();
 
-            ChatService.getInstance().setConnectionListener(connected -> {
-                if (loadingTable != null) {
-                    loadingTable.visible = !connected;
-                }
-
-                if (scrollPane != null) {
-                    scrollPane.visible = connected;
-                }
+            Events.on(ChatStateChange.class, event -> {
+                var connected = event.connected;
 
                 if (connectionIndicator != null) {
                     connectionIndicator.setColor(connected ? Color.green : Color.yellow);

@@ -177,7 +177,7 @@ public class GodModeDialogs {
             t.pane(p -> {
                 int i = 0;
                 int size = 200;
-                int cols = Math.max(1, (int) (Math.min(Core.graphics.getWidth(), 800) / (size + 10)));
+                int cols = Math.max(1, (int) (Math.min(Core.graphics.getWidth() * 0.9, 1200) / (size + 10)));
 
                 for (UnitType unit : Vars.content.units()) {
                     if (unit.isHidden()) {
@@ -197,7 +197,7 @@ public class GodModeDialogs {
                         p.row();
                     }
                 }
-            }).grow().maxWidth(800);
+            }).grow().maxWidth(1200);
         }).grow().center();
 
         dialog.show();

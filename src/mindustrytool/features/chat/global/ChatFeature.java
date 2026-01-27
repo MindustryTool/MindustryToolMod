@@ -12,6 +12,7 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.auth.dto.LoginEvent;
+import mindustrytool.features.chat.global.dto.ChatMessageReceive;
 
 public class ChatFeature implements Feature {
     private ChatOverlay overlay;
@@ -30,11 +31,12 @@ public class ChatFeature implements Feature {
 
     @Override
     public void init() {
-        ChatService.getInstance().setListener(messages -> {
+        Events.on(ChatMessageReceive.class, event -> {
             if (overlay == null) {
                 return;
             }
-            overlay.addMessages(messages);
+
+            overlay.addMessages(event.messages);
         });
 
         Events.on(LoginEvent.class, e -> {

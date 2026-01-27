@@ -26,7 +26,7 @@ public final class State<T> {
         return value;
     }
 
-    public void set(@Nullable T newValue) {
+    public synchronized void set(@Nullable T newValue) {
         if (Objects.equals(value, newValue)) {
             return;
         }
