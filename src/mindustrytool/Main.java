@@ -38,6 +38,7 @@ import mindustrytool.features.display.healthbar.HealthBarVisualizer;
 import mindustrytool.features.display.pathfinding.PathfindingDisplay;
 import mindustrytool.features.display.teamresource.TeamResourceFeature;
 import mindustrytool.features.display.range.RangeDisplay;
+import mindustrytool.features.display.progress.ProgressDisplay;
 import mindustrytool.features.display.quickaccess.QuickAccessHud;
 import mindustrytool.features.auth.AuthFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
@@ -100,7 +101,8 @@ public class Main extends Mod {
                     new WavePreviewFeature(),
                     new SmartDrillFeature(),
                     new SmartConveyorFeature(),
-                    new BackgroundFeature());
+                    new BackgroundFeature(),
+                    new ProgressDisplay());
 
             boolean hasCrashed = checkForCrashes();
             if (hasCrashed) {
