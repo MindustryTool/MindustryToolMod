@@ -209,7 +209,7 @@ public class Main extends Mod {
                         }
 
                         changelog.append("[accent]").append(tagName).append("[]\n");
-                        changelog.append("[gold]Download count: ").append(downloadCount).append("\n");
+                        changelog.append("[gold]Download count: ").append(downloadCount).append("[]\n");
                         changelog.append(Utils.renderMarkdown(body)).append("\n\n");
                         count++;
                     }
