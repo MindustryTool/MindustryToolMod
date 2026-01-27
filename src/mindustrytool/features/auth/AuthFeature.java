@@ -62,7 +62,7 @@ public class AuthFeature implements Feature {
                 Log.err("Failed to login", error);
             } else if (user == null) {
                 content.clear();
-                content.button("@login", () -> startLogin()).wrapLabel(false);
+                content.button("@login", this::startLogin).wrapLabel(false);
             } else if (user != null) {
                 content.clear();
 
@@ -99,9 +99,9 @@ public class AuthFeature implements Feature {
 
     private void startLogin() {
         AuthService.getInstance().login()
-                .thenRun(() -> Vars.ui.showInfo("Login successful!"))
+                .thenRun(() -> Core.app.post(() -> Vars.ui.showInfo("Login successful!")))
                 .exceptionally(e -> {
-                    Vars.ui.showException("Login failed or timed out.", e);
+                    Core.app.post(() -> Vars.ui.showException("Login failed or timed out.", e));
                     return null;
                 });
     }

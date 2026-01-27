@@ -194,10 +194,10 @@ public class NetworkProxy extends Client implements NetListener {
                 Call.sendMessage("[scarlet][[Server]:[] "
                         + arc.Core.bundle.get("claj.message." + Strings.camelToKebab(message2Packet.message.name())));
             } else if (object instanceof Packets.PopupPacket popupPacket) {
-                Vars.ui.showText("[scarlet][[Server][] ", popupPacket.message);
+                Core.app.post(() -> Vars.ui.showText("[scarlet][[Server][] ", popupPacket.message));
             } else if (object instanceof Packets.RoomClosedPacket closedPacket) {
                 closeReason = closedPacket.reason;
-                Vars.ui.showText("[scarlet][[Server][] ", closedPacket.reason.toString());
+                Core.app.post(() -> Vars.ui.showText("[scarlet][[Server][] ", closedPacket.reason.toString()));
             } else if (object instanceof Packets.RoomLinkPacket roomLinkPacket) {
                 // Ignore if the room id is received twice
                 if (roomId != null) {

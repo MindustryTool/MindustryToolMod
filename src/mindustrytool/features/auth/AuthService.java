@@ -200,10 +200,10 @@ public class AuthService {
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer " + accessToken)
                     .error(err -> {
-                        Vars.ui.showInfo("Logout failed: " + err.getMessage());
+                        Core.app.post(() -> Vars.ui.showInfo("Logout failed: " + err.getMessage()));
                     })
                     .submit(res -> {
-                        Vars.ui.showInfoFade("Logout successful!");
+                        Core.app.post(() -> Vars.ui.showInfoFade("Logout successful!"));
                     });
         }
 

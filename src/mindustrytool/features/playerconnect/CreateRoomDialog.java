@@ -258,8 +258,9 @@ public class CreateRoomDialog extends BaseDialog {
     }
 
     void refreshOnline() {
-        if (refreshingOnline)
+        if (refreshingOnline) {
             return;
+        }
 
         refreshingOnline = true;
 
@@ -273,26 +274,30 @@ public class CreateRoomDialog extends BaseDialog {
         }
 
         PlayerConnectProviders.refreshOnline(() -> {
-            refreshingOnline = false;
-            setupServers(PlayerConnectProviders.online, online);
+            Core.app.post(() -> {
+                refreshingOnline = false;
+                setupServers(PlayerConnectProviders.online, online);
+            });
         }, e -> {
-            refreshingOnline = false;
-            Vars.ui.showInfoFade("@message.room.fetch-failed");
+            Core.app.post(() -> {
+                refreshingOnline = false;
+                Vars.ui.showInfoFade("@message.room.fetch-failed");
 
-            String message = e.getMessage();
+                String message = e.getMessage();
 
-            if (e instanceof HttpStatusException httpStatusException) {
-                message = httpStatusException.response.getResultAsString();
-            }
+                if (e instanceof HttpStatusException httpStatusException) {
+                    message = httpStatusException.response.getResultAsString();
+                }
 
-            if (online != null) {
-                online.clear();
-                online.add(message)
-                        .color(Pal.accent)
-                        .labelAlign(Align.center)
-                        .growX()
-                        .center();
-            }
+                if (online != null) {
+                    online.clear();
+                    online.add(message)
+                            .color(Pal.accent)
+                            .labelAlign(Align.center)
+                            .growX()
+                            .center();
+                }
+            });
         });
     }
 
