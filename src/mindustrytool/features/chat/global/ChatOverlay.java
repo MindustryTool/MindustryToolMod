@@ -532,7 +532,7 @@ public class ChatOverlay extends Table {
                 rebuildMessages(messageTable);
             });
 
-            Time.runTask(30, () -> {
+            Time.runTask(10, () -> {
                 if (scrollPane != null) {
                     Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
                 }

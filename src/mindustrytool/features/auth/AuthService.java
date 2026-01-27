@@ -114,7 +114,7 @@ public class AuthService {
                         loginDialog.cont.button(loginUrl, () -> {
                             Core.app.setClipboardText(loginUrl);
                             Vars.ui.showInfoFade("@copied");
-                        }).margin(40).growX().wrapLabel(true);
+                        }).margin(40).growX().wrapLabel(true).fontScale(0.5f);
 
                         Core.settings.put(KEY_LOGIN_ID, loginId);
 
