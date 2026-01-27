@@ -31,6 +31,7 @@ import mindustry.world.blocks.distribution.OverflowGate;
 import mindustry.world.blocks.distribution.Router;
 import mindustry.world.blocks.distribution.Sorter;
 import mindustry.world.blocks.distribution.StackConveyor;
+import mindustry.world.blocks.distribution.DuctBridge.DuctBridgeBuild;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -207,8 +208,14 @@ public class SmartConveyorFeature implements Feature {
                     }
                 }
 
-            } else if (block instanceof Sorter || block instanceof Router || block instanceof OverflowGate ||
-                    block instanceof DuctRouter || block instanceof OverflowDuct || block instanceof Junction) {
+            } else if (build instanceof DuctBridgeBuild ductBridge) {
+                var linked = ductBridge.findLink();
+
+                if (linked != null) {
+                    checkAndAdd(queue, visited, linked);
+                }
+            } else if (block instanceof Sorter || block instanceof Router || block instanceof OverflowGate
+                    || block instanceof DuctRouter || block instanceof OverflowDuct || block instanceof Junction) {
                 for (int i = 0; i < 4; i++) {
                     checkAndAdd(queue, visited, current.nearby(i).build);
                 }
