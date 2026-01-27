@@ -12,6 +12,8 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Reflect;
+import arc.util.Strings;
+import arc.util.Time;
 import arc.util.Http.HttpStatusException;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
@@ -100,7 +102,8 @@ public class PlayerConnectJoinInjector {
 
     private void setupPlayerConnect() {
         playerConnectTable.clear();
-        playerConnectTable.labelWrap(Core.bundle.format("message.loading"))
+        playerConnectTable.labelWrap(() -> Core.bundle.get("server.refreshing") + Strings.animated(Time.time, 4, 11,
+                "."))
                 .center()
                 .labelAlign(0)
                 .expand()

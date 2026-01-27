@@ -94,17 +94,21 @@ public class PlayerConnectRenderer {
                 }
                 body.row();
 
-                // Players
-                String names = Seq.with(room.getData().getPlayers()).map(n -> n.getName() + "[]").toString(", ");
-                body.add(Iconc.players + " []" + names)
+                body.add(Iconc.players + ": " + room.getData().getPlayers().size() + "(" + room.getData().getLocale()
+                        + ")")
                         .padBottom(6)
                         .left()
                         .wrap()
                         .wrapLabel(true)
                         .growX()
-                        .get();
+                        .row();
 
-                body.row();
+                for (var player : room.getData().getPlayers()) {
+                    body.add("- " + player.getName())
+                            .left()
+                            .padBottom(6)
+                            .row();
+                }
 
                 // Mods
                 if (room.getData().getMods().size() > 0) {
@@ -154,10 +158,6 @@ public class PlayerConnectRenderer {
                     }
                     body.row();
                 }
-
-                // Locale
-                body.add(Iconc.chat + " [lightgray]" + room.getData().getLocale()).left().padBottom(6)
-                        .row();
 
                 String versionString = getVersionString(room.getData().getVersion());
 
