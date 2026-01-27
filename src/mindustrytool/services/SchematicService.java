@@ -9,7 +9,7 @@ import mindustrytool.dto.SchematicDetailData;
 
 public class SchematicService {
 
-    public CompletableFuture<byte[]> downloadSchematic(String id) {
+    public static CompletableFuture<byte[]> downloadSchematic(String id) {
         CompletableFuture<byte[]> future = new CompletableFuture<>();
 
         Http.get(Config.API_URL + "schematics/" + id + "/data")
@@ -21,7 +21,7 @@ public class SchematicService {
         return future;
     }
 
-    public CompletableFuture<SchematicDetailData> findSchematicById(String id) {
+    public static CompletableFuture<SchematicDetailData> findSchematicById(String id) {
         CompletableFuture<SchematicDetailData> future = new CompletableFuture<>();
 
         Http.get(Config.API_URL + "schematics/" + id)

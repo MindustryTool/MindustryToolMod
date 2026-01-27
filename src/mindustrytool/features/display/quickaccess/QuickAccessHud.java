@@ -190,6 +190,8 @@ public class QuickAccessHud extends Table implements Feature {
         currentPopupFeature = f;
 
         Table popup = new Table();
+
+        popup.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown);
         popup.background(Styles.black6);
         popup.touchable = Touchable.enabled;
 

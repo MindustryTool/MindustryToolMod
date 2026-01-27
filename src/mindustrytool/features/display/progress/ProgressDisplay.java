@@ -60,7 +60,7 @@ public class ProgressDisplay implements Feature {
     }
 
     private void draw() {
-        if (!enabled || !Vars.state.isGame()) {
+        if (!enabled || !Vars.state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
             return;
         }
 

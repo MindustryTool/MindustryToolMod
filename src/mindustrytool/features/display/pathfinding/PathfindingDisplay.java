@@ -196,7 +196,7 @@ public class PathfindingDisplay implements Feature {
     }
 
     private void draw() {
-        if (!isEnabled || !state.isGame()) {
+        if (!isEnabled || !state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
             return;
         }
 
