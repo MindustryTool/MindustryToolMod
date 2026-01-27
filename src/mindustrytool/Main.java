@@ -141,7 +141,7 @@ public class Main extends Mod {
 
     private void addCustomButtons() {
         try {
-            Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
+            Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show(true));
         } catch (Exception e) {
             Log.err(e);
         }
