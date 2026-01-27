@@ -127,6 +127,7 @@ public class SmartConveyorFeature implements Feature {
     private void showMenu(Tile tile) {
         selectedTile = tile;
         currentMenu = new Table(Styles.black6);
+        currentMenu.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown);
         currentMenu.touchable = arc.scene.event.Touchable.enabled;
 
         currentMenu.update(() -> {

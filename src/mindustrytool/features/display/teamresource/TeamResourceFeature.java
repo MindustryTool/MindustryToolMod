@@ -88,7 +88,7 @@ public class TeamResourceFeature extends Table implements Feature {
 
         touchable = Touchable.enabled;
 
-        visible(() -> Vars.state.isGame());
+        visible(() -> Vars.state.isGame() && Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown);
 
         update(() -> {
             if (!visible) {

@@ -10,7 +10,7 @@ import mindustrytool.dto.MapDetailData;
 
 public class MapService {
 
-    public CompletableFuture<byte[]> downloadMap(String id) {
+    public static CompletableFuture<byte[]> downloadMap(String id) {
         CompletableFuture<byte[]> future = new CompletableFuture<>();
 
         Http.get(Config.API_URL + "maps/" + id + "/data")
@@ -23,7 +23,7 @@ public class MapService {
         return future;
     }
 
-    public CompletableFuture<MapDetailData> findMapById(String id) {
+    public static CompletableFuture<MapDetailData> findMapById(String id) {
         CompletableFuture<MapDetailData> future = new CompletableFuture<>();
 
         Http.get(Config.API_URL + "maps/" + id)

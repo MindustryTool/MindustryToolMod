@@ -81,16 +81,16 @@ public class AuthService {
 
         if (loginDialog == null) {
             loginDialog = new BaseDialog("@login");
+            loginDialog.name = "loginDialog";
+
+            loginDialog.buttons.button("@cancel", () -> {
+                if (!loginFuture.isDone()) {
+                    loginFuture.completeExceptionally(new RuntimeException("Login cancelled"));
+                }
+                loginDialog.hide();
+            }).width(230);
+
         }
-
-        loginDialog.name = "loginDialog";
-
-        loginDialog.buttons.button("@cancel", () -> {
-            if (!loginFuture.isDone()) {
-                loginFuture.completeExceptionally(new RuntimeException("Login cancelled"));
-            }
-            loginDialog.hide();
-        }).width(230);
 
         loginDialog.cont.add("@generate-loading-link");
         Core.app.post(() -> loginDialog.show());
@@ -114,7 +114,7 @@ public class AuthService {
                         loginDialog.cont.button(loginUrl, () -> {
                             Core.app.setClipboardText(loginUrl);
                             Vars.ui.showInfoFade("@copied");
-                        }).margin(40).growX().wrapLabel(true);
+                        }).margin(40).growX().wrapLabel(true).fontScale(0.5f);
 
                         Core.settings.put(KEY_LOGIN_ID, loginId);
 

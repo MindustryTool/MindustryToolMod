@@ -9,6 +9,7 @@ import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
+import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
@@ -75,7 +76,7 @@ public class HealthBarVisualizer implements Feature {
     }
 
     public void draw() {
-        if (!enabled || !state.isGame()) {
+        if (!enabled || !state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
             return;
         }
 

@@ -38,6 +38,11 @@ import mindustrytool.Utils;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
+import mindustrytool.features.browser.map.MapDialog;
+import mindustrytool.features.browser.map.MapImage;
+import mindustrytool.features.browser.map.MapInfoDialog;
+import mindustrytool.features.browser.schematic.SchematicDialog;
+import mindustrytool.features.browser.schematic.SchematicInfoDialog;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatStateChange;
 import mindustrytool.features.chat.global.dto.ChatUser;
@@ -52,14 +57,25 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import mindustrytool.features.chat.global.dto.ChatUser.SimpleRole;
 import mindustrytool.features.playerconnect.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectRenderer;
+import mindustrytool.services.MapService;
 import mindustrytool.services.PlayerConnectService;
+import mindustrytool.services.SchematicService;
 import mindustrytool.services.State;
 
 public class ChatOverlay extends Table {
+    private static final Pattern MINDUSTRY_TOOL_LINK_PATTERN = Pattern
+            .compile("^https?://[^/]+/[^/]+/(schematics|maps)/([0-9a-fA-F-]+)");
+
+    private static final float TARGET_WIDTH = 250f;
+    private static final float PREVIEW_BUTTON_SIZE = 50f;
+    private static final float CARD_HEIGHT = 330f;
+
     private Seq<ChatMessage> messages = new Seq<>();
     private Table messageTable;
     private Table userListTable;
@@ -82,6 +98,9 @@ public class ChatOverlay extends Table {
     private boolean isUserListCollapsed;
     private Image connectionIndicator;
 
+    private final SchematicInfoDialog schematicInfoDialog = new SchematicInfoDialog();
+    private final MapInfoDialog mapInfoDialog = new MapInfoDialog();
+
     public ChatOverlay() {
         name = "mdt-chat-overlay";
         touchable = Touchable.childrenOnly;
@@ -93,6 +112,8 @@ public class ChatOverlay extends Table {
         inputTable = new Table();
 
         containerCell = add(container);
+
+        visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown);
 
         inputField = new TextField();
         inputField.setMessageText("@chat.enter-message");
@@ -511,7 +532,7 @@ public class ChatOverlay extends Table {
                 rebuildMessages(messageTable);
             });
 
-            Time.runTask(60 * 3, () -> {
+            Time.runTask(10, () -> {
                 if (scrollPane != null) {
                     Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
                 }
@@ -527,9 +548,8 @@ public class ChatOverlay extends Table {
 
         for (ChatMessage msg : messages) {
             Table entry = new Table();
-            entry.setBackground(null); // Clear background
 
-            // Avatar Column
+            entry.setBackground(null);
             entry.table(avatar -> {
                 avatar.top();
                 UserService.findUserById(msg.createdBy).thenAccept(data -> {
@@ -537,12 +557,13 @@ public class ChatOverlay extends Table {
                         avatar.clear();
                         if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
                             avatar.add(new NetworkImage(data.getImageUrl())).size(40);
+                        } else {
+                            avatar.add(new Image(Icon.players)).size(40);
                         }
                     });
                 });
             }).size(48).top().pad(8);
 
-            // Content Column
             entry.table(card -> {
                 card.top().left();
                 Label label = new Label("...");
@@ -585,41 +606,64 @@ public class ChatOverlay extends Table {
                     String content = msg.content.trim();
 
                     if (PlayerConnectLink.isValid(content)) {
-                        c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
+                        c.add(content).wrap().color(Color.lightGray).left().growX();
                         c.row();
                         renderPlayerConnectRoom(c, content);
-                    } else {
-                        int schematicBasePosition = content.indexOf(Vars.schematicBaseStart);
+                        return;
+                    }
 
-                        if (schematicBasePosition != -1) {
-                            int endPosition = content.indexOf(" ", schematicBasePosition) + 1;
+                    int schematicBasePosition = content.indexOf(Vars.schematicBaseStart);
 
-                            if (endPosition == 0) {
-                                endPosition = content.length();
-                            }
+                    if (schematicBasePosition != -1) {
+                        int endPosition = content.indexOf(" ", schematicBasePosition) + 1;
 
-                            String prev = content.substring(0, schematicBasePosition);
+                        if (endPosition == 0) {
+                            endPosition = content.length();
+                        }
 
-                            c.add(prev).wrap().color(Color.lightGray).left().growX().padTop(2);
-                            String schematicBase64 = content.substring(schematicBasePosition, endPosition);
+                        String prev = content.substring(0, schematicBasePosition);
 
-                            try {
-                                var schematic = Schematics.readBase64(schematicBase64);
-                                c.row();
-                                renderSchematic(card, schematic);
-                                c.row();
-                                String after = content.substring(endPosition);
-                                c.add(after).wrap().color(Color.lightGray).left().growX().padTop(2);
-                            } catch (Exception e) {
-                                c.clear();
-                                c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
-                            }
-                        } else {
-                            c.add(content).wrap().color(Color.lightGray).left().growX().padTop(2);
+                        c.add(prev).wrap().color(Color.lightGray).left().growX();
+                        String schematicBase64 = content.substring(schematicBasePosition, endPosition);
+
+                        try {
+                            var schematic = Schematics.readBase64(schematicBase64);
+                            c.row();
+                            renderSchematic(card, schematic);
+                            c.row();
+                            String after = content.substring(endPosition);
+                            c.add(after).wrap().color(Color.lightGray).left().growX();
+                        } catch (Exception e) {
+                            c.clear();
+                            c.add(content).wrap().color(Color.lightGray).left().growX();
+                        }
+
+                        return;
+                    }
+
+                    Matcher matcher = MINDUSTRY_TOOL_LINK_PATTERN.matcher(content);
+
+                    if (matcher.find()) {
+                        String url = matcher.group(0);
+                        String contentType = matcher.group(1);
+                        String id = matcher.group(2);
+
+                        if (contentType.equals("maps")) {
+                            renderMap(c, id, url);
+                            c.table().growX();
+                            return;
+                        }
+
+                        if (contentType.equals("schematics")) {
+                            renderSchematic(c, id, url);
+                            c.table().growX();
+                            return;
                         }
                     }
+
+                    c.add(content).wrap().color(Color.lightGray).left().growX();
                 })
-                        .top().left().growX();
+                        .top().left().growX().padTop(6);
 
                 card.clicked(() -> {
                     Core.app.setClipboardText(msg.content);
@@ -629,6 +673,66 @@ public class ChatOverlay extends Table {
 
             messageTable.add(entry).growX().padBottom(4).row();
         }
+    }
+
+    private void renderSchematic(Table table, String id, String url) {
+        table.table(Tex.pane, preview -> {
+            preview.top().left().margin(0f);
+
+            preview.table(buttons -> {
+                buttons.center().defaults().size(PREVIEW_BUTTON_SIZE);
+
+                buttons.button(Icon.copy, Styles.emptyi, () -> SchematicDialog.handleCopySchematic(id))
+                        .pad(2);
+
+                buttons.button(Icon.download, Styles.emptyi, () -> SchematicDialog
+                        .handleDownloadSchematic(id))
+                        .pad(2);
+
+                buttons.button(Icon.info, Styles.emptyi,
+                        () -> SchematicService.findSchematicById(id)
+                                .thenAccept(schem -> Core.app.post(() -> schematicInfoDialog.show(schem))))
+                        .tooltip("@info.title");
+
+                buttons.button(Icon.link, Styles.emptyi, () -> Core.app.openURI(url))
+                        .pad(2);
+            }).growX().height(PREVIEW_BUTTON_SIZE);
+
+            preview.row();
+
+            preview.stack(new Table(t -> t.add(new mindustrytool.features.browser.schematic.SchematicImage(id))))
+                    .top()
+                    .left();
+        }).style(Styles.flati).width(TARGET_WIDTH).height(CARD_HEIGHT).top()
+                .left();
+
+    }
+
+    private void renderMap(Table table, String id, String url) {
+        table.table(Tex.pane, preview -> {
+            preview.top().left().margin(0f);
+
+            preview.table(buttons -> {
+                buttons.center().defaults().size(PREVIEW_BUTTON_SIZE);
+
+                buttons.button(Icon.download, Styles.emptyi, () -> MapDialog.handleDownloadMap(id))
+                        .pad(2);
+
+                buttons.button(Icon.info, Styles.emptyi,
+                        () -> MapService.findMapById(id)
+                                .thenAccept(m -> Core.app.post(() -> mapInfoDialog.show(m))))
+                        .tooltip("@info.title");
+
+                buttons.button(Icon.link, Styles.emptyi, () -> Core.app.openURI(url))
+                        .pad(2);
+            }).growX().height(PREVIEW_BUTTON_SIZE);
+
+            preview.row();
+
+            preview.stack(new Table(t -> t.add(new MapImage(id)))).top().left();
+        }).style(Styles.flati).width(TARGET_WIDTH).height(CARD_HEIGHT)
+                .top()
+                .left();
     }
 
     private void rebuildUserList(ChatUser[] users) {
@@ -652,6 +756,8 @@ public class ChatOverlay extends Table {
             // Avatar
             if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
                 card.add(new NetworkImage(user.getImageUrl())).size(40).padRight(8);
+            } else {
+                card.add(new Image(Icon.players)).size(40).padRight(8);
             }
 
             // Info Table

@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit;
 import static mindustry.Vars.*;
 
 public class SchematicDialog extends BaseDialog {
-
     private static final float TARGET_WIDTH = 250f;
     private static final float CARD_MARGIN = 4f;
     private static final float BUTTON_HEIGHT = 40f;
@@ -51,7 +50,6 @@ public class SchematicDialog extends BaseDialog {
     private final SchematicInfoDialog infoDialog = new SchematicInfoDialog();
     private final Debouncer debouncer = new Debouncer(500, TimeUnit.MILLISECONDS);
     private final TagService tagService = new TagService();
-    private final SchematicService schematicService = new SchematicService();
 
     private static SearchConfig searchConfig = new SearchConfig();
 
@@ -252,12 +250,12 @@ public class SchematicDialog extends BaseDialog {
             preview.table(buttons -> {
                 buttons.center().defaults().size(PREVIEW_BUTTON_SIZE);
 
-                buttons.button(Icon.copy, Styles.emptyi, () -> handleCopySchematic(data))
+                buttons.button(Icon.copy, Styles.emptyi, () -> handleCopySchematic(data.getId()))
                         .pad(2);
-                buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadSchematic(data))
+                buttons.button(Icon.download, Styles.emptyi, () -> handleDownloadSchematic(data.getId()))
                         .pad(2);
                 buttons.button(Icon.info, Styles.emptyi,
-                        () -> schematicService.findSchematicById(data.getId())
+                        () -> SchematicService.findSchematicById(data.getId())
                                 .thenAccept(schem -> Core.app.post(() -> infoDialog.show(schem))))
                         .tooltip("@info.title");
             }).growX().height(PREVIEW_BUTTON_SIZE);
@@ -306,13 +304,13 @@ public class SchematicDialog extends BaseDialog {
         }
 
         if (state.isMenu()) {
-            schematicService.findSchematicById(data.getId())
+            SchematicService.findSchematicById(data.getId())
                     .thenAccept(schem -> Core.app.post(() -> infoDialog.show(schem)));
         } else {
             if (!state.rules.schematicsAllowed) {
                 ui.showInfo("@schematic.disabled");
             } else {
-                handleDownloadSchematicData(data,
+                handleDownloadSchematicData(data.getId(),
                         content -> control.input.useSchematic(Utils.readSchematic(content)));
                 hide();
             }
@@ -394,8 +392,8 @@ public class SchematicDialog extends BaseDialog {
         rebuildFooter();
     }
 
-    private void handleCopySchematic(SchematicData schematic) {
-        handleDownloadSchematicData(schematic, data -> {
+    public static void handleCopySchematic(String id) {
+        handleDownloadSchematicData(id, data -> {
             Core.app.post(() -> {
                 Schematic s = Utils.readSchematic(data);
                 Core.app.setClipboardText(Vars.schematics.writeBase64(s));
@@ -404,9 +402,9 @@ public class SchematicDialog extends BaseDialog {
         });
     }
 
-    private void handleDownloadSchematic(SchematicData schematic) {
-        handleDownloadSchematicData(schematic, data -> {
-            schematicService.findSchematicById(schematic.getId()).thenAccept(detail -> {
+    public static void handleDownloadSchematic(String id) {
+        handleDownloadSchematicData(id, data -> {
+            SchematicService.findSchematicById(id).thenAccept(detail -> {
                 Schematic s = Utils.readSchematic(data);
                 Core.app.post(() -> {
                     s.labels.add(Seq.with(detail.getTags().stream().map(i -> i.getName()).toArray(String[]::new)));
@@ -418,8 +416,8 @@ public class SchematicDialog extends BaseDialog {
         });
     }
 
-    private void handleDownloadSchematicData(SchematicData data, Cons<String> cons) {
-        schematicService.downloadSchematic(data.getId()).thenAccept(result -> {
+    private static void handleDownloadSchematicData(String id, Cons<String> cons) {
+        SchematicService.downloadSchematic(id).thenAccept(result -> {
             cons.get(new String(Base64Coder.encode(result)));
         })
                 .exceptionally((err) -> {
