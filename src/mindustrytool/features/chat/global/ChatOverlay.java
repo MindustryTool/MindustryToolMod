@@ -557,6 +557,8 @@ public class ChatOverlay extends Table {
                         avatar.clear();
                         if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
                             avatar.add(new NetworkImage(data.getImageUrl())).size(40);
+                        } else {
+                            avatar.add(new Image(Icon.players)).size(40);
                         }
                     });
                 });
@@ -754,6 +756,8 @@ public class ChatOverlay extends Table {
             // Avatar
             if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
                 card.add(new NetworkImage(user.getImageUrl())).size(40).padRight(8);
+            } else {
+                card.add(new Image(Icon.players)).size(40).padRight(8);
             }
 
             // Info Table
