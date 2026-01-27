@@ -28,8 +28,13 @@ public class PlayerConnectRenderer {
 
     public static Cell<Table> render(Table container, PlayerConnectRoom room, float targetWidth) {
         float contentWidth = targetWidth > 0 ? targetWidth - 40f : 0;
+
         boolean matchProtocolVersion = Objects.equals(room.getData().getProtocolVersion(),
                 NetworkProxy.PROTOCOL_VERSION);
+
+        if (contentWidth > 0) {
+            container.setWidth(contentWidth);
+        }
 
         return container.table(Styles.black8, t -> {
             t.top().left();
