@@ -32,8 +32,19 @@ public class InternalGodModeProvider implements GodModeProvider {
         table.button(Icon.units, Styles.cleari, () -> {
             GodModeDialogs.showUnitDialog(
                     (unit, amount, team, x, y) -> {
-                        for (int i = 0; i < amount; i++) {
-                            unit.spawn(team, x, y);
+                        int size = (int) Math.sqrt(amount) + 1;
+                        int spawned = 0;
+
+                        for (int offX = 0; offX < size; offX++) {
+                            for (int offY = 0; offY < size; offY++) {
+                                if (spawned >= amount) {
+                                    break;
+                                }
+
+                                unit.spawn(team, x + offX, y + offY);
+                                spawned++;
+
+                            }
                         }
                     },
                     (unit, team) -> {
