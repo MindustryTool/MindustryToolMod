@@ -11,7 +11,6 @@ import arc.scene.Group;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.Dialog;
-import arc.scene.ui.ImageButton.ImageButtonStyle;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
@@ -30,9 +29,6 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 
 public class FeatureSettingDialog extends BaseDialog {
-
-    private final ImageButtonStyle style = new ImageButtonStyle(Tex.button, Tex.button, Tex.whiteui,
-            Tex.whiteui, Tex.whiteui, Tex.whiteui);
 
     private static final Seq<WebFeature> webFeatures = Seq.with(
             new WebFeature(
@@ -82,8 +78,6 @@ public class FeatureSettingDialog extends BaseDialog {
         super("Feature");
 
         addCloseButton();
-
-        style.imageUpColor = Color.white;
 
         buttons.button("@feature.report-bug", Icon.infoCircle, () -> {
             Core.app.openURI(Config.DISCORD_INVITE_URL);
@@ -274,7 +268,7 @@ public class FeatureSettingDialog extends BaseDialog {
         boolean enabled = FeatureManager.getInstance().isEnabled(feature);
         var metadata = feature.getMetadata();
 
-        var card = parent.button(Tex.whiteui, style, () -> {
+        var card = parent.button(Styles.black8, () -> {
         })
                 .growX()
                 .minWidth(cardWidth)
