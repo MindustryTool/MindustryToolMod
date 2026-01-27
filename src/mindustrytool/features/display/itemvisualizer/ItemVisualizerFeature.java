@@ -13,7 +13,6 @@ import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustry.graphics.Layer;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustry.world.ItemBuffer;
 import mindustry.world.blocks.distribution.BufferedItemBridge.BufferedItemBridgeBuild;
 import mindustry.world.blocks.distribution.Duct.DuctBuild;
 import mindustry.world.blocks.distribution.DuctBridge.DuctBridgeBuild;

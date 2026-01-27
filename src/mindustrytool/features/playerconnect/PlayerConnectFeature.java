@@ -3,8 +3,12 @@ package mindustrytool.features.playerconnect;
 import java.util.Optional;
 
 import arc.scene.ui.Dialog;
+import arc.scene.ui.layout.Table;
+import arc.util.Log;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustry.ui.IntFormat;
+import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -39,7 +43,36 @@ public class PlayerConnectFeature implements Feature {
 
     @Override
     public void onEnable() {
-        // Feature enabled
+        if (Vars.ui.hudGroup != null) {
+            Table parent = Vars.ui.hudGroup.find("fps/ping");
+
+            if (parent == null) {
+                Log.err("fps/ping not found");
+                return;
+            }
+
+            IntFormat ping = new IntFormat("ping");
+
+            parent.label(() -> pingColor() + ping.get(PlayerConnect.ping))
+                    .visible(() -> PlayerConnect.isHosting())
+                    .left()
+                    .style(Styles.outlineLabel)
+                    .name("pc-ping").get();
+
+            parent.row();
+        }
+    }
+
+    private String pingColor() {
+        if (PlayerConnect.ping <= 200) {
+            return "";
+        }
+
+        if (PlayerConnect.ping <= 500) {
+            return "[yellow]";
+        }
+
+        return "red";
     }
 
     @Override

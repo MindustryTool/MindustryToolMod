@@ -39,6 +39,8 @@ public class PlayerConnect {
     private static final Seq<Request> requestQueue = new Seq<>();
     private static boolean isShowingDialog = false;
 
+    public static int ping;
+
     static {
         Vars.ui.paused.hidden(() -> {
             arc.util.Timer.schedule(() -> {
@@ -76,6 +78,12 @@ public class PlayerConnect {
         Timer.schedule(() -> {
             updateStats();
         }, 60f, 60f);
+
+        Timer.schedule(() -> {
+            if (isHosting()) {
+                room.sendTCP(new Packets.PingPacket());
+            }
+        }, 0, 1f);
 
         Events.on(PlayerLeave.class, event -> {
             requestQueue.remove(req -> req.player.uuid().equals(event.player.uuid()));
@@ -140,6 +148,10 @@ public class PlayerConnect {
 
     public static boolean isRoomClosed() {
         return room == null || !room.isConnected();
+    }
+
+    public static boolean isHosting() {
+        return room != null && room.isConnected();
     }
 
     public static String getRemoteHost() {
