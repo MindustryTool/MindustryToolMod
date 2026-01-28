@@ -324,6 +324,10 @@ public class Main extends Mod {
     }
 
     private static long parseCrashTime(Fi file) {
+        if (file == null) {
+            return 0;
+        }
+
         String filename = file.nameWithoutExtension();
 
         if (filename.startsWith("crash-report-")) {
@@ -369,17 +373,17 @@ public class Main extends Mod {
 
         String latestCrashKey = "latestCrash";
 
-        var savedLatest = Core.settings.getString(latestCrashKey, "");
+        var savedLatest = Core.settings.getLong(latestCrashKey, 0);
 
         if (latest == null) {
             return false;
         }
 
-        if (latest != null && latest.nameWithoutExtension().equals(savedLatest)) {
+        if (parseCrashTime(latest) == savedLatest) {
             return false;
         }
 
-        Core.settings.put(latestCrashKey, latest.nameWithoutExtension());
+        Core.settings.put(latestCrashKey, parseCrashTime(latest));
 
         showCrashDialog(latest);
 
