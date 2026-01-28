@@ -10,28 +10,32 @@ description:
   '''
 [accent[]] [#FFF000[]]Mindustry Tool  [white[]]- The Ultimate Utility for Every Player[[]]
 
-[white[]]Mindustry Tool is an extended utility that integrates multiple features, including the website [#88C6ED[]]mindustry-tool.com[white[]], allowing players to share and download [#394BA0[]]maps [white[]]and [#D54799[]]schematics [white[]]with just a few simple steps. Most notably, it introduces powerful features that help you play with friends using tools tailored specifically for the game.
+[white[]]Mindustry Tool is a feature-rich mod that integrates with [#88C6ED[]]mindustry-tool.com[white[]], enhancing your gameplay with community content, advanced automation, and powerful visual analysis tools.
 
 
-[accent[]] [#009F75[]]Play With Friends:[[]]
-  [white[]] No complicated setup required — a single button is all it takes to host your own server and invite friends.
-  [white[]] Connections are optimized for international play, delivering a smooth and stable multiplayer experience.
+[accent[]] [#88C6ED[]]Content Browser:[[]]
+  [white[]] Access a curated repository of [#394BA0[]]Maps [white[]]and [#D54799[]]Schematics [white[]]directly in-game.
+  [white[]] Filter by size, mode, planet, and version to find exactly what you need.
 
-[accent[]] [#88C6ED[]]Community Servers:[[]]
-  [white[]] Quickly browse and join servers via Mindustry Tool, offering a wide variety of game modes.
-  [white[]] Enhance your community experience through exclusive free servers and community events.
+[accent[]] [#FFF000[]]Automation (Autoplay):[[]]
+  [white[]] Smart task management for building support, repairing, and automated mining.
+  [white[]] Dynamic AI control that takes over your unit to optimize efficiency.
 
-[accent[]] [#FFF000[]]Maps & Schematics:[[]]
-  [white[]] Effortlessly share or save high-quality maps, explore strategic schematics, and optimize your production or defense builds.
-  [white[]] Designed to meet the needs of all players — from beginners to pros.
+[accent[]] [#FAA31B[]]Enhanced Communication:[[]]
+  [white[]] [#88C6ED[]]Global Chat:[white[]] Connect with other mod users across all servers.
+  [white[]] [#82C341[]]Real-time Translation:[white[]] Translate chat messages instantly using Gemini or DeepL.
 
-[accent[]] [#82C341[]]Strict Content Moderation:[[]]
-  [white[]] All content is reviewed by the [#82C341[]]Mindustry Tool [white[]]team to ensure creativity, safety, and compatibility.
-  [white[]] Play with confidence knowing the tools you use are verified and trustworthy.
+[accent[]] [#EF4444[]]Visualizers & HUD:[[]]
+  [white[]] Customizable health bars, enemy pathfinding prediction, and range indicators.
+  [white[]] Enhanced resource tracking and HUD elements for better situational awareness.
 
-[accent[]] [#FAA31B[]]Advanced Filtering System:[[]]
-  [white[]] Use powerful tags and filters to find the exact content you're looking for, tailored to any purpose.
-  [white[]] A modern, intuitive interface speeds up your search and enhances the discovery process.
+[accent[]] [#009F75[]]Multiplayer & Networking:[[]]
+  [white[]] [#009F75[]]Player Connect:[white[]] Easily create or join private rooms with friends.
+  [white[]] Optimized connections with built-in latency monitoring for hosts.
+
+[accent[]] [#82C341[]]Quality of Life:[[]]
+  [white[]] [#82C341[]]Smart Conveyor:[white[]] Instantly upgrade entire distribution chains with one tap.
+  [white[]] [#FAA31B[]]God Mode:[white[]] Powerful suite for sandbox testing and server administration.
 
 [accent[]] [#FFF000[]]Community Credits[[]]:
 [#88C6ED[]] Design-it Community:  

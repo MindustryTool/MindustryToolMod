@@ -6,50 +6,55 @@
 
 ![Icon](banner.png)
 
-**Mindustry Tool** is a mod that integrates with [Mindustry Tool](https://mindustry-tool.com), enhancing the **Mindustry** gameplay
-experience by allowing players to share and download **maps** and **schematics** directly within the game. The mod offers seamless in-game
-access to a wide range of user-generated content that is carefully curated and moderated for quality.
+**Mindustry Tool** is a feature-rich mod that integrates with [Mindustry Tool](https://mindustry-tool.com), significantly enhancing the **Mindustry** gameplay experience. It offers everything from community-driven content sharing to advanced automation, enhanced communication, and deep visual analysis tools.
 
 ## **Features:**
 
--  **Share and Download Maps and Schematics:**
+### 🗺️ **Content Browser**
+- **Map Browser:** Access a curated, community-driven repository of verified maps directly in-game. Filter by size, mode, planet, and version.
+- **Schematic Browser:** Explore a vast library of community-shared schematics. Preview, download, or copy them to your clipboard with one click.
+- **Direct Integration:** Seamlessly browse, search, and import content without ever leaving the game interface.
 
-   Upload and download **maps** and **schematics** from a curated library of resources.
+### 🤖 **Automation (Autoplay)**
+- **Smart Task Management:** Automatically handles building support (Assist), repairing damaged structures, and resource mining.
+- **Dynamic AI Control:** The mod takes control of your unit, applying prioritized AI logic based on your current needs.
+- **Visual Feedback:** Real-time status icons show exactly what task your unit is currently performing.
 
--  **Quality Moderation:**  
-   Content is reviewed and moderated by a dedicated team to ensure high quality and relevance.
+### 💬 **Enhanced Communication**
+- **Global Chat:** Connect with other Mindustry Tool users across different servers through a dedicated global chat overlay.
+- **Real-time Translation:** Automatically translate incoming chat messages using providers like **Gemini** or **DeepL**.
+- **Pretty Chat:** Express yourself with message transformations like **UwUifier**, **Rainbow text**, and more.
 
--  **In-Game Integration:**  
-   Browse and use **maps** and **schematics** directly in-game without the need to leave the game interface.
+### 📊 **Visualizers & HUD**
+- **Health Bars:** Highly customizable health and shield bars for units and buildings, with zoom-based visibility.
+- **Pathfinding Visualization:** See exactly where enemies are going with ground, water, and hover path predictions.
+- **Range Indicators:** Clear, dashed-circle indicators for turret ranges, unit reach, and building influence zones.
+- **Team Resource Tracking:** Keep a close eye on your team's resources with enhanced HUD elements.
 
--  **Diverse Content for All Levels:**  
-   Explore a variety of **maps** and **schematics**, from simple designs to complex, high-level strategies.
+### 🌐 **Multiplayer & Networking**
+- **Player Connect:** A custom room-based system for private sessions, featuring "Create Room" and "Join Room" shortcuts.
+- **Network Proxy:** Reliable connection handling with built-in latency monitoring for hosts.
 
--  **Easy Search System:**  
-   A comprehensive tagging system to help players easily find specific content.
-
--  **Direct Schematic Use:**  
-   Experience the convenience of using **schematics** directly in your gameplay with just a few clicks.
-
--  **Seamless Map Downloading:**  
-   Search for and download **maps** while in the game, enhancing the gameplay flow without interruptions.
+### 🛠️ **Quality of Life & Admin Tools**
+- **Smart Conveyor:** Instantly upgrade entire chains of distribution blocks (conveyors, ducts, etc.) with a single tap.
+- **God Mode:** A powerful suite for sandbox testing or server administration, including unit spawning, item injection, and team management.
 
 ## **Installation:**
 
 1. Download the **Mindustry Tool mod** from this repository.
 2. Install the mod into your Mindustry game directory.
-3. Launch the game and access **maps** and **schematics** directly from within the game.
+3. Launch the game and access all features directly from the in-game menus.
 
 ## **Join the Community:**
 
--  **Discord:** [Mindustry TMindustryTool](https://discord.gg/nuSYYJbQ52)
--  **Web:** [Mindustry Tool](https://mindustry-tool.com)
+- **Discord:** [Mindustry Tool](https://discord.gg/YGuBQ3g9fQ)
+- **Web:** [Mindustry Tool](https://mindustry-tool.com)
 
 If you like the mod, please give it a star on GitHub. Thank you for supporting **Mindustry Tool**!
 
 ## **Credit to:**
 
--  **xpdustry:** for sharing claj
+- **xpdustry:** for sharing claj
 
 **Translator:**
 
