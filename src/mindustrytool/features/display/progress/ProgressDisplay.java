@@ -82,11 +82,14 @@ public class ProgressDisplay implements Feature {
         float fraction = 0f;
         float remainingTime = 0f;
 
+
+        var scale = build.timeScale();
+
         if (build instanceof UnitFactory.UnitFactoryBuild b) {
             UnitFactory block = (UnitFactory) b.block;
             if (b.currentPlan != -1 && b.currentPlan < block.plans.size) {
                 float totalTime = block.plans.get(b.currentPlan).time;
-                fraction = b.progress / totalTime;
+                fraction = b.progress / totalTime / scale;
                 remainingTime = (totalTime - b.progress) / 60f;
             }
         } else if (build instanceof Reconstructor.ReconstructorBuild b) {
@@ -107,7 +110,7 @@ public class ProgressDisplay implements Feature {
         fraction = Mathf.clamp(fraction, 0f, 1f);
 
         if (fraction > 0.01f) {
-            drawBar(build.x, build.y, build.block.size * Vars.tilesize, fraction, build.team.color, remainingTime);
+            drawBar(build.x, build.y, build.block.size * Vars.tilesize, fraction, build.team.color, remainingTime / scale);
         }
     }
 
