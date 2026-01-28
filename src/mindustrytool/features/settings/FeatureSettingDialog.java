@@ -372,55 +372,66 @@ public class FeatureSettingDialog extends BaseDialog {
                     dialog.addCloseButton();
                     dialog.closeOnBack();
 
-                    int width = 400;
-                    int cols = (int) (Core.graphics.getWidth() * 0.9 / (width + 20));
-                    String[] filter = { "" };
-
-                    dialog.cont.field(filter[0], Styles.defaultField, (t) -> filter[0] = t).growX().row();
-
-                    var declaredFields = Iconc.class.getDeclaredFields();
-
-                    int col = 0;
                     var containers = new Table();
 
-                    for (var field : declaredFields) {
+                    int width = 400;
+                    int cols = Math.max((int) (Core.graphics.getWidth() * 0.9 / (width + 20)), 1);
+                    String[] filter = { "" };
 
-                        try {
-                            field.setAccessible(true);
+                    Runnable build = () -> {
+                        containers.clear();
 
-                            var icon = field.get(null);
+                        var declaredFields = Iconc.class.getDeclaredFields();
 
-                            if (icon == Iconc.all) {
-                                continue;
-                            }
+                        int col = 0;
 
-                            if (icon instanceof String || icon instanceof Character) {
-                                containers.button(String.valueOf(icon) + " " + field.getName(), () -> {
-                                    Core.app.setClipboardText(String.valueOf(icon));
-                                })
-                                        .width(width)
-                                        .scaling(Scaling.fill)
-                                        .growX()
-                                        .padRight(8)
-                                        .padBottom(8)
-                                        .labelAlign(Align.left)
-                                        .top()
-                                        .visible(() -> field.getName().toLowerCase().contains(filter[0]
-                                                .toLowerCase()))
-                                        .left()
-                                        .get();
+                        for (var field : declaredFields) {
+                            try {
+                                field.setAccessible(true);
 
-                                if (++col % cols == 0) {
-                                    containers.row();
+                                var icon = field.get(null);
+
+                                if (icon == Iconc.all) {
+                                    continue;
                                 }
+
+                                if (icon instanceof String || icon instanceof Character) {
+                                    if (!field.getName().toLowerCase().contains(filter[0]
+                                            .toLowerCase())) {
+                                        continue;
+                                    }
+
+                                    containers.button(String.valueOf(icon) + " " + field.getName(), () -> {
+                                        Core.app.setClipboardText(String.valueOf(icon));
+                                    })
+                                            .width(width)
+                                            .scaling(Scaling.fill)
+                                            .growX()
+                                            .padRight(8)
+                                            .padBottom(8)
+                                            .labelAlign(Align.left)
+                                            .top()
+                                            .left()
+                                            .get();
+
+                                    if (++col % cols == 0) {
+                                        containers.row();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                Log.err(e);
                             }
-                        } catch (Exception e) {
-                            Log.err(e);
                         }
+                    };
 
-                    }
+                    dialog.cont.field(filter[0], Styles.defaultField, (t) -> {
+                        filter[0] = t;
+                        build.run();
+                    }).width(cols * (width + 20) - 20).growX().row();
 
-                    dialog.cont.pane(containers).scrollX(false);
+                    build.run();
+                    dialog.cont.pane(containers).scrollX(false).top();
+                    dialog.cont.top();
 
                     dialog.show();
                 });
