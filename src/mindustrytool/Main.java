@@ -373,7 +373,13 @@ public class Main extends Mod {
 
         String latestCrashKey = "latestCrash";
 
-        var savedLatest = Core.settings.getLong(latestCrashKey, 0);
+        var savedLatest = 0l;
+
+        try {
+            savedLatest = Core.settings.getLong(latestCrashKey, 0);
+        } catch (Exception e) {
+            Log.err(e);
+        }
 
         if (latest == null) {
             return false;
