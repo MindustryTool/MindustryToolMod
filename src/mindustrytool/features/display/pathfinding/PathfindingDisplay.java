@@ -172,10 +172,11 @@ public class PathfindingDisplay implements Feature {
             PathfindingConfig.setDrawUnitPath(checked);
         }).left().row();
 
-        settingsContainer.check("@pathfinding.draw-spawn-point-path", PathfindingConfig.isDrawSpawnPointPath(), (checked) -> {
-            PathfindingConfig.setDrawSpawnPointPath(checked);
-            rebuildSettings();
-        }).left().row();
+        settingsContainer
+                .check("@pathfinding.draw-spawn-point-path", PathfindingConfig.isDrawSpawnPointPath(), (checked) -> {
+                    PathfindingConfig.setDrawSpawnPointPath(checked);
+                    rebuildSettings();
+                }).left().row();
 
         if (PathfindingConfig.isDrawSpawnPointPath()) {
             Table costTable = new Table();

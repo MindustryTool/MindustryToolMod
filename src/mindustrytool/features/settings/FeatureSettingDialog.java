@@ -1,13 +1,7 @@
 package mindustrytool.features.settings;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import arc.Core;
 import arc.graphics.Color;
-import arc.scene.Element;
-import arc.scene.Group;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.Dialog;
@@ -26,9 +20,9 @@ import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
-import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
+import mindustrytool.ui.ChangelogDialog;
 
 public class FeatureSettingDialog extends BaseDialog {
 
@@ -81,47 +75,14 @@ public class FeatureSettingDialog extends BaseDialog {
 
         addCloseButton();
 
+        buttons.button("@feature.changelog", Icon.book, () -> {
+            new ChangelogDialog().show();
+        });
+
         buttons.button("@feature.report-bug", Icon.infoCircle, () -> {
             if (!Core.app.openURI(Config.DISCORD_INVITE_URL)) {
                 Core.app.setClipboardText(Config.DISCORD_INVITE_URL);
                 Vars.ui.showInfoFade("@copied");
-            }
-
-        });
-
-        buttons.button("@feature.copy-debug-detail", Icon.export, () -> {
-            try {
-                HashMap<String, Object> json = new HashMap<>();
-
-                String lastLog = Vars.dataDirectory.child("last_log.txt").readString();
-                String type = Core.app.getType().name();
-                float uiScale = Scl.scl();
-                String locale = Core.bundle.getLocale().toLanguageTag();
-                float windowWidth = Core.graphics.getWidth();
-                float windowHeight = Core.graphics.getHeight();
-                boolean fullscreen = Core.graphics.isFullscreen();
-                boolean isPortrait = Core.graphics.isPortrait();
-
-                String mods = Vars.mods.getModStrings().reduce("", (a, b) -> a + b + "\n");
-
-                json.put("mods", mods);
-                json.put("type", type);
-                json.put("window_width", String.valueOf(windowWidth));
-                json.put("window_height", String.valueOf(windowHeight));
-                json.put("fullscreen", String.valueOf(fullscreen));
-                json.put("is_portrait", String.valueOf(isPortrait));
-                json.put("locale", locale);
-                json.put("ui_scale", String.valueOf(uiScale));
-                json.put("last_log", lastLog);
-                var tree = getUiTree(Core.scene.root);
-                json.put("ui_tree", tree);
-                json.put("flatten_ui_tree", flattenUiTree(tree));
-
-                Core.app.setClipboardText(Utils.toJsonPretty(json));
-                Vars.ui.showInfoFade("@coppied");
-
-            } catch (Exception err) {
-                Vars.ui.showException(err);
             }
         });
 
@@ -442,46 +403,6 @@ public class FeatureSettingDialog extends BaseDialog {
                 .growX()
                 .minWidth(cardWidth)
                 .height(180f).pad(10f);
-    }
-
-    private UiTree getUiTree(Element element) {
-        var node = new UiTree(element.name, element.getClass().getSimpleName());
-
-        if (element instanceof Group group) {
-            node.children = group.getChildren().map(child -> getUiTree(child)).list();
-        }
-
-        return node;
-    }
-
-    private List<String> flattenUiTree(UiTree tree) {
-        List<String> result = new ArrayList<>();
-        flatten(tree, tree.name != null ? tree.type + "(" + tree.name + ")" : tree.type, result);
-        result.sort(String::compareTo);
-        return result;
-    }
-
-    private void flatten(UiTree node, String path, List<String> result) {
-        if (node.children == null || node.children.isEmpty()) {
-            result.add(path);
-            return;
-        }
-
-        for (UiTree child : node.children) {
-            flatten(child, path + "." + (child.name != null ? child.type + "(" + child.name + ")" : child.type),
-                    result);
-        }
-    }
-
-    private static class UiTree {
-        public String name;
-        public String type;
-        public List<UiTree> children;
-
-        public UiTree(String name, String type) {
-            this.name = name;
-            this.type = type;
-        }
     }
 
     @Data
