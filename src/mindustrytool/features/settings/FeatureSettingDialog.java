@@ -374,6 +374,9 @@ public class FeatureSettingDialog extends BaseDialog {
 
                     int width = 400;
                     int cols = (int) (Core.graphics.getWidth() * 0.9 / (width + 20));
+                    String[] filter = { "" };
+
+                    dialog.cont.field(filter[0], Styles.defaultField, (t) -> filter[0] = t).growX().row();
 
                     var declaredFields = Iconc.class.getDeclaredFields();
 
@@ -402,6 +405,8 @@ public class FeatureSettingDialog extends BaseDialog {
                                         .padBottom(8)
                                         .labelAlign(Align.left)
                                         .top()
+                                        .visible(() -> field.getName().toLowerCase().contains(filter[0]
+                                                .toLowerCase()))
                                         .left()
                                         .get();
 
