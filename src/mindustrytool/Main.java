@@ -79,49 +79,57 @@ public class Main extends Mod {
 
     @Override
     public void init() {
-        self = Vars.mods.getMod(Main.class);
+        try {
+            self = Vars.mods.getMod(Main.class);
 
-        imageDir.mkdirs();
-        mapsDir.mkdirs();
-        schematicDir.mkdirs();
+            imageDir.mkdirs();
+            mapsDir.mkdirs();
+            schematicDir.mkdirs();
 
-        TapListener.init();
-        ServerService.init();
+            TapListener.init();
+            ServerService.init();
 
-        Events.on(ClientLoadEvent.class, e -> {
-            featureSettingDialog = new FeatureSettingDialog();
+            Events.on(ClientLoadEvent.class, e -> {
+                try {
+                    featureSettingDialog = new FeatureSettingDialog();
 
-            FeatureManager.getInstance().register(//
-                    new MapBrowserFeature(), //
-                    new SchematicBrowserFeature(), //
-                    new PlayerConnectFeature(), //
-                    new HealthBarVisualizer(), //
-                    new TeamResourceFeature(),
-                    new PathfindingDisplay(), //
-                    new RangeDisplay(), //
-                    new QuickAccessHud(), //
-                    new AuthFeature(), //
-                    new ChatFeature(),
-                    new ChatTranslationFeature(),
-                    new PrettyChatFeature(),
-                    new AutoplayFeature(),
-                    new WavePreviewFeature(),
-                    // new ItemVisualizerFeature(),
-                    new GodModeFeature(),
-                    new SmartDrillFeature(),
-                    new SmartConveyorFeature(),
-                    new BackgroundFeature(),
-                    new ProgressDisplay());
+                    FeatureManager.getInstance().register(//
+                            new MapBrowserFeature(), //
+                            new SchematicBrowserFeature(), //
+                            new PlayerConnectFeature(), //
+                            new HealthBarVisualizer(), //
+                            new TeamResourceFeature(),
+                            new PathfindingDisplay(), //
+                            new RangeDisplay(), //
+                            new QuickAccessHud(), //
+                            new AuthFeature(), //
+                            new ChatFeature(),
+                            new ChatTranslationFeature(),
+                            new PrettyChatFeature(),
+                            new AutoplayFeature(),
+                            new WavePreviewFeature(),
+                            // new ItemVisualizerFeature(),
+                            new GodModeFeature(),
+                            new SmartDrillFeature(),
+                            new SmartConveyorFeature(),
+                            new BackgroundFeature(),
+                            new ProgressDisplay());
 
-            boolean hasCrashed = checkForCrashes();
-            if (hasCrashed) {
-                // Try to disable all feature
-                FeatureManager.getInstance().disableAll();
-            }
-            initFeatures();
-            checkForUpdate();
-            addCustomButtons();
-        });
+                    boolean hasCrashed = checkForCrashes();
+                    if (hasCrashed) {
+                        // Try to disable all feature
+                        FeatureManager.getInstance().disableAll();
+                    }
+                    initFeatures();
+                    checkForUpdate();
+                    addCustomButtons();
+                } catch (Exception err) {
+                    Log.err(err);
+                }
+            });
+        } catch (Exception e) {
+            Log.err(e);
+        }
     }
 
     private void initFeatures() {
