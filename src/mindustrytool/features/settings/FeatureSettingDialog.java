@@ -14,12 +14,14 @@ import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import arc.util.Align;
 import arc.util.Log;
 import arc.util.Scaling;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
@@ -155,6 +157,11 @@ public class FeatureSettingDialog extends BaseDialog {
                     if (++i % cols == 0) {
                         table.row();
                     }
+                }
+
+                buildIconDialog(table, cardWidth);
+                if (++i % cols == 0) {
+                    table.row();
                 }
 
                 table.row();
@@ -342,6 +349,83 @@ public class FeatureSettingDialog extends BaseDialog {
                     .color(enabled ? Color.green : Color.red)
                     .left();
         }).top().left().grow();
+    }
+
+    private void buildIconDialog(Table parent, float cardWidth) {
+        parent.table(Tex.button, card -> {
+            card.top().left();
+
+            card.table(c -> {
+                c.top().left().margin(12);
+
+                c.table(header -> {
+                    header.left();
+                    header.add("Icon").style(Styles.defaultLabel).color(Color.white).growX().left();
+                }).growX().row();
+
+                c.add().growY().row();
+                c.add().growX();
+
+                c.button(Icon.linkSmall, () -> {
+                    var dialog = new BaseDialog("Icon");
+
+                    dialog.addCloseButton();
+                    dialog.closeOnBack();
+
+                    int width = 400;
+                    int cols = (int) (Core.graphics.getWidth() * 0.9 / (width + 20));
+
+                    var declaredFields = Iconc.class.getDeclaredFields();
+
+                    int col = 0;
+                    var containers = new Table();
+
+                    for (var field : declaredFields) {
+
+                        try {
+                            field.setAccessible(true);
+
+                            var icon = field.get(null);
+
+                            if (icon == Iconc.all) {
+                                continue;
+                            }
+
+                            if (icon instanceof String || icon instanceof Character) {
+                                containers.button(String.valueOf(icon) + " " + field.getName(), () -> {
+                                    Core.app.setClipboardText(String.valueOf(icon));
+                                })
+                                        .width(width)
+                                        .scaling(Scaling.fill)
+                                        .growX()
+                                        .padRight(8)
+                                        .padBottom(8)
+                                        .labelAlign(Align.left)
+                                        .top()
+                                        .left()
+                                        .get();
+
+                                if (++col % cols == 0) {
+                                    containers.row();
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.err(e);
+                        }
+
+                    }
+
+                    dialog.cont.pane(containers).scrollX(false);
+
+                    dialog.show();
+                });
+
+            }).grow();
+
+        })
+                .growX()
+                .minWidth(cardWidth)
+                .height(180f).pad(10f);
     }
 
     private UiTree getUiTree(Element element) {
