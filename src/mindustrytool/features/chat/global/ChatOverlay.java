@@ -825,7 +825,7 @@ public class ChatOverlay extends Table {
 
                     if (sendButton != null) {
                         sendButton.setText("@chat.send");
-                        sendButton.fireClick();
+                        inputField.fireClick();
                     }
                 });
             }).exceptionally((err) -> {
