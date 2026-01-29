@@ -14,7 +14,22 @@ public class FeatureManager {
         return instance;
     }
 
+    public void reEnable() {
+        @SuppressWarnings("unchecked")
+        Seq<String> enableds = Core.settings.getJson("mindustry-tool.enableds", Seq.class, String.class, Seq::new);
+
+        for (Feature feature : features) {
+            if (enableds.contains(feature.getMetadata().name())) {
+                setEnabled(feature, true);
+            }
+        }
+    }
+
     public void disableAll() {
+        Seq<String> enableds = getEnableds().map(f -> f.getMetadata().name());
+
+        Core.settings.putJson("mindustry-tool.enableds", String.class, enableds);
+
         for (Feature feature : features) {
             setEnabled(feature, false);
         }
