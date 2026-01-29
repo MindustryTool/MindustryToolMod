@@ -4,6 +4,7 @@ import arc.Core;
 import arc.util.Http;
 import arc.util.Http.HttpStatusException;
 import lombok.Data;
+import mindustry.Vars;
 import mindustrytool.Config;
 import mindustrytool.Utils;
 import arc.scene.ui.layout.Table;
@@ -30,11 +31,15 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
     public CompletableFuture<String> translate(String message) {
         CompletableFuture<String> future = new CompletableFuture<>();
 
-        String locale = Core.bundle.getLocale().getLanguage();
+        if (Vars.ui.language.getLocale() == null) {
+            future.completeExceptionally(new IllegalArgumentException("Invalid locale: null"));
+            return future;
+        }
 
-        if (locale == null || locale.isEmpty()) {
-            future.completeExceptionally(
-                    new IllegalArgumentException("Invalid locale: " + Core.bundle.getLocale().getDisplayName()));
+        String locale = Vars.ui.language.getLocale().getLanguage();
+
+        if (locale.isEmpty()) {
+            future.completeExceptionally(new IllegalArgumentException("Invalid locale: " + locale));
             return future;
         }
 

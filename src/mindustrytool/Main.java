@@ -276,10 +276,10 @@ public class Main extends Mod {
             try {
                 dialog.remove();
                 Vars.ui.mods.show();
-                Vars.ui.mods.githubImportMod(Config.REPO_URL, true, null);
+                Vars.ui.mods.githubImportMod(Config.REPO_URL, true);
                 Vars.ui.mods.toFront();
                 Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Log.err(e);
                 Vars.ui.showException(e);
             }
