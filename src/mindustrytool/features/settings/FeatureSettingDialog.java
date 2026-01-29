@@ -131,6 +131,10 @@ public class FeatureSettingDialog extends BaseDialog {
                         .pad(10)
                         .row();
 
+                table.button("@reeanable", () -> {
+                    FeatureManager.getInstance().reEnable();
+                }).row();
+
             }
             table.add("@settings").padLeft(10).top().left().row();
 
