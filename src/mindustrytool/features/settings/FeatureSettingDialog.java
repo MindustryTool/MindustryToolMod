@@ -64,6 +64,24 @@ public class FeatureSettingDialog extends BaseDialog {
     );
 
     private boolean showWebFeature = true;
+    private String filter = "";
+    private Table paneTable;
+
+    private String t(String text) {
+        if (text == null) {
+            return "";
+        }
+
+        if (text.startsWith("@")) {
+            String key = text.substring(1);
+            try {
+                return Core.bundle.get(key);
+            } catch (Exception e) {
+                return text;
+            }
+        }
+        return text;
+    }
 
     public Dialog show(boolean showWebFeature) {
         this.showWebFeature = showWebFeature;
@@ -91,66 +109,96 @@ public class FeatureSettingDialog extends BaseDialog {
 
     private void rebuild() {
         cont.clear();
+
+        cont.table(s -> {
+            s.left();
+            s.image(Icon.zoom).padRight(8);
+            s.field(filter, f -> {
+                filter = f;
+                rebuildPane();
+            }).growX();
+        }).growX().pad(10).row();
+
         cont.pane(table -> {
-            table.top().left();
+            this.paneTable = table;
+            rebuildPane();
+        }).scrollX(false).grow();
+    }
 
-            int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / Scl.scl() * 0.9f / 340f));
-            float cardWidth = ((float) arc.Core.graphics.getWidth() / Scl.scl() * 0.9f) / cols;
+    private void rebuildPane() {
+        if (paneTable == null) {
+            return;
+        }
 
-            int i = 0;
+        paneTable.clear();
+        paneTable.top().left();
 
-            if (showWebFeature) {
-                table.add("@feature").padLeft(10).top().left().row();
+        int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / Scl.scl() * 0.97f / 340f));
 
-                var featureWithDialog = FeatureManager.getInstance().getEnableds().select(f -> f.dialog().isPresent());
+        float cardWidth = ((float) arc.Core.graphics.getWidth() / Scl.scl() * 0.97f) / cols;
 
-                if (featureWithDialog.size > 0) {
-                    for (Feature feature : featureWithDialog) {
-                        buildFeatureButton(table, feature, cardWidth);
-                        if (++i % cols == 0) {
-                            table.row();
-                        }
-                    }
-                }
+        int i = 0;
 
-                for (WebFeature webFeature : webFeatures) {
-                    buildFeatureButton(table, webFeature, cardWidth);
+        if (showWebFeature) {
+            paneTable.add("@feature").padLeft(10).top().left().row();
+
+            var featureWithDialog = FeatureManager.getInstance().getEnableds()
+                    .select(f -> f.dialog().isPresent() && (filter.isEmpty()
+                            || t(f.getMetadata().name()).toLowerCase().contains(filter.toLowerCase())));
+
+            if (featureWithDialog.size > 0) {
+                for (Feature feature : featureWithDialog) {
+                    buildFeatureButton(paneTable, feature, cardWidth);
                     if (++i % cols == 0) {
-                        table.row();
+                        paneTable.row();
                     }
                 }
-
-                buildIconDialog(table, cardWidth);
-                if (++i % cols == 0) {
-                    table.row();
-                }
-
-                table.row();
-                table.image().color(Color.gray).growX().height(4f)
-                        .colspan(cols)
-                        .pad(10)
-                        .row();
-
-                table.button("@reeanable", () -> {
-                    FeatureManager.getInstance().reEnable();
-                }).row();
-
             }
-            table.add("@settings").padLeft(10).top().left().row();
 
-            i = 0;
-
-            for (Feature feature : FeatureManager.getInstance().getFeatures()) {
-                table.table(parent -> buildFeatureCard(parent, feature, cardWidth))
-                        .growX();
-
+            for (WebFeature webFeature : webFeatures) {
+                if (!filter.isEmpty() && !t(webFeature.getName()).toLowerCase().contains(filter.toLowerCase())) {
+                    continue;
+                }
+                buildFeatureButton(paneTable, webFeature, cardWidth);
                 if (++i % cols == 0) {
-                    table.row();
+                    paneTable.row();
                 }
             }
-        })
-                .scrollX(false)
-                .grow();
+
+            buildIconDialog(paneTable, cardWidth);
+            if (++i % cols == 0) {
+                paneTable.row();
+            }
+
+            paneTable.row();
+            paneTable.button("@reeanable", () -> {
+                FeatureManager.getInstance().reEnable();
+            }).width(250).top().left().pad(10).tooltip("Used after a crash");
+
+            paneTable.table().growX().row();
+
+            paneTable.row();
+            paneTable.image().color(Color.gray).growX().height(4f)
+                    .colspan(cols)
+                    .pad(10)
+                    .row();
+
+        }
+        paneTable.add("@settings").padLeft(10).top().left().row();
+
+        i = 0;
+
+        for (Feature feature : FeatureManager.getInstance().getFeatures()) {
+            if (!filter.isEmpty() && !t(feature.getMetadata().name()).toLowerCase().contains(filter.toLowerCase())) {
+                continue;
+            }
+            paneTable.table(parent -> buildFeatureCard(parent, feature, cardWidth))
+                    .growX();
+
+            if (++i % cols == 0) {
+                paneTable.row();
+            }
+        }
     }
 
     private void buildFeatureButton(Table parent, Feature feature, float cardWidth) {
@@ -199,7 +247,7 @@ public class FeatureSettingDialog extends BaseDialog {
 
         })
                 .growX()
-                .minWidth(cardWidth)
+                .width(cardWidth)
                 .height(180f).pad(10f).get().clicked(() -> {
                     feature.dialog().get().show();
                 });
@@ -239,7 +287,7 @@ public class FeatureSettingDialog extends BaseDialog {
 
         })
                 .growX()
-                .minWidth(cardWidth)
+                .width(cardWidth)
                 .height(180f).pad(10f);
     }
 
@@ -250,7 +298,7 @@ public class FeatureSettingDialog extends BaseDialog {
         var card = parent.button(Styles.black8, () -> {
         })
                 .growX()
-                .minWidth(cardWidth)
+                .width(cardWidth)
                 .height(180f)
                 .pad(10f)
                 .grow()
@@ -405,7 +453,7 @@ public class FeatureSettingDialog extends BaseDialog {
 
         })
                 .growX()
-                .minWidth(cardWidth)
+                .width(cardWidth)
                 .height(180f).pad(10f);
     }
 
