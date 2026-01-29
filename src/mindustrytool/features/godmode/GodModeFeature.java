@@ -26,6 +26,7 @@ public class GodModeFeature extends Table implements Feature {
         return FeatureMetadata.builder()
                 .name("@feature.god-mode.name")
                 .description("@feature.god-mode.description")
+                .enabledByDefault(false)
                 .icon(Icon.defense)
                 .build();
     }
