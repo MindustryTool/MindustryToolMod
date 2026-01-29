@@ -18,7 +18,7 @@ public class PlayerConnectService {
         CompletableFuture<Seq<PlayerConnectRoom>> future = new CompletableFuture<>();
 
         Http.get(Config.API_v4_URL + "player-connect/rooms?q=" + q)
-                .timeout(30000)
+                .timeout(60000)
                 .error(future::completeExceptionally)
                 .submit(response -> {
                     try {
@@ -37,7 +37,7 @@ public class PlayerConnectService {
         CompletableFuture<Seq<PlayerConnectProvider>> future = new CompletableFuture<>();
 
         Http.get(Config.API_v4_URL + "player-connect/providers")
-                .timeout(30000)
+                .timeout(60000)
                 .error(future::completeExceptionally)
                 .submit(response -> {
                     try {
