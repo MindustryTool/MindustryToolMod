@@ -302,6 +302,11 @@ public class QuickAccessHud extends Table implements Feature {
             table.row();
         }
 
+        table.button("@reset", () -> {
+            QuickAccessConfig.x(0);
+            QuickAccessConfig.y(0);
+        }).fillX().top().left().pad(5).get().left();
+
         return Optional.of(dialog);
     }
 }
