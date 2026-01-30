@@ -200,7 +200,7 @@ public class ChangelogDialog extends BaseDialog {
                         Vars.ui.mods.toFront();
                         // Close dialogs to show the mod installation progress
                         this.hide();
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         Log.err(e);
                         Vars.ui.showException(e);
                     }
