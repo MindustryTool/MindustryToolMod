@@ -261,7 +261,7 @@ public class QuickAccessHud extends Table implements Feature {
         popup.name = "quickAccessPopup";
         currentPopup = popup;
 
-        Timer.schedule(() ->{if (popup != null){ popup.toFront();}}, 5f);
+        Timer.schedule(() ->popup.toFront(), 5f);
     }
 
     private void closePopup() {
