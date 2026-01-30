@@ -150,7 +150,11 @@ public class SmartConveyorFeature implements Feature {
         });
 
         Vars.ui.hudGroup.addChild(currentMenu);
-        Timer.schedule(() -> currentMenu.toFront(), 5f);
+        Timer.schedule(() -> {
+            if (currentMenu != null) {
+                currentMenu.toFront();
+            }
+        }, 5f);
         currentMenu.pack();
     }
 
