@@ -22,6 +22,7 @@ import arc.struct.Seq;
 import arc.util.Interval;
 import arc.util.Log;
 import arc.util.Scaling;
+import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.core.UI;
 import mindustry.game.EventType.*;
@@ -132,7 +133,8 @@ public class TeamResourceFeature extends Table implements Feature {
         name = "team-resources-overlay";
 
         Vars.ui.hudGroup.addChild(this);
-        this.toFront();
+
+        Timer.schedule(() -> this.toFront(), 5f);
 
         Core.settings.put("coreitems", false);
 

@@ -3,6 +3,7 @@ package mindustrytool.features.display.quickaccess;
 import java.util.Optional;
 
 import arc.Core;
+import arc.Events;
 import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.graphics.Color;
@@ -18,7 +19,9 @@ import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
+import arc.util.Timer;
 import mindustry.Vars;
+import mindustry.game.EventType;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
@@ -63,6 +66,18 @@ public class QuickAccessHud extends Table implements Feature {
                 }
 
                 return false;
+            }
+        });
+
+        Events.on(EventType.ResizeEvent.class, event -> {
+            this.rebuild();
+        });
+
+        Events.on(EventType.StateChangeEvent.class, event -> {
+            if (currentPopup != null) {
+                currentPopup.remove();
+                currentPopup = null;
+                currentPopupFeature = null;
             }
         });
     }
@@ -111,6 +126,15 @@ public class QuickAccessHud extends Table implements Feature {
                         }
                     }
                 });
+
+        float sw = Core.graphics.getWidth();
+        float sh = Core.graphics.getHeight();
+
+        QuickAccessHud.this.x = Mathf.clamp(QuickAccessHud.this.x, 0, sw - 40f);
+        QuickAccessHud.this.y = Mathf.clamp(QuickAccessHud.this.y, 0, sh - 40f);
+
+        QuickAccessConfig.x(QuickAccessHud.this.x);
+        QuickAccessConfig.y(QuickAccessHud.this.y);
 
         // 2. Separator
         Image sep = new Image(Tex.whiteui);
@@ -236,6 +260,8 @@ public class QuickAccessHud extends Table implements Feature {
         Vars.ui.hudGroup.addChild(popup);
         popup.name = "quickAccessPopup";
         currentPopup = popup;
+
+        Timer.schedule(() -> popup.toFront(), 5f);
     }
 
     private void closePopup() {
@@ -298,6 +324,11 @@ public class QuickAccessHud extends Table implements Feature {
 
             table.row();
         }
+
+        table.button("@reset", () -> {
+            QuickAccessConfig.x(0);
+            QuickAccessConfig.y(0);
+        }).fillX().top().left().pad(5).get().left();
 
         return Optional.of(dialog);
     }

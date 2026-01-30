@@ -9,6 +9,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Align;
+import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.core.GameState.State;
 import mindustry.entities.units.BuildPlan;
@@ -149,6 +150,7 @@ public class SmartConveyorFeature implements Feature {
         });
 
         Vars.ui.hudGroup.addChild(currentMenu);
+        Timer.schedule(() -> currentMenu.toFront(), 5f);
         currentMenu.pack();
     }
 
