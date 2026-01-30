@@ -18,6 +18,7 @@ import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
+import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
@@ -236,6 +237,8 @@ public class QuickAccessHud extends Table implements Feature {
         Vars.ui.hudGroup.addChild(popup);
         popup.name = "quickAccessPopup";
         currentPopup = popup;
+
+        Timer.schedule(() -> popup.toFront(), 5f);
     }
 
     private void closePopup() {
