@@ -67,8 +67,6 @@ public class MusicFeature implements Feature {
         MusicConfig.saveBossPaths(MusicConfig.getBossPaths());
         MusicConfig.saveDarkPaths(MusicConfig.getDarkPaths());
         MusicConfig.saveAmbientPaths(MusicConfig.getAmbientPaths());
-
-        Vars.control.sound.playRandom();
     }
 
     private void loadType(Seq<String> paths, Seq<Music> masterList, Seq<Music> original) {
