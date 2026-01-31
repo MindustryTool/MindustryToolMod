@@ -85,6 +85,7 @@ public class MusicSettingsDialog extends BaseDialog {
                     }
 
                     feature.loadCustomMusic();
+                    Vars.control.sound.playRandom();
                     Core.app.post(() -> rebuild());
                 }, "ogg", "mp3");
             }).size(btnSize).padRight(5).tooltip(Core.bundle.get("music.tooltip.add", "Add custom music"));
@@ -97,6 +98,7 @@ public class MusicSettingsDialog extends BaseDialog {
                 });
                 feature.loadCustomMusic();
                 rebuild();
+                Vars.control.sound.playRandom();
             }).size(btnSize).tooltip(Core.bundle.get("music.tooltip.remove-original", "Remove all original sounds"));
         }).growX().row();
 
