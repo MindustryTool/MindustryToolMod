@@ -12,6 +12,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustrytool.Main;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 
@@ -66,21 +67,18 @@ public class MusicSettingsDialog extends BaseDialog {
                         return;
                     }
 
-                    Fi musicDir = Vars.dataDirectory.child("mindustry-tool-musics");
-                    musicDir.mkdirs();
-
                     if (file.isDirectory()) {
                         for (Fi f : file.list()) {
                             if (!f.isDirectory() && (f.name().endsWith(".ogg") || f.name().endsWith(".mp3"))) {
-                                var copy = musicDir.child(f.name());
+                                var copy = Main.musicsDir.child(f.name());
                                 f.copyFilesTo(copy);
-                                customPaths.add(copy.absolutePath());
+                                customPaths.add(copy.name());
                             }
                         }
                     } else {
-                        var copy = musicDir.child(file.name());
+                        var copy = Main.musicsDir.child(file.name());
                         file.copyTo(copy);
-                        customPaths.add(copy.absolutePath());
+                        customPaths.add(copy.name());
                         pathSaver.accept(customPaths);
                     }
 
@@ -94,7 +92,8 @@ public class MusicSettingsDialog extends BaseDialog {
 
                 masterList.removeAll(m -> {
                     Fi file = feature.getMusicFile(m);
-                    return file == null || !customPaths.contains(file.absolutePath());
+                    return file == null || !customPaths.contains(file.name())
+                            && !customPaths.contains(file.absolutePath());
                 });
                 feature.loadCustomMusic();
                 rebuild();
@@ -110,7 +109,8 @@ public class MusicSettingsDialog extends BaseDialog {
                 String name = feature.getMusicName(music);
                 boolean isDisabled = disabled.contains(name);
                 Fi musicFile = feature.getMusicFile(music);
-                boolean isCustom = musicFile != null && customPaths.contains(musicFile.absolutePath());
+                boolean isCustom = musicFile != null && (customPaths.contains(musicFile.name())
+                        || customPaths.contains(musicFile.absolutePath()));
 
                 t.table(Styles.grayPanel, item -> {
                     item.left().margin(6);
@@ -128,6 +128,7 @@ public class MusicSettingsDialog extends BaseDialog {
                         item.button(Icon.trash, Styles.clearNonei, () -> {
                             if (music.isPlaying())
                                 music.stop();
+                            customPaths.remove(musicFile.name());
                             customPaths.remove(musicFile.absolutePath());
                             pathSaver.accept(customPaths);
                             masterList.remove(music);

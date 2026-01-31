@@ -12,6 +12,7 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.graphics.MenuRenderer;
 import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.Main;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -41,7 +42,11 @@ public class BackgroundFeature implements Feature {
         String path = Core.settings.getString(SETTING_KEY, null);
 
         if (path != null) {
-            Fi file = Core.files.absolute(path);
+            Fi file = Main.backgroundsDir.child(path);
+            if (!file.exists()) {
+                file = Core.files.absolute(path);
+            }
+
             if (file.exists() && !file.isDirectory()) {
                 applyBackground(file);
             }
@@ -97,9 +102,11 @@ public class BackgroundFeature implements Feature {
         table.button("Select Background Image", Icon.file, () -> {
             Vars.platform.showFileChooser(true, "png", file -> {
                 if (file != null) {
-                    Core.settings.put(SETTING_KEY, file.absolutePath());
+                    Fi dest = Main.backgroundsDir.child(file.name());
+                    file.copyTo(dest);
+                    Core.settings.put(SETTING_KEY, dest.name());
                     Core.settings.forceSave();
-                    applyBackground(file);
+                    applyBackground(dest);
                 }
             });
         }).size(250, 60);
