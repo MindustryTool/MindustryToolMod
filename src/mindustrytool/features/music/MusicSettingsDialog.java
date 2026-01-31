@@ -60,10 +60,16 @@ public class MusicSettingsDialog extends BaseDialog {
             t.button(Icon.add, () -> {
                 Vars.platform.showMultiFileChooser(file -> {
                     if (file != null) {
-                        customPaths.add(file.absolutePath());
+                        Fi musicDir = Vars.dataDirectory.child("mindustry-tool-musics");
+                        musicDir.mkdirs();
+                        var copy = musicDir.child(file.name());
+
+                        file.copyTo(copy);
+
+                        customPaths.add(copy.absolutePath());
                         pathSaver.accept(customPaths);
                         feature.loadCustomMusic();
-                        rebuild();
+                        Core.app.post(() -> rebuild());
                     }
                 }, "ogg", "mp3");
             }).size(btnSize).padRight(5).tooltip(Core.bundle.get("music.tooltip.add", "Add custom music"));

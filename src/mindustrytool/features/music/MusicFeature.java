@@ -64,9 +64,15 @@ public class MusicFeature implements Feature {
         loadType(MusicConfig.getBossPaths(), allBoss);
 
         applyDisabledFilter();
+
+        MusicConfig.saveBossPaths(MusicConfig.getBossPaths());
+        MusicConfig.saveDarkPaths(MusicConfig.getDarkPaths());
+        MusicConfig.saveAmbientPaths(MusicConfig.getAmbientPaths());
     }
 
     private void loadType(Seq<String> paths, Seq<Music> masterList) {
+        var deleted = new Seq<String>();
+
         for (String path : paths) {
             try {
                 if (loadedMusic.containsKey(path)) {
@@ -77,19 +83,28 @@ public class MusicFeature implements Feature {
                 }
 
                 Fi file = Core.files.absolute(path);
+
                 if (file.exists()) {
                     try {
+                        Log.info("Loading music file: @", file.absolutePath());
                         Music music = new Music(file);
                         masterList.add(music);
                         loadedMusic.put(path, music);
                     } catch (Exception e) {
+                        Log.err("Failed to create music instance for @", path, e);
                         Vars.ui.showException(e);
                     }
+                } else {
+                    Log.warn("Music file not found: @", path);
+                    Vars.ui.showInfoFade("File not exists: " + path);
+                    deleted.add(path);
                 }
             } catch (Exception e) {
                 Log.err("Failed to load music: " + path, e);
             }
         }
+
+        paths.removeAll(deleted);
     }
 
     public void applyDisabledFilter() {
