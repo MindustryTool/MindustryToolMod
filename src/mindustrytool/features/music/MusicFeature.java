@@ -78,9 +78,13 @@ public class MusicFeature implements Feature {
 
                 Fi file = Core.files.absolute(path);
                 if (file.exists()) {
-                    Music music = new Music(file);
-                    masterList.add(music);
-                    loadedMusic.put(path, music);
+                    try {
+                        Music music = new Music(file);
+                        masterList.add(music);
+                        loadedMusic.put(path, music);
+                    } catch (Exception e) {
+                        Vars.ui.showException(e);
+                    }
                 }
             } catch (Exception e) {
                 Log.err("Failed to load music: " + path, e);
