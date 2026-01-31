@@ -1,5 +1,7 @@
 package mindustrytool.features.music;
 
+import java.util.function.Consumer;
+
 import arc.Core;
 import arc.audio.Music;
 import arc.files.Fi;
@@ -49,7 +51,7 @@ public class MusicSettingsDialog extends BaseDialog {
     }
 
     private void renderSection(Table table, String title, Seq<Music> masterList, Seq<String> customPaths,
-            java.util.function.Consumer<Seq<String>> pathSaver) {
+            Consumer<Seq<String>> pathSaver) {
 
         table.table(Styles.black6, t -> {
             t.margin(6);
@@ -59,18 +61,31 @@ public class MusicSettingsDialog extends BaseDialog {
 
             t.button(Icon.add, () -> {
                 Vars.platform.showMultiFileChooser(file -> {
-                    if (file != null) {
-                        Fi musicDir = Vars.dataDirectory.child("mindustry-tool-musics");
-                        musicDir.mkdirs();
+                    if (file == null) {
+                        Vars.ui.showErrorMessage("Invalid file");
+                        return;
+                    }
+
+                    Fi musicDir = Vars.dataDirectory.child("mindustry-tool-musics");
+                    musicDir.mkdirs();
+
+                    if (file.isDirectory()) {
+                        for (Fi f : file.list()) {
+                            if (!f.isDirectory() && (f.name().endsWith(".ogg") || f.name().endsWith(".mp3"))) {
+                                var copy = musicDir.child(f.name());
+                                f.copyFilesTo(copy);
+                                customPaths.add(copy.absolutePath());
+                            }
+                        }
+                    } else {
                         var copy = musicDir.child(file.name());
-
                         file.copyTo(copy);
-
                         customPaths.add(copy.absolutePath());
                         pathSaver.accept(customPaths);
-                        feature.loadCustomMusic();
-                        Core.app.post(() -> rebuild());
                     }
+
+                    feature.loadCustomMusic();
+                    Core.app.post(() -> rebuild());
                 }, "ogg", "mp3");
             }).size(btnSize).padRight(5).tooltip(Core.bundle.get("music.tooltip.add", "Add custom music"));
 
@@ -80,7 +95,7 @@ public class MusicSettingsDialog extends BaseDialog {
                     Fi file = feature.getMusicFile(m);
                     return file == null || !customPaths.contains(file.absolutePath());
                 });
-                feature.applyDisabledFilter();
+                feature.loadCustomMusic();
                 rebuild();
             }).size(btnSize).tooltip(Core.bundle.get("music.tooltip.remove-original", "Remove all original sounds"));
         }).growX().row();
@@ -114,7 +129,7 @@ public class MusicSettingsDialog extends BaseDialog {
                             customPaths.remove(musicFile.absolutePath());
                             pathSaver.accept(customPaths);
                             masterList.remove(music);
-                            feature.applyDisabledFilter();
+                            feature.loadCustomMusic();
                             rebuild();
                         }).size(itemBtnSize)
                                 .tooltip(Core.bundle.get("music.tooltip.remove-custom", "Remove custom music"));
@@ -138,7 +153,7 @@ public class MusicSettingsDialog extends BaseDialog {
                                 music.stop();
                         }
                         MusicConfig.saveDisabledSounds(disabled);
-                        feature.applyDisabledFilter();
+                        feature.loadCustomMusic();
                         rebuild();
                     }).size(itemBtnSize)
                             .tooltip(Core.bundle.get("music.tooltip.toggle-disabled", "Toggle enabled/disabled"));
