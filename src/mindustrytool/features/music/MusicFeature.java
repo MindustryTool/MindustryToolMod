@@ -80,13 +80,16 @@ public class MusicFeature implements Feature {
 
                 if (file.exists()) {
                     try {
+                        Log.info("Loading music file: @", file.absolutePath());
                         Music music = new Music(file);
                         masterList.add(music);
                         loadedMusic.put(path, music);
                     } catch (Exception e) {
+                        Log.err("Failed to create music instance for @", path, e);
                         Vars.ui.showException(e);
                     }
                 } else {
+                    Log.warn("Music file not found: @", path);
                     Vars.ui.showInfoFade("File not exists: " + path);
                 }
             } catch (Exception e) {

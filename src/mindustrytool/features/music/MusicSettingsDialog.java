@@ -68,7 +68,7 @@ public class MusicSettingsDialog extends BaseDialog {
                         customPaths.add(copy.absolutePath());
                         pathSaver.accept(customPaths);
                         feature.loadCustomMusic();
-                        rebuild();
+                        Core.app.post(() -> rebuild());
                     }
                 }, "ogg", "mp3");
             }).size(btnSize).padRight(5).tooltip(Core.bundle.get("music.tooltip.add", "Add custom music"));
