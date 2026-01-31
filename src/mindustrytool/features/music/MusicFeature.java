@@ -77,6 +77,7 @@ public class MusicFeature implements Feature {
                 }
 
                 Fi file = Core.files.absolute(path);
+
                 if (file.exists()) {
                     try {
                         Music music = new Music(file);
@@ -85,6 +86,8 @@ public class MusicFeature implements Feature {
                     } catch (Exception e) {
                         Vars.ui.showException(e);
                     }
+                } else {
+                    Vars.ui.showInfoFade("File not exists: " + path);
                 }
             } catch (Exception e) {
                 Log.err("Failed to load music: " + path, e);
