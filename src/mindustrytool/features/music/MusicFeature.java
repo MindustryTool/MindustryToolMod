@@ -44,6 +44,9 @@ public class MusicFeature implements Feature {
 
     @Override
     public void onEnable() {
+        allAmbient.set(Vars.control.sound.ambientMusic);
+        allDark.set(Vars.control.sound.darkMusic);
+        allBoss.set(Vars.control.sound.bossMusic);
     }
 
     @Override
