@@ -5,7 +5,6 @@ import arc.Events;
 import arc.audio.Music;
 import arc.files.Fi;
 import arc.scene.ui.Dialog;
-import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Reflect;
@@ -18,7 +17,6 @@ import mindustrytool.features.FeatureMetadata;
 import java.util.Optional;
 
 public class MusicFeature implements Feature {
-    private final ObjectMap<String, Music> loadedMusic = new ObjectMap<>();
     private final Seq<Music> allAmbient = new Seq<>();
     private final Seq<Music> allDark = new Seq<>();
     private final Seq<Music> allBoss = new Seq<>();
@@ -59,29 +57,25 @@ public class MusicFeature implements Feature {
     public void loadCustomMusic() {
         Log.info("Loading custom music...");
 
-        loadType(MusicConfig.getAmbientPaths(), allAmbient);
-        loadType(MusicConfig.getDarkPaths(), allDark);
-        loadType(MusicConfig.getBossPaths(), allBoss);
-
-        applyDisabledFilter();
+        loadType(MusicConfig.getAmbientPaths(), Vars.control.sound.ambientMusic, allAmbient);
+        loadType(MusicConfig.getDarkPaths(), Vars.control.sound.darkMusic, allDark);
+        loadType(MusicConfig.getBossPaths(), Vars.control.sound.bossMusic, allBoss);
 
         MusicConfig.saveBossPaths(MusicConfig.getBossPaths());
         MusicConfig.saveDarkPaths(MusicConfig.getDarkPaths());
         MusicConfig.saveAmbientPaths(MusicConfig.getAmbientPaths());
+
+        Vars.control.sound.playRandom();
     }
 
-    private void loadType(Seq<String> paths, Seq<Music> masterList) {
+    private void loadType(Seq<String> paths, Seq<Music> masterList, Seq<Music> original) {
         var deleted = new Seq<String>();
+
+        masterList.clear();
+        masterList.addAll(original);
 
         for (String path : paths) {
             try {
-                if (loadedMusic.containsKey(path)) {
-                    if (!masterList.contains(loadedMusic.get(path))) {
-                        masterList.add(loadedMusic.get(path));
-                    }
-                    continue;
-                }
-
                 Fi file = Core.files.absolute(path);
 
                 if (file.exists()) {
@@ -89,7 +83,6 @@ public class MusicFeature implements Feature {
                         Log.info("Loading music file: @", file.absolutePath());
                         Music music = new Music(file);
                         masterList.add(music);
-                        loadedMusic.put(path, music);
                     } catch (Exception e) {
                         Log.err("Failed to create music instance for @", path, e);
                         Vars.ui.showException(e);
@@ -105,23 +98,9 @@ public class MusicFeature implements Feature {
         }
 
         paths.removeAll(deleted);
-    }
 
-    public void applyDisabledFilter() {
         Seq<String> disabled = MusicConfig.getDisabledSounds();
-
-        syncSequence(Vars.control.sound.ambientMusic, allAmbient, disabled);
-        syncSequence(Vars.control.sound.darkMusic, allDark, disabled);
-        syncSequence(Vars.control.sound.bossMusic, allBoss, disabled);
-    }
-
-    private void syncSequence(Seq<Music> target, Seq<Music> source, Seq<String> disabled) {
-        target.clear();
-        for (Music m : source) {
-            if (!disabled.contains(getMusicName(m))) {
-                target.add(m);
-            }
-        }
+        masterList.removeAll(m -> disabled.contains(getMusicName(m)));
     }
 
     public Seq<Music> getAllAmbient() {
