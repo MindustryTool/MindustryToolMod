@@ -10,6 +10,7 @@ import arc.util.Log;
 import arc.util.Reflect;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustrytool.Main;
 import mindustrytool.events.MusicRegisterEvent;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -77,7 +78,10 @@ public class MusicFeature implements Feature {
 
         for (String path : paths) {
             try {
-                Fi file = Core.files.absolute(path);
+                Fi file = Main.musicsDir.child(path);
+                if (!file.exists()) {
+                    file = Core.files.absolute(path);
+                }
 
                 if (file.exists()) {
                     try {
