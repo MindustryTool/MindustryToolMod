@@ -64,6 +64,10 @@ public class MusicFeature implements Feature {
         loadType(MusicConfig.getBossPaths(), allBoss);
 
         applyDisabledFilter();
+
+        MusicConfig.saveBossPaths(MusicConfig.getBossPaths());
+        MusicConfig.saveDarkPaths(MusicConfig.getDarkPaths());
+        MusicConfig.saveAmbientPaths(MusicConfig.getAmbientPaths());
     }
 
     private void loadType(Seq<String> paths, Seq<Music> masterList) {
