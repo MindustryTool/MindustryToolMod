@@ -67,6 +67,8 @@ public class MusicFeature implements Feature {
     }
 
     private void loadType(Seq<String> paths, Seq<Music> masterList) {
+        var deleted = new Seq<String>();
+
         for (String path : paths) {
             try {
                 if (loadedMusic.containsKey(path)) {
@@ -91,11 +93,14 @@ public class MusicFeature implements Feature {
                 } else {
                     Log.warn("Music file not found: @", path);
                     Vars.ui.showInfoFade("File not exists: " + path);
+                    deleted.add(path);
                 }
             } catch (Exception e) {
                 Log.err("Failed to load music: " + path, e);
             }
         }
+
+        paths.removeAll(deleted);
     }
 
     public void applyDisabledFilter() {

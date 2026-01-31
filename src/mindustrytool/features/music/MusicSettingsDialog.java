@@ -16,8 +16,6 @@ import mindustry.ui.dialogs.BaseDialog;
 public class MusicSettingsDialog extends BaseDialog {
     private final MusicFeature feature;
 
-    private final Fi musicDir = Vars.dataDirectory.child("mindustry-tool-musics");
-
     public MusicSettingsDialog(MusicFeature feature) {
         super(Core.bundle.get("feature.music.name", "Music Settings"));
         this.feature = feature;
@@ -62,9 +60,12 @@ public class MusicSettingsDialog extends BaseDialog {
             t.button(Icon.add, () -> {
                 Vars.platform.showMultiFileChooser(file -> {
                     if (file != null) {
+                        Fi musicDir = Vars.dataDirectory.child("mindustry-tool-musics");
                         musicDir.mkdirs();
                         var copy = musicDir.child(file.name());
-                        file.copyTo(musicDir.child(file.name()));
+
+                        file.copyTo(copy);
+
                         customPaths.add(copy.absolutePath());
                         pathSaver.accept(customPaths);
                         feature.loadCustomMusic();
