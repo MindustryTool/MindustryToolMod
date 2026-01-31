@@ -52,6 +52,8 @@ import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.godmode.TapListener;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
+import mindustrytool.features.music.MusicFeature;
+import mindustrytool.events.MusicRegisterEvent;
 import mindustrytool.features.display.wavepreview.WavePreviewFeature;
 import mindustrytool.features.chat.translation.ChatTranslationFeature;
 import mindustrytool.features.chat.pretty.PrettyChatFeature;
@@ -113,6 +115,7 @@ public class Main extends Mod {
                             new SmartDrillFeature(),
                             new SmartConveyorFeature(),
                             new BackgroundFeature(),
+                            new MusicFeature(),
                             new ProgressDisplay());
 
                     boolean hasCrashed = checkForCrashes();
@@ -121,6 +124,9 @@ public class Main extends Mod {
                         FeatureManager.getInstance().disableAll();
                     }
                     initFeatures();
+                    
+                    Events.fire(new MusicRegisterEvent());
+                    
                     checkForUpdate();
                     addCustomButtons();
                 } catch (Exception err) {

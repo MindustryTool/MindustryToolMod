@@ -6,6 +6,7 @@ import arc.ApplicationListener;
 import arc.Core;
 import arc.Events;
 import arc.scene.ui.Dialog;
+import arc.util.Log;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
@@ -47,7 +48,11 @@ public class ChatFeature implements Feature {
         Core.app.addListener(new ApplicationListener() {
             @Override
             public void exit() {
-                ChatService.getInstance().disconnectStream();
+                try {
+                    ChatService.getInstance().disconnectStream();
+                } catch (Throwable e) {
+                    Log.err(e);
+                }
             }
         });
     }
