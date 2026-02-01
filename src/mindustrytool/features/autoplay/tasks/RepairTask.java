@@ -2,17 +2,18 @@ package mindustrytool.features.autoplay.tasks;
 
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
-import mindustry.ai.types.RepairAI;
 import mindustry.entities.Units;
 import mindustry.entities.units.AIController;
+import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.gen.Unit;
+import mindustry.world.blocks.ConstructBlock.ConstructBuild;
 
 public class RepairTask implements AutoplayTask {
     private boolean enabled = true;
     private String status = "";
-    private final RepairAI ai = new RepairAI();
+    private final CustomRepairAI ai = new CustomRepairAI();
 
     @Override
     public String getName() {
@@ -48,22 +49,33 @@ public class RepairTask implements AutoplayTask {
             return false;
         }
 
-        // Check for damaged buildings within a reasonable range (e.g. 500 blocks
-        // radius)
-        var tile = Units.findDamagedTile(unit.team, unit.x, unit.y);
+        Building tile = Units.findDamagedTile(unit.team, unit.x, unit.y);
+        if (tile instanceof ConstructBuild)
+            tile = null;
 
         if (tile == null) {
             status = Core.bundle.get("autoplay.status.no-damaged-buildings");
             return false;
         }
 
+        ai.setTarget(tile);
         status = Core.bundle.get("autoplay.status.active");
         return true;
-
     }
 
     @Override
     public AIController getAI() {
         return ai;
+    }
+
+    public static class CustomRepairAI extends BaseAutoplayAI {
+        @Override
+        public void updateMovement() {
+
+            float range = unit.type.range * 0.65f;
+            moveTo(target, range);
+            unit.lookAt(target);
+            unit.controlWeapons(unit.within(target, unit.type.range));
+        }
     }
 }

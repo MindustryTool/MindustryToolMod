@@ -105,6 +105,7 @@ public class FeatureSettingDialog extends BaseDialog {
         });
 
         shown(this::rebuild);
+        resized(this::rebuild);
     }
 
     private void rebuild() {

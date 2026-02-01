@@ -100,7 +100,11 @@ public class MiningTask implements AutoplayTask {
 
         Item best = null;
         int minAmount = Integer.MAX_VALUE;
-        int mineTier = Vars.player.unit().type.mineTier;
+        var playerUnit = Vars.player.unit();
+        if (playerUnit == null)
+            return false;
+
+        int mineTier = playerUnit.type.mineTier;
         Tile bestTile = null;
 
         for (Item item : selectedItems) {
@@ -198,7 +202,7 @@ public class MiningTask implements AutoplayTask {
         return Optional.of(table);
     }
 
-    public class MinerAI extends AIController {
+    public class MinerAI extends BaseAutoplayAI {
         public boolean mining = true;
         public Item targetItem;
         public Tile ore;

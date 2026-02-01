@@ -744,8 +744,8 @@ public class ChatOverlay extends Table {
         userListTable.top().left();
 
         Arrays.sort(users, (u1, u2) -> {
-            int l1 = u1.getHighestRole().map(SimpleRole::getLevel).orElse(0);
-            int l2 = u2.getHighestRole().map(SimpleRole::getLevel).orElse(0);
+            int l1 = u1.getHighestRole().map(SimpleRole::getLevel).orElse(-1);
+            int l2 = u2.getHighestRole().map(SimpleRole::getLevel).orElse(-1);
 
             return Integer.compare(l2, l1);
         });
