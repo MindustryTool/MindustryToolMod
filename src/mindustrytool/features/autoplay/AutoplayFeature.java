@@ -11,13 +11,11 @@ import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustry.graphics.Layer;
+import mindustry.graphics.Pal;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.features.autoplay.tasks.AssistTask;
-import mindustrytool.features.autoplay.tasks.AutoplayTask;
-import mindustrytool.features.autoplay.tasks.MiningTask;
-import mindustrytool.features.autoplay.tasks.RepairTask;
+import mindustrytool.features.autoplay.tasks.*;
 
 import java.util.Optional;
 
@@ -26,6 +24,7 @@ public class AutoplayFeature implements Feature {
     private AutoplaySettingDialog dialog;
     private AutoplayTask currentTask;
     private boolean isEnabled = false;
+    private boolean isFollowUnit = Core.settings.getBool("mindustrytool.autoplay.followUnit", true);
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -40,8 +39,12 @@ public class AutoplayFeature implements Feature {
 
     @Override
     public void init() {
+        tasks.add(new SelfHealTask());
+        tasks.add(new FleeTask());
+        tasks.add(new AttackTask());
         tasks.add(new RepairTask());
-        tasks.add(new AssistTask());
+        tasks.add(new FollowAssistTask());
+        tasks.add(new RebuildTask());
         tasks.add(new MiningTask());
 
         // Load task order
@@ -72,7 +75,7 @@ public class AutoplayFeature implements Feature {
         Events.run(Trigger.draw, this::draw);
 
         Timer.schedule(() -> {
-            updateTask();
+            Core.app.post(this::updateTask);
         }, 0, 0.2f);
     }
 
@@ -86,7 +89,7 @@ public class AutoplayFeature implements Feature {
         isEnabled = false;
         var unit = Vars.player.unit();
 
-        if (unit != null && !unit.dead && currentTask != null) {
+        if (unit != null && !unit.dead) {
             unit.controller(Vars.player);
         }
 
@@ -117,13 +120,18 @@ public class AutoplayFeature implements Feature {
 
         var icon = currentTask.getIcon();
 
-        if (icon == null) {
-            return;
+        if (icon != null) {
+            Draw.z(Layer.overlayUI);
+            Draw.rect(icon.getRegion(), unit.x, unit.y + unit.hitSize * 2f, 10f, 10f);
+            Draw.reset();
         }
 
-        Draw.z(Layer.overlayUI);
-        Draw.rect(icon.getRegion(), unit.x, unit.y + unit.hitSize * 2f, 10f, 10f);
-        Draw.reset();
+        var targetPos = currentTask.getTargetPos();
+        if (targetPos != null) {
+            Draw.z(Layer.overlayUI);
+            mindustry.graphics.Drawf.dashLine(Pal.accent, unit.x, unit.y, targetPos.x, targetPos.y);
+            Draw.reset();
+        }
     }
 
     private void updateTask() {
@@ -187,6 +195,10 @@ public class AutoplayFeature implements Feature {
             if (Vars.state.isGame()) {
                 currentTask.getAI().updateUnit();
             }
+
+            if (Vars.mobile && isFollowUnit) {
+                Core.camera.position.lerp(unit.x, unit.y, 0.1f);
+            }
         }
     }
 
@@ -200,6 +212,15 @@ public class AutoplayFeature implements Feature {
 
     public Seq<AutoplayTask> getTasks() {
         return tasks;
+    }
+
+    public boolean isFollowUnit() {
+        return isFollowUnit;
+    }
+
+    public void setFollowUnit(boolean followUnit) {
+        isFollowUnit = followUnit;
+        Core.settings.put("mindustrytool.autoplay.followUnit", followUnit);
     }
 
     public void saveTaskOrder() {

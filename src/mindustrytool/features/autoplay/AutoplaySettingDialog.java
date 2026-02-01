@@ -22,6 +22,16 @@ public class AutoplaySettingDialog extends BaseDialog {
         cont.pane(t -> {
             t.top();
 
+            if (mindustry.Vars.mobile) {
+                t.table(Tex.button, c -> {
+                    c.check("@autoplay.settings.follow-unit", feature.isFollowUnit(), feature::setFollowUnit).pad(10)
+                            .left();
+                    c.add().growX();
+                }).growX().pad(5).row();
+
+                t.image().color(mindustry.graphics.Pal.gray).growX().height(2).pad(5).row();
+            }
+
             for (int i = 0; i < feature.getTasks().size; i++) {
                 AutoplayTask task = feature.getTasks().get(i);
                 int index = i;

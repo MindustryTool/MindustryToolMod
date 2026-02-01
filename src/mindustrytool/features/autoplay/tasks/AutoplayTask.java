@@ -7,6 +7,7 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Unit;
+import arc.math.geom.Vec2;
 
 public interface AutoplayTask {
     default String getId() {
@@ -42,5 +43,13 @@ public interface AutoplayTask {
 
     default Optional<Table> settings() {
         return Optional.empty();
+    }
+
+    default Vec2 getTargetPos() {
+        AIController ai = getAI();
+        if (ai instanceof BaseAutoplayAI baseAi) {
+            return baseAi.targetPos;
+        }
+        return null;
     }
 }
