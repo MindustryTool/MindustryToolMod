@@ -14,6 +14,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
+import arc.util.Timer;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustry.gen.Icon;
@@ -196,8 +197,9 @@ public class ChangelogDialog extends BaseDialog {
                 t.button("@install", Icon.download, () -> {
                     try {
                         Vars.ui.mods.show();
-                        Vars.ui.mods.githubImportMod(Config.REPO_URL, true, "tag/" + finalTagName);
+                        Vars.ui.mods.githubImportMod(Config.REPO_URL, true, "tags/" + finalTagName);
                         Vars.ui.mods.toFront();
+                        Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
                         // Close dialogs to show the mod installation progress
                         this.hide();
                     } catch (Throwable e) {
