@@ -177,6 +177,7 @@ public class ChatService {
         try {
             Jval json = Jval.newObject();
             json.put("content", content);
+            json.put("type", "msch");
 
             AuthHttp.post(Config.API_v4_URL + "chats/schematic", json.toString())
                     .header("Content-Type", "application/json")

@@ -118,17 +118,7 @@ public class ChatOverlay extends Table {
         inputField = new TextField();
         inputField.setMessageText("@chat.enter-message");
         inputField.setValidator(this::isValidInput);
-        inputField.keyDown(arc.input.KeyCode.enter, () -> {
-            Core.app.post(() -> {
-                boolean isSchematic = isSchematic(inputField.getText());
-
-                if (isSchematic) {
-                    sendSchematic();
-                } else if (inputField.isValid()) {
-                    sendMessage();
-                }
-            });
-        });
+        inputField.keyDown(arc.input.KeyCode.enter, this::handleSend);
 
         inputField.keyDown(arc.input.KeyCode.escape, this::collapse);
 
@@ -173,6 +163,16 @@ public class ChatOverlay extends Table {
             buildInputTable(inputTable);
         });
         Core.app.post(() -> setup());
+    }
+
+    public void handleSend() {
+        boolean isSchematic = isSchematic(inputField.getText().trim());
+
+        if (isSchematic) {
+            sendSchematic();
+        } else if (inputField.isValid()) {
+            sendMessage();
+        }
     }
 
     public boolean isCollapsed() {
@@ -420,7 +420,7 @@ public class ChatOverlay extends Table {
 
         if (AuthService.getInstance().isLoggedIn()) {
             sendButton = new TextButton(isSending.get() ? "@sending" : "@chat.send", Styles.defaultt);
-            sendButton.clicked(this::sendMessage);
+            sendButton.clicked(this::handleSend);
             sendButton.setDisabled(() -> isSending.get());
 
             inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
