@@ -53,7 +53,6 @@ public class GodModeFeature extends Table implements Feature {
                 return;
             }
 
-            waves.row();
             waves.add(this).growX().padTop(10f);
         }
     }
