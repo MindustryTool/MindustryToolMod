@@ -45,6 +45,7 @@ public class AttackTask implements AutoplayTask {
 
         status = Core.bundle.get("autoplay.status.no-enemies");
         unit.isShooting(false);
+
         return false;
     }
 
