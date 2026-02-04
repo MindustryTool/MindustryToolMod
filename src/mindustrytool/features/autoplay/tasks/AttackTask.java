@@ -69,7 +69,7 @@ public class AttackTask implements AutoplayTask {
 
             float range = unit.type.range * 0.9f;
             moveTo(target, range);
-            unit.lookAt(target);
+            unit.aim(target);
             unit.controlWeapons(unit.within(target, unit.type.range));
             unit.isShooting(true);
         }
