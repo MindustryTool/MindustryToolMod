@@ -1,6 +1,7 @@
 package mindustrytool.features.godmode;
 
 import arc.scene.ui.layout.Table;
+import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
@@ -12,16 +13,21 @@ public class JSGodModeProvider implements GodModeProvider {
     }
 
     @Override
+    public boolean isAvailable() {
+        return Vars.net.active() && Vars.net.client() && Vars.player.admin;
+    }
+
+    @Override
     public void build(Table table) {
         table.defaults().size(40, 40).pad(2);
 
-        table.button(Icon.players,Styles.cleari, () -> {
+        table.button(Icon.players, Styles.cleari, () -> {
             GodModeDialogs.showTeamDialog((player, team) -> {
                 js("Groups.player.find(p => p.name == \"" + player.name + "\").team(Team.get(" + team.id + "))");
             });
         }).tooltip("Change Team");
 
-        table.button(Icon.box, Styles.cleari,() -> {
+        table.button(Icon.box, Styles.cleari, () -> {
             GodModeDialogs.showItemDialog((item, amount, team) -> {
                 js("var team = Team.get(" + team.id
                         + "); if(team.core() != null) team.core().items.add(Vars.content.items.find(i => i.name == \""
@@ -29,7 +35,7 @@ public class JSGodModeProvider implements GodModeProvider {
             });
         }).tooltip("Items");
 
-        table.button(Icon.units, Styles.cleari,() -> {
+        table.button(Icon.units, Styles.cleari, () -> {
             GodModeDialogs.showUnitDialog(
                     (unit, amount, team, x, y) -> {
                         js("for(var i=0;i<" + amount + ";i++){ Vars.content.units.find(u => u.name == \"" + unit.name

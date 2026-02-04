@@ -12,6 +12,11 @@ import mindustry.world.Tile;
 public class InternalGodModeProvider implements GodModeProvider {
 
     @Override
+    public boolean isAvailable() {
+        return !Vars.net.active() || Vars.net.server();
+    }
+
+    @Override
     public void build(Table table) {
         table.defaults().size(40, 40).pad(2);
 
@@ -22,7 +27,7 @@ public class InternalGodModeProvider implements GodModeProvider {
             });
         }).tooltip("Change Team");
 
-        table.button(Icon.box, Styles.cleari,() -> {
+        table.button(Icon.box, Styles.cleari, () -> {
             GodModeDialogs.showItemDialog((item, amount, team) -> {
                 if (team != null && team.core() != null) {
                     team.core().items.add(item, amount);
@@ -30,7 +35,7 @@ public class InternalGodModeProvider implements GodModeProvider {
             });
         }).tooltip("Items");
 
-        table.button(Icon.units, Styles.cleari,() -> {
+        table.button(Icon.units, Styles.cleari, () -> {
             GodModeDialogs.showUnitDialog(
                     (unit, amount, team, x, y) -> {
                         for (int i = 0; i < amount; i++) {
