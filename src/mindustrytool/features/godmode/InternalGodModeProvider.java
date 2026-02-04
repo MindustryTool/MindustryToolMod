@@ -6,6 +6,7 @@ import mindustry.Vars;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
+import mindustry.ui.Styles;
 import mindustry.world.Tile;
 
 public class InternalGodModeProvider implements GodModeProvider {
@@ -14,14 +15,14 @@ public class InternalGodModeProvider implements GodModeProvider {
     public void build(Table table) {
         table.defaults().size(40, 40).pad(2);
 
-        table.button(Icon.players, () -> {
+        table.button(Icon.players, Styles.cleari, () -> {
             GodModeDialogs.showTeamDialog((player, team) -> {
                 if (player != null)
                     player.team(team);
             });
         }).tooltip("Change Team");
 
-        table.button(Icon.box, () -> {
+        table.button(Icon.box, Styles.cleari,() -> {
             GodModeDialogs.showItemDialog((item, amount, team) -> {
                 if (team != null && team.core() != null) {
                     team.core().items.add(item, amount);
@@ -29,7 +30,7 @@ public class InternalGodModeProvider implements GodModeProvider {
             });
         }).tooltip("Items");
 
-        table.button(Icon.units, () -> {
+        table.button(Icon.units, Styles.cleari,() -> {
             GodModeDialogs.showUnitDialog(
                     (unit, amount, team, x, y) -> {
                         for (int i = 0; i < amount; i++) {
@@ -42,7 +43,7 @@ public class InternalGodModeProvider implements GodModeProvider {
                     });
         }).tooltip("Units");
 
-        table.button(Icon.effect, () -> {
+        table.button(Icon.effect, Styles.cleari, () -> {
             GodModeDialogs.showEffectDialog(
                     (effect, duration) -> {
                         if (Vars.player != null && Vars.player.unit() != null) {
@@ -56,7 +57,7 @@ public class InternalGodModeProvider implements GodModeProvider {
                     });
         }).tooltip("Effects");
 
-        table.button(Icon.hammer, () -> {
+        table.button(Icon.hammer, Styles.cleari, () -> {
             GodModeDialogs.showCoreDialog((coreBlock, team, x, y) -> {
                 Tile tile = Vars.world.tileWorld(x, y);
                 if (tile != null) {
