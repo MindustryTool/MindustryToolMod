@@ -105,7 +105,7 @@ public class FollowAssistTask implements AutoplayTask {
                 t.button(p.name, Styles.togglet, () -> {
                     targetPlayer = p;
                     buildSettings(table);
-                }).checked(targetPlayer == p).growX().left().row();
+                }).checked(targetPlayer == p).padTop(5).growX().left().row();
             }
         }).growX().padTop(5).row();
     }
@@ -143,7 +143,7 @@ public class FollowAssistTask implements AutoplayTask {
                     target = targetMount.target;
                     float range = unit.type.range * 0.8f;
                     moveTo(target, range);
-                    unit.lookAt(target);
+                    unit.aim(target);
                     unit.controlWeapons(unit.within(target, unit.type.range));
                     return;
                 }

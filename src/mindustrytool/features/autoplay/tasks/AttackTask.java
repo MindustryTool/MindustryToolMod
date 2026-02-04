@@ -44,6 +44,8 @@ public class AttackTask implements AutoplayTask {
         }
 
         status = Core.bundle.get("autoplay.status.no-enemies");
+        unit.isShooting(false);
+
         return false;
     }
 
@@ -65,10 +67,11 @@ public class AttackTask implements AutoplayTask {
                 return;
             }
 
-            float range = unit.type.range * 0.8f;
+            float range = unit.type.range * 0.9f;
             moveTo(target, range);
-            unit.lookAt(target);
+            unit.aim(target);
             unit.controlWeapons(unit.within(target, unit.type.range));
+            unit.isShooting(true);
         }
     }
 }

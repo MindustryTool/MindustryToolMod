@@ -76,10 +76,14 @@ public class MusicSettingsDialog extends BaseDialog {
                             }
                         }
                     } else {
-                        var copy = Main.musicsDir.child(file.name());
-                        file.copyTo(copy);
-                        customPaths.add(copy.name());
-                        pathSaver.accept(customPaths);
+                        if (file.name().endsWith(".ogg") || file.name().endsWith(".mp3")) {
+                            var copy = Main.musicsDir.child(file.name());
+                            file.copyTo(copy);
+                            customPaths.add(copy.name());
+                            pathSaver.accept(customPaths);
+                        } else {
+                            Vars.ui.showErrorMessage("Invalid file type, only .ogg and .mp3 are supported");
+                        }
                     }
 
                     feature.loadCustomMusic();

@@ -74,7 +74,7 @@ public class RepairTask implements AutoplayTask {
 
             float range = unit.type.range * 0.65f;
             moveTo(target, range);
-            unit.lookAt(target);
+            unit.aim(target);
             unit.controlWeapons(unit.within(target, unit.type.range));
         }
     }

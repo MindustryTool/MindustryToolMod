@@ -4,6 +4,7 @@ import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.Vars;
 import mindustry.entities.units.AIController;
+import mindustry.entities.units.BuildPlan;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
@@ -73,8 +74,7 @@ public class RebuildTask implements AutoplayTask {
                         && Vars.world.tile(block.x, block.y).block() == block.block) {
                     blocks.removeFirst();
                 } else if (Build.validPlace(block.block, unit.team(), block.x, block.y, block.rotation)) {
-                    unit.addBuild(new mindustry.entities.units.BuildPlan(block.x, block.y, block.rotation, block.block,
-                            block.config));
+                    unit.addBuild(new BuildPlan(block.x, block.y, block.rotation, block.block, block.config));
                     blocks.addLast(blocks.removeFirst());
                 } else {
                     blocks.addLast(blocks.removeFirst());
