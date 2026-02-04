@@ -58,6 +58,10 @@ public class FeatureManager {
                 feature.getMetadata().enabledByDefault());
     }
 
+    public void toogle(Feature feature) {
+        setEnabled(feature, !isEnabled(feature));
+    }
+
     public void setEnabled(Feature feature, boolean enabled) {
         boolean current = isEnabled(feature);
         if (current == enabled) {
