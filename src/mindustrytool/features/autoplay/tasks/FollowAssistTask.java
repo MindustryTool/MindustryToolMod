@@ -143,6 +143,7 @@ public class FollowAssistTask implements AutoplayTask {
                     target = targetMount.target;
                     float range = unit.type.range * 0.8f;
                     moveTo(target, range);
+                    unit.lookAt(target);
                     unit.aim(target);
                     unit.controlWeapons(unit.within(target, unit.type.range));
                     return;
