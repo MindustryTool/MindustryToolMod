@@ -10,11 +10,13 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
+import mindustry.game.EventType;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustry.graphics.Pal;
+import mindustry.type.UnitType;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Utils;
@@ -22,6 +24,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static mindustry.Vars.*;
 
@@ -30,6 +33,8 @@ public class HealthBarVisualizer implements Feature {
     private static TextureRegion barRegion;
     private BaseDialog dialog;
     private boolean enabled = false;
+
+    private ConcurrentHashMap<UnitType, Float> maxHpMap = new ConcurrentHashMap<>();
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -47,6 +52,7 @@ public class HealthBarVisualizer implements Feature {
     public void init() {
         HealthBarConfig.load();
         Events.run(Trigger.draw, this::draw);
+        Events.run(EventType.WorldLoadEndEvent.class, maxHpMap::clear);
     }
 
     @Override
@@ -131,10 +137,16 @@ public class HealthBarVisualizer implements Feature {
         Draw.rect(barRegion, x, y, w + 2f, h + 2f);
 
         float hpPercent = unit.health / unit.maxHealth;
+        float maxHealth = unit.maxHealth;
 
-        Draw.color(unit.team.color, 0.75f * HealthBarConfig.opacity);
+        if (unit.health > maxHealth) {
+            maxHealth = maxHpMap.computeIfAbsent(unit.type, t -> t.health);
+            hpPercent = unit.health / maxHealth;
+        }
 
         float left = x - w / 2f;
+
+        Draw.color(unit.team.color, 0.75f * HealthBarConfig.opacity);
 
         if (hpPercent > 0) {
             float filledW = w * hpPercent;
@@ -143,11 +155,20 @@ public class HealthBarVisualizer implements Feature {
         }
 
         if (unit.shield > 0) {
-            float shieldPercent = Math.min(unit.shield / unit.maxHealth, 1f);
+            float shieldValue = unit.shield / maxHealth;
+            Draw.color(Pal.shield, 0.5f * HealthBarConfig.opacity);
+
+            if (shieldValue > 1) {
+                float shieldW = w * (shieldValue % 1);
+                float shieldCenterX = left + shieldW / 2f;
+                Draw.color(Pal.shield.cpy().add(0f, 0f, 0.2f * shieldValue), 0.75f * HealthBarConfig.opacity);
+                Draw.rect(barRegion, shieldCenterX, y, shieldW, h);
+            }
+
+            float shieldPercent = Math.min(shieldValue, 1f);
             float shieldW = w * shieldPercent;
             float shieldCenterX = left + shieldW / 2f;
-
-            Draw.color(Pal.shield, 0.5f * HealthBarConfig.opacity);
+            Draw.color(unit.team.color, 0.75f * HealthBarConfig.opacity);
             Draw.rect(barRegion, shieldCenterX, y, shieldW, h);
         }
 
