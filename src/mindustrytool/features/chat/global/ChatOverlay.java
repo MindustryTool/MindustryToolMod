@@ -100,6 +100,7 @@ public class ChatOverlay extends Table {
 
     private final SchematicInfoDialog schematicInfoDialog = new SchematicInfoDialog();
     private final MapInfoDialog mapInfoDialog = new MapInfoDialog();
+    private AttachContentDialog attachContentDialog;
 
     public ChatOverlay() {
         name = "mdt-chat-overlay";
@@ -426,7 +427,10 @@ public class ChatOverlay extends Table {
             inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
 
             inputTable.button(Utils.icons("attach-file.png"), () -> {
-                Vars.ui.showInfoFade("feature-not-implemented");
+                if (attachContentDialog == null) {
+                    attachContentDialog = new AttachContentDialog(this::handleAttachContent);
+                }
+                attachContentDialog.show();
             }).pad(8);
 
             inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
@@ -609,6 +613,14 @@ public class ChatOverlay extends Table {
                         c.add(content).wrap().color(Color.lightGray).left().growX();
                         c.row();
                         renderPlayerConnectRoom(c, content);
+                        return;
+                    }
+
+                    if (NetworkImage.isValidImageLink(content)) {
+                        c.add(content).wrap().color(Color.lightGray).left().growX();
+                        c.row();
+                        c.add(new NetworkImage(content)).maxHeight(800).maxWidth(800);
+                        c.table().growX();
                         return;
                     }
 
@@ -800,7 +812,24 @@ public class ChatOverlay extends Table {
         send(() -> ChatService.getInstance().sendSchematic(inputField.getText()).thenAccept(this::addMessages));
     }
 
+    private void handleAttachContent(String content) {
+        if (content == null || content.isEmpty())
+            return;
+
+        boolean isSchematic = isSchematic(content.trim());
+
+        if (isSchematic) {
+            send(() -> ChatService.getInstance().sendSchematic(content).thenAccept(this::addMessages), false);
+        } else {
+            send(() -> ChatService.getInstance().sendMessage(content).thenAccept(this::addMessages), false);
+        }
+    }
+
     private <T> void send(Prov<CompletableFuture<T>> prov) {
+        send(prov, true);
+    }
+
+    private <T> void send(Prov<CompletableFuture<T>> prov, boolean clearInput) {
         if (!AuthService.getInstance().isLoggedIn()) {
             Vars.ui.showInfoFade("@chat.not-logged-in");
             return;
@@ -821,11 +850,15 @@ public class ChatOverlay extends Table {
             prov.get().thenRun(() -> {
                 Core.app.post(() -> {
                     isSending.set(false);
-                    inputField.setText("");
+                    if (clearInput) {
+                        inputField.setText("");
+                    }
 
                     if (sendButton != null) {
                         sendButton.setText("@chat.send");
-                        inputField.fireClick();
+                        if (clearInput) {
+                            inputField.fireClick();
+                        }
                     }
                 });
             }).exceptionally((err) -> {

@@ -40,6 +40,10 @@ public class NetworkImage extends Image {
         setScaling(Scaling.fit);
     }
 
+    public static boolean isValidImageLink(String url) {
+        return url.matches("https?://.*\\.(png|jpg|jpeg)");
+    }
+
     @Override
     public void draw() {
         super.draw();
