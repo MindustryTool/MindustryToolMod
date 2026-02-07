@@ -22,7 +22,6 @@ import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
-import arc.util.Threads;
 import arc.util.Timer;
 import arc.util.pooling.Pools;
 import arc.util.Http.HttpStatusException;
@@ -462,52 +461,33 @@ public class Main extends Mod {
             container.pack();
         }).width(Math.min(600, Core.graphics.getWidth() / Scl.scl() / 1.2f));
 
-        // Avoid bot dectection and spam on github
-        // #crash-report channel;
-        // Please dont nuke me
-        String w = "https://disc";
-        String e = "ord.com/api/webho";
-        String b = "oks/14646860185309";
-        String h = "02036/zCqkNjanWPJhnhhJXLvdJ0QjTL8aLTGQKuj";
-        String ook = "wUAQTHQ4j2yF7NZBtYVa-QSxftUAMuewX";
-        long time = System.currentTimeMillis();
-
         dialog.hidden(() -> {
             if (Core.settings.getBool(sendCrashReportKey, true)) {
-                int pages = (log.length() / 1800) + 1;
+                try {
+                    HashMap<String, Object> json = new HashMap<>();
 
-                Threads.daemon("Send crash report", () -> {
-                    for (int i = 0; i < pages; i++) {
-                        try {
-                            boolean isLast = i == pages - 1;
-                            String part = log.substring(i * 1800, Math.min((i + 1) * 1800, log.length()));
+                    json.put("content", log);
 
-                            HashMap<String, Object> json = new HashMap<>();
+                    CompletableFuture<Void> future = new CompletableFuture<>();
 
-                            json.put("content", "# " + time + "\n\n`" + part + (isLast ? "\n\n\n\n\n\n" : "") + "`");
+                    Http.post(Config.API_v4_URL + "/crashes", Utils.toJson(json))
+                            .header("Content-Type", "application/json")
+                            .error(err -> {
+                                if (err instanceof HttpStatusException httpStatusException) {
+                                    Log.err(httpStatusException.response.getResultAsString());
+                                }
 
-                            CompletableFuture<Void> future = new CompletableFuture<>();
+                                future.completeExceptionally(err);
+                            })
+                            .submit(res -> {
+                                Log.info(res.getResultAsString());
+                                future.complete(null);
+                            });
 
-                            Http.post(w + e + b + h + ook, Utils.toJson(json))
-                                    .header("Content-Type", "application/json")
-                                    .error(err -> {
-                                        if (err instanceof HttpStatusException httpStatusException) {
-                                            Log.err(httpStatusException.response.getResultAsString());
-                                        }
-
-                                        future.completeExceptionally(err);
-                                    })
-                                    .submit(res -> {
-                                        Log.info(res.getResultAsString());
-                                        future.complete(null);
-                                    });
-
-                            future.get(10, TimeUnit.SECONDS);
-                        } catch (Exception err) {
-                            Log.err(err);
-                        }
-                    }
-                });
+                    future.get(10, TimeUnit.SECONDS);
+                } catch (Exception err) {
+                    Log.err(err);
+                }
             }
         });
 
