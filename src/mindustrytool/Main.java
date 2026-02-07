@@ -1,8 +1,11 @@
 package mindustrytool;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -181,7 +184,7 @@ public class Main extends Mod {
                 String latestVersionStr = json.getString("version");
                 int[] latestVersion = extractVersionNumber(latestVersionStr);
 
-                if (isVersionGreater(latestVersion, currentVersion)) {
+                if (!isVersionGreater(latestVersion, currentVersion)) {
                     Log.info("Mod require update, current version: @, latest version: @",
                             versionToString(currentVersion),
                             versionToString(latestVersion));
@@ -220,6 +223,7 @@ public class Main extends Mod {
 
                         String tagName = release.getString("tag_name", "");
                         String body = release.getString("body", "No description provided.");
+                        String publishedAt = release.getString("published_at", "");
                         int downloadCount = 0;
                         if (release.has("assets")) {
                             Jval assets = release.get("assets");
@@ -233,6 +237,18 @@ public class Main extends Mod {
                         }
 
                         changelog.append("[accent]").append(tagName).append("[white]\n");
+
+                        try {
+                            if (!publishedAt.isEmpty()) {
+                                Instant instant = Instant.parse(publishedAt);
+                                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                                        .withZone(ZoneId.systemDefault());
+                                changelog.append("[lightgray]").append(formatter.format(instant)).append("[] - ");
+                            }
+                        } catch (Exception e) {
+                            Log.err(e);
+                        }
+
                         changelog.append("[gold]Download count: ").append(downloadCount).append("[white]\n");
                         changelog.append(Utils.renderMarkdown(body)).append("\n\n");
                         count++;
