@@ -382,7 +382,7 @@ public class PlayerConnect {
 
         Vars.ui.showCustomConfirm(//
                 "@playerconnect.join-request",
-                "Player [accent]\"" + req.player.name + "\"[] wants to join.", //
+                "Player [accent]\"" + req.player.name + "\"[white] wants to join.", //
                 "@accept", //
                 "@reject", //
                 () -> {

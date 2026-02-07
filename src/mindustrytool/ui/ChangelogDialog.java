@@ -180,14 +180,14 @@ public class ChangelogDialog extends BaseDialog {
 
                 t.table(header -> {
                     header.left();
-                    header.add("[accent]" + finalName + "[]").style(Styles.defaultLabel).growX().left();
-                    header.add("[lightgray]" + finalTagName + "[]").padLeft(10f);
+                    header.add("[accent]" + finalName + "[white]").style(Styles.defaultLabel).growX().left();
+                    header.add("[lightgray]" + finalTagName + "[white]").padLeft(10f);
                 }).growX().row();
 
                 t.table(stats -> {
                     stats.left();
                     stats.image(Icon.download).size(16f).color(Color.gold);
-                    stats.add("[gold] " + finalDownloadCount + "[]").padLeft(5f);
+                    stats.add("[gold] " + finalDownloadCount + "[white]").padLeft(5f);
                 }).padTop(5f).growX().row();
 
                 t.image().color(Color.gray).height(2f).growX().padTop(5f).padBottom(5f).row();

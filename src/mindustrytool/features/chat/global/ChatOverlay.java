@@ -600,7 +600,7 @@ public class ChatOverlay extends Table {
                                 })
                                 .orElse(Color.white);
 
-                        label.setText("[#" + color.toString() + "]" + data.getName() + "[]"
+                        label.setText("[#" + color.toString() + "]" + data.getName() + "[white]"
                                 + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
                     });
                 });
@@ -775,7 +775,7 @@ public class ChatOverlay extends Table {
             // Info Table
             card.table(info -> {
                 info.left();
-                info.add(user.getName() + "[]").minWidth(0).ellipsis(true).style(Styles.defaultLabel)
+                info.add(user.getName() + "[white]").minWidth(0).ellipsis(true).style(Styles.defaultLabel)
                         .color(Color.white)
                         .left().row();
 
