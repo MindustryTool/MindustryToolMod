@@ -184,7 +184,7 @@ public class Main extends Mod {
                 String latestVersionStr = json.getString("version");
                 int[] latestVersion = extractVersionNumber(latestVersionStr);
 
-                if (!isVersionGreater(latestVersion, currentVersion)) {
+                if (isVersionGreater(latestVersion, currentVersion)) {
                     Log.info("Mod require update, current version: @, latest version: @",
                             versionToString(currentVersion),
                             versionToString(latestVersion));
