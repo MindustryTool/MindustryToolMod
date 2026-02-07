@@ -23,7 +23,6 @@ import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
 import arc.util.Timer;
-import arc.util.pooling.Pools;
 import arc.util.Http.HttpStatusException;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
@@ -32,11 +31,9 @@ import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.net.Packet;
 import mindustry.mod.Mod;
-import mindustry.ui.Fonts;
 import mindustry.ui.dialogs.BaseDialog;
 import arc.scene.ui.ScrollPane;
 import arc.graphics.Color;
-import arc.graphics.g2d.GlyphLayout;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
@@ -103,7 +100,6 @@ public class Main extends Mod {
             Events.on(ClientLoadEvent.class, e -> {
                 try {
                     featureSettingDialog = new FeatureSettingDialog();
-                    saveGlyphLayoutMap();
 
                     FeatureManager.getInstance().register(//
                             new MapBrowserFeature(), //
@@ -492,28 +488,5 @@ public class Main extends Mod {
         });
 
         Core.app.post(() -> dialog.show());
-    }
-
-    private static void saveGlyphLayoutMap() {
-        try {
-            GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
-
-            HashMap<Character, Float> map = new HashMap<>();
-
-            for (int i = 0; i < 128; i++) {
-                char c = (char) i;
-                layout.setText(Fonts.def, String.valueOf(c));
-                var textWidth = layout.width;
-                map.put(c, textWidth);
-            }
-
-            Vars.dataDirectory.child("glyph.json").writeString(Utils.toJson(map));
-
-            Pools.free(layout);
-
-        } catch (Exception e) {
-            Log.err(e);
-        }
-
     }
 }
