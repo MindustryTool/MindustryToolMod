@@ -55,7 +55,8 @@ public class PlayerConnectRenderer {
 
                     float lockWidth = 16f;
 
-                    var label = info.add((isSecured ? "[accent]" + Iconc.lock + "[] " : "") + room.getData().getName())
+                    var label = info
+                            .add((isSecured ? "[accent]" + Iconc.lock + "[white] " : "") + room.getData().getName())
                             .style(Styles.outlineLabel)
                             .fontScale(1.25f)
                             .left();

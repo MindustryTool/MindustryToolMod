@@ -1,5 +1,6 @@
 package mindustrytool.features.godmode;
 
+import arc.Events;
 import arc.scene.ui.ButtonGroup;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.TextButton;
@@ -7,6 +8,7 @@ import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import mindustry.Vars;
+import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
@@ -18,7 +20,10 @@ import java.util.Optional;
 
 public class GodModeFeature extends Table implements Feature {
 
-    private GodModeProvider provider = new InternalGodModeProvider();
+    private GodModeProvider internal = new InternalGodModeProvider();
+    private JSGodModeProvider js = new JSGodModeProvider();
+
+    private GodModeProvider provider = null;
     private boolean useJS = false;
 
     @Override
@@ -34,6 +39,16 @@ public class GodModeFeature extends Table implements Feature {
     @Override
     public void init() {
         rebuild();
+
+        Events.run(WorldLoadEndEvent.class, () -> {
+            if (internal.isAvailable()) {
+                provider = internal;
+            } else if (js.isAvailable()) {
+                provider = js;
+            }
+
+            rebuild();
+        });
     }
 
     @Override
@@ -75,15 +90,15 @@ public class GodModeFeature extends Table implements Feature {
 
             t.button("Internal", Styles.togglet, () -> {
                 useJS = false;
-                provider = new InternalGodModeProvider();
+                provider = internal;
                 rebuild();
-            }).group(group).checked(!useJS).disabled(b -> Vars.net.active() && !Vars.net.server()).size(120, 50);
+            }).group(group).checked(!useJS).disabled(b -> !internal.isAvailable()).size(120, 50);
 
             t.button("JS", Styles.togglet, () -> {
                 useJS = true;
-                provider = new JSGodModeProvider();
+                provider = js;
                 rebuild();
-            }).group(group).checked(useJS).size(120, 50);
+            }).group(group).checked(useJS).disabled(b -> !js.isAvailable()).size(120, 50);
 
         }).row();
 
@@ -96,6 +111,8 @@ public class GodModeFeature extends Table implements Feature {
 
         if (provider != null) {
             provider.build(this);
+        } else {
+            add("Unavailable");
         }
     }
 }

@@ -174,6 +174,7 @@ public class FeatureSettingDialog extends BaseDialog {
             paneTable.row();
             paneTable.button("@reeanable", () -> {
                 FeatureManager.getInstance().reEnable();
+                rebuildPane();
             }).width(250).top().left().pad(10).tooltip("Used after a crash");
 
             paneTable.table().growX().row();

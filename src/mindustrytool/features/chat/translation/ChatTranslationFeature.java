@@ -95,7 +95,7 @@ public class ChatTranslationFeature implements Feature {
                 .thenApply(translated -> {
                     if (ChatTranslationConfig.isShowOriginal()) {
                         String locale = LanguageDialog.getDisplayName(Core.bundle.getLocale());
-                        String formated = Strings.format("[]@[]\n\n[gold]@[]: @\n\n", message, locale, translated);
+                        String formated = Strings.format("[white]@[]\n\n[gold]@[]: @\n\n", message, locale, translated);
 
                         return formated;
                     }

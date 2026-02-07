@@ -1,8 +1,11 @@
 package mindustrytool;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -19,9 +22,7 @@ import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
-import arc.util.Threads;
 import arc.util.Timer;
-import arc.util.pooling.Pools;
 import arc.util.Http.HttpStatusException;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
@@ -30,11 +31,9 @@ import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.net.Packet;
 import mindustry.mod.Mod;
-import mindustry.ui.Fonts;
 import mindustry.ui.dialogs.BaseDialog;
 import arc.scene.ui.ScrollPane;
 import arc.graphics.Color;
-import arc.graphics.g2d.GlyphLayout;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
@@ -101,7 +100,6 @@ public class Main extends Mod {
             Events.on(ClientLoadEvent.class, e -> {
                 try {
                     featureSettingDialog = new FeatureSettingDialog();
-                    saveGlyphLayoutMap();
 
                     FeatureManager.getInstance().register(//
                             new MapBrowserFeature(), //
@@ -220,6 +218,7 @@ public class Main extends Mod {
 
                         String tagName = release.getString("tag_name", "");
                         String body = release.getString("body", "No description provided.");
+                        String publishedAt = release.getString("published_at", "");
                         int downloadCount = 0;
                         if (release.has("assets")) {
                             Jval assets = release.get("assets");
@@ -232,8 +231,20 @@ public class Main extends Mod {
                             }
                         }
 
-                        changelog.append("[accent]").append(tagName).append("[]\n");
-                        changelog.append("[gold]Download count: ").append(downloadCount).append("[]\n");
+                        changelog.append("[accent]").append(tagName).append("[white]\n");
+
+                        try {
+                            if (!publishedAt.isEmpty()) {
+                                Instant instant = Instant.parse(publishedAt);
+                                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                                        .withZone(ZoneId.systemDefault());
+                                changelog.append("[lightgray]").append(formatter.format(instant)).append("[] - ");
+                            }
+                        } catch (Exception e) {
+                            Log.err(e);
+                        }
+
+                        changelog.append("[gold]Download count: ").append(downloadCount).append("[white]\n");
                         changelog.append(Utils.renderMarkdown(body)).append("\n\n");
                         count++;
                     }
@@ -446,78 +457,36 @@ public class Main extends Mod {
             container.pack();
         }).width(Math.min(600, Core.graphics.getWidth() / Scl.scl() / 1.2f));
 
-        // Avoid bot dectection and spam on github
-        // #crash-report channel;
-        // Please dont nuke me
-        String w = "https://disc";
-        String e = "ord.com/api/webho";
-        String b = "oks/14646860185309";
-        String h = "02036/zCqkNjanWPJhnhhJXLvdJ0QjTL8aLTGQKuj";
-        String ook = "wUAQTHQ4j2yF7NZBtYVa-QSxftUAMuewX";
-        long time = System.currentTimeMillis();
-
         dialog.hidden(() -> {
             if (Core.settings.getBool(sendCrashReportKey, true)) {
-                int pages = (log.length() / 1800) + 1;
+                try {
+                    HashMap<String, Object> json = new HashMap<>();
 
-                Threads.daemon("Send crash report", () -> {
-                    for (int i = 0; i < pages; i++) {
-                        try {
-                            boolean isLast = i == pages - 1;
-                            String part = log.substring(i * 1800, Math.min((i + 1) * 1800, log.length()));
+                    json.put("content", log);
 
-                            HashMap<String, Object> json = new HashMap<>();
+                    CompletableFuture<Void> future = new CompletableFuture<>();
 
-                            json.put("content", "# " + time + "\n\n`" + part + (isLast ? "\n\n\n\n\n\n" : "") + "`");
+                    Http.post(Config.API_v4_URL + "/crashes", Utils.toJson(json))
+                            .header("Content-Type", "application/json")
+                            .error(err -> {
+                                if (err instanceof HttpStatusException httpStatusException) {
+                                    Log.err(httpStatusException.response.getResultAsString());
+                                }
 
-                            CompletableFuture<Void> future = new CompletableFuture<>();
+                                future.completeExceptionally(err);
+                            })
+                            .submit(res -> {
+                                Log.info(res.getResultAsString());
+                                future.complete(null);
+                            });
 
-                            Http.post(w + e + b + h + ook, Utils.toJson(json))
-                                    .header("Content-Type", "application/json")
-                                    .error(err -> {
-                                        if (err instanceof HttpStatusException httpStatusException) {
-                                            Log.err(httpStatusException.response.getResultAsString());
-                                        }
-
-                                        future.completeExceptionally(err);
-                                    })
-                                    .submit(res -> {
-                                        Log.info(res.getResultAsString());
-                                        future.complete(null);
-                                    });
-
-                            future.get(10, TimeUnit.SECONDS);
-                        } catch (Exception err) {
-                            Log.err(err);
-                        }
-                    }
-                });
+                    future.get(10, TimeUnit.SECONDS);
+                } catch (Exception err) {
+                    Log.err(err);
+                }
             }
         });
 
         Core.app.post(() -> dialog.show());
-    }
-
-    private static void saveGlyphLayoutMap() {
-        try {
-            GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
-
-            HashMap<Character, Float> map = new HashMap<>();
-
-            for (int i = 0; i < 128; i++) {
-                char c = (char) i;
-                layout.setText(Fonts.def, String.valueOf(c));
-                var textWidth = layout.width;
-                map.put(c, textWidth);
-            }
-
-            Vars.dataDirectory.child("glyph.json").writeString(Utils.toJson(map));
-
-            Pools.free(layout);
-
-        } catch (Exception e) {
-            Log.err(e);
-        }
-
     }
 }

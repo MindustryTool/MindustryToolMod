@@ -26,6 +26,7 @@ import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.defense.OverdriveProjector;
 import mindustry.world.blocks.defense.turrets.Turret;
+import mindustry.world.blocks.defense.turrets.Turret.TurretBuild;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -219,7 +220,8 @@ public class RangeDisplay implements Feature {
             }
         }
 
-        if (RangeDisplayConfig.drawUnitRangeAlly || RangeDisplayConfig.drawUnitRangeEnemy || RangeDisplayConfig.drawPlayerRange) {
+        if (RangeDisplayConfig.drawUnitRangeAlly || RangeDisplayConfig.drawUnitRangeEnemy
+                || RangeDisplayConfig.drawPlayerRange) {
             float margin = 2000f;
             Groups.unit.intersect(cx - cw / 2f - margin, cy - ch / 2f - margin, cw + margin * 2, ch + margin * 2,
                     unitDrawer);
@@ -278,6 +280,10 @@ public class RangeDisplay implements Feature {
         float range = 0;
         if (isTurret) {
             range = ((Turret) build.block).range;
+            var ammo = ((TurretBuild) build).peekAmmo();
+            if (ammo != null) {
+                range = range + ammo.rangeChange;
+            }
         } else if (build.block instanceof OverdriveProjector projector) {
             range = projector.range;
         } else {
