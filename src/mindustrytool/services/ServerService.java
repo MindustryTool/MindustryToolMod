@@ -5,7 +5,6 @@ import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
-import arc.util.Timer;
 import lombok.Data;
 import mindustry.Vars;
 import mindustry.ui.dialogs.JoinDialog.Server;
@@ -21,7 +20,7 @@ public class ServerService {
     }
 
     public static void init() {
-        Timer.schedule(() -> fetchServers(), 0, 60 * 5);
+        fetchServers();
         Vars.ui.join.shown(() -> fetchServers());
     }
 
@@ -30,14 +29,13 @@ public class ServerService {
         try {
             Seq<Server> servers = Core.settings.getJson("servers", Seq.class, Server.class, Seq::new);
 
-            servers.removeAll(server -> server.ip == null || server.ip.contains("mindustry-tool.com"));
-
             Http.get(Config.API_v4_URL + "servers?page=0&size=100")
                     .error(Log::err)
                     .submit(res -> {
                         try {
                             var serverDtos = Utils.fromJsonArray(ServerDto.class, res.getResultAsString());
 
+                            servers.removeAll(server -> server.ip == null || server.ip.contains("mindustry-tool"));
                             serverDtos.stream().filter(server -> server.status == 0 || server.status == 1)
                                     .forEach(serverDto -> {
                                         var server = new Server();

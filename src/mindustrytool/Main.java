@@ -135,6 +135,7 @@ public class Main extends Mod {
 
                     checkForUpdate();
                     addCustomButtons();
+
                 } catch (Exception err) {
                     Log.err(err);
                 }
@@ -142,6 +143,7 @@ public class Main extends Mod {
         } catch (Exception e) {
             Log.err(e);
         }
+        // throw new RuntimeException("Crash test");
     }
 
     private void initFeatures() {
