@@ -165,7 +165,7 @@ public class AutoplayFeature implements Feature {
             return;
         }
 
-        if (currentTask.getAI().unit() != unit) {
+        if (currentTask != null && currentTask.getAI().unit() != unit) {
             currentTask = null;
             return;
         }
