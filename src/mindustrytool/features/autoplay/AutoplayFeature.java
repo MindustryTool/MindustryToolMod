@@ -149,6 +149,10 @@ public class AutoplayFeature implements Feature {
             return;
         }
 
+        if (!Vars.state.isPlaying()) {
+            return;
+        }
+
         var unit = Vars.player.unit();
 
         if (unit == null) {
@@ -157,6 +161,11 @@ public class AutoplayFeature implements Feature {
         }
 
         if (unit.dead) {
+            currentTask = null;
+            return;
+        }
+
+        if (currentTask != null && currentTask.getAI().unit() != unit) {
             currentTask = null;
             return;
         }
@@ -186,6 +195,10 @@ public class AutoplayFeature implements Feature {
 
     private void updateUnit() {
         if (!isEnabled) {
+            return;
+        }
+
+        if (!Vars.state.isPlaying()) {
             return;
         }
 

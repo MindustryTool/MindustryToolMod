@@ -14,7 +14,7 @@ public class JSGodModeProvider implements GodModeProvider {
 
     @Override
     public boolean isAvailable() {
-        return Vars.net.active() && Vars.net.client() && Vars.player.admin;
+        return Vars.net.active() && Vars.net.client() && Vars.player != null && Vars.player.admin;
     }
 
     @Override
