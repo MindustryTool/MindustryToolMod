@@ -43,6 +43,7 @@ public class BackgroundFeature implements Feature {
 
         if (path != null) {
             Fi file = Main.backgroundsDir.child(path);
+
             if (!file.exists()) {
                 file = Core.files.absolute(path);
             }
@@ -70,7 +71,7 @@ public class BackgroundFeature implements Feature {
 
     private void applyBackground(Fi file) {
         if (!file.exists() || file.isDirectory()) {
-            Log.err("Background file invalid: @", file.absolutePath());
+            Vars.ui.showInfo("Background file invalid: " + file.absolutePath());
             return;
         }
 
@@ -87,7 +88,7 @@ public class BackgroundFeature implements Feature {
             customRenderer = new CustomMenuRenderer(texture);
             Reflect.set(Vars.ui.menufrag, "renderer", customRenderer);
         } catch (Exception e) {
-            Log.err("Failed to apply background", e);
+            Vars.ui.showException("Failed to apply background", e);
         }
     }
 
@@ -101,12 +102,16 @@ public class BackgroundFeature implements Feature {
         Table table = dialog.cont;
         table.button("Select Background Image", Icon.file, () -> {
             Vars.platform.showFileChooser(true, "png", file -> {
-                if (file != null) {
-                    Fi dest = Main.backgroundsDir.child(file.name());
-                    file.copyTo(dest);
-                    Core.settings.put(SETTING_KEY, dest.name());
-                    Core.settings.forceSave();
-                    applyBackground(dest);
+                try {
+                    if (file != null) {
+                        Fi dest = Main.backgroundsDir.child(file.name());
+                        file.copyTo(dest);
+                        Core.settings.put(SETTING_KEY, dest.name());
+                        Core.settings.forceSave();
+                        applyBackground(dest);
+                    }
+                } catch (Exception e) {
+                    Vars.ui.showException("Failed to apply background", e);
                 }
             });
         }).size(250, 60);
