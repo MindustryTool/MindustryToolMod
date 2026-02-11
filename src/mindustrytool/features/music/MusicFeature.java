@@ -85,8 +85,9 @@ public class MusicFeature implements Feature {
         Seq<String> disabled = MusicConfig.getDisabledSounds();
         Seq<String> deleted = new Seq<>();
 
-        if (targetList == null || originals == null)
+        if (targetList == null || originals == null) {
             return;
+        }
 
         Seq<Music> completeList = new Seq<>();
         completeList.addAll(originals);

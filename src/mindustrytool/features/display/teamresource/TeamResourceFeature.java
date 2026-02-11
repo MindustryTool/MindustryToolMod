@@ -54,7 +54,7 @@ public class TeamResourceFeature extends Table implements Feature {
 
     private Seq<PowerGraph> teamGraphs = new Seq<>();
 
-    private boolean showTeamSelector = false;
+    private boolean showTeamSelector = true;
     private boolean isHovered = false;
 
     private final TeamResourceInputListener statsListener = new TeamResourceInputListener();
@@ -221,7 +221,7 @@ public class TeamResourceFeature extends Table implements Feature {
                                 selectedTeam = team;
                                 usedUnits.clear();
                                 rebuild();
-                            }).checked(sel -> selectedTeam == team).size(32f).pad(2f).margin(2f);
+                            }).checked(sel -> selectedTeam == team).size(32f).pad(2f);
                         }
 
                         if (validTeams.size > 5) {
@@ -575,15 +575,6 @@ public class TeamResourceFeature extends Table implements Feature {
     }
 
     private class TeamResourceInputListener extends ClickListener {
-        @Override
-        public void clicked(InputEvent event, float x, float y) {
-            try {
-                showTeamSelector = !showTeamSelector;
-                rebuild();
-            } catch (Exception e) {
-                Log.err(e);
-            }
-        }
 
         @Override
         public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
