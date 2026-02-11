@@ -21,6 +21,7 @@ import arc.graphics.g2d.TextureRegion;
 
 public class BackgroundFeature implements Feature {
     private static final String SETTING_KEY = "mindustrytool.background.path";
+    private static final String SETTING_OPACITY_KEY = "mindustrytool.background.opacity";
     private MenuRenderer originalRenderer;
     private CustomMenuRenderer customRenderer;
 
@@ -85,7 +86,7 @@ public class BackgroundFeature implements Feature {
             }
 
             Texture texture = new Texture(file);
-            customRenderer = new CustomMenuRenderer(texture);
+            customRenderer = new CustomMenuRenderer(texture, originalRenderer);
             Reflect.set(Vars.ui.menufrag, "renderer", customRenderer);
         } catch (Exception e) {
             Vars.ui.showException("Failed to apply background", e);
@@ -116,23 +117,41 @@ public class BackgroundFeature implements Feature {
             });
         }).size(250, 60);
 
+        table.row();
+        table.slider(5, 100, 5, Core.settings.getInt(SETTING_OPACITY_KEY, 100), value -> {
+            Core.settings.put(SETTING_OPACITY_KEY, (int) value);
+        }).width(180).padTop(10);
+        table.label(() -> Core.settings.getInt(SETTING_OPACITY_KEY, 100) + "%").padTop(10).padLeft(10);
+
         return Optional.of(dialog);
     }
 
     public static class CustomMenuRenderer extends MenuRenderer {
         private final Texture texture;
         private final TextureRegion region;
+        private final MenuRenderer originalRenderer;
 
-        public CustomMenuRenderer(Texture texture) {
+        public CustomMenuRenderer(Texture texture, MenuRenderer originalRenderer) {
             super();
             this.texture = texture;
             this.region = new TextureRegion(texture);
+            this.originalRenderer = originalRenderer;
         }
 
         @Override
         public void render() {
             try {
+                int opacity = Core.settings.getInt(SETTING_OPACITY_KEY, 100);
+
+                if (opacity < 100 && originalRenderer != null) {
+                    originalRenderer.render();
+                }
+
                 Draw.reset();
+                if (opacity < 100) {
+                    Draw.alpha(opacity / 100f);
+                }
+
                 Draw.rect(region, Core.graphics.getWidth() / 2f, Core.graphics.getHeight() / 2f,
                         Core.graphics.getWidth(), Core.graphics.getHeight());
             } catch (Exception e) {
