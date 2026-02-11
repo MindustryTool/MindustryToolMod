@@ -193,17 +193,28 @@ public class PlayerConnectRenderer {
 
                 body.add().growY().row();
 
-                // Join Button
-                if (matchProtocolVersion) {
+                if (PlayerConnect.isHosting()) {
+                    body.button("You're hosting, can not join another room", Icon.play, () -> {
+                    })
+                            .growX()
+                            .height(40f)
+                            .padTop(5)
+                            .disabled(true);
+                } else if (matchProtocolVersion) {
                     body.button(Core.bundle.format("join"), Icon.play, () -> {
                         joinRoom(room, unneeded, missing);
-                    }).growX().height(40f).padTop(5);
+                    })
+                            .growX()
+                            .height(40f)
+                            .padTop(5);
                 } else {
                     body.button(Core.bundle.format("player-connect.unmatch-protocol-version"), Icon.play, () -> {
                         Vars.ui.showInfo("Howw");
                     })
                             .disabled(true)
-                            .growX().height(40f).padTop(5);
+                            .growX()
+                            .height(40f)
+                            .padTop(5);
                 }
 
             }).growY().growX().left().bottom();

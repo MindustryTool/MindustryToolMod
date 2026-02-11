@@ -8,11 +8,11 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
+import arc.math.geom.Rect;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
-import arc.struct.ObjectMap;
 import arc.util.Tmp;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
@@ -22,37 +22,34 @@ import mindustry.gen.Unit;
 import mindustry.graphics.Layer;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustry.world.Block;
 import mindustry.world.Tile;
+import mindustry.world.blocks.defense.BuildTurret;
+import mindustry.world.blocks.defense.MendProjector;
 import mindustry.world.blocks.defense.OverdriveProjector;
+import mindustry.world.blocks.defense.RegenProjector;
+import mindustry.world.blocks.defense.OverdriveProjector.OverdriveBuild;
 import mindustry.world.blocks.defense.turrets.Turret;
 import mindustry.world.blocks.defense.turrets.Turret.TurretBuild;
+import mindustry.world.blocks.distribution.MassDriver;
+import mindustry.world.blocks.logic.LogicBlock;
+import mindustry.world.blocks.power.LightBlock;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
-import java.lang.reflect.Field;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 public class RangeDisplay implements Feature {
     private boolean enabled = false;
     private BaseDialog dialog;
 
-    private final ObjectMap<Block, Float> blockRangeCache = new ObjectMap<>();
-
     private final Cons<Unit> unitDrawer = this::drawUnit;
     private final Cons<Building> buildingDrawer = this::drawBuilding;
     private final Boolf<Building> buildingPredicate = b -> true;
-
-    private static final Set<String> blockRangeFields = new HashSet<String>();
+    private final Rect viewBounds = new Rect();
+    private final int MAX_RANGE = 169 * Vars.tilesize;
 
     private float targetX = 0, targetY = 0;
-
-    static {
-        blockRangeFields.add("range");
-    }
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -193,13 +190,12 @@ public class RangeDisplay implements Feature {
         }
 
         Draw.z(Layer.overlayUI);
-
         float cx = Core.camera.position.x;
         float cy = Core.camera.position.y;
         float cw = Core.camera.width;
         float ch = Core.camera.height;
-        float maxDimension = Math.max(cw, ch);
-        float radius = maxDimension * 0.75f;
+
+        Core.camera.bounds(viewBounds).grow(MAX_RANGE);
 
         if (RangeDisplayConfig.drawSpawnerRange) {
             if (Vars.spawner.getSpawns() != null) {
@@ -210,11 +206,10 @@ public class RangeDisplay implements Feature {
                     float x = tile.worldx();
                     float y = tile.worldy();
 
-                    if (Mathf.dst(cx, cy, x, y) - dropRadius < radius) {
+                    if (viewBounds.contains(x, y)) {
                         Color color = Vars.state.rules.waveTeam.color;
 
                         drawCircle(x, y, dropRadius, color);
-
                     }
                 }
             }
@@ -227,7 +222,7 @@ public class RangeDisplay implements Feature {
                     unitDrawer);
         }
 
-        Vars.indexer.eachBlock(null, cx, cy, radius, buildingPredicate, buildingDrawer);
+        Vars.indexer.eachBlock(null, cx, cy, MAX_RANGE, buildingPredicate, buildingDrawer);
 
         Draw.reset();
     }
@@ -278,26 +273,49 @@ public class RangeDisplay implements Feature {
         }
 
         float range = 0;
+        var circle = true;
+
         if (isTurret) {
             range = ((Turret) build.block).range;
             var ammo = ((TurretBuild) build).peekAmmo();
             if (ammo != null) {
                 range = range + ammo.rangeChange;
             }
-        } else if (build.block instanceof OverdriveProjector projector) {
-            range = projector.range;
-        } else {
-            range = getBlockRange(build.block);
+        } else if (build instanceof OverdriveBuild projector && build.block instanceof OverdriveProjector od) {
+            range = od.range + projector.phaseHeat * od.phaseRangeBoost;
+        } else if (build.block instanceof MassDriver massDriver) {
+            range = massDriver.range;
+        } else if (build.block instanceof BuildTurret od) {
+            range = od.range;
+        } else if (build.block instanceof LightBlock lb) {
+            range = lb.radius;
+        } else if (build.block instanceof LogicBlock lb) {
+            range = lb.range;
+        } else if (build.block instanceof MendProjector rdb) {
+            range = rdb.range;
+        } else if (build.block instanceof RegenProjector p) {
+            range = p.range * Vars.tilesize;
+            circle = false;
         }
 
         if (range > 0) {
             Color color = build.team.color;
-            drawCircle(build.x, build.y, range, color);
+            if (circle) {
+                drawCircle(build.x, build.y, range, color);
+            } else {
+                drawSquare(build.x, build.y, range, color);
+            }
         }
     }
 
-    private void drawCircle(float x, float y, float range, Color color) {
+    private void drawSquare(float x, float y, float range, Color color) {
+        Tmp.c2.set(color).a(RangeDisplayConfig.opacity);
+        Lines.stroke(1f, Tmp.c2);
+        Lines.rect(x - range / 2, y - range / 2, range, range);
+        Draw.reset();
+    }
 
+    private void drawCircle(float x, float y, float range, Color color) {
         var rotation = Mathf.angle(targetX - x, targetY - y);
 
         Tmp.c2.set(color).a(RangeDisplayConfig.opacity);
@@ -306,31 +324,6 @@ public class RangeDisplay implements Feature {
         Draw.color(Tmp.c2);
         Lines.line(x, y, x + Mathf.cosDeg(rotation) * range, y + Mathf.sinDeg(rotation) * range);
         Draw.reset();
-    }
-
-    private float getBlockRange(Block block) {
-        if (blockRangeCache.containsKey(block)) {
-            return blockRangeCache.get(block);
-        }
-
-        float range = 0;
-        for (String fieldName : blockRangeFields) {
-            try {
-                Field rangeField = block.getClass().getDeclaredField(fieldName);
-                rangeField.setAccessible(true);
-                float blockRange = rangeField.getFloat(block);
-
-                if (blockRange > 0) {
-                    range = blockRange;
-                    break;
-                }
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-
-            }
-        }
-
-        blockRangeCache.put(block, range);
-        return range;
     }
 
     private void addCheck(Table table, String text, boolean def, arc.func.Boolc listener) {

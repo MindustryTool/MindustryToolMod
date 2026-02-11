@@ -14,16 +14,20 @@ import arc.scene.event.InputListener;
 import arc.scene.event.Touchable;
 import arc.scene.event.VisibilityListener;
 import arc.scene.ui.Image;
+import arc.scene.ui.Label;
+import arc.scene.ui.Slider;
 import arc.scene.ui.Button;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
+import arc.util.Scaling;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
+import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Main;
@@ -88,13 +92,18 @@ public class QuickAccessHud extends Table implements Feature {
         // Main container table that will be dragged
         Table container = new Table();
         container.background(Styles.black6);
+        container.setColor(1f, 1f, 1f, QuickAccessConfig.opacity());
         container.touchable = Touchable.enabled; // Container catches touches
+
+        float scale = QuickAccessConfig.scale();
+        float buttonSize = 48f * scale;
+        float margin = 8f * scale;
 
         // 1. Anchor (Draggable only)
         container.button(Icon.move, Styles.clearNonei, () -> {
         })
-                .size(48f)
-                .margin(8)
+                .size(buttonSize)
+                .margin(margin)
                 .get()
                 .addListener(new InputListener() {
                     float lastX, lastY;
@@ -155,7 +164,10 @@ public class QuickAccessHud extends Table implements Feature {
 
         Seq<Feature> features = FeatureManager.getInstance().getFeatures();
         int i = 0;
-        int cols = 6; // 5 buttons per row
+        int cols = QuickAccessConfig.cols();
+        float scale = QuickAccessConfig.scale();
+        float buttonSize = 48f * scale;
+        float margin = 8f * scale;
 
         for (Feature f : features) {
             // Skip this feature itself
@@ -174,14 +186,14 @@ public class QuickAccessHud extends Table implements Feature {
             Button[] btnRef = new Button[1];
             btnRef[0] = t.button(b -> {
                 b.image(meta.icon())
-                        .update(l -> l
-                                .setColor(FeatureManager.getInstance().isEnabled(f) ? Color.white
-                                        : mindustry.graphics.Pal.gray));
+                        .size(buttonSize * 0.7f)
+                        .scaling(Scaling.fit)
+                        .update(l -> l.setColor(FeatureManager.getInstance().isEnabled(f) ? Color.white : Pal.gray));
             }, Styles.clearNonei, () -> {
                 showPopupFor(btnRef[0], f);
             })
-                    .size(48f)
-                    .margin(8)
+                    .size(buttonSize)
+                    .margin(margin)
                     .tooltip(meta.name())
                     .get();
 
@@ -191,12 +203,14 @@ public class QuickAccessHud extends Table implements Feature {
 
         Button[] btnRef = new Button[1];
         btnRef[0] = t.button(b -> {
-            b.image(Icon.settings);
+            b.image(Icon.settings)
+                    .size(buttonSize * 0.7f)
+                    .scaling(Scaling.fit);
         }, Styles.clearNonei, () -> {
             Main.featureSettingDialog.show(false);
         })
-                .size(48f)
-                .margin(8)
+                .size(buttonSize)
+                .margin(margin)
                 .get();
     }
 
@@ -224,11 +238,13 @@ public class QuickAccessHud extends Table implements Feature {
             FeatureManager.getInstance().setEnabled(f, b);
         }).pad(10).left().row();
 
+        float widthScale = QuickAccessConfig.width();
+
         f.setting().ifPresent(dialog -> {
             popup.button("@settings", Icon.settings, () -> {
                 dialog.show();
                 closePopup();
-            }).fillX().pad(10).padTop(0).left().minWidth(220);
+            }).fillX().pad(10).padTop(0).left().minWidth(220 * widthScale);
         });
 
         popup.pack();
@@ -261,7 +277,7 @@ public class QuickAccessHud extends Table implements Feature {
         popup.name = "quickAccessPopup";
         currentPopup = popup;
 
-        Timer.schedule(() ->popup.toFront(), 5f);
+        Timer.schedule(() -> popup.toFront(), 5f);
     }
 
     private void closePopup() {
@@ -301,9 +317,79 @@ public class QuickAccessHud extends Table implements Feature {
         Table table = new Table();
 
         dialog.cont.pane(table)
-                .top()
-                .left()
+                .center()
+                .maxWidth(800)
                 .grow();
+
+        // Settings
+        table.add("@settings").style(Styles.outlineLabel).left().pad(5).row();
+
+        // Opacity
+        Table opacityTable = new Table();
+        opacityTable.left();
+        opacityTable.add("@opacity").left().padRight(10);
+        Slider opacitySlider = new Slider(0.05f, 1f, 0.05f, false);
+        opacitySlider.setValue(QuickAccessConfig.opacity());
+        Label opacityLabel = new Label(String.format("%.0f%%", QuickAccessConfig.opacity() * 100));
+        opacitySlider.changed(() -> {
+            QuickAccessConfig.opacity(opacitySlider.getValue());
+            opacityLabel.setText(String.format("%.0f%%", QuickAccessConfig.opacity() * 100));
+            QuickAccessHud.this.rebuild();
+        });
+        opacityTable.add(opacitySlider).width(200f);
+        opacityTable.add(opacityLabel).padLeft(10);
+        table.add(opacityTable).left().pad(5).row();
+
+        // Scale
+        Table scaleTable = new Table();
+        scaleTable.left();
+        scaleTable.add("@scale").left().padRight(10);
+        Slider scaleSlider = new Slider(0.5f, 1.5f, 0.1f, false);
+        scaleSlider.setValue(QuickAccessConfig.scale());
+        Label scaleLabel = new Label(String.format("%.0f%%", QuickAccessConfig.scale() * 100));
+        scaleSlider.changed(() -> {
+            QuickAccessConfig.scale(scaleSlider.getValue());
+            scaleLabel.setText(String.format("%.0f%%", QuickAccessConfig.scale() * 100));
+            QuickAccessHud.this.rebuild();
+        });
+        scaleTable.add(scaleSlider).width(200f);
+        scaleTable.add(scaleLabel).padLeft(10);
+        table.add(scaleTable).left().pad(5).row();
+
+        // Width
+        Table widthTable = new Table();
+        widthTable.left();
+        widthTable.add("@width").left().padRight(10);
+        Slider widthSlider = new Slider(0.5f, 2.0f, 0.1f, false);
+        widthSlider.setValue(QuickAccessConfig.width());
+        Label widthLabel = new Label(String.format("%.0f%%", QuickAccessConfig.width() * 100));
+        widthSlider.changed(() -> {
+            QuickAccessConfig.width(widthSlider.getValue());
+            widthLabel.setText(String.format("%.0f%%", QuickAccessConfig.width() * 100));
+            QuickAccessHud.this.rebuild();
+        });
+        widthTable.add(widthSlider).width(200f);
+        widthTable.add(widthLabel).padLeft(10);
+        table.add(widthTable).left().pad(5).row();
+
+        // Columns
+        Table colsTable = new Table();
+        colsTable.left();
+        colsTable.add("@columns").left().padRight(10);
+        Slider colsSlider = new Slider(1, 9, 1, false);
+        colsSlider.setValue(QuickAccessConfig.cols());
+        Label colsLabel = new Label(String.valueOf(QuickAccessConfig.cols()));
+        colsSlider.changed(() -> {
+            QuickAccessConfig.cols((int) colsSlider.getValue());
+            colsLabel.setText(String.valueOf((int) colsSlider.getValue()));
+            QuickAccessHud.this.rebuild();
+        });
+        colsTable.add(colsSlider).width(200f);
+        colsTable.add(colsLabel).padLeft(10);
+        table.add(colsTable).left().pad(5).row();
+
+        table.image().color(Color.gray).height(2).growX().pad(5).row();
+        table.add("@features").style(Styles.outlineLabel).left().pad(5).row();
 
         Seq<Feature> features = FeatureManager.getInstance().getFeatures();
         for (Feature f : features) {

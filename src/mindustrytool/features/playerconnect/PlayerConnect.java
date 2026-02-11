@@ -3,6 +3,7 @@ package mindustrytool.features.playerconnect;
 import java.net.InetAddress;
 import java.util.concurrent.ExecutorService;
 
+import arc.ApplicationListener;
 import arc.Core;
 import arc.Events;
 import arc.func.Cons;
@@ -18,13 +19,11 @@ import arc.util.Threads;
 import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
-import mindustry.core.GameState;
 import mindustry.game.EventType;
 import mindustry.game.Team;
 import mindustry.game.EventType.PlayerIpBanEvent;
 import mindustry.game.EventType.PlayerJoin;
 import mindustry.game.EventType.PlayerLeave;
-import mindustry.game.EventType.StateChangeEvent;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
@@ -44,13 +43,6 @@ public class PlayerConnect {
     public static int ping;
 
     static {
-        Events.on(StateChangeEvent.class, event -> {
-            if (event.to == GameState.State.menu) {
-                close();
-                Log.info("Close room when changed to menu");
-            }
-        });
-
         Events.run(EventType.HostEvent.class, () -> {
             close();
             Log.info("Close room on host event");
@@ -118,6 +110,13 @@ public class PlayerConnect {
 
         Events.on(RoomCreatedEvent.class, event -> {
             unbanProxyIp();
+        });
+
+        Core.app.addListener(new ApplicationListener() {
+            @Override
+            public void exit() {
+                close();
+            }
         });
     }
 

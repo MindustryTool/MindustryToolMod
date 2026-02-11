@@ -117,13 +117,11 @@ public class FollowAssistTask implements AutoplayTask {
         public void updateMovement() {
             if (following == null || !following.isAdded() || following.dead()) {
                 following = null;
-                unit.plans.clear();
                 return;
             }
 
             // Help build
             if (following.activelyBuilding()) {
-                unit.plans.clear();
                 unit.plans.addFirst(following.buildPlan());
 
                 var req = unit.buildPlan();
@@ -132,8 +130,6 @@ public class FollowAssistTask implements AutoplayTask {
                     moveTo(req.tile(), range - 10f, 20f);
                     return;
                 }
-            } else {
-                unit.plans.clear();
             }
 
             // Help attack

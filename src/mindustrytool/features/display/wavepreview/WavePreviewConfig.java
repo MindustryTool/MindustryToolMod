@@ -34,4 +34,12 @@ public class WavePreviewConfig {
     public static void scale(float val) {
         Core.settings.put("wavepreview-scale", val);
     }
+
+    public static float opacity() {
+        return Core.settings.getFloat("wavepreview-opacity", 1f);
+    }
+
+    public static void opacity(float val) {
+        Core.settings.put("wavepreview-opacity", val);
+    }
 }

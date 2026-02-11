@@ -46,6 +46,7 @@ public class AutoplayFeature implements Feature {
         tasks.add(new AttackTask());
         tasks.add(new RepairTask());
         tasks.add(new FollowAssistTask());
+        tasks.add(new SelfBuildTask());
         tasks.add(new RebuildTask());
         tasks.add(new MiningTask());
 

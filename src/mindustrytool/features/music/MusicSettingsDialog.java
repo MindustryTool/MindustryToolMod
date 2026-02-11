@@ -1,7 +1,5 @@
 package mindustrytool.features.music;
 
-import java.util.function.Consumer;
-
 import arc.Core;
 import arc.audio.Music;
 import arc.files.Fi;
@@ -12,7 +10,6 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
-import mindustrytool.Main;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 
@@ -36,23 +33,26 @@ public class MusicSettingsDialog extends BaseDialog {
         table.margin(Vars.mobile ? 10f : 20f);
         table.defaults().pad(4).fillX();
 
-        renderSection(table, Core.bundle.get("music.type.ambient", "Ambient"), feature.getAllAmbient(),
-                MusicConfig.getAmbientPaths(), MusicConfig::saveAmbientPaths);
-        table.row();
-
-        renderSection(table, Core.bundle.get("music.type.dark", "Dark"), feature.getAllDark(),
-                MusicConfig.getDarkPaths(), MusicConfig::saveDarkPaths);
-        table.row();
-
-        renderSection(table, Core.bundle.get("music.type.boss", "Boss"), feature.getAllBoss(),
-                MusicConfig.getBossPaths(), MusicConfig::saveBossPaths);
+        for (MusicType type : MusicType.values()) {
+            renderSection(table, type);
+            table.row();
+        }
 
         ScrollPane pane = new ScrollPane(table);
-        cont.add(pane).maxWidth(1000).grow();
+        cont.add(pane).maxWidth(1000)
+                .scrollX(false)
+                .scrollY(true)
+                .grow();
     }
 
-    private void renderSection(Table table, String title, Seq<Music> masterList, Seq<String> customPaths,
-            Consumer<Seq<String>> pathSaver) {
+    private void renderSection(Table table, MusicType type) {
+        String title = switch (type) {
+            case AMBIENT -> Core.bundle.get("music.type.ambient", "Ambient");
+            case DARK -> Core.bundle.get("music.type.dark", "Dark");
+            case BOSS -> Core.bundle.get("music.type.boss", "Boss");
+        };
+
+        Seq<Music> list = feature.getMusicList(type);
 
         table.table(Styles.black6, t -> {
             t.margin(6);
@@ -70,55 +70,34 @@ public class MusicSettingsDialog extends BaseDialog {
                     if (file.isDirectory()) {
                         for (Fi f : file.list()) {
                             if (!f.isDirectory() && (f.name().endsWith(".ogg") || f.name().endsWith(".mp3"))) {
-                                var copy = Main.musicsDir.child(f.name());
-                                f.copyFilesTo(copy);
-                                customPaths.add(copy.name());
+                                feature.addTrack(type, f);
                             }
                         }
                     } else {
-                        if (file.name().endsWith(".ogg") || file.name().endsWith(".mp3")) {
-                            var copy = Main.musicsDir.child(file.name());
-                            file.copyTo(copy);
-                            customPaths.add(copy.name());
-                            pathSaver.accept(customPaths);
-                        } else {
-                            Vars.ui.showErrorMessage("Invalid file type, only .ogg and .mp3 are supported");
-                        }
+                        feature.addTrack(type, file);
                     }
 
-                    feature.loadCustomMusic();
-                    Vars.control.sound.playRandom();
-                    Core.app.post(() -> rebuild());
+                    Core.app.post(this::rebuild);
                 }, "ogg", "mp3");
             }).size(btnSize).padRight(5).tooltip(Core.bundle.get("music.tooltip.add", "Add custom music"));
 
             t.button(Icon.trash, () -> {
-
-                masterList.removeAll(m -> {
-                    Fi file = feature.getMusicFile(m);
-                    return file == null || !customPaths.contains(file.name())
-                            && !customPaths.contains(file.absolutePath());
-                });
-                feature.loadCustomMusic();
+                feature.disableAllOriginals(type);
                 rebuild();
-                Vars.control.sound.playRandom();
-            }).size(btnSize).tooltip(Core.bundle.get("music.tooltip.remove-original", "Remove all original sounds"));
+            }).size(btnSize).tooltip(Core.bundle.get("music.tooltip.remove-original", "Disable all original sounds"));
         }).growX().row();
 
         table.table(t -> {
             t.left();
-            Seq<String> disabled = MusicConfig.getDisabledSounds();
 
-            for (Music music : masterList) {
+            for (Music music : list) {
                 String name = feature.getMusicName(music);
-                boolean isDisabled = disabled.contains(name);
-                Fi musicFile = feature.getMusicFile(music);
-                boolean isCustom = musicFile != null && (customPaths.contains(musicFile.name())
-                        || customPaths.contains(musicFile.absolutePath()));
+                boolean isDisabled = feature.isTrackDisabled(music);
+                boolean isCustom = feature.isCustomTrack(music);
 
                 t.table(Styles.grayPanel, item -> {
                     item.left().margin(6);
-                    Label label = item.add(name).growX().left().minWidth(0).get();
+                    Label label = item.add(name).ellipsis(true).growX().left().minWidth(0).get();
                     label.setEllipsis(true);
 
                     if (isDisabled) {
@@ -130,13 +109,7 @@ public class MusicSettingsDialog extends BaseDialog {
 
                     if (isCustom) {
                         item.button(Icon.trash, Styles.clearNonei, () -> {
-                            if (music.isPlaying())
-                                music.stop();
-                            customPaths.remove(musicFile.name());
-                            customPaths.remove(musicFile.absolutePath());
-                            pathSaver.accept(customPaths);
-                            masterList.remove(music);
-                            feature.loadCustomMusic();
+                            feature.removeTrack(type, music);
                             rebuild();
                         }).size(itemBtnSize)
                                 .tooltip(Core.bundle.get("music.tooltip.remove-custom", "Remove custom music"));
@@ -152,15 +125,7 @@ public class MusicSettingsDialog extends BaseDialog {
                     }).size(itemBtnSize).tooltip(Core.bundle.get("music.tooltip.play-stop", "Play/Stop"));
 
                     item.button(isDisabled ? Icon.cancel : Icon.ok, Styles.clearNonei, () -> {
-                        if (isDisabled) {
-                            disabled.remove(name);
-                        } else {
-                            disabled.add(name);
-                            if (music.isPlaying())
-                                music.stop();
-                        }
-                        MusicConfig.saveDisabledSounds(disabled);
-                        feature.loadCustomMusic();
+                        feature.toggleTrack(music);
                         rebuild();
                     }).size(itemBtnSize)
                             .tooltip(Core.bundle.get("music.tooltip.toggle-disabled", "Toggle enabled/disabled"));

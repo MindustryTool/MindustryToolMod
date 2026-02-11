@@ -57,4 +57,28 @@ public class ChatConfig {
     public static void lastRead(Instant value) {
         Core.settings.put("mindustrytool.chat.lastRead", value.toEpochMilli());
     }
+
+    public static float opacity() {
+        return Core.settings.getFloat("mindustrytool.chat.opacity", 1f);
+    }
+
+    public static void opacity(float value) {
+        Core.settings.put("mindustrytool.chat.opacity", value);
+    }
+
+    public static float scale() {
+        return Core.settings.getFloat("mindustrytool.chat.scale", 1f);
+    }
+
+    public static void scale(float value) {
+        Core.settings.put("mindustrytool.chat.scale", value);
+    }
+
+    public static float width() {
+        return Core.settings.getFloat("mindustrytool.chat.width", 1f);
+    }
+
+    public static void width(float value) {
+        Core.settings.put("mindustrytool.chat.width", value);
+    }
 }
