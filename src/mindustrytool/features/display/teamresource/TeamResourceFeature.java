@@ -124,6 +124,10 @@ public class TeamResourceFeature extends Table implements Feature {
                 }
             }
         });
+
+        Events.on(ResizeEvent.class, (event) -> {
+            rebuild();
+        });
     }
 
     @Override

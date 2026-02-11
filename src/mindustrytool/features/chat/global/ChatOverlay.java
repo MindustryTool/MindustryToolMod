@@ -26,6 +26,7 @@ import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.game.Schematic;
 import mindustry.game.Schematics;
+import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
@@ -130,6 +131,9 @@ public class ChatOverlay extends Table {
 
         Events.on(LoginEvent.class, e -> Core.app.post(() -> setup()));
         Events.on(LogoutEvent.class, e -> Core.app.post(() -> setup()));
+        Events.on(ResizeEvent.class, (event) -> {
+            setup();
+        });
 
         Events.run(Trigger.update, () -> {
             boolean noInputFocused = !Core.scene.hasField();
