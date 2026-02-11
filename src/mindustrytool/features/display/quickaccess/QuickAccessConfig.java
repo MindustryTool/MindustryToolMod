@@ -22,6 +22,38 @@ public class QuickAccessConfig {
         Core.settings.put("mindustrytool.quickaccess.y", value);
     }
 
+    public static float opacity() {
+        return Core.settings.getFloat("mindustrytool.quickaccess.opacity", 1f);
+    }
+
+    public static void opacity(float value) {
+        Core.settings.put("mindustrytool.quickaccess.opacity", value);
+    }
+
+    public static float scale() {
+        return Core.settings.getFloat("mindustrytool.quickaccess.scale", 1f);
+    }
+
+    public static void scale(float value) {
+        Core.settings.put("mindustrytool.quickaccess.scale", value);
+    }
+
+    public static float width() {
+        return Core.settings.getFloat("mindustrytool.quickaccess.width", 1f);
+    }
+
+    public static void width(float value) {
+        Core.settings.put("mindustrytool.quickaccess.width", value);
+    }
+
+    public static int cols() {
+        return Core.settings.getInt("mindustrytool.quickaccess.cols", 6);
+    }
+
+    public static void cols(int value) {
+        Core.settings.put("mindustrytool.quickaccess.cols", value);
+    }
+
     public static boolean isFeatureVisible(String name) {
         String hidden = Core.settings.getString("mindustrytool.quickaccess.hidden", "");
         if (hidden.isEmpty())

@@ -184,11 +184,19 @@ public class ChatOverlay extends Table {
         return ChatConfig.collapsed();
     }
 
+    public void rebuild() {
+        setup();
+    }
+
     private synchronized void setup() {
         setPosition(ChatConfig.x(ChatConfig.collapsed()), ChatConfig.y(ChatConfig.collapsed()));
 
         container.clearChildren();
         container.touchable = Touchable.enabled;
+        container.setColor(1f, 1f, 1f, ChatConfig.opacity());
+
+        float scale = ChatConfig.scale();
+        float widthScale = ChatConfig.width();
 
         if (ChatConfig.collapsed()) {
             container.background(null);
@@ -258,10 +266,10 @@ public class ChatOverlay extends Table {
             container.add(buttonTable).grow();
         } else {
             container.background(Styles.black8);
-            float width = Core.graphics.getWidth() / Scl.scl() * 0.7f;
-            float height = Core.graphics.getHeight() / Scl.scl() * 0.7f;
+            float width = Core.graphics.getWidth() / Scl.scl() * 0.7f * widthScale;
+            float height = Core.graphics.getHeight() / Scl.scl() * 0.7f * scale;
 
-            containerCell.size(Math.min(width, 1400f), Math.min(height, 900f));
+            containerCell.size(Math.min(width, 1400f * widthScale), Math.min(height, 900f * scale));
 
             // Header
             Table header = new Table();
@@ -292,8 +300,9 @@ public class ChatOverlay extends Table {
                 }
             });
 
-            header.image(Icon.move).color(Color.gray).size(24).padLeft(8);
-            header.add("@chat.global-chat").style(Styles.outlineLabel).padLeft(8);
+            header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(8 * scale);
+            Label title = header.add("@chat.global-chat").style(Styles.outlineLabel).padLeft(8 * scale).get();
+            title.setFontScale(scale);
 
             connectionIndicator = new Image(Tex.whiteui) {
                 @Override
@@ -304,7 +313,7 @@ public class ChatOverlay extends Table {
                 }
             };
             connectionIndicator.setColor(ChatService.getInstance().isConnected() ? Color.green : Color.yellow);
-            header.add(connectionIndicator).size(10).padLeft(8);
+            header.add(connectionIndicator).size(10 * scale).padLeft(8 * scale);
 
             header.add().growX();
 
@@ -313,10 +322,10 @@ public class ChatOverlay extends Table {
                 messages.clear();
                 ChatService.getInstance().disconnectStream();
                 ChatService.getInstance().connectStream();
-            }).size(40).padRight(4);
-            header.button(Icon.down, Styles.clearNonei, this::collapse).size(40).padRight(4);
+            }).size(40 * scale).padRight(4 * scale);
+            header.button(Icon.down, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
 
-            container.add(header).growX().height(46).row();
+            container.add(header).growX().height(46 * scale).row();
 
             // Main Content Area
             Table mainContent = new Table();
@@ -333,7 +342,7 @@ public class ChatOverlay extends Table {
             loadingTable = new Table();
 
             loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray)
-                    .visible(() -> !ChatService.getInstance().isConnected());
+                    .visible(() -> !ChatService.getInstance().isConnected()).get().setFontScale(scale);
 
             Stack stack = new Stack();
             stack.add(loadingTable);
@@ -350,7 +359,7 @@ public class ChatOverlay extends Table {
             });
 
             // Vertical Separator
-            mainContent.image(Tex.whiteui).width(1f).color(Color.darkGray).fillY();
+            mainContent.image(Tex.whiteui).width(1f * scale).color(Color.darkGray).fillY();
 
             // User List Sidebar
             Table rightSide = new Table();
@@ -359,14 +368,16 @@ public class ChatOverlay extends Table {
 
             Table titleTable = new Table();
             if (!isUserListCollapsed) {
-                titleTable.add("@chat.online-members").style(Styles.defaultLabel).color(Color.gray).pad(10).left()
-                        .minWidth(0).ellipsis(true).growX();
+                Label l = titleTable.add("@chat.online-members").style(Styles.defaultLabel).color(Color.gray)
+                        .pad(10 * scale).left()
+                        .minWidth(0).ellipsis(true).growX().get();
+                l.setFontScale(scale);
             }
 
             titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
                 isUserListCollapsed = !isUserListCollapsed;
                 setup();
-            }).size(40).pad(4).right();
+            }).size(40 * scale).pad(4 * scale).right();
 
             rightSide.add(titleTable).growX().row();
 
@@ -382,7 +393,7 @@ public class ChatOverlay extends Table {
                 rightSide.pack();
             }
 
-            mainContent.add(rightSide).width(isUserListCollapsed ? 48f : 280f).growY();
+            mainContent.add(rightSide).width(isUserListCollapsed ? 48f * scale : 280f * scale).growY();
 
             container.add(mainContent).grow().row();
 
@@ -423,25 +434,27 @@ public class ChatOverlay extends Table {
         inputTable.clear();
         inputTable.background(Styles.black6);
 
+        float scale = ChatConfig.scale();
+
         if (AuthService.getInstance().isLoggedIn()) {
             sendButton = new TextButton(isSending.get() ? "@sending" : "@chat.send", Styles.defaultt);
             sendButton.clicked(this::handleSend);
             sendButton.setDisabled(() -> isSending.get());
 
-            inputTable.add(inputField).growX().height(40f).pad(8).padRight(4);
+            inputTable.add(inputField).growX().height(40f * scale).pad(8 * scale).padRight(4 * scale);
 
             inputTable.button(Utils.icons("attach-file.png"), () -> {
                 if (attachContentDialog == null) {
                     attachContentDialog = new AttachContentDialog(this::handleAttachContent);
                 }
                 attachContentDialog.show();
-            }).pad(8);
+            }).pad(8 * scale).size(40f * scale);
 
-            inputTable.add(sendButton).width(100f).height(40f).pad(8).padLeft(0);
+            inputTable.add(sendButton).width(100f * scale).height(40f * scale).pad(8 * scale).padLeft(0);
         } else {
             inputTable.button("@login", Styles.defaultt, () -> {
                 AuthService.getInstance().login();
-            }).growX().height(40f).pad(8);
+            }).growX().height(40f * scale).pad(8 * scale);
         }
     }
 
@@ -552,6 +565,8 @@ public class ChatOverlay extends Table {
         messageTable.clear();
         messageTable.top().left();
 
+        float scale = ChatConfig.scale();
+
         ChatConfig.lastRead(Instant.now());
 
         for (ChatMessage msg : messages) {
@@ -564,18 +579,19 @@ public class ChatOverlay extends Table {
                     Core.app.post(() -> {
                         avatar.clear();
                         if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
-                            avatar.add(new NetworkImage(data.getImageUrl())).size(40);
+                            avatar.add(new NetworkImage(data.getImageUrl())).size(40 * scale);
                         } else {
-                            avatar.add(new Image(Icon.players)).size(40);
+                            avatar.add(new Image(Icon.players)).size(40 * scale);
                         }
                     });
                 });
-            }).size(48).top().pad(8);
+            }).size(48 * scale).top().pad(8 * scale);
 
             entry.table(card -> {
                 card.top().left();
                 Label label = new Label("...");
                 label.setStyle(Styles.defaultLabel);
+                label.setFontScale(scale);
 
                 UserService.findUserById(msg.createdBy).thenAccept(data -> {
                     Core.app.post(() -> {
@@ -614,16 +630,18 @@ public class ChatOverlay extends Table {
                     String content = msg.content.trim();
 
                     if (PlayerConnectLink.isValid(content)) {
-                        c.add(content).wrap().color(Color.lightGray).left().growX();
+                        Label l = c.add(content).wrap().color(Color.lightGray).left().growX().get();
+                        l.setFontScale(scale);
                         c.row();
                         renderPlayerConnectRoom(c, content);
                         return;
                     }
 
                     if (NetworkImage.isValidImageLink(content)) {
-                        c.add(content).wrap().color(Color.lightGray).left().growX();
+                        Label l = c.add(content).wrap().color(Color.lightGray).left().growX().get();
+                        l.setFontScale(scale);
                         c.row();
-                        c.add(new NetworkImage(content)).maxHeight(800).maxWidth(800);
+                        c.add(new NetworkImage(content)).maxHeight(800 * scale).maxWidth(800 * scale);
                         c.table().growX();
                         return;
                     }
@@ -639,7 +657,8 @@ public class ChatOverlay extends Table {
 
                         String prev = content.substring(0, schematicBasePosition);
 
-                        c.add(prev).wrap().color(Color.lightGray).left().growX();
+                        Label l = c.add(prev).wrap().color(Color.lightGray).left().growX().get();
+                        l.setFontScale(scale);
                         String schematicBase64 = content.substring(schematicBasePosition, endPosition);
 
                         try {
@@ -648,10 +667,12 @@ public class ChatOverlay extends Table {
                             renderSchematic(card, schematic);
                             c.row();
                             String after = content.substring(endPosition);
-                            c.add(after).wrap().color(Color.lightGray).left().growX();
+                            Label l2 = c.add(after).wrap().color(Color.lightGray).left().growX().get();
+                            l2.setFontScale(scale);
                         } catch (Exception e) {
                             c.clear();
-                            c.add(content).wrap().color(Color.lightGray).left().growX();
+                            Label l2 = c.add(content).wrap().color(Color.lightGray).left().growX().get();
+                            l2.setFontScale(scale);
                         }
 
                         return;
@@ -677,17 +698,18 @@ public class ChatOverlay extends Table {
                         }
                     }
 
-                    c.add(content).wrap().color(Color.lightGray).left().growX();
+                    Label l = c.add(content).wrap().color(Color.lightGray).left().growX().get();
+                    l.setFontScale(scale);
                 })
-                        .top().left().growX().padTop(6);
+                        .top().left().growX().padTop(6 * scale);
 
                 card.clicked(() -> {
                     Core.app.setClipboardText(msg.content);
                     Vars.ui.showInfoFade("@copied");
                 });
-            }).growX().pad(8).top();
+            }).growX().pad(8 * scale).top();
 
-            messageTable.add(entry).growX().padBottom(4).row();
+            messageTable.add(entry).growX().padBottom(4 * scale).row();
         }
     }
 
@@ -759,6 +781,8 @@ public class ChatOverlay extends Table {
         userListTable.clear();
         userListTable.top().left();
 
+        float scale = ChatConfig.scale();
+
         Arrays.sort(users, (u1, u2) -> {
             int l1 = u1.getHighestRole().map(SimpleRole::getLevel).orElse(-1);
             int l2 = u2.getHighestRole().map(SimpleRole::getLevel).orElse(-1);
@@ -771,26 +795,30 @@ public class ChatOverlay extends Table {
 
             // Avatar
             if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
-                card.add(new NetworkImage(user.getImageUrl())).size(40).padRight(8);
+                card.add(new NetworkImage(user.getImageUrl())).size(40 * scale).padRight(8 * scale);
             } else {
-                card.add(new Image(Icon.players)).size(40).padRight(8);
+                card.add(new Image(Icon.players)).size(40 * scale).padRight(8 * scale);
             }
 
             // Info Table
             card.table(info -> {
                 info.left();
-                info.add(user.getName() + "[white]").minWidth(0).ellipsis(true).style(Styles.defaultLabel)
+                Label l = info.add(user.getName() + "[white]").minWidth(0).ellipsis(true).style(Styles.defaultLabel)
                         .color(Color.white)
-                        .left().row();
+                        .left().get();
+                l.setFontScale(scale);
+                info.row();
 
                 user.getHighestRole().ifPresent(role -> {
-                    info.add(role.getId()).minWidth(0).ellipsis(true).style(Styles.defaultLabel)
+                    Label l2 = info.add(role.getId()).minWidth(0).ellipsis(true).style(Styles.defaultLabel)
                             .color(Color.valueOf(role.getColor()))
-                            .left().row();
+                            .get();
+                    l2.setFontScale(scale);
                 });
             }).growX().left();
 
-            userListTable.add(card).growX().minWidth(0).padBottom(8).padLeft(8).padRight(8).row();
+            userListTable.add(card).growX().minWidth(0).padBottom(8 * scale).padLeft(8 * scale).padRight(8 * scale)
+                    .row();
             userListTable.pack();
         }
     }

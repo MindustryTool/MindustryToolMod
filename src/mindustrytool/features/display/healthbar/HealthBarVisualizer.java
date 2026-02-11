@@ -127,11 +127,14 @@ public class HealthBarVisualizer implements Feature {
     }
 
     private void drawBar(Unit unit) {
-        float x = unit.x;
-        float y = unit.y + unit.hitSize * 0.8f + 3f;
+        float scale = HealthBarConfig.scale;
+        float widthScale = HealthBarConfig.width;
 
-        float w = unit.hitSize * 2.5f;
-        float h = 2f;
+        float x = unit.x;
+        float y = unit.y + (unit.hitSize * 0.8f + 3f) * scale;
+
+        float w = unit.hitSize * 2.5f * widthScale;
+        float h = 2f * scale;
 
         Draw.color(Color.black, 0.6f * HealthBarConfig.opacity);
         Draw.rect(barRegion, x, y, w + 2f, h + 2f);
@@ -227,5 +230,49 @@ public class HealthBarVisualizer implements Feature {
         });
 
         cont.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
+
+        Slider scaleSlider = new Slider(0.5f, 1.5f, 0.1f, false);
+        scaleSlider.setValue(HealthBarConfig.scale);
+
+        Label scaleValue = new Label(
+                String.format("%.0f%%", HealthBarConfig.scale * 100),
+                Styles.outlineLabel);
+        scaleValue.setColor(Color.lightGray);
+
+        Table scaleContent = new Table();
+        scaleContent.touchable = arc.scene.event.Touchable.disabled;
+        scaleContent.margin(3f, 33f, 3f, 33f);
+        scaleContent.add("@scale", Styles.outlineLabel).left().growX();
+        scaleContent.add(scaleValue).padLeft(10f).right();
+
+        scaleSlider.changed(() -> {
+            HealthBarConfig.scale = scaleSlider.getValue();
+            scaleValue.setText(String.format("%.0f%%", HealthBarConfig.scale * 100));
+            HealthBarConfig.save();
+        });
+
+        cont.stack(scaleSlider, scaleContent).width(width).left().padTop(4f).row();
+
+        Slider widthSlider = new Slider(0.5f, 2.0f, 0.1f, false);
+        widthSlider.setValue(HealthBarConfig.width);
+
+        Label widthValue = new Label(
+                String.format("%.0f%%", HealthBarConfig.width * 100),
+                Styles.outlineLabel);
+        widthValue.setColor(Color.lightGray);
+
+        Table widthContent = new Table();
+        widthContent.touchable = arc.scene.event.Touchable.disabled;
+        widthContent.margin(3f, 33f, 3f, 33f);
+        widthContent.add("@width", Styles.outlineLabel).left().growX();
+        widthContent.add(widthValue).padLeft(10f).right();
+
+        widthSlider.changed(() -> {
+            HealthBarConfig.width = widthSlider.getValue();
+            widthValue.setText(String.format("%.0f%%", HealthBarConfig.width * 100));
+            HealthBarConfig.save();
+        });
+
+        cont.stack(widthSlider, widthContent).width(width).left().padTop(4f).row();
     }
 }

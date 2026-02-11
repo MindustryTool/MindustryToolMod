@@ -17,12 +17,21 @@ import mindustry.ui.Fonts;
 import mindustry.world.blocks.units.Reconstructor;
 import mindustry.world.blocks.units.UnitAssembler;
 import mindustry.world.blocks.units.UnitFactory;
+import arc.scene.ui.Dialog;
+import arc.scene.ui.Label;
+import arc.scene.ui.Slider;
+import arc.scene.ui.layout.Table;
+import mindustry.gen.Icon;
+import mindustry.ui.Styles;
+import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import java.util.Optional;
 
 public class ProgressDisplay implements Feature {
     private boolean enabled = false;
+    private BaseDialog settingsDialog;
 
     private final Cons<Building> buildingDrawer = this::drawBuilding;
     private final Boolf<Building> buildingPredicate = b -> {
@@ -46,7 +55,100 @@ public class ProgressDisplay implements Feature {
 
     @Override
     public void init() {
+        ProgressConfig.load();
         Events.run(Trigger.draw, this::draw);
+    }
+
+    @Override
+    public Optional<Dialog> setting() {
+        if (settingsDialog == null) {
+            settingsDialog = new BaseDialog("@progress.settings.title");
+            settingsDialog.name = "progressSettingDialog";
+            settingsDialog.addCloseButton();
+            settingsDialog.shown(this::rebuildSettings);
+            settingsDialog.buttons.button("@reset", Icon.refresh, () -> {
+                ProgressConfig.reset();
+                rebuildSettings();
+            }).size(250, 64);
+        }
+        return Optional.of(settingsDialog);
+    }
+
+    private void rebuildSettings() {
+        Table settingsContainer = settingsDialog.cont;
+        settingsContainer.clear();
+        settingsContainer.defaults().pad(6).left();
+
+        float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
+
+        // Opacity
+        Slider opacitySlider = new Slider(0f, 1f, 0.05f, false);
+        opacitySlider.setValue(ProgressConfig.opacity);
+
+        Label opacityValue = new Label(
+                String.format("%.0f%%", ProgressConfig.opacity * 100),
+                Styles.outlineLabel);
+        opacityValue.setColor(Color.lightGray);
+
+        Table opacityContent = new Table();
+        opacityContent.touchable = arc.scene.event.Touchable.disabled;
+        opacityContent.margin(3f, 33f, 3f, 33f);
+        opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
+        opacityContent.add(opacityValue).padLeft(10f).right();
+
+        opacitySlider.changed(() -> {
+            ProgressConfig.opacity = opacitySlider.getValue();
+            opacityValue.setText(String.format("%.0f%%", ProgressConfig.opacity * 100));
+            ProgressConfig.save();
+        });
+
+        settingsContainer.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
+
+        // Scale
+        Slider scaleSlider = new Slider(0.5f, 1.5f, 0.1f, false);
+        scaleSlider.setValue(ProgressConfig.scale);
+
+        Label scaleValue = new Label(
+                String.format("%.0f%%", ProgressConfig.scale * 100),
+                Styles.outlineLabel);
+        scaleValue.setColor(Color.lightGray);
+
+        Table scaleContent = new Table();
+        scaleContent.touchable = arc.scene.event.Touchable.disabled;
+        scaleContent.margin(3f, 33f, 3f, 33f);
+        scaleContent.add("@scale", Styles.outlineLabel).left().growX();
+        scaleContent.add(scaleValue).padLeft(10f).right();
+
+        scaleSlider.changed(() -> {
+            ProgressConfig.scale = scaleSlider.getValue();
+            scaleValue.setText(String.format("%.0f%%", ProgressConfig.scale * 100));
+            ProgressConfig.save();
+        });
+
+        settingsContainer.stack(scaleSlider, scaleContent).width(width).left().padTop(4f).row();
+
+        // Width
+        Slider widthSlider = new Slider(0.5f, 2.0f, 0.1f, false);
+        widthSlider.setValue(ProgressConfig.width);
+
+        Label widthValue = new Label(
+                String.format("%.0f%%", ProgressConfig.width * 100),
+                Styles.outlineLabel);
+        widthValue.setColor(Color.lightGray);
+
+        Table widthContent = new Table();
+        widthContent.touchable = arc.scene.event.Touchable.disabled;
+        widthContent.margin(3f, 33f, 3f, 33f);
+        widthContent.add("@width", Styles.outlineLabel).left().growX();
+        widthContent.add(widthValue).padLeft(10f).right();
+
+        widthSlider.changed(() -> {
+            ProgressConfig.width = widthSlider.getValue();
+            widthValue.setText(String.format("%.0f%%", ProgressConfig.width * 100));
+            ProgressConfig.save();
+        });
+
+        settingsContainer.stack(widthSlider, widthContent).width(width).left().padTop(4f).row();
     }
 
     @Override
@@ -115,20 +217,25 @@ public class ProgressDisplay implements Feature {
     }
 
     private void drawBar(float x, float y, float size, float fraction, Color color, float remainingTime) {
-        float width = size;
-        float height = 3f;
-        float yOffset = size / 2f - 1;
+        float scale = ProgressConfig.scale;
+        float widthScale = ProgressConfig.width;
+        float opacity = ProgressConfig.opacity;
+
+        float width = size * widthScale;
+        float height = 3f * scale;
+        float yOffset = (size / 2f - 1) * scale;
 
         Draw.color(Color.black);
-        Draw.alpha(0.8f);
+        Draw.alpha(0.8f * opacity);
         Fill.rect(x, y + yOffset, width, height);
 
         Draw.color(color);
+        Draw.alpha(opacity);
         Fill.rect(x - width / 2f + width * fraction / 2f, y + yOffset, width * fraction, height);
 
         if (remainingTime > 0) {
             String text = String.format("%.1fs", remainingTime);
-            Fonts.outline.draw(text, x, y, Color.white, 0.25f, false, Align.center);
+            Fonts.outline.draw(text, x, y, Color.white, 0.25f * scale, false, Align.center);
         }
 
         Draw.reset();

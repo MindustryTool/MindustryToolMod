@@ -2,6 +2,7 @@ package mindustrytool.features.display.wavepreview;
 
 import arc.Core;
 import arc.Events;
+import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
@@ -21,7 +22,6 @@ import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import java.util.Optional;
-import arc.scene.ui.Dialog;
 
 public class WavePreviewFeature extends Table implements Feature {
     private final ObjectIntMap<UnitType> currentWaveCounts = new ObjectIntMap<>();
@@ -135,11 +135,18 @@ public class WavePreviewFeature extends Table implements Feature {
 
         top().left();
         background(Tex.pane);
+        setColor(1f, 1f, 1f, WavePreviewConfig.opacity());
 
-        add("@wave-preview.title").top().left().align(Align.left).style(Styles.outlineLabel).pad(4)
-                .color(mindustry.graphics.Pal.accent).row();
+        float scale = WavePreviewConfig.scale();
 
-        add(new Label(() -> "" + Vars.state.wave)).style(Styles.outlineLabel).left().padLeft(4).row();
+        Label title = add("@wave-preview.title").top().left().align(Align.left).style(Styles.outlineLabel).pad(4)
+                .color(mindustry.graphics.Pal.accent).get();
+        title.setFontScale(scale);
+        row();
+
+        Label waveLabel = add(new Label(() -> "" + Vars.state.wave)).style(Styles.outlineLabel).left().padLeft(4).get();
+        waveLabel.setFontScale(scale);
+        row();
 
         Table currentWaveTable = new Table();
         add(currentWaveTable).growX().pad(4).row();
@@ -148,7 +155,9 @@ public class WavePreviewFeature extends Table implements Feature {
         if (!nextWaveCounts.isEmpty()) {
             image().color(mindustry.graphics.Pal.gray).height(2).growX().pad(4).row();
 
-            add(new Label(() -> "" + (Vars.state.wave + 1))).style(Styles.outlineLabel).left().padLeft(4).row();
+            Label nextWaveLabel = add(new Label(() -> "" + (Vars.state.wave + 1))).style(Styles.outlineLabel).left().padLeft(4).get();
+            nextWaveLabel.setFontScale(scale);
+            row();
 
             Table nextWaveTable = new Table();
             add(nextWaveTable).growX().pad(4).row();
@@ -160,9 +169,11 @@ public class WavePreviewFeature extends Table implements Feature {
 
     private void buildWaveTable(Table table, ObjectIntMap<UnitType> counts) {
         table.clear();
+        float scale = WavePreviewConfig.scale();
 
         if (counts.isEmpty()) {
-            table.add("-").style(Styles.outlineLabel).color(mindustry.graphics.Pal.gray);
+            Label l = table.add("-").style(Styles.outlineLabel).color(mindustry.graphics.Pal.gray).get();
+            l.setFontScale(scale);
             return;
         }
 
@@ -172,8 +183,9 @@ public class WavePreviewFeature extends Table implements Feature {
             if (amount <= 0)
                 continue;
 
-            table.image(type.uiIcon).size(16 * 1.5f).padRight(4);
-            table.add(String.valueOf(amount)).style(Styles.outlineLabel).padRight(8);
+            table.image(type.uiIcon).size(16 * 1.5f * scale).padRight(4 * scale);
+            Label l = table.add(String.valueOf(amount)).style(Styles.outlineLabel).padRight(8 * scale).get();
+            l.setFontScale(scale);
 
             if (++i % 3 == 0)
                 table.row();
