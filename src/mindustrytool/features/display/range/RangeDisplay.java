@@ -24,7 +24,9 @@ import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.Tile;
 import mindustry.world.blocks.defense.BuildTurret;
+import mindustry.world.blocks.defense.MendProjector;
 import mindustry.world.blocks.defense.OverdriveProjector;
+import mindustry.world.blocks.defense.RegenProjector;
 import mindustry.world.blocks.defense.OverdriveProjector.OverdriveBuild;
 import mindustry.world.blocks.defense.turrets.Turret;
 import mindustry.world.blocks.defense.turrets.Turret.TurretBuild;
@@ -271,6 +273,7 @@ public class RangeDisplay implements Feature {
         }
 
         float range = 0;
+        var circle = true;
 
         if (isTurret) {
             range = ((Turret) build.block).range;
@@ -288,16 +291,31 @@ public class RangeDisplay implements Feature {
             range = lb.radius;
         } else if (build.block instanceof LogicBlock lb) {
             range = lb.range;
+        } else if (build.block instanceof MendProjector rdb) {
+            range = rdb.range;
+        } else if (build.block instanceof RegenProjector p) {
+            range = p.range * Vars.tilesize;
+            circle = false;
         }
 
         if (range > 0) {
             Color color = build.team.color;
-            drawCircle(build.x, build.y, range, color);
+            if (circle) {
+                drawCircle(build.x, build.y, range, color);
+            } else {
+                drawSquare(build.x, build.y, range, color);
+            }
         }
     }
 
-    private void drawCircle(float x, float y, float range, Color color) {
+    private void drawSquare(float x, float y, float range, Color color) {
+        Tmp.c2.set(color).a(RangeDisplayConfig.opacity);
+        Lines.stroke(1f, Tmp.c2);
+        Lines.rect(x - range / 2, y - range / 2, range, range);
+        Draw.reset();
+    }
 
+    private void drawCircle(float x, float y, float range, Color color) {
         var rotation = Mathf.angle(targetX - x, targetY - y);
 
         Tmp.c2.set(color).a(RangeDisplayConfig.opacity);
