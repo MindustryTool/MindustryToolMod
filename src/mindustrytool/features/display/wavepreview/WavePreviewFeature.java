@@ -2,15 +2,18 @@ package mindustrytool.features.display.wavepreview;
 
 import arc.Core;
 import arc.Events;
+import arc.math.Mathf;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.struct.ObjectIntMap;
+import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Interval;
 import arc.util.Log;
 import mindustry.Vars;
+import mindustry.content.StatusEffects;
 import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.game.SpawnGroup;
 import mindustry.game.Team;
@@ -47,7 +50,7 @@ public class WavePreviewFeature extends Table implements Feature {
 
         Events.run(WorldLoadEvent.class, () -> Core.app.post(() -> rebuild()));
 
-        visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
+        visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame() && Vars.state.rules.waves);
 
         update(() -> {
             if (!visible) {
@@ -55,8 +58,10 @@ public class WavePreviewFeature extends Table implements Feature {
             }
 
             if (interval.get(30)) {
-                updateCounts();
-                Core.app.post(() -> updateUI());
+                Core.app.post(() -> {
+                    updateCounts();
+                    updateUI();
+                });
             }
         });
 
@@ -116,22 +121,26 @@ public class WavePreviewFeature extends Table implements Feature {
         });
 
         nextWaveCounts.clear();
-        int nextWave = Vars.state.wave + 1;
-
+        int nextWave = Vars.state.wave;
         for (SpawnGroup group : Vars.state.rules.spawns) {
             int amount = group.getSpawned(nextWave - 1);
-            if (amount > 0) {
-                nextWaveCounts.put(group.type, nextWaveCounts.get(group.type, 0) + amount);
+
+            if (Vars.state.isCampaign()) {
+                amount = Math.max(1, group.effect == StatusEffects.boss
+                        ? (int) (amount * Vars.state.getPlanet().campaignRules.difficulty.enemySpawnMultiplier)
+                        : Mathf.round(amount * Vars.state.getPlanet().campaignRules.difficulty.enemySpawnMultiplier));
+            }
+
+            int spawnedf = amount;
+
+            if (spawnedf > 0) {
+                nextWaveCounts.put(group.type, nextWaveCounts.get(group.type, 0) + spawnedf);
             }
         }
     }
 
     private void updateUI() {
         clear();
-
-        if (!Vars.state.rules.waves) {
-            return;
-        }
 
         top().left();
         background(Tex.pane);
@@ -155,7 +164,8 @@ public class WavePreviewFeature extends Table implements Feature {
         if (!nextWaveCounts.isEmpty()) {
             image().color(mindustry.graphics.Pal.gray).height(2).growX().pad(4).row();
 
-            Label nextWaveLabel = add(new Label(() -> "" + (Vars.state.wave + 1))).style(Styles.outlineLabel).left().padLeft(4).get();
+            Label nextWaveLabel = add(new Label(() -> "" + (Vars.state.wave + 1))).style(Styles.outlineLabel).left()
+                    .padLeft(4).get();
             nextWaveLabel.setFontScale(scale);
             row();
 
@@ -178,17 +188,22 @@ public class WavePreviewFeature extends Table implements Feature {
         }
 
         int i = 0;
-        for (UnitType type : counts.keys()) {
+
+        var keys = Seq.with(counts.keys()).sort(u -> u.health);
+
+        for (UnitType type : keys) {
             int amount = counts.get(type);
-            if (amount <= 0)
+            if (amount <= 0) {
                 continue;
+            }
 
             table.image(type.uiIcon).size(16 * 1.5f * scale).padRight(4 * scale);
             Label l = table.add(String.valueOf(amount)).style(Styles.outlineLabel).padRight(8 * scale).get();
             l.setFontScale(scale);
 
-            if (++i % 3 == 0)
+            if (++i % 3 == 0) {
                 table.row();
+            }
         }
     }
 }
