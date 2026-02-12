@@ -140,7 +140,7 @@ public class SmartConveyorFeature implements Feature {
 
             Vec2 pos = Core.camera.project(selectedTile.worldx(), selectedTile.worldy());
 
-            currentMenu.setPosition(pos.x, pos.y + selectedTile.block().size * Vars.tilesize / 2f, Align.center);
+            currentMenu.setPosition(pos.x, pos.y + selectedTile.block().size * Vars.tilesize * 2, Align.center);
         });
 
         Vars.content.blocks().each(block -> {
