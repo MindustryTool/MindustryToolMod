@@ -8,7 +8,8 @@ import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import mindustry.Vars;
-import mindustry.game.EventType.WorldLoadEndEvent;
+import mindustry.game.EventType.PlayEvent;
+import mindustry.game.EventType.StateChangeEvent;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
@@ -40,15 +41,18 @@ public class GodModeFeature extends Table implements Feature {
     public void init() {
         rebuild();
 
-        Events.run(WorldLoadEndEvent.class, () -> {
-            if (internal.isAvailable()) {
-                provider = internal;
-            } else if (js.isAvailable()) {
-                provider = js;
-            }
+        Events.run(PlayEvent.class, this::switchProvider);
+        Events.run(StateChangeEvent.class, this::switchProvider);
+    }
 
-            rebuild();
-        });
+    private void switchProvider() {
+        if (internal.isAvailable()) {
+            provider = internal;
+        } else if (js.isAvailable()) {
+            provider = js;
+        }
+
+        rebuild();
     }
 
     @Override
