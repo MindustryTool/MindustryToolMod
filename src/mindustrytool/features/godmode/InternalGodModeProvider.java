@@ -13,7 +13,10 @@ public class InternalGodModeProvider implements GodModeProvider {
 
     @Override
     public boolean isAvailable() {
-        return !Vars.net.active() || Vars.net.server();
+        var singleplayer = !Vars.net.active();
+        var hosting = Vars.net.server();
+
+        return singleplayer || hosting;
     }
 
     @Override

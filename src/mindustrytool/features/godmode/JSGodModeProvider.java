@@ -15,7 +15,11 @@ public class JSGodModeProvider implements GodModeProvider {
 
     @Override
     public boolean isAvailable() {
-        return Vars.net.active() && Vars.net.client() && Vars.player != null && Vars.player.admin;
+        var isAdminInServer = Vars.net.client() &&
+                Vars.player != null &&
+                Vars.player.admin;
+
+        return isAdminInServer;
     }
 
     @Override
@@ -53,7 +57,7 @@ public class JSGodModeProvider implements GodModeProvider {
                                 effect.name, duration);
                     },
                     (effect) -> {
-                        js("if(Vars.player.unit() != null) Vars.player.unit().unapply(Vars.content.statusEffect(\"@\"), @)",
+                        js("if(Vars.player.unit() != null) Vars.player.unit().unapply(Vars.content.statusEffect(\"@\"))",
                                 effect.name);
                     });
         }).tooltip("Effects");
