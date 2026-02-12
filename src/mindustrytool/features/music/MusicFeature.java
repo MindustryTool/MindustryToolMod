@@ -108,8 +108,9 @@ public class MusicFeature implements Feature {
                             music = new Music(file);
                             musicCache.put(absPath, music);
                         } catch (Exception e) {
-                            Log.err("Failed to create music instance for @", path, e);
-                            Vars.ui.showException(e);
+                            Vars.ui.showException("Failed to create music instance for " + path
+                                    + ", maybe its your filename is too long", e);
+                            deleted.add(path);
                             continue;
                         }
                     }
