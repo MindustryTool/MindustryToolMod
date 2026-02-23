@@ -227,6 +227,7 @@ public class PathfindingDisplay implements Feature {
         boolean useCulling = totalUnits > 300;
         Rect cullBounds = useCulling ? Core.camera.bounds(Tmp.r1).grow(500f) : null;
         float currentTime = Time.time;
+        int updatesThisFrame = 0;
 
         for (Unit unit : Groups.unit) {
             if (unit.team == player.team()) {
@@ -255,9 +256,13 @@ public class PathfindingDisplay implements Feature {
                     cacheEntry.data = new float[250 * 2];
                     pathCache.put(cacheKey, cacheEntry);
                 }
-                cacheEntry.size = 0;
-                recalculatePath(unit, cacheEntry, maxSteps);
-                cacheEntry.lastUpdateTime = currentTime + Mathf.random(3f, 8f);
+                
+                if (updatesThisFrame < 3) {
+                    cacheEntry.size = 0;
+                    recalculatePath(unit, cacheEntry, maxSteps);
+                    cacheEntry.lastUpdateTime = currentTime + Mathf.random(3f, 8f);
+                    updatesThisFrame++;
+                }
             }
 
             if (cacheEntry.size >= 2) {
@@ -377,7 +382,7 @@ public class PathfindingDisplay implements Feature {
                     if (cache == null || (currentTime - cache.lastUpdateTime) > 60f) {
                         if (cache == null) {
                             cache = new PathfindingCache();
-                            cache.data = new float[1024];
+                            cache.data = new float[2048];
                             spawnPathCache.put(key, cache);
                         }
                         updateSpawnPathCache(cache, spawnTile, team, costType);

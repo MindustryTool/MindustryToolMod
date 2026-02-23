@@ -164,7 +164,7 @@ public class HealthBarVisualizer implements Feature {
             if (shieldValue > 1) {
                 float shieldW = w * (shieldValue % 1);
                 float shieldCenterX = left + shieldW / 2f;
-                Draw.color(Pal.shield.cpy().add(0f, 0f, 0.2f * shieldValue), 0.75f * HealthBarConfig.opacity);
+                Draw.color(arc.util.Tmp.c1.set(Pal.shield).add(0f, 0f, 0.2f * shieldValue, 0f), 0.75f * HealthBarConfig.opacity);
                 Draw.rect(barRegion, shieldCenterX, y, shieldW, h);
             }
 

@@ -466,23 +466,16 @@ public class Main extends Mod {
 
                     json.put("content", log);
 
-                    CompletableFuture<Void> future = new CompletableFuture<>();
-
                     Http.post(Config.API_v4_URL + "/crashes", Utils.toJson(json))
                             .header("Content-Type", "application/json")
                             .error(err -> {
                                 if (err instanceof HttpStatusException httpStatusException) {
                                     Log.err(httpStatusException.response.getResultAsString());
                                 }
-
-                                future.completeExceptionally(err);
                             })
                             .submit(res -> {
                                 Log.info(res.getResultAsString());
-                                future.complete(null);
                             });
-
-                    future.get(10, TimeUnit.SECONDS);
                 } catch (Exception err) {
                     Log.err(err);
                 }
