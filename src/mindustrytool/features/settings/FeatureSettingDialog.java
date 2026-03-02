@@ -275,7 +275,10 @@ public class FeatureSettingDialog extends BaseDialog {
             }
         }
 
-        paneTable.row();
+        if (i % cols != 0) {
+            paneTable.row();
+        }
+
         paneTable.image().color(Color.gray).growX().height(4f).colspan(cols).pad(10).row();
 
         paneTable.add("@feature").padLeft(10).top().left().row();
@@ -328,6 +331,6 @@ public class FeatureSettingDialog extends BaseDialog {
 
                 c.button(Icon.linkSmall, () -> new IconBrowserDialog().show());
             }).grow();
-        }).growX().width(cardWidth).height(180f).pad(10f);
+        }).growX().height(180f).pad(10f);
     }
 }

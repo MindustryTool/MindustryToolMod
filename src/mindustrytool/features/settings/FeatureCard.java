@@ -21,7 +21,7 @@ public class FeatureCard {
         var metadata = feature.getMetadata();
 
         var card = parent.button(Styles.black8, () -> {
-        }).growX().height(180f).pad(5f).grow()
+        }).growX().height(180f).pad(5f)
                 .color(enabled ? Color.green : Color.red).get();
 
         card.addListener(new ClickListener() {
@@ -68,9 +68,9 @@ public class FeatureCard {
             c.add(Utils.getString(metadata.description())).color(Color.lightGray).fontScale(0.9f).wrap().growX()
                     .padTop(10).ellipsis(true)
                     .row();
-            c.add().growY().row();
+            c.add().row();
             c.add(enabled ? "@enabled" : "@disabled").color(enabled ? Color.green : Color.red).left();
-        }).top().left().grow();
+        }).top().left();
     }
 
     public static void buildLink(Table parent, Feature feature) {
@@ -101,11 +101,11 @@ public class FeatureCard {
                         .padTop(10)
                         .ellipsis(true)
                         .row();
-                c.add().growY().row();
+                c.add().row();
                 c.add().growX();
 
                 c.button(Icon.linkSmall, () -> feature.dialog().ifPresent(d -> d.show()));
-            }).grow();
+            });
         }).growX().height(180f).pad(5f).get().clicked(() -> feature.dialog().ifPresent(d -> d.show()));
     }
 
@@ -132,7 +132,7 @@ public class FeatureCard {
                         mindustry.Vars.ui.showInfoFade("@copied");
                     }
                 });
-            }).grow();
+            });
         }).growX().height(180f).pad(5f);
     }
 }
