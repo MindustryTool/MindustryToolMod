@@ -218,18 +218,24 @@ public class FeatureSettingDialog extends BaseDialog {
 
                 t.table(meta -> {
                     meta.left();
-                    meta.add(task.status).style(Styles.outlineLabel).color(Color.yellow).fontScale(0.8f).padRight(10);
-                    if (task.author != null) {
-                        meta.add("by " + task.author.getName()).style(Styles.outlineLabel).color(Color.gray)
-                                .fontScale(0.8f)
-                                .growX();
-                    }
+                    meta.table(info -> {
+                        info.add(task.status).style(Styles.outlineLabel).color(Color.yellow).fontScale(0.8f)
+                                .padRight(10)
+                                .padTop(5);
+
+                        if (task.author != null) {
+                            info.add("by " + task.author.getName()).style(Styles.outlineLabel).color(Color.gray)
+                                    .fontScale(0.8f)
+                                    .growX();
+                        }
+                    }).growX();
 
                     if ("ACCEPTED".equals(task.status)) {
                         meta.button(Icon.upOpen, () -> {
                             Core.app.openURI(Config.PROJECT_URL + "/projects/" + Config.PROJECT_ID);
-                        }).size(50).padLeft(10).padRight(10);
+                        }).size(50).padLeft(10).padRight(10).center();
                     }
+                    meta.center().left();
                 }).growX().center().left();
 
             }).growX().pad(5).row();
