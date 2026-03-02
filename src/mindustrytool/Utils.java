@@ -2,6 +2,7 @@ package mindustrytool;
 
 import java.io.IOException;
 
+import arc.Core;
 import arc.graphics.Texture;
 import arc.graphics.g2d.TextureRegion;
 import arc.math.geom.*;
@@ -185,6 +186,22 @@ public class Utils {
         // Code
         text = text.replaceAll("`([^`]*)`", "[cyan]$1[]");
 
+        return text;
+    }
+
+    public static String getString(String text) {
+        if (text == null) {
+            return "";
+        }
+
+        if (text.startsWith("@")) {
+            String key = text.substring(1);
+            try {
+                return Core.bundle.get(key);
+            } catch (Exception e) {
+                return text;
+            }
+        }
         return text;
     }
 

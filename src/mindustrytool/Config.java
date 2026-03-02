@@ -34,4 +34,8 @@ public class Config {
             new Sort("oldest", "time_asc"), //
             new Sort("most-download", "download-count_desc"), //
             new Sort("most-like", "like_desc"));
+
+
+    public static final String PROJECT_URL = "https://your-choice-seven.vercel.app";
+    public static final String PROJECT_ID = "cmm8tccmc0001vlucyj8bn6s1";
 }

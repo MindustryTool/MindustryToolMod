@@ -158,3 +158,5 @@ android/libs/
 build.bat
 
 .vscode
+get-pip.py
+/venv/

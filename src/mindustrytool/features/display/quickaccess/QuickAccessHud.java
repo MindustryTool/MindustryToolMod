@@ -207,7 +207,7 @@ public class QuickAccessHud extends Table implements Feature {
                     .size(buttonSize * 0.7f)
                     .scaling(Scaling.fit);
         }, Styles.clearNonei, () -> {
-            Main.featureSettingDialog.show(false);
+            Main.featureSettingDialog.show();
         })
                 .size(buttonSize)
                 .margin(margin)

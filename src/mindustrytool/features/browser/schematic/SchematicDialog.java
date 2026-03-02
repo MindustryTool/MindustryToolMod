@@ -395,9 +395,13 @@ public class SchematicDialog extends BaseDialog {
     public static void handleCopySchematic(String id) {
         handleDownloadSchematicData(id, data -> {
             Core.app.post(() -> {
-                Schematic s = Utils.readSchematic(data);
-                Core.app.setClipboardText(Vars.schematics.writeBase64(s));
-                ui.showInfoFade("@copied");
+                try {
+                    Schematic s = Utils.readSchematic(data);
+                    Core.app.setClipboardText(Vars.schematics.writeBase64(s));
+                    ui.showInfoFade("@copied");
+                } catch (Exception e) {
+                    ui.showInfoFade(e.getMessage());
+                }
             });
         });
     }
@@ -405,13 +409,17 @@ public class SchematicDialog extends BaseDialog {
     public static void handleDownloadSchematic(String id) {
         handleDownloadSchematicData(id, data -> {
             SchematicService.findSchematicById(id).thenAccept(detail -> {
-                Schematic s = Utils.readSchematic(data);
-                Core.app.post(() -> {
-                    s.labels.add(Seq.with(detail.getTags().stream().map(i -> i.getName()).toArray(String[]::new)));
-                    s.removeSteamID();
-                    Vars.schematics.add(s);
-                    ui.showInfoFade("@schematic.saved");
-                });
+                try {
+                    Schematic s = Utils.readSchematic(data);
+                    Core.app.post(() -> {
+                        s.labels.add(Seq.with(detail.getTags().stream().map(i -> i.getName()).toArray(String[]::new)));
+                        s.removeSteamID();
+                        Vars.schematics.add(s);
+                        ui.showInfoFade("@schematic.saved");
+                    });
+                } catch (Exception e) {
+                    ui.showInfoFade(e.getMessage());
+                }
             });
         });
     }

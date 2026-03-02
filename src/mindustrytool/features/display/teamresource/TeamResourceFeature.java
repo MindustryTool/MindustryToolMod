@@ -423,7 +423,7 @@ public class TeamResourceFeature extends Table implements Feature {
             int cap = Float.compare(b.getLastCapacity(), a.getLastCapacity());
             if (cap != 0)
                 return cap;
-            return Float.compare(b.getLastPowerProduced(), a.getLastPowerProduced());
+            return Integer.compare(a.hashCode(), b.hashCode());
         });
 
         if (!newGraphs.equals(teamGraphs)) {

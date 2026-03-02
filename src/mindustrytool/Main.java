@@ -8,8 +8,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import arc.Core;
 import arc.Events;
@@ -165,7 +163,7 @@ public class Main extends Mod {
 
     private void addCustomButtons() {
         try {
-            Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show(true));
+            Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
         } catch (Exception e) {
             Log.err(e);
         }
@@ -466,23 +464,16 @@ public class Main extends Mod {
 
                     json.put("content", log);
 
-                    CompletableFuture<Void> future = new CompletableFuture<>();
-
                     Http.post(Config.API_v4_URL + "/crashes", Utils.toJson(json))
                             .header("Content-Type", "application/json")
                             .error(err -> {
                                 if (err instanceof HttpStatusException httpStatusException) {
                                     Log.err(httpStatusException.response.getResultAsString());
                                 }
-
-                                future.completeExceptionally(err);
                             })
                             .submit(res -> {
                                 Log.info(res.getResultAsString());
-                                future.complete(null);
                             });
-
-                    future.get(10, TimeUnit.SECONDS);
                 } catch (Exception err) {
                     Log.err(err);
                 }

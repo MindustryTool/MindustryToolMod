@@ -704,8 +704,12 @@ public class ChatOverlay extends Table {
                         .top().left().growX().padTop(6 * scale);
 
                 card.clicked(() -> {
-                    Core.app.setClipboardText(msg.content);
-                    Vars.ui.showInfoFade("@copied");
+                    try {
+                        Core.app.setClipboardText(msg.content);
+                        Vars.ui.showInfoFade("@copied");
+                    } catch (Exception e) {
+                        Vars.ui.showInfoFade(e.getMessage());
+                    }
                 });
             }).growX().pad(8 * scale).top();
 

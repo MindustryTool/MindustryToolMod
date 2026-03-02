@@ -2,91 +2,39 @@ package mindustrytool.features.settings;
 
 import arc.Core;
 import arc.graphics.Color;
-import arc.scene.event.ClickListener;
-import arc.scene.event.InputEvent;
-import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
-import arc.struct.Seq;
-import arc.util.Align;
-import arc.util.Log;
-import arc.util.Scaling;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import mindustry.Vars;
 import mindustry.gen.Icon;
-import mindustry.gen.Iconc;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
+import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
+import mindustrytool.features.WebFeature;
 import mindustrytool.ui.ChangelogDialog;
+import arc.util.Http;
+import arc.util.Log;
+import mindustrytool.dto.TaskData;
+import mindustrytool.dto.TaskResponse;
+import java.util.List;
 
 public class FeatureSettingDialog extends BaseDialog {
 
-    private static final Seq<WebFeature> webFeatures = Seq.with(
-            new WebFeature(
-                    "@content-patches",
-                    "@content-patches.description",
-                    "https://mindustry-tool.com/vi/content-patches?size=100"),
-            new WebFeature(
-                    "@logic-editor",
-                    "@logic-editor.description",
-                    "https://mindustry-tool.com/vi/tools/logic"),
-            new WebFeature(
-                    "@logic-display-generator",
-                    "@logic-display-generator.description",
-                    "https://mindustry-tool.com/vi/tools/logic-display-generator"),
-            new WebFeature(
-                    "@sorter-image-generator",
-                    "@sorter-image-generator.description",
-                    "https://mindustry-tool.com/vi/tools/sorter-generator"),
-            new WebFeature(
-                    "@canvas-image-generator",
-                    "@canvas-image-generator.description",
-                    "https://mindustry-tool.com/vi/tools/canvas-generator"),
-            new WebFeature(
-                    "@wiki",
-                    "@wiki.description",
-                    "https://mindustry-tool.com/vi/wiki"),
-            new WebFeature(
-                    "@post",
-                    "@post.description",
-                    "https://mindustry-tool.com/vi/posts"),
-            new WebFeature(
-                    "@free-mindustry-server",
-                    "@free-mindustry-server.description",
-                    "https://mindustry-tool.com/vi/@me/servers")
-
-    //
-    );
-
-    private boolean showWebFeature = true;
     private String filter = "";
     private Table paneTable;
 
-    private String t(String text) {
-        if (text == null) {
-            return "";
-        }
+    private List<TaskData> inProgressTasks = null;
+    private List<TaskData> acceptedTasks = null;
+    private boolean isLoadingTasks = false;
 
-        if (text.startsWith("@")) {
-            String key = text.substring(1);
-            try {
-                return Core.bundle.get(key);
-            } catch (Exception e) {
-                return text;
-            }
-        }
-        return text;
+    private enum Tab {
+        General, Development
     }
 
-    public Dialog show(boolean showWebFeature) {
-        this.showWebFeature = showWebFeature;
-        return super.show();
-    }
+    private Tab currentTab = Tab.General;
 
     public FeatureSettingDialog() {
         super("Feature");
@@ -110,7 +58,29 @@ public class FeatureSettingDialog extends BaseDialog {
 
     private void rebuild() {
         cont.clear();
+        cont.top();
 
+        cont.table(t -> {
+            t.button("General", Styles.togglet, () -> {
+                currentTab = Tab.General;
+                rebuild();
+            }).checked(currentTab == Tab.General).growX().height(50).padRight(10).padLeft(10);
+
+            t.button("Development", Styles.togglet, () -> {
+                currentTab = Tab.Development;
+                rebuild();
+            }).checked(currentTab == Tab.Development).growX().height(50).padRight(10);
+        }).growX().row();
+
+        if (currentTab == Tab.General) {
+            buildGeneral();
+        } else {
+            buildDevelopment();
+        }
+
+    }
+
+    private void buildGeneral() {
         cont.table(s -> {
             s.left();
             s.image(Icon.zoom).padRight(8);
@@ -126,6 +96,152 @@ public class FeatureSettingDialog extends BaseDialog {
         }).scrollX(false).grow();
     }
 
+    private void buildDevelopment() {
+        if (inProgressTasks != null && acceptedTasks != null) {
+            buildTaskTable(inProgressTasks, acceptedTasks);
+            return;
+        }
+
+        if (isLoadingTasks) {
+            cont.add("@loading").color(Color.gray).center();
+            return;
+        }
+
+        isLoadingTasks = true;
+        inProgressTasks = null;
+        acceptedTasks = null;
+        cont.add("@loading").color(Color.gray).center();
+
+        // Load IN_PROGRESS
+        Http.get(Config.PROJECT_URL + "/api/v1/projects/" + Config.PROJECT_ID + "/tasks?status=IN_PROGRESS")
+                .error(this::handleError)
+                .timeout(20000)
+                .submit(response -> {
+                    try {
+                        TaskResponse taskResponse = Utils.fromJson(TaskResponse.class, response.getResultAsString());
+                        inProgressTasks = taskResponse.data;
+                        checkTasksLoaded();
+                    } catch (Exception e) {
+                        handleError(e);
+                    }
+                });
+
+        // Load ACCEPTED
+        Http.get(Config.PROJECT_URL + "/api/v1/projects/" + Config.PROJECT_ID + "/tasks?status=ACCEPTED")
+                .error(this::handleError)
+                .timeout(20000)
+                .submit(response -> {
+                    try {
+                        TaskResponse taskResponse = Utils.fromJson(TaskResponse.class, response.getResultAsString());
+                        acceptedTasks = taskResponse.data;
+                        checkTasksLoaded();
+                    } catch (Exception e) {
+                        handleError(e);
+                    }
+                });
+    }
+
+    private void handleError(Throwable e) {
+        isLoadingTasks = false;
+        Core.app.post(() -> {
+            if (currentTab != Tab.Development)
+                return;
+            cont.clear();
+            cont.add("Error: " + e.getMessage()).color(Color.red).grow();
+            Log.err(e);
+        });
+    }
+
+    private void checkTasksLoaded() {
+        if (inProgressTasks != null && acceptedTasks != null) {
+            isLoadingTasks = false;
+            Core.app.post(() -> {
+                if (currentTab == Tab.Development) {
+                    rebuild();
+                }
+            });
+        }
+    }
+
+    private void buildTaskTable(List<TaskData> inProgress, List<TaskData> accepted) {
+        cont.pane(table -> {
+            table.top().left(); 
+
+            table.table(header -> {
+                header.left();
+                header.button(Icon.refresh, () -> {
+                    inProgressTasks = null;
+                    acceptedTasks = null;
+                    rebuild();
+                }).pad(10).left().height(50);
+
+                header.button("Create Suggestion", Icon.add, () -> {
+                    Core.app.openURI(Config.PROJECT_URL + "/projects/" + Config.PROJECT_ID);
+                }).pad(10).padLeft(0).left().growX();
+            }).left().growX().height(50).row();
+
+            // In Progress Section
+            if (inProgress != null && !inProgress.isEmpty()) {
+                table.add("In Progress").style(Styles.defaultLabel).color(Color.sky).pad(10).left().row();
+                renderTaskList(table, inProgress);
+            } else {
+                table.add("No tasks in progress.").color(Color.gray).pad(10).left().row();
+            }
+
+            // Divider
+            table.image().color(Color.gray).growX().height(3f).pad(10).row();
+
+            // Accepted Section
+            if (accepted != null && !accepted.isEmpty()) {
+                table.add("Accepted").style(Styles.defaultLabel).color(Color.green).pad(10).left().row();
+                renderTaskList(table, accepted);
+            } else {
+                table.add("No accepted tasks.").color(Color.gray).pad(10).left().row();
+            }
+
+        }).grow();
+    }
+
+    private void renderTaskList(Table table, List<TaskData> tasks) {
+        for (TaskData task : tasks) {
+            table.table(Tex.pane, t -> {
+                t.left().top().margin(10);
+                t.add(task.title).style(Styles.defaultLabel).color(Color.white).growX().left().row();
+
+                if (task.description != null && !task.description.isEmpty()) {
+                    String desc = task.description;
+                    if (desc.length() > 100)
+                        desc = desc.substring(0, 100) + "...";
+                    t.add(desc).style(Styles.outlineLabel).color(Color.lightGray).fontScale(0.8f).growX().left().wrap()
+                            .padTop(5).row();
+                }
+
+                t.table(meta -> {
+                    meta.left();
+                    meta.table(info -> {
+                        info.add(task.status).style(Styles.outlineLabel).color(Color.yellow).fontScale(0.8f)
+                                .padRight(10)
+                                .padTop(5);
+
+                        if (task.author != null) {
+                            info.add("by " + task.author.getName()).style(Styles.outlineLabel).color(Color.gray)
+                                    .fontScale(0.8f)
+                                    .growX();
+                        }
+                    }).growX();
+
+                    if ("ACCEPTED".equals(task.status)) {
+                        meta.button(Icon.upOpen, () -> {
+                            Core.app.openURI(Config.PROJECT_URL + "/projects/" + Config.PROJECT_ID);
+                        }).size(50).padLeft(10).padRight(10).center();
+                    }
+                    meta.center().left();
+                }).growX().center().left();
+
+            }).growX().pad(5).row();
+        }
+    }
+
     private void rebuildPane() {
         if (paneTable == null) {
             return;
@@ -135,244 +251,76 @@ public class FeatureSettingDialog extends BaseDialog {
         paneTable.top().left();
 
         int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / Scl.scl() * 0.85f / 340f));
-
         float cardWidth = ((float) arc.Core.graphics.getWidth() / Scl.scl() * 0.85f) / cols;
 
+        paneTable.row();
+        paneTable.button("@reeanable", () -> {
+            FeatureManager.getInstance().reEnable();
+            rebuildPane();
+        }).width(250).top().left().pad(10).tooltip("Used after a crash");
+
+        paneTable.row();
+
         int i = 0;
+        // Toggleable Features
+        for (Feature feature : FeatureManager.getInstance().getFeatures()) {
+            if (!filter.isEmpty()
+                    && !Utils.getString(feature.getMetadata().name()).toLowerCase().contains(filter.toLowerCase()))
+                continue;
 
-        if (showWebFeature) {
-            paneTable.add("@feature").padLeft(10).top().left().row();
+            FeatureCard.buildToggle(paneTable, feature, this::rebuildPane);
 
-            var featureWithDialog = FeatureManager.getInstance().getEnableds()
-                    .select(f -> f.dialog().isPresent() && (filter.isEmpty()
-                            || t(f.getMetadata().name()).toLowerCase().contains(filter.toLowerCase())));
-
-            if (featureWithDialog.size > 0) {
-                for (Feature feature : featureWithDialog) {
-                    buildFeatureButton(paneTable, feature, cardWidth);
-                    if (++i % cols == 0) {
-                        paneTable.row();
-                    }
-                }
-            }
-
-            for (WebFeature webFeature : webFeatures) {
-                if (!filter.isEmpty() && !t(webFeature.getName()).toLowerCase().contains(filter.toLowerCase())) {
-                    continue;
-                }
-                buildFeatureButton(paneTable, webFeature, cardWidth);
-                if (++i % cols == 0) {
-                    paneTable.row();
-                }
-            }
-
-            buildIconDialog(paneTable, cardWidth);
             if (++i % cols == 0) {
                 paneTable.row();
             }
-
-            paneTable.row();
-            paneTable.button("@reeanable", () -> {
-                FeatureManager.getInstance().reEnable();
-                rebuildPane();
-            }).width(250).top().left().pad(10).tooltip("Used after a crash");
-
-            paneTable.table().growX().row();
-
-            paneTable.row();
-            paneTable.image().color(Color.gray).growX().height(4f)
-                    .colspan(cols)
-                    .pad(10)
-                    .row();
-
         }
-        paneTable.add("@settings").padLeft(10).top().left().row();
+
+        if (i % cols != 0) {
+            paneTable.row();
+        }
+
+        paneTable.image().color(Color.gray).growX().height(4f).colspan(cols).pad(10).row();
+
+        paneTable.add("@feature").padLeft(10).top().left().row();
 
         i = 0;
 
-        for (Feature feature : FeatureManager.getInstance().getFeatures()) {
-            if (!filter.isEmpty() && !t(feature.getMetadata().name()).toLowerCase().contains(filter.toLowerCase())) {
+        // Features with Dialogs
+        for (Feature feature : FeatureManager.getInstance().getEnableds()) {
+            if (!feature.dialog().isPresent())
                 continue;
-            }
-            paneTable.table(parent -> buildFeatureCard(parent, feature, cardWidth))
-                    .growX();
+            if (!filter.isEmpty()
+                    && !Utils.getString(feature.getMetadata().name()).toLowerCase().contains(filter.toLowerCase()))
+                continue;
 
-            if (++i % cols == 0) {
+            FeatureCard.buildLink(paneTable, feature);
+            if (++i % cols == 0)
                 paneTable.row();
-            }
         }
+
+        // Web Features
+        for (WebFeature webFeature : WebFeature.defaults) {
+            if (!filter.isEmpty() && !Utils.getString(webFeature.name()).toLowerCase().contains(filter.toLowerCase()))
+                continue;
+
+            FeatureCard.buildLink(paneTable, webFeature);
+            if (++i % cols == 0)
+                paneTable.row();
+        }
+
+        // Icon Dialog
+        buildIconDialogButton(paneTable, cardWidth);
+        if (++i % cols == 0)
+            paneTable.row();
+
+        paneTable.table().growX().row();
     }
 
-    private void buildFeatureButton(Table parent, Feature feature, float cardWidth) {
-        var metadata = feature.getMetadata();
+    private void buildIconDialogButton(Table parent, float cardWidth) {
         parent.table(Tex.button, card -> {
             card.top().left();
-
             card.table(c -> {
                 c.top().left().margin(12);
-
-                c.table(header -> {
-                    header.left();
-                    header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
-
-                    if (feature.setting().isPresent()) {
-                        header.button(Icon.settings, Styles.clearNonei,
-                                () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
-                                .size(32)
-                                .padLeft(8)
-                                .get().addListener(new ClickListener() {
-                                    @Override
-                                    public void clicked(InputEvent event, float x, float y) {
-                                        event.stop();
-                                    }
-                                });
-                    }
-
-                }).growX().row();
-
-                c.add(metadata.description())
-                        .color(Color.lightGray)
-                        .fontScale(0.9f)
-                        .wrap()
-                        .growX()
-                        .padTop(10)
-                        .row();
-
-                c.add().growY().row();
-                c.add().growX();
-
-                c.button(Icon.linkSmall, () -> {
-                    feature.dialog().get().show();
-                });
-
-            }).grow();
-
-        })
-                .growX()
-                .width(cardWidth)
-                .height(180f).pad(10f).get().clicked(() -> {
-                    feature.dialog().get().show();
-                });
-    }
-
-    private void buildFeatureButton(Table parent, WebFeature feature, float cardWidth) {
-        parent.table(Tex.button, card -> {
-            card.top().left();
-
-            card.table(c -> {
-                c.top().left().margin(12);
-
-                c.table(header -> {
-                    header.left();
-                    header.add(feature.getName()).style(Styles.defaultLabel).color(Color.white).growX().left();
-                }).growX().row();
-
-                c.add(feature.getDescription())
-                        .color(Color.lightGray)
-                        .fontScale(0.9f)
-                        .wrap()
-                        .growX()
-                        .padTop(10)
-                        .row();
-
-                c.add().growY().row();
-                c.add().growX();
-
-                c.button(Icon.linkSmall, () -> {
-                    if (!Core.app.openURI(feature.getUrl())) {
-                        Core.app.setClipboardText(feature.getUrl());
-                        Vars.ui.showInfoFade("@copied");
-                    }
-                });
-
-            }).grow();
-
-        })
-                .growX()
-                .width(cardWidth)
-                .height(180f).pad(10f);
-    }
-
-    private void buildFeatureCard(Table parent, Feature feature, float cardWidth) {
-        boolean enabled = FeatureManager.getInstance().isEnabled(feature);
-        var metadata = feature.getMetadata();
-
-        var card = parent.button(Styles.black8, () -> {
-        })
-                .growX()
-                .width(cardWidth)
-                .height(180f)
-                .pad(10f)
-                .grow()
-                .color(enabled ? Color.green : Color.red)
-                .get();
-
-        card.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                if (event.stopped) {
-                    return;
-                }
-
-                try {
-                    FeatureManager.getInstance().setEnabled(feature, !enabled);
-                    parent.clear();
-                    buildFeatureCard(parent, feature, cardWidth);
-                } catch (Exception e) {
-                    Log.err(e);
-                }
-            }
-        });
-
-        card.top().left();
-        card.table(c -> {
-            c.top().left().margin(12);
-
-            c.table(header -> {
-                header.left();
-                header.image(metadata.icon()).scaling(Scaling.fill).size(24).padRight(8);
-                header.add(metadata.name()).style(Styles.defaultLabel).color(Color.white).growX().left();
-
-                if (feature.setting().isPresent()) {
-                    header.button(Icon.settings, Styles.clearNonei,
-                            () -> feature.setting().ifPresent(dialog -> Core.app.post(() -> dialog.show())))
-                            .size(32)
-                            .padLeft(8)
-                            .get().addListener(new ClickListener() {
-                                @Override
-                                public void clicked(InputEvent event, float x, float y) {
-                                    event.stop();
-                                }
-                            });
-                }
-
-                header.image(enabled ? Icon.eyeSmall : Icon.eyeOffSmall).size(24).padLeft(4)
-                        .color(enabled ? Color.white : Color.gray);
-            }).growX().row();
-
-            c.add(metadata.description())
-                    .color(Color.lightGray)
-                    .fontScale(0.9f)
-                    .wrap()
-                    .growX()
-                    .padTop(10)
-                    .row();
-
-            c.add().growY().row();
-
-            c.add(enabled ? "@enabled" : "@disabled")
-                    .color(enabled ? Color.green : Color.red)
-                    .left();
-        }).top().left().grow();
-    }
-
-    private void buildIconDialog(Table parent, float cardWidth) {
-        parent.table(Tex.button, card -> {
-            card.top().left();
-
-            card.table(c -> {
-                c.top().left().margin(12);
-
                 c.table(header -> {
                     header.left();
                     header.add("Icon").style(Styles.defaultLabel).color(Color.white).growX().left();
@@ -381,87 +329,8 @@ public class FeatureSettingDialog extends BaseDialog {
                 c.add().growY().row();
                 c.add().growX();
 
-                c.button(Icon.linkSmall, () -> {
-                    var dialog = new BaseDialog("Icon");
-
-                    dialog.addCloseButton();
-                    dialog.closeOnBack();
-
-                    var containers = new Table();
-
-                    int width = 400;
-                    int cols = Math.max((int) (Core.graphics.getWidth() * 0.9 / (width + 20)), 1);
-                    String[] filter = { "" };
-
-                    Runnable build = () -> {
-                        containers.clear();
-
-                        var declaredFields = Iconc.class.getDeclaredFields();
-
-                        int col = 0;
-
-                        for (var field : declaredFields) {
-                            try {
-                                field.setAccessible(true);
-
-                                var icon = field.get(null);
-
-                                if (icon == Iconc.all) {
-                                    continue;
-                                }
-
-                                if (icon instanceof String || icon instanceof Character) {
-                                    if (!field.getName().toLowerCase().contains(filter[0]
-                                            .toLowerCase())) {
-                                        continue;
-                                    }
-
-                                    containers.button(String.valueOf(icon) + " " + field.getName(), () -> {
-                                        Core.app.setClipboardText(String.valueOf(icon));
-                                    })
-                                            .width(width)
-                                            .scaling(Scaling.fill)
-                                            .growX()
-                                            .padRight(8)
-                                            .padBottom(8)
-                                            .labelAlign(Align.left)
-                                            .top()
-                                            .left()
-                                            .get();
-
-                                    if (++col % cols == 0) {
-                                        containers.row();
-                                    }
-                                }
-                            } catch (Exception e) {
-                                Log.err(e);
-                            }
-                        }
-                    };
-
-                    dialog.cont.field(filter[0], Styles.defaultField, (t) -> {
-                        filter[0] = t;
-                        build.run();
-                    }).width(cols * (width + 20) - 20).growX().row();
-
-                    build.run();
-                    dialog.cont.pane(containers).scrollX(false).top();
-                    dialog.cont.top();
-
-                    dialog.show();
-                });
-
+                c.button(Icon.linkSmall, () -> new IconBrowserDialog().show());
             }).grow();
-
-        })
-                .growX()
-                .width(cardWidth)
-                .height(180f).pad(10f);
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class WebFeature {
-        private String name, description, url;
+        }).growX().height(180f).pad(10f);
     }
 }
