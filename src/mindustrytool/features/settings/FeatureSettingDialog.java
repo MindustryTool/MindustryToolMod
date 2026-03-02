@@ -165,7 +165,7 @@ public class FeatureSettingDialog extends BaseDialog {
 
     private void buildTaskTable(List<TaskData> inProgress, List<TaskData> accepted) {
         cont.pane(table -> {
-            table.top().left();
+            table.top().left(); 
 
             table.table(header -> {
                 header.left();
