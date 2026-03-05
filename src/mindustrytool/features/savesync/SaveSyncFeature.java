@@ -21,7 +21,6 @@ import mindustrytool.features.savesync.dto.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -38,7 +37,6 @@ public class SaveSyncFeature implements Feature {
                 .name("save-sync")
                 .description("Sync your saves with the cloud.")
                 .icon(Icon.save)
-                .enabledByDefault(false)
                 .order(10)
                 .build();
     }
@@ -309,9 +307,13 @@ public class SaveSyncFeature implements Feature {
             List<ClientFileDto> files = listFiles();
             SyncSlotDto syncData = new SyncSlotDto();
             syncData.clientFiles = files;
+            try {
             var lastSyncTime = Core.settings.getLong(SETTING_LAST_SYNC, 0);
             if (lastSyncTime != 0) {
                 syncData.lastSync = Instant.ofEpochMilli(lastSyncTime);
+            }
+            } catch (Exception e){
+                Core.settings.put(SETTING_LAST_SYNC, 0);
             }
 
             cont.clear();
@@ -459,8 +461,6 @@ public class SaveSyncFeature implements Feature {
         cont.clear();
         cont.add("Sync Complete!").color(mindustry.graphics.Pal.accent).row();
         cont.button("Close", dialog::hide).size(100, 50).padTop(10);
-
-        Core.settings.put(SETTING_LAST_SYNC, new Date().toString());
 
         // Update initialFilePaths after successful sync
         initialFilePaths.clear();
