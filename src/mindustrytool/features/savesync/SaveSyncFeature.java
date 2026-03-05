@@ -12,6 +12,7 @@ import arc.util.Http.HttpStatusException;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.Main;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -416,10 +417,17 @@ public class SaveSyncFeature implements Feature {
         }
 
         DownloadDto download = downloads.get(index);
+
+        cont.clear();
+        cont.add("Downloading " + download.path).row();
         Http.get(download.url, res -> {
             try {
-                byte[] bytes = res.getResult();
-                getFile(download.path).writeBytes(bytes);
+                if (Main.self.file.path().endsWith(download.path)) {
+                    Log.info("Skipping download of " + download.path);
+                } else {
+                    byte[] bytes = res.getResult();
+                    getFile(download.path).writeBytes(bytes);
+                }
 
                 Core.app.post(() -> downloadNext(downloads, index + 1, dialog, cont, response));
             } catch (Exception e) {
