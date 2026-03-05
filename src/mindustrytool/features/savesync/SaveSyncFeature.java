@@ -15,9 +15,12 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Main;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.savesync.dto.*;
+
+import static mindustry.Vars.loadLocales;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -107,12 +110,16 @@ public class SaveSyncFeature implements Feature {
 
     @Override
     public void init() {
+        var feature = this;
+
         Core.app.addListener(new ApplicationListener() {
             @Override
             public void exit() {
-                String slotId = Core.settings.getString(SETTING_SLOT_ID, null);
-                if (slotId != null && AuthService.getInstance().isLoggedIn()) {
-                    performSyncOnExit(slotId);
+                if (FeatureManager.getInstance().isEnabled(feature)) {
+                    String slotId = Core.settings.getString(SETTING_SLOT_ID, null);
+                    if (slotId != null && AuthService.getInstance().isLoggedIn()) {
+                        performSyncOnExit(slotId);
+                    }
                 }
             }
         });
@@ -309,11 +316,11 @@ public class SaveSyncFeature implements Feature {
             SyncSlotDto syncData = new SyncSlotDto();
             syncData.clientFiles = files;
             try {
-            var lastSyncTime = Core.settings.getLong(SETTING_LAST_SYNC, 0);
-            if (lastSyncTime != 0) {
-                syncData.lastSync = Instant.ofEpochMilli(lastSyncTime);
-            }
-            } catch (Exception e){
+                var lastSyncTime = Core.settings.getLong(SETTING_LAST_SYNC, 0);
+                if (lastSyncTime != 0) {
+                    syncData.lastSync = Instant.ofEpochMilli(lastSyncTime);
+                }
+            } catch (Exception e) {
                 Core.settings.put(SETTING_LAST_SYNC, 0);
             }
 
@@ -344,20 +351,29 @@ public class SaveSyncFeature implements Feature {
         }
     }
 
-    private void processSyncResponse(SyncSlotResponseDto response, BaseDialog dialog, Table cont) {
+    private ClientFileDto findFileByHash(List<ClientFileDto> files, String hash) {
+        for (ClientFileDto file : files) {
+            if (file.hash.equals(hash)) {
+                return file;
+            }
+        }
+        return null;
+    }
+
+    private void processSyncResponse(SyncSlotResponseDto response, BaseDialog dialog,
+            Table cont) {
         cont.clear();
         cont.add("Processing changes...").row();
 
-        // Upload missing files
+        List<ClientFileDto> localFiles = listFiles();
+
         if (response.missingHashes != null && !response.missingHashes.isEmpty()) {
-            List<ClientFileDto> localFiles = listFiles();
             List<String> toUpload = new ArrayList<>();
             for (String hash : response.missingHashes) {
-                for (ClientFileDto file : localFiles) {
-                    if (file.hash.equals(hash)) {
-                        toUpload.add(file.path);
-                        break;
-                    }
+                var file = findFileByHash(localFiles, hash);
+                if (file != null) {
+                    toUpload.add(file.path);
+
                 }
             }
 
@@ -365,19 +381,21 @@ public class SaveSyncFeature implements Feature {
 
             if (total > 0) {
                 cont.add("Uploading " + total + " files...").row();
-                uploadNext(toUpload, 0, dialog, cont, response);
+                uploadNext(localFiles, toUpload, 0, dialog, cont, response);
                 return;
             }
         }
 
-        processDownloads(response, dialog, cont);
+        processDownloads(localFiles, response, dialog, cont);
+
         Core.settings.put(SETTING_LAST_SYNC, System.currentTimeMillis());
     }
 
-    private void uploadNext(List<String> files, int index, BaseDialog dialog, Table cont,
+    private void uploadNext(List<ClientFileDto> localFiles, List<String> files, int index, BaseDialog dialog,
+            Table cont,
             SyncSlotResponseDto response) {
         if (index >= files.size()) {
-            processDownloads(response, dialog, cont);
+            processDownloads(localFiles, response, dialog, cont);
             return;
         }
 
@@ -389,36 +407,38 @@ public class SaveSyncFeature implements Feature {
 
         if (file == null || !file.exists()) {
             Log.err("File not found for upload: " + path);
-            uploadNext(files, index + 1, dialog, cont, response);
+            uploadNext(localFiles, files, index + 1, dialog, cont, response);
             return;
         }
 
         StorageService.uploadFile(file).thenRun(() -> {
             Log.info("Uploaded " + path);
-            Core.app.post(() -> uploadNext(files, index + 1, dialog, cont, response));
+            Core.app.post(() -> uploadNext(localFiles, files, index + 1, dialog, cont, response));
         }).exceptionally(e -> {
             Core.app.post(() -> {
                 Log.err("Failed to upload " + path, e);
-                uploadNext(files, index + 1, dialog, cont, response);
+                uploadNext(localFiles, files, index + 1, dialog, cont, response);
             });
             return null;
         });
     }
 
-    private void processDownloads(SyncSlotResponseDto response, BaseDialog dialog, Table cont) {
+    private void processDownloads(List<ClientFileDto> localFiles, SyncSlotResponseDto response, BaseDialog dialog,
+            Table cont) {
         if (response.downloads != null && !response.downloads.isEmpty()) {
             cont.clear();
             cont.add("Downloading " + response.downloads.size() + " files...").row();
-            downloadNext(response.downloads, 0, dialog, cont, response);
+            downloadNext(localFiles, response.downloads, 0, dialog, cont, response);
         } else {
-            processDeletes(response, dialog, cont);
+            processDeletes(localFiles, response, dialog, cont);
         }
     }
 
-    private void downloadNext(List<DownloadDto> downloads, int index, BaseDialog dialog, Table cont,
+    private void downloadNext(List<ClientFileDto> localFiles, List<DownloadDto> downloads, int index, BaseDialog dialog,
+            Table cont,
             SyncSlotResponseDto response) {
         if (index >= downloads.size()) {
-            processDeletes(response, dialog, cont);
+            processDeletes(localFiles, response, dialog, cont);
             return;
         }
 
@@ -435,27 +455,31 @@ public class SaveSyncFeature implements Feature {
                     getFile(download.path).writeBytes(bytes);
                 }
 
-                Core.app.post(() -> downloadNext(downloads, index + 1, dialog, cont, response));
+                Core.app.post(() -> downloadNext(localFiles, downloads, index + 1, dialog, cont, response));
             } catch (Exception e) {
                 Core.app.post(() -> {
                     Log.err("Failed to save " + download.path, e);
-                    downloadNext(downloads, index + 1, dialog, cont, response);
+                    downloadNext(localFiles, downloads, index + 1, dialog, cont, response);
                 });
             }
         }, err -> {
             Core.app.post(() -> {
                 Log.err("Failed to download " + download.path, err);
-                downloadNext(downloads, index + 1, dialog, cont, response);
+                downloadNext(localFiles, downloads, index + 1, dialog, cont, response);
             });
         });
     }
 
-    private void processDeletes(SyncSlotResponseDto response, BaseDialog dialog, Table cont) {
+    private void processDeletes(List<ClientFileDto> localFiles, SyncSlotResponseDto response, BaseDialog dialog,
+            Table cont) {
         if (response.extraHashes != null && !response.extraHashes.isEmpty()) {
             cont.clear();
             cont.add("Deleting " + response.extraHashes.size() + " files...").row();
-            for (String path : response.extraHashes) {
-                getFile(path).delete();
+            for (String hash : response.extraHashes) {
+                var file = findFileByHash(localFiles, hash);
+                if (file != null) {
+                    getFile(file.path).delete();
+                }
             }
         }
 

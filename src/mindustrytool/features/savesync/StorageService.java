@@ -3,6 +3,7 @@ package mindustrytool.features.savesync;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -61,7 +62,8 @@ public class StorageService {
 
         CompletableFuture<Void> future = new CompletableFuture<>();
         AuthService.getInstance().refreshTokenIfNeeded().thenRun(() -> {
-            AuthHttp.delete(BASE_URL + "slots/" + slotId + "/files?path=" + path)
+            AuthHttp.delete(
+                    BASE_URL + "slots/" + slotId + "/files?path=" + URLEncoder.encode(path, StandardCharsets.UTF_8))
                     .header("Authorization", "Bearer " + AuthService.getInstance().getAccessToken())
                     .error(future::completeExceptionally)
                     .submit(res -> future.complete(null));
