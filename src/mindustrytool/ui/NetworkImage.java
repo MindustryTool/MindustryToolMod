@@ -41,7 +41,7 @@ public class NetworkImage extends Image {
     }
 
     public static boolean isValidImageLink(String url) {
-        return url.matches("https?://.*\\.(png|jpg|jpeg)");
+        return url.matches("^https?://[^?\\s]+\\.(png|jpg|jpeg)(\\?.*)?$");
     }
 
     @Override

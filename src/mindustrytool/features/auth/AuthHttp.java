@@ -26,6 +26,14 @@ public class AuthHttp {
         get(url).submit(success, failure);
     }
 
+    public static void delete(String url, ConsT<HttpResponse, Exception> success, Cons<Throwable> failure) {
+        delete(url).submit(success, failure);
+    }
+
+    public static AuthRequest delete(String url) {
+        return new AuthRequest(url, HttpMethod.DELETE);
+    }
+
     public static class AuthRequest {
         String url;
         HttpMethod method;
