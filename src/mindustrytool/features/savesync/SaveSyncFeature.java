@@ -78,6 +78,7 @@ public class SaveSyncFeature implements Feature {
 
     private java.util.Set<String> listFilePaths() {
         Seq<Fi> files = new Seq<>();
+        files.add(Core.settings.getSettingsFile());
         files.addAll(Vars.customMapDirectory.list());
         files.addAll(Vars.saveDirectory.list());
         files.addAll(Vars.modDirectory.list());
