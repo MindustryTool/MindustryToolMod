@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import arc.files.Fi;
+import arc.util.Log;
 import mindustrytool.Config;
 import mindustrytool.Utils;
 import mindustrytool.features.auth.AuthHttp;
@@ -56,6 +57,8 @@ public class StorageService {
     }
 
     public static CompletableFuture<Void> deleteFile(String slotId, String path) {
+        Log.info("Delete: " + path);
+
         CompletableFuture<Void> future = new CompletableFuture<>();
         AuthService.getInstance().refreshTokenIfNeeded().thenRun(() -> {
             AuthHttp.delete(BASE_URL + "slots/" + slotId + "/files?path=" + path)
@@ -95,6 +98,8 @@ public class StorageService {
     }
 
     public static CompletableFuture<Void> uploadFile(Fi file) {
+        Log.info("Upload: " + file.path());
+
         return AuthService.getInstance().refreshTokenIfNeeded().thenCompose(v -> CompletableFuture.runAsync(() -> {
             String boundary = "---" + System.currentTimeMillis();
             String LINE_FEED = "\r\n";

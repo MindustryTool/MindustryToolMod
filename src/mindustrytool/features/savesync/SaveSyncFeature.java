@@ -48,7 +48,7 @@ public class SaveSyncFeature implements Feature {
         files.add(Core.settings.getSettingsFile());
         files.addAll(Vars.customMapDirectory.list());
         files.addAll(Vars.saveDirectory.list());
-        files.addAll(Vars.modDirectory.list());
+        // files.addAll(Vars.modDirectory.list());
         files.addAll(Vars.schematicDirectory.list());
 
         String base = Vars.dataDirectory.absolutePath();
@@ -316,7 +316,6 @@ public class SaveSyncFeature implements Feature {
 
             StorageService.syncSlot(slotId, syncData).thenAccept(response -> {
                 Core.app.post(() -> {
-                    Log.info("SaveSync: SyncSlotResponseDto: " + response);
                     processSyncResponse(response, dialog, cont);
                 });
             }).exceptionally(e -> {
