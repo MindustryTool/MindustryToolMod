@@ -309,7 +309,10 @@ public class SaveSyncFeature implements Feature {
             List<ClientFileDto> files = listFiles();
             SyncSlotDto syncData = new SyncSlotDto();
             syncData.clientFiles = files;
-            // syncData.lastSync = ...
+            var lastSyncTime = Core.settings.getLong(SETTING_LAST_SYNC, 0);
+            if (lastSyncTime != 0) {
+                syncData.lastSync = Instant.ofEpochMilli(lastSyncTime);
+            }
 
             cont.clear();
             cont.add("Syncing with server...").row();
@@ -365,6 +368,7 @@ public class SaveSyncFeature implements Feature {
         }
 
         processDownloads(response, dialog, cont);
+        Core.settings.put(SETTING_LAST_SYNC, System.currentTimeMillis());
     }
 
     private void uploadNext(List<String> files, int index, BaseDialog dialog, Table cont,
