@@ -57,6 +57,7 @@ import mindustrytool.events.MusicRegisterEvent;
 import mindustrytool.features.display.wavepreview.WavePreviewFeature;
 import mindustrytool.features.chat.translation.ChatTranslationFeature;
 import mindustrytool.features.chat.pretty.PrettyChatFeature;
+import mindustrytool.features.savesync.SaveSyncFeature;
 
 public class Main extends Mod {
     public static LoadedMod self;
@@ -114,6 +115,7 @@ public class Main extends Mod {
                             new PrettyChatFeature(),
                             new AutoplayFeature(),
                             new WavePreviewFeature(),
+                            new SaveSyncFeature(),
                             // new ItemVisualizerFeature(),
                             new GodModeFeature(),
                             new SmartDrillFeature(),

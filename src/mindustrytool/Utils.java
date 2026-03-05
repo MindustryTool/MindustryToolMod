@@ -1,7 +1,5 @@
 package mindustrytool;
 
-import java.io.IOException;
-
 import arc.Core;
 import arc.graphics.Texture;
 import arc.graphics.g2d.TextureRegion;
@@ -27,6 +25,8 @@ import mindustry.world.blocks.sandbox.*;
 import mindustry.world.blocks.storage.*;
 
 import java.io.*;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.*;
@@ -34,6 +34,7 @@ import java.util.zip.*;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import static mindustry.Vars.*;
 
@@ -44,7 +45,9 @@ public class Utils {
     private static final byte[] header = { 'm', 's', 'c', 'h' };
 
     private static final ObjectMapper mapper = new ObjectMapper()
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .registerModule(new JavaTimeModule());
 
     public static synchronized Schematic readSchematic(String data) {
         return schematicData.get(data, () -> readBase64(data));
@@ -222,5 +225,28 @@ public class Utils {
             iconCache.put(name, Icon.book);
             return Icon.book;
         }
+    }
+
+    public static String sha256(File file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+        try (InputStream fis = new FileInputStream(file);
+                DigestInputStream dis = new DigestInputStream(fis, digest)) {
+
+            byte[] buffer = new byte[8192];
+            while (dis.read(buffer) != -1) {
+                // just read to update digest
+            }
+        }
+
+        return bytesToHex(digest.digest());
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }

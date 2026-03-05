@@ -26,6 +26,14 @@ public class AuthHttp {
         get(url).submit(success, failure);
     }
 
+    public static void delete(String url, ConsT<HttpResponse, Exception> success, Cons<Throwable> failure) {
+        delete(url).submit(success, failure);
+    }
+
+    public static AuthRequest delete(String url) {
+        return new AuthRequest(url, HttpMethod.DELETE);
+    }
+
     public static class AuthRequest {
         String url;
         HttpMethod method;
@@ -61,12 +69,11 @@ public class AuthHttp {
             AuthService.getInstance().refreshTokenIfNeeded()
                     .thenRun(() -> {
 
-                        HttpRequest req;
-                        if (method == HttpMethod.GET) {
-                            req = Http
-                                    .get(url).timeout(10000);
-                        } else {
-                            req = Http.post(url, content).timeout(10000);
+                        HttpRequest req = Http.request(method, url)
+                                .timeout(10000);
+
+                        if (content != null) {
+                            req.content(content);
                         }
 
                         String token = AuthService.getInstance().getAccessToken();
