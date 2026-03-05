@@ -20,8 +20,6 @@ import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.savesync.dto.*;
 
-import static mindustry.Vars.loadLocales;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
