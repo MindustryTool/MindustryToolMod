@@ -38,6 +38,7 @@ public class SaveSyncFeature implements Feature {
                 .description("Sync your saves with the cloud.")
                 .icon(Icon.save)
                 .order(10)
+                .enabledByDefault(false)
                 .build();
     }
 
