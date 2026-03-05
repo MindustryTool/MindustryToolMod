@@ -63,7 +63,7 @@ public class StorageService {
         CompletableFuture<Void> future = new CompletableFuture<>();
         AuthService.getInstance().refreshTokenIfNeeded().thenRun(() -> {
             AuthHttp.delete(
-                    BASE_URL + "slots/" + slotId + "/files?path=" + URLEncoder.encode(path, StandardCharsets.UTF_8))
+                    BASE_URL + "slots/" + slotId + "/files?path=" + URLEncoder.encode(path))
                     .header("Authorization", "Bearer " + AuthService.getInstance().getAccessToken())
                     .error(future::completeExceptionally)
                     .submit(res -> future.complete(null));
