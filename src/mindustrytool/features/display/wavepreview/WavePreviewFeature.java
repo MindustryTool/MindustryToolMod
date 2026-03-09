@@ -57,11 +57,9 @@ public class WavePreviewFeature extends Table implements Feature {
                 return;
             }
 
-            if (interval.get(30)) {
-                Core.app.post(() -> {
-                    updateCounts();
-                    updateUI();
-                });
+            if (interval.get(60)) {
+                updateCounts();
+                updateUI();
             }
         });
 
@@ -121,9 +119,8 @@ public class WavePreviewFeature extends Table implements Feature {
         });
 
         nextWaveCounts.clear();
-        int nextWave = Vars.state.wave;
         for (SpawnGroup group : Vars.state.rules.spawns) {
-            int amount = group.getSpawned(nextWave - 1);
+            int amount = group.getSpawned(Vars.state.wave - 1);
 
             if (Vars.state.isCampaign()) {
                 amount = Math.max(1, group.effect == StatusEffects.boss
