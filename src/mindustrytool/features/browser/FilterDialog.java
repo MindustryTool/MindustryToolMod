@@ -35,8 +35,13 @@ public class FilterDialog extends BaseDialog {
 
     private ModService modService = new ModService();
     private SearchConfig searchConfig;
+    private boolean useBlocks = false;
 
-    public FilterDialog(TagService tagService, SearchConfig searchConfig, Cons<Cons<Seq<TagCategory>>> tagProvider) {
+    public FilterDialog(//
+            TagService tagService,
+            SearchConfig searchConfig, //
+            Cons<Cons<Seq<TagCategory>>> tagProvider//
+    ) {
         super("");
 
         this.tagProvider = tagProvider;
@@ -71,6 +76,11 @@ public class FilterDialog extends BaseDialog {
         super.show();
     }
 
+    public FilterDialog setUseBlocks(boolean useBlocks) {
+        this.useBlocks = useBlocks;
+        return this;
+    }
+
     private void rebuild() {
         if (searchConfig == null) {
             return;
@@ -88,23 +98,28 @@ public class FilterDialog extends BaseDialog {
             float cardWidth = availableWidth / cols;
 
             cont.clear();
-            cont.pane(table -> {
-                table.top().left();
+            cont.pane(container -> {
+                container.top().left();
 
-                modService.getMod(mods -> ModSelector(table, searchConfig, mods, cols, cardWidth));
+                modService.getMod(mods -> ModSelector(container, searchConfig, mods, cols, cardWidth));
 
-                table.row();
-                SortSelector(table, searchConfig, cols, cardWidth);
-                table.row();
-                table.top();
+                container.row();
+                SortSelector(container, searchConfig, cols, cardWidth);
+                container.row();
 
                 tagProvider.get(categories -> {
                     for (var category : categories.sort((a, b) -> a.getPosition() - b.getPosition())) {
                         if (category.getTags().isEmpty())
                             continue;
 
-                        table.row();
-                        TagSelector(table, searchConfig, category, availableWidth);
+                        container.row();
+                        TagSelector(container, searchConfig, category, availableWidth);
+                    }
+
+                    container.row();
+
+                    if (useBlocks) {
+                        BlockSelector(container, searchConfig, cols, cardWidth);
                     }
                 });
             })
@@ -126,6 +141,51 @@ public class FilterDialog extends BaseDialog {
         }
     }
 
+    public void BlockSelector(Table container, SearchConfig searchConfig, int cols, float cardWidth) {
+        container.table(Styles.flatOver,
+                text -> text.add(Core.bundle.format("message.block"))
+                        .fontScale(scale)
+                        .left()
+                        .labelAlign(Align.left))
+                .top()
+                .left()
+                .expandX()
+                .padBottom(4);
+
+        container.row();
+        container.table(card -> {
+            card.defaults().size(cardWidth, 50); // Use calculated width
+            int i = 0;
+            for (var block : Vars.content.blocks().select(block -> block.isVisible())) {
+                card.button(btn -> {
+                    btn.left();
+                    btn.add(block.emoji())
+                            .size(40 * scale)
+                            .padRight(4)
+                            .marginRight(4);
+                    btn.add(block.localizedName).fontScale(scale);
+                }, style,
+                        () -> {
+                            searchConfig.toggleBlock(block.name);
+                        })
+                        .checked(searchConfig.containBlock(block.name))
+                        .padRight(CARD_GAP)
+                        .padBottom(CARD_GAP)
+                        .left()
+                        .fillX()
+                        .margin(12);
+
+                if (++i % cols == 0) {
+                    card.row();
+                }
+            }
+        })
+                .top()
+                .left()
+                .expandX()
+                .padBottom(48);
+    }
+
     public void ModSelector(Table table, SearchConfig searchConfig, Seq<ModData> mods, int cols, float cardWidth) {
         table.table(Styles.flatOver,
                 text -> text.add(Core.bundle.format("message.mod"))
@@ -138,7 +198,7 @@ public class FilterDialog extends BaseDialog {
                 .padBottom(4);
 
         table.row();
-        table.pane(card -> {
+        table.table(card -> {
             card.defaults().size(cardWidth, 50); // Use calculated width
             int i = 0;
             for (var mod : mods.sort((a, b) -> a.getPosition() - b.getPosition())) {
@@ -193,7 +253,7 @@ public class FilterDialog extends BaseDialog {
                 .padBottom(4);
 
         table.row();
-        table.pane(card -> {
+        table.table(card -> {
             card.defaults().size(cardWidth, 50); // Use calculated width
             int i = 0;
             for (var sort : Config.sorts) {
@@ -300,6 +360,7 @@ public class FilterDialog extends BaseDialog {
         Pools.free(layout);
 
         table.add(container).width(availableWidth).left().padBottom(48);
+        table.row();
     }
 
     private String formatTag(String name) {

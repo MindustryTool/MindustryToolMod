@@ -816,6 +816,8 @@ public class ChatOverlay extends Table {
                 user.getHighestRole().ifPresent(role -> {
                     Label l2 = info.add(role.getId()).minWidth(0).ellipsis(true).style(Styles.defaultLabel)
                             .color(Color.valueOf(role.getColor()))
+                            .labelAlign(Align.left)
+                            .left()
                             .get();
                     l2.setFontScale(scale);
                 });

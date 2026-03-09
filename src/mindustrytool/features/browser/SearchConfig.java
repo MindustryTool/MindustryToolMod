@@ -1,5 +1,7 @@
 package mindustrytool.features.browser;
 
+import java.util.List;
+
 import arc.struct.Seq;
 import lombok.Data;
 import mindustrytool.Config;
@@ -10,6 +12,7 @@ import mindustrytool.dto.TagData;
 
 public class SearchConfig {
     private Seq<SelectedTag> selectedTags = new Seq<>();
+    private Seq<String> blocks = new Seq<>();
     private Sort sort = Config.sorts.get(0);
     private boolean changed = false;
 
@@ -21,6 +24,24 @@ public class SearchConfig {
         return changed;
     }
 
+    public void toggleBlock(String block) {
+        if (blocks.contains(block)) {
+            blocks.remove(block);
+        } else {
+            blocks.add(block);
+        }
+        changed = true;
+    }
+
+    public boolean containBlock(String block) {
+        return blocks.contains(block);
+    }
+
+
+    public List<String> getBlocks() {
+        return blocks.list();
+    }
+    
     public String getSelectedTagsString() {
         if (selectedTags.isEmpty()) {
             return "";
