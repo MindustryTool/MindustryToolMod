@@ -135,7 +135,7 @@ public class GodModeDialogs {
                 field.setFilter((f, c) -> Character.isDigit(c) || c == '-');
                 ctrl.add(field).growX().row();
 
-                Slider slider = new Slider(-10000, 10000, 100, false);
+                Slider slider = new Slider(-50000, 50000, 100, false);
                 slider.setValue(amount[0]);
 
                 field.changed(() -> {
@@ -229,7 +229,7 @@ public class GodModeDialogs {
                         .growX()
                         .row();
 
-                Slider slider = new Slider(-100, 100, 1, false);
+                Slider slider = new Slider(-1000, 1000, 1, false);
                 slider.setValue(amount[0]);
 
                 field.changed(() -> {
