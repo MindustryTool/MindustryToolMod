@@ -68,9 +68,9 @@ public class MusicSettingsDialog extends BaseDialog {
                     }
 
                     if (file.isDirectory()) {
-                        for (Fi f : file.list()) {
-                            if (!f.isDirectory() && (f.name().endsWith(".ogg") || f.name().endsWith(".mp3"))) {
-                                feature.addTrack(type, f);
+                        for (Fi child : file.list()) {
+                            if (!child.isDirectory() && MusicFeature.validExtensions.contains(child.extension())) {
+                                feature.addTrack(type, child);
                             }
                         }
                     } else {
@@ -78,7 +78,7 @@ public class MusicSettingsDialog extends BaseDialog {
                     }
 
                     Core.app.post(this::rebuild);
-                }, "ogg", "mp3");
+                }, "ogg", "mp3", "wav");
             }).size(btnSize).padRight(5).tooltip(Core.bundle.get("music.tooltip.add", "Add custom music"));
 
             t.button(Icon.trash, () -> {

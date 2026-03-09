@@ -23,6 +23,8 @@ public class MusicFeature implements Feature {
     private final ObjectMap<MusicType, Seq<Music>> allMusic = new ObjectMap<>();
     private final ObjectMap<String, Music> musicCache = new ObjectMap<>();
 
+    public static final Seq<String> validExtensions = Seq.with("mp3", "ogg", "wav");
+
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
@@ -161,17 +163,18 @@ public class MusicFeature implements Feature {
             return;
         }
 
-        String ext = file.extension();
-        if (!ext.equals("ogg") && !ext.equals("mp3")) {
-            Vars.ui.showErrorMessage("Invalid file type, only .ogg and .mp3 are supported");
+        if (!validExtensions.contains(file.extension())) {
+            Vars.ui.showErrorMessage("Invalid file type, supported types: " + validExtensions);
             return;
         }
 
         try {
             Fi copy = Main.musicsDir.child(file.name());
+
             file.copyTo(copy);
 
             Seq<String> paths = MusicConfig.getPaths(type);
+
             if (!paths.contains(copy.name())) {
                 paths.add(copy.name());
                 MusicConfig.savePaths(type, paths);
