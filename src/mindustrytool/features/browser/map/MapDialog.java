@@ -56,7 +56,7 @@ public class MapDialog extends BaseDialog {
 
     private Seq<MapData> mapsData = new Seq<>();
     private PagingRequest<MapData> request;
-    private ObjectMap<String, String> options = new ObjectMap<>();
+    private ObjectMap<String, Object> options = new ObjectMap<>();
 
     private Table searchTable;
     private Table contentTable;

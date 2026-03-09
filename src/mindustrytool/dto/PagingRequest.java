@@ -1,6 +1,7 @@
 package mindustrytool.dto;
 
 import java.net.URI;
+import java.util.List;
 
 import org.apache.http.client.utils.URIBuilder;
 
@@ -29,7 +30,7 @@ public class PagingRequest<T> {
     private final String url;
     private final Class<T> clazz;
 
-    private ObjectMap<String, String> options = new ObjectMap<>();
+    private ObjectMap<String, Object> options = new ObjectMap<>();
 
     public PagingRequest(Class<T> clazz, String url) {
         this.url = url;
@@ -48,11 +49,21 @@ public class PagingRequest<T> {
                     .setParameter("page", String.valueOf(page))//
                     .setParameter("size", String.valueOf(Math.min(size, 100)));
 
-            for (Entry<String, String> entry : options.entries())
-                if (entry.value != null && !entry.value.isEmpty()) {
-                    builder.setParameter(entry.key, entry.value);
-                }
+            for (Entry<String, Object> entry : options.entries()) {
+                Object value = entry.value;
 
+                if (value instanceof List list) {
+                    for (Object v : list) {
+                        String str = String.valueOf(v);
+                        if (str.isEmpty()) continue;
+                        builder.addParameter(entry.key, str);
+                    }
+                } else {
+                    if (entry.value != null && !String.valueOf(value).isEmpty()) {
+                        builder.setParameter(entry.key, String.valueOf(value));
+                    }
+                }
+            }
             URI uri = builder.build();
             listener.get(null);
 
@@ -82,7 +93,7 @@ public class PagingRequest<T> {
         this.page = page;
     }
 
-    public synchronized void setOptions(ObjectMap<String, String> options) {
+    public synchronized void setOptions(ObjectMap<String, Object> options) {
         this.options = options;
     }
 

@@ -54,11 +54,12 @@ public class SchematicDialog extends BaseDialog {
     private static SearchConfig searchConfig = new SearchConfig();
 
     private final FilterDialog filterDialog = new FilterDialog(tagService, searchConfig,
-            (tag) -> tagService.getTag(TagCategoryEnum.schematics, group -> tag.get(group)));
+            (tag) -> tagService.getTag(TagCategoryEnum.schematics, group -> tag.get(group)))
+            .setUseBlocks(true);
 
     private Seq<SchematicData> schematicsData = new Seq<>();
     private PagingRequest<SchematicData> request;
-    private ObjectMap<String, String> options = new ObjectMap<>();
+    private ObjectMap<String, Object> options = new ObjectMap<>();
 
     private Table searchTable;
     private Table contentTable;
@@ -131,6 +132,8 @@ public class SchematicDialog extends BaseDialog {
     private void updateOptions() {
         options.put("tags", searchConfig.getSelectedTagsString());
         options.put("sort", searchConfig.getSort().getValue());
+        options.put("blocks", searchConfig.getBlocks());
+
         if (!searchText.isEmpty()) {
             options.put("name", searchText);
         } else {
