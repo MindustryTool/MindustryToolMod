@@ -15,6 +15,7 @@ import arc.util.Align;
 import arc.util.Log;
 import arc.util.pooling.Pools;
 import mindustry.Vars;
+import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
@@ -32,6 +33,9 @@ public class FilterDialog extends BaseDialog {
     private float scale = 1;
     private final int CARD_GAP = 4;
     private Seq<String> modIds = new Seq<>();
+    private String filterText = "";
+    private Table resultsTable;
+    private int rebuildToken = 0;
 
     private ModService modService = new ModService();
     private SearchConfig searchConfig;
@@ -43,6 +47,7 @@ public class FilterDialog extends BaseDialog {
             Cons<Cons<Seq<TagCategory>>> tagProvider//
     ) {
         super("");
+        setup();
 
         this.tagProvider = tagProvider;
         this.searchConfig = searchConfig;
@@ -76,17 +81,36 @@ public class FilterDialog extends BaseDialog {
         super.show();
     }
 
+    private void setup() {
+        cont.table(t -> {
+            t.image(Icon.zoom).padRight(8);
+            t.field(filterText, text -> {
+                filterText = text.toLowerCase();
+                rebuildResults();
+            }).growX().get().setMessageText(Core.bundle.get("message.search"));
+        }).fillX().pad(10).row();
+
+        cont.pane(container -> {
+            resultsTable = container;
+        }).grow().scrollY(true);
+    }
+
+    private void rebuildResults() {
+        rebuild();
+    }
+
     public FilterDialog setUseBlocks(boolean useBlocks) {
         this.useBlocks = useBlocks;
         return this;
     }
 
     private void rebuild() {
-        if (searchConfig == null) {
+        if (searchConfig == null || resultsTable == null) {
             return;
         }
 
         try {
+            int token = ++rebuildToken;
             scale = Vars.mobile ? 0.8f : 1f;
 
             // Calculate layout metrics based on SchematicDialog logic
@@ -97,41 +121,33 @@ public class FilterDialog extends BaseDialog {
             int cols = Mathf.clamp((int) (availableWidth / targetW), 1, 20);
             float cardWidth = availableWidth / cols;
 
-            cont.clear();
-            cont.pane(container -> {
-                container.top().left();
+            resultsTable.clear();
+            resultsTable.top().left();
 
-                modService.getMod(mods -> ModSelector(container, searchConfig, mods, cols, cardWidth));
+            modService.getMod(mods -> {
+                if (token != rebuildToken)
+                    return;
+                ModSelector(resultsTable, searchConfig, mods, cols, cardWidth);
 
-                container.row();
-                SortSelector(container, searchConfig, cols, cardWidth);
-                container.row();
+                resultsTable.row();
+                SortSelector(resultsTable, searchConfig, cols, cardWidth);
+                resultsTable.row();
 
                 tagProvider.get(categories -> {
+                    if (token != rebuildToken)
+                        return;
                     for (var category : categories.sort((a, b) -> a.getPosition() - b.getPosition())) {
-                        if (category.getTags().isEmpty())
-                            continue;
-
-                        container.row();
-                        TagSelector(container, searchConfig, category, availableWidth);
+                        TagSelector(resultsTable, searchConfig, category, availableWidth);
                     }
 
-                    container.row();
+                    resultsTable.row();
 
                     if (useBlocks) {
-                        BlockSelector(container, searchConfig, cols, cardWidth);
+                        BlockSelector(resultsTable, searchConfig, cols, cardWidth);
                     }
                 });
-            })
-                    .padLeft(20)
-                    .padRight(20)
-                    .scrollY(true)
-                    .expand()
-                    .fill()
-                    .left()
-                    .top();
+            });
 
-            cont.row();
             buttons.clearChildren();
             buttons.defaults().size(Core.graphics.isPortrait() ? 150f : 210f, 64f);
 
@@ -142,6 +158,13 @@ public class FilterDialog extends BaseDialog {
     }
 
     public void BlockSelector(Table container, SearchConfig searchConfig, int cols, float cardWidth) {
+        var blocks = Vars.content.blocks().select(block -> block.isVisible()
+                && (filterText.isEmpty() || block.localizedName.toLowerCase().contains(filterText)));
+
+        if (blocks.isEmpty()) {
+            return;
+        }
+
         container.table(Styles.flatOver,
                 text -> text.add(Core.bundle.format("message.block"))
                         .fontScale(scale)
@@ -156,7 +179,7 @@ public class FilterDialog extends BaseDialog {
         container.table(card -> {
             card.defaults().size(cardWidth, 50); // Use calculated width
             int i = 0;
-            for (var block : Vars.content.blocks().select(block -> block.isVisible())) {
+            for (var block : blocks) {
                 card.button(btn -> {
                     btn.left();
                     btn.add(block.emoji())
@@ -281,6 +304,7 @@ public class FilterDialog extends BaseDialog {
         var tags = category.getTags()
                 .stream().filter(value -> value.getPlanetIds() == null || value.getPlanetIds().size() == 0
                         || value.getPlanetIds().stream().anyMatch(t -> modIds.contains(t)))
+                .filter(tag -> filterText.isEmpty() || formatTag(tag.getName()).toLowerCase().contains(filterText))
                 .sorted((a, b) -> a.getPosition() - b.getPosition())
                 .collect(Collectors.toList());
 
