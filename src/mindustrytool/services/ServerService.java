@@ -5,6 +5,7 @@ import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
+import arc.util.Timer;
 import lombok.Data;
 import mindustry.Vars;
 import mindustry.ui.dialogs.JoinDialog.Server;
@@ -22,6 +23,8 @@ public class ServerService {
     public static void init() {
         fetchServers();
         Vars.ui.join.shown(() -> fetchServers());
+
+        Timer.schedule(ServerService::fetchServers, 5 * 60, 5 * 60);
     }
 
     @SuppressWarnings("unchecked")
