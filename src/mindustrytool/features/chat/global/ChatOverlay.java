@@ -16,7 +16,9 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
+import arc.struct.ObjectMap;
 import arc.struct.Seq;
+import mindustrytool.features.chat.global.dto.ChannelDto;
 import arc.util.Align;
 import arc.util.Log;
 import arc.util.Scaling;
@@ -77,7 +79,13 @@ public class ChatOverlay extends Table {
     private static final float PREVIEW_BUTTON_SIZE = 50f;
     private static final float CARD_HEIGHT = 330f;
 
-    private Seq<ChatMessage> messages = new Seq<>();
+    private ObjectMap<String, Seq<ChatMessage>> messagesByChannel = new ObjectMap<>();
+    private arc.struct.ObjectSet<String> fullyLoadedChannels = new arc.struct.ObjectSet<>();
+    private ObjectMap<String, Integer> unreadByChannel = new ObjectMap<>();
+    private Seq<ChannelDto> channels = new Seq<>();
+    private String currentChannelId = null;
+    private Table channelListTable;
+
     private Table messageTable;
     private Table userListTable;
     private ScrollPane scrollPane;
@@ -87,6 +95,7 @@ public class ChatOverlay extends Table {
     private TextButton sendButton;
 
     private State<Boolean> isSending = new State<>(false);
+    private boolean isLoadingMessages = false;
 
     private Table container;
 
@@ -266,10 +275,10 @@ public class ChatOverlay extends Table {
             container.add(buttonTable).grow();
         } else {
             container.background(Styles.black8);
-            float width = Core.graphics.getWidth() / Scl.scl() * 0.7f * widthScale;
-            float height = Core.graphics.getHeight() / Scl.scl() * 0.7f * scale;
+            float width = Core.graphics.getWidth() / Scl.scl() * 0.9f * widthScale;
+            float height = Core.graphics.getHeight() / Scl.scl() * 0.9f * scale;
 
-            containerCell.size(Math.min(width, 1400f * widthScale), Math.min(height, 900f * scale));
+            containerCell.size(Math.min(width, 1900f * widthScale), Math.min(height, 1300f * scale));
 
             // Header
             Table header = new Table();
@@ -319,9 +328,8 @@ public class ChatOverlay extends Table {
 
             // Minimize button
             header.button(Icon.refresh, Styles.clearNonei, () -> {
-                messages.clear();
-                ChatService.getInstance().disconnectStream();
-                ChatService.getInstance().connectStream();
+                messagesByChannel.clear();
+                fullyLoadedChannels.clear();
             }).size(40 * scale).padRight(4 * scale);
             header.button(Icon.down, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
 
@@ -329,6 +337,18 @@ public class ChatOverlay extends Table {
 
             // Main Content Area
             Table mainContent = new Table();
+
+            // Left Side - Channels
+            Table leftSide = new Table();
+            leftSide.top().background(Styles.black5);
+            channelListTable = new Table();
+            channelListTable.top().left();
+            ScrollPane channelScroll = new ScrollPane(channelListTable, Styles.noBarPane);
+            channelScroll.setScrollingDisabled(true, false);
+            leftSide.add(channelScroll).grow();
+
+            mainContent.add(leftSide).width(160f * scale).growY();
+            mainContent.image(Tex.whiteui).width(1f * scale).color(Color.darkGray).fillY();
 
             // Messages
             messageTable = new Table();
@@ -338,11 +358,21 @@ public class ChatOverlay extends Table {
             scrollPane.setScrollingDisabled(true, false);
             scrollPane.setFadeScrollBars(false);
             scrollPane.visible(() -> ChatService.getInstance().isConnected());
+            scrollPane.scrolled(amount -> {
+                if (scrollPane.getScrollY() < 100 && !isLoadingMessages && currentChannelId != null
+                        && !fullyLoadedChannels.contains(currentChannelId)) {
+                    Seq<ChatMessage> msgs = messagesByChannel.get(currentChannelId);
+                    if (msgs != null && !msgs.isEmpty()) {
+                        loadMoreMessages(currentChannelId, msgs.first().id);
+                    }
+                }
+            });
 
             loadingTable = new Table();
 
             loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray)
-                    .visible(() -> !ChatService.getInstance().isConnected()).get().setFontScale(scale);
+                    .visible(() -> !ChatService.getInstance().isConnected() || isLoadingMessages).get()
+                    .setFontScale(scale);
 
             Stack stack = new Stack();
             stack.add(loadingTable);
@@ -399,8 +429,24 @@ public class ChatOverlay extends Table {
 
             // Fetch users
             Timer.schedule(() -> {
-                ChatService.getInstance().getChatUsers(this::rebuildUserList, e -> Log.err("Failed to fetch users", e));
+                if (currentChannelId != null) {
+                    ChatService.getInstance().getChatUsers(currentChannelId, this::rebuildUserList,
+                            e -> Log.err("Failed to fetch users", e));
+                }
             }, 0.25f);
+
+            if (channels.isEmpty()) {
+                ChatService.getInstance().getChannels(chans -> {
+                    channels.clear();
+                    channels.addAll(chans);
+                    if (channels.size > 0 && currentChannelId == null) {
+                        switchChannel(channels.get(0).id);
+                    }
+                    rebuildChannelList();
+                }, e -> Log.err("Failed to fetch channels", e));
+            } else {
+                rebuildChannelList();
+            }
 
             buildInputTable(inputTable);
 
@@ -428,6 +474,126 @@ public class ChatOverlay extends Table {
 
         keepInScreen();
 
+    }
+
+    private void rebuildChannelList() {
+        if (channelListTable == null)
+            return;
+        channelListTable.clear();
+        channelListTable.top().left();
+
+        float scale = ChatConfig.scale();
+
+        for (ChannelDto channel : channels) {
+            boolean isSelected = channel.id.equals(currentChannelId);
+            TextButton btn = new TextButton("# " + channel.name, isSelected ? Styles.togglet : Styles.cleart);
+            btn.getLabel().setAlignment(Align.left);
+            btn.getLabel().setFontScale(scale);
+            if (isSelected) {
+                btn.setChecked(true);
+            }
+
+            int unread = unreadByChannel.get(channel.id, 0);
+            if (unread > 0 && !isSelected) {
+                btn.getLabel().setColor(Color.white);
+                btn.setText("# " + channel.name + " (" + (unread > 99 ? "99+" : unread) + ")");
+            } else {
+                btn.getLabel().setColor(Color.lightGray);
+            }
+
+            btn.clicked(() -> {
+                if (!isSelected) {
+                    switchChannel(channel.id);
+                }
+            });
+
+            channelListTable.add(btn).growX().height(40 * scale).pad(2 * scale).row();
+        }
+    }
+
+    private void switchChannel(String channelId) {
+        currentChannelId = channelId;
+        unreadByChannel.put(channelId, 0);
+        updateBadge();
+        rebuildChannelList();
+
+        if (messageTable != null) {
+            messageTable.clear();
+        }
+
+        if (!messagesByChannel.containsKey(channelId) || messagesByChannel.get(channelId).isEmpty()) {
+            isLoadingMessages = true;
+            ChatService.getInstance().fetchMessages(channelId, null, msgs -> {
+                if (channelId.equals(currentChannelId)) {
+                    isLoadingMessages = false;
+                }
+                Seq<ChatMessage> seq = new Seq<>(msgs);
+                messagesByChannel.put(channelId, seq.reverse());
+                if (channelId.equals(currentChannelId)) {
+                    rebuildMessages(messageTable);
+                    if (scrollPane != null) {
+                        Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
+                    }
+                }
+            }, e -> {
+                if (channelId.equals(currentChannelId)) {
+                    isLoadingMessages = false;
+                }
+                Log.err("Failed to fetch messages for channel", e);
+            });
+        } else {
+            isLoadingMessages = false;
+            rebuildMessages(messageTable);
+            if (scrollPane != null) {
+                Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
+            }
+        }
+
+        ChatService.getInstance().getChatUsers(channelId, this::rebuildUserList,
+                e -> Log.err("Failed to fetch users", e));
+    }
+
+    private void loadMoreMessages(String channelId, String cursor) {
+        if (isLoadingMessages)
+            return;
+        isLoadingMessages = true;
+        ChatService.getInstance().fetchMessages(channelId, cursor, msgs -> {
+            if (channelId.equals(currentChannelId)) {
+                isLoadingMessages = false;
+            }
+            if (msgs.length > 0) {
+                Seq<ChatMessage> seq = messagesByChannel.get(channelId);
+                if (seq == null) {
+                    seq = new Seq<>();
+                    messagesByChannel.put(channelId, seq);
+                }
+
+                // Keep track of old scroll Y
+                float oldMaxY = scrollPane != null ? scrollPane.getMaxY() : 0;
+                float oldScrollY = scrollPane != null ? scrollPane.getScrollY() : 0;
+
+                Seq<ChatMessage> oldMsgs = new Seq<>(msgs);
+                oldMsgs.reverse().addAll(seq);
+                messagesByChannel.put(channelId, oldMsgs);
+
+                if (channelId.equals(currentChannelId)) {
+                    rebuildMessages(messageTable);
+                    if (scrollPane != null) {
+                        Core.app.post(() -> {
+                            float newMaxY = scrollPane.getMaxY();
+                            scrollPane.setScrollY(oldScrollY + (newMaxY - oldMaxY));
+                        });
+                    }
+                }
+            } else {
+                fullyLoadedChannels.add(channelId);
+            }
+        }, e -> {
+            if (channelId.equals(currentChannelId)) {
+                isLoadingMessages = false;
+            }
+            Log.err("Failed to fetch more messages for channel", e);
+        });
     }
 
     private void buildInputTable(Table inputTable) {
@@ -517,38 +683,55 @@ public class ChatOverlay extends Table {
     }
 
     public synchronized void addMessages(ChatMessage... newMessages) {
-        int addedCount = 0;
+        int totalAddedCount = 0;
+        boolean currentChannelUpdated = false;
 
         for (ChatMessage msg : newMessages) {
-            if (messages.contains(m -> m.id.equals(msg.id))) {
+            String cId = msg.channelId;
+            if (cId == null)
+                continue;
+
+            if (!messagesByChannel.containsKey(cId)) {
+                messagesByChannel.put(cId, new Seq<>());
+            }
+            Seq<ChatMessage> channelMsgs = messagesByChannel.get(cId);
+
+            if (channelMsgs.contains(m -> m.id.equals(msg.id))) {
                 continue;
             }
 
-            messages.add(msg);
+            channelMsgs.add(msg);
+
+            if (cId.equals(currentChannelId)) {
+                currentChannelUpdated = true;
+            }
+
+            if (channelMsgs.size > 1000) {
+                channelMsgs.remove(0);
+            }
 
             try {
-                if (ChatConfig.collapsed() && ChatConfig.lastRead().isBefore(Instant.parse(msg.createdAt))) {
-                    addedCount++;
+                if ((ChatConfig.collapsed() || !cId.equals(currentChannelId))
+                        && ChatConfig.lastRead().isBefore(Instant.parse(msg.createdAt))) {
+                    unreadByChannel.put(cId, unreadByChannel.get(cId, 0) + 1);
+                    totalAddedCount++;
                 }
             } catch (Exception e) {
                 Log.err(e);
             }
         }
 
-        if (ChatConfig.collapsed() && addedCount > 0) {
-            unreadCount += addedCount;
+        if (totalAddedCount > 0) {
+            unreadCount += totalAddedCount;
             updateBadge();
-        } else {
+            Core.app.post(() -> rebuildChannelList());
+        }
+
+        if (!ChatConfig.collapsed() && currentChannelId != null && currentChannelUpdated) {
             ChatConfig.lastRead(Instant.now());
         }
 
-        if (messages.size > 1000) {
-            messages.remove(0);
-        }
-
-        if (messageTable != null && !ChatConfig.collapsed()) {
-            // Scroll to bottom
-
+        if (messageTable != null && !ChatConfig.collapsed() && currentChannelUpdated) {
             Core.app.post(() -> {
                 rebuildMessages(messageTable);
             });
@@ -567,9 +750,23 @@ public class ChatOverlay extends Table {
 
         float scale = ChatConfig.scale();
 
-        ChatConfig.lastRead(Instant.now());
+        if (currentChannelId != null) {
+            ChatConfig.lastRead(Instant.now());
+        }
 
-        for (ChatMessage msg : messages) {
+        if (currentChannelId == null && !channels.isEmpty()) {
+            currentChannelId = channels.get(0).id;
+        }
+
+        if (currentChannelId == null) {
+            return;
+        }
+
+        Seq<ChatMessage> channelMsgs = messagesByChannel.get(currentChannelId);
+        if (channelMsgs == null)
+            return;
+
+        for (ChatMessage msg : channelMsgs) {
             Table entry = new Table();
 
             entry.setBackground(null);
@@ -843,23 +1040,34 @@ public class ChatOverlay extends Table {
             return;
         }
 
-        send(() -> ChatService.getInstance().sendMessage(content).thenAccept(this::addMessages));
+        if (currentChannelId == null)
+            return;
+
+        send(() -> ChatService.getInstance().sendMessage(currentChannelId, content).thenAccept(this::addMessages));
     }
 
     private void sendSchematic() {
-        send(() -> ChatService.getInstance().sendSchematic(inputField.getText()).thenAccept(this::addMessages));
+        if (currentChannelId == null)
+            return;
+        send(() -> ChatService.getInstance().sendSchematic(currentChannelId, inputField.getText())
+                .thenAccept(this::addMessages));
     }
 
     private void handleAttachContent(String content) {
         if (content == null || content.isEmpty())
             return;
 
+        if (currentChannelId == null)
+            return;
+
         boolean isSchematic = isSchematic(content.trim());
 
         if (isSchematic) {
-            send(() -> ChatService.getInstance().sendSchematic(content).thenAccept(this::addMessages), false);
+            send(() -> ChatService.getInstance().sendSchematic(currentChannelId, content).thenAccept(this::addMessages),
+                    false);
         } else {
-            send(() -> ChatService.getInstance().sendMessage(content).thenAccept(this::addMessages), false);
+            send(() -> ChatService.getInstance().sendMessage(currentChannelId, content).thenAccept(this::addMessages),
+                    false);
         }
     }
 
