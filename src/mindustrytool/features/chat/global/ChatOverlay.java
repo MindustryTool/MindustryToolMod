@@ -97,6 +97,9 @@ public class ChatOverlay extends Table {
     private State<Boolean> isSending = new State<>(false);
     private boolean isLoadingMessages = false;
 
+    private String expandedMessageId = null;
+    private String replyingToMessageId = null;
+
     private Table container;
 
     private Cell<Table> containerCell;
@@ -603,20 +606,54 @@ public class ChatOverlay extends Table {
         float scale = ChatConfig.scale();
 
         if (AuthService.getInstance().isLoggedIn()) {
+            if (replyingToMessageId != null && currentChannelId != null) {
+                Seq<ChatMessage> msgs = messagesByChannel.get(currentChannelId);
+                ChatMessage repliedMsg = msgs != null ? msgs.find(m -> m.id.equals(replyingToMessageId)) : null;
+                if (repliedMsg != null) {
+                    Table replyContainer = new Table();
+                    replyContainer.background(Styles.black5);
+                    replyContainer.left();
+                    replyContainer.add(new Image(Icon.upSmall)).size(16 * scale).padRight(4 * scale).color(Color.gray);
+
+                    UserService.findUserById(repliedMsg.createdBy).thenAccept(replyData -> {
+                        Core.app.post(() -> {
+                            Label replyUser = new Label(replyData.getName());
+                            replyUser.setFontScale(scale * 0.8f);
+                            replyUser.setColor(Color.gray);
+                            replyContainer.add(replyUser).padRight(4 * scale);
+
+                            Label replyContent = new Label(repliedMsg.content.replace('\n', ' '));
+                            replyContent.setFontScale(scale * 0.8f);
+                            replyContent.setColor(Color.gray);
+                            replyContent.setEllipsis(true);
+                            replyContainer.add(replyContent).minWidth(0).maxWidth(200 * scale).padRight(8 * scale);
+
+                            replyContainer.button(Icon.cancel, Styles.clearNonei, () -> {
+                                replyingToMessageId = null;
+                                buildInputTable(inputTable);
+                            }).size(20 * scale);
+                        });
+                    });
+                    inputTable.add(replyContainer).growX().pad(4 * scale).row();
+                }
+            }
+
+            Table inputRow = new Table();
             sendButton = new TextButton(isSending.get() ? "@sending" : "@chat.send", Styles.defaultt);
             sendButton.clicked(this::handleSend);
             sendButton.setDisabled(() -> isSending.get());
 
-            inputTable.add(inputField).growX().height(40f * scale).pad(8 * scale).padRight(4 * scale);
+            inputRow.add(inputField).growX().height(40f * scale).pad(8 * scale).padRight(4 * scale);
 
-            inputTable.button(Utils.icons("attach-file.png"), () -> {
+            inputRow.button(Utils.icons("attach-file.png"), () -> {
                 if (attachContentDialog == null) {
                     attachContentDialog = new AttachContentDialog(this::handleAttachContent);
                 }
                 attachContentDialog.show();
             }).pad(8 * scale).size(40f * scale);
 
-            inputTable.add(sendButton).width(100f * scale).height(40f * scale).pad(8 * scale).padLeft(0);
+            inputRow.add(sendButton).width(100f * scale).height(40f * scale).pad(8 * scale).padLeft(0);
+            inputTable.add(inputRow).growX();
         } else {
             inputTable.button("@login", Styles.defaultt, () -> {
                 AuthService.getInstance().login();
@@ -786,6 +823,7 @@ public class ChatOverlay extends Table {
 
             entry.table(card -> {
                 card.top().left();
+
                 Label label = new Label("...");
                 label.setStyle(Styles.defaultLabel);
                 label.setFontScale(scale);
@@ -823,6 +861,22 @@ public class ChatOverlay extends Table {
                 });
 
                 card.add(label).left().row();
+                if (msg.replyTo != null && !msg.replyTo.isEmpty()) {
+                    ChatMessage repliedMsg = channelMsgs.find(m -> m.id.equals(msg.replyTo));
+                    if (repliedMsg != null) {
+                        card.table(replyTable -> {
+                            replyTable.center().left();
+                            replyTable.image(Icon.rightSmall).size(16 * scale).padRight(4 * scale)
+                                    .color(Color.gray);
+
+                            Label replyContent = new Label(repliedMsg.content.replace('\n', ' '));
+                            replyContent.setFontScale(scale);
+                            replyContent.setColor(Color.gray);
+                            replyContent.setEllipsis(true);
+                            replyTable.add(replyContent).minWidth(0).maxWidth(200 * scale);
+                        }).growX().padBottom(2 * scale).row();
+                    }
+                }
                 card.table(c -> {
                     String content = msg.content.trim();
 
@@ -901,13 +955,45 @@ public class ChatOverlay extends Table {
                         .top().left().growX().padTop(6 * scale);
 
                 card.clicked(() -> {
-                    try {
-                        Core.app.setClipboardText(msg.content);
-                        Vars.ui.showInfoFade("@copied");
-                    } catch (Exception e) {
-                        Vars.ui.showInfoFade(e.getMessage());
+                    if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
+                        expandedMessageId = null;
+                    } else {
+                        expandedMessageId = msg.id;
                     }
+                    rebuildMessages(messageTable);
                 });
+
+                if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
+                    card.row();
+                    card.table(actions -> {
+                        actions.left().defaults().height(36 * scale).minWidth(80 * scale).padRight(8 * scale);
+
+                        TextButton copyBtn = new TextButton("@copy", Styles.defaultt);
+                        copyBtn.clicked(() -> {
+                            try {
+                                Core.app.setClipboardText(msg.content);
+                                Vars.ui.showInfoFade("@copied");
+                                expandedMessageId = null;
+                                rebuildMessages(messageTable);
+                            } catch (Exception e) {
+                                Vars.ui.showInfoFade(e.getMessage());
+                            }
+                        });
+                        copyBtn.getLabel().setFontScale(scale * 0.8f);
+                        actions.add(copyBtn);
+
+                        TextButton replyBtn = new TextButton("@chat.reply", Styles.defaultt);
+                        replyBtn.clicked(() -> {
+                            replyingToMessageId = msg.id;
+                            expandedMessageId = null;
+                            rebuildMessages(messageTable);
+                            buildInputTable(inputTable);
+                        });
+                        replyBtn.getLabel().setFontScale(scale * 0.8f);
+                        actions.add(replyBtn);
+
+                    }).growX().padTop(4 * scale);
+                }
             }).growX().pad(8 * scale).top();
 
             messageTable.add(entry).growX().padBottom(4 * scale).row();
@@ -1043,13 +1129,14 @@ public class ChatOverlay extends Table {
         if (currentChannelId == null)
             return;
 
-        send(() -> ChatService.getInstance().sendMessage(currentChannelId, content).thenAccept(this::addMessages));
+        send(() -> ChatService.getInstance().sendMessage(currentChannelId, content, replyingToMessageId)
+                .thenAccept(this::addMessages));
     }
 
     private void sendSchematic() {
         if (currentChannelId == null)
             return;
-        send(() -> ChatService.getInstance().sendSchematic(currentChannelId, inputField.getText())
+        send(() -> ChatService.getInstance().sendSchematic(currentChannelId, inputField.getText(), replyingToMessageId)
                 .thenAccept(this::addMessages));
     }
 
@@ -1063,10 +1150,12 @@ public class ChatOverlay extends Table {
         boolean isSchematic = isSchematic(content.trim());
 
         if (isSchematic) {
-            send(() -> ChatService.getInstance().sendSchematic(currentChannelId, content).thenAccept(this::addMessages),
+            send(() -> ChatService.getInstance().sendSchematic(currentChannelId, content, replyingToMessageId)
+                    .thenAccept(this::addMessages),
                     false);
         } else {
-            send(() -> ChatService.getInstance().sendMessage(currentChannelId, content).thenAccept(this::addMessages),
+            send(() -> ChatService.getInstance().sendMessage(currentChannelId, content, replyingToMessageId)
+                    .thenAccept(this::addMessages),
                     false);
         }
     }
@@ -1098,6 +1187,8 @@ public class ChatOverlay extends Table {
                     isSending.set(false);
                     if (clearInput) {
                         inputField.setText("");
+                        replyingToMessageId = null;
+                        buildInputTable(inputTable);
                     }
 
                     if (sendButton != null) {

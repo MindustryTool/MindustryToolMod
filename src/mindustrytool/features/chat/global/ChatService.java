@@ -11,6 +11,7 @@ import arc.Core;
 import arc.Events;
 import arc.func.Cons;
 import arc.util.Log;
+import arc.util.Timer;
 import arc.util.serialization.Jval;
 import arc.util.serialization.Json;
 import mindustrytool.Config;
@@ -30,6 +31,10 @@ public class ChatService {
 
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
     private AtomicBoolean isConnected = new AtomicBoolean(false);
+
+    public ChatService(){
+        Timer.schedule(this::connectStream, 0, 60);
+    }
 
     public static ChatService getInstance() {
         if (instance == null) {
@@ -177,7 +182,7 @@ public class ChatService {
                 });
     }
 
-    public CompletableFuture<ChatMessage> sendMessage(String channelId, String content) {
+    public CompletableFuture<ChatMessage> sendMessage(String channelId, String content, String replyTo) {
         CompletableFuture<ChatMessage> future = new CompletableFuture<>();
         if (channelId == null) {
             future.completeExceptionally(new IllegalArgumentException("Channel ID cannot be null"));
@@ -187,6 +192,9 @@ public class ChatService {
             Jval json = Jval.newObject();
             json.put("content", content);
             json.put("channelId", channelId);
+            if (replyTo != null && !replyTo.isEmpty()) {
+                json.put("replyTo", replyTo);
+            }
 
             AuthHttp.post(Config.API_v4_URL + "chats/text", json.toString())
                     .header("Content-Type", "application/json")
@@ -200,7 +208,7 @@ public class ChatService {
         }
     }
 
-    public CompletableFuture<ChatMessage> sendSchematic(String channelId, String content) {
+    public CompletableFuture<ChatMessage> sendSchematic(String channelId, String content, String replyTo) {
         CompletableFuture<ChatMessage> future = new CompletableFuture<>();
         if (channelId == null) {
             future.completeExceptionally(new IllegalArgumentException("Channel ID cannot be null"));
@@ -210,6 +218,9 @@ public class ChatService {
             Jval json = Jval.newObject();
             json.put("content", content);
             json.put("channelId", channelId);
+            if (replyTo != null && !replyTo.isEmpty()) {
+                json.put("replyTo", replyTo);
+            }
 
             AuthHttp.post(Config.API_v4_URL + "chats/msch", json.toString())
                     .header("Content-Type", "application/json")
