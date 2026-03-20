@@ -65,6 +65,7 @@ public class UserService {
                         var user = users.stream().filter(u -> u.getId().equals(id)).findFirst();
                         if (user.isPresent()) {
                             for (var callback : callbacks) {
+                                cache.put(id, user.get());
                                 callback.complete(user.get());
                             }
                         } else {
