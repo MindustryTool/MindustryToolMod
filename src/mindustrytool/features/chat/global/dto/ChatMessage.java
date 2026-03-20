@@ -7,6 +7,7 @@ public class ChatMessage {
     public String id;
     public String createdBy;
     public String createdAt;
-    public String type;
     public String content;
+    public String replyTo;
+    public String channelId;
 }

@@ -21,6 +21,7 @@ import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatMessageReceive;
 import mindustrytool.features.chat.global.dto.ChatStateChange;
 import mindustrytool.features.chat.global.dto.ChatUser;
+import mindustrytool.features.chat.global.dto.ChannelDto;
 
 public class ChatService {
     private static ChatService instance;
@@ -42,7 +43,7 @@ public class ChatService {
         return isConnected.get();
     }
 
-    public void connectStream() {
+    public synchronized void connectStream() {
         if (isStreaming.get()) {
             return;
         }
@@ -55,9 +56,11 @@ public class ChatService {
                 try {
                     AuthService.getInstance().refreshTokenIfNeeded().get();
 
-                    Log.info("Connecting to chat stream...");
+                    Log.info("Connecting to chat stream");
 
-                    URL url = new URL(Config.API_v4_URL + "chats/stream");
+                    String urlStr = Config.API_v4_URL + "chats/stream";
+
+                    URL url = new URL(urlStr);
                     conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
                     conn.setRequestProperty("Accept", "text/event-stream");
@@ -82,6 +85,8 @@ public class ChatService {
                     }
 
                     broadcastConnectionStatus(true);
+
+                    Log.info("Chat stream connected");
 
                     BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                     String line;
@@ -154,11 +159,34 @@ public class ChatService {
         Log.info("Chat stream disconnected.");
     }
 
-    public CompletableFuture<ChatMessage> sendMessage(String content) {
+    public void getChannels(Cons<ChannelDto[]> onSuccess, Cons<Throwable> onError) {
+        AuthHttp.get(Config.API_v4_URL + "chats/channels")
+                .error(onError)
+                .submit(res -> {
+                    try {
+                        Json json = new Json();
+                        ChannelDto[] channels = json.fromJson(ChannelDto[].class, res.getResultAsString());
+                        if (channels == null) {
+                            Core.app.post(() -> onSuccess.get(new ChannelDto[0]));
+                        } else {
+                            Core.app.post(() -> onSuccess.get(channels));
+                        }
+                    } catch (Exception e) {
+                        Core.app.post(() -> onError.get(e));
+                    }
+                });
+    }
+
+    public CompletableFuture<ChatMessage> sendMessage(String channelId, String content) {
         CompletableFuture<ChatMessage> future = new CompletableFuture<>();
+        if (channelId == null) {
+            future.completeExceptionally(new IllegalArgumentException("Channel ID cannot be null"));
+            return future;
+        }
         try {
             Jval json = Jval.newObject();
             json.put("content", content);
+            json.put("channelId", channelId);
 
             AuthHttp.post(Config.API_v4_URL + "chats/text", json.toString())
                     .header("Content-Type", "application/json")
@@ -172,14 +200,18 @@ public class ChatService {
         }
     }
 
-    public CompletableFuture<ChatMessage> sendSchematic(String content) {
+    public CompletableFuture<ChatMessage> sendSchematic(String channelId, String content) {
         CompletableFuture<ChatMessage> future = new CompletableFuture<>();
+        if (channelId == null) {
+            future.completeExceptionally(new IllegalArgumentException("Channel ID cannot be null"));
+            return future;
+        }
         try {
             Jval json = Jval.newObject();
             json.put("content", content);
-            json.put("type", "msch");
+            json.put("channelId", channelId);
 
-            AuthHttp.post(Config.API_v4_URL + "chats/schematic", json.toString())
+            AuthHttp.post(Config.API_v4_URL + "chats/msch", json.toString())
                     .header("Content-Type", "application/json")
                     .error(future::completeExceptionally)
                     .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
@@ -191,8 +223,12 @@ public class ChatService {
         }
     }
 
-    public void getChatUsers(Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {
-        AuthHttp.get(Config.API_v4_URL + "chats/users")
+    public void getChatUsers(String channelId, Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {
+        if (channelId == null) {
+            onError.get(new IllegalArgumentException("Channel ID cannot be null"));
+            return;
+        }
+        AuthHttp.get(Config.API_v4_URL + "chats/users?channelId=" + channelId)
                 .error(onError)
                 .submit(res -> {
                     try {
@@ -200,9 +236,38 @@ public class ChatService {
                         ChatUser[] users = json.fromJson(ChatUser[].class, res.getResultAsString());
 
                         if (users == null) {
-                            onSuccess.get(new ChatUser[0]);
+                            Core.app.post(() -> onSuccess.get(new ChatUser[0]));
                         } else {
                             Core.app.post(() -> onSuccess.get(users));
+                        }
+                    } catch (Exception e) {
+                        Core.app.post(() -> onError.get(e));
+                    }
+                });
+    }
+
+    public void fetchMessages(String channelId, String cursor, Cons<ChatMessage[]> onSuccess, Cons<Throwable> onError) {
+        if (channelId == null) {
+            onError.get(new IllegalArgumentException("Channel ID cannot be null"));
+            return;
+        }
+
+        String url = Config.API_v4_URL + "chats?channelId=" + channelId;
+        if (cursor != null && !cursor.isEmpty()) {
+            url += "&cursor=" + cursor;
+        }
+
+        AuthHttp.get(url)
+                .error(onError)
+                .submit(res -> {
+                    try {
+                        Json json = new Json();
+                        ChatMessage[] msgs = json.fromJson(ChatMessage[].class, res.getResultAsString());
+
+                        if (msgs == null) {
+                            Core.app.post(() -> onSuccess.get(new ChatMessage[0]));
+                        } else {
+                            Core.app.post(() -> onSuccess.get(msgs));
                         }
                     } catch (Exception e) {
                         Core.app.post(() -> onError.get(e));

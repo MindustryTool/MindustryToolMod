@@ -63,6 +63,8 @@ public class ChatFeature implements Feature {
     @Override
     public void onEnable() {
         overlay = new ChatOverlay();
+
+        ChatService.getInstance().disconnectStream();
         ChatService.getInstance().connectStream();
 
         if (Vars.ui.menuGroup != null) {
