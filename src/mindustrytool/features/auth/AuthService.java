@@ -154,28 +154,32 @@ public class AuthService {
                     Core.settings.remove(KEY_LOGIN_ID);
                     future.completeExceptionally(new RuntimeException("Failed to get login token", e));
                 })
-                .timeout(15000)
+                .timeout(60 * 1000)
                 .submit(res -> {
-                    Core.settings.remove(KEY_LOGIN_ID);
+                    try {
+                        Core.settings.remove(KEY_LOGIN_ID);
 
-                    Jval json = Jval.read(res.getResultAsString());
+                        Jval json = Jval.read(res.getResultAsString());
 
-                    if (json.has("accessToken") && json.has("refreshToken")) {
-                        String accessToken = json.getString("accessToken");
-                        String refreshToken = json.getString("refreshToken");
+                        if (json.has("accessToken") && json.has("refreshToken")) {
+                            String accessToken = json.getString("accessToken");
+                            String refreshToken = json.getString("refreshToken");
 
-                        saveTokens(accessToken, refreshToken);
+                            saveTokens(accessToken, refreshToken);
 
-                        sessionStore.fetch().whenComplete((v, e) -> {
-                            if (e != null) {
-                                future.completeExceptionally(e);
-                            } else {
-                                Core.app.post(() -> Events.fire(new LoginEvent()));
-                                future.complete(null);
-                            }
-                        });
-                    } else {
-                        future.completeExceptionally(new RuntimeException("Invalid response: missing tokens"));
+                            sessionStore.fetch().whenComplete((v, e) -> {
+                                if (e != null) {
+                                    future.completeExceptionally(e);
+                                } else {
+                                    Core.app.post(() -> Events.fire(new LoginEvent()));
+                                    future.complete(null);
+                                }
+                            });
+                        } else {
+                            future.completeExceptionally(new RuntimeException("Invalid response: missing tokens"));
+                        }
+                    } catch (Exception e) {
+                        future.completeExceptionally(e);
                     }
                 });
         return future;
