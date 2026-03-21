@@ -194,12 +194,12 @@ public class PlayerConnectRenderer {
                 body.add().growY().row();
 
                 if (PlayerConnect.isHosting()) {
-                    body.button("You're hosting, can not join another room", Icon.play, () -> {
+                    body.button("You're hosting, close room", Icon.play, () -> {
+                        PlayerConnect.close();
                     })
                             .growX()
                             .height(40f)
-                            .padTop(5)
-                            .disabled(true);
+                            .padTop(5);
                 } else if (matchProtocolVersion) {
                     body.button(Core.bundle.format("join"), Icon.play, () -> {
                         joinRoom(room, unneeded, missing);
