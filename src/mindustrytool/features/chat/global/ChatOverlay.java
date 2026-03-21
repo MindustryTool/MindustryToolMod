@@ -217,8 +217,6 @@ public class ChatOverlay extends Table {
     private synchronized void setup() {
         setPosition(ChatConfig.x(ChatConfig.collapsed()), ChatConfig.y(ChatConfig.collapsed()));
 
-        Vars.mobile = true;
-
         container.clearChildren();
         container.touchable = Touchable.enabled;
         container.setColor(1f, 1f, 1f, ChatConfig.opacity());
