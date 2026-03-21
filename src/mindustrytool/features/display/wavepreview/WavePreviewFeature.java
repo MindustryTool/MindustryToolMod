@@ -16,8 +16,6 @@ import mindustry.Vars;
 import mindustry.content.StatusEffects;
 import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.game.SpawnGroup;
-import mindustry.game.Team;
-import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.type.UnitType;
@@ -27,7 +25,6 @@ import mindustrytool.features.FeatureMetadata;
 import java.util.Optional;
 
 public class WavePreviewFeature extends Table implements Feature {
-    private final ObjectIntMap<UnitType> currentWaveCounts = new ObjectIntMap<>();
     private final ObjectIntMap<UnitType> nextWaveCounts = new ObjectIntMap<>();
 
     private final Interval interval = new Interval();
@@ -48,7 +45,7 @@ public class WavePreviewFeature extends Table implements Feature {
     public void init() {
         name = "wave-preview";
 
-        Events.run(WorldLoadEvent.class, () -> Core.app.post(() -> rebuild()));
+        Events.run(WorldLoadEvent.class, () -> Core.app.post(this::rebuild));
 
         visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame() && Vars.state.rules.waves);
 
@@ -58,12 +55,11 @@ public class WavePreviewFeature extends Table implements Feature {
             }
 
             if (interval.get(60)) {
-                updateCounts();
-                updateUI();
+                rebuild();
             }
         });
 
-        Core.app.post(() -> rebuild());
+        Core.app.post(this::rebuild);
     }
 
     @Override
@@ -86,7 +82,7 @@ public class WavePreviewFeature extends Table implements Feature {
             waves.row();
             waves.add(this).growX().padTop(10f);
 
-            Core.app.post(() -> rebuild());
+            Core.app.post(this::rebuild);
         }
     }
 
@@ -101,24 +97,12 @@ public class WavePreviewFeature extends Table implements Feature {
     }
 
     private void rebuild() {
-        updateCounts();
-        updateUI();
-    }
-
-    private void updateCounts() {
         if (!Vars.state.isGame()) {
             return;
         }
 
-        currentWaveCounts.clear();
-        Team enemyTeam = Vars.state.rules.waveTeam;
-
-        // Count current enemies
-        Groups.unit.each(u -> u.team == enemyTeam, u -> {
-            currentWaveCounts.put(u.type, currentWaveCounts.get(u.type, 0) + 1);
-        });
-
         nextWaveCounts.clear();
+
         for (SpawnGroup group : Vars.state.rules.spawns) {
             int amount = group.getSpawned(Vars.state.wave - 1);
 
@@ -128,17 +112,12 @@ public class WavePreviewFeature extends Table implements Feature {
                         : Mathf.round(amount * Vars.state.getPlanet().campaignRules.difficulty.enemySpawnMultiplier));
             }
 
-            int spawnedf = amount;
-
-            if (spawnedf > 0) {
-                nextWaveCounts.put(group.type, nextWaveCounts.get(group.type, 0) + spawnedf);
+            if (amount > 0) {
+                nextWaveCounts.put(group.type, nextWaveCounts.get(group.type, 0) + amount);
             }
         }
-    }
 
-    private void updateUI() {
         clear();
-
         top().left();
         background(Tex.pane);
         setColor(1f, 1f, 1f, WavePreviewConfig.opacity());
@@ -150,57 +129,32 @@ public class WavePreviewFeature extends Table implements Feature {
         title.setFontScale(scale);
         row();
 
-        Label waveLabel = add(new Label(() -> "" + Vars.state.wave)).style(Styles.outlineLabel).left().padLeft(4).get();
-        waveLabel.setFontScale(scale);
-        row();
-
-        Table currentWaveTable = new Table();
-        add(currentWaveTable).growX().pad(4).row();
-        buildWaveTable(currentWaveTable, currentWaveCounts);
-
         if (!nextWaveCounts.isEmpty()) {
-            image().color(mindustry.graphics.Pal.gray).height(2).growX().pad(4).row();
-
-            Label nextWaveLabel = add(new Label(() -> "" + (Vars.state.wave + 1))).style(Styles.outlineLabel).left()
+            Label nextWaveLabel = add(new Label(() -> "" + Vars.state.wave)).style(Styles.outlineLabel).left()
                     .padLeft(4).get();
             nextWaveLabel.setFontScale(scale);
             row();
 
             Table nextWaveTable = new Table();
             add(nextWaveTable).growX().pad(4).row();
-            buildWaveTable(nextWaveTable, nextWaveCounts);
+
+            int i = 0;
+            var keys = Seq.with(nextWaveCounts.keys()).sort(u -> u.health);
+
+            for (UnitType type : keys) {
+                int amount = nextWaveCounts.get(type);
+
+                nextWaveTable.image(type.uiIcon).size(16 * 1.5f * scale).padRight(4 * scale);
+                Label l = nextWaveTable.add(String.valueOf(amount)).style(Styles.outlineLabel).padRight(8 * scale)
+                        .get();
+                l.setFontScale(scale);
+
+                if (++i % 3 == 0) {
+                    nextWaveTable.row();
+                }
+            }
         }
 
         pack();
-    }
-
-    private void buildWaveTable(Table table, ObjectIntMap<UnitType> counts) {
-        table.clear();
-        float scale = WavePreviewConfig.scale();
-
-        if (counts.isEmpty()) {
-            Label l = table.add("-").style(Styles.outlineLabel).color(mindustry.graphics.Pal.gray).get();
-            l.setFontScale(scale);
-            return;
-        }
-
-        int i = 0;
-
-        var keys = Seq.with(counts.keys()).sort(u -> u.health);
-
-        for (UnitType type : keys) {
-            int amount = counts.get(type);
-            if (amount <= 0) {
-                continue;
-            }
-
-            table.image(type.uiIcon).size(16 * 1.5f * scale).padRight(4 * scale);
-            Label l = table.add(String.valueOf(amount)).style(Styles.outlineLabel).padRight(8 * scale).get();
-            l.setFontScale(scale);
-
-            if (++i % 3 == 0) {
-                table.row();
-            }
-        }
     }
 }

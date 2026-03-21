@@ -78,12 +78,19 @@ public class ChatOverlay extends Table {
     private static final float TARGET_WIDTH = 250f;
     private static final float PREVIEW_BUTTON_SIZE = 50f;
     private static final float CARD_HEIGHT = 330f;
+    private static final String CURRENT_CHANNEL_ID_KEY = "mindustrytool-current-channel-id";
+
+    public enum MobileTab {
+        CHANNELS, MESSAGES, MEMBERS
+    }
+
+    private MobileTab currentMobileTab = MobileTab.MESSAGES;
 
     private ObjectMap<String, Seq<ChatMessage>> messagesByChannel = new ObjectMap<>();
     private arc.struct.ObjectSet<String> fullyLoadedChannels = new arc.struct.ObjectSet<>();
     private ObjectMap<String, Integer> unreadByChannel = new ObjectMap<>();
     private Seq<ChannelDto> channels = new Seq<>();
-    private String currentChannelId = null;
+    private String currentChannelId = Core.settings.getString(CURRENT_CHANNEL_ID_KEY, null);
     private Table channelListTable;
 
     private Table messageTable;
@@ -178,6 +185,13 @@ public class ChatOverlay extends Table {
         isSending.subscribe((curr, old) -> {
             inputField.setDisabled(curr);
             buildInputTable(inputTable);
+        });
+        Events.on(ChatStateChange.class, event -> {
+            var connected = event.connected;
+
+            if (connectionIndicator != null) {
+                connectionIndicator.setColor(connected ? Color.green : Color.yellow);
+            }
         });
         Core.app.post(() -> setup());
     }
@@ -281,7 +295,8 @@ public class ChatOverlay extends Table {
             float width = Core.graphics.getWidth() / Scl.scl() * 0.9f * widthScale;
             float height = Core.graphics.getHeight() / Scl.scl() * 0.9f * scale;
 
-            containerCell.size(Math.min(width, 1900f * widthScale), Math.min(height, 1300f * scale));
+            float actualWidth = Math.min(width, 1900f * widthScale);
+            containerCell.size(actualWidth, Math.min(height, 1300f * scale));
 
             // Header
             Table header = new Table();
@@ -312,10 +327,6 @@ public class ChatOverlay extends Table {
                 }
             });
 
-            header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(8 * scale);
-            Label title = header.add("@chat.global-chat").style(Styles.outlineLabel).padLeft(8 * scale).get();
-            title.setFontScale(scale);
-
             connectionIndicator = new Image(Tex.whiteui) {
                 @Override
                 public void draw() {
@@ -325,110 +336,245 @@ public class ChatOverlay extends Table {
                 }
             };
             connectionIndicator.setColor(ChatService.getInstance().isConnected() ? Color.green : Color.yellow);
-            header.add(connectionIndicator).size(10 * scale).padLeft(8 * scale);
 
-            header.add().growX();
+            if (Vars.mobile) {
+                if (currentMobileTab == MobileTab.MESSAGES) {
+                    header.button(Icon.left, Styles.clearNonei, () -> {
+                        currentMobileTab = MobileTab.CHANNELS;
+                        setup();
+                    }).size(40 * scale).padLeft(4 * scale);
+                    header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(4 * scale);
 
-            // Minimize button
-            header.button(Icon.refresh, Styles.clearNonei, () -> {
-                messagesByChannel.clear();
-                fullyLoadedChannels.clear();
-            }).size(40 * scale).padRight(4 * scale);
-            header.button(Icon.down, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
+                    String chanName = "@chat.global-chat";
+                    if (currentChannelId != null) {
+                        ChannelDto c = channels.find(ch -> ch.id.equals(currentChannelId));
+                        if (c != null)
+                            chanName = "# " + c.name;
+                    }
+                    Label title = header.add(chanName).style(Styles.outlineLabel).padLeft(8 * scale).get();
+                    title.setFontScale(scale);
+
+                    header.add(connectionIndicator).size(10 * scale).padLeft(8 * scale);
+                    header.add().growX();
+
+                    header.button(Icon.right, Styles.clearNonei, () -> {
+                        currentMobileTab = MobileTab.MEMBERS;
+                        setup();
+                    }).size(40 * scale).padRight(4 * scale);
+                    header.button(Icon.refresh, Styles.clearNonei, () -> {
+                        messagesByChannel.clear();
+                        fullyLoadedChannels.clear();
+                    }).size(40 * scale).padRight(4 * scale);
+                    header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
+                } else if (currentMobileTab == MobileTab.CHANNELS) {
+                    header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(8 * scale);
+                    Label title = header.add("@chat.channels").style(Styles.outlineLabel).padLeft(8 * scale).get();
+                    title.setFontScale(scale);
+                    header.add().growX();
+                    header.button(Icon.refresh, Styles.clearNonei, () -> {
+                        messagesByChannel.clear();
+                        fullyLoadedChannels.clear();
+                    }).size(40 * scale).padRight(4 * scale);
+                    header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
+                    header.button(Icon.right, Styles.clearNonei, () -> {
+                        currentMobileTab = MobileTab.MESSAGES;
+                        setup();
+                    }).size(40 * scale).padRight(4 * scale);
+                } else if (currentMobileTab == MobileTab.MEMBERS) {
+                    header.button(Icon.left, Styles.clearNonei, () -> {
+                        currentMobileTab = MobileTab.MESSAGES;
+                        setup();
+                    }).size(40 * scale).padLeft(4 * scale);
+                    header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(4 * scale);
+                    Label title = header.add("@chat.online-members").style(Styles.outlineLabel).padLeft(8 * scale)
+                            .get();
+                    title.setFontScale(scale);
+                    header.add().growX();
+                    header.button(Icon.refresh, Styles.clearNonei, () -> {
+                        messagesByChannel.clear();
+                        fullyLoadedChannels.clear();
+                    }).size(40 * scale).padRight(4 * scale);
+                    header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
+                }
+            } else {
+                header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(8 * scale);
+                Label title = header.add("@chat.global-chat").style(Styles.outlineLabel).padLeft(8 * scale).get();
+                title.setFontScale(scale);
+
+                header.add(connectionIndicator).size(10 * scale).padLeft(8 * scale);
+
+                header.add().growX();
+
+                // Minimize button
+                header.button(Icon.refresh, Styles.clearNonei, () -> {
+                    messagesByChannel.clear();
+                    fullyLoadedChannels.clear();
+                }).size(40 * scale).padRight(4 * scale);
+                header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
+            }
 
             container.add(header).growX().height(46 * scale).row();
 
             // Main Content Area
             Table mainContent = new Table();
 
-            // Left Side - Channels
-            Table leftSide = new Table();
-            leftSide.top().background(Styles.black5);
-            channelListTable = new Table();
-            channelListTable.top().left();
-            ScrollPane channelScroll = new ScrollPane(channelListTable, Styles.noBarPane);
-            channelScroll.setScrollingDisabled(true, false);
-            leftSide.add(channelScroll).grow();
+            if (Vars.mobile) {
+                if (currentMobileTab == MobileTab.CHANNELS) {
+                    Table leftSide = new Table();
+                    leftSide.top().background(Styles.black5);
+                    channelListTable = new Table();
+                    channelListTable.top().left();
+                    ScrollPane channelScroll = new ScrollPane(channelListTable, Styles.noBarPane);
+                    channelScroll.setScrollingDisabled(true, false);
+                    leftSide.add(channelScroll).grow();
+                    mainContent.add(leftSide).grow();
+                } else if (currentMobileTab == MobileTab.MEMBERS) {
+                    Table rightSide = new Table();
+                    rightSide.top().background(Styles.black3);
+                    userListTable = new Table();
+                    userListTable.top().left();
+                    ScrollPane userScrollPane = new ScrollPane(userListTable, Styles.noBarPane);
+                    userScrollPane.setScrollingDisabled(true, false);
+                    rightSide.add(userScrollPane).grow().row();
+                    mainContent.add(rightSide).grow();
+                } else {
+                    messageTable = new Table();
+                    messageTable.top().left();
 
-            mainContent.add(leftSide).width(160f * scale).growY();
-            mainContent.image(Tex.whiteui).width(1f * scale).color(Color.darkGray).fillY();
+                    scrollPane = new ScrollPane(messageTable, Styles.noBarPane);
+                    scrollPane.setScrollingDisabled(true, false);
+                    scrollPane.setFadeScrollBars(false);
+                    scrollPane.visible(() -> ChatService.getInstance().isConnected());
+                    scrollPane.scrolled(amount -> {
+                        if (scrollPane.getScrollY() < 100 && !isLoadingMessages && currentChannelId != null
+                                && !fullyLoadedChannels.contains(currentChannelId)) {
+                            Seq<ChatMessage> msgs = messagesByChannel.get(currentChannelId);
+                            if (msgs != null && !msgs.isEmpty()) {
+                                loadMoreMessages(currentChannelId, msgs.first().id);
+                            }
+                        }
+                    });
 
-            // Messages
-            messageTable = new Table();
-            messageTable.top().left();
+                    loadingTable = new Table();
 
-            scrollPane = new ScrollPane(messageTable, Styles.noBarPane);
-            scrollPane.setScrollingDisabled(true, false);
-            scrollPane.setFadeScrollBars(false);
-            scrollPane.visible(() -> ChatService.getInstance().isConnected());
-            scrollPane.scrolled(amount -> {
-                if (scrollPane.getScrollY() < 100 && !isLoadingMessages && currentChannelId != null
-                        && !fullyLoadedChannels.contains(currentChannelId)) {
-                    Seq<ChatMessage> msgs = messagesByChannel.get(currentChannelId);
-                    if (msgs != null && !msgs.isEmpty()) {
-                        loadMoreMessages(currentChannelId, msgs.first().id);
+                    loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray)
+                            .visible(() -> !ChatService.getInstance().isConnected() || isLoadingMessages).get()
+                            .setFontScale(scale);
+
+                    Stack stack = new Stack();
+                    stack.add(loadingTable);
+                    stack.add(scrollPane);
+
+                    Table centerArea = new Table();
+                    centerArea.add(stack).grow().row();
+
+                    buildInputTable(inputTable);
+                    centerArea.add(inputTable).growX().bottom();
+
+                    mainContent.add(centerArea).grow().minWidth(0);
+                }
+                container.add(mainContent).grow().minWidth(0).row();
+            } else {
+                float leftWidth = Math.min(160f * scale, actualWidth * 0.25f);
+                float rightWidthExp = Math.min(280f * scale, actualWidth * 0.35f);
+                float rightWidthCol = 48f * scale;
+
+                // Left Side - Channels
+                Table leftSide = new Table();
+                leftSide.top().background(Styles.black5);
+                channelListTable = new Table();
+                channelListTable.top().left();
+                ScrollPane channelScroll = new ScrollPane(channelListTable, Styles.noBarPane);
+                channelScroll.setScrollingDisabled(true, false);
+                leftSide.add(channelScroll).grow();
+
+                mainContent.add(leftSide).width(leftWidth).growY();
+                mainContent.image(Tex.whiteui).width(1f * scale).color(Color.darkGray).fillY();
+
+                // Messages
+                messageTable = new Table();
+                messageTable.top().left();
+
+                scrollPane = new ScrollPane(messageTable, Styles.noBarPane);
+                scrollPane.setScrollingDisabled(true, false);
+                scrollPane.setFadeScrollBars(false);
+                scrollPane.visible(() -> ChatService.getInstance().isConnected());
+                scrollPane.scrolled(amount -> {
+                    if (scrollPane.getScrollY() < 100 && !isLoadingMessages && currentChannelId != null
+                            && !fullyLoadedChannels.contains(currentChannelId)) {
+                        Seq<ChatMessage> msgs = messagesByChannel.get(currentChannelId);
+                        if (msgs != null && !msgs.isEmpty()) {
+                            loadMoreMessages(currentChannelId, msgs.first().id);
+                        }
                     }
-                }
-            });
+                });
 
-            loadingTable = new Table();
+                loadingTable = new Table();
 
-            loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray)
-                    .visible(() -> !ChatService.getInstance().isConnected() || isLoadingMessages).get()
-                    .setFontScale(scale);
+                loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray)
+                        .visible(() -> !ChatService.getInstance().isConnected() || isLoadingMessages).get()
+                        .setFontScale(scale);
 
-            Stack stack = new Stack();
-            stack.add(loadingTable);
-            stack.add(scrollPane);
+                Stack stack = new Stack();
+                stack.add(loadingTable);
+                stack.add(scrollPane);
 
-            mainContent.add(stack).grow();
+                Table centerArea = new Table();
+                centerArea.add(stack).grow().row();
 
-            Events.on(ChatStateChange.class, event -> {
-                var connected = event.connected;
+                buildInputTable(inputTable);
+                centerArea.add(inputTable).growX().bottom();
 
-                if (connectionIndicator != null) {
-                    connectionIndicator.setColor(connected ? Color.green : Color.yellow);
-                }
-            });
+                mainContent.add(centerArea).grow().minWidth(0);
 
-            // Vertical Separator
-            mainContent.image(Tex.whiteui).width(1f * scale).color(Color.darkGray).fillY();
+                // Vertical Separator
+                mainContent.image(Tex.whiteui).width(1f * scale).color(Color.darkGray).fillY();
 
-            // User List Sidebar
-            Table rightSide = new Table();
-            rightSide.top();
-            rightSide.background(Styles.black3);
+                // User List Sidebar
+                Table rightSide = new Table();
+                rightSide.top();
+                rightSide.background(Styles.black3);
 
-            Table titleTable = new Table();
-            if (!isUserListCollapsed) {
-                Label l = titleTable.add("@chat.online-members").style(Styles.defaultLabel).color(Color.gray)
-                        .pad(10 * scale).left()
-                        .minWidth(0).ellipsis(true).growX().get();
-                l.setFontScale(scale);
-            }
-
-            titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
-                isUserListCollapsed = !isUserListCollapsed;
-                setup();
-            }).size(40 * scale).pad(4 * scale).right();
-
-            rightSide.add(titleTable).growX().row();
-
-            if (!isUserListCollapsed) {
                 userListTable = new Table();
                 userListTable.top().left();
-
-                ScrollPane userScrollPane = new ScrollPane(userListTable,
-                        Styles.noBarPane);
+                ScrollPane userScrollPane = new ScrollPane(userListTable, Styles.noBarPane);
                 userScrollPane.setScrollingDisabled(true, false);
 
-                rightSide.add(userScrollPane).grow().row();
-                rightSide.pack();
+                Runnable rebuildRightSide = new Runnable() {
+                    @Override
+                    public void run() {
+                        rightSide.clear();
+                        Table titleTable = new Table();
+                        if (!isUserListCollapsed) {
+                            Label l = titleTable.add("@chat.online-members").style(Styles.defaultLabel)
+                                    .color(Color.gray)
+                                    .pad(10 * scale).left()
+                                    .minWidth(0).ellipsis(true).growX().get();
+                            l.setFontScale(scale);
+                        }
+
+                        titleTable.button(isUserListCollapsed ? Icon.left : Icon.right, Styles.clearNonei, () -> {
+                            isUserListCollapsed = !isUserListCollapsed;
+                            this.run();
+                            Cell<?> cell = mainContent.getCell(rightSide);
+                            if (cell != null) {
+                                cell.width(isUserListCollapsed ? rightWidthCol : rightWidthExp);
+                            }
+                        }).size(40 * scale).pad(4 * scale).right();
+
+                        rightSide.add(titleTable).growX().row();
+
+                        if (!isUserListCollapsed) {
+                            rightSide.add(userScrollPane).grow().row();
+                        }
+                    }
+                };
+                rebuildRightSide.run();
+
+                mainContent.add(rightSide).width(isUserListCollapsed ? rightWidthCol : rightWidthExp).growY();
+
+                container.add(mainContent).grow().minWidth(0).row();
             }
-
-            mainContent.add(rightSide).width(isUserListCollapsed ? 48f * scale : 280f * scale).growY();
-
-            container.add(mainContent).grow().row();
 
             // Fetch users
             Timer.schedule(() -> {
@@ -442,18 +588,18 @@ public class ChatOverlay extends Table {
                 ChatService.getInstance().getChannels(chans -> {
                     channels.clear();
                     channels.addAll(chans);
-                    if (channels.size > 0 && currentChannelId == null) {
-                        switchChannel(channels.get(0).id);
+                    if (channels.size > 0) {
+                        if (currentChannelId == null || !channels.contains(c -> c.id.equals(currentChannelId))) {
+                            switchChannel(channels.get(0).id);
+                        } else {
+                            switchChannel(currentChannelId);
+                        }
                     }
                     rebuildChannelList();
                 }, e -> Log.err("Failed to fetch channels", e));
             } else {
                 rebuildChannelList();
             }
-
-            buildInputTable(inputTable);
-
-            container.add(inputTable).growX().bottom();
 
             // Initial population
             rebuildMessages(messageTable);
@@ -492,6 +638,10 @@ public class ChatOverlay extends Table {
             TextButton btn = new TextButton("# " + channel.name, isSelected ? Styles.togglet : Styles.cleart);
             btn.getLabel().setAlignment(Align.left);
             btn.getLabel().setFontScale(scale);
+            btn.getLabel().setEllipsis(true);
+            if (btn.getLabelCell() != null)
+                btn.getLabelCell().minWidth(0);
+
             if (isSelected) {
                 btn.setChecked(true);
             }
@@ -508,14 +658,19 @@ public class ChatOverlay extends Table {
                 if (!isSelected) {
                     switchChannel(channel.id);
                 }
+                if (Vars.mobile && currentMobileTab != MobileTab.MESSAGES) {
+                    currentMobileTab = MobileTab.MESSAGES;
+                    setup();
+                }
             });
 
-            channelListTable.add(btn).growX().height(40 * scale).pad(2 * scale).row();
+            channelListTable.add(btn).growX().minWidth(0).height(40 * scale).pad(2 * scale).row();
         }
     }
 
     private void switchChannel(String channelId) {
         currentChannelId = channelId;
+        Core.settings.put(CURRENT_CHANNEL_ID_KEY, channelId);
         unreadByChannel.put(channelId, 0);
         updateBadge();
         rebuildChannelList();
@@ -643,7 +798,7 @@ public class ChatOverlay extends Table {
             sendButton.clicked(this::handleSend);
             sendButton.setDisabled(() -> isSending.get());
 
-            inputRow.add(inputField).growX().height(40f * scale).pad(8 * scale).padRight(4 * scale);
+            inputRow.add(inputField).growX().minWidth(0).height(40f * scale).pad(8 * scale).padRight(4 * scale);
 
             inputRow.button(Utils.icons("attach-file.png"), () -> {
                 if (attachContentDialog == null) {
@@ -653,7 +808,7 @@ public class ChatOverlay extends Table {
             }).pad(8 * scale).size(40f * scale);
 
             inputRow.add(sendButton).width(100f * scale).height(40f * scale).pad(8 * scale).padLeft(0);
-            inputTable.add(inputRow).growX();
+            inputTable.add(inputRow).growX().minWidth(0);
         } else {
             inputTable.button("@login", Styles.defaultt, () -> {
                 AuthService.getInstance().login();
@@ -782,6 +937,8 @@ public class ChatOverlay extends Table {
     }
 
     private void rebuildMessages(Table messageTable) {
+        if (messageTable == null)
+            return;
         messageTable.clear();
         messageTable.top().left();
 
@@ -966,7 +1123,7 @@ public class ChatOverlay extends Table {
                 if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
                     card.row();
                     card.table(actions -> {
-                        actions.left().defaults().height(36 * scale).minWidth(80 * scale).padRight(8 * scale);
+                        actions.left().defaults().height(36 * scale).minWidth(160 * scale).padRight(8 * scale);
 
                         TextButton copyBtn = new TextButton("@copy", Styles.defaultt);
                         copyBtn.clicked(() -> {

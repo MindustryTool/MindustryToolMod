@@ -118,12 +118,12 @@ public class PlayerConnectRenderer {
 
                 // Mods
                 if (room.getData().getMods().size() > 0) {
-                    var modsLabel = body.add(Iconc.book + " [lightgray]" + Strings.join(", ", room.getData().getMods()))
+                    var modsLabel = body.add(Iconc.book + " [lightgray]" + Strings.join("[white], ", room.getData().getMods()))
                             .left()
                             .padBottom(6);
 
                     if (targetWidth > 0) {
-                        modsLabel.width(contentWidth).ellipsis(true);
+                        modsLabel.width(contentWidth).wrap();
                     } else {
                         modsLabel.wrap().growX();
                     }
@@ -138,7 +138,7 @@ public class PlayerConnectRenderer {
                 Seq<String> unneeded = localMods.select(m -> !serverMods.contains(m));
 
                 if (!missing.isEmpty()) {
-                    var label = body.labelWrap("[scarlet]Missing: " + Strings.join(", ", missing))
+                    var label = body.labelWrap("[scarlet]Missing:[white] " + Strings.join("[white], ", missing))
                             .left()
                             .labelAlign(Align.left)
                             .padBottom(6);
@@ -194,12 +194,12 @@ public class PlayerConnectRenderer {
                 body.add().growY().row();
 
                 if (PlayerConnect.isHosting()) {
-                    body.button("You're hosting, can not join another room", Icon.play, () -> {
+                    body.button("You're hosting, close room", Icon.play, () -> {
+                        PlayerConnect.close();
                     })
                             .growX()
                             .height(40f)
-                            .padTop(5)
-                            .disabled(true);
+                            .padTop(5);
                 } else if (matchProtocolVersion) {
                     body.button(Core.bundle.format("join"), Icon.play, () -> {
                         joinRoom(room, unneeded, missing);

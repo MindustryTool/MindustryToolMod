@@ -161,18 +161,16 @@ public class HealthBarVisualizer implements Feature {
             float shieldValue = unit.shield / maxHealth;
             Draw.color(Pal.shield, 0.5f * HealthBarConfig.opacity);
 
-            if (shieldValue > 1) {
-                float shieldW = w * (shieldValue % 1);
+            while (shieldValue > 0) {
+                y += h * 1.5f;
+                float shieldPercent = Math.min(shieldValue, 1f);
+                float shieldW = w * shieldPercent;
                 float shieldCenterX = left + shieldW / 2f;
-                Draw.color(arc.util.Tmp.c1.set(Pal.shield).add(0f, 0f, 0.2f * shieldValue, 0f), 0.75f * HealthBarConfig.opacity);
+                Draw.color(unit.team.color, 0.75f * HealthBarConfig.opacity);
                 Draw.rect(barRegion, shieldCenterX, y, shieldW, h);
-            }
 
-            float shieldPercent = Math.min(shieldValue, 1f);
-            float shieldW = w * shieldPercent;
-            float shieldCenterX = left + shieldW / 2f;
-            Draw.color(unit.team.color, 0.75f * HealthBarConfig.opacity);
-            Draw.rect(barRegion, shieldCenterX, y, shieldW, h);
+                shieldValue -= 1;
+            }
         }
 
         Draw.reset();
