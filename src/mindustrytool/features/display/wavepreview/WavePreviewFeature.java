@@ -104,7 +104,15 @@ public class WavePreviewFeature extends Table implements Feature {
         nextWaveCounts.clear();
 
         for (SpawnGroup group : Vars.state.rules.spawns) {
+            if (group.type == null) {
+                continue;
+            }
+
             int amount = group.getSpawned(Vars.state.wave - 1);
+
+            if (amount == 0) {
+                continue;
+            }
 
             if (Vars.state.isCampaign()) {
                 amount = Math.max(1, group.effect == StatusEffects.boss
