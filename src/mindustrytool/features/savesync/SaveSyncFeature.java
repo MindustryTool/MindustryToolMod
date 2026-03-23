@@ -46,6 +46,7 @@ public class SaveSyncFeature implements Feature {
     private List<ClientFileDto> listFiles() {
         Seq<Fi> files = new Seq<>();
         files.add(Core.settings.getSettingsFile());
+        files.add(Core.settings.getBackupSettingsFile());
         files.addAll(Vars.customMapDirectory.list());
         files.addAll(Vars.saveDirectory.list());
         // files.addAll(Vars.modDirectory.list());
