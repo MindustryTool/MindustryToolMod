@@ -20,6 +20,7 @@ import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
+import arc.util.Strings;
 import arc.util.Timer;
 import arc.util.Http.HttpStatusException;
 import arc.util.serialization.Jval;
@@ -440,6 +441,19 @@ public class Main extends Mod {
             return;
         }
 
+        int separatorIndex = log.indexOf("\n\n");
+
+        if (separatorIndex != -1) {
+            var firstPart = log.substring(0, separatorIndex);
+            var secondPart = log.substring(separatorIndex);
+            var enabledFeatures = FeatureManager.getInstance().getEnableds().map(f -> f.getMetadata().name());
+            var enabledFeatureString = Strings.join(",", enabledFeatures);
+
+            log = firstPart + "\n" + "Enabled features: " + enabledFeatureString + secondPart;
+        }
+
+        var data = log;
+
         String sendCrashReportKey = "sendCrashReport";
 
         BaseDialog dialog = new BaseDialog("@crash-report.title");
@@ -464,7 +478,7 @@ public class Main extends Mod {
                 try {
                     HashMap<String, Object> json = new HashMap<>();
 
-                    json.put("content", log);
+                    json.put("content", data);
 
                     Http.post(Config.API_v4_URL + "/crashes", Utils.toJson(json))
                             .header("Content-Type", "application/json")
