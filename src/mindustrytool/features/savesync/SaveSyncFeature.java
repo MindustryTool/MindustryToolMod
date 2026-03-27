@@ -22,15 +22,17 @@ import mindustrytool.features.savesync.dto.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public class SaveSyncFeature implements Feature {
     private static final String SETTING_SLOT_ID = "mindustrytool.savesync.slotId";
     private static final String SETTING_LAST_SYNC = "mindustrytool.savesync.lastSync";
 
-    private final java.util.Set<String> initialFilePaths = new java.util.HashSet<>();
+    private final Set<String> initialFilePaths = new HashSet<>();
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -77,28 +79,11 @@ public class SaveSyncFeature implements Feature {
         return result;
     }
 
-    private java.util.Set<String> listFilePaths() {
-        Seq<Fi> files = new Seq<>();
-        files.add(Core.settings.getSettingsFile());
-        files.addAll(Vars.customMapDirectory.list());
-        files.addAll(Vars.saveDirectory.list());
-        files.addAll(Vars.modDirectory.list());
-        files.addAll(Vars.schematicDirectory.list());
-
-        String base = Vars.dataDirectory.absolutePath();
-        java.util.Set<String> result = new java.util.HashSet<>();
-
+    private Set<String> listFilePaths() {
+        List<ClientFileDto> files = listFiles();
+        Set<String> result = new HashSet<>();
         for (var file : files) {
-            if (file.isDirectory()) {
-                continue;
-            }
-            String relativePath = file.absolutePath().substring(base.length());
-            // normalize path
-            relativePath = relativePath.replace('\\', '/');
-            if (relativePath.startsWith("/")) {
-                relativePath = relativePath.substring(1);
-            }
-            result.add(relativePath);
+            result.add(file.getPath());
         }
         return result;
     }
@@ -127,7 +112,7 @@ public class SaveSyncFeature implements Feature {
     private void performSyncOnExit(String slotId) {
         Log.info("Performing save sync on exit...");
         try {
-            java.util.Set<String> currentPaths = listFilePaths();
+            Set<String> currentPaths = listFilePaths();
             List<String> deletedFiles = new ArrayList<>();
             for (String path : initialFilePaths) {
                 if (!currentPaths.contains(path)) {

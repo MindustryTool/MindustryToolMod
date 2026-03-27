@@ -2,6 +2,9 @@ package mindustrytool.features.savesync.dto;
 
 import java.time.Instant;
 
+import lombok.Data;
+
+@Data
 public class ClientFileDto {
     public String path;
     public String hash;

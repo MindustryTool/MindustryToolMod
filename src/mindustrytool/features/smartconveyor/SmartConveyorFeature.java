@@ -49,6 +49,7 @@ public class SmartConveyorFeature implements Feature {
                 .name("feature.smart-conveyor.name")
                 .description("feature.smart-conveyor.description")
                 .icon(Icon.distribution)
+                .quickAccess(true)
                 .build();
     }
 
