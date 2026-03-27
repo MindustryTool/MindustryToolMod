@@ -242,7 +242,7 @@ public class Main extends Mod {
                                         .withZone(ZoneId.systemDefault());
                                 changelog.append("[lightgray]").append(formatter.format(instant)).append("[] - ");
                             }
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             Log.err(e);
                         }
 

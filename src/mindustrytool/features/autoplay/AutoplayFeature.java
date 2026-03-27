@@ -6,6 +6,7 @@ import arc.graphics.g2d.Draw;
 import arc.input.KeyCode;
 import arc.scene.ui.Dialog;
 import arc.struct.Seq;
+import arc.util.Log;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
@@ -78,7 +79,11 @@ public class AutoplayFeature implements Feature {
         Events.run(Trigger.draw, this::draw);
 
         Timer.schedule(() -> {
-            Core.app.post(this::updateTask);
+            try {
+                updateTask();
+            } catch (Exception e) {
+                Log.err(e);
+            }
         }, 0, 0.2f);
 
         Events.run(Trigger.update, () -> {
