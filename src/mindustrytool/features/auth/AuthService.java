@@ -1,6 +1,8 @@
 package mindustrytool.features.auth;
 
 import java.net.SocketTimeoutException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,6 +27,7 @@ public class AuthService {
     public static final String KEY_ACCESS_TOKEN = "mindustrytool.auth.accessToken";
     public static final String KEY_REFRESH_TOKEN = "mindustrytool.auth.refreshToken";
     public static final String KEY_LOGIN_ID = "mindustrytool.auth.loginId";
+    public static final String KEY_LOGIN_EXPIRY = "mindustrytool.auth.loginExpiry";
 
     public final ReactiveStore<UserSession> sessionStore;
 
@@ -58,6 +61,14 @@ public class AuthService {
         String logindId = Core.settings.getString(KEY_LOGIN_ID);
 
         if (logindId == null) {
+            return;
+        }
+
+        Instant expiry = Instant.parse(Core.settings.getString(KEY_LOGIN_EXPIRY));
+
+        if (expiry.isBefore(Instant.now())) {
+            Core.settings.remove(KEY_LOGIN_ID);
+            Core.settings.remove(KEY_LOGIN_EXPIRY);
             return;
         }
 
@@ -117,6 +128,8 @@ public class AuthService {
                         }).margin(40).growX().wrapLabel(true).fontScale(0.5f);
 
                         Core.settings.put(KEY_LOGIN_ID, loginId);
+                        Core.settings.put(KEY_LOGIN_EXPIRY, Instant.now().plus(Duration.ofMinutes(5)));
+
 
                         // Start polling for token
                         pollLoginToken(loginId).whenComplete((v, e) -> {
