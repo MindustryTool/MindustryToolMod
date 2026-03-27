@@ -6,20 +6,24 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class QuickAccessConfig {
+    private static String getAxisKey(String axis) {
+        return "mindustrytool.quickaccess." + axis + (Core.graphics.isPortrait() ? ".portrait" : ".landscape");
+    }
+
     public static float x() {
-        return Core.settings.getFloat("mindustrytool.quickaccess.x", 0);
+        return Core.settings.getFloat(getAxisKey("x"), 0);
     }
 
     public static void x(float value) {
-        Core.settings.put("mindustrytool.quickaccess.x", value);
+        Core.settings.put(getAxisKey("x"), value);
     }
 
     public static float y() {
-        return Core.settings.getFloat("mindustrytool.quickaccess.y", Core.graphics.getHeight() / 2f);
+        return Core.settings.getFloat(getAxisKey("y"), Core.graphics.getHeight() / 2f);
     }
 
     public static void y(float value) {
-        Core.settings.put("mindustrytool.quickaccess.y", value);
+        Core.settings.put(getAxisKey("y"), value);
     }
 
     public static float opacity() {
