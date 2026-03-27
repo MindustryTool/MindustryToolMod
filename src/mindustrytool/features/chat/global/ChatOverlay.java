@@ -987,7 +987,7 @@ public class ChatOverlay extends Table {
 
                 UserService.findUserById(msg.createdBy).thenAccept(data -> {
                     Core.app.post(() -> {
-                        String timeStr = "";
+                        String timeStr = msg.createdAt;
 
                         if (msg.createdAt != null) {
                             try {
@@ -996,7 +996,7 @@ public class ChatOverlay extends Table {
                                         .withZone(ZoneId.systemDefault())
                                         .format(instant);
 
-                            } catch (Exception err) {
+                            } catch (Throwable err) {
                                 Log.err(err);
                             }
                         }

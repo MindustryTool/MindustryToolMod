@@ -64,7 +64,7 @@ public class AuthService {
             return;
         }
 
-        Instant expiry = Instant.parse(Core.settings.getString(KEY_LOGIN_EXPIRY));
+        Instant expiry = Instant.ofEpochMilli(Core.settings.getLong(KEY_LOGIN_EXPIRY, 0));
 
         if (expiry.isBefore(Instant.now())) {
             Core.settings.remove(KEY_LOGIN_ID);
@@ -128,8 +128,7 @@ public class AuthService {
                         }).margin(40).growX().wrapLabel(true).fontScale(0.5f);
 
                         Core.settings.put(KEY_LOGIN_ID, loginId);
-                        Core.settings.put(KEY_LOGIN_EXPIRY, Instant.now().plus(Duration.ofMinutes(5)));
-
+                        Core.settings.put(KEY_LOGIN_EXPIRY, Instant.now().plus(Duration.ofMinutes(5)).toEpochMilli());
 
                         // Start polling for token
                         pollLoginToken(loginId).whenComplete((v, e) -> {
