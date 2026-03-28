@@ -12,6 +12,7 @@ import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
+import arc.struct.IntSet;
 import arc.struct.LongMap;
 import arc.struct.LongSeq;
 import arc.struct.Seq;
@@ -42,7 +43,8 @@ import static mindustry.Vars.*;
 public class PathfindingDisplay implements Feature {
     private final LongMap<PathfindingCache> pathCache = new LongMap<>();
     private final LongMap<PathfindingCache> spawnPathCache = new LongMap<>();
-    private final LongMap<Object> activeTiles = new LongMap<>();
+    private final LongSeq keysToRemove = new LongSeq();
+    private final IntSet activeTeams = new IntSet();
 
     private Seq<Tile> spawns = new Seq<>(false);
     private boolean isEnabled;
@@ -98,7 +100,6 @@ public class PathfindingDisplay implements Feature {
         isEnabled = false;
         pathCache.clear();
         spawnPathCache.clear();
-        activeTiles.clear();
     }
 
     @Override
@@ -220,64 +221,28 @@ public class PathfindingDisplay implements Feature {
     private void drawUnitPath() {
         Draw.z(Layer.overlayUI);
 
-        activeTiles.clear();
-
         int totalUnits = Groups.unit.size();
         int maxSteps = (totalUnits > 2000) ? 50 : (totalUnits > 1000) ? 100 : (totalUnits > 500) ? 150 : 250;
         boolean useCulling = totalUnits > 300;
         Rect cullBounds = useCulling ? Core.camera.bounds(Tmp.r1).grow(500f) : null;
         float currentTime = Time.time;
-        int updatesThisFrame = 0;
+        int[] updatesThisFrame = { 0 };
 
-        for (Unit unit : Groups.unit) {
-            if (unit.team == player.team()) {
-                continue;
+        if (useCulling) {
+            Groups.unit.intersect(cullBounds.x, cullBounds.y, cullBounds.width, cullBounds.height, unit -> {
+                processUnitPath(unit, maxSteps, currentTime, updatesThisFrame);
+            });
+        } else {
+            for (Unit unit : Groups.unit) {
+                processUnitPath(unit, maxSteps, currentTime, updatesThisFrame);
             }
-
-            if (useCulling && !cullBounds.contains(unit.x, unit.y)) {
-                continue;
-            }
-
-            long packedPosition = Point2.pack(unit.tileX(), unit.tileY());
-            long cacheKey = (((long) packedPosition) << 32) | ((long) unit.type.flowfieldPathType << 8)
-                    | (long) unit.team.id;
-
-            if (activeTiles.containsKey(cacheKey)) {
-                continue;
-            }
-
-            activeTiles.put(cacheKey, null);
-
-            PathfindingCache cacheEntry = pathCache.get(cacheKey);
-
-            if (cacheEntry == null || (currentTime - cacheEntry.lastUpdateTime) > 15f) {
-                if (cacheEntry == null) {
-                    cacheEntry = new PathfindingCache();
-                    cacheEntry.data = new float[250 * 2];
-                    pathCache.put(cacheKey, cacheEntry);
-                }
-                
-                if (updatesThisFrame < 3) {
-                    cacheEntry.size = 0;
-                    recalculatePath(unit, cacheEntry, maxSteps);
-                    cacheEntry.lastUpdateTime = currentTime + Mathf.random(3f, 8f);
-                    updatesThisFrame++;
-                }
-            }
-
-            if (cacheEntry.size >= 2) {
-                cacheEntry.data[0] = unit.x;
-                cacheEntry.data[1] = unit.y;
-            }
-
-            drawFromCache(cacheEntry, unit.team.color, maxSteps);
         }
 
-        if (Time.time % 60 == 0) {
-            LongSeq keysToRemove = new LongSeq();
+        if (Core.graphics.getFrameId() % 60 == 0) {
+            keysToRemove.clear();
 
             for (LongMap.Entry<PathfindingCache> entry : pathCache.entries()) {
-                if (!activeTiles.containsKey(entry.key)) {
+                if ((currentTime - entry.value.lastUsedTime) > 60f) {
                     keysToRemove.add(entry.key);
                 }
             }
@@ -286,6 +251,46 @@ public class PathfindingDisplay implements Feature {
                 pathCache.remove(keysToRemove.get(i));
             }
         }
+    }
+
+    private void processUnitPath(Unit unit, int maxSteps, float currentTime, int[] updatesThisFrame) {
+        if (unit.team == player.team()) {
+            return;
+        }
+
+        long packedPosition = Point2.pack(unit.tileX(), unit.tileY());
+        long cacheKey = (((long) packedPosition) << 32) | ((long) unit.type.flowfieldPathType << 8)
+                | (long) unit.team.id;
+
+        PathfindingCache cacheEntry = pathCache.get(cacheKey);
+
+        if (cacheEntry == null || (currentTime - cacheEntry.lastUpdateTime) > 15f) {
+            if (cacheEntry == null) {
+                cacheEntry = new PathfindingCache();
+                cacheEntry.data = new float[250 * 2];
+                pathCache.put(cacheKey, cacheEntry);
+            }
+
+            if (updatesThisFrame[0] < 3) {
+                cacheEntry.size = 0;
+                recalculatePath(unit, cacheEntry, maxSteps);
+                cacheEntry.lastUpdateTime = currentTime + Mathf.random(3f, 8f);
+                updatesThisFrame[0]++;
+            }
+        }
+
+        if (cacheEntry.lastUsedTime == currentTime) {
+            return;
+        }
+
+        cacheEntry.lastUsedTime = currentTime;
+
+        if (cacheEntry.size >= 2) {
+            cacheEntry.data[0] = unit.x;
+            cacheEntry.data[1] = unit.y;
+        }
+
+        drawFromCache(cacheEntry, unit.team.color, maxSteps);
     }
 
     private void recalculatePath(Unit unit, PathfindingCache cacheEntry, int maxSteps) {
@@ -363,12 +368,18 @@ public class PathfindingDisplay implements Feature {
 
         float currentTime = Time.time;
 
+        // Collect unique enemy teams
+        activeTeams.clear();
         for (var spawnPoint : Vars.state.rules.spawns) {
             var team = spawnPoint.team == null ? Vars.state.rules.waveTeam : spawnPoint.team;
-
-            if (team == player.team()) {
-                continue;
+            if (team != player.team()) {
+                activeTeams.add(team.id);
             }
+        }
+
+        for (arc.struct.IntSet.IntSetIterator it = activeTeams.iterator(); it.hasNext;) {
+            int teamId = it.next();
+            Team team = Team.get(teamId);
 
             for (var costType = 0; costType < Pathfinder.costTypes.size; costType++) {
                 if (!PathfindingConfig.isCostTypeEnabled(costType)) {
