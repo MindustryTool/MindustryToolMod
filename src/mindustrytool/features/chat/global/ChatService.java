@@ -13,6 +13,7 @@ import arc.func.Cons;
 import arc.util.Log;
 import arc.util.Timer;
 import arc.util.serialization.Jval;
+import mindustry.io.JsonIO;
 import arc.util.serialization.Json;
 import mindustrytool.Config;
 import mindustrytool.Utils;
@@ -23,6 +24,7 @@ import mindustrytool.features.chat.global.dto.ChatMessageReceive;
 import mindustrytool.features.chat.global.dto.ChatStateChange;
 import mindustrytool.features.chat.global.dto.ChatUser;
 import mindustrytool.features.chat.global.dto.ChannelDto;
+import arc.struct.Seq;
 
 public class ChatService {
     private static ChatService instance;
@@ -32,7 +34,7 @@ public class ChatService {
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
     private AtomicBoolean isConnected = new AtomicBoolean(false);
 
-    public ChatService(){
+    public ChatService() {
         Timer.schedule(this::connectStream, 0, 60);
     }
 
@@ -46,6 +48,27 @@ public class ChatService {
 
     public boolean isConnected() {
         return isConnected.get();
+    }
+
+    public void init() {
+        fetchChannelsAndCurrentMessages();
+    }
+
+    public void fetchChannelsAndCurrentMessages() {
+        getChannels(chans -> {
+            ChatStore store = ChatStore.getInstance();
+            store.setChannels(new Seq<>(chans));
+            if (chans.length > 0) {
+                String currentId = store.getCurrentChannelId();
+                final String currentIdFinal = currentId;
+                if (currentId == null || !new Seq<>(chans).contains(c -> c.id.equals(currentIdFinal))) {
+                    store.setCurrentChannelId(chans[0].id);
+                    currentId = chans[0].id;
+                }
+                fetchMessages(currentId, null);
+                fetchChatUsers(currentId);
+            }
+        }, e -> Log.err("Failed to fetch channels", e));
     }
 
     public synchronized void connectStream() {
@@ -104,12 +127,14 @@ public class ChatService {
                                     // Parse array of messages
                                     Jval json = Jval.read(data);
 
-                                    Log.info(json.toString());
-
                                     if (json.isArray()) {
-                                        Json jsonParser = new Json();
-                                        ChatMessage[] messages = jsonParser.fromJson(ChatMessage[].class, data);
+                                        @SuppressWarnings("unchecked")
+                                        Seq<ChatMessage> messages = JsonIO.json.fromJson(Seq.class, ChatMessage.class,
+                                                data);
                                         Core.app.post(() -> Events.fire(new ChatMessageReceive(messages)));
+                                    } else {
+                                        ChatMessage msg = JsonIO.json.fromJson(ChatMessage.class, data);
+                                        Core.app.post(() -> Events.fire(new ChatMessageReceive(Seq.with(msg))));
                                     }
                                 } catch (Exception e) {
                                     Log.err("Failed to parse chat message", e);
@@ -259,6 +284,12 @@ public class ChatService {
                 });
     }
 
+    public void fetchChatUsers(String channelId) {
+        getChatUsers(channelId,
+                users -> ChatStore.getInstance().setUsers(channelId, users),
+                e -> Log.err("Failed to fetch chat users for channel " + channelId, e));
+    }
+
     public void fetchMessages(String channelId, String cursor, Cons<ChatMessage[]> onSuccess, Cons<Throwable> onError) {
         if (channelId == null) {
             onError.get(new IllegalArgumentException("Channel ID cannot be null"));
@@ -285,6 +316,31 @@ public class ChatService {
                     } catch (Exception e) {
                         Core.app.post(() -> onError.get(e));
                     }
+                });
+    }
+
+    public void fetchMessages(String channelId, String cursor) {
+        ChatStore store = ChatStore.getInstance();
+        store.setLoadingMessages(true);
+        fetchMessages(channelId, cursor,
+                msgs -> {
+                    store.setLoadingMessages(false);
+                    if (msgs.length == 0) {
+                        if (cursor == null) {
+                            store.setMessages(channelId, new Seq<>());
+                        }
+                        store.setFullyLoaded(channelId);
+                    } else {
+                        if (cursor == null) {
+                            store.setMessages(channelId, new Seq<>(msgs).reverse());
+                        } else {
+                            store.prependMessages(channelId, new Seq<>(msgs));
+                        }
+                    }
+                },
+                e -> {
+                    store.setLoadingMessages(false);
+                    Log.err("Failed to fetch messages for channel " + channelId, e);
                 });
     }
 }

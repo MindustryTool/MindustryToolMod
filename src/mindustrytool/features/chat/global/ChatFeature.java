@@ -1,5 +1,6 @@
 package mindustrytool.features.chat.global;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import arc.ApplicationListener;
@@ -7,6 +8,7 @@ import arc.Core;
 import arc.Events;
 import arc.scene.ui.Dialog;
 import arc.util.Log;
+import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import arc.scene.ui.Label;
@@ -16,7 +18,9 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.auth.dto.LoginEvent;
+import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatMessageReceive;
+import mindustrytool.features.chat.global.ui.ChatOverlay;
 
 public class ChatFeature implements Feature {
     private ChatOverlay overlay;
@@ -36,11 +40,23 @@ public class ChatFeature implements Feature {
     @Override
     public void init() {
         Events.on(ChatMessageReceive.class, event -> {
-            if (overlay == null) {
-                return;
-            }
+            ChatStore store = ChatStore.getInstance();
+            String currentChannelId = store.getCurrentChannelId();
 
-            overlay.addMessages(event.messages);
+            for (ChatMessage msg : event.messages) {
+                String channelId = msg.channelId;
+
+                store.addMessages(channelId, Seq.with(msg));
+
+                try {
+                    if ((ChatConfig.collapsed() || !channelId.equals(currentChannelId))
+                            && ChatConfig.lastRead().isBefore(Instant.parse(msg.createdAt))) {
+                        store.addUnread(channelId, 1);
+                    }
+                } catch (Exception e) {
+                    Log.err(e);
+                }
+            }
         });
 
         Events.on(LoginEvent.class, e -> {
@@ -58,6 +74,8 @@ public class ChatFeature implements Feature {
                 }
             }
         });
+
+        ChatService.getInstance().init();
     }
 
     @Override

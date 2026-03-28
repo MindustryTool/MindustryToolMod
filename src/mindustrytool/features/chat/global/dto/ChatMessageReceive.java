@@ -1,9 +1,9 @@
 package mindustrytool.features.chat.global.dto;
 
-public class ChatMessageReceive {
-    public final ChatMessage[] messages;
+import arc.struct.Seq;
+import lombok.RequiredArgsConstructor;
 
-    public ChatMessageReceive(ChatMessage[] messages) {
-        this.messages = messages;
-    }
+@RequiredArgsConstructor
+public class ChatMessageReceive {
+    public final Seq<ChatMessage> messages;
 }
