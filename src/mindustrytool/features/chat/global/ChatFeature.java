@@ -53,7 +53,7 @@ public class ChatFeature implements Feature {
             public void exit() {
                 try {
                     ChatService.getInstance().disconnectStream();
-                } catch (Throwable e) {
+                } catch (Exception e) {
                     Log.err(e);
                 }
             }

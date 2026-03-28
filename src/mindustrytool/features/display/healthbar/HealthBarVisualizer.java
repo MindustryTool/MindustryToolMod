@@ -162,7 +162,11 @@ public class HealthBarVisualizer implements Feature {
             Draw.color(Pal.shield, 0.5f * HealthBarConfig.opacity);
 
             while (shieldValue > 0) {
-                y += h * 1.5f;
+                y += h * 1.8f;
+
+                Draw.color(Color.black, 0.6f * HealthBarConfig.opacity);
+                Draw.rect(barRegion, x, y, w + 2f, h + 2f);
+
                 float shieldPercent = Math.min(shieldValue, 1f);
                 float shieldW = w * shieldPercent;
                 float shieldCenterX = left + shieldW / 2f;

@@ -100,7 +100,7 @@ public class PlayerConnectRenderer {
                 }
                 body.row();
 
-                body.add(Iconc.players + ": " + room.getData().getPlayers().size() + "(" + room.getData().getLocale()
+                body.add(Iconc.players + " " + room.getData().getPlayers().size() + "(" + room.getData().getLocale()
                         + ")")
                         .padBottom(6)
                         .left()
@@ -118,7 +118,8 @@ public class PlayerConnectRenderer {
 
                 // Mods
                 if (room.getData().getMods().size() > 0) {
-                    var modsLabel = body.add(Iconc.book + " [lightgray]" + Strings.join("[white], ", room.getData().getMods()))
+                    var modsLabel = body
+                            .add(Iconc.book + " [lightgray]" + Strings.join("[white], ", room.getData().getMods()))
                             .left()
                             .padBottom(6);
 
@@ -167,9 +168,7 @@ public class PlayerConnectRenderer {
 
                 String versionString = getVersionString(room.getData().getVersion());
 
-                var versionLabel = body.add("[white]" + Iconc.info + " [lightgray]" + versionString)
-                        .style(Styles.outlineLabel)
-                        .color(Pal.lightishGray)
+                var versionLabel = body.add("[white]" + Iconc.info + " " + versionString)
                         .padBottom(6)
                         .left();
 
@@ -270,7 +269,7 @@ public class PlayerConnectRenderer {
         if (!room.getData().isSecured()) {
             try {
                 PlayerConnect.join(link, "", () -> Log.info("Joined room: " + link));
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 Vars.ui.showException("@message.connect.fail", e);
             }
             return;
@@ -295,7 +294,7 @@ public class PlayerConnectRenderer {
         connect.buttons.button("@ok", () -> {
             try {
                 PlayerConnect.join(link, password[0], connect::hide);
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 connect.hide();
                 Vars.ui.showException("@message.connect.fail", e);
             }
@@ -320,9 +319,9 @@ public class PlayerConnectRenderer {
             return Core.bundle.get("server.outdated.client") + "\n" +
                     Core.bundle.format("server.version", version, "");
         } else if (version == Version.build && Version.type.equals(versionType)) {
-            return "";
+            return "Unknown";
         } else {
-            return Core.bundle.format("server.version", version, versionType);
+            return versionString;
         }
     }
 

@@ -111,6 +111,11 @@ public class SaveSyncFeature implements Feature {
 
     private void performSyncOnExit(String slotId) {
         Log.info("Performing save sync on exit...");
+
+        Dialog dialog = new BaseDialog("Sync data");
+        dialog.cont.center();
+        dialog.show();
+
         try {
             Set<String> currentPaths = listFilePaths();
             List<String> deletedFiles = new ArrayList<>();
@@ -123,8 +128,13 @@ public class SaveSyncFeature implements Feature {
             if (!deletedFiles.isEmpty()) {
                 Log.info("Deleting " + deletedFiles.size() + " files on server...");
                 List<CompletableFuture<Void>> deletions = new ArrayList<>();
+                int[] deleting = { deletedFiles.size() };
                 for (String path : deletedFiles) {
-                    deletions.add(StorageService.deleteFile(slotId, path));
+                    deletions.add(StorageService.deleteFile(slotId, path).thenAccept(_ignore -> {
+                        deleting[0]--;
+                        dialog.cont.clear();
+                        dialog.cont.add("Deleted " + deleting[0] + " files on server.");
+                    }));
                 }
                 CompletableFuture.allOf(deletions.toArray(new CompletableFuture[0])).join();
             }
@@ -137,23 +147,34 @@ public class SaveSyncFeature implements Feature {
 
             if (response.missingHashes != null && !response.missingHashes.isEmpty()) {
                 List<CompletableFuture<Void>> uploads = new ArrayList<>();
-                int count = 0;
+                List<Fi> changedFiles = new ArrayList<>();
                 for (String hash : response.missingHashes) {
                     for (ClientFileDto file : files) {
                         if (file.hash.equals(hash)) {
                             Fi fileToUpload = getFile(file.path);
                             if (fileToUpload.exists()) {
-                                uploads.add(StorageService.uploadFile(fileToUpload));
-                                count++;
+                                changedFiles.add(fileToUpload);
                             }
                             break;
                         }
                     }
                 }
 
-                if (count > 0) {
-                    Log.info("Uploading " + count + " files on exit...");
+                int[] uploading = { changedFiles.size() };
+
+                for (var file : changedFiles) {
+                    uploads.add(StorageService.uploadFile(file).thenAccept(_ignore -> {
+                        uploading[0]--;
+                        dialog.cont.clear();
+                        dialog.cont.add("Uploaded " + uploading[0] + " files to server.");
+                    }));
+                }
+
+                if (changedFiles.size() > 0) {
+                    Log.info("Uploading " + changedFiles.size() + " files on exit...");
                     CompletableFuture.allOf(uploads.toArray(new CompletableFuture[0])).join();
+                    dialog.cont.clear();
+                    dialog.cont.add("Sync success");
                     Log.info("Upload complete.");
                 }
             }

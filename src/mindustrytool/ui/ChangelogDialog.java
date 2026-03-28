@@ -202,7 +202,7 @@ public class ChangelogDialog extends BaseDialog {
                         Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
                         // Close dialogs to show the mod installation progress
                         this.hide();
-                    } catch (Throwable e) {
+                    } catch (Exception e) {
                         Log.err(e);
                         Vars.ui.showException(e);
                     }

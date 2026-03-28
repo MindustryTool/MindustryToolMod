@@ -16,7 +16,6 @@ import mindustry.graphics.Pal;
 import mindustrytool.MdtKeybinds;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.autoplay.tasks.*;
 
@@ -86,13 +85,7 @@ public class AutoplayFeature implements Feature {
             }
         }, 0, 0.2f);
 
-        Events.run(Trigger.update, () -> {
-            boolean noInputFocused = !Core.scene.hasField();
-
-            if (noInputFocused && Core.input.keyRelease(MdtKeybinds.autoPlay)) {
-                Core.app.post(() -> FeatureManager.getInstance().toogle(this));
-            }
-        });
+        MdtKeybinds.addFeatureKeyBind(this, MdtKeybinds.autoPlay);
     }
 
     @Override
