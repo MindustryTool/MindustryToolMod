@@ -111,10 +111,6 @@ public class SaveSyncFeature implements Feature {
     private void performSyncOnExit(String slotId) {
         Log.info("Performing save sync on exit...");
 
-        Dialog dialog = new BaseDialog("Sync data");
-        dialog.cont.center();
-        dialog.show();
-
         try {
             Set<String> currentPaths = listFilePaths();
             List<String> deletedFiles = new ArrayList<>();
@@ -127,13 +123,8 @@ public class SaveSyncFeature implements Feature {
             if (!deletedFiles.isEmpty()) {
                 Log.info("Deleting " + deletedFiles.size() + " files on server...");
                 List<CompletableFuture<Void>> deletions = new ArrayList<>();
-                int[] deleting = { deletedFiles.size() };
                 for (String path : deletedFiles) {
-                    deletions.add(StorageService.deleteFile(slotId, path).thenAccept(_ignore -> {
-                        deleting[0]--;
-                        dialog.cont.clear();
-                        dialog.cont.add("Deleted " + deleting[0] + " files on server.");
-                    }));
+                    deletions.add(StorageService.deleteFile(slotId, path));
                 }
                 CompletableFuture.allOf(deletions.toArray(new CompletableFuture[0])).join();
             }
@@ -159,21 +150,13 @@ public class SaveSyncFeature implements Feature {
                     }
                 }
 
-                int[] uploading = { changedFiles.size() };
-
                 for (var file : changedFiles) {
-                    uploads.add(StorageService.uploadFile(file).thenAccept(_ignore -> {
-                        uploading[0]--;
-                        dialog.cont.clear();
-                        dialog.cont.add("Uploaded " + uploading[0] + " files to server.");
-                    }));
+                    uploads.add(StorageService.uploadFile(file));
                 }
 
                 if (changedFiles.size() > 0) {
                     Log.info("Uploading " + changedFiles.size() + " files on exit...");
                     CompletableFuture.allOf(uploads.toArray(new CompletableFuture[0])).join();
-                    dialog.cont.clear();
-                    dialog.cont.add("Sync success");
                     Log.info("Upload complete.");
                 }
             }
