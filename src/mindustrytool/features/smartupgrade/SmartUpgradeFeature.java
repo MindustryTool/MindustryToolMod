@@ -141,7 +141,8 @@ public class SmartUpgradeFeature implements Feature {
 
             Vec2 pos = Core.camera.project(selectedTile.worldx(), selectedTile.worldy());
 
-            currentMenu.setPosition(pos.x, pos.y + selectedTile.block().size * Vars.tilesize * 2, Align.center);
+            currentMenu.setPosition(pos.x, pos.y + selectedTile.block().size * Vars.tilesize * 3,
+                    Align.bottom | Align.center);
         });
 
         Vars.content.blocks().each(block -> {
@@ -164,7 +165,10 @@ public class SmartUpgradeFeature implements Feature {
             return;
 
         table.button(new TextureRegionDrawable(targetBlock.uiIcon), Styles.clearNonei, () -> {
-            upgradeChain(tile, targetBlock);
+            Vars.control.input.isBuilding = false;
+            Core.app.post(() -> {
+                upgradeChain(tile, targetBlock);
+            });
             closeMenu();
         }).size(48f).pad(4);
     }

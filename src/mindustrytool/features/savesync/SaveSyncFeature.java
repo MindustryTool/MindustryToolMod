@@ -471,8 +471,9 @@ public class SaveSyncFeature implements Feature {
         }
 
         cont.clear();
-        cont.add("Sync Complete!").color(mindustry.graphics.Pal.accent).row();
-        cont.button("Close", dialog::hide).size(100, 50).padTop(10);
+        dialog.hide();
+
+        Vars.ui.showInfoFade("[accent]Sync Complete!");
 
         // Update initialFilePaths after successful sync
         initialFilePaths.clear();
