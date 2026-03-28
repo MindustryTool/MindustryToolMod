@@ -32,7 +32,6 @@ public class HealthBarVisualizer implements Feature {
 
     private static TextureRegion barRegion;
     private BaseDialog dialog;
-    private boolean enabled = false;
 
     private ConcurrentHashMap<UnitType, Float> maxHpMap = new ConcurrentHashMap<>();
 
@@ -56,16 +55,6 @@ public class HealthBarVisualizer implements Feature {
     }
 
     @Override
-    public void onEnable() {
-        enabled = true;
-    }
-
-    @Override
-    public void onDisable() {
-        enabled = false;
-    }
-
-    @Override
     public Optional<Dialog> setting() {
         if (dialog == null) {
             dialog = new BaseDialog("@health-bar.settings.title");
@@ -82,7 +71,7 @@ public class HealthBarVisualizer implements Feature {
     }
 
     public void draw() {
-        if (!enabled || !state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
+        if (!isEnabled() || !state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
             return;
         }
 

@@ -20,6 +20,7 @@ import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.display.healthbar.HealthBarVisualizer;
 import mindustrytool.features.display.pathfinding.PathfindingDisplay;
 import mindustrytool.features.display.teamresource.TeamResourceFeature;
+import mindustrytool.features.display.togglerendering.ToggleRenderingFeature;
 import mindustrytool.features.display.range.RangeDisplay;
 import mindustrytool.features.display.progress.ProgressDisplay;
 import mindustrytool.features.display.quickaccess.QuickAccessHud;
@@ -104,7 +105,8 @@ public class Main extends Mod {
                             new SmartUpgradeFeature(),
                             new BackgroundFeature(),
                             new MusicFeature(),
-                            new ProgressDisplay());
+                            new ProgressDisplay(),
+                            new ToggleRenderingFeature());
 
                     boolean hasCrashed = new CrashReportService().checkForCrashes();
                     if (hasCrashed) {

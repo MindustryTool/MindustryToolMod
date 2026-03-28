@@ -32,7 +32,6 @@ public class ChatTranslationFeature implements Feature {
     private final NoopTranslationProvider noopTranslationProvider = new NoopTranslationProvider();
     private String lastError = null;
     private TranslationProvider currentProvider = defaultTranslationProvider;
-    private boolean enabled = false;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -85,7 +84,7 @@ public class ChatTranslationFeature implements Feature {
     }
 
     public void handleMessage(String message, Cons<String> cons) {
-        if (!enabled) {
+        if (!isEnabled()) {
             cons.get(message);
             return;
         }
@@ -123,16 +122,6 @@ public class ChatTranslationFeature implements Feature {
         if (currentProvider == null) {
             currentProvider = defaultTranslationProvider;
         }
-    }
-
-    @Override
-    public void onEnable() {
-        enabled = true;
-    }
-
-    @Override
-    public void onDisable() {
-        enabled = false;
     }
 
     @Override

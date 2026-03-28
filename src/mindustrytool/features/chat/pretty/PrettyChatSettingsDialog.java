@@ -15,13 +15,16 @@ import mindustrytool.features.chat.pretty.PrettyChatFeature.Prettier;
 public class PrettyChatSettingsDialog extends BaseDialog {
     private String previewMessage = "Hello World! This is a test message.";
     private Table cards;
+    private final PrettyChatFeature prettyChatFeature;
 
-    public PrettyChatSettingsDialog() {
+    public PrettyChatSettingsDialog(PrettyChatFeature prettyChatFeature) {
         super("@feature.prettychat.settings.title");
+        this.prettyChatFeature = prettyChatFeature;
 
         addCloseButton();
 
         setup();
+
     }
 
     private void setup() {
@@ -39,7 +42,7 @@ public class PrettyChatSettingsDialog extends BaseDialog {
 
         inputTable.add(new Table(t -> {
             t.add("Result: ").color(arc.graphics.Color.lightGray);
-            t.label(() -> PrettyChatFeature.transform(previewMessage)).color(mindustry.graphics.Pal.accent).wrap()
+            t.label(() -> prettyChatFeature.transform(previewMessage)).color(mindustry.graphics.Pal.accent).wrap()
                     .growX();
         })).width(800f).pad(10).row();
 

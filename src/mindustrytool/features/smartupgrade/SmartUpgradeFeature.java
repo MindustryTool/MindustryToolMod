@@ -45,8 +45,6 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
 public class SmartUpgradeFeature implements Feature {
-
-    private boolean enabled = false;
     private Table currentMenu;
     private Tile selectedTile;
     private Tile lastClick;
@@ -64,7 +62,7 @@ public class SmartUpgradeFeature implements Feature {
     @Override
     public void init() {
         Events.on(TapEvent.class, e -> {
-            if (!enabled) {
+            if (!isEnabled()) {
                 return;
             }
 
@@ -105,17 +103,6 @@ public class SmartUpgradeFeature implements Feature {
                 closeMenu();
             }
         });
-    }
-
-    @Override
-    public void onEnable() {
-        enabled = true;
-    }
-
-    @Override
-    public void onDisable() {
-        enabled = false;
-        closeMenu();
     }
 
     private void closeMenu() {

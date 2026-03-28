@@ -30,7 +30,6 @@ import mindustrytool.features.FeatureMetadata;
 import java.util.Optional;
 
 public class ProgressDisplay implements Feature {
-    private boolean enabled = false;
     private BaseDialog settingsDialog;
 
     private final Cons<Building> buildingDrawer = this::drawBuilding;
@@ -151,18 +150,8 @@ public class ProgressDisplay implements Feature {
         settingsContainer.stack(widthSlider, widthContent).width(width).left().padTop(4f).row();
     }
 
-    @Override
-    public void onEnable() {
-        enabled = true;
-    }
-
-    @Override
-    public void onDisable() {
-        enabled = false;
-    }
-
     private void draw() {
-        if (!enabled || !Vars.state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
+        if (!isEnabled() || !Vars.state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
             return;
         }
 
@@ -183,7 +172,6 @@ public class ProgressDisplay implements Feature {
     private void drawBuilding(Building build) {
         float fraction = 0f;
         float remainingTime = 0f;
-
 
         var scale = build.timeScale();
 
@@ -212,7 +200,8 @@ public class ProgressDisplay implements Feature {
         fraction = Mathf.clamp(fraction, 0f, 1f);
 
         if (fraction > 0.01f) {
-            drawBar(build.x, build.y, build.block.size * Vars.tilesize, fraction, build.team.color, remainingTime / scale);
+            drawBar(build.x, build.y, build.block.size * Vars.tilesize, fraction, build.team.color,
+                    remainingTime / scale);
         }
     }
 
