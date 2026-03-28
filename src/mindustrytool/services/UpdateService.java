@@ -45,7 +45,6 @@ public class UpdateService {
         });
 
         Http.get(Config.API_URL + "ping?client=mod-v8").submit(result -> {
-            Log.info("Ping");
         });
     }
 

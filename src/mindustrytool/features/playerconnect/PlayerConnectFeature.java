@@ -83,14 +83,6 @@ public class PlayerConnectFeature implements Feature {
             joinRoomDialog.hide();
     }
 
-    public CreateRoomDialog getCreateRoomDialog() {
-        return createRoomDialog;
-    }
-
-    public JoinRoomDialog getJoinRoomDialog() {
-        return joinRoomDialog;
-    }
-
     @Override
     public Optional<Dialog> setting() {
         if (settingDialog == null) {

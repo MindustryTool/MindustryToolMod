@@ -135,7 +135,7 @@ public class Main extends Mod {
         packetProvs.replace(packet -> {
             Class<?> clazz = packet.get().getClass();
             if (packetReplacements.containsKey(clazz)) {
-                Log.info("Replace packet @ to @", clazz.getSimpleName(),
+                Log.debug("Replace packet @ to @", clazz.getSimpleName(),
                         packetReplacements.get(clazz).get().getClass().getSimpleName());
                 return packetReplacements.get(clazz);
             }

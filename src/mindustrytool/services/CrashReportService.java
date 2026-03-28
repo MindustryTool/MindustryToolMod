@@ -152,7 +152,6 @@ public class CrashReportService {
                                 }
                             })
                             .submit(res -> {
-                                Log.info(res.getResultAsString());
                             });
                 } catch (Exception err) {
                     Log.err(err);

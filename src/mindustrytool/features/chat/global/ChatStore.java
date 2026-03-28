@@ -5,7 +5,6 @@ import arc.Events;
 import arc.struct.ObjectMap;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
-import arc.util.Log;
 import mindustrytool.features.chat.global.dto.ChannelDto;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatUser;
@@ -107,8 +106,6 @@ public class ChatStore {
                 seq.add(msg);
             }
         }
-
-        Log.info(messages);
 
         Events.fire(new MessagesUpdateEvent(channelId, false));
     }

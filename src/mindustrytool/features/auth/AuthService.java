@@ -318,7 +318,7 @@ public class AuthService {
                             Log.info("Remove tokens");
                         }
 
-                        Log.info(httpError.response.getResultAsString());
+                        Log.err(httpError.response.getResultAsString());
                     }
                     refreshFuture.completeExceptionally(err);
                 })

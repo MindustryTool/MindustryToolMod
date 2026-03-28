@@ -248,7 +248,7 @@ public class ChatOverlay extends Table {
                     ChatConfig.x(ChatOverlay.this.x);
                     ChatConfig.y(ChatOverlay.this.y);
                 } catch (Exception e) {
-                    Log.info(e);
+                    Log.err(e);
                 }
             }
         });
