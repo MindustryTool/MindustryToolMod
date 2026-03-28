@@ -62,7 +62,7 @@ public class FleeTask implements AutoplayTask {
         @Override
         public void updateMovement() {
             if (fleeFrom != null) {
-                moveTo(fleeFrom, fleeFrom.range());
+                moveTo(fleeFrom, fleeFrom.range() * 1.5f);
             }
         }
     }
