@@ -11,7 +11,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.services.ReactiveStore.LoadState;
+import mindustrytool.features.auth.dto.SessionLoadEvent;
 import mindustrytool.ui.NetworkImage;
 
 public class AuthFeature implements Feature {
@@ -49,8 +49,12 @@ public class AuthFeature implements Feature {
         authWindow.add(content).top().right().margin(8f);
         authWindow.toFront();
 
-        AuthService.getInstance().sessionStore.subscribe((user, state, error) -> {
-            if (state == LoadState.LOADING) {
+        arc.Events.on(SessionLoadEvent.class, e -> {
+            var user = e.user;
+            var error = e.error;
+            var isLoading = e.isLoading;
+
+            if (isLoading) {
                 content.clear();
                 content.add("@loading").wrapLabel(false).labelAlign(Align.left).padLeft(8);
             } else if (error != null) {
@@ -86,13 +90,13 @@ public class AuthFeature implements Feature {
 
         AuthService.getInstance()
                 .refreshTokenIfNeeded()
-                .thenCompose((_void) -> AuthService.getInstance().sessionStore.fetch());
+                .thenCompose((_void) -> AuthService.getInstance().fetchSession());
 
         Timer.schedule(() -> {
             if (AuthService.getInstance().isLoggedIn()) {
                 AuthService.getInstance()
                         .refreshTokenIfNeeded()
-                        .thenCompose((_void) -> AuthService.getInstance().sessionStore.fetch());
+                        .thenCompose((_void) -> AuthService.getInstance().fetchSession());
             }
         }, 0, 60 * 5);
     }
@@ -104,13 +108,5 @@ public class AuthFeature implements Feature {
                     Core.app.post(() -> Vars.ui.showException("Login failed or timed out.", e));
                     return null;
                 });
-    }
-
-    @Override
-    public void onEnable() {
-    }
-
-    @Override
-    public void onDisable() {
     }
 }

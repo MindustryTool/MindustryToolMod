@@ -41,6 +41,7 @@ import mindustrytool.Utils;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
+import mindustrytool.features.auth.dto.SessionLoadEvent;
 import mindustrytool.features.browser.map.MapDialog;
 import mindustrytool.features.browser.map.MapImage;
 import mindustrytool.features.browser.map.MapInfoDialog;
@@ -178,8 +179,10 @@ public class ChatOverlay extends Table {
             }
         });
 
-        AuthService.getInstance().sessionStore.subscribe((value, state, error) -> {
-            buildInputTable(inputTable);
+        Events.on(SessionLoadEvent.class, e -> {
+            if (!e.isLoading) {
+                buildInputTable(inputTable);
+            }
         });
 
         isSending.subscribe((curr, old) -> {

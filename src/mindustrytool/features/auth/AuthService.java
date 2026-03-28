@@ -18,7 +18,7 @@ import mindustrytool.Utils;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.auth.dto.UserSession;
-import mindustrytool.services.ReactiveStore;
+import mindustrytool.features.auth.dto.SessionLoadEvent;
 import arc.util.Http.HttpStatusException;
 
 public class AuthService {
@@ -29,7 +29,7 @@ public class AuthService {
     public static final String KEY_LOGIN_ID = "mindustrytool.auth.loginId";
     public static final String KEY_LOGIN_EXPIRY = "mindustrytool.auth.loginExpiry";
 
-    public final ReactiveStore<UserSession> sessionStore;
+    private UserSession currentSession;
 
     private CompletableFuture<Boolean> refreshFuture;
     private CompletableFuture<Void> loginFuture;
@@ -43,21 +43,6 @@ public class AuthService {
     }
 
     private AuthService() {
-        sessionStore = new ReactiveStore<>(() -> {
-            CompletableFuture<String> future = new CompletableFuture<>();
-
-            AuthHttp.get(Config.API_v4_URL + "auth/session", res -> future.complete(res.getResultAsString()),
-                    err -> future.completeExceptionally(err));
-
-            return future.thenApply(json -> json.isEmpty() ? null : Utils.fromJson(UserSession.class, json));
-        });
-
-        sessionStore.subscribe((value, state, error) -> {
-            if (state == ReactiveStore.LoadState.SUCCESS && value != null) {
-                Events.fire(value);
-            }
-        });
-
         String logindId = Core.settings.getString(KEY_LOGIN_ID);
 
         if (logindId == null) {
@@ -78,8 +63,35 @@ public class AuthService {
         });
     }
 
+    public UserSession getSession() {
+        return currentSession;
+    }
+
+    public CompletableFuture<UserSession> fetchSession() {
+        Events.fire(new SessionLoadEvent(currentSession, null, true));
+        CompletableFuture<String> future = new CompletableFuture<>();
+
+        AuthHttp.get(Config.API_v4_URL + "auth/session", res -> future.complete(res.getResultAsString()),
+                err -> future.completeExceptionally(err));
+
+        return future.handle((json, err) -> {
+            if (err != null) {
+                Events.fire(new SessionLoadEvent(currentSession, err, false));
+                throw new RuntimeException(err);
+            }
+
+            UserSession session = json.isEmpty() ? null : Utils.fromJson(UserSession.class, json);
+            this.currentSession = session;
+            Events.fire(new SessionLoadEvent(session, null, false));
+            if (session != null) {
+                Events.fire(session);
+            }
+            return session;
+        });
+    }
+
     public boolean isLoggedIn() {
-        return sessionStore.getValue() != null && Core.settings.has(KEY_ACCESS_TOKEN)
+        return currentSession != null && Core.settings.has(KEY_ACCESS_TOKEN)
                 && Core.settings.has(KEY_REFRESH_TOKEN);
     }
 
@@ -179,7 +191,7 @@ public class AuthService {
 
                             saveTokens(accessToken, refreshToken);
 
-                            sessionStore.fetch().whenComplete((v, e) -> {
+                            fetchSession().whenComplete((v, e) -> {
                                 if (e != null) {
                                     future.completeExceptionally(e);
                                 } else {
@@ -228,7 +240,7 @@ public class AuthService {
         Core.settings.remove(KEY_REFRESH_TOKEN);
         Core.settings.remove(KEY_LOGIN_ID);
 
-        sessionStore.fetch();
+        fetchSession();
 
         Events.fire(new LogoutEvent());
 
