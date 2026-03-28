@@ -3,7 +3,6 @@ package mindustrytool.features.autoplay.tasks;
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.entities.Units;
-import mindustry.entities.units.AIController;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.gen.Teamc;
@@ -35,7 +34,7 @@ public class AttackTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun(Unit unit) {
+    public boolean update(Unit unit) {
         Teamc target = Units.closestEnemy(unit.team, unit.x, unit.y, 400f, u -> !u.dead());
         if (target != null) {
             ai.setTarget(target);
@@ -50,7 +49,7 @@ public class AttackTask implements AutoplayTask {
     }
 
     @Override
-    public AIController getAI() {
+    public AttackAI getAI() {
         return ai;
     }
 

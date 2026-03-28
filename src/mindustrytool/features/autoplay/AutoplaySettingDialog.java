@@ -65,7 +65,6 @@ public class AutoplaySettingDialog extends BaseDialog {
                         // Toggle
                         header.check("", task.isEnabled(), b -> {
                             task.setEnabled(b);
-                            task.save();
                         }).padRight(10);
 
                         // Name

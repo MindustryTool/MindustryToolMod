@@ -9,7 +9,8 @@ public interface TranslationProvider {
 
     Table settings();
 
-    void init();
+    default void init() {
+    };
 
     String getName();
 

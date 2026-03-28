@@ -46,8 +46,8 @@ public class FeatureManager {
 
     public void init() {
         for (Feature feature : features) {
-            feature.init();
             if (feature.isEnabled()) {
+                feature.init();
                 feature.onEnable();
             }
         }

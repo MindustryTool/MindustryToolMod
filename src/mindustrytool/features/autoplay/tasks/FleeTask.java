@@ -3,11 +3,8 @@ package mindustrytool.features.autoplay.tasks;
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.entities.Units;
-import mindustry.entities.units.AIController;
-import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
-import mindustry.gen.Teamc;
 import mindustry.gen.Unit;
 
 public class FleeTask implements AutoplayTask {
@@ -36,19 +33,21 @@ public class FleeTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun(Unit unit) {
-        Teamc enemy = Units.closestEnemy(unit.team, unit.x, unit.y, 300f, u -> !u.dead());
-        if (enemy != null) {
+    public boolean update(Unit unit) {
+        Unit enemy = Units.closestEnemy(unit.team, unit.x, unit.y, 300f, u -> !u.dead());
+        if (enemy != null && enemy.inRange(enemy)) {
+            ai.fleeFrom = enemy;
             status = Core.bundle.get("autoplay.status.fleeing");
             return true;
         }
 
+        ai.fleeFrom = null;
         status = Core.bundle.get("autoplay.status.safe");
         return false;
     }
 
     @Override
-    public AIController getAI() {
+    public FleeAI getAI() {
         return ai;
     }
 
@@ -58,11 +57,12 @@ public class FleeTask implements AutoplayTask {
     }
 
     public static class FleeAI extends BaseAutoplayAI {
+        private Unit fleeFrom;
+
         @Override
         public void updateMovement() {
-            Building core = unit.closestCore();
-            if (core != null) {
-                moveTo(core, 120f);
+            if (fleeFrom != null) {
+                moveTo(fleeFrom, fleeFrom.range());
             }
         }
     }
