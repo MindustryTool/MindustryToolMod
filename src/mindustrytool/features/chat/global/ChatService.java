@@ -127,6 +127,10 @@ public class ChatService {
                                     // Parse array of messages
                                     Jval json = Jval.read(data);
 
+                                    if (json.isString() && json.asString().equals("Connected")) {
+                                        continue;
+                                    }
+
                                     if (json.isArray()) {
                                         @SuppressWarnings("unchecked")
                                         Seq<ChatMessage> messages = JsonIO.json.fromJson(Seq.class, ChatMessage.class,
