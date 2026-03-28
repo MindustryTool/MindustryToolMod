@@ -36,7 +36,7 @@ import mindustrytool.features.godmode.TapListener;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.music.MusicFeature;
-import mindustrytool.events.MusicRegisterEvent;
+import mindustrytool.features.music.dto.MusicRegisterEvent;
 import mindustrytool.features.display.wavepreview.WavePreviewFeature;
 import mindustrytool.features.chat.translation.ChatTranslationFeature;
 import mindustrytool.features.chat.pretty.PrettyChatFeature;
