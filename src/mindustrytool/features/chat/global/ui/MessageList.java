@@ -113,7 +113,10 @@ public class MessageList extends Table {
                         scrollPane.setScrollYForce(oldScrollY + (newMaxY - oldMaxY));
                     });
                 } else {
-                    scrollToBottom();
+                    var nearBottom = scrollPane.getScrollY() >= scrollPane.getMaxY() - 100;
+                    if (nearBottom) {
+                        scrollToBottom();
+                    }
                 }
             }
         });
