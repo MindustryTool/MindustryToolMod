@@ -8,6 +8,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Scaling;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
+import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
@@ -105,7 +106,9 @@ public class FeatureCard {
 
                 c.button(Icon.linkSmall, () -> feature.dialog().ifPresent(d -> d.show()));
             }).grow();
-        }).growX().height(180f).pad(5f).get().clicked(() -> feature.dialog().ifPresent(d -> d.show()));
+        })
+                .color(Pal.accent)
+                .growX().height(180f).pad(5f).get().clicked(() -> feature.dialog().ifPresent(d -> d.show()));
     }
 
     public static void buildLink(Table parent, WebFeature feature) {

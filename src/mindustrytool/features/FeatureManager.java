@@ -49,6 +49,8 @@ public class FeatureManager {
             feature.init();
             if (feature.isEnabled()) {
                 feature.onEnable();
+                feature.setting();
+                feature.dialog();
             }
         }
     }
