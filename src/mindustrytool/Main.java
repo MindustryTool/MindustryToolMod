@@ -25,7 +25,7 @@ import mindustrytool.features.display.progress.ProgressDisplay;
 import mindustrytool.features.display.quickaccess.QuickAccessHud;
 import mindustrytool.features.auth.AuthFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
-import mindustrytool.features.smartconveyor.SmartConveyorFeature;
+import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.services.ServerService;
 import mindustrytool.services.CrashReportService;
@@ -101,7 +101,7 @@ public class Main extends Mod {
                             // new ItemVisualizerFeature(),
                             new GodModeFeature(),
                             new SmartDrillFeature(),
-                            new SmartConveyorFeature(),
+                            new SmartUpgradeFeature(),
                             new BackgroundFeature(),
                             new MusicFeature(),
                             new ProgressDisplay());

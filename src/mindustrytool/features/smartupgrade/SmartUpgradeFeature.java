@@ -1,4 +1,4 @@
-package mindustrytool.features.smartconveyor;
+package mindustrytool.features.smartupgrade;
 
 import arc.Core;
 import arc.Events;
@@ -36,7 +36,7 @@ import mindustry.world.blocks.distribution.DuctBridge.DuctBridgeBuild;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
-public class SmartConveyorFeature implements Feature {
+public class SmartUpgradeFeature implements Feature {
 
     private boolean enabled = false;
     private Table currentMenu;
@@ -46,8 +46,8 @@ public class SmartConveyorFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("feature.smart-conveyor.name")
-                .description("feature.smart-conveyor.description")
+                .name("feature.smart-upgrade.name")
+                .description("feature.smart-upgrade.description")
                 .icon(Icon.distribution)
                 .quickAccess(true)
                 .build();
