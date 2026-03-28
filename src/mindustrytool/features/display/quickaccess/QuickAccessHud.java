@@ -7,12 +7,9 @@ import arc.Events;
 import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.graphics.Color;
-import arc.math.geom.Vec2;
-import arc.scene.Element;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.event.Touchable;
-import arc.scene.event.VisibilityListener;
 import arc.scene.ui.Image;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
@@ -22,7 +19,6 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Scaling;
-import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Icon;
@@ -36,8 +32,6 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 
 public class QuickAccessHud extends Table implements Feature {
-    private Table currentPopup;
-    private Feature currentPopupFeature;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -60,29 +54,8 @@ public class QuickAccessHud extends Table implements Feature {
         // Build UI
         rebuild();
 
-        addListener(new VisibilityListener() {
-            @Override
-            public boolean hidden() {
-                if (currentPopup != null) {
-                    currentPopup.remove();
-                    currentPopup = null;
-                    currentPopupFeature = null;
-                }
-
-                return false;
-            }
-        });
-
         Events.on(EventType.ResizeEvent.class, event -> {
             this.rebuild();
-        });
-
-        Events.on(EventType.StateChangeEvent.class, event -> {
-            if (currentPopup != null) {
-                currentPopup.remove();
-                currentPopup = null;
-                currentPopupFeature = null;
-            }
         });
     }
 
@@ -128,8 +101,6 @@ public class QuickAccessHud extends Table implements Feature {
 
                             QuickAccessConfig.x(QuickAccessHud.this.x);
                             QuickAccessConfig.y(QuickAccessHud.this.y);
-
-                            closePopup();
                         } catch (Exception e) {
                             Log.err(e);
                         }
@@ -190,7 +161,7 @@ public class QuickAccessHud extends Table implements Feature {
                         .scaling(Scaling.fit)
                         .update(l -> l.setColor(FeatureManager.getInstance().isEnabled(f) ? Color.white : Pal.gray));
             }, Styles.clearNonei, () -> {
-                showPopupFor(btnRef[0], f);
+                FeatureManager.getInstance().setEnabled(f, !FeatureManager.getInstance().isEnabled(f));
             })
                     .size(buttonSize)
                     .margin(margin)
@@ -214,80 +185,6 @@ public class QuickAccessHud extends Table implements Feature {
                 .get();
     }
 
-    // Helper to be used inside populateContent
-    private void showPopupFor(Element anchor, Feature f) {
-        if (currentPopup != null) {
-            boolean isSame = (currentPopupFeature == f);
-            closePopup();
-
-            if (isSame) {
-                return;
-            }
-        }
-
-        currentPopupFeature = f;
-
-        Table popup = new Table();
-
-        popup.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown);
-        popup.background(Styles.black6);
-        popup.touchable = Touchable.enabled;
-
-        // Options
-        popup.check("@enabled", FeatureManager.getInstance().isEnabled(f), b -> {
-            FeatureManager.getInstance().setEnabled(f, b);
-        }).pad(10).left().row();
-
-        float widthScale = QuickAccessConfig.width();
-
-        f.setting().ifPresent(dialog -> {
-            popup.button("@settings", Icon.settings, () -> {
-                dialog.show();
-                closePopup();
-            }).fillX().pad(10).padTop(0).left().minWidth(220 * widthScale);
-        });
-
-        popup.pack();
-
-        // Position
-        Vec2 pos = anchor.localToStageCoordinates(new Vec2(0, 0));
-        float screenHeight = Core.graphics.getHeight();
-
-        if (pos.y < screenHeight / 2) {
-            // Lower half -> show above
-            popup.setPosition(pos.x, pos.y + anchor.getHeight());
-        } else {
-            // Upper half -> show below
-            popup.setPosition(pos.x, pos.y - popup.getHeight());
-        }
-
-        // Clamp X to screen
-        if (popup.x < 0)
-            popup.x = 0;
-        if (popup.x + popup.getWidth() > Core.graphics.getWidth())
-            popup.x = Core.graphics.getWidth() - popup.getWidth();
-
-        // Clamp Y just in case
-        if (popup.y < 0)
-            popup.y = 0;
-        if (popup.y + popup.getHeight() > Core.graphics.getHeight())
-            popup.y = Core.graphics.getHeight() - popup.getHeight();
-
-        Vars.ui.hudGroup.addChild(popup);
-        popup.name = "quickAccessPopup";
-        currentPopup = popup;
-
-        Timer.schedule(() -> popup.toFront(), 5f);
-    }
-
-    private void closePopup() {
-        if (currentPopup != null) {
-            currentPopup.remove();
-            currentPopup = null;
-            currentPopupFeature = null;
-        }
-    }
-
     @Override
     public void onEnable() {
         if (Vars.ui != null && Vars.ui.hudGroup != null) {
@@ -302,7 +199,6 @@ public class QuickAccessHud extends Table implements Feature {
 
     @Override
     public void onDisable() {
-        closePopup();
         remove();
     }
 
