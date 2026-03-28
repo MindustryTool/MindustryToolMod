@@ -34,7 +34,7 @@ public class WavePreviewFeature extends Table implements Feature {
         return FeatureMetadata.builder()
                 .name("@feature.wave-preview.name")
                 .description("@feature.wave-preview.description")
-                .icon(Icon.unitsSmall)
+                .icon(Icon.units)
                 .order(1)
                 .quickAccess(true)
                 .enabledByDefault(true)
