@@ -12,7 +12,6 @@ import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.MdtKeybinds;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 
 public class SchematicBrowserFeature implements Feature {
@@ -31,13 +30,13 @@ public class SchematicBrowserFeature implements Feature {
 
     @Override
     public void init() {
-        if (FeatureManager.getInstance().isEnabled(this)) {
+        if (isEnabled()) {
             addBrowseButton();
         }
 
         Events.run(Trigger.update, () -> {
             boolean noInputFocused = !Core.scene.hasField();
-            boolean enabled = FeatureManager.getInstance().isEnabled(this);
+            boolean enabled = isEnabled();
 
             if (enabled && noInputFocused && Core.input.keyRelease(MdtKeybinds.schematicBrowserKb)) {
                 Core.app.post(() -> dialog().ifPresent(Dialog::show));

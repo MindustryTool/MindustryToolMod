@@ -20,7 +20,7 @@ public class FeatureManager {
 
         for (Feature feature : features) {
             if (enableds.contains(feature.getMetadata().name())) {
-                setEnabled(feature, true);
+                feature.setEnabled(true);
             }
         }
     }
@@ -31,7 +31,7 @@ public class FeatureManager {
         Core.settings.putJson("mindustry-tool.enableds", String.class, enableds);
 
         for (Feature feature : features) {
-            setEnabled(feature, false);
+            feature.setEnabled(false);
         }
     }
 
@@ -47,36 +47,10 @@ public class FeatureManager {
     public void init() {
         for (Feature feature : features) {
             feature.init();
-            if (isEnabled(feature)) {
+            if (feature.isEnabled()) {
                 feature.onEnable();
             }
         }
-    }
-
-    public boolean isEnabled(Feature feature) {
-        return Core.settings.getBool("mindustrytool.feature." + feature.getMetadata().name() + ".enabled",
-                feature.getMetadata().enabledByDefault());
-    }
-
-    public void toogle(Feature feature) {
-        setEnabled(feature, !isEnabled(feature));
-    }
-
-    public void setEnabled(Feature feature, boolean enabled) {
-        boolean current = isEnabled(feature);
-        if (current == enabled) {
-            return;
-        }
-
-        Core.settings.put("mindustrytool.feature." + feature.getMetadata().name() + ".enabled", enabled);
-
-        Core.app.post(() -> {
-            if (enabled) {
-                feature.onEnable();
-            } else {
-                feature.onDisable();
-            }
-        });
     }
 
     public Seq<Feature> getFeatures() {
@@ -84,6 +58,6 @@ public class FeatureManager {
     }
 
     public Seq<Feature> getEnableds() {
-        return features.select(f -> isEnabled(f));
+        return features.select(f -> f.isEnabled());
     }
 }

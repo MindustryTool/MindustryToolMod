@@ -9,7 +9,6 @@ import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.MdtKeybinds;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 
 public class MapBrowserFeature implements Feature {
@@ -29,7 +28,7 @@ public class MapBrowserFeature implements Feature {
     public void init() {
         Events.run(Trigger.update, () -> {
             boolean noInputFocused = !Core.scene.hasField();
-            boolean enabled = FeatureManager.getInstance().isEnabled(this);
+            boolean enabled = isEnabled();
 
             if (enabled && noInputFocused && Core.input.keyRelease(MdtKeybinds.mapBrowserKb)) {
                 Core.app.post(() -> dialog().ifPresent(Dialog::show));

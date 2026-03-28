@@ -11,13 +11,12 @@ import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.WebFeature;
 
 public class FeatureCard {
 
     public static void buildToggle(Table parent, Feature feature, Runnable rebuild) {
-        boolean enabled = FeatureManager.getInstance().isEnabled(feature);
+        boolean enabled = feature.isEnabled();
         var metadata = feature.getMetadata();
 
         var card = parent.button(Styles.black8, () -> {
@@ -30,7 +29,7 @@ public class FeatureCard {
                 if (event.stopped)
                     return;
                 try {
-                    FeatureManager.getInstance().setEnabled(feature, !enabled);
+                    feature.toggle();
                     parent.clear();
                     rebuild.run();
                 } catch (Exception e) {

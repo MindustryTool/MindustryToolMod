@@ -15,7 +15,6 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Main;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.savesync.dto.*;
@@ -99,7 +98,7 @@ public class SaveSyncFeature implements Feature {
         Core.app.addListener(new ApplicationListener() {
             @Override
             public void exit() {
-                if (FeatureManager.getInstance().isEnabled(feature)) {
+                if (feature.isEnabled()) {
                     String slotId = Core.settings.getString(SETTING_SLOT_ID, null);
                     if (slotId != null && AuthService.getInstance().isLoggedIn()) {
                         performSyncOnExit(slotId);
