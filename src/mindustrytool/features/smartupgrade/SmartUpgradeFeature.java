@@ -21,7 +21,6 @@ import mindustry.ui.Styles;
 import mindustry.world.Block;
 import mindustry.world.Build;
 import mindustry.world.Tile;
-import mindustry.world.blocks.distribution.ArmoredConveyor;
 import mindustry.world.blocks.distribution.BufferedItemBridge;
 import mindustry.world.blocks.distribution.Conveyor;
 import mindustry.world.blocks.distribution.Duct;
@@ -34,6 +33,11 @@ import mindustry.world.blocks.distribution.Router;
 import mindustry.world.blocks.distribution.Sorter;
 import mindustry.world.blocks.distribution.StackConveyor;
 import mindustry.world.blocks.distribution.DuctBridge.DuctBridgeBuild;
+import mindustry.world.blocks.liquid.Conduit;
+import mindustry.world.blocks.liquid.LiquidBlock;
+import mindustry.world.blocks.liquid.LiquidBridge;
+import mindustry.world.blocks.liquid.LiquidJunction;
+import mindustry.world.blocks.liquid.LiquidRouter;
 import mindustry.world.blocks.defense.Wall;
 import mindustry.world.blocks.production.Drill;
 import mindustry.world.blocks.production.BeamDrill;
@@ -123,7 +127,7 @@ public class SmartUpgradeFeature implements Feature {
     }
 
     private enum BlockGroup {
-        CONVEYOR, WALL, DRILL, NONE
+        CONVEYOR, WALL, DRILL, CONDUIT, NONE
     }
 
     private BlockGroup getGroup(Block block) {
@@ -135,6 +139,9 @@ public class SmartUpgradeFeature implements Feature {
             return BlockGroup.WALL;
         if (block instanceof Drill || block instanceof BeamDrill)
             return BlockGroup.DRILL;
+        if (block instanceof Conduit)
+            return BlockGroup.CONDUIT;
+
         return BlockGroup.NONE;
     }
 
@@ -169,7 +176,8 @@ public class SmartUpgradeFeature implements Feature {
                     && unlocked(block)
                     && selectedTile.block().size == block.size
                     && tile.block() != block
-                    && Build.validPlace(block, Vars.player.team(), tile.build.tileX(), tile.build.tileY(), tile.build.rotation)) {
+                    && Build.validPlace(block, Vars.player.team(), tile.build.tileX(), tile.build.tileY(),
+                            tile.build.rotation)) {
 
                 addUpgradeButton(currentMenu, tile, block);
                 if (++i % 5 == 0) {
@@ -232,8 +240,7 @@ public class SmartUpgradeFeature implements Feature {
             Block block = current.block();
 
             if (group == BlockGroup.CONVEYOR) {
-                if (block instanceof Conveyor || block instanceof StackConveyor || block instanceof ArmoredConveyor
-                        || block instanceof Duct) {
+                if (block instanceof Conveyor || block instanceof StackConveyor || block instanceof Duct) {
                     checkAndAdd(queue, visited, build.front(), group);
                     checkAndAdd(queue, visited, build.back(), group);
                 } else if (block instanceof BufferedItemBridge || block instanceof ItemBridge) {
@@ -264,6 +271,26 @@ public class SmartUpgradeFeature implements Feature {
                 if (build.proximity != null) {
                     for (Building next : build.proximity) {
                         checkAndAdd(queue, visited, next, group);
+                    }
+                }
+            } else if (group == BlockGroup.CONDUIT) {
+                if (block instanceof Conduit) {
+                    checkAndAdd(queue, visited, build.front(), group);
+                    checkAndAdd(queue, visited, build.back(), group);
+                } else if (block instanceof LiquidBridge) {
+                    Object c = build.config();
+
+                    if (c instanceof Point2 conf) {
+                        Tile link = Vars.world.tile(current.x + conf.x, current.y + conf.y);
+                        if (link != null && link.build != null) {
+                            for (int i = 0; i < 4; i++) {
+                                checkAndAdd(queue, visited, link.nearby(i).build, group);
+                            }
+                        }
+                    }
+                } else if (block instanceof LiquidRouter || block instanceof LiquidJunction) {
+                    for (int i = 0; i < 4; i++) {
+                        checkAndAdd(queue, visited, current.nearby(i).build, group);
                     }
                 }
             }
@@ -298,6 +325,13 @@ public class SmartUpgradeFeature implements Feature {
             }
         } else if (group == BlockGroup.WALL || group == BlockGroup.DRILL) {
             if (getGroup(block) == group) {
+                visited.add(tile);
+                queue.add(tile);
+                return true;
+            }
+        } else if (group == BlockGroup.CONDUIT) {
+            if (getGroup(block) == group || block instanceof Conduit || block instanceof LiquidBridge
+                    || block instanceof LiquidBlock) {
                 visited.add(tile);
                 queue.add(tile);
                 return true;
