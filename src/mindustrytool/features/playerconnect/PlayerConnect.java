@@ -170,7 +170,7 @@ public class PlayerConnect {
                     Core.app.post(() -> Events.fire(new RoomCreatedEvent(room)));
                     onSucceed.get(new PlayerConnectLink(ip, port, id));
                 }, onDisconnected);
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 onFailed.get(e);
             }
         });

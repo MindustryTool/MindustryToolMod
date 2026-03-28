@@ -277,8 +277,8 @@ public class Main extends Mod {
         Table table = new Table();
         table.defaults().left();
 
-        table.add(Core.bundle.format("message.new-version", "[" + Color.crimson.toString() + "]" + currentVer,
-                "[" + Color.green.toString() + "]" + latestVer))
+        table.add(Core.bundle.format("message.new-version", "[#" + Color.crimson.toString() + "]" + currentVer,
+                "[#" + Color.green.toString() + "]" + latestVer))
                 .wrap()
                 .width(500f)
                 .padBottom(20)
@@ -307,7 +307,7 @@ public class Main extends Mod {
                 Vars.ui.mods.githubImportMod(Config.REPO_URL, true);
                 Vars.ui.mods.toFront();
                 Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 Log.err(e);
                 Vars.ui.showException(e);
             }

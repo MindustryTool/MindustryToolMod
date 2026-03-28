@@ -340,7 +340,7 @@ public class NetworkProxy extends Client implements NetListener {
                 var packet = new Packets.StatsPacket(getStats());
 
                 sendTCP(packet);
-            } catch (Throwable err) {
+            } catch (Exception err) {
                 Log.err(err);
             }
         });

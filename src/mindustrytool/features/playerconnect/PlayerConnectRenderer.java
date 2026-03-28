@@ -270,7 +270,7 @@ public class PlayerConnectRenderer {
         if (!room.getData().isSecured()) {
             try {
                 PlayerConnect.join(link, "", () -> Log.info("Joined room: " + link));
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 Vars.ui.showException("@message.connect.fail", e);
             }
             return;
@@ -295,7 +295,7 @@ public class PlayerConnectRenderer {
         connect.buttons.button("@ok", () -> {
             try {
                 PlayerConnect.join(link, password[0], connect::hide);
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 connect.hide();
                 Vars.ui.showException("@message.connect.fail", e);
             }
