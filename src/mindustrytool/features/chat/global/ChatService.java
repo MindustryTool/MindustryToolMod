@@ -104,6 +104,8 @@ public class ChatService {
                                     // Parse array of messages
                                     Jval json = Jval.read(data);
 
+                                    Log.info(json.toString());
+
                                     if (json.isArray()) {
                                         Json jsonParser = new Json();
                                         ChatMessage[] messages = jsonParser.fromJson(ChatMessage[].class, data);
