@@ -3,7 +3,6 @@ package mindustrytool.features.chat.translation;
 import arc.Core;
 import arc.util.Http;
 import arc.util.Http.HttpStatusException;
-import lombok.Data;
 import mindustry.Vars;
 import mindustrytool.Config;
 import mindustrytool.Utils;
@@ -27,6 +26,15 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
     public CompletableFuture<String> translate(String message) {
         CompletableFuture<String> future = new CompletableFuture<>();
 
+        if (message == null || message.isEmpty()) {
+            future.complete("");
+            return future;
+        }
+
+        if (message.length() > 1028) {
+            message = message.substring(0, 1028);
+        }
+
         if (Vars.ui.language.getLocale() == null) {
             future.completeExceptionally(new IllegalArgumentException("Invalid locale: null"));
             return future;
@@ -39,14 +47,17 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
             return future;
         }
 
+        if (locale.length() > 16) {
+            locale = locale.substring(0, 16);
+        }
+
         try {
             HashMap<String, Object> body = new HashMap<>();
 
-            body.put("q", message);
-            body.put("source", "auto");
+            body.put("content", message);
             body.put("target", locale);
 
-            Http.post(Config.API_v4_URL + "/libre", Utils.toJson(body))
+            Http.post(Config.API_v4_URL + "translations/translate", Utils.toJson(body))
                     .header("Content-Type", "application/json")
                     .timeout(getTimeout() * 1000)
                     .error(e -> {
@@ -60,18 +71,11 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
                                 Core.bundle.get("chat-translation.error.prefix") + e.getMessage()));
                     })
                     .submit(res -> {
-                        String jsonString = res.getResultAsString();
-                        try {
-                            Response response = Utils.fromJson(Response.class, jsonString);
-                            future.complete(response.getTranslatedText());
-                        } catch (Exception e) {
-                            future.completeExceptionally(
-                                    new RuntimeException(Core.bundle.get("chat-translation.deepl.parse-error"), e));
-                        }
+                        future.complete(res.getResultAsString());
                     });
 
         } catch (Exception e) {
-            future.completeExceptionally(new RuntimeException("DeepL translation error", e));
+            future.completeExceptionally(new RuntimeException("Translation error", e));
         }
 
         return future;
@@ -105,10 +109,5 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
     @Override
     public String getId() {
         return "mindustrytool";
-    }
-
-    @Data
-    private static class Response {
-        private String translatedText;
     }
 }
