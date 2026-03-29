@@ -8,6 +8,7 @@ import arc.scene.ui.ButtonGroup;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import arc.scene.ui.Label;
+import arc.scene.ui.TextField;
 import arc.scene.ui.TextButton;
 import arc.util.Align;
 import arc.util.Log;
@@ -183,6 +184,8 @@ public class ChatTranslationFeature implements Feature {
         resultLabel.setWrap(true);
         resultLabel.setAlignment(Align.center);
 
+        TextField testInput = new TextField("Hello, Mindustry!");
+
         TextButton testButton = new TextButton(Core.bundle.get("chat-translation.settings.test-button"),
                 Styles.defaultt);
         testButton.clicked(() -> {
@@ -193,7 +196,7 @@ public class ChatTranslationFeature implements Feature {
             testButton.setText(Core.bundle.get("chat-translation.settings.testing"));
             resultLabel.setText(Core.bundle.get("chat-translation.settings.testing-connection"));
 
-            currentProvider.translate("Hello").thenAccept(result -> {
+            currentProvider.translate(testInput.getText()).thenAccept(result -> {
                 Core.app.post(() -> {
                     testButton.setDisabled(false);
                     testButton.setText(Core.bundle.get("chat-translation.settings.test-button"));
@@ -209,6 +212,7 @@ public class ChatTranslationFeature implements Feature {
             });
         });
 
+        root.add(testInput).growX().pad(10).row();
         root.add(testButton).size(250, 50).pad(10)
                 .disabled(b -> currentProvider == noopTranslationProvider
                         || testButton.getText().toString().equals(Core.bundle.get("chat-translation.settings.testing")))

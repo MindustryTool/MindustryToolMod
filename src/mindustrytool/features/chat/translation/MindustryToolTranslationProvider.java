@@ -4,6 +4,7 @@ import arc.Core;
 import arc.util.Http;
 import arc.util.Http.HttpStatusException;
 import mindustry.Vars;
+import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.Config;
 import mindustrytool.Utils;
 import arc.scene.ui.layout.Table;
@@ -40,7 +41,7 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
             return future;
         }
 
-        String locale = Vars.ui.language.getLocale().getLanguage();
+        String locale = LanguageDialog.getDisplayName(Vars.ui.language.getLocale());
 
         if (locale.isEmpty()) {
             future.completeExceptionally(new IllegalArgumentException("Invalid locale: " + locale));
