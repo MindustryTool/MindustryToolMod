@@ -2,9 +2,11 @@ package mindustrytool.features.playerconnect;
 
 import arc.Core;
 import arc.Events;
+import arc.func.Boolf;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.scene.ui.Button;
+import arc.scene.ui.TextButton;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
@@ -30,6 +32,7 @@ public class CreateRoomDialog extends BaseDialog {
     boolean refreshingOnline;
 
     private Table mainTable;
+    private Boolf<TextButton> disabled = (_b) -> !((Vars.steam && Vars.net.server()) || !Vars.net.active());
 
     public CreateRoomDialog() {
         super("@message.manage-room.title");
@@ -65,6 +68,7 @@ public class CreateRoomDialog extends BaseDialog {
                         .update(btn -> {
                             btn.setText(getButtonTitle());
                         })
+                        .disabled(disabled)
                         .row();
 
             } else if (arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2) {
@@ -75,6 +79,7 @@ public class CreateRoomDialog extends BaseDialog {
                         .update(btn -> {
                             btn.setText(getButtonTitle());
                         })
+                        .disabled(disabled)
                         .row();
 
             } else {
@@ -83,6 +88,7 @@ public class CreateRoomDialog extends BaseDialog {
                         .update(btn -> {
                             btn.setText(getButtonTitle());
                         })
+                        .disabled(disabled)
                         .row();
             }
             buttons.swap(buttons.size - 1, buttons.size - 2);
