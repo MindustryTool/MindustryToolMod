@@ -75,7 +75,7 @@ public class MessageList extends Table {
         scrollPane.setOverscroll(false, false);
         scrollPane.setFadeScrollBars(false);
         scrollPane.visible(() -> ChatService.getInstance().isConnected());
-        scrollPane.scrolled(amount -> {
+        scrollPane.update(() -> {
             ChatStore store = ChatStore.getInstance();
             String currentChannelId = store.getCurrentChannelId();
             if (scrollPane.getScrollY() < 100 && !store.isLoadingMessages() && currentChannelId != null

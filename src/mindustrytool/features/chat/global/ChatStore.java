@@ -24,7 +24,7 @@ public class ChatStore {
 
     private String currentChannelId;
     private int unreadCount = 0;
-    private boolean isLoadingMessages = false;
+    private volatile boolean isLoadingMessages = false;
 
     public ChatStore() {
         currentChannelId = Core.settings.getString(CURRENT_CHANNEL_ID_KEY, null);
