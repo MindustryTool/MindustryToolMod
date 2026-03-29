@@ -270,13 +270,17 @@ public class SmartDrillFeature implements Feature {
 
         bridgeTiles.sort(t -> t.dst2(outMostTile));
         var output = bridgeTiles.first().nearby(dir.mul(3));
+        if (output == null){
+            output = bridgeTiles.first();
+        }
+        var outputBridge = output;
         bridgeTiles.add(output);
-        bridgeTiles.sort(t -> t.dst2(output));
+        bridgeTiles.sort(t -> t.dst2(outputBridge));
 
         for (Tile bridgeTile : bridgeTiles) {
             Tile neighbor = bridgeTiles.find(t -> Math.abs(t.x - bridgeTile.x) + Math.abs(t.y - bridgeTile.y) == 3);
             Point2 config = new Point2();
-            if (neighbor != null && bridgeTile != output) {
+            if (neighbor != null && bridgeTile != outputBridge) {
                 config.set(neighbor.x - bridgeTile.x, neighbor.y - bridgeTile.y);
             }
             BuildPlan plan = new BuildPlan(bridgeTile.x, bridgeTile.y, 0, Blocks.itemBridge, config);
