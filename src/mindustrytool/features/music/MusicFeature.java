@@ -12,9 +12,9 @@ import arc.util.Reflect;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustrytool.Main;
-import mindustrytool.events.MusicRegisterEvent;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.music.dto.MusicRegisterEvent;
 
 import java.util.Optional;
 

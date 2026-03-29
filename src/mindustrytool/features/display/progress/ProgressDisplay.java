@@ -22,15 +22,14 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
 import mindustry.gen.Icon;
+import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import java.util.Optional;
 
 public class ProgressDisplay implements Feature {
-    private boolean enabled = false;
     private BaseDialog settingsDialog;
 
     private final Cons<Building> buildingDrawer = this::drawBuilding;
@@ -47,7 +46,7 @@ public class ProgressDisplay implements Feature {
         return FeatureMetadata.builder()
                 .name("@feature.progress-display.name")
                 .description("@feature.progress-display.description")
-                .icon(Utils.icons("progress-display.png"))
+                .icon(Tex.bar)
                 .order(10)
                 .enabledByDefault(true)
                 .build();
@@ -151,18 +150,8 @@ public class ProgressDisplay implements Feature {
         settingsContainer.stack(widthSlider, widthContent).width(width).left().padTop(4f).row();
     }
 
-    @Override
-    public void onEnable() {
-        enabled = true;
-    }
-
-    @Override
-    public void onDisable() {
-        enabled = false;
-    }
-
     private void draw() {
-        if (!enabled || !Vars.state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
+        if (!isEnabled() || !Vars.state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
             return;
         }
 
@@ -183,7 +172,6 @@ public class ProgressDisplay implements Feature {
     private void drawBuilding(Building build) {
         float fraction = 0f;
         float remainingTime = 0f;
-
 
         var scale = build.timeScale();
 
@@ -212,7 +200,8 @@ public class ProgressDisplay implements Feature {
         fraction = Mathf.clamp(fraction, 0f, 1f);
 
         if (fraction > 0.01f) {
-            drawBar(build.x, build.y, build.block.size * Vars.tilesize, fraction, build.team.color, remainingTime / scale);
+            drawBar(build.x, build.y, build.block.size * Vars.tilesize, fraction, build.team.color,
+                    remainingTime / scale);
         }
     }
 

@@ -3,7 +3,6 @@ package mindustrytool.features.autoplay.tasks;
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.Vars;
-import mindustry.entities.units.AIController;
 import mindustry.entities.units.BuildPlan;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
@@ -38,7 +37,7 @@ public class RebuildTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun(Unit unit) {
+    public boolean update(Unit unit) {
         if (!unit.canBuild()) {
             status = Core.bundle.get("autoplay.status.cannot-build");
             return false;
@@ -54,7 +53,7 @@ public class RebuildTask implements AutoplayTask {
     }
 
     @Override
-    public AIController getAI() {
+    public RebuildAI getAI() {
         return ai;
     }
 

@@ -17,10 +17,6 @@ public class NoopTranslationProvider implements TranslationProvider {
     }
 
     @Override
-    public void init() {
-    }
-
-    @Override
     public String getName() {
         return Core.bundle.get("chat-translation.provider.none");
     }

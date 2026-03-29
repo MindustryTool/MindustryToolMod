@@ -51,5 +51,3 @@
 
 - Java 17
 - Mindustry v8 (build 153)
-
-## Make sure there is no error by try to compile and fix all errors

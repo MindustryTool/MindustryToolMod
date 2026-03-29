@@ -1,12 +1,14 @@
 package mindustrytool.features.autoplay.tasks;
 
 import arc.Core;
+import arc.math.geom.Geometry;
 import arc.scene.style.TextureRegionDrawable;
-import mindustry.entities.units.AIController;
+import mindustry.Vars;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.gen.Unit;
+import mindustry.world.meta.BlockFlag;
 
 public class SelfHealTask implements AutoplayTask {
     private boolean enabled = true;
@@ -34,7 +36,7 @@ public class SelfHealTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun(Unit unit) {
+    public boolean update(Unit unit) {
         if (unit.health < unit.maxHealth * 0.6f) {
             status = Core.bundle.get("autoplay.status.low-hp");
             return true;
@@ -49,7 +51,7 @@ public class SelfHealTask implements AutoplayTask {
     }
 
     @Override
-    public AIController getAI() {
+    public SelfHealAI getAI() {
         return ai;
     }
 
@@ -61,9 +63,10 @@ public class SelfHealTask implements AutoplayTask {
     public static class SelfHealAI extends BaseAutoplayAI {
         @Override
         public void updateMovement() {
-            Building core = unit.closestCore();
-            if (core != null) {
-                moveTo(core, 50f);
+            Building repair = Geometry.findClosest(unit.x, unit.y,
+                    Vars.indexer.getFlagged(unit.team, BlockFlag.repair));
+            if (repair != null) {
+                moveTo(repair, 50f);
             }
         }
     }

@@ -1,38 +1,18 @@
 package mindustrytool;
 
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.HashMap;
-
-import arc.Core;
 import arc.Events;
 import arc.files.Fi;
 import arc.func.Prov;
-import arc.scene.ui.layout.Scl;
-import arc.scene.ui.layout.Table;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
-import arc.util.Http;
 import arc.util.Log;
 import arc.util.Reflect;
-import arc.util.Strings;
-import arc.util.Timer;
-import arc.util.Http.HttpStatusException;
-import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustry.editor.MapResizeDialog;
 import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.mod.Mods.LoadedMod;
 import mindustry.net.Packet;
 import mindustry.mod.Mod;
-import mindustry.ui.dialogs.BaseDialog;
-import arc.scene.ui.ScrollPane;
-import arc.graphics.Color;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
@@ -40,21 +20,24 @@ import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.display.healthbar.HealthBarVisualizer;
 import mindustrytool.features.display.pathfinding.PathfindingDisplay;
 import mindustrytool.features.display.teamresource.TeamResourceFeature;
+import mindustrytool.features.display.togglerendering.ToggleRenderingFeature;
 import mindustrytool.features.display.range.RangeDisplay;
 import mindustrytool.features.display.progress.ProgressDisplay;
 import mindustrytool.features.display.quickaccess.QuickAccessHud;
 import mindustrytool.features.auth.AuthFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
-import mindustrytool.features.smartconveyor.SmartConveyorFeature;
+import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.services.ServerService;
+import mindustrytool.services.CrashReportService;
+import mindustrytool.services.UpdateService;
 import mindustrytool.features.chat.global.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.godmode.TapListener;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.music.MusicFeature;
-import mindustrytool.events.MusicRegisterEvent;
+import mindustrytool.features.music.dto.MusicRegisterEvent;
 import mindustrytool.features.display.wavepreview.WavePreviewFeature;
 import mindustrytool.features.chat.translation.ChatTranslationFeature;
 import mindustrytool.features.chat.pretty.PrettyChatFeature;
@@ -68,7 +51,6 @@ public class Main extends Mod {
     public static Fi backgroundsDir = Vars.dataDirectory.child("mindustry-tool-backgrounds");
     public static Fi musicsDir = Vars.dataDirectory.child("mindustry-tool-musics");
     public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
-    private static SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy_HH_mm_ss");
 
     private static ObjectMap<Class<?>, Prov<? extends Packet>> packetReplacements = new ObjectMap<>();
 
@@ -120,12 +102,13 @@ public class Main extends Mod {
                             // new ItemVisualizerFeature(),
                             new GodModeFeature(),
                             new SmartDrillFeature(),
-                            new SmartConveyorFeature(),
+                            new SmartUpgradeFeature(),
                             new BackgroundFeature(),
                             new MusicFeature(),
-                            new ProgressDisplay());
+                            new ProgressDisplay(),
+                            new ToggleRenderingFeature());
 
-                    boolean hasCrashed = checkForCrashes();
+                    boolean hasCrashed = new CrashReportService().checkForCrashes();
                     if (hasCrashed) {
                         // Try to disable all feature
                         FeatureManager.getInstance().disableAll();
@@ -134,7 +117,7 @@ public class Main extends Mod {
 
                     Events.fire(new MusicRegisterEvent());
 
-                    checkForUpdate();
+                    new UpdateService().checkForUpdate(self.meta.version);
                     addCustomButtons();
 
                 } catch (Exception err) {
@@ -144,18 +127,21 @@ public class Main extends Mod {
         } catch (Exception e) {
             Log.err(e);
         }
-        // throw new RuntimeException("Crash test");
     }
 
     private void initFeatures() {
-        FeatureManager.getInstance().init();
+        try {
+            FeatureManager.getInstance().init();
+        } catch (Exception e) {
+            Log.err(e);
+        }
 
         Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
 
         packetProvs.replace(packet -> {
             Class<?> clazz = packet.get().getClass();
             if (packetReplacements.containsKey(clazz)) {
-                Log.info("Replace packet @ to @", clazz.getSimpleName(),
+                Log.debug("Replace packet @ to @", clazz.getSimpleName(),
                         packetReplacements.get(clazz).get().getClass().getSimpleName());
                 return packetReplacements.get(clazz);
             }
@@ -170,332 +156,5 @@ public class Main extends Mod {
         } catch (Exception e) {
             Log.err(e);
         }
-    }
-
-    private void checkForUpdate() {
-        int[] currentVersion = extractVersionNumber(self.meta.version);
-
-        Http.get(Config.API_REPO_URL, (res) -> {
-            try {
-                Jval json = Jval.read(res.getResultAsString());
-
-                String latestVersionStr = json.getString("version");
-                int[] latestVersion = extractVersionNumber(latestVersionStr);
-
-                if (isVersionGreater(latestVersion, currentVersion)) {
-                    Log.info("Mod require update, current version: @, latest version: @",
-                            versionToString(currentVersion),
-                            versionToString(latestVersion));
-
-                    fetchReleasesAndShowDialog(versionToString(currentVersion), versionToString(latestVersion));
-                } else {
-                    Log.info("Mod up to date");
-                }
-            } catch (Exception e) {
-                Log.err("Failed to check update", e);
-            }
-        });
-
-        Http.get(Config.API_URL + "ping?client=mod-v8").submit(result -> {
-            Log.info("Ping");
-        });
-    }
-
-    private void fetchReleasesAndShowDialog(String currentVer, String latestVer) {
-        Http.get(Config.GITHUB_API_URL).error(e -> {
-            Log.err("Failed to fetch releases", e);
-            Core.app.post(() -> {
-                showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
-            });
-        }).submit(res -> {
-            try {
-                Jval json = Jval.read(res.getResultAsString());
-                if (json.isArray()) {
-                    Seq<Jval> releases = json.asArray();
-                    StringBuilder changelog = new StringBuilder();
-
-                    int count = 0;
-                    for (Jval release : releases) {
-                        if (count >= 20)
-                            break;
-
-                        String tagName = release.getString("tag_name", "");
-                        String body = release.getString("body", "No description provided.");
-                        String publishedAt = release.getString("published_at", "");
-                        int downloadCount = 0;
-                        if (release.has("assets")) {
-                            Jval assets = release.get("assets");
-                            try {
-                                for (Jval asset : assets.asArray()) {
-                                    downloadCount += asset.getInt("download_count", 0);
-                                }
-                            } catch (Exception e) {
-                                Log.err("Failed to parse assets", e);
-                            }
-                        }
-
-                        changelog.append("[accent]").append(tagName).append("[white]\n");
-
-                        try {
-                            if (!publishedAt.isEmpty()) {
-                                Instant instant = Instant.parse(publishedAt);
-                                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-                                        .withZone(ZoneId.systemDefault());
-                                changelog.append("[lightgray]").append(formatter.format(instant)).append("[] - ");
-                            }
-                        } catch (Throwable e) {
-                            Log.err(e);
-                        }
-
-                        changelog.append("[gold]Download count: ").append(downloadCount).append("[white]\n");
-                        changelog.append(Utils.renderMarkdown(body)).append("\n\n");
-                        count++;
-                    }
-
-                    Core.app.post(() -> {
-                        showUpdateDialog(currentVer, latestVer, changelog.toString());
-                    });
-                } else {
-                    Core.app.post(() -> {
-                        showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
-                    });
-                }
-            } catch (Exception e) {
-                Log.err("Failed to parse releases", e);
-                Core.app.post(() -> {
-                    showUpdateDialog(currentVer, latestVer, "Could not parse release notes.");
-                });
-            }
-        });
-    }
-
-    private void showUpdateDialog(String currentVer, String latestVer, String changelog) {
-        BaseDialog dialog = new BaseDialog("Update Available");
-
-        dialog.name = "updateAvailableDialog";
-
-        Table table = new Table();
-        table.defaults().left();
-
-        table.add(Core.bundle.format("message.new-version", "[#" + Color.crimson.toString() + "]" + currentVer,
-                "[#" + Color.green.toString() + "]" + latestVer))
-                .wrap()
-                .width(500f)
-                .padBottom(20)
-                .row();
-
-        table.add("Discord: " + Config.DISCORD_INVITE_URL).color(Color.royal).padTop(5f).row();
-
-        table.image().height(4f).color(Color.gray).fillX().pad(10f).row();
-
-        Table changelogTable = new Table();
-        changelogTable.top().left();
-        changelogTable.add(changelog).growX().wrap().width(480f).left();
-
-        ScrollPane pane = new ScrollPane(changelogTable);
-        table.add(pane).size(500f, 400f)
-                .scrollX(false)
-                .row();
-
-        dialog.cont.add(table);
-
-        dialog.buttons.button("Cancel", () -> dialog.remove()).size(100f, 50f);
-        dialog.buttons.button("Update", () -> {
-            try {
-                dialog.remove();
-                Vars.ui.mods.show();
-                Vars.ui.mods.githubImportMod(Config.REPO_URL, true);
-                Vars.ui.mods.toFront();
-                Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
-            } catch (Exception e) {
-                Log.err(e);
-                Vars.ui.showException(e);
-            }
-        }).size(100f, 50f);
-
-        Core.app.post(() -> {
-            dialog.show();
-        });
-    }
-
-    private static int[] extractVersionNumber(String version) {
-        try {
-            if (version.contains("v")) {
-                version = version.substring(version.indexOf("v"), version.indexOf("-"));
-            }
-            String clean = version.replaceAll("[^0-9.]", "");
-            String[] parts = clean.split("\\.");
-            int[] numbers = new int[parts.length];
-            for (int i = 0; i < parts.length; i++) {
-                numbers[i] = Integer.parseInt(parts[i]);
-            }
-            return numbers;
-        } catch (Exception e) {
-            Log.err(e);
-            return new int[0];
-        }
-    }
-
-    private static boolean isVersionGreater(int[] v1, int[] v2) {
-        for (int i = 0; i < Math.min(v1.length, v2.length); i++) {
-            if (v1[i] > v2[i]) {
-                return true;
-            } else if (v1[i] < v2[i]) {
-                return false;
-            }
-        }
-
-        return v1.length > v2.length;
-    }
-
-    private static String versionToString(int[] version) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < version.length; i++) {
-            sb.append(version[i]);
-            if (i < version.length - 1) {
-                sb.append(".");
-            }
-        }
-        return sb.toString();
-    }
-
-    private static long parseCrashTime(Fi file) {
-        if (file == null) {
-            return 0;
-        }
-
-        String filename = file.nameWithoutExtension();
-
-        if (filename.startsWith("crash-report-")) {
-            String time = filename.replace("crash-report-", "");
-            try {
-                Date date = formatter.parse(time);
-                return date.getTime();
-            } catch (Exception e) {
-                Log.err(e);
-                return 0;
-            }
-        }
-
-        if (filename.startsWith("crash_", 0)) {
-            String time = filename.replace("crash_", "");
-            try {
-                return Long.parseLong(time);
-            } catch (Exception e) {
-                Log.err(e);
-                return 0;
-            }
-        }
-
-        return 0;
-    }
-
-    private static boolean checkForCrashes() {
-        Fi crashesDir = Core.settings.getDataDirectory().child("crashes");
-
-        if (!crashesDir.exists()) {
-            return false;
-        }
-
-        var latest = Seq.with(crashesDir.list()).max(fi -> parseCrashTime(fi));
-
-        long epoch = LocalDate.of(2026, 1, 25)
-                .atStartOfDay(ZoneOffset.UTC)
-                .toEpochSecond() * 1000;
-
-        if (parseCrashTime(latest) < epoch) {
-            return false;
-        }
-
-        String latestCrashKey = "latestCrash";
-
-        var savedLatest = 0l;
-
-        try {
-            savedLatest = Core.settings.getLong(latestCrashKey, 0);
-        } catch (Exception e) {
-            Log.err(e);
-        }
-
-        if (latest == null) {
-            return false;
-        }
-
-        if (parseCrashTime(latest) == savedLatest) {
-            return false;
-        }
-
-        Core.settings.put(latestCrashKey, parseCrashTime(latest));
-
-        showCrashDialog(latest);
-
-        return true;
-    }
-
-    private static void showCrashDialog(Fi file) {
-        String log = file.readString();
-
-        boolean hasMindustryTool = log.contains("mindustry-tool");
-
-        if (!hasMindustryTool) {
-            return;
-        }
-
-        int separatorIndex = log.indexOf("\n\n");
-
-        if (separatorIndex != -1) {
-            var firstPart = log.substring(0, separatorIndex);
-            var secondPart = log.substring(separatorIndex);
-            var enabledFeatures = FeatureManager.getInstance().getEnableds().map(f -> f.getMetadata().name());
-            var enabledFeatureString = Strings.join(",", enabledFeatures);
-
-            log = firstPart + "\n" + "Enabled features: " + enabledFeatureString + secondPart;
-        }
-
-        var data = log;
-
-        String sendCrashReportKey = "sendCrashReport";
-
-        BaseDialog dialog = new BaseDialog("@crash-report.title");
-
-        dialog.name = "crashReportDialog";
-
-        boolean sendCrashReport = Core.settings.getBool(sendCrashReportKey, true);
-
-        dialog.addCloseButton();
-        dialog.closeOnBack();
-
-        dialog.cont.table(container -> {
-            container.add("@crash-report.content").padBottom(10f).wrapLabel(true).wrap().growX().row();
-            container.check("@crash-report.send", sendCrashReport,
-                    (v) -> Core.settings.put(sendCrashReportKey, v)).wrapLabel(false).growX().row();
-            container.add(file.absolutePath().toString()).padBottom(10f).wrapLabel(true).wrap().growX().row();
-            container.pack();
-        }).width(Math.min(600, Core.graphics.getWidth() / Scl.scl() / 1.2f));
-
-        dialog.hidden(() -> {
-            if (Core.settings.getBool(sendCrashReportKey, true)) {
-                try {
-                    HashMap<String, Object> json = new HashMap<>();
-
-                    json.put("content", data);
-
-                    Http.post(Config.API_v4_URL + "/crashes", Utils.toJson(json))
-                            .header("Content-Type", "application/json")
-                            .error(err -> {
-                                if (err instanceof HttpStatusException httpStatusException) {
-                                    Log.err(httpStatusException.response.getResultAsString());
-                                }
-                            })
-                            .submit(res -> {
-                                Log.info(res.getResultAsString());
-                            });
-                } catch (Exception err) {
-                    Log.err(err);
-                }
-            }
-        });
-
-        Core.app.post(() -> dialog.show());
     }
 }

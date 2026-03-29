@@ -21,7 +21,6 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.Main;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import arc.struct.Seq;
 
@@ -33,7 +32,6 @@ public class ChatTranslationFeature implements Feature {
     private final NoopTranslationProvider noopTranslationProvider = new NoopTranslationProvider();
     private String lastError = null;
     private TranslationProvider currentProvider = defaultTranslationProvider;
-    private boolean enabled = false;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -86,7 +84,7 @@ public class ChatTranslationFeature implements Feature {
     }
 
     public void handleMessage(String message, Cons<String> cons) {
-        if (!enabled) {
+        if (!isEnabled()) {
             cons.get(message);
             return;
         }
@@ -124,16 +122,6 @@ public class ChatTranslationFeature implements Feature {
         if (currentProvider == null) {
             currentProvider = defaultTranslationProvider;
         }
-    }
-
-    @Override
-    public void onEnable() {
-        enabled = true;
-    }
-
-    @Override
-    public void onDisable() {
-        enabled = false;
     }
 
     @Override
@@ -175,7 +163,7 @@ public class ChatTranslationFeature implements Feature {
                     currentProvider = prov;
                     var isNoop = prov.getId().equals(noopTranslationProvider.getId());
                     ChatTranslationConfig.setProviderId(prov.getId());
-                    FeatureManager.getInstance().setEnabled(this, !isNoop);
+                    this.setEnabled(!isNoop);
                 }
             });
 

@@ -5,7 +5,6 @@ import java.util.Optional;
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
-import mindustry.entities.units.AIController;
 import mindustry.gen.Unit;
 import arc.math.geom.Vec2;
 
@@ -16,28 +15,24 @@ public interface AutoplayTask {
 
     String getName();
 
-    boolean isEnabled();
-
-    void setEnabled(boolean enabled);
-
-    default void init() {
-        setEnabled(Core.settings.getBool("autoplay.task." + getId() + ".enabled", true));
+    default boolean isEnabled() {
+        return Core.settings.getBool("autoplay.task." + getId() + ".enabled", true);
     }
 
-    default void save() {
-        Core.settings.put("autoplay.task." + getId() + ".enabled", isEnabled());
+    default void setEnabled(boolean enabled) {
+        Core.settings.put("autoplay.task." + getId() + ".enabled", enabled);
+    }
+
+    default void init() {
     }
 
     default TextureRegionDrawable getIcon() {
         return null;
     }
 
-    boolean shouldRun(Unit unit);
+    boolean update(Unit unit);
 
-    AIController getAI();
-
-    default void update(Unit unit) {
-    }
+    BaseAutoplayAI getAI();
 
     String getStatus();
 
@@ -46,9 +41,9 @@ public interface AutoplayTask {
     }
 
     default Vec2 getTargetPos() {
-        AIController ai = getAI();
-        if (ai instanceof BaseAutoplayAI baseAi) {
-            return baseAi.targetPos;
+        BaseAutoplayAI ai = getAI();
+        if (ai != null) {
+            return ai.targetPos;
         }
         return null;
     }

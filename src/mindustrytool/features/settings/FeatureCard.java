@@ -8,16 +8,16 @@ import arc.scene.ui.layout.Table;
 import arc.util.Scaling;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
+import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.WebFeature;
 
 public class FeatureCard {
 
     public static void buildToggle(Table parent, Feature feature, Runnable rebuild) {
-        boolean enabled = FeatureManager.getInstance().isEnabled(feature);
+        boolean enabled = feature.isEnabled();
         var metadata = feature.getMetadata();
 
         var card = parent.button(Styles.black8, () -> {
@@ -30,7 +30,7 @@ public class FeatureCard {
                 if (event.stopped)
                     return;
                 try {
-                    FeatureManager.getInstance().setEnabled(feature, !enabled);
+                    feature.toggle();
                     parent.clear();
                     rebuild.run();
                 } catch (Exception e) {
@@ -106,7 +106,9 @@ public class FeatureCard {
 
                 c.button(Icon.linkSmall, () -> feature.dialog().ifPresent(d -> d.show()));
             }).grow();
-        }).growX().height(180f).pad(5f).get().clicked(() -> feature.dialog().ifPresent(d -> d.show()));
+        })
+                .color(Pal.accent)
+                .growX().height(180f).pad(5f).get().clicked(() -> feature.dialog().ifPresent(d -> d.show()));
     }
 
     public static void buildLink(Table parent, WebFeature feature) {

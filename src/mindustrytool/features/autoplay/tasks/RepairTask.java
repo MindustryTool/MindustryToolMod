@@ -3,7 +3,6 @@ package mindustrytool.features.autoplay.tasks;
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.entities.Units;
-import mindustry.entities.units.AIController;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
@@ -41,8 +40,8 @@ public class RepairTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun(Unit unit) {
-        boolean canHeal = unit.type.weapons.contains(w -> w.bullet.heals());
+    public boolean update(Unit unit) {
+        boolean canHeal = unit.type.weapons.contains(weapon -> weapon.bullet.heals());
 
         if (!canHeal) {
             status = Core.bundle.get("autoplay.status.cannot-heal");
@@ -64,7 +63,7 @@ public class RepairTask implements AutoplayTask {
     }
 
     @Override
-    public AIController getAI() {
+    public CustomRepairAI getAI() {
         return ai;
     }
 

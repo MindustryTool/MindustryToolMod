@@ -6,8 +6,6 @@ import arc.graphics.g2d.Draw;
 import arc.input.KeyCode;
 import arc.scene.ui.Dialog;
 import arc.struct.Seq;
-import arc.util.Log;
-import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
@@ -25,7 +23,6 @@ public class AutoplayFeature implements Feature {
     private final Seq<AutoplayTask> tasks = new Seq<>();
     private AutoplaySettingDialog dialog;
     private AutoplayTask currentTask;
-    private boolean isEnabled = false;
     private boolean isFollowUnit = Core.settings.getBool("mindustrytool.autoplay.followUnit", true);
 
     @Override
@@ -75,27 +72,14 @@ public class AutoplayFeature implements Feature {
         tasks.each(AutoplayTask::init);
 
         Events.run(Trigger.update, this::updateUnit);
+        Events.run(Trigger.update, this::updateTask);
         Events.run(Trigger.draw, this::draw);
-
-        Timer.schedule(() -> {
-            try {
-                updateTask();
-            } catch (Exception e) {
-                Log.err(e);
-            }
-        }, 0, 0.2f);
 
         MdtKeybinds.addFeatureKeyBind(this, MdtKeybinds.autoPlay);
     }
 
     @Override
-    public void onEnable() {
-        isEnabled = true;
-    }
-
-    @Override
     public void onDisable() {
-        isEnabled = false;
         var unit = Vars.player.unit();
 
         if (unit != null && !unit.dead) {
@@ -110,7 +94,7 @@ public class AutoplayFeature implements Feature {
     }
 
     private void draw() {
-        if (!isEnabled) {
+        if (!isEnabled()) {
             return;
         }
 
@@ -144,7 +128,7 @@ public class AutoplayFeature implements Feature {
     }
 
     private void updateTask() {
-        if (!isEnabled) {
+        if (!isEnabled()) {
             return;
         }
 
@@ -172,7 +156,7 @@ public class AutoplayFeature implements Feature {
         AutoplayTask nextTask = null;
 
         for (AutoplayTask task : tasks) {
-            if (task.isEnabled() && task.shouldRun(unit)) {
+            if (task.isEnabled() && task.update(unit)) {
                 nextTask = task;
                 break;
             }
@@ -193,7 +177,7 @@ public class AutoplayFeature implements Feature {
     }
 
     private void updateUnit() {
-        if (!isEnabled) {
+        if (!isEnabled()) {
             return;
         }
 
@@ -212,8 +196,6 @@ public class AutoplayFeature implements Feature {
         }
 
         if (currentTask != null) {
-            currentTask.update(unit);
-
             if (Vars.state.isGame()) {
                 currentTask.getAI().updateUnit();
             }

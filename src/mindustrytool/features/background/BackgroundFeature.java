@@ -35,10 +35,6 @@ public class BackgroundFeature implements Feature {
     }
 
     @Override
-    public void init() {
-    }
-
-    @Override
     public void onEnable() {
         String path = Core.settings.getString(SETTING_KEY, null);
 

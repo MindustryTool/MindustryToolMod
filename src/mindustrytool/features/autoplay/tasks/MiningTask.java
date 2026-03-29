@@ -9,7 +9,6 @@ import arc.scene.ui.layout.Table;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import mindustry.Vars;
-import mindustry.entities.units.AIController;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
@@ -55,10 +54,7 @@ public class MiningTask implements AutoplayTask {
         }
     }
 
-    @Override
     public void save() {
-        AutoplayTask.super.save();
-
         Seq<String> names = new Seq<>();
 
         selectedItems.each(i -> names.add(i.name));
@@ -87,7 +83,7 @@ public class MiningTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun(Unit unit) {
+    public boolean update(Unit unit) {
         if (!unit.canMine()) {
             status = Core.bundle.get("autoplay.status.cannot-mine");
             return false;
@@ -147,12 +143,8 @@ public class MiningTask implements AutoplayTask {
     }
 
     @Override
-    public AIController getAI() {
+    public MinerAI getAI() {
         return ai;
-    }
-
-    @Override
-    public void update(Unit unit) {
     }
 
     @Override

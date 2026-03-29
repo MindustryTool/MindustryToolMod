@@ -36,7 +36,7 @@
 - **Network Proxy:** Reliable connection handling with built-in latency monitoring for hosts.
 
 ### 🛠️ **Quality of Life & Admin Tools**
-- **Smart Conveyor:** Instantly upgrade entire chains of distribution blocks (conveyors, ducts, etc.) with a single tap.
+- **Smart Upgrade:** Instantly upgrade entire chains of distribution blocks (conveyors, ducts, etc.) with a single tap.
 - **God Mode:** A powerful suite for sandbox testing or server administration, including unit spawning, item injection, and team management.
 
 ## **Installation:**

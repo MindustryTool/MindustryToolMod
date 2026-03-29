@@ -165,7 +165,7 @@ public class FeatureSettingDialog extends BaseDialog {
 
     private void buildTaskTable(List<TaskData> inProgress, List<TaskData> accepted) {
         cont.pane(table -> {
-            table.top().left(); 
+            table.top().left();
 
             table.table(header -> {
                 header.left();
@@ -265,8 +265,9 @@ public class FeatureSettingDialog extends BaseDialog {
         // Toggleable Features
         for (Feature feature : FeatureManager.getInstance().getFeatures()) {
             if (!filter.isEmpty()
-                    && !Utils.getString(feature.getMetadata().name()).toLowerCase().contains(filter.toLowerCase()))
+                    && !Utils.getString(feature.getMetadata().name()).toLowerCase().contains(filter.toLowerCase())) {
                 continue;
+            }
 
             FeatureCard.buildToggle(paneTable, feature, this::rebuildPane);
 
@@ -287,15 +288,20 @@ public class FeatureSettingDialog extends BaseDialog {
 
         // Features with Dialogs
         for (Feature feature : FeatureManager.getInstance().getEnableds()) {
-            if (!feature.dialog().isPresent())
+            if (!feature.dialog().isPresent()) {
                 continue;
+            }
+
             if (!filter.isEmpty()
-                    && !Utils.getString(feature.getMetadata().name()).toLowerCase().contains(filter.toLowerCase()))
+                    && !Utils.getString(feature.getMetadata().name()).toLowerCase().contains(filter.toLowerCase())) {
                 continue;
+            }
 
             FeatureCard.buildLink(paneTable, feature);
-            if (++i % cols == 0)
+
+            if (++i % cols == 0) {
                 paneTable.row();
+            }
         }
 
         // Web Features

@@ -24,10 +24,6 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
     }
 
     @Override
-    public void init() {
-    }
-
-    @Override
     public CompletableFuture<String> translate(String message) {
         CompletableFuture<String> future = new CompletableFuture<>();
 

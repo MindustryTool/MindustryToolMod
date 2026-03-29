@@ -4,7 +4,6 @@ import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
-import mindustry.entities.units.AIController;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
@@ -41,7 +40,7 @@ public class FollowAssistTask implements AutoplayTask {
     }
 
     @Override
-    public boolean shouldRun(Unit unit) {
+    public boolean update(Unit unit) {
         if (!unit.canBuild()) {
             status = Core.bundle.get("autoplay.status.cannot-build");
             return false;
@@ -72,7 +71,7 @@ public class FollowAssistTask implements AutoplayTask {
     }
 
     @Override
-    public AIController getAI() {
+    public FollowAI getAI() {
         return ai;
     }
 

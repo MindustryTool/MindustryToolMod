@@ -22,7 +22,7 @@ public abstract class BaseAutoplayAI extends AIController {
 
     @Override
     public void updateTargeting() {
-        // Do nothing by default, tasks handle targeting in shouldRun or updateMovement
+        // Do nothing by default, tasks handle targeting in update or updateMovement
     }
 
     @Override

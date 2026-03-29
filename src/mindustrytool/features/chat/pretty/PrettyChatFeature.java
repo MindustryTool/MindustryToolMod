@@ -23,8 +23,6 @@ public class PrettyChatFeature implements Feature {
     @Getter
     private static final Seq<Prettier> prettiers = new Seq<>();
 
-    private static boolean enabled = false;
-
     static {
         prettiers.add(new Prettier(
                 "default",
@@ -107,22 +105,12 @@ public class PrettyChatFeature implements Feature {
     }
 
     @Override
-    public void onEnable() {
-        enabled = true;
-    }
-
-    @Override
-    public void onDisable() {
-        enabled = false;
-    }
-
-    @Override
     public Optional<Dialog> setting() {
-        return Optional.of(new PrettyChatSettingsDialog());
+        return Optional.of(new PrettyChatSettingsDialog(this));
     }
 
-    public static String transform(String message) {
-        if (!enabled) {
+    public String transform(String message) {
+        if (!isEnabled()) {
             return message;
         }
 

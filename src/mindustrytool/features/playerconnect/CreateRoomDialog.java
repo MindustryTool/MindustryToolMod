@@ -2,9 +2,11 @@ package mindustrytool.features.playerconnect;
 
 import arc.Core;
 import arc.Events;
+import arc.func.Boolf;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.scene.ui.Button;
+import arc.scene.ui.TextButton;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
@@ -30,6 +32,7 @@ public class CreateRoomDialog extends BaseDialog {
     boolean refreshingOnline;
 
     private Table mainTable;
+    private Boolf<TextButton> disabled = (_b) -> !((Vars.steam && Vars.net.server()) || !Vars.net.active());
 
     public CreateRoomDialog() {
         super("@message.manage-room.title");
@@ -57,31 +60,60 @@ public class CreateRoomDialog extends BaseDialog {
             @SuppressWarnings("rawtypes")
             Seq<Cell> buttons = root.getCells();
 
-            String buttonTitle = PlayerConnect.isRoomClosed() ? "@message.create-room.title"
-                    : "@message.manage-room.title";
+            String buttonTitle = getButtonTitle();
 
             if (Vars.mobile) {
                 root.row()
-                        .buttonRow(buttonTitle, Icon.planet, this::show)
-                        .disabled(button -> !Vars.net.server())
+                        .buttonRow(buttonTitle, Icon.planet, this::handleClick)
+                        .update(btn -> {
+                            btn.setText(getButtonTitle());
+                        })
+                        .disabled(disabled)
                         .row();
 
             } else if (arc.util.Reflect.<Integer>get(buttons.get(buttons.size - 2), "colspan") == 2) {
                 root.row()
-                        .button(buttonTitle, Icon.planet, this::show)
+                        .button(buttonTitle, Icon.planet, this::handleClick)
                         .colspan(2)
                         .width(450f)
-                        .disabled(button -> !Vars.net.server())
+                        .update(btn -> {
+                            btn.setText(getButtonTitle());
+                        })
+                        .disabled(disabled)
                         .row();
 
             } else {
                 root.row()
-                        .button(buttonTitle, Icon.planet, this::show)
-                        .disabled(button -> !Vars.net.server())
+                        .button(buttonTitle, Icon.planet, this::handleClick)
+                        .update(btn -> {
+                            btn.setText(getButtonTitle());
+                        })
+                        .disabled(disabled)
                         .row();
             }
             buttons.swap(buttons.size - 1, buttons.size - 2);
         });
+    }
+
+    private String getButtonTitle() {
+        return PlayerConnect.isRoomClosed()
+                ? Core.bundle.format("message.create-room.title")
+                : Core.bundle.format("message.manage-room.title");
+    }
+
+    private void handleClick() {
+        if (Vars.net.server()) {
+            this.show();
+        } else {
+            Vars.ui.host.show();
+            Vars.ui.host.hidden(() -> {
+                Time.run(60, () -> {
+                    if (Vars.net.server()) {
+                        this.show();
+                    }
+                });
+            });
+        }
     }
 
     private void setupManageView() {

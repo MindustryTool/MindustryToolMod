@@ -13,16 +13,18 @@ import arc.func.Cons;
 import arc.util.Log;
 import arc.util.Timer;
 import arc.util.serialization.Jval;
+import mindustry.io.JsonIO;
 import arc.util.serialization.Json;
 import mindustrytool.Config;
 import mindustrytool.Utils;
 import mindustrytool.features.auth.AuthHttp;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.global.dto.ChatMessage;
-import mindustrytool.features.chat.global.dto.ChatMessageReceive;
-import mindustrytool.features.chat.global.dto.ChatStateChange;
 import mindustrytool.features.chat.global.dto.ChatUser;
+import mindustrytool.features.chat.global.events.ChatMessageReceive;
+import mindustrytool.features.chat.global.events.ChatStateChange;
 import mindustrytool.features.chat.global.dto.ChannelDto;
+import arc.struct.Seq;
 
 public class ChatService {
     private static ChatService instance;
@@ -32,7 +34,7 @@ public class ChatService {
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
     private AtomicBoolean isConnected = new AtomicBoolean(false);
 
-    public ChatService(){
+    public ChatService() {
         Timer.schedule(this::connectStream, 0, 60);
     }
 
@@ -46,6 +48,27 @@ public class ChatService {
 
     public boolean isConnected() {
         return isConnected.get();
+    }
+
+    public void init() {
+        fetchChannelsAndCurrentMessages();
+    }
+
+    public void fetchChannelsAndCurrentMessages() {
+        getChannels(chans -> {
+            ChatStore store = ChatStore.getInstance();
+            store.setChannels(new Seq<>(chans));
+            if (chans.length > 0) {
+                String currentId = store.getCurrentChannelId();
+                final String currentIdFinal = currentId;
+                if (currentId == null || !new Seq<>(chans).contains(c -> c.id.equals(currentIdFinal))) {
+                    store.setCurrentChannelId(chans[0].id);
+                    currentId = chans[0].id;
+                }
+                fetchMessages(currentId, null);
+                fetchChatUsers(currentId);
+            }
+        }, e -> Log.err("Failed to fetch channels", e));
     }
 
     public synchronized void connectStream() {
@@ -104,12 +127,18 @@ public class ChatService {
                                     // Parse array of messages
                                     Jval json = Jval.read(data);
 
-                                    Log.info(json.toString());
+                                    if (json.isString() && json.asString().equals("Connected")) {
+                                        continue;
+                                    }
 
                                     if (json.isArray()) {
-                                        Json jsonParser = new Json();
-                                        ChatMessage[] messages = jsonParser.fromJson(ChatMessage[].class, data);
+                                        @SuppressWarnings("unchecked")
+                                        Seq<ChatMessage> messages = JsonIO.json.fromJson(Seq.class, ChatMessage.class,
+                                                data);
                                         Core.app.post(() -> Events.fire(new ChatMessageReceive(messages)));
+                                    } else {
+                                        ChatMessage msg = JsonIO.json.fromJson(ChatMessage.class, data);
+                                        Core.app.post(() -> Events.fire(new ChatMessageReceive(Seq.with(msg))));
                                     }
                                 } catch (Exception e) {
                                     Log.err("Failed to parse chat message", e);
@@ -184,7 +213,8 @@ public class ChatService {
                 });
     }
 
-    public CompletableFuture<ChatMessage> sendMessage(String channelId, String content, String replyTo) {
+    private CompletableFuture<ChatMessage> sendPayload(String endpoint, String channelId, String content,
+            String replyTo) {
         CompletableFuture<ChatMessage> future = new CompletableFuture<>();
         if (channelId == null) {
             future.completeExceptionally(new IllegalArgumentException("Channel ID cannot be null"));
@@ -198,7 +228,7 @@ public class ChatService {
                 json.put("replyTo", replyTo);
             }
 
-            AuthHttp.post(Config.API_v4_URL + "chats/text", json.toString())
+            AuthHttp.post(Config.API_v4_URL + endpoint, json.toString())
                     .header("Content-Type", "application/json")
                     .error(future::completeExceptionally)
                     .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
@@ -210,30 +240,9 @@ public class ChatService {
         }
     }
 
-    public CompletableFuture<ChatMessage> sendSchematic(String channelId, String content, String replyTo) {
-        CompletableFuture<ChatMessage> future = new CompletableFuture<>();
-        if (channelId == null) {
-            future.completeExceptionally(new IllegalArgumentException("Channel ID cannot be null"));
-            return future;
-        }
-        try {
-            Jval json = Jval.newObject();
-            json.put("content", content);
-            json.put("channelId", channelId);
-            if (replyTo != null && !replyTo.isEmpty()) {
-                json.put("replyTo", replyTo);
-            }
-
-            AuthHttp.post(Config.API_v4_URL + "chats/msch", json.toString())
-                    .header("Content-Type", "application/json")
-                    .error(future::completeExceptionally)
-                    .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
-
-            return future;
-        } catch (Exception e) {
-            future.completeExceptionally(e);
-            return future;
-        }
+    public CompletableFuture<ChatMessage> sendMessage(String channelId, String content, String replyTo,
+            ContentType type) {
+        return sendPayload(type.getEndpoint(), channelId, content, replyTo);
     }
 
     public void getChatUsers(String channelId, Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {
@@ -257,6 +266,12 @@ public class ChatService {
                         Core.app.post(() -> onError.get(e));
                     }
                 });
+    }
+
+    public void fetchChatUsers(String channelId) {
+        getChatUsers(channelId,
+                users -> ChatStore.getInstance().setUsers(channelId, users),
+                e -> Log.err("Failed to fetch chat users for channel " + channelId, e));
     }
 
     public void fetchMessages(String channelId, String cursor, Cons<ChatMessage[]> onSuccess, Cons<Throwable> onError) {
@@ -285,6 +300,30 @@ public class ChatService {
                     } catch (Exception e) {
                         Core.app.post(() -> onError.get(e));
                     }
+                });
+    }
+
+    public void fetchMessages(String channelId, String cursor) {
+        ChatStore store = ChatStore.getInstance();
+        if (!store.compareAndSetLoadingMessages(false, true)) {
+            return;
+        }
+
+        fetchMessages(channelId, cursor,
+                msgs -> {
+                    store.setLoadingMessages(false);
+                    if (msgs.length == 0) {
+                        if (cursor == null) {
+                            store.prependMessages(channelId, new Seq<>());
+                        }
+                        store.setFullyLoaded(channelId);
+                    } else {
+                        store.prependMessages(channelId, new Seq<>(msgs));
+                    }
+                },
+                e -> {
+                    store.setLoadingMessages(false);
+                    Log.err("Failed to fetch messages for channel " + channelId, e);
                 });
     }
 }

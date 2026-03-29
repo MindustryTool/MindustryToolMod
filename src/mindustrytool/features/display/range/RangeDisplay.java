@@ -40,7 +40,6 @@ import mindustrytool.features.FeatureMetadata;
 import java.util.Optional;
 
 public class RangeDisplay implements Feature {
-    private boolean enabled = false;
     private BaseDialog dialog;
 
     private final Cons<Unit> unitDrawer = this::drawUnit;
@@ -67,16 +66,6 @@ public class RangeDisplay implements Feature {
     public void init() {
         RangeDisplayConfig.load();
         Events.run(Trigger.draw, this::draw);
-    }
-
-    @Override
-    public void onEnable() {
-        enabled = true;
-    }
-
-    @Override
-    public void onDisable() {
-        enabled = false;
     }
 
     @Override
@@ -180,7 +169,7 @@ public class RangeDisplay implements Feature {
     }
 
     private void draw() {
-        if (!enabled || !Vars.state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
+        if (!isEnabled() || !Vars.state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
             return;
         }
 
