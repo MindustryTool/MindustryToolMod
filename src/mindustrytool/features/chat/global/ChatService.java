@@ -305,21 +305,20 @@ public class ChatService {
 
     public void fetchMessages(String channelId, String cursor) {
         ChatStore store = ChatStore.getInstance();
-        store.setLoadingMessages(true);
+        if (!store.compareAndSetLoadingMessages(false, true)) {
+            return;
+        }
+
         fetchMessages(channelId, cursor,
                 msgs -> {
                     store.setLoadingMessages(false);
                     if (msgs.length == 0) {
                         if (cursor == null) {
-                            store.setMessages(channelId, new Seq<>());
+                            store.prependMessages(channelId, new Seq<>());
                         }
                         store.setFullyLoaded(channelId);
                     } else {
-                        if (cursor == null) {
-                            store.setMessages(channelId, new Seq<>(msgs).reverse());
-                        } else {
-                            store.prependMessages(channelId, new Seq<>(msgs));
-                        }
+                        store.prependMessages(channelId, new Seq<>(msgs));
                     }
                 },
                 e -> {

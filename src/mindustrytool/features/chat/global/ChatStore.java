@@ -10,6 +10,7 @@ import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatUser;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChatStore {
     private static ChatStore instance;
@@ -24,7 +25,7 @@ public class ChatStore {
 
     private String currentChannelId;
     private int unreadCount = 0;
-    private volatile boolean isLoadingMessages = false;
+    private final AtomicBoolean isLoadingMessages = new AtomicBoolean(false);
 
     public ChatStore() {
         currentChannelId = Core.settings.getString(CURRENT_CHANNEL_ID_KEY, null);
@@ -44,7 +45,7 @@ public class ChatStore {
         usersByChannel.clear();
         channels.clear();
         unreadCount = 0;
-        isLoadingMessages = false;
+        isLoadingMessages.set(false);
         Events.fire(new StoreUpdateEvent());
     }
 
@@ -87,12 +88,6 @@ public class ChatStore {
         return messagesByChannel.get(channelId, new Seq<>());
     }
 
-    public void setMessages(String channelId, Seq<ChatMessage> messages) {
-        messagesByChannel.put(channelId, messages);
-        fullyLoadedChannels.remove(channelId);
-        Events.fire(new MessagesUpdateEvent(channelId, false));
-    }
-
     public void addMessages(String channelId, Seq<ChatMessage> messages) {
         Seq<ChatMessage> seq = messagesByChannel.get(channelId);
 
@@ -112,13 +107,21 @@ public class ChatStore {
 
     public void prependMessages(String channelId, Seq<ChatMessage> messages) {
         Seq<ChatMessage> seq = messagesByChannel.get(channelId);
+        boolean isInitial = seq == null || seq.isEmpty();
+
         if (seq == null) {
             seq = new Seq<>();
             messagesByChannel.put(channelId, seq);
         }
+
         messages.reverse().addAll(seq);
         messagesByChannel.put(channelId, messages);
-        Events.fire(new MessagesUpdateEvent(channelId, true));
+
+        if (isInitial) {
+            fullyLoadedChannels.remove(channelId);
+        }
+
+        Events.fire(new MessagesUpdateEvent(channelId, !isInitial));
     }
 
     public boolean isFullyLoaded(String channelId) {
@@ -164,12 +167,20 @@ public class ChatStore {
     }
 
     public boolean isLoadingMessages() {
-        return isLoadingMessages;
+        return isLoadingMessages.get();
     }
 
     public void setLoadingMessages(boolean loading) {
-        this.isLoadingMessages = loading;
+        this.isLoadingMessages.set(loading);
         Events.fire(new LoadingMessagesEvent(loading));
+    }
+
+    public boolean compareAndSetLoadingMessages(boolean expect, boolean update) {
+        boolean success = this.isLoadingMessages.compareAndSet(expect, update);
+        if (success) {
+            Events.fire(new LoadingMessagesEvent(update));
+        }
+        return success;
     }
 
     public static class StoreUpdateEvent {
