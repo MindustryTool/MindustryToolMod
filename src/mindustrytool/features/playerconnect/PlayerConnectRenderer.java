@@ -313,8 +313,8 @@ public class PlayerConnectRenderer {
         } else if (version == 0) {
             return Core.bundle.get("server.outdated");
         } else if (version < Version.build && Version.build != -1) {
-            return Core.bundle.get("server.outdated") + "\n" +
-                    Core.bundle.format("server.version", version, "");
+            return "[scarlet]" + Core.bundle.get("server.outdated") + " " + versionString + " <> "
+                    + Version.combined();
         } else if (version > Version.build && Version.build != -1) {
             return Core.bundle.get("server.outdated.client") + "\n" +
                     Core.bundle.format("server.version", version, "");
