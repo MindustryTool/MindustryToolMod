@@ -311,12 +311,13 @@ public class PlayerConnectRenderer {
         if (version == -1) {
             return Core.bundle.format("server.version", Core.bundle.get("server.custombuild"), "");
         } else if (version == 0) {
-            return Core.bundle.get("server.outdated");
+            return "[scarlet]" + Core.bundle.get("server.outdated");
         } else if (version < Version.build && Version.build != -1) {
-            return Core.bundle.get("server.outdated") + "\n" +
-                    Core.bundle.format("server.version", version, "");
+            return "[scarlet]" + Core.bundle.get("server.outdated") + " " + versionString + " <> "
+                    + Version.combined();
         } else if (version > Version.build && Version.build != -1) {
-            return Core.bundle.get("server.outdated.client") + "\n" +
+            return "[scarlet]"
+                    + Core.bundle.get("server.outdated.client") + "\n" +
                     Core.bundle.format("server.version", version, "");
         } else if (version == Version.build && Version.type.equals(versionType)) {
             return "Unknown";

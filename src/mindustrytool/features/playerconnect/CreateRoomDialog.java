@@ -32,7 +32,7 @@ public class CreateRoomDialog extends BaseDialog {
     boolean refreshingOnline;
 
     private Table mainTable;
-    private Boolf<TextButton> disabled = (_b) -> !((Vars.steam && Vars.net.server()) || !Vars.net.active());
+    private Boolf<TextButton> disabled = (_b) -> Vars.net.client();
 
     public CreateRoomDialog() {
         super("@message.manage-room.title");
