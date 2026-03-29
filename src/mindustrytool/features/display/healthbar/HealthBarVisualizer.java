@@ -10,13 +10,11 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
-import mindustry.game.EventType;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustry.graphics.Pal;
-import mindustry.type.UnitType;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Utils;
@@ -24,16 +22,12 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-
 import static mindustry.Vars.*;
 
 public class HealthBarVisualizer implements Feature {
 
     private static TextureRegion barRegion;
     private BaseDialog dialog;
-
-    private ConcurrentHashMap<UnitType, Float> maxHpMap = new ConcurrentHashMap<>();
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -42,7 +36,7 @@ public class HealthBarVisualizer implements Feature {
                 .description("@feature.health-bar.description")
                 .icon(Utils.icons("healthbar.png"))
                 .order(4)
-                .enabledByDefault(true)
+                .enabledByDefault(false)
                 .quickAccess(true)
                 .build();
     }
@@ -51,7 +45,6 @@ public class HealthBarVisualizer implements Feature {
     public void init() {
         HealthBarConfig.load();
         Events.run(Trigger.draw, this::draw);
-        Events.run(EventType.WorldLoadEndEvent.class, maxHpMap::clear);
     }
 
     @Override
@@ -130,11 +123,6 @@ public class HealthBarVisualizer implements Feature {
 
         float hpPercent = unit.health / unit.maxHealth;
         float maxHealth = unit.maxHealth;
-
-        if (unit.health > maxHealth) {
-            maxHealth = maxHpMap.computeIfAbsent(unit.type, t -> t.health);
-            hpPercent = unit.health / maxHealth;
-        }
 
         float left = x - w / 2f;
 
