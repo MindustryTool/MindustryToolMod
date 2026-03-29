@@ -18,11 +18,7 @@ public interface Feature {
     };
 
     default void onEnableChange(boolean enabled) {
-        if (enabled) {
-            onEnable();
-        } else {
-            onDisable();
-        }
+  
     }
 
     default Optional<Dialog> setting() {
@@ -50,6 +46,11 @@ public interface Feature {
         Core.settings.put("mindustrytool.feature." + getMetadata().name() + ".enabled", enabled);
 
         Core.app.post(() -> {
+            if (enabled) {
+                onEnable();
+            } else {
+                onDisable();
+            }
             onEnableChange(enabled);
         });
     }

@@ -1,5 +1,7 @@
 package mindustrytool.features.chat.global.ui;
 
+import java.util.concurrent.CompletableFuture;
+
 import arc.Core;
 import arc.Events;
 import arc.graphics.Color;
@@ -9,6 +11,7 @@ import arc.scene.ui.TextButton;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
+import arc.util.serialization.Base64Coder;
 import mindustry.Vars;
 import mindustry.game.Schematics;
 import mindustry.gen.Icon;
@@ -20,11 +23,13 @@ import mindustrytool.features.chat.global.AttachContentDialog;
 import mindustrytool.features.chat.global.ChatConfig;
 import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
+import mindustrytool.features.chat.global.ContentType;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.services.State;
 import mindustrytool.services.UserService;
 
 public class ChatInput extends Table {
+
     private final TextField inputField;
     private final TextButton sendButton;
     private AttachContentDialog attachContentDialog;
@@ -137,106 +142,65 @@ public class ChatInput extends Table {
             return;
         }
 
-        boolean isSchematic = isSchematic(content.trim());
-        if (isSchematic) {
-            sendSchematic(content);
-        } else if (inputField.isValid()) {
-            sendMessage(content);
+        ContentType type = detectContentType(content.trim());
+        if (type != ContentType.TEXT || inputField.isValid()) {
+            sendContent(content, type, true);
         }
-    }
-
-    private void sendMessage(String content) {
-        String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
-        if (currentChannelId == null)
-            return;
-
-        isSending.set(true);
-        ChatService.getInstance().sendMessage(currentChannelId, content, replyingToMessageId)
-                .thenAccept(msg -> {
-                    Core.app.post(() -> {
-                        isSending.set(false);
-                        inputField.setText("");
-                        clearReply();
-                    });
-                })
-                .exceptionally(err -> {
-                    Core.app.post(() -> {
-                        isSending.set(false);
-                        handleError(err);
-                    });
-                    return null;
-                });
-    }
-
-    private void sendSchematic(String content) {
-        String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
-        if (currentChannelId == null)
-            return;
-
-        isSending.set(true);
-        ChatService.getInstance().sendSchematic(currentChannelId, content, replyingToMessageId)
-                .thenAccept(msg -> {
-                    Core.app.post(() -> {
-                        isSending.set(false);
-                        inputField.setText("");
-                        clearReply();
-                    });
-                })
-                .exceptionally(err -> {
-                    Core.app.post(() -> {
-                        isSending.set(false);
-                        handleError(err);
-                    });
-                    return null;
-                });
     }
 
     private void handleAttachContent(String content) {
         if (content == null || content.isEmpty())
             return;
 
+        ContentType type = detectContentType(content.trim());
+        sendContent(content, type, false);
+    }
+
+    private void sendContent(String content, ContentType type, boolean clearInput) {
         String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
         if (currentChannelId == null)
             return;
 
-        boolean isSchematic = isSchematic(content.trim());
         isSending.set(true);
+        CompletableFuture<ChatMessage> future = ChatService.getInstance().sendMessage(currentChannelId, content,
+                replyingToMessageId, type);
 
-        if (isSchematic) {
-            ChatService.getInstance().sendSchematic(currentChannelId, content, replyingToMessageId)
-                    .thenAccept(msg -> Core.app.post(() -> {
-                        isSending.set(false);
-                    }))
-                    .exceptionally(err -> {
-                        Core.app.post(() -> {
-                            isSending.set(false);
-                            handleError(err);
-                        });
-                        return null;
-                    });
-        } else {
-            ChatService.getInstance().sendMessage(currentChannelId, content, replyingToMessageId)
-                    .thenAccept(msg -> Core.app.post(() -> {
-                        isSending.set(false);
-                    }))
-                    .exceptionally(err -> {
-                        Core.app.post(() -> {
-                            isSending.set(false);
-                            handleError(err);
-                        });
-                        return null;
-                    });
-        }
+        future.thenAccept(msg -> Core.app.post(() -> {
+            isSending.set(false);
+            if (clearInput) {
+                inputField.setText("");
+                clearReply();
+            }
+        })).exceptionally(err -> {
+            Core.app.post(() -> {
+                isSending.set(false);
+                handleError(err);
+            });
+            return null;
+        });
     }
 
     private void handleError(Throwable err) {
         String errStr = err.toString();
+
         if (errStr.contains("409") || err.getMessage().contains("409")) {
             Vars.ui.showInfoToast("@chat.rate-limited", 3f);
         } else {
             Vars.ui.showInfoToast("@chat.send-failed", 3f);
             Log.err("Send message failed", err);
         }
+    }
+
+    private ContentType detectContentType(String text) {
+        if (isSchematic(text)) {
+            return ContentType.SCHEMATIC;
+        }
+
+        if (isMap(text)) {
+            return ContentType.MAP;
+        }
+
+        return ContentType.TEXT;
     }
 
     private boolean isSchematic(String text) {
@@ -250,12 +214,35 @@ public class ChatInput extends Table {
         }
     }
 
-    private boolean isValidInput(String text) {
-        if (text.length() <= 0)
+    private boolean isMap(String text) {
+        if (!text.startsWith("TVNB"))
             return false;
-        if (text.startsWith(Vars.schematicBaseStart)) {
-            return text.length() <= 2056 * 12;
+        try {
+            byte[] bytes = Base64Coder.decode(text.trim());
+            return bytes.length > 4 && bytes[0] == 'M' && bytes[1] == 'S' && bytes[2] == 'A' && bytes[3] == 'V';
+        } catch (Exception _e) {
+            return false;
         }
-        return text.length() <= 2056;
+    }
+
+    private boolean isValidInput(String text) {
+
+        if (text.length() <= 0) {
+            return false;
+        }
+
+        var contentType = detectContentType(text);
+
+        switch (contentType) {
+            case SCHEMATIC:
+                return text.length() <= 2056 * 12;
+
+            case MAP:
+                return text.length() <= 1024 * 1024 * 5; // 5MB max for maps
+
+            case TEXT:
+            default:
+                return text.length() <= 2056;
+        }
     }
 }

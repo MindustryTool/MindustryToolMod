@@ -213,7 +213,8 @@ public class ChatService {
                 });
     }
 
-    public CompletableFuture<ChatMessage> sendMessage(String channelId, String content, String replyTo) {
+    private CompletableFuture<ChatMessage> sendPayload(String endpoint, String channelId, String content,
+            String replyTo) {
         CompletableFuture<ChatMessage> future = new CompletableFuture<>();
         if (channelId == null) {
             future.completeExceptionally(new IllegalArgumentException("Channel ID cannot be null"));
@@ -227,7 +228,7 @@ public class ChatService {
                 json.put("replyTo", replyTo);
             }
 
-            AuthHttp.post(Config.API_v4_URL + "chats/text", json.toString())
+            AuthHttp.post(Config.API_v4_URL + endpoint, json.toString())
                     .header("Content-Type", "application/json")
                     .error(future::completeExceptionally)
                     .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
@@ -239,30 +240,9 @@ public class ChatService {
         }
     }
 
-    public CompletableFuture<ChatMessage> sendSchematic(String channelId, String content, String replyTo) {
-        CompletableFuture<ChatMessage> future = new CompletableFuture<>();
-        if (channelId == null) {
-            future.completeExceptionally(new IllegalArgumentException("Channel ID cannot be null"));
-            return future;
-        }
-        try {
-            Jval json = Jval.newObject();
-            json.put("content", content);
-            json.put("channelId", channelId);
-            if (replyTo != null && !replyTo.isEmpty()) {
-                json.put("replyTo", replyTo);
-            }
-
-            AuthHttp.post(Config.API_v4_URL + "chats/msch", json.toString())
-                    .header("Content-Type", "application/json")
-                    .error(future::completeExceptionally)
-                    .submit(res -> future.complete(Utils.fromJson(ChatMessage.class, res.getResultAsString())));
-
-            return future;
-        } catch (Exception e) {
-            future.completeExceptionally(e);
-            return future;
-        }
+    public CompletableFuture<ChatMessage> sendMessage(String channelId, String content, String replyTo,
+            ContentType type) {
+        return sendPayload(type.getEndpoint(), channelId, content, replyTo);
     }
 
     public void getChatUsers(String channelId, Cons<ChatUser[]> onSuccess, Cons<Throwable> onError) {

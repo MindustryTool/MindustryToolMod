@@ -30,7 +30,23 @@ public class AttachContentDialog extends BaseDialog {
                     }
                 });
             });
-            
+
+            t.row();
+
+            t.button("@map", Icon.map, () -> {
+                Vars.platform.showFileChooser(true, "msav", file -> {
+                    if (file == null) return;
+                    try {
+                        byte[] bytes = file.readBytes();
+                        String base64 = new String(Base64Coder.encode(bytes));
+                        callback.get(base64);
+                        hide();
+                    } catch (Exception e) {
+                        Vars.ui.showException(e);
+                    }
+                });
+            });
+
             t.row();
             
             t.button("@chat.paste-link", Icon.paste, () -> {

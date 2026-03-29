@@ -105,6 +105,11 @@ public class SmartUpgradeFeature implements Feature {
         });
     }
 
+    @Override
+    public void onDisable() {
+        closeMenu();
+    }
+
     private void closeMenu() {
         if (currentMenu != null) {
             currentMenu.remove();
