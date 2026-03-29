@@ -136,22 +136,28 @@ public class ToggleRenderingFeature implements Feature {
             }
         }
 
+        Seq<Unit> deleted = new Seq<>();
+
         Groups.draw.each(entity -> {
+            if (entity instanceof Unit unit) {
+                if (shouldHideUnit(unit)) {
+                    deleted.add(unit);
+                }
+            }
+        });
+
+        for (Unit unit : deleted) {
             try {
-                if (entity instanceof Unit unit) {
-                    if (shouldHideUnit(unit)) {
-                        int idx = unitDrawIndexField != null ? unitDrawIndexField.getInt(unit) : -1;
-                        if (idx != -1) {
-                            Groups.draw.removeIndex(unit, idx);
-                            unitDrawIndexField.setInt(unit, -1);
-                            hiddenUnits.add(unit);
-                        }
-                    }
+                int idx = unitDrawIndexField != null ? unitDrawIndexField.getInt(unit) : -1;
+                if (idx != -1) {
+                    Groups.draw.removeIndex(unit, idx);
+                    unitDrawIndexField.setInt(unit, -1);
+                    hiddenUnits.add(unit);
                 }
             } catch (Exception error) {
                 Log.err("Failed to update unit visibility", error);
             }
-        });
+        }
 
         if (!ToggleRenderingConfig.drawBlocks) {
             try {

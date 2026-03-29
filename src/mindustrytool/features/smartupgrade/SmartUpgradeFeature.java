@@ -237,7 +237,10 @@ public class SmartUpgradeFeature implements Feature {
                         Tile link = Vars.world.tile(current.x + conf.x, current.y + conf.y);
                         if (link != null && link.build != null) {
                             for (int i = 0; i < 4; i++) {
-                                checkAndAdd(queue, visited, link.nearby(i).build, group);
+                                var nearby = link.nearby(i);
+                                if (nearby != null && nearby.build != null) {
+                                    checkAndAdd(queue, visited, nearby.build, group);
+                                }
                             }
                         }
                     }
@@ -251,7 +254,10 @@ public class SmartUpgradeFeature implements Feature {
                 } else if (block instanceof Sorter || block instanceof Router || block instanceof OverflowGate
                         || block instanceof DuctRouter || block instanceof OverflowDuct || block instanceof Junction) {
                     for (int i = 0; i < 4; i++) {
-                        checkAndAdd(queue, visited, current.nearby(i).build, group);
+                        var nearby = current.nearby(i);
+                        if (nearby != null && nearby.build != null) {
+                            checkAndAdd(queue, visited, current.nearby(i).build, group);
+                        }
                     }
                 }
             } else if (group == BlockGroup.WALL || group == BlockGroup.DRILL) {
@@ -271,13 +277,19 @@ public class SmartUpgradeFeature implements Feature {
                         Tile link = Vars.world.tile(current.x + conf.x, current.y + conf.y);
                         if (link != null && link.build != null) {
                             for (int i = 0; i < 4; i++) {
-                                checkAndAdd(queue, visited, link.nearby(i).build, group);
+                                var nearby = link.nearby(i);
+                                if (nearby != null && nearby.build != null) {
+                                    checkAndAdd(queue, visited, link.nearby(i).build, group);
+                                }
                             }
                         }
                     }
                 } else if (block instanceof LiquidRouter || block instanceof LiquidJunction) {
                     for (int i = 0; i < 4; i++) {
-                        checkAndAdd(queue, visited, current.nearby(i).build, group);
+                        var nearby = current.nearby(i);
+                        if (nearby != null && nearby.build != null) {
+                            checkAndAdd(queue, visited, current.nearby(i).build, group);
+                        }
                     }
                 }
             }

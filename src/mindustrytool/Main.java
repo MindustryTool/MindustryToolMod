@@ -130,7 +130,11 @@ public class Main extends Mod {
     }
 
     private void initFeatures() {
-        FeatureManager.getInstance().init();
+        try {
+            FeatureManager.getInstance().init();
+        } catch (Exception e) {
+            Log.err(e);
+        }
 
         Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
 

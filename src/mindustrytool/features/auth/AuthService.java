@@ -68,7 +68,7 @@ public class AuthService {
     }
 
     public CompletableFuture<UserSession> fetchSession() {
-        Events.fire(new SessionLoadEvent(currentSession, null, true));
+        Core.app.post(() -> Events.fire(new SessionLoadEvent(currentSession, null, true)));
         CompletableFuture<String> future = new CompletableFuture<>();
 
         AuthHttp.get(Config.API_v4_URL + "auth/session", res -> future.complete(res.getResultAsString()),
@@ -76,13 +76,13 @@ public class AuthService {
 
         return future.handle((json, err) -> {
             if (err != null) {
-                Events.fire(new SessionLoadEvent(currentSession, err, false));
+                Core.app.post(() -> Events.fire(new SessionLoadEvent(currentSession, err, false)));
                 throw new RuntimeException(err);
             }
 
             UserSession session = json.isEmpty() ? null : Utils.fromJson(UserSession.class, json);
             this.currentSession = session;
-            Events.fire(new SessionLoadEvent(session, null, false));
+            Core.app.post(() -> Events.fire(new SessionLoadEvent(session, null, false)));
             if (session != null) {
                 Events.fire(session);
             }

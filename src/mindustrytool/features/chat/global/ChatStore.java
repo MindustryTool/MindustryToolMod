@@ -59,7 +59,7 @@ public class ChatStore {
     }
 
     public void setCurrentChannelId(String currentChannelId) {
-        if (this.currentChannelId.equals(currentChannelId)) {
+        if (this.currentChannelId != null && this.currentChannelId.equals(currentChannelId)) {
             return;
         }
 
