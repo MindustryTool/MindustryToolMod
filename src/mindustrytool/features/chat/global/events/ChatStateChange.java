@@ -1,4 +1,4 @@
-package mindustrytool.features.chat.global.dto;
+package mindustrytool.features.chat.global.events;
 
 public class ChatStateChange {
     public final boolean connected;

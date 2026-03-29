@@ -19,7 +19,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.chat.global.dto.ChatMessage;
-import mindustrytool.features.chat.global.dto.ChatMessageReceive;
+import mindustrytool.features.chat.global.events.ChatMessageReceive;
 import mindustrytool.features.chat.global.ui.ChatOverlay;
 
 public class ChatFeature implements Feature {

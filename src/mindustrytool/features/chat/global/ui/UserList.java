@@ -12,6 +12,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.chat.global.ChatConfig;
 import mindustrytool.features.chat.global.ChatStore;
+import mindustrytool.features.chat.global.events.*;
 import mindustrytool.features.chat.global.dto.ChatUser;
 import mindustrytool.ui.NetworkImage;
 
@@ -28,12 +29,12 @@ public class UserList extends Table {
 
         add(scrollPane).grow();
 
-        Events.on(ChatStore.UsersUpdateEvent.class, e -> {
+        Events.on(UsersUpdateEvent.class, e -> {
             if (e.channelId.equals(ChatStore.getInstance().getCurrentChannelId())) {
                 rebuild();
             }
         });
-        Events.on(ChatStore.CurrentChannelChangeEvent.class, e -> rebuild());
+        Events.on(CurrentChannelChangeEvent.class, e -> rebuild());
     }
 
     public void rebuild() {

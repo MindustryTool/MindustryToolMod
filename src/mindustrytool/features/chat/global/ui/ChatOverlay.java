@@ -30,8 +30,8 @@ import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.chat.global.ChatConfig;
 import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
+import mindustrytool.features.chat.global.events.*;
 import mindustrytool.features.chat.global.dto.ChannelDto;
-import mindustrytool.features.chat.global.dto.ChatStateChange;
 
 public class ChatOverlay extends Table {
     public enum MobileTab {
@@ -101,7 +101,7 @@ public class ChatOverlay extends Table {
             }
         });
 
-        Events.on(ChatStore.UnreadUpdateEvent.class, event -> updateBadge());
+        Events.on(UnreadUpdateEvent.class, event -> updateBadge());
 
         chatInput = new ChatInput();
         chatInput.getInputField().keyDown(KeyCode.escape, this::collapse);

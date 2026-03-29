@@ -8,6 +8,7 @@ import arc.struct.Seq;
 import mindustrytool.features.chat.global.dto.ChannelDto;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatUser;
+import mindustrytool.features.chat.global.events.*;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -181,48 +182,5 @@ public class ChatStore {
             Events.fire(new LoadingMessagesEvent(update));
         }
         return success;
-    }
-
-    public static class StoreUpdateEvent {
-    }
-
-    public static class CurrentChannelChangeEvent {
-        public final String channelId;
-
-        public CurrentChannelChangeEvent(String channelId) {
-            this.channelId = channelId;
-        }
-    }
-
-    public static class ChannelsUpdateEvent {
-    }
-
-    public static class MessagesUpdateEvent {
-        public final String channelId;
-        public final boolean isPrepend;
-
-        public MessagesUpdateEvent(String channelId, boolean isPrepend) {
-            this.channelId = channelId;
-            this.isPrepend = isPrepend;
-        }
-    }
-
-    public static class UsersUpdateEvent {
-        public final String channelId;
-
-        public UsersUpdateEvent(String channelId) {
-            this.channelId = channelId;
-        }
-    }
-
-    public static class UnreadUpdateEvent {
-    }
-
-    public static class LoadingMessagesEvent {
-        public final boolean isLoading;
-
-        public LoadingMessagesEvent(boolean isLoading) {
-            this.isLoading = isLoading;
-        }
     }
 }

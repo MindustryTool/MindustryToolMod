@@ -11,6 +11,7 @@ import mindustry.ui.Styles;
 import mindustrytool.features.chat.global.ChatConfig;
 import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
+import mindustrytool.features.chat.global.events.*;
 import mindustrytool.features.chat.global.dto.ChannelDto;
 
 public class ChannelList extends Table {
@@ -27,9 +28,9 @@ public class ChannelList extends Table {
 
         add(scrollPane).grow();
 
-        Events.on(ChatStore.ChannelsUpdateEvent.class, e -> rebuild());
-        Events.on(ChatStore.CurrentChannelChangeEvent.class, e -> rebuild());
-        Events.on(ChatStore.UnreadUpdateEvent.class, e -> rebuild());
+        Events.on(ChannelsUpdateEvent.class, e -> rebuild());
+        Events.on(CurrentChannelChangeEvent.class, e -> rebuild());
+        Events.on(UnreadUpdateEvent.class, e -> rebuild());
     }
 
     public void onChannelSelect(Runnable r) {
@@ -51,7 +52,8 @@ public class ChannelList extends Table {
             btn.getLabel().setAlignment(Align.left);
             btn.getLabel().setFontScale(scale);
             btn.getLabel().setEllipsis(true);
-            if (btn.getLabelCell() != null) btn.getLabelCell().minWidth(0);
+            if (btn.getLabelCell() != null)
+                btn.getLabelCell().minWidth(0);
 
             if (isSelected) {
                 btn.setChecked(true);

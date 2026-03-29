@@ -20,9 +20,9 @@ import mindustrytool.Utils;
 import mindustrytool.features.auth.AuthHttp;
 import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.chat.global.dto.ChatMessage;
-import mindustrytool.features.chat.global.dto.ChatMessageReceive;
-import mindustrytool.features.chat.global.dto.ChatStateChange;
 import mindustrytool.features.chat.global.dto.ChatUser;
+import mindustrytool.features.chat.global.events.ChatMessageReceive;
+import mindustrytool.features.chat.global.events.ChatStateChange;
 import mindustrytool.features.chat.global.dto.ChannelDto;
 import arc.struct.Seq;
 

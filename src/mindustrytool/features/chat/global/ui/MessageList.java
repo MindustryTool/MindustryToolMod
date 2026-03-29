@@ -31,6 +31,7 @@ import mindustrytool.features.browser.schematic.SchematicInfoDialog;
 import mindustrytool.features.chat.global.ChatConfig;
 import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
+import mindustrytool.features.chat.global.events.*;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.playerconnect.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectRenderer;
@@ -100,7 +101,7 @@ public class MessageList extends Table {
 
         add(stack).grow();
 
-        Events.on(ChatStore.MessagesUpdateEvent.class, e -> {
+        Events.on(MessagesUpdateEvent.class, e -> {
             if (e.channelId.equals(ChatStore.getInstance().getCurrentChannelId())) {
                 float oldMaxY = scrollPane.getMaxY();
                 float oldScrollY = scrollPane.getScrollY();
@@ -120,11 +121,11 @@ public class MessageList extends Table {
                 }
             }
         });
-        Events.on(ChatStore.CurrentChannelChangeEvent.class, e -> {
+        Events.on(CurrentChannelChangeEvent.class, e -> {
             rebuild();
             scrollToBottom();
         });
-        Events.on(ChatStore.LoadingMessagesEvent.class, e -> {
+        Events.on(LoadingMessagesEvent.class, e -> {
             // loadingTable visibility updates automatically
         });
     }
