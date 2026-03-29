@@ -42,6 +42,7 @@ public class SmartDrillFeature implements Feature {
                 .name("feature.smart-drill.name")
                 .description("feature.smart-drill.description")
                 .icon(Icon.filter)
+                .quickAccess(true)
                 .build();
     }
 

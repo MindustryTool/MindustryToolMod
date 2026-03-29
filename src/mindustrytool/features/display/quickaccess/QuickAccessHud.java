@@ -19,6 +19,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Scaling;
+import arc.util.Time;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Icon;
@@ -155,18 +156,37 @@ public class QuickAccessHud extends Table implements Feature {
             }
 
             Button[] btnRef = new Button[1];
+            long[] pressTime = { -1 };
+            boolean[] longPressed = { false };
+
             btnRef[0] = t.button(b -> {
                 b.image(meta.icon())
                         .size(buttonSize * 0.7f)
                         .scaling(Scaling.fit)
                         .update(l -> l.setColor(f.isEnabled() ? Color.white : Pal.gray));
             }, Styles.clearNonei, () -> {
-                f.toggle();
+                if (!longPressed[0]) {
+                    f.toggle();
+                }
             })
                     .size(buttonSize)
                     .margin(margin)
                     .tooltip(meta.name())
                     .get();
+
+            btnRef[0].update(() -> {
+                if (btnRef[0].isPressed()) {
+                    if (pressTime[0] == -1) {
+                        pressTime[0] = Time.millis();
+                        longPressed[0] = false;
+                    } else if (!longPressed[0] && Time.timeSinceMillis(pressTime[0]) >= 300) {
+                        longPressed[0] = true;
+                        f.setting().ifPresent(Dialog::show);
+                    }
+                } else {
+                    pressTime[0] = -1;
+                }
+            });
 
             if (++i % cols == 0)
                 t.row();
