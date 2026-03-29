@@ -340,7 +340,7 @@ public class SmartDrillFeature implements Feature {
         for (Tile tile : tiles) {
             for (int i = 0; i < 4; i++) {
                 Tile neighbor = tile.nearby(i);
-                if (neighbor == null) {
+                if (neighbor == null || tiles.contains(neighbor)) {
                     continue;
                 }
                 newTiles.addUnique(neighbor);
