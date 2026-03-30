@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ChatStore {
     private static ChatStore instance;
 
-    public static final String CURRENT_CHANNEL_ID_KEY = "mindustrytool-current-channel-id";
-    public static final String LAST_READ_MESSAGES_KEY = "mindustrytool-last-read-messages";
+    public static final String CURRENT_CHANNEL_ID_KEY = "mindustrytool.chat.current-channel-id";
+    public static final String LAST_READ_MESSAGES_KEY = "mindustrytool.chat.last-read-messages";
 
     private final ObjectMap<String, Seq<ChatMessage>> messagesByChannel = new ObjectMap<>();
     private final ObjectSet<String> fullyLoadedChannels = new ObjectSet<>();

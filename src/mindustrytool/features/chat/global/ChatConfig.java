@@ -51,11 +51,11 @@ public class ChatConfig {
     }
 
     public static Instant lastRead() {
-        return Instant.ofEpochMilli(Core.settings.getLong("mindustrytool.chat.lastRead", 0));
+        return Instant.ofEpochMilli(Core.settings.getLong("mindustrytool.chat.last-read", 0));
     }
 
     public static void lastRead(Instant value) {
-        Core.settings.put("mindustrytool.chat.lastRead", value.toEpochMilli());
+        Core.settings.put("mindustrytool.chat.last-read", value.toEpochMilli());
     }
 
     public static float opacity() {

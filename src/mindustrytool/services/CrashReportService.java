@@ -40,7 +40,7 @@ public class CrashReportService {
             return false;
         }
 
-        String latestCrashKey = "latestCrash";
+        String latestCrashKey = "mindustrytool.crash-report.latest";
 
         var savedLatest = 0L;
 
@@ -118,7 +118,7 @@ public class CrashReportService {
 
         var data = log;
 
-        String sendCrashReportKey = "sendCrashReport";
+        String sendCrashReportKey = "mindustrytool.crash-report.send";
 
         BaseDialog dialog = new BaseDialog("@crash-report.title");
 

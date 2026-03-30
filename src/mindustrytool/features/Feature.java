@@ -32,7 +32,7 @@ public interface Feature {
     default boolean isEnabled() {
         var metadata = getMetadata();
 
-        return Core.settings.getBool("mindustrytool.feature." + metadata.name() + ".enabled",
+        return Core.settings.getBool("mindustrytool." + metadata.name() + ".enabled",
                 metadata.enabledByDefault());
     }
 
@@ -43,7 +43,7 @@ public interface Feature {
             return;
         }
 
-        Core.settings.put("mindustrytool.feature." + getMetadata().name() + ".enabled", enabled);
+        Core.settings.put("mindustrytool." + getMetadata().name() + ".enabled", enabled);
 
         Core.app.post(() -> {
             if (enabled) {

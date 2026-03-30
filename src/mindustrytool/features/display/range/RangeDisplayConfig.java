@@ -14,26 +14,26 @@ public class RangeDisplayConfig {
     public static boolean drawSpawnerRange = true;
 
     public static void load() {
-        opacity = Core.settings.getFloat("range-opacity", 1f);
-        drawBlockRangeAlly = Core.settings.getBool("range-drawBlockRangeAlly", true);
-        drawBlockRangeEnemy = Core.settings.getBool("range-drawBlockRangeEnemy", true);
-        drawUnitRangeAlly = Core.settings.getBool("range-drawUnitRangeAlly", true);
-        drawUnitRangeEnemy = Core.settings.getBool("range-drawUnitRangeEnemy", true);
-        drawTurretRangeAlly = Core.settings.getBool("range-drawTurretRangeAlly", true);
-        drawTurretRangeEnemy = Core.settings.getBool("range-drawTurretRangeEnemy", true);
-        drawPlayerRange = Core.settings.getBool("range-drawPlayerRange", true);
-        drawSpawnerRange = Core.settings.getBool("range-drawSpawnerRange", true);
+        opacity = Core.settings.getFloat("mindustrytool.range.opacity", 1f);
+        drawBlockRangeAlly = Core.settings.getBool("mindustrytool.range.draw-block-range-ally", true);
+        drawBlockRangeEnemy = Core.settings.getBool("mindustrytool.range.draw-block-range-enemy", true);
+        drawUnitRangeAlly = Core.settings.getBool("mindustrytool.range.draw-unit-range-ally", true);
+        drawUnitRangeEnemy = Core.settings.getBool("mindustrytool.range.draw-unit-range-enemy", true);
+        drawTurretRangeAlly = Core.settings.getBool("mindustrytool.range.draw-turret-range-ally", true);
+        drawTurretRangeEnemy = Core.settings.getBool("mindustrytool.range.draw-turret-range-enemy", true);
+        drawPlayerRange = Core.settings.getBool("mindustrytool.range.draw-player-range", true);
+        drawSpawnerRange = Core.settings.getBool("mindustrytool.range.draw-spawner-range", true);
     }
 
     public static void save() {
-        Core.settings.put("range-opacity", opacity);
-        Core.settings.put("range-drawBlockRangeAlly", drawBlockRangeAlly);
-        Core.settings.put("range-drawBlockRangeEnemy", drawBlockRangeEnemy);
-        Core.settings.put("range-drawUnitRangeAlly", drawUnitRangeAlly);
-        Core.settings.put("range-drawUnitRangeEnemy", drawUnitRangeEnemy);
-        Core.settings.put("range-drawTurretRangeAlly", drawTurretRangeAlly);
-        Core.settings.put("range-drawTurretRangeEnemy", drawTurretRangeEnemy);
-        Core.settings.put("range-drawPlayerRange", drawPlayerRange);
-        Core.settings.put("range-drawSpawnerRange", drawSpawnerRange);
+        Core.settings.put("mindustrytool.range.opacity", opacity);
+        Core.settings.put("mindustrytool.range.draw-block-range-ally", drawBlockRangeAlly);
+        Core.settings.put("mindustrytool.range.draw-block-range-enemy", drawBlockRangeEnemy);
+        Core.settings.put("mindustrytool.range.draw-unit-range-ally", drawUnitRangeAlly);
+        Core.settings.put("mindustrytool.range.draw-unit-range-enemy", drawUnitRangeEnemy);
+        Core.settings.put("mindustrytool.range.draw-turret-range-ally", drawTurretRangeAlly);
+        Core.settings.put("mindustrytool.range.draw-turret-range-enemy", drawTurretRangeEnemy);
+        Core.settings.put("mindustrytool.range.draw-player-range", drawPlayerRange);
+        Core.settings.put("mindustrytool.range.draw-spawner-range", drawSpawnerRange);
     }
 }

@@ -52,7 +52,7 @@ public class SmartDrillFeature implements Feature {
     }
 
     public static int getMaxTiles(Block drill) {
-        return Core.settings.getInt("mindustrytool.feature.smart-drill.maxtiles." + drill.name, 100);
+        return Core.settings.getInt("mindustrytool.smart-drill.max-tiles." + drill.name, 100);
     }
 
     @Override

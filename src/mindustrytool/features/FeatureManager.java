@@ -16,7 +16,7 @@ public class FeatureManager {
 
     public void reEnable() {
         @SuppressWarnings("unchecked")
-        Seq<String> enableds = Core.settings.getJson("mindustry-tool.enableds", Seq.class, String.class, Seq::new);
+        Seq<String> enableds = Core.settings.getJson("mindustrytool.enabled-features", Seq.class, String.class, Seq::new);
 
         for (Feature feature : features) {
             if (enableds.contains(feature.getMetadata().name())) {
@@ -28,7 +28,7 @@ public class FeatureManager {
     public void disableAll() {
         Seq<String> enableds = getEnableds().map(f -> f.getMetadata().name());
 
-        Core.settings.putJson("mindustry-tool.enableds", String.class, enableds);
+        Core.settings.putJson("mindustrytool.enabled-features", String.class, enableds);
 
         for (Feature feature : features) {
             feature.setEnabled(false);

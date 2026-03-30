@@ -4,7 +4,7 @@ import arc.Core;
 import mindustry.Vars;
 
 public class PlayerConnectConfig {
-    private static final String PREFIX = "mindustrytool.playerConnect.";
+    private static final String PREFIX = "mindustrytool.player-connect.";
     private static final String KEY_ROOM_NAME = PREFIX + "roomName";
     private static final String KEY_PASSWORD = PREFIX + "password";
     private static final String KEY_AUTO_ACCEPT = PREFIX + "autoAccept";

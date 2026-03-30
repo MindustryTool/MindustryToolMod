@@ -24,10 +24,10 @@ import arc.util.Http.HttpStatusException;
 public class AuthService {
     private static AuthService instance;
 
-    public static final String KEY_ACCESS_TOKEN = "mindustrytool.auth.accessToken";
-    public static final String KEY_REFRESH_TOKEN = "mindustrytool.auth.refreshToken";
-    public static final String KEY_LOGIN_ID = "mindustrytool.auth.loginId";
-    public static final String KEY_LOGIN_EXPIRY = "mindustrytool.auth.loginExpiry";
+    public static final String KEY_ACCESS_TOKEN = "mindustrytool.auth.access-token";
+    public static final String KEY_REFRESH_TOKEN = "mindustrytool.auth.refresh-token";
+    public static final String KEY_LOGIN_ID = "mindustrytool.auth.login-id";
+    public static final String KEY_LOGIN_EXPIRY = "mindustrytool.auth.login-expiry";
 
     private UserSession currentSession;
 

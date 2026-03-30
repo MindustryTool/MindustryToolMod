@@ -4,9 +4,9 @@ import arc.Core;
 import arc.struct.Seq;
 
 public class PrettyChatConfig {
-    public static final String KEY_CONFIG = "mindustrytool.prettychat.config";
+    public static final String KEY_CONFIG = "mindustrytool.pretty-chat.config";
     public static final String DEFAULT_CONFIG = "default";
-    public static final String KEY_SCRIPT_PREFIX = "mindustrytool.prettychat.script.";
+    public static final String KEY_SCRIPT_PREFIX = "mindustrytool.pretty-chat.script.";
 
     public static String getScript(String id, String defaultScript) {
         return Core.settings.getString(KEY_SCRIPT_PREFIX + id, defaultScript);
