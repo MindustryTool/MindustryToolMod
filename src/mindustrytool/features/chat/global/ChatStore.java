@@ -12,6 +12,7 @@ import mindustrytool.features.chat.global.dto.LastReadMessageStore;
 import mindustrytool.features.chat.global.events.*;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChatStore {
@@ -88,7 +89,16 @@ public class ChatStore {
     }
 
     public Seq<ChannelDto> getChannels() {
-        return channels;
+        return channels.sort(new Comparator<ChannelDto>() {
+
+            @Override
+            public int compare(ChannelDto o1, ChannelDto o2) {
+                if (o1.lastMessageId == null || o2.lastMessageId == null) {
+                    return 0;
+                }
+                return o1.lastMessageId.compareTo(o2.lastMessageId);
+            }
+        });
     }
 
     public void setChannels(Seq<ChannelDto> newChannels) {
