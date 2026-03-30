@@ -7,6 +7,7 @@ import arc.scene.ui.TextButton;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
+import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.game.EventType.PlayEvent;
 import mindustry.game.EventType.StateChangeEvent;
@@ -43,13 +44,20 @@ public class GodModeFeature extends Table implements Feature {
 
         Events.run(PlayEvent.class, this::switchProvider);
         Events.run(StateChangeEvent.class, this::switchProvider);
+        Timer.schedule(this::switchProvider, 60, 60);
     }
 
     private void switchProvider() {
+        if (provider != null && provider.isAvailable()) {
+            return;
+        }
+
         if (js.isAvailable()) {
             provider = js;
         } else if (internal.isAvailable()) {
             provider = internal;
+        } else {
+            provider = null;
         }
 
         rebuild();

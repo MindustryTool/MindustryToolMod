@@ -43,11 +43,11 @@ import mindustry.world.blocks.production.Drill;
 import mindustry.world.blocks.production.BeamDrill;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.services.TapListener;
 
 public class SmartUpgradeFeature implements Feature {
     private Table currentMenu;
     private Tile selectedTile;
-    private Tile lastClick;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -61,40 +61,29 @@ public class SmartUpgradeFeature implements Feature {
 
     @Override
     public void init() {
+        TapListener.getInstance().registerHoldListener(300, 10, null, (tile, data) -> {
+            if (!isEnabled() || tile == null) {
+                return;
+            }
+            if (currentMenu == null) {
+                if (getGroup(tile.block()) != BlockGroup.NONE) {
+                    showMenu(tile);
+                }
+            }
+        });
+
         Events.on(TapEvent.class, e -> {
             if (!isEnabled()) {
                 return;
             }
 
-            if (e.tile == null) {
-                return;
-            }
-
-            if (e.tile != lastClick && lastClick != null) {
-                lastClick = e.tile;
-                closeMenu();
-                return;
-            }
-
-            lastClick = e.tile;
-
             if (currentMenu != null) {
-
                 if (e.tile == selectedTile) {
                     closeMenu();
                     return;
                 }
 
                 closeMenu();
-
-                if (getGroup(e.tile.block()) != BlockGroup.NONE) {
-                    showMenu(e.tile);
-                }
-                return;
-            }
-
-            if (getGroup(e.tile.block()) != BlockGroup.NONE) {
-                showMenu(e.tile);
             }
         });
 

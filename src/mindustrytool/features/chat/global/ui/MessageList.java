@@ -44,6 +44,7 @@ import mindustrytool.ui.NetworkImage;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -149,61 +150,71 @@ public class MessageList extends Table {
 
         float scale = ChatConfig.scale();
 
-        for (ChatMessage msg : channelMsgs) {
+        for (int i = 0; i < channelMsgs.size; i++) {
+            ChatMessage msg = channelMsgs.get(i);
+            boolean isSameUser = i > 0 && Objects.equals(channelMsgs.get(i - 1).createdBy, msg.createdBy);
+            boolean isNextSameUser = i < channelMsgs.size - 1
+                    && Objects.equals(channelMsgs.get(i + 1).createdBy, msg.createdBy);
+
             Table entry = new Table();
             entry.setBackground(null);
 
             entry.table(avatar -> {
                 avatar.top();
-                UserService.findUserById(msg.createdBy).thenAccept(data -> {
-                    Core.app.post(() -> {
-                        avatar.clear();
-                        if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
-                            avatar.add(new NetworkImage(data.getImageUrl())).size(40 * scale);
-                        } else {
-                            avatar.add(new Image(Icon.players)).size(40 * scale);
-                        }
+                if (!isSameUser) {
+                    UserService.findUserById(msg.createdBy).thenAccept(data -> {
+                        Core.app.post(() -> {
+                            avatar.clear();
+                            if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
+                                avatar.add(new NetworkImage(data.getImageUrl())).size(40 * scale);
+                            } else {
+                                avatar.add(new Image(Icon.players)).size(40 * scale);
+                            }
+                        });
                     });
-                });
-            }).size(48 * scale).top().pad(8 * scale);
+                }
+            }).width(48 * scale).top().padLeft(8 * scale).padRight(8 * scale).padTop(isSameUser ? 0 : 8 * scale)
+                    .padBottom(isNextSameUser ? 0 : 8 * scale);
 
             entry.table(card -> {
                 card.top().left();
 
-                Label label = new Label("...");
-                label.setStyle(Styles.defaultLabel);
-                label.setFontScale(scale);
+                if (!isSameUser) {
+                    Label label = new Label("...");
+                    label.setStyle(Styles.defaultLabel);
+                    label.setFontScale(scale);
 
-                UserService.findUserById(msg.createdBy).thenAccept(data -> {
-                    Core.app.post(() -> {
-                        String timeStr = msg.createdAt;
-                        if (msg.createdAt != null) {
-                            try {
-                                Instant instant = Instant.parse(msg.createdAt);
-                                timeStr = DateTimeFormatter.ofPattern("HH:mm")
-                                        .withZone(ZoneId.systemDefault())
-                                        .format(instant);
-                            } catch (Throwable err) {
-                                Log.err(err);
+                    UserService.findUserById(msg.createdBy).thenAccept(data -> {
+                        Core.app.post(() -> {
+                            String timeStr = msg.createdAt;
+                            if (msg.createdAt != null) {
+                                try {
+                                    Instant instant = Instant.parse(msg.createdAt);
+                                    timeStr = DateTimeFormatter.ofPattern("HH:mm")
+                                            .withZone(ZoneId.systemDefault())
+                                            .format(instant);
+                                } catch (Throwable err) {
+                                    Log.err(err);
+                                }
                             }
-                        }
 
-                        Color color = data.getHighestRole()
-                                .map(r -> {
-                                    try {
-                                        return Color.valueOf(r.getColor());
-                                    } catch (Exception err) {
-                                        return Color.white;
-                                    }
-                                })
-                                .orElse(Color.white);
+                            Color color = data.getHighestRole()
+                                    .map(r -> {
+                                        try {
+                                            return Color.valueOf(r.getColor());
+                                        } catch (Exception err) {
+                                            return Color.white;
+                                        }
+                                    })
+                                    .orElse(Color.white);
 
-                        label.setText("[#" + color.toString() + "]" + data.getName() + "[white]"
-                                + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
+                            label.setText("[#" + color.toString() + "]" + data.getName() + "[white]"
+                                    + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
+                        });
                     });
-                });
 
-                card.add(label).left().row();
+                    card.add(label).left().row();
+                }
 
                 if (msg.replyTo != null && !msg.replyTo.isEmpty()) {
                     ChatMessage repliedMsg = channelMsgs.find(m -> m.id.equals(msg.replyTo));
@@ -217,11 +228,12 @@ public class MessageList extends Table {
                             replyContent.setColor(Color.gray);
                             replyContent.setEllipsis(true);
                             replyTable.add(replyContent).minWidth(0).maxWidth(200 * scale);
-                        }).growX().padBottom(2 * scale).row();
+                        }).growX().padTop(isSameUser ? 2 * scale : 0).padBottom(0).row();
                     }
                 }
 
-                card.table(c -> renderContent(c, msg.content, scale)).top().left().growX().padTop(6 * scale);
+                card.table(c -> renderContent(c, msg.content, scale)).top().left().growX()
+                        .padTop(isSameUser && (msg.replyTo == null || msg.replyTo.isEmpty()) ? 2 * scale : 0);
 
                 card.clicked(() -> {
                     if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
@@ -262,9 +274,10 @@ public class MessageList extends Table {
 
                     }).growX().padTop(4 * scale);
                 }
-            }).growX().pad(8 * scale).top();
+            }).growX().padLeft(8 * scale).padRight(8 * scale).padTop(isSameUser ? 0 : 8 * scale)
+                    .padBottom(isNextSameUser ? 0 : 8 * scale).top();
 
-            messageTable.add(entry).growX().padBottom(4 * scale).row();
+            messageTable.add(entry).growX().padBottom(isNextSameUser ? 0 : 4 * scale).row();
         }
     }
 

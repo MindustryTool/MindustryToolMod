@@ -9,7 +9,6 @@ import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Scaling;
-import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.content.Blocks;
@@ -26,13 +25,11 @@ import mindustry.world.blocks.production.BeamDrill;
 import mindustry.world.blocks.production.Drill;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.services.TapListener;
 import arc.scene.ui.Dialog;
 import java.util.Optional;
 
 public class SmartDrillFeature implements Feature {
-    private Tile lastTapTile;
-    private long lastTapTime;
-
     private Table currentMenu;
     private Tile selectedTile;
 
@@ -57,24 +54,23 @@ public class SmartDrillFeature implements Feature {
 
     @Override
     public void init() {
+        TapListener.getInstance().registerHoldListener(300, 10, null, (tile, data) -> {
+            if (!isEnabled() || tile == null || tile.build != null || tile.drop() == null) {
+                return;
+            }
+            if (currentMenu == null) {
+                handleHold(tile);
+            }
+        });
+
         Events.on(TapEvent.class, e -> {
             if (!isEnabled()) {
                 return;
             }
 
-            if (e.tile == null) {
-                return;
-            }
-
-            if (e.tile == lastTapTile && Time.timeSinceMillis(lastTapTime) < 500) {
-                // Double tap detected
-                handleDoubleTap(e.tile);
-            } else if (currentMenu != null && e.tile != selectedTile) {
+            if (currentMenu != null && e.tile != selectedTile) {
                 closeMenu();
             }
-
-            lastTapTile = e.tile;
-            lastTapTime = Time.millis();
         });
 
         Events.on(StateChangeEvent.class, e -> {
@@ -89,7 +85,7 @@ public class SmartDrillFeature implements Feature {
         closeMenu();
     }
 
-    private void handleDoubleTap(Tile tile) {
+    private void handleHold(Tile tile) {
         Item drop = tile.drop();
         if (drop != null) {
             showDirectionMenu(tile);
@@ -110,7 +106,7 @@ public class SmartDrillFeature implements Feature {
         closeMenu();
 
         selectedTile = tile;
-        currentMenu = new Table(Styles.black6);
+        currentMenu = new Table();
         currentMenu.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown);
         currentMenu.touchable = arc.scene.event.Touchable.enabled;
 
@@ -128,17 +124,17 @@ public class SmartDrillFeature implements Feature {
 
         // Up
         directionTable.add().size(48f);
-        directionTable.button(Icon.up, Styles.clearNonei, () -> showDrillMenu(tile, 1)).size(48f).pad(4);
+        directionTable.button(Icon.up, () -> showDrillMenu(tile, 1)).size(48f).pad(4);
         directionTable.add().size(48f).row();
 
         // Left, Cancel, Right
-        directionTable.button(Icon.left, Styles.clearNonei, () -> showDrillMenu(tile, 2)).size(48f).pad(4);
-        directionTable.button(Icon.cancel, Styles.clearNonei, this::closeMenu).size(48f).pad(4);
-        directionTable.button(Icon.right, Styles.clearNonei, () -> showDrillMenu(tile, 0)).size(48f).pad(4).row();
+        directionTable.button(Icon.left, () -> showDrillMenu(tile, 2)).size(48f).pad(4);
+        directionTable.button(Icon.cancel, this::closeMenu).size(48f).pad(4);
+        directionTable.button(Icon.right, () -> showDrillMenu(tile, 0)).size(48f).pad(4).row();
 
         // Down
         directionTable.add().size(48f);
-        directionTable.button(Icon.down, Styles.clearNonei, () -> showDrillMenu(tile, 3)).size(48f).pad(4);
+        directionTable.button(Icon.down, () -> showDrillMenu(tile, 3)).size(48f).pad(4);
         directionTable.add().size(48f);
 
         currentMenu.add(directionTable);
@@ -271,7 +267,7 @@ public class SmartDrillFeature implements Feature {
 
         bridgeTiles.sort(t -> t.dst2(outMostTile));
         var output = bridgeTiles.first().nearby(dir.mul(3));
-        if (output == null){
+        if (output == null) {
             output = bridgeTiles.first();
         }
         var outputBridge = output;

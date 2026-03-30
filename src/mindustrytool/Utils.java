@@ -42,6 +42,9 @@ public class Utils {
     public static LoadedMod mod;
 
     public static ObjectMap<String, Schematic> schematicData = new ObjectMap<>();
+    private static ConcurrentHashMap<String, TextureRegionDrawable> iconCache = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<TextureRegionDrawable, TextureRegionDrawable> scalableIconCache = new ConcurrentHashMap<>();
+
     private static final byte[] header = { 'm', 's', 'c', 'h' };
 
     private static final ObjectMapper mapper = new ObjectMapper()
@@ -208,7 +211,9 @@ public class Utils {
         return text;
     }
 
-    private static ConcurrentHashMap<String, TextureRegionDrawable> iconCache = new ConcurrentHashMap<>();
+    public static TextureRegionDrawable scalable(TextureRegionDrawable original) {
+        return scalableIconCache.computeIfAbsent(original, _key -> new TextureRegionDrawable(original.getRegion()));
+    }
 
     public static TextureRegionDrawable icons(String name) {
         if (iconCache.containsKey(name)) {

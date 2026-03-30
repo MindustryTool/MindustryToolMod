@@ -402,8 +402,8 @@ public class SchematicDialog extends BaseDialog {
                     Schematic s = Utils.readSchematic(data);
                     Core.app.setClipboardText(Vars.schematics.writeBase64(s));
                     ui.showInfoFade("@copied");
-                } catch (Exception e) {
-                    ui.showInfoFade(e.getMessage());
+                } catch (Throwable e) {
+                    ui.showException(e);
                 }
             });
         });

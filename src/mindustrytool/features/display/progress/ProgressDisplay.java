@@ -23,7 +23,6 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
 import mindustry.gen.Icon;
-import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
@@ -47,7 +46,7 @@ public class ProgressDisplay implements Feature {
         return FeatureMetadata.builder()
                 .name("@feature.progress-display.name")
                 .description("@feature.progress-display.description")
-                .icon(Tex.bar)
+                .icon(Icon.chartBar)
                 .order(10)
                 .enabledByDefault(true)
                 .build();

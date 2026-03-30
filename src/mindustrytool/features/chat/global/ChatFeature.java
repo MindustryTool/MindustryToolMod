@@ -145,7 +145,7 @@ public class ChatFeature implements Feature {
 
         Table opacityContent = new Table();
         opacityContent.touchable = Touchable.disabled;
-        opacityContent.add("@opacity").left().growX();
+        opacityContent.add("@opacity").left().growX().padLeft(10).padRight(10);
         opacityContent.add(opacityValue).padLeft(10f).right();
 
         opacitySlider.changed(() -> {
@@ -164,7 +164,7 @@ public class ChatFeature implements Feature {
 
         Table scaleContent = new Table();
         scaleContent.touchable = Touchable.disabled;
-        scaleContent.add("@scale").left().growX();
+        scaleContent.add("@scale").left().growX().padLeft(10).padRight(10);
         scaleContent.add(scaleValue).padLeft(10f).right();
 
         scaleSlider.changed(() -> {
@@ -183,7 +183,7 @@ public class ChatFeature implements Feature {
 
         Table widthContent = new Table();
         widthContent.touchable = Touchable.disabled;
-        widthContent.add("@width").left().growX();
+        widthContent.add("@width").left().growX().padLeft(10).padRight(10);
         widthContent.add(widthValue).padLeft(10f).right();
 
         widthSlider.changed(() -> {
@@ -202,7 +202,7 @@ public class ChatFeature implements Feature {
 
         Table heightContent = new Table();
         heightContent.touchable = Touchable.disabled;
-        heightContent.add("@height").left().growX();
+        heightContent.add("@height").left().growX().padLeft(10).padRight(10);
         heightContent.add(heightValue).padLeft(10f).right();
 
         heightSlider.changed(() -> {

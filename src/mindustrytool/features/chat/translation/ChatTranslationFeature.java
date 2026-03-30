@@ -19,10 +19,8 @@ import mindustry.gen.SendMessageCallPacket;
 import mindustry.gen.SendMessageCallPacket2;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.Main;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import arc.struct.Seq;
 
@@ -31,7 +29,6 @@ import java.util.Optional;
 public class ChatTranslationFeature implements Feature {
     private final Seq<TranslationProvider> providers = new Seq<>();
     private final TranslationProvider defaultTranslationProvider = new MindustryToolTranslationProvider();
-    private final NoopTranslationProvider noopTranslationProvider = new NoopTranslationProvider();
     private String lastError = null;
     private TranslationProvider currentProvider = defaultTranslationProvider;
 
@@ -74,7 +71,6 @@ public class ChatTranslationFeature implements Feature {
         Main.registerPacketPlacement(SendMessageCallPacket.class, SendTranslatedMessageCallPacket::new);
         Main.registerPacketPlacement(SendMessageCallPacket2.class, SendTranslatedMessageCallPacket2::new);
 
-        providers.add(noopTranslationProvider);
         providers.add(defaultTranslationProvider);
         providers.add(new GeminiTranslationProvider());
         providers.add(new DeepLTranslationProvider());
@@ -94,8 +90,7 @@ public class ChatTranslationFeature implements Feature {
         currentProvider.translate(Strings.stripColors(message))
                 .thenApply(translated -> {
                     if (ChatTranslationConfig.isShowOriginal()) {
-                        String locale = LanguageDialog.getDisplayName(Core.bundle.getLocale());
-                        String formated = Strings.format("[white]@[]\n\n[gold]@[]: @\n\n", message, locale, translated);
+                        String formated = Strings.format("[white]@ [gray](@)", message, translated);
 
                         return formated;
                     }
@@ -163,9 +158,7 @@ public class ChatTranslationFeature implements Feature {
             card.clicked(() -> {
                 if (currentProvider != prov) {
                     currentProvider = prov;
-                    var isNoop = prov.getId().equals(noopTranslationProvider.getId());
                     ChatTranslationConfig.setProviderId(prov.getId());
-                    FeatureManager.getInstance().setEnabled(this, !isNoop);
                 }
             });
 
@@ -190,9 +183,6 @@ public class ChatTranslationFeature implements Feature {
         TextButton testButton = new TextButton(Core.bundle.get("chat-translation.settings.test-button"),
                 Styles.defaultt);
         testButton.clicked(() -> {
-            if (currentProvider == noopTranslationProvider)
-                return;
-
             testButton.setDisabled(true);
             testButton.setText(Core.bundle.get("chat-translation.settings.testing"));
             resultLabel.setText(Core.bundle.get("chat-translation.settings.testing-connection"));
@@ -215,8 +205,8 @@ public class ChatTranslationFeature implements Feature {
 
         root.add(testInput).growX().pad(10).row();
         root.add(testButton).size(250, 50).pad(10)
-                .disabled(b -> currentProvider == noopTranslationProvider
-                        || testButton.getText().toString().equals(Core.bundle.get("chat-translation.settings.testing")))
+                .disabled(b -> testButton.getText().toString()
+                        .equals(Core.bundle.get("chat-translation.settings.testing")))
                 .row();
         root.add(resultLabel).growX().pad(10).row();
 

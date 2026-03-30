@@ -51,10 +51,15 @@ public class FeatureCard {
                         .ellipsis(true)
                         .left();
 
+                header.image(Utils.scalable(enabled ? Icon.eye : Icon.eyeOff)).height(24).width(32).padRight(8)
+                        .color(enabled ? Color.white : Color.gray);
+
                 if (feature.setting().isPresent()) {
-                    header.button(Icon.settings, Styles.clearNonei,
+                    header.button(Utils.scalable(Icon.settings), Styles.clearNonei,
                             () -> feature.setting().ifPresent(dialog -> Core.app.post(dialog::show)))
-                            .size(32).padLeft(8).get().addListener(new ClickListener() {
+                            .size(32)
+                            .get()
+                            .addListener(new ClickListener() {
                                 @Override
                                 public void clicked(InputEvent event, float x, float y) {
                                     event.stop();
@@ -62,8 +67,6 @@ public class FeatureCard {
                             });
                 }
 
-                header.image(enabled ? Icon.eyeSmall : Icon.eyeOffSmall).size(24).padLeft(4)
-                        .color(enabled ? Color.white : Color.gray);
             }).growX().row();
 
             c.add(Utils.getString(metadata.description())).color(Color.lightGray).fontScale(0.9f).wrap().growX()

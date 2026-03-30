@@ -1,5 +1,8 @@
 package mindustrytool.features.display.pathfinding;
 
+import lombok.Data;
+
+@Data
 public class PathfindingCache {
     public float[] data;
     public int size;
