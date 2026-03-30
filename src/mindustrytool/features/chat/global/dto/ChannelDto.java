@@ -6,4 +6,5 @@ import lombok.Data;
 public class ChannelDto {
     public String id;
     public String name;
+    public String lastMessageId;
 }

@@ -22,6 +22,8 @@ import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.events.ChatMessageReceive;
 import mindustrytool.features.chat.global.ui.ChatOverlay;
 
+import mindustrytool.features.chat.global.dto.ChannelDto;
+
 public class ChatFeature implements Feature {
     private ChatOverlay overlay;
 
@@ -48,10 +50,17 @@ public class ChatFeature implements Feature {
 
                 store.addMessages(channelId, Seq.with(msg));
 
+                ChannelDto channel = store.getChannels().find(c -> c.id.equals(channelId));
+                if (channel != null) {
+                    channel.lastMessageId = msg.id;
+                }
+
                 try {
                     if ((ChatConfig.collapsed() || !channelId.equals(currentChannelId))
                             && ChatConfig.lastRead().isBefore(Instant.parse(msg.createdAt))) {
                         store.addUnread(channelId, 1);
+                    } else if (!ChatConfig.collapsed() && channelId.equals(currentChannelId)) {
+                        store.setLastReadMessageId(channelId, msg.id);
                     }
                 } catch (Exception e) {
                     Log.err(e);

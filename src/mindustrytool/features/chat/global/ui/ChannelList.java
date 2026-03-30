@@ -48,21 +48,29 @@ public class ChannelList extends Table {
 
         for (ChannelDto channel : channels) {
             boolean isSelected = channel.id.equals(currentChannelId);
-            TextButton btn = new TextButton("# " + channel.name, isSelected ? Styles.togglet : Styles.cleart);
+            int unread = store.getUnreadByChannel(channel.id);
+            String unreadString = (unread > 0 ? " (" + (unread > 99 ? "99+" : unread) + ")" : "");
+
+            boolean hasNewUnreadMessage = unread == 0 && channel.lastMessageId != null
+                    && !channel.lastMessageId.equals(store.getLastReadMessageId(channel.id));
+            String newIndicator = hasNewUnreadMessage ? " [white]\u25CF[]" : "";
+
+            TextButton btn = new TextButton("# " + channel.name + unreadString + newIndicator,
+                    isSelected ? Styles.togglet : Styles.cleart);
+
             btn.getLabel().setAlignment(Align.left);
             btn.getLabel().setFontScale(scale);
             btn.getLabel().setEllipsis(true);
-            if (btn.getLabelCell() != null)
+            if (btn.getLabelCell() != null) {
                 btn.getLabelCell().minWidth(0);
+            }
 
             if (isSelected) {
                 btn.setChecked(true);
             }
 
-            int unread = store.getUnreadByChannel(channel.id);
-            if (unread > 0 && !isSelected) {
+            if (isSelected) {
                 btn.getLabel().setColor(Color.white);
-                btn.setText("# " + channel.name + " (" + (unread > 99 ? "99+" : unread) + ")");
             } else {
                 btn.getLabel().setColor(Color.lightGray);
             }
@@ -72,6 +80,9 @@ public class ChannelList extends Table {
                     store.setCurrentChannelId(channel.id);
                     ChatService.getInstance().fetchMessages(channel.id, null);
                     ChatService.getInstance().fetchChatUsers(channel.id);
+                }
+                if (channel.lastMessageId != null) {
+                    store.setLastReadMessageId(channel.id, channel.lastMessageId);
                 }
                 if (onChannelSelect != null) {
                     onChannelSelect.run();

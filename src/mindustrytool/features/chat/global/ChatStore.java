@@ -8,6 +8,7 @@ import arc.struct.Seq;
 import mindustrytool.features.chat.global.dto.ChannelDto;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatUser;
+import mindustrytool.features.chat.global.dto.LastReadMessageStore;
 import mindustrytool.features.chat.global.events.*;
 
 import java.util.Arrays;
@@ -17,6 +18,7 @@ public class ChatStore {
     private static ChatStore instance;
 
     public static final String CURRENT_CHANNEL_ID_KEY = "mindustrytool-current-channel-id";
+    public static final String LAST_READ_MESSAGES_KEY = "mindustrytool-last-read-messages";
 
     private final ObjectMap<String, Seq<ChatMessage>> messagesByChannel = new ObjectMap<>();
     private final ObjectSet<String> fullyLoadedChannels = new ObjectSet<>();
@@ -27,9 +29,13 @@ public class ChatStore {
     private String currentChannelId;
     private int unreadCount = 0;
     private final AtomicBoolean isLoadingMessages = new AtomicBoolean(false);
+    private final LastReadMessageStore lastReadMessageStore;
 
     public ChatStore() {
         currentChannelId = Core.settings.getString(CURRENT_CHANNEL_ID_KEY, null);
+        LastReadMessageStore stored = Core.settings.getJson(LAST_READ_MESSAGES_KEY, LastReadMessageStore.class,
+                LastReadMessageStore::new);
+        lastReadMessageStore = stored != null ? stored : new LastReadMessageStore();
     }
 
     public static ChatStore getInstance() {
@@ -71,6 +77,12 @@ public class ChatStore {
         if (unreadCount < 0)
             unreadCount = 0;
         unreadByChannel.put(currentChannelId, 0);
+
+        ChannelDto channel = channels.find(c -> c.id.equals(currentChannelId));
+        if (channel != null && channel.lastMessageId != null) {
+            setLastReadMessageId(currentChannelId, channel.lastMessageId);
+        }
+
         Events.fire(new CurrentChannelChangeEvent(currentChannelId));
         Events.fire(new UnreadUpdateEvent());
     }
@@ -82,6 +94,12 @@ public class ChatStore {
     public void setChannels(Seq<ChannelDto> newChannels) {
         channels.clear();
         channels.addAll(newChannels);
+        if (currentChannelId != null) {
+            ChannelDto channel = channels.find(c -> c.id.equals(currentChannelId));
+            if (channel != null && channel.lastMessageId != null) {
+                setLastReadMessageId(currentChannelId, channel.lastMessageId);
+            }
+        }
         Events.fire(new ChannelsUpdateEvent());
     }
 
@@ -150,6 +168,22 @@ public class ChatStore {
     public void resetUnreadCount() {
         unreadCount = 0;
         unreadByChannel.clear();
+        Events.fire(new UnreadUpdateEvent());
+    }
+
+    public String getLastReadMessageId(String channelId) {
+        return lastReadMessageStore.lastReadMessageIds.get(channelId);
+    }
+
+    public void setLastReadMessageId(String channelId, String messageId) {
+        if (messageId == null)
+            return;
+        if (messageId.equals(lastReadMessageStore.lastReadMessageIds.get(channelId)))
+            return;
+        lastReadMessageStore.lastReadMessageIds.put(channelId, messageId);
+
+        Core.settings.putJson(LAST_READ_MESSAGES_KEY, LastReadMessageStore.class, lastReadMessageStore);
+
         Events.fire(new UnreadUpdateEvent());
     }
 
