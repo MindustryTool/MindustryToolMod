@@ -25,7 +25,7 @@ import mindustry.world.blocks.production.BeamDrill;
 import mindustry.world.blocks.production.Drill;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.features.godmode.TapListener;
+import mindustrytool.services.TapListener;
 import arc.scene.ui.Dialog;
 import java.util.Optional;
 

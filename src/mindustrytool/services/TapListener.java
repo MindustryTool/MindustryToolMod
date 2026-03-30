@@ -1,4 +1,4 @@
-package mindustrytool.features.godmode;
+package mindustrytool.services;
 
 import arc.Core;
 import arc.Events;

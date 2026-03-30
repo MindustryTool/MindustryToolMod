@@ -43,7 +43,7 @@ import mindustry.world.blocks.production.Drill;
 import mindustry.world.blocks.production.BeamDrill;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.features.godmode.TapListener;
+import mindustrytool.services.TapListener;
 
 public class SmartUpgradeFeature implements Feature {
     private Table currentMenu;

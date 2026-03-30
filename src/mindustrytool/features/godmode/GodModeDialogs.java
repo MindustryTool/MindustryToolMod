@@ -16,6 +16,7 @@ import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.Block;
 import mindustry.world.blocks.storage.CoreBlock;
+import mindustrytool.services.TapListener;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
