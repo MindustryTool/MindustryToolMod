@@ -21,7 +21,7 @@ public class IconUtils {
                 .map(f -> {
                     try {
                         Object value = f.get(null);
-                        if (value instanceof Character) {
+                        if (value != null && value instanceof Character) {
                             return new IconC(f.getName(), (Character) value);
                         }
                         return null;
