@@ -6,9 +6,15 @@ import mindustry.game.EventType.TapEvent;
 import java.util.function.BiConsumer;
 
 public class TapListener {
-    private static BiConsumer<Float, Float> currentListener;
+    private static final TapListener instance = new TapListener();
 
-    public static void init() {
+    public static TapListener getInstance() {
+        return instance;
+    }
+
+    private BiConsumer<Float, Float> currentListener;
+
+    public void init() {
         Events.on(TapEvent.class, e -> {
             if (currentListener != null) {
                 BiConsumer<Float, Float> listener = currentListener;
@@ -23,7 +29,7 @@ public class TapListener {
         });
     }
 
-    public static void select(BiConsumer<Float, Float> onSelect) {
+    public void select(BiConsumer<Float, Float> onSelect) {
         currentListener = onSelect;
     }
 }

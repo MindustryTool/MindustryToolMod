@@ -8,10 +8,16 @@ import java.util.concurrent.CompletableFuture;
 
 import arc.Core;
 import arc.Events;
+import arc.scene.event.Touchable;
+import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Http;
 import arc.util.Log;
+import arc.util.Timer;
 import arc.util.serialization.Jval;
 import mindustry.Vars;
+import mindustry.gen.Icon;
+import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
 import mindustrytool.Utils;
@@ -19,6 +25,7 @@ import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.auth.dto.UserSession;
 import mindustrytool.features.auth.dto.SessionLoadEvent;
+import mindustrytool.ui.NetworkImage;
 import arc.util.Http.HttpStatusException;
 
 public class AuthService {
@@ -34,6 +41,7 @@ public class AuthService {
     private CompletableFuture<Boolean> refreshFuture;
     private CompletableFuture<Void> loginFuture;
     private BaseDialog loginDialog;
+    private Table authWindow;
 
     public static AuthService getInstance() {
         if (instance == null) {
@@ -43,24 +51,98 @@ public class AuthService {
     }
 
     private AuthService() {
+    }
+
+    public void init() {
+        fetchSession();
+
+        Timer.schedule(() -> {
+            if (isLoggedIn()) {
+                fetchSession();
+            }
+        }, 0, 60 * 5);
+
         String logindId = Core.settings.getString(KEY_LOGIN_ID);
 
-        if (logindId == null) {
-            return;
+        if (logindId != null) {
+            Instant expiry = Instant.ofEpochMilli(Core.settings.getLong(KEY_LOGIN_EXPIRY, 0));
+
+            if (expiry.isBefore(Instant.now())) {
+                Core.settings.remove(KEY_LOGIN_ID);
+                Core.settings.remove(KEY_LOGIN_EXPIRY);
+            } else {
+                pollLoginToken(logindId).exceptionally(e -> {
+                    Log.err("Background login polling failed", e);
+                    return null;
+                });
+            }
         }
 
-        Instant expiry = Instant.ofEpochMilli(Core.settings.getLong(KEY_LOGIN_EXPIRY, 0));
+        var wholeViewport = new Table();
+        wholeViewport.name = "authWindow";
+        wholeViewport.setFillParent(true);
+        wholeViewport.top().right();
 
-        if (expiry.isBefore(Instant.now())) {
-            Core.settings.remove(KEY_LOGIN_ID);
-            Core.settings.remove(KEY_LOGIN_EXPIRY);
-            return;
-        }
+        authWindow = wholeViewport.table().get();
 
-        pollLoginToken(logindId).exceptionally(e -> {
-            Log.err("Background login polling failed", e);
-            return null;
+        authWindow.top().right();
+        authWindow.touchable = Touchable.childrenOnly;
+
+        Core.app.post(() -> Vars.ui.menuGroup.addChild(wholeViewport));
+
+        Table content = new Table();
+        content.setBackground(Styles.black6);
+
+        authWindow.add(content).top().right().margin(8f);
+        authWindow.toFront();
+
+        arc.Events.on(SessionLoadEvent.class, e -> {
+            var user = e.user;
+            var error = e.error;
+            var isLoading = e.isLoading;
+
+            if (isLoading) {
+                content.clear();
+                content.add("@loading").wrapLabel(false).labelAlign(Align.left).padLeft(8);
+            } else if (error != null) {
+                content.clear();
+                content.add("@error").labelAlign(Align.left).padLeft(8);
+                content.add(error.getLocalizedMessage()).labelAlign(Align.left).padLeft(8).row();
+                content.button("@retry", Icon.refresh, this::startLoginUI);
+
+                Log.err("Failed to login", error);
+            } else if (user == null) {
+                content.clear();
+                content.button("@login", this::startLoginUI).wrapLabel(false);
+            } else if (user != null) {
+                content.clear();
+
+                if (user.getImageUrl() != null) {
+                    content.add(new NetworkImage(user.getImageUrl())).size(64);
+                }
+
+                if (!Vars.mobile) {
+                    content.add(user.getName()).labelAlign(Align.left).padLeft(8);
+                }
+
+                content.touchable = Touchable.enabled;
+                content.clicked(() -> {
+                    Vars.ui.showConfirm("Logout", "Logged in as " + user.getName() + "\nDo you want to logout?",
+                            this::logout);
+                });
+            }
+
+            content.pack();
         });
+    }
+
+    private void startLoginUI() {
+        login()
+                .thenRun(() -> Core.app.post(() -> Vars.ui.showInfo("Login successful!")))
+                .exceptionally(e -> {
+                    Core.app.post(() -> Vars.ui.showException("Login failed or timed out.", e));
+                    return null;
+                });
     }
 
     public UserSession getSession() {

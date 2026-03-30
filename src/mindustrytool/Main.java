@@ -14,6 +14,7 @@ import mindustry.mod.Mods.LoadedMod;
 import mindustry.net.Packet;
 import mindustry.mod.Mod;
 import mindustrytool.features.FeatureManager;
+import mindustrytool.features.auth.AuthService;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
@@ -24,7 +25,6 @@ import mindustrytool.features.display.togglerendering.ToggleRenderingFeature;
 import mindustrytool.features.display.range.RangeDisplay;
 import mindustrytool.features.display.progress.ProgressDisplay;
 import mindustrytool.features.display.quickaccess.QuickAccessHud;
-import mindustrytool.features.auth.AuthFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
@@ -76,12 +76,13 @@ public class Main extends Mod {
             musicsDir.mkdirs();
             schematicDir.mkdirs();
 
-            TapListener.init();
-            ServerService.init();
-
             Events.on(ClientLoadEvent.class, e -> {
                 try {
                     featureSettingDialog = new FeatureSettingDialog();
+
+                    AuthService.getInstance().init();
+                    ServerService.getInstance().init();
+                    TapListener.getInstance().init();
 
                     FeatureManager.getInstance().register(//
                             new MapBrowserFeature(), //
@@ -92,7 +93,6 @@ public class Main extends Mod {
                             new PathfindingDisplay(), //
                             new RangeDisplay(), //
                             new QuickAccessHud(), //
-                            new AuthFeature(), //
                             new ChatFeature(),
                             new ChatTranslationFeature(),
                             new PrettyChatFeature(),

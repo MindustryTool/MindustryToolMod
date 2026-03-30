@@ -20,15 +20,21 @@ public class ServerService {
         private int port, status;
     }
 
-    public static void init() {
+    private static final ServerService instance = new ServerService();
+
+    public static ServerService getInstance() {
+        return instance;
+    }
+
+    public void init() {
         fetchServers();
         Vars.ui.join.shown(() -> fetchServers());
 
-        Timer.schedule(ServerService::fetchServers, 15 * 60, 15 * 60);
+        Timer.schedule(this::fetchServers, 15 * 60, 15 * 60);
     }
 
     @SuppressWarnings("unchecked")
-    public static void fetchServers() {
+    public void fetchServers() {
         try {
             Seq<Server> servers = Core.settings.getJson("mindustrytool.servers", Seq.class, Server.class, Seq::new);
 
