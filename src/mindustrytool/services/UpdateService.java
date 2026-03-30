@@ -88,7 +88,7 @@ public class UpdateService {
                                 Instant instant = Instant.parse(publishedAt);
                                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
                                         .withZone(ZoneId.systemDefault());
-                                changelog.append("[lightgray]").append(formatter.format(instant)).append("[] - ");
+                                changelog.append("[lightgray]").append(formatter.format(instant)).append("[white] - ");
                             }
                         } catch (Throwable e) {
                             Log.err(e);

@@ -175,22 +175,22 @@ public class Utils {
             return "";
 
         // Links - Run first to avoid matching color tags
-        text = text.replaceAll("\\[(.*?)\\]\\((.*?)\\)", "[sky]$1[]");
+        text = text.replaceAll("\\[(.*?)\\]\\((.*?)\\)", "[sky]$1[white]");
 
         // Headers
-        text = text.replaceAll("(?m)^#{1,6}\\s+(.*)$", "[accent]$1[]");
+        text = text.replaceAll("(?m)^#{1,6}\\s+(.*)$", "[accent]$1[white]");
 
         // List items
         text = text.replaceAll("(?m)^\\s*[-*]\\s+(.*)$", "• $1");
 
         // Bold
-        text = text.replaceAll("\\*\\*(.*?)\\*\\*", "[white]$1[]");
+        text = text.replaceAll("\\*\\*(.*?)\\*\\*", "[white]$1[white]");
 
         // Italic
-        text = text.replaceAll("(?<!\\*)\\*(?!\\*)(.*?)(?<!\\*)\\*(?!\\*)", "[lightgray]$1[]");
+        text = text.replaceAll("(?<!\\*)\\*(?!\\*)(.*?)(?<!\\*)\\*(?!\\*)", "[lightgray]$1[white]");
 
         // Code
-        text = text.replaceAll("`([^`]*)`", "[cyan]$1[]");
+        text = text.replaceAll("`([^`]*)`", "[cyan]$1[white]");
 
         return text;
     }
