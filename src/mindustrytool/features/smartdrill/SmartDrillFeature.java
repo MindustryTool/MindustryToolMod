@@ -106,7 +106,7 @@ public class SmartDrillFeature implements Feature {
         closeMenu();
 
         selectedTile = tile;
-        currentMenu = new Table(Styles.black6);
+        currentMenu = new Table();
         currentMenu.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown);
         currentMenu.touchable = arc.scene.event.Touchable.enabled;
 
@@ -124,17 +124,17 @@ public class SmartDrillFeature implements Feature {
 
         // Up
         directionTable.add().size(48f);
-        directionTable.button(Icon.up, Styles.clearNonei, () -> showDrillMenu(tile, 1)).size(48f).pad(4);
+        directionTable.button(Icon.up, () -> showDrillMenu(tile, 1)).size(48f).pad(4);
         directionTable.add().size(48f).row();
 
         // Left, Cancel, Right
-        directionTable.button(Icon.left, Styles.clearNonei, () -> showDrillMenu(tile, 2)).size(48f).pad(4);
-        directionTable.button(Icon.cancel, Styles.clearNonei, this::closeMenu).size(48f).pad(4);
-        directionTable.button(Icon.right, Styles.clearNonei, () -> showDrillMenu(tile, 0)).size(48f).pad(4).row();
+        directionTable.button(Icon.left, () -> showDrillMenu(tile, 2)).size(48f).pad(4);
+        directionTable.button(Icon.cancel, this::closeMenu).size(48f).pad(4);
+        directionTable.button(Icon.right, () -> showDrillMenu(tile, 0)).size(48f).pad(4).row();
 
         // Down
         directionTable.add().size(48f);
-        directionTable.button(Icon.down, Styles.clearNonei, () -> showDrillMenu(tile, 3)).size(48f).pad(4);
+        directionTable.button(Icon.down, () -> showDrillMenu(tile, 3)).size(48f).pad(4);
         directionTable.add().size(48f);
 
         currentMenu.add(directionTable);
