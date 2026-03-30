@@ -9,7 +9,6 @@ import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Scaling;
-import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.content.Blocks;
@@ -26,13 +25,11 @@ import mindustry.world.blocks.production.BeamDrill;
 import mindustry.world.blocks.production.Drill;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.godmode.TapListener;
 import arc.scene.ui.Dialog;
 import java.util.Optional;
 
 public class SmartDrillFeature implements Feature {
-    private Tile lastTapTile;
-    private long lastTapTime;
-
     private Table currentMenu;
     private Tile selectedTile;
 
@@ -57,28 +54,23 @@ public class SmartDrillFeature implements Feature {
 
     @Override
     public void init() {
+        TapListener.getInstance().registerHoldListener(300, 10, null, (tile, data) -> {
+            if (!isEnabled() || tile == null || tile.build != null || tile.drop() == null) {
+                return;
+            }
+            if (currentMenu == null) {
+                handleHold(tile);
+            }
+        });
+
         Events.on(TapEvent.class, e -> {
             if (!isEnabled()) {
                 return;
             }
 
-            if (e.tile == null) {
-                return;
-            }
-
-            if (e.tile.build != null){
-                return;
-            }
-
-            if (e.tile == lastTapTile && Time.timeSinceMillis(lastTapTime) < 500) {
-                // Double tap detected
-                handleDoubleTap(e.tile);
-            } else if (currentMenu != null && e.tile != selectedTile) {
+            if (currentMenu != null && e.tile != selectedTile) {
                 closeMenu();
             }
-
-            lastTapTile = e.tile;
-            lastTapTime = Time.millis();
         });
 
         Events.on(StateChangeEvent.class, e -> {
@@ -93,7 +85,7 @@ public class SmartDrillFeature implements Feature {
         closeMenu();
     }
 
-    private void handleDoubleTap(Tile tile) {
+    private void handleHold(Tile tile) {
         Item drop = tile.drop();
         if (drop != null) {
             showDirectionMenu(tile);
@@ -275,7 +267,7 @@ public class SmartDrillFeature implements Feature {
 
         bridgeTiles.sort(t -> t.dst2(outMostTile));
         var output = bridgeTiles.first().nearby(dir.mul(3));
-        if (output == null){
+        if (output == null) {
             output = bridgeTiles.first();
         }
         var outputBridge = output;
