@@ -44,6 +44,21 @@ public class UserList extends Table {
             }
         });
         Events.on(CurrentChannelChangeEvent.class, e -> rebuild());
+        Events.on(CurrentChannelChangeEvent.class, e -> updateUserCount());
+
+        updateUserCount();
+    }
+
+    private void updateUserCount() {
+        String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
+        if (currentChannelId != null) {
+            ChatService.getInstance().getChatUserCount(currentChannelId, count -> {
+                countLabel.setText(String.valueOf(count));
+            }, e -> {
+                countLabel.setText("?");
+                Log.err(e);
+            });
+        }
     }
 
     public void rebuild() {
@@ -51,17 +66,12 @@ public class UserList extends Table {
         userListTable.top().left();
 
         String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
-        if (currentChannelId == null)
+        if (currentChannelId == null) {
             return;
+        }
 
         float scale = ChatConfig.scale();
         countLabel.setFontScale(scale * 0.8f);
-        ChatService.getInstance().getChatUserCount(currentChannelId, count -> {
-            countLabel.setText(String.valueOf(count));
-        }, e -> {
-            countLabel.setText("?");
-            Log.err(e);
-        });
 
         Seq<ChatUser> users = ChatStore.getInstance().getUsers(currentChannelId);
 

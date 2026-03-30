@@ -60,7 +60,7 @@ public class AuthService {
             if (isLoggedIn()) {
                 fetchSession();
             }
-        }, 0, 60 * 5);
+        }, 60 * 5, 60 * 5);
 
         String logindId = Core.settings.getString(KEY_LOGIN_ID);
 
