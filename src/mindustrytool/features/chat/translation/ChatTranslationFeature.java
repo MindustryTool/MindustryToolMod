@@ -22,6 +22,7 @@ import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.Main;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import arc.struct.Seq;
 
@@ -164,7 +165,7 @@ public class ChatTranslationFeature implements Feature {
                     currentProvider = prov;
                     var isNoop = prov.getId().equals(noopTranslationProvider.getId());
                     ChatTranslationConfig.setProviderId(prov.getId());
-                    this.setEnabled(!isNoop);
+                    FeatureManager.getInstance().setEnabled(this, !isNoop);
                 }
             });
 

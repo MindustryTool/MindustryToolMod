@@ -12,6 +12,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.WebFeature;
 
 public class FeatureCard {
@@ -30,7 +31,7 @@ public class FeatureCard {
                 if (event.stopped)
                     return;
                 try {
-                    feature.toggle();
+                    FeatureManager.getInstance().toggle(feature);
                     parent.clear();
                     rebuild.run();
                 } catch (Exception e) {

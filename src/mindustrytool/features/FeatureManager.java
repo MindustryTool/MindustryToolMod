@@ -1,11 +1,14 @@
 package mindustrytool.features;
 
+import java.util.HashSet;
+
 import arc.Core;
 import arc.struct.Seq;
 
 public class FeatureManager {
     private static final FeatureManager instance = new FeatureManager();
     private final Seq<Feature> features = new Seq<>();
+    private final HashSet<Feature> initializedFeatures = new HashSet<>();
 
     private FeatureManager() {
     }
@@ -21,7 +24,7 @@ public class FeatureManager {
 
         for (Feature feature : features) {
             if (enableds.contains(feature.getMetadata().name())) {
-                feature.setEnabled(true);
+                setEnabled(feature, true);
             }
         }
     }
@@ -32,7 +35,7 @@ public class FeatureManager {
         Core.settings.putJson("mindustrytool.enabled-features", String.class, enableds);
 
         for (Feature feature : features) {
-            feature.setEnabled(false);
+            setEnabled(feature, false);
         }
     }
 
@@ -47,8 +50,8 @@ public class FeatureManager {
 
     public void init() {
         for (Feature feature : features) {
-            feature.init();
             if (feature.isEnabled()) {
+                feature.init();
                 feature.onEnable();
                 feature.setting();
                 feature.dialog();
@@ -70,5 +73,32 @@ public class FeatureManager {
 
     public Seq<Feature> getEnableds() {
         return features.select(f -> f.isEnabled());
+    }
+
+    public void setEnabled(Feature feature, boolean enabled) {
+        boolean current = feature.isEnabled();
+
+        if (current == enabled) {
+            return;
+        }
+
+        Core.settings.put(feature.getSettingKey(), enabled);
+
+        Core.app.post(() -> {
+            if (enabled) {
+                if (!initializedFeatures.contains(feature)) {
+                    initializedFeatures.add(feature);
+                    feature.init();
+                }
+                feature.onEnable();
+            } else {
+                feature.onDisable();
+            }
+            feature.onEnableChange(enabled);
+        });
+    }
+
+    public void toggle(Feature feature) {
+        setEnabled(feature, !feature.isEnabled());
     }
 }
