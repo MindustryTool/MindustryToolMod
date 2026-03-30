@@ -16,7 +16,8 @@ public class FeatureManager {
 
     public void reEnable() {
         @SuppressWarnings("unchecked")
-        Seq<String> enableds = Core.settings.getJson("mindustrytool.enabled-features", Seq.class, String.class, Seq::new);
+        Seq<String> enableds = Core.settings.getJson("mindustrytool.enabled-features", Seq.class, String.class,
+                Seq::new);
 
         for (Feature feature : features) {
             if (enableds.contains(feature.getMetadata().name())) {
@@ -57,6 +58,14 @@ public class FeatureManager {
 
     public Seq<Feature> getFeatures() {
         return features;
+    }
+
+    public <T extends Feature> T get(Class<T> featureClass) {
+        var feature = features.find(f -> f.getClass().equals(featureClass));
+        if (feature == null) {
+            throw new IllegalArgumentException("Feature not found: " + featureClass);
+        }
+        return featureClass.cast(feature);
     }
 
     public Seq<Feature> getEnableds() {
