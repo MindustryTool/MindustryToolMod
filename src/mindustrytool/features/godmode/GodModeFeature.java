@@ -50,6 +50,8 @@ public class GodModeFeature extends Table implements Feature {
             provider = js;
         } else if (internal.isAvailable()) {
             provider = internal;
+        } else {
+            provider = null;
         }
 
         rebuild();
