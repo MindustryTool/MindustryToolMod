@@ -90,13 +90,12 @@ public class ChatStore {
 
     public Seq<ChannelDto> getChannels() {
         return channels.sort(new Comparator<ChannelDto>() {
-
             @Override
             public int compare(ChannelDto o1, ChannelDto o2) {
                 if (o1.lastMessageId == null || o2.lastMessageId == null) {
                     return 0;
                 }
-                return o1.lastMessageId.compareTo(o2.lastMessageId);
+                return -o1.lastMessageId.compareTo(o2.lastMessageId);
             }
         });
     }
