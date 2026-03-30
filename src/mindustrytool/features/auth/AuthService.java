@@ -299,6 +299,13 @@ public class AuthService {
             return refreshFuture;
         }
 
+        if (isTokenNearExpiry(refreshToken)) {
+            Log.info("Refresh token near expiry, removed it");
+            Core.settings.remove(KEY_REFRESH_TOKEN);
+            refreshFuture.complete(false);
+            return refreshFuture;
+        }
+
         Jval json = Jval.newObject();
 
         json.put("refreshToken", refreshToken);

@@ -121,8 +121,8 @@ public class HealthBarVisualizer implements Feature {
         Draw.color(Color.black, 0.6f * HealthBarConfig.opacity);
         Draw.rect(barRegion, x, y, w + 2f, h + 2f);
 
-        float hpPercent = unit.health / unit.maxHealth;
         float maxHealth = unit.maxHealth;
+        float hpPercent = Math.min(1f, unit.health / maxHealth);
 
         float left = x - w / 2f;
 
