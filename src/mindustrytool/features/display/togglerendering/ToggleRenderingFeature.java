@@ -33,7 +33,7 @@ public class ToggleRenderingFeature implements Feature {
         return FeatureMetadata.builder()
                 .name("@feature.toggle-rendering.name")
                 .description("@feature.toggle-rendering.description")
-                .icon(Icon.eyeSmall)
+                .icon(Icon.eye)
                 .order(5)
                 .enabledByDefault(false)
                 .quickAccess(true)
