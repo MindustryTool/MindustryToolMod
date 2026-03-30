@@ -48,6 +48,10 @@ public class GodModeFeature extends Table implements Feature {
     }
 
     private void switchProvider() {
+        if (provider != null && provider.isAvailable()) {
+            return;
+        }
+
         if (js.isAvailable()) {
             provider = js;
         } else if (internal.isAvailable()) {
