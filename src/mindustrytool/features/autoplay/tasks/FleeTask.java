@@ -35,7 +35,8 @@ public class FleeTask implements AutoplayTask {
     @Override
     public boolean update(Unit unit) {
         Unit enemy = Units.closestEnemy(unit.team, unit.x, unit.y, 300f, u -> !u.dead());
-        if (enemy != null && enemy.inRange(enemy)) {
+
+        if (enemy != null && enemy.inRange(unit)) {
             ai.fleeFrom = enemy;
             status = Core.bundle.get("autoplay.status.fleeing");
             return true;
@@ -62,7 +63,7 @@ public class FleeTask implements AutoplayTask {
         @Override
         public void updateMovement() {
             if (fleeFrom != null) {
-                moveTo(fleeFrom, fleeFrom.range() * 1.5f);
+                moveTo(fleeFrom, fleeFrom.range() * 1.5f, 0f, true, null);
             }
         }
     }
