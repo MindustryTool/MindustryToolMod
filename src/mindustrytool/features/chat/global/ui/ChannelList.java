@@ -66,7 +66,7 @@ public class ChannelList extends Table {
             }
 
             if (hasNewUnreadMessage) {
-                Label indicatorLabel = new Label("[white]\u25CF[]");
+                Label indicatorLabel = new Label("[white]\u25CF[white]");
                 indicatorLabel.setFontScale(scale);
                 indicatorLabel.setAlignment(Align.right);
                 btn.add(indicatorLabel).right().padLeft(4 * scale);

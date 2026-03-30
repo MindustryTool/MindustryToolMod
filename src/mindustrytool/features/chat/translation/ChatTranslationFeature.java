@@ -101,7 +101,7 @@ public class ChatTranslationFeature implements Feature {
                 .exceptionally(e -> {
                     lastError = e.getMessage();
 
-                    String formated = Strings.format("@\n\n[scarlet]@[]\n\n", message,
+                    String formated = Strings.format("@\n\n[scarlet]@[white]\n\n", message,
                             Core.bundle.get("chat-translation.error.prefix") + e.getMessage());
 
                     cons.get(formated);

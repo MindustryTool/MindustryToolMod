@@ -190,15 +190,15 @@ public class NetworkProxy extends Client implements NetListener {
                 long latency = Time.millis() - pingPacket.sendAt;
                 PlayerConnect.ping = (int) latency;
             } else if (object instanceof Packets.MessagePacket messagePacket) {
-                Call.sendMessage("[scarlet][[Server]:[] " + messagePacket.message);
+                Call.sendMessage("[scarlet][[Server]:[white] " + messagePacket.message);
             } else if (object instanceof Packets.Message2Packet message2Packet) {
-                Call.sendMessage("[scarlet][[Server]:[] "
+                Call.sendMessage("[scarlet][[Server]:[white] "
                         + arc.Core.bundle.get("claj.message." + Strings.camelToKebab(message2Packet.message.name())));
             } else if (object instanceof Packets.PopupPacket popupPacket) {
-                Core.app.post(() -> Vars.ui.showText("[scarlet][[Server][] ", popupPacket.message));
+                Core.app.post(() -> Vars.ui.showText("[scarlet][[Server][white] ", popupPacket.message));
             } else if (object instanceof Packets.RoomClosedPacket closedPacket) {
                 closeReason = closedPacket.reason;
-                Core.app.post(() -> Vars.ui.showText("[scarlet][[Server][] ", closedPacket.reason.toString()));
+                Core.app.post(() -> Vars.ui.showText("[scarlet][[Server][white] ", closedPacket.reason.toString()));
             } else if (object instanceof Packets.RoomLinkPacket roomLinkPacket) {
                 // Ignore if the room id is received twice
                 if (roomId != null) {
