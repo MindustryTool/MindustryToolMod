@@ -75,10 +75,18 @@ public class ChatConfig {
     }
 
     public static float width() {
-        return Core.settings.getFloat("mindustrytool.chat.width", 1f);
+        return Core.settings.getFloat("mindustrytool.chat.width", 0.7f);
     }
 
     public static void width(float value) {
         Core.settings.put("mindustrytool.chat.width", value);
+    }
+
+    public static float height() {
+        return Core.settings.getFloat("mindustrytool.chat.height", 0.9f);
+    }
+
+    public static void height(float value) {
+        Core.settings.put("mindustrytool.chat.height", value);
     }
 }

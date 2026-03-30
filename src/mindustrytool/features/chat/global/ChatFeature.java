@@ -177,7 +177,7 @@ public class ChatFeature implements Feature {
         cont.stack(scaleSlider, scaleContent).width(width).left().padTop(4f).row();
 
         // Width
-        Slider widthSlider = new Slider(0.5f, 2.0f, 0.1f, false);
+        Slider widthSlider = new Slider(0.1f, 1.0f, 0.1f, false);
         widthSlider.setValue(ChatConfig.width());
         Label widthValue = new Label(String.format("%.0f%%", ChatConfig.width() * 100));
 
@@ -194,5 +194,24 @@ public class ChatFeature implements Feature {
         });
 
         cont.stack(widthSlider, widthContent).width(width).left().padTop(4f).row();
+
+        // Height
+        Slider heightSlider = new Slider(0.1f, 1.0f, 0.1f, false);
+        heightSlider.setValue(ChatConfig.height());
+        Label heightValue = new Label(String.format("%.0f%%", ChatConfig.height() * 100));
+
+        Table heightContent = new Table();
+        heightContent.touchable = Touchable.disabled;
+        heightContent.add("@height").left().growX();
+        heightContent.add(heightValue).padLeft(10f).right();
+
+        heightSlider.changed(() -> {
+            ChatConfig.height(heightSlider.getValue());
+            heightValue.setText(String.format("%.0f%%", ChatConfig.height() * 100));
+            if (overlay != null)
+                overlay.rebuild();
+        });
+
+        cont.stack(heightSlider, heightContent).width(width).left().padTop(4f).row();
     }
 }

@@ -142,6 +142,7 @@ public class ChatOverlay extends Table {
 
         float scale = ChatConfig.scale();
         float widthScale = ChatConfig.width();
+        float heightScale = ChatConfig.height();
 
         if (ChatConfig.collapsed()) {
             container.background(null);
@@ -205,11 +206,11 @@ public class ChatOverlay extends Table {
             container.add(buttonTable).grow();
         } else {
             container.background(Styles.black8);
-            float width = Core.graphics.getWidth() / Scl.scl() * 0.9f * widthScale;
-            float height = Core.graphics.getHeight() / Scl.scl() * 0.9f * scale;
+            float width = Core.graphics.getWidth() / Scl.scl() * widthScale;
+            float height = Core.graphics.getHeight() / Scl.scl() * heightScale;
 
-            float actualWidth = Math.min(width, 1900f * widthScale);
-            containerCell.size(actualWidth, Math.min(height, 1300f * scale));
+            float actualWidth = Math.min(width, 1900f);
+            containerCell.size(actualWidth, Math.min(height, 1300f));
 
             Table header = buildHeader(scale);
             container.add(header).growX().height(46 * scale).row();
