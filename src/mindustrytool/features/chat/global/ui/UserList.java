@@ -8,6 +8,7 @@ import arc.scene.ui.ScrollPane;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Align;
+import arc.util.Log;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.chat.global.ChatConfig;
@@ -56,9 +57,10 @@ public class UserList extends Table {
         float scale = ChatConfig.scale();
         countLabel.setFontScale(scale * 0.8f);
         ChatService.getInstance().getChatUserCount(currentChannelId, count -> {
-            countLabel.setText(count + " Members");
+            countLabel.setText(String.valueOf(count));
         }, e -> {
-            countLabel.setText("? Members");
+            countLabel.setText("?");
+            Log.err(e);
         });
 
         Seq<ChatUser> users = ChatStore.getInstance().getUsers(currentChannelId);

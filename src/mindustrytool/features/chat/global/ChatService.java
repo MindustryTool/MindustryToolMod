@@ -275,7 +275,7 @@ public class ChatService {
             return;
         }
 
-        AuthHttp.get(Config.API_v4_URL + "chats/users?channelId=" + channelId)
+        AuthHttp.get(Config.API_v4_URL + "chats/users/count?channelId=" + channelId)
                 .error(onError)
                 .submit(res -> {
                     try {
