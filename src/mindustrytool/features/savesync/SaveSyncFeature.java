@@ -28,8 +28,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public class SaveSyncFeature implements Feature {
-    private static final String SETTING_SLOT_ID = "mindustrytool.savesync.slotId";
-    private static final String SETTING_LAST_SYNC = "mindustrytool.savesync.lastSync";
+    private static final String SETTING_SLOT_ID = "mindustrytool.save-sync.slot-id";
+    private static final String SETTING_LAST_SYNC = "mindustrytool.save-sync.last-sync";
 
     private final Set<String> initialFilePaths = new HashSet<>();
 

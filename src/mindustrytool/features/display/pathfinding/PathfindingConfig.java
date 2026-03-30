@@ -3,11 +3,11 @@ package mindustrytool.features.display.pathfinding;
 import arc.Core;
 
 public class PathfindingConfig {
-    private static final String ZOOM_THRESHOLD_KEY = "mindustrytool.pathfinding.zoomThreshold";
+    private static final String ZOOM_THRESHOLD_KEY = "mindustrytool.pathfinding.zoom-threshold";
     private static final String OPACITY_KEY = "mindustrytool.pathfinding.opacity";
-    private static final String DRAW_UNIT_PATH_KEY = "mindustrytool.pathfinding.drawUnitPath";
-    private static final String DRAW_SPAWN_POINT_PATH_KEY = "mindustrytool.pathfinding.drawSpawnPointPath";
-    private static final String COST_TYPE_PREFIX = "mindustrytool.pathfinding.costType.";
+    private static final String DRAW_UNIT_PATH_KEY = "mindustrytool.pathfinding.draw-unit-path";
+    private static final String DRAW_SPAWN_POINT_PATH_KEY = "mindustrytool.pathfinding.draw-spawn-point-path";
+    private static final String COST_TYPE_PREFIX = "mindustrytool.pathfinding.cost-type.";
 
     private static float zoomThreshold;
     private static float opacity;

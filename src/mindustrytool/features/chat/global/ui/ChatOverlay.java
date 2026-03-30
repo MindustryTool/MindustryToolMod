@@ -25,9 +25,11 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustrytool.MdtKeybinds;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.auth.dto.LogoutEvent;
 import mindustrytool.features.chat.global.ChatConfig;
+import mindustrytool.features.chat.global.ChatFeature;
 import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
 import mindustrytool.features.chat.global.events.*;
@@ -140,6 +142,7 @@ public class ChatOverlay extends Table {
 
         float scale = ChatConfig.scale();
         float widthScale = ChatConfig.width();
+        float heightScale = ChatConfig.height();
 
         if (ChatConfig.collapsed()) {
             container.background(null);
@@ -203,11 +206,11 @@ public class ChatOverlay extends Table {
             container.add(buttonTable).grow();
         } else {
             container.background(Styles.black8);
-            float width = Core.graphics.getWidth() / Scl.scl() * 0.9f * widthScale;
-            float height = Core.graphics.getHeight() / Scl.scl() * 0.9f * scale;
+            float width = Core.graphics.getWidth() / Scl.scl() * widthScale;
+            float height = Core.graphics.getHeight() / Scl.scl() * heightScale;
 
-            float actualWidth = Math.min(width, 1900f * widthScale);
-            containerCell.size(actualWidth, Math.min(height, 1300f * scale));
+            float actualWidth = Math.min(width, 1900f);
+            containerCell.size(actualWidth, Math.min(height, 1300f));
 
             Table header = buildHeader(scale);
             container.add(header).growX().height(46 * scale).row();
@@ -288,25 +291,46 @@ public class ChatOverlay extends Table {
                     currentMobileTab = MobileTab.MEMBERS;
                     setup();
                 }).size(40 * scale).padRight(4 * scale);
+
+                header.button(Icon.settings, Styles.clearNonei, () -> {
+                    FeatureManager.getInstance()
+                            .get(ChatFeature.class)
+                            .setting()
+                            .get()
+                            .show();
+                }).size(40 * scale).padRight(4 * scale);
+
                 header.button(Icon.refresh, Styles.clearNonei, () -> {
                     ChatStore.getInstance().clearMessages();
                     if (currentChannelId != null) {
                         ChatService.getInstance().fetchMessages(currentChannelId, null);
                     }
                 }).size(40 * scale).padRight(4 * scale);
+
                 header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
             } else if (currentMobileTab == MobileTab.CHANNELS) {
                 header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(8 * scale);
                 Label title = header.add("@chat.channels").style(Styles.outlineLabel).padLeft(8 * scale).get();
                 title.setFontScale(scale);
                 header.add().growX();
+
+                header.button(Icon.settings, Styles.clearNonei, () -> {
+                    FeatureManager.getInstance()
+                            .get(ChatFeature.class)
+                            .setting()
+                            .get()
+                            .show();
+                }).size(40 * scale).padRight(4 * scale);
+
                 header.button(Icon.refresh, Styles.clearNonei, () -> {
                     ChatStore.getInstance().clearMessages();
                     String cid = ChatStore.getInstance().getCurrentChannelId();
                     if (cid != null)
                         ChatService.getInstance().fetchMessages(cid, null);
                 }).size(40 * scale).padRight(4 * scale);
+
                 header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
+
                 header.button(Icon.right, Styles.clearNonei, () -> {
                     currentMobileTab = MobileTab.MESSAGES;
                     setup();
@@ -316,16 +340,28 @@ public class ChatOverlay extends Table {
                     currentMobileTab = MobileTab.MESSAGES;
                     setup();
                 }).size(40 * scale).padLeft(4 * scale);
+
                 header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(4 * scale);
+
                 Label title = header.add("@chat.online-members").style(Styles.outlineLabel).padLeft(8 * scale).get();
                 title.setFontScale(scale);
                 header.add().growX();
+
+                header.button(Icon.settings, Styles.clearNonei, () -> {
+                    FeatureManager.getInstance()
+                            .get(ChatFeature.class)
+                            .setting()
+                            .get()
+                            .show();
+                }).size(40 * scale).padRight(4 * scale);
+
                 header.button(Icon.refresh, Styles.clearNonei, () -> {
                     ChatStore.getInstance().clearMessages();
                     String cid = ChatStore.getInstance().getCurrentChannelId();
                     if (cid != null)
                         ChatService.getInstance().fetchMessages(cid, null);
                 }).size(40 * scale).padRight(4 * scale);
+
                 header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
             }
         } else {
@@ -336,12 +372,22 @@ public class ChatOverlay extends Table {
             header.add(connectionIndicator).size(10 * scale).padLeft(8 * scale);
             header.add().growX();
 
+            header.button(Icon.settings, Styles.clearNonei, () -> {
+                FeatureManager.getInstance()
+                        .get(ChatFeature.class)
+                        .setting()
+                        .get()
+                        .show();
+            }).size(40 * scale).padRight(4 * scale);
+
             header.button(Icon.refresh, Styles.clearNonei, () -> {
                 ChatStore.getInstance().clearMessages();
                 String cid = ChatStore.getInstance().getCurrentChannelId();
-                if (cid != null)
+                if (cid != null) {
                     ChatService.getInstance().fetchMessages(cid, null);
+                }
             }).size(40 * scale).padRight(4 * scale);
+
             header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
         }
         return header;
@@ -369,7 +415,7 @@ public class ChatOverlay extends Table {
             }
         } else {
             float leftWidth = Math.min(160f * scale, actualWidth * 0.25f);
-            float rightWidthExp = Math.min(280f * scale, actualWidth * 0.35f);
+            float rightWidthExp = Math.min(350f * scale, actualWidth * 0.35f);
             float rightWidthCol = 48f * scale;
 
             Table leftSide = new Table();

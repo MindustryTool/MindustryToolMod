@@ -6,7 +6,7 @@ import mindustrytool.services.PlayerConnectService;
 
 public class PlayerConnectProviders {
     public static final String PUBLIC_PROVIDER_URL = "";
-    public static final String PLAYER_CONNECT_PROVIDER_PERSISTENT_KEY = "player-connect-providers";
+    public static final String PLAYER_CONNECT_PROVIDER_PERSISTENT_KEY = "mindustrytool.player-connect.providers";
     public static final ArrayMap<String, String> online = new ArrayMap<>(),
             custom = new ArrayMap<>();
     private static final PlayerConnectService playerConnectService = new PlayerConnectService();

@@ -258,7 +258,7 @@ public class GodModeDialogs {
                 dialog.remove();
 
                 if (amount[0] > 0) {
-                    TapListener.select((x, y) -> {
+                    TapListener.getInstance().select((x, y) -> {
                         onSpawn.accept(unit, amount[0], selectedTeam[0], x, y);
                     });
                 } else {
@@ -366,7 +366,7 @@ public class GodModeDialogs {
 
             t.button("Place", Icon.hammer, () -> {
                 dialog.remove();
-                TapListener.select((x, y) -> {
+                TapListener.getInstance().select((x, y) -> {
                     onPlace.accept(block, selectedTeam[0], x, y);
                 });
             }).growX().pad(5).maxWidth(300);

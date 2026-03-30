@@ -125,9 +125,6 @@ public class MessageList extends Table {
             rebuild();
             scrollToBottom();
         });
-        Events.on(LoadingMessagesEvent.class, e -> {
-            // loadingTable visibility updates automatically
-        });
     }
 
     public void rebuild() {

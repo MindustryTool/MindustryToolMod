@@ -1,6 +1,7 @@
 package mindustrytool.features.chat.pretty;
 
 import arc.Core;
+import arc.scene.event.Touchable;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextArea;
 import arc.scene.ui.TextField;
@@ -101,7 +102,7 @@ public class PrettyChatSettingsDialog extends BaseDialog {
             card.clicked(toggleAction);
 
             Table info = new Table();
-            info.touchable(() -> arc.scene.event.Touchable.disabled);
+            info.touchable(() -> Touchable.disabled);
             info.add(p.getName()).left().color(isEnabled ? mindustry.graphics.Pal.accent : arc.graphics.Color.white)
                     .row();
 

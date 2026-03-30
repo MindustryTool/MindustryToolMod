@@ -9,6 +9,7 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
 import arc.math.geom.Rect;
+import arc.scene.event.Touchable;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
@@ -87,7 +88,7 @@ public class RangeDisplay implements Feature {
             opacityValue.setColor(Color.lightGray);
 
             Table opacityContent = new Table();
-            opacityContent.touchable = arc.scene.event.Touchable.disabled;
+            opacityContent.touchable = Touchable.disabled;
             opacityContent.margin(3f, 33f, 3f, 33f);
             opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
             opacityContent.add(opacityValue).padLeft(10f).right();

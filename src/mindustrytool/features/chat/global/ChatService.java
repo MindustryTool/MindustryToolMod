@@ -250,6 +250,7 @@ public class ChatService {
             onError.get(new IllegalArgumentException("Channel ID cannot be null"));
             return;
         }
+
         AuthHttp.get(Config.API_v4_URL + "chats/users?channelId=" + channelId)
                 .error(onError)
                 .submit(res -> {
@@ -262,6 +263,24 @@ public class ChatService {
                         } else {
                             Core.app.post(() -> onSuccess.get(users));
                         }
+                    } catch (Exception e) {
+                        Core.app.post(() -> onError.get(e));
+                    }
+                });
+    }
+
+    public void getChatUserCount(String channelId, Cons<Integer> onSuccess, Cons<Throwable> onError) {
+        if (channelId == null) {
+            onError.get(new IllegalArgumentException("Channel ID cannot be null"));
+            return;
+        }
+
+        AuthHttp.get(Config.API_v4_URL + "chats/users/count?channelId=" + channelId)
+                .error(onError)
+                .submit(res -> {
+                    try {
+                        Integer count = Integer.parseInt(res.getResultAsString());
+                        Core.app.post(() -> onSuccess.get(count));
                     } catch (Exception e) {
                         Core.app.post(() -> onError.get(e));
                     }

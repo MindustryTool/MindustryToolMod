@@ -6,6 +6,7 @@ import java.util.Optional;
 import arc.ApplicationListener;
 import arc.Core;
 import arc.Events;
+import arc.scene.event.Touchable;
 import arc.scene.ui.Dialog;
 import arc.util.Log;
 import arc.struct.Seq;
@@ -21,6 +22,8 @@ import mindustrytool.features.auth.dto.LoginEvent;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.events.ChatMessageReceive;
 import mindustrytool.features.chat.global.ui.ChatOverlay;
+
+import mindustrytool.features.chat.global.dto.ChannelDto;
 
 public class ChatFeature implements Feature {
     private ChatOverlay overlay;
@@ -48,10 +51,17 @@ public class ChatFeature implements Feature {
 
                 store.addMessages(channelId, Seq.with(msg));
 
+                ChannelDto channel = store.getChannels().find(c -> c.id.equals(channelId));
+                if (channel != null) {
+                    channel.lastMessageId = msg.id;
+                }
+
                 try {
                     if ((ChatConfig.collapsed() || !channelId.equals(currentChannelId))
                             && ChatConfig.lastRead().isBefore(Instant.parse(msg.createdAt))) {
                         store.addUnread(channelId, 1);
+                    } else if (!ChatConfig.collapsed() && channelId.equals(currentChannelId)) {
+                        store.setLastReadMessageId(channelId, msg.id);
                     }
                 } catch (Exception e) {
                     Log.err(e);
@@ -134,6 +144,7 @@ public class ChatFeature implements Feature {
         Label opacityValue = new Label(String.format("%.0f%%", ChatConfig.opacity() * 100));
 
         Table opacityContent = new Table();
+        opacityContent.touchable = Touchable.disabled;
         opacityContent.add("@opacity").left().growX();
         opacityContent.add(opacityValue).padLeft(10f).right();
 
@@ -152,6 +163,7 @@ public class ChatFeature implements Feature {
         Label scaleValue = new Label(String.format("%.0f%%", ChatConfig.scale() * 100));
 
         Table scaleContent = new Table();
+        scaleContent.touchable = Touchable.disabled;
         scaleContent.add("@scale").left().growX();
         scaleContent.add(scaleValue).padLeft(10f).right();
 
@@ -165,11 +177,12 @@ public class ChatFeature implements Feature {
         cont.stack(scaleSlider, scaleContent).width(width).left().padTop(4f).row();
 
         // Width
-        Slider widthSlider = new Slider(0.5f, 2.0f, 0.1f, false);
+        Slider widthSlider = new Slider(0.1f, 1.0f, 0.1f, false);
         widthSlider.setValue(ChatConfig.width());
         Label widthValue = new Label(String.format("%.0f%%", ChatConfig.width() * 100));
 
         Table widthContent = new Table();
+        widthContent.touchable = Touchable.disabled;
         widthContent.add("@width").left().growX();
         widthContent.add(widthValue).padLeft(10f).right();
 
@@ -181,5 +194,24 @@ public class ChatFeature implements Feature {
         });
 
         cont.stack(widthSlider, widthContent).width(width).left().padTop(4f).row();
+
+        // Height
+        Slider heightSlider = new Slider(0.1f, 1.0f, 0.1f, false);
+        heightSlider.setValue(ChatConfig.height());
+        Label heightValue = new Label(String.format("%.0f%%", ChatConfig.height() * 100));
+
+        Table heightContent = new Table();
+        heightContent.touchable = Touchable.disabled;
+        heightContent.add("@height").left().growX();
+        heightContent.add(heightValue).padLeft(10f).right();
+
+        heightSlider.changed(() -> {
+            ChatConfig.height(heightSlider.getValue());
+            heightValue.setText(String.format("%.0f%%", ChatConfig.height() * 100));
+            if (overlay != null)
+                overlay.rebuild();
+        });
+
+        cont.stack(heightSlider, heightContent).width(width).left().padTop(4f).row();
     }
 }

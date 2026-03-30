@@ -52,7 +52,7 @@ public class SmartDrillSettingDialog extends BaseDialog {
                 configs.label(() -> String.valueOf(SmartDrillFeature.getMaxTiles(drill))).padRight(10).width(40);
 
                 configs.slider(20, 200, 1, SmartDrillFeature.getMaxTiles(drill), slider -> {
-                    Core.settings.put("mindustrytool.feature.smart-drill.maxtiles." + drill.name, (int) slider);
+                    Core.settings.put("mindustrytool.smart-drill.max-tiles." + drill.name, (int) slider);
                 }).growX();
                 configs.row();
             }).growX();

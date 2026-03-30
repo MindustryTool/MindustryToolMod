@@ -166,7 +166,7 @@ public class QuickAccessHud extends Table implements Feature {
                         .update(l -> l.setColor(f.isEnabled() ? Color.white : Pal.gray));
             }, Styles.clearNonei, () -> {
                 if (!longPressed[0]) {
-                    f.toggle();
+                    FeatureManager.getInstance().toggle(f);
                 }
             })
                     .size(buttonSize)

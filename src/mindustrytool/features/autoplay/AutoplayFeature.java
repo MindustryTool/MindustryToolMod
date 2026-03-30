@@ -23,7 +23,7 @@ public class AutoplayFeature implements Feature {
     private final Seq<AutoplayTask> tasks = new Seq<>();
     private AutoplaySettingDialog dialog;
     private AutoplayTask currentTask;
-    private boolean isFollowUnit = Core.settings.getBool("mindustrytool.autoplay.followUnit", true);
+    private boolean isFollowUnit = Core.settings.getBool("mindustrytool.autoplay.follow-unit", true);
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -50,7 +50,7 @@ public class AutoplayFeature implements Feature {
         // Load task order
 
         @SuppressWarnings("unchecked")
-        Seq<String> savedOrder = Core.settings.getJson("mindustrytool.autoplay.taskOrder", Seq.class, Seq::new);
+        Seq<String> savedOrder = Core.settings.getJson("mindustrytool.autoplay.task-order", Seq.class, Seq::new);
 
         if (savedOrder != null && savedOrder.size > 0) {
             Seq<AutoplayTask> ordered = new Seq<>();
@@ -224,12 +224,12 @@ public class AutoplayFeature implements Feature {
 
     public void setFollowUnit(boolean followUnit) {
         isFollowUnit = followUnit;
-        Core.settings.put("mindustrytool.autoplay.followUnit", followUnit);
+        Core.settings.put("mindustrytool.autoplay.follow-unit", followUnit);
     }
 
     public void saveTaskOrder() {
         Seq<String> ids = new Seq<>();
         tasks.each(t -> ids.add(t.getId()));
-        Core.settings.putJson("mindustrytool.autoplay.taskOrder", ids.toArray(String.class));
+        Core.settings.putJson("mindustrytool.autoplay.task-order", ids.toArray(String.class));
     }
 }

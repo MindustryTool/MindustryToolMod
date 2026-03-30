@@ -6,6 +6,7 @@ import arc.input.KeyBind;
 import arc.input.KeyCode;
 import mindustry.game.EventType.Trigger;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 
 public class MdtKeybinds {
 
@@ -19,7 +20,7 @@ public class MdtKeybinds {
             boolean noInputFocused = !Core.scene.hasField();
 
             if (noInputFocused && Core.input.keyRelease(keyBind)) {
-                Core.app.post(() -> feature.toggle());
+                Core.app.post(() -> FeatureManager.getInstance().toggle(feature));
             }
         });
     }

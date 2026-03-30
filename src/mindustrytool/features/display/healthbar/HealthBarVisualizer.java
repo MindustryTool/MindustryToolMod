@@ -5,6 +5,7 @@ import arc.Events;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
+import arc.scene.event.Touchable;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
@@ -182,7 +183,7 @@ public class HealthBarVisualizer implements Feature {
         zoomValue.setColor(HealthBarConfig.zoomThreshold <= 0.01f ? Color.gray : Color.lightGray);
 
         Table zoomContent = new Table();
-        zoomContent.touchable = arc.scene.event.Touchable.disabled;
+        zoomContent.touchable = Touchable.disabled;
         zoomContent.margin(3f, 33f, 3f, 33f);
         zoomContent.add("@health-bar.min-zoom", Styles.outlineLabel).left().growX();
         zoomContent.add(zoomValue).padLeft(10f).right();
@@ -206,7 +207,7 @@ public class HealthBarVisualizer implements Feature {
         opacityValue.setColor(Color.lightGray);
 
         Table opacityContent = new Table();
-        opacityContent.touchable = arc.scene.event.Touchable.disabled;
+        opacityContent.touchable = Touchable.disabled;
         opacityContent.margin(3f, 33f, 3f, 33f);
         opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
         opacityContent.add(opacityValue).padLeft(10f).right();
@@ -228,7 +229,7 @@ public class HealthBarVisualizer implements Feature {
         scaleValue.setColor(Color.lightGray);
 
         Table scaleContent = new Table();
-        scaleContent.touchable = arc.scene.event.Touchable.disabled;
+        scaleContent.touchable = Touchable.disabled;
         scaleContent.margin(3f, 33f, 3f, 33f);
         scaleContent.add("@scale", Styles.outlineLabel).left().growX();
         scaleContent.add(scaleValue).padLeft(10f).right();
@@ -250,7 +251,7 @@ public class HealthBarVisualizer implements Feature {
         widthValue.setColor(Color.lightGray);
 
         Table widthContent = new Table();
-        widthContent.touchable = arc.scene.event.Touchable.disabled;
+        widthContent.touchable = Touchable.disabled;
         widthContent.margin(3f, 33f, 3f, 33f);
         widthContent.add("@width", Styles.outlineLabel).left().growX();
         widthContent.add(widthValue).padLeft(10f).right();

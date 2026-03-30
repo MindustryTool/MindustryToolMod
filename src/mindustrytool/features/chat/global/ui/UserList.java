@@ -8,9 +8,11 @@ import arc.scene.ui.ScrollPane;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Align;
+import arc.util.Log;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.chat.global.ChatConfig;
+import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
 import mindustrytool.features.chat.global.events.*;
 import mindustrytool.features.chat.global.dto.ChatUser;
@@ -19,8 +21,15 @@ import mindustrytool.ui.NetworkImage;
 public class UserList extends Table {
     private final Table userListTable;
     private final ScrollPane scrollPane;
+    private final Label countLabel;
 
     public UserList() {
+        top().left();
+
+        countLabel = new Label("");
+        countLabel.setColor(Color.gray);
+        add(countLabel).padBottom(8).padLeft(8).left().row();
+
         userListTable = new Table();
         userListTable.top().left();
 
@@ -35,6 +44,21 @@ public class UserList extends Table {
             }
         });
         Events.on(CurrentChannelChangeEvent.class, e -> rebuild());
+        Events.on(CurrentChannelChangeEvent.class, e -> updateUserCount());
+
+        updateUserCount();
+    }
+
+    private void updateUserCount() {
+        String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
+        if (currentChannelId != null) {
+            ChatService.getInstance().getChatUserCount(currentChannelId, count -> {
+                countLabel.setText(String.valueOf(count));
+            }, e -> {
+                countLabel.setText("?");
+                Log.err(e);
+            });
+        }
     }
 
     public void rebuild() {
@@ -42,10 +66,14 @@ public class UserList extends Table {
         userListTable.top().left();
 
         String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
-        if (currentChannelId == null) return;
+        if (currentChannelId == null) {
+            return;
+        }
+
+        float scale = ChatConfig.scale();
+        countLabel.setFontScale(scale * 0.8f);
 
         Seq<ChatUser> users = ChatStore.getInstance().getUsers(currentChannelId);
-        float scale = ChatConfig.scale();
 
         for (ChatUser user : users) {
             Table card = new Table();
@@ -74,7 +102,8 @@ public class UserList extends Table {
                 });
             }).growX().left();
 
-            userListTable.add(card).growX().minWidth(0).padBottom(8 * scale).padLeft(8 * scale).padRight(8 * scale).row();
+            userListTable.add(card).growX().minWidth(0).padBottom(8 * scale).padLeft(8 * scale).padRight(8 * scale)
+                    .row();
         }
         userListTable.pack();
     }

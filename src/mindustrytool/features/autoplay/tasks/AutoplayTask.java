@@ -16,11 +16,11 @@ public interface AutoplayTask {
     String getName();
 
     default boolean isEnabled() {
-        return Core.settings.getBool("autoplay.task." + getId() + ".enabled", true);
+        return Core.settings.getBool("mindustrytool.autoplay.task." + getId() + ".enabled", true);
     }
 
     default void setEnabled(boolean enabled) {
-        Core.settings.put("autoplay.task." + getId() + ".enabled", enabled);
+        Core.settings.put("mindustrytool.autoplay.task." + getId() + ".enabled", enabled);
     }
 
     default void init() {

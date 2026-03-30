@@ -2,6 +2,7 @@ package mindustrytool.features.chat.global.ui;
 
 import arc.Events;
 import arc.graphics.Color;
+import arc.scene.ui.Label;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.layout.Table;
@@ -48,21 +49,35 @@ public class ChannelList extends Table {
 
         for (ChannelDto channel : channels) {
             boolean isSelected = channel.id.equals(currentChannelId);
-            TextButton btn = new TextButton("# " + channel.name, isSelected ? Styles.togglet : Styles.cleart);
+            int unread = store.getUnreadByChannel(channel.id);
+            String unreadString = (unread > 0 ? " (" + (unread > 99 ? "99+" : unread) + ")" : "");
+
+            boolean hasNewUnreadMessage = unread == 0 && channel.lastMessageId != null
+                    && !channel.lastMessageId.equals(store.getLastReadMessageId(channel.id));
+
+            TextButton btn = new TextButton("# " + channel.name + unreadString,
+                    isSelected ? Styles.togglet : Styles.cleart);
+
             btn.getLabel().setAlignment(Align.left);
             btn.getLabel().setFontScale(scale);
             btn.getLabel().setEllipsis(true);
-            if (btn.getLabelCell() != null)
-                btn.getLabelCell().minWidth(0);
+            if (btn.getLabelCell() != null) {
+                btn.getLabelCell().growX().minWidth(0).left();
+            }
+
+            if (hasNewUnreadMessage) {
+                Label indicatorLabel = new Label("[white]\u25CF[]");
+                indicatorLabel.setFontScale(scale);
+                indicatorLabel.setAlignment(Align.right);
+                btn.add(indicatorLabel).right().padLeft(4 * scale);
+            }
 
             if (isSelected) {
                 btn.setChecked(true);
             }
 
-            int unread = store.getUnreadByChannel(channel.id);
-            if (unread > 0 && !isSelected) {
+            if (isSelected) {
                 btn.getLabel().setColor(Color.white);
-                btn.setText("# " + channel.name + " (" + (unread > 99 ? "99+" : unread) + ")");
             } else {
                 btn.getLabel().setColor(Color.lightGray);
             }
@@ -72,6 +87,9 @@ public class ChannelList extends Table {
                     store.setCurrentChannelId(channel.id);
                     ChatService.getInstance().fetchMessages(channel.id, null);
                     ChatService.getInstance().fetchChatUsers(channel.id);
+                }
+                if (channel.lastMessageId != null) {
+                    store.setLastReadMessageId(channel.id, channel.lastMessageId);
                 }
                 if (onChannelSelect != null) {
                     onChannelSelect.run();
