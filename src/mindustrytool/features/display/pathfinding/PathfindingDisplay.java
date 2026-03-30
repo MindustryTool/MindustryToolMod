@@ -8,48 +8,63 @@ import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
 import arc.math.geom.Point2;
 import arc.math.geom.Rect;
-import arc.scene.event.Touchable;
 import arc.scene.ui.Dialog;
-import arc.scene.ui.Label;
-import arc.scene.ui.Slider;
-import arc.scene.ui.layout.Table;
 import arc.struct.IntSet;
-import arc.struct.LongMap;
-import arc.struct.LongSeq;
-import arc.struct.Seq;
+import arc.struct.IntSet.IntSetIterator;
+import arc.util.Interval;
+import arc.util.Log;
 import arc.util.Time;
 import arc.util.Tmp;
 import mindustry.Vars;
 import mindustry.ai.Pathfinder;
-import mindustry.content.Blocks;
 import mindustry.game.Team;
-import mindustry.game.EventType.TileOverlayChangeEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.gen.Groups;
-import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustry.graphics.Layer;
-import mindustry.ui.Styles;
-import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.Tile;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import static mindustry.Vars.*;
 
 public class PathfindingDisplay implements Feature {
-    private final LongMap<PathfindingCache> pathCache = new LongMap<>();
-    private final LongMap<PathfindingCache> spawnPathCache = new LongMap<>();
-    private final LongSeq keysToRemove = new LongSeq();
-    private final IntSet activeTeams = new IntSet();
+    private static final int MAX_STEPS_VERY_HIGH = 50;
+    private static final int MAX_STEPS_HIGH = 100;
+    private static final int MAX_STEPS_MEDIUM = 150;
+    private static final int MAX_STEPS_LOW = 250;
 
-    private Seq<Tile> spawns = new Seq<>(false);
+    private static final int MAX_UPDATES_PER_FRAME = 3;
+    private static final float CACHE_UPDATE_INTERVAL_UNIT = 15f;
+    private static final float CACHE_CLEANUP_AGE_UNIT = 60f;
+    private static final float CACHE_CLEANUP_AGE_SPAWN = 60f;
+    private static final float CACHE_UPDATE_INTERVAL_SPAWN = 60f;
+
+    private static final int CULLING_THRESHOLD = 300;
+    private static final float CULLING_GROW = 500f;
+
+    private static final int MAX_SPAWN_PATH_STEPS = 1000;
+
+    private static final int TIMER_CLEANUP = 0;
+    private static final float CLEANUP_SCHEDULE_FRAMES = 60f;
+
+    private final PathfindingCacheManager pathCache = new PathfindingCacheManager();
+    private final PathfindingCacheManager spawnPathCache = new PathfindingCacheManager();
+
+    private final IntSet activeTeams = new IntSet();
+    private final Interval timer = new Interval(1);
+
     private boolean isEnabled;
-    private BaseDialog settingsDialog;
+    private final PathfindingSettingsUI settingsUI = new PathfindingSettingsUI();
+
+    private int currentFrameUpdates;
+    private int currentMaxSteps;
+    private float currentOpacity;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -69,26 +84,10 @@ public class PathfindingDisplay implements Feature {
         Events.run(Trigger.draw, this::draw);
 
         Events.on(WorldLoadEvent.class, e -> reset());
-        Events.on(TileOverlayChangeEvent.class, e -> {
-            if (e.previous == Blocks.spawn) {
-                spawns.remove(e.tile);
-            }
-
-            if (e.overlay == Blocks.spawn) {
-                spawns.add(e.tile);
-            }
-        });
     }
 
     public void reset() {
-        spawns.clear();
         spawnPathCache.clear();
-
-        for (Tile tile : world.tiles) {
-            if (tile.overlay() == Blocks.spawn) {
-                spawns.add(tile);
-            }
-        }
     }
 
     @Override
@@ -105,97 +104,7 @@ public class PathfindingDisplay implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
-        if (settingsDialog == null) {
-            settingsDialog = new BaseDialog("@pathfinding.settings.title");
-            settingsDialog.name = "pathfindingSettingDialog";
-            settingsDialog.addCloseButton();
-            settingsDialog.shown(this::rebuildSettings);
-            settingsDialog.buttons.button("@reset", Icon.refresh, () -> {
-                PathfindingConfig.setZoomThreshold(0.5f);
-                rebuildSettings();
-            }).size(250, 64);
-        }
-        return Optional.of(settingsDialog);
-    }
-
-    private void rebuildSettings() {
-        Table settingsContainer = settingsDialog.cont;
-        settingsContainer.clear();
-        settingsContainer.defaults().pad(6).left();
-
-        float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
-        float currentZoom = PathfindingConfig.getZoomThreshold();
-
-        Slider zoomSlider = new Slider(0f, 5f, 0.1f, false);
-        zoomSlider.setValue(currentZoom);
-
-        Label zoomValueLabel = new Label(
-                currentZoom <= 0.01f ? "@off" : String.format("%.1fx", currentZoom),
-                Styles.outlineLabel);
-        zoomValueLabel.setColor(currentZoom <= 0.01f ? Color.gray : Color.lightGray);
-
-        Table zoomContent = new Table();
-        zoomContent.touchable = Touchable.disabled;
-        zoomContent.margin(3f, 33f, 3f, 33f);
-        zoomContent.add("@health-bar.min-zoom", Styles.outlineLabel).left().growX();
-        zoomContent.add(zoomValueLabel).padLeft(10f).right();
-
-        zoomSlider.changed(() -> {
-            float newZoomValue = zoomSlider.getValue();
-            PathfindingConfig.setZoomThreshold(newZoomValue);
-            zoomValueLabel.setText(newZoomValue <= 0.01f ? "@off" : String.format("%.1fx", newZoomValue));
-            zoomValueLabel.setColor(newZoomValue <= 0.01f ? Color.gray : Color.lightGray);
-        });
-
-        settingsContainer.stack(zoomSlider, zoomContent).width(width).left().padTop(4f).row();
-
-        Slider opacitySlider = new Slider(0f, 1f, 0.05f, false);
-        opacitySlider.setValue(PathfindingConfig.getOpacity());
-
-        Label opacityValue = new Label(
-                String.format("%.0f%%", PathfindingConfig.getOpacity() * 100),
-                Styles.outlineLabel);
-        opacityValue.setColor(Color.lightGray);
-
-        Table opacityContent = new Table();
-        opacityContent.touchable = Touchable.disabled;
-        opacityContent.margin(3f, 33f, 3f, 33f);
-        opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
-        opacityContent.add(opacityValue).padLeft(10f).right();
-
-        opacitySlider.changed(() -> {
-            PathfindingConfig.setOpacity(opacitySlider.getValue());
-            opacityValue.setText(String.format("%.0f%%", PathfindingConfig.getOpacity() * 100));
-        });
-
-        settingsContainer.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
-
-        settingsContainer.check("@pathfinding.draw-unit-path", PathfindingConfig.isDrawUnitPath(), (checked) -> {
-            PathfindingConfig.setDrawUnitPath(checked);
-        }).left().row();
-
-        settingsContainer
-                .check("@pathfinding.draw-spawn-point-path", PathfindingConfig.isDrawSpawnPointPath(), (checked) -> {
-                    PathfindingConfig.setDrawSpawnPointPath(checked);
-                    rebuildSettings();
-                }).left().row();
-
-        if (PathfindingConfig.isDrawSpawnPointPath()) {
-            Table costTable = new Table();
-            costTable.left().defaults().left().padLeft(16);
-
-            String[] costNames = { "@pathfinding.cost.ground", "@pathfinding.cost.legs", "@pathfinding.cost.water",
-                    "@pathfinding.cost.neoplasm", "@pathfinding.cost.flat", "@pathfinding.cost.hover" };
-
-            for (int i = 0; i < costNames.length; i++) {
-                int index = i;
-                costTable.check(costNames[i], PathfindingConfig.isCostTypeEnabled(index), c -> {
-                    PathfindingConfig.setCostTypeEnabled(index, c);
-                }).padBottom(4).row();
-            }
-
-            settingsContainer.add(costTable).left().row();
-        }
+        return Optional.of(settingsUI.getDialog());
     }
 
     private void draw() {
@@ -206,9 +115,11 @@ public class PathfindingDisplay implements Feature {
         float zoomThreshold = PathfindingConfig.getZoomThreshold();
         float currentZoom = renderer.getScale();
 
-        if (-currentZoom > -zoomThreshold) {
+        if (currentZoom < zoomThreshold) {
             return;
         }
+
+        currentOpacity = PathfindingConfig.getOpacity();
 
         if (PathfindingConfig.isDrawSpawnPointPath()) {
             drawSpawnPointPath();
@@ -217,44 +128,38 @@ public class PathfindingDisplay implements Feature {
         if (PathfindingConfig.isDrawUnitPath()) {
             drawUnitPath();
         }
+
+        if (timer.get(TIMER_CLEANUP, CLEANUP_SCHEDULE_FRAMES)) {
+            float time = Time.time;
+            pathCache.cleanup(time, CACHE_CLEANUP_AGE_UNIT);
+            spawnPathCache.cleanup(time, CACHE_CLEANUP_AGE_SPAWN);
+        }
     }
 
     private void drawUnitPath() {
         Draw.z(Layer.overlayUI);
 
         int totalUnits = Groups.unit.size();
-        int maxSteps = (totalUnits > 2000) ? 50 : (totalUnits > 1000) ? 100 : (totalUnits > 500) ? 150 : 250;
-        boolean useCulling = totalUnits > 300;
-        Rect cullBounds = useCulling ? Core.camera.bounds(Tmp.r1).grow(500f) : null;
+        currentMaxSteps = (totalUnits > 2000) ? MAX_STEPS_VERY_HIGH
+                : (totalUnits > 1000) ? MAX_STEPS_HIGH : (totalUnits > 500) ? MAX_STEPS_MEDIUM : MAX_STEPS_LOW;
+
+        boolean useCulling = totalUnits > CULLING_THRESHOLD;
+        Rect cullBounds = useCulling ? Core.camera.bounds(Tmp.r1).grow(CULLING_GROW) : null;
         float currentTime = Time.time;
-        int[] updatesThisFrame = { 0 };
+        currentFrameUpdates = 0;
 
         if (useCulling) {
             Groups.unit.intersect(cullBounds.x, cullBounds.y, cullBounds.width, cullBounds.height, unit -> {
-                processUnitPath(unit, maxSteps, currentTime, updatesThisFrame);
+                processUnitPath(unit, currentTime);
             });
         } else {
             for (Unit unit : Groups.unit) {
-                processUnitPath(unit, maxSteps, currentTime, updatesThisFrame);
-            }
-        }
-
-        if (Core.graphics.getFrameId() % 60 == 0) {
-            keysToRemove.clear();
-
-            for (LongMap.Entry<PathfindingCache> entry : pathCache.entries()) {
-                if ((currentTime - entry.value.lastUsedTime) > 60f) {
-                    keysToRemove.add(entry.key);
-                }
-            }
-
-            for (int i = 0; i < keysToRemove.size; i++) {
-                pathCache.remove(keysToRemove.get(i));
+                processUnitPath(unit, currentTime);
             }
         }
     }
 
-    private void processUnitPath(Unit unit, int maxSteps, float currentTime, int[] updatesThisFrame) {
+    private void processUnitPath(Unit unit, float currentTime) {
         if (unit.team == player.team()) {
             return;
         }
@@ -265,18 +170,18 @@ public class PathfindingDisplay implements Feature {
 
         PathfindingCache cacheEntry = pathCache.get(cacheKey);
 
-        if (cacheEntry == null || (currentTime - cacheEntry.lastUpdateTime) > 15f) {
+        if (cacheEntry == null || (currentTime - cacheEntry.lastUpdateTime) > CACHE_UPDATE_INTERVAL_UNIT) {
             if (cacheEntry == null) {
                 cacheEntry = new PathfindingCache();
-                cacheEntry.data = new float[250 * 2];
+                cacheEntry.data = new float[MAX_STEPS_LOW * 2];
                 pathCache.put(cacheKey, cacheEntry);
             }
 
-            if (updatesThisFrame[0] < 3) {
+            if (currentFrameUpdates < MAX_UPDATES_PER_FRAME) {
                 cacheEntry.size = 0;
-                recalculatePath(unit, cacheEntry, maxSteps);
+                recalculatePath(unit, cacheEntry, currentMaxSteps);
                 cacheEntry.lastUpdateTime = currentTime + Mathf.random(3f, 8f);
-                updatesThisFrame[0]++;
+                currentFrameUpdates++;
             }
         }
 
@@ -291,7 +196,7 @@ public class PathfindingDisplay implements Feature {
             cacheEntry.data[1] = unit.y;
         }
 
-        drawFromCache(cacheEntry, unit.team.color, maxSteps);
+        drawFromCache(cacheEntry, unit.team.color, currentMaxSteps);
     }
 
     private void recalculatePath(Unit unit, PathfindingCache cacheEntry, int maxSteps) {
@@ -320,10 +225,13 @@ public class PathfindingDisplay implements Feature {
 
         for (int i = 0; i < maxSteps; i++) {
             Tile nextTile = pathfinder.getTargetTile(currentTile, field);
-            if (nextTile == null || nextTile == currentTile)
+            if (nextTile == null || nextTile == currentTile) {
                 break;
-            if (dataIndex >= cacheEntry.data.length - 2)
+            }
+
+            if (dataIndex >= cacheEntry.data.length - 2) {
                 break;
+            }
 
             cacheEntry.data[dataIndex++] = nextTile.worldx();
             cacheEntry.data[dataIndex++] = nextTile.worldy();
@@ -351,7 +259,7 @@ public class PathfindingDisplay implements Feature {
             float nextX = cacheEntry.data[(i + 1) * 2];
             float nextY = cacheEntry.data[(i + 1) * 2 + 1];
 
-            Draw.color(pathColor, (1f - ((float) i / maxSteps)) * PathfindingConfig.getOpacity());
+            Draw.color(pathColor, (1f - ((float) i / maxSteps)) * currentOpacity);
             Lines.line(currentX, currentY, nextX, nextY);
 
             currentX = nextX;
@@ -369,7 +277,6 @@ public class PathfindingDisplay implements Feature {
 
         float currentTime = Time.time;
 
-        // Collect unique enemy teams
         activeTeams.clear();
         for (var spawnPoint : Vars.state.rules.spawns) {
             var team = spawnPoint.team == null ? Vars.state.rules.waveTeam : spawnPoint.team;
@@ -378,7 +285,7 @@ public class PathfindingDisplay implements Feature {
             }
         }
 
-        for (arc.struct.IntSet.IntSetIterator it = activeTeams.iterator(); it.hasNext;) {
+        for (IntSetIterator it = activeTeams.iterator(); it.hasNext;) {
             int teamId = it.next();
             Team team = Team.get(teamId);
 
@@ -387,19 +294,22 @@ public class PathfindingDisplay implements Feature {
                     continue;
                 }
 
-                for (var spawnTile : spawns) {
+                for (var spawnTile : Vars.spawner.getSpawns()) {
                     long key = ((long) spawnTile.pos() << 32) | ((long) costType << 16) | (long) team.id;
                     PathfindingCache cache = spawnPathCache.get(key);
 
-                    if (cache == null || (currentTime - cache.lastUpdateTime) > 60f) {
-                        if (cache == null) {
-                            cache = new PathfindingCache();
-                            cache.data = new float[2048];
-                            spawnPathCache.put(key, cache);
-                        }
+                    if (cache == null) {
+                        cache = new PathfindingCache();
+                        cache.data = new float[2048];
+                        spawnPathCache.put(key, cache);
+                    }
+
+                    if ((currentTime - cache.lastUpdateTime) > CACHE_UPDATE_INTERVAL_SPAWN) {
                         updateSpawnPathCache(cache, spawnTile, team, costType);
                         cache.lastUpdateTime = currentTime + Mathf.random(0f, 20f);
                     }
+
+                    cache.lastUsedTime = currentTime;
 
                     if (cache.size > 0) {
                         drawSpawnPathFromCache(cache, team.color);
@@ -414,6 +324,7 @@ public class PathfindingDisplay implements Feature {
     private void updateSpawnPathCache(PathfindingCache cache, Tile startTile, Team team, int costType) {
         int fieldType = Pathfinder.fieldCore;
         Pathfinder.Flowfield field = pathfinder.getField(team, costType, fieldType);
+
         if (field == null) {
             cache.size = 0;
             return;
@@ -422,18 +333,27 @@ public class PathfindingDisplay implements Feature {
         Tile currentTile = startTile;
         float segmentStartX = startTile.worldx();
         float segmentStartY = startTile.worldy();
+
         int lastDx = -2, lastDy = -2;
         int dataIndex = 0;
 
-        if (dataIndex + 2 > cache.data.length)
-            cache.data = java.util.Arrays.copyOf(cache.data, cache.data.length * 2);
+        if (dataIndex + 2 > cache.data.length) {
+            cache.data = Arrays.copyOf(cache.data, cache.data.length * 2);
+        }
+
         cache.data[dataIndex++] = segmentStartX;
         cache.data[dataIndex++] = segmentStartY;
 
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < MAX_SPAWN_PATH_STEPS; i++) {
             Tile nextTile = pathfinder.getTargetTile(currentTile, field);
-            if (nextTile == null || nextTile == currentTile)
+            if (nextTile == null) {
                 break;
+            }
+
+            if (nextTile == currentTile){
+                Log.err("Pathfinder loop detected");
+                break;
+            }
 
             int dx = nextTile.x - currentTile.x;
             int dy = nextTile.y - currentTile.y;
@@ -441,7 +361,7 @@ public class PathfindingDisplay implements Feature {
             if (dx != lastDx || dy != lastDy) {
                 if (i > 0) {
                     if (dataIndex + 2 > cache.data.length)
-                        cache.data = java.util.Arrays.copyOf(cache.data, cache.data.length * 2);
+                        cache.data = Arrays.copyOf(cache.data, cache.data.length * 2);
                     cache.data[dataIndex++] = currentTile.worldx();
                     cache.data[dataIndex++] = currentTile.worldy();
                 }
@@ -452,7 +372,7 @@ public class PathfindingDisplay implements Feature {
         }
 
         if (dataIndex + 2 > cache.data.length)
-            cache.data = java.util.Arrays.copyOf(cache.data, cache.data.length * 2);
+            cache.data = Arrays.copyOf(cache.data, cache.data.length * 2);
         cache.data[dataIndex++] = currentTile.worldx();
         cache.data[dataIndex++] = currentTile.worldy();
 
@@ -460,9 +380,11 @@ public class PathfindingDisplay implements Feature {
     }
 
     private void drawSpawnPathFromCache(PathfindingCache cache, Color color) {
-        if (cache.size < 4)
+        if (cache.size < 4) {
             return;
-        Draw.color(color, PathfindingConfig.getOpacity());
+        }
+
+        Draw.color(color, currentOpacity);
         Lines.stroke(1f);
 
         for (int i = 0; i < cache.size - 2; i += 2) {
