@@ -61,6 +61,13 @@ public class PlayerConnect {
         });
 
         Timer.schedule(() -> {
+            if (isHosting() && Vars.net.client()) {
+                close();
+                Vars.ui.showInfoFade("Auto close room when join another server");
+            }
+        }, 1, 1);
+
+        Timer.schedule(() -> {
             updateStats();
         }, 60f, 60f);
 
