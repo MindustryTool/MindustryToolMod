@@ -19,7 +19,6 @@ import mindustry.gen.SendMessageCallPacket;
 import mindustry.gen.SendMessageCallPacket2;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
-import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.Main;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -94,8 +93,7 @@ public class ChatTranslationFeature implements Feature {
         currentProvider.translate(Strings.stripColors(message))
                 .thenApply(translated -> {
                     if (ChatTranslationConfig.isShowOriginal()) {
-                        String locale = LanguageDialog.getDisplayName(Core.bundle.getLocale());
-                        String formated = Strings.format("[white]@[]\n\n[gold]@[]: @\n\n", message, locale, translated);
+                        String formated = Strings.format("[white]@ [gray](@)", message, translated);
 
                         return formated;
                     }
