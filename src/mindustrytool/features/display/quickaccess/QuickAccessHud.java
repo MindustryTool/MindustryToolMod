@@ -28,6 +28,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Main;
+import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
@@ -161,7 +162,6 @@ public class QuickAccessHud extends Table implements Feature {
 
             btnRef[0] = t.button(b -> {
                 b.image(meta.icon())
-                        .size(buttonSize * 0.7f)
                         .scaling(Scaling.fit)
                         .update(l -> l.setColor(f.isEnabled() ? Color.white : Pal.gray));
             }, Styles.clearNonei, () -> {
@@ -193,13 +193,10 @@ public class QuickAccessHud extends Table implements Feature {
         }
 
         Button[] btnRef = new Button[1];
-        btnRef[0] = t.button(b -> {
-            b.image(Icon.settings)
-                    .size(buttonSize * 0.7f)
-                    .scaling(Scaling.fit);
-        }, Styles.clearNonei, () -> {
-            Main.featureSettingDialog.show();
-        })
+        btnRef[0] = t
+                .button(b -> b.image(Utils.scalable(Icon.settings)).scaling(Scaling.fit), Styles.clearNonei, () -> {
+                    Main.featureSettingDialog.show();
+                })
                 .size(buttonSize)
                 .margin(margin)
                 .get();

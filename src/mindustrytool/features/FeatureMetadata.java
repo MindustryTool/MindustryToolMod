@@ -1,6 +1,8 @@
 package mindustrytool.features;
 
 import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
+import mindustrytool.Utils;
 
 public class FeatureMetadata {
     String name;
@@ -66,8 +68,8 @@ public class FeatureMetadata {
             return this;
         }
 
-        public Builder icon(Drawable icon) {
-            this.icon = icon;
+        public Builder icon(TextureRegionDrawable icon) {
+            this.icon = Utils.scalable(icon);
             return this;
         }
 
