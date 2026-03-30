@@ -66,6 +66,10 @@ public class SmartDrillFeature implements Feature {
                 return;
             }
 
+            if (e.tile.build != null){
+                return;
+            }
+
             if (e.tile == lastTapTile && Time.timeSinceMillis(lastTapTime) < 500) {
                 // Double tap detected
                 handleDoubleTap(e.tile);
