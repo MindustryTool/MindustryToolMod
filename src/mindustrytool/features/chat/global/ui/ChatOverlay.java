@@ -369,7 +369,7 @@ public class ChatOverlay extends Table {
             }
         } else {
             float leftWidth = Math.min(160f * scale, actualWidth * 0.25f);
-            float rightWidthExp = Math.min(280f * scale, actualWidth * 0.35f);
+            float rightWidthExp = Math.min(280f * 1.5f * scale, actualWidth * 0.35f * 1.5f);
             float rightWidthCol = 48f * scale;
 
             Table leftSide = new Table();

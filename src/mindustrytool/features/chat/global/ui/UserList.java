@@ -11,6 +11,7 @@ import arc.util.Align;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.chat.global.ChatConfig;
+import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
 import mindustrytool.features.chat.global.events.*;
 import mindustrytool.features.chat.global.dto.ChatUser;
@@ -19,8 +20,15 @@ import mindustrytool.ui.NetworkImage;
 public class UserList extends Table {
     private final Table userListTable;
     private final ScrollPane scrollPane;
+    private final Label countLabel;
 
     public UserList() {
+        top().left();
+
+        countLabel = new Label("");
+        countLabel.setColor(Color.gray);
+        add(countLabel).padBottom(8).padLeft(8).left().row();
+
         userListTable = new Table();
         userListTable.top().left();
 
@@ -42,10 +50,18 @@ public class UserList extends Table {
         userListTable.top().left();
 
         String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
-        if (currentChannelId == null) return;
+        if (currentChannelId == null)
+            return;
+
+        float scale = ChatConfig.scale();
+        countLabel.setFontScale(scale * 0.8f);
+        ChatService.getInstance().getChatUserCount(currentChannelId, count -> {
+            countLabel.setText(count + " Members");
+        }, e -> {
+            countLabel.setText("? Members");
+        });
 
         Seq<ChatUser> users = ChatStore.getInstance().getUsers(currentChannelId);
-        float scale = ChatConfig.scale();
 
         for (ChatUser user : users) {
             Table card = new Table();
@@ -74,7 +90,8 @@ public class UserList extends Table {
                 });
             }).growX().left();
 
-            userListTable.add(card).growX().minWidth(0).padBottom(8 * scale).padLeft(8 * scale).padRight(8 * scale).row();
+            userListTable.add(card).growX().minWidth(0).padBottom(8 * scale).padLeft(8 * scale).padRight(8 * scale)
+                    .row();
         }
         userListTable.pack();
     }

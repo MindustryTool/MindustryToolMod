@@ -18,7 +18,7 @@ public interface Feature {
     };
 
     default void onEnableChange(boolean enabled) {
-  
+
     }
 
     default Optional<Dialog> setting() {
@@ -32,8 +32,7 @@ public interface Feature {
     default boolean isEnabled() {
         var metadata = getMetadata();
 
-        return Core.settings.getBool("mindustrytool." + metadata.name() + ".enabled",
-                metadata.enabledByDefault());
+        return Core.settings.getBool("mindustrytool." + metadata.name() + ".enabled", metadata.enabledByDefault());
     }
 
     default void setEnabled(boolean enabled) {
