@@ -6,6 +6,7 @@ import java.util.Optional;
 import arc.ApplicationListener;
 import arc.Core;
 import arc.Events;
+import arc.scene.event.Touchable;
 import arc.scene.ui.Dialog;
 import arc.util.Log;
 import arc.struct.Seq;
@@ -143,6 +144,7 @@ public class ChatFeature implements Feature {
         Label opacityValue = new Label(String.format("%.0f%%", ChatConfig.opacity() * 100));
 
         Table opacityContent = new Table();
+        opacityContent.touchable = Touchable.disabled;
         opacityContent.add("@opacity").left().growX();
         opacityContent.add(opacityValue).padLeft(10f).right();
 
@@ -161,6 +163,7 @@ public class ChatFeature implements Feature {
         Label scaleValue = new Label(String.format("%.0f%%", ChatConfig.scale() * 100));
 
         Table scaleContent = new Table();
+        scaleContent.touchable = Touchable.disabled;
         scaleContent.add("@scale").left().growX();
         scaleContent.add(scaleValue).padLeft(10f).right();
 
@@ -179,6 +182,7 @@ public class ChatFeature implements Feature {
         Label widthValue = new Label(String.format("%.0f%%", ChatConfig.width() * 100));
 
         Table widthContent = new Table();
+        widthContent.touchable = Touchable.disabled;
         widthContent.add("@width").left().growX();
         widthContent.add(widthValue).padLeft(10f).right();
 

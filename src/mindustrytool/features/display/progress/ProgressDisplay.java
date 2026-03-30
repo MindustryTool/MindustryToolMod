@@ -17,6 +17,7 @@ import mindustry.ui.Fonts;
 import mindustry.world.blocks.units.Reconstructor;
 import mindustry.world.blocks.units.UnitAssembler;
 import mindustry.world.blocks.units.UnitFactory;
+import arc.scene.event.Touchable;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
@@ -90,7 +91,7 @@ public class ProgressDisplay implements Feature {
         opacityValue.setColor(Color.lightGray);
 
         Table opacityContent = new Table();
-        opacityContent.touchable = arc.scene.event.Touchable.disabled;
+        opacityContent.touchable = Touchable.disabled;
         opacityContent.margin(3f, 33f, 3f, 33f);
         opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
         opacityContent.add(opacityValue).padLeft(10f).right();
@@ -113,7 +114,7 @@ public class ProgressDisplay implements Feature {
         scaleValue.setColor(Color.lightGray);
 
         Table scaleContent = new Table();
-        scaleContent.touchable = arc.scene.event.Touchable.disabled;
+        scaleContent.touchable = Touchable.disabled;
         scaleContent.margin(3f, 33f, 3f, 33f);
         scaleContent.add("@scale", Styles.outlineLabel).left().growX();
         scaleContent.add(scaleValue).padLeft(10f).right();
@@ -136,7 +137,7 @@ public class ProgressDisplay implements Feature {
         widthValue.setColor(Color.lightGray);
 
         Table widthContent = new Table();
-        widthContent.touchable = arc.scene.event.Touchable.disabled;
+        widthContent.touchable = Touchable.disabled;
         widthContent.margin(3f, 33f, 3f, 33f);
         widthContent.add("@width", Styles.outlineLabel).left().growX();
         widthContent.add(widthValue).padLeft(10f).right();

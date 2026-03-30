@@ -297,7 +297,7 @@ public class ChatOverlay extends Table {
                             .setting()
                             .get()
                             .show();
-                });
+                }).size(40 * scale).padRight(4 * scale);
 
                 header.button(Icon.refresh, Styles.clearNonei, () -> {
                     ChatStore.getInstance().clearMessages();
@@ -319,7 +319,7 @@ public class ChatOverlay extends Table {
                             .setting()
                             .get()
                             .show();
-                });
+                }).size(40 * scale).padRight(4 * scale);
 
                 header.button(Icon.refresh, Styles.clearNonei, () -> {
                     ChatStore.getInstance().clearMessages();
@@ -352,7 +352,7 @@ public class ChatOverlay extends Table {
                             .setting()
                             .get()
                             .show();
-                });
+                }).size(40 * scale).padRight(4 * scale);
 
                 header.button(Icon.refresh, Styles.clearNonei, () -> {
                     ChatStore.getInstance().clearMessages();
@@ -377,7 +377,7 @@ public class ChatOverlay extends Table {
                         .setting()
                         .get()
                         .show();
-            });
+            }).size(40 * scale).padRight(4 * scale);
 
             header.button(Icon.refresh, Styles.clearNonei, () -> {
                 ChatStore.getInstance().clearMessages();

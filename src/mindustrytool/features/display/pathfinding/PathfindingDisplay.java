@@ -8,6 +8,7 @@ import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
 import arc.math.geom.Point2;
 import arc.math.geom.Rect;
+import arc.scene.event.Touchable;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
@@ -134,7 +135,7 @@ public class PathfindingDisplay implements Feature {
         zoomValueLabel.setColor(currentZoom <= 0.01f ? Color.gray : Color.lightGray);
 
         Table zoomContent = new Table();
-        zoomContent.touchable = arc.scene.event.Touchable.disabled;
+        zoomContent.touchable = Touchable.disabled;
         zoomContent.margin(3f, 33f, 3f, 33f);
         zoomContent.add("@health-bar.min-zoom", Styles.outlineLabel).left().growX();
         zoomContent.add(zoomValueLabel).padLeft(10f).right();
@@ -157,7 +158,7 @@ public class PathfindingDisplay implements Feature {
         opacityValue.setColor(Color.lightGray);
 
         Table opacityContent = new Table();
-        opacityContent.touchable = arc.scene.event.Touchable.disabled;
+        opacityContent.touchable = Touchable.disabled;
         opacityContent.margin(3f, 33f, 3f, 33f);
         opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
         opacityContent.add(opacityValue).padLeft(10f).right();
