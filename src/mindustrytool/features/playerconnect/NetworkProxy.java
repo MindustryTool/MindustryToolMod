@@ -44,7 +44,6 @@ public class NetworkProxy extends Client implements NetListener {
 
     private final IntMap<VirtualConnection> connections = new IntMap<>();
     private final Seq<VirtualConnection> orderedConnections = new Seq<>(false);
-    private final Server server;
     private final NetListener serverDispatcher;
 
     private volatile boolean isShutdown;
@@ -61,13 +60,12 @@ public class NetworkProxy extends Client implements NetListener {
 
         addListener(this);
 
-        NetProvider provider = Reflect.get(Vars.net, "provider");
-
         if (Vars.steam) {
-            provider = Reflect.get(provider, "provider");
+            throw new UnsupportedOperationException("Steam is not supported.");
         }
 
-        server = Reflect.get(provider, "server");
+        NetProvider provider = Reflect.get(Vars.net, "provider");
+        Server server = Reflect.get(provider, "server");
         serverDispatcher = Reflect.get(server, "dispatchListener");
     }
 

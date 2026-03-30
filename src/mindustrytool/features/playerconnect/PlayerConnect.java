@@ -155,13 +155,18 @@ public class PlayerConnect {
             Cons<Throwable> onFailed,
             Cons<RoomCloseReason> onDisconnected//
     ) {
-        if (room != null && room.isConnected()) {
-            throw new IllegalStateException("Room is already created, please close it before.");
-        }
+        try {
+            if (room != null && room.isConnected()) {
+                throw new IllegalStateException("Room is already created, please close it before.");
+            }
 
-        if (room == null || roomThread == null || !roomThread.isAlive()) {
-            room = new NetworkProxy();
-            roomThread = Threads.daemon("Proxy", room);
+            if (room == null || roomThread == null || !roomThread.isAlive()) {
+                room = new NetworkProxy();
+                roomThread = Threads.daemon("Proxy", room);
+            }
+        } catch (Exception e) {
+            onFailed.get(e);
+            return;
         }
 
         worker.submit(() -> {

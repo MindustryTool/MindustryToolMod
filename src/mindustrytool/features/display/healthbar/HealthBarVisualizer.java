@@ -121,8 +121,11 @@ public class HealthBarVisualizer implements Feature {
         Draw.color(Color.black, 0.6f * HealthBarConfig.opacity);
         Draw.rect(barRegion, x, y, w + 2f, h + 2f);
 
-        float hpPercent = unit.health / unit.maxHealth;
-        float maxHealth = unit.maxHealth;
+        float maxHealth = Math.max(unit.maxHealth, 1f);
+        if (Float.isNaN(maxHealth))
+            maxHealth = 1f;
+
+        float hpPercent = Math.max(0f, Math.min(1f, unit.health / maxHealth));
 
         float left = x - w / 2f;
 
@@ -136,6 +139,12 @@ public class HealthBarVisualizer implements Feature {
 
         if (unit.shield > 0) {
             float shieldValue = unit.shield / maxHealth;
+            if (Float.isNaN(shieldValue))
+                shieldValue = 0f;
+
+            // Cap the maximum number of shield bars to prevent OOM
+            shieldValue = Math.min(shieldValue, 20f);
+
             Draw.color(Pal.shield, 0.5f * HealthBarConfig.opacity);
 
             while (shieldValue > 0) {
