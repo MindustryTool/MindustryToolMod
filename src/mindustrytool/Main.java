@@ -78,7 +78,10 @@ public class Main extends Mod {
 
         Events.on(ClientLoadEvent.class, e -> {
             try {
+                featureSettingDialog = new FeatureSettingDialog();
+
                 addCustomButtons();
+
                 UpdateService.getInstance().checkForUpdate(() -> {
                     Core.app.post(() -> {
                         try {
@@ -100,8 +103,6 @@ public class Main extends Mod {
         backgroundsDir.mkdirs();
         musicsDir.mkdirs();
         schematicDir.mkdirs();
-
-        featureSettingDialog = new FeatureSettingDialog();
 
         AuthService.getInstance().init();
         ServerService.getInstance().init();
