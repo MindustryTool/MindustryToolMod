@@ -78,6 +78,7 @@ public class Main extends Mod {
 
         Events.on(ClientLoadEvent.class, e -> {
             try {
+                addCustomButtons();
                 UpdateService.getInstance().checkForUpdate(() -> {
                     Core.app.post(() -> {
                         try {
@@ -94,7 +95,6 @@ public class Main extends Mod {
     }
 
     private void setup() {
-
         imageDir.mkdirs();
         mapsDir.mkdirs();
         backgroundsDir.mkdirs();
@@ -139,8 +139,6 @@ public class Main extends Mod {
         initFeatures();
 
         Events.fire(new MusicRegisterEvent());
-
-        addCustomButtons();
     }
 
     private void initFeatures() {
