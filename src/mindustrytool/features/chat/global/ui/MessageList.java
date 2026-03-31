@@ -1,7 +1,6 @@
 package mindustrytool.features.chat.global.ui;
 
 import arc.Core;
-import arc.Events;
 import arc.graphics.Color;
 import arc.scene.ui.Button;
 import arc.scene.ui.Image;
@@ -31,7 +30,6 @@ import mindustrytool.features.browser.schematic.SchematicInfoDialog;
 import mindustrytool.features.chat.global.ChatConfig;
 import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
-import mindustrytool.features.chat.global.events.*;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.playerconnect.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectRenderer;
@@ -40,6 +38,8 @@ import mindustrytool.services.PlayerConnectService;
 import mindustrytool.services.SchematicService;
 import mindustrytool.services.UserService;
 import mindustrytool.ui.NetworkImage;
+import arc.Events;
+import mindustrytool.features.chat.global.events.MessagesUpdateEvent;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -59,7 +59,7 @@ public class MessageList extends Table {
     private final Table messageTable;
     private final ScrollPane scrollPane;
     private final Table loadingTable;
-    private final PlayerConnectService playerConnectService = new PlayerConnectService();
+    private final PlayerConnectService playerConnectService = PlayerConnectService.getInstance();
 
     private final SchematicInfoDialog schematicInfoDialog = new SchematicInfoDialog();
     private final MapInfoDialog mapInfoDialog = new MapInfoDialog();
@@ -103,7 +103,7 @@ public class MessageList extends Table {
         add(stack).grow();
 
         Events.on(MessagesUpdateEvent.class, e -> {
-            if (e.channelId.equals(ChatStore.getInstance().getCurrentChannelId())) {
+            if (e != null && e.channelId.equals(ChatStore.getInstance().getCurrentChannelId())) {
                 float oldMaxY = scrollPane.getMaxY();
                 float oldScrollY = scrollPane.getScrollY();
 
@@ -122,7 +122,9 @@ public class MessageList extends Table {
                 }
             }
         });
-        Events.on(CurrentChannelChangeEvent.class, e -> {
+
+        ChatStore store = ChatStore.getInstance();
+        store.currentChannel.subscribe((e, o) -> {
             rebuild();
             scrollToBottom();
         });

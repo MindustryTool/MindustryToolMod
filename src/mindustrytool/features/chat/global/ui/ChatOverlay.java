@@ -103,7 +103,7 @@ public class ChatOverlay extends Table {
             }
         });
 
-        Events.on(UnreadUpdateEvent.class, event -> updateBadge());
+        ChatStore.getInstance().unreadCountState.subscribe((n, o) -> updateBadge());
 
         chatInput = new ChatInput();
         chatInput.getInputField().keyDown(KeyCode.escape, this::collapse);
@@ -304,7 +304,9 @@ public class ChatOverlay extends Table {
                     ChatStore.getInstance().clearMessages();
                     if (currentChannelId != null) {
                         ChatService.getInstance().fetchMessages(currentChannelId, null);
+                        ChatService.getInstance().fetchChatUsers(currentChannelId);
                     }
+                    ChatService.getInstance().fetchChannels();
                 }).size(40 * scale).padRight(4 * scale);
 
                 header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
@@ -324,9 +326,12 @@ public class ChatOverlay extends Table {
 
                 header.button(Icon.refresh, Styles.clearNonei, () -> {
                     ChatStore.getInstance().clearMessages();
-                    String cid = ChatStore.getInstance().getCurrentChannelId();
-                    if (cid != null)
-                        ChatService.getInstance().fetchMessages(cid, null);
+                    String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
+                    if (currentChannelId != null) {
+                        ChatService.getInstance().fetchMessages(currentChannelId, null);
+                        ChatService.getInstance().fetchChatUsers(currentChannelId);
+                    }
+                    ChatService.getInstance().fetchChannels();
                 }).size(40 * scale).padRight(4 * scale);
 
                 header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
@@ -358,8 +363,11 @@ public class ChatOverlay extends Table {
                 header.button(Icon.refresh, Styles.clearNonei, () -> {
                     ChatStore.getInstance().clearMessages();
                     String cid = ChatStore.getInstance().getCurrentChannelId();
-                    if (cid != null)
+                    if (cid != null) {
                         ChatService.getInstance().fetchMessages(cid, null);
+                        ChatService.getInstance().fetchChatUsers(cid);
+                    }
+                    ChatService.getInstance().fetchChannels();
                 }).size(40 * scale).padRight(4 * scale);
 
                 header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
@@ -385,7 +393,9 @@ public class ChatOverlay extends Table {
                 String cid = ChatStore.getInstance().getCurrentChannelId();
                 if (cid != null) {
                     ChatService.getInstance().fetchMessages(cid, null);
+                    ChatService.getInstance().fetchChatUsers(cid);
                 }
+                ChatService.getInstance().fetchChannels();
             }).size(40 * scale).padRight(4 * scale);
 
             header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);

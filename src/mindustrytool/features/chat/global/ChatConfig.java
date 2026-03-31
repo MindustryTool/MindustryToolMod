@@ -89,4 +89,12 @@ public class ChatConfig {
     public static void height(float value) {
         Core.settings.put("mindustrytool.chat.height", value);
     }
+
+    public static boolean status() {
+        return Core.settings.getBool("mindustrytool.chat.status", true);
+    }
+
+    public static void status(boolean value) {
+        Core.settings.put("mindustrytool.chat.status", value);
+    }
 }

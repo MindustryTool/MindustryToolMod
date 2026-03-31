@@ -9,7 +9,9 @@ import mindustrytool.features.chat.global.dto.ChannelDto;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatUser;
 import mindustrytool.features.chat.global.dto.LastReadMessageStore;
-import mindustrytool.features.chat.global.events.*;
+import mindustrytool.features.chat.global.events.MessagesUpdateEvent;
+import mindustrytool.features.chat.global.events.UsersUpdateEvent;
+import mindustrytool.utils.State;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -32,8 +34,15 @@ public class ChatStore {
     private final AtomicBoolean isLoadingMessages = new AtomicBoolean(false);
     private final LastReadMessageStore lastReadMessageStore;
 
+    public final State<String> currentChannel = new State<>();
+    public final State<Seq<ChannelDto>> channelsState = new State<>(new Seq<>());
+    public final State<Integer> unreadCountState = new State<>(0);
+    public final State<Boolean> loadingMessagesState = new State<>(false);
+
     public ChatStore() {
-        currentChannelId = Core.settings.getString(CURRENT_CHANNEL_ID_KEY, null);
+        String savedChannelId = Core.settings.getString(CURRENT_CHANNEL_ID_KEY, null);
+        currentChannelId = savedChannelId;
+        currentChannel.set(savedChannelId);
         LastReadMessageStore stored = Core.settings.getJson(LAST_READ_MESSAGES_KEY, LastReadMessageStore.class,
                 LastReadMessageStore::new);
         lastReadMessageStore = stored != null ? stored : new LastReadMessageStore();
@@ -51,7 +60,6 @@ public class ChatStore {
         fullyLoadedChannels.clear();
         usersByChannel.clear();
 
-        
     }
 
     public String getCurrentChannelId() {
@@ -75,8 +83,8 @@ public class ChatStore {
             setLastReadMessageId(currentChannelId, channel.lastMessageId);
         }
 
-        Events.fire(new CurrentChannelChangeEvent(currentChannelId));
-        Events.fire(new UnreadUpdateEvent());
+        currentChannel.set(currentChannelId);
+        unreadCountState.set(unreadCount);
     }
 
     public Seq<ChannelDto> getChannels() {
@@ -100,7 +108,7 @@ public class ChatStore {
                 setLastReadMessageId(currentChannelId, channel.lastMessageId);
             }
         }
-        Events.fire(new ChannelsUpdateEvent());
+        channelsState.set(this.channels);
     }
 
     public Seq<ChatMessage> getMessages(String channelId) {
@@ -162,13 +170,13 @@ public class ChatStore {
     public void addUnread(String channelId, int count) {
         unreadByChannel.put(channelId, unreadByChannel.get(channelId, 0) + count);
         unreadCount += count;
-        Events.fire(new UnreadUpdateEvent());
+        unreadCountState.set(unreadCount);
     }
 
     public void resetUnreadCount() {
         unreadCount = 0;
         unreadByChannel.clear();
-        Events.fire(new UnreadUpdateEvent());
+        unreadCountState.set(unreadCount);
     }
 
     public String getLastReadMessageId(String channelId) {
@@ -184,7 +192,7 @@ public class ChatStore {
 
         Core.settings.putJson(LAST_READ_MESSAGES_KEY, LastReadMessageStore.class, lastReadMessageStore);
 
-        Events.fire(new UnreadUpdateEvent());
+        unreadCountState.set(unreadCount);
     }
 
     public Seq<ChatUser> getUsers(String channelId) {
@@ -207,13 +215,13 @@ public class ChatStore {
 
     public void setLoadingMessages(boolean loading) {
         this.isLoadingMessages.set(loading);
-        Events.fire(new LoadingMessagesEvent(loading));
+        loadingMessagesState.set(loading);
     }
 
     public boolean compareAndSetLoadingMessages(boolean expect, boolean update) {
         boolean success = this.isLoadingMessages.compareAndSet(expect, update);
         if (success) {
-            Events.fire(new LoadingMessagesEvent(update));
+            loadingMessagesState.set(update);
         }
         return success;
     }

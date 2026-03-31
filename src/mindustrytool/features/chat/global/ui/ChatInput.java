@@ -25,8 +25,8 @@ import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
 import mindustrytool.features.chat.global.ContentType;
 import mindustrytool.features.chat.global.dto.ChatMessage;
-import mindustrytool.services.State;
 import mindustrytool.services.UserService;
+import mindustrytool.utils.State;
 
 public class ChatInput extends Table {
 

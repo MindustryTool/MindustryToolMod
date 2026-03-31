@@ -9,7 +9,7 @@ public class PlayerConnectProviders {
     public static final String PLAYER_CONNECT_PROVIDER_PERSISTENT_KEY = "mindustrytool.player-connect.providers";
     public static final ArrayMap<String, String> online = new ArrayMap<>(),
             custom = new ArrayMap<>();
-    private static final PlayerConnectService playerConnectService = new PlayerConnectService();
+    private static final PlayerConnectService playerConnectService = PlayerConnectService.getInstance();
 
     public static synchronized void refreshOnline(Runnable onCompleted, arc.func.Cons<Throwable> onFailed) {
         playerConnectService.findPlayerConnectProvider().thenAccept(providers -> {

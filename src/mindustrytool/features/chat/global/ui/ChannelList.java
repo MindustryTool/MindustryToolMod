@@ -1,6 +1,5 @@
 package mindustrytool.features.chat.global.ui;
 
-import arc.Events;
 import arc.graphics.Color;
 import arc.scene.ui.Label;
 import arc.scene.ui.ScrollPane;
@@ -12,7 +11,6 @@ import mindustry.ui.Styles;
 import mindustrytool.features.chat.global.ChatConfig;
 import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
-import mindustrytool.features.chat.global.events.*;
 import mindustrytool.features.chat.global.dto.ChannelDto;
 
 public class ChannelList extends Table {
@@ -29,9 +27,10 @@ public class ChannelList extends Table {
 
         add(scrollPane).grow();
 
-        Events.on(ChannelsUpdateEvent.class, e -> rebuild());
-        Events.on(CurrentChannelChangeEvent.class, e -> rebuild());
-        Events.on(UnreadUpdateEvent.class, e -> rebuild());
+        ChatStore store = ChatStore.getInstance();
+        store.channelsState.subscribe((n, o) -> rebuild());
+        store.currentChannel.subscribe((n, o) -> rebuild());
+        store.unreadCountState.subscribe((n, o) -> rebuild());
     }
 
     public void onChannelSelect(Runnable r) {

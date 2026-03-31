@@ -12,7 +12,20 @@ import mindustrytool.features.playerconnect.PlayerConnectRoom;
 import mindustrytool.features.playerconnect.PlayerConnectProvider;
 
 public class PlayerConnectService {
-    private static final ConcurrentHashMap<String, PlayerConnectRoom> roomCache = new ConcurrentHashMap<>();
+
+    private PlayerConnectService() {
+    }
+
+    private static PlayerConnectService instance;
+
+    public static PlayerConnectService getInstance() {
+        if (instance == null) {
+            instance = new PlayerConnectService();
+        }
+        return instance;
+    }
+
+    private final ConcurrentHashMap<String, PlayerConnectRoom> roomCache = new ConcurrentHashMap<>();
 
     public CompletableFuture<Seq<PlayerConnectRoom>> findPlayerConnectRooms(String q) {
         CompletableFuture<Seq<PlayerConnectRoom>> future = new CompletableFuture<>();
