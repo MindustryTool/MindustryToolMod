@@ -12,6 +12,7 @@ import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
+import mindustrytool.Main;
 import mindustrytool.Utils;
 
 import java.time.Instant;
@@ -20,8 +21,25 @@ import java.time.format.DateTimeFormatter;
 
 public class UpdateService {
 
-    public void checkForUpdate(String currentVersionString) {
+    private static UpdateService instance;
+
+    private UpdateService() {
+    }
+
+    public static synchronized UpdateService getInstance() {
+        if (instance == null) {
+            instance = new UpdateService();
+        }
+
+        return instance;
+    }
+
+    public void checkForUpdate(Runnable done) {
+        String currentVersionString = Main.self.meta.version;
         int[] currentVersion = extractVersionNumber(currentVersionString);
+
+        Http.get(Config.API_URL + "ping?client=mod-v8").submit(result -> {
+        });
 
         Http.get(Config.API_REPO_URL, (res) -> {
             try {
@@ -35,24 +53,23 @@ public class UpdateService {
                             versionToString(currentVersion),
                             versionToString(latestVersion));
 
-                    fetchReleasesAndShowDialog(versionToString(currentVersion), versionToString(latestVersion));
+                    fetchReleasesAndShowDialog(versionToString(currentVersion), versionToString(latestVersion), done);
                 } else {
+                    done.run();
                     Log.info("Mod up to date");
                 }
             } catch (Exception e) {
+                done.run();
                 Log.err("Failed to check update", e);
             }
         });
-
-        Http.get(Config.API_URL + "ping?client=mod-v8").submit(result -> {
-        });
     }
 
-    private void fetchReleasesAndShowDialog(String currentVer, String latestVer) {
+    private void fetchReleasesAndShowDialog(String currentVer, String latestVer, Runnable done) {
         Http.get(Config.GITHUB_API_URL).error(e -> {
             Log.err("Failed to fetch releases", e);
             Core.app.post(() -> {
-                showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+                showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.", done);
             });
         }).submit(res -> {
             try {
@@ -100,23 +117,23 @@ public class UpdateService {
                     }
 
                     Core.app.post(() -> {
-                        showUpdateDialog(currentVer, latestVer, changelog.toString());
+                        showUpdateDialog(currentVer, latestVer, changelog.toString(), done);
                     });
                 } else {
                     Core.app.post(() -> {
-                        showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.");
+                        showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.", done);
                     });
                 }
             } catch (Exception e) {
                 Log.err("Failed to parse releases", e);
                 Core.app.post(() -> {
-                    showUpdateDialog(currentVer, latestVer, "Could not parse release notes.");
+                    showUpdateDialog(currentVer, latestVer, "Could not parse release notes.", done);
                 });
             }
         });
     }
 
-    private void showUpdateDialog(String currentVer, String latestVer, String changelog) {
+    private void showUpdateDialog(String currentVer, String latestVer, String changelog, Runnable done) {
         BaseDialog dialog = new BaseDialog("Update Available");
 
         dialog.name = "updateAvailableDialog";
@@ -146,7 +163,10 @@ public class UpdateService {
 
         dialog.cont.add(table);
 
-        dialog.buttons.button("Cancel", dialog::remove).size(100f, 50f);
+        dialog.buttons.button("Cancel", () -> {
+            dialog.remove();
+            done.run();
+        }).size(100f, 50f);
         dialog.buttons.button("Update", () -> {
             try {
                 dialog.remove();
