@@ -151,9 +151,9 @@ public class ChatService {
             while (isStreaming.get()) {
                 HttpURLConnection conn = null;
                 try {
-                    AuthService.getInstance().refreshTokenIfNeeded().get();
-
                     Log.info("Connecting to chat stream");
+
+                    AuthService.getInstance().refreshTokenIfNeeded().get();
 
                     String urlStr = Config.API_v4_URL + "chats/stream";
 
@@ -170,6 +170,7 @@ public class ChatService {
                     }
 
                     int status = conn.getResponseCode();
+
                     if (status != 200) {
                         Log.err("Chat stream failed: " + status);
                         broadcastConnectionStatus(false);
@@ -358,8 +359,7 @@ public class ChatService {
     }
 
     public void fetchChatUsers(String channelId) {
-        getChatUsers(channelId,
-                users -> ChatStore.getInstance().setUsers(channelId, users),
+        getChatUsers(channelId, users -> ChatStore.getInstance().setUsers(channelId, users),
                 e -> Log.err("Failed to fetch chat users for channel " + channelId, e));
     }
 
@@ -394,6 +394,7 @@ public class ChatService {
 
     public void fetchMessages(String channelId, String cursor) {
         ChatStore store = ChatStore.getInstance();
+
         if (!store.compareAndSetLoadingMessages(false, true)) {
             return;
         }
