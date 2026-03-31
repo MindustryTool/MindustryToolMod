@@ -29,20 +29,15 @@ public class ChatStore {
     private final ObjectMap<String, Seq<ChatUser>> usersByChannel = new ObjectMap<>();
     private final Seq<ChannelDto> channels = new Seq<>();
 
-    private String currentChannelId;
-    private int unreadCount = 0;
     private final AtomicBoolean isLoadingMessages = new AtomicBoolean(false);
     private final LastReadMessageStore lastReadMessageStore;
 
-    public final State<String> currentChannel = new State<>();
+    public final State<String> currentChannel = new State<>(Core.settings.getString(CURRENT_CHANNEL_ID_KEY, null));
     public final State<Seq<ChannelDto>> channelsState = new State<>(new Seq<>());
     public final State<Integer> unreadCountState = new State<>(0);
     public final State<Boolean> loadingMessagesState = new State<>(false);
 
     public ChatStore() {
-        String savedChannelId = Core.settings.getString(CURRENT_CHANNEL_ID_KEY, null);
-        currentChannelId = savedChannelId;
-        currentChannel.set(savedChannelId);
         LastReadMessageStore stored = Core.settings.getJson(LAST_READ_MESSAGES_KEY, LastReadMessageStore.class,
                 LastReadMessageStore::new);
         lastReadMessageStore = stored != null ? stored : new LastReadMessageStore();
@@ -63,28 +58,27 @@ public class ChatStore {
     }
 
     public String getCurrentChannelId() {
-        return currentChannelId;
+        return currentChannel.get();
     }
 
-    public void setCurrentChannelId(String currentChannelId) {
-        if (this.currentChannelId != null && this.currentChannelId.equals(currentChannelId)) {
+    public void setCurrentChannelId(String channelId) {
+        if (currentChannel.get() != null && currentChannel.get().equals(channelId)) {
             return;
         }
 
-        this.currentChannelId = currentChannelId;
-        Core.settings.put(CURRENT_CHANNEL_ID_KEY, currentChannelId);
-        unreadCount -= unreadByChannel.get(currentChannelId, 0);
-        if (unreadCount < 0)
-            unreadCount = 0;
-        unreadByChannel.put(currentChannelId, 0);
+        Core.settings.put(CURRENT_CHANNEL_ID_KEY, channelId);
+        int currentUnread = unreadCountState.get() - unreadByChannel.get(channelId, 0);
+        if (currentUnread < 0)
+            currentUnread = 0;
+        unreadByChannel.put(channelId, 0);
 
-        ChannelDto channel = channels.find(c -> c.id.equals(currentChannelId));
+        ChannelDto channel = channels.find(c -> c.id.equals(channelId));
         if (channel != null && channel.lastMessageId != null) {
-            setLastReadMessageId(currentChannelId, channel.lastMessageId);
+            setLastReadMessageId(channelId, channel.lastMessageId);
         }
 
-        currentChannel.set(currentChannelId);
-        unreadCountState.set(unreadCount);
+        currentChannel.set(channelId);
+        unreadCountState.set(currentUnread);
     }
 
     public Seq<ChannelDto> getChannels() {
@@ -102,10 +96,10 @@ public class ChatStore {
     public void setChannels(Seq<ChannelDto> newChannels) {
         channels.clear();
         channels.addAll(newChannels);
-        if (currentChannelId != null) {
-            ChannelDto channel = channels.find(c -> c.id.equals(currentChannelId));
+        if (currentChannel.get() != null) {
+            ChannelDto channel = channels.find(c -> c.id.equals(currentChannel.get()));
             if (channel != null && channel.lastMessageId != null) {
-                setLastReadMessageId(currentChannelId, channel.lastMessageId);
+                setLastReadMessageId(currentChannel.get(), channel.lastMessageId);
             }
         }
         channelsState.set(this.channels);
@@ -160,7 +154,7 @@ public class ChatStore {
     }
 
     public int getUnreadCount() {
-        return unreadCount;
+        return unreadCountState.get();
     }
 
     public int getUnreadByChannel(String channelId) {
@@ -169,14 +163,12 @@ public class ChatStore {
 
     public void addUnread(String channelId, int count) {
         unreadByChannel.put(channelId, unreadByChannel.get(channelId, 0) + count);
-        unreadCount += count;
-        unreadCountState.set(unreadCount);
+        unreadCountState.set(unreadCountState.get() + count);
     }
 
     public void resetUnreadCount() {
-        unreadCount = 0;
         unreadByChannel.clear();
-        unreadCountState.set(unreadCount);
+        unreadCountState.set(0);
     }
 
     public String getLastReadMessageId(String channelId) {
@@ -192,7 +184,7 @@ public class ChatStore {
 
         Core.settings.putJson(LAST_READ_MESSAGES_KEY, LastReadMessageStore.class, lastReadMessageStore);
 
-        unreadCountState.set(unreadCount);
+        unreadCountState.set(unreadCountState.get());
     }
 
     public Seq<ChatUser> getUsers(String channelId) {

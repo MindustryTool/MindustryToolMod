@@ -436,6 +436,7 @@ public class ChatService {
             AuthHttp.put(Config.API_v4_URL + "chats/users/state")
                     .content(json.toString())
                     .header("Content-Type", "application/json")
+                    .error(e -> Log.err("Failed to update chat state", e))
                     .submit(res -> {
                         String cid = ChatStore.getInstance().getCurrentChannelId();
                         if (cid != null) {
