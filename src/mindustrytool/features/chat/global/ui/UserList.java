@@ -1,6 +1,5 @@
 package mindustrytool.features.chat.global.ui;
 
-import arc.Events;
 import arc.graphics.Color;
 import arc.scene.ui.Image;
 import arc.scene.ui.Label;
@@ -14,9 +13,10 @@ import mindustry.ui.Styles;
 import mindustrytool.features.chat.global.ChatConfig;
 import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
-import mindustrytool.features.chat.global.events.*;
 import mindustrytool.features.chat.global.dto.ChatUser;
 import mindustrytool.ui.NetworkImage;
+import arc.Events;
+import mindustrytool.features.chat.global.events.UsersUpdateEvent;
 
 public class UserList extends Table {
     private final Table userListTable;
@@ -39,12 +39,16 @@ public class UserList extends Table {
         add(scrollPane).grow();
 
         Events.on(UsersUpdateEvent.class, e -> {
-            if (e.channelId.equals(ChatStore.getInstance().getCurrentChannelId())) {
+            if (e != null && e.channelId.equals(ChatStore.getInstance().getCurrentChannelId())) {
                 rebuild();
             }
         });
-        Events.on(CurrentChannelChangeEvent.class, e -> rebuild());
-        Events.on(CurrentChannelChangeEvent.class, e -> updateUserCount());
+
+        ChatStore store = ChatStore.getInstance();
+        store.currentChannel.subscribe((e, o) -> {
+            rebuild();
+            updateUserCount();
+        });
 
         updateUserCount();
     }
@@ -79,15 +83,19 @@ public class UserList extends Table {
             Table card = new Table();
 
             if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
-                card.add(new NetworkImage(user.getImageUrl())).size(40 * scale).padRight(8 * scale);
+                card.add(new NetworkImage(user.getImageUrl())).size(48 * scale).padRight(8 * scale);
             } else {
-                card.add(new Image(Icon.players)).size(40 * scale).padRight(8 * scale);
+                card.add(new Image(Icon.players)).size(48 * scale).padRight(8 * scale);
             }
 
             card.table(info -> {
-                info.left();
-                Label l = info.add(user.getName() + "[white]").minWidth(0).ellipsis(true).style(Styles.defaultLabel)
+                info.left().top();
+                Label l = info.add(user.getName() + "[white]")
+                        .minWidth(0)
+                        .ellipsis(true)
+                        .style(Styles.defaultLabel)
                         .color(Color.white)
+                        .growX()
                         .left().get();
                 l.setFontScale(scale);
                 info.row();
@@ -97,12 +105,24 @@ public class UserList extends Table {
                             .color(Color.valueOf(role.getColor()))
                             .labelAlign(Align.left)
                             .left()
+                            .growX()
                             .get();
                     l2.setFontScale(scale);
+                    info.row();
                 });
+                String state = user.getState();
+                if (state != null && !state.equals("menu")) {
+                    info.add("[gray]" + state + "[white]").growX().ellipsis(true);
+                    info.row();
+                }
             }).growX().left();
 
-            userListTable.add(card).growX().minWidth(0).padBottom(8 * scale).padLeft(8 * scale).padRight(8 * scale)
+            userListTable.add(card)
+                    .growX()
+                    .minWidth(0)
+                    .padBottom(8 * scale)
+                    .padLeft(8 * scale)
+                    .padRight(8 * scale)
                     .row();
         }
         userListTable.pack();

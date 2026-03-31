@@ -21,6 +21,10 @@ public class AuthHttp {
         return new AuthRequest(url, HttpMethod.POST).content(content);
     }
 
+    public static AuthRequest put(String url) {
+        return new AuthRequest(url, HttpMethod.PUT);
+    }
+
     // Convenient overload for callback style
     public static void get(String url, ConsT<HttpResponse, Exception> success, Cons<Throwable> failure) {
         get(url).submit(success, failure);

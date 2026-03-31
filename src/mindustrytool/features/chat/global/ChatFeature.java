@@ -204,5 +204,10 @@ public class ChatFeature implements Feature {
         });
 
         cont.stack(heightSlider, heightContent).width(width).left().padTop(4f).row();
+
+        // status toggle
+        cont.check("@chat.status", ChatConfig.status(), (v) -> {
+            ChatConfig.status(v);
+        }).row();
     }
 }

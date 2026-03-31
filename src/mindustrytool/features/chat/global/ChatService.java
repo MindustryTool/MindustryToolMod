@@ -13,6 +13,11 @@ import arc.func.Cons;
 import arc.util.Log;
 import arc.util.Timer;
 import arc.util.serialization.Jval;
+import mindustry.Vars;
+import mindustry.core.GameState.State;
+import mindustry.game.EventType.ClientServerConnectEvent;
+import mindustry.game.EventType.StateChangeEvent;
+import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.io.JsonIO;
 import arc.util.serialization.Json;
 import mindustrytool.Config;
@@ -23,19 +28,23 @@ import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatUser;
 import mindustrytool.features.chat.global.events.ChatMessageReceive;
 import mindustrytool.features.chat.global.events.ChatStateChange;
+import mindustrytool.features.chat.global.events.UserStateChanged;
+import mindustrytool.features.playerconnect.PlayerConnectConfig;
+import mindustrytool.features.playerconnect.PlayerConnectRoomConnected;
+import mindustrytool.features.playerconnect.RoomCreatedEvent;
+import mindustrytool.services.PlayerConnectService;
 import mindustrytool.features.chat.global.dto.ChannelDto;
 import arc.struct.Seq;
 
 public class ChatService {
     private static ChatService instance;
-
     private volatile Thread streamThread;
+    private String currentState = "";
 
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
     private AtomicBoolean isConnected = new AtomicBoolean(false);
 
-    public ChatService() {
-        Timer.schedule(this::connectStream, 0, 60);
+    private ChatService() {
     }
 
     public static ChatService getInstance() {
@@ -51,7 +60,74 @@ public class ChatService {
     }
 
     public void init() {
+        Timer.schedule(this::connectStream, 0, 60);
+
+        Events.on(UserStateChanged.class, event -> {
+            updateState(event.getState());
+        });
+
+        Events.on(ChatStateChange.class, event -> {
+            if (event.connected == true) {
+                Events.fire(new UserStateChanged("menu"));
+            }
+        });
+
+        Events.on(ClientServerConnectEvent.class, event -> {
+            Vars.net.pingHost(event.ip, event.port, result -> {
+                if (result != null) {
+                    Events.fire(new UserStateChanged("server: " + result.name));
+                }
+            }, e -> Log.err("Failed to ping host", e));
+        });
+
+        Events.on(StateChangeEvent.class, event -> {
+            if (event.to == State.menu) {
+                Events.fire(new UserStateChanged("menu"));
+            }
+        });
+
+        Events.on(PlayerConnectRoomConnected.class, event -> {
+            PlayerConnectService.getInstance().getRoomWithCache(event.link.toString()).thenAccept((room) -> {
+                if (room != null) {
+                    Events.fire(new UserStateChanged("player-connect: " + room.getData().getName()));
+                }
+            });
+        });
+
+        Events.on(RoomCreatedEvent.class, event -> {
+            Events.fire(new UserStateChanged("player-connect: " + PlayerConnectConfig.getRoomName()));
+        });
+
+        Events.on(WorldLoadEndEvent.class, event -> {
+            try {
+                if (Vars.net.client()) {
+                } else if (Vars.state.isCampaign()) {
+                    Events.fire(new UserStateChanged("campaign: " + Vars.state.map.name()));
+                } else {
+                    Events.fire(new UserStateChanged("custom-game"));
+                }
+            } catch (Exception e) {
+                Log.err("Failed to handle state change", e);
+                Vars.ui.showInfoFade(e.getMessage());
+            }
+        });
+
         fetchChannelsAndCurrentMessages();
+    }
+
+    public void fetchChannels() {
+        getChannels(chans -> {
+            ChatStore store = ChatStore.getInstance();
+            store.setChannels(new Seq<>(chans));
+            if (chans.length > 0) {
+                String currentId = store.getCurrentChannelId();
+                final String currentIdFinal = currentId;
+                if (currentId == null || !new Seq<>(chans).contains(c -> c.id.equals(currentIdFinal))) {
+                    store.setCurrentChannelId(chans[0].id);
+                    currentId = chans[0].id;
+                }
+            }
+        }, e -> Log.err("Failed to fetch channels", e));
     }
 
     public void fetchChannelsAndCurrentMessages() {
@@ -151,16 +227,17 @@ public class ChatService {
                     if (isStreaming.get()) {
                         Log.err("Chat stream error", e);
                         broadcastConnectionStatus(false);
-                        try {
-                            Thread.sleep(5000);
-                        } catch (InterruptedException ie) {
-                            break;
-                        }
                     }
                 } finally {
                     broadcastConnectionStatus(false);
                     if (conn != null)
                         conn.disconnect();
+                }
+
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException ie) {
+                    break;
                 }
             }
         }, "ChatStreamThread");
@@ -344,5 +421,28 @@ public class ChatService {
                     store.setLoadingMessages(false);
                     Log.err("Failed to fetch messages for channel " + channelId, e);
                 });
+    }
+
+    public void updateState(String state) {
+        if (state == null || state.isEmpty()) {
+            throw new IllegalArgumentException("State cannot be null or empty");
+        }
+
+        if (AuthService.getInstance().isLoggedIn() && !state.equals(currentState) && ChatConfig.status()) {
+            currentState = state;
+            Jval json = Jval.newObject();
+            json.put("state", state);
+
+            AuthHttp.put(Config.API_v4_URL + "chats/users/state")
+                    .content(json.toString())
+                    .header("Content-Type", "application/json")
+                    .error(e -> Log.err("Failed to update chat state", e))
+                    .submit(res -> {
+                        String cid = ChatStore.getInstance().getCurrentChannelId();
+                        if (cid != null) {
+                            fetchChatUsers(cid);
+                        }
+                    });
+        }
     }
 }

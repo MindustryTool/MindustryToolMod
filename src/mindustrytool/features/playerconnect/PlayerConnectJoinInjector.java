@@ -25,7 +25,7 @@ import mindustrytool.services.PlayerConnectService;
 import java.util.HashMap;
 
 public class PlayerConnectJoinInjector {
-    private final PlayerConnectService playerConnectService = new PlayerConnectService();
+    private final PlayerConnectService playerConnectService = PlayerConnectService.getInstance();
     private final Table playerConnectTable = new Table();
     private String searchTerm = "";
     private Table hosts;

@@ -12,7 +12,6 @@ import arc.scene.ui.Dialog;
 import arc.struct.IntSet;
 import arc.struct.IntSet.IntSetIterator;
 import arc.util.Interval;
-import arc.util.Log;
 import arc.util.Time;
 import arc.util.Tmp;
 import mindustry.Vars;
@@ -436,7 +435,6 @@ public class PathfindingDisplay implements Feature {
             }
 
             if (nextTile == currentTile) {
-                Log.err("Pathfinder loop detected");
                 break;
             }
 

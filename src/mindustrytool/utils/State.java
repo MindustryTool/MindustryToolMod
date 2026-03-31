@@ -1,10 +1,8 @@
-package mindustrytool.services;
+package mindustrytool.utils;
 
 import arc.Core;
 import arc.struct.Seq;
 import arc.util.Nullable;
-
-import java.util.Objects;
 
 public final class State<T> {
 
@@ -27,10 +25,6 @@ public final class State<T> {
     }
 
     public synchronized void set(@Nullable T newValue) {
-        if (Objects.equals(value, newValue)) {
-            return;
-        }
-
         T old = value;
         value = newValue;
 

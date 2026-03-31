@@ -305,6 +305,8 @@ public class PlayerConnect {
             Vars.net.send(packet, true);
 
             success.run();
+
+            Events.fire(new PlayerConnectRoomConnected(link));
         });
     }
 

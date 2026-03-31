@@ -19,6 +19,12 @@ public class AutoplaySettingDialog extends BaseDialog {
 
     public void rebuild() {
         cont.clear();
+
+        if (!feature.isEnabled()) {
+            cont.add("@autoplay.settings.disabled").row();
+            return;
+        }
+
         cont.pane(t -> {
             t.top();
 
