@@ -24,8 +24,7 @@ public class PrettyChatSettingsDialog extends BaseDialog {
 
         addCloseButton();
 
-        setup();
-
+        Core.app.post(() -> setup());
     }
 
     private void setup() {
@@ -33,6 +32,7 @@ public class PrettyChatSettingsDialog extends BaseDialog {
 
         Table inputTable = new Table();
         TextField field = new TextField(previewMessage);
+
         field.setMessageText("Type to preview...");
         field.changed(() -> {
             previewMessage = field.getText();

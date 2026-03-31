@@ -54,11 +54,12 @@ public class QuickAccessHud extends Table implements Feature {
         setPosition(QuickAccessConfig.x(), QuickAccessConfig.y());
 
         // Build UI
-        rebuild();
 
         Events.on(EventType.ResizeEvent.class, event -> {
             this.rebuild();
         });
+
+        Core.app.post(() -> rebuild());
     }
 
     private void rebuild() {

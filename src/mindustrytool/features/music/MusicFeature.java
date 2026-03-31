@@ -40,13 +40,13 @@ public class MusicFeature implements Feature {
             captureOriginalMusic();
             loadAllCustomMusic();
         });
+
+        captureOriginalMusic();
     }
 
     @Override
     public void onEnable() {
-        if (originalMusic.isEmpty()) {
-            captureOriginalMusic();
-        }
+        captureOriginalMusic();
         loadAllCustomMusic();
     }
 
@@ -56,12 +56,17 @@ public class MusicFeature implements Feature {
     }
 
     private void captureOriginalMusic() {
-        if (!originalMusic.isEmpty())
-            return;
+        if (!originalMusic.containsKey(MusicType.AMBIENT) && Vars.control.sound.ambientMusic.size != 0) {
+            originalMusic.put(MusicType.AMBIENT, new Seq<>(Vars.control.sound.ambientMusic));
+        }
 
-        originalMusic.put(MusicType.AMBIENT, new Seq<>(Vars.control.sound.ambientMusic));
-        originalMusic.put(MusicType.DARK, new Seq<>(Vars.control.sound.darkMusic));
-        originalMusic.put(MusicType.BOSS, new Seq<>(Vars.control.sound.bossMusic));
+        if (!originalMusic.containsKey(MusicType.DARK) && Vars.control.sound.darkMusic.size != 0) {
+            originalMusic.put(MusicType.DARK, new Seq<>(Vars.control.sound.darkMusic));
+        }
+
+        if (!originalMusic.containsKey(MusicType.BOSS) && Vars.control.sound.bossMusic.size != 0) {
+            originalMusic.put(MusicType.BOSS, new Seq<>(Vars.control.sound.bossMusic));
+        }
     }
 
     private void restoreOriginalMusic() {
