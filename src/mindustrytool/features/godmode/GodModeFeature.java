@@ -6,6 +6,7 @@ import arc.scene.ui.Dialog;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Log;
 import arc.util.Timer;
 import mindustry.Vars;
@@ -124,7 +125,7 @@ public class GodModeFeature extends Table implements Feature {
         if (provider != null) {
             provider.build(this);
         } else {
-            add("Unavailable");
+            add("Unavailable").growX().labelAlign(Align.center);
         }
     }
 }
