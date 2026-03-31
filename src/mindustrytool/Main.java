@@ -87,12 +87,12 @@ public class Main extends Mod {
                         try {
                             setup();
                         } catch (Exception err) {
-                            Log.err(err);
+                            Vars.ui.showException(err);
                         }
                     });
                 });
             } catch (Exception err) {
-                Log.err(err);
+                Vars.ui.showException(err);
             }
         });
     }
@@ -162,8 +162,8 @@ public class Main extends Mod {
     private void addCustomButtons() {
         try {
             Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
-        } catch (Exception e) {
-            Log.err(e);
+        } catch (Exception err) {
+            Vars.ui.showException(err);
         }
     }
 }
