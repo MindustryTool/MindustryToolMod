@@ -1,6 +1,5 @@
 package mindustrytool.features.savesync;
 
-import arc.ApplicationListener;
 import arc.Core;
 import arc.files.Fi;
 import arc.scene.ui.Dialog;
@@ -93,16 +92,11 @@ public class SaveSyncFeature implements Feature {
 
     @Override
     public void init() {
-        var feature = this;
-
-        Core.app.addListener(new ApplicationListener() {
-            @Override
-            public void exit() {
-                if (feature.isEnabled()) {
-                    String slotId = Core.settings.getString(SETTING_SLOT_ID, null);
-                    if (slotId != null && AuthService.getInstance().isLoggedIn()) {
-                        performSyncOnExit(slotId);
-                    }
+        Utils.onAppExit(() -> {
+            if (isEnabled()) {
+                String slotId = Core.settings.getString(SETTING_SLOT_ID, null);
+                if (slotId != null && AuthService.getInstance().isLoggedIn()) {
+                    performSyncOnExit(slotId);
                 }
             }
         });

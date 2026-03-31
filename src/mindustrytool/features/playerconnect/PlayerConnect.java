@@ -3,7 +3,6 @@ package mindustrytool.features.playerconnect;
 import java.net.InetAddress;
 import java.util.concurrent.ExecutorService;
 
-import arc.ApplicationListener;
 import arc.Core;
 import arc.Events;
 import arc.func.Cons;
@@ -28,6 +27,7 @@ import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 import mindustry.net.Net.NetProvider;
+import mindustrytool.Utils;
 import mindustrytool.features.playerconnect.Packets.RoomCloseReason;
 
 public class PlayerConnect {
@@ -119,12 +119,7 @@ public class PlayerConnect {
             unbanProxyIp();
         });
 
-        Core.app.addListener(new ApplicationListener() {
-            @Override
-            public void exit() {
-                close();
-            }
-        });
+        Utils.onAppExit(PlayerConnect::close);
     }
 
     private static class Request {

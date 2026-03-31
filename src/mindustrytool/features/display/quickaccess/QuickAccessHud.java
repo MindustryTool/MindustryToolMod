@@ -143,11 +143,12 @@ public class QuickAccessHud extends Table implements Feature {
         float margin = 8f * scale;
 
         for (Feature f : features) {
-            // Skip this feature itself
-            if (f == this)
+            if (f == this) {
                 continue;
+            }
 
             FeatureMetadata meta = f.getMetadata();
+
             if (!meta.quickAccess()) {
                 continue;
             }
@@ -192,8 +193,7 @@ public class QuickAccessHud extends Table implements Feature {
                 t.row();
         }
 
-        Button[] btnRef = new Button[1];
-        btnRef[0] = t
+        t
                 .button(b -> b.image(Utils.scalable(Icon.settings)).scaling(Scaling.fit), Styles.clearNonei, () -> {
                     Main.featureSettingDialog.show();
                 })
