@@ -206,35 +206,36 @@ public class FeatureSettingDialog extends BaseDialog {
         for (TaskData task : tasks) {
             table.table(Tex.pane, t -> {
                 t.left().top().margin(10);
-                t.add(task.title).style(Styles.defaultLabel).color(Color.white).growX().left().row();
+                t.add(task.title)
+                        .style(Styles.defaultLabel)
+                        .color(Color.white)
+                        .growX()
+                        .left()
+                        .row();
 
                 if (task.description != null && !task.description.isEmpty()) {
                     String desc = task.description;
-                    if (desc.length() > 100)
-                        desc = desc.substring(0, 100) + "...";
-                    t.add(desc).style(Styles.outlineLabel).color(Color.lightGray).fontScale(0.8f).growX().left().wrap()
+                    t.add(desc)
+                            .style(Styles.outlineLabel)
+                            .color(Color.lightGray)
+                            .fontScale(0.8f)
+                            .growX()
+                            .left()
+                            .wrap()
                             .padTop(5).row();
                 }
 
                 t.table(meta -> {
                     meta.left();
                     meta.table(info -> {
-                        info.add(task.status).style(Styles.outlineLabel).color(Color.yellow).fontScale(0.8f)
-                                .padRight(10)
-                                .padTop(5);
-
                         if (task.author != null) {
-                            info.add("by " + task.author.getName()).style(Styles.outlineLabel).color(Color.gray)
+                            info.add("by " + task.author.getName())
+                                    .style(Styles.outlineLabel)
+                                    .color(Color.gray)
                                     .fontScale(0.8f)
                                     .growX();
                         }
                     }).growX();
-
-                    if ("ACCEPTED".equals(task.status)) {
-                        meta.button(Icon.upOpen, () -> {
-                            Core.app.openURI(Config.PROJECT_URL + "/projects/" + Config.PROJECT_ID);
-                        }).size(50).padLeft(10).padRight(10).center();
-                    }
                     meta.center().left();
                 }).growX().center().left();
 

@@ -53,7 +53,7 @@ public class FeatureCard {
             c.table(header -> {
                 header.left();
                 header.image(metadata.icon())
-                        .scaling(Scaling.fill)
+                        .scaling(Scaling.fit)
                         .size(24)
                         .padRight(8);
 
