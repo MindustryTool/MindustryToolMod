@@ -1,5 +1,6 @@
 package mindustrytool;
 
+import arc.Core;
 import arc.Events;
 import arc.files.Fi;
 import arc.func.Prov;
@@ -67,74 +68,83 @@ public class Main extends Mod {
 
     @Override
     public void init() {
-        try {
-            self = Vars.mods.getMod(Main.class);
+        self = Vars.mods.getMod(Main.class);
 
-            imageDir.mkdirs();
-            mapsDir.mkdirs();
-            backgroundsDir.mkdirs();
-            musicsDir.mkdirs();
-            schematicDir.mkdirs();
-
-            Events.on(ClientLoadEvent.class, e -> {
-                try {
-                    featureSettingDialog = new FeatureSettingDialog();
-
-                    AuthService.getInstance().init();
-                    ServerService.getInstance().init();
-                    TapListener.getInstance().init();
-
-                    FeatureManager.getInstance().register(//
-                            new MapBrowserFeature(), //
-                            new SchematicBrowserFeature(), //
-                            new PlayerConnectFeature(), //
-                            new HealthBarVisualizer(), //
-                            new TeamResourceFeature(),
-                            new PathfindingDisplay(), //
-                            new RangeDisplay(), //
-                            new QuickAccessHud(), //
-                            new ChatFeature(),
-                            new ChatTranslationFeature(),
-                            new PrettyChatFeature(),
-                            new AutoplayFeature(),
-                            new WavePreviewFeature(),
-                            new SaveSyncFeature(),
-                            // new ItemVisualizerFeature(),
-                            new GodModeFeature(),
-                            new SmartDrillFeature(),
-                            new SmartUpgradeFeature(),
-                            new BackgroundFeature(),
-                            new MusicFeature(),
-                            new ProgressDisplay(),
-                            new ToggleRenderingFeature());
-
-                    boolean hasCrashed = new CrashReportService().checkForCrashes();
-                    if (hasCrashed) {
-                        // Try to disable all feature
-                        FeatureManager.getInstance().disableAll();
-                    }
-                    initFeatures();
-
-                    Events.fire(new MusicRegisterEvent());
-
-                    new UpdateService().checkForUpdate(self.meta.version);
-                    addCustomButtons();
-
-                } catch (Exception err) {
-                    Log.err(err);
-                }
-            });
-        } catch (Exception e) {
-            Log.err(e);
+        if (self == null) {
+            Vars.ui.showErrorMessage("Mod cant find itself, please contact admin on Discord to fix the problem\n"
+                    + Config.DISCORD_INVITE_URL);
+            return;
         }
+
+        Events.on(ClientLoadEvent.class, e -> {
+            try {
+                UpdateService.getInstance().checkForUpdate(() -> {
+                    Core.app.post(() -> {
+                        try {
+                            setup();
+                        } catch (Exception err) {
+                            Log.err(err);
+                        }
+                    });
+                });
+            } catch (Exception err) {
+                Log.err(err);
+            }
+        });
+    }
+
+    private void setup() {
+
+        imageDir.mkdirs();
+        mapsDir.mkdirs();
+        backgroundsDir.mkdirs();
+        musicsDir.mkdirs();
+        schematicDir.mkdirs();
+
+        featureSettingDialog = new FeatureSettingDialog();
+
+        AuthService.getInstance().init();
+        ServerService.getInstance().init();
+        TapListener.getInstance().init();
+
+        FeatureManager.getInstance().register(//
+                new MapBrowserFeature(), //
+                new SchematicBrowserFeature(), //
+                new PlayerConnectFeature(), //
+                new HealthBarVisualizer(), //
+                new TeamResourceFeature(),
+                new PathfindingDisplay(), //
+                new RangeDisplay(), //
+                new QuickAccessHud(), //
+                new ChatFeature(),
+                new ChatTranslationFeature(),
+                new PrettyChatFeature(),
+                new AutoplayFeature(),
+                new WavePreviewFeature(),
+                new SaveSyncFeature(),
+                // new ItemVisualizerFeature(),
+                new GodModeFeature(),
+                new SmartDrillFeature(),
+                new SmartUpgradeFeature(),
+                new BackgroundFeature(),
+                new MusicFeature(),
+                new ProgressDisplay(),
+                new ToggleRenderingFeature());
+
+        boolean hasCrashed = new CrashReportService().checkForCrashes();
+        if (hasCrashed) {
+            // Try to disable all feature
+            FeatureManager.getInstance().disableAll();
+        }
+        initFeatures();
+
+        Events.fire(new MusicRegisterEvent());
+
+        addCustomButtons();
     }
 
     private void initFeatures() {
-        try {
-            FeatureManager.getInstance().init();
-        } catch (Exception e) {
-            Log.err(e);
-        }
+        FeatureManager.getInstance().init();
 
         Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
 
