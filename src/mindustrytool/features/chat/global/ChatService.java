@@ -28,7 +28,6 @@ import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatUser;
 import mindustrytool.features.chat.global.events.ChatMessageReceive;
 import mindustrytool.features.chat.global.events.ChatStateChange;
-import mindustrytool.features.chat.global.events.UserStateChanged;
 import mindustrytool.features.playerconnect.PlayerConnectConfig;
 import mindustrytool.features.playerconnect.PlayerConnectRoomConnected;
 import mindustrytool.features.playerconnect.RoomCreatedEvent;
@@ -62,55 +61,49 @@ public class ChatService {
     public void init() {
         Timer.schedule(this::connectStream, 0, 60);
 
-        Events.on(UserStateChanged.class, event -> {
-            updateState(event.getState());
-        });
-
-        Events.on(ChatStateChange.class, event -> {
-            if (event.connected == true) {
-                Events.fire(new UserStateChanged("menu"));
-            }
-        });
-
         Events.on(ClientServerConnectEvent.class, event -> {
             Vars.net.pingHost(event.ip, event.port, result -> {
                 if (result != null) {
-                    Events.fire(new UserStateChanged("server: " + result.name));
+                    updateState("server: " + result.name);
                 }
             }, e -> Log.err("Failed to ping host", e));
         });
 
         Events.on(StateChangeEvent.class, event -> {
-            if (event.to == State.menu) {
-                Events.fire(new UserStateChanged("menu"));
+            if (event.to == State.menu && !Core.graphics.isHidden()) {
+                updateState("menu");
             }
         });
 
         Events.on(PlayerConnectRoomConnected.class, event -> {
             PlayerConnectService.getInstance().getRoomWithCache(event.link.toString()).thenAccept((room) -> {
                 if (room != null) {
-                    Events.fire(new UserStateChanged("player-connect: " + room.getData().getName()));
+                    updateState("player-connect: " + room.getData().getName());
                 }
             });
         });
 
         Events.on(RoomCreatedEvent.class, event -> {
-            Events.fire(new UserStateChanged("player-connect: " + PlayerConnectConfig.getRoomName()));
+            updateState("player-connect: " + PlayerConnectConfig.getRoomName());
         });
 
         Events.on(WorldLoadEndEvent.class, event -> {
             try {
                 if (Vars.net.client()) {
                 } else if (Vars.state.isCampaign()) {
-                    Events.fire(new UserStateChanged("campaign: " + Vars.state.map.name()));
+                    updateState("campaign: " + Vars.state.map.name());
                 } else {
-                    Events.fire(new UserStateChanged("custom-game"));
+                    updateState("custom-game");
                 }
             } catch (Exception e) {
                 Log.err("Failed to handle state change", e);
                 Vars.ui.showInfoFade(e.getMessage());
             }
         });
+
+        Timer.schedule(() -> {
+            updateState(currentState);
+        }, 5, 5);
 
         fetchChannelsAndCurrentMessages();
     }
