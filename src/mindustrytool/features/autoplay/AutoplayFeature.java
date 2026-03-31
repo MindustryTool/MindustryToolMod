@@ -71,8 +71,10 @@ public class AutoplayFeature implements Feature {
 
         tasks.each(AutoplayTask::init);
 
-        Events.run(Trigger.update, this::updateUnit);
-        Events.run(Trigger.update, this::updateTask);
+        Events.run(Trigger.update, () -> {
+            updateTask();
+            updateUnit();
+        });
         Events.run(Trigger.draw, this::draw);
 
         MdtKeybinds.addFeatureKeyBind(this, MdtKeybinds.autoPlay);
