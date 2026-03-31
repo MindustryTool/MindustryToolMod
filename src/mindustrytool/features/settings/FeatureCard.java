@@ -74,10 +74,11 @@ public class FeatureCard {
 
                 if (feature.setting().isPresent()) {
                     Dialog settingDialog = feature.setting().get();
-                    header.button(Utils.scalable(Icon.settings), Styles.clearNonei,
+                    header.button(b -> {
+                        b.image(Utils.scalable(Icon.settings)).scaling(Scaling.fit);
+                    }, Styles.clearNonei,
                             () -> Core.app.post(settingDialog::show))
                             .size(32)
-                            .scaling(Scaling.fit)
                             .get()
                             .addListener(new ClickListener() {
                                 @Override
