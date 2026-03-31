@@ -86,8 +86,12 @@ public class UserList extends Table {
 
             card.table(info -> {
                 info.left();
-                Label l = info.add(user.getName() + "[white]").minWidth(0).ellipsis(true).style(Styles.defaultLabel)
+                Label l = info.add(user.getName() + "[white]")
+                        .minWidth(0)
+                        .ellipsis(true)
+                        .style(Styles.defaultLabel)
                         .color(Color.white)
+                        .growX()
                         .left().get();
                 l.setFontScale(scale);
                 info.row();
@@ -97,12 +101,18 @@ public class UserList extends Table {
                             .color(Color.valueOf(role.getColor()))
                             .labelAlign(Align.left)
                             .left()
+                            .growX()
                             .get();
                     l2.setFontScale(scale);
                 });
             }).growX().left();
 
-            userListTable.add(card).growX().minWidth(0).padBottom(8 * scale).padLeft(8 * scale).padRight(8 * scale)
+            userListTable.add(card)
+                    .growX()
+                    .minWidth(0)
+                    .padBottom(8 * scale)
+                    .padLeft(8 * scale)
+                    .padRight(8 * scale)
                     .row();
         }
         userListTable.pack();

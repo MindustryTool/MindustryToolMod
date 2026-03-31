@@ -463,7 +463,8 @@ public class TeamResourceFeature extends Table implements Feature {
         public TeamResourceSettingsDialog() {
             super("@team-resources.settings.title");
 
-            buttons.button("@back", Icon.left, this::hide).size(210f, 64f);
+            addCloseButton();
+            addCloseListener();
 
             buttons.button("@reset-to-defaults", Icon.refresh, () -> {
                 TeamResourceConfig.opacity(1f);
