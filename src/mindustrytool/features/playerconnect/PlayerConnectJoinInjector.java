@@ -27,17 +27,32 @@ import java.util.HashMap;
 public class PlayerConnectJoinInjector {
     private final PlayerConnectService playerConnectService = PlayerConnectService.getInstance();
     private final Table playerConnectTable = new Table();
+    private final JoinRoomDialog joinRoomDialog;
     private String searchTerm = "";
     private Table hosts;
 
     private static final String HEADER_NAME = "pc-header";
     private static final String COLLAPSER_NAME = "pc-collapser";
+    private static final String BUTTON_NAME = "pc-join-btn";
+
+    public PlayerConnectJoinInjector(JoinRoomDialog joinRoomDialog) {
+        this.joinRoomDialog = joinRoomDialog;
+    }
 
     public void inject(JoinDialog dialog) {
         this.hosts = Reflect.get(dialog, "hosts");
 
         if (this.hosts == null) {
             return;
+        }
+
+        if (dialog.buttons.find(BUTTON_NAME) == null) {
+            dialog.buttons.button("@message.join-room.title", Icon.add, joinRoomDialog::show)
+                    .name(BUTTON_NAME)
+                    .size(210f, 64f);
+            if (dialog.buttons.getCells().size >= 3) {
+                dialog.buttons.getCells().swap(dialog.buttons.getCells().size - 1, dialog.buttons.getCells().size - 3);
+            }
         }
 
         // Prepare our section

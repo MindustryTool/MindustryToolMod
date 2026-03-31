@@ -11,6 +11,14 @@ public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
     public JoinRoomDialog() {
         super("@message.join-room.title");
 
+        shown(() -> {
+            String clipboard = arc.Core.app.getClipboardText();
+            if (clipboard != null && PlayerConnectLink.isValid(clipboard)) {
+                lastLink = clipboard;
+                setLink(clipboard);
+            }
+        });
+
         cont.defaults().width(Vars.mobile ? 350f : 550f);
 
         cont.table(table -> {
@@ -23,6 +31,11 @@ public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
                     .valid(this::setLink)
                     .height(54f)
                     .growX()
+                    .update(f -> {
+                        if (!f.hasKeyboard()) {
+                            f.setText(lastLink);
+                        }
+                    })
                     .row();
 
             table.add("@message.password")

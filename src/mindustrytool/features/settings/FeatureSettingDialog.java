@@ -237,7 +237,8 @@ public class FeatureSettingDialog extends BaseDialog {
                         }
                     }).growX();
                     meta.center().left();
-                }).growX().center().left();
+                }).growX().center().left()
+                .padTop(10);
 
             }).growX().pad(5).row();
         }

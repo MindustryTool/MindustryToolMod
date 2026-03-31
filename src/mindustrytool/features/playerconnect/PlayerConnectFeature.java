@@ -32,7 +32,7 @@ public class PlayerConnectFeature implements Feature {
     public void init() {
         createRoomDialog = new CreateRoomDialog();
         joinRoomDialog = new JoinRoomDialog();
-        injector = new PlayerConnectJoinInjector();
+        injector = new PlayerConnectJoinInjector(joinRoomDialog);
 
         if (Vars.ui.join != null) {
             Vars.ui.join.shown(() -> {
