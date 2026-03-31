@@ -419,7 +419,7 @@ public class ChatService {
 
     public void updateState(String state) {
         if (state == null || state.isEmpty()) {
-            throw new IllegalArgumentException("State cannot be null or empty");
+            return;
         }
 
         if (AuthService.getInstance().isLoggedIn() && !state.equals(currentState) && ChatConfig.status()) {
