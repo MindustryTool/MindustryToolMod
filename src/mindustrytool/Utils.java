@@ -1,5 +1,6 @@
 package mindustrytool;
 
+import arc.ApplicationListener;
 import arc.Core;
 import arc.graphics.Texture;
 import arc.graphics.g2d.TextureRegion;
@@ -253,5 +254,18 @@ public class Utils {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
+    }
+
+    public static void onAppExit(Runnable callback) {
+        Core.app.addListener(new ApplicationListener() {
+            @Override
+            public void exit() {
+                try {
+                    callback.run();
+                } catch (Throwable e) {
+                    Log.err(e);
+                }
+            }
+        });
     }
 }

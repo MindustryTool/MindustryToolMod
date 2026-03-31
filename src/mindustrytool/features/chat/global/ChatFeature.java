@@ -3,7 +3,6 @@ package mindustrytool.features.chat.global;
 import java.time.Instant;
 import java.util.Optional;
 
-import arc.ApplicationListener;
 import arc.Core;
 import arc.Events;
 import arc.scene.event.Touchable;
@@ -16,6 +15,7 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
 import mindustry.ui.dialogs.BaseDialog;
+import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.auth.dto.LoginEvent;
@@ -74,16 +74,7 @@ public class ChatFeature implements Feature {
             ChatService.getInstance().connectStream();
         });
 
-        Core.app.addListener(new ApplicationListener() {
-            @Override
-            public void exit() {
-                try {
-                    ChatService.getInstance().disconnectStream();
-                } catch (Exception e) {
-                    Log.err(e);
-                }
-            }
-        });
+        Utils.onAppExit(ChatService.getInstance()::disconnectStream);
 
         ChatService.getInstance().init();
     }
