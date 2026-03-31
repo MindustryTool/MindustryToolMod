@@ -110,9 +110,9 @@ public class UserList extends Table {
                     l2.setFontScale(scale);
                     info.row();
                 });
-
-                if (!user.getState().equals("menu")) {
-                    info.add("[gray]" + user.getState() + "[white]").growX().ellipsis(true);
+                String state = user.getState();
+                if (state != null && !state.equals("menu")) {
+                    info.add("[gray]" + state + "[white]").growX().ellipsis(true);
                     info.row();
                 }
             }).growX().left();

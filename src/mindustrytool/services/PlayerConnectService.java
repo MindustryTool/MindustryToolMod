@@ -18,7 +18,7 @@ public class PlayerConnectService {
 
     private static PlayerConnectService instance;
 
-    public static PlayerConnectService getInstance() {
+    public static synchronized PlayerConnectService getInstance() {
         if (instance == null) {
             instance = new PlayerConnectService();
         }
