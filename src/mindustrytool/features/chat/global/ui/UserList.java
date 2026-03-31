@@ -105,6 +105,9 @@ public class UserList extends Table {
                             .get();
                     l2.setFontScale(scale);
                 });
+                info.row();
+                info.add("[gray]" + user.getState() + "[white]").growX().ellipsis(true);
+                info.row();
             }).growX().left();
 
             userListTable.add(card)

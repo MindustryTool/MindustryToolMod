@@ -13,6 +13,10 @@ import arc.func.Cons;
 import arc.util.Log;
 import arc.util.Timer;
 import arc.util.serialization.Jval;
+import mindustry.Vars;
+import mindustry.core.GameState.State;
+import mindustry.game.EventType.ClientServerConnectEvent;
+import mindustry.game.EventType.StateChangeEvent;
 import mindustry.io.JsonIO;
 import arc.util.serialization.Json;
 import mindustrytool.Config;
@@ -23,19 +27,20 @@ import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.chat.global.dto.ChatUser;
 import mindustrytool.features.chat.global.events.ChatMessageReceive;
 import mindustrytool.features.chat.global.events.ChatStateChange;
+import mindustrytool.features.chat.global.events.UserStateChanged;
+import mindustrytool.features.playerconnect.PlayerConnect;
 import mindustrytool.features.chat.global.dto.ChannelDto;
 import arc.struct.Seq;
 
 public class ChatService {
     private static ChatService instance;
-
     private volatile Thread streamThread;
+    private String currentState = "";
 
     private AtomicBoolean isStreaming = new AtomicBoolean(false);
     private AtomicBoolean isConnected = new AtomicBoolean(false);
 
-    public ChatService() {
-        Timer.schedule(this::connectStream, 0, 60);
+    private ChatService() {
     }
 
     public static ChatService getInstance() {
@@ -51,6 +56,37 @@ public class ChatService {
     }
 
     public void init() {
+        Timer.schedule(this::connectStream, 0, 60);
+
+        Events.on(UserStateChanged.class, event -> {
+            updateState(event.getState());
+        });
+
+        Events.on(ClientServerConnectEvent.class, event -> {
+            Vars.net.pingHost(event.ip, event.port, result -> {
+                if (result != null) {
+                    Events.fire(new UserStateChanged("server: " + result.name));
+                }
+            }, e -> Log.err("Failed to ping host", e));
+        });
+
+        Events.on(StateChangeEvent.class, event -> {
+            try {
+                if (event.to == State.menu) {
+                    Events.fire(new UserStateChanged("menu"));
+                } else if (event.to == State.playing) {
+                    if (PlayerConnect.isHosting()) {
+                        Events.fire(new UserStateChanged("player-connect: " + Vars.state.map.name()));
+                    } else if (Vars.net.client()) {
+                        Events.fire(new UserStateChanged("server: " + Vars.state.map.name()));
+                    }
+                }
+            } catch (Exception e) {
+                Log.err("Failed to handle state change", e);
+                Vars.ui.showInfoFade(e.getMessage());
+            }
+        });
+
         fetchChannelsAndCurrentMessages();
     }
 
@@ -151,16 +187,17 @@ public class ChatService {
                     if (isStreaming.get()) {
                         Log.err("Chat stream error", e);
                         broadcastConnectionStatus(false);
-                        try {
-                            Thread.sleep(5000);
-                        } catch (InterruptedException ie) {
-                            break;
-                        }
                     }
                 } finally {
                     broadcastConnectionStatus(false);
                     if (conn != null)
                         conn.disconnect();
+                }
+
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException ie) {
+                    break;
                 }
             }
         }, "ChatStreamThread");
@@ -344,5 +381,12 @@ public class ChatService {
                     store.setLoadingMessages(false);
                     Log.err("Failed to fetch messages for channel " + channelId, e);
                 });
+    }
+
+    public void updateState(String state) {
+        if (AuthService.getInstance().isLoggedIn() && !state.equals(currentState)) {
+            currentState = state;
+            AuthHttp.put(Config.API_v4_URL + "chats/users/state", state);
+        }
     }
 }

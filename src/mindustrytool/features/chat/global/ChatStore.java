@@ -46,21 +46,12 @@ public class ChatStore {
         return instance;
     }
 
-    public void clear() {
-        messagesByChannel.clear();
-        fullyLoadedChannels.clear();
-        unreadByChannel.clear();
-        usersByChannel.clear();
-        channels.clear();
-        unreadCount = 0;
-        isLoadingMessages.set(false);
-        Events.fire(new StoreUpdateEvent());
-    }
-
     public void clearMessages() {
         messagesByChannel.clear();
         fullyLoadedChannels.clear();
-        Events.fire(new StoreUpdateEvent());
+        usersByChannel.clear();
+
+        
     }
 
     public String getCurrentChannelId() {
