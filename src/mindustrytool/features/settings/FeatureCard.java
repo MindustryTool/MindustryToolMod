@@ -4,7 +4,6 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
-import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.Scaling;
@@ -72,8 +71,7 @@ public class FeatureCard {
                         .scaling(Scaling.fit)
                         .color(enabled ? Color.white : Color.gray);
 
-                if (feature.setting().isPresent()) {
-                    Dialog settingDialog = feature.setting().get();
+                feature.setting().ifPresent(settingDialog -> {
                     header.button(b -> {
                         b.image(Utils.scalable(Icon.settings)).scaling(Scaling.fit);
                     }, Styles.clearNonei,
@@ -86,7 +84,7 @@ public class FeatureCard {
                                     event.stop();
                                 }
                             });
-                }
+                });
 
             }).growX().row();
 
