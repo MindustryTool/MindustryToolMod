@@ -14,7 +14,6 @@ import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
-import mindustry.ui.dialogs.BaseDialog;
 
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -223,47 +222,13 @@ public class PlayerConnectRenderer {
 
     public static void joinRoom(PlayerConnectRoom room, Seq<String> unneeded, Seq<String> missing) {
         if (!unneeded.isEmpty() || !missing.isEmpty()) {
-            BaseDialog dialog = new BaseDialog("@warning");
-            dialog.name = "playerConnectJoinWarningDialog";
-
-            if (!missing.isEmpty()) {
-                dialog.cont.add("Missing mods detected. Join anyway?").row();
-                dialog.cont.label(() -> missing.toString(", ")).color(Pal.lightishGray).width(400f).wrap().row();
-            }
-
-            if (!unneeded.isEmpty()) {
-                dialog.cont.add("Unneeded mods detected. Disable them?").row();
-                dialog.cont.label(() -> unneeded.toString(", ")).color(Pal.lightishGray).width(400f).wrap().row();
-            }
-
-            dialog.buttons.button("@cancel", dialog::hide).size(100, 50);
-
-            dialog.buttons.button("Disable & Join", () -> {
-                unneeded
-                        .map(mod -> mod.substring(0, mod.indexOf(":")))
-                        .each(name -> {
-                            var mod = Vars.mods.getMod(name);
-                            if (mod != null) {
-                                Vars.mods.setEnabled(mod, false);
-                            }
-                        });
-                dialog.hide();
-                proceedToJoin(room);
-            })
-                    .size(200, 50);
-
-            dialog.buttons.button("Ignore", () -> {
-                dialog.hide();
-                proceedToJoin(room);
-            }).size(100, 50);
-
-            Core.app.post(() -> dialog.show());
+            new PlayerConnectJoinWarningDialog(room, unneeded, missing);
         } else {
             proceedToJoin(room);
         }
     }
 
-    private static void proceedToJoin(PlayerConnectRoom room) {
+    static void proceedToJoin(PlayerConnectRoom room) {
         var link = PlayerConnectLink.fromString(room.getLink());
 
         if (!room.getData().isSecured()) {
@@ -275,32 +240,7 @@ public class PlayerConnectRenderer {
             return;
         }
 
-        BaseDialog connect = new BaseDialog("@message.type-password.title");
-        connect.name = "playerConnectPasswordDialog";
-        String[] password = { "" };
-
-        connect.cont.table(table -> {
-            table.add("@message.password").padRight(5f).right();
-            table.field(password[0], text -> password[0] = text)
-                    .size(320f, 54f)
-                    .valid(t -> t.length() > 0 && t.length() <= 100)
-                    .maxTextLength(100)
-                    .left()
-                    .get();
-            table.row().add();
-        }).row();
-
-        connect.buttons.button("@cancel", connect::hide).minWidth(210);
-        connect.buttons.button("@ok", () -> {
-            try {
-                PlayerConnect.join(link, password[0], connect::hide);
-            } catch (Exception e) {
-                connect.hide();
-                Vars.ui.showException("@message.connect.fail", e);
-            }
-        }).minWidth(210);
-
-        Core.app.post(() -> connect.show());
+        new PlayerConnectPasswordDialog(link);
     }
 
     private static String getVersionString(String versionString) {

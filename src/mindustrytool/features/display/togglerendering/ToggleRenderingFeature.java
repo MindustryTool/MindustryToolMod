@@ -1,9 +1,7 @@
 package mindustrytool.features.display.togglerendering;
 
-import arc.Core;
 import arc.Events;
 import arc.scene.ui.Dialog;
-import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Log;
 import mindustry.Vars;
@@ -73,40 +71,9 @@ public class ToggleRenderingFeature implements Feature {
     @Override
     public Optional<Dialog> setting() {
         if (dialog == null) {
-            dialog = new BaseDialog("@toggle-rendering.settings.title");
-            dialog.name = "toggleRenderingSettingDialog";
-            dialog.addCloseButton();
-            dialog.buttons.button("@reset", Icon.refresh, () -> {
-                ToggleRenderingConfig.reset();
-                rebuild();
-            }).size(250, 64);
-
-            dialog.shown(this::rebuild);
+            dialog = new ToggleRenderingSettingsDialog();
         }
         return Optional.of(dialog);
-    }
-
-    private void rebuild() {
-        Table cont = dialog.cont;
-        cont.clear();
-        cont.defaults().pad(6).left();
-
-        float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
-
-        cont.check("@toggle-rendering.draw-blocks", ToggleRenderingConfig.drawBlocks, v -> {
-            ToggleRenderingConfig.drawBlocks = v;
-            ToggleRenderingConfig.save();
-        }).width(width).left().row();
-
-        cont.check("@toggle-rendering.draw-units-allies", ToggleRenderingConfig.drawUnitsAllies, v -> {
-            ToggleRenderingConfig.drawUnitsAllies = v;
-            ToggleRenderingConfig.save();
-        }).width(width).left().row();
-
-        cont.check("@toggle-rendering.draw-units-enemies", ToggleRenderingConfig.drawUnitsEnemies, v -> {
-            ToggleRenderingConfig.drawUnitsEnemies = v;
-            ToggleRenderingConfig.save();
-        }).width(width).left().row();
     }
 
     @SuppressWarnings("unchecked")
