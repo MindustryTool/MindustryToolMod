@@ -18,7 +18,6 @@ import arc.util.serialization.Jval;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
-import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
 import mindustrytool.Utils;
 import mindustrytool.features.auth.dto.LoginEvent;
@@ -40,7 +39,7 @@ public class AuthService {
 
     private CompletableFuture<Boolean> refreshFuture;
     private CompletableFuture<Void> loginFuture;
-    private BaseDialog loginDialog;
+    private AuthLoginDialog loginDialog;
     private Table authWindow;
 
     public static AuthService getInstance() {
@@ -185,19 +184,10 @@ public class AuthService {
         loginFuture = new CompletableFuture<>();
 
         if (loginDialog == null) {
-            loginDialog = new BaseDialog("@login");
-            loginDialog.name = "loginDialog";
-
-            loginDialog.buttons.button("@cancel", () -> {
-                if (!loginFuture.isDone()) {
-                    loginFuture.completeExceptionally(new RuntimeException("Login cancelled"));
-                }
-                loginDialog.hide();
-            }).width(230);
-
+            loginDialog = new AuthLoginDialog(this);
         }
 
-        loginDialog.cont.add("@generate-loading-link");
+        loginDialog.showLoading();
         Core.app.post(() -> loginDialog.show());
 
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
@@ -215,11 +205,7 @@ public class AuthService {
                         String loginUrl = json.getString("loginUrl");
                         String loginId = json.getString("loginId");
 
-                        loginDialog.cont.clear();
-                        loginDialog.cont.button(loginUrl, () -> {
-                            Core.app.setClipboardText(loginUrl);
-                            Vars.ui.showInfoFade("@copied");
-                        }).margin(40).growX().wrapLabel(true).fontScale(0.5f);
+                        loginDialog.showLoginUrl(loginUrl);
 
                         Core.settings.put(KEY_LOGIN_ID, loginId);
                         Core.settings.put(KEY_LOGIN_EXPIRY, Instant.now().plus(Duration.ofMinutes(5)).toEpochMilli());
@@ -245,6 +231,12 @@ public class AuthService {
                 });
 
         return loginFuture;
+    }
+
+    void cancelLogin() {
+        if (loginFuture != null && !loginFuture.isDone()) {
+            loginFuture.completeExceptionally(new RuntimeException("Login cancelled"));
+        }
     }
 
     private CompletableFuture<Void> pollLoginToken(String loginId) {

@@ -12,7 +12,6 @@ import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustry.graphics.Layer;
-import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.blocks.distribution.BufferedItemBridge.BufferedItemBridgeBuild;
 import mindustry.world.blocks.distribution.Duct.DuctBuild;
 import mindustry.world.blocks.distribution.DuctBridge.DuctBridgeBuild;
@@ -69,29 +68,7 @@ public class ItemVisualizerFeature implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
-        BaseDialog dialog = new BaseDialog("Item Visualizer Settings");
-        dialog.addCloseButton();
-
-        dialog.cont.table(t -> {
-            t.defaults().pad(6).left();
-
-            t.check("Show Item Bridges", ItemVisualizerSettings.showItemBridges, val -> {
-                ItemVisualizerSettings.showItemBridges = val;
-                ItemVisualizerSettings.save();
-            }).row();
-
-            t.check("Show Liquid Bridges", ItemVisualizerSettings.showLiquidBridges, val -> {
-                ItemVisualizerSettings.showLiquidBridges = val;
-                ItemVisualizerSettings.save();
-            }).row();
-
-            t.check("Show Routers & Distributors", ItemVisualizerSettings.showRouters, val -> {
-                ItemVisualizerSettings.showRouters = val;
-                ItemVisualizerSettings.save();
-            }).row();
-        });
-
-        return Optional.of(dialog);
+        return Optional.of(new ItemVisualizerSettingsDialog());
     }
 
     private void draw() {

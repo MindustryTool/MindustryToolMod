@@ -45,7 +45,7 @@ public class TeamResourceFeature extends Table implements Feature {
     private final ObjectSet<UnitType> usedUnits = new ObjectSet<>();
     private final Interval timer = new Interval(2);
 
-    private Team selectedTeam;
+    Team selectedTeam;
     private ItemModule coreItems;
     private ItemModule lastSnapshot = new ItemModule();
     private ItemModule rateDisplay = new ItemModule();
@@ -369,31 +369,7 @@ public class TeamResourceFeature extends Table implements Feature {
     }
 
     private void showAllTeamsDialog() {
-        var dialog = new BaseDialog("@team-resources.all-teams") {
-            {
-                name = "teamResourceAllTeamsDialog";
-                addCloseButton();
-                cont.pane(p -> {
-                    p.defaults().width(150f).height(50f).pad(5f);
-                    int i = 0;
-                    for (Team team : Team.all) {
-                        p.button(b -> {
-                            b.image().color(team.color).margin(4f).size(24f).padRight(10f);
-                            b.add(team.localized()).color(team.color);
-                        }, Styles.flatTogglet, () -> {
-                            selectedTeam = team;
-                            rebuild();
-                            hide();
-                        }).checked(team == selectedTeam);
-
-                        if (++i % 3 == 0)
-                            p.row();
-                    }
-                }).grow();
-            }
-        };
-
-        Core.app.post(() -> dialog.show());
+        new TeamResourceAllTeamsDialog(this);
     }
 
     private void updateRates() {

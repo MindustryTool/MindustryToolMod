@@ -2,23 +2,15 @@ package mindustrytool.services;
 
 import arc.Core;
 import arc.files.Fi;
-import arc.scene.ui.layout.Scl;
 import arc.struct.Seq;
-import arc.util.Http;
 import arc.util.Log;
 import arc.util.Strings;
-import arc.util.Http.HttpStatusException;
-import mindustry.ui.dialogs.BaseDialog;
-import mindustrytool.Config;
-import mindustrytool.Utils;
 import mindustrytool.features.FeatureManager;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Date;
-import java.util.HashMap;
-
 public class CrashReportService {
 
     private final SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy_HH_mm_ss");
@@ -118,47 +110,6 @@ public class CrashReportService {
 
         var data = log;
 
-        String sendCrashReportKey = "mindustrytool.crash-report.send";
-
-        BaseDialog dialog = new BaseDialog("@crash-report.title");
-
-        dialog.name = "crashReportDialog";
-
-        boolean sendCrashReport = Core.settings.getBool(sendCrashReportKey, true);
-
-        dialog.addCloseButton();
-        dialog.closeOnBack();
-
-        dialog.cont.table(container -> {
-            container.add("@crash-report.content").padBottom(10f).wrapLabel(true).wrap().growX().row();
-            container.check("@crash-report.send", sendCrashReport,
-                    (v) -> Core.settings.put(sendCrashReportKey, v)).wrapLabel(false).growX().row();
-            container.add(file.absolutePath()).padBottom(10f).wrapLabel(true).wrap().growX().row();
-            container.pack();
-        }).width(Math.min(600, Core.graphics.getWidth() / Scl.scl() / 1.2f));
-
-        dialog.hidden(() -> {
-            if (Core.settings.getBool(sendCrashReportKey, true)) {
-                try {
-                    HashMap<String, Object> json = new HashMap<>();
-
-                    json.put("content", data);
-
-                    Http.post(Config.API_v4_URL + "/crashes", Utils.toJson(json))
-                            .header("Content-Type", "application/json")
-                            .error(err -> {
-                                if (err instanceof HttpStatusException httpStatusException) {
-                                    Log.err(httpStatusException.response.getResultAsString());
-                                }
-                            })
-                            .submit(res -> {
-                            });
-                } catch (Exception err) {
-                    Log.err(err);
-                }
-            }
-        });
-
-        Core.app.post(dialog::show);
+        Core.app.post(() -> new CrashReportDialog(file, data).show());
     }
 }

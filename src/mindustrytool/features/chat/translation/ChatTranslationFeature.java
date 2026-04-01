@@ -2,23 +2,13 @@ package mindustrytool.features.chat.translation;
 
 import arc.Core;
 import arc.func.Cons;
-import arc.graphics.Color;
-import arc.scene.ui.Button;
-import arc.scene.ui.ButtonGroup;
 import arc.scene.ui.Dialog;
-import arc.scene.ui.layout.Table;
-import arc.scene.ui.Label;
-import arc.scene.ui.TextField;
-import arc.scene.ui.TextButton;
-import arc.util.Align;
 import arc.util.Log;
 import arc.util.Strings;
 import mindustry.Vars;
 import mindustry.core.NetClient;
 import mindustry.gen.SendMessageCallPacket;
 import mindustry.gen.SendMessageCallPacket2;
-import mindustry.ui.Styles;
-import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Main;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -123,101 +113,22 @@ public class ChatTranslationFeature implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
-        BaseDialog dialog = new BaseDialog(Core.bundle.get("chat-translation.settings.title"));
-        dialog.name = "chatTranslationSettingDialog";
-        dialog.addCloseButton();
+        return Optional.of(new ChatTranslationSettingsDialog(this));
+    }
 
-        Table root = new Table();
-        root.top().left().defaults().top().left().padBottom(5);
+    Seq<TranslationProvider> getProviders() {
+        return providers;
+    }
 
-        root.check("@chat-translation.settings.show-original", ChatTranslationConfig.isShowOriginal(), val -> {
-            ChatTranslationConfig.setShowOriginal(val);
-        }).row();
+    TranslationProvider getCurrentProvider() {
+        return currentProvider;
+    }
 
-        root.image().height(4).color(Color.gray).fillX().pad(10).row();
+    void setCurrentProvider(TranslationProvider currentProvider) {
+        this.currentProvider = currentProvider;
+    }
 
-        root.add("@chat-translation.settings.providers").style(Styles.outlineLabel).padBottom(5).row();
-
-        Table providerList = new Table();
-        ButtonGroup<Button> group = new ButtonGroup<>();
-        group.setMinCheckCount(1);
-
-        for (TranslationProvider prov : providers) {
-            Button card = new Button(Styles.togglet);
-            card.top().left().margin(12);
-
-            card.table(h -> {
-                h.left();
-                h.label(() -> prov.getName()).style(Styles.defaultLabel).growX().left();
-            }).growX().row();
-
-            card.collapser(s -> {
-                s.add(prov.settings()).growX().padTop(10);
-            }, false, card::isChecked).growX().row();
-
-            card.clicked(() -> {
-                if (currentProvider != prov) {
-                    currentProvider = prov;
-                    ChatTranslationConfig.setProviderId(prov.getId());
-                }
-            });
-
-            if (currentProvider == prov) {
-                card.setChecked(true);
-            }
-
-            group.add(card);
-            providerList.add(card).growX().padBottom(8).row();
-        }
-
-        root.add(providerList).growX().row();
-
-        root.image().height(4).color(Color.gray).fillX().pad(10).row();
-
-        Label resultLabel = new Label("");
-        resultLabel.setWrap(true);
-        resultLabel.setAlignment(Align.center);
-
-        TextField testInput = new TextField("Hello, Mindustry!");
-
-        TextButton testButton = new TextButton(Core.bundle.get("chat-translation.settings.test-button"),
-                Styles.defaultt);
-        testButton.clicked(() -> {
-            testButton.setDisabled(true);
-            testButton.setText(Core.bundle.get("chat-translation.settings.testing"));
-            resultLabel.setText(Core.bundle.get("chat-translation.settings.testing-connection"));
-
-            currentProvider.translate(testInput.getText()).thenAccept(result -> {
-                Core.app.post(() -> {
-                    testButton.setDisabled(false);
-                    testButton.setText(Core.bundle.get("chat-translation.settings.test-button"));
-                    resultLabel.setText(Core.bundle.get("chat-translation.settings.success") + result);
-                });
-            }).exceptionally(e -> {
-                Core.app.post(() -> {
-                    testButton.setDisabled(false);
-                    testButton.setText(Core.bundle.get("chat-translation.settings.test-button"));
-                    resultLabel.setText(Core.bundle.get("chat-translation.settings.failed") + e.getMessage());
-                });
-                return null;
-            });
-        });
-
-        root.add(testInput).growX().pad(10).row();
-        root.add(testButton).size(250, 50).pad(10)
-                .disabled(b -> testButton.getText().toString()
-                        .equals(Core.bundle.get("chat-translation.settings.testing")))
-                .row();
-        root.add(resultLabel).growX().pad(10).row();
-
-        root.label(() -> lastError == null ? "" : Core.bundle.get("chat-translation.settings.error-prefix") + lastError)
-                .color(Color.red)
-                .visible(() -> lastError != null)
-                .row();
-
-        dialog.cont.pane(root).growX().maxWidth(700f).margin(20);
-        dialog.cont.pack();
-
-        return Optional.of(dialog);
+    String getLastError() {
+        return lastError;
     }
 }

@@ -1,9 +1,7 @@
 package mindustrytool.features.godmode;
 
 import arc.Events;
-import arc.scene.ui.ButtonGroup;
 import arc.scene.ui.Dialog;
-import arc.scene.ui.TextButton;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
@@ -14,8 +12,6 @@ import mindustry.game.EventType.PlayEvent;
 import mindustry.game.EventType.StateChangeEvent;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
-import mindustry.ui.Styles;
-import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -23,11 +19,11 @@ import java.util.Optional;
 
 public class GodModeFeature extends Table implements Feature {
 
-    private GodModeProvider internal = new InternalGodModeProvider();
-    private JSGodModeProvider js = new JSGodModeProvider();
+    GodModeProvider internal = new InternalGodModeProvider();
+    JSGodModeProvider js = new JSGodModeProvider();
 
-    private GodModeProvider provider = null;
-    private boolean useJS = false;
+    GodModeProvider provider = null;
+    boolean useJS = false;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -93,32 +89,10 @@ public class GodModeFeature extends Table implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
-        BaseDialog dialog = new BaseDialog("@feature.god-mode.settings");
-        dialog.addCloseButton();
-
-        dialog.cont.table(t -> {
-            t.add("Provider: ").padRight(10);
-
-            ButtonGroup<TextButton> group = new ButtonGroup<>();
-
-            t.button("Internal", Styles.togglet, () -> {
-                useJS = false;
-                provider = internal;
-                rebuild();
-            }).group(group).checked(!useJS).disabled(b -> !internal.isAvailable()).size(120, 50);
-
-            t.button("JS", Styles.togglet, () -> {
-                useJS = true;
-                provider = js;
-                rebuild();
-            }).group(group).checked(useJS).disabled(b -> !js.isAvailable()).size(120, 50);
-
-        }).row();
-
-        return Optional.of(dialog);
+        return Optional.of(new GodModeSettingsDialog(this));
     }
 
-    private void rebuild() {
+    void rebuild() {
         clear();
         background(Tex.pane);
 

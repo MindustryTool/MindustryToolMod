@@ -5,13 +5,11 @@ import arc.files.Fi;
 import arc.graphics.Texture;
 import arc.graphics.g2d.Draw;
 import arc.scene.ui.Dialog;
-import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.Reflect;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.graphics.MenuRenderer;
-import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Main;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -20,8 +18,8 @@ import java.util.Optional;
 import arc.graphics.g2d.TextureRegion;
 
 public class BackgroundFeature implements Feature {
-    private static final String SETTING_KEY = "mindustrytool.background.path";
-    private static final String SETTING_OPACITY_KEY = "mindustrytool.background.opacity";
+    static final String SETTING_KEY = "mindustrytool.background.path";
+    static final String SETTING_OPACITY_KEY = "mindustrytool.background.opacity";
     private MenuRenderer originalRenderer;
     private CustomMenuRenderer customRenderer;
 
@@ -66,7 +64,7 @@ public class BackgroundFeature implements Feature {
         }
     }
 
-    private void applyBackground(Fi file) {
+    void applyBackground(Fi file) {
         if (!file.exists() || file.isDirectory()) {
             Vars.ui.showInfo("Background file invalid: " + file.absolutePath());
             return;
@@ -91,35 +89,7 @@ public class BackgroundFeature implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
-        BaseDialog dialog = new BaseDialog("Background Settings");
-
-        dialog.addCloseButton();
-        dialog.name = "backgroundSettingDialog";
-
-        Table table = dialog.cont;
-        table.button("Select Background Image", Icon.file, () -> {
-            Vars.platform.showFileChooser(true, "png", file -> {
-                try {
-                    if (file != null) {
-                        Fi dest = Main.backgroundsDir.child(file.name());
-                        file.copyTo(dest);
-                        Core.settings.put(SETTING_KEY, dest.name());
-                        Core.settings.forceSave();
-                        applyBackground(dest);
-                    }
-                } catch (Exception e) {
-                    Vars.ui.showException("Failed to apply background", e);
-                }
-            });
-        }).size(250, 60);
-
-        table.row();
-        table.slider(5, 100, 5, Core.settings.getInt(SETTING_OPACITY_KEY, 100), value -> {
-            Core.settings.put(SETTING_OPACITY_KEY, (int) value);
-        }).width(180).padTop(10);
-        table.label(() -> Core.settings.getInt(SETTING_OPACITY_KEY, 100) + "%").padTop(10).padLeft(10);
-
-        return Optional.of(dialog);
+        return Optional.of(new BackgroundSettingsDialog(this));
     }
 
     public static class CustomMenuRenderer extends MenuRenderer {

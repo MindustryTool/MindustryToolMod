@@ -27,8 +27,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public class SaveSyncFeature implements Feature {
-    private static final String SETTING_SLOT_ID = "mindustrytool.save-sync.slot-id";
-    private static final String SETTING_LAST_SYNC = "mindustrytool.save-sync.last-sync";
+    static final String SETTING_SLOT_ID = "mindustrytool.save-sync.slot-id";
+    static final String SETTING_LAST_SYNC = "mindustrytool.save-sync.last-sync";
 
     private final Set<String> initialFilePaths = new HashSet<>();
 
@@ -173,19 +173,7 @@ public class SaveSyncFeature implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
-        BaseDialog dialog = new BaseDialog("Save Sync Settings");
-        dialog.addCloseButton();
-
-        Table cont = dialog.cont;
-
-        String slotId = Core.settings.getString(SETTING_SLOT_ID, "None");
-        cont.add("Current Slot ID: " + (slotId.equals("None") ? "[lightgray]None" : "[accent]" + slotId)).row();
-
-        cont.button("Select Slot", Icon.save, this::showSlotSelectionDialog).size(200, 50).padTop(10).row();
-        cont.button("Force Sync", Icon.refresh, () -> performSync(Core.settings.getString(SETTING_SLOT_ID, null)))
-                .size(200, 50).padTop(10).disabled(b -> Core.settings.getString(SETTING_SLOT_ID, null) == null).row();
-
-        return Optional.of(dialog);
+        return Optional.of(new SaveSyncSettingsDialog(this));
     }
 
     private void checkAndSync(boolean showWarning) {
@@ -206,90 +194,18 @@ public class SaveSyncFeature implements Feature {
         }
     }
 
-    private void showSlotSelectionDialog() {
-        BaseDialog dialog = new BaseDialog("Select Save Slot");
-        dialog.addCloseButton();
-
-        Table cont = dialog.cont;
-        cont.add("Loading slots...").row();
-
-        StorageService.listSlots().thenAccept(slots -> {
-            Core.app.post(() -> {
-                cont.clear();
-                if (slots.isEmpty()) {
-                    cont.add("No slots found.").row();
-                    cont.button("Create New Slot", Icon.add, () -> showCreateSlotDialog(dialog)).size(200, 50).row();
-                } else {
-                    cont.add("Select a slot to sync with:").padBottom(10).row();
-                    Table slotsTable = new Table();
-                    for (StorageSlotDto slot : slots) {
-                        slotsTable.button(
-                                slot.name + "\n[lightgray]"
-                                        + (slot.updatedAt != null ? slot.updatedAt.toString() : "Never synced"),
-                                Icon.save, () -> {
-                                    Core.settings.put(SETTING_SLOT_ID, slot.id);
-                                    dialog.hide();
-                                    performSync(slot.id);
-                                }).size(300, 60).padBottom(5).row();
-                    }
-                    cont.pane(slotsTable).height(300).row();
-                    cont.button("Create New Slot", Icon.add, () -> showCreateSlotDialog(dialog)).size(200, 50)
-                            .padTop(10).row();
-                }
-            });
-        }).exceptionally(e -> {
-            Core.app.post(() -> {
-                cont.clear();
-                cont.add("Error loading slots: " + e.getMessage()).color(mindustry.graphics.Pal.remove).row();
-                cont.button("Retry", this::showSlotSelectionDialog).size(100, 50);
-            });
-            return null;
-        });
-
-        dialog.show();
+    void showSlotSelectionDialog() {
+        new SaveSyncSlotSelectionDialog(this).show();
     }
 
-    private void showCreateSlotDialog(BaseDialog parentDialog) {
-        BaseDialog dialog = new BaseDialog("Create Slot");
-        dialog.addCloseButton();
-
-        Table cont = dialog.cont;
-        final String[] name = { "New Slot" };
-
-        cont.add("Slot Name:").padRight(10);
-        cont.field(name[0], val -> name[0] = val).width(200).row();
-
-        cont.button("Create", Icon.ok, () -> {
-            if (name[0].isEmpty())
-                return;
-
-            StorageService.createSlot(name[0]).thenAccept(slot -> {
-                Core.app.post(() -> {
-                    dialog.hide();
-                    if (parentDialog != null)
-                        parentDialog.hide();
-                    Core.settings.put(SETTING_SLOT_ID, slot.id);
-                    performSync(slot.id);
-                });
-            }).exceptionally(e -> {
-                Core.app.post(() -> Vars.ui.showException(e));
-                return null;
-            });
-        }).size(150, 50).padTop(10);
-
-        dialog.show();
-    }
-
-    private void performSync(String slotId) {
+    void performSync(String slotId) {
         if (slotId == null) {
             Log.warn("SaveSync: slotId is null!");
             return;
         }
 
-        BaseDialog dialog = new BaseDialog("Syncing Saves");
-        dialog.addCloseButton();
+        SaveSyncProgressDialog dialog = new SaveSyncProgressDialog();
         Table cont = dialog.cont;
-        cont.add("Preparing sync...").row();
         dialog.show();
 
         try {

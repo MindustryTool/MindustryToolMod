@@ -9,11 +9,7 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
 import arc.math.geom.Rect;
-import arc.scene.event.Touchable;
 import arc.scene.ui.Dialog;
-import arc.scene.ui.Label;
-import arc.scene.ui.Slider;
-import arc.scene.ui.layout.Table;
 import arc.util.Tmp;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
@@ -21,7 +17,6 @@ import mindustry.gen.Building;
 import mindustry.gen.Groups;
 import mindustry.gen.Unit;
 import mindustry.graphics.Layer;
-import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.Tile;
 import mindustry.world.blocks.defense.BuildTurret;
@@ -72,99 +67,7 @@ public class RangeDisplay implements Feature {
     @Override
     public Optional<Dialog> setting() {
         if (dialog == null) {
-            dialog = new BaseDialog("@range-display.settings.title");
-            dialog.name = "rangeDisplaySettingDialog";
-            dialog.addCloseButton();
-
-            Table cont = dialog.cont;
-            cont.defaults().left().pad(5);
-
-            Slider opacitySlider = new Slider(0f, 1f, 0.05f, false);
-            opacitySlider.setValue(RangeDisplayConfig.opacity);
-
-            Label opacityValue = new Label(
-                    String.format("%.0f%%", RangeDisplayConfig.opacity * 100),
-                    Styles.outlineLabel);
-            opacityValue.setColor(Color.lightGray);
-
-            Table opacityContent = new Table();
-            opacityContent.touchable = Touchable.disabled;
-            opacityContent.margin(3f, 33f, 3f, 33f);
-            opacityContent.add("@opacity", Styles.outlineLabel).left().growX();
-            opacityContent.add(opacityValue).padLeft(10f).right();
-
-            opacitySlider.changed(() -> {
-                RangeDisplayConfig.opacity = opacitySlider.getValue();
-                opacityValue.setText(String.format("%.0f%%", RangeDisplayConfig.opacity * 100));
-                RangeDisplayConfig.save();
-            });
-
-            float width = Math.min(Core.graphics.getWidth() / 1.2f, 460f);
-            cont.stack(opacitySlider, opacityContent).width(width).left().padTop(4f).row();
-
-            addCheck(cont, "@range-display.draw-ally-block-range", RangeDisplayConfig.drawBlockRangeAlly, v -> {
-                RangeDisplayConfig.drawBlockRangeAlly = v;
-                RangeDisplayConfig.save();
-            });
-
-            if (Vars.mobile) {
-                cont.row();
-            }
-
-            addCheck(cont, "@range-display.draw-enemy-block-range", RangeDisplayConfig.drawBlockRangeEnemy, v -> {
-                RangeDisplayConfig.drawBlockRangeEnemy = v;
-                RangeDisplayConfig.save();
-            });
-
-            cont.row();
-
-            addCheck(cont, "@range-display.draw-ally-turret-range", RangeDisplayConfig.drawTurretRangeAlly, v -> {
-                RangeDisplayConfig.drawTurretRangeAlly = v;
-                RangeDisplayConfig.save();
-            });
-
-            if (Vars.mobile) {
-                cont.row();
-            }
-
-            addCheck(cont, "@range-display.draw-enemy-turret-range", RangeDisplayConfig.drawTurretRangeEnemy, v -> {
-                RangeDisplayConfig.drawTurretRangeEnemy = v;
-                RangeDisplayConfig.save();
-            });
-
-            cont.row();
-
-            addCheck(cont, "@range-display.draw-ally-unit-range", RangeDisplayConfig.drawUnitRangeAlly, v -> {
-                RangeDisplayConfig.drawUnitRangeAlly = v;
-                RangeDisplayConfig.save();
-            });
-
-            if (Vars.mobile) {
-                cont.row();
-            }
-
-            addCheck(cont, "@range-display.draw-enemy-unit-range", RangeDisplayConfig.drawUnitRangeEnemy, v -> {
-                RangeDisplayConfig.drawUnitRangeEnemy = v;
-                RangeDisplayConfig.save();
-            });
-
-            cont.row();
-
-            addCheck(cont, "@range-display.draw-player-range", RangeDisplayConfig.drawPlayerRange, v -> {
-                RangeDisplayConfig.drawPlayerRange = v;
-                RangeDisplayConfig.save();
-            });
-
-            cont.row();
-
-            addCheck(cont, "@range-display.draw-spawner-range", RangeDisplayConfig.drawSpawnerRange, v -> {
-                RangeDisplayConfig.drawSpawnerRange = v;
-                RangeDisplayConfig.save();
-            });
-
-            if (Vars.mobile) {
-                cont.row();
-            }
+            dialog = new RangeDisplaySettingsDialog();
         }
         return Optional.of(dialog);
     }
@@ -316,7 +219,4 @@ public class RangeDisplay implements Feature {
         Draw.reset();
     }
 
-    private void addCheck(Table table, String text, boolean def, arc.func.Boolc listener) {
-        table.check(text, def, listener).left();
-    }
 }
