@@ -1,6 +1,5 @@
 package mindustrytool.features.savesync;
 
-import arc.Core;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
 
@@ -9,15 +8,14 @@ public class SaveSyncSettingsDialog extends BaseDialog {
         super("Save Sync Settings");
         addCloseButton();
 
-        String slotId = Core.settings.getString(SaveSyncFeature.SETTING_SLOT_ID, "None");
-        cont.add("Current Slot ID: " + (slotId.equals("None") ? "[lightgray]None" : "[accent]" + slotId)).row();
+        String slotId = feature.getSelectedSlotId();
+        cont.add("Current Slot ID: " + (slotId == null ? "[lightgray]None" : "[accent]" + slotId)).row();
 
         cont.button("Select Slot", Icon.save, feature::showSlotSelectionDialog).size(200, 50).padTop(10).row();
-        cont.button("Force Sync", Icon.refresh,
-                () -> feature.performSync(Core.settings.getString(SaveSyncFeature.SETTING_SLOT_ID, null)))
+        cont.button("Force Sync", Icon.refresh, feature::syncSelectedSlot)
                 .size(200, 50)
                 .padTop(10)
-                .disabled(button -> Core.settings.getString(SaveSyncFeature.SETTING_SLOT_ID, null) == null)
+                .disabled(button -> feature.getSelectedSlotId() == null)
                 .row();
     }
 }

@@ -26,8 +26,7 @@ public class SaveSyncCreateSlotDialog extends BaseDialog {
                     if (parentDialog != null) {
                         parentDialog.hide();
                     }
-                    Core.settings.put(SaveSyncFeature.SETTING_SLOT_ID, slot.id);
-                    feature.performSync(slot.id);
+                    feature.selectSlotAndSync(slot.id);
                 });
             }).exceptionally(e -> {
                 Core.app.post(() -> Vars.ui.showException(e));

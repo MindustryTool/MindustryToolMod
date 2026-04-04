@@ -6,6 +6,11 @@ public class SaveSyncProgressDialog extends BaseDialog {
     public SaveSyncProgressDialog() {
         super("Syncing Saves");
         addCloseButton();
-        cont.add("Preparing sync...").row();
+        setStatus("Preparing sync...");
+    }
+
+    public void setStatus(String status) {
+        cont.clear();
+        cont.add(status).row();
     }
 }
