@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import arc.Core;
@@ -19,12 +20,14 @@ import mindustrytool.features.chat.global.dto.ChatMessage;
 public class ChatStreamClient {
     private static final String STREAM_ENDPOINT = "chats/stream";
     private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String CHAT_ID_HEADER = "x-chat-id";
     private static final String ACCEPT_HEADER = "Accept";
     private static final String EVENT_STREAM = "text/event-stream";
     private static final String CONNECTED_MESSAGE = "Connected";
     private static final String DATA_EVENT = "data";
     private static final String MESSAGE_EVENT = "message";
     private static final String HEARTBEAT_EVENT = "heartbeat";
+    private static final String CHAT_ID_SETTING_KEY = "mindustrytool.chat.chat-id";
     private static final int CONNECT_TIMEOUT_MS = 10000;
     private static final long RECONNECT_DELAY_MS = 5000L;
 
@@ -117,6 +120,7 @@ public class ChatStreamClient {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty(ACCEPT_HEADER, EVENT_STREAM);
+        connection.setRequestProperty(CHAT_ID_HEADER, getOrCreateChatId());
         connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
         connection.setReadTimeout(0);
 
@@ -126,6 +130,18 @@ public class ChatStreamClient {
         }
 
         return connection;
+    }
+
+    private String getOrCreateChatId() {
+        String chatId = Core.settings.getString(CHAT_ID_SETTING_KEY, null);
+        if (chatId != null && !chatId.trim().isEmpty()) {
+            return chatId;
+        }
+
+        String generatedChatId = UUID.randomUUID().toString();
+        Core.settings.put(CHAT_ID_SETTING_KEY, generatedChatId);
+        Core.settings.forceSave();
+        return generatedChatId;
     }
 
     private void readEvents(HttpURLConnection connection) throws Exception {
