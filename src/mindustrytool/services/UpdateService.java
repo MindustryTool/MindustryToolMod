@@ -35,28 +35,34 @@ public class UpdateService {
         Http.get(Config.API_URL + "ping?client=mod-v8").submit(result -> {
         });
 
-        Http.get(Config.API_REPO_URL, (res) -> {
-            try {
-                Jval json = Jval.read(res.getResultAsString());
-
-                String latestVersionStr = json.getString("version");
-                int[] latestVersion = extractVersionNumber(latestVersionStr);
-
-                if (isVersionGreater(latestVersion, currentVersion)) {
-                    Log.info("Mod require update, current version: @, latest version: @",
-                            versionToString(currentVersion),
-                            versionToString(latestVersion));
-
-                    fetchReleasesAndShowDialog(versionToString(currentVersion), versionToString(latestVersion), done);
-                } else {
+        Http.get(Config.API_REPO_URL)
+                .error(err -> {
+                    Log.err(err);
                     done.run();
-                    Log.info("Mod up to date");
-                }
-            } catch (Exception e) {
-                done.run();
-                Log.err("Failed to check update", e);
-            }
-        });
+                })
+                .submit((res) -> {
+                    try {
+                        Jval json = Jval.read(res.getResultAsString());
+
+                        String latestVersionStr = json.getString("version");
+                        int[] latestVersion = extractVersionNumber(latestVersionStr);
+
+                        if (isVersionGreater(latestVersion, currentVersion)) {
+                            Log.info("Mod require update, current version: @, latest version: @",
+                                    versionToString(currentVersion),
+                                    versionToString(latestVersion));
+
+                            fetchReleasesAndShowDialog(versionToString(currentVersion), versionToString(latestVersion),
+                                    done);
+                        } else {
+                            done.run();
+                            Log.info("Mod up to date");
+                        }
+                    } catch (Exception e) {
+                        done.run();
+                        Log.err("Failed to check update", e);
+                    }
+                });
     }
 
     private void fetchReleasesAndShowDialog(String currentVer, String latestVer, Runnable done) {
