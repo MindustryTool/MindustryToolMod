@@ -23,6 +23,7 @@ public class ChatStateManager {
     private static final String PLAYER_CONNECT_PREFIX = "player-connect: ";
     private static final String CAMPAIGN_PREFIX = "campaign: ";
     private static final String CUSTOM_GAME_STATE = "custom-game";
+    private static final String EDITOR_STATE = "editing: ";
 
     private final ChatApiClient apiClient;
     private final Runnable refreshCurrentChannelUsers;
@@ -97,6 +98,11 @@ public class ChatStateManager {
 
             if (Vars.state.isCampaign()) {
                 updateState(CAMPAIGN_PREFIX + Vars.state.map.name());
+                return;
+            }
+
+            if (Vars.state.isEditor()){
+                updateState(EDITOR_STATE + Vars.state.map.name());
                 return;
             }
 
