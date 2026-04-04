@@ -207,6 +207,10 @@ public class ChatStore {
     }
 
     public int getStatePriority(String state) {
+        if (state == null) {
+            return 0;
+        }
+
         if (state.equalsIgnoreCase(ChatStateManager.MENU_STATE)) {
             return 0;
         }
