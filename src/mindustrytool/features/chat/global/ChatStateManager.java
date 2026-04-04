@@ -18,12 +18,12 @@ import mindustrytool.features.playerconnect.RoomCreatedEvent;
 import mindustrytool.services.PlayerConnectService;
 
 public class ChatStateManager {
-    private static final String MENU_STATE = "menu";
-    private static final String SERVER_PREFIX = "server: ";
-    private static final String PLAYER_CONNECT_PREFIX = "player-connect: ";
-    private static final String CAMPAIGN_PREFIX = "campaign: ";
-    private static final String CUSTOM_GAME_STATE = "custom-game";
-    private static final String EDITOR_STATE = "editing: ";
+    public static final String MENU_STATE = "menu";
+    public static final String SERVER_PREFIX = "server: ";
+    public static final String PLAYER_CONNECT_PREFIX = "player-connect: ";
+    public static final String CAMPAIGN_PREFIX = "campaign: ";
+    public static final String CUSTOM_GAME_STATE = "custom-game";
+    public static final String EDITOR_STATE = "editing: ";
 
     private final ChatApiClient apiClient;
     private final Runnable refreshCurrentChannelUsers;

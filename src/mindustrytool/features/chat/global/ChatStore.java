@@ -195,10 +195,23 @@ public class ChatStore {
         Arrays.sort(users, (u1, u2) -> {
             int l1 = u1.getHighestRole().map(ChatUser.SimpleRole::getLevel).orElse(-1);
             int l2 = u2.getHighestRole().map(ChatUser.SimpleRole::getLevel).orElse(-1);
+
+            if (l1 == l2) {
+                return Integer.compare(getStatePriority(u2.getState()), getStatePriority(u1.getState()));
+            }
+
             return Integer.compare(l2, l1);
         });
         usersByChannel.put(channelId, new Seq<>(users));
         Events.fire(new UsersUpdateEvent(channelId));
+    }
+
+    public int getStatePriority(String state) {
+        if (state.equalsIgnoreCase(ChatStateManager.MENU_STATE)) {
+            return 0;
+        }
+
+        return 1;
     }
 
     public boolean isLoadingMessages() {
