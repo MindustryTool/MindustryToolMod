@@ -2,6 +2,7 @@ package mindustrytool.features.savesync;
 
 import arc.Core;
 import arc.scene.ui.layout.Table;
+import mindustry.graphics.Pal;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.features.savesync.dto.StorageSlotDto;
@@ -30,9 +31,8 @@ public class SaveSyncSlotSelectionDialog extends BaseDialog {
                                 slot.name + "\n[lightgray]"
                                         + (slot.updatedAt != null ? slot.updatedAt.toString() : "Never synced"),
                                 Icon.save, () -> {
-                                    Core.settings.put(SaveSyncFeature.SETTING_SLOT_ID, slot.id);
                                     hide();
-                                    feature.performSync(slot.id);
+                                    feature.selectSlotAndSync(slot.id);
                                 }).size(300, 60).padBottom(5).row();
                     }
                     container.pane(slotsTable).height(300).row();
@@ -45,7 +45,7 @@ public class SaveSyncSlotSelectionDialog extends BaseDialog {
         }).exceptionally(e -> {
             Core.app.post(() -> {
                 container.clear();
-                container.add("Error loading slots: " + e.getMessage()).color(mindustry.graphics.Pal.remove).row();
+                container.add("Error loading slots: " + e.getMessage()).color(Pal.remove).row();
                 container.button("Retry", () -> {
                     hide();
                     new SaveSyncSlotSelectionDialog(feature).show();
