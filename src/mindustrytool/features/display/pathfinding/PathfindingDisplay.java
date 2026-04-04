@@ -60,7 +60,6 @@ public class PathfindingDisplay implements Feature {
     private final Interval timer = new Interval(1);
 
     private boolean isEnabled;
-    private final PathfindingSettingsUI settingsUI = new PathfindingSettingsUI();
 
     private int currentFrameUpdates;
     private float currentOpacity;
@@ -104,7 +103,7 @@ public class PathfindingDisplay implements Feature {
 
     @Override
     public Optional<Dialog> setting() {
-        return Optional.of(settingsUI.getDialog());
+        return Optional.of(new PathfindingSettingsDialog());
     }
 
     private void update() {
