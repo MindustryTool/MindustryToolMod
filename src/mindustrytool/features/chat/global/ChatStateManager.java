@@ -37,7 +37,7 @@ public class ChatStateManager {
 
     public void init() {
         registerStateListeners();
-        Timer.schedule(this::refreshCurrentState, 5, 5);
+        Timer.schedule(this::refreshCurrentState, 60,60);
     }
 
     public void updateState(String state) {
