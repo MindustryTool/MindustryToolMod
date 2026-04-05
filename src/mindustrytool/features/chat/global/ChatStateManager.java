@@ -78,7 +78,7 @@ public class ChatStateManager {
     private void handleStateChange(StateChangeEvent event) {
         if (event.to == State.menu && !Core.graphics.isHidden()) {
             updateState(MENU_STATE);
-        } else if (event.to == State.playing) {
+        } else if (event.to == State.playing && !stateBeforePause.isEmpty()) {
             updateState(stateBeforePause);
         }
     }
