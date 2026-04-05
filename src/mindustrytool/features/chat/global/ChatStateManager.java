@@ -6,6 +6,7 @@ import arc.Core;
 import arc.Events;
 import arc.util.Log;
 import arc.util.Timer;
+import lombok.RequiredArgsConstructor;
 import mindustry.Vars;
 import mindustry.core.GameState.State;
 import mindustry.game.EventType.ClientServerConnectEvent;
@@ -17,6 +18,7 @@ import mindustrytool.features.playerconnect.PlayerConnectRoomConnected;
 import mindustrytool.features.playerconnect.RoomCreatedEvent;
 import mindustrytool.services.PlayerConnectService;
 
+@RequiredArgsConstructor
 public class ChatStateManager {
     public static final String MENU_STATE = "menu";
     public static final String SERVER_PREFIX = "server: ";
@@ -26,16 +28,12 @@ public class ChatStateManager {
     public static final String EDITOR_STATE = "editing: ";
 
     private final ChatApiClient apiClient;
+    private final ChatStreamClient streamClient;
     private final Runnable refreshCurrentChannelUsers;
     private final AtomicBoolean isSyncing = new AtomicBoolean(false);
 
     private String currentState = "";
     private String syncedState = "";
-
-    public ChatStateManager(ChatApiClient apiClient, Runnable refreshCurrentChannelUsers) {
-        this.apiClient = apiClient;
-        this.refreshCurrentChannelUsers = refreshCurrentChannelUsers;
-    }
 
     public void init() {
         registerStateListeners();
@@ -59,7 +57,8 @@ public class ChatStateManager {
         Events.on(ClientServerConnectEvent.class, event -> handleServerConnect(event));
         Events.on(StateChangeEvent.class, event -> handleStateChange(event));
         Events.on(PlayerConnectRoomConnected.class, event -> handleRoomConnected(event));
-        Events.on(RoomCreatedEvent.class, event -> updateState(PLAYER_CONNECT_PREFIX + PlayerConnectConfig.getRoomName()));
+        Events.on(RoomCreatedEvent.class,
+                event -> updateState(PLAYER_CONNECT_PREFIX + PlayerConnectConfig.getRoomName()));
         Events.on(WorldLoadEndEvent.class, event -> handleWorldLoaded());
     }
 
@@ -101,7 +100,7 @@ public class ChatStateManager {
                 return;
             }
 
-            if (Vars.state.isEditor()){
+            if (Vars.state.isEditor()) {
                 updateState(EDITOR_STATE + Vars.state.map.name());
                 return;
             }
@@ -114,7 +113,8 @@ public class ChatStateManager {
     }
 
     private void syncState(boolean force) {
-        if (currentState.isEmpty() || !AuthService.getInstance().isLoggedIn() || !ChatConfig.status()) {
+        if (currentState.isEmpty() || !AuthService.getInstance().isLoggedIn() || !ChatConfig.status()
+                || !streamClient.isConnected()) {
             return;
         }
 

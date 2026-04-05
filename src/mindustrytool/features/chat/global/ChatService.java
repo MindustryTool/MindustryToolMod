@@ -28,7 +28,7 @@ public class ChatService {
         store = ChatStore.getInstance();
         apiClient = new ChatApiClient();
         streamClient = new ChatStreamClient(this::handleIncomingMessages, this::broadcastConnectionStatus);
-        stateManager = new ChatStateManager(apiClient, this::refreshCurrentChannelUsers);
+        stateManager = new ChatStateManager(apiClient, streamClient, this::refreshCurrentChannelUsers);
     }
 
     public synchronized static ChatService getInstance() {
