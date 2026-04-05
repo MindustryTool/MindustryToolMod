@@ -416,13 +416,12 @@ public class TeamResourceFeature extends Table implements Feature {
         int amount = coreItems.get(item);
         int rate = rateDisplay.get(item);
 
+        if (TeamResourceConfig.alwaysShowFlowRate()) {
+            return formatAmountWithRate(amount, rate);
+        }
+
         if (viewingStats) {
-            if (rate == 0)
-                return "[gray]0/s";
-
-            String prefix = rate > 0 ? "[lime]+" : "[scarlet]";
-
-            return prefix + rate + "[gray]/s";
+            return formatRate(rate);
         }
 
         String color = "[white]";
@@ -433,6 +432,26 @@ public class TeamResourceFeature extends Table implements Feature {
         }
 
         return color + UI.formatAmount(amount);
+    }
+
+    private String formatAmountWithRate(int amount, int rate) {
+        String color = "[white]";
+        if (rate < 0) {
+            color = "[scarlet]";
+        } else if (rate > 0) {
+            color = "[lime]";
+        }
+
+        return color + UI.formatAmount(amount) + " [gray](" + formatRate(rate) + "[gray])";
+    }
+
+    private String formatRate(int rate) {
+        if (rate == 0) {
+            return "0/s";
+        }
+
+        String prefix = rate > 0 ? "[lime]+" : "[scarlet]";
+        return prefix + rate + "[gray]/s";
     }
 
     public class TeamResourceSettingsDialog extends BaseDialog {
@@ -451,6 +470,7 @@ public class TeamResourceFeature extends Table implements Feature {
                 TeamResourceConfig.showPower(true);
                 TeamResourceConfig.showStoredPower(false);
                 TeamResourceConfig.hideBackground(false);
+                TeamResourceConfig.alwaysShowFlowRate(false);
 
                 rebuild();
                 hide();
@@ -546,6 +566,11 @@ public class TeamResourceFeature extends Table implements Feature {
 
             cont.check("@team-resources.hide-background", TeamResourceConfig.hideBackground(), b -> {
                 TeamResourceConfig.hideBackground(b);
+                rebuild();
+            }).left().padTop(4).row();
+
+            cont.check("@team-resources.always-show-flow-rate", TeamResourceConfig.alwaysShowFlowRate(), b -> {
+                TeamResourceConfig.alwaysShowFlowRate(b);
                 rebuild();
             }).left().padTop(4).row();
         }
