@@ -46,7 +46,7 @@ public class TimeControlFeature extends Table implements Feature {
     public void init() {
         touchable = Touchable.childrenOnly;
 
-        setPosition(100, 100);
+        setPosition(TimeControlConfig.x(), TimeControlConfig.y());
 
         Events.on(EventType.ResizeEvent.class, e -> rebuild());
 
@@ -88,6 +88,9 @@ public class TimeControlFeature extends Table implements Feature {
 
                             x = Mathf.clamp(TimeControlFeature.this.x, 0, sw - 40f);
                             y = Mathf.clamp(TimeControlFeature.this.y, 0, sh - 40f);
+
+                            TimeControlConfig.x(x);
+                            TimeControlConfig.y(y);
 
                         } catch (Exception e) {
                             Log.err(e);
