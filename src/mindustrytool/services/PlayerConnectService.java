@@ -13,6 +13,8 @@ import mindustrytool.features.playerconnect.PlayerConnectProvider;
 
 public class PlayerConnectService {
 
+    private CompletableFuture<Seq<PlayerConnectRoom>> roomFuture;
+
     private PlayerConnectService() {
     }
 
@@ -27,23 +29,32 @@ public class PlayerConnectService {
 
     private final ConcurrentHashMap<String, PlayerConnectRoom> roomCache = new ConcurrentHashMap<>();
 
-    public CompletableFuture<Seq<PlayerConnectRoom>> findPlayerConnectRooms(String q) {
-        CompletableFuture<Seq<PlayerConnectRoom>> future = new CompletableFuture<>();
+    public synchronized CompletableFuture<Seq<PlayerConnectRoom>> findPlayerConnectRooms(String q) {
+        if (roomFuture != null) {
+            return roomFuture;
+        }
+
+        roomFuture = new CompletableFuture<>();
 
         Http.get(Config.API_v4_URL + "player-connect/rooms?q=" + q)
                 .timeout(60000)
-                .error(future::completeExceptionally)
+                .error(error -> {
+                    roomFuture.completeExceptionally(error);
+                    roomFuture = null;
+                })
                 .submit(response -> {
                     try {
                         String data = response.getResultAsString();
                         Seq<PlayerConnectRoom> rooms = Seq.with(Utils.fromJsonArray(PlayerConnectRoom.class, data));
-                        future.complete(rooms);
+                        roomFuture.complete(rooms);
                     } catch (Exception e) {
-                        future.completeExceptionally(e);
+                        roomFuture.completeExceptionally(e);
+                    } finally {
+                        roomFuture = null;
                     }
                 });
 
-        return future;
+        return roomFuture;
     }
 
     public CompletableFuture<Seq<PlayerConnectProvider>> findPlayerConnectProvider() {

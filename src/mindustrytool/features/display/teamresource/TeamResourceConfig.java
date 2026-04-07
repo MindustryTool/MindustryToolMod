@@ -85,4 +85,12 @@ public class TeamResourceConfig {
     public static void hideBackground(boolean value) {
         Core.settings.put(PREFIX + "hide-background", value);
     }
+
+    public static boolean alwaysShowFlowRate() {
+        return Core.settings.getBool(PREFIX + "always-show-flow-rate", false);
+    }
+
+    public static void alwaysShowFlowRate(boolean value) {
+        Core.settings.put(PREFIX + "always-show-flow-rate", value);
+    }
 }

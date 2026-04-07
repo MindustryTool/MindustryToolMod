@@ -9,6 +9,7 @@ import arc.scene.ui.Label;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.layout.Scl;
+import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Align;
@@ -95,7 +96,7 @@ public class MessageList extends Table {
                 .get()
                 .setFontScale(scale);
 
-        arc.scene.ui.layout.Stack stack = new arc.scene.ui.layout.Stack();
+        Stack stack = new Stack();
         stack.add(loadingTable);
         stack.add(scrollPane);
 
@@ -177,104 +178,116 @@ public class MessageList extends Table {
             }).width(48 * scale).top().padLeft(8 * scale).padRight(8 * scale).padTop(isSameUser ? 0 : 8 * scale)
                     .padBottom(isNextSameUser ? 0 : 8 * scale);
 
-            entry.table(card -> {
-                card.top().left();
+            entry.table(cardContainer -> {
+                cardContainer.top().left();
 
-                if (!isSameUser) {
-                    Label label = new Label("...");
-                    label.setStyle(Styles.defaultLabel);
-                    label.setFontScale(scale);
+                Stack cardStack = new Stack();
 
-                    UserService.findUserById(msg.createdBy).thenAccept(data -> {
-                        Core.app.post(() -> {
-                            String timeStr = msg.createdAt;
-                            if (msg.createdAt != null) {
-                                try {
-                                    Instant instant = Instant.parse(msg.createdAt);
-                                    timeStr = DateTimeFormatter.ofPattern("HH:mm")
-                                            .withZone(ZoneId.systemDefault())
-                                            .format(instant);
-                                } catch (Throwable err) {
-                                    Log.err(err);
+                cardStack.add(new Table(card -> {
+                    card.top().left();
+
+                    if (!isSameUser) {
+                        Label label = new Label("...");
+                        label.setStyle(Styles.defaultLabel);
+                        label.setFontScale(scale);
+
+                        UserService.findUserById(msg.createdBy).thenAccept(data -> {
+                            Core.app.post(() -> {
+                                String timeStr = msg.createdAt;
+                                if (msg.createdAt != null) {
+                                    try {
+                                        Instant instant = Instant.parse(msg.createdAt);
+                                        timeStr = DateTimeFormatter.ofPattern("HH:mm")
+                                                .withZone(ZoneId.systemDefault())
+                                                .format(instant);
+                                    } catch (Throwable err) {
+                                        Log.err(err);
+                                    }
                                 }
-                            }
 
-                            Color color = data.getHighestRole()
-                                    .map(r -> {
-                                        try {
-                                            return Color.valueOf(r.getColor());
-                                        } catch (Exception err) {
-                                            return Color.white;
-                                        }
-                                    })
-                                    .orElse(Color.white);
+                                Color color = data.getHighestRole()
+                                        .map(r -> {
+                                            try {
+                                                return Color.valueOf(r.getColor());
+                                            } catch (Exception err) {
+                                                return Color.white;
+                                            }
+                                        })
+                                        .orElse(Color.white);
 
-                            label.setText("[#" + color.toString() + "]" + data.getName() + "[white]"
-                                    + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
+                                label.setText("[#" + color.toString() + "]" + data.getName() + "[white]"
+                                        + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
+                            });
                         });
+
+                        card.add(label).left().row();
+                    }
+
+                    if (msg.replyTo != null && !msg.replyTo.isEmpty()) {
+                        ChatMessage repliedMsg = channelMsgs.find(m -> m.id.equals(msg.replyTo));
+                        if (repliedMsg != null) {
+                            card.table(replyTable -> {
+                                replyTable.center().left();
+                                replyTable.image(Icon.rightSmall).size(16 * scale).padRight(4 * scale)
+                                        .color(Color.gray);
+
+                                Label replyContent = new Label(repliedMsg.content.replace('\n', ' '));
+                                replyContent.setFontScale(scale);
+                                replyContent.setColor(Color.gray);
+                                replyContent.setEllipsis(true);
+                                replyTable.add(replyContent).minWidth(0).maxWidth(200 * scale);
+                            }).growX().padTop(isSameUser ? 2 * scale : 0).padBottom(0).row();
+                        }
+                    }
+
+                    card.table(c -> renderContent(c, msg.content, scale)).top().left().growX()
+                            .padTop(isSameUser && (msg.replyTo == null || msg.replyTo.isEmpty()) ? 2 * scale : 0);
+
+                    card.clicked(() -> {
+                        if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
+                            expandedMessageId = null;
+                        } else {
+                            expandedMessageId = msg.id;
+                        }
+                        rebuild();
                     });
+                }));
 
-                    card.add(label).left().row();
-                }
-
-                if (msg.replyTo != null && !msg.replyTo.isEmpty()) {
-                    ChatMessage repliedMsg = channelMsgs.find(m -> m.id.equals(msg.replyTo));
-                    if (repliedMsg != null) {
-                        card.table(replyTable -> {
-                            replyTable.center().left();
-                            replyTable.image(Icon.rightSmall).size(16 * scale).padRight(4 * scale).color(Color.gray);
-
-                            Label replyContent = new Label(repliedMsg.content.replace('\n', ' '));
-                            replyContent.setFontScale(scale);
-                            replyContent.setColor(Color.gray);
-                            replyContent.setEllipsis(true);
-                            replyTable.add(replyContent).minWidth(0).maxWidth(200 * scale);
-                        }).growX().padTop(isSameUser ? 2 * scale : 0).padBottom(0).row();
-                    }
-                }
-
-                card.table(c -> renderContent(c, msg.content, scale)).top().left().growX()
-                        .padTop(isSameUser && (msg.replyTo == null || msg.replyTo.isEmpty()) ? 2 * scale : 0);
-
-                card.clicked(() -> {
+                Table overlayTable = new Table(overlay -> {
                     if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
-                        expandedMessageId = null;
-                    } else {
-                        expandedMessageId = msg.id;
-                    }
-                    rebuild();
-                });
+                        overlay.top().left();
+                        overlay.table(actions -> {
+                            actions.left().defaults().height(36 * scale).minWidth(160 * scale).padRight(8 * scale);
 
-                if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
-                    card.row();
-                    card.table(actions -> {
-                        actions.left().defaults().height(36 * scale).minWidth(160 * scale).padRight(8 * scale);
+                            TextButton copyBtn = new TextButton("@copy", Styles.defaultt);
+                            copyBtn.clicked(() -> {
+                                try {
+                                    Core.app.setClipboardText(msg.content);
+                                    Vars.ui.showInfoFade("@copied");
+                                    expandedMessageId = null;
+                                    rebuild();
+                                } catch (Exception e) {
+                                    Vars.ui.showInfoFade(e.getMessage());
+                                }
+                            });
+                            copyBtn.getLabel().setFontScale(scale * 0.8f);
+                            actions.add(copyBtn);
 
-                        TextButton copyBtn = new TextButton("@copy", Styles.defaultt);
-                        copyBtn.clicked(() -> {
-                            try {
-                                Core.app.setClipboardText(msg.content);
-                                Vars.ui.showInfoFade("@copied");
+                            TextButton replyBtn = new TextButton("@chat.reply", Styles.defaultt);
+                            replyBtn.clicked(() -> {
+                                chatInput.setReplyingTo(msg.id);
                                 expandedMessageId = null;
                                 rebuild();
-                            } catch (Exception e) {
-                                Vars.ui.showInfoFade(e.getMessage());
-                            }
-                        });
-                        copyBtn.getLabel().setFontScale(scale * 0.8f);
-                        actions.add(copyBtn);
+                            });
+                            replyBtn.getLabel().setFontScale(scale * 0.8f);
+                            actions.add(replyBtn);
+                        }).left().padTop(4 * scale);
+                    }
+                });
+                cardStack.add(overlayTable);
+                overlayTable.toFront();
 
-                        TextButton replyBtn = new TextButton("@chat.reply", Styles.defaultt);
-                        replyBtn.clicked(() -> {
-                            chatInput.setReplyingTo(msg.id);
-                            expandedMessageId = null;
-                            rebuild();
-                        });
-                        replyBtn.getLabel().setFontScale(scale * 0.8f);
-                        actions.add(replyBtn);
-
-                    }).growX().padTop(4 * scale);
-                }
+                cardContainer.add(cardStack).growX();
             }).growX().padLeft(8 * scale).padRight(8 * scale).padTop(isSameUser ? 0 : 8 * scale)
                     .padBottom(isNextSameUser ? 0 : 8 * scale).top();
 

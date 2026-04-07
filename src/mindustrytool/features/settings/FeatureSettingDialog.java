@@ -252,7 +252,7 @@ public class FeatureSettingDialog extends BaseDialog {
         paneTable.clear();
         paneTable.top().left();
 
-        int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / Scl.scl() * 0.85f / 340f));
+        int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / Scl.scl() * 0.85f / Scl.scl(340f)));
         float cardWidth = ((float) arc.Core.graphics.getWidth() / Scl.scl() * 0.85f) / cols;
 
         paneTable.row();

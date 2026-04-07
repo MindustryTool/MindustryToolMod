@@ -73,6 +73,7 @@ public class ChatService {
     }
 
     public void disconnectStream() {
+        Log.info("Disconnecting chat stream...");
         streamClient.disconnect();
         Log.info("Chat stream disconnected.");
     }
