@@ -4,6 +4,7 @@ import arc.Core;
 import arc.struct.Seq;
 import arc.util.Http;
 import arc.util.Log;
+import arc.util.Http.HttpStatusException;
 import arc.util.serialization.Jval;
 import mindustrytool.Config;
 import mindustrytool.Main;
@@ -69,7 +70,12 @@ public class UpdateService {
         Http.get(Config.GITHUB_API_URL).error(e -> {
             Log.err("Failed to fetch releases", e);
             Core.app.post(() -> {
-                showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.", done);
+                if (e instanceof HttpStatusException httpStatusException) {
+                    showUpdateDialog(currentVer, latestVer,
+                            "Could not fetch release notes: " + httpStatusException.response.getResultAsString(), done);
+                } else {
+                    showUpdateDialog(currentVer, latestVer, "Could not fetch release notes.", done);
+                }
             });
         }).submit(res -> {
             try {

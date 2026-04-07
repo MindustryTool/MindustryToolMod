@@ -28,6 +28,7 @@ import mindustrytool.features.FeatureMetadata;
 import mindustrytool.services.TapListener;
 import arc.scene.ui.Dialog;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public class SmartDrillFeature implements Feature {
     private Table currentMenu;
@@ -87,8 +88,24 @@ public class SmartDrillFeature implements Feature {
 
     private void handleHold(Tile tile) {
         Item drop = tile.drop();
+        Item wallDrop = tile.wallDrop();
+
         if (drop != null) {
-            showDirectionMenu(tile);
+            showDirectionMenu(tile, drop)
+                    .thenAccept(direction -> {
+                        if (direction == null) {
+                            return;
+                        }
+                        showDrillMenu(tile, drop, direction, false);
+                    });
+        } else if (wallDrop != null) {
+            showDirectionMenu(tile, wallDrop)
+                    .thenAccept(direction -> {
+                        if (direction == null) {
+                            return;
+                        }
+                        showDrillMenu(tile, wallDrop, direction, true);
+                    });
         } else {
             closeMenu();
         }
@@ -102,8 +119,10 @@ public class SmartDrillFeature implements Feature {
         }
     }
 
-    private void showDirectionMenu(Tile tile) {
+    private CompletableFuture<Direction> showDirectionMenu(Tile tile, Item drop) {
         closeMenu();
+
+        CompletableFuture<Direction> future = new CompletableFuture<>();
 
         selectedTile = tile;
         currentMenu = new Table();
@@ -113,6 +132,7 @@ public class SmartDrillFeature implements Feature {
         currentMenu.update(() -> {
             if (selectedTile == null) {
                 closeMenu();
+                future.complete(null);
                 return;
             }
 
@@ -124,17 +144,20 @@ public class SmartDrillFeature implements Feature {
 
         // Up
         directionTable.add().size(48f);
-        directionTable.button(Icon.up, () -> showDrillMenu(tile, 1)).size(48f).pad(4);
+        directionTable.button(Icon.up, () -> future.complete(Direction.UP)).size(48f).pad(4);
         directionTable.add().size(48f).row();
 
         // Left, Cancel, Right
-        directionTable.button(Icon.left, () -> showDrillMenu(tile, 2)).size(48f).pad(4);
-        directionTable.button(Icon.cancel, this::closeMenu).size(48f).pad(4);
-        directionTable.button(Icon.right, () -> showDrillMenu(tile, 0)).size(48f).pad(4).row();
+        directionTable.button(Icon.left, () -> future.complete(Direction.LEFT)).size(48f).pad(4);
+        directionTable.button(Icon.cancel, () -> {
+            future.complete(null);
+            closeMenu();
+        }).size(48f).pad(4);
+        directionTable.button(Icon.right, () -> future.complete(Direction.RIGHT)).size(48f).pad(4).row();
 
         // Down
         directionTable.add().size(48f);
-        directionTable.button(Icon.down, () -> showDrillMenu(tile, 3)).size(48f).pad(4);
+        directionTable.button(Icon.down, () -> future.complete(Direction.DOWN)).size(48f).pad(4);
         directionTable.add().size(48f);
 
         currentMenu.add(directionTable);
@@ -146,35 +169,35 @@ public class SmartDrillFeature implements Feature {
             }
         }, 0.1f);
         currentMenu.pack();
+
+        return future;
     }
 
-    private void showDrillMenu(Tile tile, int direction) {
+    private void showDrillMenu(Tile tile, Item drop, Direction direction, boolean isBeam) {
         if (currentMenu == null) {
             return;
         }
 
         currentMenu.clear();
 
-        Item drop = tile.drop();
-        if (drop == null) {
-            closeMenu();
-            return;
-        }
-
         int i = 0;
-        for (Block block : Vars.content.blocks()) {
-            if (isValidDrill(block, drop)) {
-                currentMenu.button(b -> b.image(block.uiIcon).scaling(Scaling.fit), Styles.clearNonei, () -> {
-                    Vars.control.input.isBuilding = false;
-                    Core.app.post(() -> {
-                        placeDrill(tile, direction, block, drop);
-                    });
-                    closeMenu();
-                }).size(48f).pad(4);
 
-                if (++i % 4 == 0) {
-                    currentMenu.row();
-                }
+        for (Block block : Vars.content.blocks()
+                .select(block -> isBeam ? isValidBeamDrill(block, drop) : isValidDrill(block, drop))) {
+            currentMenu.button(b -> b.image(block.uiIcon).scaling(Scaling.fit), Styles.clearNonei, () -> {
+                Vars.control.input.isBuilding = false;
+                Core.app.post(() -> {
+                    if (isBeam) {
+                        placeBeamDrill(tile, direction, (BeamDrill) block, drop);
+                    } else {
+                        placeDrill(tile, direction, (Drill) block, drop);
+                    }
+                });
+                closeMenu();
+            }).size(48f).pad(4);
+
+            if (++i % 4 == 0) {
+                currentMenu.row();
             }
         }
 
@@ -183,6 +206,7 @@ public class SmartDrillFeature implements Feature {
         }
 
         currentMenu.pack();
+        currentMenu.toFront();
     }
 
     private boolean isValidDrill(Block block, Item drop) {
@@ -190,6 +214,12 @@ public class SmartDrillFeature implements Feature {
             return false;
         if (block instanceof Drill drill)
             return drill.tier >= drop.hardness;
+        return false;
+    }
+
+    private boolean isValidBeamDrill(Block block, Item drop) {
+        if (!unlocked(block))
+            return false;
         if (block instanceof BeamDrill beamDrill)
             return beamDrill.tier >= drop.hardness;
         return false;
@@ -200,7 +230,7 @@ public class SmartDrillFeature implements Feature {
                 block.supportsEnv(Vars.state.rules.env);
     }
 
-    private void placeDrill(Tile tile, int direction, Block drill, Item drop) {
+    private void placeDrill(Tile tile, Direction direction, Drill drill, Item drop) {
         switch (drill.size) {
             case 1:
             default:
@@ -221,7 +251,14 @@ public class SmartDrillFeature implements Feature {
         }
     }
 
-    private void place2x2Drill(Tile tile, int direction, Block drill, Item drop) {
+    private void placeBeamDrill(Tile tile, Direction direction, BeamDrill drill, Item drop) {
+        Seq<Tile> ores = findAllConnectedOreTiles(tile, drop, getMaxTiles(drill));
+        if (ores.isEmpty()) {
+            return;
+        }
+    }
+
+    private void place2x2Drill(Tile tile, Direction direction, Block drill, Item drop) {
         var unit = Vars.player.unit();
 
         if (unit == null) {
@@ -242,16 +279,14 @@ public class SmartDrillFeature implements Feature {
         var bridgeTiles = tiles.select(this::isBridgeTile);
 
         for (Tile drillTile : drillTiles) {
-            BuildPlan plan = new BuildPlan(drillTile.x, drillTile.y, direction, drill);
+            BuildPlan plan = new BuildPlan(drillTile.x, drillTile.y, direction.rotation, drill);
             if (plan.placeable(Vars.player.team())) {
                 unit.addBuild(plan);
             }
         }
 
-        var dir = Direction.from(direction);
-
         var outMostTile = tiles.max(t -> {
-            switch (dir) {
+            switch (direction) {
                 case UP:
                     return t.y;
                 case DOWN:
@@ -266,7 +301,7 @@ public class SmartDrillFeature implements Feature {
         });
 
         bridgeTiles.sort(t -> t.dst2(outMostTile));
-        var output = bridgeTiles.first().nearby(dir.mul(3));
+        var output = bridgeTiles.first().nearby(direction.mul(3));
         if (output == null) {
             output = bridgeTiles.first();
         }
