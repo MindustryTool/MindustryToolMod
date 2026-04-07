@@ -29,7 +29,7 @@ public class ChatFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.chat.name")
+                .name("@feature.chat")
                 .description("@feature.chat.description")
                 .icon(Icon.chat)
                 .enabledByDefault(true)

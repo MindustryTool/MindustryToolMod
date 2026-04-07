@@ -17,7 +17,7 @@ public class SelfHealTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return Iconc.refresh + " " + Core.bundle.get("autoplay.task.self-heal.name");
+        return Iconc.refresh + " " + Core.bundle.get("autoplay.task.self-heal");
     }
 
     @Override

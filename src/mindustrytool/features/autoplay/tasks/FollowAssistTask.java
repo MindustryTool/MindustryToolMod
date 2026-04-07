@@ -21,7 +21,7 @@ public class FollowAssistTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return Iconc.players + " " + Core.bundle.get("autoplay.task.follow-assist.name");
+        return Iconc.players + " " + Core.bundle.get("autoplay.task.follow-assist");
     }
 
     @Override

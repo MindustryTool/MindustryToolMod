@@ -29,7 +29,7 @@ public class ToggleRenderingFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.toggle-rendering.name")
+                .name("@feature.toggle-rendering")
                 .description("@feature.toggle-rendering.description")
                 .icon(Icon.eye)
                 .order(5)

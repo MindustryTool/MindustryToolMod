@@ -28,7 +28,7 @@ public class AutoplayFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.autoplay.name")
+                .name("@feature.autoplay")
                 .description("@feature.autoplay.description")
                 .icon(Utils.icons("autoplay.png"))
                 .quickAccess(true)

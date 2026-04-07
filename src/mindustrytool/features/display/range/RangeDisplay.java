@@ -49,7 +49,7 @@ public class RangeDisplay implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.range-display.name")
+                .name("@feature.range-display")
                 .description("@feature.range-display.description")
                 .icon(Utils.icons("range-display.png"))
                 .order(5)

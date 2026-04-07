@@ -21,7 +21,7 @@ public class SchematicBrowserFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.schematic-browser.name")
+                .name("@feature.schematic-browser")
                 .description("@feature.schematic-browser.description")
                 .icon(Icon.paste)
                 .order(2)

@@ -28,7 +28,7 @@ public class GodModeFeature extends Table implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.god-mode.name")
+                .name("@feature.god-mode")
                 .description("@feature.god-mode.description")
                 .enabledByDefault(false)
                 .icon(Icon.defense)

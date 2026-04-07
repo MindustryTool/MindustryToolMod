@@ -64,7 +64,7 @@ public class MiningTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return Iconc.filter + " " + Core.bundle.get("autoplay.task.mining.name");
+        return Iconc.filter + " " + Core.bundle.get("autoplay.task.mining");
     }
 
     @Override

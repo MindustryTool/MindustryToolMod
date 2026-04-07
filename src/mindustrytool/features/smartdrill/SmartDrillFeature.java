@@ -36,7 +36,7 @@ public class SmartDrillFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("feature.smart-drill.name")
+                .name("feature.smart-drill")
                 .description("feature.smart-drill.description")
                 .icon(Icon.filter)
                 .quickAccess(true)

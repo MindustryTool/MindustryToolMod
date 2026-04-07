@@ -21,7 +21,7 @@ public class PlayerConnectFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.player-connect.name")
+                .name("@feature.player-connect")
                 .description("@feature.player-connect.description")
                 .icon(Icon.planet)
                 .order(3)

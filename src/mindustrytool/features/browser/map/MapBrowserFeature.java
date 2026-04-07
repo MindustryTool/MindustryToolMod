@@ -17,7 +17,7 @@ public class MapBrowserFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.map-browser.name")
+                .name("@feature.map-browser")
                 .description("@feature.map-browser.description")
                 .icon(Icon.map)
                 .order(1)
