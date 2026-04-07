@@ -140,6 +140,7 @@ public class Main extends Mod {
         initFeatures();
 
         Events.fire(new MusicRegisterEvent());
+        Events.fire(new MdtInitEvent());
     }
 
     private void initFeatures() {
