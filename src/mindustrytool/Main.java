@@ -25,9 +25,10 @@ import mindustrytool.features.display.teamresource.TeamResourceFeature;
 import mindustrytool.features.display.togglerendering.ToggleRenderingFeature;
 import mindustrytool.features.display.range.RangeDisplay;
 import mindustrytool.features.display.progress.ProgressDisplay;
-import mindustrytool.features.display.quickaccess.QuickAccessHud;
+import mindustrytool.features.display.quickaccess.QuickAccessFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
+import mindustrytool.features.time.TimeControlFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.services.ServerService;
 import mindustrytool.services.TapListener;
@@ -41,7 +42,6 @@ import mindustrytool.features.music.MusicFeature;
 import mindustrytool.features.music.dto.MusicRegisterEvent;
 import mindustrytool.features.display.wavepreview.WavePreviewFeature;
 import mindustrytool.features.chat.translation.ChatTranslationFeature;
-import mindustrytool.features.chat.pretty.PrettyChatFeature;
 import mindustrytool.features.savesync.SaveSyncFeature;
 
 public class Main extends Mod {
@@ -116,10 +116,10 @@ public class Main extends Mod {
                 new TeamResourceFeature(),
                 new PathfindingDisplay(), //
                 new RangeDisplay(), //
-                new QuickAccessHud(), //
+                new QuickAccessFeature(), //
                 new ChatFeature(),
                 new ChatTranslationFeature(),
-                new PrettyChatFeature(),
+                // new PrettyChatFeature(),
                 new AutoplayFeature(),
                 new WavePreviewFeature(),
                 new SaveSyncFeature(),
@@ -130,7 +130,8 @@ public class Main extends Mod {
                 new BackgroundFeature(),
                 new MusicFeature(),
                 new ProgressDisplay(),
-                new ToggleRenderingFeature());
+                new ToggleRenderingFeature(),
+                new TimeControlFeature());
 
         boolean hasCrashed = new CrashReportService().checkForCrashes();
         if (hasCrashed) {
