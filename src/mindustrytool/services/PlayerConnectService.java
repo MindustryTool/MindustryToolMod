@@ -29,7 +29,7 @@ public class PlayerConnectService {
 
     private final ConcurrentHashMap<String, PlayerConnectRoom> roomCache = new ConcurrentHashMap<>();
 
-    public CompletableFuture<Seq<PlayerConnectRoom>> findPlayerConnectRooms(String q) {
+    public synchronized CompletableFuture<Seq<PlayerConnectRoom>> findPlayerConnectRooms(String q) {
         if (roomFuture != null) {
             return roomFuture;
         }

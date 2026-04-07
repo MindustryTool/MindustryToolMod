@@ -268,4 +268,14 @@ public class Utils {
             }
         });
     }
+
+
+    public static boolean hasField(Class<?> clazz, String fieldName) {
+        try {
+            clazz.getDeclaredField(fieldName);
+            return true;
+        } catch (NoSuchFieldException e) {
+            return false;
+        }
+    }
 }

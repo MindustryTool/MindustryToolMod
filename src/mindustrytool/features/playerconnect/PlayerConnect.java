@@ -186,6 +186,7 @@ public class PlayerConnect {
     public static void close() {
         if (room != null) {
             room.closeRoom();
+            Log.info("Close room on exit");
         }
     }
 

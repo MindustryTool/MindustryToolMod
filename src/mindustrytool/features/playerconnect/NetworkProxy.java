@@ -60,11 +60,12 @@ public class NetworkProxy extends Client implements NetListener {
 
         addListener(this);
 
+        NetProvider provider = Reflect.get(Vars.net, "provider");
+
         if (Vars.steam) {
-            throw new UnsupportedOperationException("Steam is not supported.");
+            provider = Reflect.get(provider, "provider");
         }
 
-        NetProvider provider = Reflect.get(Vars.net, "provider");
         Server server = Reflect.get(provider, "server");
         serverDispatcher = Reflect.get(server, "dispatchListener");
     }
