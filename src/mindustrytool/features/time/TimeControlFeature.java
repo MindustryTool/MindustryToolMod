@@ -49,6 +49,7 @@ public class TimeControlFeature extends Table implements Feature {
         setPosition(TimeControlConfig.x(), TimeControlConfig.y());
 
         Events.on(EventType.ResizeEvent.class, e -> rebuild());
+        visible(() -> !Vars.net.client());
 
         Core.app.post(this::rebuild);
     }
