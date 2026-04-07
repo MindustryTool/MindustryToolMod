@@ -35,8 +35,10 @@ public class PlayerConnectFeature implements Feature {
         injector = new PlayerConnectJoinInjector(joinRoomDialog);
 
         if (Vars.ui.join != null) {
+            injector.inject();
+
             Vars.ui.join.shown(() -> {
-                injector.inject(Vars.ui.join);
+                injector.inject();
             });
         }
     }
