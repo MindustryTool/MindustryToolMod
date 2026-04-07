@@ -64,6 +64,7 @@ public class ChatStreamClient {
         updateConnection(false);
 
         if (currentConnection != null) {
+            Log.info("Disconnecting chat stream");
             currentConnection = null;
         }
 

@@ -11,6 +11,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
+import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -71,6 +72,9 @@ public class FeatureCard {
                         .scaling(Scaling.fit)
                         .color(enabled ? Color.white : Color.gray);
 
+                header.button("?", Styles.cleart, () -> {
+                    new FeatureHelpDialog(feature).show();
+                });
                 feature.setting().ifPresent(settingDialog -> {
                     header.button(b -> {
                         b.image(Utils.scalable(Icon.settings)).scaling(Scaling.fit);
@@ -200,5 +204,18 @@ public class FeatureCard {
 
             c.table(Tex.button, l -> l.image(Icon.linkSmall));
         }).grow();
+    }
+
+    public static class FeatureHelpDialog extends BaseDialog {
+        public FeatureHelpDialog(Feature feature) {
+            super(Utils.getString(feature.getMetadata().name()));
+
+            addCloseButton();
+            closeOnBack();
+
+            cont.pane(pane -> {
+                pane.add(Utils.getString(feature.getMetadata().name() + ".help"));
+            }).scrollX(false).scrollY(true);
+        }
     }
 }
