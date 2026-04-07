@@ -227,7 +227,7 @@ public class Utils {
             iconCache.put(name, drawable);
             return drawable;
         } catch (Exception e) {
-            Log.err(e);
+            Log.err(e.getMessage());
             iconCache.put(name, Icon.book);
             return Icon.book;
         }
