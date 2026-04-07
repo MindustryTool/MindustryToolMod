@@ -209,7 +209,7 @@ public class FeatureCard {
             c.add().growX();
 
             c.table(Tex.button, l -> l.image(Icon.linkSmall));
-        }).grow();
+    }).grow();
     }
 
     public static class FeatureHelpDialog extends BaseDialog {
