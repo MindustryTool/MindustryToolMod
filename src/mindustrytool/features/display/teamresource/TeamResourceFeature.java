@@ -62,7 +62,7 @@ public class TeamResourceFeature extends Table implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.team-resources.name")
+                .name("@feature.team-resources")
                 .description("@feature.team-resources.description")
                 .icon(Utils.icons("team-resources.png"))
                 .order(0)

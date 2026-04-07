@@ -27,7 +27,7 @@ public class HealthBarVisualizer implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.health-bar.name")
+                .name("@feature.health-bar")
                 .description("@feature.health-bar.description")
                 .icon(Utils.icons("healthbar.png"))
                 .order(4)

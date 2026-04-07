@@ -1,6 +1,7 @@
 package mindustrytool.features.settings;
 
 import arc.Core;
+import arc.Events;
 import arc.graphics.Color;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
@@ -10,6 +11,7 @@ import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Config;
+import mindustrytool.MdtInitEvent;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -54,6 +56,10 @@ public class FeatureSettingDialog extends BaseDialog {
 
         shown(this::rebuild);
         resized(this::rebuild);
+
+        Events.on(MdtInitEvent.class, e -> {
+            rebuild();
+        });
     }
 
     private void rebuild() {
@@ -238,7 +244,7 @@ public class FeatureSettingDialog extends BaseDialog {
                     }).growX();
                     meta.center().left();
                 }).growX().center().left()
-                .padTop(10);
+                        .padTop(10);
 
             }).growX().pad(5).row();
         }
@@ -252,8 +258,9 @@ public class FeatureSettingDialog extends BaseDialog {
         paneTable.clear();
         paneTable.top().left();
 
-        int cols = Math.max(1, (int) (arc.Core.graphics.getWidth() / Scl.scl() * 0.85f / Scl.scl(340f)));
-        float cardWidth = ((float) arc.Core.graphics.getWidth() / Scl.scl() * 0.85f) / cols;
+        float screenWidth = (Core.graphics.getWidth() / Scl.scl() * 0.9f - 40f);
+        int cols = Math.max(1, (int) (screenWidth / 340f));
+        float cardWidth = screenWidth / cols;
 
         paneTable.row();
         paneTable.button("@reeanable", () -> {
@@ -271,7 +278,7 @@ public class FeatureSettingDialog extends BaseDialog {
                 continue;
             }
 
-            FeatureCard.buildToggle(paneTable, feature, this::rebuildPane);
+            FeatureCard.buildToggle(paneTable, feature, cardWidth, this::rebuildPane);
 
             if (++i % cols == 0) {
                 paneTable.row();
@@ -317,14 +324,14 @@ public class FeatureSettingDialog extends BaseDialog {
         }
 
         // Icon Dialog
-        buildIconDialogButton(paneTable, cardWidth);
+        buildIconDialogButton(paneTable);
         if (++i % cols == 0)
             paneTable.row();
 
         paneTable.table().growX().row();
     }
 
-    private void buildIconDialogButton(Table parent, float cardWidth) {
+    private void buildIconDialogButton(Table parent) {
         parent.table(Tex.button, card -> {
             card.top().left();
             card.table(c -> {

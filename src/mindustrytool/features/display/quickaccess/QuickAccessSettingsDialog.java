@@ -13,7 +13,7 @@ import mindustrytool.features.FeatureMetadata;
 
 public class QuickAccessSettingsDialog extends BaseDialog {
 
-    public QuickAccessSettingsDialog(QuickAccessHud quickAccessHud) {
+    public QuickAccessSettingsDialog(QuickAccessFeature quickAccessHud) {
         super("@settings");
 
         name = "quickAccessSettingDialog";

@@ -79,7 +79,6 @@ public class MusicFeature implements Feature {
     }
 
     public void loadAllCustomMusic() {
-        Log.info("Loading custom music...");
         for (MusicType type : MusicType.values()) {
             loadMusicType(type);
         }

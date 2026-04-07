@@ -11,7 +11,7 @@ public class QuickAccessConfig {
     }
 
     public static float x() {
-        return Core.settings.getFloat(getAxisKey("x"), 0);
+        return Core.settings.getFloat(getAxisKey("x"), Core.graphics.getWidth() / 2f);
     }
 
     public static void x(float value) {

@@ -76,7 +76,7 @@ public class PrettyChatFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.prettychat.name")
+                .name("@feature.prettychat")
                 .description("@feature.prettychat.description")
                 .icon(Icon.chat)
                 .build();

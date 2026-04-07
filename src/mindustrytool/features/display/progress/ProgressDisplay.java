@@ -39,7 +39,7 @@ public class ProgressDisplay implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.progress-display.name")
+                .name("@feature.progress-display")
                 .description("@feature.progress-display.description")
                 .icon(Icon.chartBar)
                 .order(10)

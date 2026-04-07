@@ -37,11 +37,10 @@ public class SearchConfig {
         return blocks.contains(block);
     }
 
-
     public List<String> getBlocks() {
         return blocks.list();
     }
-    
+
     public String getSelectedTagsString() {
         if (selectedTags.isEmpty()) {
             return "";

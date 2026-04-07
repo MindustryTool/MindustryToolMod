@@ -18,7 +18,7 @@ public class RebuildTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return Iconc.hammer + " " + Core.bundle.get("autoplay.task.rebuild.name");
+        return Iconc.hammer + " " + Core.bundle.get("autoplay.task.rebuild");
     }
 
     @Override

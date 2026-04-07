@@ -73,9 +73,7 @@ public class ChatService {
     }
 
     public void disconnectStream() {
-        Log.info("Disconnecting chat stream...");
         streamClient.disconnect();
-        Log.info("Chat stream disconnected.");
     }
 
     public void getChannels(Cons<ChannelDto[]> onSuccess, Cons<Throwable> onError) {

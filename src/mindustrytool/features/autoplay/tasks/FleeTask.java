@@ -14,7 +14,7 @@ public class FleeTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return Iconc.move + " " + Core.bundle.get("autoplay.task.flee.name");
+        return Iconc.move + " " + Core.bundle.get("autoplay.task.flee");
     }
 
     @Override

@@ -28,7 +28,7 @@ public class JSGodModeProvider implements GodModeProvider {
 
         table.button(Icon.players, Styles.cleari, () -> {
             GodModeDialogs.showTeamDialog((player, team) -> {
-                js("Groups.player.find(p => p.name == \"@\").team(Team.get(@))", player.name, team.id);
+                js("Groups.player.find(p => p == \"@\").team(Team.get(@))", player.name, team.id);
             });
         }).tooltip("Change Team");
 

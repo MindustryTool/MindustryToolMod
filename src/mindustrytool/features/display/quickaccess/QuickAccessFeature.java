@@ -31,13 +31,13 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 
-public class QuickAccessHud extends Table implements Feature {
+public class QuickAccessFeature extends Table implements Feature {
     private BaseDialog settingsDialog;
 
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.quick-access-hud.name")
+                .name("@feature.quick-access-hud")
                 .description("@feature.quick-access-hud.description")
                 .icon(Icon.menu)
                 .build();
@@ -98,11 +98,11 @@ public class QuickAccessHud extends Table implements Feature {
                             float sw = Core.graphics.getWidth();
                             float sh = Core.graphics.getHeight();
 
-                            QuickAccessHud.this.x = Mathf.clamp(QuickAccessHud.this.x, 0, sw - 40f);
-                            QuickAccessHud.this.y = Mathf.clamp(QuickAccessHud.this.y, 0, sh - 40f);
+                            QuickAccessFeature.this.x = Mathf.clamp(QuickAccessFeature.this.x, 0, sw - 40f);
+                            QuickAccessFeature.this.y = Mathf.clamp(QuickAccessFeature.this.y, 0, sh - 40f);
 
-                            QuickAccessConfig.x(QuickAccessHud.this.x);
-                            QuickAccessConfig.y(QuickAccessHud.this.y);
+                            QuickAccessConfig.x(QuickAccessFeature.this.x);
+                            QuickAccessConfig.y(QuickAccessFeature.this.y);
                         } catch (Exception e) {
                             Log.err(e);
                         }
@@ -112,11 +112,11 @@ public class QuickAccessHud extends Table implements Feature {
         float sw = Core.graphics.getWidth();
         float sh = Core.graphics.getHeight();
 
-        QuickAccessHud.this.x = Mathf.clamp(QuickAccessHud.this.x, 0, sw - 40f);
-        QuickAccessHud.this.y = Mathf.clamp(QuickAccessHud.this.y, 0, sh - 40f);
+        QuickAccessFeature.this.x = Mathf.clamp(QuickAccessFeature.this.x, 0, sw - 40f);
+        QuickAccessFeature.this.y = Mathf.clamp(QuickAccessFeature.this.y, 0, sh - 40f);
 
-        QuickAccessConfig.x(QuickAccessHud.this.x);
-        QuickAccessConfig.y(QuickAccessHud.this.y);
+        QuickAccessConfig.x(QuickAccessFeature.this.x);
+        QuickAccessConfig.y(QuickAccessFeature.this.y);
 
         // 2. Separator
         Image sep = new Image(Tex.whiteui);

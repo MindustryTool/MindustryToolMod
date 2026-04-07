@@ -45,7 +45,8 @@ public class PlayerConnectService {
                 .submit(response -> {
                     try {
                         String data = response.getResultAsString();
-                        Seq<PlayerConnectRoom> rooms = Seq.with(Utils.fromJsonArray(PlayerConnectRoom.class, data));
+                        Seq<PlayerConnectRoom> rooms = Seq.with(Utils.fromJsonArray(PlayerConnectRoom.class, data))
+                                .select(room -> room.getData().getName().contains(q));
                         roomFuture.complete(rooms);
                     } catch (Exception e) {
                         roomFuture.completeExceptionally(e);

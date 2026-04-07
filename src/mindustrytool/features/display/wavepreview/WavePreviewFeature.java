@@ -32,9 +32,9 @@ public class WavePreviewFeature extends Table implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.wave-preview.name")
+                .name("@feature.wave-preview")
                 .description("@feature.wave-preview.description")
-                .icon( Icon.units)
+                .icon(Icon.units)
                 .order(1)
                 .quickAccess(true)
                 .enabledByDefault(true)

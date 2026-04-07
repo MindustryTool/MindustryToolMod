@@ -15,6 +15,7 @@ import arc.util.Reflect;
 import arc.util.Strings;
 import arc.util.Time;
 import arc.util.Http.HttpStatusException;
+import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
@@ -39,7 +40,8 @@ public class PlayerConnectJoinInjector {
         this.joinRoomDialog = joinRoomDialog;
     }
 
-    public void inject(JoinDialog dialog) {
+    public void inject() {
+        JoinDialog dialog = Vars.ui.join;
         this.hosts = Reflect.get(dialog, "hosts");
 
         if (this.hosts == null) {
@@ -79,29 +81,22 @@ public class PlayerConnectJoinInjector {
         }).growX().left().labelAlign(Align.left).padBottom(3).get().getLabelCell().padRight(18).growX();
 
         header.button(Icon.refresh, Styles.defaulti, this::setupPlayerConnect).size(52f).padBottom(3).right();
-
-        // Swap Trick:
-        // 1. Get existing children (Snapshot to avoid modification issues)
         Seq<Element> children = new Seq<>(hosts.getChildren());
 
-        // 2. Clear hosts table
         hosts.clear();
 
-        // 3. Add our section at the top
         hosts.add(header).growX().padTop(10).row();
-        hosts.add(col).width((targetWidth() + 5f) * columns());
+        hosts.add(col).growX();
         hosts.row();
         hosts.image().growX().pad(5).padLeft(10).padRight(10).height(3).color(Pal.accent);
         hosts.row();
 
-        // 4. Add back existing children, skipping our own if they were present
         for (Element child : children) {
             if (HEADER_NAME.equals(child.name) || COLLAPSER_NAME.equals(child.name)) {
                 continue;
             }
 
             if (child instanceof Table) {
-                // It's likely a header
                 hosts.add(child).growX().padTop(10).row();
             } else if (child instanceof Collapser) {
                 hosts.add(child).growX().row();

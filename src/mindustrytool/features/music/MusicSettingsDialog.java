@@ -17,7 +17,7 @@ public class MusicSettingsDialog extends BaseDialog {
     private final MusicFeature feature;
 
     public MusicSettingsDialog(MusicFeature feature) {
-        super(Core.bundle.get("feature.music.name", "Music Settings"));
+        super(Core.bundle.get("feature.music", "Music Settings"));
         this.feature = feature;
 
         addCloseButton();

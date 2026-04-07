@@ -67,7 +67,7 @@ public class PathfindingDisplay implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.pathfinding-visualizer.name")
+                .name("@feature.pathfinding-visualizer")
                 .description("@feature.pathfinding-visualizer.description")
                 .icon(Utils.icons("pathfinding.png"))
                 .order(0)

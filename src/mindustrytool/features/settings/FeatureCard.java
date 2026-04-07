@@ -11,6 +11,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
+import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Utils;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -18,16 +19,18 @@ import mindustrytool.features.WebFeature;
 
 public class FeatureCard {
 
-    public static void buildToggle(Table parent, Feature feature, Runnable rebuild) {
+    public static void buildToggle(Table parent, Feature feature, float cardWidth, Runnable rebuild) {
         boolean enabled = feature.isEnabled();
         var metadata = feature.getMetadata();
 
         var card = parent.button(Styles.black8, () -> {
 
         })
-                .growX()
+                .name("Card")
                 .height(180f)
                 .pad(5f)
+                .top()
+                .left()
                 .color(enabled ? Color.green : Color.red).get();
 
         card.addListener(new ClickListener() {
@@ -47,10 +50,11 @@ public class FeatureCard {
         });
 
         card.top().left();
-        card.table(c -> {
-            c.top().left().margin(12);
+        card.table(container -> {
+            container.name = "Card container";
 
-            c.table(header -> {
+            container.table(header -> {
+                header.name = "Card header";
                 header.left();
                 header.image(metadata.icon())
                         .scaling(Scaling.fit)
@@ -60,16 +64,16 @@ public class FeatureCard {
                 header.add(Utils.getString(metadata.name()))
                         .style(Styles.defaultLabel)
                         .color(Color.white)
-                        .growX()
                         .ellipsis(true)
                         .left();
 
-                header.image(Utils.scalable(enabled ? Icon.eye : Icon.eyeOff))
-                        .height(24)
-                        .width(32)
-                        .padRight(8)
-                        .scaling(Scaling.fit)
-                        .color(enabled ? Color.white : Color.gray);
+                header.table().minWidth(5).growX();
+
+                header.button("?", Styles.cleart, () -> {
+                    new FeatureHelpDialog(feature).show();
+                })
+                .fontScale(1.5f)
+                .size(32);
 
                 feature.setting().ifPresent(settingDialog -> {
                     header.button(b -> {
@@ -85,10 +89,12 @@ public class FeatureCard {
                                 }
                             });
                 });
+            })
+                    .width(cardWidth - 12 * 2)
+                    .growX()
+                    .row();
 
-            }).growX().row();
-
-            c.add(Utils.getString(metadata.description()))
+            container.add(Utils.getString(metadata.description()))
                     .color(Color.lightGray)
                     .fontScale(0.9f)
                     .wrap()
@@ -97,9 +103,13 @@ public class FeatureCard {
                     .ellipsis(true)
                     .row();
 
-            c.add().growY().row();
-            c.add(enabled ? "@enabled" : "@disabled").color(enabled ? Color.green : Color.red).left();
-        }).grow().top().left();
+            container.add().growY().row();
+            container.add(enabled ? "@enabled" : "@disabled").color(enabled ? Color.green : Color.red).left();
+        })
+                .pad(12)
+                .grow()
+                .top()
+                .left();
     }
 
     public static void buildLink(Table parent, Feature feature) {
@@ -199,6 +209,19 @@ public class FeatureCard {
             c.add().growX();
 
             c.table(Tex.button, l -> l.image(Icon.linkSmall));
-        }).grow();
+    }).grow();
+    }
+
+    public static class FeatureHelpDialog extends BaseDialog {
+        public FeatureHelpDialog(Feature feature) {
+            super(Utils.getString(feature.getMetadata().name()));
+
+            addCloseButton();
+            closeOnBack();
+
+            cont.pane(pane -> {
+                pane.add(Utils.getString(feature.getMetadata().name() + ".help"));
+            }).scrollX(false).scrollY(true);
+        }
     }
 }

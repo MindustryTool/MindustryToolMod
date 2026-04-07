@@ -61,15 +61,13 @@ public class ChatStreamClient {
 
     public synchronized void disconnect() {
         isStreaming.set(false);
-        Log.info("Update connection");
         updateConnection(false);
 
-        Log.info("Close connecton");
         if (currentConnection != null) {
+            Log.info("Disconnecting chat stream");
             currentConnection = null;
         }
 
-        Log.info("Stop thread.");
         if (streamThread != null) {
             streamThread.interrupt();
             streamThread = null;

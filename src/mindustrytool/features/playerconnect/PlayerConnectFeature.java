@@ -21,7 +21,7 @@ public class PlayerConnectFeature implements Feature {
     @Override
     public FeatureMetadata getMetadata() {
         return FeatureMetadata.builder()
-                .name("@feature.player-connect.name")
+                .name("@feature.player-connect")
                 .description("@feature.player-connect.description")
                 .icon(Icon.planet)
                 .order(3)
@@ -35,8 +35,10 @@ public class PlayerConnectFeature implements Feature {
         injector = new PlayerConnectJoinInjector(joinRoomDialog);
 
         if (Vars.ui.join != null) {
+            injector.inject();
+
             Vars.ui.join.shown(() -> {
-                injector.inject(Vars.ui.join);
+                injector.inject();
             });
         }
     }

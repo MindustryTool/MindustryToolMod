@@ -15,7 +15,7 @@ public class TeamResourceConfig {
     }
 
     public static float y() {
-        return Core.settings.getFloat(PREFIX + "y", Core.graphics.getHeight());
+        return Core.settings.getFloat(PREFIX + "y", Core.graphics.getHeight() / 2f);
     }
 
     public static void y(float value) {

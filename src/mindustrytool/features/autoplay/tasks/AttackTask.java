@@ -15,7 +15,7 @@ public class AttackTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return Iconc.warning + " " + Core.bundle.get("autoplay.task.attack.name");
+        return Iconc.warning + " " + Core.bundle.get("autoplay.task.attack");
     }
 
     @Override

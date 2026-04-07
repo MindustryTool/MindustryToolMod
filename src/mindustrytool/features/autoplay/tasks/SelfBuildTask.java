@@ -20,7 +20,7 @@ public class SelfBuildTask implements AutoplayTask {
 
     @Override
     public String getName() {
-        return Iconc.hammer + " " + Core.bundle.get("autoplay.task.self-build.name");
+        return Iconc.hammer + " " + Core.bundle.get("autoplay.task.self-build");
     }
 
     @Override
