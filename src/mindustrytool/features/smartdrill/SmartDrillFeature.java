@@ -252,7 +252,7 @@ public class SmartDrillFeature implements Feature {
     }
 
     private void placeBeamDrill(Tile tile, Direction direction, BeamDrill drill, Item drop) {
-        Seq<Tile> ores = findAllConnectedOreTiles(tile, drop, getMaxTiles(drill));
+        Seq<Tile> ores = findAllConnectedWallOreTiles(tile, drop, getMaxTiles(drill), direction, drill);
         if (ores.isEmpty()) {
             return;
         }
@@ -273,7 +273,7 @@ public class SmartDrillFeature implements Feature {
 
         tiles.retainAll(t -> t.drop() == drop);
 
-        expandTiles(tiles, 2);
+        expandTiles(tiles, 3);
 
         var drillTiles = tiles.select(this::isDrillTile);
         var bridgeTiles = tiles.select(this::isBridgeTile);
@@ -322,6 +322,35 @@ public class SmartDrillFeature implements Feature {
         }
     }
 
+    private Seq<Tile> findAllConnectedWallOreTiles(Tile start, Item drop, int maxTiles, Direction direction,
+            BeamDrill drill) {
+        Seq<Tile> tiles = new Seq<>();
+        Seq<Tile> queue = new Seq<>();
+        ObjectSet<Tile> visited = new ObjectSet<>();
+
+        queue.add(start);
+        visited.add(start);
+
+        while (!queue.isEmpty() && tiles.size < maxTiles) {
+
+            Tile tile = queue.remove(0);
+            tiles.add(tile);
+
+            for (int i = 0; i < 4; i++) {
+                Tile neighbor = tile.nearby(i);
+
+                if (neighbor == null || visited.contains(neighbor) || neighbor.wallDrop() != drop) {
+                    continue;
+                }
+
+                visited.add(neighbor);
+                queue.add(neighbor);
+            }
+        }
+
+        return tiles;
+    }
+
     private Seq<Tile> findAllConnectedOreTiles(Tile start, Item drop, int maxTiles) {
         Seq<Tile> tiles = new Seq<>();
         Seq<Tile> queue = new Seq<>();
@@ -334,12 +363,12 @@ public class SmartDrillFeature implements Feature {
         visited.add(start);
 
         while (!queue.isEmpty() && tiles.size < maxTiles) {
-
             queue.sort(t -> {
-                int dx = Math.abs(t.x - centerX);
-                int dy = Math.abs(t.y - centerY);
+                float dx = Math.abs(t.x - centerX);
+                float dy = Math.abs(t.y - centerY);
+                float diff = Math.abs(dx - dy);
 
-                return Math.max(dx, dy);
+                return Math.max(dx * dx + diff, dy * dy + diff);
             });
 
             Tile tile = queue.remove(0);
@@ -348,7 +377,8 @@ public class SmartDrillFeature implements Feature {
             for (int i = 0; i < 4; i++) {
                 Tile neighbor = tile.nearby(i);
 
-                if (neighbor == null || visited.contains(neighbor) || neighbor.drop() != drop) {
+                if (neighbor == null || visited.contains(neighbor)
+                        || (neighbor.drop() != drop && neighbor.wallDrop() != drop)) {
                     continue;
                 }
 
