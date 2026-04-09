@@ -300,6 +300,7 @@ public class Utils {
                 var field = clazz.getDeclaredField(fieldName);
                 field.setAccessible(true);
                 field.set(object, value);
+                return;
             } catch (NoSuchFieldException e) {
                 clazz = clazz.getSuperclass();
             } catch (IllegalAccessException e) {
