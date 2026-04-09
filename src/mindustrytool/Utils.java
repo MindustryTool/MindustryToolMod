@@ -269,13 +269,44 @@ public class Utils {
         });
     }
 
-
-    public static boolean hasField(Class<?> clazz, String fieldName) {
-        try {
-            clazz.getDeclaredField(fieldName);
-            return true;
-        } catch (NoSuchFieldException e) {
+    public static boolean hasField(Object object, String fieldName) {
+        if (object == null || fieldName == null || fieldName.isEmpty()) {
             return false;
         }
+
+        Class<?> clazz = object.getClass();
+
+        while (clazz != null) {
+            try {
+                clazz.getDeclaredField(fieldName);
+                return true;
+            } catch (NoSuchFieldException ignored) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+
+        return false;
+    }
+
+    public static void setField(Object object, String fieldName, Object value) {
+        if (object == null || fieldName == null || fieldName.isEmpty()) {
+            throw new IllegalArgumentException("Object or field name is null or empty");
+        }
+
+        Class<?> clazz = object.getClass();
+
+        while (clazz != null) {
+            try {
+                var field = clazz.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                field.set(object, value);
+            } catch (NoSuchFieldException e) {
+                clazz = clazz.getSuperclass();
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("Cannot access field: " + fieldName, e);
+            }
+        }
+
+        throw new RuntimeException("Field not found: " + fieldName);
     }
 }
