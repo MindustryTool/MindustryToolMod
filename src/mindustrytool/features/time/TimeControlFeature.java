@@ -39,6 +39,7 @@ public class TimeControlFeature extends Table implements Feature {
                 .description("@feature.time-control.description")
                 .icon(Utils.icons("clock.png"))
                 .order(1)
+                .enabledByDefault(false)
                 .build();
     }
 

@@ -247,12 +247,10 @@ public class PlayerConnect {
         }
 
         Client client = Reflect.get(provider, "client");
-
-        Reflect.set(client, "serialization", new NetworkProxy.Serializer());
-
         var tcp = Reflect.get(Connection.class, client, "tcp");
 
-        Reflect.set(tcp, "serialization", new NetworkProxy.Serializer());
+        Utils.setField(client, "serialization", new NetworkProxy.Serializer());
+        Utils.setField(tcp, "serialization", new NetworkProxy.Serializer());
 
         NetListener[] listeners = Reflect.get(Connection.class, client, "listeners");
 
