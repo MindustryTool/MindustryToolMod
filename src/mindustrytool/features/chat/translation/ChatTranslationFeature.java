@@ -78,15 +78,6 @@ public class ChatTranslationFeature implements Feature {
         }
 
         currentProvider.translate(Strings.stripColors(message))
-                .thenApply(translated -> {
-                    if (ChatTranslationConfig.isShowOriginal()) {
-                        String formated = Strings.format("[white]@ [gray](@)", message, translated);
-
-                        return formated;
-                    }
-
-                    return translated;
-                })
                 .thenAccept(formated -> cons.get(formated))
                 .exceptionally(e -> {
                     lastError = e.getMessage();

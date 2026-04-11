@@ -14,14 +14,6 @@ public class ChatTranslationConfig {
     public static final String DEEPL_API_KEY = "mindustrytool.chat-translation.deepl.api-key";
     public static final String DEEPL_TIMEOUT = "mindustrytool.chat-translation.deepl.timeout";
 
-    public static boolean isShowOriginal() {
-        return Core.settings.getBool(SHOW_ORIGINAL, true);
-    }
-
-    public static void setShowOriginal(boolean showOriginal) {
-        Core.settings.put(SHOW_ORIGINAL, showOriginal);
-    }
-
     public static String getProviderId() {
         return Core.settings.getString(PROVIDER, "noop");
     }

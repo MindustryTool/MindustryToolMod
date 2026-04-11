@@ -20,11 +20,6 @@ public class ChatTranslationSettingsDialog extends BaseDialog {
 
         Table root = new Table();
         root.top().left().defaults().top().left().padBottom(5);
-
-        root.check("@chat-translation.settings.show-original", ChatTranslationConfig.isShowOriginal(), val -> {
-            ChatTranslationConfig.setShowOriginal(val);
-        }).row();
-
         root.image().height(4).color(Color.gray).fillX().pad(10).row();
 
         root.add("@chat-translation.settings.providers").style(Styles.outlineLabel).padBottom(5).row();
