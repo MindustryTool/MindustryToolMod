@@ -48,9 +48,9 @@ public class TimeControlFeature extends Table implements Feature {
         touchable = Touchable.childrenOnly;
 
         setPosition(TimeControlConfig.x(), TimeControlConfig.y());
+        visible(() -> Vars.ui.hudfrag.shown && isEnabled() && !Vars.net.client());
 
         Events.on(EventType.ResizeEvent.class, e -> rebuild());
-        visible(() -> !Vars.net.client());
 
         Core.app.post(this::rebuild);
     }
@@ -153,7 +153,6 @@ public class TimeControlFeature extends Table implements Feature {
             remove();
 
             name = "time-control-hud";
-            visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
 
             Core.app.post(() -> Vars.ui.hudGroup.addChild(this));
         }
