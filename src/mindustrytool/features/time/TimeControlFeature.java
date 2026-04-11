@@ -48,7 +48,7 @@ public class TimeControlFeature extends Table implements Feature {
         touchable = Touchable.childrenOnly;
 
         setPosition(TimeControlConfig.x(), TimeControlConfig.y());
-        visible(() -> Vars.ui.hudfrag.shown && !Vars.net.client());
+        visible(() -> Vars.ui.hudfrag.shown && isEnabled() && !Vars.net.client());
 
         Events.on(EventType.ResizeEvent.class, e -> rebuild());
 
