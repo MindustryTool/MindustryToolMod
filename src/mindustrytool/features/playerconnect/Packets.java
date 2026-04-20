@@ -115,6 +115,7 @@ public class Packets {
         public String version;
         public String modVersion;
         public long createdAt;
+        public String id;
 
         public RoomStats() {
         }
