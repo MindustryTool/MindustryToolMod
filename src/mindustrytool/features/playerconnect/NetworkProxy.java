@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.util.Date;
+import java.util.UUID;
 
 import arc.Core;
 import arc.func.Cons;
@@ -40,15 +41,16 @@ public class NetworkProxy extends Client implements NetListener {
     public static final String PROTOCOL_VERSION = "2.1";
     public static final int defaultTimeout = 10000;
 
+    private static final String ROOM_ID_KEY = "mindustrytool.playerc-onnect.room-id";
     private static final Ratekeeper noopRate = new NoopRatekeeper();
 
     private final IntMap<VirtualConnection> connections = new IntMap<>();
     private final Seq<VirtualConnection> orderedConnections = new Seq<>(false);
     private final NetListener serverDispatcher;
+    private final String roomId = getOrCreateId();
 
     private volatile boolean isShutdown;
 
-    private String roomId = null;
     private RoomCloseReason closeReason;
     private String remoteHost = "";
 
@@ -106,10 +108,7 @@ public class NetworkProxy extends Client implements NetListener {
                 Log.err("IOException in NetworkProxy.run(): @", ex);
                 close();
             } catch (ArcNetException ex) {
-                if (roomId == null) {
-                    close();
-                    throw ex;
-                }
+                close();
             }
         }
     }
@@ -135,8 +134,6 @@ public class NetworkProxy extends Client implements NetListener {
     }
 
     public void closeRoom() {
-        roomId = null;
-
         if (isConnected()) {
             sendTCP(new Packets.RoomClosureRequestPacket());
         }
@@ -159,8 +156,6 @@ public class NetworkProxy extends Client implements NetListener {
 
     @Override
     public void disconnected(Connection connection, DcReason reason) {
-        roomId = null;
-
         if (onRoomClosed != null) {
             onRoomClosed.get(closeReason);
         }
@@ -200,13 +195,8 @@ public class NetworkProxy extends Client implements NetListener {
             } else if (object instanceof Packets.RoomClosedPacket closedPacket) {
                 closeReason = closedPacket.reason;
                 Core.app.post(() -> Vars.ui.showText("[scarlet][[Server][white] ", closedPacket.reason.toString()));
-            } else if (object instanceof Packets.RoomLinkPacket roomLinkPacket) {
-                // Ignore if the room id is received twice
-                if (roomId != null) {
-                    throw new ArcNetException("Room id is received twice");
-                }
-
-                roomId = roomLinkPacket.roomId;
+            } else if (object instanceof Packets.RoomLinkPacket) {
+                // This is not used anymore
 
                 if (roomId == null) {
                     throw new ArcNetException("Room id can not be null");
@@ -309,6 +299,7 @@ public class NetworkProxy extends Client implements NetListener {
     public Packets.RoomStats getStats() {
         Packets.RoomStats stats = new Packets.RoomStats();
 
+        stats.id = roomId;
         stats.modVersion = Main.self.meta.version;
         stats.gamemode = Vars.state.rules.mode().name();
         stats.mapName = Vars.state.map.name();
@@ -498,5 +489,17 @@ public class NetworkProxy extends Client implements NetListener {
         public void notifyReceived0(Object object) {
             listeners.each(l -> l.received(this, object));
         }
+    }
+
+    private String getOrCreateId() {
+        String roomId = Core.settings.getString(ROOM_ID_KEY, null);
+        if (roomId != null && !roomId.trim().isEmpty()) {
+            return roomId;
+        }
+
+        String generatedRoomId = UUID.randomUUID().toString();
+        Core.settings.put(ROOM_ID_KEY, generatedRoomId);
+        Core.settings.forceSave();
+        return generatedRoomId;
     }
 }
