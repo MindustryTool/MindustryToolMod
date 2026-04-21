@@ -32,8 +32,8 @@ public class ChatStateManager {
     private final Runnable refreshCurrentChannelUsers;
     private final AtomicBoolean isSyncing = new AtomicBoolean(false);
 
-    private String stateBeforePause = "";
-    private String currentState = "";
+    private String previousState = MENU_STATE;
+    private String currentState = MENU_STATE;
     private String syncedState = "";
 
     public void init() {
@@ -47,7 +47,7 @@ public class ChatStateManager {
         }
 
         if (state.equals(MENU_STATE)) {
-            stateBeforePause = currentState;
+            previousState = currentState;
         }
 
         currentState = state;
@@ -55,6 +55,10 @@ public class ChatStateManager {
     }
 
     public void refreshCurrentState() {
+        if (!Vars.state.isMenu() && currentState.equals(MENU_STATE)) {
+            currentState = previousState;
+        }
+
         syncState(true);
     }
 
@@ -78,8 +82,8 @@ public class ChatStateManager {
     private void handleStateChange(StateChangeEvent event) {
         if (event.to == State.menu && !Core.graphics.isHidden()) {
             updateState(MENU_STATE);
-        } else if (event.to == State.playing && !stateBeforePause.isEmpty()) {
-            updateState(stateBeforePause);
+        } else if (event.to == State.playing && !previousState.isEmpty()) {
+            updateState(previousState);
         }
     }
 
@@ -134,6 +138,8 @@ public class ChatStateManager {
         }
 
         String stateToSync = currentState;
+
+        Log.info("Syncing chat state: @", stateToSync);
 
         apiClient.updateState(stateToSync)
                 .thenRun(() -> {
