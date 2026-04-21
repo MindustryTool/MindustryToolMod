@@ -54,7 +54,7 @@ public class SchematicImage extends Image {
     public void draw() {
         super.draw();
 
-        var next = textureCache.get(id);
+        var next = textureCache.get(imageUrl);
         if (lastTexture != next && next != null) {
             lastTexture = next;
             setDrawable(next);
@@ -68,8 +68,8 @@ public class SchematicImage extends Image {
         // textures are only requested when the rendering happens; this assists with
         // culling
         try {
-            if (!textureCache.containsKey(id)) {
-                textureCache.put(id, lastTexture = Core.atlas.find("nomap"));
+            if (!textureCache.containsKey(imageUrl)) {
+                textureCache.put(imageUrl, lastTexture = Core.atlas.find("nomap"));
 
                 var file = Main.schematicDir.child(id + ".png");
 
@@ -80,7 +80,7 @@ public class SchematicImage extends Image {
                         try {
                             var tex = new Texture(pix);
                             tex.setFilter(TextureFilter.linear);
-                            textureCache.put(id, new TextureRegion(tex));
+                            textureCache.put(imageUrl, new TextureRegion(tex));
                             pix.dispose();
                         } catch (Exception e) {
                             Log.err(id, e);
@@ -93,7 +93,7 @@ public class SchematicImage extends Image {
                                 if (!(error instanceof HttpStatusException requestError)
                                         || requestError.status != HttpStatus.NOT_FOUND) {
                                     Log.err(error);
-                                    Timer.schedule(() -> textureCache.remove(id), 5);
+                                    Timer.schedule(() -> textureCache.remove(imageUrl), 5);
                                 }
                             })
                             .submit(res -> {
@@ -116,7 +116,7 @@ public class SchematicImage extends Image {
                                         try {
                                             var tex = new Texture(pix);
                                             tex.setFilter(TextureFilter.linear);
-                                            textureCache.put(id, new TextureRegion(tex));
+                                            textureCache.put(imageUrl, new TextureRegion(tex));
                                             pix.dispose();
                                         } catch (Exception e) {
                                             Log.err(id, e);

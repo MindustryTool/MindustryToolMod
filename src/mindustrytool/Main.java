@@ -107,8 +107,6 @@ public class Main extends Mod {
         checkDirVersion(imageDir, 1);
         checkDirVersion(mapsDir, 1);
         checkDirVersion(schematicDir, 1);
-        checkDirVersion(backgroundsDir, 1);
-        checkDirVersion(musicsDir, 1);
 
         AuthService.getInstance().init();
         ServerService.getInstance().init();

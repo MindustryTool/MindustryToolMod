@@ -54,14 +54,14 @@ public class MapImage extends Image {
         super.draw();
 
         try {
-            var next = textureCache.get(id);
+            var next = textureCache.get(imageUrl);
             if (lastTexture != next && next != null) {
                 lastTexture = next;
                 setDrawable(next);
             }
 
-            if (!textureCache.containsKey(id)) {
-                textureCache.put(id, lastTexture = Core.atlas.find("nomap"));
+            if (!textureCache.containsKey(imageUrl)) {
+                textureCache.put(imageUrl, lastTexture = Core.atlas.find("nomap"));
                 var file = Main.mapsDir.child(id + ".png");
 
                 if (file.exists()) {
@@ -71,7 +71,7 @@ public class MapImage extends Image {
                         try {
                             var tex = new Texture(pix);
                             tex.setFilter(TextureFilter.linear);
-                            textureCache.put(id, new TextureRegion(tex));
+                            textureCache.put(imageUrl, new TextureRegion(tex));
                             pix.dispose();
                         } catch (Exception e) {
                             Log.err(id, e);
@@ -85,7 +85,7 @@ public class MapImage extends Image {
                                 if (!(error instanceof HttpStatusException requestError)
                                         || requestError.status != HttpStatus.NOT_FOUND) {
                                     Log.err(id, error);
-                                    Timer.schedule(() -> textureCache.remove(id), 5);
+                                    Timer.schedule(() -> textureCache.remove(imageUrl), 5);
                                 }
                             })
                             .submit(res -> {
@@ -107,7 +107,7 @@ public class MapImage extends Image {
                                     try {
                                         var tex = new Texture(pix);
                                         tex.setFilter(TextureFilter.linear);
-                                        textureCache.put(id, new TextureRegion(tex));
+                                        textureCache.put(imageUrl, new TextureRegion(tex));
                                         pix.dispose();
                                     } catch (Exception e) {
                                         Log.err(id, e);
