@@ -28,7 +28,8 @@ public class SchematicImage extends Image {
     public float thickness = 4f;
     public Color borderColor = Pal.gray;
 
-    private String id;
+    private final String id;
+    private final boolean preview;
     private TextureRegion lastTexture;
     private final String imageUrl;
 
@@ -37,6 +38,7 @@ public class SchematicImage extends Image {
     public SchematicImage(String id, boolean preview) {
         super(Tex.clear);
         this.id = id;
+        this.preview = preview;
 
         StringBuilder sb = new StringBuilder(Config.IMAGE_URL);
         sb.append("schematics/")
@@ -71,7 +73,7 @@ public class SchematicImage extends Image {
             if (!textureCache.containsKey(imageUrl)) {
                 textureCache.put(imageUrl, lastTexture = Core.atlas.find("nomap"));
 
-                var file = Main.schematicDir.child(id + ".png");
+                var file = Main.schematicDir.child(id + (preview ? "_preview" : "") + ".png");
 
                 if (file.exists()) {
                     byte[] result = file.readBytes();

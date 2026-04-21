@@ -28,7 +28,8 @@ public class MapImage extends Image {
     public float thickness = 4f;
     public Color borderColor = Pal.gray;
 
-    private String id;
+    private final String id;
+    private final boolean preview;
     private TextureRegion lastTexture;
     private static ObjectMap<String, TextureRegion> textureCache = new ObjectMap<>();
     private final String imageUrl;
@@ -36,6 +37,7 @@ public class MapImage extends Image {
     public MapImage(String id, boolean preview) {
         super(Tex.clear);
         this.id = id;
+        this.preview = preview;
 
         StringBuilder sb = new StringBuilder(Config.IMAGE_URL);
         sb.append("maps/")
@@ -62,7 +64,7 @@ public class MapImage extends Image {
 
             if (!textureCache.containsKey(imageUrl)) {
                 textureCache.put(imageUrl, lastTexture = Core.atlas.find("nomap"));
-                var file = Main.mapsDir.child(id + ".png");
+                var file = Main.mapsDir.child(id + (preview ? "_preview" : "") + ".png");
 
                 if (file.exists()) {
                     byte[] result = file.readBytes();
