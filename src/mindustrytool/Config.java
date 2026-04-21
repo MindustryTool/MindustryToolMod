@@ -16,7 +16,7 @@ public class Config {
     public static final boolean DEV = (ENV != null && ENV.equals("DEV"));
     public static final String API_URL = (DEV ? DEV_URL : PROD_URL) + "v4/";
     public static final String API_v4_URL = (DEV ? DEV_URL : PROD_URL) + "v4/";
-    public static final String IMAGE_URL = "https://image.mindustry-tool.com/";
+    public static final String IMAGE_URL = API_v4_URL;
 
     public static final String API_REPO_URL = "https://raw.githubusercontent.com/MindustryTool/MindustryToolMod/v8/mod.hjson";
 

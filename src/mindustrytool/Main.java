@@ -49,9 +49,9 @@ public class Main extends Mod {
 
     public static Fi imageDir = Vars.dataDirectory.child("mindustry-tool-caches");
     public static Fi mapsDir = Vars.dataDirectory.child("mindustry-tool-maps");
+    public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
     public static Fi backgroundsDir = Vars.dataDirectory.child("mindustry-tool-backgrounds");
     public static Fi musicsDir = Vars.dataDirectory.child("mindustry-tool-musics");
-    public static Fi schematicDir = Vars.dataDirectory.child("mindustry-tool-schematics");
 
     private static ObjectMap<Class<?>, Prov<? extends Packet>> packetReplacements = new ObjectMap<>();
 
@@ -103,6 +103,12 @@ public class Main extends Mod {
         backgroundsDir.mkdirs();
         musicsDir.mkdirs();
         schematicDir.mkdirs();
+
+        checkDirVersion(imageDir, 1);
+        checkDirVersion(mapsDir, 1);
+        checkDirVersion(schematicDir, 1);
+        checkDirVersion(backgroundsDir, 1);
+        checkDirVersion(musicsDir, 1);
 
         AuthService.getInstance().init();
         ServerService.getInstance().init();
@@ -166,6 +172,44 @@ public class Main extends Mod {
             Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
         } catch (Exception err) {
             Vars.ui.showException(err);
+        }
+    }
+
+    private int readDirVersion(Fi dir) {
+        try {
+            Fi versionFile = dir.child("version.txt");
+            if (versionFile.exists()) {
+                return Integer.parseInt(versionFile.readString());
+            } else {
+                return -1;
+            }
+        } catch (Exception err) {
+            return 0;
+        }
+    }
+
+    private void writeDirVersion(Fi dir, int version) {
+        try {
+            dir.emptyDirectory(false);
+            Fi versionFile = dir.child("version.txt");
+            versionFile.writeString(version + "");
+        } catch (Exception err) {
+            Vars.ui.showException(err);
+        }
+    }
+
+    private void checkDirVersion(Fi dir, int expectedVersion) {
+        try {
+            int version = readDirVersion(dir);
+            if (version == -1) {
+                dir.mkdirs();
+            }
+
+            if (version != expectedVersion) {
+                writeDirVersion(dir, expectedVersion);
+            }
+        } catch (Exception err) {
+            Log.err("Check dir version failed", err);
         }
     }
 }

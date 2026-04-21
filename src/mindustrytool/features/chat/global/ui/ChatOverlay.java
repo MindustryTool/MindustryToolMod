@@ -157,6 +157,7 @@ public class ChatOverlay extends Table {
 
             badgeTable = new Table();
             stack.add(badgeTable);
+            badgeTable.toFront();
             updateBadge();
 
             btn.add(stack);
@@ -507,10 +508,12 @@ public class ChatOverlay extends Table {
     }
 
     private void updateBadge() {
-        if (badgeTable == null)
+        if (badgeTable == null) {
             return;
+        }
 
         int unreadCount = ChatStore.getInstance().getUnreadCount();
+
         badgeTable.clear();
         badgeTable.visible = unreadCount > 0;
         badgeTable.top().right();

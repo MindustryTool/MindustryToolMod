@@ -266,7 +266,7 @@ public class SchematicDialog extends BaseDialog {
             preview.row();
 
             preview.stack(
-                    new Table(t -> t.add(new SchematicImage(data.getId()))),
+                    new Table(t -> t.add(new SchematicImage(data.getId(), true))),
                     new Table(nameTable -> {
                         nameTable.top();
                         nameTable.table(Styles.black3, c -> {

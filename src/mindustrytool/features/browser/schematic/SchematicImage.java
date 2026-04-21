@@ -16,6 +16,7 @@ import arc.util.Http.HttpStatus;
 import arc.util.Http.HttpStatusException;
 import arc.util.Log;
 import arc.util.Scaling;
+import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
@@ -26,16 +27,26 @@ public class SchematicImage extends Image {
     public float scaling = 16f;
     public float thickness = 4f;
     public Color borderColor = Pal.gray;
-    private boolean isError = false;
 
     private String id;
     private TextureRegion lastTexture;
+    private final String imageUrl;
 
     private static ObjectMap<String, TextureRegion> textureCache = new ObjectMap<>();
 
-    public SchematicImage(String id) {
+    public SchematicImage(String id, boolean preview) {
         super(Tex.clear);
         this.id = id;
+
+        StringBuilder sb = new StringBuilder(Config.IMAGE_URL);
+        sb.append("schematics/")
+                .append(id)
+                .append("/image");
+        if (preview) {
+            sb.append("?variant=preview");
+        }
+        imageUrl = sb.toString();
+
         setScaling(Scaling.fit);
     }
 
@@ -44,7 +55,7 @@ public class SchematicImage extends Image {
         super.draw();
 
         var next = textureCache.get(id);
-        if (lastTexture != next) {
+        if (lastTexture != next && next != null) {
             lastTexture = next;
             setDrawable(next);
         }
@@ -53,10 +64,6 @@ public class SchematicImage extends Image {
         Lines.stroke(Scl.scl(thickness));
         Lines.rect(x, y, width, height);
         Draw.reset();
-
-        if (isError) {
-            return;
-        }
 
         // textures are only requested when the rendering happens; this assists with
         // culling
@@ -77,55 +84,54 @@ public class SchematicImage extends Image {
                             pix.dispose();
                         } catch (Exception e) {
                             Log.err(id, e);
-                            isError = true;
                         }
                     });
                 } else {
-                    Http.get(Config.IMAGE_URL + "schematics/" + id + ".png?variant=preview", res -> {
-                        byte[] result = res.getResult();
-                        try {
-                            if (result.length == 0)
-                                return;
-
-                            Pixmap pix = new Pixmap(result);
-
-                            Vars.mainExecutor.execute(() -> {
+                    Http.get(imageUrl)
+                            .timeout(60_000)
+                            .error(error -> {
+                                if (!(error instanceof HttpStatusException requestError)
+                                        || requestError.status != HttpStatus.NOT_FOUND) {
+                                    Log.err(error);
+                                    Timer.schedule(() -> textureCache.remove(id), 5);
+                                }
+                            })
+                            .submit(res -> {
+                                byte[] result = res.getResult();
                                 try {
-                                    file.writeBytes(result);
+                                    if (result.length == 0)
+                                        return;
+
+                                    Pixmap pix = new Pixmap(result);
+
+                                    Vars.mainExecutor.execute(() -> {
+                                        try {
+                                            file.writeBytes(result);
+                                        } catch (Exception error) {
+                                            Log.err(id, error);
+                                        }
+                                    });
+
+                                    Core.app.post(() -> {
+                                        try {
+                                            var tex = new Texture(pix);
+                                            tex.setFilter(TextureFilter.linear);
+                                            textureCache.put(id, new TextureRegion(tex));
+                                            pix.dispose();
+                                        } catch (Exception e) {
+                                            Log.err(id, e);
+                                        }
+                                    });
                                 } catch (Exception error) {
                                     Log.err(id, error);
                                 }
-                            });
 
-                            Core.app.post(() -> {
-                                try {
-                                    var tex = new Texture(pix);
-                                    tex.setFilter(TextureFilter.linear);
-                                    textureCache.put(id, new TextureRegion(tex));
-                                    pix.dispose();
-                                } catch (Exception e) {
-                                    Log.err(id, e);
-                                    isError = true;
-                                }
                             });
-                        } catch (Exception error) {
-                            Log.err(id, error);
-                            isError = true;
-                        }
-
-                    }, error -> {
-                        if (!(error instanceof HttpStatusException requestError)
-                                || requestError.status != HttpStatus.NOT_FOUND) {
-                            Log.err(error);
-                            isError = true;
-                        }
-                    });
                 }
             }
 
         } catch (Exception error) {
             Log.err(id, error);
-            isError = true;
         }
     }
 }
