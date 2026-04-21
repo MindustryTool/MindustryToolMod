@@ -111,7 +111,7 @@ public class UserList extends Table {
                     info.row();
                 });
                 String state = user.getState();
-                if (state != null && !state.equals("menu")) {
+                if (state != null && !state.isBlank()) {
                     info.add("[gray]" + state + "[white]").growX().ellipsis(true).fontScale(0.8f);
                     info.row();
                 }
