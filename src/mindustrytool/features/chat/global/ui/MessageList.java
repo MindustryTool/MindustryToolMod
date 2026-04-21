@@ -398,7 +398,7 @@ public class MessageList extends Table {
                 buttons.button(Icon.link, Styles.emptyi, () -> Core.app.openURI(url)).pad(2);
             }).growX().height(PREVIEW_BUTTON_SIZE);
             preview.row();
-            preview.stack(new Table(t -> t.add(new mindustrytool.features.browser.schematic.SchematicImage(id)))).top()
+            preview.stack(new Table(t -> t.add(new mindustrytool.features.browser.schematic.SchematicImage(id, true)))).top()
                     .left();
         }).style(Styles.flati).width(TARGET_WIDTH).height(CARD_HEIGHT).top().left();
     }
@@ -416,7 +416,7 @@ public class MessageList extends Table {
                 buttons.button(Icon.link, Styles.emptyi, () -> Core.app.openURI(url)).pad(2);
             }).growX().height(PREVIEW_BUTTON_SIZE);
             preview.row();
-            preview.stack(new Table(t -> t.add(new MapImage(id)))).top().left();
+            preview.stack(new Table(t -> t.add(new MapImage(id, true)))).top().left();
         }).style(Styles.flati).width(TARGET_WIDTH).height(CARD_HEIGHT).top().left();
     }
 

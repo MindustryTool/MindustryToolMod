@@ -16,6 +16,7 @@ import arc.util.Http.HttpStatus;
 import arc.util.Http.HttpStatusException;
 import arc.util.Log;
 import arc.util.Scaling;
+import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
@@ -27,13 +28,25 @@ public class MapImage extends Image {
     public float thickness = 4f;
     public Color borderColor = Pal.gray;
 
-    private String id;
+    private final String id;
+    private final boolean preview;
     private TextureRegion lastTexture;
     private static ObjectMap<String, TextureRegion> textureCache = new ObjectMap<>();
+    private final String imageUrl;
 
-    public MapImage(String id) {
+    public MapImage(String id, boolean preview) {
         super(Tex.clear);
         this.id = id;
+        this.preview = preview;
+
+        StringBuilder sb = new StringBuilder(Config.IMAGE_URL);
+        sb.append("maps/")
+                .append(id)
+                .append("/image");
+        if (preview) {
+            sb.append("?variant=preview");
+        }
+        imageUrl = sb.toString();
 
         setScaling(Scaling.fit);
     }
@@ -43,15 +56,15 @@ public class MapImage extends Image {
         super.draw();
 
         try {
-            var next = textureCache.get(id);
-            if (lastTexture != next) {
+            var next = textureCache.get(imageUrl);
+            if (lastTexture != next && next != null) {
                 lastTexture = next;
                 setDrawable(next);
             }
 
-            if (!textureCache.containsKey(id)) {
-                textureCache.put(id, lastTexture = Core.atlas.find("nomap"));
-                var file = Main.mapsDir.child(id + ".png");
+            if (!textureCache.containsKey(imageUrl)) {
+                textureCache.put(imageUrl, lastTexture = Core.atlas.find("nomap"));
+                var file = Main.mapsDir.child(id + (preview ? "_preview" : "") + ".png");
 
                 if (file.exists()) {
                     byte[] result = file.readBytes();
@@ -60,7 +73,7 @@ public class MapImage extends Image {
                         try {
                             var tex = new Texture(pix);
                             tex.setFilter(TextureFilter.linear);
-                            textureCache.put(id, new TextureRegion(tex));
+                            textureCache.put(imageUrl, new TextureRegion(tex));
                             pix.dispose();
                         } catch (Exception e) {
                             Log.err(id, e);
@@ -68,38 +81,42 @@ public class MapImage extends Image {
                     });
 
                 } else {
-                    Http.get(Config.IMAGE_URL + "maps/" + id + ".png?variant=preview", res -> {
-                        byte[] result = res.getResult();
-                        if (result.length == 0)
-                            return;
+                    Http.get(imageUrl)
+                            .timeout(60_000)
+                            .error(error -> {
+                                if (!(error instanceof HttpStatusException requestError)
+                                        || requestError.status != HttpStatus.NOT_FOUND) {
+                                    Log.err(id, error);
+                                    Timer.schedule(() -> textureCache.remove(imageUrl), 5);
+                                }
+                            })
+                            .submit(res -> {
+                                byte[] result = res.getResult();
+                                if (result.length == 0)
+                                    return;
 
-                        Pixmap pix = new Pixmap(result);
-                        Vars.mainExecutor.execute(() -> {
-                            try {
-                                file.writeBytes(result);
+                                Pixmap pix = new Pixmap(result);
+                                Vars.mainExecutor.execute(() -> {
+                                    try {
+                                        file.writeBytes(result);
 
-                            } catch (Exception error) {
-                                Log.err(id, error);
-                            }
-                        });
+                                    } catch (Exception error) {
+                                        Log.err(id, error);
+                                    }
+                                });
 
-                        Core.app.post(() -> {
-                            try {
-                                var tex = new Texture(pix);
-                                tex.setFilter(TextureFilter.linear);
-                                textureCache.put(id, new TextureRegion(tex));
-                                pix.dispose();
-                            } catch (Exception e) {
-                                Log.err(id, e);
-                            }
-                        });
+                                Core.app.post(() -> {
+                                    try {
+                                        var tex = new Texture(pix);
+                                        tex.setFilter(TextureFilter.linear);
+                                        textureCache.put(imageUrl, new TextureRegion(tex));
+                                        pix.dispose();
+                                    } catch (Exception e) {
+                                        Log.err(id, e);
+                                    }
+                                });
 
-                    }, error -> {
-                        if (!(error instanceof HttpStatusException requestError)
-                                || requestError.status != HttpStatus.NOT_FOUND) {
-                            Log.err(id, error);
-                        }
-                    });
+                            });
                 }
             }
 

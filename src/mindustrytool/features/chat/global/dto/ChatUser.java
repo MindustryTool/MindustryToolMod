@@ -10,7 +10,7 @@ public class ChatUser {
     private String name;
     private String imageUrl;
     private List<SimpleRole> roles;
-    private String state = "menu";
+    private String state = "";
 
     public Optional<SimpleRole> getHighestRole() {
         if (roles == null || roles.isEmpty()) {

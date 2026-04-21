@@ -259,7 +259,7 @@ public class MapDialog extends BaseDialog {
             preview.row();
 
             preview.stack(
-                    new Table(t -> t.add(new MapImage(data.getId()))),
+                    new Table(t -> t.add(new MapImage(data.getId(), true))),
                     new Table(nameTable -> {
                         nameTable.top();
                         nameTable.table(Styles.black3, c -> {
