@@ -16,11 +16,11 @@ import java.util.concurrent.CompletableFuture;
 public class MindustryToolTranslationProvider implements TranslationProvider {
 
     private int getTimeout() {
-        return Core.settings.getInt(ChatTranslationConfig.DEEPL_TIMEOUT, 10);
+        return Core.settings.getInt(ChatTranslationConfig.MINDUSTRYTOOL_TIMEOUT, 120);
     }
 
     private void setTimeout(int timeout) {
-        Core.settings.put(ChatTranslationConfig.DEEPL_TIMEOUT, timeout);
+        Core.settings.put(ChatTranslationConfig.MINDUSTRYTOOL_TIMEOUT, timeout);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
                         .setText(Core.bundle.get("chat-translation.timeout-label") + ": " + getTimeout() + "s"))
                 .row();
 
-        Slider slider = new Slider(2, 20, 1, false);
+        Slider slider = new Slider(30, 120, 1, false);
         slider.setValue(getTimeout());
         slider.moved(val -> {
             setTimeout((int) val);
