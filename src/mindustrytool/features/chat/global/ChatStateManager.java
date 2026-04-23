@@ -29,7 +29,6 @@ public class ChatStateManager {
 
     private final ChatApiClient apiClient;
     private final ChatStreamClient streamClient;
-    private final Runnable refreshCurrentChannelUsers;
     private final AtomicBoolean isSyncing = new AtomicBoolean(false);
 
     private String previousState = MENU_STATE;
@@ -144,7 +143,6 @@ public class ChatStateManager {
         apiClient.updateState(stateToSync)
                 .thenRun(() -> {
                     syncedState = stateToSync;
-                    refreshCurrentChannelUsers.run();
                 })
                 .exceptionally(e -> {
                     Log.err("Failed to update chat state", e);

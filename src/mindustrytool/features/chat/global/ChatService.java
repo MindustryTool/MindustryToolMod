@@ -28,7 +28,7 @@ public class ChatService {
         store = ChatStore.getInstance();
         apiClient = new ChatApiClient();
         streamClient = new ChatStreamClient(this::handleIncomingMessages, this::broadcastConnectionStatus);
-        stateManager = new ChatStateManager(apiClient, streamClient, this::refreshCurrentChannelUsers);
+        stateManager = new ChatStateManager(apiClient, streamClient);
     }
 
     public synchronized static ChatService getInstance() {
@@ -138,7 +138,7 @@ public class ChatService {
         Events.fire(new ChatStateChange(connected));
     }
 
-    private void refreshCurrentChannelUsers() {
+    public void refreshCurrentChannelUsers() {
         String channelId = store.getCurrentChannelId();
         if (channelId != null) {
             fetchChatUsers(channelId);
