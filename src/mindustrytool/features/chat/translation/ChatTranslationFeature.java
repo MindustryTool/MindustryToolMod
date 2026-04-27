@@ -78,7 +78,7 @@ public class ChatTranslationFeature implements Feature {
         }
 
         currentProvider.translate(Strings.stripColors(message))
-                .thenAccept(formated -> cons.get(formated))
+                .thenAccept(translated -> cons.get(Strings.format("@ [gold](@)[white]", message, translated)))
                 .exceptionally(e -> {
                     lastError = e.getMessage();
 

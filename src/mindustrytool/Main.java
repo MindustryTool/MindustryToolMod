@@ -156,13 +156,17 @@ public class Main extends Mod {
         packetProvs.replace(packet -> {
             Class<?> clazz = packet.get().getClass();
             if (packetReplacements.containsKey(clazz)) {
-                Log.debug("Replace packet @ to @", clazz.getSimpleName(),
+                Log.info("Replace packet @ to @", clazz.getSimpleName(),
                         packetReplacements.get(clazz).get().getClass().getSimpleName());
-                return packetReplacements.get(clazz);
+                return packetReplacements.remove(clazz);
             }
 
             return packet;
         });
+
+        for (Class<?> clazz : packetReplacements.keys()) {
+            Log.info("Packet @ not found", clazz.getSimpleName());
+        }
     }
 
     private void addCustomButtons() {
