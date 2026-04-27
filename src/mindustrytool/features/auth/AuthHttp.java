@@ -44,6 +44,7 @@ public class AuthHttp {
         String content;
         Map<String, String> headers = new HashMap<>();
         Cons<Throwable> error;
+        int timeout = 10000;
 
         public AuthRequest(String url, HttpMethod method) {
             this.url = url;
@@ -57,6 +58,11 @@ public class AuthHttp {
 
         public AuthRequest header(String name, String value) {
             headers.put(name, value);
+            return this;
+        }
+
+        public AuthRequest timeout(int milis) {
+            this.timeout = milis;
             return this;
         }
 
@@ -74,7 +80,7 @@ public class AuthHttp {
                     .thenRun(() -> {
 
                         HttpRequest req = Http.request(method, url)
-                                .timeout(10000);
+                                .timeout(timeout);
 
                         if (content != null) {
                             req.content(content);
