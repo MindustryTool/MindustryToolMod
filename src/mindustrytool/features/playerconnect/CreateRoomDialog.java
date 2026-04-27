@@ -8,6 +8,7 @@ import arc.graphics.g2d.Draw;
 import arc.scene.ui.Button;
 import arc.scene.ui.TextButton;
 import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
@@ -44,7 +45,7 @@ public class CreateRoomDialog extends BaseDialog {
         addCloseButton();
 
         mainTable = new Table();
-        cont.add(mainTable).growX().maxWidth(1200f);
+        cont.add(mainTable).growX().maxWidth(Math.min(Core.graphics.getWidth(), 1200f) / Scl.scl());
 
         shown(() -> {
             if (!PlayerConnect.isRoomClosed()) {
