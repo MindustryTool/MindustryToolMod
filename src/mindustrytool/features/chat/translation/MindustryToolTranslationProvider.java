@@ -1,12 +1,13 @@
 package mindustrytool.features.chat.translation;
 
 import arc.Core;
-import arc.util.Http;
 import arc.util.Http.HttpStatusException;
 import mindustry.Vars;
 import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.Config;
 import mindustrytool.Utils;
+import mindustrytool.features.auth.AuthHttp;
+import mindustrytool.features.auth.AuthService;
 import arc.scene.ui.layout.Table;
 import arc.scene.ui.Slider;
 
@@ -41,6 +42,11 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
             return future;
         }
 
+        if (!AuthService.getInstance().isLoggedIn()){
+            future.completeExceptionally(new IllegalArgumentException("Not logged in"));
+            return future;
+        }
+
         String locale = LanguageDialog.getDisplayName(Vars.ui.language.getLocale());
 
         if (locale.isEmpty()) {
@@ -58,7 +64,7 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
             body.put("content", message);
             body.put("target", locale);
 
-            Http.post(Config.API_v4_URL + "translations/translate", Utils.toJson(body))
+            AuthHttp.post(Config.API_v4_URL + "translations/translate", Utils.toJson(body))
                     .header("Content-Type", "application/json")
                     .timeout(getTimeout() * 1000)
                     .error(e -> {
@@ -85,6 +91,11 @@ public class MindustryToolTranslationProvider implements TranslationProvider {
     @Override
     public Table settings() {
         Table table = new Table();
+
+        if (!AuthService.getInstance().isLoggedIn()){
+            table.add(Core.bundle.get("chat-translation.error.not-logged-in")).row();
+            return table;
+        }
 
         table.add(Core.bundle.get("chat-translation.timeout-label") + ": " + getTimeout() + "s").left()
                 .padTop(10)
