@@ -268,22 +268,24 @@ public class ChatOverlay extends Table {
         connectionIndicator.setColor(ChatService.getInstance().isConnected() ? Color.green : Color.yellow);
 
         if (Vars.mobile) {
-            if (currentMobileTab == MobileTab.MESSAGES) {
+            ChatStore store = ChatStore.getInstance();
+            if (currentMobileTab == MobileTab.MESSAGES && store.getCurrentChannelId() != null) {
+                header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(4 * scale);
+
                 header.button(Icon.left, Styles.clearNonei, () -> {
                     currentMobileTab = MobileTab.CHANNELS;
                     setup();
                 }).size(40 * scale).padLeft(4 * scale);
-                header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(4 * scale);
 
-                String chanName = "@chat.global-chat";
-                String currentChannelId = ChatStore.getInstance().getCurrentChannelId();
-                if (currentChannelId != null) {
-                    ChannelDto c = ChatStore.getInstance().getChannels().find(ch -> ch.id.equals(currentChannelId));
-                    if (c != null)
-                        chanName = "# " + c.name;
-                }
-                Label title = header.add(chanName).style(Styles.outlineLabel).padLeft(8 * scale).get();
-                title.setFontScale(scale);
+                header.add("Loading").update(l -> {
+                    if (store.getCurrentChannelId() != null) {
+                        ChannelDto channel = store.getChannels()
+                                .find(c -> c.getId().equals(store.getCurrentChannelId()));
+                        if (channel != null) {
+                            l.setText(channel.name);
+                        }
+                    }
+                });
 
                 header.add(connectionIndicator).size(10 * scale).padLeft(8 * scale);
                 header.add().growX();
@@ -303,6 +305,7 @@ public class ChatOverlay extends Table {
 
                 header.button(Icon.refresh, Styles.clearNonei, () -> {
                     ChatStore.getInstance().clearMessages();
+                    String currentChannelId = store.getCurrentChannelId();
                     if (currentChannelId != null) {
                         ChatService.getInstance().fetchMessages(currentChannelId, null);
                         ChatService.getInstance().fetchChatUsers(currentChannelId);
@@ -311,7 +314,7 @@ public class ChatOverlay extends Table {
                 }).size(40 * scale).padRight(4 * scale);
 
                 header.button(Icon.cancel, Styles.clearNonei, this::collapse).size(40 * scale).padRight(4 * scale);
-            } else if (currentMobileTab == MobileTab.CHANNELS) {
+            } else if (currentMobileTab == MobileTab.CHANNELS || store.getCurrentChannelId() == null) {
                 header.image(Icon.move).color(Color.gray).size(24 * scale).padLeft(8 * scale);
                 Label title = header.add("@chat.channels").style(Styles.outlineLabel).padLeft(8 * scale).get();
                 title.setFontScale(scale);
@@ -406,9 +409,10 @@ public class ChatOverlay extends Table {
 
     private Table buildMainContent(float scale, float actualWidth) {
         Table mainContent = new Table();
+        ChatStore store = ChatStore.getInstance();
 
         if (Vars.mobile) {
-            if (currentMobileTab == MobileTab.CHANNELS) {
+            if (currentMobileTab == MobileTab.CHANNELS || store.getCurrentChannelId() == null) {
                 Table leftSide = new Table();
                 leftSide.top().background(Styles.black5);
                 leftSide.add(channelList).grow();
