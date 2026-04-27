@@ -45,7 +45,7 @@ public class CreateRoomDialog extends BaseDialog {
         addCloseButton();
 
         mainTable = new Table();
-        cont.add(mainTable).growX().maxWidth(Math.min(Core.graphics.getWidth(), 1200f) / Scl.scl());
+        cont.add(mainTable).growX().maxWidth(Math.min(Core.graphics.getWidth(), 1200f) / Scl.scl() * 0.9f);
 
         shown(() -> {
             if (!PlayerConnect.isRoomClosed()) {
