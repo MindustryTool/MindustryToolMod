@@ -15,6 +15,7 @@ import mindustrytool.features.FeatureMetadata;
 import arc.struct.Seq;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public class ChatTranslationFeature implements Feature {
     private final Seq<TranslationProvider> providers = new Seq<>();
@@ -77,7 +78,7 @@ public class ChatTranslationFeature implements Feature {
             return;
         }
 
-        currentProvider.translate(Strings.stripColors(message))
+        translateContent(message)
                 .thenAccept(translated -> cons.get(Strings.format("@ [gold](@)[white]", message, translated)))
                 .exceptionally(e -> {
                     lastError = e.getMessage();
@@ -91,6 +92,20 @@ public class ChatTranslationFeature implements Feature {
                     return null;
                 });
 
+    }
+
+    public CompletableFuture<String> translateContent(String message) {
+        if (!isEnabled()) {
+            throw new IllegalArgumentException("ChatTranslationFeature is not enabled");
+        }
+
+        return currentProvider.translate(Strings.stripColors(message))
+                .whenComplete((translated, error) -> {
+                    if (error != null) {
+                        Throwable cause = error.getCause() != null ? error.getCause() : error;
+                        lastError = cause.getMessage();
+                    }
+                });
     }
 
     private void loadProvider() {

@@ -11,6 +11,8 @@ import arc.scene.ui.TextButton;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
+import arc.struct.ObjectMap;
+import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Log;
@@ -28,12 +30,14 @@ import mindustrytool.features.browser.map.MapImage;
 import mindustrytool.features.browser.map.MapInfoDialog;
 import mindustrytool.features.browser.schematic.SchematicDialog;
 import mindustrytool.features.browser.schematic.SchematicInfoDialog;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.chat.global.ChatConfig;
 import mindustrytool.features.chat.global.ChatService;
 import mindustrytool.features.chat.global.ChatStore;
 import mindustrytool.features.chat.global.dto.ChatMessage;
 import mindustrytool.features.playerconnect.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectRenderer;
+import mindustrytool.features.chat.translation.ChatTranslationFeature;
 import mindustrytool.services.MapService;
 import mindustrytool.services.PlayerConnectService;
 import mindustrytool.services.SchematicService;
@@ -64,6 +68,8 @@ public class MessageList extends Table {
 
     private final SchematicInfoDialog schematicInfoDialog = new SchematicInfoDialog();
     private final MapInfoDialog mapInfoDialog = new MapInfoDialog();
+    private final ObjectMap<String, String> translatedMessages = new ObjectMap<>();
+    private final ObjectSet<String> translatingMessageIds = new ObjectSet<>();
 
     private String expandedMessageId = null;
     private ChatInput chatInput;
@@ -125,6 +131,8 @@ public class MessageList extends Table {
 
         ChatStore store = ChatStore.getInstance();
         store.currentChannel.subscribe((e, o) -> {
+            translatedMessages.clear();
+            translatingMessageIds.clear();
             rebuild();
             scrollToBottom();
         });
@@ -151,6 +159,9 @@ public class MessageList extends Table {
             return;
 
         float scale = ChatConfig.scale();
+        ChatTranslationFeature translationFeature = FeatureManager.getInstance()
+                .getFeature(ChatTranslationFeature.class);
+        boolean isTranslationEnabled = translationFeature != null && translationFeature.isEnabled();
 
         for (int i = 0; i < channelMsgs.size; i++) {
             ChatMessage msg = channelMsgs.get(i);
@@ -242,6 +253,14 @@ public class MessageList extends Table {
 
                     card.table(c -> renderContent(c, msg.content, scale)).top().left().growX()
                             .padTop(isSameUser && (msg.replyTo == null || msg.replyTo.isEmpty()) ? 2 * scale : 0);
+                    if (translatedMessages.containsKey(msg.id)) {
+                        card.row();
+                        Label translated = new Label(translatedMessages.get(msg.id));
+                        translated.setColor(Color.gray);
+                        translated.setFontScale(scale * 0.9f);
+                        translated.setWrap(true);
+                        card.add(translated).left().growX().padTop(4 * scale);
+                    }
 
                     card.clicked(() -> {
                         if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
@@ -281,6 +300,42 @@ public class MessageList extends Table {
                             });
                             replyBtn.getLabel().setFontScale(scale * 0.8f);
                             actions.add(replyBtn);
+
+                            if (isTranslationEnabled) {
+                                TextButton translateBtn = new TextButton(
+                                        translatingMessageIds.contains(msg.id)
+                                                ? Core.bundle.get("chat-translation.translating")
+                                                : Core.bundle.get("chat-translation.translate"),
+                                        Styles.defaultt);
+                                translateBtn.setDisabled(translatingMessageIds.contains(msg.id));
+                                translateBtn.clicked(() -> {
+                                    if (translatingMessageIds.contains(msg.id)) {
+                                        return;
+                                    }
+
+                                    translatingMessageIds.add(msg.id);
+                                    rebuild();
+
+                                    translationFeature.translateContent(msg.content)
+                                            .thenAccept(translated -> Core.app.post(() -> {
+                                                translatedMessages.put(msg.id, translated);
+                                                translatingMessageIds.remove(msg.id);
+                                                expandedMessageId = null;
+                                                rebuild();
+                                            }))
+                                            .exceptionally(e -> {
+                                                Core.app.post(() -> {
+                                                    translatedMessages.remove(msg.id);
+                                                    translatingMessageIds.remove(msg.id);
+                                                    Vars.ui.showInfoFade(e.getMessage());
+                                                    rebuild();
+                                                });
+                                                return null;
+                                            });
+                                });
+                                translateBtn.getLabel().setFontScale(scale * 0.8f);
+                                actions.add(translateBtn);
+                            }
                         }).left().padTop(4 * scale);
                     }
                 });
@@ -398,7 +453,8 @@ public class MessageList extends Table {
                 buttons.button(Icon.link, Styles.emptyi, () -> Core.app.openURI(url)).pad(2);
             }).growX().height(PREVIEW_BUTTON_SIZE);
             preview.row();
-            preview.stack(new Table(t -> t.add(new mindustrytool.features.browser.schematic.SchematicImage(id, true)))).top()
+            preview.stack(new Table(t -> t.add(new mindustrytool.features.browser.schematic.SchematicImage(id, true))))
+                    .top()
                     .left();
         }).style(Styles.flati).width(TARGET_WIDTH).height(CARD_HEIGHT).top().left();
     }
