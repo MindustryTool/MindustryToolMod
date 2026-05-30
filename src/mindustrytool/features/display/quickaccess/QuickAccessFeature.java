@@ -56,6 +56,7 @@ public class QuickAccessFeature extends Table implements Feature {
 
         Events.on(EventType.ResizeEvent.class, event -> {
             this.rebuild();
+            keepInScreen();
         });
 
         Core.app.post(() -> rebuild());
@@ -103,6 +104,7 @@ public class QuickAccessFeature extends Table implements Feature {
 
                             QuickAccessConfig.x(QuickAccessFeature.this.x);
                             QuickAccessConfig.y(QuickAccessFeature.this.y);
+                            keepInScreen();
                         } catch (Exception e) {
                             Log.err(e);
                         }
@@ -130,6 +132,26 @@ public class QuickAccessFeature extends Table implements Feature {
 
         add(container).pad(0).margin(0);
         pack();
+        keepInScreen();
+    }
+
+    public void keepInScreen() {
+        if (getScene() == null)
+            return;
+
+        float w = getWidth();
+        float h = getHeight();
+        float sw = getScene().getWidth();
+        float sh = getScene().getHeight();
+
+        if (x < 0)
+            x = 0;
+        if (y < 0)
+            y = 0;
+        if (x + w > sw)
+            x = sw - w;
+        if (y + h > sh)
+            y = sh - h;
     }
 
     private void populateContent(Table t) {
