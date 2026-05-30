@@ -99,7 +99,9 @@ public class SaveSyncFeature implements Feature {
     private void checkAndSync(boolean showWarning) {
         if (!AuthService.getInstance().isLoggedIn()) {
             if (showWarning) {
-                Vars.ui.showInfo("You must be logged in to use Save Sync.");
+                Core.app.post(() -> {
+                    Vars.ui.showInfo("You must be logged in to use Save Sync.");
+                });
             }
             return;
         }
@@ -161,7 +163,9 @@ public class SaveSyncFeature implements Feature {
 
     private void handleSyncSuccess(SaveSyncProgressDialog dialog) {
         dialog.hide();
-        Vars.ui.showInfoFade("[accent]Sync Complete!");
+        Core.app.post(() -> {
+            Vars.ui.showInfoFade("[accent]Sync Complete!");
+        });
     }
 
     private void handleSyncFailure(SaveSyncProgressDialog dialog, Throwable error) {
@@ -170,10 +174,14 @@ public class SaveSyncFeature implements Feature {
         Log.err(failure);
         if (failure instanceof HttpStatusException) {
             HttpStatusException statusException = (HttpStatusException) failure;
-            Vars.ui.showErrorMessage("Http response error: " + statusException.response.getResultAsString());
+            Core.app.post(() -> {
+                Vars.ui.showErrorMessage("Http response error: " + statusException.response.getResultAsString());
+            });
             return;
         }
-        Vars.ui.showException(failure);
+        Core.app.post(() -> {
+            Vars.ui.showException(failure);
+        });
     }
 
     private Throwable unwrap(Throwable error) {

@@ -71,8 +71,10 @@ public class Main extends Mod {
         self = Vars.mods.getMod(Main.class);
 
         if (self == null) {
-            Vars.ui.showErrorMessage("Mod cant find itself, please contact admin on Discord to fix the problem\n"
-                    + Config.DISCORD_INVITE_URL);
+            Core.app.post(() -> {
+                Vars.ui.showErrorMessage("Mod cant find itself, please contact admin on Discord to fix the problem\n"
+                        + Config.DISCORD_INVITE_URL);
+            });
             return;
         }
 
@@ -87,12 +89,16 @@ public class Main extends Mod {
                         try {
                             setup();
                         } catch (Exception err) {
-                            Vars.ui.showException(err);
+                            Core.app.post(() -> {
+                                Vars.ui.showException(err);
+                            });
                         }
                     });
                 });
             } catch (Exception err) {
-                Vars.ui.showException(err);
+                Core.app.post(() -> {
+                    Vars.ui.showException(err);
+                });
             }
         });
     }
@@ -170,11 +176,13 @@ public class Main extends Mod {
     }
 
     private void addCustomButtons() {
-        try {
-            Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
-        } catch (Exception err) {
-            Vars.ui.showException(err);
-        }
+        Core.app.post(() -> {
+            try {
+                Vars.ui.menufrag.addButton("Mindustry Tool", Utils.icons("mod.png"), () -> featureSettingDialog.show());
+            } catch (Exception err) {
+                Vars.ui.showException(err);
+            }
+        });
     }
 
     private int readDirVersion(Fi dir) {
@@ -196,7 +204,9 @@ public class Main extends Mod {
             Fi versionFile = dir.child("version.txt");
             versionFile.writeString(version + "");
         } catch (Exception err) {
-            Vars.ui.showException(err);
+            Core.app.post(() -> {
+                Vars.ui.showException(err);
+            });
         }
     }
 

@@ -171,6 +171,10 @@ public class PathfindingDisplay implements Feature {
     }
 
     private void updateProcessUnitPath(Unit unit, float currentTime, int maxSteps) {
+        if (unit == null || unit.type == null) {
+            return;
+        }
+
         if (unit.team == player.team()) {
             return;
         }

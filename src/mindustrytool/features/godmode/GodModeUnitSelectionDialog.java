@@ -2,6 +2,7 @@ package mindustrytool.features.godmode;
 
 import arc.Core;
 import mindustry.Vars;
+import mindustry.gen.BlockUnitc;
 import mindustry.gen.Tex;
 import mindustry.type.UnitType;
 import mindustry.ui.dialogs.BaseDialog;
@@ -9,7 +10,8 @@ import mindustry.ui.dialogs.BaseDialog;
 import java.util.function.BiConsumer;
 
 public class GodModeUnitSelectionDialog extends BaseDialog {
-    public GodModeUnitSelectionDialog(GodModeDialogs.UnitSpawnConsumer onSpawn, BiConsumer<UnitType, mindustry.game.Team> onKill) {
+    public GodModeUnitSelectionDialog(GodModeDialogs.UnitSpawnConsumer onSpawn,
+            BiConsumer<UnitType, mindustry.game.Team> onKill) {
         super("Select Unit");
         addCloseButton();
 
@@ -20,7 +22,7 @@ public class GodModeUnitSelectionDialog extends BaseDialog {
                 int cols = Math.max(1, (int) (Math.min(Core.graphics.getWidth() * 0.9, 1200) / (size + 10)));
 
                 for (UnitType unit : Vars.content.units()) {
-                    if (unit.isHidden()) {
+                    if (unit.isHidden() || unit instanceof BlockUnitc) {
                         continue;
                     }
 

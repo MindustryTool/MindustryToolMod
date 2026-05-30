@@ -187,8 +187,10 @@ public class AuthService {
             loginDialog = new AuthLoginDialog(this);
         }
 
-        loginDialog.showLoading();
-        Core.app.post(() -> loginDialog.show());
+        Core.app.post(() -> {
+            loginDialog.showLoading();
+            loginDialog.show();
+        });
 
         Http.get(Config.API_v4_URL + "auth/app/login-uri")
                 .timeout(10000)
@@ -205,7 +207,9 @@ public class AuthService {
                         String loginUrl = json.getString("loginUrl");
                         String loginId = json.getString("loginId");
 
-                        loginDialog.showLoginUrl(loginUrl);
+                        Core.app.post(() -> {
+                            loginDialog.showLoginUrl(loginUrl);
+                        });
 
                         Core.settings.put(KEY_LOGIN_ID, loginId);
                         Core.settings.put(KEY_LOGIN_EXPIRY, Instant.now().plus(Duration.ofMinutes(5)).toEpochMilli());
