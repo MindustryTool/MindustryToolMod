@@ -13,7 +13,7 @@ import mindustrytool.features.playerconnect.PlayerConnectProvider;
 
 public class PlayerConnectService {
 
-    private CompletableFuture<Seq<PlayerConnectRoom>> roomFuture;
+    private CompletableFuture<Seq<PlayerConnectRoom>> roomFuture = new CompletableFuture<>();
 
     private PlayerConnectService() {
     }
@@ -30,7 +30,7 @@ public class PlayerConnectService {
     private final ConcurrentHashMap<String, PlayerConnectRoom> roomCache = new ConcurrentHashMap<>();
 
     public synchronized CompletableFuture<Seq<PlayerConnectRoom>> findPlayerConnectRooms(String q) {
-        if (roomFuture != null) {
+        if (!roomFuture.isDone()) {
             return roomFuture;
         }
 
@@ -40,7 +40,7 @@ public class PlayerConnectService {
                 .timeout(60000)
                 .error(error -> {
                     roomFuture.completeExceptionally(error);
-                    roomFuture = null;
+                    roomFuture = new CompletableFuture<>();
                 })
                 .submit(response -> {
                     try {
@@ -51,7 +51,7 @@ public class PlayerConnectService {
                     } catch (Exception e) {
                         roomFuture.completeExceptionally(e);
                     } finally {
-                        roomFuture = null;
+                        roomFuture = new CompletableFuture<>();
                     }
                 });
 

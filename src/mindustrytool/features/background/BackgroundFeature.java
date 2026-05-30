@@ -66,7 +66,9 @@ public class BackgroundFeature implements Feature {
 
     void applyBackground(Fi file) {
         if (!file.exists() || file.isDirectory()) {
-            Vars.ui.showInfo("Background file invalid: " + file.absolutePath());
+            Core.app.post(() -> {
+                Vars.ui.showInfo("Background file invalid: " + file.absolutePath());
+            });
             return;
         }
 
@@ -83,7 +85,9 @@ public class BackgroundFeature implements Feature {
             customRenderer = new CustomMenuRenderer(texture, originalRenderer);
             Reflect.set(Vars.ui.menufrag, "renderer", customRenderer);
         } catch (Exception e) {
-            Vars.ui.showException("Failed to apply background", e);
+            Core.app.post(() -> {
+                Vars.ui.showException("Failed to apply background", e);
+            });
         }
     }
 
