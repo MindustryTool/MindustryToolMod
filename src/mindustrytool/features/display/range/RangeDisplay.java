@@ -7,12 +7,15 @@ import arc.func.Cons;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
+import arc.math.Angles;
 import arc.math.Mathf;
 import arc.math.geom.Rect;
 import arc.scene.ui.Dialog;
 import arc.util.Tmp;
 import mindustry.Vars;
+import mindustry.entities.bullet.BulletType;
 import mindustry.game.EventType.Trigger;
+import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Groups;
 import mindustry.gen.Unit;
@@ -38,13 +41,12 @@ import java.util.Optional;
 public class RangeDisplay implements Feature {
     private BaseDialog dialog;
 
-    private final Cons<Unit> unitDrawer = this::drawUnit;
-    private final Cons<Building> buildingDrawer = this::drawBuilding;
+    private final Cons<Unit> unitDrawer = this::drawUnitRange;
+    private final Cons<Building> buildingDrawer = this::drawBuildingRange;
     private final Boolf<Building> buildingPredicate = b -> true;
     private final Rect viewBounds = new Rect();
     private final int MAX_RANGE = 169 * Vars.tilesize;
 
-    private float targetX = 0, targetY = 0;
 
     @Override
     public FeatureMetadata getMetadata() {
@@ -72,14 +74,11 @@ public class RangeDisplay implements Feature {
         return Optional.of(dialog);
     }
 
+
+
     private void draw() {
         if (!isEnabled() || !Vars.state.isGame() || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
             return;
-        }
-
-        if (Vars.player.unit() != null) {
-            targetX = Vars.player.unit().x;
-            targetY = Vars.player.unit().y;
         }
 
         Draw.z(Layer.overlayUI);
@@ -108,8 +107,7 @@ public class RangeDisplay implements Feature {
             }
         }
 
-        if (RangeDisplayConfig.drawUnitRangeAlly || RangeDisplayConfig.drawUnitRangeEnemy
-                || RangeDisplayConfig.drawPlayerRange) {
+        if (RangeDisplayConfig.drawUnitRangeAlly || RangeDisplayConfig.drawUnitRangeEnemy) {
             float margin = 2000f;
             Groups.unit.intersect(cx - cw / 2f - margin, cy - ch / 2f - margin, cw + margin * 2, ch + margin * 2,
                     unitDrawer);
@@ -120,54 +118,55 @@ public class RangeDisplay implements Feature {
         Draw.reset();
     }
 
-    private void drawUnit(Unit unit) {
+    private void drawUnitRange(Unit unit) {
         if (!unit.isValid())
             return;
 
         boolean isPlayer = unit == Vars.player.unit();
-        boolean isAlly = unit.team == Vars.player.team();
+        if (isPlayer) return;
 
-        if (isPlayer) {
-            if (!RangeDisplayConfig.drawPlayerRange)
-                return;
-        } else {
-            if (isAlly && !RangeDisplayConfig.drawUnitRangeAlly)
-                return;
-            if (!isAlly && !RangeDisplayConfig.drawUnitRangeEnemy)
-                return;
-        }
+        boolean isAlly = unit.team == Vars.player.team();
+        if (isAlly && !RangeDisplayConfig.drawUnitRangeAlly)
+            return;
+        if (!isAlly && !RangeDisplayConfig.drawUnitRangeEnemy)
+            return;
+
 
         if (unit.range() > 0) {
             Color color = unit.team.color;
-
+            
             drawCircle(unit.x, unit.y, unit.range(), color);
-
         }
     }
 
-    private void drawBuilding(Building build) {
-        if (!build.isValid()) {
+    private void drawBuildingRange(Building build) {
+        if (!build.isValid() || build.team == Team.derelict) {
             return;
         }
 
         boolean isAlly = build.team == Vars.player.team();
         boolean isTurret = build.block instanceof Turret;
+        boolean canShoot = build instanceof TurretBuild bt && ((bt.canConsume() && bt.hasAmmo()) || (!build.enabled && bt.peekAmmo() != null));
+        float range = 0;
+        var circle = true;
 
+
+        // config check
         if (isTurret) {
             if (isAlly && !RangeDisplayConfig.drawTurretRangeAlly)
                 return;
             if (!isAlly && !RangeDisplayConfig.drawTurretRangeEnemy)
                 return;
-        } else {
+        }
+        else {
             if (isAlly && !RangeDisplayConfig.drawBlockRangeAlly)
                 return;
             if (!isAlly && !RangeDisplayConfig.drawBlockRangeEnemy)
                 return;
         }
+        
 
-        float range = 0;
-        var circle = true;
-
+        // range calculation
         if (isTurret) {
             range = ((Turret) build.block).range;
             var ammo = ((TurretBuild) build).peekAmmo();
@@ -180,19 +179,29 @@ public class RangeDisplay implements Feature {
             range = massDriver.range;
         } else if (build.block instanceof BuildTurret od) {
             range = od.range;
-        } else if (build.block instanceof LightBlock lb) {
-            range = lb.radius;
-        } else if (build.block instanceof LogicBlock lb) {
-            range = lb.range;
+        } else if (build.block instanceof LightBlock) {
+            return;
+        } else if (build.block instanceof LogicBlock) {
+            return;
         } else if (build.block instanceof MendProjector rdb) {
             range = rdb.range;
-        } else if (build.block instanceof RegenProjector p) {
+        } else if (build.block instanceof RegenProjector p){
             range = p.range * Vars.tilesize;
             circle = false;
         }
 
+
+        // color set
+        Color color;
+        if(isTurret && !canShoot) {
+            color = Color.gray;
+        } else {
+            color = build.team.color;
+        }
+
+
+        // draw
         if (range > 0) {
-            Color color = build.team.color;
             if (circle) {
                 drawCircle(build.x, build.y, range, color);
             } else {
@@ -200,6 +209,7 @@ public class RangeDisplay implements Feature {
             }
         }
     }
+
 
     private void drawSquare(float x, float y, float range, Color color) {
         Tmp.c2.set(color).a(RangeDisplayConfig.opacity);
@@ -209,14 +219,10 @@ public class RangeDisplay implements Feature {
     }
 
     private void drawCircle(float x, float y, float range, Color color) {
-        var rotation = Mathf.angle(targetX - x, targetY - y);
-
         Tmp.c2.set(color).a(RangeDisplayConfig.opacity);
         Lines.stroke(1f, Tmp.c2);
-        Lines.dashCircle(x, y, range);
+        Lines.circle(x, y, range);
         Draw.color(Tmp.c2);
-        Lines.line(x, y, x + Mathf.cosDeg(rotation) * range, y + Mathf.sinDeg(rotation) * range);
         Draw.reset();
     }
-
 }

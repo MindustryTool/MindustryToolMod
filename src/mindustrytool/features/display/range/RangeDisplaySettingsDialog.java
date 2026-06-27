@@ -88,12 +88,12 @@ public class RangeDisplaySettingsDialog extends BaseDialog {
             RangeDisplayConfig.save();
         });
 
-        container.row();
+        //container.row();
 
-        addCheck(container, "@range-display.draw-player-range", RangeDisplayConfig.drawPlayerRange, v -> {
-            RangeDisplayConfig.drawPlayerRange = v;
-            RangeDisplayConfig.save();
-        });
+        // addCheck(container, "@range-display.draw-player-range", RangeDisplayConfig.drawPlayerRange, v -> {
+        //     RangeDisplayConfig.drawPlayerRange = v;
+        //     RangeDisplayConfig.save();
+        // });
 
         container.row();
 
