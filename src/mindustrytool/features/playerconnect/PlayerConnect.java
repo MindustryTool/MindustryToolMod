@@ -27,8 +27,6 @@ import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 import mindustry.net.Net.NetProvider;
-import mindustry.net.Net;
-import mindustry.net.Packet;
 import mindustrytool.Utils;
 import mindustrytool.features.playerconnect.Packets.RoomCloseReason;
 
@@ -43,6 +41,7 @@ public class PlayerConnect {
     private static boolean isShowingDialog = false;
 
     public static int ping;
+    public static final int PING_INTERVAL = 3;
 
     static {
         Events.run(EventType.HostEvent.class, () -> {
@@ -77,7 +76,7 @@ public class PlayerConnect {
             if (isHosting()) {
                 room.sendTCP(new Packets.PingPacket());
             }
-        }, 0, 1f);
+        }, 0, PING_INTERVAL);
 
         Events.on(PlayerLeave.class, event -> {
             requestQueue.remove(req -> req.player.uuid().equals(event.player.uuid()));
@@ -273,11 +272,6 @@ public class PlayerConnect {
 
             @Override
             public void received(Connection connection, Object object) {
-                int id = -1;
-                if (object instanceof Packet packet) {
-                    id = Net.getPacketId(packet);
-                }
-                Log.info(object + " " + id);
                 if (object instanceof Packets.MessagePacket messagePacket) {
                     Core.app.post(() -> Vars.ui.showErrorMessage(messagePacket.message));
                     Vars.netClient.setQuiet();

@@ -184,7 +184,7 @@ public class NetworkProxy extends Client implements NetListener {
 
         try {
             if (object instanceof Packets.PingPacket pingPacket) {
-                long latency = Time.millis() - pingPacket.sendAt;
+                long latency = (Time.millis() - pingPacket.sendAt) / PlayerConnect.PING_INTERVAL;
                 PlayerConnect.ping = (int) latency;
             } else if (object instanceof Packets.MessagePacket messagePacket) {
                 Call.sendMessage("[scarlet][[Server]:[white] " + messagePacket.message);
