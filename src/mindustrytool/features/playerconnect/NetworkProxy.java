@@ -22,6 +22,7 @@ import arc.util.Ratekeeper;
 import arc.util.Reflect;
 import arc.util.Strings;
 import arc.util.Time;
+import arc.util.Log.LogLevel;
 import arc.util.io.ByteBufferInput;
 import arc.util.io.ByteBufferOutput;
 
@@ -169,9 +170,8 @@ public class NetworkProxy extends Client implements NetListener {
 
     @Override
     public void received(Connection connection, Object object) {
+        Log.level = LogLevel.debug;
         var isPcPacket = object instanceof Packets.Packet;
-
-        
 
         if (!isPcPacket) {
             return;
