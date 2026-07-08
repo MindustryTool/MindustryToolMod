@@ -38,7 +38,7 @@ import mindustrytool.features.playerconnect.Packets.ConnectionCloseReason;
 import mindustrytool.features.playerconnect.Packets.RoomCloseReason;
 
 public class NetworkProxy extends Client implements NetListener {
-    public static final String PROTOCOL_VERSION = "2.1";
+    public static final String PROTOCOL_VERSION = "159";
     public static final int defaultTimeout = 10000;
 
     private static final String ROOM_ID_KEY = "mindustrytool.playerc-onnect.room-id";
@@ -170,6 +170,8 @@ public class NetworkProxy extends Client implements NetListener {
     @Override
     public void received(Connection connection, Object object) {
         var isPcPacket = object instanceof Packets.Packet;
+
+        
 
         if (!isPcPacket) {
             return;
