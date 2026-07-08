@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import arc.Core;
 import arc.func.Cons;
+import arc.net.ArcNet;
 import arc.net.ArcNetException;
 import arc.net.Client;
 import arc.net.Connection;
@@ -22,7 +23,6 @@ import arc.util.Ratekeeper;
 import arc.util.Reflect;
 import arc.util.Strings;
 import arc.util.Time;
-import arc.util.Log.LogLevel;
 import arc.util.io.ByteBufferInput;
 import arc.util.io.ByteBufferOutput;
 
@@ -170,7 +170,6 @@ public class NetworkProxy extends Client implements NetListener {
 
     @Override
     public void received(Connection connection, Object object) {
-        Log.level = LogLevel.debug;
         var isPcPacket = object instanceof Packets.Packet;
 
         if (!isPcPacket) {
@@ -370,6 +369,21 @@ public class NetworkProxy extends Client implements NetListener {
         }
 
         @Override
+        public int sendTCPBuffer(ByteBuffer buffer) {
+            if (buffer == null)
+                throw new IllegalArgumentException("buffer cannot be null.");
+
+            try {
+                var packet = new Packets.ConnectionPacketWrapPacket(id, true, buffer);
+                return proxy.sendTCP(packet);
+            } catch (ArcNetException ex) {
+                close(DcReason.error);
+                ArcNet.handleError(ex);
+                return 0;
+            }
+        }
+
+        @Override
         public int sendUDP(Object object) {
             if (object == null) {
                 throw new IllegalArgumentException("object cannot be null.");
@@ -378,6 +392,19 @@ public class NetworkProxy extends Client implements NetListener {
             isIdling = false;
 
             var packet = new Packets.ConnectionPacketWrapPacket(id, false, object);
+
+            return proxy.sendUDP(packet);
+        }
+
+        @Override
+        public int sendUDPBuffer(ByteBuffer buffer) {
+            if (buffer == null) {
+                throw new IllegalArgumentException("buffer cannot be null.");
+            }
+
+            isIdling = false;
+
+            var packet = new Packets.ConnectionPacketWrapPacket(id, false, buffer);
 
             return proxy.sendUDP(packet);
         }

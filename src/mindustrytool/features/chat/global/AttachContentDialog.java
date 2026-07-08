@@ -5,6 +5,7 @@ import arc.func.Cons;
 import arc.util.serialization.Base64Coder;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustry.ui.FileChooser;
 import mindustry.ui.dialogs.BaseDialog;
 
 public class AttachContentDialog extends BaseDialog {
@@ -18,7 +19,7 @@ public class AttachContentDialog extends BaseDialog {
             t.defaults().size(220f, 60f).pad(5);
             
             t.button("@chat.select-file", Icon.file, () -> {
-                Vars.platform.showFileChooser(true, "msch", file -> {
+                FileChooser.open("msch").submit( file -> {
                     if (file == null) return;
                     try {
                         byte[] bytes = file.readBytes();
@@ -34,7 +35,7 @@ public class AttachContentDialog extends BaseDialog {
             t.row();
 
             t.button("@map", Icon.map, () -> {
-                Vars.platform.showFileChooser(true, "msav", file -> {
+                FileChooser.open("msav").submit( file -> {
                     if (file == null) return;
                     try {
                         byte[] bytes = file.readBytes();

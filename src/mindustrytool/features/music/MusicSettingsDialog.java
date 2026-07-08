@@ -10,6 +10,7 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustry.ui.FileChooser;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
 
@@ -61,7 +62,7 @@ public class MusicSettingsDialog extends BaseDialog {
             float btnSize = Vars.mobile ? 48 : 40;
 
             t.button(Icon.add, () -> {
-                Vars.platform.showMultiFileChooser(file -> {
+                FileChooser.open("ogg", "mp3", "wav").submit( file -> {
                     if (file == null) {
                         Vars.ui.showErrorMessage("Invalid file");
                         return;
@@ -78,7 +79,7 @@ public class MusicSettingsDialog extends BaseDialog {
                     }
 
                     Core.app.post(this::rebuild);
-                }, "ogg", "mp3", "wav");
+                });
             }).size(btnSize).padRight(5).tooltip(Core.bundle.get("music.tooltip.add", "Add custom music"));
 
             t.button(Icon.trash, () -> {

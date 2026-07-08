@@ -4,41 +4,52 @@ version '1.0'
 
 sourceSets.main.java.srcDirs = ["src"]
 
+
+sourceSets.main.java.srcDirs = ["src"]
+
 repositories{
     mavenCentral()
-    google()
-    maven{ url "https://raw.githubusercontent.com/Zelaux/MindustryRepo/master/repository" }
-    maven{ url 'https://www.jitpack.io' }
-}
 
+    //Downloads the dependencies JAR file from Mindustry releases; does not use any real repository. Surprisingly, this is the most reliable option.
+    ivy{
+        url = 'https://github.com/'
+        patternLayout{artifact '/[organisation]/[module]/releases/download/[revision]/dependencies.jar'}
+        metadataSources{ artifact() }
+    }
 
-java{
-    targetCompatibility = 8
-    sourceCompatibility = JavaVersion.VERSION_17
-}
+    //If the version is set to 'latest', downloads the latest Mindustry *release* as a dependency
+    ivy{
+        url = 'https://github.com/'
+        patternLayout{artifact '/[organisation]/[module]/releases/[revision]/download/dependencies.jar'}
+        metadataSources{ artifact() }
+    }
 
-allprojects{
-    tasks.withType(JavaCompile).tap{
-        configureEach{
-            options.compilerArgs.addAll(['--release', '8'])
-        }
+    //For depending on the absolute newest commit for Mindustry
+    ivy{
+        url = 'https://github.com/'
+        patternLayout{artifact '/[organisation]/[module]/releases/download/master/[revision].jar'}
+        metadataSources{ artifact() }
     }
 }
 
-
+java{
+    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_17
+}
 
 ext{
-    //the build number that this mod is made for
-    mindustryVersion = 'v154'
-    jabelVersion = "93fde537c7"
-    //windows sucks
+    // Mindustry version to depend on.
+    // Valid values:
+    // - latest: depend on the latest release of mindustry
+    // - be: depend on the very latest commit of mindustry
+    // - v<number>: depend on a specific commit
+    mindustryVersion = "v159.2"
     isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
     sdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
 }
 
 dependencies{    
-    compileOnly "com.github.Anuken.Arc:arc-core:$mindustryVersion"
-    compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"
+    compileOnly mindustryVersion == "be" ? "Anuken:MindustryBuilds:latest" : "Anuken:Mindustry:$mindustryVersion"
 	compileOnly 'org.projectlombok:lombok:1.18.32'
       
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
@@ -46,25 +57,16 @@ dependencies{
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.2'
     
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
-    annotationProcessor "com.github.Anuken:jabel:$jabelVersion"
 }
 
-//force arc version
-configurations.all{
-    resolutionStrategy.eachDependency { details ->
-        if(details.requested.group == 'com.github.Anuken.Arc'){
-            details.useVersion "$mindustryVersion"
-        }
-    }
-}
-
-task jarAndroid{
+tasks.register('jarAndroid'){
     dependsOn "jar"
+    def projectName = project.name
 
     doLast{
-        if(!sdkRoot || !new File(sdkRoot).exists()) throw new GradleException("No valid Android SDK found. Ensure that ANDROID_HOME is set to your Android SDK directory.");
+        if(!sdkRoot || !new File(sdkRoot).exists()) throw new GradleException("No valid Android SDK found. Ensure that ANDROID_HOME is set to your Android SDK directory.")
 
-        def platformRoot = new File("$sdkRoot/platforms/").listFiles().sort().reverse().find{ f -> new File(f, "android.jar").exists()}
+        def platformRoot = new File("$sdkRoot/platforms/").listFiles().sort().reverse().find{ f -> new File(f, "android.jar").exists() }
 
         if(!platformRoot) throw new GradleException("No android.jar found. Ensure that you have an Android platform installed.")
 
@@ -74,21 +76,21 @@ task jarAndroid{
         def d8 = isWindows ? "d8.bat" : "d8"
 
         //dex and desugar files - this requires d8 in your PATH
-        "$d8 $dependencies --min-api 14 --output ${project.archivesBaseName}Android.jar ${project.archivesBaseName}Desktop.jar"
-            .execute(null, new File("$buildDir/libs")).waitForProcessOutput(System.out, System.err)
+        "$d8 $dependencies --min-api 14 --output ${projectName}Android.jar ${projectName}Desktop.jar"
+                .execute(null, new File("build/libs")).waitForProcessOutput(System.out, System.err)
     }
 }
 
 jar{
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 
-    archiveFileName = "${base.archivesBaseName}Desktop.jar"
+    archiveFileName = "${project.name}Desktop.jar"
 
     from{
         configurations.runtimeClasspath.collect{ it.isDirectory() ? it : zipTree(it) }
     }
 
-    from(rootDir){
+    from(projectDir){
         include "mod.hjson"
         include "icon.png"
     }
@@ -98,17 +100,17 @@ jar{
     }
 }
 
-task deploy(type: Jar){
+tasks.register('deploy', Jar){
+    def projectName = project.name
     dependsOn jarAndroid
     dependsOn jar
-    archiveFileName = "${base.archivesBaseName}.jar"
+    archiveFileName = "${projectName}.jar"
 
-    from{ [zipTree("$buildDir/libs/${project.archivesBaseName}Desktop.jar"), zipTree("$buildDir/libs/${project.archivesBaseName}Android.jar")] }
+    from{ [zipTree("build/libs/${projectName}Desktop.jar"), zipTree("build/libs/${projectName}Android.jar")] }
 
     doLast{
         delete{
-            delete "$buildDir/libs/${project.archivesBaseName}Desktop.jar"
-            delete "$buildDir/libs/${project.archivesBaseName}Android.jar"
+            delete "build/libs/${projectName}Android.jar"
         }
     }
 }

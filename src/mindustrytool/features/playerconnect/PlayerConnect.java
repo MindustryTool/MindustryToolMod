@@ -27,6 +27,8 @@ import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 import mindustry.net.Net.NetProvider;
+import mindustry.net.Net;
+import mindustry.net.Packet;
 import mindustrytool.Utils;
 import mindustrytool.features.playerconnect.Packets.RoomCloseReason;
 
@@ -271,6 +273,11 @@ public class PlayerConnect {
 
             @Override
             public void received(Connection connection, Object object) {
+                int id = -1;
+                if (object instanceof Packet packet) {
+                    id = Net.getPacketId(packet);
+                }
+                Log.info(object + " " + id);
                 if (object instanceof Packets.MessagePacket messagePacket) {
                     Core.app.post(() -> Vars.ui.showErrorMessage(messagePacket.message));
                     Vars.netClient.setQuiet();
