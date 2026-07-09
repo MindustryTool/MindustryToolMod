@@ -177,9 +177,9 @@ public class NetworkProxy extends Client implements NetListener {
         }
 
         if (object instanceof Packets.ConnectionPacketWrapPacket wrapperPacket) {
-            Log.debug(wrapperPacket.object);
+            Log.info(wrapperPacket.object);
         } else {
-            Log.debug(object);
+            Log.info(object);
         }
 
         try {
@@ -293,6 +293,8 @@ public class NetworkProxy extends Client implements NetListener {
                 return;
             }
 
+            Log.info("Write " + object);
+
             super.write(buffer, object);
         }
     }
@@ -370,8 +372,11 @@ public class NetworkProxy extends Client implements NetListener {
 
         @Override
         public int sendTCPBuffer(ByteBuffer buffer) {
-            if (buffer == null)
+            if (buffer == null){
                 throw new IllegalArgumentException("buffer cannot be null.");
+            }
+            
+            isIdling = false;
 
             try {
                 var packet = new Packets.ConnectionPacketWrapPacket(id, true, buffer);
@@ -404,6 +409,9 @@ public class NetworkProxy extends Client implements NetListener {
 
             isIdling = false;
 
+            Log.info("Send UDP buffer: @", buffer.toString());
+
+            buffer.position(buffer.position() - 1);
             var packet = new Packets.ConnectionPacketWrapPacket(id, false, buffer);
 
             return proxy.sendUDP(packet);
