@@ -64,7 +64,7 @@ public class PlayerConnect {
         });
 
         Events.on(StateChangeEvent.class, event -> {
-            if (event.to == GameState.State.menu) {
+            if (event.to == GameState.State.menu && isHosting()) {
                 close();
                 Vars.ui.showInfoFade("Close room when back to menu");
             }
@@ -217,31 +217,10 @@ public class PlayerConnect {
         }
     }
 
-    // private static Cons<Disconnect> customDisconnectLisenser;
-
     public static void join(PlayerConnectLink link, String password, Runnable success) {
         if (link == null) {
             throw new IllegalArgumentException("Link cannot be null.");
         }
-
-        // if (customDisconnectLisenser == null) {
-
-        // ObjectMap<Class<?>, Cons<Object>> listeners = Reflect.get(Vars.net,
-        // "clientListeners");
-
-        // var originalDisconnectListener = listeners.get(Disconnect.class);
-        // customDisconnectLisenser = (p) -> {
-        // Vars.netClient.setQuiet();
-        // Time.runTask(3f, () -> {
-        // Vars.ui.loadfrag.hide();
-        // Vars.ui.showErrorMessage("Disconnected from server. Wrong password or room is
-        // closed");
-        // });
-        // originalDisconnectListener.get(p);
-        // };
-
-        // Vars.net.handleClient(Disconnect.class, customDisconnectLisenser);
-        // }
 
         Vars.ui.loadfrag.show("@connecting");
 
@@ -257,7 +236,12 @@ public class PlayerConnect {
         }
 
         Client client = Reflect.get(provider, "client");
+
         var tcp = Reflect.get(Connection.class, client, "tcp");
+
+        if (tcp == null) {
+            throw new IllegalStateException("TCP connection is null.");
+        }
 
         Utils.setField(client, "serialization", new NetworkProxy.Serializer());
         Utils.setField(tcp, "serialization", new NetworkProxy.Serializer());
@@ -305,6 +289,13 @@ public class PlayerConnect {
         Reflect.set(Connection.class, client, "listeners", new NetListener[] { wrap });
 
         Vars.net.connect(link.host, link.port, () -> {
+            var udp = Reflect.get(Connection.class, client, "udp");
+
+            if (udp == null) {
+                throw new IllegalStateException("UDP connection is null.");
+            }
+
+            Utils.setField(udp, "serialization", new NetworkProxy.Serializer());
 
             if (!Vars.net.client()) {
                 throw new IllegalStateException("Net client is not active.");

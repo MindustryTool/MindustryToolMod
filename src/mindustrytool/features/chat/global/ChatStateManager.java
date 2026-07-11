@@ -75,7 +75,7 @@ public class ChatStateManager {
             if (result != null) {
                 updateState(SERVER_PREFIX + result.name);
             }
-        }, e -> Log.err("Failed to ping host", e));
+        }, e -> Log.err("Failed to ping server on @ @", event.ip, event.port));
     }
 
     private void handleStateChange(StateChangeEvent event) {

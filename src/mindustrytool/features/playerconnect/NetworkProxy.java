@@ -1,21 +1,24 @@
 package mindustrytool.features.playerconnect;
 
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import arc.Core;
 import arc.func.Cons;
-import arc.net.ArcNet;
 import arc.net.ArcNetException;
 import arc.net.Client;
 import arc.net.Connection;
 import arc.net.DcReason;
 import arc.net.NetListener;
 import arc.net.Server;
+import arc.net.FrameworkMessage.KeepAlive;
 import arc.struct.IntMap;
 import arc.struct.Seq;
 import arc.util.Log;
@@ -32,6 +35,7 @@ import mindustry.gen.Call;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
 import mindustry.net.NetConnection;
+import mindustry.net.ArcNetProvider.ArcConnection;
 import mindustry.net.Net.NetProvider;
 import mindustrytool.Main;
 import mindustrytool.features.playerconnect.Packets.RoomPlayer;
@@ -48,6 +52,7 @@ public class NetworkProxy extends Client implements NetListener {
     private final IntMap<VirtualConnection> connections = new IntMap<>();
     private final Seq<VirtualConnection> orderedConnections = new Seq<>(false);
     private final NetListener serverDispatcher;
+    private final Server server;
     private final String roomId = getOrCreateId();
 
     private volatile boolean isShutdown;
@@ -69,11 +74,83 @@ public class NetworkProxy extends Client implements NetListener {
             provider = Reflect.get(provider, "provider");
         }
 
-        Server server = Reflect.get(provider, "server");
+        server = Reflect.get(provider, "server");
         serverDispatcher = Reflect.get(server, "dispatchListener");
+
+        wrapProvider();
     }
 
-    public void connect(String host, int udpTcpPort, Cons<String> onRoomCreated,
+    private void wrapProvider() {
+        NetProvider original = Reflect.get(Vars.net, "provider");
+
+        Reflect.set(Vars.net, "provider",
+                NetProvider.class.cast(
+                        Proxy.newProxyInstance(
+                                NetProvider.class.getClassLoader(),
+                                new Class<?>[] { NetProvider.class },
+                                ($, method, args) -> {
+                                    String name = method.getName();
+
+                                    if ("sendAllServer".equals(name) && args.length == 2) {
+                                        original.sendAllServer(args[0], (Boolean) args[1]);
+                                        sendToAllVirtual(args[0], (Boolean) args[1], -1);
+                                        return null;
+                                    }
+
+                                    if ("sendAllServer".equals(name) && args.length == 3) {
+                                        @SuppressWarnings("unchecked")
+                                        var conns = (Iterable<NetConnection>) args[1];
+                                        boolean reliable = (Boolean) args[2];
+                                        List<NetConnection> real = new ArrayList<>();
+
+                                        for (NetConnection nc : conns) {
+                                            if (nc instanceof ArcConnection ac
+                                                    && ac.connection instanceof VirtualConnection vc) {
+                                                if (vc.isConnected()) {
+                                                    nc.send(args[0], reliable);
+                                                }
+                                            } else {
+                                                real.add(nc);
+                                            }
+                                        }
+
+                                        if (!real.isEmpty()) {
+                                            original.sendAllServer(args[0], real, reliable);
+                                        }
+                                        return null;
+                                    }
+
+                                    if ("sendExceptServer".equals(name) && args.length == 3) {
+                                        original.sendExceptServer((NetConnection) args[0], args[1], (Boolean) args[2]);
+
+                                        int excludeId = -1;
+                                        if (args[0] instanceof ArcConnection ac
+                                                && ac.connection instanceof VirtualConnection vc) {
+                                            excludeId = vc.getID();
+                                        }
+                                        sendToAllVirtual(args[1], (Boolean) args[2], excludeId);
+                                        return null;
+                                    }
+
+                                    return method.invoke(original, args);
+                                })));
+    }
+
+    private void sendToAllVirtual(Object object, boolean reliable, int excludeId) {
+        for (int i = 0; i < orderedConnections.size; i++) {
+            VirtualConnection vc = orderedConnections.get(i);
+            if (vc.isConnected() && vc.getID() != excludeId) {
+                if (reliable) {
+                    vc.sendTCP(object);
+                } else {
+                    vc.sendUDP(object);
+                }
+            }
+        }
+    }
+
+    public void connect(String host, int udpTcpPort, //
+            Cons<String> onRoomCreated,
             Cons<RoomCloseReason> onRoomClosed//
     ) throws IOException {
         this.remoteHost = host;
@@ -170,16 +247,23 @@ public class NetworkProxy extends Client implements NetListener {
 
     @Override
     public void received(Connection connection, Object object) {
+        var isKeepAlive = object instanceof KeepAlive;
+
+        if (isKeepAlive) {
+            return;
+        }
+
         var isPcPacket = object instanceof Packets.Packet;
 
         if (!isPcPacket) {
+            Log.info("Received non-PC packet: @", object);
             return;
         }
 
         if (object instanceof Packets.ConnectionPacketWrapPacket wrapperPacket) {
-            Log.info(wrapperPacket.object);
+            Log.debug(wrapperPacket.object);
         } else {
-            Log.info(object);
+            Log.debug(object);
         }
 
         try {
@@ -230,10 +314,16 @@ public class NetworkProxy extends Client implements NetListener {
                         }
 
                         addConnection(con = new VirtualConnection(this, id));
+
                         con.notifyConnected0();
-                        // Change the packet rate and chat rate to a no-op version
-                        ((NetConnection) con.getArbitraryData()).packetRate = noopRate;
-                        ((NetConnection) con.getArbitraryData()).chatRate = noopRate;
+
+                        try {
+                            // Change the packet rate and chat rate to a no-op version
+                            ((NetConnection) con.getArbitraryData()).packetRate = noopRate;
+                            ((NetConnection) con.getArbitraryData()).chatRate = noopRate;
+                        } catch (Exception error) {
+                            Log.debug("Failed to set packet rate: " + error);
+                        }
                     }
 
                 } else if (object instanceof Packets.ConnectionPacketWrapPacket packetWrapPacket) {
@@ -246,7 +336,7 @@ public class NetworkProxy extends Client implements NetListener {
                 }
             }
         } catch (Exception error) {
-            Log.debug("Failed to handle: " + object);
+            Log.err("Failed to handle: " + object, error);
         }
     }
 
@@ -292,8 +382,6 @@ public class NetworkProxy extends Client implements NetListener {
 
                 return;
             }
-
-            Log.info("Write " + object);
 
             super.write(buffer, object);
         }
@@ -346,7 +434,7 @@ public class NetworkProxy extends Client implements NetListener {
         volatile boolean isConnected = true;
         /** The server will notify if the client is idling */
         volatile boolean isIdling = true;
-        NetworkProxy proxy;
+        final NetworkProxy proxy;
 
         public VirtualConnection(NetworkProxy proxy, int id) {
             this.proxy = proxy;
@@ -372,20 +460,11 @@ public class NetworkProxy extends Client implements NetListener {
 
         @Override
         public int sendTCPBuffer(ByteBuffer buffer) {
-            if (buffer == null){
-                throw new IllegalArgumentException("buffer cannot be null.");
-            }
-            
             isIdling = false;
 
-            try {
-                var packet = new Packets.ConnectionPacketWrapPacket(id, true, buffer);
-                return proxy.sendTCP(packet);
-            } catch (ArcNetException ex) {
-                close(DcReason.error);
-                ArcNet.handleError(ex);
-                return 0;
-            }
+            var packet = new Packets.ConnectionPacketWrapPacket(id, true, buffer);
+
+            return proxy.sendTCP(packet);
         }
 
         @Override
@@ -403,15 +482,8 @@ public class NetworkProxy extends Client implements NetListener {
 
         @Override
         public int sendUDPBuffer(ByteBuffer buffer) {
-            if (buffer == null) {
-                throw new IllegalArgumentException("buffer cannot be null.");
-            }
-
             isIdling = false;
 
-            Log.info("Send UDP buffer: @", buffer.toString());
-
-            buffer.position(buffer.position() - 1);
             var packet = new Packets.ConnectionPacketWrapPacket(id, false, buffer);
 
             return proxy.sendUDP(packet);
@@ -488,7 +560,7 @@ public class NetworkProxy extends Client implements NetListener {
 
         @Override
         public String toString() {
-            return "Connection " + id;
+            return "VirtualConnection " + id;
         }
 
         /** Only used when sending world data */

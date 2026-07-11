@@ -1,11 +1,13 @@
 package mindustrytool.features.playerconnect;
 
+import arc.Core;
 import mindustry.Vars;
 
 public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
-    String lastLink = "player-connect://";
+    String LAST_LINK_KEY = "last-link";
+    String lastLink = Core.settings.getString(LAST_LINK_KEY, "player-connect://");
     String password = "";
-    boolean isValid;
+    boolean isValid = PlayerConnectLink.isValid(lastLink);
     String output;
 
     public JoinRoomDialog() {
@@ -34,6 +36,7 @@ public class JoinRoomDialog extends mindustry.ui.dialogs.BaseDialog {
                     .update(f -> {
                         if (!f.hasKeyboard()) {
                             f.setText(lastLink);
+                            Core.settings.put(LAST_LINK_KEY, lastLink);
                         }
                     })
                     .row();
