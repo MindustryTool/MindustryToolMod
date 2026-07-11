@@ -18,11 +18,13 @@ import arc.util.Threads;
 import arc.util.Time;
 import arc.util.Timer;
 import mindustry.Vars;
+import mindustry.core.GameState;
 import mindustry.game.EventType;
 import mindustry.game.Team;
 import mindustry.game.EventType.PlayerIpBanEvent;
 import mindustry.game.EventType.PlayerJoin;
 import mindustry.game.EventType.PlayerLeave;
+import mindustry.game.EventType.StateChangeEvent;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
@@ -41,6 +43,7 @@ public class PlayerConnect {
     private static boolean isShowingDialog = false;
 
     public static int ping;
+    public static final int PING_INTERVAL = 3;
 
     static {
         Events.run(EventType.HostEvent.class, () -> {
@@ -60,6 +63,13 @@ public class PlayerConnect {
             updateStats();
         });
 
+        Events.on(StateChangeEvent.class, event -> {
+            if (event.to == GameState.State.menu && isHosting()) {
+                close();
+                Vars.ui.showInfoFade("Close room when back to menu");
+            }
+        });
+
         Timer.schedule(() -> {
             if (isHosting() && Vars.net.client()) {
                 close();
@@ -75,7 +85,7 @@ public class PlayerConnect {
             if (isHosting()) {
                 room.sendTCP(new Packets.PingPacket());
             }
-        }, 0, 1f);
+        }, 0, PING_INTERVAL);
 
         Events.on(PlayerLeave.class, event -> {
             requestQueue.remove(req -> req.player.uuid().equals(event.player.uuid()));
@@ -207,31 +217,10 @@ public class PlayerConnect {
         }
     }
 
-    // private static Cons<Disconnect> customDisconnectLisenser;
-
     public static void join(PlayerConnectLink link, String password, Runnable success) {
         if (link == null) {
             throw new IllegalArgumentException("Link cannot be null.");
         }
-
-        // if (customDisconnectLisenser == null) {
-
-        // ObjectMap<Class<?>, Cons<Object>> listeners = Reflect.get(Vars.net,
-        // "clientListeners");
-
-        // var originalDisconnectListener = listeners.get(Disconnect.class);
-        // customDisconnectLisenser = (p) -> {
-        // Vars.netClient.setQuiet();
-        // Time.runTask(3f, () -> {
-        // Vars.ui.loadfrag.hide();
-        // Vars.ui.showErrorMessage("Disconnected from server. Wrong password or room is
-        // closed");
-        // });
-        // originalDisconnectListener.get(p);
-        // };
-
-        // Vars.net.handleClient(Disconnect.class, customDisconnectLisenser);
-        // }
 
         Vars.ui.loadfrag.show("@connecting");
 
@@ -247,7 +236,12 @@ public class PlayerConnect {
         }
 
         Client client = Reflect.get(provider, "client");
+
         var tcp = Reflect.get(Connection.class, client, "tcp");
+
+        if (tcp == null) {
+            throw new IllegalStateException("TCP connection is null.");
+        }
 
         Utils.setField(client, "serialization", new NetworkProxy.Serializer());
         Utils.setField(tcp, "serialization", new NetworkProxy.Serializer());
@@ -295,6 +289,13 @@ public class PlayerConnect {
         Reflect.set(Connection.class, client, "listeners", new NetListener[] { wrap });
 
         Vars.net.connect(link.host, link.port, () -> {
+            var udp = Reflect.get(Connection.class, client, "udp");
+
+            if (udp == null) {
+                throw new IllegalStateException("UDP connection is null.");
+            }
+
+            Utils.setField(udp, "serialization", new NetworkProxy.Serializer());
 
             if (!Vars.net.client()) {
                 throw new IllegalStateException("Net client is not active.");

@@ -103,7 +103,7 @@ public class CrashReportService {
             var firstPart = log.substring(0, separatorIndex);
             var secondPart = log.substring(separatorIndex);
             var enabledFeatures = FeatureManager.getInstance().getEnableds().map(f -> f.getMetadata().name());
-            var enabledFeatureString = Strings.join(",", enabledFeatures);
+            var enabledFeatureString = enabledFeatures.size > 0 ? Strings.join(",", enabledFeatures) : "None";
 
             log = firstPart + "\n" + "Enabled features: " + enabledFeatureString + secondPart;
         }

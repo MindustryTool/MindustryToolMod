@@ -20,6 +20,8 @@ public class PlayerConnectProviders {
                     online.put(provider.getName(), provider.getAddress());
                 }
 
+                online.put("LocalHost", "localhost:11010");
+
                 onCompleted.run();
             });
         }).exceptionally(error -> {

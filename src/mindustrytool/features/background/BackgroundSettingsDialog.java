@@ -5,6 +5,7 @@ import arc.files.Fi;
 import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustry.ui.FileChooser;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustrytool.Main;
 
@@ -17,7 +18,7 @@ public class BackgroundSettingsDialog extends BaseDialog {
 
         Table table = cont;
         table.button("Select Background Image", Icon.file, () -> {
-            Vars.platform.showFileChooser(true, "png", file -> {
+            FileChooser.open("png").submit( file -> {
                 try {
                     if (file != null) {
                         Fi dest = Main.backgroundsDir.child(file.name());
