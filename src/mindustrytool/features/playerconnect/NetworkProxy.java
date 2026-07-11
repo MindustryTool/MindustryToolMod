@@ -1,13 +1,10 @@
 package mindustrytool.features.playerconnect;
 
 import java.io.IOException;
-import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 import arc.Core;
@@ -35,7 +32,6 @@ import mindustry.gen.Call;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
 import mindustry.net.NetConnection;
-import mindustry.net.ArcNetProvider.ArcConnection;
 import mindustry.net.Net.NetProvider;
 import mindustrytool.Main;
 import mindustrytool.features.playerconnect.Packets.RoomPlayer;
@@ -45,6 +41,7 @@ import mindustrytool.features.playerconnect.Packets.RoomCloseReason;
 public class NetworkProxy extends Client implements NetListener {
     public static final String PROTOCOL_VERSION = "159";
     public static final int defaultTimeout = 10000;
+    public static NetProvider originalProvider;
 
     private static final String ROOM_ID_KEY = "mindustrytool.playerc-onnect.room-id";
     private static final Ratekeeper noopRate = new NoopRatekeeper();
@@ -82,71 +79,11 @@ public class NetworkProxy extends Client implements NetListener {
 
     private void wrapProvider() {
         NetProvider original = Reflect.get(Vars.net, "provider");
-
-        Reflect.set(Vars.net, "provider",
-                NetProvider.class.cast(
-                        Proxy.newProxyInstance(
-                                NetProvider.class.getClassLoader(),
-                                new Class<?>[] { NetProvider.class },
-                                ($, method, args) -> {
-                                    String name = method.getName();
-
-                                    if ("sendAllServer".equals(name) && args.length == 2) {
-                                        original.sendAllServer(args[0], (Boolean) args[1]);
-                                        sendToAllVirtual(args[0], (Boolean) args[1], -1);
-                                        return null;
-                                    }
-
-                                    if ("sendAllServer".equals(name) && args.length == 3) {
-                                        @SuppressWarnings("unchecked")
-                                        var conns = (Iterable<NetConnection>) args[1];
-                                        boolean reliable = (Boolean) args[2];
-                                        List<NetConnection> real = new ArrayList<>();
-
-                                        for (NetConnection nc : conns) {
-                                            if (nc instanceof ArcConnection ac
-                                                    && ac.connection instanceof VirtualConnection vc) {
-                                                if (vc.isConnected()) {
-                                                    nc.send(args[0], reliable);
-                                                }
-                                            } else {
-                                                real.add(nc);
-                                            }
-                                        }
-
-                                        if (!real.isEmpty()) {
-                                            original.sendAllServer(args[0], real, reliable);
-                                        }
-                                        return null;
-                                    }
-
-                                    if ("sendExceptServer".equals(name) && args.length == 3) {
-                                        original.sendExceptServer((NetConnection) args[0], args[1], (Boolean) args[2]);
-
-                                        int excludeId = -1;
-                                        if (args[0] instanceof ArcConnection ac
-                                                && ac.connection instanceof VirtualConnection vc) {
-                                            excludeId = vc.getID();
-                                        }
-                                        sendToAllVirtual(args[1], (Boolean) args[2], excludeId);
-                                        return null;
-                                    }
-
-                                    return method.invoke(original, args);
-                                })));
-    }
-
-    private void sendToAllVirtual(Object object, boolean reliable, int excludeId) {
-        for (int i = 0; i < orderedConnections.size; i++) {
-            VirtualConnection vc = orderedConnections.get(i);
-            if (vc.isConnected() && vc.getID() != excludeId) {
-                if (reliable) {
-                    vc.sendTCP(object);
-                } else {
-                    vc.sendUDP(object);
-                }
-            }
+        if (originalProvider == null) {
+            originalProvider = original;
         }
+
+        Reflect.set(Vars.net, "provider", new ProxyProvider(original, orderedConnections));
     }
 
     public void connect(String host, int udpTcpPort, //

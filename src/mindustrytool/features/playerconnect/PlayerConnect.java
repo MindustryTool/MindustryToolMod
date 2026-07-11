@@ -231,6 +231,11 @@ public class PlayerConnect {
 
         NetProvider provider = Reflect.get(Vars.net, "provider");
 
+        if (NetworkProxy.originalProvider != null && NetworkProxy.originalProvider != provider) {
+            provider = NetworkProxy.originalProvider;
+            Reflect.set(Vars.net, "provider", provider);
+        } 
+
         if (Vars.steam) {
             provider = Reflect.get(provider, "provider");
         }
