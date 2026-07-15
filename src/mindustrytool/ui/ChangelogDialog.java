@@ -197,7 +197,7 @@ public class ChangelogDialog extends BaseDialog {
                 t.button("@install", Icon.download, () -> {
                     try {
                         Vars.ui.mods.show();
-                        Vars.ui.mods.githubImportMod(Config.REPO_URL, true, "tags/" + finalTagName);
+                        Vars.ui.mods.githubImportMod(Config.REPO_URL, true, "tags/" + finalTagName, true);
                         Vars.ui.mods.toFront();
                         Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
                         // Close dialogs to show the mod installation progress

@@ -4,9 +4,6 @@ version '1.0'
 
 sourceSets.main.java.srcDirs = ["src"]
 
-
-sourceSets.main.java.srcDirs = ["src"]
-
 repositories{
     mavenCentral()
 
@@ -43,7 +40,7 @@ ext{
     // - latest: depend on the latest release of mindustry
     // - be: depend on the very latest commit of mindustry
     // - v<number>: depend on a specific commit
-    mindustryVersion = "v159.2"
+    mindustryVersion = "v159.6"
     isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
     sdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
 }
