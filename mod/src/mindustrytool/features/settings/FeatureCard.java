@@ -33,7 +33,7 @@ public class FeatureCard extends BaseComponent {
                 .onClick(() -> feature.setEnabled(!feature.isEnabled())).children(() -> {
                     column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
                         row().growX().children(() -> {
-                            image(metadata.getIcon()).scaling(Scaling.fit).size(unit(6)).marginRight(unit(2));
+                            icon(metadata.getIcon()).size(unit(6)).marginRight(unit(2));
 
                             text(feature.getName()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left();
 
@@ -42,18 +42,18 @@ public class FeatureCard extends BaseComponent {
                             if (feature.getMainDialog() != null) {
                                 button(() -> feature.getMainDialog().show()).style(Styles.clearNonei).size(unit(9))
                                         .tooltip(Core.bundle.get("feature.button.open-dialog"))
-                                        .children(() -> icon(Icon.linkSmall));
+                                        .children(() -> icon(Icon.linkSmall).size(unit(6)));
                             }
 
                             if (feature.getSettingDialog() != null) {
                                 button(() -> feature.getSettingDialog().show()).style(Styles.clearNonei).size(unit(9))
                                         .tooltip(Core.bundle.get("feature.button.settings"))
-                                        .children(() -> icon(Icon.settings));
+                                        .children(() -> icon(Icon.settings).size(unit(6)));
                             }
 
                             button(() -> new FeatureHelpDialog(feature).show()).style(Styles.clearNonei).size(unit(9))
                                     .tooltip(Core.bundle.get("feature.button.help"))
-                                    .children(() -> icon(Icon.infoCircle));
+                                    .children(() -> icon(Icon.infoCircle).size(unit(6)));
                         });
 
                         text(feature.getDescription()).color(Color.lightGray).fontScale(0.9f).wrap(true).left();
