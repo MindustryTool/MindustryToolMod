@@ -48,7 +48,7 @@ public class SchematicBrowserDialog extends SolimDialog {
 
     private static CompletableFuture<List<SchematicData>> fetchSchematics(
             int page, int size, String sort, String query, List<String> tags) {
-        return MindustryTool.searchSchematics(page, size, sort, query, tags);
+        return MindustryTool.searchSchematics(page, size, sort, query, tags, null, null);
     }
 
     private static class BrowserContent extends BaseComponent {

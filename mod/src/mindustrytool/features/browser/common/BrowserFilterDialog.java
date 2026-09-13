@@ -355,10 +355,10 @@ public class BrowserFilterDialog extends SolimDialog {
 
                         String blockName = block.name;
                         String chipLabel = block.localizedName;
-                        Readable<Boolean> checked = state.selectedTags().map(
+                        Readable<Boolean> checked = state.selectedBlocks().map(
                                 selected -> selected != null && selected.contains(blockName));
 
-                        button(() -> state.toggleTag(blockName))
+                        button(() -> state.toggleBlock(blockName))
                                 .style(WebStyles.filterChipText())
                                 .checked(checked)
                                 .height(unit(9))

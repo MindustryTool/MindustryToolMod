@@ -15,6 +15,11 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -107,6 +112,18 @@ class RequestTest {
 			@Override
 			public void handle(HttpExchange exchange) throws IOException {
 				exchange.sendResponseHeaders(400, -1);
+			}
+		});
+		server.createContext("/test-query", new HttpHandler() {
+			@Override
+			public void handle(HttpExchange exchange) throws IOException {
+				String query = exchange.getRequestURI().getQuery();
+				byte[] response = (query != null ? query : "").getBytes(StandardCharsets.UTF_8);
+				exchange.getResponseHeaders().set("Content-Type", "text/plain");
+				exchange.sendResponseHeaders(200, response.length);
+				try (OutputStream os = exchange.getResponseBody()) {
+					os.write(response);
+				}
 			}
 		});
 		server.setExecutor(null);
@@ -300,5 +317,130 @@ class RequestTest {
 		assertTrue(text.contains("abc123hash"));
 		assertTrue(text.contains("name=\"file\"; filename=\"file.txt\""));
 		assertTrue(text.contains("file-content"));
+	}
+
+	@Test
+	void testSingleQueryStringParam() throws Exception {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		Request.Response<String> res = client.get("/test-query").query("page", 1).sendAsync().get();
+		assertEquals(200, res.statusCode());
+		assertEquals("page=1", res.body());
+	}
+
+	@Test
+	void testMultipleQueryParams() throws Exception {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		Request.Response<String> res = client.get("/test-query")
+				.query("page", 1)
+				.query("size", 20)
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertEquals("page=1&size=20", res.body());
+	}
+
+	@Test
+	void testRepeatedQueryKey() throws Exception {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		Request.Response<String> res = client.get("/test-query")
+				.query("tags", "a")
+				.query("tags", "b")
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertEquals("tags=a&tags=b", res.body());
+	}
+
+	@Test
+	void testListQueryParam() throws Exception {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		Request.Response<String> res = client.get("/test-query")
+				.query("tags", Arrays.asList("a", "b"))
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertEquals("tags=a&tags=b", res.body());
+	}
+
+	@Test
+	void testMapQueryReplaces() throws Exception {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		Request.Response<String> res = client.get("/test-query")
+				.query("tags", "a")
+				.query(Collections.singletonMap("tags", "b"))
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertEquals("tags=b", res.body());
+	}
+
+	@Test
+	void testNullQueryKeyThrows() {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		assertThrows(NullPointerException.class, () -> client.get("/test-query").query(null, "value"));
+	}
+
+	@Test
+	void testNullStringValueSkipped() throws Exception {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		Request.Response<String> res = client.get("/test-query")
+				.query("sort", (String) null)
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertEquals("", res.body());
+	}
+
+	@Test
+	void testEmptyStringValueSkipped() throws Exception {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		Request.Response<String> res = client.get("/test-query")
+				.query("sort", "")
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertEquals("", res.body());
+	}
+
+	@Test
+	void testQueryUrlEncoding() throws Exception {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		Request.Response<String> res = client.get("/test-query")
+				.query("query", "hello world")
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertTrue(res.body().contains("query=hello+world") || res.body().contains("query=hello%20world"));
+	}
+
+	@Test
+	void testQueryAppendedToExistingQueryString() throws Exception {
+		Request client =
+				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
+
+		Request.Response<String> res = client.get("/test-query?page=0")
+				.query("sort", "newest")
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertEquals("page=0&sort=newest", res.body());
 	}
 }

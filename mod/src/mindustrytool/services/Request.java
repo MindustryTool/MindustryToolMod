@@ -9,8 +9,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -184,6 +187,7 @@ public final class Request {
         private final String url;
         private Duration timeoutOverride;
         private final Map<String, String> headers = new LinkedHashMap<>();
+        private final Map<String, List<String>> queryParams = new LinkedHashMap<>();
         private byte[] bodyBytes;
         private boolean useAuth = true;
 
@@ -202,6 +206,70 @@ public final class Request {
         public RequestBuilder timeout(Duration timeout) {
             this.timeoutOverride = timeout;
             return this;
+        }
+
+        // ─── Query parameters ──────────────────────────────────────
+
+        public RequestBuilder query(String key, String value) {
+            if (key == null) throw new NullPointerException("query key must not be null");
+            if (value == null || value.isEmpty()) return this;
+            queryParams.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
+            return this;
+        }
+
+        public RequestBuilder query(String key, int value) {
+            if (key == null) throw new NullPointerException("query key must not be null");
+            queryParams.computeIfAbsent(key, k -> new ArrayList<>()).add(String.valueOf(value));
+            return this;
+        }
+
+        public RequestBuilder query(String key, float value) {
+            if (key == null) throw new NullPointerException("query key must not be null");
+            queryParams.computeIfAbsent(key, k -> new ArrayList<>()).add(String.valueOf(value));
+            return this;
+        }
+
+        public RequestBuilder query(String key, List<String> values) {
+            if (key == null) throw new NullPointerException("query key must not be null");
+            if (values == null || values.isEmpty()) return this;
+            List<String> existing = queryParams.computeIfAbsent(key, k -> new ArrayList<>());
+            for (String v : values) {
+                if (v != null && !v.isEmpty()) {
+                    existing.add(v);
+                }
+            }
+            return this;
+        }
+
+        public RequestBuilder query(Map<String, String> params) {
+            if (params == null || params.isEmpty()) return this;
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                String key = entry.getKey();
+                if (key == null) throw new NullPointerException("query key must not be null");
+                String value = entry.getValue();
+                if (value != null && !value.isEmpty()) {
+                    queryParams.put(key, new ArrayList<>(Collections.singletonList(value)));
+                } else {
+                    queryParams.remove(key);
+                }
+            }
+            return this;
+        }
+
+        private String buildQueryString() {
+            if (queryParams.isEmpty()) return "";
+            StringBuilder sb = new StringBuilder(url.contains("?") ? "&" : "?");
+            boolean first = true;
+            for (Map.Entry<String, List<String>> entry : queryParams.entrySet()) {
+                for (String value : entry.getValue()) {
+                    if (!first) sb.append("&");
+                    first = false;
+                    sb.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
+                    sb.append("=");
+                    sb.append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+                }
+            }
+            return sb.toString();
         }
 
         public RequestBuilder body(String body) {
@@ -230,7 +298,9 @@ public final class Request {
         }
 
         public <T> CompletableFuture<Response<T>> sendAsync(BodyHandler<T> handler) {
-            String resolvedUrl = resolveUrl(outer.baseUrl, url);
+            String queryString = buildQueryString();
+            String effectiveUrl = !queryString.isEmpty() ? url + queryString : url;
+            String resolvedUrl = resolveUrl(outer.baseUrl, effectiveUrl);
             Duration effectiveTimeout = timeoutOverride != null ? timeoutOverride : outer.timeout;
 
             if (useAuth && outer.authProvider != null) {

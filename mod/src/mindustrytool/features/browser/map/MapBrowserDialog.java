@@ -48,7 +48,7 @@ public class MapBrowserDialog extends SolimDialog {
 
     private static CompletableFuture<List<MapData>> fetchMaps(
             int page, int size, String sort, String query, List<String> tags) {
-        return MindustryTool.searchMaps(page, size, sort, query, tags);
+        return MindustryTool.searchMaps(page, size, sort, query, tags, null, null);
     }
 
     private static class BrowserContent extends BaseComponent {

@@ -20,6 +20,7 @@ public class BrowserState<T> {
 
     private final Signal<String> query = Signal.of("");
     private final Signal<Seq<String>> selectedTags = Signal.of(new Seq<String>());
+    private final Signal<Seq<String>> selectedBlocks = Signal.of(new Seq<String>());
     private final Signal<String> sort = Signal.of(Config.sorts.get(0).getValue());
     private final Signal<Integer> page = Signal.of(0);
     private final Signal<Seq<T>> items = Signal.of(new Seq<T>());
@@ -120,6 +121,22 @@ public class BrowserState<T> {
         resetPage();
     }
 
+    public void toggleBlock(String block) {
+        if (block == null) {
+            return;
+        }
+        selectedBlocks.update(current -> {
+            Seq<String> copy = current != null ? new Seq<String>(current) : new Seq<String>();
+            if (copy.contains(block)) {
+                copy.remove(block);
+            } else {
+                copy.add(block);
+            }
+            return copy;
+        });
+        resetPage();
+    }
+
     public void clearTags() {
         selectedTags.set(new Seq<String>());
         resetPage();
@@ -139,6 +156,10 @@ public class BrowserState<T> {
 
     public Signal<Seq<String>> selectedTags() {
         return selectedTags;
+    }
+
+    public Signal<Seq<String>> selectedBlocks() {
+        return selectedBlocks;
     }
 
     public Signal<String> sort() {

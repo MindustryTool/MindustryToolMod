@@ -1,6 +1,7 @@
 package mindustrytool.services;
 
 import arc.Core;
+import arc.util.Nullable;
 import arc.util.serialization.Jval;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -82,9 +83,17 @@ public final class MindustryTool {
     }
 
     public static CompletableFuture<List<MapData>> searchMaps(
-            int page, int size, String sort, String query, List<String> tags) {
+            int page, int size, String sort, String name, List<String> tags,
+            @Nullable String author, @Nullable String verification) {
         return publicApi
-                .get(buildPagedUrl("/maps", page, size, sort, query, tags))
+                .get("/maps")
+                .query("page", page)
+                .query("size", Math.min(size, 100))
+                .query("sort", sort)
+                .query("name", name)
+                .query("tags", tags)
+                .query("author", author)
+                .query("verification", verification)
                 .sendAsync()
                 .thenApply(r -> JsonUtils.fromJsonArray(MapData.class, r.body()));
     }
@@ -107,9 +116,17 @@ public final class MindustryTool {
     }
 
     public static CompletableFuture<List<SchematicData>> searchSchematics(
-            int page, int size, String sort, String query, List<String> tags) {
+            int page, int size, String sort, String name, List<String> tags,
+            @Nullable String author, @Nullable String verification) {
         return publicApi
-                .get(buildPagedUrl("/schematics", page, size, sort, query, tags))
+                .get("/schematics")
+                .query("page", page)
+                .query("size", Math.min(size, 100))
+                .query("sort", sort)
+                .query("name", name)
+                .query("tags", tags)
+                .query("author", author)
+                .query("verification", verification)
                 .sendAsync()
                 .thenApply(r -> JsonUtils.fromJsonArray(SchematicData.class, r.body()));
     }
@@ -330,25 +347,6 @@ public final class MindustryTool {
                 .json(body.toString())
                 .sendAsync()
                 .thenApply(Request.Response::body);
-    }
-
-    // ─── Paged search helper ───────────────────────────────────────
-
-    private static String buildPagedUrl(
-            String baseUrl, int page, int size, String sort, String query, List<String> tags) {
-        StringBuilder sb = new StringBuilder(baseUrl);
-        sb.append("?page=").append(page).append("&size=").append(Math.min(size, 100));
-        if (sort != null && !sort.isEmpty())
-            sb.append("&sort=").append(URLEncoder.encode(sort, StandardCharsets.UTF_8));
-        if (query != null && !query.isEmpty())
-            sb.append("&query=").append(URLEncoder.encode(query, StandardCharsets.UTF_8));
-        if (tags != null) {
-            for (String tag : tags) {
-                if (tag != null && !tag.isEmpty())
-                    sb.append("&tags=").append(URLEncoder.encode(tag, StandardCharsets.UTF_8));
-            }
-        }
-        return sb.toString();
     }
 
     private static synchronized String getMid() {
