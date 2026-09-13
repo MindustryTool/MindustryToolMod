@@ -11,6 +11,7 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
+import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
 import mindustrytool.services.auth.AuthOverlay;
@@ -87,14 +88,13 @@ public class ChatInputView extends BaseComponent {
                                 .rounded(unit(3), Color.clear)
                                 .border(1.5f, Color.darkGray)
                                 .children(() -> {
-                                    var input = textField(messageText)
+                                    textField(messageText)
+                                            .style(WebStyles.clearInput())
                                             .placeholder(Core.bundle.get("feature.chat.ui.placeholder", "Message..."))
                                             .validator(this::isValidInput)
                                             .onEnter(this::onSend)
                                             .disabled(isSending)
                                             .growX();
-                                    // Keep rounding while focused: the skin's focused drawable is square.
-                                    input.field().getStyle().focusedBackground = input.field().getStyle().background;
 
                                     button(() -> new AttachContentDialog(this::handleAttachContent).show())
                                             .style(Styles.cleart)

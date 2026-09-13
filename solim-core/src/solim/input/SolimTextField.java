@@ -16,6 +16,7 @@ import solim.runtime.ComponentContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
+import solim.style.InputStyle;
 import solim.ui.Binding;
 
 /**
@@ -118,6 +119,14 @@ public final class SolimTextField implements Component {
 
 	public SolimTextField placeholder(String placeholder) {
 		field.setMessageText(placeholder);
+		return this;
+	}
+
+	public SolimTextField style(@Nullable InputStyle style) {
+		if (style == null) {
+			return this;
+		}
+		field.setStyle(style.appliedTo(field.getStyle()));
 		return this;
 	}
 

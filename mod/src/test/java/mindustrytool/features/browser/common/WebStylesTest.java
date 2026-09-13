@@ -222,6 +222,13 @@ class WebStylesTest {
     }
 
     @Test
+    void clearInputReturnsCachedSingleton() {
+        assertSame(WebStyles.clearInput(), WebStyles.clearInput());
+        // Slot blankness is covered in solim-core InputStyleTest with stub
+        // drawables: Tex.clear is null until the game loads assets headless.
+    }
+
+    @Test
     void noLegacyAliasesExist() {
         for (Field field : WebStyles.class.getDeclaredFields()) {
             String name = field.getName();

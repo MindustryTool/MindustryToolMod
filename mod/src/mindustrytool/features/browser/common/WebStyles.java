@@ -5,7 +5,9 @@ import static solim.UI.*;
 import arc.graphics.Color;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
+import mindustry.gen.Tex;
 import mindustry.ui.Fonts;
+import solim.style.InputStyle;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
 
@@ -115,6 +117,34 @@ public final class WebStyles {
     private static final SolimButtonStyle DANGER_TEXT_STYLE = textOf(
             DANGER_STYLE, Colors.DANGER_FG, Colors.DANGER_FG, Color.lightGray, Colors.DISABLED_FG);
 
+    private static final SolimButtonStyle CARD_ACTION_STYLE = new SolimButtonStyleBuilder()
+            .rounded(unit(2))
+            .border(1.0f, Colors.BORDER_INPUT)
+            .padding(unit(1.5f))
+            .up(u -> u.background(Colors.SECONDARY))
+            .over(o -> o.background(Colors.SECONDARY_HOVER))
+            .down(d -> d.background(Colors.SECONDARY_DOWN))
+            .disabled(dis -> dis.background(Colors.DISABLED_BG).border(1.0f, Colors.DISABLED_BORDER))
+            .build();
+
+    private static final SolimButtonStyle CARD_ACTION_TEXT_STYLE = textOf(
+            CARD_ACTION_STYLE, Colors.SECONDARY_FG, Colors.PRIMARY_FG, Color.lightGray, Colors.DISABLED_FG);
+
+    private static final SolimButtonStyle PREVIEW_CARD_STYLE = new SolimButtonStyleBuilder()
+            .rounded(unit(2))
+            .border(1.0f, Colors.BORDER_INPUT)
+            .up(u -> u.background(Colors.SECONDARY))
+            .over(o -> o.background(Colors.SECONDARY_HOVER).border(1.0f, Colors.BORDER_INPUT))
+            .down(d -> d.background(Colors.SECONDARY_DOWN))
+            .build();
+
+    private static final InputStyle CLEAR_INPUT = InputStyle.builder()
+            .background(Tex.clear)
+            .focusedBackground(Tex.clear)
+            .disabledBackground(Tex.clear)
+            .invalidBackground(Tex.clear)
+            .build();
+
     public static SolimButtonStyle primary() {
         return PRIMARY_STYLE;
     }
@@ -129,6 +159,22 @@ public final class WebStyles {
 
     public static SolimButtonStyle secondaryText() {
         return SECONDARY_TEXT_STYLE;
+    }
+
+    public static SolimButtonStyle cardAction() {
+        return CARD_ACTION_STYLE;
+    }
+
+    public static SolimButtonStyle cardActionText() {
+        return CARD_ACTION_TEXT_STYLE;
+    }
+
+    public static SolimButtonStyle previewCard() {
+        return PREVIEW_CARD_STYLE;
+    }
+
+    public static InputStyle clearInput() {
+        return CLEAR_INPUT;
     }
 
     public static SolimButtonStyle outline() {

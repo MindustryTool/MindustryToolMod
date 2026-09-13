@@ -76,7 +76,7 @@ The system SHALL display the search text field inside a card container with roun
 
 #### Scenario: Maintain focus styling without square corners
 - **WHEN** user focuses the search text field
-- **THEN** the focused background SHALL preserve rounded corner styling
+- **THEN** the field SHALL keep its chromeless per-instance `clearInput` style with no underline and no square focus ring, and the shared global textfield style SHALL remain unmodified
 
 ### Requirement: Standardized Fixed Header Height
 The system SHALL lock the search bar card container and adjacent action buttons (`refresh`, `filter`) in `BrowserSearchHeader` to a standardized fixed height (`unit(10)` / 40px) with vertically centered icons and text field, ensuring pixel-perfect baseline alignment across the header bar.
@@ -95,4 +95,15 @@ The system SHALL render the active filter chips row using `dynamic(...)` conditi
 #### Scenario: Active filters render chips
 - **WHEN** tags are selected
 - **THEN** the filter chip bar SHALL render chips with delete icons and a clear-all button
+
+### Requirement: Chromeless Embedded Browser Fields
+Textfields embedded inside custom containers SHALL use `WebStyles.clearInput()` instead of the default underline chrome: the `BrowserSearchHeader` search field, the `BrowserFilterDialog` filter field, the `FeatureSettingsView` search field, and the `ChatInputView` message field. Standalone labeled fields (API-key and test inputs) SHALL keep the default style. No code path SHALL mutate the shared global `TextFieldStyle`.
+
+#### Scenario: Search field renders without underline
+- **WHEN** `BrowserSearchHeader` is rendered in normal, focused, or disabled state
+- **THEN** its textfield shows no underline chrome while other textfields in the mod still show the default underline
+
+#### Scenario: No global style mutation exists
+- **WHEN** the browser sources are inspected
+- **THEN** no statement assigns into an object obtained from `getStyle()` on a textfield
 

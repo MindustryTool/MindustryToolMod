@@ -73,6 +73,7 @@ public class BrowserFilterDialog extends SolimDialog {
                     icon(Icon.zoom).size(unit(5));
                     textField(filterText)
                             .growX()
+                            .style(WebStyles.clearInput())
                             .placeholder(Core.bundle.get("browser.search.placeholder"));
                 });
 

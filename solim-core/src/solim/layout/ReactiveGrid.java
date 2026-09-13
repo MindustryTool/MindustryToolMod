@@ -6,6 +6,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import solim.core.BaseComponent;
@@ -15,21 +16,41 @@ import solim.modifier.ElementModifiers;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.runtime.StructuralReconciler;
+import solim.signal.Computed;
 import solim.signal.Effect;
 import solim.signal.Readable;
+import solim.signal.Signal;
 import solim.ui.Ui;
+import solim.ui.Units;
 
 /**
  * Keyed reactive grid that reflows existing component cells when column count changes and
  * structurally reconciles items when the item collection changes.
  */
 public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutModifiers<ReactiveGrid<T, K>> {
-	private final Table table = new Table();
+	private final Signal<Float> tableWidth = Signal.of(0f);
+	private final Signal<Float> gapSignal = Signal.of(0f);
+	private final Computed<Float> itemWidth;
+	private final GridItemContext context;
+
+	private final Table table = new Table() {
+		@Override
+		public void layout() {
+			super.layout();
+			checkWidth(getWidth());
+		}
+
+		@Override
+		protected void sizeChanged() {
+			super.sizeChanged();
+			checkWidth(getWidth());
+		}
+	};
 	private final SizeConstraints constraints = new SizeConstraints();
 	private final Readable<Integer> columnCount;
 	private final Readable<? extends Iterable<T>> items;
 	private final Function<T, K> keyExtractor;
-	private final Function<T, Component> itemFactory;
+	private final BiFunction<T, GridItemContext, Component> itemFactory;
 	private final StructuralReconciler<K, Component> reconciler = new StructuralReconciler<>();
 	private final List<Disposable> itemBindings = new ArrayList<>();
 
@@ -43,12 +64,46 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 			Readable<? extends Iterable<T>> items,
 			Function<T, K> keyExtractor,
 			Function<T, Component> itemFactory) {
+		this(columnCount, items, keyExtractor, (item, ctx) -> itemFactory.apply(item));
+	}
+
+	public ReactiveGrid(
+			Readable<Integer> columnCount,
+			Readable<? extends Iterable<T>> items,
+			Function<T, K> keyExtractor,
+			BiFunction<T, GridItemContext, Component> itemFactory) {
 		this.table.name = "solim-reactive-grid-table";
 		this.table.userObject = this;
+		this.table.update(() -> checkWidth(this.table.getWidth()));
 		this.columnCount = columnCount;
 		this.items = items;
 		this.keyExtractor = keyExtractor;
 		this.itemFactory = itemFactory;
+
+		this.itemWidth = new Computed<>(() -> {
+			float tw = tableWidth.get();
+			int cols = Math.max(1, columnCount.get() != null ? columnCount.get() : 1);
+			float g = gapSignal.get();
+			if (tw <= 0f) {
+				float sw = Units.screenWidth();
+				float fallbackW = sw > 0f ? sw - 32f : 300f;
+				return Math.max(0f, (fallbackW / cols) - g);
+			}
+			return Math.max(0f, (tw / cols) - g);
+		});
+
+		this.context = new GridItemContext() {
+			@Override
+			public Readable<Float> itemWidth() {
+				return itemWidth;
+			}
+
+			@Override
+			public Readable<Integer> columnCount() {
+				return columnCount;
+			}
+		};
+
 		growX();
 	}
 
@@ -58,6 +113,28 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 			Function<T, K> keyExtractor,
 			Function<T, Component> itemFactory) {
 		return new ReactiveGrid<>(columnCount, items, keyExtractor, itemFactory);
+	}
+
+	public static <T, K> ReactiveGrid<T, K> of(
+			Readable<Integer> columnCount,
+			Readable<? extends Iterable<T>> items,
+			Function<T, K> keyExtractor,
+			BiFunction<T, GridItemContext, Component> itemFactory) {
+		return new ReactiveGrid<>(columnCount, items, keyExtractor, itemFactory);
+	}
+
+	public GridItemContext context() {
+		return context;
+	}
+
+	public Readable<Float> itemWidth() {
+		return itemWidth;
+	}
+
+	private void checkWidth(float w) {
+		if (w > 0f && Math.abs(w - tableWidth.get()) > 0.5f) {
+			tableWidth.set(w);
+		}
 	}
 
 	public ReactiveGrid<T, K> empty(Runnable emptyRunnable) {
@@ -72,6 +149,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 
 	public ReactiveGrid<T, K> gap(float gap) {
 		this.gap = gap;
+		this.gapSignal.set(gap);
 		ElementModifiers.gap(table, gap);
 		return this;
 	}
@@ -118,7 +196,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 	}
 
 	private void updateItemsAndReflow(Iterable<T> itemList, int cols) {
-		reconciler.reconcile(itemList, keyExtractor, itemFactory);
+		reconciler.reconcile(itemList, keyExtractor, item -> itemFactory.apply(item, context));
 		reflow(cols);
 	}
 
@@ -200,6 +278,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 		itemBindings.clear();
 
 		reconciler.dispose();
+		itemWidth.dispose();
 
 		if (currentEmptyComponent != null) {
 			currentEmptyComponent.dispose();

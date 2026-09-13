@@ -14,6 +14,7 @@ import arc.util.Nullable;
 import arc.util.Scaling;
 
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -34,6 +35,7 @@ import solim.layout.Column;
 import solim.layout.Direction;
 import solim.layout.Divider;
 import solim.layout.Grid;
+import solim.layout.GridItemContext;
 import solim.layout.ReactiveGrid;
 import solim.layout.Row;
 import solim.layout.Scroll;

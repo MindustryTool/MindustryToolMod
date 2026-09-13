@@ -66,3 +66,14 @@ The system SHALL provide isolated `TextButtonStyle` and `ButtonStyle` instances 
 #### Scenario: No legacy aliases exist
 - **WHEN** `WebStyles.java` is inspected
 - **THEN** it contains no deprecated `webButton`, `webTextButton`, or `CHANNEL_BLUE` fields
+
+### Requirement: Clear Input Preset (WebStyles.clearInput)
+`WebStyles` SHALL provide a shared, cached `clearInput()` preset returning an `InputStyle` with a blank drawable (`Tex.clear`) in all four background slots (`background`, `focusedBackground`, `disabledBackground`, `invalidBackground`) and everything else unset (inheriting the field base style).
+
+#### Scenario: Retrieving the cached preset
+- **WHEN** `WebStyles.clearInput()` is called repeatedly
+- **THEN** it returns the same shared instance with zero new allocations
+
+#### Scenario: Preset blanks all chrome states
+- **WHEN** the preset is inspected
+- **THEN** all four background slots hold the blank drawable, so no underline appears in normal, focused, disabled, or invalid states

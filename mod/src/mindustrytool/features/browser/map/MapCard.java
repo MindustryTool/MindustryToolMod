@@ -9,6 +9,7 @@ import arc.scene.style.Drawable;
 import arc.util.Scaling;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.features.browser.common.WebStyles;
@@ -16,9 +17,8 @@ import mindustrytool.models.response.MapData;
 import solim.core.BaseComponent;
 
 /**
- * Hero image-first card showing a large map preview with the title overlaid
- * on a translucent bottom bar and a single row of compact interactive action
- * buttons with stat counts.
+ * Image-first card layout showing a dedicated preview card with a centered
+ * title strip and a compact row of interactive stat action buttons.
  */
 public class MapCard extends BaseComponent {
 
@@ -42,67 +42,82 @@ public class MapCard extends BaseComponent {
         String title = map.getName() != null ? map.getName()
                 : Core.bundle.get("browser.map.unnamed");
 
-        return card(Styles.black8)
+        return column()
                 .name("MapCard-" + map.getItemId())
                 .growX()
-                .rounded(6)
-                .border(1f, Color.darkGray)
-                .onClick(onClick)
+                .gap(unit(2))
                 .children(() -> {
-                    column().growX().padding(unit(2)).gap(unit(2)).children(() -> {
-                        stack().growX().children(() -> {
-                            networkImage(imageUrl)
-                                    .placeholder(Icon.terrain)
-                                    .fallback(Icon.terrain)
-                                    .growX()
-                                    .height(unit(38))
-                                    .rounded(4)
-                                    .scaling(Scaling.fit);
-                        }).children(() -> {
-                            column().grow().children(() -> {
-                                spacer();
-                                row().growX().background(Styles.black8).padding(unit(1)).children(() -> {
-                                    text(title)
-                                            .style(Styles.defaultLabel)
-                                            .color(Color.white)
-                                            .ellipsis(true)
-                                            .left()
-                                            .growX();
+                    card(WebStyles.previewCard().style())
+                            .name("MapCard-preview-" + map.getItemId())
+                            .growX()
+                            .height(unit(58))
+                            .onClick(onClick)
+                            .children(() -> {
+                                stack().grow().children(() -> {
+                                    networkImage(imageUrl)
+                                            .placeholder(Icon.terrain)
+                                            .fallback(Icon.terrain)
+                                            .grow()
+                                            .rounded(8)
+                                            .scaling(Scaling.fit);
+                                }).children(() -> {
+                                    column().grow().children(() -> {
+                                        spacer();
+                                        row().growX()
+                                                .background(Styles.black8)
+                                                .padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f))
+                                                .center()
+                                                .children(() -> {
+                                                    text(title)
+                                                            .style(Styles.defaultLabel)
+                                                            .color(Color.white)
+                                                            .ellipsis(true)
+                                                            .center()
+                                                            .growX();
+                                                });
+                                    });
                                 });
                             });
-                        });
 
-                        row().growX().gap(unit(1)).children(() -> {
-                            statButton(
-                                    BrowserStatsBadge.formatCount(BrowserImages.count(map.getLikes())),
-                                    Icon.upOpenSmall, Color.scarlet, onDetails,
-                                    Core.bundle.get("browser.map.details"));
-                            statButton(
-                                    BrowserStatsBadge.formatCount(BrowserImages.count(map.getComments())),
-                                    Icon.chatSmall, Color.lightGray, onDetails,
-                                    Core.bundle.get("browser.map.details"));
-                            statButton(
-                                    BrowserStatsBadge.formatCount(BrowserImages.count(map.getDownloads())),
-                                    Icon.downloadSmall, Color.sky, onDownload,
-                                    Core.bundle.get("browser.map.download"));
+                    row().growX().gap(unit(1.5f)).children(() -> {
+                        statButton(
+                                BrowserStatsBadge.formatCount(BrowserImages.count(map.getLikes())),
+                                FileIcon.of("heart.png", Icon.upOpenSmall),
+                                Color.white,
+                                onDetails,
+                                Core.bundle.get("browser.map.details"));
+                        statButton(
+                                BrowserStatsBadge.formatCount(BrowserImages.count(map.getComments())),
+                                Icon.chatSmall,
+                                Color.white,
+                                onDetails,
+                                Core.bundle.get("browser.map.details"));
+                        statButton(
+                                BrowserStatsBadge.formatCount(BrowserImages.count(map.getDownloads())),
+                                Icon.downloadSmall,
+                                map.getDownloads() != null && map.getDownloads() > 0 ? Color.sky : Color.white,
+                                onDownload,
+                                Core.bundle.get("browser.map.download"));
 
-                            button(onPlay).style(WebStyles.outlineText()).growX().height(unit(10))
-                                    .tooltip(Core.bundle.get("browser.map.play"))
-                                    .children(() -> icon(Icon.play).size(unit(5)));
-                        });
+                        button(onPlay)
+                                .style(WebStyles.cardActionText())
+                                .growX()
+                                .height(unit(9))
+                                .tooltip(Core.bundle.get("browser.map.play"))
+                                .children(() -> icon(Icon.play).size(unit(4.5f)).color(Color.white));
                     });
                 }).element();
     }
 
-    private void statButton(String count, Drawable icon, Color tint, Runnable action, String tooltip) {
+    private void statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         button(action)
-                .style(WebStyles.outlineText())
+                .style(WebStyles.cardActionText())
                 .growX()
-                .height(unit(10))
+                .height(unit(9))
                 .tooltip(tooltip)
                 .children(() -> {
-                    icon(icon).size(unit(5)).color(tint);
-                    text(count).style(Styles.defaultLabel).fontScale(0.9f);
+                    icon(iconDrawable).size(unit(4.5f)).color(Color.white).marginRight(unit(1));
+                    text(count).style(Styles.defaultLabel).fontScale(0.85f).color(textColor);
                 });
     }
 }
