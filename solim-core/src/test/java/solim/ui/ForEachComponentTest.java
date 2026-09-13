@@ -115,7 +115,7 @@ class ForEachComponentTest {
 	void forEachImplementsLayoutModifiersAndSupportsGrowX() {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
 		ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new TestComponent(id));
-		assertTrue(fe instanceof solim.layout.LayoutModifiers);
+		assertTrue(fe instanceof solim.layout.CellConfig);
 		assertNotNull(fe.sizeConstraints());
 		assertFalse(fe.sizeConstraints().growX);
 		fe.growX();

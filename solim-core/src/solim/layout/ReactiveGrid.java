@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.runtime.StructuralReconciler;
@@ -27,7 +27,7 @@ import solim.ui.Units;
  * Keyed reactive grid that reflows existing component cells when column count changes and
  * structurally reconciles items when the item collection changes.
  */
-public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutModifiers<ReactiveGrid<T, K>>, GapContainer {
+public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfig<ReactiveGrid<T, K>>, GapContainer {
 	private final Signal<Float> tableWidth = Signal.of(0f);
 	private final Signal<Float> gapSignal = Signal.of(0f);
 	private final Computed<Float> itemWidth;
@@ -264,10 +264,10 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 			Element el = comp.element();
 			Cell<?> cell = table.add(el).top().left();
 			SizeConstraints sc = null;
-			if (comp instanceof LayoutModifiers) {
-				sc = ((LayoutModifiers<?>) comp).sizeConstraints();
-			} else if (el.userObject instanceof LayoutModifiers) {
-				sc = ((LayoutModifiers<?>) el.userObject).sizeConstraints();
+			if (comp instanceof CellConfig) {
+				sc = ((CellConfig<?>) comp).sizeConstraints();
+			} else if (el.userObject instanceof CellConfig) {
+				sc = ((CellConfig<?>) el.userObject).sizeConstraints();
 			}
 			if (sc != null) {
 				List<Disposable> effects = sc.applyToCell(cell);

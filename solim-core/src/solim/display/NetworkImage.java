@@ -27,13 +27,13 @@ import mindustry.core.Version;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.runtime.ComponentContext;
-import solim.layout.LayoutModifiers;
+import solim.layout.CellConfig;
 import solim.layout.SizeConstraints;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.signal.Effect;
 import solim.signal.Readable;
 
-public final class NetworkImage implements Component, LayoutModifiers<NetworkImage> {
+public final class NetworkImage implements Component, CellConfig<NetworkImage> {
 
     @FunctionalInterface
     public interface ImageLoader {
@@ -380,7 +380,7 @@ public final class NetworkImage implements Component, LayoutModifiers<NetworkIma
 
     @Override
     public NetworkImage size(float width, float height) {
-        LayoutModifiers.super.size(width, height);
+        CellConfig.super.size(width, height);
         if (cornerRadius > 0 && currentUrl != null) {
             loadUrl(currentUrl);
         }
@@ -534,7 +534,7 @@ public final class NetworkImage implements Component, LayoutModifiers<NetworkIma
 
     @Override
     public NetworkImage name(String name) {
-        ElementModifiers.name(image, name);
+        ElementConfig.name(image, name);
         return this;
     }
 
@@ -574,14 +574,14 @@ public final class NetworkImage implements Component, LayoutModifiers<NetworkIma
     }
 
     @Override
-    public NetworkImage marginX(float x) {
+    public NetworkImage cellPaddingX(float x) {
         this.marginLeft = this.marginRight = x;
         applySpacing();
         return this;
     }
 
     @Override
-    public NetworkImage marginY(float y) {
+    public NetworkImage cellPaddingY(float y) {
         this.marginTop = this.marginBottom = y;
         applySpacing();
         return this;

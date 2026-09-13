@@ -15,7 +15,7 @@ import solim.signal.Readable;
  * Divider line supporting horizontal (X) and vertical (Y) directions. Uses an
  * Image instead of a Table for lightweight rendering.
  */
-public final class Divider implements Component, LayoutModifiers<Divider> {
+public final class Divider implements Component, CellConfig<Divider> {
     private final SolimImage image;
     private final Direction direction;
 
@@ -40,12 +40,12 @@ public final class Divider implements Component, LayoutModifiers<Divider> {
             growY();
             width(1.5f);
             minWidth(1.5f);
-            marginBottom(1);
+            cellPaddingBottom(1);
         } else {
             growX();
             height(1.5f);
             minHeight(1.5f);
-            marginRight(1);
+            cellPaddingRight(1);
         }
     }
 

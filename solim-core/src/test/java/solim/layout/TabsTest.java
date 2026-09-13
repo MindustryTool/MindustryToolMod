@@ -41,7 +41,7 @@ class TabsTest {
 	}
 
 	@Test
-	void headerBarDefaultGapUsesElementModifiers() {
+	void headerBarDefaultGapUsesElementConfig() {
 		Tabs tabs = new Tabs(Signal.of(0));
 		Element a = new Element();
 		Element b = new Element();

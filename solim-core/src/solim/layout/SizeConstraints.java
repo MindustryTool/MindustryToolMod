@@ -110,8 +110,8 @@ public final class SizeConstraints {
     public static @Nullable SizeConstraints find(@Nullable Object target) {
         if (target == null)
             return null;
-        if (target instanceof LayoutModifiers) {
-            return ((LayoutModifiers<?>) target).sizeConstraints();
+        if (target instanceof CellConfig) {
+            return ((CellConfig<?>) target).sizeConstraints();
         }
         if (target instanceof SizeConstraints) {
             return (SizeConstraints) target;

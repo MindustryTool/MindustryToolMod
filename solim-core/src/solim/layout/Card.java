@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
@@ -26,7 +26,7 @@ import solim.ui.Ui;
  * Clickable and stylable card container component with support for inner children, reactive
  * width/height/color bindings, and click event bubbling control.
  */
-public final class Card implements Component, LayoutModifiers<Card>, GapContainer {
+public final class Card implements Component, CellConfig<Card>, GapContainer {
 
 	public static final ParentStack.Attacher ATTACHER = (table, child) -> {
 		Cell<?> cell = table.add(child);
@@ -105,7 +105,7 @@ public final class Card implements Component, LayoutModifiers<Card>, GapContaine
 	}
 
 	public Card name(String name) {
-		ElementModifiers.name(cardButton, name);
+		ElementConfig.name(cardButton, name);
 		return this;
 	}
 
@@ -146,32 +146,32 @@ public final class Card implements Component, LayoutModifiers<Card>, GapContaine
 
 	@Override
 	public Card top() {
-		ElementModifiers.top(container);
-		return LayoutModifiers.super.top();
+		ElementConfig.top(container);
+		return CellConfig.super.top();
 	}
 
 	@Override
 	public Card bottom() {
-		ElementModifiers.bottom(container);
-		return LayoutModifiers.super.bottom();
+		ElementConfig.bottom(container);
+		return CellConfig.super.bottom();
 	}
 
 	@Override
 	public Card left() {
-		ElementModifiers.left(container);
-		return LayoutModifiers.super.left();
+		ElementConfig.left(container);
+		return CellConfig.super.left();
 	}
 
 	@Override
 	public Card right() {
-		ElementModifiers.right(container);
-		return LayoutModifiers.super.right();
+		ElementConfig.right(container);
+		return CellConfig.super.right();
 	}
 
 	@Override
 	public Card center() {
-		ElementModifiers.center(container);
-		return LayoutModifiers.super.center();
+		ElementConfig.center(container);
+		return CellConfig.super.center();
 	}
 
 	public Card gap(float g) {
@@ -181,22 +181,22 @@ public final class Card implements Component, LayoutModifiers<Card>, GapContaine
 	}
 
 	public Card padding(float p) {
-		ElementModifiers.padding(container, p);
+		ElementConfig.padding(container, p);
 		return this;
 	}
 
 	public Card padding(float top, float left, float bottom, float right) {
-		ElementModifiers.padding(container, top, left, bottom, right);
+		ElementConfig.padding(container, top, left, bottom, right);
 		return this;
 	}
 
 	public Card paddingX(float x) {
-		ElementModifiers.paddingX(container, x);
+		ElementConfig.paddingX(container, x);
 		return this;
 	}
 
 	public Card paddingY(float y) {
-		ElementModifiers.paddingY(container, y);
+		ElementConfig.paddingY(container, y);
 		return this;
 	}
 
@@ -244,27 +244,27 @@ public final class Card implements Component, LayoutModifiers<Card>, GapContaine
 	}
 
 	public Card x(float x) {
-		ElementModifiers.x(cardButton, x);
+		ElementConfig.x(cardButton, x);
 		return this;
 	}
 
 	public Card y(float y) {
-		ElementModifiers.y(cardButton, y);
+		ElementConfig.y(cardButton, y);
 		return this;
 	}
 
 	public Card position(float x, float y) {
-		ElementModifiers.position(cardButton, x, y);
+		ElementConfig.position(cardButton, x, y);
 		return this;
 	}
 
 	public Card visible(boolean visible) {
-		ElementModifiers.visible(cardButton, visible);
+		ElementConfig.visible(cardButton, visible);
 		return this;
 	}
 
 	public Card visible(@Nullable Readable<Boolean> visible) {
-		ElementModifiers.visible(cardButton, visible);
+		ElementConfig.visible(cardButton, visible);
 		return this;
 	}
 
@@ -301,7 +301,7 @@ public final class Card implements Component, LayoutModifiers<Card>, GapContaine
 	}
 
 	public Card rounded(int radius, @Nullable Color color) {
-		solim.graphics.RoundedDrawable rd = ElementModifiers.rounded(cardButton, radius, color);
+		solim.graphics.RoundedDrawable rd = ElementConfig.rounded(cardButton, radius, color);
 		if (rd != null) {
 			Button.ButtonStyle s = cardButton.getStyle();
 			if (s == null) {
@@ -314,7 +314,7 @@ public final class Card implements Component, LayoutModifiers<Card>, GapContaine
 	}
 
 	public Card rounded(int radius, @Nullable Readable<Color> color) {
-		solim.graphics.RoundedDrawable rd = ElementModifiers.rounded(cardButton, radius, color);
+		solim.graphics.RoundedDrawable rd = ElementConfig.rounded(cardButton, radius, color);
 		if (rd != null) {
 			Button.ButtonStyle s = cardButton.getStyle();
 			if (s == null) {
@@ -327,7 +327,7 @@ public final class Card implements Component, LayoutModifiers<Card>, GapContaine
 	}
 
 	public Card border(float stroke, @Nullable Color color) {
-		solim.graphics.RoundedDrawable rd = ElementModifiers.border(cardButton, stroke, color);
+		solim.graphics.RoundedDrawable rd = ElementConfig.border(cardButton, stroke, color);
 		if (rd != null) {
 			Button.ButtonStyle s = cardButton.getStyle();
 			if (s == null) {
@@ -340,7 +340,7 @@ public final class Card implements Component, LayoutModifiers<Card>, GapContaine
 	}
 
 	public Card border(float stroke, @Nullable Readable<Color> color) {
-		solim.graphics.RoundedDrawable rd = ElementModifiers.border(cardButton, stroke, color);
+		solim.graphics.RoundedDrawable rd = ElementConfig.border(cardButton, stroke, color);
 		if (rd != null) {
 			Button.ButtonStyle s = cardButton.getStyle();
 			if (s == null) {

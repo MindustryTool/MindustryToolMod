@@ -3,10 +3,10 @@ package solim.layout;
 import arc.scene.Element;
 import arc.scene.ui.layout.Stack;
 import solim.core.Component;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 
 /** Stack container: overlays children on top of each other. */
-public final class SolimStack implements Component, LayoutModifiers<SolimStack> {
+public final class SolimStack implements Component, CellConfig<SolimStack> {
     private final Stack stack = new Stack();
     private final SizeConstraints constraints = new SizeConstraints();
 
@@ -24,7 +24,7 @@ public final class SolimStack implements Component, LayoutModifiers<SolimStack> 
     }
 
     public SolimStack name(String name) {
-        ElementModifiers.name(stack, name);
+        ElementConfig.name(stack, name);
         return this;
     }
 

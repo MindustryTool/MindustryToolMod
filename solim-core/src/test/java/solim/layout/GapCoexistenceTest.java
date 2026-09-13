@@ -10,7 +10,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.SignalDispatcher;
 import solim.signal.Signal;
 import solim.ui.Dynamic;
@@ -31,8 +31,8 @@ class GapCoexistenceTest {
 	@Test
 	void childMarginAndContainerGapCoexistAdditivelyInRow() {
 		Row r = Ui.row().gap(12f);
-		Card card1 = Ui.card().margin(5f, 10f, 5f, 10f); // top 5, left 10, bottom 5, right 10
-		Card card2 = Ui.card().margin(6f, 15f, 6f, 20f); // top 6, left 15, bottom 6, right 20
+		Card card1 = Ui.card().cellPadding(5f, 10f, 5f, 10f); // top 5, left 10, bottom 5, right 10
+		Card card2 = Ui.card().cellPadding(6f, 15f, 6f, 20f); // top 6, left 15, bottom 6, right 20
 		Card card3 = Ui.card(); // no margin
 
 		r.children(() -> {
@@ -67,8 +67,8 @@ class GapCoexistenceTest {
 	@Test
 	void childMarginAndContainerGapCoexistAdditivelyInColumn() {
 		Column col = Ui.column().gap(14f);
-		Card card1 = Ui.card().margin(8f, 4f, 4f, 4f);
-		Card card2 = Ui.card().margin(6f, 4f, 4f, 4f);
+		Card card1 = Ui.card().cellPadding(8f, 4f, 4f, 4f);
+		Card card2 = Ui.card().cellPadding(6f, 4f, 4f, 4f);
 		Card card3 = Ui.card();
 
 		col.children(() -> {
@@ -117,7 +117,7 @@ class GapCoexistenceTest {
 		assertEquals(16f, CellAccess.padLeft(cellC), 0.01f);
 
 		// Collapse cardA
-		ElementModifiers.visible(cardA.element(), false);
+		ElementConfig.visible(cardA.element(), false);
 		assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
 		// cardB is promoted to first visible: padLeft becomes 0
 		assertEquals(0f, CellAccess.padLeft(cellB), 0.01f);
@@ -125,14 +125,14 @@ class GapCoexistenceTest {
 		assertEquals(16f, CellAccess.padLeft(cellC), 0.01f);
 
 		// Collapse cardB as well
-		ElementModifiers.visible(cardB.element(), false);
+		ElementConfig.visible(cardB.element(), false);
 		assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
 		assertEquals(0f, CellAccess.padLeft(cellB), 0.01f);
 		// cardC is now first visible: padLeft becomes 0
 		assertEquals(0f, CellAccess.padLeft(cellC), 0.01f);
 
 		// Re-expand cardA: cardA is first visible (0), cardC is second visible (16)
-		ElementModifiers.visible(cardA.element(), true);
+		ElementConfig.visible(cardA.element(), true);
 		assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
 		assertEquals(0f, CellAccess.padLeft(cellB), 0.01f); // still invisible
 		assertEquals(16f, CellAccess.padLeft(cellC), 0.01f);
@@ -177,7 +177,7 @@ class GapCoexistenceTest {
 		assertEquals(20f, CellAccess.padLeft(suffixCell), 0.01f);
 
 		// Collapse prefix as well
-		ElementModifiers.visible(prefix.element(), false);
+		ElementConfig.visible(prefix.element(), false);
 		// Now suffix is the ONLY visible element in row -> gets 0 leading gap!
 		assertEquals(0f, CellAccess.padLeft(suffixCell), 0.01f);
 

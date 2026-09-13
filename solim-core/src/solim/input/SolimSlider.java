@@ -3,7 +3,7 @@ package solim.input;
 import arc.scene.ui.Slider;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Signal;
 
@@ -69,7 +69,7 @@ public final class SolimSlider implements Component {
 
 	@Override
 	public SolimSlider name(String name) {
-		ElementModifiers.name(slider, name);
+		ElementConfig.name(slider, name);
 		return this;
 	}
 

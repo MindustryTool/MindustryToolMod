@@ -245,7 +245,7 @@ class LayoutTest {
 				.height(180f)
 				.width(widthSignal)
 				.color(colorSignal)
-				.margin(12f)
+				.cellPadding(12f)
 				.children(() -> {
 					ParentStack.add(new Element());
 					ParentStack.add(new Element());

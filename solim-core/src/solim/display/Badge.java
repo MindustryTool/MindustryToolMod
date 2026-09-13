@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.layout.LayoutModifiers;
+import solim.layout.CellConfig;
 import solim.layout.SizeConstraints;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
@@ -21,7 +21,7 @@ import solim.signal.Readable;
  * Compact pill-shaped badge component for notification counters and tag
  * indicators.
  */
-public final class Badge implements Component, LayoutModifiers<Badge> {
+public final class Badge implements Component, CellConfig<Badge> {
 
     private final Table table;
     private final SizeConstraints constraints = new SizeConstraints();
@@ -48,7 +48,7 @@ public final class Badge implements Component, LayoutModifiers<Badge> {
             table.setBackground(bg);
             table.setColor(new Color(0.85f, 0.25f, 0.25f, 0.9f));
         }
-        ElementModifiers.padding(table, 2f, 6f, 2f, 6f);
+        ElementConfig.padding(table, 2f, 6f, 2f, 6f);
 
         this.label = Text.of(text);
         table.add(label.label()).center();
@@ -135,32 +135,32 @@ public final class Badge implements Component, LayoutModifiers<Badge> {
     }
 
     public Badge name(String name) {
-        ElementModifiers.name(table, name);
+        ElementConfig.name(table, name);
         return this;
     }
 
     public Badge rounded(int radius) {
-        ElementModifiers.rounded(table, radius);
+        ElementConfig.rounded(table, radius);
         return this;
     }
 
     public Badge rounded(int radius, @Nullable Color color) {
-        ElementModifiers.rounded(table, radius, color);
+        ElementConfig.rounded(table, radius, color);
         return this;
     }
 
     public Badge rounded(int radius, @Nullable Readable<Color> color) {
-        ElementModifiers.rounded(table, radius, color);
+        ElementConfig.rounded(table, radius, color);
         return this;
     }
 
     public Badge border(float stroke, @Nullable Color color) {
-        ElementModifiers.border(table, stroke, color);
+        ElementConfig.border(table, stroke, color);
         return this;
     }
 
     public Badge border(float stroke, @Nullable Readable<Color> color) {
-        ElementModifiers.border(table, stroke, color);
+        ElementConfig.border(table, stroke, color);
         return this;
     }
 

@@ -7,7 +7,7 @@ import arc.scene.Element;
 import arc.util.Nullable;
 import solim.core.BaseComponent;
 import solim.display.Badge;
-import solim.layout.LayoutModifiers;
+import solim.layout.CellConfig;
 import solim.layout.SizeConstraints;
 import solim.layout.SolimStack;
 import solim.signal.Readable;
@@ -17,7 +17,7 @@ import solim.signal.Readable;
  * Renders with continuous-curvature (Apple-style L4 superellipse) rounded corners on both
  * the fallback badge and the network image layer.
  */
-public class ChatAvatar extends BaseComponent implements LayoutModifiers<ChatAvatar> {
+public class ChatAvatar extends BaseComponent implements CellConfig<ChatAvatar> {
 
     private static final Color[] PALETTE = {
             Color.valueOf("ef5350"),

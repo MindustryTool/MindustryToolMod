@@ -258,7 +258,7 @@ class ReactiveGridTest {
 							.children(() -> {
 								holder[0] = solim.ui.Ui.card()
 										.growX()
-										.margin(4f, 0f, 4f, 0f)
+										.cellPadding(4f, 0f, 4f, 0f)
 										.height(ctx.itemWidth())
 										.children(() -> {});
 							});

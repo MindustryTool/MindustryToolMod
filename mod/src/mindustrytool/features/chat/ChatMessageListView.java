@@ -192,7 +192,7 @@ public class ChatMessageListView extends BaseComponent {
                                         }
                                     });
 
-                    return virtualList.marginBottom(unit(2));
+                    return virtualList.cellPaddingBottom(unit(2));
                 } else {
                     return column().padding(unit(4)).top().left().children(() -> {
                         text(Core.bundle.get("feature.chat.ui.empty-messages", "No messages yet."))
@@ -276,7 +276,7 @@ public class ChatMessageListView extends BaseComponent {
                         // Shared group avatar on the left, pinned to the top
                         new ChatAvatar(authorName, avatarUrl, authorId, ChatMessageHeightCalculator.AVATAR_SIZE)
                                 .top()
-                                .marginRight(ChatMessageHeightCalculator.AVATAR_GAP);
+                                .cellPaddingRight(ChatMessageHeightCalculator.AVATAR_GAP);
 
                         // Right column: header followed by stacked messages
                         column().growX().top().left().children(() -> {
@@ -335,20 +335,20 @@ public class ChatMessageListView extends BaseComponent {
             var card = card().growX().top().left();
             card.onClick(() -> openActions(raw, card.element()));
             if (hasPrevious) {
-                card.marginTop(ChatMessageHeightCalculator.MESSAGE_GAP);
+                card.cellPaddingTop(ChatMessageHeightCalculator.MESSAGE_GAP);
             }
             card.children(() -> {
                 row().growX().top().left()
                         .padding(ChatMessageHeightCalculator.MESSAGE_CARD_PADDING / 2f)
                         .children(() -> {
                             if (mentioned) {
-                                divider(Direction.Y).color(Pal.accent).width(unit(1)).marginRight(unit(1));
+                                divider(Direction.Y).color(Pal.accent).width(unit(1)).cellPaddingRight(unit(1));
                             }
 
                             if (raw.getReplyTo() != null && !raw.getReplyTo().isEmpty()) {
                                 column().growX().top().left().children(() -> {
                                     buildReplyPreview(raw.getReplyTo());
-                                    column().growX().top().left().marginTop(ChatMessageHeightCalculator.REPLY_GAP)
+                                    column().growX().top().left().cellPaddingTop(ChatMessageHeightCalculator.REPLY_GAP)
                                             .children(() -> {
                                                 buildMessageBody(parsed, isPending, isFailed);
                                             });
@@ -396,7 +396,7 @@ public class ChatMessageListView extends BaseComponent {
 
             final String displaySnippet = targetSnippet;
             row().growX().top().left().height(ChatMessageHeightCalculator.REPLY_PREVIEW_HEIGHT).children(() -> {
-                icon(Icon.rightSmall).size(unit(4), unit(4)).color(Color.gray).marginRight(unit(1));
+                icon(Icon.rightSmall).size(unit(4), unit(4)).color(Color.gray).cellPaddingRight(unit(1));
                 text(displaySnippet)
                         .color(Color.gray)
                         .fontScale(0.8f)
@@ -509,7 +509,7 @@ public class ChatMessageListView extends BaseComponent {
                         return null;
                     }
                     final String translatedText = translated;
-                    return column().growX().top().left().marginTop(unit(1)).children(() -> {
+                    return column().growX().top().left().cellPaddingTop(unit(1)).children(() -> {
                         text(Core.bundle.get("feature.chat.ui.translated-badge", "Translated"))
                                 .color(Pal.accent)
                                 .fontScale(0.8f)

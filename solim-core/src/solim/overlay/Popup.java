@@ -17,7 +17,7 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.graphics.RoundedDrawable;
 import solim.layout.Spacer;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
 import solim.signal.Readable;
@@ -96,27 +96,27 @@ public final class Popup<T> extends BaseComponent {
     }
 
     public Popup<T> rounded(int radius) {
-        ElementModifiers.rounded(table, radius);
+        ElementConfig.rounded(table, radius);
         return this;
     }
 
     public Popup<T> rounded(int radius, @Nullable Color color) {
-        ElementModifiers.rounded(table, radius, color);
+        ElementConfig.rounded(table, radius, color);
         return this;
     }
 
     public Popup<T> rounded(int radius, @Nullable Readable<Color> color) {
-        ElementModifiers.rounded(table, radius, color);
+        ElementConfig.rounded(table, radius, color);
         return this;
     }
 
     public Popup<T> border(float stroke, @Nullable Color color) {
-        ElementModifiers.border(table, stroke, color);
+        ElementConfig.border(table, stroke, color);
         return this;
     }
 
     public Popup<T> border(float stroke, @Nullable Readable<Color> color) {
-        ElementModifiers.border(table, stroke, color);
+        ElementConfig.border(table, stroke, color);
         return this;
     }
 

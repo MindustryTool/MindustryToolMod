@@ -10,7 +10,7 @@ import solim.core.Component;
 import solim.signal.Effect;
 import solim.signal.Readable;
 
-import solim.layout.LayoutModifiers;
+import solim.layout.CellConfig;
 import solim.layout.SizeConstraints;
 import solim.runtime.StructuralReconciler;
 
@@ -18,7 +18,7 @@ import solim.runtime.StructuralReconciler;
  * Keyed reactive list component that efficiently manages child components without rebuilding
  * unchanged items.
  */
-public final class ForEach<T, K> extends BaseComponent implements LayoutModifiers<ForEach<T, K>> {
+public final class ForEach<T, K> extends BaseComponent implements CellConfig<ForEach<T, K>> {
 	private final Table container = new Table();
 	private final SizeConstraints constraints = new SizeConstraints();
 	private final Readable<? extends Iterable<T>> collection;

@@ -7,7 +7,7 @@ import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.WrapTable;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
 
@@ -15,7 +15,7 @@ import solim.ui.Ui;
  * Wrap container: lays out children in a row that wraps when the row is full.
  * Children receive growX() by default so WrapTable receives the full available width.
  */
-public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContainer {
+public final class Wrap implements Component, CellConfig<Wrap>, GapContainer {
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -70,7 +70,7 @@ public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContaine
     }
 
     public Wrap name(String name) {
-        ElementModifiers.name(table, name);
+        ElementConfig.name(table, name);
         return this;
     }
 
@@ -86,12 +86,12 @@ public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContaine
     }
 
     public Wrap padding(float p) {
-        ElementModifiers.padding(table, p);
+        ElementConfig.padding(table, p);
         return this;
     }
 
     public Wrap padding(float top, float left, float bottom, float right) {
-        ElementModifiers.padding(table, top, left, bottom, right);
+        ElementConfig.padding(table, top, left, bottom, right);
         return this;
     }
 
@@ -101,7 +101,7 @@ public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContaine
         for (Cell<?> c : table.getCells()) {
             if (c != null) c.left();
         }
-        return LayoutModifiers.super.left();
+        return CellConfig.super.left();
     }
 
     public Wrap right() {
@@ -110,7 +110,7 @@ public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContaine
         for (Cell<?> c : table.getCells()) {
             if (c != null) c.right();
         }
-        return LayoutModifiers.super.right();
+        return CellConfig.super.right();
     }
 
     public Wrap center() {
@@ -119,7 +119,7 @@ public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContaine
         for (Cell<?> c : table.getCells()) {
             if (c != null) c.center();
         }
-        return LayoutModifiers.super.center();
+        return CellConfig.super.center();
     }
 
     public Wrap children(@Nullable Runnable r) {

@@ -8,7 +8,7 @@ import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.GapContainer;
-import solim.layout.LayoutModifiers;
+import solim.layout.CellConfig;
 import solim.layout.SizeConstraints;
 import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
@@ -16,7 +16,7 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 
 /** Structural reactive component for switching dynamic subtrees based on a reactive value. */
-public final class Dynamic<T> extends BaseComponent implements LayoutModifiers<Dynamic<T>> {
+public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynamic<T>> {
 	private static final Object SENTINEL = new Object();
 	private final Table container = new Table();
 	private final SizeConstraints constraints = new SizeConstraints();

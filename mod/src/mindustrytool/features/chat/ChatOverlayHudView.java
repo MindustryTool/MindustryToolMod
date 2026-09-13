@@ -76,7 +76,7 @@ public class ChatOverlayHudView extends BaseComponent {
 
         return card()
                 .rounded(10, new Color(0f, 0f, 0f, 0.6f))
-                .margin(unit(4))
+                .cellPadding(unit(4))
                 .children(() -> {
                     button(() -> {
                         feature.collapsedConfig.set(false);
@@ -92,7 +92,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                         .layer(() -> icon(Icon.chat).size(unit(10)).center().grow().color(Color.white))
                                         .layer(() -> row().top().right().grow().visible(hasUnread).children(() -> {
                                             image(circle())
-                                                    .margin(unit(1))
+                                                    .cellPadding(unit(1))
                                                     .size(unit(3))
                                                     .color(Color.scarlet);
                                         }));

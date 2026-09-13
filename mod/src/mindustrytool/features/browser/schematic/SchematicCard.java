@@ -69,7 +69,7 @@ public class SchematicCard extends BaseComponent {
                     card(WebStyles.previewCard().style())
                             .name("SchematicCard-preview-" + schematic.getItemId())
                             .growX()
-                            .margin(unit(1), 0f, unit(1), 0f)
+                            .cellPadding(unit(1), 0f, unit(1), 0f)
                             .height(previewHeight != null ? previewHeight : Readable.of(unit(58f)))
                             .onClick(onClick)
                             .children(() -> {
@@ -138,7 +138,7 @@ public class SchematicCard extends BaseComponent {
                 .gap(unit(1))
                 .tooltip(tooltip)
                 .children(() -> {
-                    icon(iconDrawable).size(unit(4.5f)).color(Color.white).marginRight(unit(1));
+                    icon(iconDrawable).size(unit(4.5f)).color(Color.white).cellPaddingRight(unit(1));
                     text(count).style(Styles.defaultLabel).fontScale(0.85f).color(textColor);
                 });
     }

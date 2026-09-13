@@ -28,7 +28,7 @@ import solim.runtime.StructuralReconciler;
  * @param <T> the item type
  * @param <K> the item key type
  */
-public final class VirtualList<T, K> extends BaseComponent implements LayoutModifiers<VirtualList<T, K>> {
+public final class VirtualList<T, K> extends BaseComponent implements CellConfig<VirtualList<T, K>> {
 
     private final Table outer;
     private final SizeConstraints constraints = new SizeConstraints();

@@ -69,7 +69,7 @@ public class QuickAccessHudView extends BaseComponent {
             image(Tex.whiteui)
                     .color(Pal.accent)
                     .width(2f)
-                    .marginRight(2)
+                    .cellPaddingRight(2)
                     .growY();
 
             grid(parentFeature.colsConfig.signal(), items, HudItem::id,

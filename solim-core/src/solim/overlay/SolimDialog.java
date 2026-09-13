@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ParentStack;
 import solim.signal.Signal;
 
@@ -52,7 +52,7 @@ public class SolimDialog implements Component {
 
     public SolimDialog(String title) {
         wrapped = new BaseDialog(title != null ? title : "");
-        ElementModifiers.name(wrapped, name);
+        ElementConfig.name(wrapped, name);
         wrapped.setFillParent(true);
     }
 
@@ -236,7 +236,7 @@ public class SolimDialog implements Component {
     @Override
     public SolimDialog name(String name) {
         this.name = name;
-        ElementModifiers.name(wrapped, name);
+        ElementConfig.name(wrapped, name);
         return this;
     }
 
@@ -315,27 +315,27 @@ public class SolimDialog implements Component {
     }
 
     public SolimDialog rounded(int radius) {
-        ElementModifiers.rounded(wrapped.cont, radius);
+        ElementConfig.rounded(wrapped.cont, radius);
         return this;
     }
 
     public SolimDialog rounded(int radius, @Nullable Color color) {
-        ElementModifiers.rounded(wrapped.cont, radius, color);
+        ElementConfig.rounded(wrapped.cont, radius, color);
         return this;
     }
 
     public SolimDialog rounded(int radius, @Nullable Readable<Color> color) {
-        ElementModifiers.rounded(wrapped.cont, radius, color);
+        ElementConfig.rounded(wrapped.cont, radius, color);
         return this;
     }
 
     public SolimDialog border(float stroke, @Nullable Color color) {
-        ElementModifiers.border(wrapped.cont, stroke, color);
+        ElementConfig.border(wrapped.cont, stroke, color);
         return this;
     }
 
     public SolimDialog border(float stroke, @Nullable Readable<Color> color) {
-        ElementModifiers.border(wrapped.cont, stroke, color);
+        ElementConfig.border(wrapped.cont, stroke, color);
         return this;
     }
 

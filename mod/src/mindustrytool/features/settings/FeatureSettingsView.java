@@ -43,17 +43,20 @@ public final class FeatureSettingsView extends BaseComponent {
     }
 
     private void toolbar() {
-        row().growX().gap(unit(2)).children(() -> {
-            icon(Icon.zoom);
-            textField(filter).growX().style(WebStyles.clearInput())
-                    .placeholder(Core.bundle.get("feature.search.placeholder"));
+        row().growX().gap(unit(2))
+                .border(1.5f, Color.lightGray)
+                .rounded(3)
+                .children(() -> {
+                    icon(Icon.zoom);
+                    textField(filter).growX().style(WebStyles.clearInput())
+                            .placeholder(Core.bundle.get("feature.search.placeholder"));
 
-            button(FeatureManager::reenable).style(Styles.defaultb).width(unit(50)).height(unit(10))
-                    .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {
-                        icon(Icon.refresh);
-                        text(Core.bundle.get("feature.button.re-enable"));
-                    });
-        });
+                    button(FeatureManager::reenable).style(Styles.defaultb).width(unit(50)).height(unit(10))
+                            .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {
+                                icon(Icon.refresh);
+                                text(Core.bundle.get("feature.button.re-enable"));
+                            });
+                });
     }
 
     static boolean matchesFilter(Feature feature, String query) {

@@ -23,7 +23,7 @@ import solim.core.Disposable;
 import solim.layout.Direction;
 import solim.layout.GapContainer;
 import solim.layout.Row;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.overlay.Hud;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
@@ -279,7 +279,7 @@ public final class Button implements Component, GapContainer {
             button.setStyle(resolved.style());
         }
         if (resolved.padding() != null) {
-            ElementModifiers.padding(button, resolved.padding().floatValue());
+            ElementConfig.padding(button, resolved.padding().floatValue());
         }
         if (resolved.margin() != null) {
             applyStyleMargin(resolved.margin().floatValue());
@@ -323,7 +323,7 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button width(float width) {
-        ElementModifiers.width(button, width);
+        ElementConfig.width(button, width);
         return this;
     }
 
@@ -342,7 +342,7 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button height(float height) {
-        ElementModifiers.height(button, height);
+        ElementConfig.height(button, height);
         return this;
     }
 
@@ -361,12 +361,12 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button size(float width, float height) {
-        ElementModifiers.size(button, width, height);
+        ElementConfig.size(button, width, height);
         return this;
     }
 
     public Button size(float size) {
-        ElementModifiers.size(button, size);
+        ElementConfig.size(button, size);
         return this;
     }
 
@@ -474,7 +474,7 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button marginX(float x) {
-        ElementModifiers.marginX(button, x);
+        ElementConfig.marginX(button, x);
         return this;
     }
 
@@ -493,7 +493,7 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button marginY(float y) {
-        ElementModifiers.marginY(button, y);
+        ElementConfig.marginY(button, y);
         return this;
     }
 
@@ -512,37 +512,37 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button padding(float p) {
-        ElementModifiers.padding(button, p);
+        ElementConfig.padding(button, p);
         return this;
     }
 
     public Button padding(float top, float left, float bottom, float right) {
-        ElementModifiers.padding(button, top, left, bottom, right);
+        ElementConfig.padding(button, top, left, bottom, right);
         return this;
     }
 
     public Button paddingX(float x) {
-        ElementModifiers.paddingX(button, x);
+        ElementConfig.paddingX(button, x);
         return this;
     }
 
     public Button paddingY(float y) {
-        ElementModifiers.paddingY(button, y);
+        ElementConfig.paddingY(button, y);
         return this;
     }
 
     public Button x(float x) {
-        ElementModifiers.x(button, x);
+        ElementConfig.x(button, x);
         return this;
     }
 
     public Button y(float y) {
-        ElementModifiers.y(button, y);
+        ElementConfig.y(button, y);
         return this;
     }
 
     public Button position(float x, float y) {
-        ElementModifiers.position(button, x, y);
+        ElementConfig.position(button, x, y);
         return this;
     }
 
@@ -585,7 +585,7 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button name(String name) {
-        ElementModifiers.name(button, name);
+        ElementConfig.name(button, name);
         return this;
     }
 
@@ -598,12 +598,12 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button draggable(@Nullable Hud hud) {
-        ElementModifiers.draggable(button, hud);
+        ElementConfig.draggable(button, hud);
         return this;
     }
 
     public Button draggable(@Nullable Hud hud, @Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
-        ElementModifiers.draggable(button, hud, xSignal, ySignal);
+        ElementConfig.draggable(button, hud, xSignal, ySignal);
         return this;
     }
 
@@ -635,7 +635,7 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button rounded(int radius, @Nullable Color color) {
-        RoundedDrawable rd = ElementModifiers.rounded(button, radius, color);
+        RoundedDrawable rd = ElementConfig.rounded(button, radius, color);
         if (rd != null) {
             ButtonStyle s = button.getStyle();
             if (s == null) {
@@ -654,7 +654,7 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button rounded(int radius, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = ElementModifiers.rounded(button, radius, color);
+        RoundedDrawable rd = ElementConfig.rounded(button, radius, color);
         if (rd != null) {
             ButtonStyle s = button.getStyle();
             if (s == null) {
@@ -685,7 +685,7 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button border(float stroke, @Nullable Color color) {
-        RoundedDrawable rd = ElementModifiers.border(button, stroke, color);
+        RoundedDrawable rd = ElementConfig.border(button, stroke, color);
         if (rd != null) {
             ButtonStyle s = button.getStyle();
             if (s == null) {
@@ -707,7 +707,7 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button border(float stroke, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = ElementModifiers.border(button, stroke, color);
+        RoundedDrawable rd = ElementConfig.border(button, stroke, color);
         if (rd != null) {
             ButtonStyle s = button.getStyle();
             if (s == null) {

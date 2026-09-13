@@ -12,7 +12,7 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
@@ -23,7 +23,7 @@ import solim.ui.Ui;
 /**
  * Tabs layout component: provides a tab header button bar and switches between tab content panels reactively.
  */
-public final class Tabs implements Component, LayoutModifiers<Tabs> {
+public final class Tabs implements Component, CellConfig<Tabs> {
 
 	private final Table root;
 	private final Table headerBar;
@@ -45,7 +45,7 @@ public final class Tabs implements Component, LayoutModifiers<Tabs> {
 		this.headerBar = new Table();
 		this.headerBar.name = "solim-tabs-headerBar";
 		this.headerBar.top().left();
-		ElementModifiers.gap(this.headerBar, 4f);
+		ElementConfig.gap(this.headerBar, 4f);
 		this.root.add(headerBar).growX().row();
 
 		this.contentStack = new SolimStack();
@@ -59,7 +59,7 @@ public final class Tabs implements Component, LayoutModifiers<Tabs> {
 	}
 
 	public Tabs headerGap(float gap) {
-		ElementModifiers.gap(this.headerBar, gap);
+		ElementConfig.gap(this.headerBar, gap);
 		return this;
 	}
 
@@ -174,7 +174,7 @@ public final class Tabs implements Component, LayoutModifiers<Tabs> {
 	}
 
 	public Tabs name(String name) {
-		ElementModifiers.name(root, name);
+		ElementConfig.name(root, name);
 		return this;
 	}
 

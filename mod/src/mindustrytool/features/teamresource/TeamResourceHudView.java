@@ -229,7 +229,7 @@ public class TeamResourceHudView extends BaseComponent {
                 });
             });
         })
-        .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
+        .cellPadding(scale.map(s -> 2f * (s != null ? s : 1f)))
         .growX()
         .height(cardHeight)
         .onClick(() -> state.setViewingStats(!state.isViewingStats()));
@@ -266,7 +266,7 @@ public class TeamResourceHudView extends BaseComponent {
                         .fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f)));
             });
         })
-        .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
+        .cellPadding(scale.map(s -> 2f * (s != null ? s : 1f)))
         .growX()
         .height(cardHeight);
     }
@@ -275,9 +275,9 @@ public class TeamResourceHudView extends BaseComponent {
         return column(() -> {
             divider();
 
-            row().left().growX()
-                .marginTop(scale.map(s -> 6f * (s != null ? s : 1f)))
-                .marginBottom(scale.map(s -> 3f * (s != null ? s : 1f)))
+                row().left().growX()
+                .cellPaddingTop(scale.map(s -> 6f * (s != null ? s : 1f)))
+                .cellPaddingBottom(scale.map(s -> 3f * (s != null ? s : 1f)))
                 .children(() -> {
                     text(state.tickSignal.map(t -> {
                         if (state.getTeamGraphs().isEmpty()) {
@@ -292,15 +292,15 @@ public class TeamResourceHudView extends BaseComponent {
 
             SplitBar satisfactionBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.SATISFACTION, () -> scale.get() != null ? scale.get() : 1f);
             row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
-                .marginBottom(scale.map(s -> 4f * (s != null ? s : 1f)))
+                .cellPaddingBottom(scale.map(s -> 4f * (s != null ? s : 1f)))
                 .children(() -> {
                     arc(satisfactionBar);
                 });
 
             dynamic(feature.showStoredPowerConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
                 row().left().growX()
-                    .marginTop(scale.map(s -> 5f * (s != null ? s : 1f)))
-                    .marginBottom(scale.map(s -> 3f * (s != null ? s : 1f)))
+                    .cellPaddingTop(scale.map(s -> 5f * (s != null ? s : 1f)))
+                    .cellPaddingBottom(scale.map(s -> 3f * (s != null ? s : 1f)))
                     .children(() -> {
                         text(state.tickSignal.map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ") + state.getFormattedStoredPower()))
                                 .style(Styles.outlineLabel)
@@ -309,7 +309,7 @@ public class TeamResourceHudView extends BaseComponent {
 
                 SplitBar storedBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED, () -> scale.get() != null ? scale.get() : 1f);
                 row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
-                    .marginBottom(scale.map(s -> 2f * (s != null ? s : 1f)))
+                    .cellPaddingBottom(scale.map(s -> 2f * (s != null ? s : 1f)))
                     .children(() -> {
                         arc(storedBar);
                     });

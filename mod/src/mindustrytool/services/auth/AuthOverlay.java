@@ -86,11 +86,11 @@ public class AuthOverlay {
                             return row()
                                     .top()
                                     .right()
-                                    .margin(8f)
-                                    .background(Styles.black6)
-                                    .padding(unit(2))
-                                    .children(() -> {
-                                        text(Core.bundle.get("auth.session.loading"));
+                            .cellPadding(8f)
+                            .background(Styles.black6)
+                            .padding(unit(2))
+                            .children(() -> {
+                                text(Core.bundle.get("auth.session.loading"));
                                     });
                         }
 
@@ -98,12 +98,12 @@ public class AuthOverlay {
                             return row()
                                     .top()
                                     .right()
-                                    .margin(8f)
-                                    .background(Styles.black6)
-                                    .gap(unit(2))
-                                    .padding(unit(2))
-                                    .children(() -> {
-                                        text(Core.bundle.get("auth.session.error"));
+                            .cellPadding(8f)
+                            .background(Styles.black6)
+                            .gap(unit(2))
+                            .padding(unit(2))
+                            .children(() -> {
+                                text(Core.bundle.get("auth.session.error"));
                                         String errText = s.error.getLocalizedMessage() != null
                                                 ? s.error.getLocalizedMessage()
                                                 : "";
@@ -118,11 +118,11 @@ public class AuthOverlay {
                             return row()
                                     .top()
                                     .right()
-                                    .margin(8f)
-                                    .background(Styles.black6)
-                                    .padding(unit(2))
-                                    .children(() -> {
-                                        button(Core.bundle.get("auth.login"), this::startLoginUI);
+                            .cellPadding(8f)
+                            .background(Styles.black6)
+                            .padding(unit(2))
+                            .children(() -> {
+                                button(Core.bundle.get("auth.login"), this::startLoginUI);
                                     });
                         }
 

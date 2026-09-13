@@ -13,16 +13,16 @@ import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SpacingAware;
-import solim.layout.LayoutModifiers;
+import solim.layout.CellConfig;
 import solim.layout.SizeConstraints;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
 
 /** Display widget for drawable content. */
-public final class SolimImage implements Component, LayoutModifiers<SolimImage>, SpacingAware {
+public final class SolimImage implements Component, CellConfig<SolimImage>, SpacingAware {
 
 	private final Image image;
 	private final List<Disposable> bindings = new ArrayList<>();
@@ -99,7 +99,7 @@ public final class SolimImage implements Component, LayoutModifiers<SolimImage>,
 	@Override
 	public SolimImage width(float width) {
 		constraints.prefWidth = Readable.of(width);
-		ElementModifiers.width(image, width);
+		ElementConfig.width(image, width);
 		constraints.applySizeToParentCell(image);
 		return this;
 	}
@@ -111,7 +111,7 @@ public final class SolimImage implements Component, LayoutModifiers<SolimImage>,
 			Effect e = Effect.of(() -> {
 				Float w = width.get();
 				if (w != null) {
-					ElementModifiers.width(image, w);
+					ElementConfig.width(image, w);
 					constraints.applySizeToParentCell(image);
 				}
 			});
@@ -124,7 +124,7 @@ public final class SolimImage implements Component, LayoutModifiers<SolimImage>,
 	@Override
 	public SolimImage height(float height) {
 		constraints.prefHeight = Readable.of(height);
-		ElementModifiers.height(image, height);
+		ElementConfig.height(image, height);
 		constraints.applySizeToParentCell(image);
 		return this;
 	}
@@ -136,7 +136,7 @@ public final class SolimImage implements Component, LayoutModifiers<SolimImage>,
 			Effect e = Effect.of(() -> {
 				Float h = height.get();
 				if (h != null) {
-					ElementModifiers.height(image, h);
+					ElementConfig.height(image, h);
 					constraints.applySizeToParentCell(image);
 				}
 			});
@@ -199,27 +199,27 @@ public final class SolimImage implements Component, LayoutModifiers<SolimImage>,
 	}
 
 	public SolimImage x(float x) {
-		ElementModifiers.x(image, x);
+		ElementConfig.x(image, x);
 		return this;
 	}
 
 	public SolimImage y(float y) {
-		ElementModifiers.y(image, y);
+		ElementConfig.y(image, y);
 		return this;
 	}
 
 	public SolimImage position(float x, float y) {
-		ElementModifiers.position(image, x, y);
+		ElementConfig.position(image, x, y);
 		return this;
 	}
 
 	public SolimImage visible(boolean visible) {
-		ElementModifiers.visible(image, visible);
+		ElementConfig.visible(image, visible);
 		return this;
 	}
 
 	public SolimImage visible(@Nullable Readable<Boolean> signal) {
-		ElementModifiers.visible(image, signal);
+		ElementConfig.visible(image, signal);
 		return this;
 	}
 
@@ -335,14 +335,14 @@ public final class SolimImage implements Component, LayoutModifiers<SolimImage>,
 	}
 
 	@Override
-	public SolimImage marginX(float x) {
+	public SolimImage cellPaddingX(float x) {
 		this.marginLeft = this.marginRight = x;
 		applySpacing();
 		return this;
 	}
 
 	@Override
-	public SolimImage marginY(float y) {
+	public SolimImage cellPaddingY(float y) {
 		this.marginTop = this.marginBottom = y;
 		applySpacing();
 		return this;
@@ -370,7 +370,7 @@ public final class SolimImage implements Component, LayoutModifiers<SolimImage>,
 
 	@Override
 	public SolimImage name(String name) {
-		ElementModifiers.name(image, name);
+		ElementConfig.name(image, name);
 		return this;
 	}
 

@@ -35,7 +35,7 @@ public class AxisSpacingTest {
 		assertEquals(8f, colTable.getMarginTop(), 0.01f);
 		assertEquals(8f, colTable.getMarginBottom(), 0.01f);
 
-		col.marginX(10f).marginY(5f);
+		col.cellPaddingX(10f).cellPaddingY(5f);
 		assertEquals(10f, colTable.getMarginLeft(), 0.01f);
 		assertEquals(10f, colTable.getMarginRight(), 0.01f);
 		assertEquals(5f, colTable.getMarginTop(), 0.01f);
@@ -48,7 +48,7 @@ public class AxisSpacingTest {
 		assertEquals(12f, rowTable.getMarginTop(), 0.01f);
 		assertEquals(12f, rowTable.getMarginBottom(), 0.01f);
 
-		row.marginX(14f).marginY(7f);
+		row.cellPaddingX(14f).cellPaddingY(7f);
 		assertEquals(14f, rowTable.getMarginLeft(), 0.01f);
 		assertEquals(14f, rowTable.getMarginRight(), 0.01f);
 		assertEquals(7f, rowTable.getMarginTop(), 0.01f);
@@ -78,7 +78,7 @@ public class AxisSpacingTest {
 		SolimImage img = new SolimImage();
 		parent.add(img.element());
 
-		img.paddingX(10f).paddingY(5f).marginX(8f).marginY(4f);
+		img.paddingX(10f).paddingY(5f).cellPaddingX(8f).cellPaddingY(4f);
 
 		Cell<?> cell = parent.getCell(img.element());
 		// padding (10, 5) + margin (8, 4) = 18 horizontal, 9 vertical
@@ -125,7 +125,7 @@ public class AxisSpacingTest {
 		Signal<Float> mx = Signal.of(11f);
 		Signal<Float> my = Signal.of(7f);
 
-		grid.marginX(mx).marginY(my);
+		grid.cellPaddingX(mx).cellPaddingY(my);
 		grid.sizeConstraints().applyToCell(cell);
 		SignalDispatcher.flush();
 

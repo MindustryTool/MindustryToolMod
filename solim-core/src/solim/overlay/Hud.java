@@ -17,10 +17,10 @@ import java.util.List;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.layout.LayoutModifiers;
+import solim.layout.CellConfig;
 import solim.layout.Row;
 import solim.layout.SizeConstraints;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
@@ -33,7 +33,7 @@ import solim.signal.Signal;
  * Content children are nested within an inner enabled container.
  * Automatically adapts to screen resize events via {@link #keepInScreen()}.
  */
-public class Hud implements Component, LayoutModifiers<Hud> {
+public class Hud implements Component, CellConfig<Hud> {
 
 	private final Table root;
 	private final Table container;
@@ -110,7 +110,7 @@ public class Hud implements Component, LayoutModifiers<Hud> {
 	}
 
 	public Hud name(String name) {
-		ElementModifiers.name(root, name);
+		ElementConfig.name(root, name);
 		return this;
 	}
 
@@ -200,7 +200,7 @@ public class Hud implements Component, LayoutModifiers<Hud> {
 	}
 
 	public Hud x(float x) {
-		ElementModifiers.x(root, x);
+		ElementConfig.x(root, x);
 		return this;
 	}
 
@@ -212,7 +212,7 @@ public class Hud implements Component, LayoutModifiers<Hud> {
 			Effect e = Effect.of(() -> {
 				Float v = x.get();
 				if (v != null) {
-					ElementModifiers.x(root, v);
+					ElementConfig.x(root, v);
 				}
 			});
 			bindings.add(e);
@@ -222,7 +222,7 @@ public class Hud implements Component, LayoutModifiers<Hud> {
 	}
 
 	public Hud y(float y) {
-		ElementModifiers.y(root, y);
+		ElementConfig.y(root, y);
 		return this;
 	}
 
@@ -234,7 +234,7 @@ public class Hud implements Component, LayoutModifiers<Hud> {
 			Effect e = Effect.of(() -> {
 				Float v = y.get();
 				if (v != null) {
-					ElementModifiers.y(root, v);
+					ElementConfig.y(root, v);
 				}
 			});
 			bindings.add(e);
@@ -244,7 +244,7 @@ public class Hud implements Component, LayoutModifiers<Hud> {
 	}
 
 	public Hud position(float x, float y) {
-		ElementModifiers.position(root, x, y);
+		ElementConfig.position(root, x, y);
 		return this;
 	}
 
@@ -255,7 +255,7 @@ public class Hud implements Component, LayoutModifiers<Hud> {
 	}
 
 	public Hud opacity(float opacity) {
-		ElementModifiers.opacity(container, opacity);
+		ElementConfig.opacity(container, opacity);
 		return this;
 	}
 
@@ -264,7 +264,7 @@ public class Hud implements Component, LayoutModifiers<Hud> {
 			Effect e = Effect.of(() -> {
 				Float v = opacity.get();
 				if (v != null) {
-					ElementModifiers.opacity(container, v);
+					ElementConfig.opacity(container, v);
 				}
 			});
 			bindings.add(e);
@@ -302,14 +302,14 @@ public class Hud implements Component, LayoutModifiers<Hud> {
 	}
 
 	public Hud draggable(Element handle) {
-		ElementModifiers.draggable(handle, this);
+		ElementConfig.draggable(handle, this);
 		return this;
 	}
 
 	public Hud draggable(Element handle, @Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
 		if (xSignal != null) this.boundXSignal = xSignal;
 		if (ySignal != null) this.boundYSignal = ySignal;
-		ElementModifiers.draggable(handle, this, xSignal, ySignal);
+		ElementConfig.draggable(handle, this, xSignal, ySignal);
 		return this;
 	}
 

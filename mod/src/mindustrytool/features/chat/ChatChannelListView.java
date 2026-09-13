@@ -91,7 +91,7 @@ public class ChatChannelListView extends BaseComponent {
 
             return row()
                     .growX()
-                    .marginTop(unit(1))
+                    .cellPaddingTop(unit(1))
                     .height(unit(10))
                     .left()
                     .children(() -> {

@@ -7,7 +7,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
@@ -15,7 +15,7 @@ import solim.runtime.ParentStack;
 import solim.ui.Ui;
 
 /** Column layout — vertical Table wrapper. */
-public final class Column implements Component, LayoutModifiers<Column>, GapContainer {
+public final class Column implements Component, CellConfig<Column>, GapContainer {
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -56,7 +56,7 @@ public final class Column implements Component, LayoutModifiers<Column>, GapCont
     }
 
     public Column name(String name) {
-        ElementModifiers.name(table, name);
+        ElementConfig.name(table, name);
         return this;
     }
 
@@ -81,7 +81,7 @@ public final class Column implements Component, LayoutModifiers<Column>, GapCont
     }
 
     public Column background(@Nullable Drawable bg) {
-        ElementModifiers.background(table, bg);
+        ElementConfig.background(table, bg);
         return this;
     }
 
@@ -114,165 +114,165 @@ public final class Column implements Component, LayoutModifiers<Column>, GapCont
     }
 
     public Column padding(float p) {
-        ElementModifiers.padding(table, p);
+        ElementConfig.padding(table, p);
         return this;
     }
 
     public Column padding(float top, float left, float bottom, float right) {
-        ElementModifiers.padding(table, top, left, bottom, right);
+        ElementConfig.padding(table, top, left, bottom, right);
         return this;
     }
 
     public Column paddingTop(float top) {
-        ElementModifiers.paddingTop(table, top);
+        ElementConfig.paddingTop(table, top);
         return this;
     }
 
     public Column paddingBottom(float bottom) {
-        ElementModifiers.paddingBottom(table, bottom);
+        ElementConfig.paddingBottom(table, bottom);
         return this;
     }
 
     public Column paddingLeft(float left) {
-        ElementModifiers.paddingLeft(table, left);
+        ElementConfig.paddingLeft(table, left);
         return this;
     }
 
     public Column paddingRight(float right) {
-        ElementModifiers.paddingRight(table, right);
+        ElementConfig.paddingRight(table, right);
         return this;
     }
 
     public Column margin(float m) {
-        ElementModifiers.margin(table, m);
+        ElementConfig.margin(table, m);
         return this;
     }
 
     public Column margin(float top, float left, float bottom, float right) {
-        ElementModifiers.margin(table, top, left, bottom, right);
+        ElementConfig.margin(table, top, left, bottom, right);
         return this;
     }
 
     public Column marginTop(float top) {
-        ElementModifiers.marginTop(table, top);
+        ElementConfig.marginTop(table, top);
         return this;
     }
 
     public Column marginBottom(float bottom) {
-        ElementModifiers.marginBottom(table, bottom);
+        ElementConfig.marginBottom(table, bottom);
         return this;
     }
 
     public Column marginLeft(float left) {
-        ElementModifiers.marginLeft(table, left);
+        ElementConfig.marginLeft(table, left);
         return this;
     }
 
     public Column marginRight(float right) {
-        ElementModifiers.marginRight(table, right);
+        ElementConfig.marginRight(table, right);
         return this;
     }
 
     public Column paddingX(float x) {
-        ElementModifiers.paddingX(table, x);
+        ElementConfig.paddingX(table, x);
         return this;
     }
 
     public Column paddingY(float y) {
-        ElementModifiers.paddingY(table, y);
+        ElementConfig.paddingY(table, y);
         return this;
     }
 
     @Override
-    public Column marginX(float x) {
-        ElementModifiers.marginX(table, x);
+    public Column cellPaddingX(float x) {
+        ElementConfig.marginX(table, x);
         return this;
     }
 
     @Override
-    public Column marginY(float y) {
-        ElementModifiers.marginY(table, y);
+    public Column cellPaddingY(float y) {
+        ElementConfig.marginY(table, y);
         return this;
     }
 
     public Column x(float x) {
-        ElementModifiers.x(table, x);
+        ElementConfig.x(table, x);
         return this;
     }
 
     public Column y(float y) {
-        ElementModifiers.y(table, y);
+        ElementConfig.y(table, y);
         return this;
     }
 
     public Column position(float x, float y) {
-        ElementModifiers.position(table, x, y);
+        ElementConfig.position(table, x, y);
         return this;
     }
 
     public Column visible(boolean visible) {
-        ElementModifiers.visible(table, visible);
+        ElementConfig.visible(table, visible);
         return this;
     }
 
     public Column visible(@Nullable Readable<Boolean> visible) {
-        ElementModifiers.visible(table, visible);
+        ElementConfig.visible(table, visible);
         return this;
     }
 
     @Override
     public Column top() {
-        ElementModifiers.top(table);
+        ElementConfig.top(table);
         table.defaults().top();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.top();
         }
-        return LayoutModifiers.super.top();
+        return CellConfig.super.top();
     }
 
     @Override
     public Column bottom() {
-        ElementModifiers.bottom(table);
+        ElementConfig.bottom(table);
         table.defaults().bottom();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.bottom();
         }
-        return LayoutModifiers.super.bottom();
+        return CellConfig.super.bottom();
     }
 
     @Override
     public Column left() {
-        ElementModifiers.left(table);
+        ElementConfig.left(table);
         table.defaults().left();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.left();
         }
-        return LayoutModifiers.super.left();
+        return CellConfig.super.left();
     }
 
     @Override
     public Column right() {
-        ElementModifiers.right(table);
+        ElementConfig.right(table);
         table.defaults().right();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.right();
         }
-        return LayoutModifiers.super.right();
+        return CellConfig.super.right();
     }
 
     @Override
     public Column center() {
-        ElementModifiers.center(table);
+        ElementConfig.center(table);
         table.defaults().center();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.center();
         }
-        return LayoutModifiers.super.center();
+        return CellConfig.super.center();
     }
 
     public Column align(Align a) {

@@ -12,12 +12,12 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
 
 /** Scroll container wrapping a Table in a ScrollPane. */
-public final class Scroll implements Component, LayoutModifiers<Scroll> {
+public final class Scroll implements Component, CellConfig<Scroll> {
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -211,7 +211,7 @@ public final class Scroll implements Component, LayoutModifiers<Scroll> {
         for (Cell<?> cell : content.getCells()) {
             cell.center().top();
         }
-        return LayoutModifiers.super.center();
+        return CellConfig.super.center();
     }
 
     @Override
@@ -222,7 +222,7 @@ public final class Scroll implements Component, LayoutModifiers<Scroll> {
         for (Cell<?> cell : content.getCells()) {
             cell.left().top();
         }
-        return LayoutModifiers.super.left();
+        return CellConfig.super.left();
     }
 
     @Override
@@ -233,7 +233,7 @@ public final class Scroll implements Component, LayoutModifiers<Scroll> {
         for (Cell<?> cell : content.getCells()) {
             cell.right().top();
         }
-        return LayoutModifiers.super.right();
+        return CellConfig.super.right();
     }
 
     @Override
@@ -247,22 +247,22 @@ public final class Scroll implements Component, LayoutModifiers<Scroll> {
     }
 
     public Scroll x(float x) {
-        ElementModifiers.x(outer, x);
+        ElementConfig.x(outer, x);
         return this;
     }
 
     public Scroll y(float y) {
-        ElementModifiers.y(outer, y);
+        ElementConfig.y(outer, y);
         return this;
     }
 
     public Scroll position(float x, float y) {
-        ElementModifiers.position(outer, x, y);
+        ElementConfig.position(outer, x, y);
         return this;
     }
 
     public Scroll visible(boolean visible) {
-        ElementModifiers.visible(outer, visible);
+        ElementConfig.visible(outer, visible);
         return this;
     }
 
@@ -304,7 +304,7 @@ public final class Scroll implements Component, LayoutModifiers<Scroll> {
     }
 
     public Scroll name(String name) {
-        ElementModifiers.name(outer, name);
+        ElementConfig.name(outer, name);
         return this;
     }
 }

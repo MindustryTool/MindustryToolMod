@@ -19,7 +19,7 @@ import solim.signal.Readable;
 import solim.signal.Signal;
 
 /**
- * Category A — Self / Element modifiers.
+ * Element-level configuration utilities.
  *
  * <p>
  * Static utility methods that modify the Arc {@link arc.scene.Element} itself:
@@ -28,7 +28,7 @@ import solim.signal.Signal;
  * child defaults.
  *
  * <p>
- * Modifier targets:
+ * Targets:
  * <ul>
  * <li>{@code width/height/size} — element's size (sets on the element
  * directly)</li>
@@ -44,13 +44,13 @@ import solim.signal.Signal;
  * </ul>
  *
  * <p>
- * Contrast with {@link solim.layout.LayoutModifiers}, which is a Category B
- * interface that configures how the element behaves inside its <em>parent</em>
- * layout cell (grow, margin as parent-cell padding, alignment in parent, etc.).
+ * Contrast with {@link solim.layout.CellConfig}, which is a mixin interface
+ * that configures how the element behaves inside its <em>parent</em> layout
+ * cell (grow, cellPadding as parent-cell spacing, alignment in parent, etc.).
  */
-public final class ElementModifiers {
+public final class ElementConfig {
 
-    private ElementModifiers() {
+    private ElementConfig() {
     }
 
     public static void width(@Nullable Element element, float width) {

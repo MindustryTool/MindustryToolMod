@@ -11,7 +11,7 @@ import arc.util.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import solim.core.Component;
-import solim.modifier.ElementModifiers;
+import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
@@ -131,22 +131,22 @@ public final class SolimTextField implements Component {
 	}
 
 	public SolimTextField width(float width) {
-		ElementModifiers.width(field, width);
+		ElementConfig.width(field, width);
 		return this;
 	}
 
 	public SolimTextField height(float height) {
-		ElementModifiers.height(field, height);
+		ElementConfig.height(field, height);
 		return this;
 	}
 
 	public SolimTextField size(float width, float height) {
-		ElementModifiers.size(field, width, height);
+		ElementConfig.size(field, width, height);
 		return this;
 	}
 
 	public SolimTextField size(float size) {
-		ElementModifiers.size(field, size);
+		ElementConfig.size(field, size);
 		return this;
 	}
 
@@ -179,22 +179,22 @@ public final class SolimTextField implements Component {
 	}
 
 	public SolimTextField x(float x) {
-		ElementModifiers.x(field, x);
+		ElementConfig.x(field, x);
 		return this;
 	}
 
 	public SolimTextField y(float y) {
-		ElementModifiers.y(field, y);
+		ElementConfig.y(field, y);
 		return this;
 	}
 
 	public SolimTextField position(float x, float y) {
-		ElementModifiers.position(field, x, y);
+		ElementConfig.position(field, x, y);
 		return this;
 	}
 
 	public SolimTextField visible(boolean visible) {
-		ElementModifiers.visible(field, visible);
+		ElementConfig.visible(field, visible);
 		return this;
 	}
 
@@ -209,7 +209,7 @@ public final class SolimTextField implements Component {
 
 	@Override
 	public SolimTextField name(String name) {
-		ElementModifiers.name(field, name);
+		ElementConfig.name(field, name);
 		return this;
 	}
 

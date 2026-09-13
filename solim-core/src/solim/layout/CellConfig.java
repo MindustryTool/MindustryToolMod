@@ -5,47 +5,37 @@ import arc.scene.style.Drawable;
 import solim.signal.Readable;
 
 /**
- * Category B — Parent-layout modifiers (and Category C — container modifiers).
+ * Parent-cell configuration mixin.
  *
  * <p>
- * Mixin interface implemented by Solim layout containers ({@link Row},
- * {@link Column}, {@link Card}, {@link Grid}, {@link Scroll}, etc.). Each
- * method configures how this component behaves inside its <em>parent</em>
- * layout cell, or how the container manages its children.
+ * Implemented by Solim layout containers ({@link Row}, {@link Column},
+ * {@link Card}, {@link Grid}, {@link Scroll}, etc.). Each method configures
+ * how this component behaves inside its <em>parent</em> layout cell.
  *
  * <p>
- * Modifier categories:
+ * Categories:
  * <ul>
- * <li><b>Category B — Parent-cell configuration</b>: {@code growX/growY/grow},
- * {@code margin}, {@code align} — these are applied to the
- * {@link arc.scene.ui.layout.Cell} that the parent layout allocates for this
- * element.</li>
- * <li><b>Category A — Element size</b>:
- * {@code width/height/size/minWidth/maxWidth} — these go into
- * {@link SizeConstraints} and are applied to the cell as preferred/min/max size
- * constraints. They do NOT directly mutate the element unlike
- * {@link solim.modifier.ElementModifiers} static methods.</li>
- * <li><b>Category C — Container defaults</b>: {@code padding/gap/opacity} —
- * stored on the component's root element and affect how children are laid
- * out.</li>
+ * <li><b>Size</b>: {@code width/height/size/minWidth/maxWidth} — stored in
+ * {@link SizeConstraints}, applied to the parent cell as preferred/min/max
+ * size constraints.</li>
+ * <li><b>Grow</b>: {@code growX/growY/grow} — marks this component to grow
+ * in its parent cell.</li>
+ * <li><b>Cell padding</b>: {@code cellPadding/cellPaddingTop/...} — outer
+ * spacing between this element and the parent cell boundary (applied as
+ * {@code Cell.pad()}).</li>
+ * <li><b>Alignment</b>: {@code center/top/bottom/left/right} — positions
+ * this component within its parent cell.</li>
+ * <li><b>Visual</b>: {@code opacity/rounded/border/background} — delegates
+ * to {@link solim.modifier.ElementConfig}.</li>
  * </ul>
  *
  * <p>
- * Contrast with {@link solim.modifier.ElementModifiers}, which is a Category A
- * static utility that mutates an Arc element's own properties directly.
- *
- * <p>
- * Fluent ordering convention:
- * <ol>
- * <li>Container/self configuration (before {@code children()})</li>
- * <li>{@code children()} — declare child components</li>
- * <li>Parent-layout modifiers — {@code grow()}, {@code margin()}, etc. (after
- * {@code children()})</li>
- * </ol>
+ * Contrast with {@link solim.modifier.ElementConfig}, which is a static
+ * utility that mutates an Arc element's own properties directly.
  *
  * @param <SELF> the concrete component type, enabling fluent chaining
  */
-public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
+public interface CellConfig<SELF extends CellConfig<SELF>> {
 
     /**
      * Returns the {@link SizeConstraints} owned by this component's root element.
@@ -277,14 +267,14 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
 
     default SELF opacity(float v) {
         if (this instanceof solim.core.Component) {
-            solim.modifier.ElementModifiers.opacity(((solim.core.Component) this).element(), v);
+            solim.modifier.ElementConfig.opacity(((solim.core.Component) this).element(), v);
         }
         return self();
     }
 
     default SELF opacity(Readable<Float> v) {
         if (this instanceof solim.core.Component) {
-            solim.modifier.ElementModifiers.opacity(((solim.core.Component) this).element(), v);
+            solim.modifier.ElementConfig.opacity(((solim.core.Component) this).element(), v);
         }
         return self();
     }
@@ -354,13 +344,13 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    // ---------- margin (outer spacing via parent cell pad) ----------
+    // ---------- cell padding (outer spacing via parent cell pad) ----------
 
-    default SELF margin(float m) {
-        return margin(m, m, m, m);
+    default SELF cellPadding(float p) {
+        return cellPadding(p, p, p, p);
     }
 
-    default SELF margin(float top, float left, float bottom, float right) {
+    default SELF cellPadding(float top, float left, float bottom, float right) {
         sizeConstraints().padTop = Readable.of(top);
         sizeConstraints().padLeft = Readable.of(left);
         sizeConstraints().padBottom = Readable.of(bottom);
@@ -371,11 +361,11 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF margin(Readable<Float> m) {
-        return margin(m, m, m, m);
+    default SELF cellPadding(Readable<Float> p) {
+        return cellPadding(p, p, p, p);
     }
 
-    default SELF margin(Readable<Float> top, Readable<Float> left, Readable<Float> bottom, Readable<Float> right) {
+    default SELF cellPadding(Readable<Float> top, Readable<Float> left, Readable<Float> bottom, Readable<Float> right) {
         sizeConstraints().padTop = top;
         sizeConstraints().padLeft = left;
         sizeConstraints().padBottom = bottom;
@@ -386,7 +376,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginTop(float top) {
+    default SELF cellPaddingTop(float top) {
         sizeConstraints().padTop = Readable.of(top);
         if (this instanceof solim.core.Component) {
             sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
@@ -394,7 +384,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginTop(Readable<Float> top) {
+    default SELF cellPaddingTop(Readable<Float> top) {
         sizeConstraints().padTop = top;
         if (this instanceof solim.core.Component) {
             sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
@@ -402,7 +392,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginBottom(float bottom) {
+    default SELF cellPaddingBottom(float bottom) {
         sizeConstraints().padBottom = Readable.of(bottom);
         if (this instanceof solim.core.Component) {
             sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
@@ -410,7 +400,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginBottom(Readable<Float> bottom) {
+    default SELF cellPaddingBottom(Readable<Float> bottom) {
         sizeConstraints().padBottom = bottom;
         if (this instanceof solim.core.Component) {
             sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
@@ -418,7 +408,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginLeft(float left) {
+    default SELF cellPaddingLeft(float left) {
         sizeConstraints().padLeft = Readable.of(left);
         if (this instanceof solim.core.Component) {
             sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
@@ -426,7 +416,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginLeft(Readable<Float> left) {
+    default SELF cellPaddingLeft(Readable<Float> left) {
         sizeConstraints().padLeft = left;
         if (this instanceof solim.core.Component) {
             sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
@@ -434,7 +424,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginRight(float right) {
+    default SELF cellPaddingRight(float right) {
         sizeConstraints().padRight = Readable.of(right);
         if (this instanceof solim.core.Component) {
             sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
@@ -442,7 +432,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginRight(Readable<Float> right) {
+    default SELF cellPaddingRight(Readable<Float> right) {
         sizeConstraints().padRight = right;
         if (this instanceof solim.core.Component) {
             sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
@@ -450,7 +440,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginX(float x) {
+    default SELF cellPaddingX(float x) {
         sizeConstraints().padLeft = Readable.of(x);
         sizeConstraints().padRight = Readable.of(x);
         if (this instanceof solim.core.Component) {
@@ -459,7 +449,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginX(Readable<Float> x) {
+    default SELF cellPaddingX(Readable<Float> x) {
         sizeConstraints().padLeft = x;
         sizeConstraints().padRight = x;
         if (this instanceof solim.core.Component) {
@@ -468,7 +458,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginY(float y) {
+    default SELF cellPaddingY(float y) {
         sizeConstraints().padTop = Readable.of(y);
         sizeConstraints().padBottom = Readable.of(y);
         if (this instanceof solim.core.Component) {
@@ -477,7 +467,7 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
         return self();
     }
 
-    default SELF marginY(Readable<Float> y) {
+    default SELF cellPaddingY(Readable<Float> y) {
         sizeConstraints().padTop = y;
         sizeConstraints().padBottom = y;
         if (this instanceof solim.core.Component) {
@@ -490,35 +480,35 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
 
     default SELF rounded(int radius) {
         if (this instanceof solim.core.Component) {
-            solim.modifier.ElementModifiers.rounded(((solim.core.Component) this).element(), radius);
+            solim.modifier.ElementConfig.rounded(((solim.core.Component) this).element(), radius);
         }
         return self();
     }
 
     default SELF rounded(int radius, Color color) {
         if (this instanceof solim.core.Component) {
-            solim.modifier.ElementModifiers.rounded(((solim.core.Component) this).element(), radius, color);
+            solim.modifier.ElementConfig.rounded(((solim.core.Component) this).element(), radius, color);
         }
         return self();
     }
 
     default SELF rounded(int radius, Readable<Color> color) {
         if (this instanceof solim.core.Component) {
-            solim.modifier.ElementModifiers.rounded(((solim.core.Component) this).element(), radius, color);
+            solim.modifier.ElementConfig.rounded(((solim.core.Component) this).element(), radius, color);
         }
         return self();
     }
 
     default SELF border(float stroke, Color color) {
         if (this instanceof solim.core.Component) {
-            solim.modifier.ElementModifiers.border(((solim.core.Component) this).element(), stroke, color);
+            solim.modifier.ElementConfig.border(((solim.core.Component) this).element(), stroke, color);
         }
         return self();
     }
 
     default SELF border(float stroke, Readable<Color> color) {
         if (this instanceof solim.core.Component) {
-            solim.modifier.ElementModifiers.border(((solim.core.Component) this).element(), stroke, color);
+            solim.modifier.ElementConfig.border(((solim.core.Component) this).element(), stroke, color);
         }
         return self();
     }
@@ -527,14 +517,14 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
 
     default SELF background(Drawable bg) {
         if (this instanceof solim.core.Component) {
-            solim.modifier.ElementModifiers.background(((solim.core.Component) this).element(), bg);
+            solim.modifier.ElementConfig.background(((solim.core.Component) this).element(), bg);
         }
         return self();
     }
 
     default SELF background(Color color) {
         if (this instanceof solim.core.Component) {
-            solim.modifier.ElementModifiers.background(((solim.core.Component) this).element(), color);
+            solim.modifier.ElementConfig.background(((solim.core.Component) this).element(), color);
         }
         return self();
     }
