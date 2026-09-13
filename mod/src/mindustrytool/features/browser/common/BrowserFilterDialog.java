@@ -7,12 +7,15 @@ import arc.func.Boolf;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.struct.Seq;
+import arc.util.Strings;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.world.Block;
 import mindustrytool.Config;
@@ -24,6 +27,7 @@ import mindustrytool.models.response.TagCategory;
 import mindustrytool.models.response.TagData;
 import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
+import solim.layout.Direction;
 import solim.overlay.SolimDialog;
 import solim.signal.Computed;
 import solim.signal.Readable;
@@ -43,13 +47,14 @@ public class BrowserFilterDialog extends SolimDialog {
         closeOnBack();
         fillParent(true);
         children(() -> new FilterContent(state, tagGroup, useBlocks, usePlanets));
+        dialog().background(colored(Color.black, Tex.whiteui));
     }
 
-    private static class FilterContent extends BaseComponent {
-        private static final Signal<List<TagCategory>> cachedTags = Signal.of(Collections.<TagCategory>emptyList());
-        private static final Signal<List<ModData>> cachedPlanets = Signal.of(Collections.<ModData>emptyList());
-        private static boolean tagsLoaded = false;
-        private static boolean planetsLoaded = false;
+    private class FilterContent extends BaseComponent {
+        private final Signal<List<TagCategory>> cachedTags = Signal.of(Collections.<TagCategory>emptyList());
+        private final Signal<List<ModData>> cachedPlanets = Signal.of(Collections.<ModData>emptyList());
+        private boolean tagsLoaded = false;
+        private boolean planetsLoaded = false;
 
         private final BrowserState<?> state;
         private final String tagGroup;
@@ -57,7 +62,8 @@ public class BrowserFilterDialog extends SolimDialog {
         private final boolean usePlanets;
         private final Signal<Seq<String>> selectedPlanets = Signal.of(new Seq<String>());
         private final Signal<String> filterText = Signal.of("");
-        private final Computed<List<CategoryViewModel>> visibleCategories = new Computed<>(this::computeVisibleCategories);
+        private final Computed<List<CategoryViewModel>> visibleCategories = new Computed<>(
+                this::computeVisibleCategories);
 
         FilterContent(BrowserState<?> state, String tagGroup, boolean useBlocks, boolean usePlanets) {
             this.state = state;
@@ -74,7 +80,7 @@ public class BrowserFilterDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            return column().grow().padding(unit(1)).gap(unit(1)).children(() -> {
+            return column().grow().padding(unit(4)).gap(unit(1)).children(() -> {
                 searchRow();
                 scroll().grow().children(() -> {
                     column().growX().left().gap(unit(1)).children(() -> {
@@ -91,30 +97,32 @@ public class BrowserFilterDialog extends SolimDialog {
                         }
                     });
                 });
-                clearAllButton();
             }).element();
         }
 
         private void searchRow() {
             row().growX().left()
-                    .rounded(unit(2))
-                    .border(1f, WebStyles.Colors.SECTION_BORDER)
-                    .background(Styles.black6)
-                    .padding(unit(1))
+                    .gap(unit(1))
+                    .height(unit(10))
+                    .rounded(unit(3))
+                    .border(1.5f, Color.darkGray)
+                    .paddingLeft(unit(2))
                     .children(() -> {
-                        icon(Icon.zoom).size(unit(4)).color(Color.gray);
+                        icon(Icon.zoom).size(unit(5)).color(Color.gray);
+
                         textField(filterText)
                                 .growX()
                                 .style(WebStyles.clearInput())
                                 .placeholder(Core.bundle.get("browser.search.placeholder"));
+                        divider(Direction.HORIZONTAL);
+                        clearAllButton();
                     });
         }
 
         private void clearAllButton() {
             button(Core.bundle.get("browser.filter.clear-all"), this::clearAll)
                     .style(WebStyles.clearFiltersText())
-                    .growX()
-                    .height(unit(9));
+                    .height(unit(10));
         }
 
         private static int computeColumns(float availableWidth, float longestLabelWidth) {
@@ -125,22 +133,22 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void sectionPanel(String title, Runnable content) {
-            row().growX().left()
+            column().growX().left()
                     .rounded(unit(2))
                     .border(1f, WebStyles.Colors.SECTION_BORDER)
                     .background(Styles.black6)
                     .padding(unit(1))
+                    .gap(unit(1))
                     .children(() -> {
-                        column().growX().left().gap(unit(1)).children(() -> {
-                            text(title).style(Styles.defaultLabel).color(Color.lightGray).left();
-                            content.run();
-                        });
+                        text(title).style(Styles.defaultLabel).color(Color.lightGray).left();
+                        content.run();
                     });
         }
 
         private void renderSortOptions() {
             float longestLabel = 15f;
-            Readable<Integer> columns = dvw(95f).map(w -> computeColumns(w, longestLabel));
+            Readable<Integer> columns = dvw(75f).map(w -> computeColumns(w, longestLabel));
+
             grid(columns).left().gap(unit(1)).children(() -> {
                 for (Sort sortOption : Config.sorts) {
                     String sortValue = sortOption.getValue();
@@ -159,6 +167,7 @@ public class BrowserFilterDialog extends SolimDialog {
                 if (mods == null || mods.isEmpty()) {
                     return row();
                 }
+
                 List<ModData> sorted = new ArrayList<ModData>(mods);
                 Collections.sort(sorted, new Comparator<ModData>() {
                     @Override
@@ -174,7 +183,7 @@ public class BrowserFilterDialog extends SolimDialog {
                     longestLabel = Math.max(longestLabel, name.length() * 1.2f);
                 }
                 float fl = longestLabel;
-                Readable<Integer> columns = dvw(95f).map(w -> computeColumns(w, fl));
+                Readable<Integer> columns = dvw(75f).map(w -> computeColumns(w, fl));
                 return grid(columns).left().gap(unit(1)).children(() -> {
                     for (ModData mod : sorted) {
                         renderPlanet(mod);
@@ -244,7 +253,9 @@ public class BrowserFilterDialog extends SolimDialog {
                 if (category.getTags() == null) {
                     continue;
                 }
+
                 List<TagData> visible = visibleTags(category.getTags(), planetFilter, loweredQuery);
+
                 if (!visible.isEmpty()) {
                     result.add(new CategoryViewModel(
                             category.getName() != null ? category.getName() : "",
@@ -266,6 +277,7 @@ public class BrowserFilterDialog extends SolimDialog {
                         }
                         return;
                     }
+
                     for (CategoryViewModel category : categories) {
                         renderCategory(category);
                     }
@@ -275,15 +287,18 @@ public class BrowserFilterDialog extends SolimDialog {
 
         private void renderCategory(CategoryViewModel category) {
             float longestLabel = 0f;
+
             for (TagData tag : category.tags) {
                 String name = tag.getName() != null ? tag.getName() : "";
-                longestLabel = Math.max(longestLabel, name.length() * 1.2f);
+                longestLabel = Math.max(longestLabel, name.length() * 1.4f);
             }
+
             float fl = longestLabel;
-            Readable<Integer> columns = dvw(95f).map(w -> computeColumns(w, fl));
-            column().growX().left().gap(unit(0.5f)).children(() -> {
-                text(category.name)
-                        .color(Color.lightGray)
+            Readable<Integer> columns = dvw(75f).map(w -> computeColumns(w, fl));
+
+            column().growX().left().gap(unit(1)).children(() -> {
+                text(Strings.capitalize(category.name))
+                        .color(category.color)
                         .style(Styles.defaultLabel)
                         .left();
 
@@ -338,6 +353,7 @@ public class BrowserFilterDialog extends SolimDialog {
                 final String loweredQuery = query != null ? query.toLowerCase() : "";
                 Seq<Block> blocks = availableBlocks();
                 float longestLabel = 0f;
+
                 for (int i = 0; i < blocks.size; i++) {
                     Block block = blocks.get(i);
                     if (block != null && block.localizedName != null) {
@@ -346,25 +362,30 @@ public class BrowserFilterDialog extends SolimDialog {
                         }
                     }
                 }
+
                 float fl = longestLabel;
-                Readable<Integer> columns = dvw(95f).map(w -> computeColumns(w, fl));
+                Readable<Integer> columns = dvw(75f).map(w -> computeColumns(w, fl));
+
+                if (blocks.isEmpty()) {
+                    return text(Core.bundle.get("browser.filter.blocks.empty")).color(Color.gray).left();
+                }
+
                 return grid(columns).left().gap(unit(1)).children(() -> {
-                    if (blocks.isEmpty()) {
-                        text(Core.bundle.get("browser.filter.blocks.empty")).color(Color.gray).left();
-                        return;
-                    }
                     for (int i = 0; i < blocks.size; i++) {
                         Block block = blocks.get(i);
                         if (block == null || block.localizedName == null) {
                             continue;
                         }
+
                         if (!loweredQuery.isEmpty()
                                 && !block.localizedName.toLowerCase().contains(loweredQuery)) {
                             continue;
                         }
+
                         String blockName = block.name;
                         Readable<Boolean> checked = state.selectedTags().map(
                                 selected -> selected != null && selected.contains(blockName));
+
                         button(block.localizedName, () -> state.toggleTag(blockName))
                                 .style(WebStyles.filterChipText())
                                 .checked(checked)

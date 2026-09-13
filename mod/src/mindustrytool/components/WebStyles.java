@@ -167,10 +167,10 @@ public class WebStyles {
             .build();
 
     private static final SolimButtonStyle FILTER_CHIP_STYLE = new SolimButtonStyleBuilder()
-            .rounded(unit(1))
+            .rounded(unit(2))
             .border(1.0f, Colors.CHIP_BORDER)
             .padding(unit(1))
-            .up(u -> u.background(Colors.CHIP_BG))
+            .up(u -> u.background(Color.clear))
             .over(o -> o.background(Colors.CHIP_HOVER_BG))
             .down(d -> d.background(Colors.CHIP_DOWN_BG))
             .checked(c -> c.background(Colors.CHIP_CHECKED_BG).border(1.0f, Colors.CHIP_CHECKED_BORDER))

@@ -67,8 +67,8 @@ public class BrowserSearchHeader extends BaseComponent {
 
                 card(Styles.black5).growX().height(unit(10)).children(() -> {
                     row().grow().gap(unit(1))
-                            .rounded(unit(3), Color.clear)
                             .paddingLeft(unit(2))
+                            .rounded(unit(3), Color.clear)
                             .gap(unit(2))
                             .border(1.5f, Color.darkGray)
                             .children(() -> {
