@@ -26,7 +26,7 @@ import solim.ui.Ui;
  * Clickable and stylable card container component with support for inner children, reactive
  * width/height/color bindings, and click event bubbling control.
  */
-public final class Card implements Component, LayoutModifiers<Card> {
+public final class Card implements Component, LayoutModifiers<Card>, GapContainer {
 
 	public static final ParentStack.Attacher ATTACHER = (table, child) -> {
 		Cell<?> cell = table.add(child);
@@ -34,6 +34,10 @@ public final class Card implements Component, LayoutModifiers<Card> {
 			cell.growY();
 		}
 		cell.row();
+		if (table.userObject instanceof GapContainer) {
+			GapContainer gc = (GapContainer) table.userObject;
+			GapContainer.spaceAttachedCell(table, cell, Direction.VERTICAL, gc.gap());
+		}
 		return cell;
 	};
 
@@ -41,6 +45,7 @@ public final class Card implements Component, LayoutModifiers<Card> {
 	private final Table container = new Table();
 	private final SizeConstraints constraints = new SizeConstraints();
 	private final List<Disposable> bindings = new ArrayList<>();
+	private float gap = 0f;
 	private @Nullable Runnable onClick;
 
 	public Card() {
@@ -56,6 +61,7 @@ public final class Card implements Component, LayoutModifiers<Card> {
 		this.cardButton.userObject = this;
 		this.cardButton.name = "solim-card-cardButton";
 		this.container.name = "solim-card-container";
+		this.container.userObject = this;
 		this.cardButton.top().left();
 		this.container.top().left();
 		this.cardButton.add(container).grow().top().left();
@@ -66,6 +72,7 @@ public final class Card implements Component, LayoutModifiers<Card> {
 		this.cardButton.userObject = this;
 		this.cardButton.name = "solim-card-cardButton";
 		this.container.name = "solim-card-container";
+		this.container.userObject = this;
 		this.cardButton.top().left();
 		this.container.top().left();
 		this.cardButton.add(container).grow().top().left();
@@ -133,6 +140,7 @@ public final class Card implements Component, LayoutModifiers<Card> {
 			ParentStack.pop();
 		}
 		ParentStack.attachToParent(cardButton);
+		respace();
 		return this;
 	}
 
@@ -167,8 +175,24 @@ public final class Card implements Component, LayoutModifiers<Card> {
 	}
 
 	public Card gap(float g) {
-		ElementModifiers.gap(container, g);
+		this.gap = g;
+		respace();
 		return this;
+	}
+
+	@Override
+	public Direction direction() {
+		return Direction.VERTICAL;
+	}
+
+	@Override
+	public float gap() {
+		return gap;
+	}
+
+	@Override
+	public void respace() {
+		GapContainer.applySpacing(container, Direction.VERTICAL, gap);
 	}
 
 	public Card style(Button.ButtonStyle style) {

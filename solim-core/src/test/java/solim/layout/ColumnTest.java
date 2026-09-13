@@ -46,16 +46,18 @@ class ColumnTest {
 	}
 
 	@Test
-	void gapAppliesHalfPadToDefaultsAndExistingCells() {
+	void gapAppliesDirectionalSpacingToExistingCells() {
 		Column col = new Column();
 		Element a = new Element();
 		Element b = new Element();
-		col.add(a).row();
+		col.add(a);
 		col.add(b);
 
 		col.gap(16f);
 
-		assertEquals(8f, CellAccess.padTop(col.table().defaults()), 0.01f);
+		assertEquals(0f, CellAccess.padTop(col.table().getCell(a)), 0.01f);
+		assertEquals(16f, CellAccess.padTop(col.table().getCell(b)), 0.01f);
+		assertEquals(0f, CellAccess.padLeft(col.table().getCell(b)), 0.01f);
 		assertEquals(2, col.table().getChildren().size);
 	}
 

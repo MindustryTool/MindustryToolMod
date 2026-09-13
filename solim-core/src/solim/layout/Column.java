@@ -7,12 +7,14 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.modifier.ElementModifiers;
+import solim.runtime.ComponentContext;
+import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
 
 /** Column layout — vertical Table wrapper. */
-public final class Column implements Component, LayoutModifiers<Column> {
+public final class Column implements Component, LayoutModifiers<Column>, GapContainer {
 
 	public static final ParentStack.Attacher ATTACHER = (table, child) -> {
 		Cell<?> cell = table.add(child);
@@ -20,11 +22,16 @@ public final class Column implements Component, LayoutModifiers<Column> {
 			cell.growY();
 		}
 		cell.row();
+		if (table.userObject instanceof GapContainer) {
+			GapContainer gc = (GapContainer) table.userObject;
+			GapContainer.spaceAttachedCell(table, cell, Direction.VERTICAL, gc.gap());
+		}
 		return cell;
 	};
 
 	private final Table table;
 	private final SizeConstraints constraints = new SizeConstraints();
+	private float gap = 0f;
 
 	public Column() {
 		this.table = new Table();
@@ -67,8 +74,37 @@ public final class Column implements Component, LayoutModifiers<Column> {
 	}
 
 	public Column gap(float g) {
-		ElementModifiers.gap(table, g);
+		this.gap = g;
+		respace();
 		return this;
+	}
+
+	public Column gap(@Nullable Readable<Float> gapSignal) {
+		if (gapSignal != null) {
+			Effect e = Effect.of(() -> {
+				Float g = gapSignal.get();
+				if (g != null) {
+					gap(g);
+				}
+			});
+			ComponentContext.register(e);
+		}
+		return this;
+	}
+
+	@Override
+	public Direction direction() {
+		return Direction.VERTICAL;
+	}
+
+	@Override
+	public float gap() {
+		return gap;
+	}
+
+	@Override
+	public void respace() {
+		GapContainer.applySpacing(table, Direction.VERTICAL, gap);
 	}
 
 	public Column padding(float p) {
@@ -246,10 +282,13 @@ public final class Column implements Component, LayoutModifiers<Column> {
 			ParentStack.pop();
 		}
 		ParentStack.attachToParent(table);
+		respace();
 		return this;
 	}
 
 	public Cell<?> add(Element e) {
-		return table.add(e);
+		Cell<?> cell = table.add(e);
+		respace();
+		return cell;
 	}
 }

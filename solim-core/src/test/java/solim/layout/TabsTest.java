@@ -6,6 +6,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
+import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.Button.ButtonStyle;
@@ -42,22 +43,29 @@ class TabsTest {
 	@Test
 	void headerBarDefaultGapUsesElementModifiers() {
 		Tabs tabs = new Tabs(Signal.of(0));
-		assertEquals(2f, CellAccess.padTop(tabs.headerBar().defaults()), 0.01f);
-		assertEquals(2f, CellAccess.padLeft(tabs.headerBar().defaults()), 0.01f);
-		assertEquals(2f, CellAccess.padBottom(tabs.headerBar().defaults()), 0.01f);
-		assertEquals(2f, CellAccess.padRight(tabs.headerBar().defaults()), 0.01f);
+		Element a = new Element();
+		Element b = new Element();
+		tabs.headerBar().add(a);
+		tabs.headerBar().add(b);
+		tabs.headerGap(4f);
+		assertEquals(0f, CellAccess.padLeft(tabs.headerBar().getCell(a)), 0.01f);
+		assertEquals(4f, CellAccess.padLeft(tabs.headerBar().getCell(b)), 0.01f);
+		assertEquals(0f, CellAccess.padTop(tabs.headerBar().getCell(b)), 0.01f);
 		tabs.dispose();
 	}
 
 	@Test
 	void headerBarCustomGapUpdatesHeaderBarCells() {
 		Tabs tabs = new Tabs(Signal.of(0));
+		Element a = new Element();
+		Element b = new Element();
+		tabs.headerBar().add(a);
+		tabs.headerBar().add(b);
 		tabs.headerGap(12f);
 
-		assertEquals(6f, CellAccess.padTop(tabs.headerBar().defaults()), 0.01f);
-		assertEquals(6f, CellAccess.padLeft(tabs.headerBar().defaults()), 0.01f);
-		assertEquals(6f, CellAccess.padBottom(tabs.headerBar().defaults()), 0.01f);
-		assertEquals(6f, CellAccess.padRight(tabs.headerBar().defaults()), 0.01f);
+		assertEquals(0f, CellAccess.padLeft(tabs.headerBar().getCell(a)), 0.01f);
+		assertEquals(12f, CellAccess.padLeft(tabs.headerBar().getCell(b)), 0.01f);
+		assertEquals(0f, CellAccess.padTop(tabs.headerBar().getCell(b)), 0.01f);
 		tabs.dispose();
 	}
 

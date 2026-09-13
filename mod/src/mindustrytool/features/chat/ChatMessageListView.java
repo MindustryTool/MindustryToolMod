@@ -4,6 +4,7 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.graphics.Color;
+import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.util.Nullable;
 import arc.util.Scaling;
@@ -12,10 +13,13 @@ import arc.util.Timer;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
@@ -23,6 +27,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.FileIcon;
+import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.features.chat.models.MessageGroup;
 import mindustrytool.features.chat.models.ParsedChatMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.ImageMessage;
@@ -33,13 +38,20 @@ import mindustrytool.features.chat.models.ParsedChatMessage.TextMessage;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
 import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.layout.Direction;
 import solim.layout.VirtualList;
 import solim.signal.Computed;
 import solim.signal.Effect;
+import solim.display.Text;
+import solim.input.Button;
 import solim.signal.Readable;
+import solim.overlay.SolimDialog;
+import arc.scene.event.ClickListener;
 
 public class ChatMessageListView extends BaseComponent {
+
+    private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"'{}|\\\\^`]+");
 
     private final ChatStore store;
     private final @Nullable ChatService service;
@@ -288,7 +300,10 @@ public class ChatMessageListView extends BaseComponent {
                                         spacer();
 
                                         // Action ellipsis / menu button
-                                        button(() -> openActions(firstRaw))
+                                        Button actionsButton = button(() -> {
+                                        });
+                                        actionsButton
+                                                .onClick(() -> openActions(firstRaw, actionsButton.element()))
                                                 .style(Styles.clearNonei)
                                                 .size(unit(6), unit(6))
                                                 .children(() -> icon(FileIcon.of("ellipsis-vertical.png"))
@@ -316,8 +331,8 @@ public class ChatMessageListView extends BaseComponent {
             Readable<Boolean> isPending = pendingIds.map(set -> set != null && set.contains(msgId));
             Readable<Boolean> isFailed = failedIds.map(set -> set != null && set.contains(msgId));
 
-            var card = card().growX().top().left()
-                    .onClick(() -> openActions(raw));
+            var card = card().growX().top().left();
+            card.onClick(() -> openActions(raw, card.element()));
             if (hasPrevious) {
                 card.marginTop(ChatMessageHeightCalculator.MESSAGE_GAP);
             }
@@ -343,8 +358,18 @@ public class ChatMessageListView extends BaseComponent {
             });
         }
 
-        private void openActions(ChatMessage message) {
-            new MessageActionDialog(message, store, service).show();
+        private void openActions(ChatMessage message, @Nullable Element anchor) {
+            float x = -1f;
+            float y = -1f;
+            if (anchor != null) {
+                try {
+                    Vec2 stage = anchor.localToStageCoordinates(new Vec2(0f, anchor.getHeight()));
+                    x = stage.x;
+                    y = stage.y;
+                } catch (Throwable ignored) {
+                }
+            }
+            ChatActionPopup.showFor(message, x, y);
         }
 
         private void buildReplyPreview(String replyToId) {
@@ -475,12 +500,32 @@ public class ChatMessageListView extends BaseComponent {
 
             if (parsed instanceof TextMessage) {
                 TextMessage txt = (TextMessage) parsed;
-                text(txt.getText())
-                        .color(bodyColor)
-                        .fontScale(1.0f)
-                        .left()
-                        .wrap()
-                        .growX();
+                buildMessageText(txt.getText(), bodyColor);
+                final String translatedId = parsed.getId();
+                dynamic(store.translation(translatedId), translated -> {
+                    if (translated == null || translated.isEmpty()) {
+                        return null;
+                    }
+                    final String translatedText = translated;
+                    return column().growX().top().left().marginTop(unit(1)).children(() -> {
+                        text(Core.bundle.get("feature.chat.ui.translated-badge", "Translated"))
+                                .color(Pal.accent)
+                                .fontScale(0.8f)
+                                .left();
+                        buildMessageText(translatedText, bodyColor);
+                    });
+                });
+                dynamic(store.translatingMessageId(), translatingId -> {
+                    if (translatingId == null || !translatingId.equals(translatedId)) {
+                        return null;
+                    }
+                    return row().growX().top().left().children(() -> {
+                        text(Core.bundle.get("feature.chat.ui.translating", "Translating..."))
+                                .color(Color.gray)
+                                .fontScale(0.8f)
+                                .left();
+                    });
+                });
                 return;
             }
 
@@ -494,19 +539,35 @@ public class ChatMessageListView extends BaseComponent {
                     .growX();
         }
 
-        private void buildSchematicCard(Schematic schematic) {
+private void buildSchematicCard(Schematic schematic) {
             card().top().left().children(() -> {
                 column().top().left().gap(unit(1)).children(() -> {
+                    // Header: just the name
                     row().growX().top().left().gap(unit(1)).children(() -> {
                         text(schematic.name())
                                 .color(Pal.accent)
                                 .fontScale(0.95f)
                                 .ellipsis()
-                                .left()
-                                .growX();
+                                .growX()
+                                .left();
 
                         spacer();
+                    });
 
+                    // Preview image button
+                    float ratio = schematic.height > 0 ? (float) schematic.width / (float) schematic.height : 1f;
+                    float width = Math.max(unit(10), ratio * unit(35));
+
+                    button(() -> useSchematic(schematic))
+                            .style(Styles.flatt)
+                            .height(unit(35))
+                            .width(width)
+                            .children(() -> {
+                                arc(new SchematicImage(schematic).setScaling(Scaling.fit));
+                            });
+
+                    // Action buttons row below preview
+                    row().growX().top().left().gap(unit(1)).children(() -> {
                         button(() -> Vars.ui.schematics.showInfo(schematic))
                                 .style(Styles.clearNonei)
                                 .size(unit(6), unit(6))
@@ -531,19 +592,104 @@ public class ChatMessageListView extends BaseComponent {
                                 .tooltip(Core.bundle.get("feature.chat.ui.schematic.use", "Use"))
                                 .children(() -> icon(Icon.play).size(unit(5), unit(5)));
                     });
-
-                    float ratio = schematic.height > 0 ? (float) schematic.width / (float) schematic.height : 1f;
-                    float width = Math.max(unit(10), ratio * unit(35));
-
-                    button(() -> useSchematic(schematic))
-                            .style(Styles.flatt)
-                            .height(unit(35))
-                            .width(width)
-                            .children(() -> {
-                                arc(new SchematicImage(schematic).setScaling(Scaling.fit));
-                            });
                 });
             });
+        }
+
+        private Component buildMessageText(String messageText, Readable<Color> bodyColor) {
+            if (messageText == null || messageText.isEmpty()) {
+                return text("").color(bodyColor).fontScale(1.0f).left().wrap().growX();
+            }
+
+            Matcher m = URL_PATTERN.matcher(messageText);
+            List<String> urls = new ArrayList<>();
+            StringBuilder marked = new StringBuilder();
+            int prev = 0;
+            String linkHex = WebStyles.Colors.PRIMARY.toString().substring(0, 6);
+            while (m.find()) {
+                if (m.start() > prev) {
+                    marked.append(messageText, prev, m.start());
+                }
+                String url = m.group();
+                urls.add(url);
+                marked.append("[#").append(linkHex).append("]").append(url).append("[]");
+                prev = m.end();
+            }
+
+            if (urls.isEmpty()) {
+                return text(messageText).color(bodyColor).fontScale(1.0f).left().wrap().growX();
+            }
+
+            // Bare link fast path: the whole message is one clickable link.
+            if (urls.size() == 1 && messageText.trim().equals(urls.get(0))) {
+                final String onlyUrl = urls.get(0);
+                Text linkText = text(onlyUrl)
+                        .color(WebStyles.Colors.PRIMARY)
+                        .fontScale(1.0f)
+                        .left()
+                        .wrap()
+                        .growX();
+                linkText.label().addListener(new ClickListener() {
+                    @Override
+                    public void clicked(arc.scene.event.InputEvent event, float x, float y) {
+                        event.stop();
+                        openLinkDialog(onlyUrl);
+                    }
+                });
+                return linkText;
+            }
+
+            if (prev < messageText.length()) {
+                marked.append(messageText.substring(prev));
+            }
+            final String highlighted = marked.toString();
+            final List<String> linkUrls = new ArrayList<>(urls);
+            return column().growX().top().left().children(() -> {
+                text(highlighted).color(bodyColor).fontScale(1.0f).left().wrap().growX();
+
+                // Clickable link chips below the text; the inline label itself is not clickable.
+                row().growX().top().left().gap(unit(1)).children(() -> {
+                    for (String linkUrl : linkUrls) {
+                        final String chipUrl = linkUrl;
+                        Text chip = text(chipUrl)
+                                .color(WebStyles.Colors.PRIMARY)
+                                .fontScale(0.85f)
+                                .ellipsis()
+                                .left();
+                        chip.label().addListener(new ClickListener() {
+                            @Override
+                            public void clicked(arc.scene.event.InputEvent event, float x, float y) {
+                                event.stop();
+                                openLinkDialog(chipUrl);
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        private void openLinkDialog(String url) {
+            SolimDialog dialog = new SolimDialog(Core.bundle.get("chat.link.dialog.title"));
+            dialog.addCloseButton();
+            dialog.maxWidth(400f);
+            dialog.children(() -> {
+                column().growX().padding(unit(3)).gap(unit(2)).children(() -> {
+                    text(Core.bundle.format("chat.link.dialog.prompt", url))
+                            .wrap()
+                            .growX()
+                            .left();
+                    row().gap(unit(1)).children(() -> {
+                        button(Core.bundle.get("chat.link.dialog.cancel"), dialog::hide)
+                                .style(Styles.defaultt)
+                                .height(unit(7));
+                        button(Core.bundle.get("chat.link.dialog.open"), () -> {
+                            Core.app.openURI(url);
+                            dialog.hide();
+                        }).style(Styles.defaultb).height(unit(7));
+                    });
+                });
+            });
+            dialog.show();
         }
 
         private void useSchematic(Schematic schematic) {

@@ -121,7 +121,7 @@ public class MapBrowserDialog extends SolimDialog {
                             .empty(() -> {
                                 text(Core.bundle.get("browser.empty")).color(Color.gray).padding(unit(4));
                             })
-                            .gap(unit(2));
+                            .gap(unit(4));
                 });
 
                 new BrowserFooter(state, Config.UPLOAD_MAP_URL, onClose);

@@ -168,6 +168,9 @@ public class ChatOverlayHudView extends BaseComponent {
                             }
                         })
                         .grow();
+
+                        // Shared floating message-action popup (zero-footprint overlay driver).
+                        new ChatActionPopup(store, service);
                     });
                 });
     }

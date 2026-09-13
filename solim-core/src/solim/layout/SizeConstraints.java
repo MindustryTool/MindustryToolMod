@@ -26,6 +26,10 @@ public final class SizeConstraints {
 					ComponentContext.register(effect);
 				}
 			}
+			Table t = cell.getTable();
+			if (t != null && t.userObject instanceof GapContainer) {
+				((GapContainer) t.userObject).respace();
+			}
 		});
 	}
 
@@ -129,10 +133,38 @@ public final class SizeConstraints {
 		effects.addAll(bind(cell, maxWidth,   v -> applyMaxWidth(cell, v)));
 		effects.addAll(bind(cell, maxHeight,  v -> applyMaxHeight(cell, v)));
 
-		effects.addAll(bind(cell, padTop,     v -> cell.padTop(Math.max(0f, v))));
-		effects.addAll(bind(cell, padLeft,    v -> cell.padLeft(Math.max(0f, v))));
-		effects.addAll(bind(cell, padBottom,  v -> cell.padBottom(Math.max(0f, v))));
-		effects.addAll(bind(cell, padRight,   v -> cell.padRight(Math.max(0f, v))));
+		effects.addAll(bind(cell, padTop,     v -> {
+			Table t = cell.getTable();
+			if (t != null && t.userObject instanceof GapContainer) {
+				((GapContainer) t.userObject).respace();
+			} else {
+				cell.padTop(Math.max(0f, v));
+			}
+		}));
+		effects.addAll(bind(cell, padLeft,    v -> {
+			Table t = cell.getTable();
+			if (t != null && t.userObject instanceof GapContainer) {
+				((GapContainer) t.userObject).respace();
+			} else {
+				cell.padLeft(Math.max(0f, v));
+			}
+		}));
+		effects.addAll(bind(cell, padBottom,  v -> {
+			Table t = cell.getTable();
+			if (t != null && t.userObject instanceof GapContainer) {
+				((GapContainer) t.userObject).respace();
+			} else {
+				cell.padBottom(Math.max(0f, v));
+			}
+		}));
+		effects.addAll(bind(cell, padRight,   v -> {
+			Table t = cell.getTable();
+			if (t != null && t.userObject instanceof GapContainer) {
+				((GapContainer) t.userObject).respace();
+			} else {
+				cell.padRight(Math.max(0f, v));
+			}
+		}));
 
 		if (growX) {
 			cell.growX();
@@ -176,6 +208,10 @@ public final class SizeConstraints {
 	public void applyMarginToParentCell(@Nullable Element element) {
 		if (element != null && element.parent instanceof Table) {
 			Table parentTable = (Table) element.parent;
+			if (parentTable.userObject instanceof GapContainer) {
+				((GapContainer) parentTable.userObject).respace();
+				return;
+			}
 			Cell<?> cell = parentTable.getCell(element);
 			if (cell != null) {
 				if (padTop != null && padTop.get() != null) cell.padTop(Math.max(0f, padTop.get()));

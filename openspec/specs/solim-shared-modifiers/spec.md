@@ -15,11 +15,15 @@ The Solim framework SHALL provide an `ElementModifiers` static utility class in 
 - **THEN** `ElementModifiers` updates the table's alignment
 
 ### Requirement: ElementModifiers gap utility for table spacing
-The `ElementModifiers` static utility class SHALL provide `gap(@Nullable Table table, float gap)` and `gap(@Nullable Element element, float gap)` static methods to apply default cell padding / item gap spacing to Arc `Table` instances.
+The `ElementModifiers` static utility class SHALL provide `gap(@Nullable Table table, float gap)` and `gap(@Nullable Element element, float gap)` static methods to apply directional item gap spacing to Arc `Table` instances without mutating `table.defaults().pad(g / 2f)` across all four edges. For recognized Solim layout containers (`Row`, `Column`, `Grid`, `Wrap`), `gap` SHALL configure primary-axis sibling spacing. For generic `Table` or `Button` instances, `gap` SHALL configure horizontal sibling padding between adjacent child cells.
 
 #### Scenario: Applying gap spacing via ElementModifiers
 - **WHEN** `ElementModifiers.gap(table, gap)` is invoked with a non-null Table and float value `g`
-- **THEN** `table.defaults().pad(g / 2f)` is executed on the table
+- **THEN** the table configures directional inter-sibling cell spacing of `g` along its layout axis, leaving outer container edges and cross-axis padding unaffected
+
+#### Scenario: Element overload delegates safely
+- **WHEN** `ElementModifiers.gap((Element) table, 20f)` is invoked
+- **THEN** directional gap spacing of 20f is applied to the table's cells, and invoking with a non-Table element or null does not throw
 
 ### Requirement: Components delegate modifier methods to ElementModifiers
 Solim components SHALL expose semantic fluent modifier methods (`width`, `height`, `size`, `position`, `visible`, `gap`, etc.) that return `this` for chaining while delegating implementation execution directly to `ElementModifiers`.

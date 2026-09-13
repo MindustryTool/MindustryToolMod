@@ -58,11 +58,17 @@ class RowTest {
 	}
 
 	@Test
-	void gapAppliesHalfPadToDefaults() {
+	void gapAppliesDirectionalSpacingToCells() {
 		Row row = new Row();
 		row.gap(8f);
+		Element a = new Element();
+		Element b = new Element();
+		row.add(a);
+		row.add(b);
 
-		assertEquals(4f, arc.scene.ui.layout.CellAccess.padTop(row.table().defaults()), 0.01f);
+		assertEquals(0f, arc.scene.ui.layout.CellAccess.padLeft(row.table().getCell(a)), 0.01f);
+		assertEquals(8f, arc.scene.ui.layout.CellAccess.padLeft(row.table().getCell(b)), 0.01f);
+		assertEquals(0f, arc.scene.ui.layout.CellAccess.padTop(row.table().getCell(b)), 0.01f);
 	}
 
 	@Test

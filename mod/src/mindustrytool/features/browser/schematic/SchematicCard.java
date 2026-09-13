@@ -69,6 +69,7 @@ public class SchematicCard extends BaseComponent {
                     card(WebStyles.previewCard().style())
                             .name("SchematicCard-preview-" + schematic.getItemId())
                             .growX()
+                            .margin(unit(1), 0f, unit(1), 0f)
                             .height(previewHeight != null ? previewHeight : Readable.of(unit(58f)))
                             .onClick(onClick)
                             .children(() -> {
@@ -133,6 +134,7 @@ public class SchematicCard extends BaseComponent {
                 .style(WebStyles.cardActionText())
                 .growX()
                 .height(unit(9))
+                .gap(unit(1))
                 .tooltip(tooltip)
                 .children(() -> {
                     icon(iconDrawable).size(unit(4.5f)).color(Color.white).marginRight(unit(1));

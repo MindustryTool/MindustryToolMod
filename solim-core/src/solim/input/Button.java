@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.layout.Direction;
+import solim.layout.GapContainer;
 import solim.layout.Row;
 import solim.modifier.ElementModifiers;
 import solim.overlay.Hud;
@@ -35,10 +37,11 @@ import solim.style.SolimButtonStyleBuilder;
  * Pure Button container widget supporting explicit children composition, custom
  * width/height sizing, and reactive state.
  */
-public final class Button implements Component {
+public final class Button implements Component, GapContainer {
 
     private final arc.scene.ui.Button button;
     private final List<Disposable> bindings = new ArrayList<>();
+    private float gap = 0f;
     private boolean stopClickPropagation = true;
     private @Nullable Runnable onClick;
     private @Nullable Runnable onLongClick;
@@ -68,6 +71,7 @@ public final class Button implements Component {
 
     public Button(arc.scene.ui.Button button) {
         this.button = button;
+        this.button.userObject = this;
         this.button.name = "solim-button-sizedButton";
         this.button.center();
     }
@@ -81,6 +85,7 @@ public final class Button implements Component {
         } finally {
             ParentStack.pop();
         }
+        respace();
         return this;
     }
 
@@ -280,7 +285,7 @@ public final class Button implements Component {
             applyStyleMargin(resolved.margin().floatValue());
         }
         if (resolved.gap() != null) {
-            ElementModifiers.gap(button, resolved.gap().floatValue());
+            gap(resolved.gap().floatValue());
         }
         if (resolved.font() != null) {
             applyStyleFont(resolved.font());
@@ -410,8 +415,38 @@ public final class Button implements Component {
     }
 
     public Button gap(float g) {
-        ElementModifiers.gap(button, g);
+        this.gap = g;
+        respace();
         return this;
+    }
+
+    public Button gap(@Nullable Readable<Float> gapSignal) {
+        if (gapSignal != null) {
+            Effect e = Effect.of(() -> {
+                Float g = gapSignal.get();
+                if (g != null) {
+                    gap(g);
+                }
+            });
+            bindings.add(e);
+            ComponentContext.register(e);
+        }
+        return this;
+    }
+
+    @Override
+    public Direction direction() {
+        return Direction.HORIZONTAL;
+    }
+
+    @Override
+    public float gap() {
+        return gap;
+    }
+
+    @Override
+    public void respace() {
+        GapContainer.applySpacing(button, Direction.HORIZONTAL, gap);
     }
 
     public Button margin(float m) {

@@ -27,7 +27,7 @@ import solim.ui.Units;
  * Keyed reactive grid that reflows existing component cells when column count changes and
  * structurally reconciles items when the item collection changes.
  */
-public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutModifiers<ReactiveGrid<T, K>> {
+public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutModifiers<ReactiveGrid<T, K>>, GapContainer {
 	private final Signal<Float> tableWidth = Signal.of(0f);
 	private final Signal<Float> gapSignal = Signal.of(0f);
 	private final Computed<Float> itemWidth;
@@ -46,6 +46,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 			checkWidth(getWidth());
 		}
 	};
+
 	private final SizeConstraints constraints = new SizeConstraints();
 	private final Readable<Integer> columnCount;
 	private final Readable<? extends Iterable<T>> items;
@@ -84,12 +85,15 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 			float tw = tableWidth.get();
 			int cols = Math.max(1, columnCount.get() != null ? columnCount.get() : 1);
 			float g = gapSignal.get();
+			float horizontalMargin = table.getMarginLeft() + table.getMarginRight();
+			float availableWidth = Math.max(0f, tw - horizontalMargin);
+			float totalGaps = (cols - 1) * g;
 			if (tw <= 0f) {
 				float sw = Units.screenWidth();
 				float fallbackW = sw > 0f ? sw - 32f : 300f;
-				return Math.max(0f, (fallbackW / cols) - g);
+				return Math.max(0f, (fallbackW - totalGaps) / cols);
 			}
-			return Math.max(0f, (tw / cols) - g);
+			return Math.max(0f, (availableWidth - totalGaps) / cols);
 		});
 
 		this.context = new GridItemContext() {
@@ -150,8 +154,24 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 	public ReactiveGrid<T, K> gap(float gap) {
 		this.gap = gap;
 		this.gapSignal.set(gap);
-		ElementModifiers.gap(table, gap);
+		respace();
 		return this;
+	}
+
+	@Override
+	public Direction direction() {
+		return Direction.HORIZONTAL;
+	}
+
+	@Override
+	public float gap() {
+		return gap;
+	}
+
+	@Override
+	public void respace() {
+		int cols = Math.max(1, columnCount.get() != null ? columnCount.get() : 1);
+		GapContainer.applyGridSpacing(table, cols, gap);
 	}
 
 	public ReactiveGrid<T, K> gap(@Nullable Readable<Float> gapSignal) {
@@ -242,7 +262,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 		int col = 0;
 		for (Component comp : reconciler.activeComponents().values()) {
 			Element el = comp.element();
-			Cell<?> cell = table.add(el).pad(gap / 2f).top().left();
+			Cell<?> cell = table.add(el).top().left();
 			SizeConstraints sc = null;
 			if (comp instanceof LayoutModifiers) {
 				sc = ((LayoutModifiers<?>) comp).sizeConstraints();
@@ -252,10 +272,10 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 			if (sc != null) {
 				List<Disposable> effects = sc.applyToCell(cell);
 				itemBindings.addAll(effects);
-				if (sc.growX) {
-					cell.uniformX();
+				if (sc.growX || !sc.hasExplicitWidth()) {
+					cell.growX().uniformX();
 				}
-			} else if (Ui.isExpanding(el)) {
+			} else {
 				cell.growX().uniformX();
 			}
 			if (++col % cols == 0) {
@@ -263,10 +283,11 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements LayoutMod
 			}
 		}
 		while (col % cols != 0) {
-			table.add().uniformX().growX().pad(gap / 2f);
+			table.add().uniformX().growX();
 			col++;
 		}
 		table.row();
+		respace();
 		table.invalidateHierarchy();
 	}
 

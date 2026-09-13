@@ -68,6 +68,7 @@ public class BrowserSearchHeader extends BaseComponent {
                     row().grow().gap(unit(1))
                             .rounded(unit(3), Color.clear)
                             .padLeft(unit(2))
+                            .gap(unit(2))
                             .border(1.5f, Color.darkGray)
                             .children(() -> {
                                 icon(Icon.zoom).size(unit(5));

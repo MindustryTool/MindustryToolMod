@@ -612,12 +612,12 @@ class LayoutTest {
 				});
 
 		assertEquals(2, g.table().getCells().size);
-		for (Cell<?> cell : g.table().getCells()) {
-			assertEquals(8f, CellAccess.padTop(cell), 0.01f, "Each cell should have gap / 2 padding");
-			assertEquals(8f, CellAccess.padBottom(cell), 0.01f);
-			assertEquals(8f, CellAccess.padLeft(cell), 0.01f);
-			assertEquals(8f, CellAccess.padRight(cell), 0.01f);
-		}
+		Cell<?> cell0 = g.table().getCells().get(0);
+		Cell<?> cell1 = g.table().getCells().get(1);
+		assertEquals(0f, CellAccess.padLeft(cell0), 0.01f);
+		assertEquals(0f, CellAccess.padTop(cell0), 0.01f);
+		assertEquals(16f, CellAccess.padLeft(cell1), 0.01f);
+		assertEquals(0f, CellAccess.padTop(cell1), 0.01f);
 	}
 
 	@Test
@@ -630,10 +630,10 @@ class LayoutTest {
 				.gap(20f);
 
 		assertEquals(2, g.table().getCells().size);
-		for (Cell<?> cell : g.table().getCells()) {
-			assertEquals(10f, CellAccess.padTop(cell), 0.01f, "Existing cells must be updated when gap is called after children");
-			assertEquals(10f, CellAccess.padBottom(cell), 0.01f);
-		}
+		Cell<?> cell0 = g.table().getCells().get(0);
+		Cell<?> cell1 = g.table().getCells().get(1);
+		assertEquals(0f, CellAccess.padLeft(cell0), 0.01f);
+		assertEquals(20f, CellAccess.padLeft(cell1), 0.01f);
 	}
 
 	@Test
@@ -645,7 +645,7 @@ class LayoutTest {
 				});
 
 		assertEquals(1, g.table().getCells().size);
-		assertEquals(6f, CellAccess.padTop(g.table().getCells().first()), 0.01f);
+		assertEquals(0f, CellAccess.padLeft(g.table().getCells().first()), 0.01f);
 	}
 
 	@Test
@@ -658,11 +658,15 @@ class LayoutTest {
 					Ui.row(() -> {});
 				});
 
-		assertEquals(5f, CellAccess.padTop(g.table().getCells().first()), 0.01f);
+		Cell<?> cell0 = g.table().getCells().get(0);
+		Cell<?> cell1 = g.table().getCells().get(1);
+		assertEquals(0f, CellAccess.padLeft(cell0), 0.01f);
+		assertEquals(10f, CellAccess.padLeft(cell1), 0.01f);
 
 		gapSig.set(30f);
 		solim.runtime.SignalDispatcher.flush();
-		assertEquals(15f, CellAccess.padTop(g.table().getCells().first()), 0.01f);
+		assertEquals(0f, CellAccess.padLeft(cell0), 0.01f);
+		assertEquals(30f, CellAccess.padLeft(cell1), 0.01f);
 	}
 
 	@Test
@@ -682,9 +686,10 @@ class LayoutTest {
 
 		gapSig.set(16f);
 		solim.runtime.SignalDispatcher.flush();
-		for (Cell<?> cell : rg.table().getCells()) {
-			assertEquals(8f, CellAccess.padTop(cell), 0.01f, "Reactive gap change must update all active cells");
-		}
+		Cell<?> cell0 = rg.table().getCells().get(0);
+		Cell<?> cell1 = rg.table().getCells().get(1);
+		assertEquals(0f, CellAccess.padLeft(cell0), 0.01f);
+		assertEquals(16f, CellAccess.padLeft(cell1), 0.01f);
 	}
 
 	@Test

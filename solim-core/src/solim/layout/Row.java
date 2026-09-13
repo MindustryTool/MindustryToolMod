@@ -9,24 +9,31 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.modifier.ElementModifiers;
 import solim.overlay.Hud;
+import solim.runtime.ComponentContext;
+import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
 
 /** Row layout — horizontal Table wrapper. */
-public final class Row implements Component, LayoutModifiers<Row> {
+public final class Row implements Component, LayoutModifiers<Row>, GapContainer {
 
 	public static final ParentStack.Attacher ATTACHER = (table, child) -> {
 		Cell<?> cell = table.add(child);
 		if (Ui.isExpanding(child)) {
 			cell.growX();
 		}
+		if (table.userObject instanceof GapContainer) {
+			GapContainer gc = (GapContainer) table.userObject;
+			GapContainer.spaceAttachedCell(table, cell, Direction.HORIZONTAL, gc.gap());
+		}
 		return cell;
 	};
 
 	private final Table table;
 	private final SizeConstraints constraints = new SizeConstraints();
+	private float gap = 0f;
 
 	public Row() {
 		this.table = new Table();
@@ -69,8 +76,37 @@ public final class Row implements Component, LayoutModifiers<Row> {
 	}
 
 	public Row gap(float g) {
-		ElementModifiers.gap(table, g);
+		this.gap = g;
+		respace();
 		return this;
+	}
+
+	public Row gap(@Nullable Readable<Float> gapSignal) {
+		if (gapSignal != null) {
+			Effect e = Effect.of(() -> {
+				Float g = gapSignal.get();
+				if (g != null) {
+					gap(g);
+				}
+			});
+			ComponentContext.register(e);
+		}
+		return this;
+	}
+
+	@Override
+	public Direction direction() {
+		return Direction.HORIZONTAL;
+	}
+
+	@Override
+	public float gap() {
+		return gap;
+	}
+
+	@Override
+	public void respace() {
+		GapContainer.applySpacing(table, Direction.HORIZONTAL, gap);
 	}
 
 	public Row padding(float p) {
@@ -271,6 +307,7 @@ public final class Row implements Component, LayoutModifiers<Row> {
 			ParentStack.pop();
 		}
 		ParentStack.attachToParent(table);
+		respace();
 		return this;
 	}
 
@@ -300,6 +337,8 @@ public final class Row implements Component, LayoutModifiers<Row> {
 	}
 
 	public Cell<?> add(Element e) {
-		return table.add(e);
+		Cell<?> cell = table.add(e);
+		respace();
+		return cell;
 	}
 }

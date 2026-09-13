@@ -4,15 +4,15 @@
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
 ## Requirements
 ### Requirement: Column and Row with flex-like modifiers
-`Column` and `Row` SHALL be vertical/horizontal layout containers supporting fluent configuration modifiers `gap(int/float)`, `justify(Justify)` (START/CENTER/END/BETWEEN/AROUND/EVENLY), `align(Align)` (START/CENTER/END/STRETCH), `padding(int)`, and `grow()`, followed by `.children(Runnable)` for declaring children. Components SHALL delegate `gap` calculations to `ElementModifiers.gap()`.
+`Column` and `Row` SHALL be vertical/horizontal layout containers supporting fluent configuration modifiers `gap(int/float)`, `gap(Readable<Float>)`, `justify(Justify)` (START/CENTER/END/BETWEEN/AROUND/EVENLY), `align(Align)` (START/CENTER/END/STRETCH), `padding(int)`, and `grow()`, followed by `.children(Runnable)` for declaring children. `Row` and `Column` SHALL apply gap as directional sibling padding along their primary axis (horizontal `padLeft` for `Row`, vertical `padTop` for `Column`) strictly to subsequent visible siblings, with zero gap padding on the leading child, zero gap padding on trailing edges, and zero gap padding on the cross-axis.
 
 #### Scenario: Row justify and align
 - **WHEN** `row().justify(Justify.BETWEEN).align(Align.CENTER).gap(8).children(() -> { button("A"); button("B"); })` is called
-- **THEN** row configuration is applied before children are declared, distributing children with space-between and centered vertically using `ElementModifiers.gap()`
+- **THEN** row configuration is applied before children are declared, distributing children with space-between and centered vertically, button A has 0px gap padding and button B has 8px left gap padding with 0px top/bottom gap padding
 
 #### Scenario: Column gap and padding
 - **WHEN** `column().gap(16).padding(24).children(() -> { text("Title"); divider(); text("Body"); })` is called
-- **THEN** column configuration is set before children execution, applying 16px gap and 24px padding using `ElementModifiers`
+- **THEN** column configuration is set before children execution, applying 24px container padding via table margins, 0px top gap padding to "Title", 16px top gap padding to "divider" and "Body", and 0px left/right gap padding
 
 ### Requirement: Grow semantics
 Layouts SHALL support `growX()`, `growY()`, `grow()` on cells and widgets (e.g., `textField(input).growX()` or `button("Action").growX()`). Components in layout containers (`Column`, `Row`, `Card`, `Scroll`) and structural components (`ForEach`, `Dynamic`) SHALL NOT grow by default. Sizing SHALL adhere to the child's natural content size or explicit constraints unless `grow()`, `growX()`, or `growY()` is explicitly invoked, or the element is an expanding spacer. Grow SHALL map to Arc `cell.growX()`/`grow()`.
@@ -41,11 +41,11 @@ Layouts SHALL support `growX()`, `growY()`, `grow()` on cells and widgets (e.g.,
 - **THEN** spacer expands vertically with `growY > 0`, pushing "Bottom" to the end of the column
 
 ### Requirement: Grid with columns and gap
-`grid(int columns)` and `grid(columns).gap(g)` SHALL provide a grid layout container supporting `.children(Runnable)` after column count and gap configuration.
+`grid(int columns)` and `grid(columns).gap(g)` SHALL provide a grid layout container supporting `.children(Runnable)` after column count and gap configuration. The grid SHALL apply horizontal gap between adjacent columns (`col > 0`) and vertical gap between adjacent rows (`row > 0`), with zero gap padding on the outer container borders.
 
 #### Scenario: Grid 3 columns
-- **WHEN** `grid(3).children(() -> { button("One"); button("Two"); button("Three"); button("Four"); })` is rendered
-- **THEN** grid configuration sets 3 columns before children are attached, arranging 3 buttons per row and wrapping the fourth
+- **WHEN** `grid(3).gap(8f).children(() -> { button("One"); button("Two"); button("Three"); button("Four"); })` is rendered
+- **THEN** grid arranges 3 buttons in the first row and wraps the fourth, with button "One" having 0px left/top gap, button "Two" having 8px left gap, and button "Four" having 8px top gap
 
 ### Requirement: Wrap children wrapping
 `wrap(() -> { ... })` SHALL layout children horizontally and wrap to next line when exceeding container width, using Arc wrapping container or `Table` with wrap enabled.
@@ -92,4 +92,19 @@ All layout primitives and components SHALL delegate to Arc's existing `Table`, `
 #### Scenario: Enum values exist
 - **WHEN** `Justify.values()` and `Align.values()` are inspected
 - **THEN** they contain exactly the listed constants
+
+### Requirement: Additive combination of child margins and container gap
+Layout containers (`Row`, `Column`, `Grid`) SHALL combine child element margins and container gap additively on the primary layout axis. For any child element in a `Row`, the cell's `padLeft` SHALL equal the child's explicit `marginLeft` plus the container's `gap` if the child is preceded by an earlier visible sibling. For any child element in a `Column`, the cell's `padTop` SHALL equal the child's explicit `marginTop` plus the container's `gap` if preceded by an earlier visible sibling.
+
+#### Scenario: Child margin coexists with container gap
+- **WHEN** a `Row` with `gap(16)` contains child A and child B with `marginLeft(8)`
+- **THEN** child A has `padLeft = 0` and child B has `padLeft = 24` (8px margin + 16px gap), while neither child receives top or bottom padding from gap
+
+### Requirement: Visibility-aware gap re-spacing
+When a child element inside a `Row` or `Column` changes visibility or collapses to zero-size via `Dynamic`, the container SHALL re-evaluate adjacent sibling gap spacing so that the first currently visible element receives 0px gap padding along the primary axis, avoiding dead space at the container's leading edge.
+
+#### Scenario: First child collapses in Row
+- **WHEN** the first child of a `Row` with `gap(16)` becomes hidden (`visible = false`)
+- **THEN** the second child is promoted to the leading visible element and its `padLeft` gap offset is reduced to 0px
+
 

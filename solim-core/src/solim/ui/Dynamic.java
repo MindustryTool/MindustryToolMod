@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.layout.GapContainer;
 import solim.layout.LayoutModifiers;
 import solim.layout.SizeConstraints;
 import solim.runtime.ParentStack;
@@ -113,13 +114,15 @@ public final class Dynamic<T> extends BaseComponent implements LayoutModifiers<D
 			container.visible = true;
 			if (parentCell != null) {
 				parentCell.size(-1f);
-				parentCell.padTop(-1f).padBottom(-1f);
 			}
 		} else {
 			container.visible = false;
 			if (parentCell != null) {
-				parentCell.size(0f).padTop(0f).padBottom(0f);
+				parentCell.size(0f).pad(0f);
 			}
+		}
+		if (container.parent instanceof Table) {
+			GapContainer.respace((Table) container.parent);
 		}
 	}
 

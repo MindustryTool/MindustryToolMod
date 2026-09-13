@@ -55,10 +55,22 @@ class GridTest {
 	}
 
 	@Test
-	void gapAppliesHalfPadToDefaults() {
+	void gapAppliesDirectionalSpacing() {
 		Grid g = new Grid(2);
 		g.gap(16f);
-		assertEquals(8f, CellAccess.padTop(g.table().defaults()), 0.01f);
+		Element a = new Element();
+		Element b = new Element();
+		Element c = new Element();
+		g.add(a);
+		g.add(b);
+		g.add(c);
+
+		assertEquals(0f, CellAccess.padLeft(g.table().getCell(a)), 0.01f);
+		assertEquals(0f, CellAccess.padTop(g.table().getCell(a)), 0.01f);
+		assertEquals(16f, CellAccess.padLeft(g.table().getCell(b)), 0.01f);
+		assertEquals(0f, CellAccess.padTop(g.table().getCell(b)), 0.01f);
+		assertEquals(0f, CellAccess.padLeft(g.table().getCell(c)), 0.01f);
+		assertEquals(16f, CellAccess.padTop(g.table().getCell(c)), 0.01f);
 	}
 
 	@Test
@@ -116,16 +128,20 @@ class GridTest {
 	}
 
 	@Test
-	void reactiveGapUpdatesDefaultsPad() {
+	void reactiveGapUpdatesCellSpacing() {
 		Signal<Float> gap = Signal.of(8f);
 		Grid g = new Grid(2);
 		g.gap(gap);
+		Element a = new Element();
+		Element b = new Element();
+		g.add(a);
+		g.add(b);
 
-		assertEquals(4f, CellAccess.padTop(g.table().defaults()), 0.01f);
+		assertEquals(8f, CellAccess.padLeft(g.table().getCell(b)), 0.01f);
 
 		gap.set(16f);
 		solim.runtime.SignalDispatcher.flush();
-		assertEquals(8f, CellAccess.padTop(g.table().defaults()), 0.01f);
+		assertEquals(16f, CellAccess.padLeft(g.table().getCell(b)), 0.01f);
 	}
 
 	@Test

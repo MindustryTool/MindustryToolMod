@@ -103,6 +103,9 @@ public final class ElementModifiers {
         if (element == null)
             return;
         element.visible = visible;
+        if (element.parent instanceof Table) {
+            solim.layout.GapContainer.respace((Table) element.parent);
+        }
     }
 
     public static void visible(@Nullable Element element, @Nullable Readable<Boolean> visible) {
@@ -112,6 +115,9 @@ public final class ElementModifiers {
             Boolean val = visible.get();
             if (val != null) {
                 element.visible = val;
+                if (element.parent instanceof Table) {
+                    solim.layout.GapContainer.respace((Table) element.parent);
+                }
                 element.invalidateHierarchy();
             }
         });
@@ -426,16 +432,36 @@ public final class ElementModifiers {
         }
     }
 
+    public static void respace(@Nullable Table table) {
+        solim.layout.GapContainer.respace(table);
+    }
+
     public static void gap(@Nullable Table table, float gap) {
         if (table == null)
             return;
-        table.defaults().pad(gap / 2f);
-        if (table.getCells() != null) {
-            for (Cell<?> cell : table.getCells()) {
-                if (cell != null) {
-                    cell.pad(gap / 2f);
-                }
+        if (table.userObject instanceof solim.layout.GapContainer) {
+            solim.layout.GapContainer gc = (solim.layout.GapContainer) table.userObject;
+            if (gc instanceof solim.layout.Row) {
+                ((solim.layout.Row) gc).gap(gap);
+            } else if (gc instanceof solim.layout.Column) {
+                ((solim.layout.Column) gc).gap(gap);
+            } else if (gc instanceof solim.layout.Grid) {
+                ((solim.layout.Grid) gc).gap(gap);
+            } else if (gc instanceof solim.layout.Wrap) {
+                ((solim.layout.Wrap) gc).gap(gap);
+            } else if (gc instanceof solim.layout.Card) {
+                ((solim.layout.Card) gc).gap(gap);
+            } else if (gc instanceof solim.input.Button) {
+                ((solim.input.Button) gc).gap(gap);
+            } else if (gc instanceof GenericGapContainer) {
+                ((GenericGapContainer) gc).setGap(gap);
+            } else {
+                gc.respace();
             }
+        } else {
+            GenericGapContainer ggc = new GenericGapContainer(table, gap);
+            table.userObject = ggc;
+            ggc.respace();
         }
         table.invalidateHierarchy();
     }
@@ -443,6 +469,36 @@ public final class ElementModifiers {
     public static void gap(@Nullable Element element, float gap) {
         if (element instanceof Table) {
             gap((Table) element, gap);
+        }
+    }
+
+    private static final class GenericGapContainer implements solim.layout.GapContainer {
+        private final Table table;
+        private float gap;
+
+        GenericGapContainer(Table table, float gap) {
+            this.table = table;
+            this.gap = gap;
+        }
+
+        void setGap(float gap) {
+            this.gap = gap;
+            respace();
+        }
+
+        @Override
+        public solim.layout.Direction direction() {
+            return solim.layout.Direction.HORIZONTAL;
+        }
+
+        @Override
+        public float gap() {
+            return gap;
+        }
+
+        @Override
+        public void respace() {
+            solim.layout.GapContainer.applySpacing(table, solim.layout.Direction.HORIZONTAL, gap);
         }
     }
 

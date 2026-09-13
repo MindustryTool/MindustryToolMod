@@ -15,7 +15,7 @@ import solim.signal.Readable;
 import solim.ui.Ui;
 
 /** Simple grid with fixed or reactive column count and customizable gap. */
-public final class Grid implements Component, LayoutModifiers<Grid> {
+public final class Grid implements Component, LayoutModifiers<Grid>, GapContainer {
 
 	private final Table table;
 	private final SizeConstraints constraints = new SizeConstraints();
@@ -27,7 +27,7 @@ public final class Grid implements Component, LayoutModifiers<Grid> {
 		this.table = new Table();
 		this.table.userObject = this;
 		this.table.name = "solim-grid-table";
-		ElementModifiers.gap(table, gap);
+		respace();
 	}
 
 	public Grid(int columns) {
@@ -76,7 +76,7 @@ public final class Grid implements Component, LayoutModifiers<Grid> {
 
 	public Grid gap(float g) {
 		this.gap = g;
-		ElementModifiers.gap(table, g);
+		respace();
 		return this;
 	}
 
@@ -93,6 +93,21 @@ public final class Grid implements Component, LayoutModifiers<Grid> {
 		return this;
 	}
 
+	@Override
+	public Direction direction() {
+		return Direction.HORIZONTAL;
+	}
+
+	@Override
+	public float gap() {
+		return gap;
+	}
+
+	@Override
+	public void respace() {
+		GapContainer.applyGridSpacing(table, columns, gap);
+	}
+
 	public Grid background(@Nullable Drawable bg) {
 		table.background(bg);
 		return this;
@@ -100,9 +115,8 @@ public final class Grid implements Component, LayoutModifiers<Grid> {
 
 	public Grid children(@Nullable Runnable r) {
 		int[] count = new int[] {0};
-		ElementModifiers.gap(table, gap);
 		ParentStack.push(table, (tbl, child) -> {
-			Cell<?> cell = tbl.add(child).pad(gap / 2f);
+			Cell<?> cell = tbl.add(child);
 			if (Ui.isExpanding(child)) {
 				cell.growX().fillX();
 			}
@@ -110,6 +124,7 @@ public final class Grid implements Component, LayoutModifiers<Grid> {
 			if (++count[0] % Math.max(1, columns) == 0) {
 				tbl.row();
 			}
+			respace();
 			return cell;
 		});
 		try {
@@ -120,6 +135,7 @@ public final class Grid implements Component, LayoutModifiers<Grid> {
 			ParentStack.pop();
 		}
 		ParentStack.attachToParent(table);
+		respace();
 		return this;
 	}
 
@@ -127,10 +143,9 @@ public final class Grid implements Component, LayoutModifiers<Grid> {
 		if (table.getChildren().size == 0) return;
 		Seq<Element> children = new Seq<>(table.getChildren());
 		table.clear();
-		ElementModifiers.gap(table, gap);
 		int col = 0;
 		for (Element child : children) {
-			Cell<?> cell = table.add(child).pad(gap / 2f);
+			Cell<?> cell = table.add(child);
 			if (Ui.isExpanding(child)) {
 				cell.growX().fillX();
 			}
@@ -139,12 +154,13 @@ public final class Grid implements Component, LayoutModifiers<Grid> {
 				table.row();
 			}
 		}
+		respace();
 		table.invalidateHierarchy();
 	}
 
 	/** Add a child element to the grid; wraps to next row when columns exceeded. */
 	public Grid add(Element child) {
-		Cell<?> cell = table.add(child).pad(gap / 2f);
+		Cell<?> cell = table.add(child);
 		if (Ui.isExpanding(child)) {
 			cell.growX().fillX();
 		}
@@ -154,6 +170,7 @@ public final class Grid implements Component, LayoutModifiers<Grid> {
 			table.row();
 			currentCell = 0;
 		}
+		respace();
 		return this;
 	}
 }

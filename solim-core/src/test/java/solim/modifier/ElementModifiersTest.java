@@ -6,6 +6,7 @@ import arc.Core;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.BeforeAll;
@@ -39,18 +40,35 @@ class ElementModifiersTest {
 	@Test
 	void elementModifiersGapOnTable() {
 		Table table = new Table();
+		Element a = new Element();
+		Element b = new Element();
+		table.add(a);
+		table.add(b);
 		ElementModifiers.gap(table, 16f);
-		assertEquals(8f, CellAccess.padTop(table.defaults()), 0.01f);
-		assertEquals(8f, CellAccess.padLeft(table.defaults()), 0.01f);
-		assertEquals(8f, CellAccess.padBottom(table.defaults()), 0.01f);
-		assertEquals(8f, CellAccess.padRight(table.defaults()), 0.01f);
+		Cell<?> cellA = table.getCell(a);
+		Cell<?> cellB = table.getCell(b);
+		assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
+		assertEquals(0f, CellAccess.padTop(cellA), 0.01f);
+		assertEquals(16f, CellAccess.padLeft(cellB), 0.01f);
+		assertEquals(0f, CellAccess.padTop(cellB), 0.01f);
+
+		ElementModifiers.gap(table, 24f);
+		assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
+		assertEquals(24f, CellAccess.padLeft(cellB), 0.01f);
 	}
 
 	@Test
 	void elementModifiersGapOnElementOverload() {
 		Table table = new Table();
+		Element a = new Element();
+		Element b = new Element();
+		table.add(a);
+		table.add(b);
 		ElementModifiers.gap((Element) table, 20f);
-		assertEquals(10f, CellAccess.padTop(table.defaults()), 0.01f);
+		Cell<?> cellA = table.getCell(a);
+		Cell<?> cellB = table.getCell(b);
+		assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
+		assertEquals(20f, CellAccess.padLeft(cellB), 0.01f);
 
 		Element element = new Element();
 		assertDoesNotThrow(() -> ElementModifiers.gap(element, 20f));
@@ -61,30 +79,60 @@ class ElementModifiersTest {
 	@Test
 	void componentGapDelegation() {
 		Row row = new Row().gap(14f);
-		assertEquals(7f, CellAccess.padTop(row.table().defaults()), 0.01f);
+		Element ra = new Element();
+		Element rb = new Element();
+		row.add(ra);
+		row.add(rb);
+		assertEquals(0f, CellAccess.padLeft(row.table().getCell(ra)), 0.01f);
+		assertEquals(14f, CellAccess.padLeft(row.table().getCell(rb)), 0.01f);
+		assertEquals(0f, CellAccess.padTop(row.table().getCell(rb)), 0.01f);
 
 		Column column = new Column().gap(18f);
-		assertEquals(9f, CellAccess.padTop(column.table().defaults()), 0.01f);
+		Element ca = new Element();
+		Element cb = new Element();
+		column.add(ca);
+		column.add(cb);
+		assertEquals(0f, CellAccess.padTop(column.table().getCell(ca)), 0.01f);
+		assertEquals(18f, CellAccess.padTop(column.table().getCell(cb)), 0.01f);
+		assertEquals(0f, CellAccess.padLeft(column.table().getCell(cb)), 0.01f);
 
-		Grid grid = new Grid().gap(10f);
-		assertEquals(5f, CellAccess.padTop(grid.table().defaults()), 0.01f);
+		Grid grid = new Grid(2).gap(10f);
+		Element ga = new Element();
+		Element gb = new Element();
+		Element gc = new Element();
+		grid.add(ga);
+		grid.add(gb);
+		grid.add(gc);
+		assertEquals(0f, CellAccess.padLeft(grid.table().getCell(ga)), 0.01f);
+		assertEquals(10f, CellAccess.padLeft(grid.table().getCell(gb)), 0.01f);
+		assertEquals(10f, CellAccess.padTop(grid.table().getCell(gc)), 0.01f);
 
 		Wrap wrap = new Wrap().gap(12f);
-		assertEquals(6f, CellAccess.padTop(wrap.table().defaults()), 0.01f);
+		Element wa = new Element();
+		Element wb = new Element();
+		wrap.add(wa);
+		wrap.add(wb);
+		assertEquals(0f, CellAccess.padLeft(wrap.table().getCell(wa)), 0.01f);
+		assertEquals(12f, CellAccess.padLeft(wrap.table().getCell(wb)), 0.01f);
 
 		Card card = new Card().gap(16f);
-		assertEquals(8f, CellAccess.padTop(card.container().defaults()), 0.01f);
+		Element cda = new Element();
+		Element cdb = new Element();
+		card.container().add(cda);
+		card.container().add(cdb);
+		card.respace();
+		assertEquals(0f, CellAccess.padTop(card.container().getCell(cda)), 0.01f);
+		assertEquals(16f, CellAccess.padTop(card.container().getCell(cdb)), 0.01f);
 
 		Button button = new Button().gap(8f);
-		assertEquals(4f, CellAccess.padTop(button.sizedButton().defaults()), 0.01f);
-
-		ReactiveGrid<String, String> rgrid = ReactiveGrid.of(
-			Signal.of(2),
-			Signal.of(java.util.Collections.singletonList("item")),
-			s -> s,
-			s -> new Row()
-		).gap(24f);
-		assertEquals(12f, CellAccess.padTop(rgrid.table().defaults()), 0.01f);
+		Element bta = new Element();
+		Element btb = new Element();
+		button.sizedButton().add(bta);
+		button.sizedButton().add(btb);
+		button.respace();
+		assertEquals(0f, CellAccess.padLeft(button.sizedButton().getCell(bta)), 0.01f);
+		assertEquals(8f, CellAccess.padLeft(button.sizedButton().getCell(btb)), 0.01f);
+		assertEquals(0f, CellAccess.padTop(button.sizedButton().getCell(btb)), 0.01f);
 	}
 
 	@Test

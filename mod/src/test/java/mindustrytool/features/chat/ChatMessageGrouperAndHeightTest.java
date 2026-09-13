@@ -546,8 +546,13 @@ class ChatMessageGrouperAndHeightTest {
     }
 
     @Test
-    void testHeightCalculatorSchematicMessageBranches() {
-        // Both prefix and suffix present
+    void testSchematicCardHeightMatchesRestructuredLayout() {
+        // Title row 24 + gap 4 + preview 140 + gap 4 + actions row 28 + card padding 12 = 212.
+        assertEquals(212f, ChatMessageHeightCalculator.SCHEMATIC_CARD_HEIGHT, 0.001f);
+    }
+
+    @Test
+    void testHeightCalculatorSchematicMessageBranches() {        // Both prefix and suffix present
         ParsedChatMessage.SchematicMessage schemBoth = new ParsedChatMessage.SchematicMessage(
                 raw("schem-both", "builder", "schematic content"), null, "Prefix description", "Suffix notes");
         MessageGroup groupBoth = new MessageGroup("builder", "2026-09-12T10:00:00Z", Collections.singletonList(schemBoth));
