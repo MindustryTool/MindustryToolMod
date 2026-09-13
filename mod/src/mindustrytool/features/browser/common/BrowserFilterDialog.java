@@ -17,6 +17,7 @@ import mindustry.ui.Styles;
 import mindustry.world.Block;
 import mindustrytool.Config;
 import mindustrytool.components.Loader;
+import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ModData;
 import mindustrytool.models.response.Sort;
 import mindustrytool.models.response.TagCategory;
@@ -95,16 +96,17 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void searchRow() {
-            card(WebStyles.sectionPanel().style()).growX().left()
+            row().growX().left()
+                    .rounded(unit(2))
+                    .border(1f, WebStyles.Colors.SECTION_BORDER)
+                    .background(Styles.black6)
                     .padding(unit(1))
                     .children(() -> {
-                        row().growX().left().children(() -> {
-                            icon(Icon.zoom).size(unit(4)).color(Color.gray);
-                            textField(filterText)
-                                    .growX()
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("browser.search.placeholder"));
-                        });
+                        icon(Icon.zoom).size(unit(4)).color(Color.gray);
+                        textField(filterText)
+                                .growX()
+                                .style(WebStyles.clearInput())
+                                .placeholder(Core.bundle.get("browser.search.placeholder"));
                     });
         }
 
@@ -123,7 +125,10 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void sectionPanel(String title, Runnable content) {
-            card(WebStyles.sectionPanel().style()).growX().left()
+            row().growX().left()
+                    .rounded(unit(2))
+                    .border(1f, WebStyles.Colors.SECTION_BORDER)
+                    .background(Styles.black6)
                     .padding(unit(1))
                     .children(() -> {
                         column().growX().left().gap(unit(1)).children(() -> {

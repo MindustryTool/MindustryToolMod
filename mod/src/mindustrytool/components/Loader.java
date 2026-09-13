@@ -9,7 +9,6 @@ import arc.util.Align;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import arc.util.Time;
-import mindustry.graphics.Pal;
 import solim.core.BaseComponent;
 import solim.core.Component;
 
@@ -23,11 +22,11 @@ public class Loader extends BaseComponent {
     private final float speed;
 
     public Loader() {
-        this(unit(10), Pal.accent);
+        this(unit(6), WebStyles.Colors.PRIMARY);
     }
 
     public Loader(float size) {
-        this(size, Pal.accent);
+        this(size, WebStyles.Colors.PRIMARY);
     }
 
     public Loader(float size, @Nullable Color color) {

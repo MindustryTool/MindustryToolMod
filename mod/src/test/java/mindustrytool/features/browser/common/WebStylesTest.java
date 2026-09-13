@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.graphics.RoundedDrawable;
 import solim.style.SolimButtonStyle;
+import mindustrytool.components.WebStyles;
 
 class WebStylesTest {
 

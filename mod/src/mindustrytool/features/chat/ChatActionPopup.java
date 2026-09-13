@@ -6,7 +6,7 @@ import arc.Core;
 import arc.util.Nullable;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
-import mindustrytool.features.browser.common.WebStyles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.translation.TranslationFeature;
 import mindustrytool.models.response.ChatMessage;
@@ -34,7 +34,10 @@ public final class ChatActionPopup {
         menu.children(request -> menuRows(store, request)).rounded(2);
     }
 
-    /** Opens the shared menu for the given message anchored near the given stage coordinates. */
+    /**
+     * Opens the shared menu for the given message anchored near the given stage
+     * coordinates.
+     */
     public static void showFor(@Nullable ChatMessage message, float stageX, float stageY) {
         if (menu != null) {
             menu.show(message, stageX, stageY);
@@ -109,7 +112,8 @@ public final class ChatActionPopup {
             Core.app.post(() -> {
                 store.translatingMessageId().set(null);
                 if (err != null || res == null) {
-                    Vars.ui.showInfoToast(Core.bundle.get("feature.chat.ui.translate-failed", "Translation failed"), 2f);
+                    Vars.ui.showInfoToast(Core.bundle.get("feature.chat.ui.translate-failed", "Translation failed"),
+                            2f);
                 } else {
                     ChatMessageHeightCalculator.clearCache();
                     store.setTranslation(messageId, res);

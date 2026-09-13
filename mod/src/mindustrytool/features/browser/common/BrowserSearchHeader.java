@@ -12,6 +12,7 @@ import mindustry.ui.Styles;
 import solim.core.BaseComponent;
 import solim.signal.Signal;
 
+import mindustrytool.components.WebStyles;
 /**
  * Search header with debounced text input, filter trigger button, refresh
  * button, and reactive active filter chips.

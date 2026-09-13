@@ -13,7 +13,7 @@ import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
-import mindustrytool.features.browser.common.WebStyles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.SchematicData;
 import solim.core.BaseComponent;
 import solim.signal.Readable;
@@ -115,7 +115,8 @@ public class SchematicCard extends BaseComponent {
                         statButton(
                                 BrowserStatsBadge.formatCount(BrowserImages.count(schematic.getDownloads())),
                                 Icon.downloadSmall,
-                                schematic.getDownloads() != null && schematic.getDownloads() > 0 ? Color.sky : Color.white,
+                                schematic.getDownloads() != null && schematic.getDownloads() > 0 ? Color.sky
+                                        : Color.white,
                                 onSave,
                                 Core.bundle.get("browser.schematic.save"));
 

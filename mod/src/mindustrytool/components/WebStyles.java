@@ -1,4 +1,4 @@
-package mindustrytool.features.browser.common;
+package mindustrytool.components;
 
 import static solim.UI.*;
 
@@ -16,7 +16,7 @@ import solim.style.SolimButtonStyleBuilder;
  * and shared button variants with built-in padding.
  * Does not mutate global Arc styles.
  */
-public final class WebStyles {
+public class WebStyles {
 
     /**
      * Semantic color tokens for browser UI, derived from the shadcn/ui dark
@@ -67,6 +67,8 @@ public final class WebStyles {
         public static final Color CLEAR_FG = new Color(0.7f, 0.7f, 0.7f, 1f);
         public static final Color CLEAR_HOVER_BG = new Color(0.18f, 0.18f, 0.18f, 1f);
         public static final Color CLEAR_DOWN_BG = new Color(0.10f, 0.10f, 0.10f, 1f);
+
+        public static final Color SECONDARY_BG = new Color(0.10f, 0.10f, 0.10f, 1f);
 
         private Colors() {
         }

@@ -11,7 +11,7 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
-import mindustrytool.features.browser.common.WebStyles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
 import mindustrytool.services.auth.AuthOverlay;

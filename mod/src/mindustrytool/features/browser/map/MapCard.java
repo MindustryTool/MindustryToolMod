@@ -13,10 +13,10 @@ import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
-import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.models.response.MapData;
 import solim.core.BaseComponent;
 import solim.signal.Readable;
+import mindustrytool.components.WebStyles;
 
 /**
  * Image-first card layout showing a dedicated preview card with a centered

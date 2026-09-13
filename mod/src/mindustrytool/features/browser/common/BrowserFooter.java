@@ -9,6 +9,7 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import solim.core.BaseComponent;
 
+import mindustrytool.components.WebStyles;
 /**
  * Footer with Previous/Next buttons, direct page jump, and external upload
  * shortcut. Pages are zero-based internally and displayed one-based.

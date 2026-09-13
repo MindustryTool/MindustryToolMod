@@ -10,7 +10,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
-import mindustrytool.features.browser.common.WebStyles;
+import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.signal.Computed;
 import solim.signal.Signal;
@@ -45,7 +45,8 @@ public final class FeatureSettingsView extends BaseComponent {
     private void toolbar() {
         row().growX().gap(unit(2)).children(() -> {
             icon(Icon.zoom);
-            textField(filter).growX().style(WebStyles.clearInput()).placeholder(Core.bundle.get("feature.search.placeholder"));
+            textField(filter).growX().style(WebStyles.clearInput())
+                    .placeholder(Core.bundle.get("feature.search.placeholder"));
 
             button(FeatureManager::reenable).style(Styles.defaultb).width(unit(50)).height(unit(10))
                     .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {

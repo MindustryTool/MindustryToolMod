@@ -19,7 +19,7 @@ import mindustry.ui.Styles;
 import mindustrytool.Config;
 import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
-import mindustrytool.features.browser.common.WebStyles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.SchematicDetailData;
 import mindustrytool.models.response.SchematicDetailData.SchematicRequirement;
 import mindustrytool.models.response.TagData;

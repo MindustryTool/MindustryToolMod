@@ -27,7 +27,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.FileIcon;
-import mindustrytool.features.browser.common.WebStyles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.chat.models.MessageGroup;
 import mindustrytool.features.chat.models.ParsedChatMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.ImageMessage;
@@ -282,7 +282,8 @@ public class ChatMessageListView extends BaseComponent {
                         column().growX().top().left().children(() -> {
                             // Author and timestamp header + action button
                             row().growX().top().left()
-                                    .height(ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP)
+                                    .height(ChatMessageHeightCalculator.HEADER_HEIGHT
+                                            + ChatMessageHeightCalculator.HEADER_GAP)
                                     .children(() -> {
                                         text(authorName)
                                                 .color(authorColor)
@@ -347,9 +348,10 @@ public class ChatMessageListView extends BaseComponent {
                             if (raw.getReplyTo() != null && !raw.getReplyTo().isEmpty()) {
                                 column().growX().top().left().children(() -> {
                                     buildReplyPreview(raw.getReplyTo());
-                                    column().growX().top().left().marginTop(ChatMessageHeightCalculator.REPLY_GAP).children(() -> {
-                                        buildMessageBody(parsed, isPending, isFailed);
-                                    });
+                                    column().growX().top().left().marginTop(ChatMessageHeightCalculator.REPLY_GAP)
+                                            .children(() -> {
+                                                buildMessageBody(parsed, isPending, isFailed);
+                                            });
                                 });
                             } else {
                                 buildMessageBody(parsed, isPending, isFailed);
@@ -539,7 +541,7 @@ public class ChatMessageListView extends BaseComponent {
                     .growX();
         }
 
-private void buildSchematicCard(Schematic schematic) {
+        private void buildSchematicCard(Schematic schematic) {
             card().top().left().children(() -> {
                 column().top().left().gap(unit(1)).children(() -> {
                     // Header: just the name
@@ -647,7 +649,8 @@ private void buildSchematicCard(Schematic schematic) {
             return column().growX().top().left().children(() -> {
                 text(highlighted).color(bodyColor).fontScale(1.0f).left().wrap().growX();
 
-                // Clickable link chips below the text; the inline label itself is not clickable.
+                // Clickable link chips below the text; the inline label itself is not
+                // clickable.
                 row().growX().top().left().gap(unit(1)).children(() -> {
                     for (String linkUrl : linkUrls) {
                         final String chipUrl = linkUrl;
