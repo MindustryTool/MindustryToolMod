@@ -1,7 +1,7 @@
-## MODIFIED Requirements
+## Requirements
 
 ### Requirement: HTTP Request Builder
-The system SHALL provide a fluent `RequestBuilder` for constructing HTTP requests with configurable method, URL, headers, body, timeout, auth, and query parameters. Query parameters SHALL be accumulated via `.query()` overloads and assembled into the final URL at send time. Query parameter keys SHALL be required (throw `NullPointerException` if null). String values SHALL be skipped if null or empty. The `Map<String, String>` overload SHALL replace existing entries for each key present in the map. All other overloads SHALL append to the key's list.
+The system SHALL provide a fluent `RequestBuilder` for constructing HTTP requests with configurable method, URL, headers, body, timeout, auth, and query parameters. Query parameters SHALL be accumulated via `.query()` overloads and assembled into the final URL at send time. Null query parameter keys SHALL be silently skipped. Null or empty String values SHALL be skipped. The `Map<String, String>` overload SHALL replace existing entries for each key present in the map. All other overloads SHALL append to the key's list.
 
 #### Scenario: Single query parameter
 - **WHEN** `request.get("/maps").query("page", 1).sendAsync()` is called
@@ -23,9 +23,9 @@ The system SHALL provide a fluent `RequestBuilder` for constructing HTTP request
 - **WHEN** `request.get("/maps").query("tags", "a").query(Map.of("tags", "b")).sendAsync()` is called
 - **THEN** the request URL SHALL be `/maps?tags=b`
 
-#### Scenario: Null key throws
-- **WHEN** `request.get("/maps").query(null, "value")` is called
-- **THEN** a `NullPointerException` SHALL be thrown
+#### Scenario: Null key is skipped
+- **WHEN** `request.get("/maps").query(null, "value").sendAsync()` is called
+- **THEN** the request URL SHALL be `/maps` (no parameter added)
 
 #### Scenario: Null String value is skipped
 - **WHEN** `request.get("/maps").query("sort", null).sendAsync()` is called

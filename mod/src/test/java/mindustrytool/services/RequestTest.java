@@ -385,11 +385,16 @@ class RequestTest {
 	}
 
 	@Test
-	void testNullQueryKeyThrows() {
+	void testNullQueryKeySkipped() throws Exception {
 		Request client =
 				Request.builder().baseUrl("http://127.0.0.1:" + serverPort).build();
 
-		assertThrows(NullPointerException.class, () -> client.get("/test-query").query(null, "value"));
+		Request.Response<String> res = client.get("/test-query")
+				.query(null, "value")
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertEquals("", res.body());
 	}
 
 	@Test

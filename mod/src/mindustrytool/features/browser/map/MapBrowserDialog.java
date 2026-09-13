@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.struct.Seq;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
@@ -46,9 +47,15 @@ public class MapBrowserDialog extends SolimDialog {
         hidden(() -> state.stop());
     }
 
-    private static CompletableFuture<List<MapData>> fetchMaps(
-            int page, int size, String sort, String query, List<String> tags) {
-        return MindustryTool.searchMaps(page, size, sort, query, tags, null, null);
+    private static CompletableFuture<List<MapData>> fetchMaps(BrowserState<MapData> state) {
+        return MindustryTool.searchMaps(
+                state.page().peek() != null ? state.page().peek() : 0,
+                BrowserState.PAGE_SIZE,
+                state.sort().peek(),
+                state.query().peek(),
+                state.selectedTags().peek().list(),
+                null,
+                state.verification().peek());
     }
 
     private static class BrowserContent extends BaseComponent {

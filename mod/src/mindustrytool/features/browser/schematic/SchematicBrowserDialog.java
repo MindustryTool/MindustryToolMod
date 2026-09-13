@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.struct.Seq;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
@@ -46,9 +47,18 @@ public class SchematicBrowserDialog extends SolimDialog {
         hidden(() -> state.stop());
     }
 
-    private static CompletableFuture<List<SchematicData>> fetchSchematics(
-            int page, int size, String sort, String query, List<String> tags) {
-        return MindustryTool.searchSchematics(page, size, sort, query, tags, null, null);
+    private static CompletableFuture<List<SchematicData>> fetchSchematics(BrowserState<SchematicData> state) {
+        Seq<String> blocks = state.selectedBlocks().get();
+        List<String> blockList = blocks != null ? blocks.list() : java.util.Collections.emptyList();
+        return MindustryTool.searchSchematics(
+                state.page().peek() != null ? state.page().peek() : 0,
+                BrowserState.PAGE_SIZE,
+                state.sort().peek(),
+                state.query().peek(),
+                state.selectedTags().peek().list(),
+                blockList,
+                null,
+                state.verification().peek());
     }
 
     private static class BrowserContent extends BaseComponent {

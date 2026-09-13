@@ -86,6 +86,8 @@ public class BrowserFilterDialog extends SolimDialog {
                     column().growX().left().gap(unit(4)).children(() -> {
                         sectionPanel(Core.bundle.get("browser.filter.sort"), () -> renderSortOptions());
 
+                        sectionPanel(Core.bundle.get("browser.filter.verification"), () -> renderVerificationOptions());
+
                         if (usePlanets) {
                             sectionPanel(Core.bundle.get("browser.filter.planets"), () -> renderPlanets());
                         }
@@ -152,6 +154,30 @@ public class BrowserFilterDialog extends SolimDialog {
                             .height(unit(9))
                             .children(() -> {
                                 text(sortOption.getName()).color(checked.map(c -> c ? Color.white : Color.gray));
+                            });
+                }
+            });
+        }
+
+        private void renderVerificationOptions() {
+            String[] options = {"ALL", "PENDING", "VERIFIED", "REJECTED"};
+            String[] keys = {
+                    "browser.filter.verification.all",
+                    "browser.filter.verification.pending",
+                    "browser.filter.verification.verified",
+                    "browser.filter.verification.rejected"
+            };
+            wrap().gap(unit(1)).left().children(() -> {
+                for (int i = 0; i < options.length; i++) {
+                    String optionValue = options[i];
+                    String label = Core.bundle.get(keys[i]);
+                    Readable<Boolean> checked = state.verification().map(current -> optionValue.equals(current));
+                    button(() -> state.setVerification(optionValue))
+                            .style(WebStyles.filterChipText())
+                            .checked(checked)
+                            .height(unit(9))
+                            .children(() -> {
+                                text(label).color(checked.map(c -> c ? Color.white : Color.gray));
                             });
                 }
             });
@@ -273,12 +299,12 @@ public class BrowserFilterDialog extends SolimDialog {
                         renderCategory(category);
                     }
                 });
-            });
+            }).growX();
         }
 
         private void renderCategory(CategoryViewModel category) {
             sectionPanel(Strings.capitalize(category.name), () -> {
-                wrap().left().gap(unit(1)).children(() -> {
+                wrap().growX().left().gap(unit(1)).children(() -> {
                     for (TagData tag : category.tags) {
                         renderTag(tag);
                     }
@@ -388,7 +414,9 @@ public class BrowserFilterDialog extends SolimDialog {
 
         private void clearAll() {
             state.clearTags();
+            state.clearBlocks();
             state.setSort(Config.sorts.get(0).getValue());
+            state.setVerification("ALL");
             selectedPlanets.set(new Seq<String>());
             filterText.set("");
         }

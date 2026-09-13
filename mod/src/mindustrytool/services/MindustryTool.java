@@ -3,8 +3,6 @@ package mindustrytool.services;
 import arc.Core;
 import arc.util.Nullable;
 import arc.util.serialization.Jval;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -117,7 +115,7 @@ public final class MindustryTool {
 
     public static CompletableFuture<List<SchematicData>> searchSchematics(
             int page, int size, String sort, String name, List<String> tags,
-            @Nullable String author, @Nullable String verification) {
+            List<String> blocks, @Nullable String author, @Nullable String verification) {
         return publicApi
                 .get("/schematics")
                 .query("page", page)
@@ -125,6 +123,7 @@ public final class MindustryTool {
                 .query("sort", sort)
                 .query("name", name)
                 .query("tags", tags)
+                .query("blocks", blocks)
                 .query("author", author)
                 .query("verification", verification)
                 .sendAsync()

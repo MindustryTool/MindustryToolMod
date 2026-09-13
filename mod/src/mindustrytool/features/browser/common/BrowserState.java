@@ -16,12 +16,13 @@ import solim.signal.Signal;
  */
 public class BrowserState<T> {
 
-    private static final int PAGE_SIZE = 20;
+    public static final int PAGE_SIZE = 20;
 
     private final Signal<String> query = Signal.of("");
     private final Signal<Seq<String>> selectedTags = Signal.of(new Seq<String>());
     private final Signal<Seq<String>> selectedBlocks = Signal.of(new Seq<String>());
     private final Signal<String> sort = Signal.of(Config.sorts.get(0).getValue());
+    private final Signal<String> verification = Signal.of("VERIFIED");
     private final Signal<Integer> page = Signal.of(0);
     private final Signal<Seq<T>> items = Signal.of(new Seq<T>());
     private final Signal<Boolean> loading = Signal.of(false);
@@ -32,7 +33,7 @@ public class BrowserState<T> {
 
     @FunctionalInterface
     public interface Fetcher<T> {
-        CompletableFuture<List<T>> fetch(int page, int size, String sort, String query, List<String> tags);
+        CompletableFuture<List<T>> fetch(BrowserState<T> state);
     }
 
     public BrowserState(Fetcher<T> fetcher) {
@@ -44,12 +45,13 @@ public class BrowserState<T> {
             return;
         }
         autoFetch = Effect.of(() -> {
-            String currentQuery = query.get();
-            Seq<String> currentTags = selectedTags.get();
-            String currentSort = sort.get();
-            Integer currentPage = page.get();
-
-            fetch(currentQuery, currentTags, currentSort, currentPage != null ? currentPage : 0);
+            query.get();
+            selectedTags.get();
+            selectedBlocks.get();
+            sort.get();
+            verification.get();
+            page.get();
+            doFetch();
         });
     }
 
@@ -60,15 +62,15 @@ public class BrowserState<T> {
         }
     }
 
-    public void fetch(String queryValue, Seq<String> tags, String sortValue, int pageValue) {
+    public void refresh() {
+        doFetch();
+    }
+
+    private void doFetch() {
         loading.set(true);
         error.set(null);
 
-        String effectiveQuery = queryValue != null ? queryValue.trim() : "";
-        String effectiveSort = sortValue != null ? sortValue : Config.sorts.get(0).getValue();
-        List<String> effectiveTags = tags != null ? tags.list() : new Seq<String>().list();
-
-        fetcher.fetch(pageValue, PAGE_SIZE, effectiveSort, effectiveQuery, effectiveTags)
+        fetcher.fetch(this)
                 .whenComplete((result, throwable) -> {
                     Core.app.post(() -> {
                         loading.set(false);
@@ -83,10 +85,6 @@ public class BrowserState<T> {
                         }
                     });
                 });
-    }
-
-    public void refresh() {
-        fetch(query.peek(), selectedTags.peek(), sort.peek(), page.peek() != null ? page.peek() : 0);
     }
 
     public void nextPage() {
@@ -142,11 +140,24 @@ public class BrowserState<T> {
         resetPage();
     }
 
+    public void clearBlocks() {
+        selectedBlocks.set(new Seq<String>());
+        resetPage();
+    }
+
     public void setSort(String sortValue) {
         if (sortValue == null) {
             return;
         }
         sort.set(sortValue);
+        resetPage();
+    }
+
+    public void setVerification(String verificationValue) {
+        if (verificationValue == null) {
+            return;
+        }
+        verification.set(verificationValue);
         resetPage();
     }
 
@@ -164,6 +175,10 @@ public class BrowserState<T> {
 
     public Signal<String> sort() {
         return sort;
+    }
+
+    public Signal<String> verification() {
+        return verification;
     }
 
     public Signal<Integer> page() {
