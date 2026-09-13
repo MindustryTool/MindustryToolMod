@@ -175,15 +175,9 @@ class RowTest {
 	}
 
 	@Test
-	void testRowTopLeftAlignment() {
-		arc.scene.ui.layout.Cell<?> testCell = new arc.scene.ui.layout.Cell<>();
-		testCell.top().left();
-		System.out.println("testCell after top left: " + arc.scene.ui.layout.CellAccess.align(testCell));
-		testCell.center();
-		System.out.println("testCell after center: " + arc.scene.ui.layout.CellAccess.align(testCell));
+	void rowTopLeftAlignsChildrenToTopAndLeft() {
 		Row row = new Row();
 		row.top().left();
-		row.table().defaults().top();
 		Element e1 = new Element() {
 			@Override public float getPrefWidth() { return 50f; }
 			@Override public float getPrefHeight() { return 50f; }
@@ -198,15 +192,72 @@ class RowTest {
 		});
 		row.table().setSize(300f, 200f);
 		row.table().layout();
+
 		arc.scene.ui.layout.Cell<?> c1 = row.table().getCell(e1);
 		arc.scene.ui.layout.Cell<?> c2 = row.table().getCell(e2);
-		System.out.println("table align: " + row.table().getAlign());
-		System.out.println("c1 align: " + arc.scene.ui.layout.CellAccess.align(c1) + ", y: " + e1.y + ", h: " + e1.getHeight() + ", x: " + e1.x);
-		System.out.println("c2 align: " + arc.scene.ui.layout.CellAccess.align(c2) + ", y: " + e2.y + ", h: " + e2.getHeight() + ", x: " + e2.x);
+
+		// Both cell alignments must include Align.top and Align.left
+		assertEquals(arc.util.Align.top | arc.util.Align.left, arc.scene.ui.layout.CellAccess.align(c1) & (arc.util.Align.top | arc.util.Align.left));
+		assertEquals(arc.util.Align.top | arc.util.Align.left, arc.scene.ui.layout.CellAccess.align(c2) & (arc.util.Align.top | arc.util.Align.left));
+
+		// Both children must be flush with the top edge of the row (y + height == 200)
+		assertEquals(200f, e1.y + e1.getHeight(), 0.01f, "Child 1 must be aligned to top of row");
+		assertEquals(200f, e2.y + e2.getHeight(), 0.01f, "Child 2 must be aligned to top of row");
+
+		// Left alignment: e1 at left (0), e2 immediately following (50)
+		assertEquals(0f, e1.x, 0.01f, "Child 1 must be at left edge");
+		assertEquals(50f, e2.x, 0.01f, "Child 2 must follow Child 1");
 	}
 
 	@Test
-	void testLandscapeLayoutWithScroll() {
+	void rowBottomRightAlignsChildrenToBottomAndRight() {
+		Row row = new Row();
+		row.bottom().right();
+		Element e1 = new Element() {
+			@Override public float getPrefWidth() { return 50f; }
+			@Override public float getPrefHeight() { return 50f; }
+		};
+		Element e2 = new Element() {
+			@Override public float getPrefWidth() { return 100f; }
+			@Override public float getPrefHeight() { return 100f; }
+		};
+		row.children(() -> {
+			solim.runtime.ParentStack.add(e1);
+			solim.runtime.ParentStack.add(e2);
+		});
+		row.table().setSize(300f, 200f);
+		row.table().layout();
+
+		// Both children must be flush with the bottom edge of the row (y == 0)
+		assertEquals(0f, e1.y, 0.01f, "Child 1 must be aligned to bottom");
+		assertEquals(0f, e2.y, 0.01f, "Child 2 must be aligned to bottom");
+
+		// Right alignment: e2 ends at 300, e1 before it
+		assertEquals(300f, e2.x + e2.getWidth(), 0.01f, "Child 2 must be at right edge");
+		assertEquals(200f, e1.x + e1.getWidth(), 0.01f, "Child 1 must precede Child 2");
+	}
+
+	@Test
+	void rowAlignmentAfterChildrenUpdatesExistingCells() {
+		Row row = new Row();
+		Element e1 = new Element() {
+			@Override public float getPrefWidth() { return 50f; }
+			@Override public float getPrefHeight() { return 50f; }
+		};
+		row.children(() -> solim.runtime.ParentStack.add(e1));
+
+		// Call top() after children are added
+		row.top();
+		row.table().setSize(300f, 200f);
+		row.table().layout();
+
+		arc.scene.ui.layout.Cell<?> c1 = row.table().getCell(e1);
+		assertEquals(arc.util.Align.top, arc.scene.ui.layout.CellAccess.align(c1) & arc.util.Align.top);
+		assertEquals(200f, e1.y + e1.getHeight(), 0.01f);
+	}
+
+	@Test
+	void landscapeLayoutInScrollAlignsChildrenTopLeft() {
 		Element img = new Element() {
 			@Override public float getPrefWidth() { return 120f; }
 			@Override public float getPrefHeight() { return 80f; }
@@ -234,10 +285,12 @@ class RowTest {
 		Row row = (Row) scroll.content().getChildren().first().userObject;
 		row.table().layout();
 
-		System.out.println("scroll.outer: " + scroll.outer().getWidth() + "x" + scroll.outer().getHeight());
-		System.out.println("scroll.content: " + scroll.content().getWidth() + "x" + scroll.content().getHeight());
-		System.out.println("row.table: " + row.table().getWidth() + "x" + row.table().getHeight() + " at y=" + row.table().y);
-		System.out.println("img: " + img.getWidth() + "x" + img.getHeight() + " at (" + img.x + ", " + img.y + ")");
-		System.out.println("det: " + det.getWidth() + "x" + det.getHeight() + " at (" + det.x + ", " + det.y + ")");
+		// Both img and det must be flush with the top of the row table (400)
+		assertEquals(400f, img.y + img.getHeight(), 0.01f, "Image must align to the top");
+		assertEquals(400f, det.y + det.getHeight(), 0.01f, "Details must align to the top");
+
+		// Left alignment with gap
+		assertEquals(0f, img.x, 0.01f, "Image starts at left edge");
+		assertEquals(128f, det.x, 0.01f, "Details starts after image + gap");
 	}
 }

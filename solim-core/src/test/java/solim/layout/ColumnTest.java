@@ -159,4 +159,76 @@ class ColumnTest {
 		Column col = new Column();
 		assertNotNull(col.sizeConstraints());
 	}
+
+	@Test
+	void columnTopLeftAlignsChildren() {
+		Column col = new Column();
+		col.top().left();
+		Element e1 = new Element() {
+			@Override public float getPrefWidth() { return 50f; }
+			@Override public float getPrefHeight() { return 30f; }
+		};
+		Element e2 = new Element() {
+			@Override public float getPrefWidth() { return 100f; }
+			@Override public float getPrefHeight() { return 60f; }
+		};
+		col.children(() -> {
+			solim.runtime.ParentStack.add(e1);
+			solim.runtime.ParentStack.add(e2);
+		});
+		col.table().setSize(200f, 300f);
+		col.table().layout();
+
+		arc.scene.ui.layout.Cell<?> c1 = col.table().getCell(e1);
+		arc.scene.ui.layout.Cell<?> c2 = col.table().getCell(e2);
+
+		assertEquals(arc.util.Align.top | arc.util.Align.left, CellAccess.align(c1) & (arc.util.Align.top | arc.util.Align.left));
+		assertEquals(arc.util.Align.top | arc.util.Align.left, CellAccess.align(c2) & (arc.util.Align.top | arc.util.Align.left));
+
+		// Left aligned: both start at x = 0
+		assertEquals(0f, e1.x, 0.01f, "Child 1 must be at left edge");
+		assertEquals(0f, e2.x, 0.01f, "Child 2 must be at left edge");
+	}
+
+	@Test
+	void columnBottomRightAlignsChildren() {
+		Column col = new Column();
+		col.bottom().right();
+		Element e1 = new Element() {
+			@Override public float getPrefWidth() { return 50f; }
+			@Override public float getPrefHeight() { return 30f; }
+		};
+		Element e2 = new Element() {
+			@Override public float getPrefWidth() { return 100f; }
+			@Override public float getPrefHeight() { return 60f; }
+		};
+		col.children(() -> {
+			solim.runtime.ParentStack.add(e1);
+			solim.runtime.ParentStack.add(e2);
+		});
+		col.table().setSize(200f, 300f);
+		col.table().layout();
+
+		// Right aligned: both end at x = 200
+		assertEquals(200f, e1.x + e1.getWidth(), 0.01f, "Child 1 must be flush with right edge");
+		assertEquals(200f, e2.x + e2.getWidth(), 0.01f, "Child 2 must be flush with right edge");
+	}
+
+	@Test
+	void columnAlignmentAfterChildrenUpdatesExistingCells() {
+		Column col = new Column();
+		Element e1 = new Element() {
+			@Override public float getPrefWidth() { return 50f; }
+			@Override public float getPrefHeight() { return 30f; }
+		};
+		col.children(() -> solim.runtime.ParentStack.add(e1));
+
+		col.right();
+		col.table().setSize(200f, 300f);
+		col.table().layout();
+
+		arc.scene.ui.layout.Cell<?> c1 = col.table().getCell(e1);
+		assertEquals(arc.util.Align.right, CellAccess.align(c1) & arc.util.Align.right);
+		assertEquals(200f, e1.x + e1.getWidth(), 0.01f);
+	}
 }
