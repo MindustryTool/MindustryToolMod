@@ -180,6 +180,26 @@ public final class Card implements Component, LayoutModifiers<Card>, GapContaine
 		return this;
 	}
 
+	public Card padding(float p) {
+		ElementModifiers.padding(container, p);
+		return this;
+	}
+
+	public Card padding(float top, float left, float bottom, float right) {
+		ElementModifiers.padding(container, top, left, bottom, right);
+		return this;
+	}
+
+	public Card paddingX(float x) {
+		ElementModifiers.paddingX(container, x);
+		return this;
+	}
+
+	public Card paddingY(float y) {
+		ElementModifiers.paddingY(container, y);
+		return this;
+	}
+
 	@Override
 	public Direction direction() {
 		return Direction.VERTICAL;

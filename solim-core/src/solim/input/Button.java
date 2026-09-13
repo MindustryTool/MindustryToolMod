@@ -473,6 +473,44 @@ public final class Button implements Component, GapContainer {
         return this;
     }
 
+    public Button marginX(float x) {
+        ElementModifiers.marginX(button, x);
+        return this;
+    }
+
+    public Button marginX(@Nullable Readable<Float> x) {
+        if (x != null) {
+            Effect e = Effect.of(() -> {
+                Float val = x.get();
+                if (val != null) {
+                    marginX(val);
+                }
+            });
+            bindings.add(e);
+            ComponentContext.register(e);
+        }
+        return this;
+    }
+
+    public Button marginY(float y) {
+        ElementModifiers.marginY(button, y);
+        return this;
+    }
+
+    public Button marginY(@Nullable Readable<Float> y) {
+        if (y != null) {
+            Effect e = Effect.of(() -> {
+                Float val = y.get();
+                if (val != null) {
+                    marginY(val);
+                }
+            });
+            bindings.add(e);
+            ComponentContext.register(e);
+        }
+        return this;
+    }
+
     public Button x(float x) {
         ElementModifiers.x(button, x);
         return this;

@@ -132,7 +132,7 @@ public class AuthOverlay {
                                 .top()
                                 .right()
                                 .children(() -> {
-                                    row().pad(unit(2)).background(Styles.black6).gap(unit(2)).center().children(() -> {
+                                    row().padding(unit(2)).background(Styles.black6).gap(unit(2)).center().children(() -> {
                                         if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
                                             networkImage(user.getImageUrl()).size(64f);
                                         }

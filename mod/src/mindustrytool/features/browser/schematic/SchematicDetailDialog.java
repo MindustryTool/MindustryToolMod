@@ -67,7 +67,7 @@ public class SchematicDetailDialog extends SolimDialog {
                         return portraitLayout();
                     }
                     return landscapeLayout();
-                });
+                }).grow();
             }).element();
         }
 

@@ -59,7 +59,7 @@ public class MapDetailDialog extends SolimDialog {
                         return portraitLayout();
                     }
                     return landscapeLayout();
-                });
+                }).grow();
             }).element();
         }
 

@@ -81,9 +81,9 @@ public class ChatInputView extends BaseComponent {
                         card(Styles.black5).growX().children(() -> {
                             row().growX().gap(unit(1))
                                     .paddingLeft(unit(2))
-                                    .padRight(unit(2))
-                                    .padTop(unit(1))
-                                    .padBottom(unit(1))
+                                    .paddingRight(unit(2))
+                                    .paddingTop(unit(1))
+                                    .paddingBottom(unit(1))
                                     .rounded(unit(3), Color.clear)
                                     .border(1.5f, Color.darkGray)
                                     .children(() -> {
