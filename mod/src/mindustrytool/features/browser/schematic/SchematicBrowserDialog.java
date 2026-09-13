@@ -79,25 +79,32 @@ public class SchematicBrowserDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            return column().grow().children(() -> {
+            return column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
                 new BrowserSearchHeader(state, () -> filterDialog.show());
 
-                row().growX().visible(state.loading()).children(() -> {
-                    text(Core.bundle.get("browser.loading")).color(Color.lightGray);
+                dynamic(state.loading(), loading -> {
+                    if (!Boolean.TRUE.equals(loading)) {
+                        return null;
+                    }
+                    return row().growX().children(() -> {
+                        text(Core.bundle.get("browser.loading")).color(Color.lightGray);
+                    });
                 });
 
-                row().growX()
-                        .visible(state.error().map(message -> message != null && !message.isEmpty()))
-                        .gap(unit(1))
-                        .children(() -> {
-                            text(state.error().map(message -> message != null ? message : ""))
-                                    .color(Color.scarlet)
-                                    .wrap(true)
-                                    .growX();
-                            button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                    .style(WebStyles.outlineText())
-                                    .height(unit(10));
-                        });
+                dynamic(state.error(), message -> {
+                    if (message == null || message.isEmpty()) {
+                        return null;
+                    }
+                    return row().growX().gap(unit(1)).children(() -> {
+                        text(message)
+                                .color(Color.scarlet)
+                                .wrap(true)
+                                .growX();
+                        button(Core.bundle.get("browser.retry"), () -> state.refresh())
+                                .style(WebStyles.outlineText())
+                                .height(unit(10));
+                    });
+                });
 
                 scroll().grow().children(() -> {
                     reactiveGrid(

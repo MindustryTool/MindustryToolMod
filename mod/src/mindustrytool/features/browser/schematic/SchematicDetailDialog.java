@@ -72,22 +72,34 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private Component portraitLayout() {
             return column().grow().gap(unit(2)).children(() -> {
-                previewImage();
+                previewImagePortrait();
                 scroll().grow().children(() -> details());
             });
         }
 
         private Component landscapeLayout() {
             return row().grow().gap(unit(4)).children(() -> {
-                previewImage();
+                previewImageLandscape();
                 scroll().grow().children(() -> details());
             });
         }
 
-        private void previewImage() {
+        private void previewImagePortrait() {
             networkImage(BrowserImages.schematicImageUrl(itemId))
+                    .placeholder(Icon.image)
+                    .fallback(Icon.image)
                     .growX()
-                    .height(unit(50))
+                    .height(dvh(45f))
+                    .rounded(8)
+                    .scaling(Scaling.fit);
+        }
+
+        private void previewImageLandscape() {
+            networkImage(BrowserImages.schematicImageUrl(itemId))
+                    .placeholder(Icon.image)
+                    .fallback(Icon.image)
+                    .width(dvw(55f))
+                    .growY()
                     .rounded(8)
                     .scaling(Scaling.fit);
         }

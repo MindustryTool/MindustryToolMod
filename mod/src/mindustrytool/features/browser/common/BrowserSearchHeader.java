@@ -61,19 +61,18 @@ public class BrowserSearchHeader extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().growX().children(() -> {
-            row().growX().gap(unit(1)).children(() -> {
+        return column().growX().gap(unit(2)).children(() -> {
+            row().growX().gap(unit(2)).children(() -> {
 
-                card(Styles.black5).growX().children(() -> {
-                    row().growX().gap(unit(1)).padding(unit(2))
+                card(Styles.black5).growX().height(unit(10)).children(() -> {
+                    row().grow().gap(unit(1))
                             .rounded(unit(3), Color.clear)
                             .border(1.5f, Color.darkGray)
-                            .gap(unit(1))
-                            .pad(unit(1))
                             .children(() -> {
                                 icon(Icon.zoom).size(unit(5));
                                 var input = textField(inputBuffer)
                                         .growX()
+                                        .height(unit(8))
                                         .placeholder(Core.bundle.get("browser.search.placeholder"))
                                         .onEnter(this::submitNow);
                                 input.field().getStyle().focusedBackground = input.field().getStyle().background;
@@ -89,28 +88,25 @@ public class BrowserSearchHeader extends BaseComponent {
                         .children(() -> icon(Icon.filter).size(unit(5)));
             });
 
-            row().growX()
-                    .visible(state.selectedTags().map(tags -> tags != null && !tags.isEmpty()))
-                    .gap(unit(1))
-                    .children(() -> {
-                        text(Core.bundle.get("browser.search.active-filters"))
-                                .color(Color.lightGray)
-                                .fontScale(0.85f);
+            dynamic(state.selectedTags(), tags -> {
+                if (tags == null || tags.isEmpty()) {
+                    return null;
+                }
+                return row().growX().gap(unit(1)).children(() -> {
+                    text(Core.bundle.get("browser.search.active-filters"))
+                            .color(Color.lightGray)
+                            .fontScale(0.85f);
 
-                        dynamic(state.selectedTags(), tags -> {
-                            if (tags == null || tags.isEmpty()) {
-                                return row();
-                            }
-                            return row().gap(unit(1)).children(() -> {
-                                for (String tag : tags) {
-                                    renderChip(tag);
-                                }
-                                button(() -> state.clearTags()).style(Styles.clearNonei).size(unit(8))
-                                        .tooltip(Core.bundle.get("browser.search.clear-all"))
-                                        .children(() -> icon(Icon.cancel).size(unit(4)).color(Color.scarlet));
-                            });
-                        });
+                    row().gap(unit(1)).children(() -> {
+                        for (String tag : tags) {
+                            renderChip(tag);
+                        }
+                        button(() -> state.clearTags()).style(Styles.clearNonei).size(unit(8))
+                                .tooltip(Core.bundle.get("browser.search.clear-all"))
+                                .children(() -> icon(Icon.cancel).size(unit(4)).color(Color.scarlet));
                     });
+                });
+            });
         }).element();
     }
 

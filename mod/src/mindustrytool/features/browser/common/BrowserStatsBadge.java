@@ -44,7 +44,7 @@ public class BrowserStatsBadge extends BaseComponent {
         }).element();
     }
 
-    static String formatCount(long count) {
+    public static String formatCount(long count) {
         if (count >= 1_000_000) {
             return String.format("%.1fM", count / 1_000_000.0);
         }
