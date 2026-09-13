@@ -5,6 +5,7 @@ import arc.scene.Element;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.WidgetGroup;
+import arc.util.Log;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -294,6 +295,11 @@ public final class VirtualList<T, K> extends BaseComponent implements LayoutModi
                 float itemY = totalHeight - yOffsets[i] - itemH;
                 el.setBounds(0, itemY, contentW, itemH);
                 el.validate();
+                float prefH = el.getPrefHeight();
+                if (prefH > 0 && Math.abs(prefH - itemH) > 2f) {
+                    Log.warn("VirtualList height mismatch: key='@' calcHeight=@ prefHeight=@ containerWidth=@",
+                            key, itemH, prefH, contentW);
+                }
                 content.addChild(el);
             }
         }

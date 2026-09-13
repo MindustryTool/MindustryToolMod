@@ -152,7 +152,8 @@ public final class ChatMessageHeightCalculator {
                 font.getData().setScale(oldScaleX, oldScaleY);
                 Pools.free(layout);
                 return h + descentCorrection;
-            } catch (Throwable ignored) {
+            } catch (Throwable t) {
+                arc.util.Log.err("Error measuring text height for '" + text + "' at wrapWidth=" + wrapWidth, t);
             }
         }
 

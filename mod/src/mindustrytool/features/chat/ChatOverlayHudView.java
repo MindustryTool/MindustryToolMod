@@ -167,7 +167,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                 return buildDesktopBody();
                             }
                         })
-                        .growX();
+                        .grow();
                     });
                 });
     }

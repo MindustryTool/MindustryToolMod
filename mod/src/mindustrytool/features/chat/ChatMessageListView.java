@@ -532,7 +532,8 @@ public class ChatMessageListView extends BaseComponent {
                                 .children(() -> icon(Icon.play).size(unit(5), unit(5)));
                     });
 
-                    float width = schematic.width / schematic.height * unit(35);
+                    float ratio = schematic.height > 0 ? (float) schematic.width / (float) schematic.height : 1f;
+                    float width = Math.max(unit(10), ratio * unit(35));
 
                     button(() -> useSchematic(schematic))
                             .style(Styles.flatt)
