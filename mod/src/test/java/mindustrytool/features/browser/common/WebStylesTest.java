@@ -98,10 +98,12 @@ class WebStylesTest {
         assertNotNull(WebStyles.Colors.DISABLED_BORDER);
         assertNotNull(WebStyles.Colors.DISABLED_FG);
 
-        assertEquals(rgba(new Color(0.45f, 0.35f, 0.90f, 1.0f)), rgba(WebStyles.Colors.PRIMARY));
-        assertEquals(rgba(new Color(0.45f, 0.35f, 0.90f, 0.15f)), rgba(WebStyles.Colors.PRIMARY_BG));
-        assertEquals(rgba(new Color(0.20f, 0.20f, 0.28f, 0.70f)), rgba(WebStyles.Colors.SECONDARY));
-        assertEquals(rgba(new Color(0.85f, 0.25f, 0.25f, 1.0f)), rgba(WebStyles.Colors.DANGER));
+        assertEquals(rgba(new Color(0.215f, 0.163f, 0.674f, 1.0f)), rgba(WebStyles.Colors.PRIMARY));
+        assertEquals(rgba(new Color(0.215f, 0.163f, 0.674f, 0.15f)), rgba(WebStyles.Colors.PRIMARY_BG));
+        assertEquals(rgba(new Color(0.153f, 0.153f, 0.166f, 0.70f)), rgba(WebStyles.Colors.SECONDARY));
+        assertEquals(rgba(new Color(1.0f, 0.391f, 0.404f, 1.0f)), rgba(WebStyles.Colors.DANGER));
+        assertEquals(rgba(new Color(1f, 1f, 1f, 0.10f)), rgba(WebStyles.Colors.BORDER));
+        assertEquals(rgba(new Color(0.630f, 0.630f, 0.630f, 1.0f)), rgba(WebStyles.Colors.GHOST_FG));
     }
 
     @Test
@@ -155,7 +157,7 @@ class WebStylesTest {
     }
 
     @Test
-    void outlineVariantMatchesLegacyWash() {
+    void outlineVariantUsesPrimaryWash() {
         SolimButtonStyle style = WebStyles.outline();
         RoundedDrawable up = (RoundedDrawable) style.style().up;
         RoundedDrawable over = (RoundedDrawable) style.style().over;

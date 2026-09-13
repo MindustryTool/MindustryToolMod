@@ -6,13 +6,13 @@ Provides shadcn/ui-inspired semantic design-system button styles with a centrali
 ## Requirements
 
 ### Requirement: Semantic Color Sheet (WebStyles.Colors)
-The system SHALL provide a nested `WebStyles.Colors` static class containing semantic color tokens:
-- Primary brand: `PRIMARY` (solid channel blue `(0.45f, 0.35f, 0.90f, 1.0f)`), `PRIMARY_HOVER`, `PRIMARY_DOWN`, `PRIMARY_FG` (`Color.white`).
-- Primary wash: `PRIMARY_BG` (translucent wash `(0.45f, 0.35f, 0.90f, 0.15f)`), `PRIMARY_BG_HOVER`, `PRIMARY_BG_DOWN`.
-- Secondary: `SECONDARY` (dark slate `(0.20f, 0.20f, 0.28f, 0.70f)`), `SECONDARY_HOVER`, `SECONDARY_DOWN`, `SECONDARY_FG`.
-- Ghost: `GHOST_HOVER`, `GHOST_DOWN`, `GHOST_FG`.
-- Danger: `DANGER` (crimson red `(0.85f, 0.25f, 0.25f, 1.0f)`), `DANGER_HOVER`, `DANGER_DOWN`, `DANGER_FG`.
-- Border and disabled: `BORDER`, `DISABLED_BG`, `DISABLED_BORDER`, `DISABLED_FG`.
+The system SHALL provide a nested `WebStyles.Colors` static class containing semantic color tokens derived from the shadcn/ui dark theme:
+- Primary brand: `PRIMARY` (shadcn `primary`, deep indigo `(0.215f, 0.163f, 0.674f, 1.0f)`), `PRIMARY_HOVER` (shadcn `sidebar-primary`, brighter indigo), `PRIMARY_DOWN`, `PRIMARY_FG` (shadcn `primary-foreground`, lavender-white).
+- Primary wash: `PRIMARY_BG` (primary at 15% alpha), `PRIMARY_BG_HOVER` (35%), `PRIMARY_BG_DOWN` (60%).
+- Secondary: `SECONDARY` (shadcn `secondary`, dark slate `(0.153f, 0.153f, 0.166f, 0.70f)`), `SECONDARY_HOVER`, `SECONDARY_DOWN`, `SECONDARY_FG` (shadcn `secondary-foreground`).
+- Ghost: `GHOST_HOVER` (white 10%, shadcn `border`), `GHOST_DOWN`, `GHOST_FG` (shadcn `muted-foreground`).
+- Danger: `DANGER` (shadcn `destructive`, coral red `(1.0f, 0.391f, 0.404f, 1.0f)`), `DANGER_HOVER`, `DANGER_DOWN`, `DANGER_FG`.
+- Border and disabled: `BORDER` (shadcn `border`, white 10%), `DISABLED_BG`, `DISABLED_BORDER`, `DISABLED_FG`.
 
 #### Scenario: Accessing semantic tokens
 - **WHEN** `WebStyles.Colors.PRIMARY` or `WebStyles.Colors.DANGER` is referenced
