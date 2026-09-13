@@ -21,24 +21,32 @@ import solim.signal.Signal;
 /**
  * Category A — Self / Element modifiers.
  *
- * <p>Static utility methods that modify the Arc {@link arc.scene.Element} itself: its size,
- * position, visibility, color, name, and so on. These affect the element directly and do NOT
- * configure the element's parent cell or container child defaults.
+ * <p>
+ * Static utility methods that modify the Arc {@link arc.scene.Element} itself:
+ * its size, position, visibility, color, name, and so on. These affect the
+ * element directly and do NOT configure the element's parent cell or container
+ * child defaults.
  *
- * <p>Modifier targets:
+ * <p>
+ * Modifier targets:
  * <ul>
- *   <li>{@code width/height/size} — element's size (sets on the element directly)</li>
- *   <li>{@code x/y/position} — element's position in local coordinates</li>
- *   <li>{@code visible/opacity/alpha} — element's visibility and transparency</li>
- *   <li>{@code name} — element's debug name</li>
- *   <li>{@code align} — element's internal content alignment</li>
- *   <li>{@code gap} — spacing between children inside a Table-based container</li>
- *   <li>{@code margin/padding} — padding on the element (container-internal defaults)</li>
+ * <li>{@code width/height/size} — element's size (sets on the element
+ * directly)</li>
+ * <li>{@code x/y/position} — element's position in local coordinates</li>
+ * <li>{@code visible/opacity/alpha} — element's visibility and
+ * transparency</li>
+ * <li>{@code name} — element's debug name</li>
+ * <li>{@code align} — element's internal content alignment</li>
+ * <li>{@code gap} — spacing between children inside a Table-based
+ * container</li>
+ * <li>{@code margin/padding} — padding on the element (container-internal
+ * defaults)</li>
  * </ul>
  *
- * <p>Contrast with {@link solim.layout.LayoutModifiers}, which is a Category B interface that
- * configures how the element behaves inside its <em>parent</em> layout cell (grow, margin as
- * parent-cell padding, alignment in parent, etc.).
+ * <p>
+ * Contrast with {@link solim.layout.LayoutModifiers}, which is a Category B
+ * interface that configures how the element behaves inside its <em>parent</em>
+ * layout cell (grow, margin as parent-cell padding, alignment in parent, etc.).
  */
 public final class ElementModifiers {
 
@@ -556,8 +564,10 @@ public final class ElementModifiers {
             return;
         handle.touchable = Touchable.enabled;
         if (hud != null) {
-            if (xSignal != null) hud.bindXSignal(xSignal);
-            if (ySignal != null) hud.bindYSignal(ySignal);
+            if (xSignal != null)
+                hud.bindXSignal(xSignal);
+            if (ySignal != null)
+                hud.bindYSignal(ySignal);
         }
         handle.addListener(new InputListener() {
             private float lastStageX;
@@ -569,8 +579,10 @@ public final class ElementModifiers {
             private @Nullable Hud resolveHud() {
                 Hud target = hud != null ? hud : Hud.find(handle);
                 if (target != null) {
-                    if (xSignal != null) target.bindXSignal(xSignal);
-                    if (ySignal != null) target.bindYSignal(ySignal);
+                    if (xSignal != null)
+                        target.bindXSignal(xSignal);
+                    if (ySignal != null)
+                        target.bindYSignal(ySignal);
                 }
                 return target;
             }
@@ -667,7 +679,8 @@ public final class ElementModifiers {
     }
 
     public static @Nullable RoundedDrawable rounded(@Nullable Element element, int radius, @Nullable Color color) {
-        if (element == null) return null;
+        if (element == null)
+            return null;
         RoundedDrawable rd = getOrCreateRounded(element, radius);
         rd.radius(radius);
         if (color != null) {
@@ -676,8 +689,10 @@ public final class ElementModifiers {
         return rd;
     }
 
-    public static @Nullable RoundedDrawable rounded(@Nullable Element element, int radius, @Nullable Readable<Color> color) {
-        if (element == null) return null;
+    public static @Nullable RoundedDrawable rounded(@Nullable Element element, int radius,
+            @Nullable Readable<Color> color) {
+        if (element == null)
+            return null;
         RoundedDrawable rd = getOrCreateRounded(element, radius);
         rd.radius(radius);
         if (color != null) {
@@ -687,14 +702,17 @@ public final class ElementModifiers {
     }
 
     public static @Nullable RoundedDrawable border(@Nullable Element element, float stroke, @Nullable Color color) {
-        if (element == null) return null;
+        if (element == null)
+            return null;
         RoundedDrawable rd = getOrCreateRounded(element, 8);
         rd.border(stroke, color != null ? color : Color.white);
         return rd;
     }
 
-    public static @Nullable RoundedDrawable border(@Nullable Element element, float stroke, @Nullable Readable<Color> color) {
-        if (element == null) return null;
+    public static @Nullable RoundedDrawable border(@Nullable Element element, float stroke,
+            @Nullable Readable<Color> color) {
+        if (element == null)
+            return null;
         RoundedDrawable rd = getOrCreateRounded(element, 8);
         if (color != null) {
             rd.border(stroke, color);
@@ -705,7 +723,8 @@ public final class ElementModifiers {
     }
 
     public static void background(@Nullable Element element, @Nullable Drawable bg) {
-        if (element == null) return;
+        if (element == null)
+            return;
         if (element instanceof Table) {
             Table table = (Table) element;
             if (table.getBackground() instanceof RoundedDrawable) {
@@ -717,7 +736,8 @@ public final class ElementModifiers {
     }
 
     public static void background(@Nullable Element element, @Nullable Color color) {
-        if (element == null) return;
+        if (element == null)
+            return;
         if (element instanceof Table) {
             Table table = (Table) element;
             if (table.getBackground() instanceof RoundedDrawable) {
@@ -732,7 +752,8 @@ public final class ElementModifiers {
     }
 
     public static void background(@Nullable Element element, @Nullable Readable<Color> color) {
-        if (element == null) return;
+        if (element == null)
+            return;
         if (element instanceof Table && color != null) {
             solim.signal.Effect e = solim.signal.Effect.of(() -> {
                 Color c = color.get();
@@ -758,46 +779,65 @@ public final class ElementModifiers {
         }
 
         @Override
-        public void draw(float x, float y, float originX, float originY, float width, float height, float scaleX, float scaleY, float rotation) {
+        public void draw(float x, float y, float originX, float originY, float width, float height, float scaleX,
+                float scaleY, float rotation) {
             arc.graphics.g2d.Draw.color(color);
             arc.graphics.g2d.Fill.rect(x, y, width, height);
         }
 
         @Override
-        public float getLeftWidth() { return 0; }
+        public float getLeftWidth() {
+            return 0;
+        }
 
         @Override
-        public void setLeftWidth(float leftWidth) {}
+        public void setLeftWidth(float leftWidth) {
+        }
 
         @Override
-        public float getRightWidth() { return 0; }
+        public float getRightWidth() {
+            return 0;
+        }
 
         @Override
-        public void setRightWidth(float rightWidth) {}
+        public void setRightWidth(float rightWidth) {
+        }
 
         @Override
-        public float getTopHeight() { return 0; }
+        public float getTopHeight() {
+            return 0;
+        }
 
         @Override
-        public void setTopHeight(float topHeight) {}
+        public void setTopHeight(float topHeight) {
+        }
 
         @Override
-        public float getBottomHeight() { return 0; }
+        public float getBottomHeight() {
+            return 0;
+        }
 
         @Override
-        public void setBottomHeight(float bottomHeight) {}
+        public void setBottomHeight(float bottomHeight) {
+        }
 
         @Override
-        public float getMinWidth() { return 0; }
+        public float getMinWidth() {
+            return 0;
+        }
 
         @Override
-        public void setMinWidth(float minWidth) {}
+        public void setMinWidth(float minWidth) {
+        }
 
         @Override
-        public float getMinHeight() { return 0; }
+        public float getMinHeight() {
+            return 0;
+        }
 
         @Override
-        public void setMinHeight(float minHeight) {}
+        public void setMinHeight(float minHeight) {
+        }
     }
 
     private static RoundedDrawable getOrCreateRounded(Element element, int defaultRadius) {
