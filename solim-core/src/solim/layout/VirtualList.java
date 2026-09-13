@@ -5,7 +5,6 @@ import arc.scene.Element;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.WidgetGroup;
-import arc.util.Log;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -295,17 +294,6 @@ public final class VirtualList<T, K> extends BaseComponent implements LayoutModi
                 float itemY = totalHeight - yOffsets[i] - itemH;
                 el.setBounds(0, itemY, contentW, itemH);
                 el.validate();
-                float prefH = el.getPrefHeight();
-                if (prefH > 0 && Math.abs(prefH - itemH) > 2f) {
-                    Log.warn("VirtualList height mismatch: key='@' calcHeight=@ prefHeight=@ containerWidth=@",
-                            key, itemH, prefH, contentW);
-                    if (!dumpedOnce) {
-                        dumpedOnce = true;
-                        Log.warn("=== MessageGroupView Hierarchy Breakdown ===");
-                        dumpElement(el, "");
-                        Log.warn("============================================");
-                    }
-                }
                 content.addChild(el);
             }
         }
@@ -383,23 +371,6 @@ public final class VirtualList<T, K> extends BaseComponent implements LayoutModi
                 }
             } else {
                 inBottomZone = false;
-            }
-        }
-    }
-
-    private static boolean dumpedOnce = false;
-
-    private static void dumpElement(Element el, String indent) {
-        if (el == null) return;
-        float pw = el.getPrefWidth();
-        float ph = el.getPrefHeight();
-        float w = el.getWidth();
-        float h = el.getHeight();
-        String name = el.name != null ? ("#" + el.name) : "";
-        Log.warn(indent + el.getClass().getSimpleName() + name + " [w=" + w + " h=" + h + ", prefW=" + pw + " prefH=" + ph + "]");
-        if (el instanceof arc.scene.Group) {
-            for (Element child : ((arc.scene.Group) el).getChildren()) {
-                dumpElement(child, indent + "  ");
             }
         }
     }
