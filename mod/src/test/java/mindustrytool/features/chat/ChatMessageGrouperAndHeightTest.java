@@ -21,6 +21,7 @@ import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
 import arc.scene.Scene;
 import arc.scene.ui.Label;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import mindustry.ui.Fonts;
 import org.junit.jupiter.api.BeforeEach;
@@ -669,5 +670,31 @@ class ChatMessageGrouperAndHeightTest {
         float narrow = ChatMessageHeightCalculator.calculateHeight(group, 150f);
 
         assertTrue(narrow >= wide, "Narrow width should produce taller or equal height for wrapped text");
+    }
+
+    @Test
+    void testHeightCalculatorMobileScaling() {
+        ChatMessageHeightCalculator.clearCache();
+        try {
+            MessageGroup group = ChatMessageGrouper.groupRaw(Collections.singletonList(raw("scale-msg", "author", "Test message content"))).get(0);
+
+            // Desktop scale (1.0f)
+            Scl.setProduct(1.0f);
+            float h1 = ChatMessageHeightCalculator.calculateHeight(group, 300f);
+
+            // Mobile scale (2.0f)
+            Scl.setProduct(2.0f);
+            float h2 = ChatMessageHeightCalculator.calculateHeight(group, 300f);
+
+            // With scale 2.0, height should be significantly larger (proportional to scale)
+            assertTrue(h2 > h1 * 1.5f, "Height under Scl 2.0 (" + h2 + ") should scale up compared to Scl 1.0 (" + h1 + ")");
+
+            // Empty group should also scale
+            float emptyH1 = ChatMessageHeightCalculator.calculateHeight(null, 300f);
+            assertEquals(48f, emptyH1, 0.001f); // 24f * 2.0 = 48f
+        } finally {
+            Scl.setProduct(1.0f);
+            ChatMessageHeightCalculator.clearCache();
+        }
     }
 }

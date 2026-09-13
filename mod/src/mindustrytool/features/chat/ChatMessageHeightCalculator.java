@@ -3,6 +3,7 @@ package mindustrytool.features.chat;
 import arc.graphics.Color;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.GlyphLayout;
+import arc.scene.ui.layout.Scl;
 import arc.util.Align;
 import arc.util.Nullable;
 import arc.util.pooling.Pools;
@@ -53,11 +54,12 @@ public final class ChatMessageHeightCalculator {
      */
     public static float calculateHeight(MessageGroup group, float containerWidth) {
         if (group == null || group.getMessageCount() == 0) {
-            return 24f;
+            return Scl.scl(24f);
         }
 
         int widthKey = (int) Math.max(100f, containerWidth);
-        String cacheKey = group.getKey() + "_" + widthKey;
+        int scaleKey = (int) (Scl.scl() * 100);
+        String cacheKey = group.getKey() + "_" + widthKey + "_" + scaleKey;
         Float cached = HEIGHT_CACHE.get(cacheKey);
         if (cached != null) {
             return cached;
@@ -69,30 +71,30 @@ public final class ChatMessageHeightCalculator {
     }
 
     private static float computeHeight(MessageGroup group, float containerWidth) {
-        float verticalPadding = UNIT_1 + UNIT_1;
+        float verticalPadding = Scl.scl(UNIT_1 + UNIT_1);
 
         float messagesHeight = 0f;
         for (ParsedChatMessage msg : group.getMessages()) {
             messagesHeight += measureMessageHeight(msg, containerWidth);
         }
         if (group.getMessageCount() > 1) {
-            messagesHeight += MESSAGE_GAP * (group.getMessageCount() - 1);
+            messagesHeight += Scl.scl(MESSAGE_GAP) * (group.getMessageCount() - 1);
         }
 
-        float rightColumnHeight = HEADER_HEIGHT + HEADER_GAP + messagesHeight;
-        float total = Math.max(AVATAR_SIZE, rightColumnHeight) + verticalPadding;
-        return Math.max(24f, total);
+        float rightColumnHeight = Scl.scl(HEADER_HEIGHT + HEADER_GAP) + messagesHeight;
+        float total = Math.max(Scl.scl(AVATAR_SIZE), rightColumnHeight) + verticalPadding;
+        return Math.max(Scl.scl(24f), total);
     }
 
     private static float measureMessageHeight(ParsedChatMessage msg, float containerWidth) {
-        float height = MESSAGE_CARD_PADDING;
+        float height = Scl.scl(MESSAGE_CARD_PADDING);
 
         boolean mentioned = (msg instanceof TextMessage) && ((TextMessage) msg).isMentionsCurrentUser();
-        float availableTextWidth = Math.max(20f, containerWidth - HORIZONTAL_PADDINGS - (mentioned ? MENTION_EXTRA_PADDING : 0f));
+        float availableTextWidth = Math.max(20f, containerWidth - Scl.scl(HORIZONTAL_PADDINGS) - (mentioned ? Scl.scl(MENTION_EXTRA_PADDING) : 0f));
 
         // Reply preview row
         if (msg.getReplyTo() != null && !msg.getReplyTo().isEmpty()) {
-            height += REPLY_PREVIEW_HEIGHT + REPLY_GAP;
+            height += Scl.scl(REPLY_PREVIEW_HEIGHT + REPLY_GAP);
         }
 
         // Body height by type
@@ -101,7 +103,7 @@ public final class ChatMessageHeightCalculator {
             height += measureTextHeight(txt.getText(), availableTextWidth, FONT_SCALE);
         } else if (msg instanceof SchematicMessage) {
             SchematicMessage schem = (SchematicMessage) msg;
-            height += SCHEMATIC_CARD_HEIGHT;
+            height += Scl.scl(SCHEMATIC_CARD_HEIGHT);
             if (schem.getPrefixText() != null && !schem.getPrefixText().isEmpty()) {
                 height += measureTextHeight(schem.getPrefixText(), availableTextWidth, FONT_SCALE);
             }
@@ -109,13 +111,13 @@ public final class ChatMessageHeightCalculator {
                 height += measureTextHeight(schem.getSuffixText(), availableTextWidth, FONT_SCALE);
             }
         } else if (msg instanceof ImageMessage) {
-            height += IMAGE_CARD_HEIGHT;
+            height += Scl.scl(IMAGE_CARD_HEIGHT);
         } else if (msg instanceof RoomInviteMessage) {
-            height += INVITE_CARD_HEIGHT;
+            height += Scl.scl(INVITE_CARD_HEIGHT);
         } else if (msg instanceof MindustryToolLinkMessage) {
-            height += TOOL_LINK_CARD_HEIGHT;
+            height += Scl.scl(TOOL_LINK_CARD_HEIGHT);
         } else {
-            height += 24f;
+            height += Scl.scl(24f);
         }
         return height;
     }
@@ -134,7 +136,7 @@ public final class ChatMessageHeightCalculator {
             if (font != null) {
                 return (font.getCapHeight() - font.getDescent() * 2f) * fontScale;
             }
-            return 18f * fontScale;
+            return Scl.scl(18f) * fontScale;
         }
 
         if (font != null) {
@@ -158,9 +160,9 @@ public final class ChatMessageHeightCalculator {
         }
 
         // Fallback for headless tests where Fonts.def is not initialized
-        float charsPerLine = Math.max(10f, wrapWidth / (9f * fontScale));
+        float charsPerLine = Math.max(10f, wrapWidth / (9f * fontScale * Scl.scl()));
         int estimatedLines = (int) Math.ceil(text.length() / charsPerLine);
-        return Math.max(18f * fontScale, estimatedLines * (20f * fontScale));
+        return Math.max(Scl.scl(18f) * fontScale, estimatedLines * (Scl.scl(20f) * fontScale));
     }
 
     public static void clearCache() {
