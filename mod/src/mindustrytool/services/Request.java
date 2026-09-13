@@ -43,11 +43,13 @@ public final class Request {
 	private final String baseUrl;
 	private final Duration timeout;
 	private final AuthProvider authProvider;
+    private final Map<String, String> headers;
 
-	private Request(String baseUrl, Duration timeout, AuthProvider authProvider) {
+	private Request(String baseUrl, Duration timeout, AuthProvider authProvider, Map<String, String> headers) {
 		this.baseUrl = baseUrl;
 		this.timeout = timeout != null ? timeout : DEFAULT_TIMEOUT;
 		this.authProvider = authProvider;
+        this.headers = headers;
 	}
 
 	public static Builder builder() {
@@ -58,6 +60,12 @@ public final class Request {
 		private String baseUrl;
 		private Duration timeout;
 		private AuthProvider authProvider;
+        private final Map<String, String> headers = new LinkedHashMap<>();
+
+		public Builder header(String name, String value) {
+			headers.put(name, value);
+			return this;
+		}
 
 		public Builder baseUrl(String baseUrl) {
 			this.baseUrl = baseUrl;
@@ -75,7 +83,7 @@ public final class Request {
 		}
 
 		public Request build() {
-			return new Request(baseUrl, timeout, authProvider);
+			return new Request(baseUrl, timeout, authProvider, headers);
 		}
 	}
 
@@ -181,6 +189,8 @@ public final class Request {
 			this.outer = outer;
 			this.method = method;
 			this.url = url;
+            
+            headers.putAll(outer.headers);
 		}
 
 		public RequestBuilder header(String name, String value) {
@@ -225,7 +235,8 @@ public final class Request {
 			if (useAuth && outer.authProvider != null) {
 				return outer.authProvider.refreshIfNeeded().thenCompose(v -> {
 					String token = outer.authProvider.getAccessToken();
-					return executeAsync(resolvedUrl, effectiveTimeout, token, handler);
+                    headers.put("Authorization", "Bearer " + token);
+					return executeAsync(resolvedUrl, effectiveTimeout, headers, handler);
 				});
 			} else {
 				return executeAsync(resolvedUrl, effectiveTimeout, null, handler);
@@ -233,11 +244,11 @@ public final class Request {
 		}
 
 		private <T> CompletableFuture<Response<T>> executeAsync(
-				String resolvedUrl, Duration effectiveTimeout, String token, BodyHandler<T> handler) {
+				String resolvedUrl, Duration effectiveTimeout, Map<String, String> headers, BodyHandler<T> handler) {
 			CompletableFuture<Response<T>> future = new CompletableFuture<>();
 			EXECUTOR.execute(() -> {
 				try {
-					Response<T> resp = executeSync(resolvedUrl, effectiveTimeout, token, handler);
+					Response<T> resp = executeSync(resolvedUrl, effectiveTimeout, headers, handler);
 					future.complete(resp);
 				} catch (Throwable t) {
 					future.completeExceptionally(t);
@@ -247,7 +258,7 @@ public final class Request {
 		}
 
 		private <T> Response<T> executeSync(
-				String resolvedUrl, Duration effectiveTimeout, String token, BodyHandler<T> handler)
+				String resolvedUrl, Duration effectiveTimeout, Map<String, String> headers, BodyHandler<T> handler)
 				throws IOException {
 			URL targetUrl = new URL(resolvedUrl);
 			HttpURLConnection conn = (HttpURLConnection) targetUrl.openConnection();
@@ -265,8 +276,8 @@ public final class Request {
 				conn.setRequestProperty(header.getKey(), header.getValue());
 			}
 
-			if (token != null) {
-				conn.setRequestProperty("Authorization", "Bearer " + token);
+            for (Map.Entry<String, String> header : outer.headers.entrySet()) {
+               	conn.setRequestProperty(header.getKey(), header.getValue());
 			}
 
 			byte[] payload = bodyBytes;

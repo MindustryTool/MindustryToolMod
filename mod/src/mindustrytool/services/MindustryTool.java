@@ -1,10 +1,12 @@
 package mindustrytool.services;
 
+import arc.Core;
 import arc.util.serialization.Jval;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
 import java.util.concurrent.SubmissionPublisher;
@@ -43,11 +45,13 @@ public final class MindustryTool {
             .baseUrl(Config.API_URL)
             .timeout(Duration.ofSeconds(10))
             .authProvider(MindustryAuthProvider.getInstance())
+            .header("mid", getMid())
             .build();
 
     private static final Request publicApi = Request.builder()
             .baseUrl(Config.API_URL)
             .timeout(Duration.ofSeconds(10))
+            .header("mid", getMid())
             .build();
 
     private MindustryTool() {
@@ -345,5 +349,16 @@ public final class MindustryTool {
             }
         }
         return sb.toString();
+    }
+
+    private static synchronized String getMid() {
+        String midKey = "mid-key";
+        String mid = Core.settings.getString(midKey);
+        if (mid == null || mid.isEmpty()) {
+            mid = UUID.randomUUID().toString();
+            Core.settings.put(midKey, mid);
+        }
+
+        return mid;
     }
 }

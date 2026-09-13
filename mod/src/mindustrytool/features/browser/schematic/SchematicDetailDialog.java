@@ -89,7 +89,7 @@ public class SchematicDetailDialog extends SolimDialog {
                     .placeholder(Icon.image)
                     .fallback(Icon.image)
                     .growX()
-                    .height(dvh(45f))
+                    .height(dvh(50f))
                     .rounded(8)
                     .scaling(Scaling.fit);
         }
@@ -98,7 +98,7 @@ public class SchematicDetailDialog extends SolimDialog {
             networkImage(BrowserImages.schematicImageUrl(itemId))
                     .placeholder(Icon.image)
                     .fallback(Icon.image)
-                    .width(dvw(55f))
+                    .width(dvw(60f))
                     .growY()
                     .rounded(8)
                     .scaling(Scaling.fit);
