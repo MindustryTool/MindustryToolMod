@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "solim": {
+      "command": "node",
+      "args": ["c:/DATA/Mod/MindustryToolMod/solim-mcp/bridge.js"],
+      "env": {
+        "SOLIM_MCP_URL": "ws://127.0.0.1:8754/"
+      }
+    }
+  }
+}

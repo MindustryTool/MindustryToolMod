@@ -83,11 +83,16 @@ if not exist "%DEST_FOLDER%" (
 echo Copying %JAR_PATH% to %DEST_FOLDER%...
 copy "%JAR_PATH%" "%DEST_FOLDER%" /y
 
+if exist "%DEFAULT_DIR%saves\mods" (
+    echo Copying %JAR_PATH% to %DEFAULT_DIR%saves\mods...
+    copy "%JAR_PATH%" "%DEFAULT_DIR%saves\mods" /y
+)
+
 :: Run the selected application (.exe -> start, .jar -> java -jar)
 echo Running %APP_TO_RUN%...
 set "ext=%APP_TO_RUN:~-4%"
 if /I "%ext%"==".jar" (
-    start "" /d "%DEFAULT_DIR%." javaw -jar "%APP_TO_RUN%"
+    start "" /d "%DEFAULT_DIR%." javaw -Dsolim.mcp.enabled=true -jar "%APP_TO_RUN%"
 ) else (
     start "" /d "%DEFAULT_DIR%." "%APP_TO_RUN%"
 )
