@@ -6,7 +6,7 @@ import arc.Core;
 import arc.util.Nullable;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
-import mindustry.ui.Styles;
+import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.translation.TranslationFeature;
 import mindustrytool.models.response.ChatMessage;
@@ -49,19 +49,19 @@ public final class ChatActionPopup {
     }
 
     private static Component menuRows(ChatStore store, ChatMessage message) {
-        return column().growX().children(() -> {
+        return column().growX().padding(unit(1)).gap(unit(1)).children(() -> {
             button(Core.bundle.get("feature.chat.ui.copy", "Copy"), () -> copyMessage(store, message))
-                    .style(Styles.defaultb)
+                    .style(WebStyles.secondaryText())
                     .growX()
                     .height(unit(10));
 
             button(Core.bundle.get("feature.chat.ui.reply", "Reply"), () -> {
                 store.setReplyTarget(message);
                 dismiss();
-            }).style(Styles.defaultb).growX().height(unit(10));
+            }).style(WebStyles.secondaryText()).growX().height(unit(10));
 
             button(Core.bundle.get("feature.chat.ui.translate", "Translate"), () -> translateMessage(store, message))
-                    .style(Styles.defaultb)
+                    .style(WebStyles.secondaryText())
                     .growX()
                     .height(unit(10));
         });

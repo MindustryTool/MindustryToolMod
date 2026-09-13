@@ -31,7 +31,7 @@ public final class WebStyles {
         public static final Color PRIMARY_BG_HOVER = new Color(0.215f, 0.163f, 0.674f, 0.35f);
         public static final Color PRIMARY_BG_DOWN = new Color(0.215f, 0.163f, 0.674f, 0.60f);
 
-        public static final Color SECONDARY = new Color(0.153f, 0.153f, 0.166f, 0.70f);
+        public static final Color SECONDARY = new Color(0.153f, 0.153f, 0.166f, 1f);
         public static final Color SECONDARY_HOVER = new Color(0.199f, 0.199f, 0.216f, 0.80f);
         public static final Color SECONDARY_DOWN = new Color(0.115f, 0.115f, 0.124f, 0.90f);
         public static final Color SECONDARY_FG = new Color(0.980f, 0.980f, 0.980f, 1.0f);

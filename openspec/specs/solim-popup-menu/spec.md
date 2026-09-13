@@ -1,5 +1,8 @@
-## ADDED Requirements
+# solim-popup-menu Specification
 
+## Purpose
+Native Solim floating context menu providing reactive provider content, explicit show/hide with stage-coordinate placement, prefer-above/flip/clamp positioning, tap-outside, Back/Escape, and resize dismissal, with headless-safe no-ops.
+## Requirements
 ### Requirement: Reactive provider content
 The `Popup` component SHALL render its menu content from a caller-supplied provider function applied to the data passed at show time, rebuilding content on every `show()` call.
 

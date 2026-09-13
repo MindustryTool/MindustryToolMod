@@ -42,75 +42,77 @@ public class ChatInputView extends BaseComponent {
         return column().growX().gap(unit(1)).padding(unit(2)).children(() -> {
             // Login banner when not logged in
             dynamic(isNotLoggedIn, notLoggedIn -> {
-                if (!Boolean.TRUE.equals(notLoggedIn)) {
-                    return null;
+                if (Boolean.TRUE.equals(notLoggedIn)) {
+                    return row().growX().padding(unit(1)).children(() -> {
+                        button(Core.bundle.get("auth.login", "Login"), () -> AuthOverlay.getInstance().startLoginUI())
+                                .style(Styles.defaultt)
+                                .growX()
+                                .height(unit(8));
+                    });
                 }
-                return row().growX().padding(unit(1)).children(() -> {
-                    button(Core.bundle.get("auth.login", "Login"), () -> AuthOverlay.getInstance().startLoginUI())
-                            .style(Styles.defaultt)
-                            .growX()
-                            .height(unit(10));
-                });
-            });
 
-            // Composer area when logged in
-            column().growX().gap(unit(1)).visible(isLoggedIn).children(() -> {
-                dynamic(store.replyTarget(), target -> {
-                    if (target == null) {
-                        return null;
-                    }
-                    String authorId = target.getCreatedBy();
-                    UserData cachedUser = (authorId != null && store.userCache().peek() != null)
-                            ? store.userCache().peek().get(authorId)
-                            : null;
-                    String targetName = (cachedUser != null && cachedUser.getName() != null)
-                            ? cachedUser.getName()
-                            : (authorId != null ? authorId : "message");
-                    return row().growX().padding(unit(1)).gap(unit(1)).children(() -> {
-                        icon(Icon.leftSmall).size(unit(4), unit(4)).color(Pal.accent);
-                        text(Core.bundle.format("feature.chat.ui.replying", targetName)).color(Color.lightGray)
-                                .fontScale(0.85f).left();
-                        spacer();
-                        button(() -> store.setReplyTarget(null))
-                                .style(Styles.clearNonei)
-                                .size(unit(6), unit(6))
-                                .children(() -> icon(Icon.cancel).size(unit(4), unit(4)));
+                // Composer area when logged in
+                return column().growX().gap(unit(1)).children(() -> {
+                    dynamic(store.replyTarget(), target -> {
+                        if (target == null) {
+                            return null;
+                        }
+                        String authorId = target.getCreatedBy();
+                        UserData cachedUser = (authorId != null && store.userCache().peek() != null)
+                                ? store.userCache().peek().get(authorId)
+                                : null;
+                        String targetName = (cachedUser != null && cachedUser.getName() != null)
+                                ? cachedUser.getName()
+                                : (authorId != null ? authorId : "message");
+
+                        return row().growX().padding(unit(1)).height(unit(12)).gap(unit(1)).children(() -> {
+                            icon(Icon.leftSmall).size(unit(4), unit(4)).color(Pal.accent);
+                            text(Core.bundle.format("feature.chat.ui.replying", targetName)).color(Color.lightGray)
+                                    .fontScale(0.85f).left();
+                            spacer();
+                            button(() -> store.setReplyTarget(null))
+                                    .style(Styles.clearNonei)
+                                    .size(unit(6), unit(6))
+                                    .children(() -> icon(Icon.cancel).size(unit(4), unit(4)));
+                        });
+                    });
+
+                    row().growX().gap(unit(1)).children(() -> {
+                        card(Styles.black5).growX().children(() -> {
+                            row().growX().gap(unit(1))
+                                    .paddingLeft(unit(2))
+                                    .padRight(unit(2))
+                                    .padTop(unit(1))
+                                    .padBottom(unit(1))
+                                    .rounded(unit(3), Color.clear)
+                                    .border(1.5f, Color.darkGray)
+                                    .children(() -> {
+                                        textField(messageText)
+                                                .style(WebStyles.clearInput())
+                                                .placeholder(
+                                                        Core.bundle.get("feature.chat.ui.placeholder", "Message..."))
+                                                .validator(this::isValidInput)
+                                                .onEnter(this::onSend)
+                                                .disabled(isSending)
+                                                .growX();
+
+                                        button(() -> new AttachContentDialog(this::handleAttachContent).show())
+                                                .style(Styles.cleart)
+                                                .size(unit(10))
+                                                .children(
+                                                        () -> image(FileIcon.of("upload.png")).size(unit(6), unit(6)));
+
+                                        button(this::onSend)
+                                                .style(Styles.cleart)
+                                                .enabled(canSend)
+                                                .size(unit(10))
+                                                .children(() -> image(FileIcon.of("send.png")).size(unit(6), unit(6))
+                                                        .color(Pal.accent));
+                                    });
+                        });
                     });
                 });
-
-                row().growX().gap(unit(1)).children(() -> {
-                    card(Styles.black5).growX().children(() -> {
-                        row().growX().gap(unit(1))
-                                .paddingLeft(unit(2))
-                                .padRight(unit(2))
-                                .padTop(unit(1))
-                                .padBottom(unit(1))
-                                .rounded(unit(3), Color.clear)
-                                .border(1.5f, Color.darkGray)
-                                .children(() -> {
-                                    textField(messageText)
-                                            .style(WebStyles.clearInput())
-                                            .placeholder(Core.bundle.get("feature.chat.ui.placeholder", "Message..."))
-                                            .validator(this::isValidInput)
-                                            .onEnter(this::onSend)
-                                            .disabled(isSending)
-                                            .growX();
-
-                                    button(() -> new AttachContentDialog(this::handleAttachContent).show())
-                                            .style(Styles.cleart)
-                                            .size(unit(10))
-                                            .children(() -> image(FileIcon.of("upload.png")).size(unit(6), unit(6)));
-
-                                    button(this::onSend)
-                                            .style(Styles.cleart)
-                                            .enabled(canSend)
-                                            .size(unit(10))
-                                            .children(() -> image(FileIcon.of("send.png")).size(unit(6), unit(6))
-                                                    .color(Pal.accent));
-                                });
-                    });
-                });
-            });
+            }).grow();
         }).element();
     }
 

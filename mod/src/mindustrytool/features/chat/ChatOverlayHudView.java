@@ -120,15 +120,16 @@ public class ChatOverlayHudView extends BaseComponent {
 
         Readable<Boolean> isConnected = store.connected();
 
+        // Shared floating message-action popup (zero-footprint overlay driver).
+        ChatActionPopup.install(store);
+
         return card(Styles.black8)
                 .width(winWidth)
                 .height(winHeight)
                 .maxWidth(Units.dvw(95f))
                 .maxHeight(Units.dvh(95f))
                 .children(() -> {
-                        // Shared floating message-action popup (zero-footprint overlay driver).
-                        ChatActionPopup.install(store);
-                    
+
                     column().grow().children(() -> {
                         // Window Action Bar (draggable bar wrapping title & action buttons)
                         row().growX()
@@ -170,7 +171,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                 return buildDesktopBody();
                             }
                         })
-                        .grow();
+                                .grow();
                     });
                 });
     }
