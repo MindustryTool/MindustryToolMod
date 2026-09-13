@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import mindustry.Vars;
 import mindustrytool.features.translation.TranslationFeature;
 import mindustrytool.features.translation.TranslationProvider;
 import mindustrytool.services.HttpException;
@@ -98,6 +99,11 @@ public class DeepLTranslationProvider implements TranslationProvider {
 		String clean = lang.trim();
 		if (clean.length() == 2) {
 			return clean.toUpperCase(Locale.ROOT);
+		}
+		for (Locale loc : Vars.locales) {
+			if (clean.equalsIgnoreCase(loc.toString()) || clean.equalsIgnoreCase(loc.getLanguage())) {
+				return loc.getLanguage().toUpperCase(Locale.ROOT);
+			}
 		}
 		String lower = clean.toLowerCase(Locale.ROOT);
 		switch (lower) {

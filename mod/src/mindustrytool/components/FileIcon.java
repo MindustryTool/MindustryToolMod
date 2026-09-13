@@ -40,6 +40,6 @@ public class FileIcon {
     }
 
     private static TextureRegionDrawable fallbackIcon() {
-        return Icon.book;
+        return Icon.book != null ? Icon.book : new TextureRegionDrawable();
     }
 }

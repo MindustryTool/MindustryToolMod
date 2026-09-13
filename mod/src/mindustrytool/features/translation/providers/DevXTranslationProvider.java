@@ -4,7 +4,9 @@ import arc.Core;
 import arc.struct.Seq;
 import arc.util.serialization.Jval;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
+import mindustry.Vars;
 import mindustrytool.features.translation.DevXSecrets;
 import mindustrytool.features.translation.TranslationFeature;
 import mindustrytool.features.translation.TranslationProvider;
@@ -74,7 +76,14 @@ public class DevXTranslationProvider implements TranslationProvider {
 			case "fr", "french", "tiếng pháp" -> "French";
 			case "de", "german", "tiếng đức" -> "German";
 			case "es", "spanish", "tiếng tây ban nha" -> "Spanish";
-			default -> lang.trim();
+			default -> {
+				for (Locale loc : Vars.locales) {
+					if (clean.equalsIgnoreCase(loc.toString()) || clean.equalsIgnoreCase(loc.getLanguage())) {
+						yield loc.getDisplayLanguage(Locale.ENGLISH);
+					}
+				}
+				yield lang.trim();
+			}
 		};
 	}
 
