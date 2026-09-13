@@ -24,7 +24,7 @@ public final class FeatureSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().children(() -> {
+        return column().grow().gap(unit(2)).children(() -> {
             toolbar();
             scroll().grow().children(() -> {
                 grid(columnCount, //
@@ -45,8 +45,9 @@ public final class FeatureSettingsView extends BaseComponent {
     private void toolbar() {
         row().growX().gap(unit(2))
                 .rounded(unit(3))
+                .paddingLeft(unit(2))
                 .border(1.5f, Color.darkGray).children(() -> {
-                    icon(Icon.zoom).size(unit(6)).marginLeft(unit(2));
+                    icon(Icon.zoom).size(unit(6));
                     textField(filter).growX().style(WebStyles.clearInput())
                             .placeholder(Core.bundle.get("feature.search.placeholder"));
 
