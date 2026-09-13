@@ -275,6 +275,39 @@ Fully qualified names are allowed only when necessary to resolve unavoidable nam
 
 ---
 
+# Simple Conditions: Prefer Ternary Operator — Mandatory
+
+Prefer the ternary operator (`? :`) over `if`/`if-else` blocks or mutable variables for simple condition checks, variable initialization, and method arguments.
+
+❌ Bad:
+
+```java
+String title;
+if (name != null) {
+    title = name;
+} else {
+    title = "Unknown";
+}
+
+if (previewHeight != null) {
+    card.height(previewHeight);
+} else {
+    card.height(unit(58));
+}
+```
+
+✅ Good:
+
+```java
+String title = name != null ? name : "Unknown";
+
+card.height(previewHeight != null ? previewHeight : Readable.of(unit(58f)));
+```
+
+Use `if` statements when branches involve multiple statements, side effects, early returns, or complex nested logic.
+
+---
+
 # Legacy Code
 
 **Ignore the `old/` folder entirely.**
@@ -855,6 +888,7 @@ Verify:
 * [ ] No unsupported Java 9+ runtime APIs are used.
 * [ ] Nullable values use `arc.util.Nullable`.
 * [ ] Imports are used instead of unnecessary fully qualified class names.
+* [ ] Ternary operator is preferred over `if` for simple conditions and assignments.
 
 ### Architecture
 

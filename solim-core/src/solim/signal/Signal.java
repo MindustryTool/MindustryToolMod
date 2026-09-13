@@ -51,7 +51,7 @@ public final class Signal<T> implements Readable<T> {
 	@Override
 	public T get() {
 		if (ReactiveContext.current() == null && ComponentContext.current() != null) {
-			Log.warn("[Solim Reactivity Warning] Signal.get() was called during build()! This severs reactivity. Pass the Signal/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
+			Log.debug("[Solim Reactivity Warning] Signal.get() was called during build()! This severs reactivity. Pass the Signal/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
 		}
 		ReactiveContext.track(this);
 		return value;

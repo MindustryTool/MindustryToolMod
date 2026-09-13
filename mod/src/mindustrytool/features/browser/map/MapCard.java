@@ -6,6 +6,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
+import arc.util.Nullable;
 import arc.util.Scaling;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
@@ -15,6 +16,7 @@ import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.models.response.MapData;
 import solim.core.BaseComponent;
+import solim.signal.Readable;
 
 /**
  * Image-first card layout showing a dedicated preview card with a centered
@@ -23,13 +25,25 @@ import solim.core.BaseComponent;
 public class MapCard extends BaseComponent {
 
     private final MapData map;
+    private final @Nullable Readable<Float> previewHeight;
     private final Runnable onClick;
     private final Runnable onDownload;
     private final Runnable onDetails;
     private final Runnable onPlay;
 
     public MapCard(MapData map, Runnable onClick, Runnable onDownload, Runnable onDetails, Runnable onPlay) {
+        this(map, null, onClick, onDownload, onDetails, onPlay);
+    }
+
+    public MapCard(
+            MapData map,
+            @Nullable Readable<Float> previewHeight,
+            Runnable onClick,
+            Runnable onDownload,
+            Runnable onDetails,
+            Runnable onPlay) {
         this.map = map;
+        this.previewHeight = previewHeight;
         this.onClick = onClick;
         this.onDownload = onDownload;
         this.onDetails = onDetails;
@@ -50,7 +64,7 @@ public class MapCard extends BaseComponent {
                     card(WebStyles.previewCard().style())
                             .name("MapCard-preview-" + map.getItemId())
                             .growX()
-                            .height(unit(58))
+                            .height(previewHeight != null ? previewHeight : Readable.of(unit(58f)))
                             .onClick(onClick)
                             .children(() -> {
                                 stack().grow().children(() -> {

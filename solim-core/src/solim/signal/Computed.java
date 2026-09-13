@@ -39,7 +39,7 @@ public final class Computed<T> implements ReactiveObserver, Readable<T> {
 			return cachedValue;
 		}
 		if (ReactiveContext.current() == null && ComponentContext.current() != null) {
-			Log.warn("[Solim Reactivity Warning] Computed.get() was called during build()! This severs reactivity. Pass the Computed/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
+			Log.debug("[Solim Reactivity Warning] Computed.get() was called during build()! This severs reactivity. Pass the Computed/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
 		}
 		if (dirty || !hasValue) {
 			recompute();

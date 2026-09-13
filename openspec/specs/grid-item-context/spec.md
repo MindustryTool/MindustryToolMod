@@ -1,4 +1,9 @@
-## ADDED Requirements
+# grid-item-context Specification
+
+## Purpose
+Exposes contextual metrics from `ReactiveGrid` to child item component factories.
+
+## Requirements
 
 ### Requirement: ReactiveGrid Item Context
 `ReactiveGrid` SHALL provide a `GridItemContext` interface to child item factories, exposing reactive layout metrics including the computed usable item width and current column count.

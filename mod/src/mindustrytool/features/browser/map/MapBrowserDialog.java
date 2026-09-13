@@ -111,8 +111,9 @@ public class MapBrowserDialog extends SolimDialog {
                             columnCount,
                             state.items(),
                             MapData::getItemId,
-                            item -> new MapCard(
+                            (item, ctx) -> new MapCard(
                                     item,
+                                    ctx.itemWidth(),
                                     () -> showDetails(item),
                                     () -> MapActions.downloadAndImport(item.getItemId()),
                                     () -> showDetails(item),

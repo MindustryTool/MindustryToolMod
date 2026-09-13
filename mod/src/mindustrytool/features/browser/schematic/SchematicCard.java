@@ -6,6 +6,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
+import arc.util.Nullable;
 import arc.util.Scaling;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
@@ -15,6 +16,7 @@ import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.models.response.SchematicData;
 import solim.core.BaseComponent;
+import solim.signal.Readable;
 
 /**
  * Image-first card layout showing a dedicated preview card with a centered
@@ -23,6 +25,7 @@ import solim.core.BaseComponent;
 public class SchematicCard extends BaseComponent {
 
     private final SchematicData schematic;
+    private final @Nullable Readable<Float> previewHeight;
     private final Runnable onClick;
     private final Runnable onCopy;
     private final Runnable onSave;
@@ -34,7 +37,18 @@ public class SchematicCard extends BaseComponent {
             Runnable onCopy,
             Runnable onSave,
             Runnable onDetails) {
+        this(schematic, null, onClick, onCopy, onSave, onDetails);
+    }
+
+    public SchematicCard(
+            SchematicData schematic,
+            @Nullable Readable<Float> previewHeight,
+            Runnable onClick,
+            Runnable onCopy,
+            Runnable onSave,
+            Runnable onDetails) {
         this.schematic = schematic;
+        this.previewHeight = previewHeight;
         this.onClick = onClick;
         this.onCopy = onCopy;
         this.onSave = onSave;
@@ -55,7 +69,7 @@ public class SchematicCard extends BaseComponent {
                     card(WebStyles.previewCard().style())
                             .name("SchematicCard-preview-" + schematic.getItemId())
                             .growX()
-                            .height(unit(58))
+                            .height(previewHeight != null ? previewHeight : Readable.of(unit(58f)))
                             .onClick(onClick)
                             .children(() -> {
                                 stack().grow().children(() -> {

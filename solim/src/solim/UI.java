@@ -528,11 +528,29 @@ public final class UI {
         return grid;
     }
 
+    public static <T, K> ReactiveGrid<T, K> grid(
+            Readable<Integer> columnCount,
+            Readable<? extends Iterable<T>> items,
+            Function<T, K> keyExtractor,
+            BiFunction<T, GridItemContext, Component> itemFactory) {
+        ReactiveGrid<T, K> grid = ReactiveGrid.of(columnCount, items, keyExtractor, itemFactory);
+        ParentStack.attachToParent(grid.element());
+        return grid;
+    }
+
     public static <T, K> ReactiveGrid<T, K> reactiveGrid(
             Readable<Integer> columnCount,
             Readable<? extends Iterable<T>> items,
             Function<T, K> keyExtractor,
             Function<T, Component> itemFactory) {
+        return grid(columnCount, items, keyExtractor, itemFactory);
+    }
+
+    public static <T, K> ReactiveGrid<T, K> reactiveGrid(
+            Readable<Integer> columnCount,
+            Readable<? extends Iterable<T>> items,
+            Function<T, K> keyExtractor,
+            BiFunction<T, GridItemContext, Component> itemFactory) {
         return grid(columnCount, items, keyExtractor, itemFactory);
     }
 

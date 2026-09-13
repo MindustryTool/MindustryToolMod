@@ -111,8 +111,9 @@ public class SchematicBrowserDialog extends SolimDialog {
                             columnCount,
                             state.items(),
                             SchematicData::getItemId,
-                            item -> new SchematicCard(
+                            (item, ctx) -> new SchematicCard(
                                     item,
+                                    ctx.itemWidth(),
                                     () -> onCardClick(item),
                                     () -> SchematicActions.copyToClipboard(item.getItemId()),
                                     () -> SchematicActions.saveToLocal(item.getItemId()),
