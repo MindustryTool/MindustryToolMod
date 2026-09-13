@@ -4,11 +4,11 @@
 TBD - created by archiving change rewrite-browser-features. Update Purpose after archive.
 ## Requirements
 ### Requirement: Browse Online Schematics
-The system SHALL provide a SchematicBrowserFeature and SchematicBrowserDialog displaying verified schematics queried from MindustryTool.searchSchematics().
+The system SHALL provide a SchematicBrowserFeature and SchematicBrowserDialog with a solid black background displaying verified schematics queried from MindustryTool.searchSchematics(). The dialog SHALL render schematic cards as physical tiles with subtle borders, rounded corners, inner padding, and WebStyles action buttons, omitting vanilla Mindustry close buttons in favor of the aligned footer close action.
 
-#### Scenario: Display schematic cards
+#### Scenario: Display schematic cards as physical tiles
 - **WHEN** schematic browser dialog is opened
-- **THEN** it SHALL render a grid of schematic cards with preview image thumbnails, titles, authors, like counts, and download counts
+- **THEN** it SHALL render against an opaque black background with a grid of schematic cards having distinct rounded borders, inner padding, and WebStyles action buttons
 
 #### Scenario: Card click in active game match
 - **WHEN** user clicks on a schematic card while in an active match and rules allow schematics

@@ -79,8 +79,12 @@ public class ChatInputView extends BaseComponent {
 
                 row().growX().gap(unit(1)).children(() -> {
                     card(Styles.black5).growX().children(() -> {
-                        row().growX().gap(unit(1)).padding(unit(2))
-                                .rounded(unit(5), Color.clear)
+                        row().growX().gap(unit(1))
+                                .paddingLeft(unit(2))
+                                .padRight(unit(2))
+                                .padTop(unit(1))
+                                .padBottom(unit(1))
+                                .rounded(unit(3), Color.clear)
                                 .border(1.5f, Color.darkGray)
                                 .children(() -> {
                                     var input = textField(messageText)

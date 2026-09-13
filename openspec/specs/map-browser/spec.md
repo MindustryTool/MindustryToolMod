@@ -4,11 +4,11 @@
 TBD - created by archiving change rewrite-browser-features. Update Purpose after archive.
 ## Requirements
 ### Requirement: Browse Online Maps
-The system SHALL provide a MapBrowserFeature and MapBrowserDialog displaying verified maps queried from MindustryTool.searchMaps().
+The system SHALL provide a MapBrowserFeature and MapBrowserDialog with a solid black background displaying verified maps queried from MindustryTool.searchMaps(). The dialog SHALL render map cards as physical tiles with subtle borders, rounded corners, inner padding, and WebStyles action buttons, omitting vanilla Mindustry close buttons in favor of the aligned footer close action.
 
-#### Scenario: Display map cards
+#### Scenario: Display map cards as physical tiles
 - **WHEN** map browser dialog is opened
-- **THEN** it SHALL render a grid of map cards with preview image thumbnails, titles, authors, like counts, and download counts
+- **THEN** it SHALL render against an opaque black background with a grid of map cards having distinct rounded borders, inner padding, and WebStyles action buttons
 
 #### Scenario: Card click opens map details
 - **WHEN** user clicks on a map card

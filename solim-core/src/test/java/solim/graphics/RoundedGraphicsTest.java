@@ -211,4 +211,25 @@ class RoundedGraphicsTest {
             assertTrue(badge.table().getBackground() instanceof RoundedDrawable);
         }
     }
+
+    @Test
+    void borderAndRoundedDefaultToTransparentBackground() {
+        RoundedDrawable raw = new RoundedDrawable(8);
+        assertEquals(Color.clear, raw.getFillColor(), "Default fillColor must be transparent (Color.clear)");
+
+        Column colBorder = new Column();
+        colBorder.border(1.5f, Color.darkGray);
+        assertTrue(colBorder.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rdBorders = (RoundedDrawable) colBorder.table().getBackground();
+        assertEquals(Color.clear, rdBorders.getFillColor(), "Calling .border() must default to transparent fillColor");
+        assertEquals(Color.darkGray, rdBorders.getBorderColor());
+        assertEquals(1.5f, rdBorders.getStroke(), 0.001f);
+
+        Column colRounded = new Column();
+        colRounded.rounded(6);
+        assertTrue(colRounded.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rdRound = (RoundedDrawable) colRounded.table().getBackground();
+        assertEquals(6, rdRound.getRadius());
+        assertEquals(Color.clear, rdRound.getFillColor(), "Calling .rounded(radius) without color must default to transparent fillColor");
+    }
 }

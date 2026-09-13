@@ -10,6 +10,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
+import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.models.response.MapData;
 import solim.core.BaseComponent;
 
@@ -38,6 +39,8 @@ public class MapCard extends BaseComponent {
         return card(Styles.black8)
                 .name("MapCard-" + map.getItemId())
                 .growX()
+                .rounded(6)
+                .border(1f, Color.darkGray)
                 .onClick(onClick)
                 .children(() -> {
                     column().growX().padding(unit(2)).gap(unit(1)).children(() -> {
@@ -61,13 +64,13 @@ public class MapCard extends BaseComponent {
                                 BrowserImages.count(map.getDownloads()));
 
                         row().growX().gap(unit(1)).children(() -> {
-                            button(onDownload).style(Styles.clearNonei).size(unit(10))
+                            button(onDownload).style(WebStyles.webButton).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.map.download"))
                                     .children(() -> icon(Icon.download).size(unit(5)));
 
                             spacer();
 
-                            button(onDetails).style(Styles.clearNonei).size(unit(10))
+                            button(onDetails).style(WebStyles.webButton).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.map.details"))
                                     .children(() -> icon(Icon.infoCircle).size(unit(5)));
                         });

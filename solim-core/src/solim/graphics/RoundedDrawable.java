@@ -20,7 +20,7 @@ public class RoundedDrawable implements Drawable, Disposable {
 
     private int radius;
     private float stroke;
-    private Color fillColor = Color.white.cpy();
+    private Color fillColor = Color.clear.cpy();
     private Color borderColor = Color.clear.cpy();
 
     private @Nullable NinePatchDrawable fillPatch;
@@ -36,7 +36,7 @@ public class RoundedDrawable implements Drawable, Disposable {
     private final List<Disposable> bindings = new ArrayList<>();
 
     public RoundedDrawable(int radius) {
-        this(radius, Color.white);
+        this(radius, Color.clear);
     }
 
     public RoundedDrawable(int radius, Color fillColor) {

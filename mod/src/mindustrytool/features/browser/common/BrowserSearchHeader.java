@@ -65,16 +65,24 @@ public class BrowserSearchHeader extends BaseComponent {
             row().growX().gap(unit(1)).children(() -> {
                 icon(Icon.zoom).size(unit(5));
 
-                textField(inputBuffer)
-                        .growX()
-                        .placeholder(Core.bundle.get("browser.search.placeholder"))
-                        .onEnter(this::submitNow);
+                card(Styles.black5).growX().children(() -> {
+                    row().growX().gap(unit(1)).padding(unit(2))
+                            .rounded(unit(5), Color.clear)
+                            .border(1.5f, Color.darkGray)
+                            .children(() -> {
+                                var input = textField(inputBuffer)
+                                        .growX()
+                                        .placeholder(Core.bundle.get("browser.search.placeholder"))
+                                        .onEnter(this::submitNow);
+                                input.field().getStyle().focusedBackground = input.field().getStyle().background;
+                            });
+                });
 
-                button(this::refresh).style(Styles.clearNonei).size(unit(10))
+                button(this::refresh).style(WebStyles.webButton).size(unit(10))
                         .tooltip(Core.bundle.get("browser.search.refresh"))
                         .children(() -> icon(Icon.refresh).size(unit(5)));
 
-                button(onFilterClick).style(Styles.clearNonei).size(unit(10))
+                button(onFilterClick).style(WebStyles.webButton).size(unit(10))
                         .tooltip(Core.bundle.get("browser.search.filter"))
                         .children(() -> icon(Icon.filter).size(unit(5)));
             });

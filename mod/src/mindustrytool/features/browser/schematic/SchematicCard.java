@@ -10,6 +10,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
+import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.models.response.SchematicData;
 import solim.core.BaseComponent;
 
@@ -45,6 +46,8 @@ public class SchematicCard extends BaseComponent {
         return card(Styles.black8)
                 .name("SchematicCard-" + schematic.getItemId())
                 .growX()
+                .rounded(6)
+                .border(1f, Color.darkGray)
                 .onClick(onClick)
                 .children(() -> {
                     column().growX().padding(unit(2)).gap(unit(1)).children(() -> {
@@ -68,17 +71,17 @@ public class SchematicCard extends BaseComponent {
                                 BrowserImages.count(schematic.getDownloads()));
 
                         row().growX().gap(unit(1)).children(() -> {
-                            button(onCopy).style(Styles.clearNonei).size(unit(10))
+                            button(onCopy).style(WebStyles.webButton).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.schematic.copy"))
                                     .children(() -> icon(Icon.copy).size(unit(5)));
 
-                            button(onSave).style(Styles.clearNonei).size(unit(10))
+                            button(onSave).style(WebStyles.webButton).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.schematic.save"))
                                     .children(() -> icon(Icon.save).size(unit(5)));
 
                             spacer();
 
-                            button(onDetails).style(Styles.clearNonei).size(unit(10))
+                            button(onDetails).style(WebStyles.webButton).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.schematic.details"))
                                     .children(() -> icon(Icon.infoCircle).size(unit(5)));
                         });

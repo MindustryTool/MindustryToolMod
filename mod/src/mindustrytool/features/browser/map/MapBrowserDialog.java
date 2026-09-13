@@ -14,6 +14,7 @@ import mindustrytool.features.browser.common.BrowserFilterDialog;
 import mindustrytool.features.browser.common.BrowserFooter;
 import mindustrytool.features.browser.common.BrowserSearchHeader;
 import mindustrytool.features.browser.common.BrowserState;
+import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.models.response.MapData;
 import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
@@ -36,10 +37,10 @@ public class MapBrowserDialog extends SolimDialog {
         state = new BrowserState<>(MapBrowserDialog::fetchMaps);
         filterDialog = new BrowserFilterDialog(state, "maps", false, true);
 
-        addCloseButton();
         closeOnBack();
         fillParent(true);
-        children(() -> new BrowserContent(state, filterDialog));
+        children(() -> new BrowserContent(state, filterDialog, this::hide));
+        cont().background(Styles.black);
         shown(() -> state.start());
         hidden(() -> state.stop());
     }
@@ -52,6 +53,7 @@ public class MapBrowserDialog extends SolimDialog {
     private static class BrowserContent extends BaseComponent {
         private final BrowserState<MapData> state;
         private final BrowserFilterDialog filterDialog;
+        private final Runnable onClose;
         private final Computed<Float> viewportWidth = dvw(100f);
         private final Readable<Boolean> portrait = isPortrait();
         private final Computed<Integer> columnCount = new Computed<>(() -> {
@@ -69,9 +71,10 @@ public class MapBrowserDialog extends SolimDialog {
             return Math.max(3, Math.min(6, (int) (w / 300f)));
         });
 
-        BrowserContent(BrowserState<MapData> state, BrowserFilterDialog filterDialog) {
+        BrowserContent(BrowserState<MapData> state, BrowserFilterDialog filterDialog, Runnable onClose) {
             this.state = state;
             this.filterDialog = filterDialog;
+            this.onClose = onClose;
         }
 
         @Override
@@ -92,7 +95,7 @@ public class MapBrowserDialog extends SolimDialog {
                                     .wrap(true)
                                     .growX();
                             button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                    .style(Styles.defaultb)
+                                    .style(WebStyles.webTextButton)
                                     .height(unit(10));
                         });
 
@@ -112,7 +115,7 @@ public class MapBrowserDialog extends SolimDialog {
                             .gap(unit(2));
                 });
 
-                new BrowserFooter(state, Config.UPLOAD_MAP_URL);
+                new BrowserFooter(state, Config.UPLOAD_MAP_URL, onClose);
             }).element();
         }
 
