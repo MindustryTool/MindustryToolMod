@@ -94,7 +94,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                             image(circle())
                                                     .margin(unit(1))
                                                     .size(unit(3))
-                                                    .color(Color.white);
+                                                    .color(Color.scarlet);
                                         }));
                             });
                 });
