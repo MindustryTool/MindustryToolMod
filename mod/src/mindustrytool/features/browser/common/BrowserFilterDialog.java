@@ -6,6 +6,7 @@ import arc.Core;
 import arc.func.Boolf;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import arc.util.Strings;
 import java.util.ArrayList;
@@ -79,17 +80,17 @@ public class BrowserFilterDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            return column().grow().padding(unit(4)).gap(unit(1)).children(() -> {
+            return column().grow().padding(unit(4)).gap(unit(4)).children(() -> {
                 searchRow();
                 scroll().grow().children(() -> {
-                    column().growX().left().gap(unit(1)).children(() -> {
+                    column().growX().left().gap(unit(4)).children(() -> {
                         sectionPanel(Core.bundle.get("browser.filter.sort"), () -> renderSortOptions());
 
                         if (usePlanets) {
                             sectionPanel(Core.bundle.get("browser.filter.planets"), () -> renderPlanets());
                         }
 
-                        sectionPanel(Core.bundle.get("browser.filter.tags"), () -> renderTagCategories());
+                        renderTagCategories();
 
                         if (useBlocks) {
                             sectionPanel(Core.bundle.get("browser.filter.blocks"), () -> renderBlocks());
@@ -125,14 +126,17 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void sectionPanel(String title, Runnable content) {
+            sectionPanel(title, content, Color.white);
+        }
+
+        private void sectionPanel(String title, Runnable content, Color color) {
             column().growX().left()
                     .rounded(unit(2))
-                    .border(1f, WebStyles.Colors.SECTION_BORDER)
-                    .background(Styles.black6)
-                    .padding(unit(1))
-                    .gap(unit(1))
+                    .border(1.5f, WebStyles.Colors.SECTION_BORDER)
+                    .padding(unit(3))
+                    .gap(unit(2))
                     .children(() -> {
-                        text(title).style(Styles.defaultLabel).color(Color.lightGray).left();
+                        text(title).style(Styles.defaultLabel).color(color).left();
                         content.run();
                     });
         }
@@ -142,10 +146,13 @@ public class BrowserFilterDialog extends SolimDialog {
                 for (Sort sortOption : Config.sorts) {
                     String sortValue = sortOption.getValue();
                     Readable<Boolean> checked = state.sort().map(current -> sortValue.equals(current));
-                    button(sortOption.getName(), () -> state.setSort(sortValue))
+                    button(() -> state.setSort(sortValue))
                             .style(WebStyles.filterChipText())
                             .checked(checked)
-                            .height(unit(9));
+                            .height(unit(9))
+                            .children(() -> {
+                                text(sortOption.getName()).color(checked.map(c -> c ? Color.white : Color.gray));
+                            });
                 }
             });
         }
@@ -178,10 +185,13 @@ public class BrowserFilterDialog extends SolimDialog {
             String chipLabel = mod.getName() != null ? mod.getName() : modId;
             Readable<Boolean> checked = selectedPlanets.map(
                     selected -> selected != null && modId != null && selected.contains(modId));
-            button(chipLabel, () -> togglePlanet(modId))
+            button(() -> togglePlanet(modId))
                     .style(WebStyles.filterChipText())
                     .checked(checked)
-                    .height(unit(9));
+                    .height(unit(9))
+                    .children(() -> {
+                        text(chipLabel).color(checked.map(c -> c ? Color.white : Color.gray));
+                    });
         }
 
         private void togglePlanet(String modId) {
@@ -249,7 +259,7 @@ public class BrowserFilterDialog extends SolimDialog {
 
         private void renderTagCategories() {
             dynamic(visibleCategories, categories -> {
-                return column().growX().gap(unit(1)).children(() -> {
+                return column().growX().gap(unit(4)).children(() -> {
                     if (categories == null || categories.isEmpty()) {
                         if (cachedTags.peek().isEmpty()) {
                             row().growX().center().padding(unit(4)).children(() -> new Loader(unit(6)));
@@ -267,18 +277,13 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderCategory(CategoryViewModel category) {
-            column().growX().left().gap(unit(1)).children(() -> {
-                text(Strings.capitalize(category.name))
-                        .color(category.color)
-                        .style(Styles.defaultLabel)
-                        .left();
-
+            sectionPanel(Strings.capitalize(category.name), () -> {
                 wrap().left().gap(unit(1)).children(() -> {
                     for (TagData tag : category.tags) {
                         renderTag(tag);
                     }
                 });
-            });
+            }, category.color);
         }
 
         private List<TagData> visibleTags(List<TagData> tags, Seq<String> planetFilter, String loweredQuery) {
@@ -313,10 +318,18 @@ public class BrowserFilterDialog extends SolimDialog {
             String chipLabel = tag.getName() != null ? tag.getName() : "";
             Readable<Boolean> checked = state.selectedTags().map(
                     selected -> selected != null && selected.contains(key));
-            button(chipLabel, () -> state.toggleTag(key))
+
+            button(() -> state.toggleTag(key))
                     .style(WebStyles.filterChipText())
                     .checked(checked)
-                    .height(unit(9));
+                    .height(unit(9))
+                    .gap(unit(1))
+                    .children(() -> {
+                        if (tag.getIcon() != null) {
+                            networkImage(tag.getIcon()).size(unit(6));
+                        }
+                        text(chipLabel).color(checked.map(c -> c ? Color.white : Color.gray));
+                    });
         }
 
         private void renderBlocks() {
@@ -345,10 +358,17 @@ public class BrowserFilterDialog extends SolimDialog {
                         Readable<Boolean> checked = state.selectedTags().map(
                                 selected -> selected != null && selected.contains(blockName));
 
-                        button(chipLabel, () -> state.toggleTag(blockName))
+                        button(() -> state.toggleTag(blockName))
                                 .style(WebStyles.filterChipText())
                                 .checked(checked)
-                                .height(unit(9));
+                                .height(unit(9))
+                                .gap(unit(1))
+                                .children(() -> {
+                                    if (block.uiIcon != null) {
+                                        icon(new TextureRegionDrawable(block.uiIcon)).size(unit(6));
+                                    }
+                                    text(chipLabel).color(checked.map(c -> c ? Color.white : Color.gray));
+                                });
                     }
                 });
             });

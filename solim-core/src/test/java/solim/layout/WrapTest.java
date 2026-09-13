@@ -6,6 +6,8 @@ import arc.Core;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.CellAccess;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -52,5 +54,65 @@ class WrapTest {
 	void tableIsSameAsElement() {
 		Wrap w = new Wrap();
 		assertSame(w.table(), w.element());
+	}
+
+	@Test
+	void gapSetsDefaultCellPadding() {
+		Wrap w = new Wrap();
+		w.gap(8f);
+		assertEquals(8f, w.gap());
+		Cell<?> def = w.table().defaults();
+		assertEquals(8f, CellAccess.padRight(def));
+		assertEquals(8f, CellAccess.padBottom(def));
+	}
+
+	@Test
+	void leftAlignsTable() {
+		Wrap w = new Wrap();
+		w.left();
+		// Just verify it doesn't throw
+	}
+
+	@Test
+	void centerAlignsTable() {
+		Wrap w = new Wrap();
+		w.center();
+		// Just verify it doesn't throw
+	}
+
+	@Test
+	void rightAlignsTable() {
+		Wrap w = new Wrap();
+		w.right();
+		// Just verify it doesn't throw
+	}
+
+	@Test
+	void backgroundSetsDrawable() {
+		Wrap w = new Wrap();
+		assertNull(w.table().getBackground());
+		w.background(new arc.scene.style.TextureRegionDrawable());
+		assertNotNull(w.table().getBackground());
+	}
+
+	@Test
+	void paddingSetsTablePadding() {
+		Wrap w = new Wrap();
+		w.padding(12f);
+		// Just verify it doesn't throw
+	}
+
+	@Test
+	void childrenAddsElementsToTable() {
+		Wrap w = new Wrap();
+		w.add(new Element());
+		w.add(new Element());
+		assertEquals(2, w.table().getChildren().size);
+	}
+
+	@Test
+	void defaultGapIs4() {
+		Wrap w = new Wrap();
+		assertEquals(4f, w.gap());
 	}
 }

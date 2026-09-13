@@ -95,7 +95,7 @@ public class BrowserSearchHeader extends BaseComponent {
                     return null;
                 }
                 return row().growX().gap(unit(1)).children(() -> {
-                    scroll().scrollX(true).children(() -> {
+                    wrap().children(() -> {
                         row().gap(unit(1)).children(() -> {
                             for (String tag : tags) {
                                 renderChip(tag);
@@ -111,7 +111,9 @@ public class BrowserSearchHeader extends BaseComponent {
         button(tag, Icon.cancelSmall, () -> state.toggleTag(tag))
                 .gap(unit(1))
                 .style(Styles.cleart)
-                .height(unit(8));
+                .border(1.5f, Color.lightGray)
+                .rounded(3)
+                .height(unit(9));
     }
 
     private void submitNow() {

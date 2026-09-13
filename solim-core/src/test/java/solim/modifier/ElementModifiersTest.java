@@ -111,7 +111,11 @@ class ElementModifiersTest {
         wrap.add(wa);
         wrap.add(wb);
         assertEquals(0f, CellAccess.padLeft(wrap.table().getCell(wa)), 0.01f);
-        assertEquals(12f, CellAccess.padLeft(wrap.table().getCell(wb)), 0.01f);
+        assertEquals(12f, CellAccess.padRight(wrap.table().getCell(wa)), 0.01f);
+        assertEquals(12f, CellAccess.padBottom(wrap.table().getCell(wa)), 0.01f);
+        assertEquals(0f, CellAccess.padLeft(wrap.table().getCell(wb)), 0.01f);
+        assertEquals(12f, CellAccess.padRight(wrap.table().getCell(wb)), 0.01f);
+        assertEquals(12f, CellAccess.padBottom(wrap.table().getCell(wb)), 0.01f);
 
         Card card = new Card().gap(16f);
         Element cda = new Element();

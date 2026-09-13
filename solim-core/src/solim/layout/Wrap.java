@@ -13,6 +13,7 @@ import solim.ui.Ui;
 
 /**
  * Wrap container: lays out children in a row that wraps when the row is full.
+ * Children receive growX() by default so WrapTable receives the full available width.
  */
 public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContainer {
 
@@ -20,10 +21,6 @@ public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContaine
         Cell<?> cell = table.add(child);
         if (Ui.isExpanding(child)) {
             cell.growX();
-        }
-        if (table.userObject instanceof GapContainer) {
-            GapContainer gc = (GapContainer) table.userObject;
-            GapContainer.spaceAttachedCell(table, cell, Direction.HORIZONTAL, gc.gap());
         }
         return cell;
     };
@@ -35,7 +32,7 @@ public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContaine
     public Wrap() {
         this.table.name = "solim-wrap-table";
         this.table.userObject = this;
-        respace();
+        this.table.left();
     }
 
     public Table table() {
@@ -64,7 +61,12 @@ public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContaine
 
     @Override
     public void respace() {
-        GapContainer.applySpacing(table, Direction.HORIZONTAL, gap);
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) {
+                c.padRight(gap).padBottom(gap);
+            }
+        }
+        table.defaults().padRight(gap).padBottom(gap);
     }
 
     public Wrap name(String name) {
@@ -91,6 +93,33 @@ public final class Wrap implements Component, LayoutModifiers<Wrap>, GapContaine
     public Wrap padding(float top, float left, float bottom, float right) {
         ElementModifiers.padding(table, top, left, bottom, right);
         return this;
+    }
+
+    public Wrap left() {
+        table.left();
+        table.defaults().left();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) c.left();
+        }
+        return LayoutModifiers.super.left();
+    }
+
+    public Wrap right() {
+        table.right();
+        table.defaults().right();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) c.right();
+        }
+        return LayoutModifiers.super.right();
+    }
+
+    public Wrap center() {
+        table.center();
+        table.defaults().center();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) c.center();
+        }
+        return LayoutModifiers.super.center();
     }
 
     public Wrap children(@Nullable Runnable r) {

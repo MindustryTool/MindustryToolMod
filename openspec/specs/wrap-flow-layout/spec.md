@@ -1,5 +1,9 @@
-﻿## ADDED Requirements
+# wrap-flow-layout Specification
 
+## Purpose
+Auto-wrapping flow container wrapping Arc.scene.ui.layout.WrapTable with 2D gap spacing, default container expansion, and Solim alignment support.
+
+## Requirements
 ### Requirement: Automatic Line Wrapping
 The system SHALL wrap child elements in a Wrap container onto new rows whenever the accumulated cell widths on the current row exceed the container's available width.
 
