@@ -44,10 +44,9 @@ public final class FeatureSettingsView extends BaseComponent {
 
     private void toolbar() {
         row().growX().gap(unit(2))
-                .border(1.5f, Color.lightGray)
-                .rounded(3)
-                .children(() -> {
-                    icon(Icon.zoom);
+                .rounded(unit(3))
+                .border(1.5f, Color.darkGray).children(() -> {
+                    icon(Icon.zoom).size(unit(6)).marginLeft(unit(2));
                     textField(filter).growX().style(WebStyles.clearInput())
                             .placeholder(Core.bundle.get("feature.search.placeholder"));
 
