@@ -30,7 +30,7 @@ import solim.runtime.StructuralReconciler;
  */
 public final class VirtualList<T, K> extends BaseComponent implements LayoutModifiers<VirtualList<T, K>> {
 
-    private final Table outer = new Table();
+    private final Table outer;
     private final SizeConstraints constraints = new SizeConstraints();
     private final @Nullable ScrollPane pane;
     private final VirtualContainer content;
@@ -69,6 +69,17 @@ public final class VirtualList<T, K> extends BaseComponent implements LayoutModi
         this.heightProvider = heightProvider;
         this.itemFactory = itemFactory;
 
+        this.outer = new Table() {
+            @Override
+            public float getPrefHeight() {
+                return constraints.hasExplicitHeight() ? super.getPrefHeight() : 0f;
+            }
+
+            @Override
+            public float getMinHeight() {
+                return constraints.hasExplicitHeight() ? super.getMinHeight() : 0f;
+            }
+        };
         this.outer.userObject = this;
         this.outer.name = "solim-virtual-list-outer";
         this.outer.top().left();

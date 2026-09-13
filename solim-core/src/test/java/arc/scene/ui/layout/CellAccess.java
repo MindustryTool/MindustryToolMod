@@ -47,4 +47,12 @@ public final class CellAccess {
 	public static float maxWidth(Cell<?> cell) {
 		return cell.maxWidth;
 	}
+
+	public static float minHeight(Cell<?> cell) {
+		return cell.minHeight;
+	}
+
+	public static float maxHeight(Cell<?> cell) {
+		return cell.maxHeight;
+	}
 }

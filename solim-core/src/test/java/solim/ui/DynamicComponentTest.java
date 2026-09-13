@@ -166,6 +166,85 @@ class DynamicComponentTest {
 	}
 
 	@Test
+	void expandAfterCollapseResetsCellConstraints() {
+		Signal<String> source = Signal.of("show");
+		Dynamic<String> dyn = new Dynamic<>(source, val -> "show".equals(val) ? new TestComponent("active") : null);
+
+		arc.scene.ui.layout.Table parent = new arc.scene.ui.layout.Table();
+		arc.scene.ui.layout.Cell<?> parentCell = parent.add(dyn.element());
+		parent.pack();
+
+		// Collapse
+		source.set(null);
+		SignalDispatcher.flush();
+		parent.layout();
+
+		assertFalse(dyn.container().visible);
+
+		// Expand
+		source.set("show");
+		SignalDispatcher.flush();
+		parent.layout();
+
+		assertTrue(dyn.container().visible);
+		assertEquals(1, dyn.container().getChildren().size);
+		assertTrue(dyn.container().getChildren().first().getMinHeight() >= 0,
+				"Expanded container child must have non-negative minHeight");
+	}
+
+	@Test
+	void nullThenNonNullShowsVisibleContainerWithChild() {
+		Signal<String> source = Signal.of(null);
+		Dynamic<String> dyn = new Dynamic<>(source, val -> val != null ? new TestComponent("item") : null);
+
+		arc.scene.ui.layout.Table parent = new arc.scene.ui.layout.Table();
+		parent.add(dyn.element());
+		parent.pack();
+
+		assertFalse(dyn.container().visible);
+		assertEquals(0, dyn.container().getChildren().size);
+
+		source.set("show");
+		SignalDispatcher.flush();
+		parent.layout();
+
+		assertTrue(dyn.container().visible);
+		assertEquals(1, dyn.container().getChildren().size);
+		dyn.dispose();
+	}
+
+	@Test
+	void collapseExpandCyclePreservesContainerChild() {
+		Signal<String> source = Signal.of("show");
+		Dynamic<String> dyn = new Dynamic<>(source, val -> "show".equals(val) ? new TestComponent("dynamic") : null);
+
+		arc.scene.ui.layout.Table parent = new arc.scene.ui.layout.Table();
+		parent.add(dyn.element());
+		parent.setSize(400f, 300f);
+		parent.validate();
+		parent.layout();
+
+		assertTrue(dyn.container().visible);
+		assertEquals(1, dyn.container().getChildren().size);
+
+		// Collapse
+		source.set(null);
+		SignalDispatcher.flush();
+		parent.layout();
+		assertFalse(dyn.container().visible);
+		assertEquals(0, dyn.container().getChildren().size);
+
+		// Expand
+		source.set("show");
+		SignalDispatcher.flush();
+		parent.layout();
+		assertTrue(dyn.container().visible);
+		assertEquals(1, dyn.container().getChildren().size);
+
+		dyn.dispose();
+	}
+
+	@Test
 	void dynamicPreservesTopRightAlignmentWithoutGrowX() {
 		Signal<Boolean> state = Signal.of(true);
 		Dynamic<Boolean> dyn = Dynamic.of(state, s -> {

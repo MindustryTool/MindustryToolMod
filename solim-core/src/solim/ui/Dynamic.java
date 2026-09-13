@@ -17,18 +17,14 @@ import solim.signal.Readable;
 
 /** Structural reactive component for switching dynamic subtrees based on a reactive value. */
 public final class Dynamic<T> extends BaseComponent implements LayoutModifiers<Dynamic<T>> {
-	private final Table container = new Table() {
-		@Override
-		public void layout() {
-			updateParentCell();
-			super.layout();
-		}
-	};
+	private static final Object SENTINEL = new Object();
+	private final Table container = new Table();
 	private final SizeConstraints constraints = new SizeConstraints();
 	private final Readable<T> source;
 	private final Function<T, Component> factory;
 	private Component currentComponent;
-	private T lastValue;
+	@SuppressWarnings("unchecked")
+	private T lastValue = (T) SENTINEL;
 	private final java.util.List<solim.core.Disposable> currentBindings = new java.util.ArrayList<>();
 
 	public Dynamic(Readable<T> source, Function<T, Component> factory) {
@@ -113,7 +109,9 @@ public final class Dynamic<T> extends BaseComponent implements LayoutModifiers<D
 		if (currentComponent != null) {
 			container.visible = true;
 			if (parentCell != null) {
-				parentCell.size(-1f);
+				parentCell.minWidth(Float.NEGATIVE_INFINITY).minHeight(Float.NEGATIVE_INFINITY);
+				parentCell.maxWidth(Float.NEGATIVE_INFINITY).maxHeight(Float.NEGATIVE_INFINITY);
+				constraints.applyToCell(parentCell);
 			}
 		} else {
 			container.visible = false;

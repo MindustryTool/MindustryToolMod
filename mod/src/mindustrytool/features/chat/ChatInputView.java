@@ -75,7 +75,7 @@ public class ChatInputView extends BaseComponent {
                                     .size(unit(6), unit(6))
                                     .children(() -> icon(Icon.cancel).size(unit(4), unit(4)));
                         });
-                    });
+                    }).growX();
 
                     row().growX().gap(unit(1)).children(() -> {
                         card(Styles.black5).growX().children(() -> {

@@ -33,27 +33,27 @@ public class FeatureCard extends BaseComponent {
                 .onClick(() -> feature.setEnabled(!feature.isEnabled())).children(() -> {
                     column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
                         row().growX().children(() -> {
-                            icon(metadata.getIcon()).size(unit(6)).marginRight(unit(2));
+                            icon(metadata.getIcon()).size(unit(7)).marginRight(unit(2));
 
                             text(feature.getName()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left();
 
                             spacer();
 
                             if (feature.getMainDialog() != null) {
-                                button(() -> feature.getMainDialog().show()).style(Styles.clearNonei).size(unit(9))
+                                button(() -> feature.getMainDialog().show()).style(Styles.clearNonei).size(unit(11))
                                         .tooltip(Core.bundle.get("feature.button.open-dialog"))
-                                        .children(() -> icon(Icon.linkSmall).size(unit(6)));
+                                        .children(() -> icon(Icon.linkSmall).size(unit(7)));
                             }
 
                             if (feature.getSettingDialog() != null) {
-                                button(() -> feature.getSettingDialog().show()).style(Styles.clearNonei).size(unit(9))
+                                button(() -> feature.getSettingDialog().show()).style(Styles.clearNonei).size(unit(11))
                                         .tooltip(Core.bundle.get("feature.button.settings"))
-                                        .children(() -> icon(Icon.settings).size(unit(6)));
+                                        .children(() -> icon(Icon.settings).size(unit(7)));
                             }
 
-                            button(() -> new FeatureHelpDialog(feature).show()).style(Styles.clearNonei).size(unit(9))
+                            button(() -> new FeatureHelpDialog(feature).show()).style(Styles.clearNonei).size(unit(11))
                                     .tooltip(Core.bundle.get("feature.button.help"))
-                                    .children(() -> icon(Icon.infoCircle).size(unit(6)));
+                                    .children(() -> icon(Icon.infoCircle).size(unit(7)));
                         });
 
                         text(feature.getDescription()).color(Color.lightGray).fontScale(0.9f).wrap(true).left();

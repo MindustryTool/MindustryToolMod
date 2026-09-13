@@ -136,15 +136,15 @@ The chat composer input field SHALL maintain focus while typing and avoid unmoun
 - **THEN** the input component remains continuously mounted and does not lose focus between keystrokes.
 
 ### Requirement: Reply Section Layout
-The chat input composer SHALL render the reply-target row as a fixed layout element that is visible only when a reply target is set, with zero height and no consumed space when not replying.
+The chat input composer SHALL render the reply-target row as a dynamic layout element that is visible and expands across the full composer width when a reply target is set, and occupies zero height and no consumed space when not replying.
 
 #### Scenario: Reply row hidden when no reply target
 - **WHEN** the store has no reply target (replyTarget is null)
-- **THEN** the reply row has setVisible(false) and setLayoutEnabled(false) applied, occupying no vertical space in the composer
+- **THEN** the reply row collapses from layout, occupying zero vertical space in the composer and applying zero padding
 
 #### Scenario: Reply row shown when replying
 - **WHEN** the store has a non-null reply target
-- **THEN** the reply row becomes visible and shows the target author name with a cancel button
+- **THEN** the reply row becomes visible, expands horizontally across the composer width (`growX`), and displays the target author name with a cancel button without overlapping the chat input card
 
 #### Scenario: Cancelling a reply
 - **WHEN** the user clicks the cancel button in the reply row
