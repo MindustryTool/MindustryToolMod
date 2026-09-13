@@ -37,26 +37,28 @@ public class BrowserFooter extends BaseComponent {
 
             spacer();
 
-            button(Core.bundle.get("browser.footer.previous"), () -> state.prevPage())
+            button(() -> state.prevPage())
                     .style(WebStyles.outlineText())
                     .height(unit(10))
                     .enabled(state.page().map(page -> page != null && page > 0))
-                    .tooltip(Core.bundle.get("browser.footer.previous.tooltip"));
+                    .tooltip(Core.bundle.get("browser.footer.previous.tooltip"))
+                    .children(() -> icon(Icon.left));
 
             button(state.page().map(page -> Core.bundle.format("browser.footer.page", page != null ? page + 1 : 1)),
                     this::showPageJumpDialog)
-                    .style(WebStyles.outlineText())
-                    .height(unit(10))
-                    .tooltip(Core.bundle.get("browser.footer.page-jump.title"));
+                            .style(WebStyles.outlineText())
+                            .height(unit(10))
+                            .tooltip(Core.bundle.get("browser.footer.page-jump.title"));
 
-            button(Core.bundle.get("browser.footer.next"), () -> state.nextPage())
+            button(() -> state.nextPage())
                     .style(WebStyles.outlineText())
                     .height(unit(10))
-                    .tooltip(Core.bundle.get("browser.footer.next.tooltip"));
+                    .tooltip(Core.bundle.get("browser.footer.next.tooltip"))
+                    .children(() -> icon(Icon.right));
 
             spacer();
 
-            button(Core.bundle.get("browser.footer.upload"), Icon.upload, () -> Core.app.openURI(uploadUrl))
+            button(Core.bundle.get("browser.footer.upload"), () -> Core.app.openURI(uploadUrl))
                     .style(WebStyles.outlineText())
                     .height(unit(10))
                     .tooltip(Core.bundle.get("browser.footer.upload.tooltip"));

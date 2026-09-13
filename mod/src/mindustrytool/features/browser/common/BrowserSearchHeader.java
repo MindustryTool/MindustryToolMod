@@ -95,17 +95,12 @@ public class BrowserSearchHeader extends BaseComponent {
                     return null;
                 }
                 return row().growX().gap(unit(1)).children(() -> {
-                    text(Core.bundle.get("browser.search.active-filters"))
-                            .color(Color.lightGray)
-                            .fontScale(0.85f);
-
-                    row().gap(unit(1)).children(() -> {
-                        for (String tag : tags) {
-                            renderChip(tag);
-                        }
-                        button(() -> state.clearTags()).style(Styles.clearNonei).size(unit(8))
-                                .tooltip(Core.bundle.get("browser.search.clear-all"))
-                                .children(() -> icon(Icon.cancel).size(unit(4)).color(Color.scarlet));
+                    scroll().scrollX(true).children(() -> {
+                        row().gap(unit(1)).children(() -> {
+                            for (String tag : tags) {
+                                renderChip(tag);
+                            }
+                        });
                     });
                 });
             });
@@ -114,6 +109,7 @@ public class BrowserSearchHeader extends BaseComponent {
 
     private void renderChip(String tag) {
         button(tag, Icon.cancelSmall, () -> state.toggleTag(tag))
+                .gap(unit(1))
                 .style(Styles.cleart)
                 .height(unit(8));
     }
