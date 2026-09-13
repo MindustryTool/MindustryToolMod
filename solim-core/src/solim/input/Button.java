@@ -511,6 +511,26 @@ public final class Button implements Component, GapContainer {
         return this;
     }
 
+    public Button padding(float p) {
+        ElementModifiers.padding(button, p);
+        return this;
+    }
+
+    public Button padding(float top, float left, float bottom, float right) {
+        ElementModifiers.padding(button, top, left, bottom, right);
+        return this;
+    }
+
+    public Button paddingX(float x) {
+        ElementModifiers.paddingX(button, x);
+        return this;
+    }
+
+    public Button paddingY(float y) {
+        ElementModifiers.paddingY(button, y);
+        return this;
+    }
+
     public Button x(float x) {
         ElementModifiers.x(button, x);
         return this;
