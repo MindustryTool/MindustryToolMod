@@ -12,7 +12,7 @@ The system SHALL provide a nested `WebStyles.Colors` static class containing sem
 - Secondary: `SECONDARY` (shadcn `secondary`, dark slate `(0.153f, 0.153f, 0.166f, 0.70f)`), `SECONDARY_HOVER`, `SECONDARY_DOWN`, `SECONDARY_FG` (shadcn `secondary-foreground`).
 - Ghost: `GHOST_HOVER` (white 10%, shadcn `border`), `GHOST_DOWN`, `GHOST_FG` (shadcn `muted-foreground`).
 - Danger: `DANGER` (shadcn `destructive`, coral red `(1.0f, 0.391f, 0.404f, 1.0f)`), `DANGER_HOVER`, `DANGER_DOWN`, `DANGER_FG`.
-- Border and disabled: `BORDER` (shadcn `border`, white 10%), `DISABLED_BG`, `DISABLED_BORDER`, `DISABLED_FG`.
+- Border and disabled: `BORDER` (shadcn `border`, white 10%), `BORDER_INPUT` (shadcn `input`, white 15%, used for the outline button border), `DISABLED_BG`, `DISABLED_BORDER`, `DISABLED_FG`.
 
 #### Scenario: Accessing semantic tokens
 - **WHEN** `WebStyles.Colors.PRIMARY` or `WebStyles.Colors.DANGER` is referenced

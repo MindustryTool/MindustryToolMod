@@ -44,6 +44,7 @@ public final class WebStyles {
         public static final Color DANGER_FG = new Color(1f, 1f, 1f, 1f);
 
         public static final Color BORDER = new Color(1f, 1f, 1f, 0.10f);
+        public static final Color BORDER_INPUT = new Color(1f, 1f, 1f, 0.15f);
 
         public static final Color DISABLED_BG = new Color(0.1f, 0.1f, 0.1f, 0.3f);
         public static final Color DISABLED_BORDER = new Color(0.3f, 0.3f, 0.3f, 0.5f);
@@ -73,11 +74,11 @@ public final class WebStyles {
 
     private static final SolimButtonStyle OUTLINE_STYLE = new SolimButtonStyleBuilder()
             .rounded(unit(2))
-            .border(1.5f, Colors.PRIMARY)
+            .border(1.5f, Colors.BORDER_INPUT)
             .padding(unit(2))
             .up(u -> u.background(Colors.PRIMARY_BG))
-            .over(o -> o.background(Colors.PRIMARY_BG_HOVER).border(1.5f, Colors.PRIMARY_HOVER))
-            .down(d -> d.background(Colors.PRIMARY_BG_DOWN).border(1.5f, Colors.PRIMARY_DOWN))
+            .over(o -> o.background(Colors.PRIMARY_BG_HOVER))
+            .down(d -> d.background(Colors.PRIMARY_BG_DOWN))
             .disabled(dis -> dis.background(Colors.DISABLED_BG).border(1.0f, Colors.DISABLED_BORDER))
             .build();
 

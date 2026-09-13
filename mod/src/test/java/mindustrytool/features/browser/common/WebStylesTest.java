@@ -94,6 +94,7 @@ class WebStylesTest {
         assertNotNull(WebStyles.Colors.DANGER_DOWN);
         assertNotNull(WebStyles.Colors.DANGER_FG);
         assertNotNull(WebStyles.Colors.BORDER);
+        assertNotNull(WebStyles.Colors.BORDER_INPUT);
         assertNotNull(WebStyles.Colors.DISABLED_BG);
         assertNotNull(WebStyles.Colors.DISABLED_BORDER);
         assertNotNull(WebStyles.Colors.DISABLED_FG);
@@ -103,6 +104,7 @@ class WebStylesTest {
         assertEquals(rgba(new Color(0.153f, 0.153f, 0.166f, 0.70f)), rgba(WebStyles.Colors.SECONDARY));
         assertEquals(rgba(new Color(1.0f, 0.391f, 0.404f, 1.0f)), rgba(WebStyles.Colors.DANGER));
         assertEquals(rgba(new Color(1f, 1f, 1f, 0.10f)), rgba(WebStyles.Colors.BORDER));
+        assertEquals(rgba(new Color(1f, 1f, 1f, 0.15f)), rgba(WebStyles.Colors.BORDER_INPUT));
         assertEquals(rgba(new Color(0.630f, 0.630f, 0.630f, 1.0f)), rgba(WebStyles.Colors.GHOST_FG));
     }
 
@@ -166,7 +168,9 @@ class WebStylesTest {
         assertEquals(rgba(WebStyles.Colors.PRIMARY_BG_HOVER), rgba(over.getFillColor()));
         assertEquals(rgba(WebStyles.Colors.PRIMARY_BG_DOWN), rgba(down.getFillColor()));
         assertEquals(1.5f, up.getStroke(), 0.001f);
-        assertEquals(rgba(WebStyles.Colors.PRIMARY), rgba(up.getBorderColor()));
+        assertEquals(rgba(WebStyles.Colors.BORDER_INPUT), rgba(up.getBorderColor()));
+        assertEquals(rgba(WebStyles.Colors.BORDER_INPUT), rgba(over.getBorderColor()));
+        assertEquals(rgba(WebStyles.Colors.BORDER_INPUT), rgba(down.getBorderColor()));
         assertEquals(8, up.getRadius());
     }
 
