@@ -66,10 +66,19 @@ public final class ExecuteJsTool implements McpTool {
 			if (Core.app != null) {
 				CompletableFuture<String> future = new CompletableFuture<>();
 				Core.app.post(() -> {
+					boolean entered = false;
 					try {
+						if (rhino.Context.getCurrentContext() == null) {
+							rhino.Context.enter();
+							entered = true;
+						}
 						future.complete(Vars.mods.getScripts().runConsole(code));
 					} catch (Throwable t) {
 						future.completeExceptionally(t);
+					} finally {
+						if (entered) {
+							rhino.Context.exit();
+						}
 					}
 				});
 				try {

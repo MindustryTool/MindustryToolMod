@@ -42,7 +42,7 @@ public class ChatFeature extends Feature {
     public ChatFeature() {
         super(FeatureMetadata.builder()
                 .id("chat")
-                .icon(Icon.chat)
+                .icon(Icon.planet)
                 .order(20)
                 .enabledByDefault(true)
                 .quickAccess(true)
@@ -65,10 +65,14 @@ public class ChatFeature extends Feature {
         float defExpX = sw > 0 ? Math.max(20f, (sw - 600f) / 2f) : 40f;
         float defExpY = sh > 0 ? Math.max(20f, (sh - 400f) / 2f) : 60f;
 
-        collapsedXConfig = collapsedGroup.floatValueKeyed("x", Signals.isPortrait(), p -> p ? "portrait" : "landscape", defColX);
-        collapsedYConfig = collapsedGroup.floatValueKeyed("y", Signals.isPortrait(), p -> p ? "portrait" : "landscape", defColY);
-        expandedXConfig = expandedGroup.floatValueKeyed("x", Signals.isPortrait(), p -> p ? "portrait" : "landscape", defExpX);
-        expandedYConfig = expandedGroup.floatValueKeyed("y", Signals.isPortrait(), p -> p ? "portrait" : "landscape", defExpY);
+        collapsedXConfig = collapsedGroup.floatValueKeyed("x", Signals.isPortrait(), p -> p ? "portrait" : "landscape",
+                defColX);
+        collapsedYConfig = collapsedGroup.floatValueKeyed("y", Signals.isPortrait(), p -> p ? "portrait" : "landscape",
+                defColY);
+        expandedXConfig = expandedGroup.floatValueKeyed("x", Signals.isPortrait(), p -> p ? "portrait" : "landscape",
+                defExpX);
+        expandedYConfig = expandedGroup.floatValueKeyed("y", Signals.isPortrait(), p -> p ? "portrait" : "landscape",
+                defExpY);
 
         boolean isCol = Boolean.TRUE.equals(collapsedConfig.get());
         Float initX = isCol ? collapsedXConfig.get() : expandedXConfig.get();
@@ -100,8 +104,10 @@ public class ChatFeature extends Feature {
             boolean isCollapsed = Boolean.TRUE.equals(col);
             Float targetX = isCollapsed ? collapsedXConfig.get() : expandedXConfig.get();
             Float targetY = isCollapsed ? collapsedYConfig.get() : expandedYConfig.get();
-            if (targetX != null) xSignal.set(targetX);
-            if (targetY != null) ySignal.set(targetY);
+            if (targetX != null)
+                xSignal.set(targetX);
+            if (targetY != null)
+                ySignal.set(targetY);
             if (hudView != null) {
                 Core.app.post(hudView::keepInScreen);
             }

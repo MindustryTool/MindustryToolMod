@@ -1,11 +1,13 @@
 package mindustrytool.features.translation.ui;
 
 import arc.Core;
-import mindustry.gen.Icon;
+import arc.util.Nullable;
 import mindustrytool.features.translation.TranslationFeature;
 import solim.overlay.SolimDialog;
 
 public class TranslationSettingsDialog extends SolimDialog {
+
+	private @Nullable TranslationSettingsView view;
 
 	public TranslationSettingsDialog(TranslationFeature feature) {
 		super(Core.bundle.get("feature.translation.settings.title", "Chat Translation Settings"));
@@ -14,8 +16,13 @@ public class TranslationSettingsDialog extends SolimDialog {
 		addCloseButton();
 		closeOnBack();
 
-		actionButton(Core.bundle.get("feature.translation.settings.reset", "Reset to Defaults"), Icon.refresh, 220f, 64f, feature::resetToDefaults);
-
-		children(() -> new TranslationSettingsView(feature));
+		children(() -> {
+			view = new TranslationSettingsView(feature);
+		});
+		hidden(() -> {
+			if (view != null) {
+				view.closeDropdown();
+			}
+		});
 	}
 }

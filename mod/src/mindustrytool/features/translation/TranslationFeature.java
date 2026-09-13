@@ -13,6 +13,7 @@ import arc.util.Strings;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
+import mindustry.ui.dialogs.LanguageDialog;
 import mindustry.core.NetClient;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Call;
@@ -27,6 +28,7 @@ import solim.config.ConfigValue;
 import mindustrytool.features.translation.providers.DeepLTranslationProvider;
 import mindustrytool.features.translation.providers.DevXTranslationProvider;
 import mindustrytool.features.translation.providers.GeminiTranslationProvider;
+import mindustrytool.features.translation.ui.OutgoingLanguageDialog;
 import mindustrytool.features.translation.ui.TranslationSettingsDialog;
 import mindustrytool.services.PacketReplacer;
 import solim.signal.Signal;
@@ -162,9 +164,43 @@ public class TranslationFeature extends Feature {
 		return (display != null && !display.trim().isEmpty()) ? display : "English";
 	}
 
-	public String getOutgoingTargetLanguage() {
+	public Locale getOutgoingTargetLocale() {
 		String lang = outgoingTargetLangConfig.get();
-		return (lang != null && !lang.trim().isEmpty()) ? lang.trim() : "English";
+		if (lang == null || lang.trim().isEmpty() || "none".equalsIgnoreCase(lang.trim())) {
+			return Locale.ENGLISH;
+		}
+		String clean = lang.trim();
+		for (Locale loc : Vars.locales) {
+			if (clean.equalsIgnoreCase(loc.toString())
+					|| clean.equalsIgnoreCase(loc.getLanguage())
+					|| clean.equalsIgnoreCase(LanguageDialog.getDisplayName(loc))
+					|| clean.equalsIgnoreCase(loc.getDisplayLanguage(Locale.ENGLISH))) {
+				return loc;
+			}
+		}
+		return Locale.ENGLISH;
+	}
+
+	public String getOutgoingTargetLanguage() {
+		Locale loc = getOutgoingTargetLocale();
+		String display = loc.getDisplayLanguage(Locale.ENGLISH);
+		return (display != null && !display.trim().isEmpty()) ? display : "English";
+	}
+
+	public String getOutgoingTargetLanguageDisplayName(String current) {
+		if ("none".equalsIgnoreCase(current) || !Boolean.TRUE.equals(outgoingEnabledConfig.get())) {
+			return Core.bundle.get("feature.translation.outgoing.none", Core.bundle.get("none", "None"));
+		}
+		Locale loc = getOutgoingTargetLocale();
+		return LanguageDialog.getDisplayName(loc);
+	}
+
+	public void setOutgoingTargetLocale(Locale loc) {
+		outgoingTargetLangConfig.set(loc.toString());
+	}
+
+	public boolean isSameLanguage(String current, Locale loc) {
+		return getOutgoingTargetLocale().equals(loc);
 	}
 
 	public boolean shouldTranslateOutgoing(String raw) {
@@ -183,15 +219,20 @@ public class TranslationFeature extends Feature {
 		if (text.startsWith("/tr ") || text.startsWith("/dich ")) {
 			return true;
 		}
+		// If outgoing translation is disabled or target language is none, do not translate
+		if (!Boolean.TRUE.equals(outgoingEnabledConfig.get())
+				|| "none".equalsIgnoreCase(outgoingTargetLangConfig.get())) {
+			return false;
+		}
 		// Allow /t (team chat) and /a (admin chat) to be translated
 		if (text.startsWith("/t ") || text.startsWith("/a ")) {
-			return Boolean.TRUE.equals(outgoingEnabledConfig.get());
+			return true;
 		}
 		// Other commands starting with / are game commands (e.g. /vote, /help)
 		if (text.startsWith("/")) {
 			return false;
 		}
-		return Boolean.TRUE.equals(outgoingEnabledConfig.get());
+		return true;
 	}
 
 	public static class OutgoingParts {
@@ -390,5 +431,14 @@ public class TranslationFeature extends Feature {
 			settingsDialog = new TranslationSettingsDialog(this);
 		}
 		return settingsDialog;
+	}
+
+	private @Nullable OutgoingLanguageDialog languageDialog;
+
+	public void showLanguageDialog() {
+		if (languageDialog == null) {
+			languageDialog = new OutgoingLanguageDialog(this);
+		}
+		languageDialog.show();
 	}
 }
