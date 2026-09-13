@@ -190,7 +190,6 @@ class HudComponentTest {
 		hud.pack();
 
 		float unscaledW = hud.root().getPrefWidth();
-		float unscaledH = hud.root().getPrefHeight();
 		assertTrue(unscaledW > 0f, "Root must have positive pref width before scaling");
 
 		hud.scale(scale);

@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
-import solim.core.Component;
 import solim.runtime.SignalDispatcher;
 import solim.signal.Signal;
 

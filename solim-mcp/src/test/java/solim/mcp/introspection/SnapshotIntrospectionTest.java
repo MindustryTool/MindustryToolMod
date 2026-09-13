@@ -81,6 +81,7 @@ class SnapshotIntrospectionTest {
 	@Test
 	void scansAmbientComponentContext() {
 		class Probe extends BaseComponent {
+			@SuppressWarnings("unused")
 			final Signal<Integer> duringBuild = Signal.of(11);
 
 			@Override

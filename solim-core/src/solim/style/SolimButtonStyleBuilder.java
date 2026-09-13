@@ -383,9 +383,7 @@ public final class SolimButtonStyleBuilder extends BaseStyleBuilder<SolimButtonS
             } else if (state.borderColorValue() != null) {
                 bc = state.borderColorValue();
             }
-        } else if (fallbackBackground != null) {
-            bg = fallbackBackground;
-        }
+        } 
         return new ResolvedState(bg, r, s, bc, null);
     }
 

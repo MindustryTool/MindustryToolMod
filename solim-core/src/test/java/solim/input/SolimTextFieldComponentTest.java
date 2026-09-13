@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.Core;
 import arc.input.KeyCode;
 import arc.scene.event.InputEvent;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;

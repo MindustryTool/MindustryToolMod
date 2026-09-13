@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
 import arc.Settings;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;

@@ -201,7 +201,7 @@ class RoundedGraphicsTest {
         container.rounded(6, Color.blue);
         assertTrue(container.table().getBackground() instanceof RoundedDrawable);
 
-        Popup popup = new Popup();
+        Popup<Object> popup = new Popup<>();
         popup.rounded(8, Color.gray).border(1f, Color.white);
         assertTrue(popup.table().getBackground() instanceof RoundedDrawable);
 

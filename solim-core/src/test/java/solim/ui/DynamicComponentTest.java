@@ -171,7 +171,7 @@ class DynamicComponentTest {
 		Dynamic<String> dyn = new Dynamic<>(source, val -> "show".equals(val) ? new TestComponent("active") : null);
 
 		arc.scene.ui.layout.Table parent = new arc.scene.ui.layout.Table();
-		arc.scene.ui.layout.Cell<?> parentCell = parent.add(dyn.element());
+		parent.add(dyn.element());
 		parent.pack();
 
 		// Collapse

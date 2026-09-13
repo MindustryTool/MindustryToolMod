@@ -692,6 +692,7 @@ class LayoutTest {
 		assertEquals(16f, CellAccess.padLeft(cell1), 0.01f);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	void featureCardGrowXInReactiveGrid() {
 		Table root = new Table();
@@ -730,6 +731,7 @@ class LayoutTest {
 		assertTrue(cell0.get().getWidth() > 400f, "Card must expand to fill grid column (was " + cell0.get().getWidth() + ")");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	void featureCardSingleItemInMultiColumnReactiveGrid() {
 		Table root = new Table();

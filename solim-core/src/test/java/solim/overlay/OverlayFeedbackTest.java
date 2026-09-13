@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
-import solim.core.Component;
 import solim.feedback.Alert;
 import solim.feedback.Avatar;
 import solim.feedback.Badge;
@@ -181,7 +180,7 @@ class OverlayFeedbackTest {
 
 	@Test
 	void popupStartsEmpty() {
-		Popup p = new Popup();
+		Popup<Object> p = new Popup<>();
 		assertEquals(0, p.table().getChildren().size);
 	}
 }

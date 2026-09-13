@@ -29,7 +29,6 @@ public class LayoutBenchmarkTest {
         Column col = new Column();
         col.children(() -> {
             for (int i = 0; i < count; i++) {
-                final int idx = i;
                 new Card().growX().children(() -> {
                     new Row().growX().children(() -> {
                         Element el = new Element();

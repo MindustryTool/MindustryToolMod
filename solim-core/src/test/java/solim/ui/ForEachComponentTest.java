@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.Core;
 import arc.scene.Element;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;

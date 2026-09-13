@@ -5,7 +5,6 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Nullable;
-import solim.display.Text;
 
 /**
  * Interface implemented by layout containers that support sibling-aware,
@@ -39,6 +38,7 @@ public interface GapContainer {
 		if (table == null || cell == null || gap <= 0f) return;
 		Element el = cell.get();
 		if (el == null || !el.visible) return;
+		@SuppressWarnings("rawtypes")
 		Seq<Cell> cells = table.getCells();
 		if (cells == null || cells.size <= 1) return;
 
@@ -65,6 +65,7 @@ public interface GapContainer {
 	 * The first visible element receives 0 gap padding; subsequent visible elements receive gap.
 	 * Cross-axis padding and outer boundaries remain untouched.
 	 */
+	@SuppressWarnings("rawtypes")
 	static void applySpacing(@Nullable Table table, Direction direction, float gap) {
 		if (table == null) return;
 		Seq<Cell> cells = table.getCells();
@@ -109,6 +110,7 @@ public interface GapContainer {
 	 * Applies 2D directional spacing to all cells in a Grid layout.
 	 * Columns after the first receive horizontal gap; rows after the first receive vertical gap.
 	 */
+	@SuppressWarnings("rawtypes")
 	static void applyGridSpacing(@Nullable Table table, int columns, float gap) {
 		if (table == null) return;
 		Seq<Cell> cells = table.getCells();

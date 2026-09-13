@@ -6,7 +6,6 @@ import arc.Core;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
-import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.layout.Card;

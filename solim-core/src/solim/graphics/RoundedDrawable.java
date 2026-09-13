@@ -34,11 +34,6 @@ public class RoundedDrawable implements Drawable, Disposable {
     private float minWidth;
     private float minHeight;
 
-    private float lastWidth;
-    private float lastHeight;
-    private int clampedRadius;
-    private boolean radiusDirty = true;
-
     private final List<Disposable> bindings = new ArrayList<>();
 
     public RoundedDrawable(int radius) {

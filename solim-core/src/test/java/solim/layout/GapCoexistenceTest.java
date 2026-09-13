@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.Core;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
-import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import org.junit.jupiter.api.BeforeAll;
