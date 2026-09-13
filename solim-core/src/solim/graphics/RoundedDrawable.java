@@ -23,6 +23,7 @@ public class RoundedDrawable implements Drawable, Disposable {
     private Color fillColor = Color.clear.cpy();
     private Color borderColor = Color.clear.cpy();
 
+    private @Nullable Drawable baseDrawable;
     private @Nullable NinePatchDrawable fillPatch;
     private @Nullable NinePatchDrawable borderPatch;
 
@@ -32,6 +33,11 @@ public class RoundedDrawable implements Drawable, Disposable {
     private float bottomHeight;
     private float minWidth;
     private float minHeight;
+
+    private float lastWidth;
+    private float lastHeight;
+    private int clampedRadius;
+    private boolean radiusDirty = true;
 
     private final List<Disposable> bindings = new ArrayList<>();
 
@@ -61,6 +67,15 @@ public class RoundedDrawable implements Drawable, Disposable {
 
     public static RoundedDrawable of(int radius, Color fillColor, float stroke, Color borderColor) {
         return new RoundedDrawable(radius, fillColor, stroke, borderColor);
+    }
+
+    public @Nullable Drawable getBaseDrawable() {
+        return baseDrawable;
+    }
+
+    public RoundedDrawable baseDrawable(@Nullable Drawable drawable) {
+        this.baseDrawable = drawable;
+        return this;
     }
 
     public int getRadius() {
@@ -182,6 +197,11 @@ public class RoundedDrawable implements Drawable, Disposable {
         this.minHeight = 2f * radius + 1f;
     }
 
+    private int computeClampedRadius(float width, float height) {
+        int maxRadius = (int) (Math.min(width, height) / 2f);
+        return Math.min(radius, Math.max(1, maxRadius));
+    }
+
     @Override
     public void draw(float x, float y, float width, float height) {
         Color current = Draw.getColor();
@@ -190,14 +210,28 @@ public class RoundedDrawable implements Drawable, Disposable {
         float b = current.b;
         float a = current.a;
 
+        if (baseDrawable != null) {
+            baseDrawable.draw(x, y, width, height);
+        }
+
+        int effective = computeClampedRadius(width, height);
+
         if (fillPatch != null && fillColor.a > 0.001f) {
             Draw.color(r * fillColor.r, g * fillColor.g, b * fillColor.b, a * fillColor.a);
-            fillPatch.draw(x, y, width, height);
+            if (effective != radius) {
+                RoundedCache.getSolid(effective).draw(x, y, width, height);
+            } else {
+                fillPatch.draw(x, y, width, height);
+            }
         }
 
         if (borderPatch != null && stroke > 0f && borderColor.a > 0.001f) {
             Draw.color(r * borderColor.r, g * borderColor.g, b * borderColor.b, a * borderColor.a);
-            borderPatch.draw(x, y, width, height);
+            if (effective != radius) {
+                RoundedCache.getBorder(effective, stroke).draw(x, y, width, height);
+            } else {
+                borderPatch.draw(x, y, width, height);
+            }
         }
 
         Draw.color(r, g, b, a);
@@ -211,14 +245,28 @@ public class RoundedDrawable implements Drawable, Disposable {
         float b = current.b;
         float a = current.a;
 
+        if (baseDrawable != null) {
+            baseDrawable.draw(x, y, originX, originY, width, height, scaleX, scaleY, rotation);
+        }
+
+        int effective = computeClampedRadius(width, height);
+
         if (fillPatch != null && fillColor.a > 0.001f) {
             Draw.color(r * fillColor.r, g * fillColor.g, b * fillColor.b, a * fillColor.a);
-            fillPatch.draw(x, y, originX, originY, width, height, scaleX, scaleY, rotation);
+            if (effective != radius) {
+                RoundedCache.getSolid(effective).draw(x, y, originX, originY, width, height, scaleX, scaleY, rotation);
+            } else {
+                fillPatch.draw(x, y, originX, originY, width, height, scaleX, scaleY, rotation);
+            }
         }
 
         if (borderPatch != null && stroke > 0f && borderColor.a > 0.001f) {
             Draw.color(r * borderColor.r, g * borderColor.g, b * borderColor.b, a * borderColor.a);
-            borderPatch.draw(x, y, originX, originY, width, height, scaleX, scaleY, rotation);
+            if (effective != radius) {
+                RoundedCache.getBorder(effective, stroke).draw(x, y, originX, originY, width, height, scaleX, scaleY, rotation);
+            } else {
+                borderPatch.draw(x, y, originX, originY, width, height, scaleX, scaleY, rotation);
+            }
         }
 
         Draw.color(r, g, b, a);

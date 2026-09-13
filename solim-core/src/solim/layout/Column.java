@@ -81,7 +81,7 @@ public final class Column implements Component, LayoutModifiers<Column>, GapCont
     }
 
     public Column background(@Nullable Drawable bg) {
-        table.background(bg);
+        ElementModifiers.background(table, bg);
         return this;
     }
 

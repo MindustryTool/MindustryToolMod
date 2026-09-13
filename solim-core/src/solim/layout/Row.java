@@ -313,7 +313,7 @@ public final class Row implements Component, LayoutModifiers<Row>, GapContainer 
 	}
 
 	public Row background(@Nullable Drawable bg) {
-		table.background(bg);
+		ElementModifiers.background(table, bg);
 		return this;
 	}
 

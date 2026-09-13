@@ -5,12 +5,9 @@ import static solim.UI.*;
 import arc.Core;
 import arc.func.Boolf;
 import arc.graphics.Color;
-import arc.graphics.g2d.GlyphLayout;
 import arc.scene.Element;
 import arc.struct.Seq;
 import arc.util.Strings;
-import arc.util.pooling.Pools;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,7 +25,6 @@ import mindustrytool.models.response.Sort;
 import mindustrytool.models.response.TagCategory;
 import mindustrytool.models.response.TagData;
 import mindustrytool.services.MindustryTool;
-import mindustry.ui.Fonts;
 import solim.core.BaseComponent;
 import solim.layout.Direction;
 import solim.overlay.SolimDialog;
@@ -106,18 +102,18 @@ public class BrowserFilterDialog extends SolimDialog {
         private void searchRow() {
             row().growX().left()
                     .gap(unit(1))
-                    .height(unit(10))
+                    .height(unit(11))
                     .rounded(unit(3))
                     .border(1.5f, Color.darkGray)
                     .paddingLeft(unit(2))
                     .children(() -> {
-                        icon(Icon.zoom).size(unit(5)).color(Color.gray);
+                        icon(Icon.zoom).size(unit(6)).color(Color.gray);
 
                         textField(filterText)
                                 .growX()
                                 .style(WebStyles.clearInput())
                                 .placeholder(Core.bundle.get("browser.search.placeholder"));
-                        divider(Direction.HORIZONTAL);
+                        divider(Direction.VERTICAL);
                         clearAllButton();
                     });
         }
@@ -126,16 +122,6 @@ public class BrowserFilterDialog extends SolimDialog {
             button(Core.bundle.get("browser.filter.clear-all"), this::clearAll)
                     .style(WebStyles.clearFiltersText())
                     .height(unit(10));
-        }
-
-        private static float chipWidth(String label) {
-            GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
-            try {
-                layout.setText(Fonts.def, label != null ? label : "");
-                return layout.width + 12f;
-            } finally {
-                Pools.free(layout);
-            }
         }
 
         private void sectionPanel(String title, Runnable content) {

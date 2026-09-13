@@ -13,6 +13,7 @@ import solim.core.BaseComponent;
 import solim.signal.Signal;
 
 import mindustrytool.components.WebStyles;
+
 /**
  * Search header with debounced text input, filter trigger button, refresh
  * button, and reactive active filter chips.
@@ -65,30 +66,28 @@ public class BrowserSearchHeader extends BaseComponent {
         return column().growX().gap(unit(2)).children(() -> {
             row().growX().gap(unit(2)).children(() -> {
 
-                card(Styles.black5).growX().height(unit(10)).children(() -> {
-                    row().grow().gap(unit(1))
-                            .paddingLeft(unit(2))
-                            .rounded(unit(3), Color.clear)
-                            .gap(unit(2))
-                            .border(1.5f, Color.darkGray)
-                            .children(() -> {
-                                icon(Icon.zoom).size(unit(5));
-                                textField(inputBuffer)
-                                        .growX()
-                                        .height(unit(8))
-                                        .style(WebStyles.clearInput())
-                                        .placeholder(Core.bundle.get("browser.search.placeholder"))
-                                        .onEnter(this::submitNow);
-                            });
-                });
+                row().grow().gap(unit(1))
+                        .paddingLeft(unit(2))
+                        .rounded(unit(3), Color.clear)
+                        .gap(unit(2))
+                        .border(1.5f, Color.darkGray)
+                        .children(() -> {
+                            icon(Icon.zoom).size(unit(6));
+                            textField(inputBuffer)
+                                    .growX()
+                                    .height(unit(11))
+                                    .style(WebStyles.clearInput())
+                                    .placeholder(Core.bundle.get("browser.search.placeholder"))
+                                    .onEnter(this::submitNow);
+                        });
 
-                button(this::refresh).style(WebStyles.outlineText()).size(unit(10))
+                button(this::refresh).style(WebStyles.outlineText()).size(unit(11))
                         .tooltip(Core.bundle.get("browser.search.refresh"))
-                        .children(() -> icon(Icon.refresh).size(unit(5)));
+                        .children(() -> icon(Icon.refresh).size(unit(6)));
 
-                button(onFilterClick).style(WebStyles.outlineText()).size(unit(10))
+                button(onFilterClick).style(WebStyles.outlineText()).size(unit(11))
                         .tooltip(Core.bundle.get("browser.search.filter"))
-                        .children(() -> icon(Icon.filter).size(unit(5)));
+                        .children(() -> icon(Icon.filter).size(unit(6)));
             });
 
             dynamic(state.selectedTags(), tags -> {

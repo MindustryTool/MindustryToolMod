@@ -1,6 +1,7 @@
 package solim.layout;
 
 import arc.graphics.Color;
+import arc.scene.style.Drawable;
 import solim.signal.Readable;
 
 /**
@@ -508,6 +509,22 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
 	default SELF border(float stroke, Readable<Color> color) {
 		if (this instanceof solim.core.Component) {
 			solim.modifier.ElementModifiers.border(((solim.core.Component) this).element(), stroke, color);
+		}
+		return self();
+	}
+
+	// ---------- background ----------
+
+	default SELF background(Drawable bg) {
+		if (this instanceof solim.core.Component) {
+			solim.modifier.ElementModifiers.background(((solim.core.Component) this).element(), bg);
+		}
+		return self();
+	}
+
+	default SELF background(Color color) {
+		if (this instanceof solim.core.Component) {
+			solim.modifier.ElementModifiers.background(((solim.core.Component) this).element(), color);
 		}
 		return self();
 	}

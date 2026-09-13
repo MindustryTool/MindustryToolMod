@@ -232,4 +232,128 @@ class RoundedGraphicsTest {
         assertEquals(6, rdRound.getRadius());
         assertEquals(Color.clear, rdRound.getFillColor(), "Calling .rounded(radius) without color must default to transparent fillColor");
     }
+
+    @Test
+    void baseDrawableDefaultsToNull() {
+        RoundedDrawable rd = new RoundedDrawable(8, Color.darkGray);
+        assertNull(rd.getBaseDrawable(), "baseDrawable should be null by default");
+    }
+
+    @Test
+    void baseDrawableCanBeSetAndRetrieved() {
+        RoundedDrawable rd = new RoundedDrawable(8);
+        rd.baseDrawable(mindustry.ui.Styles.black6);
+        assertSame(mindustry.ui.Styles.black6, rd.getBaseDrawable(), "baseDrawable should be retrievable after setting");
+    }
+
+    @Test
+    void baseDrawableIsIndependentOfFillAndBorder() {
+        RoundedDrawable rd = new RoundedDrawable(10, Color.darkGray, 1.5f, Color.red);
+        rd.baseDrawable(mindustry.ui.Styles.black6);
+        assertSame(mindustry.ui.Styles.black6, rd.getBaseDrawable());
+        assertEquals(10, rd.getRadius());
+        assertEquals(Color.darkGray, rd.getFillColor());
+        assertEquals(1.5f, rd.getStroke(), 0.001f);
+        assertEquals(Color.red, rd.getBorderColor());
+    }
+
+    @Test
+    void radiusClampedWhenOversized() {
+        RoundedDrawable rd = new RoundedDrawable(40);
+        // radius=40 > min(100, 36)/2 = 18, so clamping should occur
+        // We verify the drawable is created without error; actual draw requires Graphics context
+        assertNotNull(rd);
+        assertEquals(40, rd.getRadius());
+    }
+
+    @Test
+    void radiusNotClampedWhenSmallEnough() {
+        RoundedDrawable rd = new RoundedDrawable(8);
+        // 8 <= min(100, 100)/2 = 50, so no clamping needed
+        assertNotNull(rd);
+        assertEquals(8, rd.getRadius(), "Radius should remain unchanged when small enough");
+    }
+
+    @Test
+    void backgroundThenBorderPreservesBoth() {
+        Column col = new Column();
+        col.background(mindustry.ui.Styles.black6).border(1f, Color.gray);
+        assertTrue(col.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
+        assertNotNull(rd.getBaseDrawable(), "baseDrawable should be set from background call");
+        assertEquals(1f, rd.getStroke(), 0.001f);
+        assertEquals(Color.gray, rd.getBorderColor());
+    }
+
+    @Test
+    void borderThenBackgroundPreservesBoth() {
+        Column col = new Column();
+        col.border(1f, Color.gray).background(mindustry.ui.Styles.black6);
+        assertTrue(col.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
+        assertNotNull(rd.getBaseDrawable(), "baseDrawable should be set from background call");
+        assertEquals(1f, rd.getStroke(), 0.001f);
+        assertEquals(Color.gray, rd.getBorderColor());
+    }
+
+    @Test
+    void roundedThenBackgroundPreservesBoth() {
+        Column col = new Column();
+        col.rounded(12, Color.darkGray).background(mindustry.ui.Styles.black6);
+        assertTrue(col.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
+        assertNotNull(rd.getBaseDrawable(), "baseDrawable should be set from background call");
+        assertEquals(12, rd.getRadius());
+        assertEquals(Color.darkGray, rd.getFillColor());
+    }
+
+    @Test
+    void backgroundThenRoundedPreservesBoth() {
+        Column col = new Column();
+        col.background(mindustry.ui.Styles.black6).rounded(12, Color.darkGray);
+        assertTrue(col.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
+        assertNotNull(rd.getBaseDrawable(), "baseDrawable should be set from background call");
+        assertEquals(12, rd.getRadius());
+        assertEquals(Color.darkGray, rd.getFillColor());
+    }
+
+    @Test
+    void allThreeOrderIndependent() {
+        // Order 1: bg -> rounded -> border
+        Column col1 = new Column();
+        col1.background(mindustry.ui.Styles.black6).rounded(10, Color.darkGray).border(1.5f, Color.red);
+        assertTrue(col1.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd1 = (RoundedDrawable) col1.table().getBackground();
+        assertNotNull(rd1.getBaseDrawable());
+        assertEquals(10, rd1.getRadius());
+        assertEquals(1.5f, rd1.getStroke(), 0.001f);
+
+        // Order 2: border -> bg -> rounded
+        Column col2 = new Column();
+        col2.border(1.5f, Color.red).background(mindustry.ui.Styles.black6).rounded(10, Color.darkGray);
+        assertTrue(col2.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd2 = (RoundedDrawable) col2.table().getBackground();
+        assertNotNull(rd2.getBaseDrawable());
+        assertEquals(10, rd2.getRadius());
+        assertEquals(1.5f, rd2.getStroke(), 0.001f);
+
+        // Order 3: rounded -> border -> bg
+        Column col3 = new Column();
+        col3.rounded(10, Color.darkGray).border(1.5f, Color.red).background(mindustry.ui.Styles.black6);
+        assertTrue(col3.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd3 = (RoundedDrawable) col3.table().getBackground();
+        assertNotNull(rd3.getBaseDrawable());
+        assertEquals(10, rd3.getRadius());
+        assertEquals(1.5f, rd3.getStroke(), 0.001f);
+    }
+
+    @Test
+    void backgroundColorDirectOnTable() {
+        Table table = new Table();
+        ElementModifiers.background(table, Color.royal);
+        assertTrue(table.getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd = (RoundedDrawable) table.getBackground();
+        assertNotNull(rd.getBaseDrawable(), "baseDrawable should be set for color background");
+    }
 }

@@ -8,6 +8,7 @@ import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.event.Touchable;
+import arc.scene.style.Drawable;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -703,6 +704,102 @@ public final class ElementModifiers {
         return rd;
     }
 
+    public static void background(@Nullable Element element, @Nullable Drawable bg) {
+        if (element == null) return;
+        if (element instanceof Table) {
+            Table table = (Table) element;
+            if (table.getBackground() instanceof RoundedDrawable) {
+                ((RoundedDrawable) table.getBackground()).baseDrawable(bg);
+            } else {
+                table.setBackground(bg);
+            }
+        }
+    }
+
+    public static void background(@Nullable Element element, @Nullable Color color) {
+        if (element == null) return;
+        if (element instanceof Table) {
+            Table table = (Table) element;
+            if (table.getBackground() instanceof RoundedDrawable) {
+                RoundedDrawable rd = (RoundedDrawable) table.getBackground();
+                rd.baseDrawable(new ColorDrawable(color));
+            } else {
+                RoundedDrawable rd = new RoundedDrawable(8);
+                rd.baseDrawable(new ColorDrawable(color));
+                table.setBackground(rd);
+            }
+        }
+    }
+
+    public static void background(@Nullable Element element, @Nullable Readable<Color> color) {
+        if (element == null) return;
+        if (element instanceof Table && color != null) {
+            solim.signal.Effect e = solim.signal.Effect.of(() -> {
+                Color c = color.get();
+                if (c != null) {
+                    background(element, c);
+                }
+            });
+            solim.runtime.ComponentContext.register(e);
+        }
+    }
+
+    private static class ColorDrawable implements Drawable {
+        private final Color color;
+
+        ColorDrawable(Color color) {
+            this.color = color != null ? color : Color.clear;
+        }
+
+        @Override
+        public void draw(float x, float y, float width, float height) {
+            arc.graphics.g2d.Draw.color(color);
+            arc.graphics.g2d.Fill.rect(x, y, width, height);
+        }
+
+        @Override
+        public void draw(float x, float y, float originX, float originY, float width, float height, float scaleX, float scaleY, float rotation) {
+            arc.graphics.g2d.Draw.color(color);
+            arc.graphics.g2d.Fill.rect(x, y, width, height);
+        }
+
+        @Override
+        public float getLeftWidth() { return 0; }
+
+        @Override
+        public void setLeftWidth(float leftWidth) {}
+
+        @Override
+        public float getRightWidth() { return 0; }
+
+        @Override
+        public void setRightWidth(float rightWidth) {}
+
+        @Override
+        public float getTopHeight() { return 0; }
+
+        @Override
+        public void setTopHeight(float topHeight) {}
+
+        @Override
+        public float getBottomHeight() { return 0; }
+
+        @Override
+        public void setBottomHeight(float bottomHeight) {}
+
+        @Override
+        public float getMinWidth() { return 0; }
+
+        @Override
+        public void setMinWidth(float minWidth) {}
+
+        @Override
+        public float getMinHeight() { return 0; }
+
+        @Override
+        public void setMinHeight(float minHeight) {}
+    }
+
     private static RoundedDrawable getOrCreateRounded(Element element, int defaultRadius) {
         if (element instanceof Table) {
             Table table = (Table) element;
@@ -710,6 +807,9 @@ public final class ElementModifiers {
                 return (RoundedDrawable) table.getBackground();
             }
             RoundedDrawable rd = new RoundedDrawable(defaultRadius);
+            if (table.getBackground() != null) {
+                rd.baseDrawable(table.getBackground());
+            }
             table.setBackground(rd);
             return rd;
         }
