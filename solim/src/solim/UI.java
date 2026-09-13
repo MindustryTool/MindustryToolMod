@@ -461,10 +461,14 @@ public final class UI {
         return h;
     }
 
-    public static Popup popup() {
-        Popup p = new Popup();
-        ParentStack.attachToParent(p.table());
-        return p;
+    public static <T> Popup<T> popup() {
+        return new Popup<>();
+    }
+
+    public static <T> Popup<T> popup(Function<T, Component> provider) {
+        Popup<T> popup = new Popup<>();
+        popup.children(provider);
+        return popup;
     }
 
     // --- Reactivity ---

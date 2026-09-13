@@ -148,7 +148,7 @@ public class ChatMessageListView extends BaseComponent {
 
         Timer.schedule(this::scrollToBottom, 1);
 
-        return column().grow().top().left().gap(unit(1)).children(() -> {
+        return column().grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
             dynamic(showEndOfHistory, show -> {
                 if (Boolean.TRUE.equals(show)) {
                     return row().top().center().growX().padding(unit(2)).children(() -> {

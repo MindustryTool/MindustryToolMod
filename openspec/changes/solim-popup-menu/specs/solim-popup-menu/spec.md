@@ -81,8 +81,8 @@ The `Popup` component SHALL perform no scene operations when no scene exists, ma
 The `Popup` component SHALL return its own instance from every configuration and control method (`children`, `rounded`, `border`, `show`, `hide`) so a menu is declared as a single chain.
 
 #### Scenario: Chained configuration yields one instance
-- **WHEN** `popup().children(provider).rounded(radius)` is evaluated
-- **THEN** the result is the same single menu instance configured by each call in order
+- **WHEN** a menu is configured through chained calls (`children(provider)`, `rounded()`, `border()`, `show()`, `hide()`) on a typed instance
+- **THEN** each call returns the same single menu instance in order (configuration starts from direct assignment, since generic inference does not propagate through chains rooted at the bare facade call)
 
 ### Requirement: Default visible menu chrome
 The `Popup` component SHALL render with a default dark rounded menu background so an unstyled menu is visible, while existing `rounded()` and `border()` calls override the chrome.

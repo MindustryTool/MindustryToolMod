@@ -29,7 +29,7 @@ public class ChatChannelListView extends BaseComponent {
     protected Element build() {
         Readable<Boolean> hasChannels = store.channels().map(list -> list != null && !list.isEmpty());
 
-        return column().grow().gap(unit(1)).children(() -> {
+        return column().grow().gap(unit(1)).padding(unit(2)).children(() -> {
             scroll().grow().children(() -> {
                 column().growX().gap(unit(1)).children(() -> {
                     dynamic(hasChannels, available -> {

@@ -39,7 +39,7 @@ public class ChatInputView extends BaseComponent {
         Readable<Boolean> isNotLoggedIn = isLoggedIn.map(l -> !l);
         Readable<Boolean> canSend = isSending.map(s -> !s);
 
-        return column().growX().gap(unit(1)).children(() -> {
+        return column().growX().gap(unit(1)).padding(unit(2)).children(() -> {
             // Login banner when not logged in
             dynamic(isNotLoggedIn, notLoggedIn -> {
                 if (!Boolean.TRUE.equals(notLoggedIn)) {

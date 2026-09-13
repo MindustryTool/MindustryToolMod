@@ -3,10 +3,6 @@ package mindustrytool.features.chat;
 import static solim.UI.*;
 
 import arc.Core;
-import arc.input.KeyCode;
-import arc.scene.Element;
-import arc.scene.event.InputEvent;
-import arc.scene.event.InputListener;
 import arc.util.Nullable;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
@@ -15,176 +11,65 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.translation.TranslationFeature;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
-import solim.overlay.SolimDialog;
-import solim.signal.Signal;
+import solim.core.Component;
+import solim.overlay.Popup;
 
 /**
- * Shared floating action menu (Copy, Reply, Translate) that replaces the old
- * modal {@code MessageActionDialog}. A single transparent dialog instance is
- * reused for every message and anchored near the clicked card. Touching
- * outside the menu dismisses it without dimming the game behind it.
+ * Shared floating message-action menu (Copy, Reply, Translate) hosted once in
+ * the chat overlay and driven by the native {@link Popup}. Message targeting
+ * stays here; all floating-menu machinery (positioning, dismissal, listener
+ * lifecycle) lives in Solim.
  */
-public class ChatActionPopup extends BaseComponent {
+public final class ChatActionPopup {
 
-    /** Shared popup request: target message plus the stage coordinates to anchor near. */
-    public static final class PopupRequest {
-        public final ChatMessage message;
-        public final float stageX;
-        public final float stageY;
+    /** The single shared menu instance, installed by the chat overlay. */
+    public static @Nullable Popup<ChatMessage> menu;
 
-        public PopupRequest(ChatMessage message, float stageX, float stageY) {
-            this.message = message;
-            this.stageX = stageX;
-            this.stageY = stageY;
-        }
+    private ChatActionPopup() {
     }
 
-    private static final Signal<PopupRequest> sharedRequest = Signal.of(null);
+    /** Hosts the shared menu. Call once from the overlay build. */
+    public static void install(ChatStore store) {
+        menu = popup();
+        menu.children(request -> menuRows(store, request)).rounded(2);
+    }
 
-    /** Opens the shared popup for the given message anchored near the given stage coordinates. */
+    /** Opens the shared menu for the given message anchored near the given stage coordinates. */
     public static void showFor(@Nullable ChatMessage message, float stageX, float stageY) {
-        sharedRequest.set(message != null ? new PopupRequest(message, stageX, stageY) : null);
+        if (menu != null) {
+            menu.show(message, stageX, stageY);
+        }
     }
 
-    /** Dismisses the shared popup if it is open. */
+    /** Dismisses the shared menu if it is open. */
     public static void dismiss() {
-        sharedRequest.set(null);
+        if (menu != null) {
+            menu.hide();
+        }
     }
 
-    private final ChatStore store;
-    private final @Nullable ChatService service;
-    private final SolimDialog dialog;
-    private @Nullable ChatMessage current;
-    private boolean catcherAttached = false;
+    private static Component menuRows(ChatStore store, ChatMessage message) {
+        return column().growX().children(() -> {
+            button(Core.bundle.get("feature.chat.ui.copy", "Copy"), () -> copyMessage(store, message))
+                    .style(Styles.defaultb)
+                    .growX()
+                    .height(unit(10));
 
-    private final InputListener outsideCatcher = new InputListener() {
-        @Override
-        public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-            Element hit = null;
-            try {
-                if (Core.scene != null && Core.scene.root != null) {
-                    hit = Core.scene.root.hit(event.stageX, event.stageY, true);
-                }
-            } catch (Throwable ignored) {
-            }
-            Element menu = dialog.element();
-            for (Element e = hit; e != null; e = e.parent) {
-                if (e == menu) {
-                    return false;
-                }
-            }
-            dismiss();
-            return true;
-        }
-    };
+            button(Core.bundle.get("feature.chat.ui.reply", "Reply"), () -> {
+                store.setReplyTarget(message);
+                dismiss();
+            }).style(Styles.defaultb).growX().height(unit(10));
 
-    public ChatActionPopup(ChatStore store, @Nullable ChatService service) {
-        this.store = store;
-        this.service = service;
-        this.dialog = new SolimDialog(Core.bundle.get("feature.chat.ui.actions", "Message Actions"));
-        dialog.fillParent(false);
-        dialog.addCloseButton();
-        dialog.closeOnBack();
-        dialog.dialog().setBackground(null);
-        dialog.hidden(() -> {
-            detachCatcher();
-            dismiss();
-        });
-        dialog.children(() -> {
-            column().growX().children(() -> {
-                button(Core.bundle.get("feature.chat.ui.copy", "Copy"), this::copyCurrent)
-                        .style(Styles.defaultb)
-                        .growX()
-                        .height(unit(10));
-
-                button(Core.bundle.get("feature.chat.ui.reply", "Reply"), this::replyCurrent)
-                        .style(Styles.defaultb)
-                        .growX()
-                        .height(unit(10));
-
-                button(Core.bundle.get("feature.chat.ui.translate", "Translate"), this::translateCurrent)
-                        .style(Styles.defaultb)
-                        .growX()
-                        .height(unit(10));
-            });
+            button(Core.bundle.get("feature.chat.ui.translate", "Translate"), () -> translateMessage(store, message))
+                    .style(Styles.defaultb)
+                    .growX()
+                    .height(unit(10));
         });
     }
 
-    @Override
-    protected Element build() {
-        effect(() -> {
-            PopupRequest request = sharedRequest.get();
-            if (request != null) {
-                current = request.message;
-                showAt(request.stageX, request.stageY);
-            } else {
-                current = null;
-                hideMenu();
-            }
-        });
-        return spacer();
-    }
-
-    @Override
-    protected void onDispose() {
-        hideMenu();
-    }
-
-    private void showAt(float stageX, float stageY) {
-        if (Core.scene == null) {
-            return;
-        }
-        dialog.dialog().pack();
-        float menuWidth = dialog.dialog().getWidth();
-        float menuHeight = dialog.dialog().getHeight();
-        float stageWidth = Core.scene.getWidth();
-        float stageHeight = Core.scene.getHeight();
-
-        float x = stageX >= 0f ? stageX : Math.max(0f, (stageWidth - menuWidth) / 2f);
-        float y = stageY >= 0f ? stageY : Math.max(0f, (stageHeight - menuHeight) / 2f);
-        if (stageX >= 0f && stageY >= 0f && y + menuHeight > stageHeight) {
-            y = Math.max(0f, stageY - menuHeight);
-        }
-        x = Math.max(0f, Math.min(x, Math.max(0f, stageWidth - menuWidth)));
-        y = Math.max(0f, Math.min(y, Math.max(0f, stageHeight - menuHeight)));
-
-        dialog.dialog().setPosition(x, y);
-        if (!dialog.isShown()) {
-            dialog.show();
-        }
-        attachCatcher();
-    }
-
-    private void hideMenu() {
-        detachCatcher();
-        if (dialog.isShown()) {
-            dialog.hide();
-        }
-    }
-
-    private void attachCatcher() {
-        if (!catcherAttached && Core.scene != null && Core.scene.root != null) {
-            catcherAttached = true;
-            Core.scene.root.addCaptureListener(outsideCatcher);
-        }
-    }
-
-    private void detachCatcher() {
-        if (catcherAttached) {
-            catcherAttached = false;
-            try {
-                if (Core.scene != null && Core.scene.root != null) {
-                    Core.scene.root.removeCaptureListener(outsideCatcher);
-                }
-            } catch (Throwable ignored) {
-            }
-        }
-    }
-
-    private void copyCurrent() {
+    private static void copyMessage(ChatStore store, @Nullable ChatMessage message) {
         try {
-            String content = current != null && current.getContent() != null ? current.getContent() : "";
+            String content = message != null && message.getContent() != null ? message.getContent() : "";
             Core.app.setClipboardText(content);
             Vars.ui.showInfoFade(Core.bundle.get("feature.chat.ui.copied", "Copied to clipboard!"));
         } catch (Throwable ignored) {
@@ -192,17 +77,12 @@ public class ChatActionPopup extends BaseComponent {
         dismiss();
     }
 
-    private void replyCurrent() {
-        store.setReplyTarget(current);
-        dismiss();
-    }
-
-    private void translateCurrent() {
-        if (current == null) {
+    private static void translateMessage(ChatStore store, @Nullable ChatMessage message) {
+        if (message == null) {
             dismiss();
             return;
         }
-        String messageId = current.getId();
+        String messageId = message.getId();
         String alreadyTranslating = store.translatingMessageId().peek();
         if (messageId != null && messageId.equals(alreadyTranslating)) {
             dismiss();
@@ -220,9 +100,9 @@ public class ChatActionPopup extends BaseComponent {
         TranslationFeature tf = FeatureManager.getFeature(TranslationFeature.class);
         CompletableFuture<String> future;
         if (tf != null && tf.isEnabled() && tf.getActiveProvider().isConfigured()) {
-            future = tf.translate(current.getContent(), tf.getTargetLanguage());
+            future = tf.translate(message.getContent(), tf.getTargetLanguage());
         } else {
-            future = MindustryTool.translate(current.getContent(), targetLocale);
+            future = MindustryTool.translate(message.getContent(), targetLocale);
         }
 
         future.whenComplete((res, err) -> {
