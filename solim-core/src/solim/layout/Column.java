@@ -217,47 +217,62 @@ public final class Column implements Component, LayoutModifiers<Column>, GapCont
 	@Override
 	public Column top() {
 		ElementModifiers.top(table);
+		table.defaults().top();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.top();
+		}
 		return LayoutModifiers.super.top();
 	}
 
 	@Override
 	public Column bottom() {
 		ElementModifiers.bottom(table);
+		table.defaults().bottom();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.bottom();
+		}
 		return LayoutModifiers.super.bottom();
 	}
 
 	@Override
 	public Column left() {
 		ElementModifiers.left(table);
+		table.defaults().left();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.left();
+		}
 		return LayoutModifiers.super.left();
 	}
 
 	@Override
 	public Column right() {
 		ElementModifiers.right(table);
+		table.defaults().right();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.right();
+		}
 		return LayoutModifiers.super.right();
 	}
 
 	@Override
 	public Column center() {
 		ElementModifiers.center(table);
+		table.defaults().center();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.center();
+		}
 		return LayoutModifiers.super.center();
 	}
 
 	public Column align(Align a) {
 		switch (a) {
 			case START:
-				table.top();
-				break;
-			case CENTER:
-				table.center();
-				break;
-			case END:
-				table.bottom();
-				break;
 			case STRETCH:
-				table.top();
-				break;
+				return top();
+			case CENTER:
+				return center();
+			case END:
+				return bottom();
 			default:
 				break;
 		}

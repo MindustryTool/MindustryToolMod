@@ -73,7 +73,7 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private Component portraitLayout() {
             return scroll().grow().children(() -> {
-                column().grow().gap(unit(2)).children(() -> {
+                column().grow().top().left().gap(unit(2)).children(() -> {
                     previewImagePortrait();
                     details();
                 });
@@ -82,8 +82,7 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private Component landscapeLayout() {
             return scroll().grow().children(() -> {
-
-                row().grow().gap(unit(2)).children(() -> {
+                row().grow().top().left().gap(unit(2)).children(() -> {
                     previewImageLandscape();
                     details();
                 });
@@ -111,7 +110,7 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private void details() {
-            column().growX().gap(unit(1)).children(() -> {
+            column().growX().gap(unit(2)).children(() -> {
                 card(WebStyles.previewCard().style()).padding(unit(2)).gap(unit(1)).growX().children(() -> {
                     row().growX().gap(unit(1)).children(() -> {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray);
@@ -142,16 +141,16 @@ public class SchematicDetailDialog extends SolimDialog {
 
                 divider();
 
-                row().growX().gap(unit(1)).children(() -> {
+                row().growX().gap(unit(2)).children(() -> {
                     button(Core.bundle.get("browser.schematic.copy"),
                             () -> SchematicActions.copyToClipboard(itemId))
-                                    .style(WebStyles.secondary())
+                                    .style(WebStyles.primary())
                                     .growX()
                                     .height(unit(9));
 
                     button(Core.bundle.get("browser.schematic.save"),
                             () -> SchematicActions.saveToLocal(itemId))
-                                    .style(WebStyles.secondary())
+                                    .style(WebStyles.primary())
                                     .growX()
                                     .height(unit(9));
                 });

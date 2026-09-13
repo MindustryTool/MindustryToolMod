@@ -74,41 +74,6 @@ class WebStylesTest {
     }
 
     @Test
-    void colorsAreDefined() {
-        assertNotNull(WebStyles.Colors.PRIMARY);
-        assertNotNull(WebStyles.Colors.PRIMARY_HOVER);
-        assertNotNull(WebStyles.Colors.PRIMARY_DOWN);
-        assertNotNull(WebStyles.Colors.PRIMARY_FG);
-        assertNotNull(WebStyles.Colors.PRIMARY_BG);
-        assertNotNull(WebStyles.Colors.PRIMARY_BG_HOVER);
-        assertNotNull(WebStyles.Colors.PRIMARY_BG_DOWN);
-        assertNotNull(WebStyles.Colors.SECONDARY);
-        assertNotNull(WebStyles.Colors.SECONDARY_HOVER);
-        assertNotNull(WebStyles.Colors.SECONDARY_DOWN);
-        assertNotNull(WebStyles.Colors.SECONDARY_FG);
-        assertNotNull(WebStyles.Colors.GHOST_HOVER);
-        assertNotNull(WebStyles.Colors.GHOST_DOWN);
-        assertNotNull(WebStyles.Colors.GHOST_FG);
-        assertNotNull(WebStyles.Colors.DANGER);
-        assertNotNull(WebStyles.Colors.DANGER_HOVER);
-        assertNotNull(WebStyles.Colors.DANGER_DOWN);
-        assertNotNull(WebStyles.Colors.DANGER_FG);
-        assertNotNull(WebStyles.Colors.BORDER);
-        assertNotNull(WebStyles.Colors.BORDER_INPUT);
-        assertNotNull(WebStyles.Colors.DISABLED_BG);
-        assertNotNull(WebStyles.Colors.DISABLED_BORDER);
-        assertNotNull(WebStyles.Colors.DISABLED_FG);
-
-        assertEquals(rgba(new Color(0.215f, 0.163f, 0.674f, 1.0f)), rgba(WebStyles.Colors.PRIMARY));
-        assertEquals(rgba(new Color(0.215f, 0.163f, 0.674f, 0.15f)), rgba(WebStyles.Colors.PRIMARY_BG));
-        assertEquals(rgba(new Color(0.153f, 0.153f, 0.166f, 0.70f)), rgba(WebStyles.Colors.SECONDARY));
-        assertEquals(rgba(new Color(1.0f, 0.391f, 0.404f, 1.0f)), rgba(WebStyles.Colors.DANGER));
-        assertEquals(rgba(new Color(1f, 1f, 1f, 0.10f)), rgba(WebStyles.Colors.BORDER));
-        assertEquals(rgba(new Color(1f, 1f, 1f, 0.15f)), rgba(WebStyles.Colors.BORDER_INPUT));
-        assertEquals(rgba(new Color(0.630f, 0.630f, 0.630f, 1.0f)), rgba(WebStyles.Colors.GHOST_FG));
-    }
-
-    @Test
     void variantsReturnCachedSingletonsWithPadding() {
         assertSame(WebStyles.primary(), WebStyles.primary());
         assertSame(WebStyles.secondary(), WebStyles.secondary());

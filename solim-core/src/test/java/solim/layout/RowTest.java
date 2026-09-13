@@ -9,6 +9,7 @@ import arc.scene.Element;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
+import solim.ui.Ui;
 
 class RowTest {
 
@@ -171,5 +172,72 @@ class RowTest {
 		arc.scene.ui.layout.Cell<?> cell = parent.table().getCell(child.table());
 		assertNotNull(cell);
 		assertEquals(40f, arc.scene.ui.layout.CellAccess.minWidth(cell), 0.01f);
+	}
+
+	@Test
+	void testRowTopLeftAlignment() {
+		arc.scene.ui.layout.Cell<?> testCell = new arc.scene.ui.layout.Cell<>();
+		testCell.top().left();
+		System.out.println("testCell after top left: " + arc.scene.ui.layout.CellAccess.align(testCell));
+		testCell.center();
+		System.out.println("testCell after center: " + arc.scene.ui.layout.CellAccess.align(testCell));
+		Row row = new Row();
+		row.top().left();
+		row.table().defaults().top();
+		Element e1 = new Element() {
+			@Override public float getPrefWidth() { return 50f; }
+			@Override public float getPrefHeight() { return 50f; }
+		};
+		Element e2 = new Element() {
+			@Override public float getPrefWidth() { return 100f; }
+			@Override public float getPrefHeight() { return 100f; }
+		};
+		row.children(() -> {
+			solim.runtime.ParentStack.add(e1);
+			solim.runtime.ParentStack.add(e2);
+		});
+		row.table().setSize(300f, 200f);
+		row.table().layout();
+		arc.scene.ui.layout.Cell<?> c1 = row.table().getCell(e1);
+		arc.scene.ui.layout.Cell<?> c2 = row.table().getCell(e2);
+		System.out.println("table align: " + row.table().getAlign());
+		System.out.println("c1 align: " + arc.scene.ui.layout.CellAccess.align(c1) + ", y: " + e1.y + ", h: " + e1.getHeight() + ", x: " + e1.x);
+		System.out.println("c2 align: " + arc.scene.ui.layout.CellAccess.align(c2) + ", y: " + e2.y + ", h: " + e2.getHeight() + ", x: " + e2.x);
+	}
+
+	@Test
+	void testLandscapeLayoutWithScroll() {
+		Element img = new Element() {
+			@Override public float getPrefWidth() { return 120f; }
+			@Override public float getPrefHeight() { return 80f; }
+		};
+		Element det = new Element() {
+			@Override public float getPrefWidth() { return 200f; }
+			@Override public float getPrefHeight() { return 250f; }
+		};
+
+		Scroll scroll = Ui.scroll().grow().children(() -> {
+			Ui.row().grow().top().left().gap(8f).children(() -> {
+				solim.runtime.ParentStack.add(img);
+				solim.runtime.ParentStack.add(det);
+			});
+		});
+
+		scroll.outer().setSize(600f, 400f);
+		scroll.outer().layout();
+		if (scroll.pane() != null) {
+			scroll.pane().setSize(600f, 400f);
+			scroll.pane().layout();
+		}
+		scroll.content().layout();
+
+		Row row = (Row) scroll.content().getChildren().first().userObject;
+		row.table().layout();
+
+		System.out.println("scroll.outer: " + scroll.outer().getWidth() + "x" + scroll.outer().getHeight());
+		System.out.println("scroll.content: " + scroll.content().getWidth() + "x" + scroll.content().getHeight());
+		System.out.println("row.table: " + row.table().getWidth() + "x" + row.table().getHeight() + " at y=" + row.table().y);
+		System.out.println("img: " + img.getWidth() + "x" + img.getHeight() + " at (" + img.x + ", " + img.y + ")");
+		System.out.println("det: " + det.getWidth() + "x" + det.getHeight() + " at (" + det.x + ", " + det.y + ")");
 	}
 }

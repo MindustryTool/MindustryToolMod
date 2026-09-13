@@ -219,50 +219,64 @@ public final class Row implements Component, LayoutModifiers<Row>, GapContainer 
 	@Override
 	public Row top() {
 		ElementModifiers.top(table);
+		table.defaults().top();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.top();
+		}
 		return LayoutModifiers.super.top();
 	}
 
 	@Override
 	public Row bottom() {
 		ElementModifiers.bottom(table);
+		table.defaults().bottom();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.bottom();
+		}
 		return LayoutModifiers.super.bottom();
 	}
 
 	@Override
 	public Row left() {
 		ElementModifiers.left(table);
+		table.defaults().left();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.left();
+		}
 		return LayoutModifiers.super.left();
 	}
 
 	@Override
 	public Row right() {
 		ElementModifiers.right(table);
+		table.defaults().right();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.right();
+		}
 		return LayoutModifiers.super.right();
 	}
 
 	@Override
 	public Row center() {
 		ElementModifiers.center(table);
+		table.defaults().center();
+		for (Cell<?> c : table.getCells()) {
+			if (c != null) c.center();
+		}
 		return LayoutModifiers.super.center();
 	}
 
 	public Row justify(Justify j) {
 		switch (j) {
 			case START:
-				table.left();
-				break;
+				return left();
 			case CENTER:
-				table.center();
-				break;
+				return center();
 			case END:
-				table.right();
-				break;
+				return right();
 			case BETWEEN:
-				break;
 			case AROUND:
-				break;
 			case EVENLY:
-				break;
 			default:
 				break;
 		}
@@ -272,17 +286,12 @@ public final class Row implements Component, LayoutModifiers<Row>, GapContainer 
 	public Row align(Align a) {
 		switch (a) {
 			case START:
-				table.top();
-				break;
-			case CENTER:
-				table.center();
-				break;
-			case END:
-				table.bottom();
-				break;
 			case STRETCH:
-				table.top();
-				break;
+				return top();
+			case CENTER:
+				return center();
+			case END:
+				return bottom();
 			default:
 				break;
 		}
