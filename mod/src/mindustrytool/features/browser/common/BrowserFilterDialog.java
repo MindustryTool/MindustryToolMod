@@ -5,9 +5,11 @@ import static solim.UI.*;
 import arc.Core;
 import arc.func.Boolf;
 import arc.graphics.Color;
+import arc.graphics.g2d.GlyphLayout;
 import arc.scene.Element;
 import arc.struct.Seq;
 import arc.util.Strings;
+import arc.util.pooling.Pools;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +28,7 @@ import mindustrytool.models.response.Sort;
 import mindustrytool.models.response.TagCategory;
 import mindustrytool.models.response.TagData;
 import mindustrytool.services.MindustryTool;
+import mindustry.ui.Fonts;
 import solim.core.BaseComponent;
 import solim.layout.Direction;
 import solim.overlay.SolimDialog;
@@ -125,11 +128,14 @@ public class BrowserFilterDialog extends SolimDialog {
                     .height(unit(10));
         }
 
-        private static int computeColumns(float availableWidth, float longestLabelWidth) {
-            float minColWidth = longestLabelWidth + 3f;
-            int cols = Math.max(1, (int) (availableWidth / minColWidth));
-            int maxCols = Math.max(1, (int) (availableWidth / 8f));
-            return Math.min(cols, maxCols);
+        private static float chipWidth(String label) {
+            GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
+            try {
+                layout.setText(Fonts.def, label != null ? label : "");
+                return layout.width + 12f;
+            } finally {
+                Pools.free(layout);
+            }
         }
 
         private void sectionPanel(String title, Runnable content) {
@@ -146,17 +152,13 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderSortOptions() {
-            float longestLabel = 15f;
-            Readable<Integer> columns = dvw(75f).map(w -> computeColumns(w, longestLabel));
-
-            grid(columns).left().gap(unit(1)).children(() -> {
+            wrap().gap(unit(1)).left().children(() -> {
                 for (Sort sortOption : Config.sorts) {
                     String sortValue = sortOption.getValue();
                     Readable<Boolean> checked = state.sort().map(current -> sortValue.equals(current));
                     button(sortOption.getName(), () -> state.setSort(sortValue))
                             .style(WebStyles.filterChipText())
                             .checked(checked)
-                            .growX()
                             .height(unit(9));
                 }
             });
@@ -177,14 +179,7 @@ public class BrowserFilterDialog extends SolimDialog {
                         return pa - pb;
                     }
                 });
-                float longestLabel = 0f;
-                for (ModData mod : sorted) {
-                    String name = mod.getName() != null ? mod.getName() : "";
-                    longestLabel = Math.max(longestLabel, name.length() * 1.2f);
-                }
-                float fl = longestLabel;
-                Readable<Integer> columns = dvw(75f).map(w -> computeColumns(w, fl));
-                return grid(columns).left().gap(unit(1)).children(() -> {
+                return wrap().left().gap(unit(1)).children(() -> {
                     for (ModData mod : sorted) {
                         renderPlanet(mod);
                     }
@@ -194,12 +189,12 @@ public class BrowserFilterDialog extends SolimDialog {
 
         private void renderPlanet(ModData mod) {
             String modId = mod.getId();
+            String chipLabel = mod.getName() != null ? mod.getName() : modId;
             Readable<Boolean> checked = selectedPlanets.map(
                     selected -> selected != null && modId != null && selected.contains(modId));
-            button(mod.getName() != null ? mod.getName() : modId, () -> togglePlanet(modId))
+            button(chipLabel, () -> togglePlanet(modId))
                     .style(WebStyles.filterChipText())
                     .checked(checked)
-                    .growX()
                     .height(unit(9));
         }
 
@@ -286,23 +281,13 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderCategory(CategoryViewModel category) {
-            float longestLabel = 0f;
-
-            for (TagData tag : category.tags) {
-                String name = tag.getName() != null ? tag.getName() : "";
-                longestLabel = Math.max(longestLabel, name.length() * 1.4f);
-            }
-
-            float fl = longestLabel;
-            Readable<Integer> columns = dvw(75f).map(w -> computeColumns(w, fl));
-
             column().growX().left().gap(unit(1)).children(() -> {
                 text(Strings.capitalize(category.name))
                         .color(category.color)
                         .style(Styles.defaultLabel)
                         .left();
 
-                grid(columns).left().gap(unit(1)).children(() -> {
+                wrap().left().gap(unit(1)).children(() -> {
                     for (TagData tag : category.tags) {
                         renderTag(tag);
                     }
@@ -339,12 +324,12 @@ public class BrowserFilterDialog extends SolimDialog {
 
         private void renderTag(TagData tag) {
             String key = tagKey(tag);
+            String chipLabel = tag.getName() != null ? tag.getName() : "";
             Readable<Boolean> checked = state.selectedTags().map(
                     selected -> selected != null && selected.contains(key));
-            button(tag.getName(), () -> state.toggleTag(key))
+            button(chipLabel, () -> state.toggleTag(key))
                     .style(WebStyles.filterChipText())
                     .checked(checked)
-                    .growX()
                     .height(unit(9));
         }
 
@@ -352,25 +337,12 @@ public class BrowserFilterDialog extends SolimDialog {
             dynamic(filterText, query -> {
                 final String loweredQuery = query != null ? query.toLowerCase() : "";
                 Seq<Block> blocks = availableBlocks();
-                float longestLabel = 0f;
-
-                for (int i = 0; i < blocks.size; i++) {
-                    Block block = blocks.get(i);
-                    if (block != null && block.localizedName != null) {
-                        if (loweredQuery.isEmpty() || block.localizedName.toLowerCase().contains(loweredQuery)) {
-                            longestLabel = Math.max(longestLabel, block.localizedName.length() * 1.2f);
-                        }
-                    }
-                }
-
-                float fl = longestLabel;
-                Readable<Integer> columns = dvw(75f).map(w -> computeColumns(w, fl));
 
                 if (blocks.isEmpty()) {
                     return text(Core.bundle.get("browser.filter.blocks.empty")).color(Color.gray).left();
                 }
 
-                return grid(columns).left().gap(unit(1)).children(() -> {
+                return wrap().left().gap(unit(1)).children(() -> {
                     for (int i = 0; i < blocks.size; i++) {
                         Block block = blocks.get(i);
                         if (block == null || block.localizedName == null) {
@@ -383,13 +355,13 @@ public class BrowserFilterDialog extends SolimDialog {
                         }
 
                         String blockName = block.name;
+                        String chipLabel = block.localizedName;
                         Readable<Boolean> checked = state.selectedTags().map(
                                 selected -> selected != null && selected.contains(blockName));
 
-                        button(block.localizedName, () -> state.toggleTag(blockName))
+                        button(chipLabel, () -> state.toggleTag(blockName))
                                 .style(WebStyles.filterChipText())
                                 .checked(checked)
-                                .growX()
                                 .height(unit(9));
                     }
                 });

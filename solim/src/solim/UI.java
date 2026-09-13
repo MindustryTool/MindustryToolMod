@@ -35,6 +35,7 @@ import solim.layout.Column;
 import solim.layout.Direction;
 import solim.layout.Divider;
 import solim.layout.Grid;
+import solim.layout.Wrap;
 import solim.layout.GridItemContext;
 import solim.layout.ReactiveGrid;
 import solim.layout.Row;
@@ -60,8 +61,8 @@ import solim.ui.ForEach;
 import solim.ui.Units;
 
 /**
- * Public entry point and declarative UI facade for Solim.
- * This class exposes all allowed factory and utility methods for user-facing and mod development.
+ * Public entry point and declarative UI facade for Solim. This class exposes
+ * all allowed factory and utility methods for user-facing and mod development.
  */
 public final class UI {
     static {
@@ -72,8 +73,9 @@ public final class UI {
     }
 
     /**
-     * Initializes Solim runtime hooks, registering the single-frame signal dispatcher with Mindustry.
-     * This method is idempotent and safe to call repeatedly.
+     * Initializes Solim runtime hooks, registering the single-frame signal
+     * dispatcher with Mindustry. This method is idempotent and safe to call
+     * repeatedly.
      */
     public static void init() {
         SignalDispatcher.register();
@@ -159,12 +161,12 @@ public final class UI {
         return grid(columns).children(r);
     }
 
-    public static Row wrap() {
-        return row();
+    public static Wrap wrap() {
+        return new Wrap();
     }
 
-    public static Row wrap(@Nullable Runnable r) {
-        return row().children(r);
+    public static Wrap wrap(@Nullable Runnable r) {
+        return wrap().children(r);
     }
 
     public static Scroll scroll() {
@@ -579,8 +581,9 @@ public final class UI {
     }
 
     /**
-     * Escape hatch for raw Arc elements with no Solim equivalent (e.g. SchematicImage).
-     * Prefer Solim primitives such as text() or image() whenever one exists.
+     * Escape hatch for raw Arc elements with no Solim equivalent (e.g.
+     * SchematicImage). Prefer Solim primitives such as text() or image() whenever
+     * one exists.
      */
     public static <T extends Element> T arc(@Nullable T el) {
         ParentStack.attachToParent(el);

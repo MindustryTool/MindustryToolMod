@@ -1,5 +1,9 @@
-## ADDED Requirements
+# animated-loader Specification
 
+## Purpose
+Reusable animated circular loader component for mod dialogs.
+
+## Requirements
 ### Requirement: Animated Circle Loader Component
 The system SHALL provide a reusable `Loader` Solim component that renders `loader-circle.png` and continuously animates its rotation around its center point.
 
