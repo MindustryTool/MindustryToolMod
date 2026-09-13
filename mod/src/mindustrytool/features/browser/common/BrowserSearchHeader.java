@@ -63,13 +63,15 @@ public class BrowserSearchHeader extends BaseComponent {
     protected Element build() {
         return column().growX().children(() -> {
             row().growX().gap(unit(1)).children(() -> {
-                icon(Icon.zoom).size(unit(5));
 
                 card(Styles.black5).growX().children(() -> {
                     row().growX().gap(unit(1)).padding(unit(2))
-                            .rounded(unit(5), Color.clear)
+                            .rounded(unit(3), Color.clear)
                             .border(1.5f, Color.darkGray)
+                            .gap(unit(1))
+                            .pad(unit(1))
                             .children(() -> {
+                                icon(Icon.zoom).size(unit(5));
                                 var input = textField(inputBuffer)
                                         .growX()
                                         .placeholder(Core.bundle.get("browser.search.placeholder"))
