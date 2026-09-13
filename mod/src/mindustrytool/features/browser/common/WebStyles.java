@@ -52,6 +52,22 @@ public final class WebStyles {
         public static final Color DISABLED_BORDER = new Color(0.3f, 0.3f, 0.3f, 0.5f);
         public static final Color DISABLED_FG = new Color(0.5f, 0.5f, 0.5f, 1f);
 
+        public static final Color SECTION_BG = new Color(0.08f, 0.08f, 0.08f, 1f);
+        public static final Color SECTION_BORDER = new Color(0.22f, 0.22f, 0.22f, 1f);
+        public static final Color CHIP_BG = new Color(0.12f, 0.12f, 0.12f, 1f);
+        public static final Color CHIP_BORDER = new Color(0.22f, 0.22f, 0.22f, 1f);
+        public static final Color CHIP_HOVER_BG = new Color(0.18f, 0.18f, 0.18f, 1f);
+        public static final Color CHIP_DOWN_BG = new Color(0.24f, 0.24f, 0.24f, 1f);
+        public static final Color CHIP_FG = new Color(0.6f, 0.6f, 0.6f, 1f);
+        public static final Color CHIP_CHECKED_BG = new Color(0.26f, 0.26f, 0.26f, 1f);
+        public static final Color CHIP_CHECKED_BORDER = new Color(0.38f, 0.38f, 0.38f, 1f);
+        public static final Color CHIP_CHECKED_FG = new Color(0.95f, 0.95f, 0.95f, 1f);
+        public static final Color CLEAR_BG = new Color(0.12f, 0.12f, 0.12f, 1f);
+        public static final Color CLEAR_BORDER = new Color(0.22f, 0.22f, 0.22f, 1f);
+        public static final Color CLEAR_FG = new Color(0.7f, 0.7f, 0.7f, 1f);
+        public static final Color CLEAR_HOVER_BG = new Color(0.18f, 0.18f, 0.18f, 1f);
+        public static final Color CLEAR_DOWN_BG = new Color(0.10f, 0.10f, 0.10f, 1f);
+
         private Colors() {
         }
     }
@@ -117,6 +133,7 @@ public final class WebStyles {
     private static final SolimButtonStyle DANGER_TEXT_STYLE = textOf(
             DANGER_STYLE, Colors.DANGER_FG, Colors.DANGER_FG, Color.lightGray, Colors.DISABLED_FG);
 
+
     private static final SolimButtonStyle CARD_ACTION_STYLE = new SolimButtonStyleBuilder()
             .rounded(unit(2))
             .border(1.0f, Colors.BORDER_INPUT)
@@ -137,6 +154,40 @@ public final class WebStyles {
             .over(o -> o.background(Colors.SECONDARY_HOVER).border(1.0f, Colors.BORDER_INPUT))
             .down(d -> d.background(Colors.SECONDARY_DOWN))
             .build();
+
+    private static final SolimButtonStyle SECTION_PANEL_STYLE = new SolimButtonStyleBuilder()
+            .rounded(unit(2))
+            .border(1.0f, Colors.SECTION_BORDER)
+            .padding(unit(1))
+            .up(u -> u.background(Colors.SECTION_BG))
+            .over(o -> o.background(Colors.SECTION_BG))
+            .down(d -> d.background(Colors.SECTION_BG))
+            .build();
+
+    private static final SolimButtonStyle FILTER_CHIP_STYLE = new SolimButtonStyleBuilder()
+            .rounded(unit(1))
+            .border(1.0f, Colors.CHIP_BORDER)
+            .padding(unit(1))
+            .up(u -> u.background(Colors.CHIP_BG))
+            .over(o -> o.background(Colors.CHIP_HOVER_BG))
+            .down(d -> d.background(Colors.CHIP_DOWN_BG))
+            .checked(c -> c.background(Colors.CHIP_CHECKED_BG).border(1.0f, Colors.CHIP_CHECKED_BORDER))
+            .build();
+
+    private static final SolimButtonStyle CLEAR_FILTERS_STYLE = new SolimButtonStyleBuilder()
+            .rounded(unit(2))
+            .border(1.0f, Colors.CLEAR_BORDER)
+            .padding(unit(1.5f))
+            .up(u -> u.background(Colors.CLEAR_BG))
+            .over(o -> o.background(Colors.CLEAR_HOVER_BG))
+            .down(d -> d.background(Colors.CLEAR_DOWN_BG))
+            .build();
+
+    private static final SolimButtonStyle FILTER_CHIP_TEXT_STYLE = textOf(
+            FILTER_CHIP_STYLE, Colors.CHIP_FG, Colors.CHIP_CHECKED_FG, Color.lightGray, Colors.DISABLED_FG);
+
+    private static final SolimButtonStyle CLEAR_FILTERS_TEXT_STYLE = textOf(
+            CLEAR_FILTERS_STYLE, Colors.CLEAR_FG, Colors.CHIP_CHECKED_FG, Color.lightGray, Colors.DISABLED_FG);
 
     private static final InputStyle CLEAR_INPUT = InputStyle.builder()
             .background(Tex.clear)
@@ -199,6 +250,26 @@ public final class WebStyles {
 
     public static SolimButtonStyle dangerText() {
         return DANGER_TEXT_STYLE;
+    }
+
+    public static SolimButtonStyle sectionPanel() {
+        return SECTION_PANEL_STYLE;
+    }
+
+    public static SolimButtonStyle filterChip() {
+        return FILTER_CHIP_STYLE;
+    }
+
+    public static SolimButtonStyle filterChipText() {
+        return FILTER_CHIP_TEXT_STYLE;
+    }
+
+    public static SolimButtonStyle clearFilters() {
+        return CLEAR_FILTERS_STYLE;
+    }
+
+    public static SolimButtonStyle clearFiltersText() {
+        return CLEAR_FILTERS_TEXT_STYLE;
     }
 
     private static SolimButtonStyle textOf(

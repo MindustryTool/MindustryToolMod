@@ -16,6 +16,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustry.world.Block;
 import mindustrytool.Config;
+import mindustrytool.components.Loader;
 import mindustrytool.models.response.ModData;
 import mindustrytool.models.response.Sort;
 import mindustrytool.models.response.TagCategory;
@@ -44,84 +45,112 @@ public class BrowserFilterDialog extends SolimDialog {
     }
 
     private static class FilterContent extends BaseComponent {
+        private static final Signal<List<TagCategory>> cachedTags = Signal.of(Collections.<TagCategory>emptyList());
+        private static final Signal<List<ModData>> cachedPlanets = Signal.of(Collections.<ModData>emptyList());
+        private static boolean tagsLoaded = false;
+        private static boolean planetsLoaded = false;
+
         private final BrowserState<?> state;
         private final String tagGroup;
         private final boolean useBlocks;
         private final boolean usePlanets;
-        private final Signal<List<TagCategory>> tagCategories = Signal.of(Collections.<TagCategory>emptyList());
-        private final Signal<List<ModData>> planets = Signal.of(Collections.<ModData>emptyList());
         private final Signal<Seq<String>> selectedPlanets = Signal.of(new Seq<String>());
         private final Signal<String> filterText = Signal.of("");
         private final Computed<List<CategoryViewModel>> visibleCategories = new Computed<>(this::computeVisibleCategories);
-        private final Readable<Integer> tagColumns = isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4);
 
         FilterContent(BrowserState<?> state, String tagGroup, boolean useBlocks, boolean usePlanets) {
             this.state = state;
             this.tagGroup = tagGroup;
             this.useBlocks = useBlocks;
             this.usePlanets = usePlanets;
-            fetchTags();
-            if (usePlanets) {
+            if (!tagsLoaded) {
+                fetchTags();
+            }
+            if (usePlanets && !planetsLoaded) {
                 fetchPlanets();
             }
         }
 
         @Override
         protected Element build() {
-            return column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
-                row().growX().gap(unit(1)).children(() -> {
-                    icon(Icon.zoom).size(unit(5));
-                    textField(filterText)
-                            .growX()
-                            .style(WebStyles.clearInput())
-                            .placeholder(Core.bundle.get("browser.search.placeholder"));
-                });
-
+            return column().grow().padding(unit(1)).gap(unit(1)).children(() -> {
+                searchRow();
                 scroll().grow().children(() -> {
-                    column().growX().gap(unit(2)).children(() -> {
-                        sectionTitle(Core.bundle.get("browser.filter.sort"));
-                        renderSortOptions();
+                    column().growX().left().gap(unit(1)).children(() -> {
+                        sectionPanel(Core.bundle.get("browser.filter.sort"), () -> renderSortOptions());
 
                         if (usePlanets) {
-                            sectionTitle(Core.bundle.get("browser.filter.planets"));
-                            renderPlanets();
+                            sectionPanel(Core.bundle.get("browser.filter.planets"), () -> renderPlanets());
                         }
 
-                        sectionTitle(Core.bundle.get("browser.filter.tags"));
-                        renderTagCategories();
+                        sectionPanel(Core.bundle.get("browser.filter.tags"), () -> renderTagCategories());
 
                         if (useBlocks) {
-                            sectionTitle(Core.bundle.get("browser.filter.blocks"));
-                            renderBlocks();
+                            sectionPanel(Core.bundle.get("browser.filter.blocks"), () -> renderBlocks());
                         }
                     });
                 });
-
-                button(Core.bundle.get("browser.filter.clear-all"), this::clearAll)
-                        .style(Styles.defaultb)
-                        .growX()
-                        .height(unit(10));
+                clearAllButton();
             }).element();
         }
 
-        private void sectionTitle(String title) {
-            text(title).style(Styles.defaultLabel).color(Color.white).left();
+        private void searchRow() {
+            card(WebStyles.sectionPanel().style()).growX().left()
+                    .padding(unit(1))
+                    .children(() -> {
+                        row().growX().left().children(() -> {
+                            icon(Icon.zoom).size(unit(4)).color(Color.gray);
+                            textField(filterText)
+                                    .growX()
+                                    .style(WebStyles.clearInput())
+                                    .placeholder(Core.bundle.get("browser.search.placeholder"));
+                        });
+                    });
+        }
+
+        private void clearAllButton() {
+            button(Core.bundle.get("browser.filter.clear-all"), this::clearAll)
+                    .style(WebStyles.clearFiltersText())
+                    .growX()
+                    .height(unit(9));
+        }
+
+        private static int computeColumns(float availableWidth, float longestLabelWidth) {
+            float minColWidth = longestLabelWidth + 3f;
+            int cols = Math.max(1, (int) (availableWidth / minColWidth));
+            int maxCols = Math.max(1, (int) (availableWidth / 8f));
+            return Math.min(cols, maxCols);
+        }
+
+        private void sectionPanel(String title, Runnable content) {
+            card(WebStyles.sectionPanel().style()).growX().left()
+                    .padding(unit(1))
+                    .children(() -> {
+                        column().growX().left().gap(unit(1)).children(() -> {
+                            text(title).style(Styles.defaultLabel).color(Color.lightGray).left();
+                            content.run();
+                        });
+                    });
         }
 
         private void renderSortOptions() {
-            for (Sort sortOption : Config.sorts) {
-                String sortValue = sortOption.getValue();
-                Readable<Boolean> checked = state.sort().map(current -> sortValue.equals(current));
-                button(sortOption.getName(), () -> state.setSort(sortValue))
-                        .style(Styles.togglet)
-                        .checked(checked)
-                        .growX()
-                        .height(unit(10));
-            }
+            float longestLabel = 15f;
+            Readable<Integer> columns = dvw(95f).map(w -> computeColumns(w, longestLabel));
+            grid(columns).left().gap(unit(1)).children(() -> {
+                for (Sort sortOption : Config.sorts) {
+                    String sortValue = sortOption.getValue();
+                    Readable<Boolean> checked = state.sort().map(current -> sortValue.equals(current));
+                    button(sortOption.getName(), () -> state.setSort(sortValue))
+                            .style(WebStyles.filterChipText())
+                            .checked(checked)
+                            .growX()
+                            .height(unit(9));
+                }
+            });
         }
 
         private void renderPlanets() {
-            dynamic(planets, mods -> {
+            dynamic(cachedPlanets, mods -> {
                 if (mods == null || mods.isEmpty()) {
                     return row();
                 }
@@ -134,7 +163,14 @@ public class BrowserFilterDialog extends SolimDialog {
                         return pa - pb;
                     }
                 });
-                return column().growX().gap(unit(1)).children(() -> {
+                float longestLabel = 0f;
+                for (ModData mod : sorted) {
+                    String name = mod.getName() != null ? mod.getName() : "";
+                    longestLabel = Math.max(longestLabel, name.length() * 1.2f);
+                }
+                float fl = longestLabel;
+                Readable<Integer> columns = dvw(95f).map(w -> computeColumns(w, fl));
+                return grid(columns).left().gap(unit(1)).children(() -> {
                     for (ModData mod : sorted) {
                         renderPlanet(mod);
                     }
@@ -147,10 +183,10 @@ public class BrowserFilterDialog extends SolimDialog {
             Readable<Boolean> checked = selectedPlanets.map(
                     selected -> selected != null && modId != null && selected.contains(modId));
             button(mod.getName() != null ? mod.getName() : modId, () -> togglePlanet(modId))
-                    .style(Styles.togglet)
+                    .style(WebStyles.filterChipText())
                     .checked(checked)
                     .growX()
-                    .height(unit(10));
+                    .height(unit(9));
         }
 
         private void togglePlanet(String modId) {
@@ -181,7 +217,7 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private List<CategoryViewModel> computeVisibleCategories() {
-            List<TagCategory> categories = tagCategories.get();
+            List<TagCategory> categories = cachedTags.get();
             Seq<String> planetFilter = selectedPlanets.get();
             String query = filterText.get();
             final String loweredQuery = query != null ? query.toLowerCase().trim() : "";
@@ -216,10 +252,10 @@ public class BrowserFilterDialog extends SolimDialog {
 
         private void renderTagCategories() {
             dynamic(visibleCategories, categories -> {
-                return column().growX().gap(unit(2)).children(() -> {
+                return column().growX().gap(unit(1)).children(() -> {
                     if (categories == null || categories.isEmpty()) {
-                        if (tagCategories.peek().isEmpty()) {
-                            text(Core.bundle.get("browser.filter.tags.loading")).color(Color.gray).left();
+                        if (cachedTags.peek().isEmpty()) {
+                            row().growX().center().padding(unit(4)).children(() -> new Loader(unit(6)));
                         } else {
                             text(Core.bundle.get("browser.empty")).color(Color.gray).left();
                         }
@@ -233,13 +269,20 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderCategory(CategoryViewModel category) {
-            column().growX().gap(unit(1)).children(() -> {
+            float longestLabel = 0f;
+            for (TagData tag : category.tags) {
+                String name = tag.getName() != null ? tag.getName() : "";
+                longestLabel = Math.max(longestLabel, name.length() * 1.2f);
+            }
+            float fl = longestLabel;
+            Readable<Integer> columns = dvw(95f).map(w -> computeColumns(w, fl));
+            column().growX().left().gap(unit(0.5f)).children(() -> {
                 text(category.name)
-                        .color(category.color)
+                        .color(Color.lightGray)
                         .style(Styles.defaultLabel)
                         .left();
 
-                grid(tagColumns).growX().gap(unit(1)).children(() -> {
+                grid(columns).left().gap(unit(1)).children(() -> {
                     for (TagData tag : category.tags) {
                         renderTag(tag);
                     }
@@ -279,17 +322,28 @@ public class BrowserFilterDialog extends SolimDialog {
             Readable<Boolean> checked = state.selectedTags().map(
                     selected -> selected != null && selected.contains(key));
             button(tag.getName(), () -> state.toggleTag(key))
-                    .style(Styles.togglet)
+                    .style(WebStyles.filterChipText())
                     .checked(checked)
                     .growX()
-                    .height(unit(8));
+                    .height(unit(9));
         }
 
         private void renderBlocks() {
             dynamic(filterText, query -> {
                 final String loweredQuery = query != null ? query.toLowerCase() : "";
-                return column().growX().gap(unit(1)).children(() -> {
-                    Seq<Block> blocks = availableBlocks();
+                Seq<Block> blocks = availableBlocks();
+                float longestLabel = 0f;
+                for (int i = 0; i < blocks.size; i++) {
+                    Block block = blocks.get(i);
+                    if (block != null && block.localizedName != null) {
+                        if (loweredQuery.isEmpty() || block.localizedName.toLowerCase().contains(loweredQuery)) {
+                            longestLabel = Math.max(longestLabel, block.localizedName.length() * 1.2f);
+                        }
+                    }
+                }
+                float fl = longestLabel;
+                Readable<Integer> columns = dvw(95f).map(w -> computeColumns(w, fl));
+                return grid(columns).left().gap(unit(1)).children(() -> {
                     if (blocks.isEmpty()) {
                         text(Core.bundle.get("browser.filter.blocks.empty")).color(Color.gray).left();
                         return;
@@ -307,7 +361,7 @@ public class BrowserFilterDialog extends SolimDialog {
                         Readable<Boolean> checked = state.selectedTags().map(
                                 selected -> selected != null && selected.contains(blockName));
                         button(block.localizedName, () -> state.toggleTag(blockName))
-                                .style(Styles.togglet)
+                                .style(WebStyles.filterChipText())
                                 .checked(checked)
                                 .growX()
                                 .height(unit(9));
@@ -341,7 +395,8 @@ public class BrowserFilterDialog extends SolimDialog {
                     if (isDisposed()) {
                         return;
                     }
-                    tagCategories.set(result != null ? result : Collections.<TagCategory>emptyList());
+                    cachedTags.set(result != null ? result : Collections.<TagCategory>emptyList());
+                    tagsLoaded = true;
                 });
             });
         }
@@ -352,7 +407,8 @@ public class BrowserFilterDialog extends SolimDialog {
                     if (isDisposed()) {
                         return;
                     }
-                    planets.set(result != null ? result : Collections.<ModData>emptyList());
+                    cachedPlanets.set(result != null ? result : Collections.<ModData>emptyList());
+                    planetsLoaded = true;
                 });
             });
         }

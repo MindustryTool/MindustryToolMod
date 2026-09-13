@@ -4,8 +4,10 @@ import static solim.UI.*;
 
 import arc.Core;
 import mindustry.Vars;
+import mindustrytool.components.Loader;
 import solim.UI;
 import solim.overlay.SolimDialog;
+import solim.signal.Readable;
 import solim.signal.Signal;
 
 public class AuthLoginDialog extends SolimDialog {
@@ -17,18 +19,20 @@ public class AuthLoginDialog extends SolimDialog {
 		name("loginDialog");
 		closeOnBack();
 
+		Readable<Boolean> hasUrl = loginUrlSignal.map(url -> url != null && !url.trim().isEmpty());
+
 		content(() -> {
 			column().grow().padding(unit(4)).center().children(() -> {
-				dynamic(loginUrlSignal, url -> {
-					if (url == null || url.isEmpty()) {
-						return text(Core.bundle.get("auth.login.loading"));
-					} else {
+				dynamic(hasUrl, available -> {
+					if (Boolean.TRUE.equals(available)) {
 						return UI.button(() -> {
-							Core.app.setClipboardText(url);
+							Core.app.setClipboardText(loginUrlSignal.peek());
 							Vars.ui.showInfoFade(Core.bundle.get("auth.login.copied"));
 						}).children(() -> {
-							text(url).fontScale(0.7f).wrap();
+							text(loginUrlSignal).fontScale(0.7f).wrap();
 						});
+					} else {
+						return new Loader(unit(8));
 					}
 				});
 			});

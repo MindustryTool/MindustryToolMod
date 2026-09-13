@@ -272,5 +272,250 @@ class DynamicComponentTest {
 		dyn.dispose();
 		col.dispose();
 	}
+
+	@Test
+	void nestedDynamicInnerSwitchesIndependentlyWithoutOuterRebuild() {
+		Signal<Boolean> outer = Signal.of(true);
+		Signal<String> inner = Signal.of("A");
+		int[] outerBuildCount = new int[]{0};
+		int[] innerBuildCount = new int[]{0};
+		Map<String, TestComponent> instances = new HashMap<>();
+
+		Dynamic<Boolean> root = Dynamic.of(outer, show -> {
+			outerBuildCount[0]++;
+			if (!Boolean.TRUE.equals(show)) return null;
+			return Dynamic.of(inner, val -> {
+				innerBuildCount[0]++;
+				TestComponent tc = new TestComponent(val);
+				instances.put(val, tc);
+				return tc;
+			});
+		});
+
+		root.element();
+		assertEquals(1, outerBuildCount[0]);
+		assertEquals(1, innerBuildCount[0]);
+		assertNotNull(instances.get("A"));
+		assertFalse(instances.get("A").wasDisposed);
+
+		// Inner switches from A to B
+		inner.set("B");
+		SignalDispatcher.flush();
+
+		assertEquals(1, outerBuildCount[0], "Outer factory must NOT re-run when inner signal changes");
+		assertEquals(2, innerBuildCount[0], "Inner factory must run for new inner signal value");
+		assertTrue(instances.get("A").wasDisposed, "Previous inner component must be disposed");
+		assertNotNull(instances.get("B"));
+		assertFalse(instances.get("B").wasDisposed, "New inner component must be active");
+
+		root.dispose();
+	}
+
+	@Test
+	void nestedDynamicOuterCollapseCascadesDisposal() {
+		Signal<Boolean> outer = Signal.of(true);
+		Signal<String> inner = Signal.of("A");
+		Map<String, TestComponent> instances = new HashMap<>();
+
+		Dynamic<Boolean> root = Dynamic.of(outer, show -> {
+			if (!Boolean.TRUE.equals(show)) return null;
+			return Dynamic.of(inner, val -> {
+				TestComponent tc = new TestComponent(val);
+				instances.put(val, tc);
+				return tc;
+			});
+		});
+
+		root.element();
+		TestComponent compA = instances.get("A");
+		assertNotNull(compA);
+		assertFalse(compA.wasDisposed);
+		assertTrue(root.container().visible);
+		assertEquals(1, root.container().getChildren().size);
+
+		// Collapse outer
+		outer.set(false);
+		SignalDispatcher.flush();
+
+		assertFalse(root.container().visible, "Outer container must be hidden when collapsed");
+		assertEquals(0, root.container().getChildren().size, "Outer container must have no children");
+		assertTrue(compA.wasDisposed, "Active inner component must be recursively disposed on outer collapse");
+
+		root.dispose();
+	}
+
+	@Test
+	void nestedDynamicZombieEffectSuppressionAfterOuterCollapse() {
+		Signal<Boolean> outer = Signal.of(true);
+		Signal<String> inner = Signal.of("A");
+		int[] innerBuildCount = new int[]{0};
+		Map<String, TestComponent> instances = new HashMap<>();
+
+		Dynamic<Boolean> root = Dynamic.of(outer, show -> {
+			if (!Boolean.TRUE.equals(show)) return null;
+			return Dynamic.of(inner, val -> {
+				innerBuildCount[0]++;
+				TestComponent tc = new TestComponent(val);
+				instances.put(val, tc);
+				return tc;
+			});
+		});
+
+		root.element();
+		assertEquals(1, innerBuildCount[0]);
+
+		// Collapse outer
+		outer.set(false);
+		SignalDispatcher.flush();
+		assertTrue(instances.get("A").wasDisposed);
+
+		// Mutate inner signal while outer is collapsed
+		inner.set("B");
+		SignalDispatcher.flush();
+
+		assertEquals(1, innerBuildCount[0], "Inner factory must NOT be invoked after outer collapse");
+		assertNull(instances.get("B"), "No component should be instantiated for mutated inner signal");
+
+		root.dispose();
+	}
+
+	@Test
+	void nestedDynamicReexpansionReinstantiatesSubtree() {
+		Signal<Boolean> outer = Signal.of(true);
+		Signal<String> inner = Signal.of("A");
+		int[] innerBuildCount = new int[]{0};
+		Map<String, TestComponent> instances = new HashMap<>();
+
+		Dynamic<Boolean> root = Dynamic.of(outer, show -> {
+			if (!Boolean.TRUE.equals(show)) return null;
+			return Dynamic.of(inner, val -> {
+				innerBuildCount[0]++;
+				TestComponent tc = new TestComponent(val + "-" + innerBuildCount[0]);
+				instances.put(tc.id, tc);
+				return tc;
+			});
+		});
+
+		root.element();
+		assertEquals(1, innerBuildCount[0]);
+		TestComponent first = instances.get("A-1");
+		assertNotNull(first);
+		assertFalse(first.wasDisposed);
+
+		// Collapse outer
+		outer.set(false);
+		SignalDispatcher.flush();
+		assertTrue(first.wasDisposed);
+		assertFalse(root.container().visible);
+
+		// Re-expand outer
+		outer.set(true);
+		SignalDispatcher.flush();
+		assertTrue(root.container().visible);
+		assertEquals(2, innerBuildCount[0], "Inner factory must run when re-expanded");
+		TestComponent second = instances.get("A-2");
+		assertNotNull(second);
+		assertFalse(second.wasDisposed);
+		assertNotSame(first, second);
+
+		// Subsequent inner updates on re-expanded subtree work properly
+		inner.set("B");
+		SignalDispatcher.flush();
+		assertEquals(3, innerBuildCount[0]);
+		assertTrue(second.wasDisposed);
+		TestComponent third = instances.get("B-3");
+		assertNotNull(third);
+		assertFalse(third.wasDisposed);
+
+		root.dispose();
+	}
+
+	@Test
+	void nestedDynamicBatchedSignalUpdatesResolveDeterministically() {
+		Signal<Boolean> outer = Signal.of(true);
+		Signal<String> inner = Signal.of("A");
+		int[] innerBuildCount = new int[]{0};
+		Map<String, TestComponent> instances = new HashMap<>();
+
+		Dynamic<Boolean> root = Dynamic.of(outer, show -> {
+			if (!Boolean.TRUE.equals(show)) return null;
+			return Dynamic.of(inner, val -> {
+				innerBuildCount[0]++;
+				TestComponent tc = new TestComponent(val);
+				instances.put(val, tc);
+				return tc;
+			});
+		});
+
+		root.element();
+		assertEquals(1, innerBuildCount[0]);
+		assertFalse(instances.get("A").wasDisposed);
+
+		// Simultaneous update: collapse outer AND change inner in same flush
+		outer.set(false);
+		inner.set("B");
+		SignalDispatcher.flush();
+
+		assertFalse(root.container().visible);
+		assertEquals(0, root.container().getChildren().size);
+		assertTrue(instances.get("A").wasDisposed);
+		assertEquals(1, innerBuildCount[0], "Inner factory must NOT be called for B when outer collapsed in same flush");
+		assertNull(instances.get("B"));
+
+		// Simultaneous update: re-expand outer AND change inner to C in same flush
+		outer.set(true);
+		inner.set("C");
+		SignalDispatcher.flush();
+
+		assertTrue(root.container().visible);
+		assertEquals(2, innerBuildCount[0]);
+		TestComponent compC = instances.get("C");
+		assertNotNull(compC, "Subtree must immediately mount with latest inner value C");
+		assertFalse(compC.wasDisposed);
+
+		root.dispose();
+	}
+
+	@Test
+	void nestedDynamicInsideLayoutContainerResizesAndCollapses() {
+		Signal<Boolean> outer = Signal.of(true);
+		Signal<Boolean> inner = Signal.of(true);
+
+		Dynamic<Boolean> root = Dynamic.of(outer, showOuter -> {
+			if (!Boolean.TRUE.equals(showOuter)) return null;
+			return Ui.column(() -> {
+				Ui.dynamic(inner, showInner -> {
+					if (!Boolean.TRUE.equals(showInner)) return null;
+					return new TestComponent("leaf");
+				});
+			});
+		});
+
+		arc.scene.ui.layout.Table parent = new arc.scene.ui.layout.Table();
+		arc.scene.ui.layout.Cell<?> cell = parent.add(root.element());
+		parent.pack();
+
+		assertTrue(root.container().visible);
+		assertEquals(1, root.container().getChildren().size);
+
+		// Collapse inner dynamic inside column
+		inner.set(false);
+		SignalDispatcher.flush();
+		parent.layout();
+
+		// Outer is still visible, but inner dynamic inside column is collapsed
+		assertTrue(root.container().visible);
+
+		// Collapse outer dynamic
+		outer.set(false);
+		SignalDispatcher.flush();
+		parent.layout();
+
+		assertFalse(root.container().visible);
+		assertEquals(0f, arc.scene.ui.layout.CellAccess.minWidth(cell), 0.01f);
+		assertEquals(0f, arc.scene.ui.layout.CellAccess.minHeight(cell), 0.01f);
+
+		root.dispose();
+	}
 }
 

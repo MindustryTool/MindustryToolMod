@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
 import mindustry.ui.Styles;
 import mindustrytool.Config;
+import mindustrytool.components.Loader;
 import mindustrytool.features.browser.common.BrowserFilterDialog;
 import mindustrytool.features.browser.common.BrowserFooter;
 import mindustrytool.features.browser.common.BrowserSearchHeader;
@@ -79,50 +80,49 @@ public class SchematicBrowserDialog extends SolimDialog {
 
         @Override
         protected Element build() {
+            Readable<Boolean> hasError = state.error().map(e -> e != null && !e.trim().isEmpty());
+
             return column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
                 new BrowserSearchHeader(state, () -> filterDialog.show());
 
                 dynamic(state.loading(), loading -> {
-                    if (!Boolean.TRUE.equals(loading)) {
-                        return null;
+                    if (Boolean.TRUE.equals(loading)) {
+                        return Loader.centered();
                     }
-                    return row().growX().children(() -> {
-                        text(Core.bundle.get("browser.loading")).color(Color.lightGray);
-                    });
-                });
 
-                dynamic(state.error(), message -> {
-                    if (message == null || message.isEmpty()) {
-                        return null;
-                    }
-                    return row().growX().gap(unit(1)).children(() -> {
-                        text(message)
-                                .color(Color.scarlet)
-                                .wrap(true)
-                                .growX();
-                        button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                .style(WebStyles.outlineText())
-                                .height(unit(10));
-                    });
-                });
+                    return dynamic(hasError, errorOccurred -> {
+                        if (Boolean.TRUE.equals(errorOccurred)) {
+                            return row().grow().gap(unit(1)).children(() -> {
+                                text(state.error().map(e -> e != null ? e : ""))
+                                        .color(Color.scarlet)
+                                        .wrap(true)
+                                        .growX();
+                                button(Core.bundle.get("browser.retry"), () -> state.refresh())
+                                        .style(WebStyles.outlineText())
+                                        .height(unit(10));
+                            });
+                        }
 
-                scroll().grow().children(() -> {
-                    reactiveGrid(
-                            columnCount,
-                            state.items(),
-                            SchematicData::getItemId,
-                            (item, ctx) -> new SchematicCard(
-                                    item,
-                                    ctx.itemWidth(),
-                                    () -> onCardClick(item),
-                                    () -> SchematicActions.copyToClipboard(item.getItemId()),
-                                    () -> SchematicActions.saveToLocal(item.getItemId()),
-                                    () -> showDetails(item)))
-                            .empty(() -> {
-                                text(Core.bundle.get("browser.empty")).color(Color.gray).padding(unit(4));
-                            })
-                            .gap(unit(4));
-                });
+                        return scroll().grow().children(() -> {
+                            reactiveGrid(
+                                    columnCount,
+                                    state.items(),
+                                    SchematicData::getItemId,
+                                    (item, ctx) -> new SchematicCard(
+                                            item,
+                                            ctx.itemWidth(),
+                                            () -> onCardClick(item),
+                                            () -> SchematicActions.copyToClipboard(item.getItemId()),
+                                            () -> SchematicActions.saveToLocal(item.getItemId()),
+                                            () -> showDetails(item)))
+                                                    .empty(() -> {
+                                                        text(Core.bundle.get("browser.empty")).color(Color.gray)
+                                                                .padding(unit(4));
+                                                    })
+                                                    .gap(unit(4));
+                        });
+                    }).grow();
+                }).grow();
 
                 new BrowserFooter(state, Config.UPLOAD_SCHEMATIC_URL, onClose);
             }).element();
