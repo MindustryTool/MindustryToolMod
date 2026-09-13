@@ -55,7 +55,7 @@ All Solim components SHALL expose a fluent `.name(String name)` method that upda
 - **THEN** the underlying button has `name` set to `"confirm-button"`, replacing its default name
 
 ### Requirement: ElementModifiers padding and margin utilities for elements
-The `ElementModifiers` static utility class SHALL provide `padding` and `margin` methods for Arc `Element` instances (`padding(@Nullable Element, float)`, `padding(@Nullable Element, float, float, float, float)`, directional `paddingTop/Bottom/Left/Right`, `margin(@Nullable Element, float)`, `margin(@Nullable Element, float, float, float, float)`, directional `marginTop/Bottom/Left/Right`). When the element is a `Table`, they SHALL apply to table margins. When the element is contained within a parent `Table`, they SHALL apply to the element's enclosing `Cell` padding.
+The `ElementModifiers` static utility class SHALL provide canonical `padding` and `margin` methods for Arc `Element` and `Table` instances (`padding`, `paddingTop`, `paddingBottom`, `paddingLeft`, `paddingRight`, `paddingX`, `paddingY`, `margin`, `marginTop`, `marginBottom`, `marginLeft`, `marginRight`, `marginX`, `marginY`). Abbreviated `pad*` methods SHALL NOT be provided. When the element is a `Table`, padding/margin methods SHALL apply to table margins. When the element is contained within a parent `Table`, they SHALL apply to the element's enclosing `Cell` padding.
 
 #### Scenario: Applying padding to an Element in a Table
 - **WHEN** an element is placed inside an Arc `Table` and `ElementModifiers.padding(element, 10f)` is called
@@ -64,6 +64,10 @@ The `ElementModifiers` static utility class SHALL provide `padding` and `margin`
 #### Scenario: Null-safe element padding and margin
 - **WHEN** `ElementModifiers.padding(null, 10f)` or `ElementModifiers.margin(null, 10f)` is called
 - **THEN** no exception is thrown
+
+#### Scenario: Applying two-axis padding and margin via ElementModifiers
+- **WHEN** `ElementModifiers.paddingX(table, 12f)` and `ElementModifiers.paddingY(table, 6f)` are called
+- **THEN** the table's left and right margins are set to 12f, and top and bottom margins are set to 6f
 
 ### Requirement: ElementModifiers opacity and alpha utilities
 The `ElementModifiers` static utility class SHALL provide `opacity(@Nullable Element element, float opacity)` and `opacity(@Nullable Element element, Readable<Float> opacity)` (with `alpha` as an alias) to adjust element color alpha transparency, supporting both static values and reactive signals.
@@ -82,4 +86,20 @@ Solim layout containers (`Hud`, `Column`, `Row`, `Card`) SHALL expose fluent `.o
 #### Scenario: Chaining opacity on a layout component
 - **WHEN** `hud().opacity(feature.opacityConfig.signal())` is declared
 - **THEN** the HUD container's transparency is bound to the opacity signal
+
+### Requirement: Two-axis spacing modifiers on Solim components
+Solim layout and display components (`Column`, `Row`, `Text`, `SolimImage`, `NetworkImage`, `Container`, `Card`, `Button`) SHALL expose fluent `paddingX(float)`, `paddingY(float)`, `marginX(float)`, and `marginY(float)` methods (with `Readable<Float>` reactive overloads where supported) for configuring horizontal (left and right) and vertical (top and bottom) spacing symmetrically.
+
+#### Scenario: Setting horizontal and vertical padding on Column
+- **WHEN** `column().paddingX(16f).paddingY(8f)` is declared
+- **THEN** the column's underlying table has left and right padding set to 16f, and top and bottom padding set to 8f
+
+#### Scenario: Setting horizontal and vertical margin on Text
+- **WHEN** `text("hello").marginX(10f).marginY(4f)` is declared
+- **THEN** the text's parent cell padding reflects 10f on left and right, and 4f on top and bottom
+
+#### Scenario: Setting horizontal and vertical margin on Button
+- **WHEN** `button("OK").marginX(12f).marginY(6f)` is declared
+- **THEN** the button's margins are set to 12f horizontally and 6f vertically
+
 

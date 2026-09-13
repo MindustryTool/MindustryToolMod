@@ -72,16 +72,21 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private Component portraitLayout() {
-            return column().grow().gap(unit(2)).children(() -> {
-                previewImagePortrait();
-                scroll().grow().children(() -> details());
+            return scroll().grow().children(() -> {
+                column().grow().gap(unit(2)).children(() -> {
+                    previewImagePortrait();
+                    details();
+                });
             });
         }
 
         private Component landscapeLayout() {
-            return row().grow().gap(unit(2)).children(() -> {
-                previewImageLandscape();
-                scroll().grow().children(() -> details());
+            return scroll().grow().children(() -> {
+
+                row().grow().gap(unit(2)).children(() -> {
+                    previewImageLandscape();
+                    details();
+                });
             });
         }
 
@@ -90,7 +95,7 @@ public class SchematicDetailDialog extends SolimDialog {
                     .placeholder(Icon.image)
                     .fallback(Icon.image)
                     .growX()
-                    .height(dvh(50f))
+                    .height(dvh(45))
                     .rounded(8)
                     .scaling(Scaling.fit);
         }
@@ -99,7 +104,7 @@ public class SchematicDetailDialog extends SolimDialog {
             networkImage(BrowserImages.schematicImageUrl(itemId))
                     .placeholder(Icon.image)
                     .fallback(Icon.image)
-                    .width(dvw(60f))
+                    .width(dvw(45))
                     .growY()
                     .rounded(8)
                     .scaling(Scaling.fit);
@@ -107,19 +112,19 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private void details() {
             column().growX().gap(unit(1)).children(() -> {
-                card(WebStyles.previewCard().style()).growX().children(() -> {
+                card(WebStyles.previewCard().style()).padding(unit(2)).gap(unit(1)).growX().children(() -> {
                     row().growX().gap(unit(1)).children(() -> {
-                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(0.9f);
-                        text(authorName).color(Color.white).fontScale(0.9f);
+                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray);
+                        text(authorName).color(Color.white);
                     });
 
                     row().growX().gap(unit(1)).children(() -> {
-                        text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray).fontScale(0.9f);
-                        text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white).fontScale(0.9f);
+                        text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray);
+                        text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white);
                     });
                 });
 
-                card(WebStyles.previewCard().style()).growX().children(() -> {
+                card(WebStyles.previewCard().style()).padding(unit(2)).growX().children(() -> {
                     new BrowserStatsBadge(
                             BrowserImages.count(detail.getLikes()),
                             BrowserImages.count(detail.getComments()),
@@ -135,20 +140,20 @@ public class SchematicDetailDialog extends SolimDialog {
                     });
                 }
 
-                spacer();
+                divider();
 
                 row().growX().gap(unit(1)).children(() -> {
                     button(Core.bundle.get("browser.schematic.copy"),
                             () -> SchematicActions.copyToClipboard(itemId))
-                            .style(WebStyles.cardActionText())
-                            .growX()
-                            .height(unit(9));
+                                    .style(WebStyles.secondary())
+                                    .growX()
+                                    .height(unit(9));
 
                     button(Core.bundle.get("browser.schematic.save"),
                             () -> SchematicActions.saveToLocal(itemId))
-                            .style(WebStyles.cardActionText())
-                            .growX()
-                            .height(unit(9));
+                                    .style(WebStyles.secondary())
+                                    .growX()
+                                    .height(unit(9));
                 });
             });
         }
@@ -158,17 +163,14 @@ public class SchematicDetailDialog extends SolimDialog {
             if (tags == null || tags.isEmpty()) {
                 return;
             }
-            card(WebStyles.previewCard().style()).growX().children(() -> {
-                text(Core.bundle.get("browser.detail.tags")).color(Color.white).left();
-                grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().gap(unit(1)).children(() -> {
+
+            card(WebStyles.previewCard().style()).growX().top().left().padding(unit(2)).children(() -> {
+                text(Core.bundle.get("browser.detail.tags")).color(Color.white).growX().left();
+                grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().left().gap(unit(1)).children(() -> {
                     for (TagData tag : tags) {
-                        if (tag == null || tag.getName() == null) {
-                            continue;
-                        }
                         text(tag.getName())
                                 .style(Styles.defaultLabel)
-                                .color(tag.color())
-                                .fontScale(0.85f);
+                                .color(tag.color());
                     }
                 });
             });
@@ -177,12 +179,14 @@ public class SchematicDetailDialog extends SolimDialog {
         private void renderRequirements() {
             Seq<ItemStack> requirements = toItemSeq(
                     detail.getMeta() != null ? detail.getMeta().getRequirements() : null);
+
             if (requirements.isEmpty()) {
                 return;
             }
-            card(WebStyles.previewCard().style()).growX().children(() -> {
-                text(Core.bundle.get("browser.detail.requirements")).color(Color.white).left();
-                grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().gap(unit(1)).children(() -> {
+
+            card(WebStyles.previewCard().style()).growX().top().left().padding(unit(2)).children(() -> {
+                text(Core.bundle.get("browser.detail.requirements")).color(Color.white).growX().left();
+                grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().left().gap(unit(1)).children(() -> {
                     for (ItemStack stack : requirements) {
                         row().gap(unit(1)).left().children(() -> {
                             image(new TextureRegionDrawable(stack.item.uiIcon)).size(unit(8));

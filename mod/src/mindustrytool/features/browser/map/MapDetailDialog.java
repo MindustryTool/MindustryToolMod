@@ -91,7 +91,7 @@ public class MapDetailDialog extends SolimDialog {
             networkImage(BrowserImages.mapImageUrl(itemId))
                     .placeholder(Icon.terrain)
                     .fallback(Icon.terrain)
-                    .width(dvw(55f))
+                    .width(dvw(45f))
                     .growY()
                     .rounded(8)
                     .scaling(Scaling.fit);

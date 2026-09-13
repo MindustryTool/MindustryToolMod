@@ -2,10 +2,9 @@ package mindustrytool.features.browser.common;
 
 import static solim.UI.*;
 
-import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.gen.Icon;
-import mindustry.ui.Styles;
+import mindustrytool.components.FileIcon;
 import solim.core.BaseComponent;
 
 /**
@@ -26,21 +25,21 @@ public class BrowserStatsBadge extends BaseComponent {
 
     @Override
     protected Element build() {
-        return row().gap(unit(1)).children(() -> {
-            icon(Icon.upOpenSmall).size(unit(4)).color(Color.scarlet);
-            text(formatCount(likes))
-                    .style(Styles.defaultLabel)
-                    .fontScale(0.85f);
+        return row().gap(unit(4)).children(() -> {
+            row().gap(unit(2)).children(() -> {
+                icon(FileIcon.of("heart.png")).size(unit(4));
+                text(formatCount(likes));
+            });
 
-            icon(Icon.chatSmall).size(unit(4)).color(Color.lightGray);
-            text(formatCount(comments))
-                    .style(Styles.defaultLabel)
-                    .fontScale(0.85f);
+            row().gap(unit(2)).children(() -> {
+                icon(Icon.chatSmall).size(unit(4));
+                text(formatCount(comments));
+            });
 
-            icon(Icon.downloadSmall).size(unit(4)).color(Color.sky);
-            text(formatCount(downloads))
-                    .style(Styles.defaultLabel)
-                    .fontScale(0.85f);
+            row().gap(unit(2)).children(() -> {
+                icon(Icon.downloadSmall).size(unit(4));
+                text(formatCount(downloads));
+            });
         }).element();
     }
 
