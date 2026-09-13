@@ -167,33 +167,25 @@ public final class Column implements Component, LayoutModifiers<Column>, GapCont
 		return this;
 	}
 
-	public Column pad(float p) {
-		ElementModifiers.pad(table, p);
+	public Column paddingX(float x) {
+		ElementModifiers.paddingX(table, x);
 		return this;
 	}
 
-	public Column pad(float top, float left, float bottom, float right) {
-		ElementModifiers.pad(table, top, left, bottom, right);
+	public Column paddingY(float y) {
+		ElementModifiers.paddingY(table, y);
 		return this;
 	}
 
-	public Column padTop(float top) {
-		ElementModifiers.padTop(table, top);
+	@Override
+	public Column marginX(float x) {
+		ElementModifiers.marginX(table, x);
 		return this;
 	}
 
-	public Column padBottom(float bottom) {
-		ElementModifiers.padBottom(table, bottom);
-		return this;
-	}
-
-	public Column padLeft(float left) {
-		ElementModifiers.padLeft(table, left);
-		return this;
-	}
-
-	public Column padRight(float right) {
-		ElementModifiers.padRight(table, right);
+	@Override
+	public Column marginY(float y) {
+		ElementModifiers.marginY(table, y);
 		return this;
 	}
 

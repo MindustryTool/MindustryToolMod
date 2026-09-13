@@ -19,6 +19,7 @@ import mindustry.ui.Styles;
 import mindustrytool.Config;
 import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
+import mindustrytool.features.browser.common.WebStyles;
 import mindustrytool.models.response.SchematicDetailData;
 import mindustrytool.models.response.SchematicDetailData.SchematicRequirement;
 import mindustrytool.models.response.TagData;
@@ -78,7 +79,7 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private Component landscapeLayout() {
-            return row().grow().gap(unit(4)).children(() -> {
+            return row().grow().gap(unit(2)).children(() -> {
                 previewImageLandscape();
                 scroll().grow().children(() -> details());
             });
@@ -105,43 +106,49 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private void details() {
-            column().growX().gap(unit(2)).children(() -> {
-                row().growX().gap(unit(1)).children(() -> {
-                    text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(0.9f);
-                    text(authorName).color(Color.white).fontScale(0.9f);
+            column().growX().gap(unit(1)).children(() -> {
+                card(WebStyles.previewCard().style()).growX().children(() -> {
+                    row().growX().gap(unit(1)).children(() -> {
+                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(0.9f);
+                        text(authorName).color(Color.white).fontScale(0.9f);
+                    });
+
+                    row().growX().gap(unit(1)).children(() -> {
+                        text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray).fontScale(0.9f);
+                        text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white).fontScale(0.9f);
+                    });
                 });
 
-                row().growX().gap(unit(1)).children(() -> {
-                    text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray).fontScale(0.9f);
-                    text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white).fontScale(0.9f);
+                card(WebStyles.previewCard().style()).growX().children(() -> {
+                    new BrowserStatsBadge(
+                            BrowserImages.count(detail.getLikes()),
+                            BrowserImages.count(detail.getComments()),
+                            BrowserImages.count(detail.getDownloads()));
                 });
-
-                new BrowserStatsBadge(
-                        BrowserImages.count(detail.getLikes()),
-                        BrowserImages.count(detail.getComments()),
-                        BrowserImages.count(detail.getDownloads()));
 
                 renderTags();
                 renderRequirements();
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
-                    text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
+                    card(WebStyles.previewCard().style()).growX().children(() -> {
+                        text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
+                    });
                 }
 
                 spacer();
 
-                row().growX().gap(unit(2)).children(() -> {
+                row().growX().gap(unit(1)).children(() -> {
                     button(Core.bundle.get("browser.schematic.copy"),
                             () -> SchematicActions.copyToClipboard(itemId))
-                            .style(Styles.defaultb)
+                            .style(WebStyles.cardActionText())
                             .growX()
-                            .height(unit(10));
+                            .height(unit(9));
 
                     button(Core.bundle.get("browser.schematic.save"),
                             () -> SchematicActions.saveToLocal(itemId))
-                            .style(Styles.defaultb)
+                            .style(WebStyles.cardActionText())
                             .growX()
-                            .height(unit(10));
+                            .height(unit(9));
                 });
             });
         }
@@ -151,17 +158,19 @@ public class SchematicDetailDialog extends SolimDialog {
             if (tags == null || tags.isEmpty()) {
                 return;
             }
-            text(Core.bundle.get("browser.detail.tags")).color(Color.white).left();
-            grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().gap(unit(1)).children(() -> {
-                for (TagData tag : tags) {
-                    if (tag == null || tag.getName() == null) {
-                        continue;
+            card(WebStyles.previewCard().style()).growX().children(() -> {
+                text(Core.bundle.get("browser.detail.tags")).color(Color.white).left();
+                grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().gap(unit(1)).children(() -> {
+                    for (TagData tag : tags) {
+                        if (tag == null || tag.getName() == null) {
+                            continue;
+                        }
+                        text(tag.getName())
+                                .style(Styles.defaultLabel)
+                                .color(tag.color())
+                                .fontScale(0.85f);
                     }
-                    text(tag.getName())
-                            .style(Styles.defaultLabel)
-                            .color(tag.color())
-                            .fontScale(0.85f);
-                }
+                });
             });
         }
 
@@ -171,14 +180,16 @@ public class SchematicDetailDialog extends SolimDialog {
             if (requirements.isEmpty()) {
                 return;
             }
-            text(Core.bundle.get("browser.detail.requirements")).color(Color.white).left();
-            grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().gap(unit(1)).children(() -> {
-                for (ItemStack stack : requirements) {
-                    row().gap(unit(1)).left().children(() -> {
-                        image(new TextureRegionDrawable(stack.item.uiIcon)).size(unit(8));
-                        text(requirementLabel(stack)).fontScale(0.9f);
-                    });
-                }
+            card(WebStyles.previewCard().style()).growX().children(() -> {
+                text(Core.bundle.get("browser.detail.requirements")).color(Color.white).left();
+                grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().gap(unit(1)).children(() -> {
+                    for (ItemStack stack : requirements) {
+                        row().gap(unit(1)).left().children(() -> {
+                            image(new TextureRegionDrawable(stack.item.uiIcon)).size(unit(8));
+                            text(requirementLabel(stack)).fontScale(0.9f);
+                        });
+                    }
+                });
             });
         }
 

@@ -232,6 +232,18 @@ public final class Text implements Component, SpacingAware {
         return this;
     }
 
+    public Text paddingX(float x) {
+        this.padLeft = this.padRight = x;
+        applySpacing();
+        return this;
+    }
+
+    public Text paddingY(float y) {
+        this.padTop = this.padBottom = y;
+        applySpacing();
+        return this;
+    }
+
     public Text margin(float margin) {
         this.marginTop = this.marginLeft = this.marginBottom = this.marginRight = margin;
         applySpacing();
@@ -267,6 +279,18 @@ public final class Text implements Component, SpacingAware {
 
     public Text marginRight(float right) {
         this.marginRight = right;
+        applySpacing();
+        return this;
+    }
+
+    public Text marginX(float x) {
+        this.marginLeft = this.marginRight = x;
+        applySpacing();
+        return this;
+    }
+
+    public Text marginY(float y) {
+        this.marginTop = this.marginBottom = y;
         applySpacing();
         return this;
     }

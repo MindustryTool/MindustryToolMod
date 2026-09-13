@@ -555,8 +555,34 @@ public final class NetworkImage implements Component, LayoutModifiers<NetworkIma
         return this;
     }
 
+    public NetworkImage paddingX(float x) {
+        this.padLeft = this.padRight = x;
+        applySpacing();
+        return this;
+    }
+
+    public NetworkImage paddingY(float y) {
+        this.padTop = this.padBottom = y;
+        applySpacing();
+        return this;
+    }
+
     public NetworkImage margin(float m) {
         this.marginTop = this.marginLeft = this.marginBottom = this.marginRight = m;
+        applySpacing();
+        return this;
+    }
+
+    @Override
+    public NetworkImage marginX(float x) {
+        this.marginLeft = this.marginRight = x;
+        applySpacing();
+        return this;
+    }
+
+    @Override
+    public NetworkImage marginY(float y) {
+        this.marginTop = this.marginBottom = y;
         applySpacing();
         return this;
     }

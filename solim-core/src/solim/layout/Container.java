@@ -36,6 +36,16 @@ public final class Container implements Component {
 		return this;
 	}
 
+	public Container paddingX(float x) {
+		ElementModifiers.paddingX(table, x);
+		return this;
+	}
+
+	public Container paddingY(float y) {
+		ElementModifiers.paddingY(table, y);
+		return this;
+	}
+
 	public Container background(Drawable d) {
 		table.setBackground(d);
 		return this;

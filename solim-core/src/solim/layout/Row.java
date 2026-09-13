@@ -169,33 +169,25 @@ public final class Row implements Component, LayoutModifiers<Row>, GapContainer 
 		return this;
 	}
 
-	public Row pad(float p) {
-		ElementModifiers.pad(table, p);
+	public Row paddingX(float x) {
+		ElementModifiers.paddingX(table, x);
 		return this;
 	}
 
-	public Row pad(float top, float left, float bottom, float right) {
-		ElementModifiers.pad(table, top, left, bottom, right);
+	public Row paddingY(float y) {
+		ElementModifiers.paddingY(table, y);
 		return this;
 	}
 
-	public Row padTop(float top) {
-		ElementModifiers.padTop(table, top);
+	@Override
+	public Row marginX(float x) {
+		ElementModifiers.marginX(table, x);
 		return this;
 	}
 
-	public Row padBottom(float bottom) {
-		ElementModifiers.padBottom(table, bottom);
-		return this;
-	}
-
-	public Row padLeft(float left) {
-		ElementModifiers.padLeft(table, left);
-		return this;
-	}
-
-	public Row padRight(float right) {
-		ElementModifiers.padRight(table, right);
+	@Override
+	public Row marginY(float y) {
+		ElementModifiers.marginY(table, y);
 		return this;
 	}
 

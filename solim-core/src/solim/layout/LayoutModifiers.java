@@ -439,6 +439,42 @@ public interface LayoutModifiers<SELF extends LayoutModifiers<SELF>> {
 		return self();
 	}
 
+	default SELF marginX(float x) {
+		sizeConstraints().padLeft = Readable.of(x);
+		sizeConstraints().padRight = Readable.of(x);
+		if (this instanceof solim.core.Component) {
+			sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+		}
+		return self();
+	}
+
+	default SELF marginX(Readable<Float> x) {
+		sizeConstraints().padLeft = x;
+		sizeConstraints().padRight = x;
+		if (this instanceof solim.core.Component) {
+			sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+		}
+		return self();
+	}
+
+	default SELF marginY(float y) {
+		sizeConstraints().padTop = Readable.of(y);
+		sizeConstraints().padBottom = Readable.of(y);
+		if (this instanceof solim.core.Component) {
+			sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+		}
+		return self();
+	}
+
+	default SELF marginY(Readable<Float> y) {
+		sizeConstraints().padTop = y;
+		sizeConstraints().padBottom = y;
+		if (this instanceof solim.core.Component) {
+			sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+		}
+		return self();
+	}
+
 	// ---------- rounded & border ----------
 
 	default SELF rounded(int radius) {

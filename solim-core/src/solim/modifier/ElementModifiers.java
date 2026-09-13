@@ -32,7 +32,7 @@ import solim.signal.Signal;
  *   <li>{@code name} — element's debug name</li>
  *   <li>{@code align} — element's internal content alignment</li>
  *   <li>{@code gap} — spacing between children inside a Table-based container</li>
- *   <li>{@code margin/pad} — padding on the element (container-internal defaults)</li>
+ *   <li>{@code margin/padding} — padding on the element (container-internal defaults)</li>
  * </ul>
  *
  * <p>Contrast with {@link solim.layout.LayoutModifiers}, which is a Category B interface that
@@ -306,28 +306,26 @@ public final class ElementModifiers {
         }
     }
 
-    public static void pad(@Nullable Table table, float pad) {
-        margin(table, pad);
+    public static void paddingX(@Nullable Table table, float x) {
+        if (table == null)
+            return;
+        table.marginLeft(x);
+        table.marginRight(x);
     }
 
-    public static void pad(@Nullable Table table, float top, float left, float bottom, float right) {
-        margin(table, top, left, bottom, right);
+    public static void paddingY(@Nullable Table table, float y) {
+        if (table == null)
+            return;
+        table.marginTop(y);
+        table.marginBottom(y);
     }
 
-    public static void padTop(@Nullable Table table, float top) {
-        marginTop(table, top);
+    public static void marginX(@Nullable Table table, float x) {
+        paddingX(table, x);
     }
 
-    public static void padBottom(@Nullable Table table, float bottom) {
-        marginBottom(table, bottom);
-    }
-
-    public static void padLeft(@Nullable Table table, float left) {
-        marginLeft(table, left);
-    }
-
-    public static void padRight(@Nullable Table table, float right) {
-        marginRight(table, right);
+    public static void marginY(@Nullable Table table, float y) {
+        paddingY(table, y);
     }
 
     public static void padding(@Nullable Table table, float padding) {
@@ -430,6 +428,42 @@ public final class ElementModifiers {
                 cell.padRight(right);
             }
         }
+    }
+
+    public static void paddingX(@Nullable Element element, float x) {
+        if (element == null)
+            return;
+        if (element instanceof Table) {
+            paddingX((Table) element, x);
+        } else if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
+            if (cell != null) {
+                cell.padLeft(x);
+                cell.padRight(x);
+            }
+        }
+    }
+
+    public static void paddingY(@Nullable Element element, float y) {
+        if (element == null)
+            return;
+        if (element instanceof Table) {
+            paddingY((Table) element, y);
+        } else if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
+            if (cell != null) {
+                cell.padTop(y);
+                cell.padBottom(y);
+            }
+        }
+    }
+
+    public static void marginX(@Nullable Element element, float x) {
+        paddingX(element, x);
+    }
+
+    public static void marginY(@Nullable Element element, float y) {
+        paddingY(element, y);
     }
 
     public static void respace(@Nullable Table table) {

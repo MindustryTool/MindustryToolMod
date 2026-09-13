@@ -283,6 +283,18 @@ public final class SolimImage implements Component, LayoutModifiers<SolimImage>,
 		return this;
 	}
 
+	public SolimImage paddingX(float x) {
+		this.padLeft = this.padRight = x;
+		applySpacing();
+		return this;
+	}
+
+	public SolimImage paddingY(float y) {
+		this.padTop = this.padBottom = y;
+		applySpacing();
+		return this;
+	}
+
 	public SolimImage margin(float m) {
 		this.marginTop = this.marginLeft = this.marginBottom = this.marginRight = m;
 		applySpacing();
@@ -318,6 +330,20 @@ public final class SolimImage implements Component, LayoutModifiers<SolimImage>,
 
 	public SolimImage marginRight(float right) {
 		this.marginRight = right;
+		applySpacing();
+		return this;
+	}
+
+	@Override
+	public SolimImage marginX(float x) {
+		this.marginLeft = this.marginRight = x;
+		applySpacing();
+		return this;
+	}
+
+	@Override
+	public SolimImage marginY(float y) {
+		this.marginTop = this.marginBottom = y;
 		applySpacing();
 		return this;
 	}
