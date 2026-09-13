@@ -6,7 +6,7 @@ import arc.graphics.Color;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import mindustry.ui.Fonts;
-import solim.graphics.RoundedDrawable;
+import solim.style.SolimButtonStyleBuilder;
 
 /**
  * Dedicated button styles for browser UI featuring continuous rounded borders
@@ -32,22 +32,38 @@ public final class WebStyles {
         int radius = unit(2);
         float stroke = 1.5f;
 
-        webButton = new ButtonStyle();
-        webButton.up = new RoundedDrawable(radius, CHANNEL_BLUE_BG, stroke, CHANNEL_BLUE);
-        webButton.over = new RoundedDrawable(radius, CHANNEL_BLUE_BG_OVER, stroke, CHANNEL_BLUE_OVER);
-        webButton.down = new RoundedDrawable(radius, CHANNEL_BLUE_BG_DOWN, stroke, CHANNEL_BLUE_DOWN);
-        webButton.disabled = new RoundedDrawable(radius, DISABLED_BG, 1.0f, DISABLED_BORDER);
+        SolimButtonStyleBuilder builder = new SolimButtonStyleBuilder()
+                .rounded(radius)
+                .border(stroke, CHANNEL_BLUE)
+                .up(u -> u.background(CHANNEL_BLUE_BG))
+                .over(o -> o.background(CHANNEL_BLUE_BG_OVER).border(stroke, CHANNEL_BLUE_OVER))
+                .down(d -> d.background(CHANNEL_BLUE_BG_DOWN).border(stroke, CHANNEL_BLUE_DOWN))
+                .disabled(dis -> dis.background(DISABLED_BG).border(1.0f, DISABLED_BORDER));
+
+        webButton = builder.build().style();
 
         webTextButton = new TextButtonStyle();
-        webTextButton.up = new RoundedDrawable(radius, CHANNEL_BLUE_BG, stroke, CHANNEL_BLUE);
-        webTextButton.over = new RoundedDrawable(radius, CHANNEL_BLUE_BG_OVER, stroke, CHANNEL_BLUE_OVER);
-        webTextButton.down = new RoundedDrawable(radius, CHANNEL_BLUE_BG_DOWN, stroke, CHANNEL_BLUE_DOWN);
-        webTextButton.disabled = new RoundedDrawable(radius, DISABLED_BG, 1.0f, DISABLED_BORDER);
+        webTextButton.up = webButton.up;
+        webTextButton.over = webButton.over;
+        webTextButton.down = webButton.down;
+        webTextButton.disabled = webButton.disabled;
         webTextButton.font = Fonts.def;
         webTextButton.fontColor = Color.white;
         webTextButton.overFontColor = Color.white;
         webTextButton.downFontColor = Color.lightGray;
         webTextButton.disabledFontColor = Color.gray;
+    }
+
+    public static ButtonStyle button() {
+        return webButton;
+    }
+
+    public static ButtonStyle webButton() {
+        return webButton;
+    }
+
+    public static TextButtonStyle webTextButton() {
+        return webTextButton;
     }
 
     private WebStyles() {

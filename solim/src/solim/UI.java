@@ -49,6 +49,7 @@ import solim.signal.Computed;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
+import solim.style.SolimButtonStyleBuilder;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
 import solim.signal.Signals;
@@ -358,6 +359,36 @@ public final class UI {
 
     public static Button button(Drawable icon) {
         return button(icon, (Runnable) null);
+    }
+
+    public static Button button(String text, @Nullable Runnable onClick,
+            @Nullable Consumer<SolimButtonStyleBuilder> style) {
+        Button b = button(text, onClick);
+        if (style != null) {
+            b.style(style);
+        }
+        return b;
+    }
+
+    public static Button button(Readable<String> text, @Nullable Runnable onClick,
+            @Nullable Consumer<SolimButtonStyleBuilder> style) {
+        Button b = button(text, onClick);
+        if (style != null) {
+            b.style(style);
+        }
+        return b;
+    }
+
+    public static SolimButtonStyleBuilder buttonStyle() {
+        return new SolimButtonStyleBuilder();
+    }
+
+    public static SolimButtonStyleBuilder buttonStyle(@Nullable Consumer<SolimButtonStyleBuilder> config) {
+        SolimButtonStyleBuilder builder = new SolimButtonStyleBuilder();
+        if (config != null) {
+            config.accept(builder);
+        }
+        return builder;
     }
 
     public static SolimTextField textField(Signal<String> signal) {

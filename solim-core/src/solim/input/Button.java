@@ -1,6 +1,7 @@
 package solim.input;
 
 import arc.graphics.Color;
+import arc.graphics.g2d.Font;
 import arc.input.KeyCode;
 import solim.graphics.RoundedDrawable;
 import arc.scene.Element;
@@ -8,6 +9,7 @@ import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.Label;
+import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -15,6 +17,7 @@ import arc.util.Log;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.layout.Row;
@@ -25,6 +28,8 @@ import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
+import solim.style.SolimButtonStyle;
+import solim.style.SolimButtonStyleBuilder;
 
 /**
  * Pure Button container widget supporting explicit children composition, custom
@@ -235,6 +240,74 @@ public final class Button implements Component {
             ComponentContext.register(e);
         }
         return this;
+    }
+
+    public Button style(@Nullable Consumer<SolimButtonStyleBuilder> config) {
+        if (config == null) {
+            return this;
+        }
+        SolimButtonStyleBuilder builder = new SolimButtonStyleBuilder();
+        config.accept(builder);
+        if (builder.isStatic()) {
+            applyResolvedStyle(builder.build());
+        } else {
+            applyResolvedStyle(builder.build());
+            Effect e = Effect.of(() -> applyResolvedStyle(builder.build()));
+            bindings.add(e);
+            ComponentContext.register(e);
+        }
+        return this;
+    }
+
+    private void applyResolvedStyle(@Nullable SolimButtonStyle resolved) {
+        if (resolved == null) {
+            return;
+        }
+        if (resolved.style() != null) {
+            button.setStyle(resolved.style());
+        }
+        if (resolved.padding() != null) {
+            ElementModifiers.padding(button, resolved.padding().floatValue());
+        }
+        if (resolved.margin() != null) {
+            applyStyleMargin(resolved.margin().floatValue());
+        }
+        if (resolved.gap() != null) {
+            ElementModifiers.gap(button, resolved.gap().floatValue());
+        }
+        if (resolved.font() != null) {
+            applyStyleFont(resolved.font());
+        }
+    }
+
+    private void applyStyleMargin(float margin) {
+        if (button.parent instanceof Table) {
+            Cell<?> cell = ((Table) button.parent).getCell(button);
+            if (cell != null) {
+                cell.pad(margin);
+                ((Table) button.parent).invalidateHierarchy();
+                return;
+            }
+        }
+        button.margin(margin);
+    }
+
+    private void applyStyleFont(Font font) {
+        try {
+            for (Element child : button.getChildren()) {
+                if (child instanceof Label) {
+                    Label label = (Label) child;
+                    try {
+                        LabelStyle old = label.getStyle();
+                        LabelStyle next = new LabelStyle(old);
+                        next.font = font;
+                        label.setStyle(next);
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     public Button width(float width) {
