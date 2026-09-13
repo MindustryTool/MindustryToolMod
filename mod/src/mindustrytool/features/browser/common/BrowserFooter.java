@@ -30,7 +30,7 @@ public class BrowserFooter extends BaseComponent {
         return row().growX().gap(unit(2)).children(() -> {
             if (onClose != null) {
                 button(Core.bundle.get("browser.footer.close"), onClose)
-                        .style(WebStyles.webTextButton)
+                        .style(WebStyles.outlineText())
                         .height(unit(10))
                         .tooltip(Core.bundle.get("browser.footer.close.tooltip"));
             }
@@ -38,26 +38,26 @@ public class BrowserFooter extends BaseComponent {
             spacer();
 
             button(Core.bundle.get("browser.footer.previous"), () -> state.prevPage())
-                    .style(WebStyles.webTextButton)
+                    .style(WebStyles.outlineText())
                     .height(unit(10))
                     .enabled(state.page().map(page -> page != null && page > 0))
                     .tooltip(Core.bundle.get("browser.footer.previous.tooltip"));
 
             button(state.page().map(page -> Core.bundle.format("browser.footer.page", page != null ? page + 1 : 1)),
                     this::showPageJumpDialog)
-                    .style(WebStyles.webTextButton)
+                    .style(WebStyles.outlineText())
                     .height(unit(10))
                     .tooltip(Core.bundle.get("browser.footer.page-jump.title"));
 
             button(Core.bundle.get("browser.footer.next"), () -> state.nextPage())
-                    .style(WebStyles.webTextButton)
+                    .style(WebStyles.outlineText())
                     .height(unit(10))
                     .tooltip(Core.bundle.get("browser.footer.next.tooltip"));
 
             spacer();
 
             button(Core.bundle.get("browser.footer.upload"), Icon.upload, () -> Core.app.openURI(uploadUrl))
-                    .style(WebStyles.webTextButton)
+                    .style(WebStyles.outlineText())
                     .height(unit(10))
                     .tooltip(Core.bundle.get("browser.footer.upload.tooltip"));
         }).element();

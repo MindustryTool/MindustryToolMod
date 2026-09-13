@@ -71,17 +71,17 @@ public class SchematicCard extends BaseComponent {
                                 BrowserImages.count(schematic.getDownloads()));
 
                         row().growX().gap(unit(1)).children(() -> {
-                            button(onCopy).style(WebStyles.webButton).size(unit(10))
+                            button(onCopy).style(WebStyles.outlineText()).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.schematic.copy"))
                                     .children(() -> icon(Icon.copy).size(unit(5)));
 
-                            button(onSave).style(WebStyles.webButton).size(unit(10))
+                            button(onSave).style(WebStyles.outlineText()).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.schematic.save"))
                                     .children(() -> icon(Icon.save).size(unit(5)));
 
                             spacer();
 
-                            button(onDetails).style(WebStyles.webButton).size(unit(10))
+                            button(onDetails).style(WebStyles.outlineText()).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.schematic.details"))
                                     .children(() -> icon(Icon.infoCircle).size(unit(5)));
                         });

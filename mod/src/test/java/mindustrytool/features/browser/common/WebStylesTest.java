@@ -1,0 +1,227 @@
+package mindustrytool.features.browser.common;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import arc.Core;
+import arc.graphics.Color;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.TextureRegion;
+import arc.mock.MockApplication;
+import arc.mock.MockGL20;
+import arc.mock.MockGraphics;
+import arc.mock.MockSettings;
+import arc.scene.Scene;
+import arc.scene.ui.TextButton.TextButtonStyle;
+import java.lang.reflect.Field;
+import mindustry.ui.Fonts;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import solim.graphics.RoundedDrawable;
+import solim.style.SolimButtonStyle;
+
+class WebStylesTest {
+
+    private static Font testFont;
+
+    private static int rgba(Color color) {
+        return Color.rgba8888(color.r, color.g, color.b, color.a);
+    }
+
+    @BeforeAll
+    static void setUp() {
+        Core.app = new MockApplication();
+        Core.graphics = new MockGraphics();
+        Core.settings = new MockSettings();
+        if (Core.gl == null) {
+            Core.gl = new MockGL20();
+            Core.gl20 = (MockGL20) Core.gl;
+        }
+        if (Core.scene == null) {
+            Core.scene = new Scene();
+        }
+        if (testFont == null) {
+            Font.FontData fontData = new Font.FontData() {
+                @Override
+                public boolean hasGlyph(char ch) {
+                    return true;
+                }
+
+                @Override
+                public Font.Glyph getGlyph(char ch) {
+                    Font.Glyph g = super.getGlyph(ch);
+                    if (g == null) {
+                        g = new Font.Glyph();
+                        g.id = ch;
+                        g.width = 8;
+                        g.height = 12;
+                        g.xadvance = 8;
+                        setGlyph(ch, g);
+                    }
+                    return g;
+                }
+            };
+            fontData.lineHeight = 18f;
+            fontData.capHeight = 14f;
+            fontData.ascent = 14f;
+            fontData.descent = -4f;
+            fontData.down = -18f;
+            testFont = new Font(fontData, new TextureRegion(), false);
+        }
+        Fonts.def = testFont;
+    }
+
+    @Test
+    void colorsAreDefined() {
+        assertNotNull(WebStyles.Colors.PRIMARY);
+        assertNotNull(WebStyles.Colors.PRIMARY_HOVER);
+        assertNotNull(WebStyles.Colors.PRIMARY_DOWN);
+        assertNotNull(WebStyles.Colors.PRIMARY_FG);
+        assertNotNull(WebStyles.Colors.PRIMARY_BG);
+        assertNotNull(WebStyles.Colors.PRIMARY_BG_HOVER);
+        assertNotNull(WebStyles.Colors.PRIMARY_BG_DOWN);
+        assertNotNull(WebStyles.Colors.SECONDARY);
+        assertNotNull(WebStyles.Colors.SECONDARY_HOVER);
+        assertNotNull(WebStyles.Colors.SECONDARY_DOWN);
+        assertNotNull(WebStyles.Colors.SECONDARY_FG);
+        assertNotNull(WebStyles.Colors.GHOST_HOVER);
+        assertNotNull(WebStyles.Colors.GHOST_DOWN);
+        assertNotNull(WebStyles.Colors.GHOST_FG);
+        assertNotNull(WebStyles.Colors.DANGER);
+        assertNotNull(WebStyles.Colors.DANGER_HOVER);
+        assertNotNull(WebStyles.Colors.DANGER_DOWN);
+        assertNotNull(WebStyles.Colors.DANGER_FG);
+        assertNotNull(WebStyles.Colors.BORDER);
+        assertNotNull(WebStyles.Colors.DISABLED_BG);
+        assertNotNull(WebStyles.Colors.DISABLED_BORDER);
+        assertNotNull(WebStyles.Colors.DISABLED_FG);
+
+        assertEquals(rgba(new Color(0.45f, 0.35f, 0.90f, 1.0f)), rgba(WebStyles.Colors.PRIMARY));
+        assertEquals(rgba(new Color(0.45f, 0.35f, 0.90f, 0.15f)), rgba(WebStyles.Colors.PRIMARY_BG));
+        assertEquals(rgba(new Color(0.20f, 0.20f, 0.28f, 0.70f)), rgba(WebStyles.Colors.SECONDARY));
+        assertEquals(rgba(new Color(0.85f, 0.25f, 0.25f, 1.0f)), rgba(WebStyles.Colors.DANGER));
+    }
+
+    @Test
+    void variantsReturnCachedSingletonsWithPadding() {
+        assertSame(WebStyles.primary(), WebStyles.primary());
+        assertSame(WebStyles.secondary(), WebStyles.secondary());
+        assertSame(WebStyles.outline(), WebStyles.outline());
+        assertSame(WebStyles.ghost(), WebStyles.ghost());
+        assertSame(WebStyles.danger(), WebStyles.danger());
+
+        assertSame(WebStyles.primaryText(), WebStyles.primaryText());
+        assertSame(WebStyles.secondaryText(), WebStyles.secondaryText());
+        assertSame(WebStyles.outlineText(), WebStyles.outlineText());
+        assertSame(WebStyles.ghostText(), WebStyles.ghostText());
+        assertSame(WebStyles.dangerText(), WebStyles.dangerText());
+
+        float expectedPadding = 8f;
+        assertEquals(expectedPadding, WebStyles.primary().padding().floatValue(), 0.001f);
+        assertEquals(expectedPadding, WebStyles.secondary().padding().floatValue(), 0.001f);
+        assertEquals(expectedPadding, WebStyles.outline().padding().floatValue(), 0.001f);
+        assertEquals(expectedPadding, WebStyles.ghost().padding().floatValue(), 0.001f);
+        assertEquals(expectedPadding, WebStyles.danger().padding().floatValue(), 0.001f);
+        assertEquals(expectedPadding, WebStyles.primaryText().padding().floatValue(), 0.001f);
+        assertEquals(expectedPadding, WebStyles.secondaryText().padding().floatValue(), 0.001f);
+        assertEquals(expectedPadding, WebStyles.outlineText().padding().floatValue(), 0.001f);
+        assertEquals(expectedPadding, WebStyles.ghostText().padding().floatValue(), 0.001f);
+        assertEquals(expectedPadding, WebStyles.dangerText().padding().floatValue(), 0.001f);
+    }
+
+    @Test
+    void primaryVariantColors() {
+        SolimButtonStyle style = WebStyles.primary();
+        RoundedDrawable up = (RoundedDrawable) style.style().up;
+        RoundedDrawable over = (RoundedDrawable) style.style().over;
+        RoundedDrawable down = (RoundedDrawable) style.style().down;
+        assertEquals(rgba(WebStyles.Colors.PRIMARY), rgba(up.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.PRIMARY_HOVER), rgba(over.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.PRIMARY_DOWN), rgba(down.getFillColor()));
+        assertEquals(8, up.getRadius());
+    }
+
+    @Test
+    void secondaryVariantColors() {
+        SolimButtonStyle style = WebStyles.secondary();
+        RoundedDrawable up = (RoundedDrawable) style.style().up;
+        RoundedDrawable over = (RoundedDrawable) style.style().over;
+        RoundedDrawable down = (RoundedDrawable) style.style().down;
+        assertEquals(rgba(WebStyles.Colors.SECONDARY), rgba(up.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.SECONDARY_HOVER), rgba(over.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.SECONDARY_DOWN), rgba(down.getFillColor()));
+    }
+
+    @Test
+    void outlineVariantMatchesLegacyWash() {
+        SolimButtonStyle style = WebStyles.outline();
+        RoundedDrawable up = (RoundedDrawable) style.style().up;
+        RoundedDrawable over = (RoundedDrawable) style.style().over;
+        RoundedDrawable down = (RoundedDrawable) style.style().down;
+        assertEquals(rgba(WebStyles.Colors.PRIMARY_BG), rgba(up.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.PRIMARY_BG_HOVER), rgba(over.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.PRIMARY_BG_DOWN), rgba(down.getFillColor()));
+        assertEquals(1.5f, up.getStroke(), 0.001f);
+        assertEquals(rgba(WebStyles.Colors.PRIMARY), rgba(up.getBorderColor()));
+        assertEquals(8, up.getRadius());
+    }
+
+    @Test
+    void ghostVariantColors() {
+        SolimButtonStyle style = WebStyles.ghost();
+        RoundedDrawable over = (RoundedDrawable) style.style().over;
+        RoundedDrawable down = (RoundedDrawable) style.style().down;
+        assertEquals(rgba(WebStyles.Colors.GHOST_HOVER), rgba(over.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.GHOST_DOWN), rgba(down.getFillColor()));
+    }
+
+    @Test
+    void dangerVariantColors() {
+        SolimButtonStyle style = WebStyles.danger();
+        RoundedDrawable up = (RoundedDrawable) style.style().up;
+        RoundedDrawable over = (RoundedDrawable) style.style().over;
+        RoundedDrawable down = (RoundedDrawable) style.style().down;
+        assertEquals(rgba(WebStyles.Colors.DANGER), rgba(up.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.DANGER_HOVER), rgba(over.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.DANGER_DOWN), rgba(down.getFillColor()));
+    }
+
+    @Test
+    void textCounterpartsContainFontAndDrawables() {
+        SolimButtonStyle[] texts = new SolimButtonStyle[]{
+            WebStyles.primaryText(),
+            WebStyles.secondaryText(),
+            WebStyles.outlineText(),
+            WebStyles.ghostText(),
+            WebStyles.dangerText()
+        };
+        for (SolimButtonStyle text : texts) {
+            assertTrue(text.style() instanceof TextButtonStyle);
+            TextButtonStyle ts = (TextButtonStyle) text.style();
+            assertNotNull(ts.up);
+            assertNotNull(ts.over);
+            assertNotNull(ts.down);
+            assertEquals(Fonts.def, ts.font);
+            assertNotNull(ts.fontColor);
+            assertNotNull(ts.overFontColor);
+            assertNotNull(ts.downFontColor);
+            assertNotNull(ts.disabledFontColor);
+        }
+
+        TextButtonStyle outlineText = (TextButtonStyle) WebStyles.outlineText().style();
+        RoundedDrawable up = (RoundedDrawable) outlineText.up;
+        assertEquals(rgba(WebStyles.Colors.PRIMARY_BG), rgba(up.getFillColor()));
+    }
+
+    @Test
+    void noLegacyAliasesExist() {
+        for (Field field : WebStyles.class.getDeclaredFields()) {
+            String name = field.getName();
+            assertTrue(!name.equals("webButton"), "Legacy webButton should not exist");
+            assertTrue(!name.equals("webTextButton"), "Legacy webTextButton should not exist");
+            assertTrue(!name.startsWith("CHANNEL_BLUE"), "Legacy CHANNEL_BLUE should not exist");
+        }
+    }
+}

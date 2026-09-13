@@ -259,6 +259,13 @@ public final class Button implements Component {
         return this;
     }
 
+    public Button style(@Nullable SolimButtonStyle resolved) {
+        if (resolved != null) {
+            applyResolvedStyle(resolved);
+        }
+        return this;
+    }
+
     private void applyResolvedStyle(@Nullable SolimButtonStyle resolved) {
         if (resolved == null) {
             return;

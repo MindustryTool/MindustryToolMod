@@ -80,11 +80,11 @@ public class BrowserSearchHeader extends BaseComponent {
                             });
                 });
 
-                button(this::refresh).style(WebStyles.webButton).size(unit(10))
+                button(this::refresh).style(WebStyles.outlineText()).size(unit(10))
                         .tooltip(Core.bundle.get("browser.search.refresh"))
                         .children(() -> icon(Icon.refresh).size(unit(5)));
 
-                button(onFilterClick).style(WebStyles.webButton).size(unit(10))
+                button(onFilterClick).style(WebStyles.outlineText()).size(unit(10))
                         .tooltip(Core.bundle.get("browser.search.filter"))
                         .children(() -> icon(Icon.filter).size(unit(5)));
             });

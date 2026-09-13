@@ -64,13 +64,13 @@ public class MapCard extends BaseComponent {
                                 BrowserImages.count(map.getDownloads()));
 
                         row().growX().gap(unit(1)).children(() -> {
-                            button(onDownload).style(WebStyles.webButton).size(unit(10))
+                            button(onDownload).style(WebStyles.outlineText()).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.map.download"))
                                     .children(() -> icon(Icon.download).size(unit(5)));
 
                             spacer();
 
-                            button(onDetails).style(WebStyles.webButton).size(unit(10))
+                            button(onDetails).style(WebStyles.outlineText()).size(unit(10))
                                     .tooltip(Core.bundle.get("browser.map.details"))
                                     .children(() -> icon(Icon.infoCircle).size(unit(5)));
                         });

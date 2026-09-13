@@ -95,7 +95,7 @@ public class SchematicBrowserDialog extends SolimDialog {
                                     .wrap(true)
                                     .growX();
                             button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                    .style(WebStyles.webTextButton)
+                                    .style(WebStyles.outlineText())
                                     .height(unit(10));
                         });
 
