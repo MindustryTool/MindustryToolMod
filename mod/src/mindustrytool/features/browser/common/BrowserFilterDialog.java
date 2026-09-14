@@ -134,9 +134,8 @@ public class BrowserFilterDialog extends SolimDialog {
 
         private void sectionPanel(String title, Runnable content, Color color) {
             column().growX().left()
-                    .rounded(unit(3))
-                    .border(2f, Color.green)
-                    .backgroundColor(Color.scarlet)
+                    .rounded(unit(2))
+                    .backgroundColor(Color.rgb(24, 24, 24))
                     .padding(unit(3))
                     .gap(unit(2))
                     .children(() -> {
@@ -152,7 +151,7 @@ public class BrowserFilterDialog extends SolimDialog {
                     Readable<Boolean> checked = state.sort().map(current -> sortValue.equals(current));
                     button(() -> state.setSort(sortValue))
                             .style(WebStyles.filterChipText())
-                            .paddingX(unit(2))
+                            .paddingX(unit(3))
                             .checked(checked)
                             .height(unit(9))
                             .children(() -> {
@@ -177,7 +176,7 @@ public class BrowserFilterDialog extends SolimDialog {
                     Readable<Boolean> checked = state.verification().map(current -> optionValue.equals(current));
                     button(() -> state.setVerification(optionValue))
                             .style(WebStyles.filterChipText())
-                            .paddingX(unit(2))
+                            .paddingX(unit(3))
                             .checked(checked)
                             .height(unit(9))
                             .children(() -> {
@@ -217,7 +216,7 @@ public class BrowserFilterDialog extends SolimDialog {
                     selected -> selected != null && modId != null && selected.contains(modId));
             button(() -> togglePlanet(modId))
                     .style(WebStyles.filterChipText())
-                    .paddingX(unit(2))
+                    .paddingX(unit(3))
                     .checked(checked)
                     .height(unit(9))
                     .children(() -> {
@@ -352,7 +351,7 @@ public class BrowserFilterDialog extends SolimDialog {
 
             button(() -> state.toggleTag(key))
                     .style(WebStyles.filterChipText())
-                    .paddingX(unit(2))
+                    .paddingX(unit(3))
                     .checked(checked)
                     .height(unit(9))
                     .gap(unit(1))
@@ -392,7 +391,7 @@ public class BrowserFilterDialog extends SolimDialog {
 
                         button(() -> state.toggleBlock(blockName))
                                 .style(WebStyles.filterChipText())
-                                .paddingX(unit(2))
+                                .paddingX(unit(3))
                                 .checked(checked)
                                 .height(unit(9))
                                 .gap(unit(1))

@@ -55,7 +55,6 @@ public class QuickAccessHudView extends BaseComponent {
         Readable<Float> scale = parentFeature.scaleConfig.signal();
         Readable<Float> buttonSize = scale.map(s -> unit(14) * s);
         Readable<Float> iconSize = scale.map(s -> unit(12) * s);
-        Readable<Float> margin = scale.map(s -> unit(2) * s);
 
         Readable<List<HudItem>> items = parentFeature.hiddenFeaturesConfig.signal().map(this::computeVisibleItems);
 
@@ -73,7 +72,7 @@ public class QuickAccessHudView extends BaseComponent {
                     .growY();
 
             grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items, HudItem::id,
-                    item -> createItemButton(item, buttonSize, iconSize, margin))
+                    item -> createItemButton(item, buttonSize, iconSize))
                             .gap(2);
         });
 
@@ -103,8 +102,7 @@ public class QuickAccessHudView extends BaseComponent {
         return list;
     }
 
-    private Component createItemButton(HudItem item, Readable<Float> buttonSize, Readable<Float> iconSize,
-            Readable<Float> margin) {
+    private Component createItemButton(HudItem item, Readable<Float> buttonSize, Readable<Float> iconSize) {
 
         if (item.feature != null) {
             Feature f = item.feature;
