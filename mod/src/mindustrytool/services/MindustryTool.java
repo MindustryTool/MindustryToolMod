@@ -349,10 +349,10 @@ public final class MindustryTool {
     }
 
     private static synchronized String getMid() {
-        String midKey = "mid-key";
+        String midKey = "mod-mid-key";
         String mid = Core.settings.getString(midKey);
         if (mid == null || mid.isEmpty()) {
-            mid = UUID.randomUUID().toString();
+            mid = "mod:" + UUID.randomUUID().toString();
             Core.settings.put(midKey, mid);
         }
 
