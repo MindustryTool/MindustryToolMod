@@ -72,7 +72,7 @@ public class ChatOverlayHudView extends BaseComponent {
     }
 
     private Component buildCollapsedBadge() {
-        Readable<Boolean> hasUnread = store.unreadCount().map(count -> count != null && count > 0);
+        Readable<Boolean> hasUnread = store.unread().total().map(count -> count != null && count > 0);
 
         return card()
                 .rounded(10, new Color(0f, 0f, 0f, 0.6f))
@@ -80,7 +80,7 @@ public class ChatOverlayHudView extends BaseComponent {
                 .children(() -> {
                     button(() -> {
                         feature.collapsedConfig.set(false);
-                        store.clearUnread();
+                        store.unread().clearAll();
                     })
                             .style(Styles.clearNonei)
                             .size(unit(14), unit(14))
@@ -118,7 +118,7 @@ public class ChatOverlayHudView extends BaseComponent {
             return Math.max(minH, Math.min(maxH, target));
         });
 
-        Readable<Boolean> isConnected = store.connected();
+        Readable<Boolean> isConnected = store.session().connected();
 
         // Shared floating message-action popup (zero-footprint overlay driver).
         ChatActionPopup.install(store);

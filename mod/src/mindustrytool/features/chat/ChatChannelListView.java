@@ -7,7 +7,6 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
-
 import java.util.Objects;
 import mindustry.ui.Fonts;
 import mindustry.ui.Styles;
@@ -27,14 +26,14 @@ public class ChatChannelListView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<Boolean> hasChannels = store.channels().map(list -> list != null && !list.isEmpty());
+        Readable<Boolean> hasChannels = store.channels().all().map(list -> list != null && !list.isEmpty());
 
         return column().grow().gap(unit(1)).padding(unit(2)).children(() -> {
             scroll().grow().children(() -> {
                 column().growX().gap(unit(1)).children(() -> {
                     dynamic(hasChannels, available -> {
                         if (Boolean.TRUE.equals(available)) {
-                            return forEach(store.channels(), ChannelDto::getId,
+                            return forEach(store.channels().all(), ChannelDto::getId,
                                     channel -> new ChannelItem(channel, store))
                                             .growX();
                         } else {
@@ -82,9 +81,9 @@ public class ChatChannelListView extends BaseComponent {
         @Override
         protected Element build() {
             Computed<Boolean> isSelected = new Computed<>(
-                    () -> Objects.equals(store.activeChannelId().get(), channel.getId()));
+                    () -> Objects.equals(store.channels().activeId().get(), channel.getId()));
 
-            Readable<Boolean> hasUnread = store.channelUnread(channel.getId())
+            Readable<Boolean> hasUnread = store.unread().forChannel(channel.getId())
                     .map(count -> count != null && count > 0);
 
             Computed<ButtonStyle> style = isSelected.map(s -> s ? selectedStyle : defaultStyle);
@@ -95,7 +94,7 @@ public class ChatChannelListView extends BaseComponent {
                     .height(unit(10))
                     .left()
                     .children(() -> {
-                        button(() -> store.setActiveChannelId(channel.getId()))
+                        button(() -> store.selectChannel(channel.getId()))
                                 .style(style)
                                 .margin(unit(1))
                                 .left()

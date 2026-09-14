@@ -1,434 +1,69 @@
 package mindustrytool.features.chat;
 
 import arc.util.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import mindustrytool.models.response.ChannelDto;
-import mindustrytool.models.response.ChatMessage;
-import mindustrytool.models.response.ChatUser;
-import mindustrytool.models.response.UserData;
-import mindustrytool.services.auth.MindustryAuthProvider;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import mindustrytool.features.chat.state.ChatChannels;
+import mindustrytool.features.chat.state.ChatMembers;
+import mindustrytool.features.chat.state.ChatMessageDelivery;
+import mindustrytool.features.chat.state.ChatMessages;
+import mindustrytool.features.chat.state.ChatSession;
+import mindustrytool.features.chat.state.ChatTranslations;
+import mindustrytool.features.chat.state.ChatUiState;
+import mindustrytool.features.chat.state.ChatUnread;
+import mindustrytool.features.chat.state.ChatUsers;
 
-public class ChatStore {
+public final class ChatStore {
 
-    private final Computed<Boolean> loggedIn = new Computed<>(() ->
-            MindustryAuthProvider.getInstance().session().get() != null);
-    private final Signal<List<ChannelDto>> channels = Signal.of(Collections.emptyList());
-    private final Signal<String> activeChannelId = Signal.of("");
-    private final Signal<Map<String, List<ChatMessage>>> messages = Signal.of(new HashMap<>());
-    private final Signal<Map<String, List<ChatUser>>> users = Signal.of(new HashMap<>());
-    private final Signal<Map<String, UserData>> userCache = Signal.of(new HashMap<>());
-    private final Signal<Integer> unreadCount = Signal.of(0);
-    private final Signal<Map<String, Integer>> channelUnread = Signal.of(new HashMap<>());
-    private final Signal<Boolean> connected = Signal.of(false);
-    private final Signal<ChatMessage> replyTarget = Signal.of(null);
-    private final Signal<Boolean> loadingOlder = Signal.of(false);
-    private final Signal<Map<String, Boolean>> fullyLoadedChannels = Signal.of(new HashMap<>());
-    private final Signal<String> expandedMessageId = Signal.of(null);
-    private final Signal<Map<String, String>> translatedMessages = Signal.of(new HashMap<>());
-    private final Signal<String> translatingMessageId = Signal.of(null);
-    private final Signal<Set<String>> pendingMessageIds = Signal.of(new HashSet<>());
-    private final Signal<Set<String>> failedMessageIds = Signal.of(new HashSet<>());
-    private final Map<String, Readable<UserData>> userComputeds = new HashMap<>();
-    private final Computed<String> sessionUsername = MindustryAuthProvider.getInstance().session()
-            .map(session -> session != null ? session.getName() : null);
+    private final ChatSession session = new ChatSession();
+    private final ChatChannels channels = new ChatChannels();
+    private final ChatMessages messages = new ChatMessages(channels.activeId());
+    private final ChatMembers members = new ChatMembers(channels.activeId());
+    private final ChatUsers users = new ChatUsers();
+    private final ChatUnread unread = new ChatUnread();
+    private final ChatTranslations translations = new ChatTranslations();
+    private final ChatMessageDelivery delivery = new ChatMessageDelivery();
+    private final ChatUiState ui = new ChatUiState();
 
-    private final Computed<List<ChatMessage>> activeMessages = new Computed<>(() -> {
-        String activeId = activeChannelId.get();
-        if (activeId == null || activeId.isEmpty()) {
-            return Collections.emptyList();
-        }
-        Map<String, List<ChatMessage>> map = messages.get();
-        List<ChatMessage> list = map != null ? map.get(activeId) : null;
-        return list != null ? list : Collections.emptyList();
-    });
-
-    private final Computed<List<ChatUser>> activeUsers = new Computed<>(() -> {
-        String activeId = activeChannelId.get();
-        if (activeId == null || activeId.isEmpty()) {
-            return Collections.emptyList();
-        }
-        Map<String, List<ChatUser>> map = users.get();
-        List<ChatUser> list = map != null ? map.get(activeId) : null;
-        return list != null ? list : Collections.emptyList();
-    });
-
-    private final Computed<ChannelDto> activeChannel = new Computed<>(() -> {
-        String activeId = activeChannelId.get();
-        if (activeId == null || activeId.isEmpty()) {
-            return null;
-        }
-        List<ChannelDto> list = channels.get();
-        if (list == null) {
-            return null;
-        }
-        for (ChannelDto c : list) {
-            if (Objects.equals(c.getId(), activeId)) {
-                return c;
-            }
-        }
-        return null;
-    });
-
-    private final Computed<Boolean> activeChannelFullyLoaded = new Computed<>(() -> {
-        String activeId = activeChannelId.get();
-        if (activeId == null || activeId.isEmpty()) {
-            return false;
-        }
-        Map<String, Boolean> map = fullyLoadedChannels.get();
-        return map != null && Boolean.TRUE.equals(map.get(activeId));
-    });
-
-    public ChatStore() {
-        sessionUsername.subscribe(username -> ChatMessageParser.clearCache());
-        sessionUsername.peek();
+    public ChatSession session() {
+        return session;
     }
 
-    public Readable<Boolean> loggedIn() {
-        return loggedIn;
-    }
-
-    public Readable<List<ChannelDto>> channels() {
+    public ChatChannels channels() {
         return channels;
     }
 
-    public Signal<String> activeChannelId() {
-        return activeChannelId;
+    public ChatMessages messages() {
+        return messages;
     }
 
-    public Readable<List<ChatMessage>> activeMessages() {
-        return activeMessages;
+    public ChatMembers members() {
+        return members;
     }
 
-    public Readable<List<ChatUser>> activeUsers() {
-        return activeUsers;
+    public ChatUsers users() {
+        return users;
     }
 
-    public Readable<ChannelDto> activeChannel() {
-        return activeChannel;
+    public ChatUnread unread() {
+        return unread;
     }
 
-    public Readable<Integer> unreadCount() {
-        return unreadCount;
+    public ChatTranslations translations() {
+        return translations;
     }
 
-    public Readable<Boolean> connected() {
-        return connected;
+    public ChatMessageDelivery delivery() {
+        return delivery;
     }
 
-    public Signal<ChatMessage> replyTarget() {
-        return replyTarget;
+    public ChatUiState ui() {
+        return ui;
     }
 
-    public void setChannels(List<ChannelDto> newChannels) {
-        channels.set(newChannels != null ? new ArrayList<>(newChannels) : Collections.emptyList());
-        if (!newChannels.isEmpty()) {
-            String current = activeChannelId.peek();
-            boolean exists = false;
-            for (ChannelDto c : newChannels) {
-                if (Objects.equals(c.getId(), current)) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) {
-                activeChannelId.set(newChannels.get(0).getId());
-            }
-        }
-    }
-
-    public void setActiveChannelId(String channelId) {
-        if (!Objects.equals(activeChannelId.peek(), channelId)) {
-            activeChannelId.set(channelId);
-            replyTarget.set(null);
-            expandedMessageId.set(null);
-
-            // Clear unread for selected channel
-            Map<String, Integer> unreads = new HashMap<>(channelUnread.peek() != null ? channelUnread.peek() : Collections.emptyMap());
-            unreads.put(channelId, 0);
-            channelUnread.set(unreads);
-        }
-    }
-
-    public Readable<Integer> channelUnread(String channelId) {
-        return channelUnread.map(map -> (map != null && channelId != null) ? map.getOrDefault(channelId, 0) : 0);
-    }
-
-    public Readable<Boolean> loadingOlder() {
-        return loadingOlder;
-    }
-
-    public void setLoadingOlder(boolean loading) {
-        loadingOlder.set(loading);
-    }
-
-    public Readable<Boolean> fullyLoaded(String channelId) {
-        return fullyLoadedChannels.map(map -> (map != null && channelId != null) && Boolean.TRUE.equals(map.get(channelId)));
-    }
-
-    public Readable<Boolean> activeChannelFullyLoaded() {
-        return activeChannelFullyLoaded;
-    }
-
-    public boolean isFullyLoaded(String channelId) {
-        Map<String, Boolean> map = fullyLoadedChannels.peek();
-        return channelId != null && map != null && Boolean.TRUE.equals(map.get(channelId));
-    }
-
-    public void setFullyLoaded(String channelId, boolean fullyLoaded) {
+    public void selectChannel(@Nullable String channelId) {
+        channels.select(channelId);
+        ui.clearActiveSelection();
         if (channelId != null) {
-            Map<String, Boolean> map = new HashMap<>(fullyLoadedChannels.peek() != null ? fullyLoadedChannels.peek() : Collections.emptyMap());
-            map.put(channelId, fullyLoaded);
-            fullyLoadedChannels.set(map);
+            unread.clear(channelId);
         }
-    }
-
-    public Signal<String> expandedMessageId() {
-        return expandedMessageId;
-    }
-
-    public void toggleExpanded(String messageId) {
-        if (Objects.equals(expandedMessageId.peek(), messageId)) {
-            expandedMessageId.set(null);
-        } else {
-            expandedMessageId.set(messageId);
-        }
-    }
-
-    public Readable<String> translation(String messageId) {
-        return translatedMessages.map(map -> (map != null && messageId != null) ? map.get(messageId) : null);
-    }
-
-    public void setTranslation(String messageId, String translation) {
-        if (messageId != null) {
-            Map<String, String> map = new HashMap<>(translatedMessages.peek() != null ? translatedMessages.peek() : Collections.emptyMap());
-            if (translation != null) {
-                map.put(messageId, translation);
-            } else {
-                map.remove(messageId);
-            }
-            translatedMessages.set(map);
-        }
-    }
-
-    public Signal<String> translatingMessageId() {
-        return translatingMessageId;
-    }
-
-    public void setMessages(String channelId, List<ChatMessage> newMessages) {
-        Map<String, List<ChatMessage>> current = new HashMap<>(messages.peek() != null ? messages.peek() : Collections.emptyMap());
-        current.put(channelId, newMessages != null ? new ArrayList<>(newMessages) : Collections.emptyList());
-        messages.set(current);
-    }
-
-    public int prependMessages(String channelId, List<ChatMessage> oldMessages) {
-        if (oldMessages == null || oldMessages.isEmpty() || channelId == null) {
-            return 0;
-        }
-        Map<String, List<ChatMessage>> current = new HashMap<>(messages.peek() != null ? messages.peek() : Collections.emptyMap());
-        List<ChatMessage> existing = current.containsKey(channelId) ? new ArrayList<>(current.get(channelId)) : new ArrayList<>();
-        List<ChatMessage> merged = new ArrayList<>();
-        for (ChatMessage m : oldMessages) {
-            boolean found = false;
-            for (ChatMessage ex : existing) {
-                if (Objects.equals(ex.getId(), m.getId())) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                merged.add(m);
-            }
-        }
-        if (merged.isEmpty()) {
-            return 0;
-        }
-        int added = merged.size();
-        merged.addAll(existing);
-        current.put(channelId, merged);
-        messages.set(current);
-        return added;
-    }
-
-    public void appendMessage(ChatMessage message, boolean isWindowOpen) {
-        if (message == null || message.getChannelId() == null) {
-            return;
-        }
-        String chId = message.getChannelId();
-        Map<String, List<ChatMessage>> current = new HashMap<>(messages.peek() != null ? messages.peek() : Collections.emptyMap());
-        List<ChatMessage> list = current.containsKey(chId) ? new ArrayList<>(current.get(chId)) : new ArrayList<>();
-
-        // Prevent duplicates
-        for (ChatMessage existing : list) {
-            if (Objects.equals(existing.getId(), message.getId())) {
-                return;
-            }
-        }
-
-        list.add(message);
-        current.put(chId, list);
-        messages.set(current);
-
-        boolean isActive = Objects.equals(activeChannelId.peek(), chId);
-        if (!isWindowOpen || !isActive) {
-            Integer unread = unreadCount.peek();
-            unreadCount.set((unread != null ? unread : 0) + 1);
-
-            Map<String, Integer> unreads = new HashMap<>(channelUnread.peek() != null ? channelUnread.peek() : Collections.emptyMap());
-            int count = unreads.getOrDefault(chId, 0);
-            unreads.put(chId, count + 1);
-            channelUnread.set(unreads);
-        }
-    }
-
-    public void setUsers(String channelId, List<ChatUser> userList) {
-        Map<String, List<ChatUser>> current = new HashMap<>(users.peek() != null ? users.peek() : Collections.emptyMap());
-        current.put(channelId, userList != null ? new ArrayList<>(userList) : Collections.emptyList());
-        users.set(current);
-    }
-
-    public void setConnected(boolean isConnected) {
-        connected.set(isConnected);
-    }
-
-    public void clearUnread() {
-        unreadCount.set(0);
-        String active = activeChannelId.peek();
-        if (active != null && !active.isEmpty()) {
-            Map<String, Integer> unreads = new HashMap<>(channelUnread.peek() != null ? channelUnread.peek() : Collections.emptyMap());
-            unreads.put(active, 0);
-            channelUnread.set(unreads);
-        }
-    }
-
-    public void setReplyTarget(@Nullable ChatMessage target) {
-        replyTarget.set(target);
-    }
-
-    public Readable<Set<String>> pendingMessageIds() {
-        return pendingMessageIds;
-    }
-
-    public Readable<Set<String>> failedMessageIds() {
-        return failedMessageIds;
-    }
-
-    public void addPendingMessage(String tempId) {
-        if (tempId == null) return;
-        Set<String> set = new HashSet<>(pendingMessageIds.peek());
-        set.add(tempId);
-        pendingMessageIds.set(set);
-    }
-
-    public void removePendingMessage(String tempId) {
-        if (tempId == null) return;
-        Set<String> set = new HashSet<>(pendingMessageIds.peek());
-        set.remove(tempId);
-        pendingMessageIds.set(set);
-    }
-
-    public void addFailedMessage(String tempId) {
-        if (tempId == null) return;
-        Set<String> pending = new HashSet<>(pendingMessageIds.peek());
-        pending.remove(tempId);
-        pendingMessageIds.set(pending);
-        Set<String> failed = new HashSet<>(failedMessageIds.peek());
-        failed.add(tempId);
-        failedMessageIds.set(failed);
-    }
-
-    public void removeFailedMessage(String tempId) {
-        if (tempId == null) return;
-        Set<String> set = new HashSet<>(failedMessageIds.peek());
-        set.remove(tempId);
-        failedMessageIds.set(set);
-    }
-
-    public boolean replaceMessage(String tempId, ChatMessage realMsg) {
-        if (tempId == null || realMsg == null) return false;
-        String chId = realMsg.getChannelId();
-        if (chId == null) return false;
-        Map<String, List<ChatMessage>> current = new HashMap<>(messages.peek() != null ? messages.peek() : Collections.emptyMap());
-        List<ChatMessage> list = current.get(chId);
-        if (list == null) return false;
-        for (int i = 0; i < list.size(); i++) {
-            if (Objects.equals(list.get(i).getId(), tempId)) {
-                List<ChatMessage> newList = new ArrayList<>(list);
-                newList.set(i, realMsg);
-                current.put(chId, newList);
-                messages.set(current);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean removeMessage(String messageId) {
-        if (messageId == null) return false;
-        String chId = activeChannelId.peek();
-        if (chId == null || chId.isEmpty()) return false;
-        Map<String, List<ChatMessage>> current = new HashMap<>(messages.peek() != null ? messages.peek() : Collections.emptyMap());
-        List<ChatMessage> list = current.get(chId);
-        if (list == null) return false;
-        for (int i = 0; i < list.size(); i++) {
-            if (Objects.equals(list.get(i).getId(), messageId)) {
-                List<ChatMessage> newList = new ArrayList<>(list);
-                newList.remove(i);
-                current.put(chId, newList);
-                messages.set(current);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean hasMessage(String messageId) {
-        if (messageId == null) return false;
-        Map<String, List<ChatMessage>> map = messages.peek();
-        if (map == null) return false;
-        for (List<ChatMessage> list : map.values()) {
-            if (list != null) {
-                for (ChatMessage m : list) {
-                    if (Objects.equals(m.getId(), messageId)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    public Readable<Map<String, UserData>> userCache() {
-        return userCache;
-    }
-
-    public Readable<UserData> user(@Nullable String userId) {
-        String key = userId != null ? userId : "";
-        Readable<UserData> existing = userComputeds.get(key);
-        if (existing == null) {
-            existing = userCache.map(map -> (map != null && !key.isEmpty()) ? map.get(key) : null);
-            userComputeds.put(key, existing);
-        }
-        return existing;
-    }
-
-    public void putUsers(List<UserData> users) {
-        if (users == null || users.isEmpty()) return;
-        Map<String, UserData> map = new HashMap<>(userCache.peek() != null ? userCache.peek() : Collections.emptyMap());
-        for (UserData u : users) {
-            if (u.getId() != null) {
-                map.put(u.getId(), u);
-            }
-        }
-        userCache.set(map);
     }
 }

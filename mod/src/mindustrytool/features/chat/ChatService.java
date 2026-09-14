@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
@@ -34,7 +35,7 @@ public class ChatService {
         this.store = store;
         this.windowOpenSupplier = windowOpenSupplier;
 
-        store.activeChannelId().subscribe(channelId -> {
+        store.channels().activeId().subscribe(channelId -> {
             if (channelId != null && !channelId.isEmpty()) {
                 loadMessages(channelId);
                 loadUsers(channelId);
@@ -60,14 +61,14 @@ public class ChatService {
             }
             streamSubscription = null;
         }
-        Core.app.post(() -> store.setConnected(false));
+        Core.app.post(() -> store.session().setConnected(false));
     }
 
     public void refreshChannels() {
         MindustryTool.getChatChannels().thenAccept(channels -> {
             Core.app.post(() -> {
-                store.setChannels(channels);
-                String activeId = store.activeChannelId().peek();
+                store.channels().replace(channels);
+                String activeId = store.channels().currentActiveId();
                 if (activeId != null && !activeId.isEmpty()) {
                     loadMessages(activeId);
                     loadUsers(activeId);
@@ -88,8 +89,8 @@ public class ChatService {
                 if (messages != null) {
                     Collections.reverse(messages);
                 }
-                store.setMessages(channelId, messages);
-                store.setFullyLoaded(channelId, messages == null || messages.size() < PAGE_SIZE);
+                store.messages().replace(channelId, messages);
+                store.messages().setFullyLoaded(channelId, messages == null || messages.size() < PAGE_SIZE);
                 fetchMissingUsers(messages);
             });
         }).exceptionally(e -> {
@@ -102,37 +103,37 @@ public class ChatService {
         if (channelId == null || channelId.isEmpty()) {
             return;
         }
-        if (Boolean.TRUE.equals(store.loadingOlder().peek())) {
+        if (store.messages().isLoadingOlder()) {
             return;
         }
-        if (store.isFullyLoaded(channelId)) {
+        if (store.messages().isFullyLoaded(channelId)) {
             return;
         }
 
-        List<ChatMessage> currentMsgs = store.activeMessages().peek();
+        List<ChatMessage> currentMsgs = store.messages().currentActive();
         if (currentMsgs == null || currentMsgs.isEmpty()) {
             return;
         }
 
         String oldestId = currentMsgs.get(0).getId();
-        store.setLoadingOlder(true);
+        store.messages().setLoadingOlder(true);
 
         MindustryTool.getChatMessages(channelId, oldestId).thenAccept(older -> {
             Core.app.post(() -> {
-                store.setLoadingOlder(false);
+                store.messages().setLoadingOlder(false);
                 if (older == null || older.isEmpty()) {
-                    store.setFullyLoaded(channelId, true);
+                    store.messages().setFullyLoaded(channelId, true);
                 } else {
                     Collections.reverse(older);
-                    int added = store.prependMessages(channelId, older);
+                    int added = store.messages().prepend(channelId, older);
                     if (older.size() < PAGE_SIZE || added == 0) {
-                        store.setFullyLoaded(channelId, true);
+                        store.messages().setFullyLoaded(channelId, true);
                     }
                     fetchMissingUsers(older);
                 }
             });
         }).exceptionally(e -> {
-            Core.app.post(() -> store.setLoadingOlder(false));
+            Core.app.post(() -> store.messages().setLoadingOlder(false));
             Log.err("Failed to fetch older chat messages for " + channelId, e);
             return null;
         });
@@ -143,7 +144,7 @@ public class ChatService {
             return;
         }
         MindustryTool.getChatUsers(channelId).thenAccept(users -> {
-            Core.app.post(() -> store.setUsers(channelId, users));
+            Core.app.post(() -> store.members().replace(channelId, users));
         }).exceptionally(e -> {
             Log.err("Failed to fetch chat users for " + channelId, e);
             return null;
@@ -151,7 +152,7 @@ public class ChatService {
     }
 
     public CompletableFuture<ChatMessage> sendMessage(String content, @Nullable String replyTo) {
-        String activeId = store.activeChannelId().peek();
+        String activeId = store.channels().currentActiveId();
         if (activeId == null || activeId.isEmpty()) {
             CompletableFuture<ChatMessage> failed = new CompletableFuture<>();
             failed.completeExceptionally(new IllegalStateException("No active channel"));
@@ -161,8 +162,15 @@ public class ChatService {
         return MindustryTool.sendChatMessage("text", activeId, content, replyTo)
                 .thenApply(msg -> {
                     Core.app.post(() -> {
-                        store.appendMessage(msg, windowOpenSupplier.get());
-                        store.setReplyTarget(null);
+                        boolean added = store.messages().append(msg);
+                        if (added) {
+                            boolean open = windowOpenSupplier.get();
+                            boolean isActive = Objects.equals(store.channels().currentActiveId(), msg.getChannelId());
+                            if (!open || !isActive) {
+                                store.unread().increment(msg.getChannelId());
+                            }
+                        }
+                        store.ui().setReplyTarget(null);
                     });
                     return msg;
                 });
@@ -184,7 +192,7 @@ public class ChatService {
                 public void onSubscribe(Flow.Subscription subscription) {
                     streamSubscription = subscription;
                     subscription.request(Long.MAX_VALUE);
-                    Core.app.post(() -> store.setConnected(true));
+                    Core.app.post(() -> store.session().setConnected(true));
                 }
 
                 @Override
@@ -194,18 +202,18 @@ public class ChatService {
 
                 @Override
                 public void onError(Throwable throwable) {
-                    Core.app.post(() -> store.setConnected(false));
+                    Core.app.post(() -> store.session().setConnected(false));
                     scheduleReconnect();
                 }
 
                 @Override
                 public void onComplete() {
-                    Core.app.post(() -> store.setConnected(false));
+                    Core.app.post(() -> store.session().setConnected(false));
                     scheduleReconnect();
                 }
             });
         }).exceptionally(e -> {
-            Core.app.post(() -> store.setConnected(false));
+            Core.app.post(() -> store.session().setConnected(false));
             scheduleReconnect();
             return null;
         });
@@ -249,7 +257,7 @@ public class ChatService {
         }
 
         if ("heartbeat".equalsIgnoreCase(event) || "\"Connected\"".equals(data) || "Connected".equals(data)) {
-            Core.app.post(() -> store.setConnected(true));
+            Core.app.post(() -> store.session().setConnected(true));
             return;
         }
 
@@ -260,7 +268,13 @@ public class ChatService {
                     Core.app.post(() -> {
                         boolean open = windowOpenSupplier.get();
                         for (ChatMessage msg : list) {
-                            store.appendMessage(msg, open);
+                            boolean added = store.messages().append(msg);
+                            if (added) {
+                                boolean isActive = Objects.equals(store.channels().currentActiveId(), msg.getChannelId());
+                                if (!open || !isActive) {
+                                    store.unread().increment(msg.getChannelId());
+                                }
+                            }
                         }
                         fetchMissingUsers(list);
                     });
@@ -269,7 +283,14 @@ public class ChatService {
                 ChatMessage msg = JsonUtils.fromJson(ChatMessage.class, data);
                 if (msg != null && msg.getId() != null) {
                     Core.app.post(() -> {
-                        store.appendMessage(msg, windowOpenSupplier.get());
+                        boolean added = store.messages().append(msg);
+                        if (added) {
+                            boolean open = windowOpenSupplier.get();
+                            boolean isActive = Objects.equals(store.channels().currentActiveId(), msg.getChannelId());
+                            if (!open || !isActive) {
+                                store.unread().increment(msg.getChannelId());
+                            }
+                        }
                         fetchMissingUsers(Collections.singletonList(msg));
                     });
                 }
@@ -282,11 +303,11 @@ public class ChatService {
     public void fetchMissingUsers(List<ChatMessage> messages) {
         if (messages == null || messages.isEmpty())
             return;
-        Map<String, UserData> cached = store.userCache().peek();
+        Map<String, UserData> cached = store.users().currentAll();
         List<String> missing = new ArrayList<>();
         for (ChatMessage msg : messages) {
             String authorId = msg.getCreatedBy();
-            if (authorId != null && !authorId.isEmpty() && (cached == null || !cached.containsKey(authorId))) {
+            if (authorId != null && !authorId.isEmpty() && !cached.containsKey(authorId)) {
                 if (!missing.contains(authorId)) {
                     missing.add(authorId);
                 }
@@ -295,7 +316,7 @@ public class ChatService {
         if (!missing.isEmpty()) {
             MindustryTool.getUserBatch(missing).thenAccept(userDataList -> {
                 if (userDataList != null) {
-                    Core.app.post(() -> store.putUsers(userDataList));
+                    Core.app.post(() -> store.users().putAll(userDataList));
                 }
             }).exceptionally(e -> {
                 Log.err("Failed to fetch user batch", e);

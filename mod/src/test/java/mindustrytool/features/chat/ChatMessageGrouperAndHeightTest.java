@@ -343,10 +343,10 @@ class ChatMessageGrouperAndHeightTest {
     @Test
     void testRealComponentHeightReplySnippetTruncated() {
         ChatStore store = new ChatStore();
-        store.setActiveChannelId("ch1");
+        store.selectChannel("ch1");
         ChatMessage target = raw("target-long", "charlie",
                 "This is a very long message that definitely exceeds forty characters in total length for reply testing.");
-        store.setMessages("ch1", Collections.singletonList(target));
+        store.messages().replace("ch1", Collections.singletonList(target));
 
         ChatMessage replyMsg = raw("reply-long", "bob", "Responding to long message");
         replyMsg.setReplyTo("target-long");
@@ -360,9 +360,9 @@ class ChatMessageGrouperAndHeightTest {
     @Test
     void testRealComponentHeightReplySnippetShort() {
         ChatStore store = new ChatStore();
-        store.setActiveChannelId("ch1");
+        store.selectChannel("ch1");
         ChatMessage target = raw("target-short", "charlie", "Short message");
-        store.setMessages("ch1", Collections.singletonList(target));
+        store.messages().replace("ch1", Collections.singletonList(target));
 
         ChatMessage replyMsg = raw("reply-short", "bob", "Responding to short");
         replyMsg.setReplyTo("target-short");
@@ -376,9 +376,9 @@ class ChatMessageGrouperAndHeightTest {
     @Test
     void testRealComponentHeightReplyTargetContentNull() {
         ChatStore store = new ChatStore();
-        store.setActiveChannelId("ch1");
+        store.selectChannel("ch1");
         ChatMessage target = raw("target-null", "charlie", null);
-        store.setMessages("ch1", Collections.singletonList(target));
+        store.messages().replace("ch1", Collections.singletonList(target));
 
         ChatMessage replyMsg = raw("reply-target-null", "bob", "Responding to null content");
         replyMsg.setReplyTo("target-null");
@@ -392,7 +392,7 @@ class ChatMessageGrouperAndHeightTest {
     @Test
     void testRealComponentHeightReplyTargetNotFound() {
         ChatStore store = new ChatStore();
-        store.setActiveChannelId("ch1");
+        store.selectChannel("ch1");
 
         ChatMessage replyMsg = raw("reply-target-not-found", "bob", "Responding to non-existent");
         replyMsg.setReplyTo("missing-id");
@@ -415,7 +415,7 @@ class ChatMessageGrouperAndHeightTest {
         role.setColor("#00FF00");
         role.setLevel(10);
         user.setRoles(Collections.singletonList(role));
-        store.putUsers(Collections.singletonList(user));
+        store.users().putAll(Collections.singletonList(user));
 
         MessageGroup group = ChatMessageGrouper.groupRaw(
                 Collections.singletonList(raw("1", "alice", "Custom user data message"))).get(0);
@@ -436,7 +436,7 @@ class ChatMessageGrouperAndHeightTest {
         role.setColor("not-a-valid-hex");
         role.setLevel(5);
         user.setRoles(Collections.singletonList(role));
-        store.putUsers(Collections.singletonList(user));
+        store.users().putAll(Collections.singletonList(user));
 
         MessageGroup group = ChatMessageGrouper.groupRaw(
                 Collections.singletonList(raw("1", "alice", "Invalid role color message"))).get(0);

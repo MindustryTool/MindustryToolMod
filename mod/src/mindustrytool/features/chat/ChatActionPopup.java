@@ -59,7 +59,7 @@ public final class ChatActionPopup {
                     .height(unit(10));
 
             button(Core.bundle.get("feature.chat.ui.reply", "Reply"), () -> {
-                store.setReplyTarget(message);
+                store.ui().setReplyTarget(message);
                 dismiss();
             }).style(WebStyles.secondaryText()).growX().height(unit(10));
 
@@ -86,7 +86,7 @@ public final class ChatActionPopup {
             return;
         }
         String messageId = message.getId();
-        String alreadyTranslating = store.translatingMessageId().peek();
+        String alreadyTranslating = store.ui().currentTranslatingMessageId();
         if (messageId != null && messageId.equals(alreadyTranslating)) {
             dismiss();
             return;
@@ -97,7 +97,7 @@ public final class ChatActionPopup {
             targetLocale = Vars.ui.language.getLocale().getLanguage();
         }
 
-        store.translatingMessageId().set(messageId);
+        store.ui().setTranslatingMessageId(messageId);
         dismiss();
 
         TranslationFeature tf = FeatureManager.getFeature(TranslationFeature.class);
@@ -110,13 +110,13 @@ public final class ChatActionPopup {
 
         future.whenComplete((res, err) -> {
             Core.app.post(() -> {
-                store.translatingMessageId().set(null);
+                store.ui().setTranslatingMessageId(null);
                 if (err != null || res == null) {
                     Vars.ui.showInfoToast(Core.bundle.get("feature.chat.ui.translate-failed", "Translation failed"),
                             2f);
                 } else {
                     ChatMessageHeightCalculator.clearCache();
-                    store.setTranslation(messageId, res);
+                    store.translations().set(messageId, res);
                 }
             });
         });

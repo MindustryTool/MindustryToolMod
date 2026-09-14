@@ -19,7 +19,7 @@ public class ChatUserListView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<Boolean> hasUsers = store.activeUsers()
+        Readable<Boolean> hasUsers = store.members().active()
                 .map(list -> list != null && !list.isEmpty());
 
         return column().grow().top().left().gap(unit(1)).children(() -> {
@@ -27,7 +27,7 @@ public class ChatUserListView extends BaseComponent {
                 column().growX().top().left().gap(unit(1)).children(() -> {
                     dynamic(hasUsers, available -> {
                         if (Boolean.TRUE.equals(available)) {
-                            return forEach(store.activeUsers(), ChatUser::getName,
+                            return forEach(store.members().active(), ChatUser::getName,
                                     UserItem::new);
                         } else {
                             return column()

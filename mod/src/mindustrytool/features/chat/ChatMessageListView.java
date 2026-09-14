@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mindustry.Vars;
@@ -73,15 +72,15 @@ public class ChatMessageListView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<Boolean> hasMessages = store.activeMessages().map(list -> list != null && !list.isEmpty());
+        Readable<Boolean> hasMessages = store.messages().active().map(list -> list != null && !list.isEmpty());
         Readable<Boolean> showEndOfHistory = new Computed<>(() -> {
-            Boolean fully = store.activeChannelFullyLoaded().get();
+            Boolean fully = store.messages().activeFullyLoaded().get();
             Boolean has = hasMessages.get();
             return Boolean.TRUE.equals(fully) && Boolean.TRUE.equals(has);
         });
 
         Readable<List<MessageGroup>> groupedMessages = new Computed<>(() -> {
-            List<ChatMessage> msgs = store.activeMessages().get();
+            List<ChatMessage> msgs = store.messages().active().get();
             if (msgs == null || msgs.isEmpty()) {
                 return Collections.emptyList();
             }
@@ -89,7 +88,7 @@ public class ChatMessageListView extends BaseComponent {
         });
 
         Effect.of(() -> {
-            String chanId = store.activeChannelId().get();
+            String chanId = store.channels().activeId().get();
             if (!Objects.equals(chanId, lastChannelId)) {
                 lastChannelId = chanId;
                 lastMessageCount = 0;
@@ -99,7 +98,7 @@ public class ChatMessageListView extends BaseComponent {
         });
 
         Effect.of(() -> {
-            List<ChatMessage> msgs = store.activeMessages().get();
+            List<ChatMessage> msgs = store.messages().active().get();
             if (msgs == null || msgs.isEmpty()) {
                 lastMessageCount = 0;
                 lastFirstMessageId = null;
@@ -161,7 +160,7 @@ public class ChatMessageListView extends BaseComponent {
                 return null;
             });
 
-            dynamic(store.loadingOlder(), loading -> {
+            dynamic(store.messages().loadingOlder(), loading -> {
                 if (Boolean.TRUE.equals(loading)) {
                     return row().top().left().padding(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.chat.ui.loading-older", "Loading older messages..."))
@@ -183,12 +182,12 @@ public class ChatMessageListView extends BaseComponent {
                                     .grow()
                                     .gap(unit(0.75f))
                                     .overscan(3)
-                                    .onReachTop(50f, () -> {
-                                        String activeId = store.activeChannelId().peek();
-                                        var msgs = store.activeMessages().peek();
+                                    .onReachTop(150f, () -> {
+                                        String activeId = store.channels().currentActiveId();
+                                        var msgs = store.messages().currentActive();
                                         if (activeId != null && !activeId.isEmpty() && service != null && msgs != null
-                                                && !msgs.isEmpty() && !Boolean.TRUE.equals(store.loadingOlder().peek())
-                                                && !store.isFullyLoaded(activeId)) {
+                                                && !msgs.isEmpty() && !store.messages().isLoadingOlder()
+                                                && !store.messages().isFullyLoaded(activeId)) {
                                             service.fetchOlderMessages(activeId);
                                         }
                                     });
@@ -244,7 +243,7 @@ public class ChatMessageListView extends BaseComponent {
             ChatMessage firstRaw = first.getRaw();
             String authorId = group.getAuthorId();
 
-            Readable<UserData> user = store.user(authorId);
+            Readable<UserData> user = store.users().get(authorId);
             Readable<String> authorName = user.map(u -> (u != null && u.getName() != null && !u.getName().isEmpty())
                     ? u.getName()
                     : (authorId != null ? authorId : "Unknown"));
@@ -327,10 +326,8 @@ public class ChatMessageListView extends BaseComponent {
             String msgId = raw.getId();
             boolean mentioned = (parsed instanceof TextMessage) && ((TextMessage) parsed).isMentionsCurrentUser();
 
-            Readable<Set<String>> pendingIds = store.pendingMessageIds();
-            Readable<Set<String>> failedIds = store.failedMessageIds();
-            Readable<Boolean> isPending = pendingIds.map(set -> set != null && set.contains(msgId));
-            Readable<Boolean> isFailed = failedIds.map(set -> set != null && set.contains(msgId));
+            Readable<Boolean> isPending = store.delivery().isPending(msgId);
+            Readable<Boolean> isFailed = store.delivery().isFailed(msgId);
 
             var card = card().growX().top().left();
             card.onClick(() -> openActions(raw, card.element()));
@@ -376,7 +373,7 @@ public class ChatMessageListView extends BaseComponent {
 
         private void buildReplyPreview(String replyToId) {
             ChatMessage target = null;
-            var list = store.activeMessages().peek();
+            var list = store.messages().currentActive();
             if (list != null) {
                 for (ChatMessage m : list) {
                     if (Objects.equals(m.getId(), replyToId)) {
@@ -504,7 +501,7 @@ public class ChatMessageListView extends BaseComponent {
                 TextMessage txt = (TextMessage) parsed;
                 buildMessageText(txt.getText(), bodyColor);
                 final String translatedId = parsed.getId();
-                dynamic(store.translation(translatedId), translated -> {
+                dynamic(store.translations().get(translatedId), translated -> {
                     if (translated == null || translated.isEmpty()) {
                         return null;
                     }
@@ -517,7 +514,7 @@ public class ChatMessageListView extends BaseComponent {
                         buildMessageText(translatedText, bodyColor);
                     });
                 });
-                dynamic(store.translatingMessageId(), translatingId -> {
+                dynamic(store.ui().translatingMessageId(), translatingId -> {
                     if (translatingId == null || !translatingId.equals(translatedId)) {
                         return null;
                     }

@@ -35,8 +35,8 @@ public class ChatInputView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<Boolean> isLoggedIn = store.loggedIn().map(l -> Boolean.TRUE.equals(l));
-        Readable<Boolean> isNotLoggedIn = isLoggedIn.map(l -> !l);
+        Readable<Boolean> isLoggedIn = store.session().loggedIn();
+        Readable<Boolean> isNotLoggedIn = isLoggedIn.map(l -> !Boolean.TRUE.equals(l));
         Readable<Boolean> canSend = isSending.map(s -> !s);
 
         return column().growX().gap(unit(1)).padding(unit(2)).children(() -> {
@@ -53,14 +53,12 @@ public class ChatInputView extends BaseComponent {
 
                 // Composer area when logged in
                 return column().growX().gap(unit(1)).children(() -> {
-                    dynamic(store.replyTarget(), target -> {
+                    dynamic(store.ui().replyTarget(), target -> {
                         if (target == null) {
                             return null;
                         }
                         String authorId = target.getCreatedBy();
-                        UserData cachedUser = (authorId != null && store.userCache().peek() != null)
-                                ? store.userCache().peek().get(authorId)
-                                : null;
+                        UserData cachedUser = authorId != null ? store.users().getDirect(authorId) : null;
                         String targetName = (cachedUser != null && cachedUser.getName() != null)
                                 ? cachedUser.getName()
                                 : (authorId != null ? authorId : "message");
@@ -70,7 +68,7 @@ public class ChatInputView extends BaseComponent {
                             text(Core.bundle.format("feature.chat.ui.replying", targetName)).color(Color.lightGray)
                                     .fontScale(0.85f).left();
                             spacer();
-                            button(() -> store.setReplyTarget(null))
+                            button(() -> store.ui().setReplyTarget(null))
                                     .style(Styles.clearNonei)
                                     .size(unit(6), unit(6))
                                     .children(() -> icon(Icon.cancel).size(unit(4), unit(4)));
@@ -143,10 +141,10 @@ public class ChatInputView extends BaseComponent {
             return;
         }
 
-        ChatMessage replyTarget = store.replyTarget().peek();
+        ChatMessage replyTarget = store.ui().currentReplyTarget();
         String replyToId = replyTarget != null ? replyTarget.getId() : null;
 
-        String activeChannelId = store.activeChannelId().peek();
+        String activeChannelId = store.channels().currentActiveId();
         if (activeChannelId == null || activeChannelId.isEmpty()) {
             return;
         }
@@ -164,26 +162,20 @@ public class ChatInputView extends BaseComponent {
         tempMsg.setReplyTo(replyToId);
         tempMsg.setChannelId(activeChannelId);
 
-        store.addPendingMessage(tempId);
-        store.appendMessage(tempMsg, true);
+        store.delivery().markPending(tempId);
+        store.messages().append(tempMsg);
 
         isSending.set(true);
         service.sendMessage(content, replyToId).whenComplete((msg, err) -> {
             Core.app.post(() -> {
                 isSending.set(false);
                 if (err != null) {
-                    store.removePendingMessage(tempId);
-                    store.addFailedMessage(tempId);
+                    store.delivery().markFailed(tempId);
                     handleSendError(err);
                 } else {
-                    store.removePendingMessage(tempId);
-                    boolean realExists = store.hasMessage(msg.getId());
-                    if (realExists) {
-                        store.removeMessage(tempId);
-                    } else {
-                        store.replaceMessage(tempId, msg);
-                    }
-                    store.setReplyTarget(null);
+                    store.delivery().clear(tempId);
+                    store.messages().confirm(tempId, msg);
+                    store.ui().setReplyTarget(null);
                 }
             });
         });
