@@ -807,4 +807,75 @@ class LayoutTest {
         assertEquals(1, CellAccess.expandX(cell), "Cell must expandX when wrap() is set");
         assertTrue(text.isWrap(), "Text wrap flag must be true");
     }
+
+    @Test
+    void debugScrollSectionPanelLayout() {
+        Table root = new Table();
+        root.setSize(1024f, 576f);
+        ParentStack.push(root);
+
+        Column mainCol = new Column();
+        mainCol.grow().padding(16f).gap(16f);
+        mainCol.children(() -> {
+            Row searchRow = new Row();
+            searchRow.growX().height(44f);
+            searchRow.children(() -> {});
+
+            Scroll scroll = new Scroll();
+            scroll.grow();
+            scroll.children(() -> {
+                Column innerCol = new Column();
+                innerCol.growX().left().gap(16f);
+                innerCol.children(() -> {
+                    Column section = new Column();
+                    section.growX().left().padding(12f).gap(8f);
+                    section.children(() -> {
+                        Wrap wrap = new Wrap();
+                        wrap.growX().left().gap(4f);
+                        wrap.children(() -> {
+                            for (int i = 0; i < 30; i++) {
+                                Element item = new Element() {
+                                    @Override
+                                    public float getPrefWidth() {
+                                        return 80f;
+                                    }
+                                    @Override
+                                    public float getPrefHeight() {
+                                        return 36f;
+                                    }
+                                };
+                                ParentStack.add(item);
+                            }
+                        });
+                    });
+                });
+            });
+        });
+        ParentStack.pop();
+
+        root.layout();
+        root.act(0.016f);
+        root.layout();
+
+        System.out.println("ROOT width: " + root.getWidth());
+        System.out.println("MainCol width: " + mainCol.table().getWidth());
+        System.out.println("Scroll outer width: " + mainCol.table().getChildren().get(1).getWidth());
+        Table outer = (Table) mainCol.table().getChildren().get(1);
+        arc.scene.ui.ScrollPane pane = (arc.scene.ui.ScrollPane) outer.getChildren().get(0);
+        System.out.println("ScrollPane width: " + pane.getWidth());
+        Table content = (Table) pane.getWidget();
+        System.out.println("Scroll content width: " + content.getWidth());
+        Table innerColTable = (Table) content.getChildren().get(0);
+        System.out.println("InnerCol table width: " + innerColTable.getWidth());
+        Table sectionTable = (Table) innerColTable.getChildren().get(0);
+        System.out.println("Section table width: " + sectionTable.getWidth());
+        Table wrapTable = (Table) sectionTable.getChildren().get(0);
+        System.out.println("Wrap table width: " + wrapTable.getWidth());
+        System.out.println("Wrap cells count: " + wrapTable.getCells().size);
+        for (int i = 0; i < Math.min(5, wrapTable.getCells().size); i++) {
+            Cell<?> c = wrapTable.getCells().get(i);
+            System.out.println("Cell " + i + " x: " + c.get().x + ", y: " + c.get().y + ", w: " + c.get().getWidth());
+        }
+    }
 }
+

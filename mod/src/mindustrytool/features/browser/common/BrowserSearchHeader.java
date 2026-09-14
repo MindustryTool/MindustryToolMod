@@ -71,6 +71,7 @@ public class BrowserSearchHeader extends BaseComponent {
                         .rounded(unit(3), Color.clear)
                         .gap(unit(2))
                         .border(1.5f, Color.darkGray)
+                        .center()
                         .children(() -> {
                             icon(Icon.zoom).size(unit(6));
                             textField(inputBuffer)

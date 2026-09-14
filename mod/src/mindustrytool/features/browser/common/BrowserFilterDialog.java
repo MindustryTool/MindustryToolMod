@@ -109,6 +109,7 @@ public class BrowserFilterDialog extends SolimDialog {
                     .rounded(unit(3))
                     .border(1.5f, Color.darkGray)
                     .paddingLeft(unit(2))
+                    .center()
                     .children(() -> {
                         icon(Icon.zoom).size(unit(6)).color(Color.gray);
 

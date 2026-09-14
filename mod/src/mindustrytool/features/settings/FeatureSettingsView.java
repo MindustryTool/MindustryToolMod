@@ -47,6 +47,7 @@ public final class FeatureSettingsView extends BaseComponent {
                     .rounded(unit(3))
                     .paddingLeft(unit(2))
                     .height(12f)
+                    .center()
                     .border(1.5f, Color.darkGray).children(() -> {
                         icon(Icon.zoom).size(unit(6));
                         textField(filter).growX().style(WebStyles.clearInput())

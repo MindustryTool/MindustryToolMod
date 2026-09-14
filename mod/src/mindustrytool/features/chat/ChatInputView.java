@@ -84,6 +84,7 @@ public class ChatInputView extends BaseComponent {
                                     .paddingBottom(unit(1))
                                     .rounded(unit(3), Color.clear)
                                     .border(1.5f, Color.darkGray)
+                                    .center()
                                     .children(() -> {
                                         textField(messageText)
                                                 .style(WebStyles.clearInput())

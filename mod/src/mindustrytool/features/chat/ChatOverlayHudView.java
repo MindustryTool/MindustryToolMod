@@ -140,6 +140,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                 .padding(unit(1), unit(2), unit(1), unit(2))
                                 .gap(unit(2))
                                 .draggable(hud, feature.xSignal, feature.ySignal)
+                                .center()
                                 .children(() -> {
                                     image(circle())
                                             .size(unit(3))
@@ -168,7 +169,7 @@ public class ChatOverlayHudView extends BaseComponent {
                         divider();
 
                         dynamic(Units.width(), width -> {
-                            if (width < 1000) {
+                            if (width < 1200) {
                                 return buildMobileBody();
                             } else {
                                 return buildDesktopBody();
@@ -182,7 +183,7 @@ public class ChatOverlayHudView extends BaseComponent {
     private Component buildDesktopBody() {
         return row().grow().children(() -> {
             // Channel List
-            row().width(unit(60)).growY().children(() -> {
+            row().width(unit(80)).growY().children(() -> {
                 new ChatChannelListView(store);
             });
 
@@ -198,7 +199,7 @@ public class ChatOverlayHudView extends BaseComponent {
             divider(Direction.Y);
 
             // User List
-            row().width(unit(60)).growY().children(() -> {
+            row().width(unit(80)).growY().children(() -> {
                 new ChatUserListView(store);
             });
         });
