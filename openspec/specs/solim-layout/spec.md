@@ -4,11 +4,11 @@
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
 ## Requirements
 ### Requirement: Column and Row with flex-like modifiers
-`Column` and `Row` SHALL be vertical/horizontal layout containers supporting fluent configuration modifiers `gap(int/float)`, `gap(Readable<Float>)`, `justify(Justify)` (START/CENTER/END/BETWEEN/AROUND/EVENLY), `align(Align)` (START/CENTER/END/STRETCH), `padding(int)`, and `grow()`, followed by `.children(Runnable)` for declaring children. `Row` and `Column` SHALL apply gap as directional sibling padding along their primary axis (horizontal `padLeft` for `Row`, vertical `padTop` for `Column`) strictly to subsequent visible siblings, with zero gap padding on the leading child, zero gap padding on trailing edges, and zero gap padding on the cross-axis.
+`Column` and `Row` SHALL be vertical/horizontal layout containers supporting fluent configuration modifiers `gap(int/float)`, `gap(Readable<Float>)`, `align(Align)` (START/CENTER/END/STRETCH), `padding(int)`, and `grow()`, followed by `.children(Runnable)` for declaring children. `Row` and `Column` SHALL apply gap as directional sibling padding along their primary axis (horizontal `padLeft` for `Row`, vertical `padTop` for `Column`) strictly to subsequent visible siblings, with zero gap padding on the leading child, zero gap padding on trailing edges, and zero gap padding on the cross-axis. `Row` and `Column` SHALL default children to top-left alignment (see Top-left default child alignment).
 
-#### Scenario: Row justify and align
-- **WHEN** `row().justify(Justify.BETWEEN).align(Align.CENTER).gap(8).children(() -> { button("A"); button("B"); })` is called
-- **THEN** row configuration is applied before children are declared, distributing children with space-between and centered vertically, button A has 0px gap padding and button B has 8px left gap padding with 0px top/bottom gap padding
+#### Scenario: Row align and gap
+- **WHEN** `row().align(Align.CENTER).gap(8).children(() -> { button("A"); button("B"); })` is called
+- **THEN** row configuration is applied before children are declared, button A has 0px gap padding and button B has 8px left gap padding with 0px top/bottom gap padding
 
 #### Scenario: Column gap and padding
 - **WHEN** `column().gap(16).padding(24).children(() -> { text("Title"); divider(); text("Body"); })` is called
@@ -86,16 +86,27 @@ The `Wrap` component SHALL use Arc's native Table wrapping mechanism. When child
 - **WHEN** `scroll().grow().children(() -> { column().children(() -> { for (i in 0..100) text("Item "+i); }); })` is declared
 - **THEN** scroll is configured to grow before child column elements are populated
 
-### Requirement: Container, Divider, SplitPane
-Framework SHALL provide `Container` (single child with padding/background), `Divider` (horizontal/vertical line), and `SplitPane` (if Arc provides `SplitPane` primitive) as thin wrappers.
+### Requirement: Divider, SplitPane
+Framework SHALL provide `Divider` (horizontal/vertical line) and `SplitPane` (if Arc provides `SplitPane` primitive) as thin wrappers.
 
 #### Scenario: Divider
 - **WHEN** `column(() -> { text("Above"); divider(); text("Below"); })` is rendered
 - **THEN** a horizontal line (e.g., `Image` with `Tex.whiteui` tinted) separates sections
 
-#### Scenario: Container padding
-- **WHEN** `container(() -> text("Hi")).padding(12).background(Styles.black6)` is used
-- **THEN** child has 12px padding and background drawable
+### Requirement: Top-left default child alignment
+`Row`, `Column`, `Card` (inner container), `Grid`, and `ReactiveGrid` SHALL default children to top-left alignment: each new child cell is aligned top-left via both the container's `table.defaults().top().left()` and per-cell `cell.top().left()` at attach time (covering `children(Runnable)` and direct `add(Element)` paths). `Scroll` already behaves this way and SHALL remain unchanged as the reference. Explicit `.top()`, `.left()`, `.right()`, `.bottom()`, or `.center()` modifiers SHALL continue to override the default for the table, its defaults, and existing cells.
+
+#### Scenario: Bare row defaults to top-left
+- **WHEN** `row().children(() -> { button("A"); button("B"); })` is rendered in a larger area without alignment modifiers
+- **THEN** child cells carry top-left alignment and children sit at the top-left of the row
+
+#### Scenario: Bare column defaults to top-left
+- **WHEN** `column().children(() -> { text("A"); text("B"); })` is rendered in a larger area without alignment modifiers
+- **THEN** child cells carry top-left alignment and children stack from the top-left of the column
+
+#### Scenario: Explicit center still centers
+- **WHEN** `column().grow().center().children(() -> { text("Loading"); })` is rendered
+- **THEN** the content is centered exactly as before the default change
 
 ### Requirement: Use Arc-native layout mechanisms
 All layout primitives and components SHALL delegate to Arc's existing `Table`, `Stack`, `ScrollPane`, and `Cell` APIs and SHALL NOT reimplement or alter Arc's layout engine. Layout containers and components SHALL NOT implement `ConstrainedElement`, SHALL NOT subclass Arc widgets to override `getPrefWidth`, `getPrefHeight`, `getMinWidth`, `getMinHeight`, `getMaxWidth`, or `getMaxHeight`, and SHALL NOT alter Arc's native layout calculations. Layout sizing, expansion, padding, and alignment SHALL be configured through native Arc `Cell` and `Element` properties.
@@ -104,12 +115,12 @@ All layout primitives and components SHALL delegate to Arc's existing `Table`, `
 - **WHEN** layout containers (`Row`, `Column`, `Grid`, `Scroll`, `Dynamic`, `ForEach`, `ReactiveGrid`) and Solim widgets are inspected
 - **THEN** they wrap standard Arc widgets directly without subclassing to override layout measurement methods or implementing `ConstrainedElement`
 
-### Requirement: Justify and Align enums
-`Justify` SHALL have START, CENTER, END, BETWEEN, AROUND, EVENLY. `Align` SHALL have START, CENTER, END, STRETCH.
+### Requirement: Align enum
+`Align` SHALL have START, CENTER, END, STRETCH.
 
-#### Scenario: Enum values exist
-- **WHEN** `Justify.values()` and `Align.values()` are inspected
-- **THEN** they contain exactly the listed constants
+#### Scenario: Align values exist
+- **WHEN** `Align.values()` is inspected
+- **THEN** it contains exactly START, CENTER, END, STRETCH
 
 ### Requirement: Additive combination of child margins and container gap
 Layout containers (`Row`, `Column`, `Grid`) SHALL combine child element margins and container gap additively on the primary layout axis. For any child element in a `Row`, the cell's `padLeft` SHALL equal the child's explicit `marginLeft` plus the container's `gap` if the child is preceded by an earlier visible sibling. For any child element in a `Column`, the cell's `padTop` SHALL equal the child's explicit `marginTop` plus the container's `gap` if preceded by an earlier visible sibling.

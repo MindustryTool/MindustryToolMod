@@ -33,7 +33,7 @@ The system SHALL provide a RoundedDrawable that composites a rounded background 
 - **THEN** the fill color SHALL default to Color.clear and no solid fill is rendered
 
 ### Requirement: Universal LayoutModifiers rounded and border support
-All Solim layout containers implementing LayoutModifiers (including Card, Container, Column, Row, Grid, SolimStack, and Scroll) SHALL provide .rounded(...) and .border(...) modifiers.
+All Solim layout containers implementing LayoutModifiers (including Card, Column, Row, Grid, SolimStack, and Scroll) SHALL provide .rounded(...) and .border(...) modifiers.
 
 #### Scenario: Layout container rounded styling
 - **WHEN** column().rounded(12, Pal.darkMetal).border(1.5f, Pal.accent) is declared

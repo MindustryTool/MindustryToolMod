@@ -84,7 +84,7 @@ Solim layout containers (`Hud`, `Column`, `Row`, `Card`) SHALL expose fluent `.o
 - **THEN** the HUD container's transparency is bound to the opacity signal
 
 ### Requirement: Two-axis spacing modifiers on Solim components
-Solim layout and display components (`Column`, `Row`, `Text`, `SolimImage`, `NetworkImage`, `Container`, `Card`, `Button`) SHALL expose fluent `paddingX(float)`, `paddingY(float)`, `marginX(float)`, and `marginY(float)` methods (with `Readable<Float>` reactive overloads where supported) for configuring horizontal (left and right) and vertical (top and bottom) spacing symmetrically.
+Solim layout and display components (`Column`, `Row`, `Text`, `SolimImage`, `NetworkImage`, `Card`, `Button`) SHALL expose fluent `paddingX(float)`, `paddingY(float)`, `marginX(float)`, and `marginY(float)` methods (with `Readable<Float>` reactive overloads where supported) for configuring horizontal (left and right) and vertical (top and bottom) spacing symmetrically.
 
 #### Scenario: Setting horizontal and vertical padding on Column
 - **WHEN** `column().paddingX(16f).paddingY(8f)` is declared
