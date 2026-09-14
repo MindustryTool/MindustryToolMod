@@ -27,6 +27,7 @@ import solim.display.SolimImage;
 import solim.display.Text;
 import solim.input.Button;
 import solim.input.Checkbox;
+import solim.input.SolimSelect;
 import solim.input.SolimSlider;
 import solim.input.SolimTextField;
 import solim.input.Switch;
@@ -429,6 +430,12 @@ public final class UI {
         Switch sw = Switch.of(signal);
         ParentStack.attachToParent(sw.element());
         return sw;
+    }
+
+    public static <T> SolimSelect<T> select(Signal<T> signal, List<T> options) {
+        SolimSelect<T> s = SolimSelect.of(signal, options);
+        ParentStack.attachToParent(s.selectBox());
+        return s;
     }
 
     // --- Overlay ---

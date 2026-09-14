@@ -27,7 +27,6 @@ import solim.ui.Binding;
 public final class SolimTextField implements Component, ElementConfig<SolimTextField> {
 
 	private final TextField field;
-	private final Signal<String> signal;
 	private @Nullable TwoWayBinding<String> binding;
 	private Effect disabledEffect;
 	private Predicate<String> validator;
@@ -48,7 +47,6 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
 	public SolimTextField(Signal<String> signal, TextField.TextFieldStyle style) {
 		this.field = style != null ? new TextField("", style) : new TextField("");
 		this.field.name = "solim-textfield-textField";
-		this.signal = signal;
 		field.setText(signal.peek() != null ? signal.peek() : "");
 		this.binding = new TwoWayBinding<>(
 			signal,

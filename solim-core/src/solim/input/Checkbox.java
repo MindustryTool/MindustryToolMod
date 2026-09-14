@@ -14,7 +14,6 @@ import solim.signal.Signal;
 public final class Checkbox implements Component {
 
 	private final CheckBox checkBox;
-	private final @Nullable Signal<Boolean> signal;
 	private @Nullable TwoWayBinding<Boolean> binding;
 
 	public Checkbox(String label, Signal<Boolean> signal) {
@@ -22,7 +21,6 @@ public final class Checkbox implements Component {
 	}
 
 	public Checkbox(String label, Signal<Boolean> signal, @Nullable CheckBoxStyle style) {
-		this.signal = signal;
 		this.checkBox = style != null
 				? new CheckBox(label != null ? label : "", style)
 				: new CheckBox(label != null ? label : "");
@@ -47,7 +45,6 @@ public final class Checkbox implements Component {
 	}
 
 	public Checkbox(String label, boolean initial, @Nullable CheckBoxStyle style, Consumer<Boolean> onChanged) {
-		this.signal = null;
 		this.checkBox = style != null
 				? new CheckBox(label != null ? label : "", style)
 				: new CheckBox(label != null ? label : "");

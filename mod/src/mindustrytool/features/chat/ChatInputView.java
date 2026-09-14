@@ -17,6 +17,7 @@ import mindustrytool.models.response.UserData;
 import mindustrytool.services.auth.AuthOverlay;
 import mindustrytool.services.auth.MindustryAuthProvider;
 import solim.core.BaseComponent;
+import solim.signal.Computed;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import mindustrytool.components.FileIcon;
@@ -37,7 +38,8 @@ public class ChatInputView extends BaseComponent {
     protected Element build() {
         Readable<Boolean> isLoggedIn = store.session().loggedIn();
         Readable<Boolean> isNotLoggedIn = isLoggedIn.map(l -> !Boolean.TRUE.equals(l));
-        Readable<Boolean> canSend = isSending.map(s -> !s);
+        Readable<Boolean> canSend = new Computed<>(() -> !Boolean.TRUE.equals(isSending.get())
+                && isValidInput(messageText.get()));
 
         return column().growX().gap(unit(1)).padding(unit(2)).children(() -> {
             // Login banner when not logged in

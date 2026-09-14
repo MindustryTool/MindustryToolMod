@@ -6,11 +6,14 @@ import arc.Core;
 import arc.scene.Element;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Table;
+import java.util.Arrays;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import solim.input.SolimSelect;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
+import solim.signal.Signal;
 
 class ArcFacadeTest {
 
@@ -51,9 +54,29 @@ class ArcFacadeTest {
 		assertNull(el.parent);
 	}
 
-	@Test
-	void initRegistersSignalDispatcher() {
-		UI.init();
-		assertTrue(SignalDispatcher.isRegistered());
-	}
+    @Test
+    void initRegistersSignalDispatcher() {
+        UI.init();
+        assertTrue(SignalDispatcher.isRegistered());
+    }
+
+    @Test
+    void selectAttachesAndShowsCurrentValue() {
+        Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent test");
+        Table root = new Table();
+        ParentStack.push(root);
+        SolimSelect<String> s = UI.select(Signal.of("b"), Arrays.asList("a", "b"));
+        ParentStack.pop();
+        assertTrue(root.getChildren().contains(s.selectBox(), true));
+        assertEquals("b", s.selectBox().getText().toString());
+        s.dispose();
+    }
+
+    @Test
+    void selectOutsideScopeIsDetached() {
+        Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent test");
+        SolimSelect<String> s = UI.select(Signal.of("a"), Arrays.asList("a", "b"));
+        assertNull(s.selectBox().parent);
+        s.dispose();
+    }
 }

@@ -12,7 +12,6 @@ import solim.runtime.ComponentContext;
  */
 public final class Switch implements Component {
 	private final TextButton button = new TextButton("");
-	private final Signal<Boolean> signal;
 	private boolean state;
 	private Disposable binding;
 
@@ -21,7 +20,6 @@ public final class Switch implements Component {
 	}
 
 	public Switch(Signal<Boolean> signal) {
-		this.signal = signal;
 		this.state = Boolean.TRUE.equals(signal.peek());
 		button.setText(state ? "ON" : "OFF");
 		this.binding = new TwoWayBinding<>(
