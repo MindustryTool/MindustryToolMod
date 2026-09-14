@@ -22,40 +22,29 @@ public class ChatUserListView extends BaseComponent {
         Readable<Boolean> hasUsers = store.activeUsers()
                 .map(list -> list != null && !list.isEmpty());
 
-        return column()
-                .grow()
-                .top().left()
-                .gap(unit(1))
-                .children(() -> {
-                    scroll()
-                            .grow()
-                            .left()
-                            .children(() -> {
-                                column()
-                                        .growX()
-                                        .top().left()
-                                        .gap(unit(1))
-                                        .children(() -> {
-                                            dynamic(hasUsers, available -> {
-                                                if (Boolean.TRUE.equals(available)) {
-                                                    return forEach(store.activeUsers(), ChatUser::getName,
-                                                            UserItem::new);
-                                                } else {
-                                                    return column()
-                                                            .padding(unit(2))
-                                                            .top().left()
-                                                            .children(() -> {
-                                                                text(Core.bundle.get("feature.chat.ui.empty-members",
-                                                                        "No members online."))
-                                                                                .color(Color.gray)
-                                                                                .fontScale(0.9f)
-                                                                                .left();
-                                                            });
-                                                }
-                                            });
-                                        });
-                            });
-                })
+        return column().grow().top().left().gap(unit(1)).children(() -> {
+            scroll().grow().left().children(() -> {
+                column().growX().top().left().gap(unit(1)).children(() -> {
+                    dynamic(hasUsers, available -> {
+                        if (Boolean.TRUE.equals(available)) {
+                            return forEach(store.activeUsers(), ChatUser::getName,
+                                    UserItem::new);
+                        } else {
+                            return column()
+                                    .padding(unit(2))
+                                    .top().left()
+                                    .children(() -> {
+                                        text(Core.bundle.get("feature.chat.ui.empty-members",
+                                                "No members online."))
+                                                        .color(Color.gray)
+                                                        .fontScale(0.9f)
+                                                        .left();
+                                    });
+                        }
+                    });
+                });
+            });
+        })
                 .element();
     }
 
@@ -84,20 +73,17 @@ public class ChatUserListView extends BaseComponent {
             }
 
             final Color finalRoleColor = roleColor;
+
             return card().growX().top().left()
                     .children(() -> {
-                        row().growX().top().left()
-                                .padding(unit(1))
-                                .gap(unit(1))
-                                .children(() -> {
-                                    new ChatAvatar(name, user.getImageUrl(), name, unit(8));
+                        row().growX().top().left().padding(unit(1)).gap(unit(1)).children(() -> {
+                            new ChatAvatar(name, user.getImageUrl(), name, unit(12));
 
-                                    text(name).color(finalRoleColor)
-                                            .fontScale(0.9f)
-                                            .growX()
-                                            .ellipsis()
-                                            .left();
-                                });
+                            text(name).color(finalRoleColor)
+                                    .growX()
+                                    .ellipsis()
+                                    .left();
+                        });
                     })
                     .element();
         }

@@ -6,7 +6,7 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
 import solim.core.BaseComponent;
-import solim.display.Badge;
+import solim.layout.Column;
 import solim.layout.SolimStack;
 import solim.signal.Readable;
 
@@ -65,15 +65,15 @@ public class ChatAvatar extends BaseComponent {
         SolimStack stack = new SolimStack()
                 .size(size, size)
                 .layer(() -> {
-                    Badge fallback = badge(initial);
-                    if (radius > 0) {
-                        fallback.rounded(radius, background);
-                    } else {
-                        fallback.color(background);
-                    }
-                    fallback.textColor(Color.white);
-                    fallback.text().fontScale(size >= 32f ? 1.2f : 0.9f);
-                    fallback.size(size, size);
+                    Column fallback = column()
+                            .size(size, size)
+                            .center();
+                    (radius > 0 ? fallback.rounded(radius, background) : fallback.background(background))
+                            .children(() -> {
+                                text(initial)
+                                        .color(Color.white)
+                                        .fontScale(size >= 32f ? 1.2f : 0.9f);
+                            });
                 })
                 .layer(() -> {
                     var img = networkImage(avatarUrl).size(size, size).top().left();
