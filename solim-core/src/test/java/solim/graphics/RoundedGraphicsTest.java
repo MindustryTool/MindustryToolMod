@@ -13,7 +13,6 @@ import solim.display.Badge;
 import solim.input.Button;
 import solim.layout.Card;
 import solim.layout.Column;
-import solim.layout.Container;
 import solim.overlay.Popup;
 import solim.signal.Signal;
 import arc.Core;
@@ -199,10 +198,6 @@ class RoundedGraphicsTest {
         Card card = new Card();
         card.rounded(16, Color.black).border(2f, Color.cyan);
         assertTrue(card.cardButton().getBackground() instanceof RoundedDrawable);
-
-        Container container = new Container();
-        container.rounded(6, Color.blue);
-        assertTrue(container.table().getBackground() instanceof RoundedDrawable);
 
         Popup<Object> popup = new Popup<>();
         popup.rounded(8, Color.gray).border(1f, Color.white);

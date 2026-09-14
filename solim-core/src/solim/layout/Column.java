@@ -41,6 +41,7 @@ public final class Column
         this.table.userObject = this;
         this.table.name = "solim-column-table";
         this.table.top().left();
+        this.table.defaults().top().left();
     }
 
     public Table table() {

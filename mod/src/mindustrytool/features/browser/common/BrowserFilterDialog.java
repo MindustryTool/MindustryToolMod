@@ -135,6 +135,7 @@ public class BrowserFilterDialog extends SolimDialog {
             column().growX().left()
                     .rounded(unit(2))
                     .border(1.5f, WebStyles.Colors.SECTION_BORDER)
+                    .backgroundColor(Color.darkGray)
                     .padding(unit(3))
                     .gap(unit(2))
                     .children(() -> {

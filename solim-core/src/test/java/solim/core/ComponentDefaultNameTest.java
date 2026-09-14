@@ -20,7 +20,6 @@ import solim.input.SolimTextField;
 import solim.input.Switch;
 import solim.layout.Card;
 import solim.layout.Column;
-import solim.layout.Container;
 import solim.layout.Divider;
 import solim.layout.Grid;
 import solim.layout.Row;
@@ -60,7 +59,6 @@ class ComponentDefaultNameTest {
 		assertEquals("solim-card-container", card.container().name);
 
 		assertEquals("solim-grid-table", new Grid().element().name);
-		assertEquals("solim-container-table", new Container().element().name);
 		assertEquals("solim-divider", new Divider().element().name);
 		assertEquals("solim-spacer-table", new Spacer().element().name);
 		assertEquals("solim-scroll-pane-outer", new Scroll().element().name);
@@ -119,7 +117,6 @@ class ComponentDefaultNameTest {
 		assertEquals("custom-row", new Row().name("custom-row").element().name);
 		assertEquals("custom-card", new Card().name("custom-card").element().name);
 		assertEquals("custom-grid", new Grid().name("custom-grid").element().name);
-		assertEquals("custom-container", new Container().name("custom-container").element().name);
 		assertEquals("custom-divider", new Divider().name("custom-divider").element().name);
 		assertEquals("custom-spacer", new Spacer().name("custom-spacer").element().name);
 		assertEquals("custom-scroll", new Scroll().name("custom-scroll").element().name);

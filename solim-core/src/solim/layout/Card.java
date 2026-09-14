@@ -35,6 +35,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
+        cell.top().left();
         if (Ui.isExpanding(child)) {
             cell.growY();
         }
@@ -69,6 +70,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         this.container.userObject = this;
         this.cardButton.top().left();
         this.container.top().left();
+        this.container.defaults().top().left();
         this.cardButton.add(container).grow().top().left();
     }
 
@@ -80,6 +82,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         this.container.userObject = this;
         this.cardButton.top().left();
         this.container.top().left();
+        this.container.defaults().top().left();
         this.cardButton.add(container).grow().top().left();
     }
 

@@ -8,7 +8,6 @@ import arc.scene.Element;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.util.Log;
 import solim.core.BaseComponent;
-import solim.layout.Justify;
 import solim.signal.Computed;
 import solim.signal.Effect;
 import solim.signal.Signal;
@@ -74,7 +73,7 @@ public final class SettingsPanel extends BaseComponent {
 
 					spacer();
 
-					row().justify(Justify.END).gap(8).children(() -> {
+					row().right().gap(8).children(() -> {
 						button(() -> {
 							dirty.set(false);
 						}).children(() -> text(t("solim.settings.discard", "Discard")));

@@ -57,14 +57,7 @@ public class AxisSpacingTest {
     }
 
     @Test
-    void containerAndCardAxisPadding() {
-        Container container = new Container().paddingX(14f).paddingY(6f);
-        Table cTable = container.table();
-        assertEquals(14f, cTable.getMarginLeft(), 0.01f);
-        assertEquals(14f, cTable.getMarginRight(), 0.01f);
-        assertEquals(6f, cTable.getMarginTop(), 0.01f);
-        assertEquals(6f, cTable.getMarginBottom(), 0.01f);
-
+    void cardAxisPadding() {
         Card card = new Card().paddingX(18f).paddingY(9f);
         Table cardContainer = card.container();
         assertEquals(18f, cardContainer.getMarginLeft(), 0.01f);

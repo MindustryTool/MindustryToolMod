@@ -14,7 +14,6 @@ import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.layout.Card;
 import solim.layout.Column;
-import solim.layout.Container;
 import solim.layout.Divider;
 import solim.layout.Grid;
 import solim.layout.Row;
@@ -188,9 +187,6 @@ class ElementModifiersTest {
 
         Grid grid = new Grid().name("my-grid").gap(8f);
         assertEquals("my-grid", grid.element().name);
-
-        Container container = new Container().name("my-container");
-        assertEquals("my-container", container.element().name);
 
         Divider divider = new Divider().name("my-divider");
         assertEquals("my-divider", divider.element().name);

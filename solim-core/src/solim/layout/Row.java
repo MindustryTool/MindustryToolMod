@@ -38,7 +38,8 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         this.table = new Table();
         this.table.userObject = this;
         this.table.name = "solim-row-table";
-        this.table.left();
+        this.table.top().left();
+        this.table.defaults().top().left();
     }
 
     public Table table() {
@@ -154,23 +155,6 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.center();
-        }
-        return this;
-    }
-
-    public Row justify(Justify j) {
-        switch (j) {
-        case START:
-            return left();
-        case CENTER:
-            return center();
-        case END:
-            return right();
-        case BETWEEN:
-        case AROUND:
-        case EVENLY:
-        default:
-            break;
         }
         return this;
     }

@@ -7,7 +7,6 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.struct.Seq;
 import mindustry.gen.Icon;
-import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.components.WebStyles;
@@ -47,6 +46,7 @@ public final class FeatureSettingsView extends BaseComponent {
             row().growX().gap(unit(2))
                     .rounded(unit(3))
                     .paddingLeft(unit(2))
+                    .height(12f)
                     .border(1.5f, Color.darkGray).children(() -> {
                         icon(Icon.zoom).size(unit(6));
                         textField(filter).growX().style(WebStyles.clearInput())
@@ -54,13 +54,14 @@ public final class FeatureSettingsView extends BaseComponent {
                     });
 
             row().growX().top().left().gap(unit(2)).children(() -> {
-                button(FeatureManager::reenable).style(Styles.defaultb).height(unit(10))
+                spacer();
+                button(FeatureManager::reenable).style(WebStyles.outline()).height(unit(10))
                         .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {
                             icon(Icon.refresh);
                             text(Core.bundle.get("feature.button.re-enable"));
                         });
 
-                button(() -> new GeneralSettingsDialog().show()).style(Styles.defaultb).height(unit(10))
+                button(() -> new GeneralSettingsDialog().show()).style(WebStyles.outline()).height(unit(10))
                         .tooltip(Core.bundle.get("feature.button.settings")).gap(unit(2)).children(() -> {
                             icon(Icon.settings);
                             text(Core.bundle.get("feature.button.settings"));

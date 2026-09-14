@@ -45,12 +45,11 @@ class LayoutTest {
     }
 
     @Test
-    void rowJustifyAndGap() {
+    void rowAlignAndGap() {
         Table root = new Table();
         ParentStack.push(root);
         Row r = new Row();
         r.gap(8f);
-        r.justify(Justify.BETWEEN);
         r.align(Align.CENTER);
         Element a = new Element();
         a.name = "a";
@@ -141,14 +140,6 @@ class LayoutTest {
     }
 
     @Test
-    void containerAddsChild() {
-        Container c = new Container().padding(12f);
-        Element child = new Element();
-        c.add(child);
-        assertEquals(1, c.table().getChildren().size);
-    }
-
-    @Test
     void scrollWrapsContent() {
         Scroll s = new Scroll();
         Element e = new Element();
@@ -158,9 +149,7 @@ class LayoutTest {
     }
 
     @Test
-    void justifyAndAlignEnums() {
-        assertEquals(6, Justify.values().length);
-        assertTrue(Arrays.asList(Justify.values()).contains(Justify.BETWEEN));
+    void alignEnumValues() {
         assertEquals(4, Align.values().length);
         assertTrue(Arrays.asList(Align.values()).contains(Align.STRETCH));
     }
@@ -188,12 +177,12 @@ class LayoutTest {
     }
 
     @Test
-    void rowJustifyPreservesChildrenAndReturnsSelf() {
-        for (Justify j : Justify.values()) {
+    void rowAlignPreservesChildrenAndReturnsSelf() {
+        for (Align a : Align.values()) {
             Row r = new Row();
             Element child = new Element();
             r.add(child);
-            assertSame(r, r.justify(j));
+            assertSame(r, r.align(a));
             assertEquals(1, r.table().getChildren().size);
             assertSame(child, r.table().getChildren().get(0));
         }
@@ -612,12 +601,15 @@ class LayoutTest {
         root.setSize(1000, 800);
 
         Column parentCol = Ui.column().grow().children(() -> {
-            Ui.card()
+            // Column children default to top-left: centering a constrained card
+            // requires explicit self-alignment via its cell config.
+            Card card = Ui.card()
                     .growX()
                     .center()
-                    .maxWidth(400f)
-                    .children(() -> {
-                    });
+                    .maxWidth(400f);
+            card.cellConfig().alignCenter();
+            card.children(() -> {
+            });
         });
 
         root.add(parentCol.element()).grow();

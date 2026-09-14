@@ -318,12 +318,4 @@ public class TeamResourceHudView extends BaseComponent {
         float scl = Scl.scl();
         return (Core.graphics != null ? Core.graphics.getWidth() : 800f) / (scl > 0f ? scl : 1f);
     }
-
-    private static float getSceneHeight() {
-        if (Core.scene != null && Core.scene.getHeight() > 0f) {
-            return Core.scene.getHeight();
-        }
-        float scl = Scl.scl();
-        return (Core.graphics != null ? Core.graphics.getHeight() : 600f) / (scl > 0f ? scl : 1f);
-    }
 }

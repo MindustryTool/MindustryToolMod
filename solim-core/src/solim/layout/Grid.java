@@ -29,6 +29,8 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         this.table = new Table();
         this.table.userObject = this;
         this.table.name = "solim-grid-table";
+        this.table.top().left();
+        this.table.defaults().top().left();
         respace();
     }
 
@@ -114,6 +116,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         int[] count = new int[] { 0 };
         ParentStack.push(table, (tbl, child) -> {
             Cell<?> cell = tbl.add(child);
+            cell.top().left();
             if (Ui.isExpanding(child)) {
                 cell.growX().fillX();
             }
@@ -144,6 +147,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         int col = 0;
         for (Element child : children) {
             Cell<?> cell = table.add(child);
+            cell.top().left();
             if (Ui.isExpanding(child)) {
                 cell.growX().fillX();
             }
@@ -159,6 +163,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
     /** Add a child element to the grid; wraps to next row when columns exceeded. */
     public Grid add(Element child) {
         Cell<?> cell = table.add(child);
+        cell.top().left();
         if (Ui.isExpanding(child)) {
             cell.growX().fillX();
         }

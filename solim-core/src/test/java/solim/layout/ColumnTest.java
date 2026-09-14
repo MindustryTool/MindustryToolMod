@@ -270,4 +270,58 @@ class ColumnTest {
         assertEquals(Align.right, CellAccess.align(c1) & Align.right);
         assertEquals(200f, e1.x + e1.getWidth(), 0.01f);
     }
+
+    @Test
+    void bareColumnDefaultsToTopLeft() {
+        Column col = new Column();
+        Element e1 = new Element() {
+            @Override
+            public float getPrefWidth() {
+                return 50f;
+            }
+
+            @Override
+            public float getPrefHeight() {
+                return 30f;
+            }
+        };
+        Element e2 = new Element() {
+            @Override
+            public float getPrefWidth() {
+                return 100f;
+            }
+
+            @Override
+            public float getPrefHeight() {
+                return 60f;
+            }
+        };
+        col.children(() -> {
+            ParentStack.add(e1);
+            ParentStack.add(e2);
+        });
+        col.table().setSize(200f, 300f);
+        col.table().layout();
+
+        Cell<?> c1 = col.table().getCell(e1);
+        Cell<?> c2 = col.table().getCell(e2);
+
+        assertEquals(Align.top | Align.left, CellAccess.align(c1) & (Align.top | Align.left));
+        assertEquals(Align.top | Align.left, CellAccess.align(c2) & (Align.top | Align.left));
+        assertEquals(0f, e1.x, 0.01f, "Child 1 must be at left edge");
+        assertEquals(0f, e2.x, 0.01f, "Child 2 must be at left edge");
+    }
+
+    @Test
+    void explicitCenterOverridesTopLeftDefault() {
+        Column col = new Column();
+        col.center();
+        Element e1 = new Element();
+        col.children(() -> {
+            ParentStack.add(e1);
+        });
+
+        Cell<?> c1 = col.table().getCell(e1);
+        assertEquals(Align.center, CellAccess.align(c1) & Align.center);
+    }
 }

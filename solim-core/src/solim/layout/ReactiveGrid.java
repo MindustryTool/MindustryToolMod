@@ -74,6 +74,8 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfi
             BiFunction<T, GridItemContext, Component> itemFactory) {
         this.table.name = "solim-reactive-grid-table";
         this.table.userObject = this;
+        this.table.top().left();
+        this.table.defaults().top().left();
         this.table.update(() -> checkWidth(this.table.getWidth()));
         this.columnCount = columnCount;
         this.items = items;
