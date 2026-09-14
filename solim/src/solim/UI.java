@@ -9,7 +9,6 @@ import solim.graphics.RoundedDrawable;
 import arc.func.Func;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
-import arc.scene.ui.Button.ButtonStyle;
 import arc.util.Nullable;
 import arc.util.Scaling;
 
@@ -108,14 +107,6 @@ public final class UI {
 
     public static Card card(@Nullable Drawable background, @Nullable Runnable r) {
         return card(background).children(r);
-    }
-
-    public static Card card(@Nullable ButtonStyle style) {
-        return new Card(style);
-    }
-
-    public static Card card(@Nullable ButtonStyle style, @Nullable Runnable r) {
-        return card(style).children(r);
     }
 
     public static Row row() {

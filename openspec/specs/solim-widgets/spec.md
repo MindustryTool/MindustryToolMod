@@ -143,6 +143,17 @@ Widgets SHALL be implemented in order: `Text`, `Button`, then `TextField`, `Chec
 - **WHEN** `gradle :solim:test` runs after initial implementation
 - **THEN** `Text`/`Button` reactive binding tests pass before `Dialog` tests are required
 
+### Requirement: Card is a single-Table layout element
+The `Card` component SHALL be a single-Table layout element consistent with `Column` and `Row`, where child composition, sizing, and background all target the same Arc `Table` instead of a Button-wrapping-Table pair.
+
+#### Scenario: Card children attach to the element table
+- **WHEN** `card(() -> { text("Hi"); })` is rendered
+- **THEN** the text label is a direct child cell of the table returned by both `element()` and `table()`.
+
+#### Scenario: Card click isolation from inner buttons
+- **WHEN** an inner button stops event propagation inside a clickable card
+- **THEN** the inner button handler runs and the card `onClick` handler does not run.
+
 **Source: animated-loader**
 
 Reusable animated circular loader component for mod dialogs.

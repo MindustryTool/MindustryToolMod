@@ -252,15 +252,15 @@ class LayoutTest {
                 });
 
         assertEquals(2, c.container().getChildren().size, "Card container must have 2 children");
-        assertEquals(180f, c.cardButton().getHeight(), 0.01f);
-        assertEquals(250f, c.cardButton().getWidth(), 0.01f);
-        assertEquals(Color.scarlet, c.cardButton().color);
+        assertEquals(180f, c.table().getHeight(), 0.01f);
+        assertEquals(250f, c.table().getWidth(), 0.01f);
+        assertEquals(Color.scarlet, c.table().color);
 
         widthSignal.set(300f);
         colorSignal.set(Color.green);
         SignalDispatcher.flush();
-        assertEquals(300f, c.cardButton().getWidth(), 0.01f);
-        assertEquals(Color.green, c.cardButton().color);
+        assertEquals(300f, c.table().getWidth(), 0.01f);
+        assertEquals(Color.green, c.table().color);
 
         c.dispose();
     }
@@ -272,7 +272,7 @@ class LayoutTest {
 
         InputEvent stoppedEvent = new InputEvent();
         stoppedEvent.stop();
-        c.cardButton().getListeners().forEach(listener -> {
+        c.table().getListeners().forEach(listener -> {
             if (listener instanceof ClickListener) {
                 ((ClickListener) listener).clicked(stoppedEvent, 0f, 0f);
             }
@@ -280,7 +280,7 @@ class LayoutTest {
         assertFalse(cardClicked[0], "Card onClick should not execute when event is stopped");
 
         InputEvent normalEvent = new InputEvent();
-        c.cardButton().getListeners().forEach(listener -> {
+        c.table().getListeners().forEach(listener -> {
             if (listener instanceof ClickListener) {
                 ((ClickListener) listener).clicked(normalEvent, 0f, 0f);
             }

@@ -3,7 +3,9 @@ package mindustrytool.components;
 import static solim.UI.*;
 
 import arc.graphics.Color;
+import arc.scene.style.Drawable;
 import arc.scene.ui.Button.ButtonStyle;
+import arc.util.Nullable;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import mindustry.gen.Tex;
 import mindustry.ui.Fonts;
@@ -224,6 +226,10 @@ public class WebStyles {
 
     public static SolimButtonStyle previewCard() {
         return PREVIEW_CARD_STYLE;
+    }
+
+    public static @Nullable Drawable previewCardBackground() {
+        return PREVIEW_CARD_STYLE.style() != null ? PREVIEW_CARD_STYLE.style().up : null;
     }
 
     public static InputStyle clearInput() {

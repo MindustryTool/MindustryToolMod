@@ -33,8 +33,25 @@ class CardTest {
     @Test
     void createsWithDefaultNames() {
         Card c = new Card();
-        assertEquals("solim-card-cardButton", c.cardButton().name);
-        assertEquals("solim-card-container", c.container().name);
+        assertEquals("solim-card-table", c.table().name);
+        assertEquals("solim-card-table", c.container().name);
+        assertEquals("solim-card-table", c.element().name);
+        c.dispose();
+    }
+
+    @Test
+    void elementTableAndContainerAreSameInstance() {
+        Card c = new Card();
+        assertSame(c.table(), c.element());
+        assertSame(c.container(), c.element());
+        c.dispose();
+    }
+
+    @Test
+    void noClickListenerWithoutOnClick() {
+        Card c = new Card();
+        assertFalse(hasClickListener(c), "Card without onClick must install no ClickListener");
+        c.dispose();
     }
 
     @Test
@@ -60,7 +77,7 @@ class CardTest {
         Card c = new Card().onClick(() -> clicked[0] = true);
 
         InputEvent event = new InputEvent();
-        c.cardButton().getListeners().forEach(listener -> {
+        c.table().getListeners().forEach(listener -> {
             if (listener instanceof ClickListener) {
                 ((ClickListener) listener).clicked(event, 0f, 0f);
             }
@@ -77,7 +94,7 @@ class CardTest {
 
         InputEvent stoppedEvent = new InputEvent();
         stoppedEvent.stop();
-        c.cardButton().getListeners().forEach(listener -> {
+        c.table().getListeners().forEach(listener -> {
             if (listener instanceof ClickListener) {
                 ((ClickListener) listener).clicked(stoppedEvent, 0f, 0f);
             }
@@ -88,107 +105,116 @@ class CardTest {
     }
 
     @Test
-    void colorModifierUpdatesButtonColor() {
-        Card c = new Card();
-        c.color(Color.scarlet);
-        assertEquals(Color.scarlet, c.cardButton().color);
+    void repeatedOnClickDoesNotStackListeners() {
+        Card c = new Card().onClick(() -> {
+        }).onClick(() -> {
+        });
+
+        int clicks = 0;
+        for (Object listener : c.table().getListeners()) {
+            if (listener instanceof ClickListener) {
+                clicks++;
+            }
+        }
+        assertEquals(1, clicks, "Repeated onClick must not stack ClickListeners");
         c.dispose();
     }
 
     @Test
-    void reactiveColorUpdatesButtonColor() {
+    void colorModifierUpdatesTableColor() {
+        Card c = new Card();
+        c.color(Color.scarlet);
+        assertEquals(Color.scarlet, c.table().color);
+        c.dispose();
+    }
+
+    @Test
+    void reactiveColorUpdatesTableColor() {
         Signal<Color> colorSig = Signal.of(Color.green);
         Card c = new Card().color(colorSig);
-        assertEquals(Color.green, c.cardButton().color);
+        assertEquals(Color.green, c.table().color);
 
         colorSig.set(Color.blue);
         SignalDispatcher.flush();
-        assertEquals(Color.blue, c.cardButton().color);
+        assertEquals(Color.blue, c.table().color);
         c.dispose();
     }
 
     @Test
-    void reactiveWidthUpdatesButtonPrefWidth() {
+    void reactiveWidthUpdatesTablePrefWidth() {
         Signal<Float> widthSig = Signal.of(200f);
         Card c = new Card();
         c.width(widthSig);
-        assertEquals(200f, c.cardButton().getWidth(), 0.01f);
+        assertEquals(200f, c.table().getWidth(), 0.01f);
         assertEquals(200f, c.cellConfig().prefWidth.get(), 0.01f);
 
         widthSig.set(300f);
         SignalDispatcher.flush();
-        assertEquals(300f, c.cardButton().getWidth(), 0.01f);
+        assertEquals(300f, c.table().getWidth(), 0.01f);
         assertEquals(300f, c.cellConfig().prefWidth.get(), 0.01f);
         c.dispose();
     }
 
     @Test
-    void reactiveHeightUpdatesButtonPrefHeight() {
+    void reactiveHeightUpdatesTablePrefHeight() {
         Signal<Float> heightSig = Signal.of(150f);
         Card c = new Card();
         c.height(heightSig);
-        assertEquals(150f, c.cardButton().getHeight(), 0.01f);
+        assertEquals(150f, c.table().getHeight(), 0.01f);
         assertEquals(150f, c.cellConfig().prefHeight.get(), 0.01f);
 
         heightSig.set(200f);
         SignalDispatcher.flush();
-        assertEquals(200f, c.cardButton().getHeight(), 0.01f);
+        assertEquals(200f, c.table().getHeight(), 0.01f);
         assertEquals(200f, c.cellConfig().prefHeight.get(), 0.01f);
         c.dispose();
     }
 
     @Test
-    void visibleModifierChangesButtonVisibility() {
+    void visibleModifierChangesTableVisibility() {
         Card c = new Card();
 
         c.visible(false);
-        assertFalse(c.cardButton().visible);
+        assertFalse(c.table().visible);
 
         c.visible(true);
-        assertTrue(c.cardButton().visible);
+        assertTrue(c.table().visible);
         c.dispose();
     }
 
     @Test
-    void reactiveVisibleUpdatesButtonVisibility() {
+    void reactiveVisibleUpdatesTableVisibility() {
         Signal<Boolean> vis = Signal.of(true);
         Card c = new Card().visible(vis);
-        assertTrue(c.cardButton().visible);
+        assertTrue(c.table().visible);
 
         vis.set(false);
         SignalDispatcher.flush();
-        assertFalse(c.cardButton().visible);
+        assertFalse(c.table().visible);
         c.dispose();
     }
 
     @Test
-    void positionSetsButtonCoordinates() {
+    void positionSetsTableCoordinates() {
         Card c = new Card();
 
         c.x(10f);
-        assertEquals(10f, c.cardButton().x, 0.01f);
+        assertEquals(10f, c.table().x, 0.01f);
 
         c.y(20f);
-        assertEquals(20f, c.cardButton().y, 0.01f);
+        assertEquals(20f, c.table().y, 0.01f);
 
         c.position(30f, 40f);
-        assertEquals(30f, c.cardButton().x, 0.01f);
-        assertEquals(40f, c.cardButton().y, 0.01f);
+        assertEquals(30f, c.table().x, 0.01f);
+        assertEquals(40f, c.table().y, 0.01f);
         c.dispose();
     }
 
     @Test
-    void nameModifierUpdatesButtonName() {
+    void nameModifierUpdatesTableName() {
         Card c = new Card();
         c.name("my-card");
-        assertEquals("my-card", c.cardButton().name);
-        c.dispose();
-    }
-
-    @Test
-    void tableIsSameAsCardButton() {
-        Card c = new Card();
-        assertSame(c.cardButton(), c.element());
+        assertEquals("my-card", c.table().name);
         c.dispose();
     }
 
@@ -216,5 +242,14 @@ class CardTest {
         assertEquals(Align.top | Align.left, CellAccess.align(c1) & (Align.top | Align.left));
         assertEquals(Align.top | Align.left, CellAccess.align(c2) & (Align.top | Align.left));
         c.dispose();
+    }
+
+    private static boolean hasClickListener(Card c) {
+        for (Object listener : c.table().getListeners()) {
+            if (listener instanceof ClickListener) {
+                return true;
+            }
+        }
+        return false;
     }
 }

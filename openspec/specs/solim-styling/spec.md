@@ -160,18 +160,26 @@ The system SHALL provide a Badge component (solim.display.Badge, Ui.badge) for c
 
 Clickable, styled card container component with declarative child composition, fluent chained reactive property bindings, and click event bubbling control.
 ### Requirement: Declarative Card Container Component
-The framework SHALL provide a `Card` component wrapping a clickable, styled container element. It SHALL support declarative child composition via `ParentStack`, custom click handling, and event bubbling control.
+The framework SHALL provide a `Card` component wrapping a single Arc `Table` as its clickable container element, such that `element()`, `table()`, and `container()` return the same instance. It SHALL support declarative child composition via `ParentStack`, custom click handling installed lazily only when `.onClick(Runnable)` is set, and event bubbling control.
 
 #### Scenario: Building card with children
 - **WHEN** `card(() -> { text("Title"); text("Subtitle"); })` is executed
-- **THEN** a `Card` instance is created and attached to the current parent, with the child elements added inside the card container.
+- **THEN** a `Card` instance is created and attached to the current parent, with the child elements added inside the single card table.
 
 #### Scenario: Card click action
 - **WHEN** a card is configured with `.onClick(Runnable)` and clicked directly
 - **THEN** the provided click handler is executed.
 
+#### Scenario: Single element identity
+- **WHEN** a `Card` is instantiated
+- **THEN** `element()`, `table()`, and `container()` return the same Arc `Table` instance.
+
+#### Scenario: No listener without onClick
+- **WHEN** a card is created without `.onClick()`
+- **THEN** no `ClickListener` is installed on its table.
+
 ### Requirement: Chained Reactive Property Bindings on Card
-The `Card` component SHALL provide fluent modifier methods for reactive and static properties including `.width(Readable<Float>)`, `.width(float)`, `.height(Readable<Float>)`, `.height(float)`, `.prefHeight(float)`, `.color(Readable<Color>)`, `.color(Color)`, `.style(ButtonStyle)`, `.name(String)`, and `.padding(float)`. The reactive bindings SHALL be automatically managed and disposed by the component lifecycle.
+The `Card` component SHALL provide fluent modifier methods for reactive and static properties including `.width(Readable<Float>)`, `.width(float)`, `.height(Readable<Float>)`, `.height(float)`, `.prefHeight(float)`, `.color(Readable<Color>)`, `.color(Color)`, `.background(Drawable)`, `.background(Color)`, `.name(String)`, and `.padding(float)` targeting the single card table. The reactive bindings SHALL be automatically managed and disposed by the component lifecycle.
 
 #### Scenario: Reactive width and color binding
 - **WHEN** `card(...).width(cardWidth).color(cardColor)` is rendered and the underlying signals update

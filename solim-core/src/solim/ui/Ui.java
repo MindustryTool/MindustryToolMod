@@ -4,7 +4,6 @@ import arc.func.Cons;
 import arc.func.Func;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
-import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -71,14 +70,6 @@ public final class Ui {
 
     public static Card card(@Nullable Drawable background, @Nullable Runnable r) {
         return card(background).children(r);
-    }
-
-    public static Card card(@Nullable ButtonStyle style) {
-        return new Card(style);
-    }
-
-    public static Card card(@Nullable ButtonStyle style, @Nullable Runnable r) {
-        return card(style).children(r);
     }
 
     public static Row row() {

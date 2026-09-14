@@ -5,10 +5,8 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
-import arc.util.Scaling;
 import lombok.AllArgsConstructor;
 import mindustry.gen.Icon;
-import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import solim.core.BaseComponent;
@@ -39,8 +37,12 @@ public class FeatureCard extends BaseComponent {
                 : feature.enabled().map(val -> Boolean.TRUE.equals(val) ? Core.bundle.get("feature.status.enabled")
                         : Core.bundle.get("feature.status.disabled"));
 
-        return card(Styles.black8).name("FeatureCard-" + metadata.getId()).height(unit(60)).growX()
-                .color(statusColor)
+        return card()
+                .name("FeatureCard-" + metadata.getId()).height(unit(60)).growX()
+                .rounded(unit(4))
+                .border(1.5f, Color.darkGray)
+                .padding(unit(1))
+                .backgroundColor(Color.black)
                 .onClick(() -> {
                     if (!inDevelopment) {
                         feature.setEnabled(!feature.isEnabled());
@@ -48,10 +50,10 @@ public class FeatureCard extends BaseComponent {
                 }).children(() -> {
                     column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
                         row().growX().children(() -> {
-                            icon(metadata.getIcon()).size(unit(7)).cellPaddingRight(unit(2));
+                            icon(metadata.getIcon()).size(unit(7)).marginRight(unit(2));
 
                             text(feature.getName()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left();
-                            
+
                             spacer();
 
                             if (feature.getMainDialog() != null) {
@@ -80,10 +82,7 @@ public class FeatureCard extends BaseComponent {
                                 .color(statusColor)
                                 .left();
 
-                        image(Tex.whiteui).growX()
-                                .scaling(Scaling.stretch)
-                                .color(statusColor)
-                                .height(unit(0.5f));
+                        divider().color(statusColor);
                     });
                 }).element();
     }

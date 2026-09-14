@@ -115,7 +115,7 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private void details() {
             column().growX().gap(unit(2)).children(() -> {
-                card(WebStyles.previewCard().style()).padding(unit(2)).gap(unit(1)).growX().children(() -> {
+                card(WebStyles.previewCardBackground()).padding(unit(2)).gap(unit(1)).growX().children(() -> {
                     row().growX().gap(unit(1)).children(() -> {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray);
                         text(authorName).color(Color.white);
@@ -127,7 +127,7 @@ public class SchematicDetailDialog extends SolimDialog {
                     });
                 });
 
-                card(WebStyles.previewCard().style()).padding(unit(2)).growX().children(() -> {
+                card(WebStyles.previewCardBackground()).padding(unit(2)).growX().children(() -> {
                     new BrowserStatsBadge(
                             BrowserImages.count(detail.getLikes()),
                             BrowserImages.count(detail.getComments()),
@@ -138,7 +138,7 @@ public class SchematicDetailDialog extends SolimDialog {
                 renderRequirements();
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
-                    card(WebStyles.previewCard().style()).growX().children(() -> {
+                    card(WebStyles.previewCardBackground()).growX().children(() -> {
                         text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
                     });
                 }
@@ -167,7 +167,7 @@ public class SchematicDetailDialog extends SolimDialog {
                 return;
             }
 
-            card(WebStyles.previewCard().style()).growX().top().left().padding(unit(2)).children(() -> {
+            card(WebStyles.previewCardBackground()).growX().top().left().padding(unit(2)).children(() -> {
                 text(Core.bundle.get("browser.detail.tags")).color(Color.white).growX().left();
                 grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().left().gap(unit(1)).children(() -> {
                     for (TagData tag : tags) {
@@ -187,7 +187,7 @@ public class SchematicDetailDialog extends SolimDialog {
                 return;
             }
 
-            card(WebStyles.previewCard().style()).growX().top().left().padding(unit(2)).children(() -> {
+            card(WebStyles.previewCardBackground()).growX().top().left().padding(unit(2)).children(() -> {
                 text(Core.bundle.get("browser.detail.requirements")).color(Color.white).growX().left();
                 grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().left().gap(unit(1)).children(() -> {
                     for (ItemStack stack : requirements) {
