@@ -77,7 +77,7 @@ public class ChatUserListView extends BaseComponent {
             return card().growX().top().left()
                     .children(() -> {
                         row().growX().top().left().padding(unit(1)).gap(unit(1)).children(() -> {
-                            new ChatAvatar(name, user.getImageUrl(), name, unit(12));
+                            new ChatAvatar(name, user.getImageUrl(), name, unit(10));
 
                             text(name).color(finalRoleColor)
                                     .growX()

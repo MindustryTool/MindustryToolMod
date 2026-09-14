@@ -103,8 +103,8 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
     }
 
     @Override
-    public PendingCellConfig sizeConstraints() {
-        return image.sizeConstraints();
+    public PendingCellConfig cellConfig() {
+        return image.cellConfig();
     }
 
     @Override

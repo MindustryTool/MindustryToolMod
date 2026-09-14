@@ -118,7 +118,7 @@ public final class PendingCellConfig {
         if (target == null)
             return null;
         if (target instanceof CellConfig) {
-            return ((CellConfig<?>) target).sizeConstraints();
+            return ((CellConfig<?>) target).cellConfig();
         }
         if (target instanceof PendingCellConfig) {
             return (PendingCellConfig) target;

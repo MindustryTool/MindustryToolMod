@@ -23,8 +23,9 @@ import solim.modifier.PendingCellConfig;
 /**
  * High-performance virtualized vertical list component.
  *
- * <p>Only instantiates and mounts items that intersect the visible scroll viewport plus
- * a configurable overscan buffer.
+ * <p>
+ * Only instantiates and mounts items that intersect the visible scroll viewport
+ * plus a configurable overscan buffer.
  *
  * @param <T> the item type
  * @param <K> the item key type
@@ -207,7 +208,7 @@ public final class VirtualList<T, K> extends BaseComponent implements CellConfig
     }
 
     @Override
-    public PendingCellConfig sizeConstraints() {
+    public PendingCellConfig cellConfig() {
         return constraints;
     }
 
@@ -312,7 +313,8 @@ public final class VirtualList<T, K> extends BaseComponent implements CellConfig
     }
 
     public static int findFirstVisible(float[] yOffsets, float[] heights, float scrollY) {
-        if (yOffsets.length == 0) return 0;
+        if (yOffsets.length == 0)
+            return 0;
         int low = 0;
         int high = yOffsets.length - 1;
         int result = high;
@@ -329,7 +331,8 @@ public final class VirtualList<T, K> extends BaseComponent implements CellConfig
     }
 
     public static int findLastVisible(float[] yOffsets, float bottom) {
-        if (yOffsets.length == 0) return 0;
+        if (yOffsets.length == 0)
+            return 0;
         int low = 0;
         int high = yOffsets.length - 1;
         int result = 0;

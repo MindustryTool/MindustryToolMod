@@ -30,7 +30,8 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     public SolimStack center() {
         if (stack.parent instanceof Table) {
             Cell<?> cell = ((Table) stack.parent).getCell(stack);
-            if (cell != null) cell.center();
+            if (cell != null)
+                cell.center();
         }
         return this;
     }
@@ -67,7 +68,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     }
 
     @Override
-    public PendingCellConfig sizeConstraints() {
+    public PendingCellConfig cellConfig() {
         return constraints;
     }
 }

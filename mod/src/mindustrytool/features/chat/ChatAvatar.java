@@ -82,7 +82,7 @@ public class ChatAvatar extends BaseComponent {
                     }
                 });
         Element el = stack.element();
-        el.userObject = this;
+        el.userObject = stack;
         return el;
     }
 

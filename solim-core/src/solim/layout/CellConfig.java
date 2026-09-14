@@ -10,14 +10,14 @@ import solim.modifier.PendingCellConfig;
  *
  * <p>
  * Implemented by Solim layout containers ({@link Row}, {@link Column},
- * {@link Card}, {@link Grid}, {@link Scroll}, etc.). Each method configures
- * how this component behaves inside its <em>parent</em> layout cell.
+ * {@link Card}, {@link Grid}, {@link Scroll}, etc.). Each method configures how
+ * this component behaves inside its <em>parent</em> layout cell.
  *
  * <p>
  * CellConfig provides ONLY parent-cell methods:
  * <ul>
- * <li><b>Grow</b>: {@code growX/growY/grow} — marks this component to grow
- * in its parent cell.</li>
+ * <li><b>Grow</b>: {@code growX/growY/grow} — marks this component to grow in
+ * its parent cell.</li>
  * <li><b>Min/Max Size</b>: {@code minWidth/minHeight/maxWidth/maxHeight} —
  * minimum and maximum size constraints applied to the parent cell.</li>
  * <li><b>Cell padding</b>: {@code cellPadding/cellPaddingTop/...} — outer
@@ -26,8 +26,8 @@ import solim.modifier.PendingCellConfig;
  * </ul>
  *
  * <p>
- * Element-targeted operations (width/height/size, opacity, rounded/border/background)
- * come from {@link solim.modifier.ElementConfig}.
+ * Element-targeted operations (width/height/size, opacity,
+ * rounded/border/background) come from {@link solim.modifier.ElementConfig}.
  * Table-targeted operations (alignment, margin, padding, gap) come from
  * {@link solim.modifier.TableConfig}.
  *
@@ -36,33 +36,34 @@ import solim.modifier.PendingCellConfig;
 public interface CellConfig<SELF extends CellConfig<SELF>> {
 
     /**
-     * Returns the {@link solim.modifier.PendingCellConfig} owned by this component's root element.
+     * Returns the {@link solim.modifier.PendingCellConfig} owned by this
+     * component's root element.
      */
-    PendingCellConfig sizeConstraints();
+    PendingCellConfig cellConfig();
 
     // ---------- minimum size ----------
 
     /** Sets the minimum width to a static value. */
     default SELF minWidth(float v) {
-        sizeConstraints().minWidth = Readable.of(v);
+        cellConfig().minWidth = Readable.of(v);
         return self();
     }
 
     /** Sets the minimum width to a reactive value. */
     default SELF minWidth(Readable<Float> v) {
-        sizeConstraints().minWidth = v;
+        cellConfig().minWidth = v;
         return self();
     }
 
     /** Sets the minimum height to a static value. */
     default SELF minHeight(float v) {
-        sizeConstraints().minHeight = Readable.of(v);
+        cellConfig().minHeight = Readable.of(v);
         return self();
     }
 
     /** Sets the minimum height to a reactive value. */
     default SELF minHeight(Readable<Float> v) {
-        sizeConstraints().minHeight = v;
+        cellConfig().minHeight = v;
         return self();
     }
 
@@ -70,25 +71,25 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
 
     /** Sets the maximum width to a static value. */
     default SELF maxWidth(float v) {
-        sizeConstraints().maxWidth = Readable.of(v);
+        cellConfig().maxWidth = Readable.of(v);
         return self();
     }
 
     /** Sets the maximum width to a reactive value. */
     default SELF maxWidth(Readable<Float> v) {
-        sizeConstraints().maxWidth = v;
+        cellConfig().maxWidth = v;
         return self();
     }
 
     /** Sets the maximum height to a static value. */
     default SELF maxHeight(float v) {
-        sizeConstraints().maxHeight = Readable.of(v);
+        cellConfig().maxHeight = Readable.of(v);
         return self();
     }
 
     /** Sets the maximum height to a reactive value. */
     default SELF maxHeight(Readable<Float> v) {
-        sizeConstraints().maxHeight = v;
+        cellConfig().maxHeight = v;
         return self();
     }
 
@@ -99,14 +100,14 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
      * Independent from {@code width()} — both can coexist (CSS flex-basis style).
      */
     default SELF growX() {
-        sizeConstraints().growX = true;
+        cellConfig().growX = true;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
             if (el != null) {
                 if (el.userObject == null) {
                     el.userObject = this;
                 }
-                sizeConstraints().applyGrowToParentCell(el);
+                cellConfig().applyGrowToParentCell(el);
             }
         }
         return self();
@@ -117,14 +118,14 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
      * Independent from {@code height()} — both can coexist.
      */
     default SELF growY() {
-        sizeConstraints().growY = true;
+        cellConfig().growY = true;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
             if (el != null) {
                 if (el.userObject == null) {
                     el.userObject = this;
                 }
-                sizeConstraints().applyGrowToParentCell(el);
+                cellConfig().applyGrowToParentCell(el);
             }
         }
         return self();
@@ -142,12 +143,12 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     }
 
     default SELF cellPadding(float top, float left, float bottom, float right) {
-        sizeConstraints().padTop = Readable.of(top);
-        sizeConstraints().padLeft = Readable.of(left);
-        sizeConstraints().padBottom = Readable.of(bottom);
-        sizeConstraints().padRight = Readable.of(right);
+        cellConfig().padTop = Readable.of(top);
+        cellConfig().padLeft = Readable.of(left);
+        cellConfig().padBottom = Readable.of(bottom);
+        cellConfig().padRight = Readable.of(right);
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
@@ -157,112 +158,112 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     }
 
     default SELF cellPadding(Readable<Float> top, Readable<Float> left, Readable<Float> bottom, Readable<Float> right) {
-        sizeConstraints().padTop = top;
-        sizeConstraints().padLeft = left;
-        sizeConstraints().padBottom = bottom;
-        sizeConstraints().padRight = right;
+        cellConfig().padTop = top;
+        cellConfig().padLeft = left;
+        cellConfig().padBottom = bottom;
+        cellConfig().padRight = right;
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingTop(float top) {
-        sizeConstraints().padTop = Readable.of(top);
+        cellConfig().padTop = Readable.of(top);
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingTop(Readable<Float> top) {
-        sizeConstraints().padTop = top;
+        cellConfig().padTop = top;
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingBottom(float bottom) {
-        sizeConstraints().padBottom = Readable.of(bottom);
+        cellConfig().padBottom = Readable.of(bottom);
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingBottom(Readable<Float> bottom) {
-        sizeConstraints().padBottom = bottom;
+        cellConfig().padBottom = bottom;
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingLeft(float left) {
-        sizeConstraints().padLeft = Readable.of(left);
+        cellConfig().padLeft = Readable.of(left);
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingLeft(Readable<Float> left) {
-        sizeConstraints().padLeft = left;
+        cellConfig().padLeft = left;
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingRight(float right) {
-        sizeConstraints().padRight = Readable.of(right);
+        cellConfig().padRight = Readable.of(right);
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingRight(Readable<Float> right) {
-        sizeConstraints().padRight = right;
+        cellConfig().padRight = right;
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingX(float x) {
-        sizeConstraints().padLeft = Readable.of(x);
-        sizeConstraints().padRight = Readable.of(x);
+        cellConfig().padLeft = Readable.of(x);
+        cellConfig().padRight = Readable.of(x);
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingX(Readable<Float> x) {
-        sizeConstraints().padLeft = x;
-        sizeConstraints().padRight = x;
+        cellConfig().padLeft = x;
+        cellConfig().padRight = x;
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingY(float y) {
-        sizeConstraints().padTop = Readable.of(y);
-        sizeConstraints().padBottom = Readable.of(y);
+        cellConfig().padTop = Readable.of(y);
+        cellConfig().padBottom = Readable.of(y);
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingY(Readable<Float> y) {
-        sizeConstraints().padTop = y;
-        sizeConstraints().padBottom = y;
+        cellConfig().padTop = y;
+        cellConfig().padBottom = y;
         if (this instanceof Component) {
-            sizeConstraints().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }

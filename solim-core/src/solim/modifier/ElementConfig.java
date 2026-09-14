@@ -13,11 +13,13 @@ import solim.signal.Signal;
 import solim.layout.GapContainer;
 
 /**
- * Mixin interface for operations that directly mutate an Arc {@link Element}'s own properties.
+ * Mixin interface for operations that directly mutate an Arc {@link Element}'s
+ * own properties.
  *
  * <p>
- * Implementing components provide {@link #element()} to supply their root Arc Element.
- * All methods are default methods that operate on the element returned by {@code element()}.
+ * Implementing components provide {@link #element()} to supply their root Arc
+ * Element. All methods are default methods that operate on the element returned
+ * by {@code element()}.
  *
  * <p>
  * Targets:
@@ -42,7 +44,8 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     /** Sets the element's width and updates the parent cell if attached. */
     default SELF width(float width) {
         Element el = element();
-        if (el == null) return self();
+        if (el == null)
+            return self();
         float val = Math.max(0f, width);
         el.setWidth(val);
         if (el.parent instanceof Table) {
@@ -52,7 +55,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
             }
         }
         if (this instanceof CellConfig) {
-            ((CellConfig<?>) this).sizeConstraints().prefWidth = Readable.of(val);
+            ((CellConfig<?>) this).cellConfig().prefWidth = Readable.of(val);
         }
         el.invalidateHierarchy();
         return self();
@@ -60,15 +63,17 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     /** Sets the element's width reactively. */
     default SELF width(@Nullable Readable<Float> width) {
-        if (width == null) return self();
+        if (width == null)
+            return self();
         if (this instanceof CellConfig) {
-            ((CellConfig<?>) this).sizeConstraints().prefWidth = width;
+            ((CellConfig<?>) this).cellConfig().prefWidth = width;
         }
         Element el = element();
         if (el != null) {
             Effect e = Effect.of(() -> {
                 Float w = width.get();
-                if (w != null) width(w);
+                if (w != null)
+                    width(w);
             });
             ComponentContext.register(e);
         }
@@ -78,7 +83,8 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     /** Sets the element's height and updates the parent cell if attached. */
     default SELF height(float height) {
         Element el = element();
-        if (el == null) return self();
+        if (el == null)
+            return self();
         float val = Math.max(0f, height);
         el.setHeight(val);
         if (el.parent instanceof Table) {
@@ -88,7 +94,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
             }
         }
         if (this instanceof CellConfig) {
-            ((CellConfig<?>) this).sizeConstraints().prefHeight = Readable.of(val);
+            ((CellConfig<?>) this).cellConfig().prefHeight = Readable.of(val);
         }
         el.invalidateHierarchy();
         return self();
@@ -96,15 +102,17 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     /** Sets the element's height reactively. */
     default SELF height(@Nullable Readable<Float> height) {
-        if (height == null) return self();
+        if (height == null)
+            return self();
         if (this instanceof CellConfig) {
-            ((CellConfig<?>) this).sizeConstraints().prefHeight = height;
+            ((CellConfig<?>) this).cellConfig().prefHeight = height;
         }
         Element el = element();
         if (el != null) {
             Effect e = Effect.of(() -> {
                 Float h = height.get();
-                if (h != null) height(h);
+                if (h != null)
+                    height(h);
             });
             ComponentContext.register(e);
         }
@@ -142,18 +150,21 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     /** Sets the element's x coordinate. */
     default SELF x(float x) {
         Element el = element();
-        if (el != null) el.x = x;
+        if (el != null)
+            el.x = x;
         return self();
     }
 
     /** Sets the element's x coordinate reactively. */
     default SELF x(@Nullable Readable<Float> x) {
-        if (x == null) return self();
+        if (x == null)
+            return self();
         Element el = element();
         if (el != null) {
             Effect e = Effect.of(() -> {
                 Float v = x.get();
-                if (v != null) x(v);
+                if (v != null)
+                    x(v);
             });
             ComponentContext.register(e);
         }
@@ -163,18 +174,21 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     /** Sets the element's y coordinate. */
     default SELF y(float y) {
         Element el = element();
-        if (el != null) el.y = y;
+        if (el != null)
+            el.y = y;
         return self();
     }
 
     /** Sets the element's y coordinate reactively. */
     default SELF y(@Nullable Readable<Float> y) {
-        if (y == null) return self();
+        if (y == null)
+            return self();
         Element el = element();
         if (el != null) {
             Effect e = Effect.of(() -> {
                 Float v = y.get();
-                if (v != null) y(v);
+                if (v != null)
+                    y(v);
             });
             ComponentContext.register(e);
         }
@@ -200,7 +214,8 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     /** Sets whether the element is visible. */
     default SELF visible(boolean visible) {
         Element el = element();
-        if (el == null) return self();
+        if (el == null)
+            return self();
         el.visible = visible;
         if (el.parent instanceof Table) {
             Table parentTable = (Table) el.parent;
@@ -213,7 +228,8 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     /** Sets element visibility reactively. */
     default SELF visible(@Nullable Readable<Boolean> visible) {
-        if (visible == null) return self();
+        if (visible == null)
+            return self();
         Element el = element();
         if (el != null) {
             Effect e = Effect.of(() -> {
@@ -238,12 +254,14 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     /** Sets the element's opacity reactively. */
     default SELF opacity(@Nullable Readable<Float> opacity) {
-        if (opacity == null) return self();
+        if (opacity == null)
+            return self();
         Element el = element();
         if (el != null) {
             Effect e = Effect.of(() -> {
                 Float v = opacity.get();
-                if (v != null) opacity(v);
+                if (v != null)
+                    opacity(v);
             });
             ComponentContext.register(e);
         }
@@ -265,7 +283,8 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     /** Sets the element's debug name. */
     default SELF name(String name) {
         Element el = element();
-        if (el != null) el.name = name;
+        if (el != null)
+            el.name = name;
         return self();
     }
 
@@ -289,7 +308,10 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Makes this element draggable targeting an explicit HUD with reactive coordinate reporting. */
+    /**
+     * Makes this element draggable targeting an explicit HUD with reactive
+     * coordinate reporting.
+     */
     default SELF draggable(@Nullable Hud hud, @Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
         Hud.makeDraggable(element(), hud, xSignal, ySignal);
         return self();

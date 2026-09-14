@@ -131,7 +131,7 @@ public final class Badge implements Component, CellConfig<Badge>, ElementConfig<
     }
 
     @Override
-    public PendingCellConfig sizeConstraints() {
+    public PendingCellConfig cellConfig() {
         return constraints;
     }
 

@@ -525,7 +525,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
     }
 
     @Override
-    public PendingCellConfig sizeConstraints() {
+    public PendingCellConfig cellConfig() {
         return constraints;
     }
 
@@ -590,7 +590,8 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
     public NetworkImage top() {
         if (image.parent instanceof Table) {
             Cell<?> cell = ((Table) image.parent).getCell(image);
-            if (cell != null) cell.top();
+            if (cell != null)
+                cell.top();
         }
         return this;
     }
@@ -598,7 +599,8 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
     public NetworkImage left() {
         if (image.parent instanceof Table) {
             Cell<?> cell = ((Table) image.parent).getCell(image);
-            if (cell != null) cell.left();
+            if (cell != null)
+                cell.left();
         }
         return this;
     }
@@ -606,7 +608,8 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
     public NetworkImage center() {
         if (image.parent instanceof Table) {
             Cell<?> cell = ((Table) image.parent).getCell(image);
-            if (cell != null) cell.center();
+            if (cell != null)
+                cell.center();
         }
         return this;
     }

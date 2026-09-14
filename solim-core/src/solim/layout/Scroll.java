@@ -249,35 +249,39 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     }
 
     @Override
-    public PendingCellConfig sizeConstraints() {
+    public PendingCellConfig cellConfig() {
         return constraints;
     }
 
     @Override
     public Scroll x(float x) {
         Element el = element();
-        if (el != null) el.x = x;
+        if (el != null)
+            el.x = x;
         return this;
     }
 
     @Override
     public Scroll y(float y) {
         Element el = element();
-        if (el != null) el.y = y;
+        if (el != null)
+            el.y = y;
         return this;
     }
 
     @Override
     public Scroll position(float x, float y) {
         Element el = element();
-        if (el != null) el.setPosition(x, y);
+        if (el != null)
+            el.setPosition(x, y);
         return this;
     }
 
     @Override
     public Scroll visible(boolean visible) {
         Element el = element();
-        if (el == null) return this;
+        if (el == null)
+            return this;
         el.visible = visible;
         if (el.parent instanceof Table) {
             GapContainer.respace((Table) el.parent);

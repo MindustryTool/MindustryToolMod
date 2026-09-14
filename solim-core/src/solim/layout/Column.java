@@ -16,7 +16,8 @@ import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 
 /** Column layout — vertical Table wrapper. */
-public final class Column implements Component, CellConfig<Column>, ElementConfig<Column>, TableConfig<Column>, GapContainer {
+public final class Column
+        implements Component, CellConfig<Column>, ElementConfig<Column>, TableConfig<Column>, GapContainer {
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -52,7 +53,7 @@ public final class Column implements Component, CellConfig<Column>, ElementConfi
     }
 
     @Override
-    public PendingCellConfig sizeConstraints() {
+    public PendingCellConfig cellConfig() {
         return constraints;
     }
 
@@ -151,8 +152,8 @@ public final class Column implements Component, CellConfig<Column>, ElementConfi
     @Override
     public Column center() {
         TableConfig.super.center();
-        sizeConstraints().alignCenter();
-        sizeConstraints().applyAlignToParentCell(element());
+        cellConfig().alignCenter();
+        cellConfig().applyAlignToParentCell(element());
         table.defaults().center();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
