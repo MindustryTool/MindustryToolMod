@@ -60,7 +60,7 @@ public class WebStyles {
         public static final Color CHIP_DOWN_BG = new Color(0.24f, 0.24f, 0.24f, 1f);
         public static final Color CHIP_FG = new Color(0.6f, 0.6f, 0.6f, 1f);
         public static final Color CHIP_CHECKED_BG = new Color(0.26f, 0.26f, 0.26f, 1f);
-        public static final Color CHIP_CHECKED_BORDER = new Color(0.38f, 0.38f, 0.38f, 1f);
+        public static final Color CHIP_CHECKED_BORDER = new Color(0.7f, 0.7f, 0.7f, 1f);
         public static final Color CHIP_CHECKED_FG = new Color(0.95f, 0.95f, 0.95f, 1f);
         public static final Color CLEAR_BG = new Color(0.12f, 0.12f, 0.12f, 1f);
         public static final Color CLEAR_BORDER = new Color(0.22f, 0.22f, 0.22f, 1f);
@@ -168,12 +168,12 @@ public class WebStyles {
 
     private static final SolimButtonStyle FILTER_CHIP_STYLE = new SolimButtonStyleBuilder()
             .rounded(unit(2))
-            .border(1.0f, Colors.CHIP_BORDER)
+            .border(1.5f, Colors.CHIP_BORDER)
             .padding(unit(1))
             .up(u -> u.background(Color.clear))
             .over(o -> o.background(Colors.CHIP_HOVER_BG))
             .down(d -> d.background(Colors.CHIP_DOWN_BG))
-            .checked(c -> c.background(Colors.CHIP_CHECKED_BG).border(1.0f, Colors.CHIP_CHECKED_BORDER))
+            .checked(c -> c.background(Colors.CHIP_CHECKED_BG).border(1.5f, Colors.CHIP_CHECKED_BORDER))
             .build();
 
     private static final SolimButtonStyle CLEAR_FILTERS_STYLE = new SolimButtonStyleBuilder()
