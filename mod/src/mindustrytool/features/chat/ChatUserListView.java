@@ -84,7 +84,7 @@ public class ChatUserListView extends BaseComponent {
                                         .ellipsis()
                                         .left();
 
-                                if (user.getState() != null && user.getState().isEmpty()) {
+                                if (user.getState() != null && !user.getState().isEmpty()) {
                                     text(user.getState()).color(Color.lightGray).fontScale(0.8f);
                                 }
                             });

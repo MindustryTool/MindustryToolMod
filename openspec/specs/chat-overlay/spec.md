@@ -33,6 +33,10 @@ The system SHALL provide a collapsed floating badge display when collapsedConfig
 - **WHEN** the collapsed badge is displayed
 - **THEN** only one icon (chat icon) is visible and no separate move/drag handle icon is rendered
 
+#### Scenario: Unread badge indicator display
+- **WHEN** any channel has persistent unread messages while the chat is collapsed
+- **THEN** a scarlet unread circle dot is displayed on the top-right corner of the collapsed badge
+
 #### Scenario: Unread badge count update
 - **WHEN** unread messages arrive while collapsed
 - **THEN** the badge label updates reactively to reflect the current unread count
@@ -160,6 +164,17 @@ Channel rows SHALL indicate unread activity so users can spot new messages witho
 #### Scenario: Active channel clears indicator
 - **WHEN** a channel becomes the active channel
 - **THEN** its unread indicator is cleared
+
+### Requirement: Channel Unread Circle Indicator
+The system SHALL display an unread indicator circle on each channel row in the channel list when that channel has unread messages, derived reactively from persistent read tracking.
+
+#### Scenario: Channel with unread messages
+- **WHEN** a channel has a latest message ID newer than the local last-read ID
+- **THEN** a white circle indicator is visible next to the channel name in ChatChannelListView
+
+#### Scenario: Channel read
+- **WHEN** the user switches to or views the channel
+- **THEN** the unread indicator circle for that channel becomes hidden
 
 ### Requirement: Member Presence and Online Count
 The member sidebar SHALL show who is online via presence dots and an online/total header count, derived from existing roster signals.
