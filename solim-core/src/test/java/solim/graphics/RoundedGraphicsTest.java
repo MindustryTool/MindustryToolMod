@@ -348,5 +348,38 @@ class RoundedGraphicsTest {
         Column col = new Column();
         col.background(Color.royal);
         assertTrue(col.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
+        assertEquals(Color.royal, rd.getFillColor(), "background(Color) must set fillColor on RoundedDrawable");
+    }
+
+    @Test
+    void backgroundColorSetsFillColorOnExistingRoundedDrawable() {
+        Column col = new Column();
+        col.rounded(16).border(2f, Color.green).backgroundColor(Color.red);
+        assertTrue(col.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
+        assertEquals(16, rd.getRadius(), "Radius must be preserved");
+        assertEquals(2f, rd.getStroke(), 0.001f, "Stroke must be preserved");
+        assertEquals(Color.green, rd.getBorderColor(), "Border color must be preserved");
+        assertEquals(Color.red, rd.getFillColor(), "Fill color must be applied to RoundedDrawable");
+    }
+
+    @Test
+    void reactiveBackgroundColorUpdatesFillColor() {
+        Signal<Color> colorSignal = Signal.of(Color.red);
+        Column col = new Column();
+        col.rounded(10).backgroundColor(colorSignal);
+
+        RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
+        assertEquals(Color.red, rd.getFillColor());
+
+        colorSignal.set(Color.blue);
+        SignalDispatcher.flush();
+        assertEquals(Color.blue, rd.getFillColor(), "Changing color signal must update fillColor on RoundedDrawable");
+
+        rd.dispose();
+        colorSignal.set(Color.green);
+        SignalDispatcher.flush();
+        assertEquals(Color.blue, rd.getFillColor(), "Disposing RoundedDrawable must stop updates to fillColor");
     }
 }

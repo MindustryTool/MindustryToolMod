@@ -128,9 +128,9 @@ class WebStylesTest {
         RoundedDrawable up = (RoundedDrawable) style.style().up;
         RoundedDrawable over = (RoundedDrawable) style.style().over;
         RoundedDrawable down = (RoundedDrawable) style.style().down;
-        assertEquals(rgba(WebStyles.Colors.PRIMARY_BG), rgba(up.getFillColor()));
+        assertEquals(rgba(Color.clear), rgba(up.getFillColor()));
         assertEquals(rgba(WebStyles.Colors.PRIMARY_BG_HOVER), rgba(over.getFillColor()));
-        assertEquals(rgba(WebStyles.Colors.PRIMARY_BG_DOWN), rgba(down.getFillColor()));
+        assertEquals(rgba(WebStyles.Colors.PRIMARY_BG), rgba(down.getFillColor()));
         assertEquals(1.5f, up.getStroke(), 0.001f);
         assertEquals(rgba(WebStyles.Colors.BORDER_INPUT), rgba(up.getBorderColor()));
         assertEquals(rgba(WebStyles.Colors.BORDER_INPUT), rgba(over.getBorderColor()));

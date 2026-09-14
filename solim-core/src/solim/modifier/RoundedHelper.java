@@ -1,5 +1,6 @@
 package solim.modifier;
 
+import arc.Core;
 import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
@@ -28,15 +29,22 @@ public final class RoundedHelper {
 
         @Override
         public void draw(float x, float y, float width, float height) {
+            if (Core.batch == null) return;
             Draw.color(color);
-            Fill.rect(x, y, width, height);
+            Fill.crect(x, y, width, height);
         }
 
         @Override
         public void draw(float x, float y, float originX, float originY, float width, float height, float scaleX,
                 float scaleY, float rotation) {
+            if (Core.batch == null) return;
             Draw.color(color);
-            Fill.rect(x, y, width, height);
+            if (rotation == 0f && scaleX == 1f && scaleY == 1f) {
+                Fill.crect(x, y, width, height);
+            } else if (Core.atlas != null) {
+                Draw.rect(Core.atlas.white(), x + width / 2f, y + height / 2f, width * scaleX, height * scaleY, originX,
+                        originY, rotation);
+            }
         }
 
         @Override

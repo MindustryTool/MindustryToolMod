@@ -72,9 +72,9 @@ public class QuickAccessHudView extends BaseComponent {
                     .cellPaddingRight(2)
                     .growY();
 
-            grid(parentFeature.colsConfig.signal(), items, HudItem::id,
+            grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items, HudItem::id,
                     item -> createItemButton(item, buttonSize, iconSize, margin))
-                    .gap(2);
+                            .gap(2);
         });
 
         hud.background(Styles.black6);

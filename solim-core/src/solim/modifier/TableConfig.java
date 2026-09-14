@@ -453,14 +453,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     default SELF background(@Nullable Color color) {
         Table t = table();
         if (t == null) return self();
-        if (t.getBackground() instanceof RoundedDrawable) {
-            RoundedDrawable rd = (RoundedDrawable) t.getBackground();
-            rd.baseDrawable(new RoundedHelper.ColorDrawable(color));
-        } else {
-            RoundedDrawable rd = new RoundedDrawable(8);
-            rd.baseDrawable(new RoundedHelper.ColorDrawable(color));
-            t.setBackground(rd);
-        }
+        RoundedDrawable rd = getOrCreateRounded(8);
+        rd.fillColor(color != null ? color : Color.clear);
         return self();
     }
 
@@ -474,13 +468,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         if (color == null) return self();
         Table t = table();
         if (t != null) {
-            Effect e = Effect.of(() -> {
-                Color c = color.get();
-                if (c != null) {
-                    background(c);
-                }
-            });
-            ComponentContext.register(e);
+            RoundedDrawable rd = getOrCreateRounded(8);
+            rd.fillColor(color);
         }
         return self();
     }

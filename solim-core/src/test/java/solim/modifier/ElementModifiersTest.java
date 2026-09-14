@@ -203,4 +203,19 @@ class ElementModifiersTest {
         Button button = new Button().name("my-button").gap(8f);
         assertEquals("my-button", button.element().name);
     }
+
+    @Test
+    void colorDrawableDrawsCornerBased() {
+        RoundedHelper.ColorDrawable cd = new RoundedHelper.ColorDrawable(Color.red);
+        assertDoesNotThrow(() -> cd.draw(10f, 20f, 100f, 50f));
+        assertDoesNotThrow(() -> cd.draw(10f, 20f, 50f, 25f, 100f, 50f, 1f, 1f, 0f));
+    }
+
+    @Test
+    void backgroundColorModifierOnColumn() {
+        Column column = new Column().backgroundColor(Color.crimson);
+        assertTrue(column.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd = (RoundedDrawable) column.table().getBackground();
+        assertEquals(Color.crimson, rd.getFillColor(), "backgroundColor modifier must set fillColor on RoundedDrawable");
+    }
 }
