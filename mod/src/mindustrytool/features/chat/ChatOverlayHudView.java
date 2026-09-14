@@ -80,7 +80,10 @@ public class ChatOverlayHudView extends BaseComponent {
                 .children(() -> {
                     button(() -> {
                         feature.collapsedConfig.set(false);
-                        store.unread().clearAll();
+                        String activeId = store.channels().currentActiveId();
+                        if (activeId != null) {
+                            store.unread().markAsRead(activeId);
+                        }
                     })
                             .style(Styles.clearNonei)
                             .size(unit(14), unit(14))

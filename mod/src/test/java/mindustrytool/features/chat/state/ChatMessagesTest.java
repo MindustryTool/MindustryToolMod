@@ -3,7 +3,6 @@ package mindustrytool.features.chat.state;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import mindustrytool.models.response.ChatMessage;
 import org.junit.jupiter.api.Test;

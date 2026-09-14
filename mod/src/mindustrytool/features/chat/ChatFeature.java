@@ -100,8 +100,17 @@ public class ChatFeature extends Feature {
             }
         });
 
+        store = new ChatStore();
+        service = new ChatService(store, () -> !Boolean.TRUE.equals(collapsedConfig.get()));
+
         collapsedConfig.signal().subscribe(col -> {
             boolean isCollapsed = Boolean.TRUE.equals(col);
+            if (!isCollapsed) {
+                String activeId = store.channels().currentActiveId();
+                if (activeId != null) {
+                    store.unread().markAsRead(activeId);
+                }
+            }
             Float targetX = isCollapsed ? collapsedXConfig.get() : expandedXConfig.get();
             Float targetY = isCollapsed ? collapsedYConfig.get() : expandedYConfig.get();
             if (targetX != null)
@@ -112,9 +121,6 @@ public class ChatFeature extends Feature {
                 Core.app.post(hudView::keepInScreen);
             }
         });
-
-        store = new ChatStore();
-        service = new ChatService(store, () -> !Boolean.TRUE.equals(collapsedConfig.get()));
     }
 
     public ChatStore getStore() {

@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import mindustrytool.models.response.ChannelDto;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
 import mindustrytool.services.MindustryTool;
@@ -68,8 +69,19 @@ public class ChatService {
         MindustryTool.getChatChannels().thenAccept(channels -> {
             Core.app.post(() -> {
                 store.channels().replace(channels);
+                if (channels != null) {
+                    for (ChannelDto c : channels) {
+                        if (c.getId() != null && c.getLastMessageId() != null) {
+                            store.unread().setLatestMessage(c.getId(), c.getLastMessageId());
+                        }
+                    }
+                }
                 String activeId = store.channels().currentActiveId();
                 if (activeId != null && !activeId.isEmpty()) {
+                    boolean open = windowOpenSupplier.get();
+                    if (open) {
+                        store.unread().markAsRead(activeId);
+                    }
                     loadMessages(activeId);
                     loadUsers(activeId);
                 }
@@ -91,6 +103,17 @@ public class ChatService {
                 }
                 store.messages().replace(channelId, messages);
                 store.messages().setFullyLoaded(channelId, messages == null || messages.size() < PAGE_SIZE);
+                if (messages != null && !messages.isEmpty()) {
+                    ChatMessage newest = messages.get(messages.size() - 1);
+                    if (newest.getId() != null) {
+                        store.unread().setLatestMessage(channelId, newest.getId());
+                        boolean open = windowOpenSupplier.get();
+                        boolean isActive = Objects.equals(store.channels().currentActiveId(), channelId);
+                        if (open && isActive) {
+                            store.unread().markAsRead(channelId, newest.getId());
+                        }
+                    }
+                }
                 fetchMissingUsers(messages);
             });
         }).exceptionally(e -> {
@@ -163,12 +186,9 @@ public class ChatService {
                 .thenApply(msg -> {
                     Core.app.post(() -> {
                         boolean added = store.messages().append(msg);
-                        if (added) {
-                            boolean open = windowOpenSupplier.get();
-                            boolean isActive = Objects.equals(store.channels().currentActiveId(), msg.getChannelId());
-                            if (!open || !isActive) {
-                                store.unread().increment(msg.getChannelId());
-                            }
+                        if (added && msg.getId() != null) {
+                            store.unread().setLatestMessage(msg.getChannelId(), msg.getId());
+                            store.unread().markAsRead(msg.getChannelId(), msg.getId());
                         }
                         store.ui().setReplyTarget(null);
                     });
@@ -271,7 +291,12 @@ public class ChatService {
                             boolean added = store.messages().append(msg);
                             if (added) {
                                 boolean isActive = Objects.equals(store.channels().currentActiveId(), msg.getChannelId());
-                                if (!open || !isActive) {
+                                if (msg.getId() != null) {
+                                    store.unread().setLatestMessage(msg.getChannelId(), msg.getId());
+                                }
+                                if (open && isActive) {
+                                    store.unread().markAsRead(msg.getChannelId(), msg.getId());
+                                } else {
                                     store.unread().increment(msg.getChannelId());
                                 }
                             }
@@ -287,7 +312,10 @@ public class ChatService {
                         if (added) {
                             boolean open = windowOpenSupplier.get();
                             boolean isActive = Objects.equals(store.channels().currentActiveId(), msg.getChannelId());
-                            if (!open || !isActive) {
+                            store.unread().setLatestMessage(msg.getChannelId(), msg.getId());
+                            if (open && isActive) {
+                                store.unread().markAsRead(msg.getChannelId(), msg.getId());
+                            } else {
                                 store.unread().increment(msg.getChannelId());
                             }
                         }

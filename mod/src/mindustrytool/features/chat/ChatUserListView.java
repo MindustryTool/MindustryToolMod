@@ -78,11 +78,16 @@ public class ChatUserListView extends BaseComponent {
                     .children(() -> {
                         row().growX().top().left().padding(unit(1)).gap(unit(1)).children(() -> {
                             new ChatAvatar(name, user.getImageUrl(), name, unit(10));
+                            column().children(() -> {
+                                text(name).color(finalRoleColor)
+                                        .growX()
+                                        .ellipsis()
+                                        .left();
 
-                            text(name).color(finalRoleColor)
-                                    .growX()
-                                    .ellipsis()
-                                    .left();
+                                if (user.getState() != null && user.getState().isEmpty()) {
+                                    text(user.getState()).color(Color.lightGray).fontScale(0.8f);
+                                }
+                            });
                         });
                     })
                     .element();
