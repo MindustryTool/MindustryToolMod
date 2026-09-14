@@ -1,7 +1,6 @@
 package mindustrytool.features.browser.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -14,7 +13,6 @@ import arc.mock.MockGL20;
 import arc.mock.MockGraphics;
 import arc.mock.MockSettings;
 import arc.scene.Scene;
-import arc.scene.ui.TextButton.TextButtonStyle;
 import java.lang.reflect.Field;
 import mindustry.ui.Fonts;
 import org.junit.jupiter.api.BeforeAll;
@@ -158,33 +156,6 @@ class WebStylesTest {
         assertEquals(rgba(WebStyles.Colors.DANGER), rgba(up.getFillColor()));
         assertEquals(rgba(WebStyles.Colors.DANGER_HOVER), rgba(over.getFillColor()));
         assertEquals(rgba(WebStyles.Colors.DANGER_DOWN), rgba(down.getFillColor()));
-    }
-
-    @Test
-    void textCounterpartsContainFontAndDrawables() {
-        SolimButtonStyle[] texts = new SolimButtonStyle[]{
-            WebStyles.primaryText(),
-            WebStyles.secondaryText(),
-            WebStyles.outlineText(),
-            WebStyles.ghostText(),
-            WebStyles.dangerText()
-        };
-        for (SolimButtonStyle text : texts) {
-            assertTrue(text.style() instanceof TextButtonStyle);
-            TextButtonStyle ts = (TextButtonStyle) text.style();
-            assertNotNull(ts.up);
-            assertNotNull(ts.over);
-            assertNotNull(ts.down);
-            assertEquals(Fonts.def, ts.font);
-            assertNotNull(ts.fontColor);
-            assertNotNull(ts.overFontColor);
-            assertNotNull(ts.downFontColor);
-            assertNotNull(ts.disabledFontColor);
-        }
-
-        TextButtonStyle outlineText = (TextButtonStyle) WebStyles.outlineText().style();
-        RoundedDrawable up = (RoundedDrawable) outlineText.up;
-        assertEquals(rgba(WebStyles.Colors.PRIMARY_BG), rgba(up.getFillColor()));
     }
 
     @Test

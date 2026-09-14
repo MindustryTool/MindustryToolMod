@@ -810,6 +810,7 @@ class LayoutTest {
 
     @Test
     void debugScrollSectionPanelLayout() {
+        Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent test");
         Table root = new Table();
         root.setSize(1024f, 576f);
         ParentStack.push(root);

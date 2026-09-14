@@ -134,9 +134,9 @@ public class BrowserFilterDialog extends SolimDialog {
 
         private void sectionPanel(String title, Runnable content, Color color) {
             column().growX().left()
-                    .rounded(unit(2))
-                    .border(1.5f, WebStyles.Colors.SECTION_BORDER)
-                    .backgroundColor(Color.darkGray)
+                    .rounded(unit(3))
+                    .border(2f, Color.green)
+                    .backgroundColor(Color.scarlet)
                     .padding(unit(3))
                     .gap(unit(2))
                     .children(() -> {
