@@ -321,6 +321,11 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
         url(url);
     }
 
+    public NetworkImage origin(int align) {
+        this.image.setOrigin(align);
+        return this;
+    }
+
     public NetworkImage rounded(int radius) {
         int r = Math.max(0, radius);
         if (this.cornerRadius != r) {

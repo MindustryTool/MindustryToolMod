@@ -357,7 +357,7 @@ public class BrowserFilterDialog extends SolimDialog {
                     .gap(unit(1))
                     .children(() -> {
                         if (tag.getIcon() != null) {
-                            networkImage(tag.getIcon()).size(unit(6));
+                            networkImage(tag.getIcon()).fallback(Icon.imageSmall).size(unit(6));
                         }
                         text(chipLabel).color(checked.map(c -> c ? Color.white : Color.gray));
                     });

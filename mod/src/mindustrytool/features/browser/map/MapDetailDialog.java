@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.util.Align;
 import arc.util.Scaling;
 import java.util.Collections;
 import java.util.List;
@@ -80,6 +81,7 @@ public class MapDetailDialog extends SolimDialog {
         private void previewImagePortrait() {
             networkImage(BrowserImages.mapImageUrl(itemId))
                     .placeholder(Icon.terrain)
+                    .origin(Align.top | Align.left)
                     .fallback(Icon.terrain)
                     .growX()
                     .height(dvh(45f))
@@ -90,6 +92,7 @@ public class MapDetailDialog extends SolimDialog {
         private void previewImageLandscape() {
             networkImage(BrowserImages.mapImageUrl(itemId))
                     .placeholder(Icon.terrain)
+                    .origin(Align.top)
                     .fallback(Icon.terrain)
                     .width(dvw(45f))
                     .growY()
@@ -125,15 +128,15 @@ public class MapDetailDialog extends SolimDialog {
                 row().growX().gap(unit(2)).children(() -> {
                     button(Core.bundle.get("browser.map.download"),
                             () -> MapActions.downloadAndImport(itemId))
-                            .style(Styles.defaultb)
-                            .growX()
-                            .height(unit(10));
+                                    .style(Styles.defaultb)
+                                    .growX()
+                                    .height(unit(10));
 
                     button(Core.bundle.get("browser.map.play"),
                             () -> MapActions.playMap(itemId))
-                            .style(Styles.defaultb)
-                            .growX()
-                            .height(unit(10));
+                                    .style(Styles.defaultb)
+                                    .growX()
+                                    .height(unit(10));
                 });
             });
         }

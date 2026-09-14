@@ -7,6 +7,7 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
+import arc.util.Align;
 import arc.util.Scaling;
 import java.util.Collections;
 import java.util.List;
@@ -93,6 +94,7 @@ public class SchematicDetailDialog extends SolimDialog {
             networkImage(BrowserImages.schematicImageUrl(itemId))
                     .placeholder(Icon.image)
                     .fallback(Icon.image)
+                    .origin(Align.top | Align.left)
                     .growX()
                     .top()
                     .height(dvh(45))
@@ -102,6 +104,7 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private void previewImageLandscape() {
             networkImage(BrowserImages.schematicImageUrl(itemId))
+                    .origin(Align.top)
                     .placeholder(Icon.image)
                     .fallback(Icon.image)
                     .width(dvw(45))
