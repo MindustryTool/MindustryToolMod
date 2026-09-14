@@ -1,21 +1,275 @@
 package mindustrytool.features.timecontrol;
 
+import arc.Core;
+import arc.math.Mathf;
+import arc.scene.Element;
+import arc.util.Nullable;
+import arc.util.Time;
+import mindustry.Vars;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import solim.config.ConfigGroup;
+import solim.config.ConfigValue;
+import solim.config.ContextualConfigValue;
+import solim.overlay.SolimDialog;
+import solim.signal.Signal;
+import solim.signal.Signals;
+import solim.ui.Units;
 
 /**
- * In-development placeholder for the time-control feature.
- * Metadata only; gameplay logic arrives with the full rewrite.
+ * Controls game speed with a standalone draggable HUD.
+ * Applies only while hosting or in single-player; speed is ephemeral and resets to 1x on
+ * disable, world exit, client sessions, and interaction-mode switches.
  */
 public class TimeControlFeature extends Feature {
+
+    public static final float[] SPEEDS = {0.125f, 0.5f, 1f, 2f, 8f};
+    public static final float SLIDER_MIN_U = -1f;
+    public static final float SLIDER_MAX_U = 1f;
+    public static final float SLIDER_STEP_U = 0.1f;
+    public static final float SLIDER_MIN_SPEED = 0.125f;
+    public static final float SLIDER_MAX_SPEED = 8f;
+    /** Clamp applied after multiplication; 4x the top-preset nominal frame, mirroring vanilla headroom. */
+    public static final float MAX_STEP = 32f;
+    public static final String MODE_PRESETS = "presets";
+    public static final String MODE_SLIDER = "slider";
+
+    public final ConfigGroup config;
+    public final ConfigValue<String> modeConfig;
+
+    public final ConfigGroup positionGroup;
+    public final ContextualConfigValue<Float, Boolean> xConfig;
+    public final ContextualConfigValue<Float, Boolean> yConfig;
+
+    public final Signal<Float> xSignal;
+    public final Signal<Float> ySignal;
+
+    private final Signal<Float> speed = Signal.of(1f);
+    private final Signal<Float> selectedPreset = Signal.of(1f);
+    private final Signal<Boolean> boosted = Signal.of(false);
+    private final Signal<Float> sliderPosition = Signal.of(0f);
+
+    private @Nullable TimeControlHudView hudView;
+    private @Nullable TimeControlSettingsDialog settingsDialog;
+
     public TimeControlFeature() {
         super(FeatureMetadata.builder()
                 .id("time-control")
                 .icon(FileIcon.of("clock.png"))
                 .order(1)
                 .enabledByDefault(false)
-                .development(true)
                 .build());
+
+        config = configGroup();
+
+        modeConfig = config.stringValue("mode", MODE_PRESETS);
+
+        positionGroup = config.group("position");
+
+        float sw = Units.screenWidth();
+        float sh = Units.screenHeight();
+        float defX = sw > 0 ? sw / 2f : 400f;
+        float defY = sh > 0 ? sh / 2f : 250f;
+
+        xConfig = positionGroup.floatValueKeyed("x", Signals.isPortrait(), p -> p ? "portrait" : "landscape", defX);
+        yConfig = positionGroup.floatValueKeyed("y", Signals.isPortrait(), p -> p ? "portrait" : "landscape", defY);
+
+        Float initX = xConfig.get();
+        Float initY = yConfig.get();
+
+        xSignal = Signal.of(initX != null ? initX : defX);
+        ySignal = Signal.of(initY != null ? initY : defY);
+
+        xSignal.subscribe(val -> {
+            if (val != null) {
+                xConfig.set(val);
+            }
+        });
+        ySignal.subscribe(val -> {
+            if (val != null) {
+                yConfig.set(val);
+            }
+        });
+
+        speed.subscribe(value -> {
+            if (canApply()) {
+                applyProvider(value != null ? value : 1f);
+            }
+        });
+
+        sliderPosition.subscribe(position -> {
+            if (canApply()) {
+                speed.set(speedFromSlider(position != null ? position : 0f));
+            }
+        });
+
+        Signals.netClient().subscribe(client -> {
+            if (Boolean.TRUE.equals(client)) {
+                resetSpeed();
+            }
+        });
+
+        modeConfig.signal().subscribe(mode -> resetSpeed());
+    }
+
+    /** Effective multiplier for a preset with the legacy double-tap boost; 1x never boosts. */
+    public static float effectiveSpeed(float preset, boolean isBoosted) {
+        return !isBoosted || Float.compare(preset, 1f) == 0 ? preset : preset >= 1f ? preset * 2f : preset / 2f;
+    }
+
+    /** Two-sided-quadratic slider map around 1x; ratio-symmetric with u = 0 exactly 1x. */
+    public static float speedFromSlider(float position) {
+        float squared = position * position;
+        return position >= 0f ? 1f + squared * (SLIDER_MAX_SPEED - 1f)
+                : 1f / (1f + squared * (1f / SLIDER_MIN_SPEED - 1f));
+    }
+
+    /** Inverse of {@link #speedFromSlider(float)}; maps a speed back to slider position. */
+    public static float sliderFromSpeed(float value) {
+        return value >= 1f ? Mathf.sqrt((value - 1f) / (SLIDER_MAX_SPEED - 1f))
+                : -Mathf.sqrt((1f / value - 1f) / (1f / SLIDER_MIN_SPEED - 1f));
+    }
+
+    /** Short display form such as 8x or 0.25x. */
+    public static String formatSpeed(float value) {
+        float rounded = Math.round(value * 100f) / 100f;
+        return rounded == (int) rounded ? String.valueOf((int) rounded) : String.valueOf(rounded);
+    }
+
+    public Signal<Float> speedSignal() {
+        return speed;
+    }
+
+    public Signal<Float> selectedPresetSignal() {
+        return selectedPreset;
+    }
+
+    public Signal<Boolean> boostedSignal() {
+        return boosted;
+    }
+
+    /** Returns the intermediate slider position signal (u in [-1, 1]); use this to bind the slider widget. */
+    public Signal<Float> sliderPositionSignal() {
+        return sliderPosition;
+    }
+
+    public boolean isPresetMode() {
+        return !MODE_SLIDER.equals(modeConfig.get());
+    }
+
+    public void selectPreset(float preset) {
+        if (!canApply()) {
+            return;
+        }
+        if (Float.compare(preset, 1f) == 0) {
+            // 1x is boost-locked: always resets to 1x and clears boost; double-tap is a no-op.
+            selectedPreset.set(1f);
+            boosted.set(false);
+            speed.set(1f);
+        } else if (Float.compare(preset, selectedPreset.peek()) == 0) {
+            // Same non-1x preset tapped again: toggle boost.
+            boosted.set(!Boolean.TRUE.equals(boosted.peek()));
+            speed.set(effectiveSpeed(preset, Boolean.TRUE.equals(boosted.peek())));
+        } else {
+            selectedPreset.set(preset);
+            boosted.set(false);
+            speed.set(preset);
+        }
+    }
+
+    /**
+     * Resets slider position to 0 (exactly 1x), routing through position signal so widget and speed never desync.
+     * Use this for all slider-mode resets.
+     */
+    public void resetSlider() {
+        sliderPosition.set(0f);
+        // speed will be updated reactively via the sliderPosition subscriber.
+    }
+
+    public void resetSpeed() {
+        selectedPreset.set(1f);
+        boosted.set(false);
+        // Route through sliderPosition so slider widget stays in sync in slider mode.
+        sliderPosition.set(0f);
+        speed.set(1f);
+        restoreDefaultProvider();
+    }
+
+    public void resetPosition() {
+        float sw = Units.screenWidth();
+        float sh = Units.screenHeight();
+        float cx = sw > 0 ? sw / 2f : 400f;
+        float cy = sh > 0 ? sh / 2f : 250f;
+
+        xConfig.set(cx);
+        yConfig.set(cy);
+        xSignal.set(cx);
+        ySignal.set(cy);
+
+        if (hudView != null) {
+            Core.app.post(hudView::keepInScreen);
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        if (hudView != null) {
+            hudView.element().remove();
+            hudView.dispose();
+        }
+
+        hudView = new TimeControlHudView(this);
+        Element el = hudView.element();
+        el.name = "time-control-hud";
+        el.visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame()
+                && Boolean.FALSE.equals(Signals.netClient().peek()));
+
+        Core.app.post(() -> {
+            if (hudView != null) {
+                Vars.ui.hudGroup.addChild(el);
+            }
+        });
+    }
+
+    @Override
+    public void onDisable() {
+        resetSpeed();
+        if (hudView != null) {
+            TimeControlHudView view = hudView;
+            hudView = null;
+            Core.app.post(() -> {
+                view.element().remove();
+                view.dispose();
+            });
+        }
+    }
+
+    @Override
+    public @Nullable SolimDialog getSettingDialog() {
+        if (settingsDialog == null) {
+            settingsDialog = new TimeControlSettingsDialog(this);
+        }
+        return settingsDialog;
+    }
+
+    private boolean canApply() {
+        return Boolean.FALSE.equals(Signals.netClient().peek()) && !Vars.net.client();
+    }
+
+    private void applyProvider(float multiplier) {
+        float m = multiplier;
+        Time.setDeltaProvider(() -> {
+            float result = Core.graphics.getDeltaTime() * 60f * m;
+            return (Float.isNaN(result) || Float.isInfinite(result)) ? 1f : Mathf.clamp(result, 0.0001f, MAX_STEP);
+        });
+    }
+
+    private void  restoreDefaultProvider() {
+        // Time exposes no getter or reset; restate the vanilla ClientLauncher form verbatim.
+        Time.setDeltaProvider(() -> {
+            float result = Core.graphics.getDeltaTime() * 60f;
+            return (Float.isNaN(result) || Float.isInfinite(result)) ? 1f : Mathf.clamp(result, 0.0001f, Vars.maxDeltaClient);
+        });
     }
 }

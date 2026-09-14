@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import mindustry.gen.Icon;
-import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
@@ -20,6 +19,7 @@ import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.layout.Direction;
 import solim.overlay.Hud;
 import solim.signal.Readable;
 
@@ -53,8 +53,8 @@ public class QuickAccessHudView extends BaseComponent {
     @Override
     protected Element build() {
         Readable<Float> scale = parentFeature.scaleConfig.signal();
-        Readable<Float> buttonSize = scale.map(s -> unit(14) * s);
-        Readable<Float> iconSize = scale.map(s -> unit(12) * s);
+        Readable<Float> buttonSize = scale.map(s -> unit(11f) * s);
+        Readable<Float> iconSize = scale.map(s -> unit(7f) * s);
 
         Readable<List<HudItem>> items = parentFeature.hiddenFeaturesConfig.signal().map(this::computeVisibleItems);
 
@@ -65,11 +65,7 @@ public class QuickAccessHudView extends BaseComponent {
                     .children(() -> icon(Icon.move).size(iconSize))
                     .draggable(parentFeature.xSignal, parentFeature.ySignal);
 
-            image(Tex.whiteui)
-                    .color(Pal.accent)
-                    .width(2f)
-                    .cellPaddingRight(2)
-                    .growY();
+            divider(Direction.Y);
 
             grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items, HudItem::id,
                     item -> createItemButton(item, buttonSize, iconSize))

@@ -1,4 +1,12 @@
-## ADDED Requirements
+# time-control Specification
+
+## Purpose
+
+Standalone Solim-first game-speed control gated to hosting or single-player, with ephemeral speed, preset and slider interaction modes, and a settings dialog. Created by archiving change rewrite-time-control.
+
+## Requirements
+
+**Source: rewrite-time-control, time-control-refinements**
 
 ### Requirement: Host-or-single-player gating
 The time-control feature SHALL apply game speed only when the session is single-player (`!Vars.net.active()`) or locally hosted (`Vars.net.server()`). When the client state (`Vars.net.client()`) holds, speed application SHALL be refused and any active speed SHALL reset to 1x.
@@ -31,7 +39,7 @@ Speed SHALL live in a memory-only `Signal<Float>` defaulting to 1x and SHALL nev
 - **THEN** the feature starts at 1x with no stored speed value read
 
 ### Requirement: Standalone reactive HUD
-The feature SHALL render a standalone Solim `hud()` overlay (not a QuickAccess entry) with a drag handle bound via `.draggable(xSignal, ySignal)`, portrait/landscape position persistence following the QuickAccess `ConfigGroup` pattern, and `keepInScreen` on `ResizeEvent`. The HUD SHALL be visible only while the feature is enabled, `Vars.ui.hudfrag.shown` is true, `Vars.state.isGame()` is true, and the net gate is valid. Construction SHALL NOT unwrap signals with `.get()` in `build()`; bindings SHALL be automatic with ambient ownership.
+The feature SHALL render a standalone Solim `hud()` overlay (not a QuickAccess entry) with a drag handle bound via `.draggable(xSignal, ySignal)`, portrait/landscape position persistence following the QuickAccess `ConfigGroup` pattern, and `keepInScreen` on `ResizeEvent`. The HUD SHALL be visible only while the feature is enabled, `Vars.ui.hudfrag.shown` is true, `Vars.state.isGame()` is true, and the net gate is valid. The bar SHALL stay compact: preset buttons roughly `13x10` units with `1`-unit gaps beside a `10`-unit drag handle (about `320x40px` total), and slider mode roughly `280x40px`, never shrinking interactive elements below mobile touch floors. Construction SHALL NOT unwrap signals with `.get()` in `build()`; bindings SHALL be automatic with ambient ownership.
 
 #### Scenario: HUD shows during valid hosted game
 - **WHEN** the feature is enabled during active hosted gameplay with the HUD fragment shown
@@ -45,23 +53,48 @@ The feature SHALL render a standalone Solim `hud()` overlay (not a QuickAccess e
 - **WHEN** the player drags the HUD anchor and rotates the screen
 - **THEN** coordinates persist under separate portrait/landscape keys and the bar stays within screen bounds
 
+#### Scenario: Bar stays compact
+- **WHEN** either interaction mode renders
+- **THEN** the bar fits within its compact footprint with a fixed-width speed label that does not resize as values change
+
 ### Requirement: Preset interaction mode
-In preset mode the HUD SHALL offer the fixed preset list with tap-to-select; tapping the already-selected preset SHALL toggle the legacy double-tap boost (`>=1 ? x2 : /2`) and SHALL update the selected highlight reactively without rebuilding the view.
+In preset mode the HUD SHALL offer the fixed preset list `0.125, 0.5, 1, 2, 8` with tap-to-select; tapping the already-selected preset SHALL toggle the double-tap boost (`>=1 ? x2 : /2`) EXCEPT for the `1x` preset, which SHALL be boost-locked. Tapping `1x` from any state SHALL clear boost and reset to 1x, and double-tapping `1x` SHALL be a no-op. Presets and boosted values SHALL interleave across every power of two from `2^-4` to `2^4` with no two provenances yielding the same speed. The selected highlight SHALL update reactively without rebuilding the view.
 
 #### Scenario: Tap selects preset
 - **WHEN** the user taps a non-selected preset
 - **THEN** speed applies that multiplier and the highlight moves to it with no full view rebuild
 
 #### Scenario: Double-tap boosts selected preset
-- **WHEN** the user taps the already-selected preset
+- **WHEN** the user taps the already-selected preset other than `1x`
 - **THEN** the boosted value applies and the label reflects the effective multiplier
 
+#### Scenario: No overlap between presets and boosts
+- **WHEN** every preset is tapped twice
+- **THEN** the nine reachable speeds (`0.0625` through `16`) each arise from exactly one preset-or-boost provenance
+
+#### Scenario: Tapping 1x resets
+- **WHEN** the user taps the `1x` preset while boosted at another speed
+- **THEN** boost clears, speed returns to 1x, and the `1x` highlight shows
+
+#### Scenario: Double-tap 1x is a no-op
+- **WHEN** the user taps the already-selected `1x` preset
+- **THEN** speed stays at 1x with no boost applied
+
 ### Requirement: Slider interaction mode
-In slider mode the HUD SHALL offer a clamped slider bound directly to the speed signal within the fixed v1 range and step, with a reactive label showing the effective multiplier.
+In slider mode the HUD SHALL offer a slider over normalized position `u in [-1, 1]` with a fixed `0.05` step, mapped two-sided-quadratically around 1x so that `speed(-u) = 1/speed(u)` with `u = 0` exactly 1x. A reset button after the label SHALL return straight to 1x. The widget SHALL bind to an intermediate position signal flowing single-directionally into the speed signal; resets SHALL zero the position signal. A reactive fixed-width label SHALL show the effective multiplier.
 
 #### Scenario: Drag changes speed continuously
 - **WHEN** the user drags the slider
 - **THEN** the applied multiplier and the label update reactively within the clamped range
+
+#### Scenario: Center detent lands on 1x
+- **WHEN** the user drags to the exact center step
+- **THEN** speed applies exactly 1x
+
+#### Scenario: Reset button returns to 1x
+- **WHEN** the user activates the slider-mode reset button at a non-1x speed
+- **THEN** the slider returns to center and speed applies exactly 1x
+
 
 ### Requirement: Persisted mode setting with reset on switch
 The interaction mode (presets or slider) SHALL persist via a `ConfigValue` while speed stays ephemeral; switching modes SHALL reset speed to 1x with the default provider restored.
@@ -86,11 +119,15 @@ The feature SHALL expose a `TimeControlSettingsDialog` (Solim dialog with mode s
 - **THEN** portrait and landscape positions return to screen center
 
 ### Requirement: Translated strings and rewritten help
-All user-visible time-control text SHALL resolve from `assets/bundles/bundle.properties` under `feature.time-control.*` keys with per-key translator comments; dynamic labels SHALL use `Core.bundle.format`. The stale "cannot be enabled yet" help text SHALL be replaced with text describing host/single-player gating, the two modes, and the auto-reset behavior. No new hardcoded display strings SHALL be introduced.
+All user-visible time-control text SHALL resolve from `assets/bundles/bundle.properties` under `feature.time-control.*` keys with per-key translator comments; dynamic labels SHALL use `Core.bundle.format`. The mode-hint text SHALL document the boost gesture and the `1x` reset exception, and the slider reset button SHALL carry a translated tooltip. No new hardcoded display strings SHALL be introduced.
 
 #### Scenario: Help describes gating and modes
 - **WHEN** the help dialog renders for time-control
 - **THEN** `feature.time-control.help` text explains hosting/single-player availability, preset vs slider modes, and auto-reset, with no hardcoded strings
+
+#### Scenario: Hint documents boost and reset
+- **WHEN** the settings dialog renders the mode hint
+- **THEN** the hint text explains tap-again-to-boost and that `1x` resets instead of boosting
 
 ### Requirement: Clamped provider apply and restore
 Applying a multiplier SHALL use a provider that clamps the effective step after multiplication, and every reset path SHALL restore the default clamped provider form. The default form SHALL be documented at the restore call site since `Time` exposes no getter.

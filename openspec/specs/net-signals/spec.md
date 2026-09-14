@@ -1,4 +1,12 @@
-## ADDED Requirements
+# net-signals Specification
+
+## Purpose
+
+Shared reactive net-state signals in `Signals.java` (`active`, `server`, `client`, `singlePlayer`, `localHosting`, `clientPlaying`) so game features gate on one source of truth instead of ad-hoc `Vars.net` checks. Created by archiving change rewrite-time-control.
+
+## Requirements
+
+**Source: rewrite-time-control**
 
 ### Requirement: Raw reactive net-state signals
 `Signals` SHALL expose raw mirrors of `Net` state as shared `Readable<Boolean>` values: `active()` reflecting `Vars.net.active()`, `server()` reflecting `Vars.net.server()`, and `client()` reflecting `Vars.net.client()`.
