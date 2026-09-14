@@ -5,13 +5,13 @@ import arc.input.KeyCode;
 import solim.graphics.RoundedDrawable;
 import arc.scene.Element;
 import arc.scene.ui.TextField;
-import arc.scene.ui.layout.Cell;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
+import solim.layout.CellConfig;
+import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
@@ -24,9 +24,10 @@ import solim.ui.Binding;
  * loop. Automatically registers with the active ComponentContext if created during a component
  * build.
  */
-public final class SolimTextField implements Component, ElementConfig<SolimTextField> {
+public final class SolimTextField implements Component, ElementConfig<SolimTextField>, CellConfig<SolimTextField> {
 
 	private final TextField field;
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private @Nullable TwoWayBinding<String> binding;
 	private Effect disabledEffect;
 	private Predicate<String> validator;
@@ -128,33 +129,10 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
 		return this;
 	}
 
-	public SolimTextField growX() {
-		field.userObject = "expanding";
-		if (field.parent instanceof Table) {
-			Cell<?> cell = ((Table) field.parent).getCell(field);
-			if (cell != null) {
-				cell.growX();
-				((Table) field.parent).invalidateHierarchy();
-			}
-		}
-		return this;
-	}
-
-	public SolimTextField growY() {
-		field.userObject = "expanding";
-		if (field.parent instanceof Table) {
-			Cell<?> cell = ((Table) field.parent).getCell(field);
-			if (cell != null) {
-				cell.growY();
-				((Table) field.parent).invalidateHierarchy();
-			}
-		}
-		return this;
-	}
-
-	public SolimTextField grow() {
-		return growX().growY();
-	}
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
+    }
 
 	public TextField field() {
 		return field;

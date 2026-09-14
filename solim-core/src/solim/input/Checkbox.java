@@ -3,18 +3,26 @@ package solim.input;
 import arc.Core;
 import arc.scene.ui.CheckBox;
 import arc.scene.ui.CheckBox.CheckBoxStyle;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.function.Consumer;
 import solim.core.Component;
+import solim.modifier.ElementConfig;
+import solim.layout.CellConfig;
+import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Signal;
 
 /** Checkbox widget bound to Signal&lt;Boolean&gt;. */
-public final class Checkbox implements Component {
+public final class Checkbox implements Component, ElementConfig<Checkbox>, CellConfig<Checkbox> {
 
 	private final CheckBox checkBox;
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private @Nullable TwoWayBinding<Boolean> binding;
+
+	@Override
+	public PendingCellConfig cellConfig() {
+		return constraints;
+	}
 
 	public Checkbox(String label, Signal<Boolean> signal) {
 		this(label, signal, Core.scene == null ? new CheckBoxStyle() : null);
@@ -65,26 +73,6 @@ public final class Checkbox implements Component {
 
 	public static Checkbox of(String label, boolean initial, Consumer<Boolean> onChanged) {
 		return new Checkbox(label, initial, onChanged);
-	}
-
-	public Checkbox growX() {
-		checkBox.userObject = "expanding";
-		if (checkBox.parent instanceof Table) {
-			((Table) checkBox.parent).getCell(checkBox).growX();
-		}
-		return this;
-	}
-
-	public Checkbox growY() {
-		checkBox.userObject = "expanding";
-		if (checkBox.parent instanceof Table) {
-			((Table) checkBox.parent).getCell(checkBox).growY();
-		}
-		return this;
-	}
-
-	public Checkbox grow() {
-		return growX().growY();
 	}
 
 	public CheckBox checkBox() {

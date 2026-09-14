@@ -17,7 +17,6 @@ import mindustry.ui.dialogs.BaseDialog;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -173,21 +172,6 @@ public class SolimDialog implements Component {
         return signal;
     }
 
-    /**
-     * Creates a reactive signal initialized from the supplier that recalculates
-     * whenever the callback
-     * registrar invokes the given callback (e.g. {@code this.resized(callback)}).
-     *
-     * @deprecated Use {@link #createSignal(java.util.function.Function, Supplier)} to support cleanup.
-     */
-    @Deprecated
-    public <T> Signal<T> createSignal(Consumer<Runnable> callbackRegistrar, Supplier<T> supplier) {
-        Signal<T> signal = Signal.of(supplier.get());
-        if (callbackRegistrar != null) {
-            callbackRegistrar.accept(() -> signal.set(supplier.get()));
-        }
-        return signal;
-    }
 
     /**
      * Creates a reactive signal initialized from the supplier that recalculates

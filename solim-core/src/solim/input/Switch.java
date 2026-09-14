@@ -4,16 +4,25 @@ import arc.scene.ui.TextButton;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.signal.Signal;
+import solim.modifier.ElementConfig;
+import solim.layout.CellConfig;
+import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 
 /**
  * Switch widget bound to Signal&lt;Boolean&gt;. Uses TextButton as a visual toggle; state held in
  * signal.
  */
-public final class Switch implements Component {
+public final class Switch implements Component, ElementConfig<Switch>, CellConfig<Switch> {
 	private final TextButton button = new TextButton("");
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private boolean state;
 	private Disposable binding;
+
+	@Override
+	public PendingCellConfig cellConfig() {
+		return constraints;
+	}
 
 	{
 		button.name = "solim-switch-switchBox";

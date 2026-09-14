@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -19,7 +18,6 @@ import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Direction;
 import solim.overlay.Hud;
 import solim.signal.Readable;
 
@@ -65,11 +63,8 @@ public class QuickAccessHudView extends BaseComponent {
                     .children(() -> icon(Icon.move).size(iconSize))
                     .draggable(parentFeature.xSignal, parentFeature.ySignal);
 
-            divider(Direction.Y);
-
             grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items, HudItem::id,
-                    item -> createItemButton(item, buttonSize, iconSize))
-                            .gap(2);
+                    item -> createItemButton(item, buttonSize, iconSize));
         });
 
         hud.background(Styles.black6);
@@ -116,7 +111,7 @@ public class QuickAccessHudView extends BaseComponent {
                         }
                     })
                     .children(() -> icon(meta.getIcon()).size(iconSize)
-                            .color(f.enabled().map(en -> en ? Color.white : Pal.gray)));
+                            .color(f.enabled().map(en -> en ? Color.white : Color.darkGray)));
         } else {
             return button()
                     .style(Styles.clearNonei)

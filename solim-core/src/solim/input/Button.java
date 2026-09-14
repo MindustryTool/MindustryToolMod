@@ -32,15 +32,18 @@ import solim.signal.Readable;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
 import arc.scene.style.Drawable;
+import solim.layout.CellConfig;
+import solim.modifier.PendingCellConfig;
 import arc.util.Time;
 
 /**
  * Pure Button container widget supporting explicit children composition, custom
  * width/height sizing, and reactive state.
  */
-public final class Button implements Component, GapContainer, ElementConfig<Button>, TableConfig<Button> {
+public final class Button implements Component, GapContainer, ElementConfig<Button>, TableConfig<Button>, CellConfig<Button> {
 
     private final arc.scene.ui.Button button;
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private final List<Disposable> bindings = new ArrayList<>();
     private float gap = 0f;
     private boolean stopClickPropagation = true;
@@ -516,6 +519,11 @@ public final class Button implements Component, GapContainer, ElementConfig<Butt
             }
         }
         return this;
+    }
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
     }
 
     @Override
