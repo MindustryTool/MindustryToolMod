@@ -7,7 +7,6 @@ import arc.graphics.g2d.Font;
 import arc.graphics.g2d.GlyphLayout;
 import arc.scene.Element;
 import arc.struct.Seq;
-import arc.util.pooling.Pools;
 import mindustry.core.UI;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
@@ -19,6 +18,7 @@ public class SplitBar extends Element {
     private final Mode mode;
     private final float fontScale;
     private final Floatp scaleSupplier;
+    private final GlyphLayout layout = new GlyphLayout();
 
     public enum Mode {
         SATISFACTION,
@@ -67,7 +67,6 @@ public class SplitBar extends Element {
             return;
         }
 
-        GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
         float currentX = x;
         Font font = Fonts.outline;
 
@@ -104,7 +103,7 @@ public class SplitBar extends Element {
                 if (i < graphs.size - 1) {
                     Draw.color(Color.black);
                     Draw.alpha(0.5f);
-                    Draw.rect("whiteui", currentX + sectionWidth, y + height / 2f, 2f, height);
+                    Tex.whiteui.draw(currentX + sectionWidth - 1f, y, 2f, height);
                 }
 
                 String text = getSectionText(graph);
@@ -122,7 +121,6 @@ public class SplitBar extends Element {
             }
         } finally {
             font.getData().setScale(originalScaleX, originalScaleY);
-            Pools.free(layout);
         }
 
         Draw.reset();

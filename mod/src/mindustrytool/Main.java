@@ -16,6 +16,7 @@ import mindustrytool.features.teamresource.TeamResourceFeature;
 import mindustrytool.features.translation.TranslationFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.browser.map.MapBrowserFeature;
+import mindustrytool.features.bridgevisualizer.BridgeVisualizerFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import mindustrytool.services.PacketReplacer;
 import mindustrytool.services.ServerService;
@@ -52,7 +53,8 @@ public class Main extends Mod {
 				new TeamResourceFeature(),
 				new TranslationFeature(),
 				new SchematicBrowserFeature(),
-				new MapBrowserFeature());
+				new MapBrowserFeature(),
+				new BridgeVisualizerFeature());
 
 		Events.on(ClientLoadEvent.class, event -> {
 			registerMindustryToolButton();

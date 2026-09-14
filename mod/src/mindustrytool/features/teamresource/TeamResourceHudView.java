@@ -164,53 +164,41 @@ public class TeamResourceHudView extends BaseComponent {
         Readable<Float> unitCardHeight = scale.map(s -> 28f * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> 18f * (s != null ? s : 1f));
 
-        Readable<Float> maxHeight = feature.overlayHeightConfig.signal().map(h -> {
-            float screenH = getSceneHeight();
-            float scaleVal = scale.get() != null ? scale.get() : 1f;
-            float headerH = 36f * scaleVal;
-            float userHeight = screenH * (h != null ? h : 0.60f);
-            float maxOverlayH = Math.min(userHeight, screenH * 0.95f);
-            float minBodyH = 40f * scaleVal;
-            return Math.max(minBodyH, maxOverlayH - headerH - 16f * scaleVal);
-        });
+        return column().growX().gap(unit(1)).children(() -> {
+            divider();
 
-        return scroll().maxHeight(maxHeight).growX().children(() -> {
-            column().growX().gap(unit(1)).children(() -> {
-                divider();
+            // Core Items Section
+            dynamic(feature.showItemsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
+                dynamic(state.usedItemsSignal, items -> {
+                    if (items == null || items.isEmpty()) {
+                        return row().left().children(() -> text(Core.bundle.get("team-resources.no-items", "No core items")).color(Color.gray).style(Styles.outlineLabel));
+                    }
+                    return grid(
+                        itemCols,
+                        state.usedItemsSignal,
+                        item -> item.name,
+                        item -> createItemCard(item, itemCardHeight, iconSize, scale)
+                    ).growX().gap(unit(1));
+                });
+            }).growX() : row());
 
-                // Core Items Section
-                dynamic(feature.showItemsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
-                    dynamic(state.usedItemsSignal, items -> {
-                        if (items == null || items.isEmpty()) {
-                            return row().left().children(() -> text(Core.bundle.get("team-resources.no-items", "No core items")).color(Color.gray).style(Styles.outlineLabel));
-                        }
-                        return grid(
-                            itemCols,
-                            state.usedItemsSignal,
-                            item -> item.name,
-                            item -> createItemCard(item, itemCardHeight, iconSize, scale)
-                        ).growX().gap(unit(1));
-                    });
-                }).growX() : row());
+            // Units Section
+            dynamic(feature.showUnitsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
+                dynamic(state.usedUnitsSignal, units -> {
+                    if (units == null || units.isEmpty()) {
+                        return row().left().children(() -> text(Core.bundle.get("team-resources.no-units", "No active units")).color(Color.gray).style(Styles.outlineLabel));
+                    }
+                    return grid(
+                        itemCols,
+                        state.usedUnitsSignal,
+                        unit -> unit.name,
+                        unit -> createUnitCard(unit, unitCardHeight, iconSize, scale)
+                    ).growX().gap(unit(1));
+                });
+            }).growX() : row()).growX();
 
-                // Units Section
-                dynamic(feature.showUnitsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
-                    dynamic(state.usedUnitsSignal, units -> {
-                        if (units == null || units.isEmpty()) {
-                            return row().left().children(() -> text(Core.bundle.get("team-resources.no-units", "No active units")).color(Color.gray).style(Styles.outlineLabel));
-                        }
-                        return grid(
-                            itemCols,
-                            state.usedUnitsSignal,
-                            unit -> unit.name,
-                            unit -> createUnitCard(unit, unitCardHeight, iconSize, scale)
-                        ).growX().gap(unit(1));
-                    });
-                }).growX() : row()).growX();
-
-                // Power Section
-                dynamic(feature.showPowerConfig.signal(), show -> Boolean.TRUE.equals(show) ? createPowerSection(scale) : row()).growX();
-            });
+            // Power Section
+            dynamic(feature.showPowerConfig.signal(), show -> Boolean.TRUE.equals(show) ? createPowerSection(scale) : row()).growX();
         });
     }
 
