@@ -281,6 +281,7 @@ public class ChatMessageListView extends BaseComponent {
                         column().growX().top().left().children(() -> {
                             // Author and timestamp header + action button
                             row().growX().top().left()
+                                    .gap(unit(1))
                                     .height(ChatMessageHeightCalculator.HEADER_HEIGHT
                                             + ChatMessageHeightCalculator.HEADER_GAP)
                                     .children(() -> {
