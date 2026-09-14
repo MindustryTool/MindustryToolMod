@@ -29,7 +29,7 @@ public class WebFeatureCard extends BaseComponent {
                 .children(() -> {
                     column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
                         row().growX().children(() -> {
-                            icon(webFeature.getIcon()).size(unit(7)).marginRight(unit(2));
+                            icon(webFeature.getIcon()).size(unit(7)).cellPaddingRight(unit(2));
 
                             text(webFeature.getName()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left();
 
