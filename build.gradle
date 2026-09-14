@@ -5,6 +5,14 @@
 subprojects{
 	apply plugin: "java"
 	apply plugin: "eclipse"
+	apply plugin: "checkstyle"
+
+	checkstyle {
+		toolVersion = "10.12.5"
+		configFile = rootProject.file("config/checkstyle/checkstyle.xml")
+		ignoreFailures = false
+		showViolations = true
+	}
 
 	version '1.0'
 
