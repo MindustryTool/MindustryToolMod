@@ -369,7 +369,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     default SELF rounded(int radius, @Nullable Color color) {
         Table t = table();
         if (t == null) return self();
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(t, radius);
+        RoundedDrawable rd = getOrCreateRounded(radius);
         rd.radius(radius);
         if (color != null) {
             rd.fillColor(color);
@@ -381,7 +381,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     default SELF rounded(int radius, @Nullable Readable<Color> color) {
         Table t = table();
         if (t == null) return self();
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(t, radius);
+        RoundedDrawable rd = getOrCreateRounded(radius);
         rd.radius(radius);
         if (color != null) {
             Effect e = Effect.of(() -> {
@@ -399,7 +399,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     default SELF border(float stroke, @Nullable Color color) {
         Table t = table();
         if (t == null) return self();
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(t, 8);
+        RoundedDrawable rd = getOrCreateRounded(8);
         rd.border(stroke, color != null ? color : Color.white);
         return self();
     }
@@ -408,7 +408,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     default SELF border(float stroke, @Nullable Readable<Color> color) {
         Table t = table();
         if (t == null) return self();
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(t, 8);
+        RoundedDrawable rd = getOrCreateRounded(8);
         if (color != null) {
             Effect e = Effect.of(() -> {
                 Color c = color.get();

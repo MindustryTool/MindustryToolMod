@@ -55,23 +55,11 @@ Layouts SHALL support `growX()`, `growY()`, `grow()` on cells and widgets (e.g.,
 - **THEN** texts flow to next line when out of horizontal space
 
 ### Requirement: Wrap with LayoutModifiers and declarative children
-The `Wrap` component SHALL implement `LayoutModifiers<Wrap>`, providing `rounded()`, `border()`, `growX()`, `grow()`, `width()`, `height()`, `padding()`, `align()`, and all other modifier capabilities. Wrap SHALL support `children(Runnable)` for declarative child attachment via `ParentStack`, matching the pattern used by `Column` and `Grid`. Wrap SHALL also expose `background(Drawable)` for setting a background on its underlying table.
+The `Wrap` component SHALL implement `CellConfig<Wrap>`, `ElementConfig<Wrap>`, and `TableConfig<Wrap>`. CellConfig provides `growX()`, `grow()`, `cellPadding()`. ElementConfig provides `width()`, `height()`, `size()`. TableConfig provides `top()`, `gap()`, `padding()`, `rounded()`, `border()`. Wrap SHALL support `children(Runnable)` for declarative child attachment via `ParentStack`.
 
 #### Scenario: Wrap with rounded and border
 - **WHEN** `wrap().rounded(4).border(1f, Color.gray).children(() -> { ... })` is called
-- **THEN** the wrap element SHALL have rounded corners and a 1px gray border, and children SHALL be attached via ParentStack
-
-#### Scenario: Wrap with growX in parent column
-- **WHEN** `wrap().growX().children(() -> { ... })` is placed inside a `column()`
-- **THEN** the wrap SHALL expand horizontally to fill the parent column's width, and child chips SHALL wrap to the next row when their cumulative widths exceed the wrap's width
-
-#### Scenario: Wrap with padding
-- **WHEN** `wrap().padding(8).children(() -> { ... })` is called
-- **THEN** the wrap's underlying table SHALL have 8px padding on all sides
-
-#### Scenario: Imperative add still works
-- **WHEN** `new Wrap()` is used with `add(element)` (without `children()`)
-- **THEN** elements SHALL be added to the underlying table as before, preserving backward compatibility
+- **THEN** the wrap element SHALL have rounded corners and a 1px gray border via TableConfig
 
 ### Requirement: Flow layout via Arc Table wrapping
 The `Wrap` component SHALL use Arc's native Table wrapping mechanism. When child cells exceed the table's available width, they SHALL wrap to the next row. The wrap table's width SHALL be determined by the parent cell constraints (e.g., `growX()`).
@@ -137,4 +125,10 @@ When a child element inside a `Row` or `Column` changes visibility or collapses 
 - **WHEN** the first child of a `Row` with `gap(16)` becomes hidden (`visible = false`)
 - **THEN** the second child is promoted to the leading visible element and its `padLeft` gap offset is reduced to 0px
 
+### Requirement: PendingCellConfig replaces SizeConstraints
+The deferred parent-cell configuration buffer SHALL be named `PendingCellConfig` instead of `SizeConstraints`. All references to `SizeConstraints` SHALL be renamed.
+
+#### Scenario: PendingCellConfig used by ParentStack
+- **WHEN** ParentStack adds a child element to a parent Table
+- **THEN** `PendingCellConfig.find(child)` resolves the pending config and `applyToCell(cell)` applies stored values
 

@@ -1,10 +1,8 @@
 # pending-cell-config Specification
 
 ## Purpose
-Defines `PendingCellConfig` (renamed from `SizeConstraints`) as the deferred configuration buffer for parent Cell settings.
-
+TBD - created by archiving change refactor-element-config-mixins. Update Purpose after archive.
 ## Requirements
-
 ### Requirement: PendingCellConfig stores pending parent-cell values
 `PendingCellConfig` SHALL store pending values for: `prefWidth`, `prefHeight`, `minWidth`, `minHeight`, `maxWidth`, `maxHeight` (all `Readable<Float>`), `growX`, `growY` (boolean), `padTop`, `padLeft`, `padBottom`, `padRight` (all `Readable<Float>`), and `align` (Integer).
 
@@ -39,3 +37,4 @@ All references to `SizeConstraints` in the codebase SHALL be renamed to `Pending
 #### Scenario: No SizeConstraints references remain
 - **WHEN** the codebase is searched for `SizeConstraints`
 - **THEN** zero results are found (all renamed to `PendingCellConfig`)
+

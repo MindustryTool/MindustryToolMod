@@ -30,7 +30,6 @@ import solim.signal.Signal;
  * <li>{@code visible} — element's visibility</li>
  * <li>{@code opacity/alpha} — element's transparency</li>
  * <li>{@code name} — element's debug name</li>
- * <li>{@code rounded/border/background} — element's visual styling</li>
  * <li>{@code draggable} — element drag-to-move integration</li>
  * </ul>
  *

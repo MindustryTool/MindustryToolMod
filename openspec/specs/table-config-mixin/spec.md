@@ -1,10 +1,8 @@
 # table-config-mixin Specification
 
 ## Purpose
-Defines the `TableConfig<SELF>` mixin interface for operations that configure an Arc Table's content defaults and child spacing.
-
+TBD - created by archiving change refactor-element-config-mixins. Update Purpose after archive.
 ## Requirements
-
 ### Requirement: TableConfig is a mixin interface with default methods
 `TableConfig<SELF>` SHALL be a public interface in `solim.modifier` with generic parameter `<SELF extends TableConfig<SELF>>`. Implementing components SHALL provide `Table table()` to supply their underlying Arc Table.
 
@@ -39,3 +37,19 @@ Defines the `TableConfig<SELF>` mixin interface for operations that configure an
 #### Scenario: Setting gap
 - **WHEN** `gap(8f)` is called on a Row
 - **THEN** adjacent children have 8f spacing along the primary axis
+
+### Requirement: TableConfig provides visual styling
+`TableConfig` SHALL provide `rounded(int)`, `rounded(int, Color)`, `rounded(int, Readable<Color>)`, `border(float, Color)`, `border(float, Readable<Color>)`, `background(Drawable)`, `background(Readable<Drawable>)`, `background(Color)`, `backgroundColor(Color)`, `backgroundColor(Readable<Color>)` that configure the Table's background and RoundedDrawable. All Readable overloads SHALL install reactive Effects.
+
+#### Scenario: Setting rounded corners
+- **WHEN** `rounded(8)` is called on a Table-backed element
+- **THEN** the Table's background is wrapped in a RoundedDrawable with radius 8
+
+#### Scenario: Setting reactive background drawable
+- **WHEN** `background(drawableSignal)` is called and signal changes
+- **THEN** the Table's background drawable updates automatically
+
+#### Scenario: Setting reactive background color
+- **WHEN** `backgroundColor(colorSignal)` is called and signal changes
+- **THEN** the Table's background color updates automatically
+

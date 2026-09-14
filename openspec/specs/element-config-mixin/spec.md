@@ -1,10 +1,8 @@
 # element-config-mixin Specification
 
 ## Purpose
-Defines the `ElementConfig<SELF>` mixin interface for operations that directly mutate an Arc Element's own properties.
-
+TBD - created by archiving change refactor-element-config-mixins. Update Purpose after archive.
 ## Requirements
-
 ### Requirement: ElementConfig is a mixin interface with default methods
 `ElementConfig<SELF>` SHALL be a public interface in `solim.modifier` with generic parameter `<SELF extends ElementConfig<SELF>>`. Implementing components SHALL provide `Element element()` to supply their root Arc Element.
 
@@ -51,17 +49,3 @@ Defines the `ElementConfig<SELF>` mixin interface for operations that directly m
 - **WHEN** `name("my-element")` is called
 - **THEN** `element.name` equals `"my-element"`
 
-### Requirement: ElementConfig provides visual styling
-`ElementConfig` SHALL provide `rounded(int)`, `rounded(int, Color)`, `rounded(int, Readable<Color>)`, `border(float, Color)`, `border(float, Readable<Color>)`, `background(Drawable)`, `background(Readable<Drawable>)`, `background(Color)`, `backgroundColor(Color)`, `backgroundColor(Readable<Color>)` that configure the element's background and RoundedDrawable. All Readable overloads SHALL install reactive Effects.
-
-#### Scenario: Setting rounded corners
-- **WHEN** `rounded(8)` is called on a Table-backed element
-- **THEN** the element's background is wrapped in a RoundedDrawable with radius 8
-
-#### Scenario: Setting reactive background drawable
-- **WHEN** `background(drawableSignal)` is called and signal changes
-- **THEN** the element's background drawable updates automatically
-
-#### Scenario: Setting reactive background color
-- **WHEN** `backgroundColor(colorSignal)` is called and signal changes
-- **THEN** the element's background color updates automatically

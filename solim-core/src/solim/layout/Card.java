@@ -96,6 +96,28 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
 		return container;
 	}
 
+	@Override
+	public solim.graphics.RoundedDrawable getOrCreateRounded(int defaultRadius) {
+		return solim.modifier.RoundedHelper.getOrCreateRounded(cardButton, defaultRadius);
+	}
+
+	@Override
+	public Card background(@Nullable Drawable bg) {
+		cardButton.setBackground(bg);
+		if (cardButton.getStyle() != null) {
+			cardButton.getStyle().up = bg;
+		}
+		return this;
+	}
+
+	@Override
+	public Card background(@Nullable Color color) {
+		if (color == null || color.a == 0f) {
+			return background((Drawable) null);
+		}
+		return rounded(0, color);
+	}
+
 	public Button cardButton() {
 		return cardButton;
 	}
