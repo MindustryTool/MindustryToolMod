@@ -1,5 +1,6 @@
 package mindustrytool.features.teamresource;
 
+import arc.func.Cons;
 import arc.graphics.Color;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
@@ -9,6 +10,7 @@ import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.core.UI;
 import mindustry.game.Team;
+import mindustry.gen.Building;
 import mindustry.graphics.Pal;
 import mindustry.type.Item;
 import mindustry.type.UnitType;
@@ -16,6 +18,8 @@ import mindustry.world.blocks.power.PowerGraph;
 import mindustry.world.modules.ItemModule;
 import solim.signal.Signal;
 import mindustry.gen.Groups;
+
+import java.util.Comparator;
 
 /**
  * Encapsulates game logic and state for tracking team resources, flow rates, units, and power grids.
@@ -35,6 +39,22 @@ public class TeamResourceState {
     private boolean viewingStats = false;
     private boolean holdingForStats = false;
     private final Seq<PowerGraph> teamGraphs = new Seq<>();
+
+    private final Seq<Team> tempTeams = new Seq<>();
+    private final ObjectSet<PowerGraph> tempPowerGraphs = new ObjectSet<>();
+    private final Seq<PowerGraph> tempGraphSeq = new Seq<>();
+    private final Cons<Building> powerGraphCollector = b -> {
+        if (b.team == selectedTeam && b.power != null && b.power.graph != null) {
+            PowerGraph graph = b.power.graph;
+            if (graph.getLastPowerProduced() > 0 || graph.getLastCapacity() > 0 || graph.getLastPowerNeeded() > 0) {
+                tempPowerGraphs.add(graph);
+            }
+        }
+    };
+    private static final Comparator<PowerGraph> GRAPH_COMPARATOR = (a, b) -> {
+        int cap = Float.compare(b.getLastCapacity(), a.getLastCapacity());
+        return cap != 0 ? cap : Integer.compare(a.hashCode(), b.hashCode());
+    };
 
     public final Signal<Team> selectedTeamSignal = Signal.of(Team.sharded);
     public final Signal<Long> tickSignal = Signal.of(0L);
@@ -60,13 +80,13 @@ public class TeamResourceState {
     }
 
     public void updateValidTeams() {
-        Seq<Team> teams = new Seq<>();
+        tempTeams.clear();
         if (Vars.state != null && Team.all != null) {
             for (Team team : Team.all) {
                 if (team != null && team.active()) {
                     try {
                         if (team.data() != null && team.data().hasCore()) {
-                            teams.add(team);
+                            tempTeams.add(team);
                         }
                     } catch (Throwable ignored) {
                     }
@@ -74,8 +94,8 @@ public class TeamResourceState {
             }
         }
         Seq<Team> current = validTeamsSignal.get();
-        if (current == null || current.size != teams.size || !current.equals(teams)) {
-            validTeamsSignal.set(teams);
+        if (current == null || current.size != tempTeams.size || !current.equals(tempTeams)) {
+            validTeamsSignal.set(new Seq<>(tempTeams));
         }
     }
 
@@ -117,7 +137,9 @@ public class TeamResourceState {
             }
         }
 
-        updateValidTeams();
+        if (timer.get(1, 60f)) {
+            updateValidTeams();
+        }
 
         coreItems = (selectedTeam != null && Vars.state != null && selectedTeam.core() != null) ? selectedTeam.core().items : null;
         if (coreItems != null && Vars.content != null) {
@@ -376,7 +398,14 @@ public class TeamResourceState {
         }
 
         if (lastSnapshot.any()) {
-            coreItems.each((item, amount) -> rateDisplay.set(item, (amount - lastSnapshot.get(item)) * 2));
+            int count = coreItems.length();
+            for (int id = 0; id < count; id++) {
+                int amount = coreItems.get(id);
+                Item item = Vars.content.item(id);
+                if (item != null) {
+                    rateDisplay.set(item, (amount - lastSnapshot.get(id)) * 2);
+                }
+            }
         }
         lastSnapshot.set(coreItems);
     }
@@ -386,29 +415,19 @@ public class TeamResourceState {
             return false;
         }
 
-        ObjectSet<PowerGraph> found = new ObjectSet<>();
+        tempPowerGraphs.clear();
         if (Groups.build != null) {
-            Groups.build.each(b -> {
-                if (b.team == selectedTeam && b.power != null && b.power.graph != null) {
-                    PowerGraph graph = b.power.graph;
-                    if (graph.getLastPowerProduced() > 0 || graph.getLastCapacity() > 0 || graph.getLastPowerNeeded() > 0) {
-                        found.add(graph);
-                    }
-                }
-            });
+            Groups.build.each(powerGraphCollector);
         }
 
-        Seq<PowerGraph> newGraphs = found.toSeq();
-        newGraphs.sort((a, b) -> {
-            int cap = Float.compare(b.getLastCapacity(), a.getLastCapacity());
-            if (cap != 0) {
-                return cap;
-            }
-            return Integer.compare(a.hashCode(), b.hashCode());
-        });
+        tempGraphSeq.clear();
+        for (PowerGraph graph : tempPowerGraphs) {
+            tempGraphSeq.add(graph);
+        }
+        tempGraphSeq.sort(GRAPH_COMPARATOR);
 
-        if (!newGraphs.equals(teamGraphs)) {
-            teamGraphs.set(newGraphs);
+        if (!tempGraphSeq.equals(teamGraphs)) {
+            teamGraphs.set(new Seq<>(tempGraphSeq));
             return true;
         }
         return false;

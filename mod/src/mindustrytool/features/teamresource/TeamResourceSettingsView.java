@@ -52,16 +52,6 @@ public class TeamResourceSettingsView extends BaseComponent {
                         });
                     });
 
-                    // Overlay Height Slider
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("team-resources.height", "Overlay Height")).left();
-                        spacer();
-                        slider(feature.overlayHeightConfig.signal(), 0.15f, 1.0f, 0.05f);
-                        row().width(unit(10)).children(() -> {
-                            text(feature.overlayHeightConfig.signal().map(v -> Math.round((v != null ? v : 0.60f) * 100) + "%"));
-                        });
-                    });
-
                     divider();
 
                     // Display Checkbox Options
