@@ -22,7 +22,7 @@ The feature settings dialog SHALL provide an action control to re-enable all reg
 - **THEN** `FeatureManager.reenable()` is invoked and all feature cards update their status reactively
 
 ### Requirement: Feature Card Display and Interaction
-The dialog SHALL present each feature as an interactive `FeatureCard` component displaying its icon, title, description, enabled/disabled status, and action shortcuts, updating its visual state reactively in-place without component recreation.
+The dialog SHALL present each feature as an interactive `FeatureCard` component displaying its icon, title, description, enabled/disabled status, and action shortcuts, updating its visual state reactively in-place without component recreation. Cards for features in development SHALL additionally display a localized "In Development" badge and SHALL NOT toggle state on click.
 
 #### Scenario: Toggle feature state
 - **WHEN** the user clicks a feature card outside of its action shortcut buttons
@@ -35,6 +35,14 @@ The dialog SHALL present each feature as an interactive `FeatureCard` component 
 #### Scenario: Instantiation without parent table
 - **WHEN** a `FeatureCard` is created
 - **THEN** it is instantiated via constructor without passing a parent `Table`, and its lifecycle and dimensions are managed reactively by its parent container
+
+#### Scenario: Development badge displayed
+- **WHEN** a card represents a feature whose metadata is in development
+- **THEN** an "In Development" badge resolving from `feature.status.in-development` is rendered on the card alongside the normal icon, title, and description
+
+#### Scenario: Locked card click is a no-op
+- **WHEN** the user clicks a development feature card outside of its action shortcut buttons
+- **THEN** the feature remains disabled, no setting is written, no state event fires, and the help shortcut remains available
 
 ### Requirement: Responsive Grid and Lifecycle Disposal
 The feature settings dialog SHALL adapt its grid layout dynamically to screen size and preserve its view instance across show and hide events, delegating lifecycle disposal of view components, reactive property bindings, and event listeners to the underlying `SolimDialog` without implementing manual disposal in `FeatureSettingDialog`. The dialog SHALL also expose a "Settings" action button that opens `GeneralSettingsDialog`.

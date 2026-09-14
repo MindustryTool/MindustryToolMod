@@ -60,8 +60,8 @@ public class QuickAccessSettingsView extends BaseComponent {
                     text(Core.bundle.get("feature.quick-access.settings.visible-features")).left().growX()
                             .color(Color.white);
 
-                    for (Feature f : FeatureManager.getFeatures()
-                            .select(f -> f != feature && f.getMetadata().isQuickAccess())) {
+                    for (Feature f : FeatureManager.getFeatures().select(
+                            f -> f != feature && f.getMetadata().isQuickAccess() && !f.getMetadata().isDevelopment())) {
 
                         FeatureMetadata meta = f.getMetadata();
 

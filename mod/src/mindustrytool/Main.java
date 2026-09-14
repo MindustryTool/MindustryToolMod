@@ -9,11 +9,26 @@ import mindustry.mod.Mod;
 import mindustry.mod.Mods.LoadedMod;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.FeatureManager;
+import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.chat.ChatFeature;
+import mindustrytool.features.godmode.GodModeFeature;
+import mindustrytool.features.healthbar.HealthBarFeature;
+import mindustrytool.features.music.MusicFeature;
+import mindustrytool.features.pathfinding.PathfindingFeature;
+import mindustrytool.features.playerconnect.PlayerConnectFeature;
+import mindustrytool.features.prettychat.PrettyChatFeature;
+import mindustrytool.features.progressdisplay.ProgressDisplayFeature;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
+import mindustrytool.features.rangedisplay.RangeDisplayFeature;
+import mindustrytool.features.savesync.SaveSyncFeature;
+import mindustrytool.features.smartdrill.SmartDrillFeature;
+import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
 import mindustrytool.features.teamresource.TeamResourceFeature;
+import mindustrytool.features.timecontrol.TimeControlFeature;
+import mindustrytool.features.togglerendering.ToggleRenderingFeature;
 import mindustrytool.features.translation.TranslationFeature;
+import mindustrytool.features.wavepreview.WavePreviewFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.bridgevisualizer.BridgeVisualizerFeature;
@@ -54,7 +69,22 @@ public class Main extends Mod {
 				new TranslationFeature(),
 				new SchematicBrowserFeature(),
 				new MapBrowserFeature(),
-				new BridgeVisualizerFeature());
+				new BridgeVisualizerFeature(),
+				new PlayerConnectFeature(),
+				new HealthBarFeature(),
+				new PathfindingFeature(),
+				new RangeDisplayFeature(),
+				new PrettyChatFeature(),
+				new AutoplayFeature(),
+				new WavePreviewFeature(),
+				new SaveSyncFeature(),
+				new GodModeFeature(),
+				new SmartDrillFeature(),
+				new SmartUpgradeFeature(),
+				new MusicFeature(),
+				new ProgressDisplayFeature(),
+				new ToggleRenderingFeature(),
+				new TimeControlFeature());
 
 		Events.on(ClientLoadEvent.class, event -> {
 			registerMindustryToolButton();

@@ -91,7 +91,7 @@ public class QuickAccessHudView extends BaseComponent {
                 continue;
 
             FeatureMetadata meta = f.getMetadata();
-            if (!meta.isQuickAccess())
+            if (meta.isDevelopment() || !meta.isQuickAccess())
                 continue;
             if (hidden != null && hidden.contains(meta.getId()))
                 continue;

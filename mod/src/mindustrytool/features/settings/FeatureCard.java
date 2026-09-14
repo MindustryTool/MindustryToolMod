@@ -12,6 +12,7 @@ import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import solim.core.BaseComponent;
+import solim.signal.Readable;
 
 /**
  * Component responsible for building and managing a single feature's visual
@@ -27,16 +28,30 @@ public class FeatureCard extends BaseComponent {
     @Override
     protected Element build() {
         var metadata = feature.getMetadata();
+        boolean inDevelopment = metadata.isDevelopment();
+
+        Readable<Color> statusColor = inDevelopment
+                ? Readable.of(Color.orange)
+                : feature.enabled().map(value -> Boolean.TRUE.equals(value) ? Color.green : Color.scarlet);
+
+        Readable<String> statusText = inDevelopment
+                ? Readable.of(Core.bundle.get("feature.status.in-development"))
+                : feature.enabled().map(val -> Boolean.TRUE.equals(val) ? Core.bundle.get("feature.status.enabled")
+                        : Core.bundle.get("feature.status.disabled"));
 
         return card(Styles.black8).name("FeatureCard-" + metadata.getId()).height(unit(60)).growX()
-                .color(feature.enabled().map(value -> Boolean.TRUE.equals(value) ? Color.green : Color.scarlet))
-                .onClick(() -> feature.setEnabled(!feature.isEnabled())).children(() -> {
+                .color(statusColor)
+                .onClick(() -> {
+                    if (!inDevelopment) {
+                        feature.setEnabled(!feature.isEnabled());
+                    }
+                }).children(() -> {
                     column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
                         row().growX().children(() -> {
                             icon(metadata.getIcon()).size(unit(7)).cellPaddingRight(unit(2));
 
                             text(feature.getName()).style(Styles.defaultLabel).color(Color.white).ellipsis(true).left();
-
+                            
                             spacer();
 
                             if (feature.getMainDialog() != null) {
@@ -60,18 +75,14 @@ public class FeatureCard extends BaseComponent {
 
                         spacer();
 
-                        text(feature.enabled()
-                                .map(val -> Boolean.TRUE.equals(val) ? Core.bundle.get("feature.status.enabled")
-                                        : Core.bundle.get("feature.status.disabled"))).style(Styles.defaultLabel)
-                                                .growX()
-                                                .color(feature.enabled().map(
-                                                        val -> Boolean.TRUE.equals(val) ? Color.green : Color.scarlet))
-                                                .left();
+                        text(statusText).style(Styles.defaultLabel)
+                                .growX()
+                                .color(statusColor)
+                                .left();
 
                         image(Tex.whiteui).growX()
                                 .scaling(Scaling.stretch)
-                                .color(feature.enabled()
-                                        .map(val -> Boolean.TRUE.equals(val) ? Color.green : Color.scarlet))
+                                .color(statusColor)
                                 .height(unit(0.5f));
                     });
                 }).element();

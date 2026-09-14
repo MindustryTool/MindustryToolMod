@@ -24,7 +24,7 @@ The system SHALL allow players to drag the Quick Access HUD via its anchor butto
 - **THEN** the HUD coordinates update, remain within screen bounds, and persist position settings under separate portrait/landscape configuration keys.
 
 ### Requirement: Feature Interaction via Quick Access HUD
-The system SHALL display buttons for features that support quick access, allowing toggling feature state and opening feature settings.
+The system SHALL display buttons for features that support quick access and are not in development, allowing toggling feature state and opening feature settings.
 
 #### Scenario: Single click toggles feature
 - **WHEN** the player clicks a feature button on the Quick Access HUD
@@ -33,6 +33,10 @@ The system SHALL display buttons for features that support quick access, allowin
 #### Scenario: Long press opens feature settings
 - **WHEN** the player long-presses a feature button on the Quick Access HUD for 300ms or longer
 - **THEN** the target feature's settings dialog is displayed if available.
+
+#### Scenario: Development features excluded from HUD
+- **WHEN** a feature's metadata is in development, even when marked quick-access capable
+- **THEN** no button for that feature appears on the Quick Access HUD and it is not offered in Quick Access visibility settings.
 
 ### Requirement: Quick Access Settings Configuration
 The system SHALL provide a settings dialog to customize HUD opacity, scale, grid columns, and individual feature visibility on the Quick Access HUD.
