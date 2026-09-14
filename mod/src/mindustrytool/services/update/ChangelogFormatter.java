@@ -2,6 +2,7 @@ package mindustrytool.services.update;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import arc.util.Nullable;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -27,18 +28,32 @@ public final class ChangelogFormatter {
 		public final String body;
 		public final String publishedAt;
 		public final int downloadCount;
+		public final boolean prerelease;
 
 		public ReleaseInfo(String tagName, String body, String publishedAt, int downloadCount) {
+			this(tagName, body, publishedAt, downloadCount, false);
+		}
+
+		public ReleaseInfo(String tagName, String body, String publishedAt, int downloadCount, boolean prerelease) {
 			this.tagName = tagName != null ? tagName : "";
 			this.body = body;
 			this.publishedAt = publishedAt != null ? publishedAt : "";
 			this.downloadCount = downloadCount;
+			this.prerelease = prerelease;
 		}
 	}
 
 	/** Formats raw GitHub releases JSON string (array) into Mindustry markup. Caps at 20 entries. */
 	public static String format(String releasesJson) {
-		if (releasesJson == null || releasesJson.isBlank()) {
+		return format(releasesJson, true);
+	}
+
+	/**
+	 * Formats releases, optionally excluding prereleases.
+	 * When {@code includePrereleases} is false, entries with {@code "prerelease": true} are skipped.
+	 */
+	public static String format(String releasesJson, boolean includePrereleases) {
+		if (releasesJson == null || releasesJson.trim().isEmpty()) {
 			return "Could not parse release notes.";
 		}
 		try {
@@ -49,6 +64,10 @@ public final class ChangelogFormatter {
 			List<ReleaseInfo> list = new ArrayList<>();
 			for (JsonNode node : root) {
 				if (list.size() >= MAX_RELEASES) break;
+				boolean prerelease = node.path("prerelease").asBoolean(false);
+				if (!includePrereleases && prerelease) {
+					continue;
+				}
 				String tagName = node.path("tag_name").asText("");
 				String body = node.has("body") && !node.path("body").isNull()
 						? node.path("body").asText("No description provided.")
@@ -61,7 +80,7 @@ public final class ChangelogFormatter {
 						downloadCount += asset.path("download_count").asInt(0);
 					}
 				}
-				list.add(new ReleaseInfo(tagName, body, publishedAt, downloadCount));
+				list.add(new ReleaseInfo(tagName, body, publishedAt, downloadCount, prerelease));
 			}
 			return formatReleases(list);
 		} catch (Exception e) {
@@ -72,6 +91,68 @@ public final class ChangelogFormatter {
 	/** Pure formatting from structured releases. */
 	public static String formatReleases(List<ReleaseInfo> releases) {
 		return formatReleases(releases, ZoneId.systemDefault(), DATE_FORMATTER);
+	}
+
+	/**
+	 * Finds the maximum release tag over all entries in raw GitHub releases JSON.
+	 * Pure and crash-proof: never throws, returns {@code null} for null/blank input,
+	 * malformed JSON, non-array payloads, or when no entry carries a parseable tag.
+	 * Entries with missing, blank, or version-unparseable {@code tag_name} are skipped.
+	 *
+	 * @param releasesJson raw GitHub releases array JSON (may be null)
+	 * @return the raw winning tag (e.g. {@code v5.0.3-v8-beta}), or null when none qualifies
+	 */
+	public static @Nullable String findLatestTag(@Nullable String releasesJson) {
+		if (releasesJson == null || releasesJson.trim().isEmpty()) {
+			return null;
+		}
+		try {
+			JsonNode root = MAPPER.readTree(releasesJson);
+			if (root == null || !root.isArray()) {
+				return null;
+			}
+			String bestTag = null;
+			int[] bestVersion = new int[0];
+			for (JsonNode node : root) {
+				if (node == null || node.isNull()) {
+					continue;
+				}
+				String tag = node.path("tag_name").asText("");
+				if (tag == null || tag.trim().isEmpty()) {
+					continue;
+				}
+				int[] version;
+				try {
+					version = VersionUtils.parseVersion(tag);
+				} catch (Exception ignored) {
+					continue;
+				}
+				if (version == null || version.length == 0) {
+					continue;
+				}
+				if (bestTag == null || VersionUtils.isGreater(version, bestVersion)) {
+					bestTag = tag;
+					bestVersion = version;
+				}
+			}
+			return bestTag;
+		} catch (Exception ignored) {
+			return null;
+		}
+	}
+
+	/** Pure formatting with prerelease filtering. */
+	public static String formatReleases(List<ReleaseInfo> releases, boolean includePrereleases) {
+		if (!includePrereleases && releases != null) {
+			List<ReleaseInfo> filtered = new ArrayList<>();
+			for (ReleaseInfo release : releases) {
+				if (release != null && !release.prerelease) {
+					filtered.add(release);
+				}
+			}
+			return formatReleases(filtered);
+		}
+		return formatReleases(releases);
 	}
 
 	/** Overload with injectable zone/formatter for deterministic tests. */

@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.util.Log;
+import arc.util.Nullable;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustrytool.Config;
@@ -15,8 +16,19 @@ import solim.overlay.SolimDialog;
  */
 public class UpdateDialog extends SolimDialog {
 
+	private final @Nullable String releaseTag;
+
 	public UpdateDialog(String currentVer, String latestVer, String changelog, Runnable done) {
+		this(currentVer, latestVer, changelog, null, done);
+	}
+
+	/**
+	 * @param releaseTag exact GitHub release tag to install (e.g. {@code v5.0.3-v8-beta});
+	 * null uses the default-branch import.
+	 */
+	public UpdateDialog(String currentVer, String latestVer, String changelog, @Nullable String releaseTag, Runnable done) {
 		super(Core.bundle.get("update.dialog.title"));
+		this.releaseTag = releaseTag;
 		name("updateAvailableDialog");
 		closeOnBack();
 
@@ -59,7 +71,11 @@ public class UpdateDialog extends SolimDialog {
 				hide();
 				Vars.ui.mods.show();
 				String repoUrl = Config.ORG_NAME + "/" + Config.REPO_NAME;
-				Vars.ui.mods.githubImportMod(repoUrl, true, true);
+				if (releaseTag != null && !releaseTag.trim().isEmpty()) {
+					Vars.ui.mods.githubImportMod(repoUrl, true, releaseTag, true);
+				} else {
+					Vars.ui.mods.githubImportMod(repoUrl, true, true);
+				}
 				Vars.ui.mods.toFront();
 				Timer.schedule(() -> Vars.ui.loadfrag.toFront(), 0.2f);
 			} catch (Throwable e) {

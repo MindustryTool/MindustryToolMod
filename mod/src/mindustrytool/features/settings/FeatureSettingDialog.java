@@ -42,6 +42,13 @@ public final class FeatureSettingDialog extends SolimDialog {
 
                     Core.app.setClipboardText(JsonUtils.toJsonPretty(root));
                 });
+
+        actionButton(
+                Core.bundle.get("feature.button.settings"),
+                Icon.settings,
+                200f,
+                64f,
+                () -> new GeneralSettingsDialog().show());
     }
 
     private void discoverSolimElements(UiNode parent, Element element, Predicate<Element> pred) {

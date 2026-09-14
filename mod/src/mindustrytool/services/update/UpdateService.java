@@ -4,6 +4,7 @@ import arc.Core;
 import arc.util.Log;
 import arc.util.serialization.Jval;
 import mindustrytool.Main;
+import mindustrytool.features.settings.ModSettings;
 import mindustrytool.services.Github;
 import mindustrytool.services.MindustryTool;
 
@@ -43,6 +44,11 @@ public final class UpdateService {
 			Log.err("Ping failed", e);
 		}
 
+		if (isBetaParticipate()) {
+			checkForUpdateBeta(currentVersion, currentVerStr, finalDone);
+			return;
+		}
+
 		Github.getModHjson().whenComplete((body, err) -> {
 			if (err != null) {
 				Log.err(err);
@@ -69,6 +75,74 @@ public final class UpdateService {
 		});
 	}
 
+	/** Reads the beta flag defensively; any failure falls back to the stable channel. */
+	private static boolean isBetaParticipate() {
+		try {
+			return Boolean.TRUE.equals(ModSettings.betaParticipate.get());
+		} catch (Exception e) {
+			Log.err("Failed to read beta flag, using stable channel", e);
+			return false;
+		}
+	}
+
+	/**
+	 * Beta channel: releases-only gate, no {@code mod.hjson} fetch. Every failure
+	 * (no network, request error, malformed/empty payload, nothing newer) resolves
+	 * to silent — log and finish — so the game can never crash or stall here.
+	 */
+	private void checkForUpdateBeta(int[] currentVersion, String currentVerStr, Runnable done) {
+		final int[] safeCurrent = currentVersion != null ? currentVersion : new int[0];
+		final String safeCurrentStr = currentVerStr != null ? currentVerStr : "";
+		final Runnable finalDone = done != null ? done : () -> {};
+
+		try {
+			Github.getReleases().whenComplete((body, err) -> {
+				try {
+					if (err != null) {
+						Log.err("Beta update check failed", err);
+						safeDone(finalDone);
+						return;
+					}
+					if (body == null || body.trim().isEmpty()) {
+						Log.info(Core.bundle.get("update.status.up-to-date"));
+						safeDone(finalDone);
+						return;
+					}
+					String latestTag = ChangelogFormatter.findLatestTag(body);
+					if (latestTag == null) {
+						Log.info(Core.bundle.get("update.status.up-to-date"));
+						safeDone(finalDone);
+						return;
+					}
+					int[] latestVersion = VersionUtils.parseVersion(latestTag);
+					if (!VersionUtils.isGreater(latestVersion, safeCurrent)) {
+						Log.info(Core.bundle.get("update.status.up-to-date"));
+						safeDone(finalDone);
+						return;
+					}
+					Log.info(Core.bundle.format("update.status.require-update", safeCurrentStr, latestTag));
+					String changelog = ChangelogFormatter.format(body, true);
+					if (changelog == null || changelog.trim().isEmpty()) {
+						changelog = Core.bundle.get("update.error.parse-releases");
+					}
+					String finalChangelog = changelog;
+					try {
+						Core.app.post(() -> new UpdateDialog(safeCurrentStr, latestTag, finalChangelog, latestTag, finalDone).show());
+					} catch (Exception e) {
+						Log.err("Failed to show beta update dialog", e);
+						safeDone(finalDone);
+					}
+				} catch (Exception e) {
+					Log.err("Beta update check failed", e);
+					safeDone(finalDone);
+				}
+			});
+		} catch (Exception e) {
+			Log.err("Beta update check failed", e);
+			safeDone(finalDone);
+		}
+	}
+
 	private void fetchReleasesAndShowDialog(String currentVer, String latestVer, Runnable done) {
 		Github.getReleases().whenComplete((body, err) -> {
 			if (err != null) {
@@ -85,8 +159,9 @@ public final class UpdateService {
 				return;
 			}
 			try {
-				String changelog = ChangelogFormatter.format(body);
-				if (changelog == null || changelog.isBlank()) {
+				boolean includePrereleases = Boolean.TRUE.equals(ModSettings.betaParticipate.get());
+				String changelog = ChangelogFormatter.format(body, includePrereleases);
+				if (changelog == null || changelog.trim().isEmpty()) {
 					changelog = Core.bundle.get("update.error.parse-releases");
 				}
 				String finalChangelog = changelog;

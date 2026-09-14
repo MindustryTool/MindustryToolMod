@@ -3,8 +3,7 @@
 ## Purpose
 A declarative Solim dialog that aggregates mod-wide preferences as labeled toggle rows, each row backed by a `ConfigValue`-derived reactive signal. Currently exposes the beta participation toggle; designed for extension without structural changes.
 
-## ADDED Requirements
-
+## Requirements
 ### Requirement: Mod-Wide Settings Config Group
 The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares all global `ConfigValue` entries as public static fields, starting with `betaParticipate: ConfigValue<Boolean>` (default `false`).
 
