@@ -17,6 +17,7 @@ import solim.display.Text;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.signal.Signal;
+import org.junit.jupiter.api.Assumptions;
 
 class TabsTest {
 
@@ -70,7 +71,7 @@ class TabsTest {
 
 	@Test
 	void tabTriggerDefaultStylingUsesRoundedBorderWithTransparentBackground() {
-		org.junit.jupiter.api.Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
+		Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
 		Tabs tabs = new Tabs(Signal.of(0))
 				.tab("Tab A", () -> {})
 				.tab("Tab B", () -> {});
@@ -97,7 +98,7 @@ class TabsTest {
 
 	@Test
 	void tabTriggerCustomButtonStylePreservedWhenSpecified() {
-		org.junit.jupiter.api.Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
+		Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
 		ButtonStyle customStyle = new ButtonStyle();
 		Tabs tabs = new Tabs(Signal.of(0))
 				.tabStyle(customStyle)
@@ -109,7 +110,7 @@ class TabsTest {
 
 	@Test
 	void tabsInitialAndSignalSwitching() {
-		org.junit.jupiter.api.Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
+		Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
 		Signal<Integer> activeTab = Signal.of(0);
 
 		Tabs tabs = new Tabs(activeTab)

@@ -10,6 +10,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
 import solim.ui.Ui;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.CellAccess;
+import arc.util.Align;
+import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
 
 class RowTest {
 
@@ -67,9 +72,9 @@ class RowTest {
 		row.add(a);
 		row.add(b);
 
-		assertEquals(0f, arc.scene.ui.layout.CellAccess.padLeft(row.table().getCell(a)), 0.01f);
-		assertEquals(8f, arc.scene.ui.layout.CellAccess.padLeft(row.table().getCell(b)), 0.01f);
-		assertEquals(0f, arc.scene.ui.layout.CellAccess.padTop(row.table().getCell(b)), 0.01f);
+		assertEquals(0f, CellAccess.padLeft(row.table().getCell(a)), 0.01f);
+		assertEquals(8f, CellAccess.padLeft(row.table().getCell(b)), 0.01f);
+		assertEquals(0f, CellAccess.padTop(row.table().getCell(b)), 0.01f);
 	}
 
 	@Test
@@ -104,11 +109,11 @@ class RowTest {
 		assertTrue(row.table().visible);
 
 		vis.set(false);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertFalse(row.table().visible);
 
 		vis.set(true);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertTrue(row.table().visible);
 	}
 
@@ -140,7 +145,7 @@ class RowTest {
 		Element child = new Element();
 
 		row.children(() -> {
-			solim.runtime.ParentStack.add(child);
+			ParentStack.add(child);
 		});
 
 		assertEquals(1, row.table().getChildren().size);
@@ -169,9 +174,9 @@ class RowTest {
 
 		assertEquals(1, parent.table().getChildren().size);
 		assertSame(child.table(), parent.table().getChildren().get(0));
-		arc.scene.ui.layout.Cell<?> cell = parent.table().getCell(child.table());
+		Cell<?> cell = parent.table().getCell(child.table());
 		assertNotNull(cell);
-		assertEquals(40f, arc.scene.ui.layout.CellAccess.minWidth(cell), 0.01f);
+		assertEquals(40f, CellAccess.minWidth(cell), 0.01f);
 	}
 
 	@Test
@@ -187,18 +192,18 @@ class RowTest {
 			@Override public float getPrefHeight() { return 100f; }
 		};
 		row.children(() -> {
-			solim.runtime.ParentStack.add(e1);
-			solim.runtime.ParentStack.add(e2);
+			ParentStack.add(e1);
+			ParentStack.add(e2);
 		});
 		row.table().setSize(300f, 200f);
 		row.table().layout();
 
-		arc.scene.ui.layout.Cell<?> c1 = row.table().getCell(e1);
-		arc.scene.ui.layout.Cell<?> c2 = row.table().getCell(e2);
+		Cell<?> c1 = row.table().getCell(e1);
+		Cell<?> c2 = row.table().getCell(e2);
 
 		// Both cell alignments must include Align.top and Align.left
-		assertEquals(arc.util.Align.top | arc.util.Align.left, arc.scene.ui.layout.CellAccess.align(c1) & (arc.util.Align.top | arc.util.Align.left));
-		assertEquals(arc.util.Align.top | arc.util.Align.left, arc.scene.ui.layout.CellAccess.align(c2) & (arc.util.Align.top | arc.util.Align.left));
+		assertEquals(Align.top | Align.left, CellAccess.align(c1) & (Align.top | Align.left));
+		assertEquals(Align.top | Align.left, CellAccess.align(c2) & (Align.top | Align.left));
 
 		// Both children must be flush with the top edge of the row (y + height == 200)
 		assertEquals(200f, e1.y + e1.getHeight(), 0.01f, "Child 1 must be aligned to top of row");
@@ -222,8 +227,8 @@ class RowTest {
 			@Override public float getPrefHeight() { return 100f; }
 		};
 		row.children(() -> {
-			solim.runtime.ParentStack.add(e1);
-			solim.runtime.ParentStack.add(e2);
+			ParentStack.add(e1);
+			ParentStack.add(e2);
 		});
 		row.table().setSize(300f, 200f);
 		row.table().layout();
@@ -244,15 +249,15 @@ class RowTest {
 			@Override public float getPrefWidth() { return 50f; }
 			@Override public float getPrefHeight() { return 50f; }
 		};
-		row.children(() -> solim.runtime.ParentStack.add(e1));
+		row.children(() -> ParentStack.add(e1));
 
 		// Call top() after children are added
 		row.top();
 		row.table().setSize(300f, 200f);
 		row.table().layout();
 
-		arc.scene.ui.layout.Cell<?> c1 = row.table().getCell(e1);
-		assertEquals(arc.util.Align.top, arc.scene.ui.layout.CellAccess.align(c1) & arc.util.Align.top);
+		Cell<?> c1 = row.table().getCell(e1);
+		assertEquals(Align.top, CellAccess.align(c1) & Align.top);
 		assertEquals(200f, e1.y + e1.getHeight(), 0.01f);
 	}
 
@@ -269,8 +274,8 @@ class RowTest {
 
 		Scroll scroll = Ui.scroll().grow().children(() -> {
 			Ui.row().grow().top().left().gap(8f).children(() -> {
-				solim.runtime.ParentStack.add(img);
-				solim.runtime.ParentStack.add(det);
+				ParentStack.add(img);
+				ParentStack.add(det);
 			});
 		});
 

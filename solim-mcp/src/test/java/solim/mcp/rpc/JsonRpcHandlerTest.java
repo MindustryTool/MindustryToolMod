@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.mcp.introspection.SnapshotRoot;
 import solim.mcp.tools.ToolRegistry;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class JsonRpcHandlerTest {
 
@@ -88,7 +89,7 @@ class JsonRpcHandlerTest {
 
 	@Test
 	void toolsCallStop() throws Exception {
-		java.util.concurrent.atomic.AtomicBoolean called = new java.util.concurrent.atomic.AtomicBoolean(false);
+		AtomicBoolean called = new AtomicBoolean(false);
 		Table root = new Table();
 		JsonRpcHandler customHandler = new JsonRpcHandler(
 			new ToolRegistry(SnapshotRoot.fixed(root), () -> called.set(true)));

@@ -11,6 +11,9 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
+import java.util.ArrayList;
+import java.util.List;
+import solim.signal.Signal;
 
 class SolimDialogComponentTest {
 
@@ -109,9 +112,9 @@ class SolimDialogComponentTest {
 	void dialogSignalCreationAndEventRecalculation() {
 		SolimDialog d = new SolimDialog("Test");
 		int[] counter = new int[] {10};
-		java.util.List<Runnable> resizeCallbacks = new java.util.ArrayList<>();
+		List<Runnable> resizeCallbacks = new ArrayList<>();
 
-		solim.signal.Signal<Integer> resizeSignal = d.createSignal(cb -> {
+		Signal<Integer> resizeSignal = d.createSignal(cb -> {
 			resizeCallbacks.add(cb);
 			return () -> resizeCallbacks.remove(cb);
 		}, () -> counter[0]);

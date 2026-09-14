@@ -17,20 +17,23 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.input.SolimTextField;
 import solim.signal.Signal;
+import arc.mock.MockApplication;
+import arc.mock.MockGL20;
+import arc.mock.MockGraphics;
 
 class InputStyleTest {
 
     @BeforeAll
     static void initArc() {
         if (Core.app == null) {
-            Core.app = new arc.mock.MockApplication();
+            Core.app = new MockApplication();
         }
         if (Core.graphics == null) {
-            Core.graphics = new arc.mock.MockGraphics();
+            Core.graphics = new MockGraphics();
         }
         if (Core.gl == null) {
-            Core.gl = new arc.mock.MockGL20();
-            Core.gl20 = (arc.mock.MockGL20) Core.gl;
+            Core.gl = new MockGL20();
+            Core.gl20 = (MockGL20) Core.gl;
         }
         if (Core.scene == null) {
             Core.scene = new Scene();

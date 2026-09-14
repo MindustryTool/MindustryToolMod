@@ -1,13 +1,14 @@
 package solim.modifier;
 
 import arc.graphics.Color;
-import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.graphics.RoundedDrawable;
-import solim.signal.Effect;
-import solim.signal.Readable;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Fill;
+import arc.scene.ui.Button;
+import arc.scene.ui.Button.ButtonStyle;
 
 /**
  * Helper for creating and managing {@link RoundedDrawable} instances
@@ -27,15 +28,15 @@ public final class RoundedHelper {
 
         @Override
         public void draw(float x, float y, float width, float height) {
-            arc.graphics.g2d.Draw.color(color);
-            arc.graphics.g2d.Fill.rect(x, y, width, height);
+            Draw.color(color);
+            Fill.rect(x, y, width, height);
         }
 
         @Override
         public void draw(float x, float y, float originX, float originY, float width, float height, float scaleX,
                 float scaleY, float rotation) {
-            arc.graphics.g2d.Draw.color(color);
-            arc.graphics.g2d.Fill.rect(x, y, width, height);
+            Draw.color(color);
+            Fill.rect(x, y, width, height);
         }
 
         @Override
@@ -66,9 +67,9 @@ public final class RoundedHelper {
 
     public static RoundedDrawable getOrCreateRounded(@Nullable Table table, int defaultRadius) {
         if (table == null) return new RoundedDrawable(defaultRadius);
-        if (table instanceof arc.scene.ui.Button) {
-            arc.scene.ui.Button btn = (arc.scene.ui.Button) table;
-            arc.scene.ui.Button.ButtonStyle s = btn.getStyle();
+        if (table instanceof Button) {
+            Button btn = (Button) table;
+            ButtonStyle s = btn.getStyle();
             if (s != null && s.up instanceof RoundedDrawable) {
                 return (RoundedDrawable) s.up;
             }
@@ -83,7 +84,7 @@ public final class RoundedHelper {
             }
             btn.setBackground(rd);
             if (s == null) {
-                s = new arc.scene.ui.Button.ButtonStyle();
+                s = new ButtonStyle();
                 btn.setStyle(s);
             }
             s.up = rd;

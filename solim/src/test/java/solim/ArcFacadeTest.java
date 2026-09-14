@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
 
 class ArcFacadeTest {
 
@@ -53,6 +54,6 @@ class ArcFacadeTest {
 	@Test
 	void initRegistersSignalDispatcher() {
 		UI.init();
-		assertTrue(solim.runtime.SignalDispatcher.isRegistered());
+		assertTrue(SignalDispatcher.isRegistered());
 	}
 }

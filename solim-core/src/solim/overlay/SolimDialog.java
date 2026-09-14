@@ -27,6 +27,7 @@ import solim.modifier.RoundedHelper;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Signal;
+import java.util.function.Function;
 
 /**
  * Declarative dialog component for Solim. Wraps a Mindustry BaseDialog while providing
@@ -163,7 +164,7 @@ public class SolimDialog implements Component {
      * whenever the callback registrar invokes the given callback. The returned disposable is owned
      * by this dialog.
      */
-    public <T> Signal<T> createSignal(java.util.function.Function<Runnable, Disposable> registrar, Supplier<T> supplier) {
+    public <T> Signal<T> createSignal(Function<Runnable, Disposable> registrar, Supplier<T> supplier) {
         Signal<T> signal = Signal.of(supplier.get());
         if (registrar != null) {
             Disposable d = registrar.apply(() -> signal.set(supplier.get()));

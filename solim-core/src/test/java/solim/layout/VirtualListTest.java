@@ -10,16 +10,19 @@ import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.signal.Signal;
 import solim.runtime.SignalDispatcher;
+import arc.mock.MockApplication;
+import arc.mock.MockGraphics;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class VirtualListTest {
 
     @BeforeAll
     static void initArc() {
         if (Core.app == null) {
-            Core.app = new arc.mock.MockApplication();
+            Core.app = new MockApplication();
         }
         if (Core.graphics == null) {
-            Core.graphics = new arc.mock.MockGraphics();
+            Core.graphics = new MockGraphics();
         }
     }
 
@@ -184,7 +187,7 @@ class VirtualListTest {
     @Test
     void childSignalReadsDoNotAttachToCollectionObserver() {
         Signal<String> childSignal = Signal.of("initial");
-        java.util.concurrent.atomic.AtomicInteger childBuildCount = new java.util.concurrent.atomic.AtomicInteger(0);
+        AtomicInteger childBuildCount = new AtomicInteger(0);
 
         class ReactiveChild extends BaseComponent {
             @Override

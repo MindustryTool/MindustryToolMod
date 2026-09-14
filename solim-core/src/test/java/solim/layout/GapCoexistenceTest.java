@@ -13,6 +13,7 @@ import solim.runtime.SignalDispatcher;
 import solim.signal.Signal;
 import solim.ui.Dynamic;
 import solim.ui.Ui;
+import solim.runtime.ParentStack;
 
 class GapCoexistenceTest {
 
@@ -34,9 +35,9 @@ class GapCoexistenceTest {
 		Card card3 = Ui.card(); // no margin
 
 		r.children(() -> {
-			solim.runtime.ParentStack.add(card1);
-			solim.runtime.ParentStack.add(card2);
-			solim.runtime.ParentStack.add(card3);
+			ParentStack.add(card1);
+			ParentStack.add(card2);
+			ParentStack.add(card3);
 		});
 
 		Cell<?> cell1 = r.table().getCell(card1.element());
@@ -70,9 +71,9 @@ class GapCoexistenceTest {
 		Card card3 = Ui.card();
 
 		col.children(() -> {
-			solim.runtime.ParentStack.add(card1);
-			solim.runtime.ParentStack.add(card2);
-			solim.runtime.ParentStack.add(card3);
+			ParentStack.add(card1);
+			ParentStack.add(card2);
+			ParentStack.add(card3);
 		});
 
 		Cell<?> cell1 = col.table().getCell(card1.element());
@@ -100,9 +101,9 @@ class GapCoexistenceTest {
 		Card cardC = Ui.card();
 
 		row.children(() -> {
-			solim.runtime.ParentStack.add(cardA);
-			solim.runtime.ParentStack.add(cardB);
-			solim.runtime.ParentStack.add(cardC);
+			ParentStack.add(cardA);
+			ParentStack.add(cardB);
+			ParentStack.add(cardC);
 		});
 
 		Cell<?> cellA = row.table().getCell(cardA.element());
@@ -151,9 +152,9 @@ class GapCoexistenceTest {
 		Card suffix = Ui.card();
 
 		row.children(() -> {
-			solim.runtime.ParentStack.add(prefix);
-			solim.runtime.ParentStack.add(dynamicCard);
-			solim.runtime.ParentStack.add(suffix);
+			ParentStack.add(prefix);
+			ParentStack.add(dynamicCard);
+			ParentStack.add(suffix);
 		});
 
 		Cell<?> prefixCell = row.table().getCell(prefix.element());

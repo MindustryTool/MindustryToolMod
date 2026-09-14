@@ -14,12 +14,13 @@ import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.ui.Ui;
+import solim.modifier.PendingCellConfig;
 
 /** Simple grid with fixed or reactive column count and customizable gap. */
 public final class Grid implements Component, CellConfig<Grid>, GapContainer, ElementConfig<Grid>, TableConfig<Grid> {
 
 	private final Table table;
-	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private int columns = 1;
 	private float gap = 4f;
 	private int currentCell = 0;
@@ -46,7 +47,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
 	}
 
 	@Override
-	public solim.modifier.PendingCellConfig sizeConstraints() {
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 

@@ -9,6 +9,7 @@ import arc.mock.MockGraphics;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
+import solim.runtime.SignalDispatcher;
 
 class SolimImageComponentTest {
 
@@ -44,7 +45,7 @@ class SolimImageComponentTest {
 		assertEquals(Color.green, img.image().color);
 
 		colorSig.set(Color.blue);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(Color.blue, img.image().color);
 	}
 

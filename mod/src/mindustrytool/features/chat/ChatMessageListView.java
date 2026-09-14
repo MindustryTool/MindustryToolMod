@@ -48,6 +48,7 @@ import solim.input.Button;
 import solim.signal.Readable;
 import solim.overlay.SolimDialog;
 import arc.scene.event.ClickListener;
+import arc.scene.event.InputEvent;
 
 public class ChatMessageListView extends BaseComponent {
 
@@ -632,7 +633,7 @@ public class ChatMessageListView extends BaseComponent {
                         .growX();
                 linkText.label().addListener(new ClickListener() {
                     @Override
-                    public void clicked(arc.scene.event.InputEvent event, float x, float y) {
+                    public void clicked(InputEvent event, float x, float y) {
                         event.stop();
                         openLinkDialog(onlyUrl);
                     }
@@ -660,7 +661,7 @@ public class ChatMessageListView extends BaseComponent {
                                 .left();
                         chip.label().addListener(new ClickListener() {
                             @Override
-                            public void clicked(arc.scene.event.InputEvent event, float x, float y) {
+                            public void clicked(InputEvent event, float x, float y) {
                                 event.stop();
                                 openLinkDialog(chipUrl);
                             }

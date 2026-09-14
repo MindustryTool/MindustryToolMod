@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import solim.input.SolimTextField;
 import solim.signal.Signal;
 import solim.ui.Binding;
+import solim.runtime.SignalDispatcher;
 
 class AmbientOwnershipTest {
 
@@ -77,7 +78,7 @@ class AmbientOwnershipTest {
 
 		// Reactive bindings update
 		parent.widthSignal.set(200f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(200f, parent.boundElement.getWidth());
 
 		// Disposing parent automatically disposes child, custom disposable, and binding
@@ -89,7 +90,7 @@ class AmbientOwnershipTest {
 
 		// Post-disposal signal update should not affect boundElement
 		parent.widthSignal.set(300f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(200f, parent.boundElement.getWidth());
 	}
 

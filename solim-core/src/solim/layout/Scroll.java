@@ -16,6 +16,7 @@ import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
+import solim.modifier.PendingCellConfig;
 
 /** Scroll container wrapping a Table in a ScrollPane. */
 public final class Scroll implements Component, CellConfig<Scroll>, ElementConfig<Scroll>, TableConfig<Scroll> {
@@ -32,7 +33,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
 
     private final Table outer;
     private final Table content;
-    private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private final ScrollPane pane;
     private boolean centered = false;
     private boolean disableX = true;
@@ -248,7 +249,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     }
 
     @Override
-    public solim.modifier.PendingCellConfig sizeConstraints() {
+    public PendingCellConfig sizeConstraints() {
         return constraints;
     }
 
@@ -279,7 +280,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         if (el == null) return this;
         el.visible = visible;
         if (el.parent instanceof Table) {
-            solim.layout.GapContainer.respace((Table) el.parent);
+            GapContainer.respace((Table) el.parent);
         }
         return this;
     }

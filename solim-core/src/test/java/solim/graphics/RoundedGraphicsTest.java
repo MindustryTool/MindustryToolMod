@@ -16,6 +16,9 @@ import solim.layout.Column;
 import solim.layout.Container;
 import solim.overlay.Popup;
 import solim.signal.Signal;
+import arc.Core;
+import mindustry.ui.Styles;
+import solim.runtime.SignalDispatcher;
 
 class RoundedGraphicsTest {
 
@@ -146,7 +149,7 @@ class RoundedGraphicsTest {
         // Reactive update
         fillSignal.set(Color.green);
         borderSignal.set(Color.yellow);
-        solim.runtime.SignalDispatcher.flush();
+        SignalDispatcher.flush();
         assertEquals(Color.green, rd.getFillColor());
         assertEquals(Color.yellow, rd.getBorderColor());
 
@@ -154,7 +157,7 @@ class RoundedGraphicsTest {
         rd.dispose();
         fillSignal.set(Color.black);
         borderSignal.set(Color.blue);
-        solim.runtime.SignalDispatcher.flush();
+        SignalDispatcher.flush();
         assertEquals(Color.green, rd.getFillColor(), "Should not update after disposal");
         assertEquals(Color.yellow, rd.getBorderColor(), "Should not update after disposal");
     }
@@ -205,7 +208,7 @@ class RoundedGraphicsTest {
         popup.rounded(8, Color.gray).border(1f, Color.white);
         assertTrue(popup.table().getBackground() instanceof RoundedDrawable);
 
-        if (arc.Core.scene != null) {
+        if (Core.scene != null) {
             Badge badge = new Badge("New");
             badge.rounded(4, Color.scarlet);
             assertTrue(badge.table().getBackground() instanceof RoundedDrawable);
@@ -242,15 +245,15 @@ class RoundedGraphicsTest {
     @Test
     void baseDrawableCanBeSetAndRetrieved() {
         RoundedDrawable rd = new RoundedDrawable(8);
-        rd.baseDrawable(mindustry.ui.Styles.black6);
-        assertSame(mindustry.ui.Styles.black6, rd.getBaseDrawable(), "baseDrawable should be retrievable after setting");
+        rd.baseDrawable(Styles.black6);
+        assertSame(Styles.black6, rd.getBaseDrawable(), "baseDrawable should be retrievable after setting");
     }
 
     @Test
     void baseDrawableIsIndependentOfFillAndBorder() {
         RoundedDrawable rd = new RoundedDrawable(10, Color.darkGray, 1.5f, Color.red);
-        rd.baseDrawable(mindustry.ui.Styles.black6);
-        assertSame(mindustry.ui.Styles.black6, rd.getBaseDrawable());
+        rd.baseDrawable(Styles.black6);
+        assertSame(Styles.black6, rd.getBaseDrawable());
         assertEquals(10, rd.getRadius());
         assertEquals(Color.darkGray, rd.getFillColor());
         assertEquals(1.5f, rd.getStroke(), 0.001f);
@@ -277,7 +280,7 @@ class RoundedGraphicsTest {
     @Test
     void backgroundThenBorderPreservesBoth() {
         Column col = new Column();
-        col.background(mindustry.ui.Styles.black6).border(1f, Color.gray);
+        col.background(Styles.black6).border(1f, Color.gray);
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
             "Background should be RoundedDrawable after border call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
@@ -288,7 +291,7 @@ class RoundedGraphicsTest {
     @Test
     void borderThenBackgroundPreservesBoth() {
         Column col = new Column();
-        col.border(1f, Color.gray).background(mindustry.ui.Styles.black6);
+        col.border(1f, Color.gray).background(Styles.black6);
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
             "Background should be RoundedDrawable after background call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
@@ -299,7 +302,7 @@ class RoundedGraphicsTest {
     @Test
     void roundedThenBackgroundPreservesBoth() {
         Column col = new Column();
-        col.rounded(12, Color.darkGray).background(mindustry.ui.Styles.black6);
+        col.rounded(12, Color.darkGray).background(Styles.black6);
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
             "Background should be RoundedDrawable after background call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
@@ -310,7 +313,7 @@ class RoundedGraphicsTest {
     @Test
     void backgroundThenRoundedPreservesBoth() {
         Column col = new Column();
-        col.background(mindustry.ui.Styles.black6).rounded(12, Color.darkGray);
+        col.background(Styles.black6).rounded(12, Color.darkGray);
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
             "Background should be RoundedDrawable after rounded call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
@@ -322,7 +325,7 @@ class RoundedGraphicsTest {
     void allThreeOrderIndependent() {
         // Order 1: bg -> rounded -> border
         Column col1 = new Column();
-        col1.background(mindustry.ui.Styles.black6).rounded(10, Color.darkGray).border(1.5f, Color.red);
+        col1.background(Styles.black6).rounded(10, Color.darkGray).border(1.5f, Color.red);
         assertTrue(col1.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd1 = (RoundedDrawable) col1.table().getBackground();
         assertEquals(10, rd1.getRadius());
@@ -330,7 +333,7 @@ class RoundedGraphicsTest {
 
         // Order 2: border -> bg -> rounded
         Column col2 = new Column();
-        col2.border(1.5f, Color.red).background(mindustry.ui.Styles.black6).rounded(10, Color.darkGray);
+        col2.border(1.5f, Color.red).background(Styles.black6).rounded(10, Color.darkGray);
         assertTrue(col2.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd2 = (RoundedDrawable) col2.table().getBackground();
         assertEquals(10, rd2.getRadius());
@@ -338,7 +341,7 @@ class RoundedGraphicsTest {
 
         // Order 3: rounded -> border -> bg
         Column col3 = new Column();
-        col3.rounded(10, Color.darkGray).border(1.5f, Color.red).background(mindustry.ui.Styles.black6);
+        col3.rounded(10, Color.darkGray).border(1.5f, Color.red).background(Styles.black6);
         assertTrue(col3.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd3 = (RoundedDrawable) col3.table().getBackground();
         assertEquals(10, rd3.getRadius());

@@ -12,6 +12,13 @@ import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Tabs;
 import solim.signal.Signal;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureRegion;
+import arc.mock.MockGL20;
+import arc.scene.Scene;
+import arc.scene.ui.Button.ButtonStyle;
+import arc.scene.ui.Label.LabelStyle;
 
 public class TabsPerformanceTest {
 
@@ -24,23 +31,23 @@ public class TabsPerformanceTest {
             Core.graphics = new MockGraphics();
         }
         if (Core.gl == null) {
-            Core.gl = new arc.mock.MockGL20();
-            Core.gl20 = (arc.mock.MockGL20) Core.gl;
+            Core.gl = new MockGL20();
+            Core.gl20 = (MockGL20) Core.gl;
         }
         if (Core.scene == null) {
-            Core.scene = new arc.scene.Scene();
-            arc.graphics.g2d.Font.FontData fontData = new arc.graphics.g2d.Font.FontData() {
+            Core.scene = new Scene();
+            FontData fontData = new FontData() {
                 @Override
                 public boolean hasGlyph(char ch) {
                     return true;
                 }
             };
-            arc.graphics.g2d.Font font = new arc.graphics.g2d.Font(fontData, new arc.graphics.g2d.TextureRegion(), false);
-            arc.scene.ui.Button.ButtonStyle btnStyle = new arc.scene.ui.Button.ButtonStyle();
-            Core.scene.addStyle(arc.scene.ui.Button.ButtonStyle.class, btnStyle);
-            arc.scene.ui.Label.LabelStyle lblStyle = new arc.scene.ui.Label.LabelStyle();
+            Font font = new Font(fontData, new TextureRegion(), false);
+            ButtonStyle btnStyle = new ButtonStyle();
+            Core.scene.addStyle(ButtonStyle.class, btnStyle);
+            LabelStyle lblStyle = new LabelStyle();
             lblStyle.font = font;
-            Core.scene.addStyle(arc.scene.ui.Label.LabelStyle.class, lblStyle);
+            Core.scene.addStyle(LabelStyle.class, lblStyle);
         }
     }
 

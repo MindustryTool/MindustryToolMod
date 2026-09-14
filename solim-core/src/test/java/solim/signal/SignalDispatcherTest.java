@@ -9,6 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
+import java.util.ArrayList;
+import java.util.List;
 
 class SignalDispatcherTest {
 
@@ -246,7 +248,7 @@ class SignalDispatcherTest {
 		int effectCount = 200;
 		Signal<Integer> source = Signal.of(0);
 		AtomicInteger executedCount = new AtomicInteger(0);
-		java.util.List<Effect> effects = new java.util.ArrayList<>();
+		List<Effect> effects = new ArrayList<>();
 
 		for (int i = 0; i < effectCount; i++) {
 			effects.add(Effect.of(() -> {

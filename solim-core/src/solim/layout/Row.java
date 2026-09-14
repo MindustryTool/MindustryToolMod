@@ -8,11 +8,12 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.overlay.Hud;
 import solim.runtime.ParentStack;
 import solim.signal.Readable;
-import solim.signal.Signal;
 import solim.ui.Ui;
+import solim.modifier.PendingCellConfig;
+import solim.runtime.ComponentContext;
+import solim.signal.Effect;
 
 /** Row layout — horizontal Table wrapper. */
 public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {
@@ -30,7 +31,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
 	};
 
 	private final Table table;
-	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private float gap = 0f;
 
 	public Row() {
@@ -50,7 +51,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
 	}
 
 	@Override
-	public solim.modifier.PendingCellConfig sizeConstraints() {
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 
@@ -76,13 +77,13 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
 
 	public Row gap(@Nullable Readable<Float> gapSignal) {
 		if (gapSignal != null) {
-			solim.signal.Effect e = solim.signal.Effect.of(() -> {
+			Effect e = Effect.of(() -> {
 				Float g = gapSignal.get();
 				if (g != null) {
 					gap(g);
 				}
 			});
-			solim.runtime.ComponentContext.register(e);
+			ComponentContext.register(e);
 		}
 		return this;
 	}

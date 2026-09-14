@@ -261,7 +261,13 @@ Only add null checks when null is genuinely possible.
 
 # Java Imports — Mandatory
 
-Prefer imports over fully qualified class names.
+Fully qualified class names are forbidden. Always import the type and use the simple class name instead.
+
+Use the following regex to search for fully qualified class names in the codebase and replace them with imports:
+
+```regex
+^(?!\s*import\b).*?\b[a-z_][\w]*(?:\.[a-zA-Z_][\w]*)*\.[A-Z][\w]*\b
+```
 
 ❌ Avoid:
 
@@ -269,9 +275,15 @@ Prefer imports over fully qualified class names.
 arc.scene.ui.ImageButton.ImageButtonStyle
 ```
 
-Import the type instead whenever possible.
+✅ Good:
 
-Fully qualified names are allowed only when necessary to resolve unavoidable naming conflicts.
+```java
+import arc.scene.ui.ImageButton.ImageButtonStyle;
+
+ImageButtonStyle
+```
+
+Fully qualified names are allowed only when strictly necessary to resolve unavoidable naming conflicts.
 
 ---
 
@@ -887,7 +899,7 @@ Verify:
 * [ ] All HTTP calls go through `Request`.
 * [ ] No unsupported Java 9+ runtime APIs are used.
 * [ ] Nullable values use `arc.util.Nullable`.
-* [ ] Imports are used instead of unnecessary fully qualified class names.
+* [ ] Fully qualified class names are forbidden and replaced with imports (use regex to check).
 * [ ] Ternary operator is preferred over `if` for simple conditions and assignments.
 
 ### Architecture

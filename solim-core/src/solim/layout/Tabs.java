@@ -18,6 +18,7 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.ui.Ui;
+import solim.modifier.PendingCellConfig;
 
 /**
  * Tabs layout component: provides a tab header button bar and switches between tab content panels reactively.
@@ -32,7 +33,7 @@ public final class Tabs implements Component, CellConfig<Tabs> {
 	private final List<Button> tabButtons = new ArrayList<>();
 	private final List<Table> tabContents = new ArrayList<>();
 	private final List<Disposable> bindings = new ArrayList<>();
-	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 
 	public Tabs(Signal<Integer> activeTab) {
 		this.activeTab = activeTab;
@@ -168,7 +169,7 @@ public final class Tabs implements Component, CellConfig<Tabs> {
 	}
 
 	@Override
-	public solim.modifier.PendingCellConfig sizeConstraints() {
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 

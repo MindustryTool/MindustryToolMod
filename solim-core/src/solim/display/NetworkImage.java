@@ -32,6 +32,7 @@ import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
 import solim.signal.Effect;
 import solim.signal.Readable;
+import solim.graphics.RoundedGenerator;
 
 public final class NetworkImage implements Component, CellConfig<NetworkImage>, ElementConfig<NetworkImage> {
 
@@ -210,7 +211,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
             float dy = r - 0.5f - y;
             for (int x = 0; x < r; x++) {
                 float dx = r - 0.5f - x;
-                float alpha = solim.graphics.RoundedGenerator.computeAlpha(dx, dy, r);
+                float alpha = RoundedGenerator.computeAlpha(dx, dy, r);
                 if (alpha >= 1f)
                     continue;
 

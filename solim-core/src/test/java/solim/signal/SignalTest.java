@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
+import java.util.ArrayList;
+import java.util.List;
 
 class SignalTest {
 
@@ -95,7 +97,7 @@ class SignalTest {
 	@Test
 	void fromCallbackRecalculatesOnTrigger() {
 		int[] val = new int[] {100};
-		java.util.List<Runnable> callbacks = new java.util.ArrayList<>();
+		List<Runnable> callbacks = new ArrayList<>();
 
 		Signal<Integer> s = Signal.fromCallback(callbacks::add, () -> val[0]);
 		assertEquals(100, s.get());

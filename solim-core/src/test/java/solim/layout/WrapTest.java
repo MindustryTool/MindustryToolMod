@@ -10,6 +10,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import arc.scene.style.TextureRegionDrawable;
 
 class WrapTest {
 
@@ -91,7 +92,7 @@ class WrapTest {
 	void backgroundSetsDrawable() {
 		Wrap w = new Wrap();
 		assertNull(w.table().getBackground());
-		w.background(new arc.scene.style.TextureRegionDrawable());
+		w.background(new TextureRegionDrawable());
 		assertNotNull(w.table().getBackground());
 	}
 

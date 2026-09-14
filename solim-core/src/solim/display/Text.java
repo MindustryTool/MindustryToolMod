@@ -7,7 +7,6 @@ import arc.scene.ui.Label;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
-import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;

@@ -5,6 +5,7 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.runtime.ComponentContext;
 import solim.signal.Signal;
+import java.util.Objects;
 
 /** Slider widget bound to Signal&lt;Float&gt;. */
 public final class SolimSlider implements Component {
@@ -44,7 +45,7 @@ public final class SolimSlider implements Component {
 				slider.changed(onChange::run);
 				return () -> {};
 			},
-			java.util.Objects::equals
+			Objects::equals
 		);
 		ComponentContext.register(this);
 	}

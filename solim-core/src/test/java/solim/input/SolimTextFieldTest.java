@@ -8,36 +8,46 @@ import arc.scene.event.InputEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureRegion;
+import arc.mock.MockApplication;
+import arc.mock.MockGL20;
+import arc.mock.MockGraphics;
+import arc.scene.Scene;
+import arc.scene.ui.TextField.TextFieldStyle;
+import org.junit.jupiter.api.AfterAll;
+import solim.runtime.SignalDispatcher;
 
 class SolimTextFieldTest {
 
 	@BeforeAll
 	static void checkArcContext() {
 		if (Core.app == null) {
-			Core.app = new arc.mock.MockApplication();
+			Core.app = new MockApplication();
 		}
 		if (Core.graphics == null) {
-			Core.graphics = new arc.mock.MockGraphics();
+			Core.graphics = new MockGraphics();
 		}
 		if (Core.gl == null) {
-			Core.gl = new arc.mock.MockGL20();
-			Core.gl20 = (arc.mock.MockGL20) Core.gl;
+			Core.gl = new MockGL20();
+			Core.gl20 = (MockGL20) Core.gl;
 		}
 		if (Core.scene == null) {
-			Core.scene = new arc.scene.Scene();
-			arc.scene.ui.TextField.TextFieldStyle style = new arc.scene.ui.TextField.TextFieldStyle();
-			arc.graphics.g2d.Font.FontData fontData = new arc.graphics.g2d.Font.FontData() {
+			Core.scene = new Scene();
+			TextFieldStyle style = new TextFieldStyle();
+			FontData fontData = new FontData() {
 				@Override
 				public boolean hasGlyph(char ch) {
 					return true;
 				}
 			};
-			style.font = new arc.graphics.g2d.Font(fontData, new arc.graphics.g2d.TextureRegion(), false);
-			Core.scene.addStyle(arc.scene.ui.TextField.TextFieldStyle.class, style);
+			style.font = new Font(fontData, new TextureRegion(), false);
+			Core.scene.addStyle(TextFieldStyle.class, style);
 		}
 	}
 
-	@org.junit.jupiter.api.AfterAll
+	@AfterAll
 	static void tearDownArc() {
 		Core.scene = null;
 		Core.gl = null;
@@ -69,7 +79,7 @@ class SolimTextFieldTest {
 
 		// Update text and submit again
 		text.set("updated text");
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		simulateKey(tf, KeyCode.enter);
 		assertEquals("updated text", submitted[0]);
 
@@ -111,13 +121,13 @@ class SolimTextFieldTest {
 
 		// Signal update that fails validation
 		text.set("ab");
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertFalse(tf.isValid());
 		assertFalse(tf.valid().get());
 
 		// Signal update that passes validation
 		text.set("abcd");
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertTrue(tf.isValid());
 		assertTrue(tf.valid().get());
 
@@ -132,11 +142,11 @@ class SolimTextFieldTest {
 		assertFalse(tf.field().isDisabled());
 
 		disabled.set(true);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertTrue(tf.field().isDisabled());
 
 		disabled.set(false);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertFalse(tf.field().isDisabled());
 
 		tf.dispose();
@@ -151,7 +161,7 @@ class SolimTextFieldTest {
 		tf.onEnter(msg -> {
 			sentMessage[0] = msg;
 			messageSignal.set(""); // Clear message upon sending (e.g. ChatInputView behavior)
-			solim.runtime.SignalDispatcher.flush();
+			SignalDispatcher.flush();
 		});
 
 		// Initial state

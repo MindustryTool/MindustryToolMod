@@ -17,6 +17,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
+import arc.scene.ui.layout.Table;
+import solim.runtime.SignalDispatcher;
 
 class HudComponentTest {
 
@@ -89,7 +91,7 @@ class HudComponentTest {
 		assertEquals(60f, hud.element().y, 0.01f);
 		x.set(150f);
 		y.set(250f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(150f, hud.element().x, 0.01f);
 		assertEquals(250f, hud.element().y, 0.01f);
 		hud.dispose();
@@ -102,7 +104,7 @@ class HudComponentTest {
 		hud.opacity(opacity);
 		assertEquals(0.7f, hud.container().color.a, 0.01f);
 		opacity.set(0.3f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(0.3f, hud.container().color.a, 0.01f);
 		hud.dispose();
 	}
@@ -183,7 +185,7 @@ class HudComponentTest {
 
 		// Populate container with content so it has a measurable size
 		hud.children(() -> {
-			arc.scene.ui.layout.Table inner = new arc.scene.ui.layout.Table();
+			Table inner = new Table();
 			inner.setSize(200f, 100f);
 			hud.container().add(inner).size(200f, 100f);
 		});

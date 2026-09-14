@@ -7,6 +7,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import solim.runtime.SignalDispatcher;
+import solim.signal.Effect;
 
 class ComponentContractTest {
 
@@ -111,7 +116,7 @@ class ComponentContractTest {
 
 	@Test
 	void baseComponentDisposalOrderIsLIFO() {
-		java.util.List<String> order = new java.util.ArrayList<>();
+		List<String> order = new ArrayList<>();
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
@@ -123,7 +128,7 @@ class ComponentContractTest {
 		};
 		comp.element();
 		comp.dispose();
-		assertEquals(java.util.Arrays.asList("third", "second", "first"), order);
+		assertEquals(Arrays.asList("third", "second", "first"), order);
 	}
 
 	@Test
@@ -188,7 +193,7 @@ class ComponentContractTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				solim.signal.Effect.of(() -> {
+				Effect.of(() -> {
 					sig.get();
 					runs.incrementAndGet();
 				});
@@ -198,11 +203,11 @@ class ComponentContractTest {
 		comp.element();
 		assertEquals(1, runs.get());
 		sig.set(1);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(2, runs.get());
 		comp.dispose();
 		sig.set(2);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(2, runs.get(), "Effect must be disposed with component");
 	}
 }

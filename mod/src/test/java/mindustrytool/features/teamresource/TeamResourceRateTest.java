@@ -8,6 +8,8 @@ import arc.mock.MockGraphics;
 import arc.mock.MockSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import arc.graphics.Color;
+import arc.scene.ui.layout.Table;
 
 class TeamResourceRateTest {
 
@@ -102,21 +104,21 @@ class TeamResourceRateTest {
 
     @Test
     void testTableLayout() {
-        arc.scene.ui.layout.Table table = new arc.scene.ui.layout.Table();
+        Table table = new Table();
         table.defaults().growX();
         int cols = 4;
         for (int i = 0; i < 5; i++) {
-            table.add(new arc.scene.ui.layout.Table());
+            table.add(new Table());
             if ((i + 1) % cols == 0) {
                 table.row();
             }
         }
-        arc.scene.ui.layout.Table table2 = new arc.scene.ui.layout.Table();
+        Table table2 = new Table();
         table2.defaults().growX();
         int total = 2;
         int cols2 = 4;
         for (int i = 0; i < total; i++) {
-            table2.add(new arc.scene.ui.layout.Table());
+            table2.add(new Table());
         }
         if (total % cols2 != 0) {
             for (int k = total % cols2; k < cols2; k++) {
@@ -194,7 +196,7 @@ class TeamResourceRateTest {
 
         assertEquals("0", state.getFormattedAmount(null));
         assertEquals("0/s", state.getFormattedRate(null));
-        assertEquals(arc.graphics.Color.gray, state.getRateColor(null));
+        assertEquals(Color.gray, state.getRateColor(null));
         assertEquals("", state.getUnitCountText(null));
         assertTrue(state.getFormattedPowerBalance().contains("0"));
         assertTrue(state.getFormattedStoredPower().contains("/"));

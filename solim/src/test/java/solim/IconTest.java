@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import solim.display.SolimImage;
 import solim.runtime.ParentStack;
 import solim.signal.Signal;
+import arc.mock.MockGraphics;
 
 class IconTest {
 
@@ -29,7 +30,7 @@ class IconTest {
 			Core.app = new MockApplication();
 		}
 		if (Core.graphics == null) {
-			Core.graphics = new arc.mock.MockGraphics();
+			Core.graphics = new MockGraphics();
 		}
 	}
 

@@ -23,6 +23,7 @@ import solim.core.BaseComponent;
 import solim.overlay.SolimDialog;
 import solim.signal.Computed;
 import solim.signal.Readable;
+import java.util.Collections;
 
 /**
  * Main schematic browser dialog with reactive column reflow and a keyed
@@ -49,7 +50,7 @@ public class SchematicBrowserDialog extends SolimDialog {
 
     private static CompletableFuture<List<SchematicData>> fetchSchematics(BrowserState<SchematicData> state) {
         Seq<String> blocks = state.selectedBlocks().get();
-        List<String> blockList = blocks != null ? blocks.list() : java.util.Collections.emptyList();
+        List<String> blockList = blocks != null ? blocks.list() : Collections.emptyList();
         return MindustryTool.searchSchematics(
                 state.page().peek() != null ? state.page().peek() : 0,
                 BrowserState.PAGE_SIZE,

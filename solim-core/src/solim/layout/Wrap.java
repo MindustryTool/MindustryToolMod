@@ -11,6 +11,7 @@ import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
+import solim.modifier.PendingCellConfig;
 
 /**
  * Wrap container: lays out children in a row that wraps when the row is full.
@@ -28,7 +29,7 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
 	};
 
 	private final WrapTable table = new WrapTable();
-	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private float gap = 4f;
 
 	public Wrap() {
@@ -47,7 +48,7 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
 	}
 
 	@Override
-	public solim.modifier.PendingCellConfig sizeConstraints() {
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 

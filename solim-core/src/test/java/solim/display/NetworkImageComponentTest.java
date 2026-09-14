@@ -13,6 +13,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
+import arc.graphics.Color;
+import arc.graphics.Pixmap;
+import solim.runtime.SignalDispatcher;
 
 class NetworkImageComponentTest {
 
@@ -89,7 +92,7 @@ class NetworkImageComponentTest {
 		NetworkImage img = new NetworkImage(urlSignal);
 		assertTrue(NetworkImage.isCached("https://example.com/a.png"));
 		urlSignal.set("https://example.com/b.png");
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertTrue(NetworkImage.isCached("https://example.com/b.png"));
 		img.dispose();
 	}
@@ -107,7 +110,7 @@ class NetworkImageComponentTest {
 
 	@Test
 	void networkImageDisposeStopsReactiveUrlUpdates() {
-		arc.graphics.g2d.TextureRegion regionA = new arc.graphics.g2d.TextureRegion();
+		TextureRegion regionA = new TextureRegion();
 		NetworkImage.setImageLoader((url, success, error) -> success.get(regionA));
 		Signal<String> urlSignal = Signal.of("https://example.com/a.png");
 		NetworkImage img = new NetworkImage(urlSignal);
@@ -166,8 +169,8 @@ class NetworkImageComponentTest {
 		int width = 30;
 		int height = 30;
 		int radius = 8;
-		arc.graphics.Pixmap pixmap = new arc.graphics.Pixmap(width, height);
-		int opaqueWhite = arc.graphics.Color.rgba8888(1f, 1f, 1f, 1f);
+		Pixmap pixmap = new Pixmap(width, height);
+		int opaqueWhite = Color.rgba8888(1f, 1f, 1f, 1f);
 
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
@@ -204,8 +207,8 @@ class NetworkImageComponentTest {
 		int width = 60;
 		int height = 60;
 		int displayRadius = 8;
-		arc.graphics.Pixmap pixmap = new arc.graphics.Pixmap(width, height);
-		int opaqueWhite = arc.graphics.Color.rgba8888(1f, 1f, 1f, 1f);
+		Pixmap pixmap = new Pixmap(width, height);
+		int opaqueWhite = Color.rgba8888(1f, 1f, 1f, 1f);
 
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {

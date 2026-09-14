@@ -15,10 +15,13 @@ import org.java_websocket.handshake.ServerHandshake;
 import org.junit.jupiter.api.Test;
 import solim.mcp.introspection.SnapshotRoot;
 import solim.signal.Signal;
+import arc.scene.ui.layout.Table;
+import java.io.ByteArrayOutputStream;
+import java.util.concurrent.CountDownLatch;
 
 class McpServerIntegrationTest {
 
-	static class Gadget extends arc.scene.ui.layout.Table {
+	static class Gadget extends Table {
 		final Signal<Float> progress = Signal.of(0.5f);
 	}
 
@@ -105,13 +108,13 @@ class McpServerIntegrationTest {
 	void invalidTokenIsRejectedWith4003() throws Exception {
 		SolimMcpServer server = SolimMcpServer.start(
 			new McpConfig(true, "127.0.0.1", 0, 0, "sekrit", 100),
-			SnapshotRoot.fixed(new arc.scene.ui.layout.Table()));
+			SnapshotRoot.fixed(new Table()));
 		assertNotNull(server);
 
 		AtomicInteger code = new AtomicInteger(-2);
 		AtomicInteger opened = new AtomicInteger(0);
 		AtomicInteger messages = new AtomicInteger(0);
-		java.util.concurrent.CountDownLatch closed = new java.util.concurrent.CountDownLatch(1);
+		CountDownLatch closed = new CountDownLatch(1);
 		WebSocketClient client = new WebSocketClient(
 			new URI("ws://127.0.0.1:" + server.webSocketPort() + "/?token=wrong")) {
 			@Override
@@ -154,7 +157,7 @@ try {
 		int httpPort = freePort();
 		SolimMcpServer server = SolimMcpServer.start(
 			new McpConfig(true, "127.0.0.1", 0, httpPort, "sekrit", 100),
-			SnapshotRoot.fixed(new arc.scene.ui.layout.Table()));
+			SnapshotRoot.fixed(new Table()));
 		assertNotNull(server);
 
 		try {
@@ -179,7 +182,7 @@ try {
 		int httpPort = freePort();
 		SolimMcpServer server = SolimMcpServer.start(
 			new McpConfig(true, "127.0.0.1", 0, httpPort, "", 100),
-			SnapshotRoot.fixed(new arc.scene.ui.layout.Table()));
+			SnapshotRoot.fixed(new Table()));
 		assertNotNull(server);
 
 		try {
@@ -252,7 +255,7 @@ try {
 			socket.getOutputStream().write(request.toString().getBytes(StandardCharsets.UTF_8));
 			socket.getOutputStream().flush();
 
-			java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			byte[] buffer = new byte[1024];
 			int read;
 			while ((read = socket.getInputStream().read(buffer)) > 0) {

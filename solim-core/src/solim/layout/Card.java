@@ -22,6 +22,9 @@ import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.ui.Ui;
+import solim.graphics.RoundedDrawable;
+import solim.modifier.PendingCellConfig;
+import solim.modifier.RoundedHelper;
 
 /**
  * Clickable and stylable card container component with support for inner children, reactive
@@ -44,7 +47,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
 
 	private final Button cardButton;
 	private final Table container = new Table();
-	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private final List<Disposable> bindings = new ArrayList<>();
 	private float gap = 0f;
 	private @Nullable Runnable onClick;
@@ -97,8 +100,8 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
 	}
 
 	@Override
-	public solim.graphics.RoundedDrawable getOrCreateRounded(int defaultRadius) {
-		return solim.modifier.RoundedHelper.getOrCreateRounded(cardButton, defaultRadius);
+	public RoundedDrawable getOrCreateRounded(int defaultRadius) {
+		return RoundedHelper.getOrCreateRounded(cardButton, defaultRadius);
 	}
 
 	@Override
@@ -128,7 +131,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
 	}
 
 	@Override
-	public solim.modifier.PendingCellConfig sizeConstraints() {
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 

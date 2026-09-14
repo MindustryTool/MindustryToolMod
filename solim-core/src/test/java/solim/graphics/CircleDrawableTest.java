@@ -4,6 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import arc.scene.style.Drawable;
 import org.junit.jupiter.api.Test;
+import arc.Core;
+import arc.mock.MockApplication;
+import arc.mock.MockGraphics;
+import arc.scene.ui.Image;
 
 class CircleDrawableTest {
 
@@ -26,9 +30,9 @@ class CircleDrawableTest {
 
 	@Test
 	void testImageLayout() {
-		if (arc.Core.app == null) arc.Core.app = new arc.mock.MockApplication();
-		if (arc.Core.graphics == null) arc.Core.graphics = new arc.mock.MockGraphics();
-		arc.scene.ui.Image img = new arc.scene.ui.Image(CircleDrawable.INSTANCE);
+		if (Core.app == null) Core.app = new MockApplication();
+		if (Core.graphics == null) Core.graphics = new MockGraphics();
+		Image img = new Image(CircleDrawable.INSTANCE);
 		img.setSize(12f, 12f);
 		img.layout();
 		assertEquals(12f, img.getImageWidth());

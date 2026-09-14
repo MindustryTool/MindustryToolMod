@@ -12,6 +12,7 @@ import solim.signal.Computed;
 import solim.signal.Effect;
 import solim.signal.Signal;
 import solim.signal.Subscription;
+import java.lang.reflect.Array;
 
 /**
  * Cycle-safe reflective scan of an object graph for reactive Solim instances.
@@ -90,9 +91,9 @@ public final class ObjectGraphScanner {
 		}
 
 		if (value.getClass().isArray()) {
-			int len = java.lang.reflect.Array.getLength(value);
+			int len = Array.getLength(value);
 			for (int i = 0; i < len; i++) {
-				visit(java.lang.reflect.Array.get(value, i), depth + 1, location + "/[" + i + "]", sourceElement);
+				visit(Array.get(value, i), depth + 1, location + "/[" + i + "]", sourceElement);
 			}
 			return;
 		}

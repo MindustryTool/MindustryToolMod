@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import solim.mcp.McpConfig;
 import solim.mcp.rpc.JsonRpcHandler;
+import java.net.InetAddress;
 
 /**
  * Minimal HTTP/1.1 fallback for one-off MCP queries, implemented with plain sockets so the module
@@ -37,7 +38,7 @@ public final class HttpFallbackServer implements AutoCloseable {
 	}
 
 	public void start() throws IOException {
-		serverSocket = new ServerSocket(config.httpPort, 16, java.net.InetAddress.getByName(config.host));
+		serverSocket = new ServerSocket(config.httpPort, 16, InetAddress.getByName(config.host));
 		serverSocket.setReuseAddress(true);
 		running.set(true);
 		Thread acceptor = new Thread(this::acceptLoop, "solim-mcp-http-acceptor");

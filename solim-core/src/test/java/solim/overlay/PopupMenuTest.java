@@ -14,15 +14,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
+import arc.mock.MockApplication;
+import arc.mock.MockGL20;
+import arc.mock.MockGraphics;
 
 class PopupMenuTest {
 
     private static void ensureScene() {
-        Core.app = new arc.mock.MockApplication();
-        Core.graphics = new arc.mock.MockGraphics();
+        Core.app = new MockApplication();
+        Core.graphics = new MockGraphics();
         if (Core.gl == null) {
-            Core.gl = new arc.mock.MockGL20();
-            Core.gl20 = (arc.mock.MockGL20) Core.gl;
+            Core.gl = new MockGL20();
+            Core.gl20 = (MockGL20) Core.gl;
         }
         Core.scene = new Scene();
     }

@@ -19,6 +19,7 @@ import mindustrytool.services.MindustryTool;
 import mindustrytool.services.Request;
 import solim.signal.Readable;
 import solim.signal.Signal;
+import java.net.SocketTimeoutException;
 
 /**
  * Merged auth provider for the rewritten codebase. Implements AuthProvider and owns a Request
@@ -300,8 +301,8 @@ public class MindustryAuthProvider implements AuthProvider {
 		MindustryTool.pollLoginToken(loginId).whenComplete((token, err) -> {
 			if (err != null) {
 				String msg = err.getMessage() != null ? err.getMessage().toLowerCase() : "";
-				boolean isTimeout = err instanceof java.net.SocketTimeoutException
-						|| (err.getCause() instanceof java.net.SocketTimeoutException)
+				boolean isTimeout = err instanceof SocketTimeoutException
+						|| (err.getCause() instanceof SocketTimeoutException)
 						|| msg.contains("timed out")
 						|| msg.contains("timeout");
 				if (isTimeout) {

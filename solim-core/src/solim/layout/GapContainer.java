@@ -5,6 +5,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Nullable;
+import solim.modifier.PendingCellConfig;
 
 /**
  * Interface implemented by layout containers that support sibling-aware,
@@ -150,7 +151,7 @@ public interface GapContainer {
 	}
 
 	private static float resolveMarginLeft(Element el) {
-		solim.modifier.PendingCellConfig sc = solim.modifier.PendingCellConfig.find(el);
+		PendingCellConfig sc = PendingCellConfig.find(el);
 		if (sc != null && sc.padLeft != null && sc.padLeft.get() != null) {
 			return Math.max(0f, sc.padLeft.get());
 		}
@@ -158,7 +159,7 @@ public interface GapContainer {
 	}
 
 	private static float resolveMarginRight(Element el) {
-		solim.modifier.PendingCellConfig sc = solim.modifier.PendingCellConfig.find(el);
+		PendingCellConfig sc = PendingCellConfig.find(el);
 		if (sc != null && sc.padRight != null && sc.padRight.get() != null) {
 			return Math.max(0f, sc.padRight.get());
 		}
@@ -166,7 +167,7 @@ public interface GapContainer {
 	}
 
 	private static float resolveMarginTop(Element el) {
-		solim.modifier.PendingCellConfig sc = solim.modifier.PendingCellConfig.find(el);
+		PendingCellConfig sc = PendingCellConfig.find(el);
 		if (sc != null && sc.padTop != null && sc.padTop.get() != null) {
 			return Math.max(0f, sc.padTop.get());
 		}
@@ -174,7 +175,7 @@ public interface GapContainer {
 	}
 
 	private static float resolveMarginBottom(Element el) {
-		solim.modifier.PendingCellConfig sc = solim.modifier.PendingCellConfig.find(el);
+		PendingCellConfig sc = PendingCellConfig.find(el);
 		if (sc != null && sc.padBottom != null && sc.padBottom.get() != null) {
 			return Math.max(0f, sc.padBottom.get());
 		}

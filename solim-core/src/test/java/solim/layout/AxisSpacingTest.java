@@ -13,6 +13,7 @@ import solim.runtime.SignalDispatcher;
 import solim.signal.Signal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import arc.mock.MockGraphics;
 
 public class AxisSpacingTest {
 
@@ -22,7 +23,7 @@ public class AxisSpacingTest {
 			Core.app = new MockApplication();
 		}
 		if (Core.graphics == null) {
-			Core.graphics = new arc.mock.MockGraphics();
+			Core.graphics = new MockGraphics();
 		}
 	}
 

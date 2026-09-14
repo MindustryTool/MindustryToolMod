@@ -1,6 +1,9 @@
 package solim.layout;
 
 import solim.signal.Readable;
+import arc.scene.Element;
+import solim.core.Component;
+import solim.modifier.PendingCellConfig;
 
 /**
  * Parent-cell configuration mixin.
@@ -35,7 +38,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     /**
      * Returns the {@link solim.modifier.PendingCellConfig} owned by this component's root element.
      */
-    solim.modifier.PendingCellConfig sizeConstraints();
+    PendingCellConfig sizeConstraints();
 
     // ---------- minimum size ----------
 
@@ -97,8 +100,8 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
      */
     default SELF growX() {
         sizeConstraints().growX = true;
-        if (this instanceof solim.core.Component) {
-            arc.scene.Element el = ((solim.core.Component) this).element();
+        if (this instanceof Component) {
+            Element el = ((Component) this).element();
             if (el != null) {
                 if (el.userObject == null) {
                     el.userObject = this;
@@ -115,8 +118,8 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
      */
     default SELF growY() {
         sizeConstraints().growY = true;
-        if (this instanceof solim.core.Component) {
-            arc.scene.Element el = ((solim.core.Component) this).element();
+        if (this instanceof Component) {
+            Element el = ((Component) this).element();
             if (el != null) {
                 if (el.userObject == null) {
                     el.userObject = this;
@@ -143,8 +146,8 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         sizeConstraints().padLeft = Readable.of(left);
         sizeConstraints().padBottom = Readable.of(bottom);
         sizeConstraints().padRight = Readable.of(right);
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
@@ -158,72 +161,72 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         sizeConstraints().padLeft = left;
         sizeConstraints().padBottom = bottom;
         sizeConstraints().padRight = right;
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingTop(float top) {
         sizeConstraints().padTop = Readable.of(top);
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingTop(Readable<Float> top) {
         sizeConstraints().padTop = top;
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingBottom(float bottom) {
         sizeConstraints().padBottom = Readable.of(bottom);
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingBottom(Readable<Float> bottom) {
         sizeConstraints().padBottom = bottom;
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingLeft(float left) {
         sizeConstraints().padLeft = Readable.of(left);
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingLeft(Readable<Float> left) {
         sizeConstraints().padLeft = left;
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingRight(float right) {
         sizeConstraints().padRight = Readable.of(right);
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
 
     default SELF cellPaddingRight(Readable<Float> right) {
         sizeConstraints().padRight = right;
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
@@ -231,8 +234,8 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF cellPaddingX(float x) {
         sizeConstraints().padLeft = Readable.of(x);
         sizeConstraints().padRight = Readable.of(x);
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
@@ -240,8 +243,8 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF cellPaddingX(Readable<Float> x) {
         sizeConstraints().padLeft = x;
         sizeConstraints().padRight = x;
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
@@ -249,8 +252,8 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF cellPaddingY(float y) {
         sizeConstraints().padTop = Readable.of(y);
         sizeConstraints().padBottom = Readable.of(y);
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }
@@ -258,8 +261,8 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF cellPaddingY(Readable<Float> y) {
         sizeConstraints().padTop = y;
         sizeConstraints().padBottom = y;
-        if (this instanceof solim.core.Component) {
-            sizeConstraints().applyMarginToParentCell(((solim.core.Component) this).element());
+        if (this instanceof Component) {
+            sizeConstraints().applyMarginToParentCell(((Component) this).element());
         }
         return self();
     }

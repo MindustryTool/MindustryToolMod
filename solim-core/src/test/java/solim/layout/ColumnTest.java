@@ -10,6 +10,10 @@ import arc.scene.ui.layout.CellAccess;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
+import arc.scene.ui.layout.Cell;
+import arc.util.Align;
+import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
 
 class ColumnTest {
 
@@ -93,11 +97,11 @@ class ColumnTest {
 		assertTrue(col.table().visible);
 
 		vis.set(false);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertFalse(col.table().visible);
 
 		vis.set(true);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertTrue(col.table().visible);
 	}
 
@@ -129,7 +133,7 @@ class ColumnTest {
 		Element child = new Element();
 
 		col.children(() -> {
-			solim.runtime.ParentStack.add(child);
+			ParentStack.add(child);
 		});
 
 		assertEquals(1, col.table().getChildren().size);
@@ -173,17 +177,17 @@ class ColumnTest {
 			@Override public float getPrefHeight() { return 60f; }
 		};
 		col.children(() -> {
-			solim.runtime.ParentStack.add(e1);
-			solim.runtime.ParentStack.add(e2);
+			ParentStack.add(e1);
+			ParentStack.add(e2);
 		});
 		col.table().setSize(200f, 300f);
 		col.table().layout();
 
-		arc.scene.ui.layout.Cell<?> c1 = col.table().getCell(e1);
-		arc.scene.ui.layout.Cell<?> c2 = col.table().getCell(e2);
+		Cell<?> c1 = col.table().getCell(e1);
+		Cell<?> c2 = col.table().getCell(e2);
 
-		assertEquals(arc.util.Align.top | arc.util.Align.left, CellAccess.align(c1) & (arc.util.Align.top | arc.util.Align.left));
-		assertEquals(arc.util.Align.top | arc.util.Align.left, CellAccess.align(c2) & (arc.util.Align.top | arc.util.Align.left));
+		assertEquals(Align.top | Align.left, CellAccess.align(c1) & (Align.top | Align.left));
+		assertEquals(Align.top | Align.left, CellAccess.align(c2) & (Align.top | Align.left));
 
 		// Left aligned: both start at x = 0
 		assertEquals(0f, e1.x, 0.01f, "Child 1 must be at left edge");
@@ -203,8 +207,8 @@ class ColumnTest {
 			@Override public float getPrefHeight() { return 60f; }
 		};
 		col.children(() -> {
-			solim.runtime.ParentStack.add(e1);
-			solim.runtime.ParentStack.add(e2);
+			ParentStack.add(e1);
+			ParentStack.add(e2);
 		});
 		col.table().setSize(200f, 300f);
 		col.table().layout();
@@ -221,14 +225,14 @@ class ColumnTest {
 			@Override public float getPrefWidth() { return 50f; }
 			@Override public float getPrefHeight() { return 30f; }
 		};
-		col.children(() -> solim.runtime.ParentStack.add(e1));
+		col.children(() -> ParentStack.add(e1));
 
 		col.right();
 		col.table().setSize(200f, 300f);
 		col.table().layout();
 
-		arc.scene.ui.layout.Cell<?> c1 = col.table().getCell(e1);
-		assertEquals(arc.util.Align.right, CellAccess.align(c1) & arc.util.Align.right);
+		Cell<?> c1 = col.table().getCell(e1);
+		assertEquals(Align.right, CellAccess.align(c1) & Align.right);
 		assertEquals(200f, e1.x + e1.getWidth(), 0.01f);
 	}
 }

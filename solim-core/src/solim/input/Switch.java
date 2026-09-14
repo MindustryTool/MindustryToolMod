@@ -4,6 +4,7 @@ import arc.scene.ui.TextButton;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.signal.Signal;
+import solim.runtime.ComponentContext;
 
 /**
  * Switch widget bound to Signal&lt;Boolean&gt;. Uses TextButton as a visual toggle; state held in
@@ -38,7 +39,7 @@ public final class Switch implements Component {
 				return () -> {};
 			}
 		);
-		solim.runtime.ComponentContext.register(this);
+		ComponentContext.register(this);
 	}
 
 	public static Switch of(Signal<Boolean> signal) {

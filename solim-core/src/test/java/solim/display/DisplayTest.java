@@ -13,6 +13,8 @@ import solim.signal.Computed;
 import solim.signal.Signal;
 import solim.runtime.ParentStack;
 import static solim.ui.Ui.*;
+import arc.graphics.g2d.TextureRegion;
+import arc.scene.style.TextureRegionDrawable;
 
 class DisplayTest {
 
@@ -56,22 +58,22 @@ class DisplayTest {
 
 	@Test
 	void imageDrawableIsApplied() {
-		Drawable drawable = new arc.scene.style.TextureRegionDrawable(new arc.graphics.g2d.TextureRegion());
+		Drawable drawable = new TextureRegionDrawable(new TextureRegion());
 		SolimImage img = new SolimImage(drawable);
 		assertSame(drawable, img.image().getDrawable());
 	}
 
 	@Test
 	void iconDrawableIsApplied() {
-		Drawable drawable = new arc.scene.style.TextureRegionDrawable(new arc.graphics.g2d.TextureRegion());
+		Drawable drawable = new TextureRegionDrawable(new TextureRegion());
 		Icon icon = new Icon(drawable);
 		assertSame(drawable, icon.image().getDrawable());
 	}
 
 	@Test
 	void reactiveIconUpdatesDrawableAndStopsAfterDispose() {
-		Drawable first = new arc.scene.style.TextureRegionDrawable(new arc.graphics.g2d.TextureRegion());
-		Drawable second = new arc.scene.style.TextureRegionDrawable(new arc.graphics.g2d.TextureRegion());
+		Drawable first = new TextureRegionDrawable(new TextureRegion());
+		Drawable second = new TextureRegionDrawable(new TextureRegion());
 		Signal<Drawable> s = Signal.of(first);
 		Icon icon = Icon.of(s);
 		assertSame(first, icon.image().getDrawable());

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
 import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
 
 class GridTest {
 
@@ -140,7 +141,7 @@ class GridTest {
 		assertEquals(8f, CellAccess.padLeft(g.table().getCell(b)), 0.01f);
 
 		gap.set(16f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(16f, CellAccess.padLeft(g.table().getCell(b)), 0.01f);
 	}
 

@@ -18,6 +18,7 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.runtime.StructuralReconciler;
+import solim.modifier.PendingCellConfig;
 
 /**
  * High-performance virtualized vertical list component.
@@ -31,7 +32,7 @@ import solim.runtime.StructuralReconciler;
 public final class VirtualList<T, K> extends BaseComponent implements CellConfig<VirtualList<T, K>> {
 
     private final Table outer;
-    private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private final @Nullable ScrollPane pane;
     private final VirtualContainer content;
 
@@ -206,7 +207,7 @@ public final class VirtualList<T, K> extends BaseComponent implements CellConfig
     }
 
     @Override
-    public solim.modifier.PendingCellConfig sizeConstraints() {
+    public PendingCellConfig sizeConstraints() {
         return constraints;
     }
 

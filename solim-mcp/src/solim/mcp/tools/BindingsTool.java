@@ -7,6 +7,7 @@ import solim.mcp.introspection.ReactiveKind;
 import solim.mcp.introspection.ReactiveRef;
 import solim.mcp.introspection.SnapshotRoot;
 import solim.mcp.introspection.UiSnapshot;
+import solim.mcp.introspection.BindingInspector;
 
 /** Reports reactive bindings/effects attached to the inspected UI, with their subscribed state. */
 public final class BindingsTool implements McpTool {
@@ -46,7 +47,7 @@ public final class BindingsTool implements McpTool {
 			String location = ref.location.toLowerCase();
 			String element = ref.sourceElement != null ? ref.sourceElement.toLowerCase() : "";
 			if (!query.isEmpty() && !location.contains(query) && !element.contains(query)) continue;
-			bindings.add(solim.mcp.introspection.BindingInspector.snapshot(ref));
+			bindings.add(BindingInspector.snapshot(ref));
 		}
 		ObjectNode result = JsonNodeFactory.instance.objectNode();
 		result.set("bindings", bindings);

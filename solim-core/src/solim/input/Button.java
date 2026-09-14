@@ -24,16 +24,15 @@ import solim.layout.Direction;
 import solim.layout.GapContainer;
 import solim.layout.Row;
 import solim.modifier.ElementConfig;
-import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.overlay.Hud;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Readable;
-import solim.signal.Signal;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
+import arc.scene.style.Drawable;
+import arc.util.Time;
 
 /**
  * Pure Button container widget supporting explicit children composition, custom
@@ -152,9 +151,9 @@ public final class Button implements Component, GapContainer, ElementConfig<Butt
         button.update(() -> {
             if (button.isPressed()) {
                 if (pressTime == -1L) {
-                    pressTime = arc.util.Time.millis();
+                    pressTime = Time.millis();
                     longPressed = false;
-                } else if (!longPressed && arc.util.Time.timeSinceMillis(pressTime) >= longClickDuration) {
+                } else if (!longPressed && Time.timeSinceMillis(pressTime) >= longClickDuration) {
                     longPressed = true;
                     if (Button.this.onLongClick != null) {
                         try {
@@ -455,7 +454,7 @@ public final class Button implements Component, GapContainer, ElementConfig<Butt
         return this;
     }
 
-    public Button background(@Nullable arc.scene.style.Drawable drawable) {
+    public Button background(@Nullable Drawable drawable) {
         button.setBackground(drawable);
         ButtonStyle s = button.getStyle();
         if (s == null) {
@@ -468,7 +467,7 @@ public final class Button implements Component, GapContainer, ElementConfig<Butt
 
     public Button background(@Nullable Color color) {
         if (color == null || color.a == 0f) {
-            return background((arc.scene.style.Drawable) null);
+            return background((Drawable) null);
         }
         return rounded(0, color);
     }
@@ -525,7 +524,7 @@ public final class Button implements Component, GapContainer, ElementConfig<Butt
     }
 
     @Override
-    public arc.scene.ui.layout.Table table() {
+    public Table table() {
         return button;
     }
 

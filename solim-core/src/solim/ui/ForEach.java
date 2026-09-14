@@ -67,9 +67,9 @@ public final class ForEach<T, K> extends BaseComponent implements CellConfig<For
 			Element el = comp.element();
 			Cell<?> cell = container.add(el);
 			cell.minWidth(0f);
-			solim.modifier.PendingCellConfig sc = solim.modifier.PendingCellConfig.find(comp);
+			PendingCellConfig sc = PendingCellConfig.find(comp);
 			if (sc == null) {
-				sc = solim.modifier.PendingCellConfig.find(el);
+				sc = PendingCellConfig.find(el);
 			}
 			if (sc != null) {
 				sc.applyToCell(cell);

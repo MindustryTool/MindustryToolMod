@@ -2,6 +2,7 @@ package solim.mcp.introspection;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.lang.reflect.Method;
+import solim.signal.Signal;
 
 /**
  * Reads the current state of a discovered reactive instance via reflection and maps it to a stable
@@ -51,7 +52,7 @@ public final class SignalIntrospector {
 	}
 
 	private static String valueClass(Object instance) {
-		Object value = instance instanceof solim.signal.Signal
+		Object value = instance instanceof Signal
 			? ReflectAccess.read(ReflectAccess.field(instance.getClass(), "value"), instance)
 			: ReflectAccess.read(ReflectAccess.field(instance.getClass(), "cachedValue"), instance);
 		return value != null ? value.getClass().getName() : "null";

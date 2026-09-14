@@ -3,6 +3,7 @@ package solim.runtime;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import solim.core.ReactiveObserver;
+import java.util.function.Supplier;
 
 /** Stack-based dependency tracking for single-threaded UI. No ThreadLocal by design. */
 public final class ReactiveContext {
@@ -41,7 +42,7 @@ public final class ReactiveContext {
 	}
 
 	/** Temporarily suspends active dependency tracking while executing the supplier. */
-	public static <T> T untracked(java.util.function.Supplier<T> supplier) {
+	public static <T> T untracked(Supplier<T> supplier) {
 		if (stack.isEmpty()) {
 			return supplier.get();
 		}

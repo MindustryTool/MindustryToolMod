@@ -12,6 +12,8 @@ import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.ui.Ui;
+import solim.modifier.PendingCellConfig;
+import solim.runtime.ComponentContext;
 
 /** Column layout — vertical Table wrapper. */
 public final class Column implements Component, CellConfig<Column>, ElementConfig<Column>, TableConfig<Column>, GapContainer {
@@ -30,7 +32,7 @@ public final class Column implements Component, CellConfig<Column>, ElementConfi
     };
 
     private final Table table;
-    private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 0f;
 
     public Column() {
@@ -50,7 +52,7 @@ public final class Column implements Component, CellConfig<Column>, ElementConfi
     }
 
     @Override
-    public solim.modifier.PendingCellConfig sizeConstraints() {
+    public PendingCellConfig sizeConstraints() {
         return constraints;
     }
 
@@ -82,7 +84,7 @@ public final class Column implements Component, CellConfig<Column>, ElementConfi
                     gap(g);
                 }
             });
-            solim.runtime.ComponentContext.register(e);
+            ComponentContext.register(e);
         }
         return this;
     }

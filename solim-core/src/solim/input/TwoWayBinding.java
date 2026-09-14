@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 import solim.core.Disposable;
 import solim.signal.Effect;
 import solim.signal.Signal;
+import java.util.function.BiPredicate;
 
 /**
  * Shared two-way binding utility for Solim input components.
@@ -50,7 +51,7 @@ class TwoWayBinding<T> implements Disposable {
             Supplier<T> widgetGetter,
             Consumer<T> widgetSetter,
             ListenerInstaller listenerInstaller,
-            java.util.function.BiPredicate<T, T> equalityChecker) {
+            BiPredicate<T, T> equalityChecker) {
 
         // Widget → Signal: install the change listener
         this.listenerDisposable = listenerInstaller.install(() -> {

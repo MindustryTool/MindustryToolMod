@@ -6,7 +6,6 @@ import arc.scene.style.Drawable;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Nullable;
 import arc.util.Scaling;
 import java.util.ArrayList;
 import java.util.List;
@@ -241,24 +240,24 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
 	}
 
 	public SolimImage top() {
-		if (image.parent instanceof arc.scene.ui.layout.Table) {
-			arc.scene.ui.layout.Cell<?> cell = ((arc.scene.ui.layout.Table) image.parent).getCell(image);
+		if (image.parent instanceof Table) {
+			Cell<?> cell = ((Table) image.parent).getCell(image);
 			if (cell != null) cell.top();
 		}
 		return this;
 	}
 
 	public SolimImage left() {
-		if (image.parent instanceof arc.scene.ui.layout.Table) {
-			arc.scene.ui.layout.Cell<?> cell = ((arc.scene.ui.layout.Table) image.parent).getCell(image);
+		if (image.parent instanceof Table) {
+			Cell<?> cell = ((Table) image.parent).getCell(image);
 			if (cell != null) cell.left();
 		}
 		return this;
 	}
 
 	public SolimImage center() {
-		if (image.parent instanceof arc.scene.ui.layout.Table) {
-			arc.scene.ui.layout.Cell<?> cell = ((arc.scene.ui.layout.Table) image.parent).getCell(image);
+		if (image.parent instanceof Table) {
+			Cell<?> cell = ((Table) image.parent).getCell(image);
 			if (cell != null) cell.center();
 		}
 		return this;

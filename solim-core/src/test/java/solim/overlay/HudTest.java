@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
 import solim.ui.Ui;
+import solim.runtime.SignalDispatcher;
 
 class HudTest {
 
@@ -347,7 +348,7 @@ class HudTest {
 		x.set(150f);
 		y.set(250f);
 		opacity.set(0.3f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 
 		assertEquals(150f, hud.element().x, 0.01f);
 		assertEquals(250f, hud.element().y, 0.01f);
@@ -382,11 +383,11 @@ class HudTest {
 	void draggableTableHandleUsesEnabled() {
 		Hud hud = new Hud();
 		Table handle = new Table();
-		assertEquals(arc.scene.event.Touchable.childrenOnly, handle.touchable,
+		assertEquals(Touchable.childrenOnly, handle.touchable,
 				"Table default touchable should be childrenOnly before draggable");
 
 		hud.draggable(handle);
-		assertEquals(arc.scene.event.Touchable.enabled, handle.touchable,
+		assertEquals(Touchable.enabled, handle.touchable,
 				"Table handle touchable should be enabled so entire surface is draggable");
 		hud.dispose();
 	}
@@ -395,11 +396,11 @@ class HudTest {
 	void draggableNonTableHandleUsesEnabled() {
 		Hud hud = new Hud();
 		Element handle = new Element();
-		assertEquals(arc.scene.event.Touchable.enabled, handle.touchable,
+		assertEquals(Touchable.enabled, handle.touchable,
 				"Non-Table element default is enabled");
 
 		hud.draggable(handle);
-		assertEquals(arc.scene.event.Touchable.enabled, handle.touchable,
+		assertEquals(Touchable.enabled, handle.touchable,
 				"Non-Table handle touchable should be enabled");
 		hud.dispose();
 	}
@@ -440,7 +441,7 @@ class HudTest {
 		// Add an interactive child with ClickListener (simulating a button)
 		Element childBtn = new Element();
 		int[] clickFired = {0};
-		childBtn.addListener(new arc.scene.event.ClickListener() {
+		childBtn.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
 				clickFired[0]++;
@@ -461,7 +462,7 @@ class HudTest {
 		// Locate drag listener on handle
 		InputListener dragListener = null;
 		for (EventListener l : handle.getListeners()) {
-			if (l instanceof InputListener && !(l instanceof arc.scene.event.ClickListener)) {
+			if (l instanceof InputListener && !(l instanceof ClickListener)) {
 				dragListener = (InputListener) l;
 				break;
 			}
@@ -477,8 +478,8 @@ class HudTest {
 		// The child button's click listener remains directly executable
 		InputEvent ev = new InputEvent();
 		for (EventListener l : childBtn.getListeners()) {
-			if (l instanceof arc.scene.event.ClickListener) {
-				((arc.scene.event.ClickListener) l).clicked(ev, 1f, 1f);
+			if (l instanceof ClickListener) {
+				((ClickListener) l).clicked(ev, 1f, 1f);
 				break;
 			}
 		}

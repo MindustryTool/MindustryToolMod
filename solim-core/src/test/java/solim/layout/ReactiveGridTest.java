@@ -11,16 +11,19 @@ import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.runtime.SignalDispatcher;
 import solim.signal.Signal;
+import arc.mock.MockApplication;
+import arc.mock.MockGraphics;
+import solim.ui.Ui;
 
 class ReactiveGridTest {
 
 	@BeforeAll
 	static void initArc() {
 		if (Core.app == null) {
-			Core.app = new arc.mock.MockApplication();
+			Core.app = new MockApplication();
 		}
 		if (Core.graphics == null) {
-			Core.graphics = new arc.mock.MockGraphics();
+			Core.graphics = new MockGraphics();
 		}
 	}
 
@@ -154,7 +157,7 @@ class ReactiveGridTest {
 				items,
 				s -> s,
 				(item, ctx) -> {
-					solim.layout.Column col = solim.ui.Ui.column().growX();
+					Column col = Ui.column().growX();
 					childElementsGrowX.add(col.element());
 					return col;
 				}
@@ -187,7 +190,7 @@ class ReactiveGridTest {
 				items,
 				s -> s,
 				(item, ctx) -> {
-					solim.layout.Column col = solim.ui.Ui.column().width(ctx.itemWidth());
+					Column col = Ui.column().width(ctx.itemWidth());
 					childElements.add(col.element());
 					return col;
 				}
@@ -216,7 +219,7 @@ class ReactiveGridTest {
 				items,
 				s -> s,
 				(item, ctx) -> {
-					solim.layout.Column col = solim.ui.Ui.column().growX();
+					Column col = Ui.column().growX();
 					childElements.add(col.element());
 					return col;
 				}
@@ -250,12 +253,12 @@ class ReactiveGridTest {
 				items,
 				s -> s,
 				(item, ctx) -> {
-					solim.layout.Card[] holder = new solim.layout.Card[1];
-					solim.layout.Column col = solim.ui.Ui.column()
+					Card[] holder = new Card[1];
+					Column col = Ui.column()
 							.growX()
 							.gap(8f)
 							.children(() -> {
-								holder[0] = solim.ui.Ui.card()
+								holder[0] = Ui.card()
 										.growX()
 										.cellPadding(4f, 0f, 4f, 0f)
 										.height(ctx.itemWidth())

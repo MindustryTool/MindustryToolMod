@@ -20,6 +20,7 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.ui.Units;
+import solim.modifier.PendingCellConfig;
 
 /**
  * Keyed reactive grid that reflows existing component cells when column count changes and
@@ -45,7 +46,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfi
 		}
 	};
 
-	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private final Readable<Integer> columnCount;
 	private final Readable<? extends Iterable<T>> items;
 	private final Function<T, K> keyExtractor;
@@ -190,7 +191,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfi
 	}
 
 	@Override
-	public solim.modifier.PendingCellConfig sizeConstraints() {
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 
@@ -261,7 +262,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfi
 		for (Component comp : reconciler.activeComponents().values()) {
 			Element el = comp.element();
 			Cell<?> cell = table.add(el).top().left();
-			solim.modifier.PendingCellConfig sc = null;
+			PendingCellConfig sc = null;
 			if (comp instanceof CellConfig) {
 				sc = ((CellConfig<?>) comp).sizeConstraints();
 			} else if (el.userObject instanceof CellConfig) {

@@ -26,6 +26,7 @@ import arc.scene.ui.layout.Table;
 import mindustry.ui.Fonts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import arc.mock.MockGL20;
 
 class ChatMessageGrouperAndHeightTest {
 
@@ -37,8 +38,8 @@ class ChatMessageGrouperAndHeightTest {
         Core.graphics = new MockGraphics();
         Core.settings = new MockSettings();
         if (Core.gl == null) {
-            Core.gl = new arc.mock.MockGL20();
-            Core.gl20 = (arc.mock.MockGL20) Core.gl;
+            Core.gl = new MockGL20();
+            Core.gl20 = (MockGL20) Core.gl;
         }
         if (Core.scene == null) {
             Core.scene = new Scene();

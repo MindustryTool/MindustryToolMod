@@ -18,6 +18,10 @@ import solim.feedback.ProgressBar;
 import solim.feedback.Spinner;
 import solim.signal.Computed;
 import solim.signal.Signal;
+import arc.scene.ui.Image;
+import arc.scene.ui.Label;
+import java.util.ArrayList;
+import java.util.List;
 
 class OverlayFeedbackTest {
 
@@ -83,7 +87,7 @@ class OverlayFeedbackTest {
 	void dialogSignalCreationAndEventRecalculation() {
 		SolimDialog d = new SolimDialog("Test");
 		int[] counter = new int[] {10};
-		java.util.List<Runnable> resizeCallbacks = new java.util.ArrayList<>();
+		List<Runnable> resizeCallbacks = new ArrayList<>();
 
 		// Test callback-based signal creation (e.g. this.resized(callback))
 		Signal<Integer> resizeSignal = d.createSignal(cb -> {
@@ -127,11 +131,11 @@ class OverlayFeedbackTest {
 		Signal<Float> progress = Signal.of(0.3f);
 		ProgressBar pb = new ProgressBar(progress);
 		assertEquals(1, pb.bar().getChildren().size);
-		arc.scene.Element firstFill = pb.bar().getChildren().get(0);
+		Element firstFill = pb.bar().getChildren().get(0);
 
 		progress.set(0.7f);
 		assertEquals(1, pb.bar().getChildren().size);
-		arc.scene.Element secondFill = pb.bar().getChildren().get(0);
+		Element secondFill = pb.bar().getChildren().get(0);
 		assertNotSame(firstFill, secondFill, "Progress change must rebuild fill");
 
 		pb.dispose();
@@ -152,17 +156,17 @@ class OverlayFeedbackTest {
 		Signal<Integer> count = Signal.of(5);
 		Computed<String> text = count.map(v -> v > 99 ? "99+" : String.valueOf(v));
 		Badge b = Badge.of(text);
-		assertEquals("5", ((arc.scene.ui.Label) b.table().getChildren().get(0)).getText().toString());
+		assertEquals("5", ((Label) b.table().getChildren().get(0)).getText().toString());
 
 		count.set(50);
-		assertEquals("50", ((arc.scene.ui.Label) b.table().getChildren().get(0)).getText().toString());
+		assertEquals("50", ((Label) b.table().getChildren().get(0)).getText().toString());
 
 		count.set(150);
-		assertEquals("99+", ((arc.scene.ui.Label) b.table().getChildren().get(0)).getText().toString());
+		assertEquals("99+", ((Label) b.table().getChildren().get(0)).getText().toString());
 
 		b.dispose();
 		count.set(7);
-		assertEquals("99+", ((arc.scene.ui.Label) b.table().getChildren().get(0)).getText().toString());
+		assertEquals("99+", ((Label) b.table().getChildren().get(0)).getText().toString());
 	}
 
 	@Test
@@ -175,7 +179,7 @@ class OverlayFeedbackTest {
 	void avatarContainsSizedImage() {
 		Avatar a = new Avatar();
 		assertEquals(1, a.table().getChildren().size);
-		assertTrue(a.table().getChildren().get(0) instanceof arc.scene.ui.Image);
+		assertTrue(a.table().getChildren().get(0) instanceof Image);
 	}
 
 	@Test

@@ -15,6 +15,9 @@ import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
+import java.util.ArrayList;
+import java.util.List;
+import solim.core.Disposable;
 
 /** Structural reactive component for switching dynamic subtrees based on a reactive value. */
 public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>> {
@@ -26,7 +29,7 @@ public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynami
 	private Component currentComponent;
 	@SuppressWarnings("unchecked")
 	private T lastValue = (T) SENTINEL;
-	private final java.util.List<solim.core.Disposable> currentBindings = new java.util.ArrayList<>();
+	private final List<Disposable> currentBindings = new ArrayList<>();
 
 	public Dynamic(Readable<T> source, Function<T, Component> factory) {
 		this.source = source;
@@ -65,7 +68,7 @@ public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynami
 				currentComponent.dispose();
 				currentComponent = null;
 			}
-			for (solim.core.Disposable d : currentBindings) {
+			for (Disposable d : currentBindings) {
 				d.dispose();
 			}
 			currentBindings.clear();
@@ -136,7 +139,7 @@ public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynami
 			currentComponent.dispose();
 			currentComponent = null;
 		}
-		for (solim.core.Disposable d : currentBindings) {
+		for (Disposable d : currentBindings) {
 			d.dispose();
 		}
 		currentBindings.clear();

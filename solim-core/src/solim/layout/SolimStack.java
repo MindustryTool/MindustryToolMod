@@ -4,11 +4,15 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Stack;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Table;
+import solim.modifier.PendingCellConfig;
+import solim.runtime.ParentStack;
 
 /** Stack container: overlays children on top of each other. */
 public final class SolimStack implements Component, CellConfig<SolimStack>, ElementConfig<SolimStack> {
     private final Stack stack = new Stack();
-    private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
+    private final PendingCellConfig constraints = new PendingCellConfig();
 
     public SolimStack() {
         this.stack.name = "solim-stack-stack";
@@ -24,8 +28,8 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     }
 
     public SolimStack center() {
-        if (stack.parent instanceof arc.scene.ui.layout.Table) {
-            arc.scene.ui.layout.Cell<?> cell = ((arc.scene.ui.layout.Table) stack.parent).getCell(stack);
+        if (stack.parent instanceof Table) {
+            Cell<?> cell = ((Table) stack.parent).getCell(stack);
             if (cell != null) cell.center();
         }
         return this;
@@ -46,7 +50,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     }
 
     public SolimStack layer(Runnable r) {
-        Row layerRow = solim.runtime.ParentStack.isolate(() -> {
+        Row layerRow = ParentStack.isolate(() -> {
             Row row = new Row();
             row.children(r);
             return row;
@@ -63,7 +67,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     }
 
     @Override
-    public solim.modifier.PendingCellConfig sizeConstraints() {
+    public PendingCellConfig sizeConstraints() {
         return constraints;
     }
 }

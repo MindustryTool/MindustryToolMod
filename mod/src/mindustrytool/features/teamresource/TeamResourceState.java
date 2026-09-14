@@ -15,6 +15,7 @@ import mindustry.type.UnitType;
 import mindustry.world.blocks.power.PowerGraph;
 import mindustry.world.modules.ItemModule;
 import solim.signal.Signal;
+import mindustry.gen.Groups;
 
 /**
  * Encapsulates game logic and state for tracking team resources, flow rates, units, and power grids.
@@ -386,8 +387,8 @@ public class TeamResourceState {
         }
 
         ObjectSet<PowerGraph> found = new ObjectSet<>();
-        if (mindustry.gen.Groups.build != null) {
-            mindustry.gen.Groups.build.each(b -> {
+        if (Groups.build != null) {
+            Groups.build.each(b -> {
                 if (b.team == selectedTeam && b.power != null && b.power.graph != null) {
                     PowerGraph graph = b.power.graph;
                     if (graph.getLastPowerProduced() > 0 || graph.getLastCapacity() > 0 || graph.getLastPowerNeeded() > 0) {

@@ -20,6 +20,17 @@ import solim.display.Text;
 import solim.signal.Signal;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureRegion;
+import arc.scene.event.EventListener;
+import arc.scene.event.InputListener;
+import arc.scene.event.Touchable;
+import arc.struct.Seq;
+import org.junit.jupiter.api.Assumptions;
+import solim.input.Checkbox;
+import solim.input.SolimTextField;
+import solim.runtime.SignalDispatcher;
 
 class LayoutTest {
 
@@ -116,12 +127,12 @@ class LayoutTest {
 	@Test
 	void rowDraggableRegistersListener() {
 		Row r = new Row().draggable();
-		assertEquals(arc.scene.event.Touchable.enabled, r.table().touchable,
+		assertEquals(Touchable.enabled, r.table().touchable,
 				"Row drag handle must use enabled so entire surface is draggable");
 
 		boolean hasDragListener = false;
-		for (arc.scene.event.EventListener l : r.table().getListeners()) {
-			if (l instanceof arc.scene.event.InputListener) {
+		for (EventListener l : r.table().getListeners()) {
+			if (l instanceof InputListener) {
 				hasDragListener = true;
 				break;
 			}
@@ -258,7 +269,7 @@ class LayoutTest {
 
 		widthSignal.set(300f);
 		colorSignal.set(Color.green);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(300f, c.cardButton().getWidth(), 0.01f);
 		assertEquals(Color.green, c.cardButton().color);
 
@@ -396,7 +407,7 @@ class LayoutTest {
 		Table root = new Table();
 		root.setSize(1024, 768);
 
-		solim.signal.Signal<arc.struct.Seq<String>> items = solim.signal.Signal.of(arc.struct.Seq.with("feat1", "feat2"));
+		Signal<Seq<String>> items = Signal.of(Seq.with("feat1", "feat2"));
 		Scroll[] scrollRef = new Scroll[1];
 
 		Column col = Ui.column().grow().children(() -> {
@@ -405,7 +416,7 @@ class LayoutTest {
 				Ui.button().height(40).width(200);
 			});
 			scrollRef[0] = Ui.scroll().grow().children(() -> {
-				Ui.grid(solim.signal.Signal.of(2), items, x -> x, x -> Ui.card().height(160).width(300).children(() -> {}));
+				Ui.grid(Signal.of(2), items, x -> x, x -> Ui.card().height(160).width(300).children(() -> {}));
 			});
 		});
 
@@ -421,9 +432,9 @@ class LayoutTest {
 
 	@Test
 	void sizedTextFieldGrowAfterAttachment() {
-		org.junit.jupiter.api.Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
+		Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
 		Table parent = new Table();
-		solim.input.SolimTextField field = new solim.input.SolimTextField("");
+		SolimTextField field = new SolimTextField("");
 		parent.add(field.element());
 		Cell<?> cell = parent.getCell(field.element());
 		assertEquals(0, CellAccess.expandX(cell));
@@ -435,9 +446,9 @@ class LayoutTest {
 
 	@Test
 	void checkboxGrowVariants() {
-		org.junit.jupiter.api.Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
+		Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
 		Table parent = new Table();
-		solim.input.Checkbox cb = new solim.input.Checkbox("Test", solim.signal.Signal.of(false));
+		Checkbox cb = new Checkbox("Test", Signal.of(false));
 		parent.add(cb.element());
 		Cell<?> cell = parent.getCell(cb.element());
 		assertEquals(0, CellAccess.expandX(cell));
@@ -453,7 +464,7 @@ class LayoutTest {
 		assertEquals(1f, CellAccess.fillY(cell), 0.001f, "cb.growY() must fill vertically");
 
 		Table parent2 = new Table();
-		solim.input.Checkbox checkbox = new solim.input.Checkbox("Test", solim.signal.Signal.of(false));
+		Checkbox checkbox = new Checkbox("Test", Signal.of(false));
 		parent2.add(checkbox.element());
 		Cell<?> cell2 = parent2.getCell(checkbox.element());
 		checkbox.grow();
@@ -664,7 +675,7 @@ class LayoutTest {
 		assertEquals(10f, CellAccess.padLeft(cell1), 0.01f);
 
 		gapSig.set(30f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(0f, CellAccess.padLeft(cell0), 0.01f);
 		assertEquals(30f, CellAccess.padLeft(cell1), 0.01f);
 	}
@@ -685,7 +696,7 @@ class LayoutTest {
 		}
 
 		gapSig.set(16f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		Cell<?> cell0 = rg.table().getCells().get(0);
 		Cell<?> cell1 = rg.table().getCells().get(1);
 		assertEquals(0f, CellAccess.padLeft(cell0), 0.01f);
@@ -698,12 +709,12 @@ class LayoutTest {
 		Table root = new Table();
 		root.setSize(1024, 768);
 
-		solim.signal.Signal<arc.struct.Seq<String>> items = solim.signal.Signal.of(arc.struct.Seq.with("feat1", "feat2"));
+		Signal<Seq<String>> items = Signal.of(Seq.with("feat1", "feat2"));
 		ReactiveGrid<String, String>[] gridRef = new ReactiveGrid[1];
 
 		Column col = Ui.column().grow().children(() -> {
 			Ui.scroll().grow().children(() -> {
-				gridRef[0] = Ui.grid(solim.signal.Signal.of(2), items, x -> x, x -> {
+				gridRef[0] = Ui.grid(Signal.of(2), items, x -> x, x -> {
 					return Ui.card().height(160).growX().children(() -> {});
 				});
 			});
@@ -737,12 +748,12 @@ class LayoutTest {
 		Table root = new Table();
 		root.setSize(1024, 768);
 
-		solim.signal.Signal<arc.struct.Seq<String>> items = solim.signal.Signal.of(arc.struct.Seq.with("feat1"));
+		Signal<Seq<String>> items = Signal.of(Seq.with("feat1"));
 		ReactiveGrid<String, String>[] gridRef = new ReactiveGrid[1];
 
 		Column col = Ui.column().grow().children(() -> {
 			Ui.scroll().grow().children(() -> {
-				gridRef[0] = Ui.grid(solim.signal.Signal.of(3), items, x -> x, x -> {
+				gridRef[0] = Ui.grid(Signal.of(3), items, x -> x, x -> {
 					return Ui.card().height(160).growX().children(() -> {});
 				});
 			});
@@ -763,8 +774,8 @@ class LayoutTest {
 	void textWrapSetsMinWidthZeroOnTableCell() {
 		Table table = new Table();
 		Label.LabelStyle style = new Label.LabelStyle();
-		arc.graphics.g2d.Font.FontData fontData = new arc.graphics.g2d.Font.FontData() {};
-		style.font = new arc.graphics.g2d.Font(fontData, new arc.graphics.g2d.TextureRegion(), false);
+		FontData fontData = new FontData() {};
+		style.font = new Font(fontData, new TextureRegion(), false);
 
 		Text text = new Text("A very long message string that wraps across multiple lines", style);
 		table.add(text.element());

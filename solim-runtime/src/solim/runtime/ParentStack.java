@@ -14,6 +14,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import solim.core.Component;
 import solim.core.SpacingAware;
+import java.util.function.Predicate;
 
 /**
  * Implicit parent stack for declarative UI construction with guaranteed cleanup. Supports
@@ -74,7 +75,7 @@ public final class ParentStack {
 		return stack.isEmpty() ? null : stack.peek().table;
 	}
 
-	public static @Nullable Table find(java.util.function.Predicate<Table> predicate) {
+	public static @Nullable Table find(Predicate<Table> predicate) {
 		if (predicate == null) return null;
 		for (Entry entry : stack) {
 			if (predicate.test(entry.table)) {

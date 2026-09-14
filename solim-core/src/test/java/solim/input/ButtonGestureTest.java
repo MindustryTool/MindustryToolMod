@@ -5,13 +5,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.Core;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
-import arc.scene.Element;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.Button.ButtonStyle;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
 import solim.ui.Ui;
+import arc.input.KeyCode;
+import arc.scene.event.ClickListener;
+import arc.scene.event.EventListener;
+import solim.layout.Row;
+import solim.runtime.SignalDispatcher;
 
 class ButtonGestureTest {
 
@@ -32,9 +36,9 @@ class ButtonGestureTest {
 		InputEvent event = new InputEvent();
 		event.listenerActor = btn.sizedButton();
 		event.targetActor = btn.sizedButton();
-		for (arc.scene.event.EventListener l : btn.element().getListeners()) {
-			if (l instanceof arc.scene.event.ClickListener) {
-				((arc.scene.event.ClickListener) l).clicked(event, 0f, 0f);
+		for (EventListener l : btn.element().getListeners()) {
+			if (l instanceof ClickListener) {
+				((ClickListener) l).clicked(event, 0f, 0f);
 			}
 		}
 
@@ -50,10 +54,10 @@ class ButtonGestureTest {
 		Button btn = Ui.button(() -> clicked[0] = true)
 				.onLongClick(50L, () -> longClicked[0] = true);
 
-		arc.scene.event.ClickListener cl = null;
-		for (arc.scene.event.EventListener l : btn.element().getListeners()) {
-			if (l instanceof arc.scene.event.ClickListener) {
-				cl = (arc.scene.event.ClickListener) l;
+		ClickListener cl = null;
+		for (EventListener l : btn.element().getListeners()) {
+			if (l instanceof ClickListener) {
+				cl = (ClickListener) l;
 				break;
 			}
 		}
@@ -62,7 +66,7 @@ class ButtonGestureTest {
 		InputEvent event = new InputEvent();
 		event.listenerActor = btn.sizedButton();
 		event.targetActor = btn.sizedButton();
-		cl.touchDown(event, 0f, 0f, 0, arc.input.KeyCode.mouseLeft);
+		cl.touchDown(event, 0f, 0f, 0, KeyCode.mouseLeft);
 		assertTrue(btn.sizedButton().isPressed());
 
 		// Initial update tick records pressTime
@@ -93,13 +97,13 @@ class ButtonGestureTest {
 		assertEquals(0.8f, btn.element().color.a, 0.001f);
 
 		op.set(0.25f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(0.25f, btn.element().color.a, 0.001f);
 	}
 
 	@Test
 	void layoutModifierOpacity() {
-		solim.layout.Row r = Ui.row().opacity(0.5f);
+		Row r = Ui.row().opacity(0.5f);
 		assertEquals(0.5f, r.element().color.a, 0.001f);
 
 		Signal<Float> op = Signal.of(0.9f);
@@ -118,7 +122,7 @@ class ButtonGestureTest {
 		assertEquals(48f, btn.button().getHeight(), 0.01f);
 
 		size.set(64f);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertEquals(64f, btn.button().getWidth(), 0.01f);
 		assertEquals(64f, btn.button().getHeight(), 0.01f);
 	}
@@ -133,7 +137,7 @@ class ButtonGestureTest {
 		assertSame(s1, btn.button().getStyle());
 
 		styleSignal.set(s2);
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertSame(s2, btn.button().getStyle());
 
 		btn.dispose();

@@ -10,16 +10,22 @@ import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.signal.Signal;
 import solim.runtime.SignalDispatcher;
+import arc.mock.MockApplication;
+import arc.mock.MockGraphics;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.CellAccess;
+import arc.scene.ui.layout.Table;
+import solim.layout.CellConfig;
 
 class ForEachComponentTest {
 
 	@BeforeAll
 	static void initArc() {
 		if (Core.app == null) {
-			Core.app = new arc.mock.MockApplication();
+			Core.app = new MockApplication();
 		}
 		if (Core.graphics == null) {
-			Core.graphics = new arc.mock.MockGraphics();
+			Core.graphics = new MockGraphics();
 		}
 	}
 
@@ -103,10 +109,10 @@ class ForEachComponentTest {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
 		ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new TestComponent(id));
 		fe.element();
-		arc.scene.ui.layout.Cell<?> cell = fe.container().getCells().first();
-		assertEquals(0, arc.scene.ui.layout.CellAccess.expandX(cell));
-		assertEquals(0, arc.scene.ui.layout.CellAccess.expandY(cell));
-		assertEquals(0f, arc.scene.ui.layout.CellAccess.minWidth(cell), 0.001f);
+		Cell<?> cell = fe.container().getCells().first();
+		assertEquals(0, CellAccess.expandX(cell));
+		assertEquals(0, CellAccess.expandY(cell));
+		assertEquals(0f, CellAccess.minWidth(cell), 0.001f);
 		fe.dispose();
 	}
 
@@ -114,7 +120,7 @@ class ForEachComponentTest {
 	void forEachImplementsLayoutModifiersAndSupportsGrowX() {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
 		ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new TestComponent(id));
-		assertTrue(fe instanceof solim.layout.CellConfig);
+		assertTrue(fe instanceof CellConfig);
 		assertNotNull(fe.sizeConstraints());
 		assertFalse(fe.sizeConstraints().growX);
 		fe.growX();
@@ -135,13 +141,13 @@ class ForEachComponentTest {
 			return null;
 		});
 
-		arc.scene.ui.layout.Table root = new arc.scene.ui.layout.Table();
+		Table root = new Table();
 		root.add(dyn.element()).width(300f);
 		root.validate();
 
-		arc.scene.ui.layout.Cell<?> dynamicCell = dyn.container().getCells().first();
+		Cell<?> dynamicCell = dyn.container().getCells().first();
 		assertNotNull(dynamicCell);
-		assertEquals(0f, arc.scene.ui.layout.CellAccess.minWidth(dynamicCell), 0.001f);
+		assertEquals(0f, CellAccess.minWidth(dynamicCell), 0.001f);
 
 		dyn.dispose();
 	}

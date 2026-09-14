@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.Core;
 import arc.scene.Element;
 import org.junit.jupiter.api.Test;
+import arc.scene.ui.layout.Table;
 
 class SettingsPanelTest {
 
@@ -30,8 +31,8 @@ class SettingsPanelTest {
 		if (Core.scene != null) {
 			SettingsPanel panel = new SettingsPanel();
 			Element el = panel.element();
-			assertTrue(el instanceof arc.scene.ui.layout.Table);
-			assertTrue(((arc.scene.ui.layout.Table) el).getChildren().size > 0);
+			assertTrue(el instanceof Table);
+			assertTrue(((Table) el).getChildren().size > 0);
 			assertSame(el, panel.element());
 			panel.dispose();
 		}

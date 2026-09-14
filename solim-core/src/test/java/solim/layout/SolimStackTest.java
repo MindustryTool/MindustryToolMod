@@ -8,6 +8,7 @@ import arc.mock.MockGraphics;
 import arc.scene.Element;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import arc.scene.ui.layout.Table;
 
 class SolimStackTest {
 
@@ -60,6 +61,6 @@ class SolimStackTest {
 		s.layer(() -> new Row());
 
 		assertEquals(1, s.stack().getChildren().size);
-		assertTrue(s.stack().getChildren().get(0) instanceof arc.scene.ui.layout.Table);
+		assertTrue(s.stack().getChildren().get(0) instanceof Table);
 	}
 }

@@ -27,6 +27,10 @@ import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
+import arc.scene.event.ClickListener;
+import arc.scene.event.EventListener;
+import arc.scene.ui.Button;
+import arc.scene.ui.layout.Scl;
 
 /**
  * Floating non-modal HUD overlay component.
@@ -334,9 +338,9 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
 					lastY = y;
 				}
 				if (Math.abs(dx) > 0.5f || Math.abs(dy) > 0.5f) {
-					for (arc.scene.event.EventListener l : handle.getListeners()) {
-						if (l instanceof arc.scene.event.ClickListener) {
-							((arc.scene.event.ClickListener) l).cancel();
+					for (EventListener l : handle.getListeners()) {
+						if (l instanceof ClickListener) {
+							((ClickListener) l).cancel();
 						}
 					}
 				}
@@ -369,11 +373,11 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
 	private static boolean isInteractiveDescendant(@Nullable Element target, Element handle) {
 		Element curr = target;
 		while (curr != null && curr != handle) {
-			if (curr instanceof arc.scene.ui.Button) {
+			if (curr instanceof Button) {
 				return true;
 			}
-			for (arc.scene.event.EventListener l : curr.getListeners()) {
-				if (l instanceof arc.scene.event.ClickListener) {
+			for (EventListener l : curr.getListeners()) {
+				if (l instanceof ClickListener) {
 					return true;
 				}
 			}
@@ -383,7 +387,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
 	}
 
 	public void keepInScreen() {
-		float scl = arc.scene.ui.layout.Scl.scl();
+		float scl = Scl.scl();
 		float sw = Core.scene != null ? Core.scene.getWidth() : (Core.graphics != null ? Core.graphics.getWidth() / (scl > 0f ? scl : 1f) : 0f);
 		float sh = Core.scene != null ? Core.scene.getHeight() : (Core.graphics != null ? Core.graphics.getHeight() / (scl > 0f ? scl : 1f) : 0f);
 		if (sw <= 0f || sh <= 0f) return;

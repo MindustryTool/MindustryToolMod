@@ -13,6 +13,7 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.layout.CellConfig;
 import solim.layout.GapContainer;
+import arc.util.Align;
 
 /**
  * Deferred configuration buffer for parent Cell settings.
@@ -90,27 +91,27 @@ public final class PendingCellConfig {
     }
 
     public void alignCenter() {
-        this.align = arc.util.Align.center;
+        this.align = Align.center;
     }
 
     public void alignTop() {
         int current = this.align != null ? this.align : 0;
-        this.align = (current | arc.util.Align.top) & ~arc.util.Align.bottom;
+        this.align = (current | Align.top) & ~Align.bottom;
     }
 
     public void alignBottom() {
         int current = this.align != null ? this.align : 0;
-        this.align = (current | arc.util.Align.bottom) & ~arc.util.Align.top;
+        this.align = (current | Align.bottom) & ~Align.top;
     }
 
     public void alignLeft() {
         int current = this.align != null ? this.align : 0;
-        this.align = (current | arc.util.Align.left) & ~arc.util.Align.right;
+        this.align = (current | Align.left) & ~Align.right;
     }
 
     public void alignRight() {
         int current = this.align != null ? this.align : 0;
-        this.align = (current | arc.util.Align.right) & ~arc.util.Align.left;
+        this.align = (current | Align.right) & ~Align.left;
     }
 
     public static @Nullable PendingCellConfig find(@Nullable Object target) {

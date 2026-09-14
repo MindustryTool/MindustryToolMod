@@ -5,6 +5,7 @@ import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.signal.Signal;
+import solim.runtime.ComponentContext;
 
 /**
  * Select widget bound to Signal&lt;T&gt;. Uses TextButton as placeholder (Arc SelectBox unavailable
@@ -47,7 +48,7 @@ public final class SolimSelect<T> implements Component {
 				return () -> {};
 			}
 		);
-		solim.runtime.ComponentContext.register(this);
+		ComponentContext.register(this);
 	}
 
 	public static <T> SolimSelect<T> of(Signal<T> signal, List<T> options) {

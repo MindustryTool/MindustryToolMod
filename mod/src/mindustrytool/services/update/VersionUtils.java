@@ -1,5 +1,8 @@
 package mindustrytool.services.update;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Pure version utilities extracted from {@code old.mindustrytool.services.UpdateService}.
  *
@@ -73,7 +76,7 @@ public final class VersionUtils {
 			// Handle leading/trailing dots and consecutive dots
 			// e.g. "1..2" → split gives ["1","","2"]; we filter empties
 			String[] parts = clean.split("\\.");
-			java.util.List<Integer> numbers = new java.util.ArrayList<>();
+			List<Integer> numbers = new ArrayList<>();
 			for (String part : parts) {
 				if (part.isEmpty()) {
 					continue;

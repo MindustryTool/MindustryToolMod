@@ -11,6 +11,7 @@ import solim.core.Component;
 import solim.display.SolimImage;
 import solim.modifier.ElementConfig;
 import solim.signal.Readable;
+import solim.modifier.PendingCellConfig;
 
 /**
  * Divider line supporting horizontal (X) and vertical (Y) directions. Uses an
@@ -102,7 +103,7 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
     }
 
     @Override
-    public solim.modifier.PendingCellConfig sizeConstraints() {
+    public PendingCellConfig sizeConstraints() {
         return image.sizeConstraints();
     }
 

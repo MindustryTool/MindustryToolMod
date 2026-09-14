@@ -1,19 +1,16 @@
 package solim.modifier;
 
-import arc.graphics.Color;
 import arc.scene.Element;
-import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import solim.core.Component;
-import solim.graphics.RoundedDrawable;
 import solim.layout.CellConfig;
 import solim.overlay.Hud;
 import solim.runtime.ComponentContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
+import solim.layout.GapContainer;
 
 /**
  * Mixin interface for operations that directly mutate an Arc {@link Element}'s own properties.
@@ -207,8 +204,8 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         el.visible = visible;
         if (el.parent instanceof Table) {
             Table parentTable = (Table) el.parent;
-            if (parentTable.userObject instanceof solim.layout.GapContainer) {
-                ((solim.layout.GapContainer) parentTable.userObject).respace();
+            if (parentTable.userObject instanceof GapContainer) {
+                ((GapContainer) parentTable.userObject).respace();
             }
         }
         return self();

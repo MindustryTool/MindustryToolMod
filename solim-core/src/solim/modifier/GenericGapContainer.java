@@ -3,6 +3,12 @@ package solim.modifier;
 import arc.scene.ui.layout.Table;
 import solim.layout.Direction;
 import solim.layout.GapContainer;
+import solim.input.Button;
+import solim.layout.Card;
+import solim.layout.Column;
+import solim.layout.Grid;
+import solim.layout.Row;
+import solim.layout.Wrap;
 
 /**
  * Package-private generic gap container for tables that don't have a dedicated
@@ -21,18 +27,18 @@ final class GenericGapContainer implements GapContainer {
         if (table == null) return;
         if (table.userObject instanceof GapContainer) {
             GapContainer gc = (GapContainer) table.userObject;
-            if (gc instanceof solim.layout.Row) {
-                ((solim.layout.Row) gc).gap(gap);
-            } else if (gc instanceof solim.layout.Column) {
-                ((solim.layout.Column) gc).gap(gap);
-            } else if (gc instanceof solim.layout.Grid) {
-                ((solim.layout.Grid) gc).gap(gap);
-            } else if (gc instanceof solim.layout.Wrap) {
-                ((solim.layout.Wrap) gc).gap(gap);
-            } else if (gc instanceof solim.layout.Card) {
-                ((solim.layout.Card) gc).gap(gap);
-            } else if (gc instanceof solim.input.Button) {
-                ((solim.input.Button) gc).gap(gap);
+            if (gc instanceof Row) {
+                ((Row) gc).gap(gap);
+            } else if (gc instanceof Column) {
+                ((Column) gc).gap(gap);
+            } else if (gc instanceof Grid) {
+                ((Grid) gc).gap(gap);
+            } else if (gc instanceof Wrap) {
+                ((Wrap) gc).gap(gap);
+            } else if (gc instanceof Card) {
+                ((Card) gc).gap(gap);
+            } else if (gc instanceof Button) {
+                ((Button) gc).gap(gap);
             } else if (gc instanceof GenericGapContainer) {
                 ((GenericGapContainer) gc).setGap(gap);
             } else {

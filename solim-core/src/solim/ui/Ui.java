@@ -40,6 +40,7 @@ import solim.runtime.ParentStack;
 import solim.signal.Computed;
 import solim.signal.Readable;
 import solim.signal.Signal;
+import arc.graphics.Color;
 
 /** Declarative UI facades for Solim. */
 public final class Ui {
@@ -453,7 +454,7 @@ public final class Ui {
         return value * BASE_UNIT;
     }
 
-    public static ColoredDrawable colored(arc.graphics.Color color, Drawable drawable) {
+    public static ColoredDrawable colored(Color color, Drawable drawable) {
         return ColoredDrawable.of(color, drawable);
     }
 

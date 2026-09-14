@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.overlay.Hud;
 import solim.runtime.ParentStack;
+import arc.scene.ui.layout.Table;
 
 class ScrollTest {
 
@@ -165,7 +166,7 @@ class ScrollTest {
 		}
 		assertNotNull(listener, "toFrontOnTouch should register an InputListener on hud.root()");
 
-		arc.scene.ui.layout.Table parent = new arc.scene.ui.layout.Table();
+		Table parent = new Table();
 		hud.mount(parent);
 		assertTrue(parent.getChildren().contains(hud.root()), "HUD root should be added to parent group");
 

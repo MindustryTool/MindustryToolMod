@@ -7,6 +7,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import mindustry.Vars;
+import rhino.Context;
+import rhino.NativeJavaObject;
+import rhino.Scriptable;
+import rhino.Undefined;
 
 /**
  * Executes arbitrary JavaScript code via Mindustry's Rhino script engine.
@@ -68,8 +72,8 @@ public final class ExecuteJsTool implements McpTool {
 				Core.app.post(() -> {
 					boolean entered = false;
 					try {
-						if (rhino.Context.getCurrentContext() == null) {
-							rhino.Context.enter();
+						if (Context.getCurrentContext() == null) {
+							Context.enter();
 							entered = true;
 						}
 						future.complete(Vars.mods.getScripts().runConsole(code));
@@ -77,7 +81,7 @@ public final class ExecuteJsTool implements McpTool {
 						future.completeExceptionally(t);
 					} finally {
 						if (entered) {
-							rhino.Context.exit();
+							Context.exit();
 						}
 					}
 				});
@@ -93,19 +97,19 @@ public final class ExecuteJsTool implements McpTool {
 
 		// Fallback: direct Rhino context execution (e.g. during headless testing)
 		try {
-			rhino.Context context = rhino.Context.enter();
+			Context context = Context.enter();
 			try {
-				rhino.Scriptable scope = context.initSafeStandardObjects();
+				Scriptable scope = context.initSafeStandardObjects();
 				Object evaluated = context.evaluateString(scope, code, "console.js", 1);
-				if (evaluated instanceof rhino.NativeJavaObject) {
-					evaluated = ((rhino.NativeJavaObject) evaluated).unwrap();
+				if (evaluated instanceof NativeJavaObject) {
+					evaluated = ((NativeJavaObject) evaluated).unwrap();
 				}
-				if (evaluated instanceof rhino.Undefined) {
+				if (evaluated instanceof Undefined) {
 					return "undefined";
 				}
 				return String.valueOf(evaluated);
 			} finally {
-				rhino.Context.exit();
+				Context.exit();
 			}
 		} catch (Throwable t) {
 			return "Rhino error: " + t.getMessage();

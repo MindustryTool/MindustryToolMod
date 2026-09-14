@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.signal.Signal;
+import solim.runtime.SignalDispatcher;
 
 class NetworkImageTest {
 
@@ -104,7 +105,7 @@ class NetworkImageTest {
 		assertTrue(NetworkImage.isCached("https://example.com/a.png"));
 
 		urlSignal.set("https://example.com/b.png");
-		solim.runtime.SignalDispatcher.flush();
+		SignalDispatcher.flush();
 		assertTrue(NetworkImage.isCached("https://example.com/b.png"));
 
 		img.dispose();

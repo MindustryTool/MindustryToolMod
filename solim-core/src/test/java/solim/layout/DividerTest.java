@@ -7,6 +7,9 @@ import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import arc.graphics.Color;
+import arc.scene.ui.Image;
+import arc.util.Scaling;
 
 class DividerTest {
 
@@ -56,14 +59,14 @@ class DividerTest {
 	@Test
 	void elementIsImage() {
 		Divider d = new Divider();
-		assertTrue(d.element() instanceof arc.scene.ui.Image);
+		assertTrue(d.element() instanceof Image);
 	}
 
 	@Test
 	void colorAndHeightModifiers() {
 		Divider d = new Divider();
-		d.color(arc.graphics.Color.green).height(2f);
-		assertEquals(arc.graphics.Color.green, d.image().color);
+		d.color(Color.green).height(2f);
+		assertEquals(Color.green, d.image().color);
 		assertEquals(2f, d.sizeConstraints().prefHeight.get());
 	}
 
@@ -71,7 +74,7 @@ class DividerTest {
 	void dividerStretchesDrawableToFillCell() {
 		// Scaling.fit would shrink the square source pixel into a centered dot
 		// instead of a line, rendering the divider effectively invisible.
-		assertEquals(arc.util.Scaling.stretch, new Divider(Direction.X).solimImage().getScaling());
-		assertEquals(arc.util.Scaling.stretch, new Divider(Direction.Y).solimImage().getScaling());
+		assertEquals(Scaling.stretch, new Divider(Direction.X).solimImage().getScaling());
+		assertEquals(Scaling.stretch, new Divider(Direction.Y).solimImage().getScaling());
 	}
 }
