@@ -10,7 +10,6 @@ import arc.scene.event.InputEvent;
 import arc.scene.ui.Button.ButtonStyle;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.modifier.ElementConfig;
 import solim.signal.Signal;
 import solim.ui.Ui;
 
@@ -85,17 +84,17 @@ class ButtonGestureTest {
 
 	@Test
 	void opacityModifierStaticAndReactive() {
-		Element el = new Element();
-		ElementConfig.opacity(el, 0.4f);
-		assertEquals(0.4f, el.color.a, 0.001f);
+		Button btn = Ui.button();
+		btn.opacity(0.4f);
+		assertEquals(0.4f, btn.element().color.a, 0.001f);
 
 		Signal<Float> op = Signal.of(0.8f);
-		ElementConfig.opacity(el, op);
-		assertEquals(0.8f, el.color.a, 0.001f);
+		btn.opacity(op);
+		assertEquals(0.8f, btn.element().color.a, 0.001f);
 
 		op.set(0.25f);
 		solim.runtime.SignalDispatcher.flush();
-		assertEquals(0.25f, el.color.a, 0.001f);
+		assertEquals(0.25f, btn.element().color.a, 0.001f);
 	}
 
 	@Test

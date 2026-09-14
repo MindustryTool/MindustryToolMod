@@ -12,7 +12,6 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
-import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
@@ -26,14 +25,14 @@ import solim.ui.Ui;
 public final class Tabs implements Component, CellConfig<Tabs> {
 
 	private final Table root;
-	private final Table headerBar;
+	private final Row headerBar;
 	private final SolimStack contentStack;
 	private final Signal<Integer> activeTab;
 	private @Nullable ButtonStyle tabButtonStyle;
 	private final List<Button> tabButtons = new ArrayList<>();
 	private final List<Table> tabContents = new ArrayList<>();
 	private final List<Disposable> bindings = new ArrayList<>();
-	private final SizeConstraints constraints = new SizeConstraints();
+	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
 
 	public Tabs(Signal<Integer> activeTab) {
 		this.activeTab = activeTab;
@@ -42,11 +41,10 @@ public final class Tabs implements Component, CellConfig<Tabs> {
 		this.root.name = "solim-tabs-root";
 		this.root.top().left();
 
-		this.headerBar = new Table();
-		this.headerBar.name = "solim-tabs-headerBar";
+		this.headerBar = new Row().gap(4f);
+		this.headerBar.name("solim-tabs-headerBar");
 		this.headerBar.top().left();
-		ElementConfig.gap(this.headerBar, 4f);
-		this.root.add(headerBar).growX().row();
+		this.root.add(headerBar.element()).growX().row();
 
 		this.contentStack = new SolimStack();
 		this.root.add(contentStack.element()).grow();
@@ -59,7 +57,7 @@ public final class Tabs implements Component, CellConfig<Tabs> {
 	}
 
 	public Tabs headerGap(float gap) {
-		ElementConfig.gap(this.headerBar, gap);
+		this.headerBar.gap(gap);
 		return this;
 	}
 
@@ -109,7 +107,8 @@ public final class Tabs implements Component, CellConfig<Tabs> {
 			Ui.text(title);
 		});
 		tabButtons.add(btn);
-		headerBar.add(btn.element()).growX();
+		headerBar.table().add(btn.element()).growX();
+		headerBar.respace();
 
 		Table contentContainer = new Table();
 		contentContainer.top().left();
@@ -160,7 +159,7 @@ public final class Tabs implements Component, CellConfig<Tabs> {
 	}
 
 	public Table headerBar() {
-		return headerBar;
+		return headerBar.table();
 	}
 
 	@Override
@@ -169,12 +168,12 @@ public final class Tabs implements Component, CellConfig<Tabs> {
 	}
 
 	@Override
-	public SizeConstraints sizeConstraints() {
+	public solim.modifier.PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 
 	public Tabs name(String name) {
-		ElementConfig.name(root, name);
+		root.name = name;
 		return this;
 	}
 
@@ -187,5 +186,6 @@ public final class Tabs implements Component, CellConfig<Tabs> {
 		for (Button b : tabButtons) {
 			b.dispose();
 		}
+		headerBar.dispose();
 	}
 }

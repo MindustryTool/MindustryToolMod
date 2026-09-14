@@ -52,12 +52,16 @@ Defines the `ElementConfig<SELF>` mixin interface for operations that directly m
 - **THEN** `element.name` equals `"my-element"`
 
 ### Requirement: ElementConfig provides visual styling
-`ElementConfig` SHALL provide `rounded(int)`, `rounded(int, Color)`, `rounded(int, Readable<Color>)`, `border(float, Color)`, `border(float, Readable<Color>)`, `background(Drawable)`, `background(Color)`, `background(Readable<Color>)` that configure the element's RoundedDrawable. All Readable overloads SHALL install reactive Effects.
+`ElementConfig` SHALL provide `rounded(int)`, `rounded(int, Color)`, `rounded(int, Readable<Color>)`, `border(float, Color)`, `border(float, Readable<Color>)`, `background(Drawable)`, `background(Readable<Drawable>)`, `background(Color)`, `backgroundColor(Color)`, `backgroundColor(Readable<Color>)` that configure the element's background and RoundedDrawable. All Readable overloads SHALL install reactive Effects.
 
 #### Scenario: Setting rounded corners
 - **WHEN** `rounded(8)` is called on a Table-backed element
 - **THEN** the element's background is wrapped in a RoundedDrawable with radius 8
 
+#### Scenario: Setting reactive background drawable
+- **WHEN** `background(drawableSignal)` is called and signal changes
+- **THEN** the element's background drawable updates automatically
+
 #### Scenario: Setting reactive background color
-- **WHEN** `background(colorSignal)` is called and signal changes
+- **WHEN** `backgroundColor(colorSignal)` is called and signal changes
 - **THEN** the element's background color updates automatically

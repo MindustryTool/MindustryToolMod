@@ -3,14 +3,14 @@ package solim.modifier;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
-import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.layout.Card;
 import solim.layout.Column;
@@ -23,7 +23,7 @@ import solim.layout.SolimStack;
 import solim.layout.Spacer;
 import solim.layout.Wrap;
 
-class ElementConfigTest {
+class ElementModifiersTest {
 
     @BeforeAll
     static void checkArcContext() {
@@ -36,42 +36,77 @@ class ElementConfigTest {
     }
 
     @Test
-    void elementModifiersGapOnTable() {
-        Table table = new Table();
-        Element a = new Element();
-        Element b = new Element();
-        table.add(a);
-        table.add(b);
-        ElementConfig.gap(table, 16f);
-        Cell<?> cellA = table.getCell(a);
-        Cell<?> cellB = table.getCell(b);
-        assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
-        assertEquals(0f, CellAccess.padTop(cellA), 0.01f);
-        assertEquals(16f, CellAccess.padLeft(cellB), 0.01f);
-        assertEquals(0f, CellAccess.padTop(cellB), 0.01f);
+    void elementConfigModifiersOnRow() {
+        Row row = new Row();
+        row.width(100f).height(50f).x(10f).y(20f).visible(false).opacity(0.8f);
 
-        ElementConfig.gap(table, 24f);
-        assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
-        assertEquals(24f, CellAccess.padLeft(cellB), 0.01f);
+        assertEquals(100f, row.element().getWidth(), 0.01f);
+        assertEquals(50f, row.element().getHeight(), 0.01f);
+        assertEquals(10f, row.element().x, 0.01f);
+        assertEquals(20f, row.element().y, 0.01f);
+        assertFalse(row.element().visible);
+        assertEquals(0.8f, row.element().color.a, 0.01f);
+
+        row.size(80f);
+        assertEquals(80f, row.element().getWidth(), 0.01f);
+        assertEquals(80f, row.element().getHeight(), 0.01f);
+
+        row.position(30f, 40f);
+        assertEquals(30f, row.element().x, 0.01f);
+        assertEquals(40f, row.element().y, 0.01f);
     }
 
     @Test
-    void elementModifiersGapOnElementOverload() {
-        Table table = new Table();
-        Element a = new Element();
-        Element b = new Element();
-        table.add(a);
-        table.add(b);
-        ElementConfig.gap((Element) table, 20f);
-        Cell<?> cellA = table.getCell(a);
-        Cell<?> cellB = table.getCell(b);
-        assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
-        assertEquals(20f, CellAccess.padLeft(cellB), 0.01f);
+    void tableConfigPaddingAndMarginOnRow() {
+        Row row = new Row();
+        row.padding(10f);
+        assertEquals(10f, row.table().getMarginLeft(), 0.01f);
+        assertEquals(10f, row.table().getMarginRight(), 0.01f);
+        assertEquals(10f, row.table().getMarginTop(), 0.01f);
+        assertEquals(10f, row.table().getMarginBottom(), 0.01f);
 
-        Element element = new Element();
-        assertDoesNotThrow(() -> ElementConfig.gap(element, 20f));
-        assertDoesNotThrow(() -> ElementConfig.gap((Table) null, 20f));
-        assertDoesNotThrow(() -> ElementConfig.gap((Element) null, 20f));
+        row.padding(1f, 2f, 3f, 4f);
+        assertEquals(1f, row.table().getMarginTop(), 0.01f);
+        assertEquals(2f, row.table().getMarginLeft(), 0.01f);
+        assertEquals(3f, row.table().getMarginBottom(), 0.01f);
+        assertEquals(4f, row.table().getMarginRight(), 0.01f);
+
+        row.paddingX(12f).paddingY(6f);
+        assertEquals(12f, row.table().getMarginLeft(), 0.01f);
+        assertEquals(12f, row.table().getMarginRight(), 0.01f);
+        assertEquals(6f, row.table().getMarginTop(), 0.01f);
+        assertEquals(6f, row.table().getMarginBottom(), 0.01f);
+
+        row.margin(8f);
+        assertEquals(8f, row.table().getMarginLeft(), 0.01f);
+        assertEquals(8f, row.table().getMarginRight(), 0.01f);
+        assertEquals(8f, row.table().getMarginTop(), 0.01f);
+        assertEquals(8f, row.table().getMarginBottom(), 0.01f);
+
+        row.marginX(14f).marginY(8f);
+        assertEquals(14f, row.table().getMarginLeft(), 0.01f);
+        assertEquals(14f, row.table().getMarginRight(), 0.01f);
+        assertEquals(8f, row.table().getMarginTop(), 0.01f);
+        assertEquals(8f, row.table().getMarginBottom(), 0.01f);
+
+        row.marginTop(12f).marginLeft(14f).marginBottom(16f).marginRight(18f);
+        assertEquals(12f, row.table().getMarginTop(), 0.01f);
+        assertEquals(14f, row.table().getMarginLeft(), 0.01f);
+        assertEquals(16f, row.table().getMarginBottom(), 0.01f);
+        assertEquals(18f, row.table().getMarginRight(), 0.01f);
+    }
+
+    @Test
+    void elementConfigStylingOnRow() {
+        Row row = new Row();
+        row.rounded(12, Color.royal).border(2f, Color.gold);
+
+        assertTrue(row.table().getBackground() instanceof RoundedDrawable);
+        RoundedDrawable rd = (RoundedDrawable) row.table().getBackground();
+        assertEquals(12, rd.getRadius());
+        assertEquals(Color.royal, rd.getFillColor());
+        assertEquals(2f, rd.getStroke(), 0.01f);
+        assertEquals(Color.gold, rd.getBorderColor());
     }
 
     @Test
@@ -135,124 +170,6 @@ class ElementConfigTest {
         assertEquals(0f, CellAccess.padLeft(button.sizedButton().getCell(bta)), 0.01f);
         assertEquals(8f, CellAccess.padLeft(button.sizedButton().getCell(btb)), 0.01f);
         assertEquals(0f, CellAccess.padTop(button.sizedButton().getCell(btb)), 0.01f);
-    }
-
-    @Test
-    void elementModifiersNameOnElement() {
-        Element element = new Element();
-        ElementConfig.name(element, "test-element");
-        assertEquals("test-element", element.name);
-
-        assertDoesNotThrow(() -> ElementConfig.name(null, "ignored"));
-    }
-
-    @Test
-    void elementModifiersNullSafe() {
-        assertDoesNotThrow(() -> ElementConfig.width(null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.height(null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.size(null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.size(null, 10f, 10f));
-        assertDoesNotThrow(() -> ElementConfig.x(null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.y(null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.position(null, 10f, 10f));
-        assertDoesNotThrow(() -> ElementConfig.visible(null, true));
-        assertDoesNotThrow(() -> ElementConfig.align(null, 0));
-        assertDoesNotThrow(() -> ElementConfig.top(null));
-        assertDoesNotThrow(() -> ElementConfig.bottom(null));
-        assertDoesNotThrow(() -> ElementConfig.left(null));
-        assertDoesNotThrow(() -> ElementConfig.right(null));
-        assertDoesNotThrow(() -> ElementConfig.center(null));
-        assertDoesNotThrow(() -> ElementConfig.margin((Table) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.padding((Table) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.margin((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.margin((Element) null, 1f, 2f, 3f, 4f));
-        assertDoesNotThrow(() -> ElementConfig.marginTop((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.marginBottom((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.marginLeft((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.marginRight((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.padding((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.padding((Element) null, 1f, 2f, 3f, 4f));
-        assertDoesNotThrow(() -> ElementConfig.paddingTop((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.paddingBottom((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.paddingLeft((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.paddingRight((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.paddingX((Table) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.paddingY((Table) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.marginX((Table) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.marginY((Table) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.paddingX((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.paddingY((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.marginX((Element) null, 10f));
-        assertDoesNotThrow(() -> ElementConfig.marginY((Element) null, 10f));
-    }
-
-    @Test
-    void elementModifiersPaddingAndMarginOnElementInTable() {
-        Table table = new Table();
-        Element element = new Element();
-        table.add(element);
-
-        ElementConfig.padding(element, 10f);
-        assertEquals(10f, CellAccess.padTop(table.getCell(element)), 0.01f);
-        assertEquals(10f, CellAccess.padLeft(table.getCell(element)), 0.01f);
-        assertEquals(10f, CellAccess.padBottom(table.getCell(element)), 0.01f);
-        assertEquals(10f, CellAccess.padRight(table.getCell(element)), 0.01f);
-
-        ElementConfig.padding(element, 1f, 2f, 3f, 4f);
-        assertEquals(1f, CellAccess.padTop(table.getCell(element)), 0.01f);
-        assertEquals(2f, CellAccess.padLeft(table.getCell(element)), 0.01f);
-        assertEquals(3f, CellAccess.padBottom(table.getCell(element)), 0.01f);
-        assertEquals(4f, CellAccess.padRight(table.getCell(element)), 0.01f);
-
-        ElementConfig.margin(element, 8f);
-        assertEquals(8f, CellAccess.padTop(table.getCell(element)), 0.01f);
-        assertEquals(8f, CellAccess.padLeft(table.getCell(element)), 0.01f);
-        assertEquals(8f, CellAccess.padBottom(table.getCell(element)), 0.01f);
-        assertEquals(8f, CellAccess.padRight(table.getCell(element)), 0.01f);
-
-        ElementConfig.marginTop(element, 12f);
-        assertEquals(12f, CellAccess.padTop(table.getCell(element)), 0.01f);
-        ElementConfig.marginLeft(element, 14f);
-        assertEquals(14f, CellAccess.padLeft(table.getCell(element)), 0.01f);
-        ElementConfig.marginBottom(element, 16f);
-        assertEquals(16f, CellAccess.padBottom(table.getCell(element)), 0.01f);
-        ElementConfig.marginRight(element, 18f);
-        assertEquals(18f, CellAccess.padRight(table.getCell(element)), 0.01f);
-    }
-
-    @Test
-    void elementModifiersTwoAxisPaddingAndMargin() {
-        Table table = new Table();
-        ElementConfig.paddingX(table, 12f);
-        ElementConfig.paddingY(table, 6f);
-        assertEquals(12f, table.getMarginLeft(), 0.01f);
-        assertEquals(12f, table.getMarginRight(), 0.01f);
-        assertEquals(6f, table.getMarginTop(), 0.01f);
-        assertEquals(6f, table.getMarginBottom(), 0.01f);
-
-        ElementConfig.marginX(table, 14f);
-        ElementConfig.marginY(table, 8f);
-        assertEquals(14f, table.getMarginLeft(), 0.01f);
-        assertEquals(14f, table.getMarginRight(), 0.01f);
-        assertEquals(8f, table.getMarginTop(), 0.01f);
-        assertEquals(8f, table.getMarginBottom(), 0.01f);
-
-        Element element = new Element();
-        table.add(element);
-
-        ElementConfig.paddingX(element, 15f);
-        ElementConfig.paddingY(element, 7f);
-        assertEquals(15f, CellAccess.padLeft(table.getCell(element)), 0.01f);
-        assertEquals(15f, CellAccess.padRight(table.getCell(element)), 0.01f);
-        assertEquals(7f, CellAccess.padTop(table.getCell(element)), 0.01f);
-        assertEquals(7f, CellAccess.padBottom(table.getCell(element)), 0.01f);
-
-        ElementConfig.marginX(element, 20f);
-        ElementConfig.marginY(element, 10f);
-        assertEquals(20f, CellAccess.padLeft(table.getCell(element)), 0.01f);
-        assertEquals(20f, CellAccess.padRight(table.getCell(element)), 0.01f);
-        assertEquals(10f, CellAccess.padTop(table.getCell(element)), 0.01f);
-        assertEquals(10f, CellAccess.padBottom(table.getCell(element)), 0.01f);
     }
 
     @Test

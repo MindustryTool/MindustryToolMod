@@ -7,19 +7,20 @@ import java.util.Objects;
 import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.GapContainer;
 import solim.layout.CellConfig;
-import solim.layout.SizeConstraints;
+import solim.layout.GapContainer;
+import solim.modifier.PendingCellConfig;
+import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
 
 /** Structural reactive component for switching dynamic subtrees based on a reactive value. */
-public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynamic<T>> {
+public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>> {
 	private static final Object SENTINEL = new Object();
 	private final Table container = new Table();
-	private final SizeConstraints constraints = new SizeConstraints();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private final Readable<T> source;
 	private final Function<T, Component> factory;
 	private Component currentComponent;
@@ -42,7 +43,12 @@ public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynami
 	}
 
 	@Override
-	public SizeConstraints sizeConstraints() {
+	public Table table() {
+		return container;
+	}
+
+	@Override
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 
@@ -78,9 +84,9 @@ public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynami
 					Element el = currentComponent.element();
 					Cell<?> cell = container.add(el);
 					cell.minWidth(0f);
-					SizeConstraints sc = SizeConstraints.find(currentComponent);
+					PendingCellConfig sc = PendingCellConfig.find(currentComponent);
 					if (sc == null) {
-						sc = SizeConstraints.find(el);
+						sc = PendingCellConfig.find(el);
 					}
 					if (sc != null) {
 						currentBindings.addAll(sc.applyToCell(cell));

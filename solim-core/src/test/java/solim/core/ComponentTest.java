@@ -174,14 +174,5 @@ class ComponentTest {
 		assertEquals("original", comp.element().name);
 	}
 
-	@Test
-	void interfaceDefaultNameSetsElementNameAndReturnsSelf() {
-		Element element = new Element();
-		Component comp = () -> element;
 
-		Component result = comp.name("test");
-
-		assertSame(comp, result);
-		assertEquals("test", element.name);
-	}
 }

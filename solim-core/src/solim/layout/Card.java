@@ -16,6 +16,7 @@ import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.modifier.ElementConfig;
+import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
@@ -26,7 +27,7 @@ import solim.ui.Ui;
  * Clickable and stylable card container component with support for inner children, reactive
  * width/height/color bindings, and click event bubbling control.
  */
-public final class Card implements Component, CellConfig<Card>, GapContainer {
+public final class Card implements Component, CellConfig<Card>, ElementConfig<Card>, TableConfig<Card>, GapContainer {
 
 	public static final ParentStack.Attacher ATTACHER = (table, child) -> {
 		Cell<?> cell = table.add(child);
@@ -43,7 +44,7 @@ public final class Card implements Component, CellConfig<Card>, GapContainer {
 
 	private final Button cardButton;
 	private final Table container = new Table();
-	private final SizeConstraints constraints = new SizeConstraints();
+	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
 	private final List<Disposable> bindings = new ArrayList<>();
 	private float gap = 0f;
 	private @Nullable Runnable onClick;
@@ -90,6 +91,11 @@ public final class Card implements Component, CellConfig<Card>, GapContainer {
 		return container;
 	}
 
+	@Override
+	public Table table() {
+		return container;
+	}
+
 	public Button cardButton() {
 		return cardButton;
 	}
@@ -100,13 +106,8 @@ public final class Card implements Component, CellConfig<Card>, GapContainer {
 	}
 
 	@Override
-	public SizeConstraints sizeConstraints() {
+	public solim.modifier.PendingCellConfig sizeConstraints() {
 		return constraints;
-	}
-
-	public Card name(String name) {
-		ElementConfig.name(cardButton, name);
-		return this;
 	}
 
 	public Card color(Color color) {
@@ -144,59 +145,10 @@ public final class Card implements Component, CellConfig<Card>, GapContainer {
 		return this;
 	}
 
-	@Override
-	public Card top() {
-		ElementConfig.top(container);
-		return CellConfig.super.top();
-	}
-
-	@Override
-	public Card bottom() {
-		ElementConfig.bottom(container);
-		return CellConfig.super.bottom();
-	}
-
-	@Override
-	public Card left() {
-		ElementConfig.left(container);
-		return CellConfig.super.left();
-	}
-
-	@Override
-	public Card right() {
-		ElementConfig.right(container);
-		return CellConfig.super.right();
-	}
-
-	@Override
-	public Card center() {
-		ElementConfig.center(container);
-		return CellConfig.super.center();
-	}
 
 	public Card gap(float g) {
 		this.gap = g;
 		respace();
-		return this;
-	}
-
-	public Card padding(float p) {
-		ElementConfig.padding(container, p);
-		return this;
-	}
-
-	public Card padding(float top, float left, float bottom, float right) {
-		ElementConfig.padding(container, top, left, bottom, right);
-		return this;
-	}
-
-	public Card paddingX(float x) {
-		ElementConfig.paddingX(container, x);
-		return this;
-	}
-
-	public Card paddingY(float y) {
-		ElementConfig.paddingY(container, y);
 		return this;
 	}
 
@@ -236,38 +188,6 @@ public final class Card implements Component, CellConfig<Card>, GapContainer {
 		return this;
 	}
 
-	public Card background(Drawable background) {
-		if (background != null) {
-			cardButton.setBackground(background);
-		}
-		return this;
-	}
-
-	public Card x(float x) {
-		ElementConfig.x(cardButton, x);
-		return this;
-	}
-
-	public Card y(float y) {
-		ElementConfig.y(cardButton, y);
-		return this;
-	}
-
-	public Card position(float x, float y) {
-		ElementConfig.position(cardButton, x, y);
-		return this;
-	}
-
-	public Card visible(boolean visible) {
-		ElementConfig.visible(cardButton, visible);
-		return this;
-	}
-
-	public Card visible(@Nullable Readable<Boolean> visible) {
-		ElementConfig.visible(cardButton, visible);
-		return this;
-	}
-
 	public Card onClick(Runnable onClick) {
 		this.onClick = onClick;
 		if (onClick != null) {
@@ -296,61 +216,6 @@ public final class Card implements Component, CellConfig<Card>, GapContainer {
 		return this;
 	}
 
-	public Card rounded(int radius) {
-		return rounded(radius, (Color) null);
-	}
-
-	public Card rounded(int radius, @Nullable Color color) {
-		solim.graphics.RoundedDrawable rd = ElementConfig.rounded(cardButton, radius, color);
-		if (rd != null) {
-			Button.ButtonStyle s = cardButton.getStyle();
-			if (s == null) {
-				s = new Button.ButtonStyle();
-				cardButton.setStyle(s);
-			}
-			s.up = rd;
-		}
-		return this;
-	}
-
-	public Card rounded(int radius, @Nullable Readable<Color> color) {
-		solim.graphics.RoundedDrawable rd = ElementConfig.rounded(cardButton, radius, color);
-		if (rd != null) {
-			Button.ButtonStyle s = cardButton.getStyle();
-			if (s == null) {
-				s = new Button.ButtonStyle();
-				cardButton.setStyle(s);
-			}
-			s.up = rd;
-		}
-		return this;
-	}
-
-	public Card border(float stroke, @Nullable Color color) {
-		solim.graphics.RoundedDrawable rd = ElementConfig.border(cardButton, stroke, color);
-		if (rd != null) {
-			Button.ButtonStyle s = cardButton.getStyle();
-			if (s == null) {
-				s = new Button.ButtonStyle();
-				cardButton.setStyle(s);
-			}
-			s.up = rd;
-		}
-		return this;
-	}
-
-	public Card border(float stroke, @Nullable Readable<Color> color) {
-		solim.graphics.RoundedDrawable rd = ElementConfig.border(cardButton, stroke, color);
-		if (rd != null) {
-			Button.ButtonStyle s = cardButton.getStyle();
-			if (s == null) {
-				s = new Button.ButtonStyle();
-				cardButton.setStyle(s);
-			}
-			s.up = rd;
-		}
-		return this;
-	}
 
 	@Override
 	public void dispose() {

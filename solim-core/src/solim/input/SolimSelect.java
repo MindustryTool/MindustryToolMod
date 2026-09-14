@@ -4,7 +4,6 @@ import arc.scene.ui.TextButton;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.modifier.ElementConfig;
 import solim.signal.Signal;
 
 /**
@@ -64,9 +63,8 @@ public final class SolimSelect<T> implements Component {
 		return selectBox;
 	}
 
-	@Override
 	public SolimSelect<T> name(String name) {
-		ElementConfig.name(selectBox, name);
+		selectBox.name = name;
 		return this;
 	}
 

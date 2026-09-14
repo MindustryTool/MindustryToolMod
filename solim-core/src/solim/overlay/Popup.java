@@ -17,9 +17,12 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.graphics.RoundedDrawable;
 import solim.layout.Spacer;
-import solim.modifier.ElementConfig;
+import solim.modifier.RoundedHelper;
+import solim.modifier.TableConfig;
+import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
+import solim.signal.Effect;
 import solim.signal.Readable;
 
 /**
@@ -38,7 +41,7 @@ import solim.signal.Readable;
  * <p>All mutating methods return this instance for chaining. Show and hide are
  * explicit and safe to call headless (no-ops without a scene).
  */
-public final class Popup<T> extends BaseComponent {
+public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T>> {
 
     private static final Color DEFAULT_FILL = new Color(0.09f, 0.09f, 0.12f, 0.96f);
     private static final int DEFAULT_RADIUS = 8;
@@ -96,27 +99,47 @@ public final class Popup<T> extends BaseComponent {
     }
 
     public Popup<T> rounded(int radius) {
-        ElementConfig.rounded(table, radius);
+        RoundedHelper.getOrCreateRounded(table, radius);
         return this;
     }
 
     public Popup<T> rounded(int radius, @Nullable Color color) {
-        ElementConfig.rounded(table, radius, color);
+        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table, radius);
+        if (color != null) {
+            rd.fillColor(color);
+        }
         return this;
     }
 
     public Popup<T> rounded(int radius, @Nullable Readable<Color> color) {
-        ElementConfig.rounded(table, radius, color);
+        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table, radius);
+        if (color != null) {
+            Effect e = Effect.of(() -> {
+                Color c = color.get();
+                if (c != null) rd.fillColor(c);
+            });
+            ComponentContext.register(e);
+        }
         return this;
     }
 
     public Popup<T> border(float stroke, @Nullable Color color) {
-        ElementConfig.border(table, stroke, color);
+        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table, 8);
+        rd.border(stroke, color != null ? color : Color.white);
         return this;
     }
 
     public Popup<T> border(float stroke, @Nullable Readable<Color> color) {
-        ElementConfig.border(table, stroke, color);
+        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table, 8);
+        if (color != null) {
+            Effect e = Effect.of(() -> {
+                Color c = color.get();
+                rd.border(stroke, c != null ? c : Color.white);
+            });
+            ComponentContext.register(e);
+        } else {
+            rd.border(stroke, Color.white);
+        }
         return this;
     }
 

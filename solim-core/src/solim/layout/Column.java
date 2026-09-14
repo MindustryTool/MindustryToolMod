@@ -2,20 +2,19 @@ package solim.layout;
 
 import arc.scene.Element;
 import arc.scene.event.Touchable;
-import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
-import solim.runtime.ComponentContext;
+import solim.modifier.TableConfig;
+import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Readable;
-import solim.runtime.ParentStack;
 import solim.ui.Ui;
 
 /** Column layout — vertical Table wrapper. */
-public final class Column implements Component, CellConfig<Column>, GapContainer {
+public final class Column implements Component, CellConfig<Column>, ElementConfig<Column>, TableConfig<Column>, GapContainer {
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -31,7 +30,7 @@ public final class Column implements Component, CellConfig<Column>, GapContainer
     };
 
     private final Table table;
-    private final SizeConstraints constraints = new SizeConstraints();
+    private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
     private float gap = 0f;
 
     public Column() {
@@ -51,13 +50,8 @@ public final class Column implements Component, CellConfig<Column>, GapContainer
     }
 
     @Override
-    public SizeConstraints sizeConstraints() {
+    public solim.modifier.PendingCellConfig sizeConstraints() {
         return constraints;
-    }
-
-    public Column name(String name) {
-        ElementConfig.name(table, name);
-        return this;
     }
 
     public Column fillParent(boolean fillParent) {
@@ -80,11 +74,6 @@ public final class Column implements Component, CellConfig<Column>, GapContainer
         return this;
     }
 
-    public Column background(@Nullable Drawable bg) {
-        ElementConfig.background(table, bg);
-        return this;
-    }
-
     public Column gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
             Effect e = Effect.of(() -> {
@@ -93,7 +82,7 @@ public final class Column implements Component, CellConfig<Column>, GapContainer
                     gap(g);
                 }
             });
-            ComponentContext.register(e);
+            solim.runtime.ComponentContext.register(e);
         }
         return this;
     }
@@ -113,166 +102,61 @@ public final class Column implements Component, CellConfig<Column>, GapContainer
         GapContainer.applySpacing(table, Direction.VERTICAL, gap);
     }
 
-    public Column padding(float p) {
-        ElementConfig.padding(table, p);
-        return this;
-    }
-
-    public Column padding(float top, float left, float bottom, float right) {
-        ElementConfig.padding(table, top, left, bottom, right);
-        return this;
-    }
-
-    public Column paddingTop(float top) {
-        ElementConfig.paddingTop(table, top);
-        return this;
-    }
-
-    public Column paddingBottom(float bottom) {
-        ElementConfig.paddingBottom(table, bottom);
-        return this;
-    }
-
-    public Column paddingLeft(float left) {
-        ElementConfig.paddingLeft(table, left);
-        return this;
-    }
-
-    public Column paddingRight(float right) {
-        ElementConfig.paddingRight(table, right);
-        return this;
-    }
-
-    public Column margin(float m) {
-        ElementConfig.margin(table, m);
-        return this;
-    }
-
-    public Column margin(float top, float left, float bottom, float right) {
-        ElementConfig.margin(table, top, left, bottom, right);
-        return this;
-    }
-
-    public Column marginTop(float top) {
-        ElementConfig.marginTop(table, top);
-        return this;
-    }
-
-    public Column marginBottom(float bottom) {
-        ElementConfig.marginBottom(table, bottom);
-        return this;
-    }
-
-    public Column marginLeft(float left) {
-        ElementConfig.marginLeft(table, left);
-        return this;
-    }
-
-    public Column marginRight(float right) {
-        ElementConfig.marginRight(table, right);
-        return this;
-    }
-
-    public Column paddingX(float x) {
-        ElementConfig.paddingX(table, x);
-        return this;
-    }
-
-    public Column paddingY(float y) {
-        ElementConfig.paddingY(table, y);
-        return this;
-    }
-
-    @Override
-    public Column cellPaddingX(float x) {
-        ElementConfig.marginX(table, x);
-        return this;
-    }
-
-    @Override
-    public Column cellPaddingY(float y) {
-        ElementConfig.marginY(table, y);
-        return this;
-    }
-
-    public Column x(float x) {
-        ElementConfig.x(table, x);
-        return this;
-    }
-
-    public Column y(float y) {
-        ElementConfig.y(table, y);
-        return this;
-    }
-
-    public Column position(float x, float y) {
-        ElementConfig.position(table, x, y);
-        return this;
-    }
-
-    public Column visible(boolean visible) {
-        ElementConfig.visible(table, visible);
-        return this;
-    }
-
-    public Column visible(@Nullable Readable<Boolean> visible) {
-        ElementConfig.visible(table, visible);
-        return this;
-    }
-
     @Override
     public Column top() {
-        ElementConfig.top(table);
+        TableConfig.super.top();
         table.defaults().top();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.top();
         }
-        return CellConfig.super.top();
+        return this;
     }
 
     @Override
     public Column bottom() {
-        ElementConfig.bottom(table);
+        TableConfig.super.bottom();
         table.defaults().bottom();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.bottom();
         }
-        return CellConfig.super.bottom();
+        return this;
     }
 
     @Override
     public Column left() {
-        ElementConfig.left(table);
+        TableConfig.super.left();
         table.defaults().left();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.left();
         }
-        return CellConfig.super.left();
+        return this;
     }
 
     @Override
     public Column right() {
-        ElementConfig.right(table);
+        TableConfig.super.right();
         table.defaults().right();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.right();
         }
-        return CellConfig.super.right();
+        return this;
     }
 
     @Override
     public Column center() {
-        ElementConfig.center(table);
+        TableConfig.super.center();
+        sizeConstraints().alignCenter();
+        sizeConstraints().applyAlignToParentCell(element());
         table.defaults().center();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
                 c.center();
         }
-        return CellConfig.super.center();
+        return this;
     }
 
     public Column align(Align a) {

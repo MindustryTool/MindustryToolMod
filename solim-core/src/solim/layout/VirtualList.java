@@ -31,7 +31,7 @@ import solim.runtime.StructuralReconciler;
 public final class VirtualList<T, K> extends BaseComponent implements CellConfig<VirtualList<T, K>> {
 
     private final Table outer;
-    private final SizeConstraints constraints = new SizeConstraints();
+    private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
     private final @Nullable ScrollPane pane;
     private final VirtualContainer content;
 
@@ -206,7 +206,7 @@ public final class VirtualList<T, K> extends BaseComponent implements CellConfig
     }
 
     @Override
-    public SizeConstraints sizeConstraints() {
+    public solim.modifier.PendingCellConfig sizeConstraints() {
         return constraints;
     }
 

@@ -19,8 +19,9 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.layout.CellConfig;
 import solim.layout.Row;
-import solim.layout.SizeConstraints;
+import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
+import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
@@ -33,11 +34,11 @@ import solim.signal.Signal;
  * Content children are nested within an inner enabled container.
  * Automatically adapts to screen resize events via {@link #keepInScreen()}.
  */
-public class Hud implements Component, CellConfig<Hud> {
+public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, TableConfig<Hud> {
 
 	private final Table root;
 	private final Table container;
-	private final SizeConstraints constraints = new SizeConstraints();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private final List<Disposable> bindings = new ArrayList<>();
 	private final Cons<ResizeEvent> resizeListener;
 	private @Nullable Signal<Float> boundXSignal;
@@ -105,13 +106,12 @@ public class Hud implements Component, CellConfig<Hud> {
 	}
 
 	@Override
-	public SizeConstraints sizeConstraints() {
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 
-	public Hud name(String name) {
-		ElementConfig.name(root, name);
-		return this;
+	public Table table() {
+		return root;
 	}
 
 	public Hud touchable(Touchable touchable) {
@@ -178,6 +178,10 @@ public class Hud implements Component, CellConfig<Hud> {
 		return this;
 	}
 
+	public Hud backgroundDrawable(@Nullable Readable<Drawable> bg) {
+		return background(bg);
+	}
+
 	public Hud children(@Nullable Runnable r) {
 		ParentStack.push(container, Row.ATTACHER);
 		try {
@@ -199,30 +203,11 @@ public class Hud implements Component, CellConfig<Hud> {
 		this.boundYSignal = ySignal;
 	}
 
-	public Hud x(float x) {
-		ElementConfig.x(root, x);
-		return this;
-	}
-
 	public Hud x(Readable<Float> x) {
 		if (x instanceof Signal) {
 			this.boundXSignal = (Signal<Float>) x;
 		}
-		if (x != null) {
-			Effect e = Effect.of(() -> {
-				Float v = x.get();
-				if (v != null) {
-					ElementConfig.x(root, v);
-				}
-			});
-			bindings.add(e);
-			ComponentContext.register(e);
-		}
-		return this;
-	}
-
-	public Hud y(float y) {
-		ElementConfig.y(root, y);
+		ElementConfig.super.x(x);
 		return this;
 	}
 
@@ -230,55 +215,28 @@ public class Hud implements Component, CellConfig<Hud> {
 		if (y instanceof Signal) {
 			this.boundYSignal = (Signal<Float>) y;
 		}
-		if (y != null) {
-			Effect e = Effect.of(() -> {
-				Float v = y.get();
-				if (v != null) {
-					ElementConfig.y(root, v);
-				}
-			});
-			bindings.add(e);
-			ComponentContext.register(e);
-		}
+		ElementConfig.super.y(y);
 		return this;
 	}
 
-	public Hud position(float x, float y) {
-		ElementConfig.position(root, x, y);
+	@Override
+	public Hud opacity(float a) {
+		float val = Math.max(0f, Math.min(1f, a));
+		root.color.a = val;
+		container.color.a = val;
 		return this;
 	}
 
-	public Hud position(Readable<Float> x, Readable<Float> y) {
-		x(x);
-		y(y);
+	@Override
+	public Hud opacity(@Nullable Readable<Float> opacity) {
+		if (opacity == null) return this;
+		Effect e = Effect.of(() -> {
+			Float v = opacity.get();
+			if (v != null) opacity(v);
+		});
+		bindings.add(e);
+		ComponentContext.register(e);
 		return this;
-	}
-
-	public Hud opacity(float opacity) {
-		ElementConfig.opacity(container, opacity);
-		return this;
-	}
-
-	public Hud opacity(Readable<Float> opacity) {
-		if (opacity != null) {
-			Effect e = Effect.of(() -> {
-				Float v = opacity.get();
-				if (v != null) {
-					ElementConfig.opacity(container, v);
-				}
-			});
-			bindings.add(e);
-			ComponentContext.register(e);
-		}
-		return this;
-	}
-
-	public Hud alpha(float alpha) {
-		return opacity(alpha);
-	}
-
-	public Hud alpha(Readable<Float> alpha) {
-		return opacity(alpha);
 	}
 
 	public Hud scale(float s) {
@@ -302,15 +260,126 @@ public class Hud implements Component, CellConfig<Hud> {
 	}
 
 	public Hud draggable(Element handle) {
-		ElementConfig.draggable(handle, this);
+		makeDraggable(handle, this, null, null);
 		return this;
 	}
 
 	public Hud draggable(Element handle, @Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
 		if (xSignal != null) this.boundXSignal = xSignal;
 		if (ySignal != null) this.boundYSignal = ySignal;
-		ElementConfig.draggable(handle, this, xSignal, ySignal);
+		makeDraggable(handle, this, xSignal, ySignal);
 		return this;
+	}
+
+	public static void makeDraggable(@Nullable Element handle, @Nullable Hud hud, @Nullable Signal<Float> xSignal,
+			@Nullable Signal<Float> ySignal) {
+		if (handle == null) return;
+		handle.touchable = Touchable.enabled;
+		if (hud != null) {
+			if (xSignal != null) hud.bindXSignal(xSignal);
+			if (ySignal != null) hud.bindYSignal(ySignal);
+		}
+		handle.addListener(new InputListener() {
+			private float lastStageX;
+			private float lastStageY;
+			private float lastX;
+			private float lastY;
+			private boolean useStage = false;
+
+			private @Nullable Hud resolveHud() {
+				Hud target = hud != null ? hud : Hud.find(handle);
+				if (target != null) {
+					if (xSignal != null) target.bindXSignal(xSignal);
+					if (ySignal != null) target.bindYSignal(ySignal);
+				}
+				return target;
+			}
+
+			@Override
+			public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
+				if (event != null && event.listenerActor != null && handle.getScene() == null)
+					return false;
+				if (event != null && isInteractiveDescendant(event.targetActor, handle))
+					return false;
+				Hud targetHud = resolveHud();
+				if (targetHud == null)
+					return false;
+				lastX = x;
+				lastY = y;
+				if (event != null && (event.stageX != 0f || event.stageY != 0f)) {
+					lastStageX = event.stageX;
+					lastStageY = event.stageY;
+					useStage = true;
+				} else {
+					useStage = false;
+				}
+				return true;
+			}
+
+			@Override
+			public void touchDragged(InputEvent event, float x, float y, int pointer) {
+				Hud targetHud = resolveHud();
+				if (targetHud == null)
+					return;
+				float dx, dy;
+				if (useStage && event != null) {
+					dx = event.stageX - lastStageX;
+					dy = event.stageY - lastStageY;
+					lastStageX = event.stageX;
+					lastStageY = event.stageY;
+				} else {
+					dx = x - lastX;
+					dy = y - lastY;
+					lastX = x;
+					lastY = y;
+				}
+				if (Math.abs(dx) > 0.5f || Math.abs(dy) > 0.5f) {
+					for (arc.scene.event.EventListener l : handle.getListeners()) {
+						if (l instanceof arc.scene.event.ClickListener) {
+							((arc.scene.event.ClickListener) l).cancel();
+						}
+					}
+				}
+				targetHud.element().moveBy(dx, dy);
+				targetHud.keepInScreen();
+				if (xSignal != null) {
+					xSignal.set(targetHud.element().x);
+				}
+				if (ySignal != null) {
+					ySignal.set(targetHud.element().y);
+				}
+			}
+
+			@Override
+			public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
+				Hud targetHud = resolveHud();
+				if (targetHud == null)
+					return;
+				targetHud.keepInScreen();
+				if (xSignal != null) {
+					xSignal.set(targetHud.element().x);
+				}
+				if (ySignal != null) {
+					ySignal.set(targetHud.element().y);
+				}
+			}
+		});
+	}
+
+	private static boolean isInteractiveDescendant(@Nullable Element target, Element handle) {
+		Element curr = target;
+		while (curr != null && curr != handle) {
+			if (curr instanceof arc.scene.ui.Button) {
+				return true;
+			}
+			for (arc.scene.event.EventListener l : curr.getListeners()) {
+				if (l instanceof arc.scene.event.ClickListener) {
+					return true;
+				}
+			}
+			curr = curr.parent;
+		}
+		return false;
 	}
 
 	public void keepInScreen() {

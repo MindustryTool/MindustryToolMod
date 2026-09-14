@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Signal;
@@ -55,7 +54,7 @@ public abstract class BaseComponent implements Component {
 
 	private void applyName(Element element) {
 		if (componentName != null) {
-			ElementConfig.name(element, componentName);
+			element.name = componentName;
 		} else if (element.name == null) {
 			String compName = getClass().getSimpleName();
 			if (compName.isEmpty()) {
@@ -65,15 +64,14 @@ public abstract class BaseComponent implements Component {
 			if (elemName.isEmpty()) {
 				elemName = "element";
 			}
-			ElementConfig.name(element, "solim-" + compName.toLowerCase() + "-" + elemName.toLowerCase());
+			element.name = "solim-" + compName.toLowerCase() + "-" + elemName.toLowerCase();
 		}
 	}
 
-	@Override
 	public BaseComponent name(String name) {
 		this.componentName = name;
 		if (cached != null) {
-			ElementConfig.name(cached, name);
+			cached.name = name;
 		}
 		return this;
 	}

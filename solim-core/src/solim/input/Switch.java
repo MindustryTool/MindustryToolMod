@@ -3,7 +3,6 @@ package solim.input;
 import arc.scene.ui.TextButton;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.modifier.ElementConfig;
 import solim.signal.Signal;
 
 /**
@@ -55,9 +54,8 @@ public final class Switch implements Component {
 		return button;
 	}
 
-	@Override
 	public Switch name(String name) {
-		ElementConfig.name(button, name);
+		button.name = name;
 		return this;
 	}
 

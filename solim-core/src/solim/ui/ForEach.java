@@ -11,7 +11,7 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 
 import solim.layout.CellConfig;
-import solim.layout.SizeConstraints;
+import solim.modifier.PendingCellConfig;
 import solim.runtime.StructuralReconciler;
 
 /**
@@ -20,7 +20,7 @@ import solim.runtime.StructuralReconciler;
  */
 public final class ForEach<T, K> extends BaseComponent implements CellConfig<ForEach<T, K>> {
 	private final Table container = new Table();
-	private final SizeConstraints constraints = new SizeConstraints();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private final Readable<? extends Iterable<T>> collection;
 	private final Function<T, K> keyExtractor;
 	private final Function<T, Component> itemFactory;
@@ -48,7 +48,7 @@ public final class ForEach<T, K> extends BaseComponent implements CellConfig<For
 	}
 
 	@Override
-	public SizeConstraints sizeConstraints() {
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 
@@ -67,9 +67,9 @@ public final class ForEach<T, K> extends BaseComponent implements CellConfig<For
 			Element el = comp.element();
 			Cell<?> cell = container.add(el);
 			cell.minWidth(0f);
-			solim.layout.SizeConstraints sc = solim.layout.SizeConstraints.find(comp);
+			solim.modifier.PendingCellConfig sc = solim.modifier.PendingCellConfig.find(comp);
 			if (sc == null) {
-				sc = solim.layout.SizeConstraints.find(el);
+				sc = solim.modifier.PendingCellConfig.find(el);
 			}
 			if (sc != null) {
 				sc.applyToCell(cell);

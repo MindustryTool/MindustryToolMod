@@ -45,7 +45,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfi
 		}
 	};
 
-	private final SizeConstraints constraints = new SizeConstraints();
+	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
 	private final Readable<Integer> columnCount;
 	private final Readable<? extends Iterable<T>> items;
 	private final Function<T, K> keyExtractor;
@@ -190,7 +190,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfi
 	}
 
 	@Override
-	public SizeConstraints sizeConstraints() {
+	public solim.modifier.PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
 
@@ -261,7 +261,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfi
 		for (Component comp : reconciler.activeComponents().values()) {
 			Element el = comp.element();
 			Cell<?> cell = table.add(el).top().left();
-			SizeConstraints sc = null;
+			solim.modifier.PendingCellConfig sc = null;
 			if (comp instanceof CellConfig) {
 				sc = ((CellConfig<?>) comp).sizeConstraints();
 			} else if (el.userObject instanceof CellConfig) {

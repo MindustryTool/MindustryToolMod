@@ -1,4 +1,4 @@
-package solim.layout;
+package solim.modifier;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
@@ -11,17 +11,23 @@ import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Readable;
+import solim.layout.CellConfig;
+import solim.layout.GapContainer;
 
 /**
- * Value object that holds all size constraints for a Solim layout component.
+ * Deferred configuration buffer for parent Cell settings.
+ *
+ * <p>
+ * Holds pending values that will be applied to a parent Cell when the element
+ * is attached to a parent Table via {@link ParentStack}.
  */
-public final class SizeConstraints {
+public final class PendingCellConfig {
 
     static {
         ParentStack.setCellConfigurator((cell, child) -> {
-            SizeConstraints constraints = find(child);
-            if (constraints != null) {
-                List<Disposable> effects = constraints.applyToCell(cell);
+            PendingCellConfig config = find(child);
+            if (config != null) {
+                List<Disposable> effects = config.applyToCell(cell);
                 for (Disposable effect : effects) {
                     ComponentContext.register(effect);
                 }
@@ -107,14 +113,14 @@ public final class SizeConstraints {
         this.align = (current | arc.util.Align.right) & ~arc.util.Align.left;
     }
 
-    public static @Nullable SizeConstraints find(@Nullable Object target) {
+    public static @Nullable PendingCellConfig find(@Nullable Object target) {
         if (target == null)
             return null;
         if (target instanceof CellConfig) {
             return ((CellConfig<?>) target).sizeConstraints();
         }
-        if (target instanceof SizeConstraints) {
-            return (SizeConstraints) target;
+        if (target instanceof PendingCellConfig) {
+            return (PendingCellConfig) target;
         }
         if (target instanceof Element) {
             Element el = (Element) target;
@@ -288,8 +294,6 @@ public final class SizeConstraints {
                 if (cell.get() != null) {
                     cell.get().invalidate();
                 }
-                // Invalidate the parent table so layout is recalculated with the new
-                // constraint.
                 if (cell.getTable() != null) {
                     cell.getTable().invalidateHierarchy();
                 }

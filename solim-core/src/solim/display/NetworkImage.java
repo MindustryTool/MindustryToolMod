@@ -28,12 +28,12 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.runtime.ComponentContext;
 import solim.layout.CellConfig;
-import solim.layout.SizeConstraints;
+import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
 import solim.signal.Effect;
 import solim.signal.Readable;
 
-public final class NetworkImage implements Component, CellConfig<NetworkImage> {
+public final class NetworkImage implements Component, CellConfig<NetworkImage>, ElementConfig<NetworkImage> {
 
     @FunctionalInterface
     public interface ImageLoader {
@@ -293,7 +293,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage> {
     // --- Instance ---
 
     private final Image image;
-    private final SizeConstraints constraints = new SizeConstraints();
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Drawable placeholder;
     private @Nullable Drawable fallback;
     private @Nullable Disposable binding;
@@ -320,7 +320,6 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage> {
         url(url);
     }
 
-    @Override
     public NetworkImage rounded(int radius) {
         int r = Math.max(0, radius);
         if (this.cornerRadius != r) {
@@ -332,7 +331,6 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage> {
         return this;
     }
 
-    @Override
     public NetworkImage rounded(int radius, @Nullable Color color) {
         rounded(radius);
         if (color != null)
@@ -340,7 +338,6 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage> {
         return this;
     }
 
-    @Override
     public NetworkImage rounded(int radius, @Nullable Readable<Color> color) {
         rounded(radius);
         if (color != null)
@@ -378,16 +375,15 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage> {
         return scaling;
     }
 
-    @Override
     public NetworkImage size(float width, float height) {
-        CellConfig.super.size(width, height);
+        width(width);
+        height(height);
         if (cornerRadius > 0 && currentUrl != null) {
             loadUrl(currentUrl);
         }
         return this;
     }
 
-    @Override
     public NetworkImage size(float size) {
         return size(size, size);
     }
@@ -528,14 +524,8 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage> {
     }
 
     @Override
-    public SizeConstraints sizeConstraints() {
+    public PendingCellConfig sizeConstraints() {
         return constraints;
-    }
-
-    @Override
-    public NetworkImage name(String name) {
-        ElementConfig.name(image, name);
-        return this;
     }
 
     public Image image() {
@@ -594,6 +584,30 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage> {
                 cell.pad(padTop + marginTop, padLeft + marginLeft, padBottom + marginBottom, padRight + marginRight);
             }
         }
+    }
+
+    public NetworkImage top() {
+        if (image.parent instanceof Table) {
+            Cell<?> cell = ((Table) image.parent).getCell(image);
+            if (cell != null) cell.top();
+        }
+        return this;
+    }
+
+    public NetworkImage left() {
+        if (image.parent instanceof Table) {
+            Cell<?> cell = ((Table) image.parent).getCell(image);
+            if (cell != null) cell.left();
+        }
+        return this;
+    }
+
+    public NetworkImage center() {
+        if (image.parent instanceof Table) {
+            Cell<?> cell = ((Table) image.parent).getCell(image);
+            if (cell != null) cell.center();
+        }
+        return this;
     }
 
     @Override

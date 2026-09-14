@@ -8,6 +8,7 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
+import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.signal.Effect;
@@ -15,10 +16,10 @@ import solim.signal.Readable;
 import solim.ui.Ui;
 
 /** Simple grid with fixed or reactive column count and customizable gap. */
-public final class Grid implements Component, CellConfig<Grid>, GapContainer {
+public final class Grid implements Component, CellConfig<Grid>, GapContainer, ElementConfig<Grid>, TableConfig<Grid> {
 
 	private final Table table;
-	private final SizeConstraints constraints = new SizeConstraints();
+	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
 	private int columns = 1;
 	private float gap = 4f;
 	private int currentCell = 0;
@@ -45,13 +46,8 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer {
 	}
 
 	@Override
-	public SizeConstraints sizeConstraints() {
+	public solim.modifier.PendingCellConfig sizeConstraints() {
 		return constraints;
-	}
-
-	public Grid name(String name) {
-		ElementConfig.name(table, name);
-		return this;
 	}
 
 	public Grid columns(int c) {

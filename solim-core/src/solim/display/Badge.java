@@ -11,8 +11,9 @@ import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.layout.CellConfig;
-import solim.layout.SizeConstraints;
+import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
+import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Effect;
 import solim.signal.Readable;
@@ -21,10 +22,10 @@ import solim.signal.Readable;
  * Compact pill-shaped badge component for notification counters and tag
  * indicators.
  */
-public final class Badge implements Component, CellConfig<Badge> {
+public final class Badge implements Component, CellConfig<Badge>, ElementConfig<Badge>, TableConfig<Badge> {
 
     private final Table table;
-    private final SizeConstraints constraints = new SizeConstraints();
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private final Text label;
     private final List<Disposable> bindings = new ArrayList<>();
     private boolean hideOnZero = false;
@@ -48,7 +49,7 @@ public final class Badge implements Component, CellConfig<Badge> {
             table.setBackground(bg);
             table.setColor(new Color(0.85f, 0.25f, 0.25f, 0.9f));
         }
-        ElementConfig.padding(table, 2f, 6f, 2f, 6f);
+        table.margin(2f, 6f, 2f, 6f);
 
         this.label = Text.of(text);
         table.add(label.label()).center();
@@ -130,38 +131,8 @@ public final class Badge implements Component, CellConfig<Badge> {
     }
 
     @Override
-    public SizeConstraints sizeConstraints() {
+    public PendingCellConfig sizeConstraints() {
         return constraints;
-    }
-
-    public Badge name(String name) {
-        ElementConfig.name(table, name);
-        return this;
-    }
-
-    public Badge rounded(int radius) {
-        ElementConfig.rounded(table, radius);
-        return this;
-    }
-
-    public Badge rounded(int radius, @Nullable Color color) {
-        ElementConfig.rounded(table, radius, color);
-        return this;
-    }
-
-    public Badge rounded(int radius, @Nullable Readable<Color> color) {
-        ElementConfig.rounded(table, radius, color);
-        return this;
-    }
-
-    public Badge border(float stroke, @Nullable Color color) {
-        ElementConfig.border(table, stroke, color);
-        return this;
-    }
-
-    public Badge border(float stroke, @Nullable Readable<Color> color) {
-        ElementConfig.border(table, stroke, color);
-        return this;
     }
 
     @Override

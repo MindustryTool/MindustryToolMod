@@ -35,7 +35,7 @@ public class AxisSpacingTest {
 		assertEquals(8f, colTable.getMarginTop(), 0.01f);
 		assertEquals(8f, colTable.getMarginBottom(), 0.01f);
 
-		col.cellPaddingX(10f).cellPaddingY(5f);
+		col.marginX(10f).marginY(5f);
 		assertEquals(10f, colTable.getMarginLeft(), 0.01f);
 		assertEquals(10f, colTable.getMarginRight(), 0.01f);
 		assertEquals(5f, colTable.getMarginTop(), 0.01f);
@@ -48,7 +48,7 @@ public class AxisSpacingTest {
 		assertEquals(12f, rowTable.getMarginTop(), 0.01f);
 		assertEquals(12f, rowTable.getMarginBottom(), 0.01f);
 
-		row.cellPaddingX(14f).cellPaddingY(7f);
+		row.marginX(14f).marginY(7f);
 		assertEquals(14f, rowTable.getMarginLeft(), 0.01f);
 		assertEquals(14f, rowTable.getMarginRight(), 0.01f);
 		assertEquals(7f, rowTable.getMarginTop(), 0.01f);

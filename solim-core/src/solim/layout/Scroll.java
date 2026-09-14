@@ -13,11 +13,12 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
+import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
 
 /** Scroll container wrapping a Table in a ScrollPane. */
-public final class Scroll implements Component, CellConfig<Scroll> {
+public final class Scroll implements Component, CellConfig<Scroll>, ElementConfig<Scroll>, TableConfig<Scroll> {
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -31,7 +32,7 @@ public final class Scroll implements Component, CellConfig<Scroll> {
 
     private final Table outer;
     private final Table content;
-    private final SizeConstraints constraints = new SizeConstraints();
+    private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
     private final ScrollPane pane;
     private boolean centered = false;
     private boolean disableX = true;
@@ -211,7 +212,7 @@ public final class Scroll implements Component, CellConfig<Scroll> {
         for (Cell<?> cell : content.getCells()) {
             cell.center().top();
         }
-        return CellConfig.super.center();
+        return this;
     }
 
     @Override
@@ -222,7 +223,7 @@ public final class Scroll implements Component, CellConfig<Scroll> {
         for (Cell<?> cell : content.getCells()) {
             cell.left().top();
         }
-        return CellConfig.super.left();
+        return this;
     }
 
     @Override
@@ -233,7 +234,7 @@ public final class Scroll implements Component, CellConfig<Scroll> {
         for (Cell<?> cell : content.getCells()) {
             cell.right().top();
         }
-        return CellConfig.super.right();
+        return this;
     }
 
     @Override
@@ -242,27 +243,44 @@ public final class Scroll implements Component, CellConfig<Scroll> {
     }
 
     @Override
-    public SizeConstraints sizeConstraints() {
+    public Table table() {
+        return outer;
+    }
+
+    @Override
+    public solim.modifier.PendingCellConfig sizeConstraints() {
         return constraints;
     }
 
+    @Override
     public Scroll x(float x) {
-        ElementConfig.x(outer, x);
+        Element el = element();
+        if (el != null) el.x = x;
         return this;
     }
 
+    @Override
     public Scroll y(float y) {
-        ElementConfig.y(outer, y);
+        Element el = element();
+        if (el != null) el.y = y;
         return this;
     }
 
+    @Override
     public Scroll position(float x, float y) {
-        ElementConfig.position(outer, x, y);
+        Element el = element();
+        if (el != null) el.setPosition(x, y);
         return this;
     }
 
+    @Override
     public Scroll visible(boolean visible) {
-        ElementConfig.visible(outer, visible);
+        Element el = element();
+        if (el == null) return this;
+        el.visible = visible;
+        if (el.parent instanceof Table) {
+            solim.layout.GapContainer.respace((Table) el.parent);
+        }
         return this;
     }
 
@@ -303,8 +321,4 @@ public final class Scroll implements Component, CellConfig<Scroll> {
         return this;
     }
 
-    public Scroll name(String name) {
-        ElementConfig.name(outer, name);
-        return this;
-    }
 }

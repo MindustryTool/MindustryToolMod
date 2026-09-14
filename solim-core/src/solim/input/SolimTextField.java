@@ -24,7 +24,7 @@ import solim.ui.Binding;
  * loop. Automatically registers with the active ComponentContext if created during a component
  * build.
  */
-public final class SolimTextField implements Component {
+public final class SolimTextField implements Component, ElementConfig<SolimTextField> {
 
 	private final TextField field;
 	private final Signal<String> signal;
@@ -130,26 +130,6 @@ public final class SolimTextField implements Component {
 		return this;
 	}
 
-	public SolimTextField width(float width) {
-		ElementConfig.width(field, width);
-		return this;
-	}
-
-	public SolimTextField height(float height) {
-		ElementConfig.height(field, height);
-		return this;
-	}
-
-	public SolimTextField size(float width, float height) {
-		ElementConfig.size(field, width, height);
-		return this;
-	}
-
-	public SolimTextField size(float size) {
-		ElementConfig.size(field, size);
-		return this;
-	}
-
 	public SolimTextField growX() {
 		field.userObject = "expanding";
 		if (field.parent instanceof Table) {
@@ -178,26 +158,6 @@ public final class SolimTextField implements Component {
 		return growX().growY();
 	}
 
-	public SolimTextField x(float x) {
-		ElementConfig.x(field, x);
-		return this;
-	}
-
-	public SolimTextField y(float y) {
-		ElementConfig.y(field, y);
-		return this;
-	}
-
-	public SolimTextField position(float x, float y) {
-		ElementConfig.position(field, x, y);
-		return this;
-	}
-
-	public SolimTextField visible(boolean visible) {
-		ElementConfig.visible(field, visible);
-		return this;
-	}
-
 	public TextField field() {
 		return field;
 	}
@@ -205,12 +165,6 @@ public final class SolimTextField implements Component {
 	@Override
 	public Element element() {
 		return field;
-	}
-
-	@Override
-	public SolimTextField name(String name) {
-		ElementConfig.name(field, name);
-		return this;
 	}
 
 	public SolimTextField rounded(int radius) {

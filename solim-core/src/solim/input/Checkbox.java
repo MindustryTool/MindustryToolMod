@@ -7,7 +7,6 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.function.Consumer;
 import solim.core.Component;
-import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Signal;
 
@@ -100,9 +99,8 @@ public final class Checkbox implements Component {
 		return checkBox;
 	}
 
-	@Override
 	public Checkbox name(String name) {
-		ElementConfig.name(checkBox, name);
+		checkBox.name = name;
 		return this;
 	}
 

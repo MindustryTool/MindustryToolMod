@@ -6,7 +6,7 @@ Additionally, `SizeConstraints` is misnamed — it's not constraining size, it's
 
 ## What Changes
 
-- **ElementConfig** becomes a mixin interface (`ElementConfig<SELF>`) with default methods for Element-targeted operations: `width`, `height`, `size`, `x`, `y`, `position`, `visible`, `opacity`, `alpha`, `name`, `rounded`, `border`, `background`. Each component provides `Element element()`.
+- **ElementConfig** becomes a mixin interface (`ElementConfig<SELF>`) with default methods for Element-targeted operations: `width`, `height`, `size`, `x`, `y`, `position`, `visible`, `opacity`, `alpha`, `name`, `rounded`, `border`, `background` (Drawable/Color), `backgroundColor` (Color). Each component provides `Element element()`.
 - **TableConfig** becomes a mixin interface (`TableConfig<SELF>`) with default methods for Table-targeted operations: `align`, `top`, `bottom`, `left`, `right`, `center`, `margin*`, `padding*`, `gap`, `respace`. Each component provides `Table table()`.
 - **CellConfig** stays as a mixin interface but **removes** methods now provided by ElementConfig/TableConfig (width/height/size, opacity, rounded/border/background, alignment). CellConfig keeps only parent-cell concepts: `grow*`, `min/max*`, `cellPadding*`.
 - **SizeConstraints** is renamed to **`PendingCellConfig`** — it's pending configuration for the parent Cell, not size constraints.
@@ -31,4 +31,4 @@ Additionally, `SizeConstraints` is misnamed — it's not constraining size, it's
 - **Files deleted**: `ElementModifiers.java` (already deleted), `LayoutModifiers.java` (already deleted), old Element-overload methods in `ElementConfig`
 - **Files modified**: All Solim components that implement `CellConfig` (Row, Column, Card, Grid, Scroll, Wrap, etc.) — their `CellConfig` methods now only contain parent-cell methods; width/height/opacity/rounded/border/background come from `ElementConfig` mixin
 - **Internal callers**: ~180+ call sites in solim-core that use `ElementConfig` static methods — re-pointed to `ElementConfig` mixin or `TableConfig` as appropriate
-- **Mod impact**: Zero direct `ElementConfig` calls in mod code — mod uses CellConfig fluent API on components, which is unchanged
+- **Mod impact**: `ChatAvatar` simplified to plain `BaseComponent` (removing `CellConfig` and manual cell alignment in favor of parent row `gap()`). `Hud.background` cleanly supports `Readable<Drawable>`, keeping `TeamResourceHudView` aligned.

@@ -21,7 +21,7 @@ import solim.signal.Readable;
 import solim.signal.Signal;
 
 /** Display widget for text content. */
-public final class Text implements Component, SpacingAware {
+public final class Text implements Component, SpacingAware, ElementConfig<Text> {
 
     private final Label label;
     private final List<Disposable> bindings = new ArrayList<>();
@@ -330,45 +330,6 @@ public final class Text implements Component, SpacingAware {
         return this;
     }
 
-    public Text size(float width, float height) {
-        ElementConfig.size(label, width, height);
-        return this;
-    }
-
-    public Text size(float size) {
-        ElementConfig.size(label, size);
-        return this;
-    }
-
-    public Text x(float x) {
-        ElementConfig.x(label, x);
-        return this;
-    }
-
-    public Text y(float y) {
-        ElementConfig.y(label, y);
-        return this;
-    }
-
-    public Text position(float x, float y) {
-        ElementConfig.position(label, x, y);
-        return this;
-    }
-
-    public Text visible(boolean visible) {
-        ElementConfig.visible(label, visible);
-        return this;
-    }
-
-    public Text visible(@Nullable Readable<Boolean> signal) {
-        if (signal != null) {
-            Effect e = Effect.of(() -> ElementConfig.visible(label, Boolean.TRUE.equals(signal.get())));
-            bindings.add(e);
-            ComponentContext.register(e);
-        }
-        return this;
-    }
-
     public Label label() {
         applySpacing();
         return label;
@@ -378,12 +339,6 @@ public final class Text implements Component, SpacingAware {
     public Element element() {
         applySpacing();
         return label;
-    }
-
-    @Override
-    public Text name(String name) {
-        ElementConfig.name(label, name);
-        return this;
     }
 
     @Override

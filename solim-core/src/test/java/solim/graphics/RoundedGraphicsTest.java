@@ -14,7 +14,6 @@ import solim.input.Button;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Container;
-import solim.modifier.ElementConfig;
 import solim.overlay.Popup;
 import solim.signal.Signal;
 
@@ -174,10 +173,11 @@ class RoundedGraphicsTest {
     }
 
     @Test
-    void elementModifiersAppliesRoundedToArbitraryTable() {
-        Table table = new Table();
-        ElementConfig.rounded(table, 10, Color.royal);
-        ElementConfig.border(table, 1.5f, Color.gold);
+    void elementModifiersAppliesRoundedToColumn() {
+        Column col = new Column();
+        col.rounded(10, Color.royal);
+        col.border(1.5f, Color.gold);
+        Table table = col.table();
 
         assertTrue(table.getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd = (RoundedDrawable) table.getBackground();
@@ -346,9 +346,9 @@ class RoundedGraphicsTest {
     }
 
     @Test
-    void backgroundColorDirectOnTable() {
-        Table table = new Table();
-        ElementConfig.background(table, Color.royal);
-        assertTrue(table.getBackground() instanceof RoundedDrawable);
+    void backgroundColorDirectOnColumn() {
+        Column col = new Column();
+        col.background(Color.royal);
+        assertTrue(col.table().getBackground() instanceof RoundedDrawable);
     }
 }

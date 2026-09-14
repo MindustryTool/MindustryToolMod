@@ -1,858 +1,308 @@
 package solim.modifier;
 
 import arc.graphics.Color;
-import arc.input.KeyCode;
 import arc.scene.Element;
-import arc.scene.event.ClickListener;
-import arc.scene.event.EventListener;
-import arc.scene.event.InputEvent;
-import arc.scene.event.InputListener;
-import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
-import arc.scene.ui.Button;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
+import solim.core.Component;
 import solim.graphics.RoundedDrawable;
+import solim.layout.CellConfig;
 import solim.overlay.Hud;
+import solim.runtime.ComponentContext;
+import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
 
 /**
- * Element-level configuration utilities.
+ * Mixin interface for operations that directly mutate an Arc {@link Element}'s own properties.
  *
  * <p>
- * Static utility methods that modify the Arc {@link arc.scene.Element} itself:
- * its size, position, visibility, color, name, and so on. These affect the
- * element directly and do NOT configure the element's parent cell or container
- * child defaults.
+ * Implementing components provide {@link #element()} to supply their root Arc Element.
+ * All methods are default methods that operate on the element returned by {@code element()}.
  *
  * <p>
  * Targets:
  * <ul>
- * <li>{@code width/height/size} — element's size (sets on the element
- * directly)</li>
+ * <li>{@code width/height/size} — element's size</li>
  * <li>{@code x/y/position} — element's position in local coordinates</li>
- * <li>{@code visible/opacity/alpha} — element's visibility and
- * transparency</li>
+ * <li>{@code visible} — element's visibility</li>
+ * <li>{@code opacity/alpha} — element's transparency</li>
  * <li>{@code name} — element's debug name</li>
- * <li>{@code align} — element's internal content alignment</li>
- * <li>{@code gap} — spacing between children inside a Table-based
- * container</li>
- * <li>{@code margin/padding} — padding on the element (container-internal
- * defaults)</li>
+ * <li>{@code rounded/border/background} — element's visual styling</li>
+ * <li>{@code draggable} — element drag-to-move integration</li>
  * </ul>
  *
- * <p>
- * Contrast with {@link solim.layout.CellConfig}, which is a mixin interface
- * that configures how the element behaves inside its <em>parent</em> layout
- * cell (grow, cellPadding as parent-cell spacing, alignment in parent, etc.).
+ * @param <SELF> the concrete component type, enabling fluent chaining
  */
-public final class ElementConfig {
+public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
-    private ElementConfig() {
-    }
+    /** Returns the root Arc Element for this component. */
+    Element element();
 
-    public static void width(@Nullable Element element, float width) {
-        if (element == null)
-            return;
+    // ---------- size ----------
+
+    /** Sets the element's width and updates the parent cell if attached. */
+    default SELF width(float width) {
+        Element el = element();
+        if (el == null) return self();
         float val = Math.max(0f, width);
-        element.setWidth(val);
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
+        el.setWidth(val);
+        if (el.parent instanceof Table) {
+            Cell<?> cell = ((Table) el.parent).getCell(el);
             if (cell != null) {
                 cell.width(val);
             }
         }
-        element.invalidateHierarchy();
+        if (this instanceof CellConfig) {
+            ((CellConfig<?>) this).sizeConstraints().prefWidth = Readable.of(val);
+        }
+        el.invalidateHierarchy();
+        return self();
     }
 
-    public static void height(@Nullable Element element, float height) {
-        if (element == null)
-            return;
+    /** Sets the element's width reactively. */
+    default SELF width(@Nullable Readable<Float> width) {
+        if (width == null) return self();
+        if (this instanceof CellConfig) {
+            ((CellConfig<?>) this).sizeConstraints().prefWidth = width;
+        }
+        Element el = element();
+        if (el != null) {
+            Effect e = Effect.of(() -> {
+                Float w = width.get();
+                if (w != null) width(w);
+            });
+            ComponentContext.register(e);
+        }
+        return self();
+    }
+
+    /** Sets the element's height and updates the parent cell if attached. */
+    default SELF height(float height) {
+        Element el = element();
+        if (el == null) return self();
         float val = Math.max(0f, height);
-        element.setHeight(val);
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
+        el.setHeight(val);
+        if (el.parent instanceof Table) {
+            Cell<?> cell = ((Table) el.parent).getCell(el);
             if (cell != null) {
                 cell.height(val);
             }
         }
-        element.invalidateHierarchy();
-    }
-
-    public static void size(@Nullable Element element, float width, float height) {
-        width(element, width);
-        height(element, height);
-    }
-
-    public static void size(@Nullable Element element, float size) {
-        size(element, size, size);
-    }
-
-    public static void x(@Nullable Element element, float x) {
-        if (element == null)
-            return;
-        element.x = x;
-    }
-
-    public static void y(@Nullable Element element, float y) {
-        if (element == null)
-            return;
-        element.y = y;
-    }
-
-    public static void position(@Nullable Element element, float x, float y) {
-        if (element == null)
-            return;
-        element.setPosition(x, y);
-    }
-
-    public static void visible(@Nullable Element element, boolean visible) {
-        if (element == null)
-            return;
-        element.visible = visible;
-        if (element.parent instanceof Table) {
-            solim.layout.GapContainer.respace((Table) element.parent);
+        if (this instanceof CellConfig) {
+            ((CellConfig<?>) this).sizeConstraints().prefHeight = Readable.of(val);
         }
+        el.invalidateHierarchy();
+        return self();
     }
 
-    public static void visible(@Nullable Element element, @Nullable Readable<Boolean> visible) {
-        if (element == null || visible == null)
-            return;
-        solim.signal.Effect e = solim.signal.Effect.of(() -> {
-            Boolean val = visible.get();
-            if (val != null) {
-                element.visible = val;
-                if (element.parent instanceof Table) {
-                    solim.layout.GapContainer.respace((Table) element.parent);
-                }
-                element.invalidateHierarchy();
-            }
-        });
-        solim.runtime.ComponentContext.register(e);
-    }
-
-    public static void opacity(@Nullable Element element, float opacity) {
-        if (element == null)
-            return;
-        element.color.a = Math.max(0f, Math.min(1f, opacity));
-    }
-
-    public static void opacity(@Nullable Element element, @Nullable Readable<Float> opacity) {
-        if (element == null || opacity == null)
-            return;
-        solim.signal.Effect e = solim.signal.Effect.of(() -> {
-            Float val = opacity.get();
-            if (val != null) {
-                opacity(element, val);
-            }
-        });
-        solim.runtime.ComponentContext.register(e);
-    }
-
-    public static void alpha(@Nullable Element element, float alpha) {
-        opacity(element, alpha);
-    }
-
-    public static void alpha(@Nullable Element element, @Nullable Readable<Float> alpha) {
-        opacity(element, alpha);
-    }
-
-    public static void name(@Nullable Element element, @Nullable String name) {
-        if (element == null)
-            return;
-        element.name = name;
-    }
-
-    public static void align(@Nullable Table table, int align) {
-        if (table == null)
-            return;
-        table.align(align);
-    }
-
-    public static void top(@Nullable Table table) {
-        if (table == null)
-            return;
-        table.top();
-    }
-
-    public static void bottom(@Nullable Table table) {
-        if (table == null)
-            return;
-        table.bottom();
-    }
-
-    public static void left(@Nullable Table table) {
-        if (table == null)
-            return;
-        table.left();
-    }
-
-    public static void right(@Nullable Table table) {
-        if (table == null)
-            return;
-        table.right();
-    }
-
-    public static void center(@Nullable Table table) {
-        if (table == null)
-            return;
-        table.center();
-    }
-
-    public static void margin(@Nullable Table table, float margin) {
-        if (table == null)
-            return;
-        table.margin(margin);
-    }
-
-    public static void margin(@Nullable Table table, float top, float left, float bottom, float right) {
-        if (table == null)
-            return;
-        table.margin(top, left, bottom, right);
-    }
-
-    public static void marginTop(@Nullable Table table, float top) {
-        if (table == null)
-            return;
-        table.marginTop(top);
-    }
-
-    public static void marginBottom(@Nullable Table table, float bottom) {
-        if (table == null)
-            return;
-        table.marginBottom(bottom);
-    }
-
-    public static void marginLeft(@Nullable Table table, float left) {
-        if (table == null)
-            return;
-        table.marginLeft(left);
-    }
-
-    public static void marginRight(@Nullable Table table, float right) {
-        if (table == null)
-            return;
-        table.marginRight(right);
-    }
-
-    public static void margin(@Nullable Element element, float margin) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            margin((Table) element, margin);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.pad(margin);
-            }
+    /** Sets the element's height reactively. */
+    default SELF height(@Nullable Readable<Float> height) {
+        if (height == null) return self();
+        if (this instanceof CellConfig) {
+            ((CellConfig<?>) this).sizeConstraints().prefHeight = height;
         }
-    }
-
-    public static void margin(@Nullable Element element, float top, float left, float bottom, float right) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            margin((Table) element, top, left, bottom, right);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.pad(top, left, bottom, right);
-            }
-        }
-    }
-
-    public static void marginTop(@Nullable Element element, float top) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            marginTop((Table) element, top);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padTop(top);
-            }
-        }
-    }
-
-    public static void marginBottom(@Nullable Element element, float bottom) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            marginBottom((Table) element, bottom);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padBottom(bottom);
-            }
-        }
-    }
-
-    public static void marginLeft(@Nullable Element element, float left) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            marginLeft((Table) element, left);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padLeft(left);
-            }
-        }
-    }
-
-    public static void marginRight(@Nullable Element element, float right) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            marginRight((Table) element, right);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padRight(right);
-            }
-        }
-    }
-
-    public static void paddingX(@Nullable Table table, float x) {
-        if (table == null)
-            return;
-        table.marginLeft(x);
-        table.marginRight(x);
-    }
-
-    public static void paddingY(@Nullable Table table, float y) {
-        if (table == null)
-            return;
-        table.marginTop(y);
-        table.marginBottom(y);
-    }
-
-    public static void marginX(@Nullable Table table, float x) {
-        paddingX(table, x);
-    }
-
-    public static void marginY(@Nullable Table table, float y) {
-        paddingY(table, y);
-    }
-
-    public static void padding(@Nullable Table table, float padding) {
-        margin(table, padding);
-    }
-
-    public static void padding(@Nullable Table table, float top, float left, float bottom, float right) {
-        margin(table, top, left, bottom, right);
-    }
-
-    public static void paddingTop(@Nullable Table table, float top) {
-        marginTop(table, top);
-    }
-
-    public static void paddingBottom(@Nullable Table table, float bottom) {
-        marginBottom(table, bottom);
-    }
-
-    public static void paddingLeft(@Nullable Table table, float left) {
-        marginLeft(table, left);
-    }
-
-    public static void paddingRight(@Nullable Table table, float right) {
-        marginRight(table, right);
-    }
-
-    public static void padding(@Nullable Element element, float padding) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            padding((Table) element, padding);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.pad(padding);
-            }
-        }
-    }
-
-    public static void padding(@Nullable Element element, float top, float left, float bottom, float right) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            padding((Table) element, top, left, bottom, right);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.pad(top, left, bottom, right);
-            }
-        }
-    }
-
-    public static void paddingTop(@Nullable Element element, float top) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            paddingTop((Table) element, top);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padTop(top);
-            }
-        }
-    }
-
-    public static void paddingBottom(@Nullable Element element, float bottom) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            paddingBottom((Table) element, bottom);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padBottom(bottom);
-            }
-        }
-    }
-
-    public static void paddingLeft(@Nullable Element element, float left) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            paddingLeft((Table) element, left);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padLeft(left);
-            }
-        }
-    }
-
-    public static void paddingRight(@Nullable Element element, float right) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            paddingRight((Table) element, right);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padRight(right);
-            }
-        }
-    }
-
-    public static void paddingX(@Nullable Element element, float x) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            paddingX((Table) element, x);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padLeft(x);
-                cell.padRight(x);
-            }
-        }
-    }
-
-    public static void paddingY(@Nullable Element element, float y) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            paddingY((Table) element, y);
-        } else if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.padTop(y);
-                cell.padBottom(y);
-            }
-        }
-    }
-
-    public static void marginX(@Nullable Element element, float x) {
-        paddingX(element, x);
-    }
-
-    public static void marginY(@Nullable Element element, float y) {
-        paddingY(element, y);
-    }
-
-    public static void respace(@Nullable Table table) {
-        solim.layout.GapContainer.respace(table);
-    }
-
-    public static void gap(@Nullable Table table, float gap) {
-        if (table == null)
-            return;
-        if (table.userObject instanceof solim.layout.GapContainer) {
-            solim.layout.GapContainer gc = (solim.layout.GapContainer) table.userObject;
-            if (gc instanceof solim.layout.Row) {
-                ((solim.layout.Row) gc).gap(gap);
-            } else if (gc instanceof solim.layout.Column) {
-                ((solim.layout.Column) gc).gap(gap);
-            } else if (gc instanceof solim.layout.Grid) {
-                ((solim.layout.Grid) gc).gap(gap);
-            } else if (gc instanceof solim.layout.Wrap) {
-                ((solim.layout.Wrap) gc).gap(gap);
-            } else if (gc instanceof solim.layout.Card) {
-                ((solim.layout.Card) gc).gap(gap);
-            } else if (gc instanceof solim.input.Button) {
-                ((solim.input.Button) gc).gap(gap);
-            } else if (gc instanceof GenericGapContainer) {
-                ((GenericGapContainer) gc).setGap(gap);
-            } else {
-                gc.respace();
-            }
-        } else {
-            GenericGapContainer ggc = new GenericGapContainer(table, gap);
-            table.userObject = ggc;
-            ggc.respace();
-        }
-        table.invalidateHierarchy();
-    }
-
-    public static void gap(@Nullable Element element, float gap) {
-        if (element instanceof Table) {
-            gap((Table) element, gap);
-        }
-    }
-
-    private static final class GenericGapContainer implements solim.layout.GapContainer {
-        private final Table table;
-        private float gap;
-
-        GenericGapContainer(Table table, float gap) {
-            this.table = table;
-            this.gap = gap;
-        }
-
-        void setGap(float gap) {
-            this.gap = gap;
-            respace();
-        }
-
-        @Override
-        public solim.layout.Direction direction() {
-            return solim.layout.Direction.HORIZONTAL;
-        }
-
-        @Override
-        public float gap() {
-            return gap;
-        }
-
-        @Override
-        public void respace() {
-            solim.layout.GapContainer.applySpacing(table, solim.layout.Direction.HORIZONTAL, gap);
-        }
-    }
-
-    public static void draggable(@Nullable Element handle) {
-        draggable(handle, null, null, null);
-    }
-
-    public static void draggable(@Nullable Element handle, @Nullable Signal<Float> xSignal,
-            @Nullable Signal<Float> ySignal) {
-        draggable(handle, null, xSignal, ySignal);
-    }
-
-    public static void draggable(@Nullable Element handle, @Nullable Hud hud) {
-        draggable(handle, hud, null, null);
-    }
-
-    public static void draggable(@Nullable Element handle, @Nullable Hud hud, @Nullable Signal<Float> xSignal,
-            @Nullable Signal<Float> ySignal) {
-        if (handle == null)
-            return;
-        handle.touchable = Touchable.enabled;
-        if (hud != null) {
-            if (xSignal != null)
-                hud.bindXSignal(xSignal);
-            if (ySignal != null)
-                hud.bindYSignal(ySignal);
-        }
-        handle.addListener(new InputListener() {
-            private float lastStageX;
-            private float lastStageY;
-            private float lastX;
-            private float lastY;
-            private boolean useStage = false;
-
-            private @Nullable Hud resolveHud() {
-                Hud target = hud != null ? hud : Hud.find(handle);
-                if (target != null) {
-                    if (xSignal != null)
-                        target.bindXSignal(xSignal);
-                    if (ySignal != null)
-                        target.bindYSignal(ySignal);
-                }
-                return target;
-            }
-
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                if (event != null && event.listenerActor != null && handle.getScene() == null)
-                    return false;
-                if (event != null && isInteractiveDescendant(event.targetActor, handle))
-                    return false;
-                Hud targetHud = resolveHud();
-                if (targetHud == null)
-                    return false;
-                lastX = x;
-                lastY = y;
-                if (event != null && (event.stageX != 0f || event.stageY != 0f)) {
-                    lastStageX = event.stageX;
-                    lastStageY = event.stageY;
-                    useStage = true;
-                } else {
-                    useStage = false;
-                }
-                return true;
-            }
-
-            @Override
-            public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                Hud targetHud = resolveHud();
-                if (targetHud == null)
-                    return;
-                float dx, dy;
-                if (useStage && event != null) {
-                    dx = event.stageX - lastStageX;
-                    dy = event.stageY - lastStageY;
-                    lastStageX = event.stageX;
-                    lastStageY = event.stageY;
-                } else {
-                    dx = x - lastX;
-                    dy = y - lastY;
-                    lastX = x;
-                    lastY = y;
-                }
-                if (Math.abs(dx) > 0.5f || Math.abs(dy) > 0.5f) {
-                    for (EventListener l : handle.getListeners()) {
-                        if (l instanceof ClickListener) {
-                            ((ClickListener) l).cancel();
-                        }
-                    }
-                }
-                targetHud.element().moveBy(dx, dy);
-                targetHud.keepInScreen();
-                if (xSignal != null) {
-                    xSignal.set(targetHud.element().x);
-                }
-                if (ySignal != null) {
-                    ySignal.set(targetHud.element().y);
-                }
-            }
-
-            @Override
-            public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                Hud targetHud = resolveHud();
-                if (targetHud == null)
-                    return;
-                targetHud.keepInScreen();
-                if (xSignal != null) {
-                    xSignal.set(targetHud.element().x);
-                }
-                if (ySignal != null) {
-                    ySignal.set(targetHud.element().y);
-                }
-            }
-        });
-    }
-
-    private static boolean isInteractiveDescendant(@Nullable Element target, Element handle) {
-        Element curr = target;
-        while (curr != null && curr != handle) {
-            if (curr instanceof Button) {
-                return true;
-            }
-            for (EventListener l : curr.getListeners()) {
-                if (l instanceof ClickListener) {
-                    return true;
-                }
-            }
-            curr = curr.parent;
-        }
-        return false;
-    }
-
-    public static @Nullable RoundedDrawable rounded(@Nullable Element element, int radius) {
-        return rounded(element, radius, (Color) null);
-    }
-
-    public static @Nullable RoundedDrawable rounded(@Nullable Element element, int radius, @Nullable Color color) {
-        if (element == null)
-            return null;
-        RoundedDrawable rd = getOrCreateRounded(element, radius);
-        rd.radius(radius);
-        if (color != null) {
-            rd.fillColor(color);
-        }
-        return rd;
-    }
-
-    public static @Nullable RoundedDrawable rounded(@Nullable Element element, int radius,
-            @Nullable Readable<Color> color) {
-        if (element == null)
-            return null;
-        RoundedDrawable rd = getOrCreateRounded(element, radius);
-        rd.radius(radius);
-        if (color != null) {
-            rd.fillColor(color);
-        }
-        return rd;
-    }
-
-    public static @Nullable RoundedDrawable border(@Nullable Element element, float stroke, @Nullable Color color) {
-        if (element == null)
-            return null;
-        RoundedDrawable rd = getOrCreateRounded(element, 8);
-        rd.border(stroke, color != null ? color : Color.white);
-        return rd;
-    }
-
-    public static @Nullable RoundedDrawable border(@Nullable Element element, float stroke,
-            @Nullable Readable<Color> color) {
-        if (element == null)
-            return null;
-        RoundedDrawable rd = getOrCreateRounded(element, 8);
-        if (color != null) {
-            rd.border(stroke, color);
-        } else {
-            rd.border(stroke, Color.white);
-        }
-        return rd;
-    }
-
-    public static void background(@Nullable Element element, @Nullable Drawable bg) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            Table table = (Table) element;
-            if (table.getBackground() instanceof RoundedDrawable) {
-                ((RoundedDrawable) table.getBackground()).baseDrawable(bg);
-            } else {
-                table.setBackground(bg);
-            }
-        }
-    }
-
-    public static void background(@Nullable Element element, @Nullable Color color) {
-        if (element == null)
-            return;
-        if (element instanceof Table) {
-            Table table = (Table) element;
-            if (table.getBackground() instanceof RoundedDrawable) {
-                RoundedDrawable rd = (RoundedDrawable) table.getBackground();
-                rd.baseDrawable(new ColorDrawable(color));
-            } else {
-                RoundedDrawable rd = new RoundedDrawable(8);
-                rd.baseDrawable(new ColorDrawable(color));
-                table.setBackground(rd);
-            }
-        }
-    }
-
-    public static void background(@Nullable Element element, @Nullable Readable<Color> color) {
-        if (element == null)
-            return;
-        if (element instanceof Table && color != null) {
-            solim.signal.Effect e = solim.signal.Effect.of(() -> {
-                Color c = color.get();
-                if (c != null) {
-                    background(element, c);
-                }
+        Element el = element();
+        if (el != null) {
+            Effect e = Effect.of(() -> {
+                Float h = height.get();
+                if (h != null) height(h);
             });
-            solim.runtime.ComponentContext.register(e);
+            ComponentContext.register(e);
         }
+        return self();
     }
 
-    private static class ColorDrawable implements Drawable {
-        private final Color color;
-
-        ColorDrawable(Color color) {
-            this.color = color != null ? color : Color.clear;
-        }
-
-        @Override
-        public void draw(float x, float y, float width, float height) {
-            arc.graphics.g2d.Draw.color(color);
-            arc.graphics.g2d.Fill.rect(x, y, width, height);
-        }
-
-        @Override
-        public void draw(float x, float y, float originX, float originY, float width, float height, float scaleX,
-                float scaleY, float rotation) {
-            arc.graphics.g2d.Draw.color(color);
-            arc.graphics.g2d.Fill.rect(x, y, width, height);
-        }
-
-        @Override
-        public float getLeftWidth() {
-            return 0;
-        }
-
-        @Override
-        public void setLeftWidth(float leftWidth) {
-        }
-
-        @Override
-        public float getRightWidth() {
-            return 0;
-        }
-
-        @Override
-        public void setRightWidth(float rightWidth) {
-        }
-
-        @Override
-        public float getTopHeight() {
-            return 0;
-        }
-
-        @Override
-        public void setTopHeight(float topHeight) {
-        }
-
-        @Override
-        public float getBottomHeight() {
-            return 0;
-        }
-
-        @Override
-        public void setBottomHeight(float bottomHeight) {
-        }
-
-        @Override
-        public float getMinWidth() {
-            return 0;
-        }
-
-        @Override
-        public void setMinWidth(float minWidth) {
-        }
-
-        @Override
-        public float getMinHeight() {
-            return 0;
-        }
-
-        @Override
-        public void setMinHeight(float minHeight) {
-        }
+    /** Sets both width and height to the given dimensions. */
+    default SELF size(float width, float height) {
+        width(width);
+        height(height);
+        return self();
     }
 
-    private static RoundedDrawable getOrCreateRounded(Element element, int defaultRadius) {
-        if (element instanceof Table) {
-            Table table = (Table) element;
-            if (table.getBackground() instanceof RoundedDrawable) {
-                return (RoundedDrawable) table.getBackground();
-            }
-            RoundedDrawable rd = new RoundedDrawable(defaultRadius);
-            if (table.getBackground() != null) {
-                rd.baseDrawable(table.getBackground());
-            }
-            table.setBackground(rd);
-            return rd;
+    /** Sets both width and height to the same value (square). */
+    default SELF size(float size) {
+        return size(size, size);
+    }
+
+    /** Sets both width and height to the same reactive value. */
+    default SELF size(@Nullable Readable<Float> size) {
+        width(size);
+        height(size);
+        return self();
+    }
+
+    /** Sets width and height to independent reactive values. */
+    default SELF size(@Nullable Readable<Float> width, @Nullable Readable<Float> height) {
+        width(width);
+        height(height);
+        return self();
+    }
+
+    // ---------- position ----------
+
+    /** Sets the element's x coordinate. */
+    default SELF x(float x) {
+        Element el = element();
+        if (el != null) el.x = x;
+        return self();
+    }
+
+    /** Sets the element's x coordinate reactively. */
+    default SELF x(@Nullable Readable<Float> x) {
+        if (x == null) return self();
+        Element el = element();
+        if (el != null) {
+            Effect e = Effect.of(() -> {
+                Float v = x.get();
+                if (v != null) x(v);
+            });
+            ComponentContext.register(e);
         }
-        return new RoundedDrawable(defaultRadius);
+        return self();
+    }
+
+    /** Sets the element's y coordinate. */
+    default SELF y(float y) {
+        Element el = element();
+        if (el != null) el.y = y;
+        return self();
+    }
+
+    /** Sets the element's y coordinate reactively. */
+    default SELF y(@Nullable Readable<Float> y) {
+        if (y == null) return self();
+        Element el = element();
+        if (el != null) {
+            Effect e = Effect.of(() -> {
+                Float v = y.get();
+                if (v != null) y(v);
+            });
+            ComponentContext.register(e);
+        }
+        return self();
+    }
+
+    /** Sets the element's position (x, y). */
+    default SELF position(float x, float y) {
+        x(x);
+        y(y);
+        return self();
+    }
+
+    /** Sets the element's position (x, y) reactively. */
+    default SELF position(@Nullable Readable<Float> x, @Nullable Readable<Float> y) {
+        x(x);
+        y(y);
+        return self();
+    }
+
+    // ---------- visibility ----------
+
+    /** Sets whether the element is visible. */
+    default SELF visible(boolean visible) {
+        Element el = element();
+        if (el == null) return self();
+        el.visible = visible;
+        if (el.parent instanceof Table) {
+            Table parentTable = (Table) el.parent;
+            if (parentTable.userObject instanceof solim.layout.GapContainer) {
+                ((solim.layout.GapContainer) parentTable.userObject).respace();
+            }
+        }
+        return self();
+    }
+
+    /** Sets element visibility reactively. */
+    default SELF visible(@Nullable Readable<Boolean> visible) {
+        if (visible == null) return self();
+        Element el = element();
+        if (el != null) {
+            Effect e = Effect.of(() -> {
+                Boolean v = visible.get();
+                visible(Boolean.TRUE.equals(v));
+            });
+            ComponentContext.register(e);
+        }
+        return self();
+    }
+
+    // ---------- opacity / alpha ----------
+
+    /** Sets the element's opacity (alpha channel of its color). */
+    default SELF opacity(float opacity) {
+        Element el = element();
+        if (el != null) {
+            el.color.a = Math.max(0f, Math.min(1f, opacity));
+        }
+        return self();
+    }
+
+    /** Sets the element's opacity reactively. */
+    default SELF opacity(@Nullable Readable<Float> opacity) {
+        if (opacity == null) return self();
+        Element el = element();
+        if (el != null) {
+            Effect e = Effect.of(() -> {
+                Float v = opacity.get();
+                if (v != null) opacity(v);
+            });
+            ComponentContext.register(e);
+        }
+        return self();
+    }
+
+    /** Alias for {@link #opacity(float)}. */
+    default SELF alpha(float alpha) {
+        return opacity(alpha);
+    }
+
+    /** Alias for {@link #opacity(Readable)}. */
+    default SELF alpha(@Nullable Readable<Float> alpha) {
+        return opacity(alpha);
+    }
+
+    // ---------- name ----------
+
+    /** Sets the element's debug name. */
+    default SELF name(String name) {
+        Element el = element();
+        if (el != null) el.name = name;
+        return self();
+    }
+
+    // ---------- draggable ----------
+
+    /** Makes this element draggable to move its parent HUD. */
+    default SELF draggable() {
+        Hud.makeDraggable(element(), null, null, null);
+        return self();
+    }
+
+    /** Makes this element draggable with reactive coordinate reporting. */
+    default SELF draggable(@Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
+        Hud.makeDraggable(element(), null, xSignal, ySignal);
+        return self();
+    }
+
+    /** Makes this element draggable targeting an explicit HUD. */
+    default SELF draggable(@Nullable Hud hud) {
+        Hud.makeDraggable(element(), hud, null, null);
+        return self();
+    }
+
+    /** Makes this element draggable targeting an explicit HUD with reactive coordinate reporting. */
+    default SELF draggable(@Nullable Hud hud, @Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
+        Hud.makeDraggable(element(), hud, xSignal, ySignal);
+        return self();
+    }
+
+    // ---------- internal ----------
+
+    @SuppressWarnings("unchecked")
+    private SELF self() {
+        return (SELF) this;
     }
 }

@@ -271,12 +271,11 @@ public class ChatMessageListView extends BaseComponent {
             return row()
                     .growX()
                     .top().left()
+                    .gap(ChatMessageHeightCalculator.AVATAR_GAP)
                     .padding(ChatMessageHeightCalculator.UNIT_1)
                     .children(() -> {
                         // Shared group avatar on the left, pinned to the top
-                        new ChatAvatar(authorName, avatarUrl, authorId, ChatMessageHeightCalculator.AVATAR_SIZE)
-                                .top()
-                                .cellPaddingRight(ChatMessageHeightCalculator.AVATAR_GAP);
+                        new ChatAvatar(authorName, avatarUrl, authorId, ChatMessageHeightCalculator.AVATAR_SIZE);
 
                         // Right column: header followed by stacked messages
                         column().growX().top().left().children(() -> {

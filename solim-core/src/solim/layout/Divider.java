@@ -9,13 +9,14 @@ import arc.util.Nullable;
 import arc.util.Scaling;
 import solim.core.Component;
 import solim.display.SolimImage;
+import solim.modifier.ElementConfig;
 import solim.signal.Readable;
 
 /**
  * Divider line supporting horizontal (X) and vertical (Y) directions. Uses an
  * Image instead of a Table for lightweight rendering.
  */
-public final class Divider implements Component, CellConfig<Divider> {
+public final class Divider implements Component, CellConfig<Divider>, ElementConfig<Divider> {
     private final SolimImage image;
     private final Direction direction;
 
@@ -101,7 +102,7 @@ public final class Divider implements Component, CellConfig<Divider> {
     }
 
     @Override
-    public SizeConstraints sizeConstraints() {
+    public solim.modifier.PendingCellConfig sizeConstraints() {
         return image.sizeConstraints();
     }
 

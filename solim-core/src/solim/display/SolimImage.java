@@ -14,7 +14,7 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SpacingAware;
 import solim.layout.CellConfig;
-import solim.layout.SizeConstraints;
+import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Effect;
@@ -22,11 +22,11 @@ import solim.signal.Readable;
 import solim.signal.Signal;
 
 /** Display widget for drawable content. */
-public final class SolimImage implements Component, CellConfig<SolimImage>, SpacingAware {
+public final class SolimImage implements Component, CellConfig<SolimImage>, ElementConfig<SolimImage>, SpacingAware {
 
 	private final Image image;
 	private final List<Disposable> bindings = new ArrayList<>();
-	private final SizeConstraints constraints = new SizeConstraints();
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private Scaling scaling = Scaling.fit;
 
 	private float padTop;
@@ -92,137 +92,9 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Spac
 	}
 
 	@Override
-	public SizeConstraints sizeConstraints() {
+	public PendingCellConfig sizeConstraints() {
 		return constraints;
 	}
-
-	@Override
-	public SolimImage width(float width) {
-		constraints.prefWidth = Readable.of(width);
-		ElementConfig.width(image, width);
-		constraints.applySizeToParentCell(image);
-		return this;
-	}
-
-	@Override
-	public SolimImage width(@Nullable Readable<Float> width) {
-		constraints.prefWidth = width;
-		if (width != null) {
-			Effect e = Effect.of(() -> {
-				Float w = width.get();
-				if (w != null) {
-					ElementConfig.width(image, w);
-					constraints.applySizeToParentCell(image);
-				}
-			});
-			bindings.add(e);
-			ComponentContext.register(e);
-		}
-		return this;
-	}
-
-	@Override
-	public SolimImage height(float height) {
-		constraints.prefHeight = Readable.of(height);
-		ElementConfig.height(image, height);
-		constraints.applySizeToParentCell(image);
-		return this;
-	}
-
-	@Override
-	public SolimImage height(@Nullable Readable<Float> height) {
-		constraints.prefHeight = height;
-		if (height != null) {
-			Effect e = Effect.of(() -> {
-				Float h = height.get();
-				if (h != null) {
-					ElementConfig.height(image, h);
-					constraints.applySizeToParentCell(image);
-				}
-			});
-			bindings.add(e);
-			ComponentContext.register(e);
-		}
-		return this;
-	}
-
-	public SolimImage size(float width, float height) {
-		width(width);
-		height(height);
-		return this;
-	}
-
-	public SolimImage size(float size) {
-		return size(size, size);
-	}
-
-	public SolimImage size(@Nullable Readable<Float> size) {
-		if (size != null) {
-			width(size);
-			height(size);
-		}
-		return this;
-	}
-
-	public SolimImage size(@Nullable Readable<Float> width, @Nullable Readable<Float> height) {
-		if (width != null) width(width);
-		if (height != null) height(height);
-		return this;
-	}
-
-	public SolimImage growX() {
-		image.userObject = "expanding";
-		if (image.parent instanceof Table) {
-			Cell<?> cell = ((Table) image.parent).getCell(image);
-			if (cell != null) {
-				cell.growX();
-				((Table) image.parent).invalidateHierarchy();
-			}
-		}
-		return this;
-	}
-
-	public SolimImage growY() {
-		image.userObject = "expanding";
-		if (image.parent instanceof Table) {
-			Cell<?> cell = ((Table) image.parent).getCell(image);
-			if (cell != null) {
-				cell.growY();
-				((Table) image.parent).invalidateHierarchy();
-			}
-		}
-		return this;
-	}
-
-	public SolimImage grow() {
-		return growX().growY();
-	}
-
-	public SolimImage x(float x) {
-		ElementConfig.x(image, x);
-		return this;
-	}
-
-	public SolimImage y(float y) {
-		ElementConfig.y(image, y);
-		return this;
-	}
-
-	public SolimImage position(float x, float y) {
-		ElementConfig.position(image, x, y);
-		return this;
-	}
-
-	public SolimImage visible(boolean visible) {
-		ElementConfig.visible(image, visible);
-		return this;
-	}
-
-	public SolimImage visible(@Nullable Readable<Boolean> signal) {
-		ElementConfig.visible(image, signal);
-		return this;
-	}
-
 	public SolimImage color(Color color) {
 		if (color != null) {
 			image.setColor(color);
@@ -368,9 +240,27 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Spac
 		return image;
 	}
 
-	@Override
-	public SolimImage name(String name) {
-		ElementConfig.name(image, name);
+	public SolimImage top() {
+		if (image.parent instanceof arc.scene.ui.layout.Table) {
+			arc.scene.ui.layout.Cell<?> cell = ((arc.scene.ui.layout.Table) image.parent).getCell(image);
+			if (cell != null) cell.top();
+		}
+		return this;
+	}
+
+	public SolimImage left() {
+		if (image.parent instanceof arc.scene.ui.layout.Table) {
+			arc.scene.ui.layout.Cell<?> cell = ((arc.scene.ui.layout.Table) image.parent).getCell(image);
+			if (cell != null) cell.left();
+		}
+		return this;
+	}
+
+	public SolimImage center() {
+		if (image.parent instanceof arc.scene.ui.layout.Table) {
+			arc.scene.ui.layout.Cell<?> cell = ((arc.scene.ui.layout.Table) image.parent).getCell(image);
+			if (cell != null) cell.center();
+		}
 		return this;
 	}
 

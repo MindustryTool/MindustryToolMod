@@ -23,13 +23,6 @@ class ComponentContractTest {
 		assertEquals("contract-element", comp.element().name);
 	}
 
-	@Test
-	void componentNameSetsElementName() {
-		Element elem = new Element();
-		Component comp = () -> elem;
-		comp.name("test-name");
-		assertEquals("test-name", elem.name);
-	}
 
 	@Test
 	void baseComponentElementCachesResult() {

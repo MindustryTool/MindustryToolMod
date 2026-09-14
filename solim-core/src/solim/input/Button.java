@@ -24,6 +24,8 @@ import solim.layout.Direction;
 import solim.layout.GapContainer;
 import solim.layout.Row;
 import solim.modifier.ElementConfig;
+import solim.modifier.ElementConfig;
+import solim.modifier.TableConfig;
 import solim.overlay.Hud;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
@@ -37,7 +39,7 @@ import solim.style.SolimButtonStyleBuilder;
  * Pure Button container widget supporting explicit children composition, custom
  * width/height sizing, and reactive state.
  */
-public final class Button implements Component, GapContainer {
+public final class Button implements Component, GapContainer, ElementConfig<Button>, TableConfig<Button> {
 
     private final arc.scene.ui.Button button;
     private final List<Disposable> bindings = new ArrayList<>();
@@ -279,7 +281,7 @@ public final class Button implements Component, GapContainer {
             button.setStyle(resolved.style());
         }
         if (resolved.padding() != null) {
-            ElementConfig.padding(button, resolved.padding().floatValue());
+            button.margin(resolved.padding().floatValue());
         }
         if (resolved.margin() != null) {
             applyStyleMargin(resolved.margin().floatValue());
@@ -320,70 +322,6 @@ public final class Button implements Component, GapContainer {
             }
         } catch (Throwable ignored) {
         }
-    }
-
-    public Button width(float width) {
-        ElementConfig.width(button, width);
-        return this;
-    }
-
-    public Button width(@Nullable Readable<Float> width) {
-        if (width != null) {
-            Effect e = Effect.of(() -> {
-                Float w = width.get();
-                if (w != null) {
-                    width(w);
-                }
-            });
-            bindings.add(e);
-            ComponentContext.register(e);
-        }
-        return this;
-    }
-
-    public Button height(float height) {
-        ElementConfig.height(button, height);
-        return this;
-    }
-
-    public Button height(@Nullable Readable<Float> height) {
-        if (height != null) {
-            Effect e = Effect.of(() -> {
-                Float h = height.get();
-                if (h != null) {
-                    height(h);
-                }
-            });
-            bindings.add(e);
-            ComponentContext.register(e);
-        }
-        return this;
-    }
-
-    public Button size(float width, float height) {
-        ElementConfig.size(button, width, height);
-        return this;
-    }
-
-    public Button size(float size) {
-        ElementConfig.size(button, size);
-        return this;
-    }
-
-    public Button size(@Nullable Readable<Float> size) {
-        if (size != null) {
-            width(size);
-            height(size);
-        }
-        return this;
-    }
-
-    public Button size(@Nullable Readable<Float> width, @Nullable Readable<Float> height) {
-        if (width != null)
-            width(width);
-        if (height != null)
-            height(height);
-        return this;
     }
 
     public Button growX() {
@@ -449,133 +387,6 @@ public final class Button implements Component, GapContainer {
         GapContainer.applySpacing(button, Direction.HORIZONTAL, gap);
     }
 
-    public Button margin(float m) {
-        button.margin(m);
-        return this;
-    }
-
-    public Button margin(@Nullable Readable<Float> margin) {
-        if (margin != null) {
-            Effect e = Effect.of(() -> {
-                Float m = margin.get();
-                if (m != null) {
-                    margin(m);
-                }
-            });
-            bindings.add(e);
-            ComponentContext.register(e);
-        }
-        return this;
-    }
-
-    public Button margin(float top, float left, float bottom, float right) {
-        button.margin(top, left, bottom, right);
-        return this;
-    }
-
-    public Button marginX(float x) {
-        ElementConfig.marginX(button, x);
-        return this;
-    }
-
-    public Button marginX(@Nullable Readable<Float> x) {
-        if (x != null) {
-            Effect e = Effect.of(() -> {
-                Float val = x.get();
-                if (val != null) {
-                    marginX(val);
-                }
-            });
-            bindings.add(e);
-            ComponentContext.register(e);
-        }
-        return this;
-    }
-
-    public Button marginY(float y) {
-        ElementConfig.marginY(button, y);
-        return this;
-    }
-
-    public Button marginY(@Nullable Readable<Float> y) {
-        if (y != null) {
-            Effect e = Effect.of(() -> {
-                Float val = y.get();
-                if (val != null) {
-                    marginY(val);
-                }
-            });
-            bindings.add(e);
-            ComponentContext.register(e);
-        }
-        return this;
-    }
-
-    public Button padding(float p) {
-        ElementConfig.padding(button, p);
-        return this;
-    }
-
-    public Button padding(float top, float left, float bottom, float right) {
-        ElementConfig.padding(button, top, left, bottom, right);
-        return this;
-    }
-
-    public Button paddingX(float x) {
-        ElementConfig.paddingX(button, x);
-        return this;
-    }
-
-    public Button paddingY(float y) {
-        ElementConfig.paddingY(button, y);
-        return this;
-    }
-
-    public Button x(float x) {
-        ElementConfig.x(button, x);
-        return this;
-    }
-
-    public Button y(float y) {
-        ElementConfig.y(button, y);
-        return this;
-    }
-
-    public Button position(float x, float y) {
-        ElementConfig.position(button, x, y);
-        return this;
-    }
-
-    public Button left() {
-        button.left();
-        button.defaults().left();
-        return this;
-    }
-
-    public Button right() {
-        button.right();
-        button.defaults().right();
-        return this;
-    }
-
-    public Button center() {
-        button.center();
-        button.defaults().center();
-        return this;
-    }
-
-    public Button top() {
-        button.top();
-        button.defaults().top();
-        return this;
-    }
-
-    public Button bottom() {
-        button.bottom();
-        button.defaults().bottom();
-        return this;
-    }
-
     public arc.scene.ui.Button button() {
         return button;
     }
@@ -583,30 +394,6 @@ public final class Button implements Component, GapContainer {
     public arc.scene.ui.Button sizedButton() {
         return button;
     }
-
-    public Button name(String name) {
-        ElementConfig.name(button, name);
-        return this;
-    }
-
-    public Button draggable() {
-        return draggable((Hud) null);
-    }
-
-    public Button draggable(@Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
-        return draggable((Hud) null, xSignal, ySignal);
-    }
-
-    public Button draggable(@Nullable Hud hud) {
-        ElementConfig.draggable(button, hud);
-        return this;
-    }
-
-    public Button draggable(@Nullable Hud hud, @Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
-        ElementConfig.draggable(button, hud, xSignal, ySignal);
-        return this;
-    }
-
     public Button color(Color color) {
         button.setColor(color);
         return this;
@@ -635,7 +422,8 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button rounded(int radius, @Nullable Color color) {
-        RoundedDrawable rd = ElementConfig.rounded(button, radius, color);
+        TableConfig.super.rounded(radius, color);
+        RoundedDrawable rd = getOrCreateRounded(radius);
         if (rd != null) {
             ButtonStyle s = button.getStyle();
             if (s == null) {
@@ -654,7 +442,8 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button rounded(int radius, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = ElementConfig.rounded(button, radius, color);
+        TableConfig.super.rounded(radius, color);
+        RoundedDrawable rd = getOrCreateRounded(radius);
         if (rd != null) {
             ButtonStyle s = button.getStyle();
             if (s == null) {
@@ -685,7 +474,8 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button border(float stroke, @Nullable Color color) {
-        RoundedDrawable rd = ElementConfig.border(button, stroke, color);
+        TableConfig.super.border(stroke, color);
+        RoundedDrawable rd = getOrCreateRounded(8);
         if (rd != null) {
             ButtonStyle s = button.getStyle();
             if (s == null) {
@@ -707,7 +497,8 @@ public final class Button implements Component, GapContainer {
     }
 
     public Button border(float stroke, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = ElementConfig.border(button, stroke, color);
+        TableConfig.super.border(stroke, color);
+        RoundedDrawable rd = getOrCreateRounded(8);
         if (rd != null) {
             ButtonStyle s = button.getStyle();
             if (s == null) {
@@ -729,7 +520,12 @@ public final class Button implements Component, GapContainer {
     }
 
     @Override
-    public Element element() {
+    public arc.scene.ui.Button element() {
+        return button;
+    }
+
+    @Override
+    public arc.scene.ui.layout.Table table() {
         return button;
     }
 

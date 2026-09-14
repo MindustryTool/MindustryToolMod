@@ -2,22 +2,20 @@ package solim.layout;
 
 import arc.scene.Element;
 import arc.scene.event.Touchable;
-import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
+import solim.modifier.TableConfig;
 import solim.overlay.Hud;
-import solim.runtime.ComponentContext;
-import solim.signal.Effect;
+import solim.runtime.ParentStack;
 import solim.signal.Readable;
 import solim.signal.Signal;
-import solim.runtime.ParentStack;
 import solim.ui.Ui;
 
 /** Row layout — horizontal Table wrapper. */
-public final class Row implements Component, CellConfig<Row>, GapContainer {
+public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {
 
 	public static final ParentStack.Attacher ATTACHER = (table, child) -> {
 		Cell<?> cell = table.add(child);
@@ -32,7 +30,7 @@ public final class Row implements Component, CellConfig<Row>, GapContainer {
 	};
 
 	private final Table table;
-	private final SizeConstraints constraints = new SizeConstraints();
+	private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
 	private float gap = 0f;
 
 	public Row() {
@@ -52,13 +50,8 @@ public final class Row implements Component, CellConfig<Row>, GapContainer {
 	}
 
 	@Override
-	public SizeConstraints sizeConstraints() {
+	public solim.modifier.PendingCellConfig sizeConstraints() {
 		return constraints;
-	}
-
-	public Row name(String name) {
-		ElementConfig.name(table, name);
-		return this;
 	}
 
 	public Row fillParent(boolean fillParent) {
@@ -83,13 +76,13 @@ public final class Row implements Component, CellConfig<Row>, GapContainer {
 
 	public Row gap(@Nullable Readable<Float> gapSignal) {
 		if (gapSignal != null) {
-			Effect e = Effect.of(() -> {
+			solim.signal.Effect e = solim.signal.Effect.of(() -> {
 				Float g = gapSignal.get();
 				if (g != null) {
 					gap(g);
 				}
 			});
-			ComponentContext.register(e);
+			solim.runtime.ComponentContext.register(e);
 		}
 		return this;
 	}
@@ -109,161 +102,54 @@ public final class Row implements Component, CellConfig<Row>, GapContainer {
 		GapContainer.applySpacing(table, Direction.HORIZONTAL, gap);
 	}
 
-	public Row padding(float p) {
-		ElementConfig.padding(table, p);
-		return this;
-	}
-
-	public Row padding(float top, float left, float bottom, float right) {
-		ElementConfig.padding(table, top, left, bottom, right);
-		return this;
-	}
-
-	public Row paddingTop(float top) {
-		ElementConfig.paddingTop(table, top);
-		return this;
-	}
-
-	public Row paddingBottom(float bottom) {
-		ElementConfig.paddingBottom(table, bottom);
-		return this;
-	}
-
-	public Row paddingLeft(float left) {
-		ElementConfig.paddingLeft(table, left);
-		return this;
-	}
-
-	public Row paddingRight(float right) {
-		ElementConfig.paddingRight(table, right);
-		return this;
-	}
-
-	public Row margin(float m) {
-		ElementConfig.margin(table, m);
-		return this;
-	}
-
-	public Row margin(float top, float left, float bottom, float right) {
-		ElementConfig.margin(table, top, left, bottom, right);
-		return this;
-	}
-
-	public Row marginTop(float top) {
-		ElementConfig.marginTop(table, top);
-		return this;
-	}
-
-	public Row marginBottom(float bottom) {
-		ElementConfig.marginBottom(table, bottom);
-		return this;
-	}
-
-	public Row marginLeft(float left) {
-		ElementConfig.marginLeft(table, left);
-		return this;
-	}
-
-	public Row marginRight(float right) {
-		ElementConfig.marginRight(table, right);
-		return this;
-	}
-
-	public Row paddingX(float x) {
-		ElementConfig.paddingX(table, x);
-		return this;
-	}
-
-	public Row paddingY(float y) {
-		ElementConfig.paddingY(table, y);
-		return this;
-	}
-
-	@Override
-	public Row cellPaddingX(float x) {
-		ElementConfig.marginX(table, x);
-		return this;
-	}
-
-	@Override
-	public Row cellPaddingY(float y) {
-		ElementConfig.marginY(table, y);
-		return this;
-	}
-
-	public Row x(float x) {
-		ElementConfig.x(table, x);
-		return this;
-	}
-
-	public Row y(float y) {
-		ElementConfig.y(table, y);
-		return this;
-	}
-
-	public Row position(float x, float y) {
-		ElementConfig.position(table, x, y);
-		return this;
-	}
-
-	public Row visible(boolean visible) {
-		ElementConfig.visible(table, visible);
-		return this;
-	}
-
-	public Row visible(@Nullable Readable<Boolean> visible) {
-		ElementConfig.visible(table, visible);
-		return this;
-	}
-
 	@Override
 	public Row top() {
-		ElementConfig.top(table);
+		TableConfig.super.top();
 		table.defaults().top();
 		for (Cell<?> c : table.getCells()) {
 			if (c != null) c.top();
 		}
-		return CellConfig.super.top();
+		return this;
 	}
 
 	@Override
 	public Row bottom() {
-		ElementConfig.bottom(table);
+		TableConfig.super.bottom();
 		table.defaults().bottom();
 		for (Cell<?> c : table.getCells()) {
 			if (c != null) c.bottom();
 		}
-		return CellConfig.super.bottom();
+		return this;
 	}
 
 	@Override
 	public Row left() {
-		ElementConfig.left(table);
+		TableConfig.super.left();
 		table.defaults().left();
 		for (Cell<?> c : table.getCells()) {
 			if (c != null) c.left();
 		}
-		return CellConfig.super.left();
+		return this;
 	}
 
 	@Override
 	public Row right() {
-		ElementConfig.right(table);
+		TableConfig.super.right();
 		table.defaults().right();
 		for (Cell<?> c : table.getCells()) {
 			if (c != null) c.right();
 		}
-		return CellConfig.super.right();
+		return this;
 	}
 
 	@Override
 	public Row center() {
-		ElementConfig.center(table);
+		TableConfig.super.center();
 		table.defaults().center();
 		for (Cell<?> c : table.getCells()) {
 			if (c != null) c.center();
 		}
-		return CellConfig.super.center();
+		return this;
 	}
 
 	public Row justify(Justify j) {
@@ -309,31 +195,6 @@ public final class Row implements Component, CellConfig<Row>, GapContainer {
 		}
 		ParentStack.attachToParent(table);
 		respace();
-		return this;
-	}
-
-	public Row background(@Nullable Drawable bg) {
-		ElementConfig.background(table, bg);
-		return this;
-	}
-
-	public Row draggable() {
-		ElementConfig.draggable(table);
-		return this;
-	}
-
-	public Row draggable(@Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
-		ElementConfig.draggable(table, null, xSignal, ySignal);
-		return this;
-	}
-
-	public Row draggable(@Nullable Hud hud) {
-		ElementConfig.draggable(table, hud);
-		return this;
-	}
-
-	public Row draggable(@Nullable Hud hud, @Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
-		ElementConfig.draggable(table, hud, xSignal, ySignal);
 		return this;
 	}
 
