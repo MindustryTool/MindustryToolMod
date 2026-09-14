@@ -43,20 +43,30 @@ public final class FeatureSettingsView extends BaseComponent {
     }
 
     private void toolbar() {
-        row().growX().gap(unit(2))
-                .rounded(unit(3))
-                .paddingLeft(unit(2))
-                .border(1.5f, Color.darkGray).children(() -> {
-                    icon(Icon.zoom).size(unit(6));
-                    textField(filter).growX().style(WebStyles.clearInput())
-                            .placeholder(Core.bundle.get("feature.search.placeholder"));
+        column().growX().gap(unit(2)).children(() -> {
+            row().growX().gap(unit(2))
+                    .rounded(unit(3))
+                    .paddingLeft(unit(2))
+                    .border(1.5f, Color.darkGray).children(() -> {
+                        icon(Icon.zoom).size(unit(6));
+                        textField(filter).growX().style(WebStyles.clearInput())
+                                .placeholder(Core.bundle.get("feature.search.placeholder"));
+                    });
 
-                    button(FeatureManager::reenable).style(Styles.defaultb).width(unit(50)).height(unit(10))
-                            .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {
-                                icon(Icon.refresh);
-                                text(Core.bundle.get("feature.button.re-enable"));
-                            });
-                });
+            row().growX().top().left().gap(unit(2)).children(() -> {
+                button(FeatureManager::reenable).style(Styles.defaultb).height(unit(10))
+                        .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {
+                            icon(Icon.refresh);
+                            text(Core.bundle.get("feature.button.re-enable"));
+                        });
+
+                button(() -> new GeneralSettingsDialog().show()).style(Styles.defaultb).height(unit(10))
+                        .tooltip(Core.bundle.get("feature.button.settings")).gap(unit(2)).children(() -> {
+                            icon(Icon.settings);
+                            text(Core.bundle.get("feature.button.settings"));
+                        });
+            });
+        });
     }
 
     static boolean matchesFilter(Feature feature, String query) {

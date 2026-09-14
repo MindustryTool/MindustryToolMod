@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustrytool.Config;
 import mindustrytool.utils.JsonUtils;
@@ -27,28 +28,24 @@ public final class FeatureSettingDialog extends SolimDialog {
                 64f,
                 () -> Core.app.openURI(Config.DISCORD_INVITE_URL));
 
-        actionButton(
-                Core.bundle.get("feature.button.copy-ui-tree", "Copy UI tree"),
-                200f,
-                64f,
-                () -> {
-                    UiNode root = new UiNode(
-                            "Scene", 0f, 0f, Core.graphics.getWidth(), Core.graphics.getHeight(), new ArrayList<>());
+        if (!Vars.mobile) {
+            actionButton(
+                    Core.bundle.get("feature.button.copy-ui-tree", "Copy UI tree"),
+                    200f,
+                    64f,
+                    () -> {
+                        UiNode root = new UiNode(
+                                "Scene", 0f, 0f, Core.graphics.getWidth(), Core.graphics.getHeight(),
+                                new ArrayList<>());
 
-                    discoverSolimElements(
-                            root,
-                            Core.scene.root,
-                            element -> "featureSettingDialog".equals(element.name));
+                        discoverSolimElements(
+                                root,
+                                Core.scene.root,
+                                element -> "featureSettingDialog".equals(element.name));
 
-                    Core.app.setClipboardText(JsonUtils.toJsonPretty(root));
-                });
-
-        actionButton(
-                Core.bundle.get("feature.button.settings"),
-                Icon.settings,
-                200f,
-                64f,
-                () -> new GeneralSettingsDialog().show());
+                        Core.app.setClipboardText(JsonUtils.toJsonPretty(root));
+                    });
+        }
     }
 
     private void discoverSolimElements(UiNode parent, Element element, Predicate<Element> pred) {
