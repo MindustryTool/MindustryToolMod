@@ -55,6 +55,7 @@ import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 import solim.signal.Computed;
 import solim.signal.Signal;
+import solim.signal.Readable;
 
 public class PlayerConnectFeature extends Feature {
 
@@ -104,6 +105,10 @@ public class PlayerConnectFeature extends Feature {
         autoAcceptConfig = config.boolValue("autoAccept", true);
 
         registerEventListeners();
+    }
+
+    public Readable<List<PlayerConnectRoom>> getRooms() {
+        return rooms;
     }
 
     private void registerEventListeners() {

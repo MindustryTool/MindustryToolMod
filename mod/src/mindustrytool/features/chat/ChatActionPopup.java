@@ -8,8 +8,8 @@ import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.FeatureManager;
+import mindustrytool.features.chat.models.ParsedChatMessage;
 import mindustrytool.features.translation.TranslationFeature;
-import mindustrytool.models.response.ChatMessage;
 import mindustrytool.services.MindustryTool;
 import solim.core.Component;
 import solim.overlay.Popup;
@@ -23,7 +23,7 @@ import solim.overlay.Popup;
 public final class ChatActionPopup {
 
     /** The single shared menu instance, installed by the chat overlay. */
-    public static @Nullable Popup<ChatMessage> menu;
+    public static @Nullable Popup<ParsedChatMessage> menu;
 
     private ChatActionPopup() {
     }
@@ -38,7 +38,7 @@ public final class ChatActionPopup {
      * Opens the shared menu for the given message anchored near the given stage
      * coordinates.
      */
-    public static void showFor(@Nullable ChatMessage message, float stageX, float stageY) {
+    public static void showFor(@Nullable ParsedChatMessage message, float stageX, float stageY) {
         if (menu != null) {
             menu.show(message, stageX, stageY);
         }
@@ -51,7 +51,7 @@ public final class ChatActionPopup {
         }
     }
 
-    private static Component menuRows(ChatStore store, ChatMessage message) {
+    private static Component menuRows(ChatStore store, ParsedChatMessage message) {
         return column().growX().padding(unit(1)).gap(unit(1)).children(() -> {
             button(Core.bundle.get("feature.chat.ui.copy", "Copy"), () -> copyMessage(store, message))
                     .style(WebStyles.secondaryText())
@@ -59,7 +59,7 @@ public final class ChatActionPopup {
                     .height(unit(10));
 
             button(Core.bundle.get("feature.chat.ui.reply", "Reply"), () -> {
-                store.ui().setReplyTarget(message);
+                store.ui().setReplyTarget(message.getRaw());
                 dismiss();
             }).style(WebStyles.secondaryText()).growX().height(unit(10));
 
@@ -70,7 +70,7 @@ public final class ChatActionPopup {
         });
     }
 
-    private static void copyMessage(ChatStore store, @Nullable ChatMessage message) {
+    private static void copyMessage(ChatStore store, @Nullable ParsedChatMessage message) {
         try {
             String content = message != null && message.getContent() != null ? message.getContent() : "";
             Core.app.setClipboardText(content);
@@ -80,7 +80,7 @@ public final class ChatActionPopup {
         dismiss();
     }
 
-    private static void translateMessage(ChatStore store, @Nullable ChatMessage message) {
+    private static void translateMessage(ChatStore store, @Nullable ParsedChatMessage message) {
         if (message == null) {
             dismiss();
             return;

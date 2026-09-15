@@ -1,7 +1,9 @@
 package mindustrytool.features.settings;
 
+import arc.struct.Seq;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.config.OrderedSeqPersister;
 
 /**
  * Mod-wide settings backed by persistent {@link ConfigGroup}.
@@ -11,6 +13,7 @@ public final class ModSettings {
 
     public static final ConfigGroup GROUP = ConfigGroup.of("mindustrytool.settings");
 
+    public static final ConfigValue<Seq<String>> featureOrder = GROUP.value("feature-order", Seq.with(), new OrderedSeqPersister());
     public static final ConfigValue<Boolean> betaParticipate = GROUP.boolValue("betaParticipate", false);
 
     private ModSettings() {}

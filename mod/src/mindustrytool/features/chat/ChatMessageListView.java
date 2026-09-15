@@ -238,7 +238,6 @@ public class ChatMessageListView extends BaseComponent {
         @Override
         protected Element build() {
             ParsedChatMessage first = group.getMessage(0);
-            ChatMessage firstRaw = first.getRaw();
             String authorId = group.getAuthorId();
 
             Readable<UserData> user = store.users().get(authorId);
@@ -302,7 +301,7 @@ public class ChatMessageListView extends BaseComponent {
                                         Button actionsButton = button(() -> {
                                         });
                                         actionsButton
-                                                .onClick(() -> openActions(firstRaw, actionsButton.element()))
+                                                .onClick(() -> openActions(first, actionsButton.element()))
                                                 .style(Styles.clearNonei)
                                                 .size(unit(6), unit(6))
                                                 .children(() -> icon(FileIcon.of("ellipsis-vertical.png"))
@@ -329,7 +328,7 @@ public class ChatMessageListView extends BaseComponent {
             Readable<Boolean> isFailed = store.delivery().isFailed(msgId);
 
             var card = card().growX().top().left();
-            card.onClick(() -> openActions(raw, card.element()));
+            card.onClick(() -> openActions(parsed, card.element()));
             if (hasPrevious) {
                 card.cellPaddingTop(ChatMessageHeightCalculator.MESSAGE_GAP);
             }
@@ -356,7 +355,7 @@ public class ChatMessageListView extends BaseComponent {
             });
         }
 
-        private void openActions(ChatMessage message, @Nullable Element anchor) {
+        private void openActions(ParsedChatMessage message, @Nullable Element anchor) {
             float x = -1f;
             float y = -1f;
             if (anchor != null) {

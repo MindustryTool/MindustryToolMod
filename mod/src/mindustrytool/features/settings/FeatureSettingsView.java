@@ -22,8 +22,13 @@ public final class FeatureSettingsView extends BaseComponent {
     private final Computed<Float> contentWidth = dvw(90f).map(w -> w - unit(10));
     private final Computed<Integer> columnCount = contentWidth.map(w -> Math.max(1, (int) (w / 400f)));
 
-    private final Computed<Seq<Feature>> filteredFeatures = filter.map(
-            q -> FeatureManager.getFeatures().select(f -> matchesFilter(f, q != null ? q.trim().toLowerCase() : "")));
+    private final Computed<Seq<Feature>> filteredFeatures = Signal.computed(() -> {
+        String q = filter.get();
+        String query = q != null ? q.trim().toLowerCase() : "";
+        return FeatureManager.features().get().select(f -> matchesFilter(f, query));
+    });
+
+    private final Computed<Boolean> reorderAllowed = filter.map(q -> q == null || q.trim().isEmpty());
 
     private final Computed<Seq<WebFeature>> filteredWebFeatures = filter.map(
             q -> WebFeature.defaults.select(w -> matchesWebFilter(w, q != null ? q.trim().toLowerCase() : "")));
@@ -53,7 +58,7 @@ public final class FeatureSettingsView extends BaseComponent {
                         grid(columnCount,
                                 filteredFeatures,
                                 feature -> feature.getMetadata().getId(),
-                                FeatureCard::new
+                                feature -> new FeatureCard(feature, reorderAllowed)
                         ).gap(unit(2));
                     });
 

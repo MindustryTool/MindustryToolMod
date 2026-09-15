@@ -29,9 +29,9 @@ import solim.signal.Signal;
 import java.util.function.Function;
 
 /**
- * Declarative dialog component for Solim. Wraps a Mindustry BaseDialog while providing
- * full declarative
- * configuration, reactive signal creation, and clean lifecycle management.
+ * Declarative dialog component for Solim. Wraps a Mindustry BaseDialog while
+ * providing full declarative configuration, reactive signal creation, and clean
+ * lifecycle management.
  */
 public class SolimDialog implements Component {
 
@@ -43,8 +43,8 @@ public class SolimDialog implements Component {
     private boolean contentBuilt = false;
 
     /**
-     * Mirrors the wrapped dialog element's name for convenient reads.
-     * Use {@link #name(String)} to rename so both stay in sync.
+     * Mirrors the wrapped dialog element's name for convenient reads. Use
+     * {@link #name(String)} to rename so both stay in sync.
      */
     public String name = "solim-dialog-dialog";
 
@@ -160,8 +160,8 @@ public class SolimDialog implements Component {
 
     /**
      * Creates a reactive signal initialized from the supplier that recalculates
-     * whenever the callback registrar invokes the given callback. The returned disposable is owned
-     * by this dialog.
+     * whenever the callback registrar invokes the given callback. The returned
+     * disposable is owned by this dialog.
      */
     public <T> Signal<T> createSignal(Function<Runnable, Disposable> registrar, Supplier<T> supplier) {
         Signal<T> signal = Signal.of(supplier.get());
@@ -172,13 +172,10 @@ public class SolimDialog implements Component {
         return signal;
     }
 
-
     /**
      * Creates a reactive signal initialized from the supplier that recalculates
-     * whenever the
-     * specified Arc event fires. The event listener is automatically cleaned up
-     * when this dialog is
-     * disposed.
+     * whenever the specified Arc event fires. The event listener is automatically
+     * cleaned up when this dialog is disposed.
      */
     public <E, T> Signal<T> createSignal(Class<E> eventType, Supplier<T> supplier) {
         Signal<T> signal = Signal.of(supplier.get());
@@ -188,9 +185,8 @@ public class SolimDialog implements Component {
 
     /**
      * Creates a reactive signal that updates with mapped event data whenever the
-     * specified Arc event
-     * fires. The event listener is automatically cleaned up when this dialog is
-     * disposed.
+     * specified Arc event fires. The event listener is automatically cleaned up
+     * when this dialog is disposed.
      */
     public <E, T> Signal<T> createSignal(Class<E> eventType, Func<E, T> mapper, T initial) {
         Signal<T> signal = Signal.of(initial);
@@ -238,6 +234,11 @@ public class SolimDialog implements Component {
 
     public SolimDialog closeOnBack() {
         wrapped.closeOnBack();
+        return this;
+    }
+
+    public SolimDialog backButton() {
+        wrapped.addCloseButton();
         return this;
     }
 
@@ -318,7 +319,8 @@ public class SolimDialog implements Component {
         if (color != null) {
             Effect e = Effect.of(() -> {
                 Color c = color.get();
-                if (c != null) rd.fillColor(c);
+                if (c != null)
+                    rd.fillColor(c);
             });
             registerDisposable(e);
         }

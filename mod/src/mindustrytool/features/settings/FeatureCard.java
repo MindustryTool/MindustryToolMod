@@ -5,13 +5,15 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
-import lombok.AllArgsConstructor;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
+import mindustrytool.components.FileIcon;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 import solim.core.BaseComponent;
 import solim.signal.Readable;
-import mindustrytool.components.FileIcon;
+import solim.signal.Signal;
 
 /**
  * Component responsible for building and managing a single feature's visual
@@ -19,10 +21,15 @@ import mindustrytool.components.FileIcon;
  * dialog), and state toggling with direct property reactivity using pure Solim
  * components.
  */
-@AllArgsConstructor
 public class FeatureCard extends BaseComponent {
 
     private final Feature feature;
+    private final Readable<Boolean> reorderAllowed;
+
+    public FeatureCard(Feature feature, Readable<Boolean> reorderAllowed) {
+        this.feature = feature;
+        this.reorderAllowed = reorderAllowed;
+    }
 
     @Override
     protected Element build() {
@@ -37,6 +44,16 @@ public class FeatureCard extends BaseComponent {
                 ? Readable.of(Core.bundle.get("feature.status.in-development"))
                 : feature.enabled().map(val -> Boolean.TRUE.equals(val) ? Core.bundle.get("feature.status.enabled")
                         : Core.bundle.get("feature.status.disabled"));
+
+        Readable<Boolean> canMoveLeft = inDevelopment
+                ? Readable.of(false)
+                : Signal.computed(() -> Boolean.TRUE.equals(reorderAllowed.get())
+                        && Boolean.TRUE.equals(FeatureManager.canMoveLeftSignal(feature).get()));
+
+        Readable<Boolean> canMoveRight = inDevelopment
+                ? Readable.of(false)
+                : Signal.computed(() -> Boolean.TRUE.equals(reorderAllowed.get())
+                        && Boolean.TRUE.equals(FeatureManager.canMoveRightSignal(feature).get()));
 
         return card()
                 .name("FeatureCard-" + metadata.getId()).height(unit(60)).growX()
@@ -58,18 +75,18 @@ public class FeatureCard extends BaseComponent {
                             spacer();
 
                             if (feature.getMainDialog() != null) {
-                                button(() -> feature.getMainDialog().show()).style(Styles.clearNonei).size(unit(11))
+                                button(() -> feature.getMainDialog().show()).style(WebStyles.ghost()).size(unit(11))
                                         .tooltip(Core.bundle.get("feature.button.open-dialog"))
                                         .children(() -> icon(Icon.linkSmall).size(unit(7)));
                             }
 
                             if (feature.getSettingDialog() != null) {
-                                button(() -> feature.getSettingDialog().show()).style(Styles.clearNonei).size(unit(11))
+                                button(() -> feature.getSettingDialog().show()).style(WebStyles.ghost()).size(unit(11))
                                         .tooltip(Core.bundle.get("feature.button.settings"))
                                         .children(() -> icon(Icon.settings).size(unit(7)));
                             }
 
-                            button(() -> new FeatureHelpDialog(feature).show()).style(Styles.clearNonei).size(unit(11))
+                            button(() -> new FeatureHelpDialog(feature).show()).style(WebStyles.ghost()).size(unit(11))
                                     .tooltip(Core.bundle.get("feature.button.help"))
                                     .children(() -> icon(FileIcon.of("info.png")).size(unit(7)));
                         });
@@ -78,10 +95,29 @@ public class FeatureCard extends BaseComponent {
 
                         spacer();
 
-                        text(statusText).style(Styles.defaultLabel)
-                                .growX()
-                                .color(statusColor)
-                                .left();
+                        row().growX().center().children(() -> {
+                            text(statusText).style(Styles.defaultLabel)
+                                    .color(statusColor)
+                                    .left();
+
+                            spacer();
+
+                            if (!inDevelopment) {
+                                button(() -> FeatureManager.moveLeft(feature))
+                                        .style(WebStyles.ghost())
+                                        .size(unit(9))
+                                        .enabled(canMoveLeft)
+                                        .tooltip(Core.bundle.get("feature.button.move-left"))
+                                        .children(() -> icon(FileIcon.of("chevron-left.png", Icon.left)).size(unit(6)));
+
+                                button(() -> FeatureManager.moveRight(feature))
+                                        .style(WebStyles.ghost())
+                                        .size(unit(9))
+                                        .enabled(canMoveRight)
+                                        .tooltip(Core.bundle.get("feature.button.move-right"))
+                                        .children(() -> icon(FileIcon.of("chevron-right.png", Icon.right)).size(unit(6)));
+                            }
+                        });
 
                         divider().color(statusColor);
                     });

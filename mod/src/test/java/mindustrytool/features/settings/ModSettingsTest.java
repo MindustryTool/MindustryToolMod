@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
 import arc.Settings;
+import arc.struct.Seq;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.config.OrderedSeqPersister;
 
 class ModSettingsTest {
 
@@ -22,11 +24,13 @@ class ModSettingsTest {
     void clearSettings() {
         Core.settings.clear();
         ModSettings.betaParticipate.set(false);
+        ModSettings.featureOrder.set(new Seq<>());
     }
 
     @AfterEach
     void resetSettings() {
         ModSettings.betaParticipate.set(false);
+        ModSettings.featureOrder.set(new Seq<>());
         Core.settings.clear();
     }
 
@@ -66,5 +70,32 @@ class ModSettingsTest {
 
         ModSettings.betaParticipate.set(false);
         assertEquals(Boolean.FALSE, ModSettings.betaParticipate.signal().peek());
+    }
+
+    @Test
+    void featureOrder_defaultsEmpty() {
+        assertNotNull(ModSettings.featureOrder.get());
+        assertTrue(ModSettings.featureOrder.get().isEmpty());
+    }
+
+    @Test
+    void featureOrder_persistsAndReloads() {
+        Seq<String> order = Seq.with("feat-b", "feat-a");
+        ModSettings.featureOrder.set(order);
+
+        assertEquals(2, ModSettings.featureOrder.get().size);
+        assertEquals("feat-b", ModSettings.featureOrder.get().get(0));
+        assertEquals("feat-a", ModSettings.featureOrder.get().get(1));
+
+        ConfigValue<Seq<String>> reloaded =
+                ModSettings.GROUP.value("feature-order", new Seq<>(), new OrderedSeqPersister());
+        assertEquals(2, reloaded.get().size);
+        assertEquals("feat-b", reloaded.get().get(0));
+        assertEquals("feat-a", reloaded.get().get(1));
+    }
+
+    @Test
+    void featureOrder_keyNamespaced() {
+        assertEquals("mindustrytool.settings.feature-order", ModSettings.featureOrder.getKey());
     }
 }
