@@ -245,6 +245,39 @@ public final class MindustryTool {
         return CompletableFuture.completedFuture(publisher);
     }
 
+    // ─── Player Connect ────────────────────────────────────────────
+
+    public static CompletableFuture<Flow.Publisher<String>> playerConnectStream() {
+        SubmissionPublisher<String> publisher = new SubmissionPublisher<>();
+        publicApi.get("/player-connect/sse")
+                .header("Accept", "text/event-stream")
+                .timeout(Duration.ofMillis(0))
+                .sendAsync(BodyHandlers.ofLines())
+                .thenAccept(response -> {
+                    response.body().forEach(publisher::submit);
+                    publisher.close();
+                })
+                .exceptionally(e -> {
+                    publisher.close();
+                    return null;
+                });
+        return CompletableFuture.completedFuture(publisher);
+    }
+
+    public static CompletableFuture<List<PlayerConnectRoom>> getPlayerConnectRooms(@Nullable String query) {
+        var req = publicApi.get("/player-connect/rooms");
+        if (query != null && !query.trim().isEmpty()) {
+            req.query("q", query);
+        }
+        return req.sendAsync().thenApply(r -> JsonUtils.fromJsonArray(PlayerConnectRoom.class, r.body()));
+    }
+
+    public static CompletableFuture<List<PlayerConnectProvider>> getPlayerConnectProviders() {
+        return publicApi.get("/player-connect/providers")
+                .sendAsync()
+                .thenApply(r -> JsonUtils.fromJsonArray(PlayerConnectProvider.class, r.body()));
+    }
+
     // ─── Auth ──────────────────────────────────────────────────────
 
     public static CompletableFuture<UserSession> getSession() {

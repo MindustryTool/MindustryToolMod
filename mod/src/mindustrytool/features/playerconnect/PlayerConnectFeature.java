@@ -1,20 +1,620 @@
 package mindustrytool.features.playerconnect;
 
-import mindustrytool.components.FileIcon;
+import arc.Core;
+import arc.Events;
+import arc.func.Cons;
+import arc.scene.ui.Button;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Table;
+import arc.struct.ArrayMap;
+import arc.struct.Seq;
+import arc.util.Log;
+import arc.util.Nullable;
+import arc.util.Threads;
+import arc.util.Timer;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Flow;
+import mindustry.Vars;
+import mindustry.game.EventType.ClientServerConnectEvent;
+import mindustry.game.EventType.HostEvent;
+import mindustry.game.EventType.PlayerIpBanEvent;
+import mindustry.game.EventType.PlayerJoin;
+import mindustry.game.EventType.PlayerLeave;
+import mindustry.game.EventType.WorldLoadEndEvent;
+import mindustry.game.Team;
+import mindustry.gen.Call;
+import mindustry.gen.Icon;
+import mindustry.gen.Player;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.playerconnect.models.HostingState;
+import mindustrytool.features.playerconnect.models.JoinRequest;
+import mindustrytool.features.playerconnect.net.NetworkProxy;
+import mindustrytool.features.playerconnect.net.PlayerConnectClient;
+import mindustrytool.features.playerconnect.net.PlayerConnectLink;
+import mindustrytool.features.playerconnect.ui.HostRoomDialog;
+import mindustrytool.features.playerconnect.ui.JoinApprovalHudView;
+import mindustrytool.features.playerconnect.ui.JoinDialogInjector;
+import mindustrytool.features.playerconnect.ui.ManageRoomDialog;
+import mindustrytool.features.playerconnect.ui.PingHudView;
+import mindustrytool.models.response.PlayerConnectProvider;
+import mindustrytool.models.response.PlayerConnectRoom;
+import mindustrytool.models.response.PlayerConnectRoomsResponse;
+import mindustrytool.services.MindustryTool;
+import mindustrytool.utils.JsonUtils;
+import solim.config.ConfigGroup;
+import solim.config.ConfigValue;
+import solim.overlay.SolimDialog;
+import solim.signal.Computed;
+import solim.signal.Signal;
 
-/**
- * In-development placeholder for the player-connect feature.
- * Metadata only; gameplay logic arrives with the full rewrite.
- */
 public class PlayerConnectFeature extends Feature {
+
+    public static final String CUSTOM_PROVIDERS_KEY = "mindustrytool.player-connect.custom-providers";
+    private static final String PAUSE_BUTTON_NAME = "pc-pause-button";
+
+    public final ConfigGroup config;
+    public final ConfigValue<String> roomNameConfig;
+    public final ConfigValue<String> passwordConfig;
+    public final ConfigValue<Integer> maxPlayerConfig;
+    public final ConfigValue<Boolean> autoAcceptConfig;
+
+    private final Signal<HostingState> state = Signal.of(HostingState.IDLE);
+    private final Signal<Integer> ping = Signal.of(0);
+    private final Signal<List<PlayerConnectRoom>> rooms = Signal.of(Collections.emptyList());
+    private final Signal<List<PlayerConnectProvider>> providers = Signal.of(Collections.emptyList());
+    private final Signal<JoinRequest> currentRequest = Signal.of(null);
+
+    private final Deque<JoinRequest> pendingQueue = new ArrayDeque<>();
+    private final ExecutorService worker = Threads.unboundedExecutor("PlayerConnect-Worker", 1);
+
+    private @Nullable NetworkProxy activeProxy;
+    private @Nullable Thread proxyThread;
+    private @Nullable PlayerConnectLink activeLink;
+
+    private @Nullable Flow.Subscription sseSubscription;
+    private @Nullable Timer.Task sseReconnectTask;
+    private @Nullable Timer.Task statsUpdateTask;
+
+    private @Nullable HostRoomDialog hostDialog;
+    private @Nullable ManageRoomDialog manageDialog;
+    private @Nullable JoinApprovalHudView approvalHud;
+    private @Nullable PingHudView pingHud;
+    private @Nullable JoinDialogInjector joinInjector;
+
     public PlayerConnectFeature() {
         super(FeatureMetadata.builder()
                 .id("player-connect")
-                .icon(FileIcon.of("signal.png"))
+                .icon(Icon.planet)
                 .order(3)
-                .development(true)
+                .enabledByDefault(true)
                 .build());
+
+        config = configGroup();
+        roomNameConfig = config.stringValue("roomName", Vars.player != null ? Vars.player.name : "Mindustry Room");
+        passwordConfig = config.stringValue("password", "");
+        maxPlayerConfig = config.intValue("maxPlayers", Vars.headless ? 30 : 0);
+        autoAcceptConfig = config.boolValue("autoAccept", true);
+
+        registerEventListeners();
+    }
+
+    private void registerEventListeners() {
+        Events.run(HostEvent.class, this::onHostEvent);
+        Events.run(WorldLoadEndEvent.class, this::updateRoomStats);
+        Events.run(PlayerJoin.class, this::updateRoomStats);
+        Events.run(PlayerLeave.class, this::updateRoomStats);
+
+        Events.on(PlayerJoin.class, this::onPlayerJoin);
+        Events.on(PlayerLeave.class, event -> {
+            removeRequestForPlayer(event.player);
+            processNextRequest();
+        });
+
+        Events.on(PlayerIpBanEvent.class, event -> {
+            if (isHosting() && activeProxy != null) {
+                PlayerConnectClient.unbanProxyIp(activeProxy.getRemoteHost());
+            }
+        });
+
+        Events.on(ClientServerConnectEvent.class, event -> {
+            if (isHosting()) {
+                closeRoom();
+                Vars.ui.showInfoFade("@feature.player-connect.auto-closed-on-client");
+            }
+        });
+    }
+
+    @Override
+    public void onEnable() {
+        refreshProviders();
+        startSseSync();
+
+        Core.app.post(() -> {
+            if (approvalHud == null) {
+                approvalHud = new JoinApprovalHudView(this);
+                Vars.ui.hudGroup.addChild(approvalHud.element());
+            }
+            if (pingHud == null) {
+                pingHud = new PingHudView(this);
+                Vars.ui.hudGroup.addChild(pingHud.element());
+            }
+            injectPauseMenuButton();
+
+            if (joinInjector == null) {
+                joinInjector = new JoinDialogInjector(this);
+            }
+            joinInjector.inject();
+        });
+
+        statsUpdateTask = Timer.schedule(this::updateRoomStats, 30f, 30f);
+    }
+
+    @Override
+    public void onDisable() {
+        closeRoom();
+        stopSseSync();
+
+        if (statsUpdateTask != null) {
+            statsUpdateTask.cancel();
+            statsUpdateTask = null;
+        }
+
+        if (approvalHud != null) {
+            approvalHud.element().remove();
+            approvalHud.dispose();
+            approvalHud = null;
+        }
+        if (pingHud != null) {
+            pingHud.element().remove();
+            pingHud.dispose();
+            pingHud = null;
+        }
+
+        PlayerConnectClient.disposePinger();
+    }
+
+    // ─── Signals & Properties ──────────────────────────────────────
+
+    public Signal<HostingState> stateSignal() {
+        return state;
+    }
+
+    public Signal<Integer> pingSignal() {
+        return ping;
+    }
+
+    public Signal<List<PlayerConnectRoom>> roomsSignal() {
+        return rooms;
+    }
+
+    public Signal<List<PlayerConnectProvider>> providersSignal() {
+        return providers;
+    }
+
+    public Signal<JoinRequest> currentRequestSignal() {
+        return currentRequest;
+    }
+
+    public Computed<Boolean> isHostingSignal() {
+        return state.map(s -> s == HostingState.HOSTING);
+    }
+
+    public boolean isHosting() {
+        return state.peek() == HostingState.HOSTING && activeProxy != null && activeProxy.isConnected();
+    }
+
+    public @Nullable PlayerConnectLink getActiveLink() {
+        return activeLink;
+    }
+
+    // ─── Room Hosting & Management ─────────────────────────────────
+
+    public void createRoom(String host, int port, Cons<PlayerConnectLink> onSuccess, Cons<Throwable> onError) {
+        if (!Vars.net.server()) {
+            onError.get(new IllegalStateException("You must host a game locally before publishing to relay."));
+            return;
+        }
+
+        closeRoom();
+
+        state.set(HostingState.CONNECTING);
+        Vars.ui.loadfrag.show("@feature.player-connect.creating-room");
+
+        activeProxy = new NetworkProxy();
+        proxyThread = Threads.daemon("PlayerConnectProxy", activeProxy);
+
+        String roomName = roomNameConfig.get();
+        String password = passwordConfig.get();
+        int maxPlayers = maxPlayerConfig.get();
+
+        if (Vars.netServer != null && Vars.netServer.admins != null) {
+            Vars.netServer.admins.setPlayerLimit(maxPlayers);
+        }
+
+        worker.submit(() -> {
+            try {
+                activeProxy.connect(
+                        host, port,
+                        roomName, password,
+                        roomId -> Core.app.post(() -> {
+                            Vars.ui.loadfrag.hide();
+                            activeLink = new PlayerConnectLink(host, port, roomId);
+                            state.set(HostingState.HOSTING);
+                            PlayerConnectClient.unbanProxyIp(host);
+                            onSuccess.get(activeLink);
+                        }),
+                        closeReason -> Core.app.post(() -> {
+                            Vars.ui.loadfrag.hide();
+                            closeRoom();
+                            state.set(HostingState.IDLE);
+                        }),
+                        newPing -> Core.app.post(() -> ping.set(newPing)));
+            } catch (Exception e) {
+                Core.app.post(() -> {
+                    Vars.ui.loadfrag.hide();
+                    closeRoom();
+                    state.set(HostingState.ERROR);
+                    onError.get(e);
+                });
+            }
+        });
+    }
+
+    public void closeRoom() {
+        if (activeProxy != null) {
+            activeProxy.closeRoom();
+            activeProxy.stop();
+            try {
+                if (proxyThread != null) {
+                    proxyThread.join(500);
+                }
+            } catch (Exception ignored) {
+            }
+            activeProxy.dispose();
+            activeProxy = null;
+            proxyThread = null;
+        }
+        activeLink = null;
+        state.set(HostingState.IDLE);
+        ping.set(0);
+        clearPendingRequests();
+    }
+
+    public void updateRoomStats() {
+        if (isHosting() && activeProxy != null) {
+            activeProxy.updateStats(roomNameConfig.get());
+        }
+    }
+
+    private void onHostEvent() {
+        if (isHosting()) {
+            closeRoom();
+        }
+    }
+
+    // ─── Join Request Moderation ───────────────────────────────────
+
+    private void onPlayerJoin(PlayerJoin event) {
+        if (!isHosting() || Boolean.TRUE.equals(autoAcceptConfig.get())) {
+            return;
+        }
+        if (event.player == Vars.player) {
+            return;
+        }
+
+        Team originalTeam = event.player.team();
+        event.player.team(Team.derelict);
+        if (event.player.unit() != null) {
+            event.player.unit().kill();
+        }
+
+        Call.infoMessage(event.player.con(), Core.bundle.get("feature.player-connect.waiting-approval"));
+
+        JoinRequest req = new JoinRequest(event.player, originalTeam);
+        synchronized (pendingQueue) {
+            pendingQueue.addLast(req);
+        }
+        processNextRequest();
+    }
+
+    public void accept(JoinRequest request) {
+        if (request.player != null && request.player.con != null && request.player.con.isConnected()) {
+            request.player.team(request.originalTeam);
+        }
+        removeAndAdvance(request);
+    }
+
+    public void reject(JoinRequest request) {
+        if (request.player != null && request.player.con != null && request.player.con.isConnected()) {
+            Call.infoMessage(request.player.con(), Core.bundle.get("feature.player-connect.rejected-message"));
+            request.player.con.close();
+        }
+        removeAndAdvance(request);
+    }
+
+    private void removeAndAdvance(JoinRequest request) {
+        synchronized (pendingQueue) {
+            pendingQueue.remove(request);
+        }
+        processNextRequest();
+    }
+
+    private void removeRequestForPlayer(Player player) {
+        synchronized (pendingQueue) {
+            pendingQueue.removeIf(req -> req.player == player || req.player.uuid().equals(player.uuid()));
+        }
+    }
+
+    private void clearPendingRequests() {
+        synchronized (pendingQueue) {
+            pendingQueue.clear();
+        }
+        currentRequest.set(null);
+    }
+
+    private void processNextRequest() {
+        Core.app.post(() -> {
+            synchronized (pendingQueue) {
+                while (!pendingQueue.isEmpty()) {
+                    JoinRequest next = pendingQueue.peekFirst();
+                    if (next != null && next.player != null && next.player.con != null
+                            && next.player.con.isConnected()) {
+                        currentRequest.set(next);
+                        return;
+                    }
+                    pendingQueue.pollFirst();
+                }
+                currentRequest.set(null);
+            }
+        });
+    }
+
+    // ─── Real-Time Room Directory & SSE ────────────────────────────
+
+    private void startSseSync() {
+        stopSseSync();
+
+        fetchRoomsRest();
+
+        MindustryTool.playerConnectStream()
+                .thenAccept(publisher -> publisher.subscribe(new Flow.Subscriber<String>() {
+                    @Override
+                    public void onSubscribe(Flow.Subscription subscription) {
+                        sseSubscription = subscription;
+                        subscription.request(Long.MAX_VALUE);
+                    }
+
+                    @Override
+                    public void onNext(String item) {
+                        if (item == null || item.trim().isEmpty() || item.startsWith(":")) {
+                            return;
+                        }
+                        String json = item.trim();
+                        if (json.startsWith("data:")) {
+                            json = json.substring(5).trim();
+                        }
+                        try {
+                            PlayerConnectRoomsResponse response = JsonUtils.fromJson(
+                                    PlayerConnectRoomsResponse.class, json);
+                            if (response != null && response.getRooms() != null) {
+                                Core.app.post(() -> rooms.set(response.getRooms()));
+                                return;
+                            }
+                        } catch (Exception ignored) {
+                        }
+                        try {
+                            List<PlayerConnectRoom> list = JsonUtils.fromJsonArray(PlayerConnectRoom.class, json);
+                            if (list != null) {
+                                Core.app.post(() -> rooms.set(list));
+                            }
+                        } catch (Exception e) {
+                            Log.debug("Failed to parse SSE room payload: @", e);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        Log.err("PlayerConnect SSE stream error", throwable);
+                        scheduleSseReconnect();
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        scheduleSseReconnect();
+                    }
+                }))
+                .exceptionally(err -> {
+                    Log.err("Failed to open PlayerConnect SSE stream", err);
+                    scheduleSseReconnect();
+                    return null;
+                });
+    }
+
+    private void stopSseSync() {
+        if (sseSubscription != null) {
+            sseSubscription.cancel();
+            sseSubscription = null;
+        }
+        if (sseReconnectTask != null) {
+            sseReconnectTask.cancel();
+            sseReconnectTask = null;
+        }
+    }
+
+    private void scheduleSseReconnect() {
+        if (sseReconnectTask == null && isEnabled()) {
+            sseReconnectTask = Timer.schedule(() -> {
+                sseReconnectTask = null;
+                if (isEnabled()) {
+                    startSseSync();
+                }
+            }, 5f);
+        }
+    }
+
+    public void fetchRoomsRest() {
+        MindustryTool.getPlayerConnectRooms("")
+                .thenAccept(data -> {
+                    if (data != null) {
+                        Core.app.post(() -> rooms.set(data));
+                    }
+                })
+                .exceptionally(e -> {
+                    Log.err("Failed to fetch initial PlayerConnect rooms", e);
+                    return null;
+                });
+    }
+
+    // ─── Provider Management ───────────────────────────────────────
+
+    public void refreshProviders() {
+        MindustryTool.getPlayerConnectProviders()
+                .thenAccept(apiProviders -> {
+                    List<PlayerConnectProvider> all = new ArrayList<>();
+                    if (apiProviders != null) {
+                        all.addAll(apiProviders);
+                    }
+                    all.add(new PlayerConnectProvider("localhost", "LocalHost", "localhost:11010"));
+
+                    List<PlayerConnectProvider> custom = loadCustomProviders();
+                    all.addAll(custom);
+
+                    Core.app.post(() -> providers.set(all));
+                })
+                .exceptionally(e -> {
+                    List<PlayerConnectProvider> fallback = new ArrayList<>();
+                    fallback.add(new PlayerConnectProvider("localhost", "LocalHost", "localhost:11010"));
+                    fallback.addAll(loadCustomProviders());
+                    Core.app.post(() -> providers.set(fallback));
+                    return null;
+                });
+    }
+
+    @SuppressWarnings("unchecked")
+    public ArrayMap<String, String> getCustomProviders() {
+        return Core.settings.getJson(
+                CUSTOM_PROVIDERS_KEY, ArrayMap.class, String.class, ArrayMap::new);
+    }
+
+    public List<PlayerConnectProvider> loadCustomProviders() {
+        try {
+            ArrayMap<String, String> map = getCustomProviders();
+            List<PlayerConnectProvider> list = new ArrayList<>();
+            if (map != null) {
+                for (int i = 0; i < map.size; i++) {
+                    list.add(new PlayerConnectProvider("custom-" + i, map.getKeyAt(i), map.getValueAt(i)));
+                }
+            }
+            return list;
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    public void addCustomProvider(String name, String address) {
+        ArrayMap<String, String> map = getCustomProviders();
+
+        if (map == null) {
+            map = new ArrayMap<>();
+        }
+        map.put(name, address);
+        Core.settings.putJson(CUSTOM_PROVIDERS_KEY, String.class, map);
+        refreshProviders();
+    }
+
+    public void removeCustomProvider(String name) {
+        ArrayMap<String, String> map = getCustomProviders();
+
+        if (map != null) {
+            map.removeKey(name);
+            Core.settings.putJson(CUSTOM_PROVIDERS_KEY, String.class, map);
+            refreshProviders();
+        }
+    }
+
+    // ─── Pause Menu Injection ──────────────────────────────────────
+
+    private void injectPauseMenuButton() {
+        if (Vars.ui.paused == null) {
+            return;
+        }
+
+        Vars.ui.paused.shown(this::ensurePauseMenuButton);
+    }
+
+    private void ensurePauseMenuButton() {
+        if (Vars.ui.paused == null || Vars.ui.paused.cont == null) {
+            return;
+        }
+
+        Table root = Vars.ui.paused.cont;
+        if (root.find(PAUSE_BUTTON_NAME) != null) {
+            return;
+        }
+
+        @SuppressWarnings("rawtypes")
+        Seq<Cell> cells = root.getCells();
+        if (cells.isEmpty()) {
+            return;
+        }
+
+        Computed<String> btnText = state.map(s -> s == HostingState.HOSTING
+                ? Core.bundle.get("feature.player-connect.manage-room", "Manage Room")
+                : Core.bundle.get("feature.player-connect.host-room", "Host Room"));
+
+        Button btn = new Button();
+        btn.name = PAUSE_BUTTON_NAME;
+        btn.setStyle(mindustry.ui.Styles.defaultb);
+        btn.add(new arc.scene.ui.Image(Icon.planet)).padRight(6f);
+        btn.label(() -> btnText.get()).padRight(6f);
+        btn.clicked(this::onPauseMenuButtonClicked);
+        btn.setDisabled(Vars.net::client);
+
+        root.row().add(btn).growX().height(50f).padTop(4f).row();
+
+        // Swap with quit button if present
+        if (cells.size >= 2) {
+            cells.swap(cells.size - 1, cells.size - 2);
+        }
+    }
+
+    private void onPauseMenuButtonClicked() {
+        if (isHosting()) {
+            showManageDialog();
+        } else if (Vars.net.server()) {
+            showHostDialog();
+        } else {
+            Vars.ui.host.show();
+            Vars.ui.host.hidden(() -> {
+                if (Vars.net.server()) {
+                    showHostDialog();
+                }
+            });
+        }
+    }
+
+    public void showHostDialog() {
+        if (hostDialog == null) {
+            hostDialog = new HostRoomDialog(this);
+        }
+        hostDialog.show();
+    }
+
+    public void showManageDialog() {
+        if (manageDialog == null) {
+            manageDialog = new ManageRoomDialog(this);
+        }
+        manageDialog.show();
+    }
+
+    @Override
+    public @Nullable SolimDialog getSettingDialog() {
+        return null;
     }
 }
