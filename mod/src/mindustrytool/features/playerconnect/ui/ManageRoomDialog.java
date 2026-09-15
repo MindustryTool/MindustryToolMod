@@ -7,7 +7,7 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.Vars;
 import mindustry.graphics.Pal;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import solim.core.BaseComponent;
@@ -48,7 +48,8 @@ public class ManageRoomDialog extends SolimDialog {
             Computed<String> pingText = feature.pingSignal().map(p -> (p != null ? p : 0) + "ms");
 
             return column()
-                    .width(dvw(90f).map(w -> Math.min(w, 900f)))
+                    .growX()
+                    .maxWidth(dvw(90f).map(w -> Math.min(w, 900f)))
                     .maxHeight(dvh(85f).map(h -> Math.min(h, 800f)))
                     .margin(unit(5))
                     .gap(unit(4))
@@ -71,15 +72,14 @@ public class ManageRoomDialog extends SolimDialog {
 
                         row().gap(unit(3)).center().children(() -> {
                             button(Core.bundle.get("feature.player-connect.copy-link", "Copy Join Link"), this::copyLink)
-                                    .style(Styles.defaultb)
+                                    .style(WebStyles.outline())
                                     .height(unit(11))
                                     .paddingX(unit(6))
                                     .paddingY(unit(2.5f))
                                     .minWidth(unit(36));
 
                             button(Core.bundle.get("feature.player-connect.close-room", "Close Room"), this::closeRoom)
-                                    .style(Styles.defaultb)
-                                    .color(Color.scarlet)
+                                    .style(WebStyles.danger())
                                     .height(unit(11))
                                     .paddingX(unit(6))
                                     .paddingY(unit(2.5f))

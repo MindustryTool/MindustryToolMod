@@ -6,9 +6,10 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.struct.ObjectMap;
+import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.graphics.Pal;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.models.response.PlayerConnectProvider;
@@ -47,13 +48,15 @@ public class HostRoomDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column()
-                    .width(dvw(90f).map(w -> Math.min(w, 1100f)))
+                    .growX()
+                    .maxWidth(dvw(90f).map(w -> Math.min(w, 1100f)))
                     .maxHeight(dvh(85f).map(h -> Math.min(h, 1200f)))
                     .margin(unit(4))
                     .gap(unit(3))
                     .center()
                     .children(() -> {
-                        dynamic(step, currentStep -> currentStep == 1 ? buildStep1() : buildStep2());
+                        dynamic(step, currentStep -> currentStep == 1 ? buildStep1() : buildStep2())
+                                .growX();
                     }).element();
         }
 
@@ -67,21 +70,27 @@ public class HostRoomDialog extends SolimDialog {
                                 .color(Pal.accent);
 
                         // Room Name
-                        row().growX().gap(unit(3)).center().children(() -> {
-                            text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).width(unit(36))
-                                    .left();
-                            textField(feature.roomNameConfig.signal())
-                                    .growX()
-                                    .height(unit(10));
+                        column().growX().gap(unit(1.5f)).left().children(() -> {
+                            text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).left();
+                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
+                                    .rounded(unit(2))
+                                    .children(() -> {
+                                        textField(feature.roomNameConfig.signal())
+                                                .grow()
+                                                .style(WebStyles.clearInput());
+                                    });
                         });
 
                         // Password
-                        row().growX().gap(unit(3)).center().children(() -> {
-                            text(Core.bundle.get("feature.player-connect.password", "Password:")).width(unit(36))
-                                    .left();
-                            textField(feature.passwordConfig.signal())
-                                    .growX()
-                                    .height(unit(10));
+                        column().growX().gap(unit(1.5f)).left().children(() -> {
+                            text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
+                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
+                                    .rounded(unit(2))
+                                    .children(() -> {
+                                        textField(feature.passwordConfig.signal())
+                                                .grow()
+                                                .style(WebStyles.clearInput());
+                                    });
                         });
 
                         // Max Players
@@ -94,34 +103,40 @@ public class HostRoomDialog extends SolimDialog {
                             } catch (NumberFormatException ignored) {
                             }
                         });
-                        row().growX().gap(unit(3)).center().children(() -> {
+                        column().growX().gap(unit(1.5f)).left().children(() -> {
                             text(Core.bundle.get("feature.player-connect.max-players", "Max Players (0=unlimited):"))
-                                    .width(unit(36)).left();
-                            textField(maxPlayersSig).growX().height(unit(10));
+                                    .left();
+                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
+                                    .rounded(unit(2))
+                                    .children(() -> {
+                                        textField(maxPlayersSig)
+                                                .grow()
+                                                .style(WebStyles.clearInput());
+                                    });
                         });
 
                         // Auto Accept
-                        row().growX().gap(unit(3)).center().children(() -> {
+                        column().growX().gap(unit(1.5f)).left().children(() -> {
                             text(Core.bundle.get("feature.player-connect.auto-accept", "Auto-accept players:"))
-                                    .width(unit(36)).left();
+                                    .left();
                             button(feature.autoAcceptConfig.signal().map(v -> Boolean.TRUE.equals(v)
                                     ? Core.bundle.get("yes", "Yes")
                                     : Core.bundle.get("no", "No")), () -> {
                                         feature.autoAcceptConfig
                                                 .set(!Boolean.TRUE.equals(feature.autoAcceptConfig.get()));
                                     })
-                                    .style(Styles.defaultb)
-                                    .height(unit(10))
-                                    .paddingX(unit(4))
-                                    .paddingY(unit(2))
-                                    .minWidth(unit(24));
+                                            .style(WebStyles.outline())
+                                            .height(unit(10))
+                                            .paddingX(unit(4))
+                                            .paddingY(unit(2))
+                                            .minWidth(unit(24));
                         });
 
                         button(Core.bundle.get("next", "Next"), () -> {
                             step.set(2);
                             pingAllProviders();
                         })
-                                .style(Styles.defaultb)
+                                .style(WebStyles.primary())
                                 .height(unit(11))
                                 .paddingX(unit(8))
                                 .paddingY(unit(2.5f))
@@ -137,19 +152,21 @@ public class HostRoomDialog extends SolimDialog {
                     .children(() -> {
                         row().growX().gap(unit(2)).center().children(() -> {
                             text(Core.bundle.get("feature.player-connect.select-provider", "Select Relay Provider"))
+                                    .ellipsis()
+                                    .growX()
                                     .color(Pal.accent);
                             spacer();
                             button(Core.bundle.get("refresh", "Refresh"), () -> {
                                 feature.refreshProviders();
                                 pingAllProviders();
                             })
-                                    .style(Styles.defaultb)
+                                    .style(WebStyles.outline())
                                     .height(unit(9))
                                     .paddingX(unit(4))
                                     .paddingY(unit(2));
 
                             button("+ " + Core.bundle.get("custom", "Custom"), this::showAddCustomDialog)
-                                    .style(Styles.defaultb)
+                                    .style(WebStyles.outline())
                                     .height(unit(9))
                                     .paddingX(unit(4))
                                     .paddingY(unit(2));
@@ -169,7 +186,7 @@ public class HostRoomDialog extends SolimDialog {
 
                         row().gap(unit(4)).center().children(() -> {
                             button(Core.bundle.get("back", "Back"), () -> step.set(1))
-                                    .style(Styles.defaultb)
+                                    .style(WebStyles.outline())
                                     .height(unit(11))
                                     .paddingX(unit(6))
                                     .paddingY(unit(2.5f))
@@ -177,8 +194,7 @@ public class HostRoomDialog extends SolimDialog {
 
                             button(Core.bundle.get("feature.player-connect.start-hosting", "Start Hosting"),
                                     this::startHosting)
-                                            .style(Styles.defaultb)
-                                            .color(Pal.accent)
+                                            .style(WebStyles.primary())
                                             .height(unit(11))
                                             .paddingX(unit(8))
                                             .paddingY(unit(2.5f))
@@ -192,21 +208,44 @@ public class HostRoomDialog extends SolimDialog {
             Signal<String> pingSignal = getOrCreatePingSignal(provider.getAddress());
             Computed<Boolean> isSelected = selectedProvider
                     .map(sel -> sel != null && sel.getAddress().equals(provider.getAddress()));
+            Computed<Boolean> showAddress = dvw(100f).map(w -> w != null && w >= 700f);
 
-            return button()
-                    .style(Styles.clearNonei)
+            return card()
+                    .background(WebStyles.Colors.SECONDARY)
+                    .border(1.5f, isSelected.map(s -> s ? Pal.accent : WebStyles.Colors.BORDER_INPUT))
                     .growX()
-                    .height(unit(12))
+                    .minHeight(unit(12))
+                    .margin(unit(1))
                     .padding(unit(2), unit(3), unit(2), unit(3))
                     .onClick(() -> selectedProvider.set(provider))
                     .children(() -> {
-                        row().growX().margin(unit(1), unit(2), unit(1), unit(2)).gap(unit(2)).children(() -> {
+                        row().growX().gap(unit(2)).center().children(() -> {
                             text(provider.getName()).color(isSelected.map(s -> s ? Pal.accent : Color.white)).left();
                             spacer();
-                            text(provider.getAddress()).color(Color.lightGray);
-                            text(pingSignal).color(Pal.accent);
+                            dynamic(showAddress,
+                                    show -> Boolean.TRUE.equals(show)
+                                            ? text(provider.getAddress()).color(Color.lightGray)
+                                            : null);
+                            text(pingSignal)
+                                    .color(pingSignal.map(this::getPingColor))
+                                    .width(unit(22))
+                                    .right();
                         });
                     });
+        }
+
+        private Color getPingColor(@Nullable String ping) {
+            if (ping == null || "...".equals(ping)) {
+                return Color.lightGray;
+            }
+            if (ping.endsWith("ms")) {
+                try {
+                    int ms = Integer.parseInt(ping.substring(0, ping.length() - 2).trim());
+                    return ms < 200 ? Color.green : (ms < 500 ? Color.yellow : Color.scarlet);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            return Color.scarlet;
         }
 
         private Signal<String> getOrCreatePingSignal(String address) {

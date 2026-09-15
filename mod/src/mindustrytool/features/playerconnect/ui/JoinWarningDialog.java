@@ -8,7 +8,7 @@ import arc.scene.Element;
 import java.util.List;
 import mindustry.Vars;
 import mindustry.mod.Mods.LoadedMod;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.models.response.PlayerConnectRoom;
@@ -55,10 +55,11 @@ public class JoinWarningDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column()
-                    .width(dvw(90f).map(w -> Math.min(w, 450f)))
-                    .maxHeight(dvh(85f).map(h -> Math.min(h, 450f)))
-                    .margin(unit(4))
-                    .gap(unit(2))
+                    .growX()
+                    .maxWidth(dvw(90f).map(w -> Math.min(w, 900f)))
+                    .maxHeight(dvh(85f).map(h -> Math.min(h, 900f)))
+                    .margin(unit(5))
+                    .gap(unit(3.5f))
                     .center()
                     .children(() -> {
                         if (!missingMods.isEmpty()) {
@@ -75,21 +76,29 @@ public class JoinWarningDialog extends SolimDialog {
                                     .color(Color.lightGray);
                         }
 
-                        row().gap(unit(2)).center().children(() -> {
+                        row().gap(unit(3)).center().children(() -> {
                             button(Core.bundle.get("cancel", "Cancel"), dialog::hide)
-                                    .style(Styles.defaultb)
-                                    .size(unit(26), unit(9));
+                                    .style(WebStyles.outline())
+                                    .height(unit(10))
+                                    .paddingX(unit(5))
+                                    .paddingY(unit(2))
+                                    .minWidth(unit(26));
 
                             if (!unneededMods.isEmpty()) {
                                 button(Core.bundle.get("feature.player-connect.disable-and-join", "Disable & Join"), this::disableAndJoin)
-                                        .style(Styles.defaultb)
-                                        .size(unit(36), unit(9));
+                                        .style(WebStyles.secondary())
+                                        .height(unit(10))
+                                        .paddingX(unit(5))
+                                        .paddingY(unit(2))
+                                        .minWidth(unit(36));
                             }
 
                             button(Core.bundle.get("feature.player-connect.join-anyway", "Join Anyway"), this::joinDirect)
-                                    .style(Styles.defaultb)
-                                    .color(Color.royal)
-                                    .size(unit(30), unit(9));
+                                    .style(WebStyles.danger())
+                                    .height(unit(10))
+                                    .paddingX(unit(5))
+                                    .paddingY(unit(2))
+                                    .minWidth(unit(30));
                         });
                     }).element();
         }

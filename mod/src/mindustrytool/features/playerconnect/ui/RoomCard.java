@@ -72,7 +72,7 @@ public class RoomCard extends BaseComponent {
                 .left()
                 .children(() -> {
                     // Header row: Title + Copy link button
-                    row().growX().children(() -> {
+                    row().growX().gap(unit(2)).children(() -> {
                         text(title).style(Styles.outlineLabel).fontScale(1.1f).left();
                         spacer();
                         button(() -> {
@@ -109,12 +109,18 @@ public class RoomCard extends BaseComponent {
                     // Join action button
                     if (!protocolMatch) {
                         button(Core.bundle.get("feature.player-connect.incompatible", "Incompatible"), () -> {
-                        }).style(WebStyles.outline()).growX().height(unit(8)).enabled(Signal.of(false));
+                        })
+                                .style(WebStyles.outline())
+                                .growX()
+                                .height(unit(8))
+                                .paddingY(unit(1.5f))
+                                .enabled(Signal.of(false));
                     } else {
                         button(Core.bundle.get("join", "Join"), () -> promptJoin(secured, missingMods, unneededMods))
                                 .style(WebStyles.secondary())
                                 .growX()
-                                .height(unit(8));
+                                .height(unit(8))
+                                .paddingY(unit(1.5f));
                     }
                 }).element();
     }

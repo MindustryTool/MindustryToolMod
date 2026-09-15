@@ -7,7 +7,6 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.struct.Seq;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
@@ -49,7 +48,6 @@ public final class FeatureSettingsView extends BaseComponent {
                         row().growX().paddingTop(unit(1)).paddingBottom(unit(1)).children(() -> {
                             text(Core.bundle.get("feature.section.mod-features", "Mod Features"))
                                     .style(Styles.defaultLabel)
-                                    .color(Pal.accent)
                                     .left();
                         });
                         grid(columnCount,
@@ -66,7 +64,6 @@ public final class FeatureSettingsView extends BaseComponent {
                         row().growX().paddingTop(unit(3)).paddingBottom(unit(1)).children(() -> {
                             text(Core.bundle.get("web-feature.section.title", "Web Tools & Community"))
                                     .style(Styles.defaultLabel)
-                                    .color(Pal.accent)
                                     .left();
                         });
                         grid(columnCount,

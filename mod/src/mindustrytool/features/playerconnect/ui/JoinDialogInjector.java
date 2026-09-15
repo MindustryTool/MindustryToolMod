@@ -22,13 +22,14 @@ public class JoinDialogInjector {
 
         Events.run(ResizeEvent.class, () -> {
             if (feature.enabled().peek()) {
-                inject();
+                performInjection();
             }
         });
     }
 
     public void inject() {
         JoinDialog dialog = Vars.ui.join;
+
         if (dialog == null) {
             return;
         }
@@ -38,6 +39,7 @@ public class JoinDialogInjector {
 
     private void performInjection() {
         JoinDialog dialog = Vars.ui.join;
+        
         if (dialog == null) {
             return;
         }

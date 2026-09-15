@@ -244,6 +244,314 @@ class CardTest {
         c.dispose();
     }
 
+    @Test
+    void minHeightSetsParentCellFloor() {
+        Row parent = new Row();
+        Card card = new Card().minHeight(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(120f, CellAccess.minHeight(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void reactiveMinHeightFollowsSignal() {
+        Signal<Float> minSig = Signal.of(120f);
+        Row parent = new Row();
+        Card card = new Card().minHeight(minSig);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(120f, CellAccess.minHeight(cell), 0.01f);
+
+        minSig.set(200f);
+        SignalDispatcher.flush();
+        assertEquals(200f, CellAccess.minHeight(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void minHeightLiftsShortContent() {
+        Row parent = new Row();
+        Card card = new Card().minHeight(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(120f, parent.table().getPrefHeight(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void minHeightLeavesTallContentUntouched() {
+        Row parent = new Row();
+        Card card = new Card().minHeight(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 300f));
+            });
+        });
+
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(300f, parent.table().getPrefHeight(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void negativeMinHeightClampsToZero() {
+        Row parent = new Row();
+        Card card = new Card().minHeight(-50f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(0f, CellAccess.minHeight(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void maxHeightSetsParentCellCeiling() {
+        Row parent = new Row();
+        Card card = new Card().maxHeight(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(120f, CellAccess.maxHeight(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void reactiveMaxHeightFollowsSignal() {
+        Signal<Float> maxSig = Signal.of(120f);
+        Row parent = new Row();
+        Card card = new Card().maxHeight(maxSig);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(120f, CellAccess.maxHeight(cell), 0.01f);
+
+        maxSig.set(200f);
+        SignalDispatcher.flush();
+        assertEquals(200f, CellAccess.maxHeight(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void maxHeightCapsTallContent() {
+        Row parent = new Row();
+        Card card = new Card().maxHeight(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 300f));
+            });
+        });
+
+        parent.table().setSize(500f, 500f);
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(120f, card.table().getHeight(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void maxHeightLeavesShortContentUntouched() {
+        Row parent = new Row();
+        Card card = new Card().maxHeight(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(20f, parent.table().getPrefHeight(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void minWidthSetsParentCellFloor() {
+        Row parent = new Row();
+        Card card = new Card().minWidth(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(120f, CellAccess.minWidth(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void reactiveMinWidthFollowsSignal() {
+        Signal<Float> minSig = Signal.of(120f);
+        Row parent = new Row();
+        Card card = new Card().minWidth(minSig);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(120f, CellAccess.minWidth(cell), 0.01f);
+
+        minSig.set(200f);
+        SignalDispatcher.flush();
+        assertEquals(200f, CellAccess.minWidth(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void minWidthWidensNarrowContent() {
+        Row parent = new Row();
+        Card card = new Card().minWidth(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(120f, parent.table().getPrefWidth(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void minWidthLeavesWideContentUntouched() {
+        Row parent = new Row();
+        Card card = new Card().minWidth(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(300f, 20f));
+            });
+        });
+
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(300f, parent.table().getPrefWidth(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void maxWidthSetsParentCellCeiling() {
+        Row parent = new Row();
+        Card card = new Card().maxWidth(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(120f, CellAccess.maxWidth(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void reactiveMaxWidthFollowsSignal() {
+        Signal<Float> maxSig = Signal.of(120f);
+        Row parent = new Row();
+        Card card = new Card().maxWidth(maxSig);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(120f, CellAccess.maxWidth(cell), 0.01f);
+
+        maxSig.set(200f);
+        SignalDispatcher.flush();
+        assertEquals(200f, CellAccess.maxWidth(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void maxWidthCapsWideContent() {
+        Row parent = new Row();
+        Card card = new Card().maxWidth(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(300f, 20f));
+            });
+        });
+
+        parent.table().setSize(500f, 500f);
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(120f, card.table().getWidth(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void maxWidthLeavesNarrowContentUntouched() {
+        Row parent = new Row();
+        Card card = new Card().maxWidth(120f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(20f, parent.table().getPrefWidth(), 0.5f);
+        card.dispose();
+    }
+
+    private static Element fixedSize(float prefW, float prefH) {
+        return new Element() {
+            @Override
+            public float getPrefWidth() {
+                return prefW;
+            }
+
+            @Override
+            public float getPrefHeight() {
+                return prefH;
+            }
+        };
+    }
+
     private static boolean hasClickListener(Card c) {
         for (Object listener : c.table().getListeners()) {
             if (listener instanceof ClickListener) {

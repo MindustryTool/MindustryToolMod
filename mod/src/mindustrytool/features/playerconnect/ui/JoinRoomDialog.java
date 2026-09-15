@@ -6,7 +6,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.Vars;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import solim.core.BaseComponent;
@@ -58,26 +58,33 @@ public class JoinRoomDialog extends SolimDialog {
                     : Core.bundle.get("feature.player-connect.link-invalid", "Invalid link (expected player-connect://host:port/roomId)"));
 
             return column()
-                    .width(dvw(90f).map(w -> Math.min(w, 500f)))
-                    .maxHeight(dvh(85f).map(h -> Math.min(h, 400f)))
-                    .margin(unit(4))
-                    .gap(unit(3))
+                    .growX()
+                    .maxWidth(dvw(90f).map(w -> Math.min(w, 1000f)))
+                    .maxHeight(dvh(85f).map(h -> Math.min(h, 800f)))
+                    .margin(unit(5))
+                    .gap(unit(4))
                     .center()
                     .children(() -> {
                         // Link input
-                        row().growX().gap(unit(2)).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.join-link", "Link:")).width(unit(20)).left();
-                            textField(linkSignal)
-                                    .growX()
-                                    .height(unit(9));
+                        column().growX().gap(unit(1.5f)).left().children(() -> {
+                            text(Core.bundle.get("feature.player-connect.join-link", "Link:")).left();
+                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2)).rounded(unit(2))
+                                    .children(() -> {
+                                        textField(linkSignal)
+                                                .grow()
+                                                .style(WebStyles.clearInput());
+                                    });
                         });
 
                         // Password input
-                        row().growX().gap(unit(2)).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.password", "Password:")).width(unit(20)).left();
-                            textField(passwordSignal)
-                                    .growX()
-                                    .height(unit(9));
+                        column().growX().gap(unit(1.5f)).left().children(() -> {
+                            text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
+                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2)).rounded(unit(2))
+                                    .children(() -> {
+                                        textField(passwordSignal)
+                                                .grow()
+                                                .style(WebStyles.clearInput());
+                                    });
                         });
 
                         // Validation text
@@ -86,9 +93,11 @@ public class JoinRoomDialog extends SolimDialog {
 
                         // Join button
                         button(Core.bundle.get("join", "Join"), this::join)
-                                .style(Styles.defaultb)
-                                .color(Color.royal)
-                                .size(unit(36), unit(10))
+                                .style(WebStyles.primary())
+                                .height(unit(11))
+                                .paddingX(unit(8))
+                                .paddingY(unit(2.5f))
+                                .minWidth(unit(36))
                                 .enabled(isValid);
                     }).element();
         }
