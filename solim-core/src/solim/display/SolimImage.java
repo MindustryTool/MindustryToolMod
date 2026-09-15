@@ -206,15 +206,13 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
         return this;
     }
 
-    @Override
-    public SolimImage cellPaddingX(float x) {
+    public SolimImage marginX(float x) {
         this.marginLeft = this.marginRight = x;
         applySpacing();
         return this;
     }
 
-    @Override
-    public SolimImage cellPaddingY(float y) {
+    public SolimImage marginY(float y) {
         this.marginTop = this.marginBottom = y;
         applySpacing();
         return this;

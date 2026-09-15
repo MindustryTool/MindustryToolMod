@@ -147,7 +147,7 @@ public class TimeControlHudView extends BaseComponent {
 
         return row()
                 .gap(unit(1))
-                .cellPaddingLeft(unit(1))
+                .marginLeft(unit(1))
                 .children(() -> {
                     // Slider binds to the intermediate u-space position signal (single-directional:
                     // u -> speed).

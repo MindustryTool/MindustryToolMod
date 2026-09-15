@@ -569,15 +569,13 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
         return this;
     }
 
-    @Override
-    public NetworkImage cellPaddingX(float x) {
+    public NetworkImage marginX(float x) {
         this.marginLeft = this.marginRight = x;
         applySpacing();
         return this;
     }
 
-    @Override
-    public NetworkImage cellPaddingY(float y) {
+    public NetworkImage marginY(float y) {
         this.marginTop = this.marginBottom = y;
         applySpacing();
         return this;

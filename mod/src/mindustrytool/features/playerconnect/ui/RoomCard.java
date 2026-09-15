@@ -79,7 +79,6 @@ public class RoomCard extends BaseComponent {
                 .padding(unit(2))
                 .left()
                 .grow()
-                .margin(unit(2.5f))
                 .minHeight(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT);
 
         return cardComp.children(() -> {

@@ -98,7 +98,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                                 .grow().color(Color.white))
                                         .layer(() -> row().top().right().grow().visible(hasUnread).children(() -> {
                                             image(circle())
-                                                    .cellPadding(unit(1))
+                                                    .margin(unit(1))
                                                     .size(unit(3))
                                                     .color(Color.scarlet);
                                         }));

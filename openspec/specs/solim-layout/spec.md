@@ -61,7 +61,7 @@ Layouts SHALL support `growX()`, `growY()`, `grow()` on cells and widgets (e.g.,
 - **THEN** texts flow to next line when out of horizontal space
 
 ### Requirement: Wrap with LayoutModifiers and declarative children
-The `Wrap` component SHALL implement `CellConfig<Wrap>`, `ElementConfig<Wrap>`, and `TableConfig<Wrap>`. CellConfig provides `growX()`, `grow()`, `cellPadding()`. ElementConfig provides `width()`, `height()`, `size()`. TableConfig provides `top()`, `gap()`, `padding()`, `rounded()`, `border()`. Wrap SHALL support `children(Runnable)` for declarative child attachment via `ParentStack`.
+The `Wrap` component SHALL implement `CellConfig<Wrap>`, `ElementConfig<Wrap>`, and `TableConfig<Wrap>`. CellConfig provides `growX()`, `grow()`, `margin()`. ElementConfig provides `width()`, `height()`, `size()`. TableConfig provides `top()`, `gap()`, `padding()`, `rounded()`, `border()`. Wrap SHALL support `children(Runnable)` for declarative child attachment via `ParentStack`.
 
 #### Scenario: Wrap with rounded and border
 - **WHEN** `wrap().rounded(4).border(1f, Color.gray).children(() -> { ... })` is called
@@ -229,23 +229,23 @@ Exposes contextual metrics from `ReactiveGrid` to child item component factories
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
 ### Requirement: Modifier categories are non-overlapping and clearly defined
-Every fluent modifier SHALL target exactly one of: (A) the component's own Arc Element via `ElementConfig`, (B) the component's Table container via `TableConfig`, or (C) the component's cell in its parent layout via `CellConfig`. Each mixin SHALL provide only methods for its domain. `CellConfig` SHALL provide only parent-cell methods (`grow*`, `min/max*`, `cellPadding*`). Element-targeted margin/padding overloads that dispatch via `instanceof Table` SHALL NOT exist.
+Every fluent modifier SHALL target exactly one of: (A) the component's own Arc Element via `ElementConfig`, (B) the component's Table container via `TableConfig`, or (C) the component's cell in its parent layout via `CellConfig`. Each mixin SHALL provide only methods for its domain. `CellConfig` SHALL provide only parent-cell methods (`grow*`, `min/max*`, `margin*`). `TableConfig` SHALL provide inner container insets via `padding*`. `cellPadding` and `TableConfig.margin` SHALL NOT exist. Element-targeted margin/padding overloads that dispatch via `instanceof Table` SHALL NOT exist.
 
 #### Scenario: Self modifiers affect the Element only
 - **WHEN** `.visible(false)`, `.opacity(0.5f)`, or `.rounded(8)` is called via `ElementConfig`
 - **THEN** only the component's own Arc Element is modified; no parent cell is touched
 
 #### Scenario: Table modifiers affect the container only
-- **WHEN** `.top()`, `.margin(8f)`, or `.gap(4f)` is called via `TableConfig`
-- **THEN** only the component's Table content defaults are modified
+- **WHEN** `.top()`, `.padding(8f)`, or `.gap(4f)` is called via `TableConfig`
+- **THEN** only the component's Table content insets and defaults are modified
 
 #### Scenario: Parent-layout modifiers affect the cell only
-- **WHEN** `.growX()` or `.cellPadding(8f)` is called via `CellConfig`
+- **WHEN** `.growX()` or `.margin(8f)` is called via `CellConfig`
 - **THEN** only the component's cell in its parent layout is modified
 
 #### Scenario: CellConfig has only parent-cell methods
 - **WHEN** searching CellConfig for methods
-- **THEN** only `grow*`, `min/max*`, `cellPadding*` exist; no width/height/opacity/rounded/border/background
+- **THEN** only `grow*`, `min/max*`, `margin*` exist; no width/height/opacity/rounded/border/background and no `cellPadding*`
 
 ### Requirement: Fluent ordering convention is consistent
 All Solim container components SHALL support the following fluent ordering convention:
@@ -265,7 +265,7 @@ Any modifier that targets the Element (width/height/opacity/rounded/border/backg
 - **THEN** exactly one implementation exists in `ElementConfig`; CellConfig does not have `width`
 
 ### Requirement: Element overloads of margin/padding that dispatch are removed
-Element-targeted overloads of `margin`/`padding` that check `instanceof Table` to dispatch between Table margin and Cell padding SHALL NOT exist. Callers SHALL use `TableConfig` for Table margin or `CellConfig.cellPadding` for parent-cell padding.
+Element-targeted overloads of `margin`/`padding` that check `instanceof Table` to dispatch between Table margin and Cell padding SHALL NOT exist. Callers SHALL use `TableConfig` for Table padding or `CellConfig.margin` for parent-cell padding.
 
 #### Scenario: No instanceof Table dispatch in margin
 - **WHEN** searching for `margin(Element` in ElementConfig/TableConfig
@@ -419,7 +419,7 @@ The `ElementConfig` and `TableConfig` interfaces SHALL NOT provide `margin(Eleme
 
 #### Scenario: No Element-targeted margin dispatch
 - **WHEN** `margin(element, 8f)` is called with an Element parameter
-- **THEN** the method does not exist; callers use `TableConfig.margin(table, 8f)` or `CellConfig.cellPadding(8f)`
+- **THEN** the method does not exist; callers use `TableConfig.padding(table, 8f)` or `CellConfig.margin(8f)`
 
 **Source: solim-units**
 
@@ -549,8 +549,8 @@ The Solim structural and compound components `Dynamic`, `ForEach`, `Tabs`, `Reac
 - **THEN** the underlying Arc Table and its cell configuration reflect the specified dimensions and visibility
 
 #### Scenario: Sizing and styling on ForEach
-- **WHEN** `.width(300f)` or `.margin(8f)` is invoked on `ForEach`
-- **THEN** the underlying container Table has width set to 300f and margin set to 8f
+- **WHEN** `.width(300f)` or `.padding(8f)` is invoked on `ForEach`
+- **THEN** the underlying container Table has width set to 300f and padding set to 8f
 
 #### Scenario: Element and table configuration on Tabs
 - **WHEN** `.width(400f)`, `.name("settings-tabs")`, or `.background(color)` is invoked on `Tabs`
@@ -561,7 +561,32 @@ The Solim structural and compound components `Dynamic`, `ForEach`, `Tabs`, `Reac
 - **THEN** the underlying grid Table reflects the dimensions and padding
 
 #### Scenario: Element and table configuration on VirtualList
-- **WHEN** `.height(600f)` or `.margin(4f)` is invoked on `VirtualList`
-- **THEN** the outer Table of the virtual list reflects the height and margin
+- **WHEN** `.height(600f)` or `.padding(4f)` is invoked on `VirtualList`
+- **THEN** the outer Table of the virtual list reflects the height and padding
+
+**Source: solim-css-margin-padding**
+
+### Requirement: CSS Box Model Margin on CellConfig
+
+`CellConfig` SHALL provide `.margin(...)` methods (`margin(float)`, `margin(float, float, float, float)`, `marginX(float)`, `marginY(float)`, `marginTop(float)`, `marginBottom(float)`, `marginLeft(float)`, `marginRight(float)`) and their reactive `Readable<Float>` overloads, mapping directly to outer spacing in the parent layout cell (`PendingCellConfig.padTop`, `padLeft`, `padBottom`, `padRight`).
+
+#### Scenario: Margin applied to child in Row
+
+- **WHEN** a component calls `.margin(8f)` inside a `Row`
+- **THEN** 8px padding is stored in its `PendingCellConfig` and applied as outer cell padding in the parent table cell
+
+#### Scenario: Reactive margin updates dynamically
+
+- **WHEN** a component binds `.margin(Readable<Float>)` to a signal
+- **THEN** the parent cell's padding updates reactively whenever the signal emits a new value
+
+### Requirement: Popup applies PendingCellConfig to root content
+
+`Popup.render()` SHALL inspect `PendingCellConfig` on the root content component and apply its constraints (including margin) to the cell created by `table.add(content.element())`.
+
+#### Scenario: Popup root content with margin
+
+- **WHEN** a popup's content provider returns a component with `.margin(12f)`
+- **THEN** the cell inside the popup table receives 12px padding around the content element
 
 

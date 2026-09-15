@@ -201,7 +201,7 @@ public class ChatMessageListView extends BaseComponent {
                                         }
                                     });
 
-                    return virtualList.cellPaddingBottom(unit(2)).grow();
+                    return virtualList.marginBottom(unit(2)).grow();
                 } else {
                     return column().padding(unit(4)).top().left().children(() -> {
                         text(Core.bundle.get("feature.chat.ui.empty-messages", "No messages yet."))
@@ -294,13 +294,12 @@ public class ChatMessageListView extends BaseComponent {
                         column().growX().top().left().children(() -> {
                             // Author and timestamp header + action button
                             row().growX().top().left()
-                                    .gap(unit(1))
+                                    .gap(unit(2))
                                     .height(ChatMessageHeightCalculator.HEADER_HEIGHT
                                             + ChatMessageHeightCalculator.HEADER_GAP)
                                     .children(() -> {
                                         text(authorName)
                                                 .color(authorColor)
-                                                .fontScale(0.95f)
                                                 .left();
 
                                         if (!timeStr.isEmpty()) {
@@ -344,22 +343,23 @@ public class ChatMessageListView extends BaseComponent {
             Readable<Boolean> isFailed = store.delivery().isFailed(msgId);
 
             Card card = card().growX().top().left();
+
             card.onClick(() -> openActions(parsed, card.element()));
             if (hasPrevious) {
-                card.cellPaddingTop(ChatMessageHeightCalculator.MESSAGE_GAP);
+                card.marginTop(ChatMessageHeightCalculator.MESSAGE_GAP);
             }
+
             card.children(() -> {
                 row().growX().top().left()
-                        .padding(ChatMessageHeightCalculator.MESSAGE_CARD_PADDING / 2f)
                         .children(() -> {
                             if (mentioned) {
-                                divider(Direction.Y).color(Pal.accent).width(unit(1)).cellPaddingRight(unit(1));
+                                divider(Direction.Y).color(Pal.accent).width(unit(1)).marginRight(unit(1));
                             }
 
                             if (raw.getReplyTo() != null && !raw.getReplyTo().isEmpty()) {
                                 column().growX().top().left().children(() -> {
                                     buildReplyPreview(raw.getReplyTo());
-                                    column().growX().top().left().cellPaddingTop(ChatMessageHeightCalculator.REPLY_GAP)
+                                    column().growX().top().left().marginTop(ChatMessageHeightCalculator.REPLY_GAP)
                                             .children(() -> {
                                                 buildMessageBody(parsed, isPending, isFailed);
                                             });
@@ -407,7 +407,7 @@ public class ChatMessageListView extends BaseComponent {
 
             final String displaySnippet = targetSnippet;
             row().growX().top().left().height(ChatMessageHeightCalculator.REPLY_PREVIEW_HEIGHT).children(() -> {
-                icon(Icon.rightSmall).size(unit(4), unit(4)).color(Color.gray).cellPaddingRight(unit(1));
+                icon(Icon.rightSmall).size(unit(4), unit(4)).color(Color.gray).marginRight(unit(1));
                 text(displaySnippet)
                         .color(Color.gray)
                         .fontScale(0.8f)
@@ -502,7 +502,7 @@ public class ChatMessageListView extends BaseComponent {
                         return null;
                     }
                     final String translatedText = translated;
-                    return column().growX().top().left().cellPaddingTop(unit(1)).children(() -> {
+                    return column().growX().top().left().marginTop(unit(1)).children(() -> {
                         text(Core.bundle.get("feature.chat.ui.translated-badge", "Translated"))
                                 .color(Pal.accent)
                                 .fontScale(0.8f)

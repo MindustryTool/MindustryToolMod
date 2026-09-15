@@ -31,15 +31,14 @@ public class TimeControlSettingsView extends BaseComponent {
                                             .style(Styles.togglet)
                                             .checked(feature.modeConfig.signal()
                                                     .map(TimeControlFeature.MODE_PRESETS::equals))
-                                            .height(unit(8.5f))
-                                            .margin(unit(1.5f), unit(4), unit(1.5f), unit(4));
+                                            .height(unit(8.5f));
+
                             button(Core.bundle.get("feature.time-control.settings.mode.slider"),
                                     () -> feature.modeConfig.set(TimeControlFeature.MODE_SLIDER))
                                             .style(Styles.togglet)
                                             .checked(feature.modeConfig.signal()
                                                     .map(TimeControlFeature.MODE_SLIDER::equals))
-                                            .height(unit(8.5f))
-                                            .margin(unit(1.5f), unit(4), unit(1.5f), unit(4));
+                                            .height(unit(8.5f));
                         });
                     });
 
@@ -57,15 +56,13 @@ public class TimeControlSettingsView extends BaseComponent {
                                             .style(Styles.togglet)
                                             .checked(feature.displayModeConfig.signal()
                                                     .map(TimeControlFeature.DISPLAY_HUD::equals))
-                                            .height(unit(8.5f))
-                                            .margin(unit(1.5f), unit(4), unit(1.5f), unit(4));
+                                            .height(unit(8.5f));
                             button(Core.bundle.get("feature.time-control.settings.display-mode.popup"),
                                     () -> feature.displayModeConfig.set(TimeControlFeature.DISPLAY_POPUP))
                                             .style(Styles.togglet)
                                             .checked(feature.displayModeConfig.signal()
                                                     .map(TimeControlFeature.DISPLAY_POPUP::equals))
-                                            .height(unit(8.5f))
-                                            .margin(unit(1.5f), unit(4), unit(1.5f), unit(4));
+                                            .height(unit(8.5f));
                         });
                     });
 

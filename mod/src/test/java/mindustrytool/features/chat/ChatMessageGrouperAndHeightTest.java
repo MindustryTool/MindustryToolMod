@@ -34,7 +34,8 @@ class ChatMessageGrouperAndHeightTest {
 
     private static final ChatFeature feature = new ChatFeature();
 
-    @BeforeEach void setUp() {
+    @BeforeEach
+    void setUp() {
         Core.app = new MockApplication();
         Core.graphics = new MockGraphics();
         Core.settings = new MockSettings();
@@ -185,11 +186,9 @@ class ChatMessageGrouperAndHeightTest {
 
         float textWidth = Math.max(100f, 400f - ChatMessageHeightCalculator.HORIZONTAL_PADDINGS);
         float first = ChatMessageHeightCalculator.measureTextHeight("First", textWidth,
-                ChatMessageHeightCalculator.FONT_SCALE)
-                + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING;
+                ChatMessageHeightCalculator.FONT_SCALE);
         float second = ChatMessageHeightCalculator.measureTextHeight("Second", textWidth,
-                ChatMessageHeightCalculator.FONT_SCALE)
-                + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING;
+                ChatMessageHeightCalculator.FONT_SCALE);
         float expected = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
                         + first + second + ChatMessageHeightCalculator.MESSAGE_GAP)
@@ -608,8 +607,7 @@ class ChatMessageGrouperAndHeightTest {
         float hImg = ChatMessageHeightCalculator.calculateHeight(groupImg, 400f);
         float expectedImg = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + ChatMessageHeightCalculator.IMAGE_CARD_HEIGHT
-                        + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING)
+                        + ChatMessageHeightCalculator.IMAGE_CARD_HEIGHT)
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedImg, hImg, 0.001f);
 
@@ -619,8 +617,7 @@ class ChatMessageGrouperAndHeightTest {
         float hInvite = ChatMessageHeightCalculator.calculateHeight(groupInvite, 400f);
         float expectedInvite = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + ChatMessageHeightCalculator.INVITE_CARD_HEIGHT
-                        + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING)
+                        + ChatMessageHeightCalculator.INVITE_CARD_HEIGHT)
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedInvite, hInvite, 0.001f);
 
@@ -631,8 +628,7 @@ class ChatMessageGrouperAndHeightTest {
         float hLink = ChatMessageHeightCalculator.calculateHeight(groupLink, 400f);
         float expectedLink = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + ChatMessageHeightCalculator.TOOL_LINK_CARD_HEIGHT
-                        + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING)
+                        + ChatMessageHeightCalculator.TOOL_LINK_CARD_HEIGHT)
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedLink, hLink, 0.001f);
 
@@ -644,7 +640,7 @@ class ChatMessageGrouperAndHeightTest {
         float hUnknown = ChatMessageHeightCalculator.calculateHeight(groupUnknown, 400f);
         float expectedUnknown = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + 24f + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING)
+                        + 24f)
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedUnknown, hUnknown, 0.001f);
     }

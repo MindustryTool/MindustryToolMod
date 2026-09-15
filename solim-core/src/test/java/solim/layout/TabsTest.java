@@ -162,7 +162,7 @@ class TabsTest {
 				.height(300f)
 				.visible(false)
 				.name("custom-tabs")
-				.margin(12f);
+				.padding(12f);
 
 		assertEquals(500f, tabs.element().getWidth());
 		assertEquals(300f, tabs.element().getHeight());

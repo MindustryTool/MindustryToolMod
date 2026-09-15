@@ -36,7 +36,7 @@ public class AxisSpacingTest {
         assertEquals(8f, colTable.getMarginTop(), 0.01f);
         assertEquals(8f, colTable.getMarginBottom(), 0.01f);
 
-        col.marginX(10f).marginY(5f);
+        col.paddingX(10f).paddingY(5f);
         assertEquals(10f, colTable.getMarginLeft(), 0.01f);
         assertEquals(10f, colTable.getMarginRight(), 0.01f);
         assertEquals(5f, colTable.getMarginTop(), 0.01f);
@@ -49,7 +49,7 @@ public class AxisSpacingTest {
         assertEquals(12f, rowTable.getMarginTop(), 0.01f);
         assertEquals(12f, rowTable.getMarginBottom(), 0.01f);
 
-        row.marginX(14f).marginY(7f);
+        row.paddingX(14f).paddingY(7f);
         assertEquals(14f, rowTable.getMarginLeft(), 0.01f);
         assertEquals(14f, rowTable.getMarginRight(), 0.01f);
         assertEquals(7f, rowTable.getMarginTop(), 0.01f);
@@ -72,7 +72,7 @@ public class AxisSpacingTest {
         SolimImage img = new SolimImage();
         parent.add(img.element());
 
-        img.paddingX(10f).paddingY(5f).cellPaddingX(8f).cellPaddingY(4f);
+        img.paddingX(10f).paddingY(5f).marginX(8f).marginY(4f);
 
         Cell<?> cell = parent.getCell(img.element());
         // padding (10, 5) + margin (8, 4) = 18 horizontal, 9 vertical
@@ -83,17 +83,17 @@ public class AxisSpacingTest {
     }
 
     @Test
-    void buttonAxisMarginsStaticAndReactive() {
-        Button btn = new Button().marginX(12f).marginY(6f);
+    void buttonAxisPaddingStaticAndReactive() {
+        Button btn = new Button().paddingX(12f).paddingY(6f);
         arc.scene.ui.Button arcBtn = (arc.scene.ui.Button) btn.element();
         assertEquals(12f, arcBtn.getMarginLeft(), 0.01f);
         assertEquals(12f, arcBtn.getMarginRight(), 0.01f);
         assertEquals(6f, arcBtn.getMarginTop(), 0.01f);
         assertEquals(6f, arcBtn.getMarginBottom(), 0.01f);
 
-        Signal<Float> marginXSignal = Signal.of(15f);
-        Signal<Float> marginYSignal = Signal.of(9f);
-        Button reactiveBtn = new Button().marginX(marginXSignal).marginY(marginYSignal);
+        Signal<Float> padXSignal = Signal.of(15f);
+        Signal<Float> padYSignal = Signal.of(9f);
+        Button reactiveBtn = new Button().paddingX(padXSignal).paddingY(padYSignal);
         SignalDispatcher.flush();
         arc.scene.ui.Button arcReactiveBtn = (arc.scene.ui.Button) reactiveBtn.element();
         assertEquals(15f, arcReactiveBtn.getMarginLeft(), 0.01f);
@@ -101,8 +101,8 @@ public class AxisSpacingTest {
         assertEquals(9f, arcReactiveBtn.getMarginTop(), 0.01f);
         assertEquals(9f, arcReactiveBtn.getMarginBottom(), 0.01f);
 
-        marginXSignal.set(24f);
-        marginYSignal.set(16f);
+        padXSignal.set(24f);
+        padYSignal.set(16f);
         SignalDispatcher.flush();
         assertEquals(24f, arcReactiveBtn.getMarginLeft(), 0.01f);
         assertEquals(24f, arcReactiveBtn.getMarginRight(), 0.01f);
@@ -119,7 +119,7 @@ public class AxisSpacingTest {
         Signal<Float> mx = Signal.of(11f);
         Signal<Float> my = Signal.of(7f);
 
-        grid.cellPaddingX(mx).cellPaddingY(my);
+        grid.marginX(mx).marginY(my);
         grid.cellConfig().applyToCell(cell);
         SignalDispatcher.flush();
 

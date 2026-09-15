@@ -260,7 +260,7 @@ class ReactiveGridTest {
 							.children(() -> {
 								holder[0] = Ui.card()
 										.growX()
-										.cellPadding(4f, 0f, 4f, 0f)
+										.margin(4f, 0f, 4f, 0f)
 										.height(ctx.itemWidth())
 										.children(() -> {});
 							});
@@ -291,7 +291,7 @@ class ReactiveGridTest {
 				.width(400f)
 				.height(200f)
 				.visible(false)
-				.margin(16f);
+				.padding(16f);
 
 		assertEquals(400f, grid.element().getWidth());
 		assertEquals(200f, grid.element().getHeight());

@@ -30,8 +30,8 @@ class GapCoexistenceTest {
 	@Test
 	void childMarginAndContainerGapCoexistAdditivelyInRow() {
 		Row r = Ui.row().gap(12f);
-		Card card1 = Ui.card().cellPadding(5f, 10f, 5f, 10f); // top 5, left 10, bottom 5, right 10
-		Card card2 = Ui.card().cellPadding(6f, 15f, 6f, 20f); // top 6, left 15, bottom 6, right 20
+		Card card1 = Ui.card().margin(5f, 10f, 5f, 10f); // top 5, left 10, bottom 5, right 10
+		Card card2 = Ui.card().margin(6f, 15f, 6f, 20f); // top 6, left 15, bottom 6, right 20
 		Card card3 = Ui.card(); // no margin
 
 		r.children(() -> {
@@ -66,8 +66,8 @@ class GapCoexistenceTest {
 	@Test
 	void childMarginAndContainerGapCoexistAdditivelyInColumn() {
 		Column col = Ui.column().gap(14f);
-		Card card1 = Ui.card().cellPadding(8f, 4f, 4f, 4f);
-		Card card2 = Ui.card().cellPadding(6f, 4f, 4f, 4f);
+		Card card1 = Ui.card().margin(8f, 4f, 4f, 4f);
+		Card card2 = Ui.card().margin(6f, 4f, 4f, 4f);
 		Card card3 = Ui.card();
 
 		col.children(() -> {
@@ -186,5 +186,61 @@ class GapCoexistenceTest {
 		// Dynamic item is now first visible (0), suffix is 2nd visible (20)
 		assertEquals(0f, CellAccess.padLeft(dynCell), 0.01f);
 		assertEquals(20f, CellAccess.padLeft(suffixCell), 0.01f);
+	}
+
+	@Test
+	void childMarginInsideRowColumnAndGridSetsParentCellPadding() {
+		// Inside Row
+		Row row = Ui.row();
+		Card rowChild = Ui.card().margin(5f, 10f, 15f, 20f);
+		row.children(() -> ParentStack.add(rowChild));
+		Cell<?> rowCell = row.table().getCell(rowChild.element());
+		assertEquals(5f, CellAccess.padTop(rowCell), 0.01f);
+		assertEquals(10f, CellAccess.padLeft(rowCell), 0.01f);
+		assertEquals(15f, CellAccess.padBottom(rowCell), 0.01f);
+		assertEquals(20f, CellAccess.padRight(rowCell), 0.01f);
+
+		// Inside Column
+		Column col = Ui.column();
+		Card colChild = Ui.card().margin(6f, 12f, 18f, 24f);
+		col.children(() -> ParentStack.add(colChild));
+		Cell<?> colCell = col.table().getCell(colChild.element());
+		assertEquals(6f, CellAccess.padTop(colCell), 0.01f);
+		assertEquals(12f, CellAccess.padLeft(colCell), 0.01f);
+		assertEquals(18f, CellAccess.padBottom(colCell), 0.01f);
+		assertEquals(24f, CellAccess.padRight(colCell), 0.01f);
+
+		// Inside Grid
+		Grid grid = Ui.grid(2);
+		Card gridChild = Ui.card().margin(7f, 14f, 21f, 28f);
+		grid.children(() -> ParentStack.add(gridChild));
+		Cell<?> gridCell = grid.table().getCell(gridChild.element());
+		assertEquals(7f, CellAccess.padTop(gridCell), 0.01f);
+		assertEquals(14f, CellAccess.padLeft(gridCell), 0.01f);
+		assertEquals(21f, CellAccess.padBottom(gridCell), 0.01f);
+		assertEquals(28f, CellAccess.padRight(gridCell), 0.01f);
+	}
+
+	@Test
+	void marginAndPaddingCoexistOnContainer() {
+		Row parent = Ui.row();
+		Card card = Ui.card()
+				.margin(8f, 12f, 16f, 20f)
+				.padding(4f, 6f, 8f, 10f);
+
+		parent.children(() -> ParentStack.add(card));
+
+		// Outer margin affects parent cell padding
+		Cell<?> cell = parent.table().getCell(card.element());
+		assertEquals(8f, CellAccess.padTop(cell), 0.01f);
+		assertEquals(12f, CellAccess.padLeft(cell), 0.01f);
+		assertEquals(16f, CellAccess.padBottom(cell), 0.01f);
+		assertEquals(20f, CellAccess.padRight(cell), 0.01f);
+
+		// Inner padding affects internal container insets
+		assertEquals(4f, card.container().getMarginTop(), 0.01f);
+		assertEquals(6f, card.container().getMarginLeft(), 0.01f);
+		assertEquals(8f, card.container().getMarginBottom(), 0.01f);
+		assertEquals(10f, card.container().getMarginRight(), 0.01f);
 	}
 }

@@ -10,10 +10,13 @@ import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.scene.Scene;
 import arc.scene.ui.layout.Table;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.CellAccess;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
+import solim.ui.Ui;
 import arc.mock.MockApplication;
 import arc.mock.MockGL20;
 import arc.mock.MockGraphics;
@@ -141,6 +144,33 @@ class PopupMenuTest {
         } finally {
             try {
                 menu.dispose();
+            } catch (Throwable ignored) {
+            }
+            Core.scene = savedScene;
+            Core.app = savedApp;
+            Core.graphics = savedGraphics;
+        }
+    }
+
+    @Test
+    void popupAppliesMarginFromRootContent() {
+        Scene savedScene = Core.scene;
+        Application savedApp = Core.app;
+        Graphics savedGraphics = Core.graphics;
+        Popup<String> popup = new Popup<>();
+        try {
+            ensureScene();
+            popup.children(data -> Ui.card().margin(10f, 15f, 20f, 25f));
+            popup.show("test", 100f, 100f);
+            Table table = popup.table();
+            Cell<?> cell = table.getCells().first();
+            assertEquals(10f, CellAccess.padTop(cell), 0.01f);
+            assertEquals(15f, CellAccess.padLeft(cell), 0.01f);
+            assertEquals(20f, CellAccess.padBottom(cell), 0.01f);
+            assertEquals(25f, CellAccess.padRight(cell), 0.01f);
+        } finally {
+            try {
+                popup.dispose();
             } catch (Throwable ignored) {
             }
             Core.scene = savedScene;

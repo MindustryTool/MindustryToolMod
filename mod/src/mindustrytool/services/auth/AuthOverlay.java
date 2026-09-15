@@ -86,7 +86,7 @@ public class AuthOverlay {
                             return row()
                                     .top()
                                     .right()
-                            .cellPadding(8f)
+                            .margin(8f)
                             .background(Styles.black6)
                             .padding(unit(2))
                             .children(() -> {
@@ -98,7 +98,7 @@ public class AuthOverlay {
                             return row()
                                     .top()
                                     .right()
-                            .cellPadding(8f)
+                            .margin(8f)
                             .background(Styles.black6)
                             .gap(unit(2))
                             .padding(unit(2))
@@ -118,7 +118,7 @@ public class AuthOverlay {
                             return row()
                                     .top()
                                     .right()
-                            .cellPadding(8f)
+                            .margin(8f)
                             .background(Styles.black6)
                             .padding(unit(2))
                             .children(() -> {

@@ -51,7 +51,6 @@ public class HostRoomDialog extends SolimDialog {
                     .growX()
                     .maxWidth(dvw(90f).map(w -> Math.min(w, 1100f)))
                     .maxHeight(dvh(85f).map(h -> Math.min(h, 1200f)))
-                    .margin(unit(4))
                     .gap(unit(3))
                     .center()
                     .children(() -> {
@@ -215,7 +214,6 @@ public class HostRoomDialog extends SolimDialog {
                     .border(1.5f, isSelected.map(s -> s ? Pal.accent : WebStyles.Colors.BORDER_INPUT))
                     .growX()
                     .minHeight(unit(12))
-                    .margin(unit(1))
                     .padding(unit(2), unit(3), unit(2), unit(3))
                     .onClick(() -> selectedProvider.set(provider))
                     .children(() -> {

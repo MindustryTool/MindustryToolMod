@@ -177,7 +177,6 @@ public class MindustryAuthProvider implements AuthProvider {
 						Jval resJson = Jval.read(body);
 						if (resJson.has("accessToken") && resJson.has("refreshToken")) {
 							saveTokens(resJson.getString("accessToken"), resJson.getString("refreshToken"));
-							Log.info("Token refreshed successfully");
 							refreshFuture.complete(null);
 						} else {
 							refreshFuture.completeExceptionally(

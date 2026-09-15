@@ -20,7 +20,7 @@ import solim.modifier.PendingCellConfig;
  * its parent cell.</li>
  * <li><b>Min/Max Size</b>: {@code minWidth/minHeight/maxWidth/maxHeight} —
  * minimum and maximum size constraints applied to the parent cell.</li>
- * <li><b>Cell padding</b>: {@code cellPadding/cellPaddingTop/...} — outer
+ * <li><b>Margin</b>: {@code margin/marginTop/...} — outer
  * spacing between this element and the parent cell boundary (applied as
  * {@code Cell.pad()}).</li>
  * </ul>
@@ -136,13 +136,13 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return growX().growY();
     }
 
-    // ---------- cell padding (outer spacing via parent cell pad) ----------
+    // ---------- margin (outer spacing via parent cell pad) ----------
 
-    default SELF cellPadding(float p) {
-        return cellPadding(p, p, p, p);
+    default SELF margin(float m) {
+        return margin(m, m, m, m);
     }
 
-    default SELF cellPadding(float top, float left, float bottom, float right) {
+    default SELF margin(float top, float left, float bottom, float right) {
         cellConfig().padTop = Readable.of(top);
         cellConfig().padLeft = Readable.of(left);
         cellConfig().padBottom = Readable.of(bottom);
@@ -153,11 +153,11 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPadding(Readable<Float> p) {
-        return cellPadding(p, p, p, p);
+    default SELF margin(Readable<Float> m) {
+        return margin(m, m, m, m);
     }
 
-    default SELF cellPadding(Readable<Float> top, Readable<Float> left, Readable<Float> bottom, Readable<Float> right) {
+    default SELF margin(Readable<Float> top, Readable<Float> left, Readable<Float> bottom, Readable<Float> right) {
         cellConfig().padTop = top;
         cellConfig().padLeft = left;
         cellConfig().padBottom = bottom;
@@ -168,7 +168,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingTop(float top) {
+    default SELF marginTop(float top) {
         cellConfig().padTop = Readable.of(top);
         if (this instanceof Component) {
             cellConfig().applyMarginToParentCell(((Component) this).element());
@@ -176,7 +176,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingTop(Readable<Float> top) {
+    default SELF marginTop(Readable<Float> top) {
         cellConfig().padTop = top;
         if (this instanceof Component) {
             cellConfig().applyMarginToParentCell(((Component) this).element());
@@ -184,7 +184,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingBottom(float bottom) {
+    default SELF marginBottom(float bottom) {
         cellConfig().padBottom = Readable.of(bottom);
         if (this instanceof Component) {
             cellConfig().applyMarginToParentCell(((Component) this).element());
@@ -192,7 +192,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingBottom(Readable<Float> bottom) {
+    default SELF marginBottom(Readable<Float> bottom) {
         cellConfig().padBottom = bottom;
         if (this instanceof Component) {
             cellConfig().applyMarginToParentCell(((Component) this).element());
@@ -200,7 +200,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingLeft(float left) {
+    default SELF marginLeft(float left) {
         cellConfig().padLeft = Readable.of(left);
         if (this instanceof Component) {
             cellConfig().applyMarginToParentCell(((Component) this).element());
@@ -208,7 +208,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingLeft(Readable<Float> left) {
+    default SELF marginLeft(Readable<Float> left) {
         cellConfig().padLeft = left;
         if (this instanceof Component) {
             cellConfig().applyMarginToParentCell(((Component) this).element());
@@ -216,7 +216,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingRight(float right) {
+    default SELF marginRight(float right) {
         cellConfig().padRight = Readable.of(right);
         if (this instanceof Component) {
             cellConfig().applyMarginToParentCell(((Component) this).element());
@@ -224,7 +224,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingRight(Readable<Float> right) {
+    default SELF marginRight(Readable<Float> right) {
         cellConfig().padRight = right;
         if (this instanceof Component) {
             cellConfig().applyMarginToParentCell(((Component) this).element());
@@ -232,7 +232,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingX(float x) {
+    default SELF marginX(float x) {
         cellConfig().padLeft = Readable.of(x);
         cellConfig().padRight = Readable.of(x);
         if (this instanceof Component) {
@@ -241,7 +241,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingX(Readable<Float> x) {
+    default SELF marginX(Readable<Float> x) {
         cellConfig().padLeft = x;
         cellConfig().padRight = x;
         if (this instanceof Component) {
@@ -250,7 +250,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingY(float y) {
+    default SELF marginY(float y) {
         cellConfig().padTop = Readable.of(y);
         cellConfig().padBottom = Readable.of(y);
         if (this instanceof Component) {
@@ -259,7 +259,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    default SELF cellPaddingY(Readable<Float> y) {
+    default SELF marginY(Readable<Float> y) {
         cellConfig().padTop = y;
         cellConfig().padBottom = y;
         if (this instanceof Component) {
