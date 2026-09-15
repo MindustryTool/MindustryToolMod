@@ -180,17 +180,21 @@ public class ChatOverlayHudView extends BaseComponent {
 
                                     button(store.ui()::toggleChannelsCollapsed)
                                             .style(WebStyles.ghost())
-                                            .size(unit(10), unit(10))
+                                            .size(unit(10))
                                             .visible(isDesktop)
                                             .tooltip(channelsTooltip)
-                                            .children(() -> icon(channelsIcon).size(unit(5)));
+                                            .children(() -> icon(channelsIcon).size(unit(6)));
 
                                     button(store.ui()::toggleUsersCollapsed)
                                             .style(WebStyles.ghost())
-                                            .size(unit(10), unit(10))
+                                            .size(unit(10))
                                             .visible(isDesktop)
                                             .tooltip(usersTooltip)
-                                            .children(() -> icon(usersIcon).size(unit(5)));
+                                            .children(() -> icon(usersIcon).size(unit(6)));
+
+                                    button(() -> service.refresh(store.channels().activeId().peek()))
+                                            .size(unit(10))
+                                            .children(() -> icon(Icon.refresh).size(unit(5)));
 
                                     button(() -> {
                                         Prov<SolimDialog> dialog = feature.getSettingDialog();
@@ -199,13 +203,13 @@ public class ChatOverlayHudView extends BaseComponent {
                                         }
                                     })
                                             .style(WebStyles.ghost())
-                                            .size(unit(10), unit(10))
+                                            .size(unit(10))
                                             .tooltip(Core.bundle.get("feature.chat.ui.settings", "Settings"))
                                             .children(() -> icon(Icon.settings).size(unit(5)));
 
                                     button(() -> feature.collapsedConfig.set(true))
                                             .style(WebStyles.ghost())
-                                            .size(unit(10), unit(10))
+                                            .size(unit(10))
                                             .tooltip(Core.bundle.get("feature.chat.ui.collapse", "Collapse"))
                                             .children(() -> icon(Icon.cancel).size(unit(5)));
                                 });
