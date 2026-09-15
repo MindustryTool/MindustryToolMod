@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import mindustrytool.models.response.ChannelDto;
@@ -28,7 +27,7 @@ public class ChatService {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final String chatId = UUID.randomUUID().toString();
 
-    private Flow.Subscription streamSubscription;
+    private @Nullable CompletableFuture<Void> streamRequest;
     private StringBuilder dataBuffer = new StringBuilder();
     private String currentEvent = "data";
 
@@ -55,12 +54,12 @@ public class ChatService {
 
     public synchronized void stop() {
         running.set(false);
-        if (streamSubscription != null) {
+        if (streamRequest != null) {
             try {
-                streamSubscription.cancel();
+                streamRequest.cancel(true);
             } catch (Exception ignored) {
             }
-            streamSubscription = null;
+            streamRequest = null;
         }
         Core.app.post(() -> store.session().setConnected(false));
     }
@@ -201,41 +200,11 @@ public class ChatService {
             return;
         }
 
-        MindustryTool.chatStream(chatId).thenAccept(publisher -> {
-            if (publisher == null) {
-                scheduleReconnect();
-                return;
-            }
-
-            publisher.subscribe(new Flow.Subscriber<String>() {
-                @Override
-                public void onSubscribe(Flow.Subscription subscription) {
-                    streamSubscription = subscription;
-                    subscription.request(Long.MAX_VALUE);
-                    Core.app.post(() -> store.session().setConnected(true));
-                }
-
-                @Override
-                public void onNext(String line) {
-                    handleStreamLine(line);
-                }
-
-                @Override
-                public void onError(Throwable throwable) {
-                    Core.app.post(() -> store.session().setConnected(false));
-                    scheduleReconnect();
-                }
-
-                @Override
-                public void onComplete() {
-                    Core.app.post(() -> store.session().setConnected(false));
-                    scheduleReconnect();
-                }
-            });
-        }).exceptionally(e -> {
+        Core.app.post(() -> store.session().setConnected(true));
+        streamRequest = MindustryTool.chatStream(chatId, this::handleStreamLine);
+        streamRequest.whenComplete((ignored, error) -> {
             Core.app.post(() -> store.session().setConnected(false));
             scheduleReconnect();
-            return null;
         });
     }
 
