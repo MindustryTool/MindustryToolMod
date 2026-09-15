@@ -3,15 +3,18 @@ package mindustrytool.features.godmode;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
+import arc.util.Time;
+import mindustry.ui.Styles;
 import solim.core.Component;
 import solim.overlay.Popup;
 import solim.signal.Readable;
 
 /**
  * QuickAccess popup shell for GodMode. Reuses the shared icon-only horizontal
- * row layout from GodModeHudView under a popup-only title header.
+ * row layout from GodModeHudView inside a black rounded container.
  */
 public final class GodModePopup {
 
@@ -20,13 +23,25 @@ public final class GodModePopup {
     private GodModePopup() {
     }
 
+    public static boolean isShowing() {
+        return menu != null && menu.isShowing();
+    }
+
+    public static void toggle(GodModeFeature feature, @Nullable Element quickAccessBar) {
+        if (menu != null && (menu.isShowing() || Time.timeSinceMillis(menu.getLastHideTime()) < 250L)) {
+            hide();
+            return;
+        }
+        show(feature, quickAccessBar);
+    }
+
     public static void show(GodModeFeature feature, @Nullable Element quickAccessBar) {
         if (feature == null) {
             return;
         }
         if (menu == null) {
             menu = popup();
-            menu.children(GodModePopup::buildContent).rounded(2);
+            menu.children(GodModePopup::buildContent).rounded(unit(2), Color.black);
         }
         float stageW = Core.scene != null ? Core.scene.getWidth() : 0f;
         float stageH = Core.scene != null ? Core.scene.getHeight() : 0f;
@@ -71,16 +86,16 @@ public final class GodModePopup {
 
     private static Component buildContent(@Nullable GodModeFeature feature) {
         if (feature == null) {
-            return column().children(() -> text(Core.bundle.get("feature.god-mode.popup.title")));
+            return row();
         }
         Readable<Boolean> canEdit = feature.enabled();
 
-        return column()
-                .padding(unit(2))
+        return row()
+                .background(Styles.black6)
+                .rounded(unit(2), Color.black)
+                .padding(unit(1))
                 .gap(unit(1))
-                .children(() -> {
-                    text(Core.bundle.get("feature.god-mode.popup.title")).center();
-                    GodModeHudView.buildControls(feature, canEdit);
-                });
+                .center()
+                .children(() -> GodModeHudView.buildControls(feature, canEdit));
     }
 }

@@ -179,8 +179,13 @@ public class GodModeFeature extends Feature implements PopupDisplayFeature {
     }
 
     @Override
+    public void togglePopup(@Nullable Element quickAccessBar) {
+        GodModePopup.toggle(this, quickAccessBar);
+    }
+
+    @Override
     public void openPopup(@Nullable Element quickAccessBar) {
-        GodModePopup.show(this, quickAccessBar);
+        GodModePopup.toggle(this, quickAccessBar);
     }
 
     @Override

@@ -11,6 +11,7 @@ import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
+import arc.util.Time;
 import java.util.function.Function;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.BaseComponent;
@@ -54,6 +55,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     private @Nullable Component currentContent;
     private boolean touchAttached = false;
     private boolean keyAttached = false;
+    private long lastHideTime = 0L;
 
     private final Cons<ResizeEvent> resizeListener = e -> {
         if (table.parent != null) {
@@ -177,10 +179,19 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
      * safe to call headless.
      */
     public Popup<T> hide() {
+        lastHideTime = Time.millis();
         detachListeners();
         table.remove();
         clearContent();
         return this;
+    }
+
+    public boolean isShowing() {
+        return table.parent != null;
+    }
+
+    public long getLastHideTime() {
+        return lastHideTime;
     }
 
     /**

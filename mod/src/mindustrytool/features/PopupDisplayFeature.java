@@ -11,5 +11,9 @@ public interface PopupDisplayFeature {
 
     boolean isPopupMode();
 
-    void openPopup(@Nullable Element quickAccessBar);
+    void togglePopup(@Nullable Element quickAccessBar);
+
+    default void openPopup(@Nullable Element quickAccessBar) {
+        togglePopup(quickAccessBar);
+    }
 }

@@ -258,8 +258,13 @@ public class TimeControlFeature extends Feature implements PopupDisplayFeature {
     }
 
     @Override
+    public void togglePopup(@Nullable Element quickAccessBar) {
+        TimeControlPopup.toggle(this, quickAccessBar);
+    }
+
+    @Override
     public void openPopup(@Nullable Element quickAccessBar) {
-        TimeControlPopup.show(this, quickAccessBar);
+        TimeControlPopup.toggle(this, quickAccessBar);
     }
 
     @Override

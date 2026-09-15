@@ -122,7 +122,7 @@ public class QuickAccessHudView extends BaseComponent {
                     .onClick(() -> {
                         if (f instanceof PopupDisplayFeature && ((PopupDisplayFeature) f).isPopupMode()) {
                             Element bar = hud != null ? hud.element() : null;
-                            ((PopupDisplayFeature) f).openPopup(bar);
+                            ((PopupDisplayFeature) f).togglePopup(bar);
                         } else {
                             f.setEnabled(!f.isEnabled());
                         }

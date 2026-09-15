@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientServerConnectEvent;
+import mindustry.game.EventType.ConnectionEvent;
 import mindustry.game.EventType.HostEvent;
 import mindustry.game.EventType.PlayerIpBanEvent;
 import mindustry.game.EventType.PlayerJoin;
@@ -42,6 +43,7 @@ import mindustry.ui.IntFormat;
 import mindustry.ui.Styles;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
+import mindustrytool.features.playerconnect.net.Packets.RoomCloseReason;
 import mindustrytool.features.playerconnect.ui.HostRoomDialog;
 import mindustrytool.features.playerconnect.ui.JoinApprovalHudView;
 import mindustrytool.features.playerconnect.ui.JoinDialogInjector;
@@ -126,9 +128,15 @@ public class PlayerConnectFeature extends Feature {
             processNextRequest();
         });
 
+        Events.run(ConnectionEvent.class, () -> {
+            if (isHosting() && activeProxy != null) {
+                PlayerConnectClient.unbanProxyIp(activeProxy);
+            }
+        });
+
         Events.on(PlayerIpBanEvent.class, event -> {
             if (isHosting() && activeProxy != null) {
-                PlayerConnectClient.unbanProxyIp(activeProxy.getRemoteHost());
+                PlayerConnectClient.unbanProxyIp(activeProxy);
             }
         });
 
@@ -261,7 +269,7 @@ public class PlayerConnectFeature extends Feature {
                             Vars.ui.loadfrag.hide();
                             activeLink = new PlayerConnectLink(host, port, roomId);
                             state.set(HostingState.HOSTING);
-                            PlayerConnectClient.unbanProxyIp(host);
+                            PlayerConnectClient.unbanProxyIp(activeProxy);
                             Events.fire(new PcRoomOpened(roomNameConfig.get()));
                             onSuccess.get(activeLink);
                         }),
@@ -283,6 +291,10 @@ public class PlayerConnectFeature extends Feature {
     }
 
     public void closeRoom() {
+        closeRoom(RoomCloseReason.closed);
+    }
+
+    public void closeRoom(RoomCloseReason reason) {
         boolean wasActive = activeProxy != null || activeLink != null;
         if (activeProxy != null) {
             activeProxy.closeRoom();

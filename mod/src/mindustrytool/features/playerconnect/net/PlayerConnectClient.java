@@ -13,7 +13,6 @@ import arc.util.Reflect;
 import arc.util.Threads;
 import arc.util.Time;
 import java.lang.reflect.Field;
-import java.net.InetAddress;
 import java.util.concurrent.ExecutorService;
 import mindustry.Vars;
 import mindustry.net.Net.NetProvider;
@@ -86,6 +85,7 @@ public class PlayerConnectClient {
                     Vars.netClient.setQuiet();
                     Vars.ui.loadfrag.hide();
                     client.close();
+                    Log.info("Client closed: " + messagePacket.message);
                     return;
                 }
 
@@ -106,7 +106,7 @@ public class PlayerConnectClient {
             }
         };
 
-        Reflect.set(Connection.class, client, "listeners", new NetListener[] {wrap});
+        Reflect.set(Connection.class, client, "listeners", new NetListener[] { wrap });
 
         try {
             Vars.net.connect(link.host, link.port, () -> {
@@ -173,23 +173,20 @@ public class PlayerConnectClient {
         }
     }
 
-    public static void unbanProxyIp(String remoteHost) {
-        if (remoteHost == null || remoteHost.trim().isEmpty()) {
-            return;
-        }
-
+    public static void unbanProxyIp(NetworkProxy proxy) {
         PING_WORKER.submit(() -> {
             try {
-                InetAddress address = InetAddress.getByName(remoteHost);
-                String ip = address.getHostAddress();
+                String ip = proxy.getProviderIp();
+                if (ip == null || ip.isEmpty()) {
+                    return;
+                }
+
                 Core.app.post(() -> {
-                    if (Vars.netServer != null && Vars.netServer.admins != null) {
-                        Vars.netServer.admins.unbanPlayerIP(ip);
-                        Log.info("PlayerConnect: Unbanned proxy relay IP @", ip);
-                    }
+                    Vars.netServer.admins.unbanPlayerIP(ip);
+                    Log.info("PlayerConnect: Unbanned proxy relay IP @", ip);
                 });
             } catch (Exception e) {
-                Log.err("Failed to resolve and unban proxy relay IP for @", remoteHost, e);
+                Log.err("Failed to resolve and unban proxy relay IP for @", proxy.getProviderIp(), e);
             }
         });
     }
