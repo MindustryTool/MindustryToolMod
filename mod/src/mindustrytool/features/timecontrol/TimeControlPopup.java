@@ -7,7 +7,7 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
 import arc.util.Time;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import solim.core.Component;
 import solim.overlay.Popup;
 import solim.signal.Readable;
@@ -15,9 +15,9 @@ import solim.signal.Signal;
 import solim.signal.Signals;
 
 /**
- * QuickAccess popup for TimeControl, opened from QuickAccess in popup display mode.
- * Reuses the shared horizontal control row layout from TimeControlHudView inside
- * a black rounded container.
+ * QuickAccess popup for TimeControl, opened from QuickAccess in popup display
+ * mode. Reuses the shared horizontal control row layout from TimeControlHudView
+ * inside a black rounded container.
  */
 public final class TimeControlPopup {
 
@@ -91,14 +91,17 @@ public final class TimeControlPopup {
         if (feature == null) {
             return row();
         }
+
         Readable<Boolean> canEdit = Signal.computed(() -> Boolean.TRUE.equals(feature.enabled().get())
                 && Boolean.FALSE.equals(Signals.netClient().get()));
 
         return row()
-                .background(Styles.black6)
-                .rounded(unit(2), Color.black)
+                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
+                .border(1.5f, WebStyles.Colors.BORDER)
                 .padding(unit(1))
                 .gap(unit(1))
+                .cellPadding(unit(5))
+                .margin(unit(5))
                 .center()
                 .children(() -> TimeControlHudView.buildControls(feature, canEdit));
     }

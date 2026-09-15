@@ -7,7 +7,7 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
 import arc.util.Time;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import solim.core.Component;
 import solim.overlay.Popup;
 import solim.signal.Readable;
@@ -91,9 +91,9 @@ public final class GodModePopup {
         Readable<Boolean> canEdit = feature.enabled();
 
         return row()
-                .background(Styles.black6)
-                .rounded(unit(2), Color.black)
                 .padding(unit(1))
+                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
+                .border(1.5f, WebStyles.Colors.BORDER)
                 .gap(unit(1))
                 .center()
                 .children(() -> GodModeHudView.buildControls(feature, canEdit));
