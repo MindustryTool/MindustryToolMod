@@ -58,30 +58,25 @@ public class GodModeFeature extends Feature {
 
         positionGroup = config.group("position");
 
-        float sw = Units.screenWidth();
-        float sh = Units.screenHeight();
-        float defX = sw > 0 ? sw / 2f : 400f;
-        float defY = sh > 0 ? sh / 2f : 200f;
+        xConfig = positionGroup.floatValueKeyed(
+                "x",
+                Signals.isPortrait(),
+                p -> p ? "portrait" : "landscape",
+                p -> {
+                    float sw = Units.screenWidth();
+                    return sw > 0 ? sw / 2f : 400f;
+                });
+        yConfig = positionGroup.floatValueKeyed(
+                "y",
+                Signals.isPortrait(),
+                p -> p ? "portrait" : "landscape",
+                p -> {
+                    float sh = Units.screenHeight();
+                    return sh > 0 ? sh / 2f : 200f;
+                });
 
-        xConfig = positionGroup.floatValueKeyed("x", Signals.isPortrait(), p -> p ? "portrait" : "landscape", defX);
-        yConfig = positionGroup.floatValueKeyed("y", Signals.isPortrait(), p -> p ? "portrait" : "landscape", defY);
-
-        Float initX = xConfig.get();
-        Float initY = yConfig.get();
-
-        xSignal = Signal.of(initX != null ? initX : defX);
-        ySignal = Signal.of(initY != null ? initY : defY);
-
-        xSignal.subscribe(val -> {
-            if (val != null) {
-                xConfig.set(val);
-            }
-        });
-        ySignal.subscribe(val -> {
-            if (val != null) {
-                yConfig.set(val);
-            }
-        });
+        xSignal = xConfig.signal();
+        ySignal = yConfig.signal();
 
         providerModeConfig.signal().subscribe(m -> checkProvider());
 
@@ -141,10 +136,13 @@ public class GodModeFeature extends Feature {
         float cx = sw > 0 ? sw / 2f : 400f;
         float cy = sh > 0 ? sh / 2f : 200f;
 
-        xConfig.set(cx);
-        yConfig.set(cy);
-        xSignal.set(cx);
-        ySignal.set(cy);
+        Core.settings.put("mindustrytool.god-mode.position.x.portrait", cx);
+        Core.settings.put("mindustrytool.god-mode.position.x.landscape", cx);
+        Core.settings.put("mindustrytool.god-mode.position.y.portrait", cy);
+        Core.settings.put("mindustrytool.god-mode.position.y.landscape", cy);
+
+        xConfig.reset();
+        yConfig.reset();
 
         if (hudView != null) {
             Core.app.post(hudView::keepInScreen);

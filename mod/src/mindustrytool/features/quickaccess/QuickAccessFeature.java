@@ -1,21 +1,22 @@
 package mindustrytool.features.quickaccess;
 
 import arc.Core;
-import arc.Events;
 import arc.scene.Element;
-import solim.overlay.SolimDialog;
 import arc.util.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import mindustry.Vars;
-import mindustry.game.EventType.ResizeEvent;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.config.ContextualConfigValue;
+import solim.overlay.SolimDialog;
 import solim.signal.Signal;
+import solim.signal.Signals;
+import solim.ui.Units;
 
 public class QuickAccessFeature extends Feature {
 
@@ -25,13 +26,8 @@ public class QuickAccessFeature extends Feature {
     public final ConfigValue<Integer> colsConfig;
     public final ConfigValue<Set<String>> hiddenFeaturesConfig;
 
-    public final ConfigGroup portraitGroup;
-    public final ConfigGroup landscapeGroup;
-
-    public final ConfigValue<Float> portraitXConfig;
-    public final ConfigValue<Float> portraitYConfig;
-    public final ConfigValue<Float> landscapeXConfig;
-    public final ConfigValue<Float> landscapeYConfig;
+    public final ContextualConfigValue<Float, Boolean> xConfig;
+    public final ContextualConfigValue<Float, Boolean> yConfig;
 
     public final Signal<Float> xSignal;
     public final Signal<Float> ySignal;
@@ -55,67 +51,67 @@ public class QuickAccessFeature extends Feature {
         colsConfig = config.intValue("cols", 6);
         hiddenFeaturesConfig = config.setValue("hidden", String.class, Collections.emptySet());
 
-        portraitGroup = config.group("portrait");
-        landscapeGroup = config.group("landscape");
+        xConfig = config.floatValueKeyed(
+                "x",
+                Signals.isPortrait(),
+                p -> p ? "portrait" : "landscape",
+                p -> {
+                    float sw = Units.screenWidth();
+                    float defX = sw > 0 ? sw / 2f : 400f;
+                    String oldKey = p ? "mindustrytool.quickaccess.x.portrait" : "mindustrytool.quickaccess.x.landscape";
+                    String groupKey = p ? "mindustrytool.quick-access.portrait.x" : "mindustrytool.quick-access.landscape.x";
+                    if (Core.settings.has(groupKey)) {
+                        return Core.settings.getFloat(groupKey);
+                    }
+                    return Core.settings.getFloat(oldKey, defX);
+                });
 
-        float defX = Core.graphics.getWidth() / 2f;
-        float defY = Core.graphics.getHeight() / 2f;
+        yConfig = config.floatValueKeyed(
+                "y",
+                Signals.isPortrait(),
+                p -> p ? "portrait" : "landscape",
+                p -> {
+                    float sh = Units.screenHeight();
+                    float defY = sh > 0 ? sh / 2f : 200f;
+                    String oldKey = p ? "mindustrytool.quickaccess.y.portrait" : "mindustrytool.quickaccess.y.landscape";
+                    String groupKey = p ? "mindustrytool.quick-access.portrait.y" : "mindustrytool.quick-access.landscape.y";
+                    if (Core.settings.has(groupKey)) {
+                        return Core.settings.getFloat(groupKey);
+                    }
+                    return Core.settings.getFloat(oldKey, defY);
+                });
 
-        portraitXConfig = portraitGroup.floatValue("x", Core.settings.getFloat("mindustrytool.quickaccess.x.portrait", defX));
-        portraitYConfig = portraitGroup.floatValue("y", Core.settings.getFloat("mindustrytool.quickaccess.y.portrait", defY));
-        landscapeXConfig = landscapeGroup.floatValue("x", Core.settings.getFloat("mindustrytool.quickaccess.x.landscape", defX));
-        landscapeYConfig = landscapeGroup.floatValue("y", Core.settings.getFloat("mindustrytool.quickaccess.y.landscape", defY));
+        xSignal = xConfig.signal();
+        ySignal = yConfig.signal();
 
-        xSignal = Signal.of(x());
-        ySignal = Signal.of(y());
-
-        xSignal.subscribe(val -> {
-            if (val != null) {
-                currentXConfig().set(val);
+        Signals.isPortrait().subscribe(p -> {
+            if (hudView != null) {
+                Core.app.post(hudView::keepInScreen);
             }
         });
-        ySignal.subscribe(val -> {
-            if (val != null) {
-                currentYConfig().set(val);
-            }
-        });
-
-        Events.on(ResizeEvent.class, e -> updateOrientationPosition());
-    }
-
-    public ConfigValue<Float> currentXConfig() {
-        return Core.graphics.isPortrait() ? portraitXConfig : landscapeXConfig;
-    }
-
-    public ConfigValue<Float> currentYConfig() {
-        return Core.graphics.isPortrait() ? portraitYConfig : landscapeYConfig;
     }
 
     public float x() {
-        Float val = currentXConfig().get();
-        return val != null ? val : Core.graphics.getWidth() / 2f;
+        Float val = xConfig.get();
+        return val != null ? val : Units.screenWidth() / 2f;
     }
 
     public void x(float value) {
-        currentXConfig().set(value);
-        xSignal.set(value);
+        xConfig.set(value);
     }
 
     public float y() {
-        Float val = currentYConfig().get();
-        return val != null ? val : Core.graphics.getHeight() / 2f;
+        Float val = yConfig.get();
+        return val != null ? val : Units.screenHeight() / 2f;
     }
 
     public void y(float value) {
-        currentYConfig().set(value);
-        ySignal.set(value);
+        yConfig.set(value);
     }
 
     public void updateOrientationPosition() {
-        xSignal.set(x());
-        ySignal.set(y());
         if (hudView != null) {
-            hudView.keepInScreen();
+            Core.app.post(hudView::keepInScreen);
         }
     }
 
@@ -136,14 +132,20 @@ public class QuickAccessFeature extends Feature {
     }
 
     public void resetPosition() {
-        float cx = Core.graphics.getWidth() / 2f;
-        float cy = Core.graphics.getHeight() / 2f;
-        portraitXConfig.set(cx);
-        portraitYConfig.set(cy);
-        landscapeXConfig.set(cx);
-        landscapeYConfig.set(cy);
-        xSignal.set(cx);
-        ySignal.set(cy);
+        float cx = Units.screenWidth() / 2f;
+        float cy = Units.screenHeight() / 2f;
+
+        Core.settings.put("mindustrytool.quick-access.x.portrait", cx);
+        Core.settings.put("mindustrytool.quick-access.x.landscape", cx);
+        Core.settings.put("mindustrytool.quick-access.y.portrait", cy);
+        Core.settings.put("mindustrytool.quick-access.y.landscape", cy);
+
+        xConfig.reset();
+        yConfig.reset();
+
+        if (hudView != null) {
+            Core.app.post(hudView::keepInScreen);
+        }
     }
 
     @Override
