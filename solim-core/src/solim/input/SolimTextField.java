@@ -208,8 +208,11 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
     }
 
     public SolimTextField focus() {
-        Core.scene.setKeyboardFocus(field);
-        field.requestKeyboard();
+        Core.app.post(() -> {
+            Core.scene.setKeyboardFocus(field);
+            field.requestKeyboard();
+        });
+        
         return this;
     }
 

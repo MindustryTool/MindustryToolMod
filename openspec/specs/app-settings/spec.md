@@ -3,12 +3,12 @@
 ## Purpose
 
 Mechanical merge of 4 specs per change `spec-domain-merge` (stage 5 settings, concat-then-dedupe). Sources: feature-settings-dialog, feature-development-flag, general-settings-dialog, quick-access. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work. Reactive config primitives (`config-value-signal`, `contextual-config-value`, `orientation-signal`) live in `solim-reactivity` and are not duplicated here.
-
 ## Requirements
 
 **Source: feature-settings-dialog**
 
 Declarative feature settings dialog and view built with Solim reactive signals and structural layout components to manage, filter, re-enable, and inspect mod features.
+
 ### Requirement: Declarative Search and Filter
 The feature settings dialog SHALL provide a search input backed by a Solim reactive `Signal<String>` that filters mod features in real time across feature names, descriptions, and metadata IDs.
 
@@ -72,6 +72,7 @@ The feature settings dialog SHALL adapt its grid layout dynamically to screen si
 **Source: feature-development-flag**
 
 Lifecycle flag marking features as in-development placeholders: always visible in settings with a badge, locked against enabling, excluded from Quick Access, covering legacy features awaiting full rewrites.
+
 ### Requirement: Development lifecycle flag on feature metadata
 The system SHALL provide a `development` boolean on `FeatureMetadata`, defaulting to `false`, settable via the builder. Existing features without the flag behave exactly as before.
 
@@ -99,13 +100,16 @@ A feature whose metadata is in development SHALL never become enabled: enabling 
 - **THEN** development features remain disabled and are not added to the persisted enabled-features list
 
 ### Requirement: Legacy stub registry
-The system SHALL register 13 metadata-only stub features with `development=true` and no logic or dialogs, porting old ids, icons, orders, `enabledByDefault`, and `quickAccess`: player-connect, pathfinding, range-display, pretty-chat, autoplay, save-sync, item-visualizer, god-mode, smart-drill, smart-upgrade, music, progress-display, toggle-rendering. `wave-preview` is no longer a stub (it is a real enable-capable feature defined by the `wave-preview` capability). `time-control` is no longer a stub (it is a real enable-capable feature defined by the `time-control` capability). `health-bar` is no longer a stub (it is a real enable-capable feature defined by the `health-bar` capability). Old `chat-translation` SHALL NOT get a stub (covered by the existing `translation` feature).
+
+The system SHALL register 13 metadata-only stub features with `development=true` and no logic or dialogs, porting old ids, icons, orders, `enabledByDefault`, and `quickAccess`: player-connect, pathfinding, range-display, pretty-chat, autoplay, wave-preview, save-sync, item-visualizer, smart-drill, smart-upgrade, music, progress-display, toggle-rendering. `god-mode` is no longer a stub (it is a real enable-capable placeholder shell defined by the `god-mode` capability). `time-control` is no longer a stub (it is a real enable-capable feature defined by the `time-control` capability). `health-bar` is no longer a stub (it is a real enable-capable feature defined by the `health-bar` capability). Old `chat-translation` SHALL NOT get a stub (covered by the existing `translation` feature).
 
 #### Scenario: Registry contains stubs alongside real features
+
 - **WHEN** the mod starts and `Main` registers features
-- **THEN** `FeatureManager.getFeatures()` contains the 11 existing features plus the 13 development stubs ordered with non-development features in persisted ordered-ID list sequence followed by development stubs sorted by feature id
+- **THEN** `FeatureManager.getFeatures()` contains the 11 existing features plus the 13 development stubs sorted by metadata order
 
 #### Scenario: Stub exposes metadata only
+
 - **WHEN** a stub is inspected
 - **THEN** it reports its ported id, icon, order, and `development=true`, returns `null` setting and main dialogs, and its `onEnable`/`onDisable` perform no game logic
 
@@ -121,15 +125,13 @@ The system SHALL localize the development badge and every stub's name, descripti
 - **THEN** `feature.<id>.name`, `feature.<id>.description`, and `feature.<id>.help` resolve from the bundle with no hardcoded user-visible text
 
 ### Requirement: Registry size test coverage
+
 Count-sensitive tests SHALL reflect the enlarged registry of 11 real features plus 13 locked stubs.
 
 #### Scenario: Feature count assertions updated
+
 - **WHEN** the test suite runs after registration
 - **THEN** expectations account for 24 registered features (or explicitly filter out development features where the test targets enabled-capable features only)
-
-**Source: general-settings-dialog**
-
-A declarative Solim dialog that aggregates mod-wide preferences as labeled toggle rows, each row backed by a `ConfigValue`-derived reactive signal. Currently exposes the beta participation toggle; designed for extension without structural changes.
 
 ### Requirement: Mod-Wide Settings Config Group
 The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares all global `ConfigValue` entries as public static fields, starting with `betaParticipate: ConfigValue<Boolean>` (default `false`).
@@ -184,7 +186,6 @@ When `ModSettings.betaParticipate.get()` is `false`, `UpdateService` SHALL consu
 
 Provides an in-game overlay HUD allowing players to quickly toggle features, open feature settings, and customize the HUD's position, opacity, scale, and layout.
 
-
 ### Requirement: Quick Access Overlay HUD Display
 The system SHALL display an in-game Quick Access overlay HUD containing feature action buttons when the `quick-access` feature is enabled.
 
@@ -204,17 +205,31 @@ The system SHALL allow players to drag the Quick Access HUD via its anchor butto
 - **THEN** the HUD coordinates update, remain within screen bounds, and persist position settings under separate portrait/landscape configuration keys.
 
 ### Requirement: Feature Interaction via Quick Access HUD
-The system SHALL display buttons for features that support quick access and are not in development, allowing toggling feature state and opening feature settings.
+
+The system SHALL display buttons for features that support quick access and are not in development, allowing toggling feature state and opening feature settings. For features in popup display mode, tapping the button SHALL toggle the feature popup visibility (opening if closed, hiding if already showing or clicked again) instead of toggling feature enablement; long-press SHALL still open settings.
 
 #### Scenario: Single click toggles feature
-- **WHEN** the player clicks a feature button on the Quick Access HUD
+
+- **WHEN** the player clicks a feature button on the Quick Access HUD for a feature in HUD display mode
 - **THEN** the target feature's enabled state is toggled between enabled and disabled.
 
+#### Scenario: Single click opens popup in popup mode
+
+- **WHEN** the player clicks a feature button on the Quick Access HUD for a feature in popup display mode while its popup is not showing
+- **THEN** the feature popup opens and the enabled state is unchanged.
+
+#### Scenario: Clicking button again hides popup in popup mode
+
+- **WHEN** the player clicks a feature button on the Quick Access HUD for a feature in popup display mode while its popup is already showing
+- **THEN** the feature popup closes and the feature enabled state is unchanged.
+
 #### Scenario: Long press opens feature settings
+
 - **WHEN** the player long-presses a feature button on the Quick Access HUD for 300ms or longer
 - **THEN** the target feature's settings dialog is displayed if available.
 
 #### Scenario: Development features excluded from HUD
+
 - **WHEN** a feature's metadata is in development, even when marked quick-access capable
 - **THEN** no button for that feature appears on the Quick Access HUD and it is not offered in Quick Access visibility settings.
 

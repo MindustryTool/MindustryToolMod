@@ -42,12 +42,12 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
             growY();
             width(1.5f);
             minWidth(1.5f);
-            cellPaddingBottom(1);
+            marginBottom(1);
         } else {
             growX();
             height(1.5f);
             minHeight(1.5f);
-            cellPaddingRight(1);
+            marginRight(1);
         }
     }
 

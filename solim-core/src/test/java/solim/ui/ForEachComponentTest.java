@@ -159,7 +159,7 @@ class ForEachComponentTest {
                 .width(300f)
                 .height(200f)
                 .visible(true)
-                .margin(8f);
+                .padding(8f);
 
         Element el = fe.element();
         assertEquals(300f, el.getWidth());

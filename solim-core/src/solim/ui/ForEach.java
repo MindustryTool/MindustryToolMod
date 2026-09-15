@@ -38,6 +38,8 @@ public final class ForEach<T, K> extends BaseComponent
         this.keyExtractor = keyExtractor;
         this.itemFactory = itemFactory;
         this.container.userObject = this;
+        this.container.top().left();
+        this.container.defaults().top().left();
     }
 
     public static <T, K> ForEach<T, K> of(

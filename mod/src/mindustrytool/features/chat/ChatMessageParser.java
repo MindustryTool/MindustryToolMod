@@ -14,6 +14,7 @@ import mindustrytool.features.chat.models.ParsedChatMessage.MindustryToolLinkMes
 import mindustrytool.features.chat.models.ParsedChatMessage.RoomInviteMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.SchematicMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.TextMessage;
+import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserSession;
 import mindustrytool.services.auth.MindustryAuthProvider;
@@ -62,7 +63,7 @@ public final class ChatMessageParser {
         String content = message.getContent() != null ? message.getContent().trim() : "";
 
         // 1. Room invite
-        if (content.startsWith("player-connect://")) {
+        if (PlayerConnectLink.isValid(content)) {
             return new RoomInviteMessage(message, content);
         }
 

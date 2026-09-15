@@ -23,8 +23,7 @@ import solim.signal.Readable;
  * Targets:
  * <ul>
  * <li>{@code align/top/bottom/left/right/center} — table content alignment</li>
- * <li>{@code margin*} — table outer margins</li>
- * <li>{@code padding*} — table inner padding (alias for margin on Table)</li>
+ * <li>{@code padding*} — table inner padding</li>
  * <li>{@code gap/respace} — inter-child spacing</li>
  * </ul>
  *
@@ -85,58 +84,58 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    // ---------- margin (static) ----------
+    // ---------- padding (inner insets on Table) ----------
 
-    /** Sets outer margins equally on all four sides. */
-    default SELF margin(float margin) {
+    /** Sets inner padding equally on all four sides. */
+    default SELF padding(float padding) {
         Table t = table();
         if (t != null)
-            t.margin(margin);
+            t.margin(padding);
         return self();
     }
 
-    /** Sets outer margins on all four sides individually. */
-    default SELF margin(float top, float left, float bottom, float right) {
+    /** Sets inner padding on all four sides individually. */
+    default SELF padding(float top, float left, float bottom, float right) {
         Table t = table();
         if (t != null)
             t.margin(top, left, bottom, right);
         return self();
     }
 
-    /** Sets top outer margin. */
-    default SELF marginTop(float top) {
+    /** Sets top inner padding. */
+    default SELF paddingTop(float top) {
         Table t = table();
         if (t != null)
             t.marginTop(top);
         return self();
     }
 
-    /** Sets bottom outer margin. */
-    default SELF marginBottom(float bottom) {
+    /** Sets bottom inner padding. */
+    default SELF paddingBottom(float bottom) {
         Table t = table();
         if (t != null)
             t.marginBottom(bottom);
         return self();
     }
 
-    /** Sets left outer margin. */
-    default SELF marginLeft(float left) {
+    /** Sets left inner padding. */
+    default SELF paddingLeft(float left) {
         Table t = table();
         if (t != null)
             t.marginLeft(left);
         return self();
     }
 
-    /** Sets right outer margin. */
-    default SELF marginRight(float right) {
+    /** Sets right inner padding. */
+    default SELF paddingRight(float right) {
         Table t = table();
         if (t != null)
             t.marginRight(right);
         return self();
     }
 
-    /** Sets horizontal outer margins. */
-    default SELF marginX(float x) {
+    /** Sets horizontal inner padding. */
+    default SELF paddingX(float x) {
         Table t = table();
         if (t != null) {
             t.marginLeft(x);
@@ -145,8 +144,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets vertical outer margins. */
-    default SELF marginY(float y) {
+    /** Sets vertical inner padding. */
+    default SELF paddingY(float y) {
         Table t = table();
         if (t != null) {
             t.marginTop(y);
@@ -155,23 +154,23 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    // ---------- margin (reactive) ----------
+    // ---------- padding (reactive) ----------
 
-    /** Sets outer margins equally on all four sides reactively. */
-    default SELF margin(@Nullable Readable<Float> margin) {
-        if (margin == null)
+    /** Sets inner padding equally on all four sides reactively. */
+    default SELF padding(@Nullable Readable<Float> padding) {
+        if (padding == null)
             return self();
         Effect e = Effect.of(() -> {
-            Float v = margin.get();
+            Float v = padding.get();
             if (v != null)
-                margin(v);
+                padding(v);
         });
         ComponentContext.register(e);
         return self();
     }
 
-    /** Sets outer margins on all four sides individually reactively. */
-    default SELF margin(
+    /** Sets inner padding on all four sides individually reactively. */
+    default SELF padding(
             @Nullable Readable<Float> top,
             @Nullable Readable<Float> left,
             @Nullable Readable<Float> bottom,
@@ -190,170 +189,82 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets top outer margin reactively. */
-    default SELF marginTop(@Nullable Readable<Float> top) {
+    /** Sets top inner padding reactively. */
+    default SELF paddingTop(@Nullable Readable<Float> top) {
         if (top == null)
             return self();
         Effect e = Effect.of(() -> {
             Float v = top.get();
             if (v != null)
-                marginTop(v);
+                paddingTop(v);
         });
         ComponentContext.register(e);
         return self();
     }
 
-    /** Sets bottom outer margin reactively. */
-    default SELF marginBottom(@Nullable Readable<Float> bottom) {
+    /** Sets bottom inner padding reactively. */
+    default SELF paddingBottom(@Nullable Readable<Float> bottom) {
         if (bottom == null)
             return self();
         Effect e = Effect.of(() -> {
             Float v = bottom.get();
             if (v != null)
-                marginBottom(v);
+                paddingBottom(v);
         });
         ComponentContext.register(e);
         return self();
     }
 
-    /** Sets left outer margin reactively. */
-    default SELF marginLeft(@Nullable Readable<Float> left) {
+    /** Sets left inner padding reactively. */
+    default SELF paddingLeft(@Nullable Readable<Float> left) {
         if (left == null)
             return self();
         Effect e = Effect.of(() -> {
             Float v = left.get();
             if (v != null)
-                marginLeft(v);
+                paddingLeft(v);
         });
         ComponentContext.register(e);
         return self();
     }
 
-    /** Sets right outer margin reactively. */
-    default SELF marginRight(@Nullable Readable<Float> right) {
+    /** Sets right inner padding reactively. */
+    default SELF paddingRight(@Nullable Readable<Float> right) {
         if (right == null)
             return self();
         Effect e = Effect.of(() -> {
             Float v = right.get();
             if (v != null)
-                marginRight(v);
+                paddingRight(v);
         });
         ComponentContext.register(e);
         return self();
     }
 
-    /** Sets horizontal outer margins reactively. */
-    default SELF marginX(@Nullable Readable<Float> x) {
+    /** Sets horizontal inner padding reactively. */
+    default SELF paddingX(@Nullable Readable<Float> x) {
         if (x == null)
             return self();
         Effect e = Effect.of(() -> {
             Float v = x.get();
             if (v != null)
-                marginX(v);
+                paddingX(v);
         });
         ComponentContext.register(e);
         return self();
     }
 
-    /** Sets vertical outer margins reactively. */
-    default SELF marginY(@Nullable Readable<Float> y) {
+    /** Sets vertical inner padding reactively. */
+    default SELF paddingY(@Nullable Readable<Float> y) {
         if (y == null)
             return self();
         Effect e = Effect.of(() -> {
             Float v = y.get();
             if (v != null)
-                marginY(v);
+                paddingY(v);
         });
         ComponentContext.register(e);
         return self();
-    }
-
-    // ---------- padding (aliases for margin on Table) ----------
-
-    /** Sets inner padding (margin) equally on all four sides. */
-    default SELF padding(float padding) {
-        return margin(padding);
-    }
-
-    /** Sets inner padding (margin) on all four sides individually. */
-    default SELF padding(float top, float left, float bottom, float right) {
-        return margin(top, left, bottom, right);
-    }
-
-    /** Sets top inner padding (margin). */
-    default SELF paddingTop(float top) {
-        return marginTop(top);
-    }
-
-    /** Sets bottom inner padding (margin). */
-    default SELF paddingBottom(float bottom) {
-        return marginBottom(bottom);
-    }
-
-    /** Sets left inner padding (margin). */
-    default SELF paddingLeft(float left) {
-        return marginLeft(left);
-    }
-
-    /** Sets right inner padding (margin). */
-    default SELF paddingRight(float right) {
-        return marginRight(right);
-    }
-
-    /** Sets horizontal padding (margin). */
-    default SELF paddingX(float x) {
-        return marginX(x);
-    }
-
-    /** Sets vertical padding (margin). */
-    default SELF paddingY(float y) {
-        return marginY(y);
-    }
-
-    // ---------- padding (reactive) ----------
-
-    /** Sets inner padding (margin) equally on all four sides reactively. */
-    default SELF padding(@Nullable Readable<Float> padding) {
-        return margin(padding);
-    }
-
-    /** Sets inner padding (margin) on all four sides individually reactively. */
-    default SELF padding(
-            @Nullable Readable<Float> top,
-            @Nullable Readable<Float> left,
-            @Nullable Readable<Float> bottom,
-            @Nullable Readable<Float> right) {
-        return margin(top, left, bottom, right);
-    }
-
-    /** Sets top inner padding (margin) reactively. */
-    default SELF paddingTop(@Nullable Readable<Float> top) {
-        return marginTop(top);
-    }
-
-    /** Sets bottom inner padding (margin) reactively. */
-    default SELF paddingBottom(@Nullable Readable<Float> bottom) {
-        return marginBottom(bottom);
-    }
-
-    /** Sets left inner padding (margin) reactively. */
-    default SELF paddingLeft(@Nullable Readable<Float> left) {
-        return marginLeft(left);
-    }
-
-    /** Sets right inner padding (margin) reactively. */
-    default SELF paddingRight(@Nullable Readable<Float> right) {
-        return marginRight(right);
-    }
-
-    /** Sets horizontal padding (margin) reactively. */
-    default SELF paddingX(@Nullable Readable<Float> x) {
-        return marginX(x);
-    }
-
-    /** Sets vertical padding (margin) reactively. */
-    default SELF paddingY(@Nullable Readable<Float> y) {
-        return marginY(y);
     }
 
     // ---------- gap ----------

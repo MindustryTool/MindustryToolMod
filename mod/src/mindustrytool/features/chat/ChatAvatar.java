@@ -70,6 +70,7 @@ public class ChatAvatar extends BaseComponent {
                     Column fallback = column()
                             .size(size, size)
                             .center();
+
                     (radius > 0 ? fallback.rounded(radius, background) : fallback.background(background))
                             .children(() -> {
                                 text(initial)

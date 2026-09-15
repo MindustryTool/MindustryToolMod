@@ -327,34 +327,6 @@ public final class Button
         }
     }
 
-    public Button growX() {
-        button.userObject = "expanding";
-        if (button.parent instanceof Table) {
-            Cell<?> cell = ((Table) button.parent).getCell(button);
-            if (cell != null) {
-                cell.growX();
-                ((Table) button.parent).invalidateHierarchy();
-            }
-        }
-        return this;
-    }
-
-    public Button growY() {
-        button.userObject = "expanding";
-        if (button.parent instanceof Table) {
-            Cell<?> cell = ((Table) button.parent).getCell(button);
-            if (cell != null) {
-                cell.growY();
-                ((Table) button.parent).invalidateHierarchy();
-            }
-        }
-        return this;
-    }
-
-    public Button grow() {
-        return growX().growY();
-    }
-
     public Button gap(float g) {
         this.gap = g;
         respace();

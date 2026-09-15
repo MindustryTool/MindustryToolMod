@@ -48,6 +48,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
         this.headerBar = new Row().gap(4f);
         this.headerBar.name("solim-tabs-headerBar");
         this.headerBar.top().left();
+        this.headerBar.height(Ui.unit(14));
         this.root.add(headerBar.element()).growX().row();
 
         this.contentStack = new SolimStack();
@@ -101,8 +102,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
         }
         btn.onClick(() -> activeTab.set(index));
         btn.checked(activeTab.map(idx -> idx != null && idx == index));
-        btn.growX();
-        btn.height(48);
+        btn.grow();
 
         btn.children(() -> {
             if (icon != null) {

@@ -14,14 +14,21 @@ import mindustrytool.features.chat.state.ChatUsers;
 public final class ChatStore {
 
     private final ChatSession session = new ChatSession();
-    private final ChatChannels channels = new ChatChannels();
-    private final ChatMessages messages = new ChatMessages(channels.activeId());
-    private final ChatMembers members = new ChatMembers(channels.activeId());
     private final ChatUsers users = new ChatUsers();
     private final ChatUnread unread = new ChatUnread();
     private final ChatTranslations translations = new ChatTranslations();
     private final ChatMessageDelivery delivery = new ChatMessageDelivery();
     private final ChatUiState ui = new ChatUiState();
+
+    private final ChatMessages messages;
+    private final ChatMembers members;
+    private final ChatChannels channels;
+
+    public ChatStore(ChatFeature feature) {
+        this.channels = new ChatChannels(feature.activeChannelConfig.signal());
+        this.messages = new ChatMessages(channels.activeId());
+        this.members = new ChatMembers(channels.activeId());
+    }
 
     public ChatSession session() {
         return session;

@@ -19,6 +19,7 @@ import arc.util.Time;
 import arc.util.io.ByteBufferInput;
 import arc.util.io.ByteBufferOutput;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
@@ -60,6 +61,7 @@ public class NetworkProxy extends Client implements NetListener {
 
     private String roomPassword = "";
     private String roomName = "";
+    private String ip = "";
 
     public NetworkProxy() {
         super(32768, 16384, new Serializer());
@@ -76,6 +78,10 @@ public class NetworkProxy extends Client implements NetListener {
         this.serverDispatcher = Reflect.get(server, "dispatchListener");
 
         wrapProvider();
+    }
+
+    public String getProviderIp() {
+        return ip;
     }
 
     private void wrapProvider() {
@@ -106,6 +112,9 @@ public class NetworkProxy extends Client implements NetListener {
         this.onRoomClosed = onRoomClosed;
         this.onPingUpdated = onPingUpdated;
 
+        InetAddress address = InetAddress.getByName(host);
+        ip = address.getHostAddress();
+
         connect(DEFAULT_TIMEOUT, host, port, port);
     }
 
@@ -130,10 +139,12 @@ public class NetworkProxy extends Client implements NetListener {
                     }
                 }
             } catch (IOException ex) {
-                Log.err("IOException in NetworkProxy.run(): @", ex);
-                close();
+                Log.err("IOException in NetworkProxy.run()", ex);
+                Vars.ui.showException(ex);
+                closeRoom();
             } catch (ArcNetException ex) {
-                close();
+                Log.err("ArcNetException in NetworkProxy.run()", ex);
+                closeRoom();
             }
         }
     }
@@ -143,7 +154,9 @@ public class NetworkProxy extends Client implements NetListener {
         if (isShutdown) {
             return;
         }
-        close();
+
+        closeRoom();
+
         isShutdown = true;
         Selector selector = Reflect.get(Client.class, this, "selector");
         if (selector != null) {
@@ -151,10 +164,22 @@ public class NetworkProxy extends Client implements NetListener {
         }
     }
 
+    @Override
+    public void close() {
+        super.close();
+    }
+
+    @Override
+    public void close(DcReason reason) {
+        Thread.dumpStack();
+        super.close(reason);
+    }
+
     public void closeRoom() {
         if (isConnected()) {
             sendTCP(new Packets.RoomClosureRequestPacket());
         }
+
         close();
     }
 

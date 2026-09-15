@@ -29,19 +29,18 @@ public final class ChatMessageHeightCalculator {
     // Fixed layout unit constants (matching UI.unit(1) = 4f)
     public static final float UNIT_1 = 4f;
     public static final float AVATAR_SIZE = 48f; // unit(12)
-    public static final float AVATAR_GAP = 6f;   // unit(1.5f)
+    public static final float AVATAR_GAP = 12f;   // unit(1.5f)
     public static final float HEADER_HEIGHT = 24f; // unit(6) ellipsis button and title row
     public static final float REPLY_PREVIEW_HEIGHT = 24f;
     public static final float REPLY_GAP = 2f; // unit(0.5f): gap between reply preview and message body
     public static final float SCHEMATIC_CARD_HEIGHT = 212f;
     public static final float IMAGE_CARD_HEIGHT = 140f;
-    public static final float INVITE_CARD_HEIGHT = 108f; // unit(27)
+    public static final float INVITE_CARD_HEIGHT = 200f; // unit(50)
     public static final float TOOL_LINK_CARD_HEIGHT = 70f;
     public static final float HORIZONTAL_PADDINGS = 70f; // 4px outer left + 48px avatar + 6px gap + 4px inner left + 4px inner right + 4px outer right
     public static final float MENTION_EXTRA_PADDING = 8f; // unit(1) divider width + unit(1) gap
     public static final float MESSAGE_GAP = 3f; // unit(0.75f): gap between messages in a group
     public static final float HEADER_GAP = 2f; // unit(0.5f): gap between group header and first message
-    public static final float MESSAGE_CARD_PADDING = 8f; // vertical padding for message item card (4f top + 4f bottom)
     public static final float FONT_SCALE = 1.0f;
 
     private static final Map<String, Float> HEIGHT_CACHE = new ConcurrentHashMap<>();
@@ -87,7 +86,7 @@ public final class ChatMessageHeightCalculator {
     }
 
     private static float measureMessageHeight(ParsedChatMessage msg, float containerWidth) {
-        float height = Scl.scl(MESSAGE_CARD_PADDING);
+        float height = 0;
 
         boolean mentioned = (msg instanceof TextMessage) && ((TextMessage) msg).isMentionsCurrentUser();
         float availableTextWidth = Math.max(20f, containerWidth - Scl.scl(HORIZONTAL_PADDINGS) - (mentioned ? Scl.scl(MENTION_EXTRA_PADDING) : 0f));

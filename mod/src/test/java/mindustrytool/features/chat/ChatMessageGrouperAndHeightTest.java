@@ -32,6 +32,8 @@ class ChatMessageGrouperAndHeightTest {
 
     private static Font testFont;
 
+    private static final ChatFeature feature = new ChatFeature();
+
     @BeforeEach
     void setUp() {
         Core.app = new MockApplication();
@@ -183,13 +185,14 @@ class ChatMessageGrouperAndHeightTest {
                 raw("2", "alice", "Second"))).get(0);
 
         float textWidth = Math.max(100f, 400f - ChatMessageHeightCalculator.HORIZONTAL_PADDINGS);
-        float first = ChatMessageHeightCalculator.measureTextHeight("First", textWidth, ChatMessageHeightCalculator.FONT_SCALE)
-                + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING;
-        float second = ChatMessageHeightCalculator.measureTextHeight("Second", textWidth, ChatMessageHeightCalculator.FONT_SCALE)
-                + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING;
+        float first = ChatMessageHeightCalculator.measureTextHeight("First", textWidth,
+                ChatMessageHeightCalculator.FONT_SCALE);
+        float second = ChatMessageHeightCalculator.measureTextHeight("Second", textWidth,
+                ChatMessageHeightCalculator.FONT_SCALE);
         float expected = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + first + second + ChatMessageHeightCalculator.MESSAGE_GAP) + 8f;
+                        + first + second + ChatMessageHeightCalculator.MESSAGE_GAP)
+                + 8f;
 
         assertEquals(expected, ChatMessageHeightCalculator.calculateHeight(group, 400f), 0.001f);
     }
@@ -202,8 +205,8 @@ class ChatMessageGrouperAndHeightTest {
                 raw("1", "alice", "First"),
                 raw("2", "alice", "Second"))).get(0);
 
-        assertTrue(ChatMessageHeightCalculator.calculateHeight(multi, 400f)
-                > ChatMessageHeightCalculator.calculateHeight(single, 400f));
+        assertTrue(ChatMessageHeightCalculator.calculateHeight(multi, 400f) > ChatMessageHeightCalculator
+                .calculateHeight(single, 400f));
     }
 
     @Test
@@ -217,12 +220,12 @@ class ChatMessageGrouperAndHeightTest {
         MessageGroup withReply = ChatMessageGrouper.groupRaw(
                 Collections.singletonList(reply)).get(0);
 
-        assertTrue(ChatMessageHeightCalculator.calculateHeight(withReply, 400f)
-                > ChatMessageHeightCalculator.calculateHeight(plain, 400f));
+        assertTrue(ChatMessageHeightCalculator.calculateHeight(withReply, 400f) > ChatMessageHeightCalculator
+                .calculateHeight(plain, 400f));
     }
 
     private float measureRealGroupHeight(MessageGroup group, float containerWidth) {
-        return measureRealGroupHeight(group, containerWidth, new ChatStore());
+        return measureRealGroupHeight(group, containerWidth, new ChatStore(feature));
     }
 
     private float measureRealGroupHeight(MessageGroup group, float containerWidth, ChatStore store) {
@@ -314,8 +317,7 @@ class ChatMessageGrouperAndHeightTest {
         List<ChatMessage> list = Arrays.asList(
                 raw("m-1", "alice", "First message"),
                 raw("m-2", "alice", "Second consecutive message"),
-                raw("m-3", "alice", "Third consecutive message")
-        );
+                raw("m-3", "alice", "Third consecutive message"));
         MessageGroup group = ChatMessageGrouper.groupRaw(list).get(0);
         assertEquals(3, group.getMessageCount());
 
@@ -327,7 +329,8 @@ class ChatMessageGrouperAndHeightTest {
     @Test
     void testRealComponentHeightNarrowVsWide() {
         String wrappedText = "The quick brown fox jumps over the lazy dog repeatedly to test narrow and wide wrapping.";
-        MessageGroup group = ChatMessageGrouper.groupRaw(Collections.singletonList(raw("wrap-nw", "alice", wrappedText))).get(0);
+        MessageGroup group = ChatMessageGrouper
+                .groupRaw(Collections.singletonList(raw("wrap-nw", "alice", wrappedText))).get(0);
 
         float calcNarrow = ChatMessageHeightCalculator.calculateHeight(group, 180f);
         float realNarrow = measureRealGroupHeight(group, 180f);
@@ -342,7 +345,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightReplySnippetTruncated() {
-        ChatStore store = new ChatStore();
+        ChatStore store = new ChatStore(feature);
         store.selectChannel("ch1");
         ChatMessage target = raw("target-long", "charlie",
                 "This is a very long message that definitely exceeds forty characters in total length for reply testing.");
@@ -359,7 +362,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightReplySnippetShort() {
-        ChatStore store = new ChatStore();
+        ChatStore store = new ChatStore(feature);
         store.selectChannel("ch1");
         ChatMessage target = raw("target-short", "charlie", "Short message");
         store.messages().replace("ch1", Collections.singletonList(target));
@@ -375,7 +378,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightReplyTargetContentNull() {
-        ChatStore store = new ChatStore();
+        ChatStore store = new ChatStore(feature);
         store.selectChannel("ch1");
         ChatMessage target = raw("target-null", "charlie", null);
         store.messages().replace("ch1", Collections.singletonList(target));
@@ -391,7 +394,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightReplyTargetNotFound() {
-        ChatStore store = new ChatStore();
+        ChatStore store = new ChatStore(feature);
         store.selectChannel("ch1");
 
         ChatMessage replyMsg = raw("reply-target-not-found", "bob", "Responding to non-existent");
@@ -405,7 +408,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightWithUserDataAndRoles() {
-        ChatStore store = new ChatStore();
+        ChatStore store = new ChatStore(feature);
         UserData user = new UserData();
         user.setId("alice");
         user.setName("Alice In Wonderland");
@@ -427,7 +430,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightWithInvalidRoleColorFallback() {
-        ChatStore store = new ChatStore();
+        ChatStore store = new ChatStore(feature);
         UserData user = new UserData();
         user.setId("alice");
         user.setName("Alice");
@@ -449,7 +452,8 @@ class ChatMessageGrouperAndHeightTest {
     @Test
     void testRealComponentHeightNullAuthorId() {
         MessageGroup group = new MessageGroup(null, "2026-09-12T10:00:00Z",
-                Collections.singletonList(new ParsedChatMessage.TextMessage(raw("1", null, "Null author"), "Null author", false)));
+                Collections.singletonList(
+                        new ParsedChatMessage.TextMessage(raw("1", null, "Null author"), "Null author", false)));
 
         float calculated = ChatMessageHeightCalculator.calculateHeight(group, 400f);
         float realHeight = measureRealGroupHeight(group, 400f);
@@ -459,13 +463,15 @@ class ChatMessageGrouperAndHeightTest {
     @Test
     void testRealComponentHeightEmptyAndNullCreatedAt() {
         MessageGroup groupNullDate = new MessageGroup("alice", null,
-                Collections.singletonList(new ParsedChatMessage.TextMessage(raw("1", "alice", "No date"), "No date", false)));
+                Collections.singletonList(
+                        new ParsedChatMessage.TextMessage(raw("1", "alice", "No date"), "No date", false)));
         float calcNull = ChatMessageHeightCalculator.calculateHeight(groupNullDate, 400f);
         float realNull = measureRealGroupHeight(groupNullDate, 400f);
         assertEquals(calcNull, realNull, 0.001f);
 
         MessageGroup groupEmptyDate = new MessageGroup("alice", "",
-                Collections.singletonList(new ParsedChatMessage.TextMessage(raw("2", "alice", "Empty date"), "Empty date", false)));
+                Collections.singletonList(
+                        new ParsedChatMessage.TextMessage(raw("2", "alice", "Empty date"), "Empty date", false)));
         float calcEmpty = ChatMessageHeightCalculator.calculateHeight(groupEmptyDate, 400f);
         float realEmpty = measureRealGroupHeight(groupEmptyDate, 400f);
         assertEquals(calcEmpty, realEmpty, 0.001f);
@@ -482,8 +488,7 @@ class ChatMessageGrouperAndHeightTest {
         List<ParsedChatMessage> messages = Arrays.asList(
                 new ParsedChatMessage.TextMessage(m1, "First message text", false),
                 m2,
-                new ParsedChatMessage.TextMessage(m3, "Third message with reply", false)
-        );
+                new ParsedChatMessage.TextMessage(m3, "Third message with reply", false));
         MessageGroup group = new MessageGroup("alice", "2026-09-12T10:00:00Z", messages);
 
         float calculated = ChatMessageHeightCalculator.calculateHeight(group, 400f);
@@ -548,41 +553,47 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testSchematicCardHeightMatchesRestructuredLayout() {
-        // Title row 24 + gap 4 + preview 140 + gap 4 + actions row 28 + card padding 12 = 212.
+        // Title row 24 + gap 4 + preview 140 + gap 4 + actions row 28 + card padding 12
+        // = 212.
         assertEquals(212f, ChatMessageHeightCalculator.SCHEMATIC_CARD_HEIGHT, 0.001f);
     }
 
     @Test
-    void testHeightCalculatorSchematicMessageBranches() {        // Both prefix and suffix present
+    void testHeightCalculatorSchematicMessageBranches() { // Both prefix and suffix present
         ParsedChatMessage.SchematicMessage schemBoth = new ParsedChatMessage.SchematicMessage(
                 raw("schem-both", "builder", "schematic content"), null, "Prefix description", "Suffix notes");
-        MessageGroup groupBoth = new MessageGroup("builder", "2026-09-12T10:00:00Z", Collections.singletonList(schemBoth));
+        MessageGroup groupBoth = new MessageGroup("builder", "2026-09-12T10:00:00Z",
+                Collections.singletonList(schemBoth));
         float hBoth = ChatMessageHeightCalculator.calculateHeight(groupBoth, 400f);
         assertTrue(hBoth > ChatMessageHeightCalculator.SCHEMATIC_CARD_HEIGHT);
 
         // Prefix only
         ParsedChatMessage.SchematicMessage schemPrefix = new ParsedChatMessage.SchematicMessage(
                 raw("schem-prefix", "builder", "schematic content"), null, "Prefix description", null);
-        MessageGroup groupPrefix = new MessageGroup("builder", "2026-09-12T10:00:00Z", Collections.singletonList(schemPrefix));
+        MessageGroup groupPrefix = new MessageGroup("builder", "2026-09-12T10:00:00Z",
+                Collections.singletonList(schemPrefix));
         float hPrefix = ChatMessageHeightCalculator.calculateHeight(groupPrefix, 400f);
         assertTrue(hBoth > hPrefix);
 
         // Suffix only
         ParsedChatMessage.SchematicMessage schemSuffix = new ParsedChatMessage.SchematicMessage(
                 raw("schem-suffix", "builder", "schematic content"), null, null, "Suffix notes");
-        MessageGroup groupSuffix = new MessageGroup("builder", "2026-09-12T10:00:00Z", Collections.singletonList(schemSuffix));
+        MessageGroup groupSuffix = new MessageGroup("builder", "2026-09-12T10:00:00Z",
+                Collections.singletonList(schemSuffix));
         float hSuffix = ChatMessageHeightCalculator.calculateHeight(groupSuffix, 400f);
         assertTrue(hBoth > hSuffix);
 
         // Neither prefix nor suffix (null and empty strings)
         ParsedChatMessage.SchematicMessage schemNone = new ParsedChatMessage.SchematicMessage(
                 raw("schem-none", "builder", "schematic content"), null, null, null);
-        MessageGroup groupNone = new MessageGroup("builder", "2026-09-12T10:00:00Z", Collections.singletonList(schemNone));
+        MessageGroup groupNone = new MessageGroup("builder", "2026-09-12T10:00:00Z",
+                Collections.singletonList(schemNone));
         float hNone = ChatMessageHeightCalculator.calculateHeight(groupNone, 400f);
 
         ParsedChatMessage.SchematicMessage schemEmptyStrings = new ParsedChatMessage.SchematicMessage(
                 raw("schem-empty", "builder", "schematic content"), null, "", "");
-        MessageGroup groupEmpty = new MessageGroup("builder", "2026-09-12T10:00:00Z", Collections.singletonList(schemEmptyStrings));
+        MessageGroup groupEmpty = new MessageGroup("builder", "2026-09-12T10:00:00Z",
+                Collections.singletonList(schemEmptyStrings));
         float hEmpty = ChatMessageHeightCalculator.calculateHeight(groupEmpty, 400f);
         assertEquals(hNone, hEmpty, 0.001f);
     }
@@ -596,19 +607,17 @@ class ChatMessageGrouperAndHeightTest {
         float hImg = ChatMessageHeightCalculator.calculateHeight(groupImg, 400f);
         float expectedImg = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + ChatMessageHeightCalculator.IMAGE_CARD_HEIGHT + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING)
+                        + ChatMessageHeightCalculator.IMAGE_CARD_HEIGHT)
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedImg, hImg, 0.001f);
 
-        // Room invite message
-        assertEquals(108f, ChatMessageHeightCalculator.INVITE_CARD_HEIGHT, 0.001f);
         ParsedChatMessage.RoomInviteMessage invite = new ParsedChatMessage.RoomInviteMessage(
                 raw("invite-msg", "user", "payload"), "player-connect://127.0.0.1:6567");
         MessageGroup groupInvite = new MessageGroup("user", "2026-09-12T10:00:00Z", Collections.singletonList(invite));
         float hInvite = ChatMessageHeightCalculator.calculateHeight(groupInvite, 400f);
         float expectedInvite = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + ChatMessageHeightCalculator.INVITE_CARD_HEIGHT + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING)
+                        + ChatMessageHeightCalculator.INVITE_CARD_HEIGHT)
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedInvite, hInvite, 0.001f);
 
@@ -619,17 +628,19 @@ class ChatMessageGrouperAndHeightTest {
         float hLink = ChatMessageHeightCalculator.calculateHeight(groupLink, 400f);
         float expectedLink = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + ChatMessageHeightCalculator.TOOL_LINK_CARD_HEIGHT + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING)
+                        + ChatMessageHeightCalculator.TOOL_LINK_CARD_HEIGHT)
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedLink, hLink, 0.001f);
 
         // Unknown fallback message type
-        ParsedChatMessage unknown = new ParsedChatMessage(raw("unk-msg", "user", "payload")) {};
-        MessageGroup groupUnknown = new MessageGroup("user", "2026-09-12T10:00:00Z", Collections.singletonList(unknown));
+        ParsedChatMessage unknown = new ParsedChatMessage(raw("unk-msg", "user", "payload")) {
+        };
+        MessageGroup groupUnknown = new MessageGroup("user", "2026-09-12T10:00:00Z",
+                Collections.singletonList(unknown));
         float hUnknown = ChatMessageHeightCalculator.calculateHeight(groupUnknown, 400f);
         float expectedUnknown = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + 24f + ChatMessageHeightCalculator.MESSAGE_CARD_PADDING)
+                        + 24f)
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedUnknown, hUnknown, 0.001f);
     }
@@ -671,7 +682,8 @@ class ChatMessageGrouperAndHeightTest {
     @Test
     void testHeightCalculatorTextWrapNarrowVsWide() {
         MessageGroup group = ChatMessageGrouper.groupRaw(Collections.singletonList(raw("long-msg", "charlie",
-                "This is a long message that should wrap to multiple lines when container width is small and fit fewer lines when wide."))).get(0);
+                "This is a long message that should wrap to multiple lines when container width is small and fit fewer lines when wide.")))
+                .get(0);
 
         float wide = ChatMessageHeightCalculator.calculateHeight(group, 600f);
         float narrow = ChatMessageHeightCalculator.calculateHeight(group, 150f);
@@ -683,7 +695,8 @@ class ChatMessageGrouperAndHeightTest {
     void testHeightCalculatorMobileScaling() {
         ChatMessageHeightCalculator.clearCache();
         try {
-            MessageGroup group = ChatMessageGrouper.groupRaw(Collections.singletonList(raw("scale-msg", "author", "Test message content"))).get(0);
+            MessageGroup group = ChatMessageGrouper
+                    .groupRaw(Collections.singletonList(raw("scale-msg", "author", "Test message content"))).get(0);
 
             // Desktop scale (1.0f)
             Scl.setProduct(1.0f);
@@ -694,7 +707,8 @@ class ChatMessageGrouperAndHeightTest {
             float h2 = ChatMessageHeightCalculator.calculateHeight(group, 300f);
 
             // With scale 2.0, height should be significantly larger (proportional to scale)
-            assertTrue(h2 > h1 * 1.5f, "Height under Scl 2.0 (" + h2 + ") should scale up compared to Scl 1.0 (" + h1 + ")");
+            assertTrue(h2 > h1 * 1.5f,
+                    "Height under Scl 2.0 (" + h2 + ") should scale up compared to Scl 1.0 (" + h1 + ")");
 
             // Empty group should also scale
             float emptyH1 = ChatMessageHeightCalculator.calculateHeight(null, 300f);

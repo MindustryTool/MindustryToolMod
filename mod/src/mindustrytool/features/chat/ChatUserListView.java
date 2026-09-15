@@ -22,7 +22,7 @@ public class ChatUserListView extends BaseComponent {
         Readable<Boolean> hasUsers = store.members().active()
                 .map(list -> list != null && !list.isEmpty());
 
-        return column().grow().top().left().gap(unit(1)).children(() -> {
+        return column().grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
             scroll().grow().left().children(() -> {
                 column().growX().top().left().gap(unit(1)).children(() -> {
                     dynamic(hasUsers, available -> {

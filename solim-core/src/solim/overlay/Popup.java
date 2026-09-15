@@ -9,14 +9,19 @@ import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
+import arc.util.Time;
+import java.util.List;
 import java.util.function.Function;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.core.Disposable;
 import solim.graphics.RoundedDrawable;
 import solim.layout.Spacer;
+import solim.modifier.PendingCellConfig;
 import solim.modifier.RoundedHelper;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
@@ -54,6 +59,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     private @Nullable Component currentContent;
     private boolean touchAttached = false;
     private boolean keyAttached = false;
+    private long lastHideTime = 0L;
 
     private final Cons<ResizeEvent> resizeListener = e -> {
         if (table.parent != null) {
@@ -177,10 +183,19 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
      * safe to call headless.
      */
     public Popup<T> hide() {
+        lastHideTime = Time.millis();
         detachListeners();
         table.remove();
         clearContent();
         return this;
+    }
+
+    public boolean isShowing() {
+        return table.parent != null;
+    }
+
+    public long getLastHideTime() {
+        return lastHideTime;
     }
 
     /**
@@ -227,7 +242,17 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
             }));
             if (content != null) {
                 currentContent = content;
-                table.add(content.element());
+                Cell<?> cell = table.add(content.element());
+                PendingCellConfig config = PendingCellConfig.find(content);
+                if (config == null) {
+                    config = PendingCellConfig.find(content.element());
+                }
+                if (config != null) {
+                    List<Disposable> effects = config.applyToCell(cell);
+                    for (Disposable effect : effects) {
+                        ComponentContext.register(effect);
+                    }
+                }
             }
         }
         if (table.getBackground() == null) {
