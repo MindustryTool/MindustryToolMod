@@ -366,6 +366,12 @@ public final class VirtualList<T, K> extends BaseComponent
         if (!updateHooked && pane != null) {
             updateHooked = true;
             pane.update(() -> {
+                if (pane.hasScroll()) {
+                    Element hover = Core.scene != null ? Core.scene.getHoverElement() : null;
+                    if (hover == null || !hover.isDescendantOf(pane) || (!pane.isScrollX() && !pane.isScrollY())) {
+                        Core.scene.setScrollFocus(null);
+                    }
+                }
                 float scrollY = pane.getVisualScrollY();
                 if (Math.abs(scrollY - lastScrollY) > 0.5f) {
                     lastScrollY = scrollY;

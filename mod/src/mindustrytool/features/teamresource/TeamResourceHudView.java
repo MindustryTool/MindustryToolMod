@@ -24,9 +24,10 @@ import mindustry.ui.Styles;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Card;
-import solim.layout.Scroll;
 import solim.overlay.Hud;
+import solim.signal.Computed;
 import solim.signal.Readable;
+import solim.signal.Signal;
 
 /**
  * Fully reactive and declarative Team Resource HUD overlay.
@@ -50,18 +51,25 @@ public class TeamResourceHudView extends BaseComponent {
         Readable<Float> iconSize = scale.map(s -> 18f * (s != null ? s : 1f));
         Readable<Boolean> expanded = feature.expandedConfig.signal();
 
-        Readable<Float> hudWidth = expanded.map(exp -> {
-            float screenW = getSceneWidth();
-            float scaleVal = scale.get() != null ? scale.get() : 1f;
-            float userWidth = screenW * (feature.overlayWidthConfig.get() != null ? feature.overlayWidthConfig.get() : 0.28f);
+        Signal<Float> screenWidth = createSignal(ResizeEvent.class, TeamResourceHudView::getSceneWidth);
+
+        Readable<Float> hudWidth = new Computed<>(() -> {
+            Float sw = screenWidth.get();
+            float screenW = sw != null ? sw : getSceneWidth();
+            Float s = scale.get();
+            float scaleVal = s != null ? s : 1f;
+            Float cfgW = feature.overlayWidthConfig.signal().get();
+            float userWidth = screenW * (cfgW != null ? cfgW : 0.28f);
             float minWidth = (Vars.mobile ? 180f : 220f) * scaleVal;
             float maxWidth = screenW * 0.98f;
             float widthToUse = Mathf.clamp(userWidth, minWidth, maxWidth);
-            return Boolean.TRUE.equals(exp) ? widthToUse : Math.min(widthToUse, (Vars.mobile ? 180f : 240f) * scaleVal);
+            return Boolean.TRUE.equals(expanded.get()) ? widthToUse : Math.min(widthToUse, (Vars.mobile ? 180f : 240f) * scaleVal);
         });
 
-        Readable<Integer> itemCols = hudWidth.map(w -> {
-            float scaleVal = scale.get() != null ? scale.get() : 1f;
+        Readable<Integer> itemCols = new Computed<>(() -> {
+            Float w = hudWidth.get();
+            Float s = scale.get();
+            float scaleVal = s != null ? s : 1f;
             float minCardW = 72f * scaleVal;
             return Math.max(2, (int) ((w != null ? w : 220f) / (minCardW > 0f ? minCardW : 72f)));
         });
@@ -88,32 +96,29 @@ public class TeamResourceHudView extends BaseComponent {
                             .tooltip(expanded.map(exp -> Core.bundle.get(Boolean.TRUE.equals(exp) ? "team-resources.collapse" : "team-resources.expand", "Toggle Expand")))
                             .children(() -> text(expanded.map(exp -> Boolean.TRUE.equals(exp) ? "▼" : "▶")));
 
-                    // Team selector chips (horizontal scroll)
-                    Scroll teamScroll = scroll().scrollingDisabled(false, true);
-                    Readable<Float> maxTeamsWidth = hudWidth.map(w -> {
-                        float scaleVal = scale.get() != null ? scale.get() : 1f;
-                        return Math.max(60f * scaleVal, (w != null ? w : 220f) - 34f * 3.5f * scaleVal);
-                    });
-                    teamScroll.height(buttonSize).maxWidth(maxTeamsWidth).children(() -> {
-                        dynamic(state.validTeamsSignal, teams -> row().gap(unit(1)).children(() -> {
-                            if (teams != null) {
-                                for (Team team : teams) {
-                                    button()
-                                            .style(Styles.clearTogglei)
-                                            .size(buttonSize)
-                                            .onClick(() -> state.setSelectedTeam(team))
-                                            .checked(state.selectedTeamSignal.map(sel -> sel == team))
-                                            .tooltip(team.localized())
-                                            .children(() -> image(Tex.whiteui).size(iconSize).color(team.color));
-                                }
-                                if (teams.size > 5) {
-                                    button("...", () -> new TeamResourceAllTeamsDialog(state).show())
-                                            .style(Styles.flatBordert)
-                                            .size(buttonSize);
-                                }
+                    // Team selector chips
+                    dynamic(state.validTeamsSignal, teams -> row().gap(unit(1)).children(() -> {
+                        if (teams != null) {
+                            int limit = Math.min(teams.size, 5);
+                            for (int i = 0; i < limit; i++) {
+                                Team team = teams.get(i);
+                                button()
+                                        .style(Styles.clearTogglei)
+                                        .size(buttonSize)
+                                        .onClick(() -> state.setSelectedTeam(team))
+                                        .checked(state.selectedTeamSignal.map(sel -> sel == team))
+                                        .tooltip(team.localized())
+                                        .children(() -> image(Tex.whiteui).size(iconSize).color(team.color));
                             }
-                        }));
-                    });
+                            if (teams.size > 5) {
+                                button("...", () -> new TeamResourceAllTeamsDialog(state).show())
+                                        .style(Styles.flatBordert)
+                                        .size(buttonSize);
+                            }
+                        }
+                    }));
+
+                    spacer();
 
                     // Settings button
                     button()
@@ -125,7 +130,7 @@ public class TeamResourceHudView extends BaseComponent {
                 });
 
                 // 2. Expanded Content Panel
-                dynamic(expanded, isExp -> Boolean.TRUE.equals(isExp) ? buildExpandedContent(scale, itemCols) : row());
+                dynamic(expanded, isExp -> Boolean.TRUE.equals(isExp) ? buildExpandedContent(scale, itemCols) : row()).growX();
             });
         });
 
@@ -179,8 +184,8 @@ public class TeamResourceHudView extends BaseComponent {
                         item -> item.name,
                         item -> createItemCard(item, itemCardHeight, iconSize, scale)
                     ).growX().gap(unit(1));
-                });
-            }).growX() : row());
+                }).growX();
+            }).growX() : row()).growX();
 
             // Units Section
             dynamic(feature.showUnitsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
@@ -194,7 +199,7 @@ public class TeamResourceHudView extends BaseComponent {
                         unit -> unit.name,
                         unit -> createUnitCard(unit, unitCardHeight, iconSize, scale)
                     ).growX().gap(unit(1));
-                });
+                }).growX();
             }).growX() : row()).growX();
 
             // Power Section
