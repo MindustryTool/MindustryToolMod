@@ -533,15 +533,15 @@ public class ChatMessageListView extends BaseComponent {
 
             dynamic(roomSignal, room -> (room != null)
                     ? new RoomCard(room, false)
-                    : buildFallbackRoomCardContent(link));
+                    : buildFallbackRoomCardContent(link))
+                            .height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT);
         }
 
         private Component buildFallbackRoomCardContent(String link) {
             return card()
                     .background(Styles.black8)
                     .border(1.5f, Color.darkGray)
-                    .growX()
-                    .height(unit(27))
+                    .grow()
                     .gap(unit(1.5f))
                     .padding(unit(2))
                     .left()
@@ -574,9 +574,9 @@ public class ChatMessageListView extends BaseComponent {
                         row().growX().height(unit(7)).gap(unit(1)).children(() -> {
                             button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
                                     () -> promptDirectJoin(link))
-                                    .style(WebStyles.secondary())
-                                    .growX()
-                                    .height(unit(7));
+                                            .style(WebStyles.secondary())
+                                            .growX()
+                                            .height(unit(7));
 
                             button(Core.bundle.get("button.copy", "Copy Link"), () -> {
                                 Core.app.setClipboardText(link);
@@ -589,7 +589,8 @@ public class ChatMessageListView extends BaseComponent {
         private void promptDirectJoin(String link) {
             try {
                 PlayerConnectLink parsed = PlayerConnectLink.fromString(link);
-                PlayerConnectClient.join(parsed, "", () -> {});
+                PlayerConnectClient.join(parsed, "", () -> {
+                });
             } catch (Exception e) {
                 Vars.ui.showErrorMessage(e.getMessage() != null ? e.getMessage() : "Failed to parse link");
             }

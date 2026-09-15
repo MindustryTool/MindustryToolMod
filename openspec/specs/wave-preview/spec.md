@@ -1,4 +1,9 @@
-## ADDED Requirements
+# wave-preview Specification
+
+## Purpose
+Preview upcoming wave unit compositions directly on the HUD with domain-split units and configurable lookahead.
+
+## Requirements
 
 ### Requirement: Parity wave composition
 

@@ -99,11 +99,11 @@ A feature whose metadata is in development SHALL never become enabled: enabling 
 - **THEN** development features remain disabled and are not added to the persisted enabled-features list
 
 ### Requirement: Legacy stub registry
-The system SHALL register 14 metadata-only stub features with `development=true` and no logic or dialogs, porting old ids, icons, orders, `enabledByDefault`, and `quickAccess`: player-connect, pathfinding, range-display, pretty-chat, autoplay, wave-preview, save-sync, item-visualizer, god-mode, smart-drill, smart-upgrade, music, progress-display, toggle-rendering. `time-control` is no longer a stub (it is a real enable-capable feature defined by the `time-control` capability). `health-bar` is no longer a stub (it is a real enable-capable feature defined by the `health-bar` capability). Old `chat-translation` SHALL NOT get a stub (covered by the existing `translation` feature).
+The system SHALL register 13 metadata-only stub features with `development=true` and no logic or dialogs, porting old ids, icons, orders, `enabledByDefault`, and `quickAccess`: player-connect, pathfinding, range-display, pretty-chat, autoplay, save-sync, item-visualizer, god-mode, smart-drill, smart-upgrade, music, progress-display, toggle-rendering. `wave-preview` is no longer a stub (it is a real enable-capable feature defined by the `wave-preview` capability). `time-control` is no longer a stub (it is a real enable-capable feature defined by the `time-control` capability). `health-bar` is no longer a stub (it is a real enable-capable feature defined by the `health-bar` capability). Old `chat-translation` SHALL NOT get a stub (covered by the existing `translation` feature).
 
 #### Scenario: Registry contains stubs alongside real features
 - **WHEN** the mod starts and `Main` registers features
-- **THEN** `FeatureManager.getFeatures()` contains the 10 existing features plus the 14 development stubs ordered with non-development features in persisted ordered-ID list sequence followed by development stubs sorted by feature id
+- **THEN** `FeatureManager.getFeatures()` contains the 11 existing features plus the 13 development stubs ordered with non-development features in persisted ordered-ID list sequence followed by development stubs sorted by feature id
 
 #### Scenario: Stub exposes metadata only
 - **WHEN** a stub is inspected
@@ -121,7 +121,7 @@ The system SHALL localize the development badge and every stub's name, descripti
 - **THEN** `feature.<id>.name`, `feature.<id>.description`, and `feature.<id>.help` resolve from the bundle with no hardcoded user-visible text
 
 ### Requirement: Registry size test coverage
-Count-sensitive tests SHALL reflect the enlarged registry of 10 real features plus 14 locked stubs.
+Count-sensitive tests SHALL reflect the enlarged registry of 11 real features plus 13 locked stubs.
 
 #### Scenario: Feature count assertions updated
 - **WHEN** the test suite runs after registration
