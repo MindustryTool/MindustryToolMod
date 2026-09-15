@@ -182,3 +182,13 @@ scratch/
 *_v*
 *_backup
 
+.bin
+
+arc/
+mod/build/
+openspec/changes/archive/
+solim/build/
+solim-api/build/
+solim-mcp/build/
+solim-core/build/
+solim-runtime/build/
