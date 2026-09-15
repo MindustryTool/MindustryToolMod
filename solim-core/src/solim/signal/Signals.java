@@ -60,21 +60,30 @@ public final class Signals {
         initialized = true;
     }
 
-    public static Readable<Boolean> isPortrait() {
+    public static Signal<Boolean> isPortrait() {
         return portrait;
     }
 
-    /** Whether any multiplayer session is active. Menu-inclusive mirror of {@code Vars.net.active()}. */
+    /**
+     * Whether any multiplayer session is active. Menu-inclusive mirror of
+     * {@code Vars.net.active()}.
+     */
     public static Signal<Boolean> netActive() {
         return netActive;
     }
 
-    /** Whether this client hosts the session. Menu-inclusive mirror of {@code Vars.net.server()}. */
+    /**
+     * Whether this client hosts the session. Menu-inclusive mirror of
+     * {@code Vars.net.server()}.
+     */
     public static Signal<Boolean> netServer() {
         return netServer;
     }
 
-    /** Whether this client joined someone else's session. Menu-inclusive mirror of {@code Vars.net.client()}. */
+    /**
+     * Whether this client joined someone else's session. Menu-inclusive mirror of
+     * {@code Vars.net.client()}.
+     */
     public static Signal<Boolean> netClient() {
         return netClient;
     }
@@ -95,8 +104,8 @@ public final class Signals {
     }
 
     /**
-     * Recomputes net signals from {@code Vars} on the app thread.
-     * Visible for testing; production invokes it via lifecycle events and the poll backstop.
+     * Recomputes net signals from {@code Vars} on the app thread. Visible for
+     * testing; production invokes it via lifecycle events and the poll backstop.
      */
     static void requestRefresh() {
         if (Core.app != null) {
@@ -107,7 +116,8 @@ public final class Signals {
     }
 
     private static void refreshNetNow() {
-        // Null guards: this shared library also loads in headless test JVMs where Vars is uninitialized.
+        // Null guards: this shared library also loads in headless test JVMs where Vars
+        // is uninitialized.
         boolean active = Vars.net != null && Vars.net.active();
         boolean server = Vars.net != null && Vars.net.server();
         boolean client = Vars.net != null && Vars.net.client();

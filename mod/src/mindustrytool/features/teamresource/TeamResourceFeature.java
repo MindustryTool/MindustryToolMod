@@ -9,7 +9,6 @@ import solim.overlay.SolimDialog;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.game.EventType.ResetEvent;
-import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
@@ -17,7 +16,10 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.config.ContextualConfigValue;
 import solim.signal.Signal;
+import solim.signal.Signals;
+import solim.ui.Units;
 
 /**
  * Feature responsible for registering and managing the Team Resource Tracker overlay.
@@ -39,13 +41,8 @@ public class TeamResourceFeature extends Feature {
     public final ConfigValue<Boolean> alwaysShowFlowRateConfig;
     public final ConfigValue<Boolean> expandedConfig;
 
-    public final ConfigGroup portraitGroup;
-    public final ConfigGroup landscapeGroup;
-
-    public final ConfigValue<Float> portraitXConfig;
-    public final ConfigValue<Float> portraitYConfig;
-    public final ConfigValue<Float> landscapeXConfig;
-    public final ConfigValue<Float> landscapeYConfig;
+    public final ContextualConfigValue<Float, Boolean> xConfig;
+    public final ContextualConfigValue<Float, Boolean> yConfig;
 
     public final Signal<Float> xSignal;
     public final Signal<Float> ySignal;
@@ -78,71 +75,71 @@ public class TeamResourceFeature extends Feature {
         alwaysShowFlowRateConfig = config.boolValue("always-show-flow-rate", true);
         expandedConfig = config.boolValue("expanded", true);
 
-        portraitGroup = config.group("portrait");
-        landscapeGroup = config.group("landscape");
+        xConfig = config.floatValueKeyed(
+                "x",
+                Signals.isPortrait(),
+                p -> p ? "portrait" : "landscape",
+                p -> {
+                    float sw = Units.screenWidth();
+                    float defX = sw > 0 ? sw / 2f : 200f;
+                    String oldKey = p ? "mindustrytool.team-resource.x.portrait" : "mindustrytool.team-resource.x.landscape";
+                    String groupKey = p ? "mindustrytool.team-resources.portrait.x" : "mindustrytool.team-resources.landscape.x";
+                    if (Core.settings.has(groupKey)) {
+                        return Core.settings.getFloat(groupKey);
+                    }
+                    return Core.settings.getFloat(oldKey, defX);
+                });
 
-        float defX = Core.graphics != null ? Core.graphics.getWidth() / 2f : 200f;
-        float defY = Core.graphics != null ? Core.graphics.getHeight() / 2f : 200f;
+        yConfig = config.floatValueKeyed(
+                "y",
+                Signals.isPortrait(),
+                p -> p ? "portrait" : "landscape",
+                p -> {
+                    float sh = Units.screenHeight();
+                    float defY = sh > 0 ? sh / 2f : 200f;
+                    String oldKey = p ? "mindustrytool.team-resource.y.portrait" : "mindustrytool.team-resource.y.landscape";
+                    String groupKey = p ? "mindustrytool.team-resources.portrait.y" : "mindustrytool.team-resources.landscape.y";
+                    if (Core.settings.has(groupKey)) {
+                        return Core.settings.getFloat(groupKey);
+                    }
+                    return Core.settings.getFloat(oldKey, defY);
+                });
 
-        portraitXConfig = portraitGroup.floatValue("x", Core.settings.getFloat("mindustrytool.team-resource.x.portrait", defX));
-        portraitYConfig = portraitGroup.floatValue("y", Core.settings.getFloat("mindustrytool.team-resource.y.portrait", defY));
-        landscapeXConfig = landscapeGroup.floatValue("x", Core.settings.getFloat("mindustrytool.team-resource.x.landscape", defX));
-        landscapeYConfig = landscapeGroup.floatValue("y", Core.settings.getFloat("mindustrytool.team-resource.y.landscape", defY));
-
-        xSignal = Signal.of(x());
-        ySignal = Signal.of(y());
-
-        xSignal.subscribe(val -> {
-            if (val != null) {
-                currentXConfig().set(val);
-            }
-        });
-        ySignal.subscribe(val -> {
-            if (val != null) {
-                currentYConfig().set(val);
-            }
-        });
+        xSignal = xConfig.signal();
+        ySignal = yConfig.signal();
 
         this.state = new TeamResourceState(this);
 
-        Events.on(ResizeEvent.class, e -> updateOrientationPosition());
+        Signals.isPortrait().subscribe(p -> {
+            if (hudView != null) {
+                Core.app.post(hudView::keepInScreen);
+            }
+        });
         Events.on(WorldLoadEvent.class, e -> state.onWorldLoad());
         Events.on(ResetEvent.class, e -> state.reset());
     }
 
-    public ConfigValue<Float> currentXConfig() {
-        return (Core.graphics != null && Core.graphics.isPortrait()) ? portraitXConfig : landscapeXConfig;
-    }
-
-    public ConfigValue<Float> currentYConfig() {
-        return (Core.graphics != null && Core.graphics.isPortrait()) ? portraitYConfig : landscapeYConfig;
-    }
-
     public float x() {
-        Float val = currentXConfig().get();
-        return val != null ? val : (Core.graphics != null ? Core.graphics.getWidth() / 2f : 200f);
+        Float val = xConfig.get();
+        return val != null ? val : Units.screenWidth() / 2f;
     }
 
     public void x(float value) {
-        currentXConfig().set(value);
-        xSignal.set(value);
+        xConfig.set(value);
     }
 
     public float y() {
-        Float val = currentYConfig().get();
-        return val != null ? val : (Core.graphics != null ? Core.graphics.getHeight() / 2f : 200f);
+        Float val = yConfig.get();
+        return val != null ? val : Units.screenHeight() / 2f;
     }
 
     public void y(float value) {
-        currentYConfig().set(value);
-        ySignal.set(value);
+        yConfig.set(value);
     }
 
     public void updateOrientationPosition() {
-        xSignal.set(x());
-        ySignal.set(y());
         if (hudView != null) {
-            hudView.keepInScreen();
+            Core.app.post(hudView::keepInScreen);
         }
     }
 
@@ -161,14 +158,20 @@ public class TeamResourceFeature extends Feature {
     }
 
     public void resetPosition() {
-        float cx = Core.graphics != null ? Core.graphics.getWidth() / 2f : 200f;
-        float cy = Core.graphics != null ? Core.graphics.getHeight() / 2f : 200f;
-        portraitXConfig.set(cx);
-        portraitYConfig.set(cy);
-        landscapeXConfig.set(cx);
-        landscapeYConfig.set(cy);
-        xSignal.set(cx);
-        ySignal.set(cy);
+        float cx = Units.screenWidth() / 2f;
+        float cy = Units.screenHeight() / 2f;
+
+        Core.settings.put("mindustrytool.team-resources.x.portrait", cx);
+        Core.settings.put("mindustrytool.team-resources.x.landscape", cx);
+        Core.settings.put("mindustrytool.team-resources.y.portrait", cy);
+        Core.settings.put("mindustrytool.team-resources.y.landscape", cy);
+
+        xConfig.reset();
+        yConfig.reset();
+
+        if (hudView != null) {
+            Core.app.post(hudView::keepInScreen);
+        }
     }
 
     @Override

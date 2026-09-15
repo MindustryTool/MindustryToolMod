@@ -56,6 +56,15 @@ public class ConfigGroup {
 		return new ContextualConfigValue<>(this, name, discriminant, keySuffix, defaultValue, persister);
 	}
 
+	public <T, K> ContextualConfigValue<T, K> valueKeyed(
+			String name,
+			Readable<K> discriminant,
+			Function<K, String> keySuffix,
+			Function<K, T> defaultFactory,
+			ConfigPersister<T> persister) {
+		return new ContextualConfigValue<>(this, name, discriminant, keySuffix, defaultFactory, persister);
+	}
+
 	public ConfigValue<Boolean> boolValue(String name, boolean defaultValue) {
 		return value(name, defaultValue, ConfigPersister.BOOLEAN);
 	}
@@ -92,12 +101,28 @@ public class ConfigGroup {
 		return valueKeyed(name, discriminant, keySuffix, defaultValue, ConfigPersister.BOOLEAN);
 	}
 
+	public <K> ContextualConfigValue<Boolean, K> boolValueKeyed(
+			String name,
+			Readable<K> discriminant,
+			Function<K, String> keySuffix,
+			Function<K, Boolean> defaultFactory) {
+		return valueKeyed(name, discriminant, keySuffix, defaultFactory, ConfigPersister.BOOLEAN);
+	}
+
 	public <K> ContextualConfigValue<Integer, K> intValueKeyed(
 			String name,
 			Readable<K> discriminant,
 			Function<K, String> keySuffix,
 			int defaultValue) {
 		return valueKeyed(name, discriminant, keySuffix, defaultValue, ConfigPersister.INTEGER);
+	}
+
+	public <K> ContextualConfigValue<Integer, K> intValueKeyed(
+			String name,
+			Readable<K> discriminant,
+			Function<K, String> keySuffix,
+			Function<K, Integer> defaultFactory) {
+		return valueKeyed(name, discriminant, keySuffix, defaultFactory, ConfigPersister.INTEGER);
 	}
 
 	public <K> ContextualConfigValue<Float, K> floatValueKeyed(
@@ -108,12 +133,28 @@ public class ConfigGroup {
 		return valueKeyed(name, discriminant, keySuffix, defaultValue, ConfigPersister.FLOAT);
 	}
 
+	public <K> ContextualConfigValue<Float, K> floatValueKeyed(
+			String name,
+			Readable<K> discriminant,
+			Function<K, String> keySuffix,
+			Function<K, Float> defaultFactory) {
+		return valueKeyed(name, discriminant, keySuffix, defaultFactory, ConfigPersister.FLOAT);
+	}
+
 	public <K> ContextualConfigValue<String, K> stringValueKeyed(
 			String name,
 			Readable<K> discriminant,
 			Function<K, String> keySuffix,
 			@Nullable String defaultValue) {
 		return valueKeyed(name, discriminant, keySuffix, defaultValue, ConfigPersister.STRING);
+	}
+
+	public <K> ContextualConfigValue<String, K> stringValueKeyed(
+			String name,
+			Readable<K> discriminant,
+			Function<K, String> keySuffix,
+			Function<K, String> defaultFactory) {
+		return valueKeyed(name, discriminant, keySuffix, defaultFactory, ConfigPersister.STRING);
 	}
 
 	private static String normalizeNamespace(String ns) {

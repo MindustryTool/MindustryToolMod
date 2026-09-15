@@ -99,4 +99,41 @@ class ContextualConfigValueTest {
 		// Discriminant listener disposed, key remains at previous
 		assertEquals("test.endpoint.dev", endpoint.getCurrentKey());
 	}
+
+	@Test
+	void testDefaultFactoryPerContext() {
+		ConfigGroup group = ConfigGroup.of("hud");
+		Signal<String> context = Signal.of("collapsed.landscape");
+
+		ContextualConfigValue<Float, String> xConfig = group.floatValueKeyed(
+				"x",
+				context,
+				k -> k,
+				k -> k.startsWith("collapsed") ? 100f : 500f);
+
+		assertEquals(100f, xConfig.get());
+		assertEquals("hud.x.collapsed.landscape", xConfig.getCurrentKey());
+
+		// Switch to expanded: default should resolve to 500f
+		context.set("expanded.landscape");
+		assertEquals(500f, xConfig.get());
+		assertEquals("hud.x.expanded.landscape", xConfig.getCurrentKey());
+
+		// Mutate expanded to 600f
+		xConfig.set(600f);
+		assertEquals(600f, xConfig.get());
+		assertEquals(600f, Core.settings.getFloat("hud.x.expanded.landscape"));
+
+		// Switch back to collapsed: should still have 100f
+		context.set("collapsed.landscape");
+		assertEquals(100f, xConfig.get());
+
+		// Switch back to expanded: should load saved 600f
+		context.set("expanded.landscape");
+		assertEquals(600f, xConfig.get());
+
+		// Reset in expanded: should revert to context default 500f
+		xConfig.reset();
+		assertEquals(500f, xConfig.get());
+	}
 }

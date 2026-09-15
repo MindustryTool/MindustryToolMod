@@ -504,4 +504,50 @@ class HudTest {
 
 		hud.dispose();
 	}
+
+	@Test
+	void makeDraggablePureClickDoesNotOverwriteSignal() {
+		Hud hud = new Hud();
+		hud.element().setSize(100f, 50f);
+		hud.element().setPosition(200f, 100f);
+
+		Signal<Float> xSignal = Signal.of(500f);
+		Signal<Float> ySignal = Signal.of(400f);
+
+		Table handle = new Table();
+		hud.container().addChild(handle);
+		Hud.makeDraggable(handle, hud, xSignal, ySignal);
+
+		InputListener dragListener = null;
+		for (EventListener l : handle.getListeners()) {
+			if (l instanceof InputListener && !(l instanceof ClickListener)) {
+				dragListener = (InputListener) l;
+				break;
+			}
+		}
+		assertNotNull(dragListener);
+
+		// Touch down on handle (without dragging)
+		InputEvent touchEvent = new InputEvent();
+		touchEvent.targetActor = handle;
+		assertTrue(dragListener.touchDown(touchEvent, 10f, 10f, 0, KeyCode.mouseLeft));
+
+		// Touch up without dragging (pure click)
+		dragListener.touchUp(touchEvent, 10f, 10f, 0, KeyCode.mouseLeft);
+
+		// Signals must NOT be overwritten with hud.element().x/y
+		assertEquals(500f, xSignal.get(), "xSignal must remain unchanged on pure click");
+		assertEquals(400f, ySignal.get(), "ySignal must remain unchanged on pure click");
+
+		// Now simulate an actual drag (> 0.5f movement)
+		assertTrue(dragListener.touchDown(touchEvent, 10f, 10f, 0, KeyCode.mouseLeft));
+		dragListener.touchDragged(touchEvent, 30f, 40f, 0); // moved by +20, +30
+		dragListener.touchUp(touchEvent, 30f, 40f, 0, KeyCode.mouseLeft);
+
+		// Now signals must be updated to the new position
+		assertEquals(220f, xSignal.get(), 0.01f, "xSignal must be updated after drag");
+		assertEquals(130f, ySignal.get(), 0.01f, "ySignal must be updated after drag");
+
+		hud.dispose();
+	}
 }

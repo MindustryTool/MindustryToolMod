@@ -296,6 +296,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
             private float lastX;
             private float lastY;
             private boolean useStage = false;
+            private boolean didDrag = false;
 
             private @Nullable Hud resolveHud() {
                 Hud target = hud != null ? hud : Hud.find(handle);
@@ -317,6 +318,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                 Hud targetHud = resolveHud();
                 if (targetHud == null)
                     return false;
+                didDrag = false;
                 lastX = x;
                 lastY = y;
                 if (event != null && (event.stageX != 0f || event.stageY != 0f)) {
@@ -347,6 +349,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                     lastY = y;
                 }
                 if (Math.abs(dx) > 0.5f || Math.abs(dy) > 0.5f) {
+                    didDrag = true;
                     for (EventListener l : handle.getListeners()) {
                         if (l instanceof ClickListener) {
                             ((ClickListener) l).cancel();
@@ -368,13 +371,16 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                 Hud targetHud = resolveHud();
                 if (targetHud == null)
                     return;
-                targetHud.keepInScreen();
-                if (xSignal != null) {
-                    xSignal.set(targetHud.element().x);
+                if (didDrag) {
+                    targetHud.keepInScreen();
+                    if (xSignal != null) {
+                        xSignal.set(targetHud.element().x);
+                    }
+                    if (ySignal != null) {
+                        ySignal.set(targetHud.element().y);
+                    }
                 }
-                if (ySignal != null) {
-                    ySignal.set(targetHud.element().y);
-                }
+                didDrag = false;
             }
         });
     }

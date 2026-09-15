@@ -2,7 +2,6 @@ package mindustrytool.features;
 
 import arc.Core;
 import arc.Events;
-import arc.scene.ui.Dialog;
 import arc.util.Nullable;
 import solim.config.ConfigGroup;
 import solim.overlay.SolimDialog;
@@ -85,7 +84,7 @@ public abstract class Feature {
 		return null;
 	}
 
-	public @Nullable Dialog getMainDialog() {
+	public @Nullable SolimDialog getMainDialog() {
 		return null;
 	}
 

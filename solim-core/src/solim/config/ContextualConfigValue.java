@@ -16,22 +16,30 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 	private final Subscription discriminantSub;
 	private @Nullable K currentDiscriminant;
 
+	private final @Nullable Function<K, T> defaultFactory;
+
 	public ContextualConfigValue(
 			ConfigGroup group,
 			String baseName,
 			Readable<K> discriminant,
 			Function<K, String> keySuffix,
 			@Nullable T defaultValue,
+			@Nullable Function<K, T> defaultFactory,
 			ConfigPersister<T> persister) {
 		super(
 				deriveInitialKey(group, baseName, discriminant, keySuffix),
-				defaultValue,
-				() -> persister != null ? persister.load(deriveInitialKey(group, baseName, discriminant, keySuffix), defaultValue) : null,
+				resolveInitialDefault(defaultValue, defaultFactory, discriminant),
+				() -> {
+					String key = deriveInitialKey(group, baseName, discriminant, keySuffix);
+					T def = resolveInitialDefault(defaultValue, defaultFactory, discriminant);
+					return persister != null ? persister.load(key, def) : null;
+				},
 				null);
 		this.group = group;
 		this.baseName = baseName;
 		this.discriminant = discriminant;
 		this.keySuffix = keySuffix;
+		this.defaultFactory = defaultFactory;
 		this.persister = persister;
 		this.currentDiscriminant = discriminant != null ? discriminant.peek() : null;
 		this.discriminantSub = subscribeToDiscriminant();
@@ -43,8 +51,41 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 			Readable<K> discriminant,
 			Function<K, String> keySuffix,
 			@Nullable T defaultValue,
+			ConfigPersister<T> persister) {
+		this(group, baseName, discriminant, keySuffix, defaultValue, null, persister);
+	}
+
+	public ContextualConfigValue(
+			ConfigGroup group,
+			String baseName,
+			Readable<K> discriminant,
+			Function<K, String> keySuffix,
+			Function<K, T> defaultFactory,
+			ConfigPersister<T> persister) {
+		this(group, baseName, discriminant, keySuffix, null, defaultFactory, persister);
+	}
+
+	public ContextualConfigValue(
+			ConfigGroup group,
+			String baseName,
+			Readable<K> discriminant,
+			Function<K, String> keySuffix,
+			@Nullable T defaultValue,
 			ContextualPersister<T> persister) {
-		this(group, baseName, discriminant, keySuffix, defaultValue, (ConfigPersister<T>) persister);
+		this(group, baseName, discriminant, keySuffix, defaultValue, null, (ConfigPersister<T>) persister);
+	}
+
+	private static <T, K> T resolveInitialDefault(
+			@Nullable T defaultValue,
+			@Nullable Function<K, T> defaultFactory,
+			@Nullable Readable<K> discriminant) {
+		if (defaultFactory != null && discriminant != null) {
+			T val = defaultFactory.apply(discriminant.peek());
+			if (val != null) {
+				return val;
+			}
+		}
+		return defaultValue;
 	}
 
 	private static <K> String deriveInitialKey(
@@ -85,8 +126,9 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 			}
 			this.currentDiscriminant = newDisc;
 			this.key = deriveKey(newDisc);
-			T loaded = persister != null ? persister.load(this.key, defaultValue) : null;
-			signal.set(loaded != null ? loaded : defaultValue);
+			T contextDefault = defaultFactory != null ? defaultFactory.apply(newDisc) : defaultValue;
+			T loaded = persister != null ? persister.load(this.key, contextDefault) : null;
+			signal.set(loaded != null ? loaded : contextDefault);
 		} finally {
 			updating = false;
 		}
@@ -103,6 +145,22 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 
 	public @Nullable K getCurrentDiscriminant() {
 		return currentDiscriminant;
+	}
+
+	@Override
+	public @Nullable T getDefaultValue() {
+		return defaultFactory != null ? defaultFactory.apply(currentDiscriminant) : defaultValue;
+	}
+
+	@Override
+	public void reset() {
+		set(getDefaultValue());
+	}
+
+	@Override
+	public boolean isModified() {
+		T def = getDefaultValue();
+		return def != null ? !def.equals(get()) : get() != null;
 	}
 
 	@Override

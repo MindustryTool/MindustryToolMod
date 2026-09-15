@@ -21,7 +21,6 @@ import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.ui.Units;
 
-
 public class ChatOverlayHudView extends BaseComponent {
 
     private final ChatFeature feature;
@@ -62,7 +61,6 @@ public class ChatOverlayHudView extends BaseComponent {
 
         effect(() -> {
             isCollapsed.get();
-            Core.app.post(this::keepInScreen);
         });
 
         Core.app.post(() -> {
@@ -158,7 +156,6 @@ public class ChatOverlayHudView extends BaseComponent {
                 .maxWidth(Units.dvw(95f))
                 .maxHeight(Units.dvh(95f))
                 .children(() -> {
-
                     column().grow().children(() -> {
                         // Window Action Bar (draggable bar wrapping title & action buttons)
                         row().growX()
@@ -238,7 +235,7 @@ public class ChatOverlayHudView extends BaseComponent {
                     });
                     divider(Direction.Y);
                 });
-            });
+            }).growY();
 
             // Message Area & Input
             column().grow().children(() -> {
@@ -258,7 +255,7 @@ public class ChatOverlayHudView extends BaseComponent {
                         new ChatUserListView(store);
                     });
                 });
-            });
+            }).growY();
         });
     }
 

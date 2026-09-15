@@ -190,7 +190,7 @@ public class ChatMessageListView extends BaseComponent {
                                         }
                                     });
 
-                    return virtualList.cellPaddingBottom(unit(2));
+                    return virtualList.cellPaddingBottom(unit(2)).grow();
                 } else {
                     return column().padding(unit(4)).top().left().children(() -> {
                         text(Core.bundle.get("feature.chat.ui.empty-messages", "No messages yet."))
