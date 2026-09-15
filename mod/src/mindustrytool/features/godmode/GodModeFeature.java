@@ -27,6 +27,7 @@ public class GodModeFeature extends Feature {
     public final ConfigGroup config;
     public final ConfigValue<Float> scaleConfig;
     public final ConfigValue<String> providerModeConfig;
+    public final ConfigValue<Boolean> hideDragHandleConfig;
 
     public final ConfigGroup positionGroup;
     public final ContextualConfigValue<Float, Boolean> xConfig;
@@ -55,6 +56,7 @@ public class GodModeFeature extends Feature {
         config = configGroup();
         scaleConfig = config.floatValue("scale", 1f);
         providerModeConfig = config.stringValue("provider", PROVIDER_AUTO);
+        hideDragHandleConfig = config.boolValue("hideDragHandle", false);
 
         positionGroup = config.group("position");
 

@@ -37,16 +37,20 @@ public class GodModeHudView extends BaseComponent {
                     .border(1.5f, WebStyles.Colors.BORDER)
                     .center()
                     .children(() -> {
-                        button()
-                                .style(WebStyles.ghost())
-                                .size(buttonSize)
-                                .children(() -> icon(Icon.move).size(iconSize))
-                                .draggable(parentFeature.xSignal, parentFeature.ySignal);
+                        dynamic(parentFeature.hideDragHandleConfig.signal(), hide -> {
+                            if (!Boolean.TRUE.equals(hide)) {
+                                return button()
+                                        .style(WebStyles.ghost())
+                                        .size(buttonSize)
+                                        .children(() -> icon(Icon.move).size(iconSize))
+                                        .draggable(parentFeature.xSignal, parentFeature.ySignal);
+                            }
+                            return null;
+                        });
 
-                        dynamic(parentFeature.providerSignal(), provider ->
-                                provider != null
-                                        ? buildActiveTools(provider, buttonSize, iconSize)
-                                        : buildUnavailableContent(buttonSize, iconSize));
+                        dynamic(parentFeature.providerSignal(), provider -> provider != null
+                                ? buildActiveTools(provider, buttonSize, iconSize)
+                                : buildUnavailableContent(buttonSize, iconSize));
                     });
         });
 
@@ -108,13 +112,13 @@ public class GodModeHudView extends BaseComponent {
                     .style(WebStyles.filterChip())
                     .size(buttonSize)
                     .checked(parentFeature.fogDisabledSignal())
-                    .tooltip(parentFeature.fogDisabledSignal().map(disabled ->
-                            Boolean.TRUE.equals(disabled)
-                                    ? Core.bundle.get("feature.god-mode.hud.fog-off")
-                                    : Core.bundle.get("feature.god-mode.hud.fog-on")))
+                    .tooltip(parentFeature.fogDisabledSignal().map(disabled -> Boolean.TRUE.equals(disabled)
+                            ? Core.bundle.get("feature.god-mode.hud.fog-off")
+                            : Core.bundle.get("feature.god-mode.hud.fog-on")))
                     .onClick(parentFeature::toggleFog)
                     .children(() -> icon(Icon.eye).size(iconSize).color(
-                            parentFeature.fogDisabledSignal().map(dis -> Boolean.TRUE.equals(dis) ? Color.gold : WebStyles.Colors.GHOST_FG)));
+                            parentFeature.fogDisabledSignal()
+                                    .map(dis -> Boolean.TRUE.equals(dis) ? Color.gold : WebStyles.Colors.GHOST_FG)));
         });
     }
 

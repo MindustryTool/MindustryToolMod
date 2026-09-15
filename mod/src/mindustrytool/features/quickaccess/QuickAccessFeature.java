@@ -25,6 +25,7 @@ public class QuickAccessFeature extends Feature {
     public final ConfigValue<Float> scaleConfig;
     public final ConfigValue<Integer> colsConfig;
     public final ConfigValue<Set<String>> hiddenFeaturesConfig;
+    public final ConfigValue<Boolean> hideDragHandleConfig;
 
     public final ContextualConfigValue<Float, Boolean> xConfig;
     public final ContextualConfigValue<Float, Boolean> yConfig;
@@ -50,6 +51,7 @@ public class QuickAccessFeature extends Feature {
         scaleConfig = config.floatValue("scale", 1f);
         colsConfig = config.intValue("cols", 6);
         hiddenFeaturesConfig = config.setValue("hidden", String.class, Collections.emptySet());
+        hideDragHandleConfig = config.boolValue("hideDragHandle", false);
 
         xConfig = config.floatValueKeyed(
                 "x",

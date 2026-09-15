@@ -31,6 +31,9 @@ public class GodModeSettingsView extends BaseComponent {
                         });
                     });
 
+                    checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
+                            feature.hideDragHandleConfig.signal()).growX();
+
                     divider();
 
                     column().growX().gap(unit(1.5f)).children(() -> {

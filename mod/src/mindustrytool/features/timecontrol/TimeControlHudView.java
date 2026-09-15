@@ -24,8 +24,8 @@ import solim.signal.Signal;
 /**
  * Standalone reactive TimeControl HUD overlay. Shows preset buttons or a slider
  * depending on the interaction mode; all state flows through the parent feature
- * signals with automatic bindings. Compact footprint at scale 1.0: ~320x40px presets,
- * ~280x40px slider; button, icon, and font sizes scale proportionally.
+ * signals with automatic bindings. Compact footprint at scale 1.0: ~320x40px
+ * presets, ~280x40px slider; button, icon, and font sizes scale proportionally.
  */
 public class TimeControlHudView extends BaseComponent {
 
@@ -46,12 +46,17 @@ public class TimeControlHudView extends BaseComponent {
         Readable<Float> fontScale = scale.map(s -> s != null ? s : 1f);
 
         hud = hud(() -> {
-            button()
-                    .style(Styles.clearNonei)
-                    .background(Styles.black6)
-                    .size(buttonSize)
-                    .children(() -> icon(Icon.move).size(dragIconSize))
-                    .draggable(parentFeature.xSignal, parentFeature.ySignal);
+            dynamic(parentFeature.hideDragHandleConfig.signal(), hide -> {
+                if (!Boolean.TRUE.equals(hide)) {
+                    return button()
+                            .style(Styles.clearNonei)
+                            .background(Styles.black6)
+                            .size(buttonSize)
+                            .children(() -> icon(Icon.move).size(dragIconSize))
+                            .draggable(parentFeature.xSignal, parentFeature.ySignal);
+                }
+                return null;
+            });
 
             dynamic(parentFeature.modeConfig.signal(),
                     mode -> buildModeContent(mode, buttonSize, presetWidth, resetIconSize, fontScale));

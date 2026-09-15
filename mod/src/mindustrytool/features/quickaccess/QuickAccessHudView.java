@@ -64,11 +64,16 @@ public class QuickAccessHudView extends BaseComponent {
                     .border(1.5f, WebStyles.Colors.BORDER)
                     .center()
                     .children(() -> {
-                        button()
-                                .style(WebStyles.ghost())
-                                .size(buttonSize)
-                                .children(() -> icon(Icon.move).size(iconSize))
-                                .draggable(parentFeature.xSignal, parentFeature.ySignal);
+                        dynamic(parentFeature.hideDragHandleConfig.signal(), hide -> {
+                            if (!Boolean.TRUE.equals(hide)) {
+                                return button()
+                                        .style(WebStyles.ghost())
+                                        .size(buttonSize)
+                                        .children(() -> icon(Icon.move).size(iconSize))
+                                        .draggable(parentFeature.xSignal, parentFeature.ySignal);
+                            }
+                            return null;
+                        });
 
                         grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items,
                                 HudItem::id,

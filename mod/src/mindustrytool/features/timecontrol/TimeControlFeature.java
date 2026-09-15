@@ -38,6 +38,7 @@ public class TimeControlFeature extends Feature {
     public final ConfigGroup config;
     public final ConfigValue<String> modeConfig;
     public final ConfigValue<Float> scaleConfig;
+    public final ConfigValue<Boolean> hideDragHandleConfig;
 
     public final ConfigGroup positionGroup;
     public final ContextualConfigValue<Float, Boolean> xConfig;
@@ -66,6 +67,7 @@ public class TimeControlFeature extends Feature {
 
         modeConfig = config.stringValue("mode", MODE_PRESETS);
         scaleConfig = config.floatValue("scale", 1f);
+        hideDragHandleConfig = config.boolValue("hideDragHandle", false);
 
         positionGroup = config.group("position");
 
