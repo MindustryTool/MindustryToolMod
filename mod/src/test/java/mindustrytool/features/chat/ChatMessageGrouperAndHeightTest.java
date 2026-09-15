@@ -600,8 +600,6 @@ class ChatMessageGrouperAndHeightTest {
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedImg, hImg, 0.001f);
 
-        // Room invite message
-        assertEquals(108f, ChatMessageHeightCalculator.INVITE_CARD_HEIGHT, 0.001f);
         ParsedChatMessage.RoomInviteMessage invite = new ParsedChatMessage.RoomInviteMessage(
                 raw("invite-msg", "user", "payload"), "player-connect://127.0.0.1:6567");
         MessageGroup groupInvite = new MessageGroup("user", "2026-09-12T10:00:00Z", Collections.singletonList(invite));

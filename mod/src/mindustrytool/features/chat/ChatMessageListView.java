@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mindustry.Vars;
@@ -41,6 +42,7 @@ import mindustrytool.features.playerconnect.ui.RoomCard;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.UserData;
+import mindustrytool.models.response.ChatUser.SimpleRole;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Card;
@@ -255,7 +257,12 @@ public class ChatMessageListView extends BaseComponent {
                     : (authorId != null ? authorId : "Unknown"));
 
             Readable<Color> authorColor = user.map(u -> {
-                if (u != null && u.getHighestRole().isPresent()) {
+                if (u == null) {
+                    return Color.white;
+                }
+
+                Optional<SimpleRole> role = u.getHighestRole();
+                if (role.isPresent()) {
                     try {
                         String hex = u.getHighestRole().get().getColor();
                         if (hex != null && !hex.isEmpty()) {
@@ -264,7 +271,7 @@ public class ChatMessageListView extends BaseComponent {
                     } catch (Exception ignored) {
                     }
                 }
-                return Pal.accent;
+                return Color.white;
             });
 
             Readable<String> avatarUrl = user
@@ -548,9 +555,9 @@ public class ChatMessageListView extends BaseComponent {
         private Component buildFallbackRoomCardContent(String link) {
             return column()
                     .grow()
-                    .left()
+                    .gap(unit(1))
                     .children(() -> {
-                        row().growX().gap(unit(2)).children(() -> {
+                        row().growX().children(() -> {
                             text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
                                     .color(Pal.accent)
                                     .fontScale(0.95f)
@@ -558,34 +565,32 @@ public class ChatMessageListView extends BaseComponent {
                                     .growX()
                                     .left();
 
-                            button(() -> {
-                                Core.app.setClipboardText(link);
-                                Vars.ui.showInfoFade("@copied");
-                            })
-                                    .style(WebStyles.ghost())
-                                    .size(unit(11))
-                                    .children(() -> icon(Icon.copy).size(unit(7)));
-                        });
-
-                        row().growX().children(() -> {
-                            text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, link))
-                                    .color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
-                        });
-
-                        row().growX().children(() -> {
                             text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
-                                    .color(Color.gray)
+                                    .color(Color.scarlet)
                                     .fontScale(0.85f)
                                     .left();
                         });
 
+                        text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, link))
+                                .color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
+
                         spacer();
 
-                        button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
-                                () -> promptDirectJoin(link))
-                                        .style(WebStyles.primary())
-                                        .growX()
-                                        .height(unit(11));
+                        row().growX().gap(unit(1)).children(() -> {
+                            button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
+                                    () -> promptDirectJoin(link))
+                                            .style(WebStyles.primary())
+                                            .growX()
+                                            .height(unit(11));
+
+                            button(() -> {
+                                Core.app.setClipboardText(link);
+                                Vars.ui.showInfoFade("@copied");
+                            })
+                                    .style(WebStyles.outline())
+                                    .size(unit(11))
+                                    .children(() -> icon(Icon.copy).size(unit(5)));
+                        });
                     });
         }
 
