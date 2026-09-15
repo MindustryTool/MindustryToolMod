@@ -152,7 +152,7 @@ public class ChatOverlayHudView extends BaseComponent {
         // Shared floating message-action popup (zero-footprint overlay driver).
         ChatActionPopup.install(store);
 
-        return card(Styles.black8)
+        return card(Styles.black9)
                 .width(winWidth)
                 .height(winHeight)
                 .maxWidth(Units.dvw(95f))

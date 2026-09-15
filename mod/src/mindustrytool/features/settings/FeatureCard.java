@@ -76,7 +76,7 @@ public class FeatureCard extends BaseComponent {
                 }).children(() -> {
                     column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
                         row().growX().center().children(() -> {
-                            row().gap(unit(2)).children(() -> {
+                            row().center().gap(unit(2)).children(() -> {
                                 icon(metadata.getIcon()).size(unit(7));
                                 text(feature.getName()).style(Styles.defaultLabel).color(Color.white).ellipsis(true)
                                         .left();
