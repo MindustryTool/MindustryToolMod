@@ -35,7 +35,7 @@ public final class ChatMessageHeightCalculator {
     public static final float REPLY_GAP = 2f; // unit(0.5f): gap between reply preview and message body
     public static final float SCHEMATIC_CARD_HEIGHT = 212f;
     public static final float IMAGE_CARD_HEIGHT = 140f;
-    public static final float INVITE_CARD_HEIGHT = 80f;
+    public static final float INVITE_CARD_HEIGHT = 108f; // unit(27)
     public static final float TOOL_LINK_CARD_HEIGHT = 70f;
     public static final float HORIZONTAL_PADDINGS = 70f; // 4px outer left + 48px avatar + 6px gap + 4px inner left + 4px inner right + 4px outer right
     public static final float MENTION_EXTRA_PADDING = 8f; // unit(1) divider width + unit(1) gap

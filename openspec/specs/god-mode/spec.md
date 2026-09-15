@@ -1,4 +1,12 @@
-## ADDED Requirements
+# god-mode Specification
+
+## Purpose
+
+Comprehensive debug, testing, and sandbox control suite providing team modification, resource injection, unit spawning/mass-clearing, status effect control, core placement, and map fog toggling across local and remote admin environments. Created by archiving change god-mode-rewrite.
+
+## Requirements
+
+**Source: god-mode-rewrite**
 
 ### Requirement: Floating Draggable God Mode HUD
 The system SHALL provide a floating, draggable Solim HUD for God Mode when the feature is enabled. The HUD SHALL remember its position across sessions and screen orientations (portrait and landscape).
@@ -22,7 +30,7 @@ The system SHALL allow changing any player's team to any valid target team.
 The system SHALL allow injecting items into any team's active core.
 
 #### Scenario: Add items to core with count presets
-- **WHEN** the player selects an item, target team, and specifies an amount (using presets `+10`, `+100`, `+1000`, `Max` or manual input)
+- **WHEN** the player selects an item, target team, and specifies an amount (using presets +10, +100, +1000, Max or manual input)
 - **THEN** the specified quantity of that item is added to the chosen team's core.
 
 ### Requirement: Unit Spawner and Mass Destroyer
@@ -77,8 +85,8 @@ The system SHALL support selecting world map coordinates by temporarily hiding t
 - **THEN** the dialog closes, the next map tile tap records world coordinates (X, Y), and the dialog re-opens with those coordinates filled in.
 
 ### Requirement: Dual Execution Providers
-The system SHALL automatically route god mode actions through `InternalGodModeProvider` in singleplayer/hosting, or through `JSGodModeProvider` using Rhino-compatible `/js` chat commands when connected as an admin on a remote server.
+The system SHALL automatically route god mode actions through InternalGodModeProvider in singleplayer/hosting, or through JSGodModeProvider using Rhino-compatible /js chat commands when connected as an admin on a remote server.
 
 #### Scenario: Remote admin execution
 - **WHEN** the player is an admin on a multiplayer server and executes a god mode action
-- **THEN** the action is formatted into valid Rhino JavaScript and sent via `/js ...` through the chat pipeline.
+- **THEN** the action is formatted into valid Rhino JavaScript and sent via /js ... through the chat pipeline.

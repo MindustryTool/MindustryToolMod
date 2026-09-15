@@ -1,6 +1,6 @@
 ## 1. Localization & Bundle Keys
 
-- [ ] 1.1 Add descriptive i18n translation keys to `assets/bundles/bundle.properties` for room invite card labels (e.g. `feature.chat.ui.try-connect`, `feature.chat.ui.unlisted-offline`, `feature.chat.ui.compatible`, `feature.chat.ui.mods-required`, `feature.chat.ui.incompatible-protocol`) with comments directly above each key.
+- [x] 1.1 Add descriptive i18n translation keys to `assets/bundles/bundle.properties` for room invite card labels (e.g. `feature.chat.ui.try-connect`, `feature.chat.ui.unlisted-offline`, `feature.chat.ui.compatible`, `feature.chat.ui.mods-required`, `feature.chat.ui.incompatible-protocol`) with comments directly above each key.
 
 ## 2. Height Calculation & Constants
 

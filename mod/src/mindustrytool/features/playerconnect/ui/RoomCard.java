@@ -92,6 +92,12 @@ public class RoomCard extends BaseComponent {
                     // Players
                     text(playerInfo).color(Color.lightGray).left();
 
+                    column(() -> {
+                        for (var player : room.getData().getPlayers()) {
+                            text("- " + player.getName());
+                        }
+                    });
+
                     // Mod conflicts indicator
                     if (!missingMods.isEmpty()) {
                         text("[scarlet]Missing mods: " + String.join(", ", missingMods)).wrap().growX().left();
