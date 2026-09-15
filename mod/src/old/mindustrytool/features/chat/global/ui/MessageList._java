@@ -1,0 +1,531 @@
+package old.mindustrytool.features.chat.global.ui;
+
+import arc.Core;
+import arc.graphics.Color;
+import arc.scene.ui.Button;
+import arc.scene.ui.Image;
+import arc.scene.ui.ImageButton.ImageButtonStyle;
+import arc.scene.ui.Label;
+import arc.scene.ui.ScrollPane;
+import arc.scene.ui.TextButton;
+import arc.scene.ui.layout.Scl;
+import arc.scene.ui.layout.Stack;
+import arc.scene.ui.layout.Table;
+import arc.struct.ObjectMap;
+import arc.struct.ObjectSet;
+import arc.struct.Seq;
+import arc.util.Align;
+import arc.util.Log;
+import arc.util.Scaling;
+import arc.util.Time;
+import mindustry.Vars;
+import mindustry.game.Schematic;
+import mindustry.game.Schematics;
+import mindustry.gen.Icon;
+import mindustry.gen.Tex;
+import mindustry.ui.Styles;
+import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
+import old.mindustrytool.features.FeatureManager;
+import old.mindustrytool.features.browser.map.MapDialog;
+import old.mindustrytool.features.browser.map.MapImage;
+import old.mindustrytool.features.browser.map.MapInfoDialog;
+import old.mindustrytool.features.browser.schematic.SchematicDialog;
+import old.mindustrytool.features.browser.schematic.SchematicInfoDialog;
+import old.mindustrytool.features.chat.global.ChatConfig;
+import old.mindustrytool.features.chat.global.ChatService;
+import old.mindustrytool.features.chat.global.ChatStore;
+import old.mindustrytool.features.chat.global.dto.ChatMessage;
+import old.mindustrytool.features.chat.global.events.MessagesUpdateEvent;
+import old.mindustrytool.features.chat.translation.ChatTranslationFeature;
+import old.mindustrytool.features.playerconnect.PlayerConnectLink;
+import old.mindustrytool.features.playerconnect.PlayerConnectRenderer;
+import old.mindustrytool.services.MapService;
+import old.mindustrytool.services.PlayerConnectService;
+import old.mindustrytool.services.SchematicService;
+import old.mindustrytool.services.UserService;
+import old.mindustrytool.ui.NetworkImage;
+import arc.Events;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class MessageList extends Table {
+    private static final Pattern MINDUSTRY_TOOL_LINK_PATTERN = Pattern
+            .compile("^https?://[^/]+/(?:[^/]+/)?(schematics|maps)/([a-zA-Z0-9_-]+)");
+
+    private static final float TARGET_WIDTH = 250f;
+    private static final float PREVIEW_BUTTON_SIZE = 50f;
+    private static final float CARD_HEIGHT = 330f;
+
+    private final Table messageTable;
+    private final ScrollPane scrollPane;
+    private final Table loadingTable;
+    private final PlayerConnectService playerConnectService = PlayerConnectService.getInstance();
+
+    private final SchematicInfoDialog schematicInfoDialog = new SchematicInfoDialog();
+    private final MapInfoDialog mapInfoDialog = new MapInfoDialog();
+    private final ObjectMap<String, String> translatedMessages = new ObjectMap<>();
+    private final ObjectSet<String> translatingMessageIds = new ObjectSet<>();
+
+    private String expandedMessageId = null;
+    private ChatInput chatInput;
+
+    public MessageList(ChatInput chatInput) {
+        this.chatInput = chatInput;
+        messageTable = new Table();
+        messageTable.top().left();
+
+        scrollPane = new ScrollPane(messageTable);
+        scrollPane.setScrollingDisabled(true, false);
+        scrollPane.setOverscroll(false, false);
+        scrollPane.setFadeScrollBars(false);
+        scrollPane.update(() -> {
+            ChatStore store = ChatStore.getInstance();
+            String currentChannelId = store.getCurrentChannelId();
+            if (scrollPane.getScrollY() < 100 && !store.isLoadingMessages() && currentChannelId != null
+                    && !store.isFullyLoaded(currentChannelId)) {
+                Seq<ChatMessage> msgs = store.getMessages(currentChannelId);
+                if (msgs != null && !msgs.isEmpty()) {
+                    ChatService.getInstance().fetchMessages(currentChannelId, msgs.first().id);
+                }
+            }
+        });
+
+        loadingTable = new Table();
+        float scale = ChatConfig.scale();
+        loadingTable.add("@loading").style(Styles.defaultLabel).color(Color.gray)
+                .visible(() -> !ChatService.getInstance().isConnected() || ChatStore.getInstance().isLoadingMessages())
+                .get()
+                .setFontScale(scale);
+
+        Stack stack = new Stack();
+        stack.add(loadingTable);
+        stack.add(scrollPane);
+
+        add(stack).grow();
+
+        Events.on(MessagesUpdateEvent.class, e -> {
+            if (e != null && e.channelId.equals(ChatStore.getInstance().getCurrentChannelId())) {
+                float oldMaxY = scrollPane.getMaxY();
+                float oldScrollY = scrollPane.getScrollY();
+
+                rebuild();
+
+                if (e.isPrepend) {
+                    Core.app.post(() -> {
+                        float newMaxY = scrollPane.getMaxY();
+                        scrollPane.setScrollYForce(oldScrollY + (newMaxY - oldMaxY));
+                    });
+                } else {
+                    var nearBottom = scrollPane.getScrollY() >= scrollPane.getMaxY() - 100;
+                    if (nearBottom) {
+                        scrollToBottom();
+                    }
+                }
+            }
+        });
+
+        ChatStore store = ChatStore.getInstance();
+        store.currentChannel.subscribe((e, o) -> {
+            translatedMessages.clear();
+            translatingMessageIds.clear();
+            rebuild();
+            scrollToBottom();
+        });
+    }
+
+    public void rebuild() {
+        messageTable.clear();
+        messageTable.top().left();
+
+        ChatStore store = ChatStore.getInstance();
+        String currentChannelId = store.getCurrentChannelId();
+        if (currentChannelId != null) {
+            ChatConfig.lastRead(Instant.now());
+        } else {
+            return;
+        }
+
+        if (store.isFullyLoaded(currentChannelId)) {
+            messageTable.add("End").row();
+        }
+
+        Seq<ChatMessage> channelMsgs = store.getMessages(currentChannelId);
+        if (channelMsgs == null)
+            return;
+
+        float scale = ChatConfig.scale();
+        ChatTranslationFeature translationFeature = FeatureManager.getInstance()
+                .getFeature(ChatTranslationFeature.class);
+        boolean isTranslationEnabled = translationFeature != null && translationFeature.isEnabled();
+
+        for (int i = 0; i < channelMsgs.size; i++) {
+            ChatMessage msg = channelMsgs.get(i);
+            boolean isSameUser = i > 0 && Objects.equals(channelMsgs.get(i - 1).createdBy, msg.createdBy);
+            boolean isNextSameUser = i < channelMsgs.size - 1
+                    && Objects.equals(channelMsgs.get(i + 1).createdBy, msg.createdBy);
+
+            Table entry = new Table();
+            entry.setBackground(null);
+
+            entry.table(avatar -> {
+                avatar.top();
+                if (!isSameUser) {
+                    UserService.findUserById(msg.createdBy).thenAccept(data -> {
+                        Core.app.post(() -> {
+                            avatar.clear();
+                            if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
+                                avatar.add(new NetworkImage(data.getImageUrl())).size(40 * scale);
+                            } else {
+                                avatar.add(new Image(Icon.players)).size(40 * scale);
+                            }
+                        });
+                    });
+                }
+            }).width(48 * scale).top().padLeft(8 * scale).padRight(8 * scale).padTop(isSameUser ? 0 : 8 * scale)
+                    .padBottom(isNextSameUser ? 0 : 8 * scale);
+
+            entry.table(cardContainer -> {
+                cardContainer.top().left();
+
+                Stack cardStack = new Stack();
+
+                cardStack.add(new Table(card -> {
+                    card.top().left();
+
+                    if (!isSameUser) {
+                        Label label = new Label("...");
+                        label.setStyle(Styles.defaultLabel);
+                        label.setFontScale(scale);
+
+                        UserService.findUserById(msg.createdBy).thenAccept(data -> {
+                            Core.app.post(() -> {
+                                String timeStr = msg.createdAt;
+                                if (msg.createdAt != null) {
+                                    try {
+                                        Instant instant = Instant.parse(msg.createdAt);
+                                        timeStr = DateTimeFormatter.ofPattern("HH:mm")
+                                                .withZone(ZoneId.systemDefault())
+                                                .format(instant);
+                                    } catch (Throwable err) {
+                                        Log.err(err);
+                                    }
+                                }
+
+                                Color color = data.getHighestRole()
+                                        .map(r -> {
+                                            try {
+                                                return Color.valueOf(r.getColor());
+                                            } catch (Exception err) {
+                                                return Color.white;
+                                            }
+                                        })
+                                        .orElse(Color.white);
+
+                                label.setText("[#" + color.toString() + "]" + data.getName() + "[white]"
+                                        + (timeStr.isEmpty() ? "" : " [gray]" + timeStr));
+                            });
+                        });
+
+                        card.add(label).left().row();
+                    }
+
+                    if (msg.replyTo != null && !msg.replyTo.isEmpty()) {
+                        ChatMessage repliedMsg = channelMsgs.find(m -> m.id.equals(msg.replyTo));
+                        if (repliedMsg != null) {
+                            card.table(replyTable -> {
+                                replyTable.center().left();
+                                replyTable.image(Icon.rightSmall).size(16 * scale).padRight(4 * scale)
+                                        .color(Color.gray);
+
+                                Label replyContent = new Label(repliedMsg.content.replace('\n', ' '));
+                                replyContent.setFontScale(scale);
+                                replyContent.setColor(Color.gray);
+                                replyContent.setEllipsis(true);
+                                replyTable.add(replyContent).minWidth(0).maxWidth(200 * scale);
+                            }).growX().padTop(isSameUser ? 2 * scale : 0).padBottom(0).row();
+                        }
+                    }
+
+                    card.table(c -> renderContent(c, msg.content, scale)).top().left().growX()
+                            .padTop(isSameUser && (msg.replyTo == null || msg.replyTo.isEmpty()) ? 2 * scale : 0);
+                    if (translatedMessages.containsKey(msg.id)) {
+                        card.row();
+                        Label translated = new Label(translatedMessages.get(msg.id));
+                        translated.setColor(Color.gray);
+                        translated.setFontScale(scale * 0.9f);
+                        translated.setWrap(true);
+                        card.add(translated).left().growX().padTop(4 * scale);
+                    }
+
+                    card.clicked(() -> {
+                        if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
+                            expandedMessageId = null;
+                        } else {
+                            expandedMessageId = msg.id;
+                        }
+                        rebuild();
+                    });
+                }));
+
+                Table overlayTable = new Table(overlay -> {
+                    if (expandedMessageId != null && expandedMessageId.equals(msg.id)) {
+                        overlay.top().left();
+                        overlay.table(actions -> {
+                            actions.left().defaults().height(36 * scale).minWidth(160 * scale).padRight(8 * scale);
+
+                            TextButton copyBtn = new TextButton("@copy", Styles.defaultt);
+                            copyBtn.clicked(() -> {
+                                try {
+                                    Core.app.setClipboardText(msg.content);
+                                    Vars.ui.showInfoFade("@copied");
+                                    expandedMessageId = null;
+                                    rebuild();
+                                } catch (Exception e) {
+                                    Vars.ui.showInfoFade(e.getMessage());
+                                }
+                            });
+                            copyBtn.getLabel().setFontScale(scale * 0.8f);
+                            actions.add(copyBtn);
+
+                            TextButton replyBtn = new TextButton("@chat.reply", Styles.defaultt);
+                            replyBtn.clicked(() -> {
+                                chatInput.setReplyingTo(msg.id);
+                                expandedMessageId = null;
+                                rebuild();
+                            });
+                            replyBtn.getLabel().setFontScale(scale * 0.8f);
+                            actions.add(replyBtn);
+
+                            if (isTranslationEnabled) {
+                                TextButton translateBtn = new TextButton(
+                                        translatingMessageIds.contains(msg.id)
+                                                ? Core.bundle.get("chat-translation.translating")
+                                                : Core.bundle.get("chat-translation.translate"),
+                                        Styles.defaultt);
+                                translateBtn.setDisabled(translatingMessageIds.contains(msg.id));
+                                translateBtn.clicked(() -> {
+                                    if (translatingMessageIds.contains(msg.id)) {
+                                        return;
+                                    }
+
+                                    translatingMessageIds.add(msg.id);
+                                    rebuild();
+
+                                    translationFeature.translateContent(msg.content)
+                                            .thenAccept(translated -> Core.app.post(() -> {
+                                                translatedMessages.put(msg.id, translated);
+                                                translatingMessageIds.remove(msg.id);
+                                                expandedMessageId = null;
+                                                rebuild();
+                                            }))
+                                            .exceptionally(e -> {
+                                                Core.app.post(() -> {
+                                                    translatedMessages.remove(msg.id);
+                                                    translatingMessageIds.remove(msg.id);
+                                                    Vars.ui.showInfoFade(e.getMessage());
+                                                    rebuild();
+                                                });
+                                                return null;
+                                            });
+                                });
+                                translateBtn.getLabel().setFontScale(scale * 0.8f);
+                                actions.add(translateBtn);
+                            }
+                        }).left().padTop(4 * scale);
+                    }
+                });
+                cardStack.add(overlayTable);
+                overlayTable.toFront();
+
+                cardContainer.add(cardStack).growX();
+            }).growX().padLeft(8 * scale).padRight(8 * scale).padTop(isSameUser ? 0 : 8 * scale)
+                    .padBottom(isNextSameUser ? 0 : 8 * scale).top();
+
+            messageTable.add(entry).growX().padBottom(isNextSameUser ? 0 : 4 * scale).row();
+        }
+    }
+
+    private void renderContent(Table c, String content, float scale) {
+        content = content.trim();
+
+        if (PlayerConnectLink.isValid(content)) {
+            Label l = c.add(content).wrap().color(Color.lightGray).left().growX().get();
+            l.setFontScale(scale);
+            c.row();
+            renderPlayerConnectRoom(c, content);
+            return;
+        }
+
+        if (NetworkImage.isValidImageLink(content)) {
+            Label l = c.add(content).wrap().color(Color.lightGray).left().growX().get();
+            l.setFontScale(scale);
+            c.row();
+            c.add(new NetworkImage(content)).maxHeight(800 * scale).maxWidth(800 * scale);
+            c.table().growX();
+            return;
+        }
+
+        int schematicBasePosition = content.indexOf(Vars.schematicBaseStart);
+
+        if (schematicBasePosition != -1) {
+            int endPosition = content.indexOf(" ", schematicBasePosition) + 1;
+            if (endPosition == 0)
+                endPosition = content.length();
+
+            String prev = content.substring(0, schematicBasePosition);
+            Label l = c.add(prev).wrap().color(Color.lightGray).left().growX().get();
+            l.setFontScale(scale);
+            String schematicBase64 = content.substring(schematicBasePosition, endPosition);
+
+            try {
+                var schematic = Schematics.readBase64(schematicBase64);
+                c.row();
+                renderSchematic(c, schematic);
+                c.row();
+                String after = content.substring(endPosition);
+                Label l2 = c.add(after).wrap().color(Color.lightGray).left().growX().get();
+                l2.setFontScale(scale);
+            } catch (Exception e) {
+                c.clear();
+                Label l2 = c.add(content).wrap().color(Color.lightGray).left().growX().get();
+                l2.setFontScale(scale);
+            }
+            return;
+        }
+
+        Matcher matcher = MINDUSTRY_TOOL_LINK_PATTERN.matcher(content);
+        if (matcher.find()) {
+            String url = matcher.group(0);
+            String contentType = matcher.group(1);
+            String itemId = matcher.group(2);
+
+            if (contentType.equals("maps")) {
+                renderMap(c, itemId, url);
+                c.table().growX();
+                return;
+            }
+
+            if (contentType.equals("schematics")) {
+                renderSchematic(c, itemId, url);
+                c.table().growX();
+                return;
+            }
+        }
+
+        Label l = c.add(content).wrap().color(Color.lightGray).left().growX().get();
+        l.setFontScale(scale);
+    }
+
+    private void renderPlayerConnectRoom(Table table, String link) {
+        table.table(t -> {
+            t.left();
+            t.add("@chat.loading-room-info").color(Color.gray);
+
+            playerConnectService.getRoomWithCache(link).thenAccept(room -> {
+                Core.app.post(() -> {
+                    t.clear();
+                    if (room != null) {
+                        PlayerConnectRenderer.render(t, room).grow();
+                    } else {
+                        t.add("@chat.room-not-found").color(Color.gray);
+                    }
+                });
+            });
+        }).growX().left().padTop(10);
+    }
+
+    private void renderSchematic(Table table, String itemId, String url) {
+        table.table(Tex.pane, preview -> {
+            preview.top().left().margin(0f);
+            preview.table(buttons -> {
+                buttons.center().defaults().size(PREVIEW_BUTTON_SIZE);
+                buttons.button(Icon.copy, Styles.emptyi, () -> SchematicDialog.handleCopySchematic(itemId)).pad(2);
+                buttons.button(Icon.download, Styles.emptyi, () -> SchematicDialog.handleDownloadSchematic(itemId)).pad(2);
+                buttons.button(Icon.info, Styles.emptyi,
+                        () -> SchematicService.findSchematicById(itemId)
+                                .thenAccept(schem -> Core.app.post(() -> schematicInfoDialog.show(schem))))
+                        .tooltip("@info.title");
+                buttons.button(Icon.link, Styles.emptyi, () -> Core.app.openURI(url)).pad(2);
+            }).growX().height(PREVIEW_BUTTON_SIZE);
+            preview.row();
+            preview.stack(new Table(t -> t.add(new old.mindustrytool.features.browser.schematic.SchematicImage(itemId, true))))
+                    .top()
+                    .left();
+        }).style(Styles.flati).width(TARGET_WIDTH).height(CARD_HEIGHT).top().left();
+    }
+
+    private void renderMap(Table table, String itemId, String url) {
+        table.table(Tex.pane, preview -> {
+            preview.top().left().margin(0f);
+            preview.table(buttons -> {
+                buttons.center().defaults().size(PREVIEW_BUTTON_SIZE);
+                buttons.button(Icon.download, Styles.emptyi, () -> MapDialog.handleDownloadMap(itemId)).pad(2);
+                buttons.button(Icon.info, Styles.emptyi,
+                        () -> MapService.findMapById(itemId)
+                                .thenAccept(m -> Core.app.post(() -> mapInfoDialog.show(m))))
+                        .tooltip("@info.title");
+                buttons.button(Icon.link, Styles.emptyi, () -> Core.app.openURI(url)).pad(2);
+            }).growX().height(PREVIEW_BUTTON_SIZE);
+            preview.row();
+            preview.stack(new Table(t -> t.add(new MapImage(itemId, true)))).top().left();
+        }).style(Styles.flati).width(TARGET_WIDTH).height(CARD_HEIGHT).top().left();
+    }
+
+    private void renderSchematic(Table table, Schematic schematic) {
+        Button[] sel = { null };
+        sel[0] = table.button(b -> {
+            b.top();
+            b.margin(0f);
+            b.table(buttons -> {
+                buttons.left();
+                buttons.defaults().size(50f);
+                ImageButtonStyle style = Styles.emptyi;
+                buttons.button(Icon.info, style, () -> Vars.ui.schematics.showInfo(schematic)).tooltip("@info.title")
+                        .growX();
+                buttons.button(Icon.upload, style, () -> Vars.ui.schematics.showExport(schematic))
+                        .tooltip("@editor.export").growX();
+                buttons.button(Icon.pencil, style, () -> Vars.ui.schematics.showEdit(schematic))
+                        .tooltip("@schematic.edit").growX();
+            }).growX().height(50f);
+            b.row();
+            b.stack(new SchematicImage(schematic).setScaling(Scaling.fit), new Table(n -> {
+                n.top();
+                n.table(Styles.black3, c -> {
+                    Label label = c.add(schematic.name()).style(Styles.outlineLabel).color(Color.white).top().growX()
+                            .maxWidth(200f - 8f).get();
+                    label.setEllipsis(true);
+                    label.setAlignment(Align.center);
+                }).growX().margin(1).pad(4).maxWidth(Scl.scl(200f - 8f)).padBottom(0);
+            })).size(200f);
+        }, () -> {
+            if (sel[0].childrenPressed())
+                return;
+            if (Vars.state.isMenu()) {
+                Vars.ui.schematics.showInfo(schematic);
+            } else {
+                if (!Vars.state.rules.schematicsAllowed) {
+                    Vars.ui.showInfo("@schematic.disabled");
+                } else {
+                    Vars.control.input.useSchematic(schematic);
+                }
+            }
+        }).top().left().pad(4).style(Styles.flati).get();
+        sel[0].getStyle().up = Tex.pane;
+    }
+
+    public void scrollToBottom() {
+        if (scrollPane != null) {
+            Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
+            Time.runTask(10, () -> {
+                if (scrollPane != null) {
+                    Core.app.post(() -> scrollPane.setScrollY(scrollPane.getMaxY()));
+                }
+            });
+        }
+    }
+}

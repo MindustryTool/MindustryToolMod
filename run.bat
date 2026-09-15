@@ -4,8 +4,8 @@ cls
 :: Use %APPDATA% for user data and remember last selected launcher
 set "BASE_APPDATA=%APPDATA%"
 set "TARGET_FILE=%BASE_APPDATA%\Mindustry\mods\mindustrytoolmindustrytoolmod.zip"
-set "BUILD_TOOL=.\gradlew jar"
-set "JAR_PATH=%~dp0\build\libs\MindustryToolModDesktop.jar"
+set "BUILD_TOOL=.\gradlew :mod:jar"
+set "JAR_PATH=%~dp0\mod\build\libs\MindustryToolModDesktop.jar"
 set "DEST_FOLDER=%BASE_APPDATA%\Mindustry\mods"
 set "LAST_PATH_FILE=%BASE_APPDATA%\Mindustry\lastpath.txt"
 
@@ -61,6 +61,11 @@ if exist "%TARGET_FILE%" (
 :: Build the JAR using Gradle
 echo Building JAR...
 call %BUILD_TOOL%
+if %ERRORLEVEL% neq 0 (
+    echo Build failed!
+    pause
+    exit /b 1
+)
 
 :: Check if JAR was built
 if not exist "%JAR_PATH%" (
@@ -78,13 +83,18 @@ if not exist "%DEST_FOLDER%" (
 echo Copying %JAR_PATH% to %DEST_FOLDER%...
 copy "%JAR_PATH%" "%DEST_FOLDER%" /y
 
+if exist "%DEFAULT_DIR%saves\mods" (
+    echo Copying %JAR_PATH% to %DEFAULT_DIR%saves\mods...
+    copy "%JAR_PATH%" "%DEFAULT_DIR%saves\mods" /y
+)
+
 :: Run the selected application (.exe -> start, .jar -> java -jar)
 echo Running %APP_TO_RUN%...
 set "ext=%APP_TO_RUN:~-4%"
 if /I "%ext%"==".jar" (
-    start "" javaw -jar "%APP_TO_RUN%"
+    start "" /d "%DEFAULT_DIR%." javaw -Dsolim.mcp.enabled=true -jar "%APP_TO_RUN%"
 ) else (
-    start "" "%APP_TO_RUN%"
+    start "" /d "%DEFAULT_DIR%." "%APP_TO_RUN%"
 )
 
 echo Done.

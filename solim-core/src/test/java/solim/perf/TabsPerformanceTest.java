@@ -1,0 +1,122 @@
+package solim.perf;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import arc.Core;
+import arc.mock.MockApplication;
+import arc.mock.MockGraphics;
+import arc.scene.Element;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import solim.layout.Card;
+import solim.layout.Column;
+import solim.layout.Tabs;
+import solim.signal.Signal;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureRegion;
+import arc.mock.MockGL20;
+import arc.scene.Scene;
+import arc.scene.ui.Button.ButtonStyle;
+import arc.scene.ui.Label.LabelStyle;
+
+public class TabsPerformanceTest {
+
+    @BeforeAll
+    static void initArc() {
+        if (Core.app == null) {
+            Core.app = new MockApplication();
+        }
+        if (Core.graphics == null) {
+            Core.graphics = new MockGraphics();
+        }
+        if (Core.gl == null) {
+            Core.gl = new MockGL20();
+            Core.gl20 = (MockGL20) Core.gl;
+        }
+        if (Core.scene == null) {
+            Core.scene = new Scene();
+            FontData fontData = new FontData() {
+                @Override
+                public boolean hasGlyph(char ch) {
+                    return true;
+                }
+            };
+            Font font = new Font(fontData, new TextureRegion(), false);
+            ButtonStyle btnStyle = new ButtonStyle();
+            Core.scene.addStyle(ButtonStyle.class, btnStyle);
+            LabelStyle lblStyle = new LabelStyle();
+            lblStyle.font = font;
+            Core.scene.addStyle(LabelStyle.class, lblStyle);
+        }
+    }
+
+    private void populateLargeContent(int count) {
+        Column col = new Column();
+        col.children(() -> {
+            for (int i = 0; i < count; i++) {
+                new Card().growX().children(() -> {
+                    Element el = new Element();
+                    el.setSize(30f, 30f);
+                });
+            }
+        });
+    }
+
+    @Test
+    void benchmarkDisabledLayoutSkipsSubtree() {
+        Signal<Integer> activeTab = Signal.of(0);
+        Tabs tabs = new Tabs(activeTab);
+
+        tabs.tab("Tab 0", () -> {
+            new Card().growX().children(() -> {
+                Element el = new Element();
+                el.setSize(100f, 100f);
+            });
+        });
+
+        tabs.tab("Tab 1", () -> populateLargeContent(300));
+        tabs.tab("Tab 2", () -> populateLargeContent(300));
+
+        // When inactive tabs have setLayoutEnabled(false), validate should be fast
+        for (int i = 1; i < tabs.contents().size(); i++) {
+            tabs.contents().get(i).setLayoutEnabled(false);
+            tabs.contents().get(i).visible = false;
+        }
+
+        // Warmup
+        for (int i = 0; i < 10; i++) {
+            tabs.root().invalidate();
+            tabs.root().validate();
+        }
+
+        long t0 = System.nanoTime();
+        int iterations = 50;
+        for (int i = 0; i < iterations; i++) {
+            tabs.root().invalidate();
+            tabs.root().validate();
+        }
+        double avgDisabledMs = ((System.nanoTime() - t0) / (double) iterations) / 1_000_000.0;
+        System.out.printf("TabsPerformance [disabled inactive tabs]: avg validate = %.3f ms%n", avgDisabledMs);
+
+        // When all tabs have setLayoutEnabled(true)
+        for (int i = 1; i < tabs.contents().size(); i++) {
+            tabs.contents().get(i).setLayoutEnabled(true);
+        }
+
+        for (int i = 0; i < 10; i++) {
+            tabs.root().invalidate();
+            tabs.root().validate();
+        }
+
+        long t1 = System.nanoTime();
+        for (int i = 0; i < iterations; i++) {
+            tabs.root().invalidate();
+            tabs.root().validate();
+        }
+        double avgEnabledMs = ((System.nanoTime() - t1) / (double) iterations) / 1_000_000.0;
+        System.out.printf("TabsPerformance [enabled inactive tabs]: avg validate = %.3f ms%n", avgEnabledMs);
+
+        assertTrue(avgDisabledMs < 2.0, "Disabled inactive tabs should validate in < 2ms");
+    }
+}

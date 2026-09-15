@@ -1,0 +1,7 @@
+// solim-api — Base contracts and interfaces for Solim (Component, Disposable, Readable)
+// Shared java/repositories/dependencies are configured in root build.gradle via subprojects.
+apply plugin: 'java-library'
+
+dependencies {
+	testImplementation "Anuken:Mindustry:${mindustryVersion}"
+}

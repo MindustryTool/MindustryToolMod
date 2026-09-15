@@ -1,0 +1,82 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Android build tools
+        run: echo "${ANDROID_HOME}/build-tools/34.0.0" >> $GITHUB_PATH
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run verification checks (all subprojects)
+        run: ./gradlew check
+
+      - name: Build Mod JAR
+        run: ./gradlew deploy
+
+      - name: Upload PR Artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MindustryToolMod-PR-${{ github.event.pull_request.number }}
+          path: build/libs/MindustryToolMod.jar
+          if-no-files-found: error
+
+      - name: Determine Version and Release Tag
+        if: github.event_name == 'push'
+        id: version
+        run: |
+          VERSION=$(grep -E '^[[:space:]]*version:' mod.hjson | sed -E 's/^[[:space:]]*version:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/')
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version from mod.hjson" >&2
+            exit 1
+          fi
+          echo "Extracted version: $VERSION"
+          if [[ "${{ github.ref_name }}" != "main" ]]; then
+            TAG="${VERSION}-beta"
+            PRERELEASE="true"
+          else
+            TAG="${VERSION}"
+            PRERELEASE="false"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
+          generate_release_notes: true
+          files: build/libs/MindustryToolMod.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

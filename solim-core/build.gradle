@@ -1,0 +1,11 @@
+// solim-core — Public components, layouts, and reactive types
+// Shared java/repositories/dependencies are configured in root build.gradle via subprojects.
+apply plugin: 'java-library'
+
+dependencies {
+	api project(':solim-api')
+	implementation project(':solim-runtime')
+
+	// Mindustry/Arc needed at test runtime for Element instantiation in component tests
+	testImplementation "Anuken:Mindustry:${mindustryVersion}"
+}

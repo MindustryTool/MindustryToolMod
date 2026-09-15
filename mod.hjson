@@ -49,11 +49,9 @@ description:
 [accent[]] [#FFF000[]]Useful Links[[]]:
   [#88C6ED[]]  Website: [white[]]mindustry-tool.com[[]]
   [#394BA0[]]  Discord: [white[]]discord.gg/nQDrEHVkrt[[]]
-  [#009F75[]]  Email: [white[]]mindustrytool@gmail.com[[]]
-  [#FAA31B[]]  Reddit: [white[]]r/MindustryTool[[]]
-  [#EF4444[]]  YouTube: [white[]]Mindustry Tool[[]]
   '''
-version: v4.59.1-v8
+
+version: v5.0.22-v8
 
 minGameVersion: 159
 

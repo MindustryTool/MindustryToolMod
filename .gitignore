@@ -143,6 +143,9 @@ nb-configuration.xml
 .gradle/
 gradle-app.setting
 /build/
+/mod/build/
+/solim/build/
+/solim-mcp/build/
 /android/build/
 /core/build/
 /desktop/build/
@@ -157,9 +160,35 @@ android/libs/
 
 build.bat
 
+.env
 .vscode
+.agents/
 get-pip.py
 /venv/
 /archive
+build/
+.agent/skills/game-developer/
+.agent/skills/i18n-localization/
+.agent/skills/java-architect/
 
-mindustry/
+/mindustry/
+archive/
+bin/
+/arc/
+.bin
+backup/
+scratch/
+
+*_v*
+*_backup
+
+.bin
+
+arc/
+mod/build/
+openspec/changes/archive/
+solim/build/
+solim-api/build/
+solim-mcp/build/
+solim-core/build/
+solim-runtime/build/

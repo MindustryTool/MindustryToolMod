@@ -1,0 +1,9 @@
+// solim-mcp — MCP debug server for Solim UI (reflection-based, no Solim source changes)
+// Shared java/repositories/dependencies are configured in root build.gradle via subprojects.
+dependencies {
+	implementation project(':solim-core')
+	implementation project(':solim-runtime')
+	implementation 'org.java-websocket:Java-WebSocket:1.5.7'
+
+	testImplementation "Anuken:Mindustry:${mindustryVersion}"
+}

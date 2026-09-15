@@ -1,0 +1,9 @@
+// solim — Public UI facade library for Mindustry mods
+// Shared java/repositories/dependencies are configured in root build.gradle via subprojects.
+apply plugin: 'java-library'
+
+dependencies {
+	api project(':solim-core')
+	implementation project(':solim-runtime')
+	testImplementation "Anuken:Mindustry:${mindustryVersion}"
+}

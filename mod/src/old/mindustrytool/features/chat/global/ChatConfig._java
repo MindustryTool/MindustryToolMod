@@ -1,0 +1,100 @@
+package old.mindustrytool.features.chat.global;
+
+import java.time.Instant;
+
+import arc.Core;
+
+public class ChatConfig {
+    public static float x(boolean collapsed) {
+        String key = collapsed ? "mindustrytool.chat.collapsed.x" : "mindustrytool.chat.expanded.x";
+        return Core.settings.getFloat(key, Core.settings.getFloat("mindustrytool.chat.x", 0));
+    }
+
+    public static void x(boolean collapsed, float value) {
+        String key = collapsed ? "mindustrytool.chat.collapsed.x" : "mindustrytool.chat.expanded.x";
+        Core.settings.put(key, value);
+    }
+
+    public static float y(boolean collapsed) {
+        String key = collapsed ? "mindustrytool.chat.collapsed.y" : "mindustrytool.chat.expanded.y";
+        return Core.settings.getFloat(key, Core.settings.getFloat("mindustrytool.chat.y", 0));
+    }
+
+    public static void y(boolean collapsed, float value) {
+        String key = collapsed ? "mindustrytool.chat.collapsed.y" : "mindustrytool.chat.expanded.y";
+        Core.settings.put(key, value);
+    }
+
+    // Deprecated or Legacy support if needed, but we will update usages.
+    public static float x() {
+        return x(collapsed());
+    }
+
+    public static void x(float value) {
+        x(collapsed(), value);
+    }
+
+    public static float y() {
+        return y(collapsed());
+    }
+
+    public static void y(float value) {
+        y(collapsed(), value);
+    }
+
+    public static boolean collapsed() {
+        return Core.settings.getBool("mindustrytool.chat.collapsed", false);
+    }
+
+    public static void collapsed(boolean value) {
+        Core.settings.put("mindustrytool.chat.collapsed", value);
+    }
+
+    public static Instant lastRead() {
+        return Instant.ofEpochMilli(Core.settings.getLong("mindustrytool.chat.last-read", 0));
+    }
+
+    public static void lastRead(Instant value) {
+        Core.settings.put("mindustrytool.chat.last-read", value.toEpochMilli());
+    }
+
+    public static float opacity() {
+        return Core.settings.getFloat("mindustrytool.chat.opacity", 1f);
+    }
+
+    public static void opacity(float value) {
+        Core.settings.put("mindustrytool.chat.opacity", value);
+    }
+
+    public static float scale() {
+        return Core.settings.getFloat("mindustrytool.chat.scale", 1f);
+    }
+
+    public static void scale(float value) {
+        Core.settings.put("mindustrytool.chat.scale", value);
+    }
+
+    public static float width() {
+        return Core.settings.getFloat("mindustrytool.chat.width", 0.7f);
+    }
+
+    public static void width(float value) {
+        Core.settings.put("mindustrytool.chat.width", value);
+    }
+
+    public static float height() {
+        return Core.settings.getFloat("mindustrytool.chat.height", 0.9f);
+    }
+
+    public static void height(float value) {
+        Core.settings.put("mindustrytool.chat.height", value);
+    }
+
+    public static boolean status() {
+        return Core.settings.getBool("mindustrytool.chat.status", true);
+    }
+
+    public static void status(boolean value) {
+        Core.settings.put("mindustrytool.chat.status", value);
+    }
+}

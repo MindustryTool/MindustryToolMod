@@ -1,0 +1,172 @@
+// mod-specific configuration — shared java/repositories/dependencies are in root build.gradle
+
+dependencies{
+	compileOnly 'org.projectlombok:lombok:1.18.36'
+	annotationProcessor 'org.projectlombok:lombok:1.18.36'
+	implementation project(':solim')
+	implementation project(':solim-mcp')
+	testImplementation "Anuken:Mindustry:${mindustryVersion}"
+}
+
+def secretsOutputDir = layout.buildDirectory.dir("generated/resources/secrets").get().asFile
+
+tasks.register('generateDevXSecrets') {
+	def envFile = new File(rootProject.projectDir, ".env")
+	if (envFile.exists()) {
+		inputs.file(envFile)
+	}
+	outputs.dir(secretsOutputDir)
+
+	doLast {
+		def apiKey = ""
+		if (System.getenv("DEVX_API_KEY")) {
+			apiKey = System.getenv("DEVX_API_KEY").trim()
+		} else if (System.getenv("API_KEY")) {
+			apiKey = System.getenv("API_KEY").trim()
+		} else if (envFile.exists()) {
+			envFile.eachLine { line ->
+				line = line.trim()
+				if (line.startsWith("API_KEY=")) {
+					apiKey = line.substring("API_KEY=".length()).trim()
+				} else if (line.startsWith("DEVX_API_KEY=")) {
+					apiKey = line.substring("DEVX_API_KEY=".length()).trim()
+				}
+			}
+		}
+
+		if (apiKey.startsWith("\"") && apiKey.endsWith("\"") && apiKey.length() > 1) {
+			apiKey = apiKey.substring(1, apiKey.length() - 1).trim()
+		} else if (apiKey.startsWith("'") && apiKey.endsWith("'") && apiKey.length() > 1) {
+			apiKey = apiKey.substring(1, apiKey.length() - 1).trim()
+		}
+
+		def targetFile = new File(secretsOutputDir, "devx.secret")
+		targetFile.parentFile.mkdirs()
+
+		if (apiKey.isEmpty()) {
+			if (targetFile.exists()) {
+				targetFile.delete()
+			}
+		} else {
+			byte[] keyBytes = apiKey.getBytes(java.nio.charset.StandardCharsets.UTF_8)
+			byte[] mask = [0x5A, 0xA5, 0x3C, 0xC3, 0x69, 0x96, 0x0F, 0xF0] as byte[]
+			byte[] encoded = new byte[keyBytes.length]
+			for (int i = 0; i < keyBytes.length; i++) {
+				encoded[i] = (byte) (keyBytes[i] ^ mask[i % mask.length])
+			}
+			targetFile.bytes = encoded
+		}
+	}
+}
+
+sourceSets.main.resources.srcDir(secretsOutputDir)
+processResources.dependsOn generateDevXSecrets
+
+
+tasks.register('jarAndroid'){
+	dependsOn "jar"
+	def projectName = rootProject.name
+
+	doLast{
+		if(!sdkRoot || !new File(sdkRoot).exists()){
+			logger.warn("No valid Android SDK found (ANDROID_HOME not set). Skipping Android dexing.")
+			return
+		}
+
+		def platformRoot = new File("$sdkRoot/platforms/").listFiles()?.sort()?.reverse()?.find{ f -> new File(f, "android.jar").exists() }
+
+		if(!platformRoot){
+			logger.warn("No android.jar found in $sdkRoot/platforms. Skipping Android dexing.")
+			return
+		}
+
+		//collect dependencies needed for desugaring
+		def dependencies = (configurations.compileClasspath.asList() + configurations.runtimeClasspath.asList() + [new File(platformRoot, "android.jar")]).collect{ "--classpath $it.path" }.join(" ")
+
+		def d8Name = isWindows ? "d8.bat" : "d8"
+		// Try to locate d8 inside Android SDK build-tools (so PATH setup is optional), fallback to PATH lookup
+		def buildToolsDir = new File(sdkRoot, "build-tools")
+		def d8File = null
+		if(buildToolsDir.exists()){
+			def candidates = buildToolsDir.listFiles()?.findAll{ it.isDirectory() }?.sort{ a, b -> b.name <=> a.name }
+			d8File = candidates?.find{ new File(it, d8Name).exists() }?.with{ new File(it, d8Name) }
+		}
+		def d8 = d8File?.exists() ? d8File.absolutePath : d8Name
+
+		def libsDir = layout.buildDirectory.dir("libs").get().asFile
+		libsDir.mkdirs()
+
+		def cmd = "$d8 $dependencies --min-api 14 --output ${projectName}Android.jar ${projectName}Desktop.jar"
+		def proc = cmd.execute(null, libsDir)
+		proc.waitForProcessOutput(System.out, System.err)
+		if(proc.exitValue() != 0) throw new GradleException("d8 failed with exit code ${proc.exitValue()}")
+	}
+}
+
+jar{
+	dependsOn(':solim-api:jar', ':solim-runtime:jar', ':solim-core:jar', ':solim:jar', ':solim-mcp:jar')
+	dependsOn(configurations.runtimeClasspath)
+	duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+
+	archiveFileName = "${rootProject.name}Desktop.jar"
+
+	from{
+		configurations.runtimeClasspath.collect{ it.isDirectory() ? it : zipTree(it) }
+	}
+
+	from(rootProject.projectDir){
+		include "mod.hjson"
+		include "icon.png"
+	}
+
+	from(new File(rootProject.projectDir, "assets")){
+		include "**"
+	}
+
+	exclude "META-INF/versions/**"
+	exclude "**/module-info.class"
+	exclude "META-INF/*.SF"
+	exclude "META-INF/*.DSA"
+	exclude "META-INF/*.RSA"
+
+	doLast{
+		def rootLibsDir = new File(rootProject.projectDir, "build/libs")
+		rootLibsDir.mkdirs()
+		copy{
+			from archiveFile
+			into rootLibsDir
+		}
+	}
+}
+
+tasks.register('deploy', Jar){
+	duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+	def projectName = rootProject.name
+	dependsOn jarAndroid
+	dependsOn jar
+	archiveFileName = "${projectName}.jar"
+
+	def libsDir = layout.buildDirectory.dir("libs").get().asFile
+	from{
+		def desktopJar = new File(libsDir, "${projectName}Desktop.jar")
+		def androidJar = new File(libsDir, "${projectName}Android.jar")
+		if(androidJar.exists()){
+			return [zipTree(desktopJar), zipTree(androidJar)]
+		}else{
+			return [zipTree(desktopJar)]
+		}
+	}
+
+	doLast{
+		def androidJar = new File(libsDir, "${projectName}Android.jar")
+		if(androidJar.exists()){
+			delete androidJar
+		}
+		def rootLibsDir = new File(rootProject.projectDir, "build/libs")
+		rootLibsDir.mkdirs()
+		copy{
+			from archiveFile
+			into rootLibsDir
+		}
+	}
+}

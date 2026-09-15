@@ -1,113 +1,109 @@
-apply plugin: "java"
+// Root project — multi-module coordinator
+// Shared configuration for :mod and :solim is defined via subprojects
+// Main mod artifact is built via :mod, UI library via :solim
 
-version '1.0'
+subprojects{
+	apply plugin: "java"
+	apply plugin: "eclipse"
+	apply plugin: "checkstyle"
 
-sourceSets.main.java.srcDirs = ["src"]
+	checkstyle {
+		toolVersion = "10.12.5"
+		configFile = rootProject.file("config/checkstyle/checkstyle.xml")
+		ignoreFailures = false
+		showViolations = true
+	}
 
-repositories{
-    mavenCentral()
+	version '1.0'
 
-    //Downloads the dependencies JAR file from Mindustry releases; does not use any real repository. Surprisingly, this is the most reliable option.
-    ivy{
-        url = 'https://github.com/'
-        patternLayout{artifact '/[organisation]/[module]/releases/download/[revision]/dependencies.jar'}
-        metadataSources{ artifact() }
-    }
+	repositories{
+		mavenCentral()
 
-    //If the version is set to 'latest', downloads the latest Mindustry *release* as a dependency
-    ivy{
-        url = 'https://github.com/'
-        patternLayout{artifact '/[organisation]/[module]/releases/[revision]/download/dependencies.jar'}
-        metadataSources{ artifact() }
-    }
+		//Downloads the dependencies JAR file from Mindustry releases; does not use any real repository. Surprisingly, this is the most reliable option.
+		ivy{
+			url = 'https://github.com/'
+			patternLayout{artifact '/[organisation]/[module]/releases/download/[revision]/dependencies.jar'}
+			metadataSources{ artifact() }
+		}
 
-    //For depending on the absolute newest commit for Mindustry
-    ivy{
-        url = 'https://github.com/'
-        patternLayout{artifact '/[organisation]/[module]/releases/download/master/[revision].jar'}
-        metadataSources{ artifact() }
-    }
+		//If the version is set to 'latest', downloads the latest Mindustry *release* as a dependency
+		ivy{
+			url = 'https://github.com/'
+			patternLayout{artifact '/[organisation]/[module]/releases/[revision]/download/dependencies.jar'}
+			metadataSources{ artifact() }
+		}
+
+		//For depending on the absolute newest commit for Mindustry
+		ivy{
+			url = 'https://github.com/'
+			patternLayout{artifact '/[organisation]/[module]/releases/download/master/[revision].jar'}
+			metadataSources{ artifact() }
+		}
+	}
+
+	java{
+		targetCompatibility = JavaVersion.VERSION_17
+		sourceCompatibility = JavaVersion.VERSION_17
+	}
+
+	ext{
+		// Mindustry version to depend on.
+		// Valid values:
+		// - latest: depend on the latest release of mindustry
+		// - be: depend on the very latest commit of mindustry
+		// - v<number>: depend on a specific commit
+		mindustryVersion = "v160.1"
+		isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
+		sdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
+	}
+
+	sourceSets{
+		main{
+			java{
+				srcDirs = ["src"]
+				exclude "**/test/**"
+			}
+		}
+		test{
+			java{
+				srcDirs = ["src/test/java"]
+			}
+		}
+	}
+
+	dependencies{
+		compileOnly mindustryVersion == "be" ? "Anuken:MindustryBuilds:latest" : "Anuken:Mindustry:$mindustryVersion"
+		compileOnly 'org.projectlombok:lombok:1.18.36'
+
+		implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.2'
+		implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.2'
+
+		annotationProcessor 'org.projectlombok:lombok:1.18.36'
+
+		testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+		testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+	}
+
+	afterEvaluate {
+		tasks.withType(JavaCompile).configureEach {
+			options.annotationProcessorPath = configurations.annotationProcessor
+		}
+	}
+
+	test{
+		useJUnitPlatform()
+	}
 }
 
-java{
-    targetCompatibility = JavaVersion.VERSION_17
-    sourceCompatibility = JavaVersion.VERSION_17
-}
-
-ext{
-    // Mindustry version to depend on.
-    // Valid values:
-    // - latest: depend on the latest release of mindustry
-    // - be: depend on the very latest commit of mindustry
-    // - v<number>: depend on a specific commit
-    mindustryVersion = "v159.7"
-    isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
-    sdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
-}
-
-dependencies{    
-    compileOnly mindustryVersion == "be" ? "Anuken:MindustryBuilds:latest" : "Anuken:Mindustry:$mindustryVersion"
-	compileOnly 'org.projectlombok:lombok:1.18.32'
-      
-    implementation 'org.apache.httpcomponents:httpclient:4.5.14'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.2'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.2'
-    
-    annotationProcessor 'org.projectlombok:lombok:1.18.32'
+// Convenience delegates so `gradlew jar` / `gradlew deploy` still work from root
+tasks.register('jar'){
+	dependsOn ':mod:jar'
 }
 
 tasks.register('jarAndroid'){
-    dependsOn "jar"
-    def projectName = project.name
-
-    doLast{
-        if(!sdkRoot || !new File(sdkRoot).exists()) throw new GradleException("No valid Android SDK found. Ensure that ANDROID_HOME is set to your Android SDK directory.")
-
-        def platformRoot = new File("$sdkRoot/platforms/").listFiles().sort().reverse().find{ f -> new File(f, "android.jar").exists() }
-
-        if(!platformRoot) throw new GradleException("No android.jar found. Ensure that you have an Android platform installed.")
-
-        //collect dependencies needed for desugaring
-        def dependencies = (configurations.compileClasspath.asList() + configurations.runtimeClasspath.asList() + [new File(platformRoot, "android.jar")]).collect{ "--classpath $it.path" }.join(" ")
-
-        def d8 = isWindows ? "d8.bat" : "d8"
-
-        //dex and desugar files - this requires d8 in your PATH
-        "$d8 $dependencies --min-api 14 --output ${projectName}Android.jar ${projectName}Desktop.jar"
-                .execute(null, new File("build/libs")).waitForProcessOutput(System.out, System.err)
-    }
+	dependsOn ':mod:jarAndroid'
 }
 
-jar{
-    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
-
-    archiveFileName = "${project.name}Desktop.jar"
-
-    from{
-        configurations.runtimeClasspath.collect{ it.isDirectory() ? it : zipTree(it) }
-    }
-
-    from(projectDir){
-        include "mod.hjson"
-        include "icon.png"
-    }
-
-    from("assets/"){
-        include "**"
-    }
-}
-
-tasks.register('deploy', Jar){
-    def projectName = project.name
-    dependsOn jarAndroid
-    dependsOn jar
-    archiveFileName = "${projectName}.jar"
-
-    from{ [zipTree("build/libs/${projectName}Desktop.jar"), zipTree("build/libs/${projectName}Android.jar")] }
-
-    doLast{
-        delete{
-            delete "build/libs/${projectName}Android.jar"
-        }
-    }
+tasks.register('deploy'){
+	dependsOn ':mod:deploy'
 }
