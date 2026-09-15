@@ -7,6 +7,8 @@ import java.util.List;
 
 import arc.Core;
 import arc.scene.Element;
+import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -58,6 +60,26 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             this.pane = outer.pane(content).grow().scrollX(false).scrollY(true).get();
             this.pane.name = "solim-scroll-pane";
             this.pane.setScrollingDisabled(disableX, disableY);
+            this.pane.update(() -> {
+                if (pane.hasScroll()) {
+                    Element hover = Core.scene != null ? Core.scene.getHoverElement() : null;
+                    if (hover == null || !hover.isDescendantOf(pane) || (!pane.isScrollX() && !pane.isScrollY())) {
+                        Core.scene.setScrollFocus(null);
+                    }
+                }
+            });
+            this.pane.addCaptureListener(new InputListener() {
+                @Override
+                public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
+                    if (pane.isScrollingDisabledY() && !pane.isScrollingDisabledX() && amountY != 0f && amountX == 0f) {
+                        float wheelX = Math.min(pane.getScrollWidth(), pane.getScrollWidth() * 0.9f / 4f);
+                        if (wheelX <= 0f) wheelX = 20f;
+                        pane.setScrollX(pane.getScrollX() + wheelX * amountY);
+                        return true;
+                    }
+                    return false;
+                }
+            });
         } else {
             this.pane = null;
             outer.add(content).grow();

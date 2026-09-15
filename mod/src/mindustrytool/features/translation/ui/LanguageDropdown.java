@@ -142,6 +142,14 @@ public class LanguageDropdown extends BaseComponent {
 		pane.setScrollingDisabled(true, false);
 		pane.setOverscroll(false, false);
 		pane.setFadeScrollBars(false);
+		pane.update(() -> {
+			if (pane.hasScroll()) {
+				Element hover = Core.scene != null ? Core.scene.getHoverElement() : null;
+				if (hover == null || !hover.isDescendantOf(pane) || (!pane.isScrollX() && !pane.isScrollY())) {
+					Core.scene.setScrollFocus(null);
+				}
+			}
+		});
 		popup.add(pane).grow();
 
 		Core.scene.add(backdrop);
@@ -158,6 +166,10 @@ public class LanguageDropdown extends BaseComponent {
 	}
 
 	public void close() {
+		if (popup != null && Core.scene != null && Core.scene.getScrollFocus() != null
+				&& Core.scene.getScrollFocus().isDescendantOf(popup)) {
+			Core.scene.setScrollFocus(null);
+		}
 		if (backdrop != null) {
 			backdrop.remove();
 			backdrop = null;

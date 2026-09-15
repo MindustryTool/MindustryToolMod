@@ -10,6 +10,7 @@ import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.Label;
+import arc.scene.ui.ScrollPane;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
@@ -877,6 +878,21 @@ class LayoutTest {
             Cell<?> c = wrapTable.getCells().get(i);
             System.out.println("Cell " + i + " x: " + c.get().x + ", y: " + c.get().y + ", w: " + c.get().getWidth());
         }
+    }
+
+    @Test
+    void scrollReleasesScrollFocusWhenNotHovered() {
+        Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping scene-dependent tests");
+        Scroll scroll = new Scroll();
+        ScrollPane pane = scroll.pane();
+        if (pane == null) return;
+
+        Core.scene.setScrollFocus(pane);
+        assertTrue(Core.scene.hasScroll(), "pane should initially have scroll focus");
+
+        pane.act(0.016f);
+
+        assertFalse(Core.scene.hasScroll(), "scrollFocus should be released when mouse is not hovering over pane");
     }
 }
 
