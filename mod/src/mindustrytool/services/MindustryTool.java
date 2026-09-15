@@ -381,6 +381,19 @@ public final class MindustryTool {
                 .thenApply(Request.Response::body);
     }
 
+    // ─── Media Upload ──────────────────────────────────────────────
+
+    public static CompletableFuture<String> uploadMedia(byte[] imageBytes, String fileName) {
+        String boundary = "----MindustryToolBoundary" + UUID.randomUUID().toString().replace("-", "");
+        byte[] multipartBody = Request.buildMultipartFormData(boundary, "image", fileName, "image/png", imageBytes);
+        return api.post("/media")
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .bytes(multipartBody)
+                .timeout(LONG_TIMEOUT)
+                .sendAsync()
+                .thenApply(Request.Response::body);
+    }
+
     private static synchronized String getMid() {
         String midKey = "mod-mid-key";
         String mid = Core.settings.getString(midKey);

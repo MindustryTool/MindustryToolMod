@@ -445,4 +445,18 @@ class RequestTest {
 		assertEquals(200, res.statusCode());
 		assertEquals("page=0&sort=newest", res.body());
 	}
+
+	@Test
+	void testBuildMultipartFormData() {
+		String boundary = "testboundary123";
+		byte[] fileContent = "dummy png data".getBytes(StandardCharsets.UTF_8);
+		byte[] body = Request.buildMultipartFormData(boundary, "image", "sample.png", "image/png", fileContent);
+
+		String bodyString = new String(body, StandardCharsets.UTF_8);
+		assertTrue(bodyString.contains("--" + boundary));
+		assertTrue(bodyString.contains("name=\"image\"; filename=\"sample.png\""));
+		assertTrue(bodyString.contains("Content-Type: image/png"));
+		assertTrue(bodyString.contains("dummy png data"));
+		assertTrue(bodyString.endsWith("--" + boundary + "--\r\n"));
+	}
 }

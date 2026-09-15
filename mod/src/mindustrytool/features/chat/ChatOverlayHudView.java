@@ -86,13 +86,13 @@ public class ChatOverlayHudView extends BaseComponent {
                             store.unread().markAsRead(activeId);
                         }
                     })
-                            .size(unit(14))
+                            .size(unit(12))
                             .draggable(hud, feature.xSignal, feature.ySignal)
                             .children(() -> {
                                 stack()
                                         .grow()
                                         .center()
-                                        .layer(() -> icon(FileIcon.of("message-circle.png")).size(unit(10)).center()
+                                        .layer(() -> icon(FileIcon.of("message-circle.png")).size(unit(8)).center()
                                                 .grow().color(Color.white))
                                         .layer(() -> row().top().right().grow().visible(hasUnread).children(() -> {
                                             image(circle())

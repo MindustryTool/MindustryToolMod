@@ -451,6 +451,24 @@ public final class Request {
 
     // ─── Multipart helper (kept for upload) ────────────────────────
 
+    public static byte[] buildMultipartFormData(String boundary, String fieldName, String fileName, String contentType, byte[] fileBytes) {
+        String CRLF = "\r\n";
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            out.write(("--" + boundary + CRLF).getBytes(StandardCharsets.UTF_8));
+            out.write(("Content-Disposition: form-data; name=\"" + fieldName + "\"; filename=\"" + fileName + "\"" + CRLF)
+                    .getBytes(StandardCharsets.UTF_8));
+            out.write(("Content-Type: " + contentType + CRLF).getBytes(StandardCharsets.UTF_8));
+            out.write(CRLF.getBytes(StandardCharsets.UTF_8));
+            out.write(fileBytes);
+            out.write(CRLF.getBytes(StandardCharsets.UTF_8));
+            out.write(("--" + boundary + "--" + CRLF).getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to build multipart body", e);
+        }
+        return out.toByteArray();
+    }
+
     public static byte[] buildMultipartBody(String boundary, byte[] fileBytes, String fileName, String hash) {
         String CRLF = "\r\n";
         ByteArrayOutputStream out = new ByteArrayOutputStream();
