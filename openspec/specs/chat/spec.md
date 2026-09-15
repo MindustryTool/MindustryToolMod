@@ -3,12 +3,12 @@
 ## Purpose
 
 Mechanical merge of 6 specs per change `spec-domain-merge` (stage 1 pilot, concat-then-dedupe). Sources: chat-overlay, chat-feature, chat-input-rounded-border, chat-message-group-layout, chat-settings, optimistic-message-send. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work.
-
 ## Requirements
 
 **Source: chat-overlay**
 
 Provides a declarative Solim HUD overlay for in-game chat with multi-pane desktop layout, tabbed mobile view, and collapsed draggable badge mode.
+
 ### Requirement: Declarative Solim HUD Overlay
 The system SHALL provide a ChatOverlayHudView implemented exclusively using declarative Solim components (solim.ui.Ui.*), with zero direct Arc scene widgets (Table, Label, Button, Cell, Stack).
 
@@ -578,4 +578,47 @@ The system SHALL prevent concurrent optimistic sends by disabling further sends 
 #### Scenario: Send disabled while pending
 - **WHEN** a message is currently in pending or failed state
 - **THEN** the send button and enter-to-send are disabled until the current send completes or fails
+
+### Requirement: Collapsible Desktop Chat Sidebars
+The system SHALL support independently collapsing and expanding the channel list sidebar and user list sidebar in desktop mode. When either sidebar is collapsed, its column and adjacent divider SHALL be omitted from the layout, and the message view SHALL expand to fill the reclaimed horizontal space.
+
+#### Scenario: Collapsing channel list sidebar
+- **WHEN** the user clicks the channel toggle button while the channel list is expanded
+- **THEN** the channel list sidebar and its divider are hidden, the message area expands to the left edge of the desktop body, and the toggle button icon updates to indicate expandability
+
+#### Scenario: Expanding channel list sidebar
+- **WHEN** the user clicks the channel toggle button while the channel list is collapsed
+- **THEN** the channel list sidebar and its divider are restored to their standard width (`unit(80)`), and the toggle button icon updates to indicate collapsible state
+
+#### Scenario: Collapsing user list sidebar
+- **WHEN** the user clicks the user list toggle button while the user list is expanded
+- **THEN** the user list sidebar and its divider are hidden, the message area expands to the right edge of the desktop body, and the user toggle button reflects the collapsed state
+
+#### Scenario: Expanding user list sidebar
+- **WHEN** the user clicks the user list toggle button while the user list is collapsed
+- **THEN** the user list sidebar and its divider are restored to their standard width (`unit(80)`), and the user toggle button reflects the expanded state
+
+### Requirement: Chat Message List Header Bar
+The system SHALL provide a header bar at the top of `ChatMessageListView` in desktop mode containing a channel list toggle button on the left, the active channel name in the center/left, and a user list toggle button on the right.
+
+#### Scenario: Displaying active channel name
+- **WHEN** a channel is active
+- **THEN** the header bar reactively displays `# <channel-name>` without blocking or snapshotting signals during build
+
+#### Scenario: Toggle button icon states
+- **WHEN** the channel list is expanded
+- **THEN** the channel toggle button renders with a left-facing collapse indicator and tooltip for hiding channels
+- **WHEN** the channel list is collapsed
+- **THEN** the channel toggle button renders with a right-facing expand indicator and tooltip for showing channels
+
+#### Scenario: Responsiveness on mobile screens
+- **WHEN** the viewport width is below the desktop threshold (< 1200 units)
+- **THEN** the sidebar collapse toggle buttons are hidden, and the view adapts to mobile tabs
+
+### Requirement: Persistent Chat Sidebar Collapse Configurations
+The system SHALL persist the collapsed states of the channel list and user list in `ChatFeature` configurations so that user preferences are preserved across application restarts.
+
+#### Scenario: Persisting sidebar collapse state across restarts
+- **WHEN** a user toggles the collapsed state of either sidebar
+- **THEN** the new state is saved to the mod configuration and loaded on subsequent application launches
 

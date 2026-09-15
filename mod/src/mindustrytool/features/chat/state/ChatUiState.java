@@ -11,6 +11,40 @@ public final class ChatUiState {
     private final Signal<ChatMessage> replyTarget = Signal.of(null);
     private final Signal<String> expandedMessageId = Signal.of(null);
     private final Signal<String> translatingMessageId = Signal.of(null);
+    private final Signal<Boolean> channelsCollapsed = Signal.of(false);
+    private final Signal<Boolean> usersCollapsed = Signal.of(false);
+
+    public Signal<Boolean> channelsCollapsed() {
+        return channelsCollapsed;
+    }
+
+    public boolean isChannelsCollapsed() {
+        return Boolean.TRUE.equals(channelsCollapsed.peek());
+    }
+
+    public void setChannelsCollapsed(boolean collapsed) {
+        channelsCollapsed.set(collapsed);
+    }
+
+    public void toggleChannelsCollapsed() {
+        channelsCollapsed.set(!Boolean.TRUE.equals(channelsCollapsed.peek()));
+    }
+
+    public Signal<Boolean> usersCollapsed() {
+        return usersCollapsed;
+    }
+
+    public boolean isUsersCollapsed() {
+        return Boolean.TRUE.equals(usersCollapsed.peek());
+    }
+
+    public void setUsersCollapsed(boolean collapsed) {
+        usersCollapsed.set(collapsed);
+    }
+
+    public void toggleUsersCollapsed() {
+        usersCollapsed.set(!Boolean.TRUE.equals(usersCollapsed.peek()));
+    }
 
     public Readable<ChatMessage> replyTarget() {
         return replyTarget;

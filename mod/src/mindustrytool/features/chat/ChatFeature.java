@@ -2,6 +2,7 @@ package mindustrytool.features.chat;
 
 import arc.Core;
 import arc.scene.Element;
+import java.util.Objects;
 import solim.overlay.SolimDialog;
 import arc.util.Nullable;
 import mindustrytool.components.FileIcon;
@@ -21,6 +22,8 @@ public class ChatFeature extends Feature {
     public final ConfigValue<Float> widthRatioConfig;
     public final ConfigValue<Float> heightRatioConfig;
     public final ConfigValue<Boolean> collapsedConfig;
+    public final ConfigValue<Boolean> channelsCollapsedConfig;
+    public final ConfigValue<Boolean> usersCollapsedConfig;
 
     public final ConfigGroup collapsedGroup;
     public final ConfigGroup expandedGroup;
@@ -54,6 +57,8 @@ public class ChatFeature extends Feature {
         widthRatioConfig = config.floatValue("width-ratio", 0.9f);
         heightRatioConfig = config.floatValue("height-ratio", 0.9f);
         collapsedConfig = config.boolValue("collapsed", false);
+        channelsCollapsedConfig = config.boolValue("channels-collapsed", false);
+        usersCollapsedConfig = config.boolValue("users-collapsed", false);
 
         collapsedGroup = config.group("collapsed");
         expandedGroup = config.group("expanded");
@@ -101,6 +106,31 @@ public class ChatFeature extends Feature {
         });
 
         store = new ChatStore();
+        store.ui().setChannelsCollapsed(Boolean.TRUE.equals(channelsCollapsedConfig.get()));
+        store.ui().setUsersCollapsed(Boolean.TRUE.equals(usersCollapsedConfig.get()));
+
+        store.ui().channelsCollapsed().subscribe(col -> {
+            if (!Objects.equals(channelsCollapsedConfig.get(), col)) {
+                channelsCollapsedConfig.set(col);
+            }
+        });
+        store.ui().usersCollapsed().subscribe(col -> {
+            if (!Objects.equals(usersCollapsedConfig.get(), col)) {
+                usersCollapsedConfig.set(col);
+            }
+        });
+
+        channelsCollapsedConfig.signal().subscribe(col -> {
+            if (!Objects.equals(store.ui().channelsCollapsed().peek(), col)) {
+                store.ui().setChannelsCollapsed(Boolean.TRUE.equals(col));
+            }
+        });
+        usersCollapsedConfig.signal().subscribe(col -> {
+            if (!Objects.equals(store.ui().usersCollapsed().peek(), col)) {
+                store.ui().setUsersCollapsed(Boolean.TRUE.equals(col));
+            }
+        });
+
         service = new ChatService(store, () -> !Boolean.TRUE.equals(collapsedConfig.get()));
 
         collapsedConfig.signal().subscribe(col -> {

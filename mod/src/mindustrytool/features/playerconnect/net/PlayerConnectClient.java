@@ -6,6 +6,8 @@ import arc.net.Client;
 import arc.net.Connection;
 import arc.net.DcReason;
 import arc.net.NetListener;
+import arc.net.TcpConnection;
+import arc.net.UdpConnection;
 import arc.util.Log;
 import arc.util.Reflect;
 import arc.util.Threads;
@@ -48,7 +50,7 @@ public class PlayerConnectClient {
         }
 
         Client client = Reflect.get(provider, "client");
-        Connection tcp = Reflect.get(Connection.class, client, "tcp");
+        TcpConnection tcp = Reflect.get(Connection.class, client, "tcp");
         if (tcp == null) {
             throw new IllegalStateException("TCP connection is null.");
         }
@@ -108,7 +110,7 @@ public class PlayerConnectClient {
 
         try {
             Vars.net.connect(link.host, link.port, () -> {
-                Connection udp = Reflect.get(Connection.class, client, "udp");
+                UdpConnection udp = Reflect.get(Connection.class, client, "udp");
                 if (udp == null) {
                     throw new IllegalStateException("UDP connection is null.");
                 }

@@ -182,11 +182,17 @@ public class ChatOverlayHudView extends BaseComponent {
     private Component buildDesktopBody() {
         return row().grow().children(() -> {
             // Channel List
-            row().width(unit(80)).growY().children(() -> {
-                new ChatChannelListView(store);
+            dynamic(store.ui().channelsCollapsed(), collapsed -> {
+                if (Boolean.TRUE.equals(collapsed)) {
+                    return null;
+                }
+                return row().growY().children(() -> {
+                    row().width(unit(80)).growY().children(() -> {
+                        new ChatChannelListView(store);
+                    });
+                    divider(Direction.Y);
+                });
             });
-
-            divider(Direction.Y);
 
             // Message Area & Input
             column().grow().children(() -> {
@@ -195,11 +201,17 @@ public class ChatOverlayHudView extends BaseComponent {
                 new ChatInputView(store, service);
             });
 
-            divider(Direction.Y);
-
             // User List
-            row().width(unit(80)).growY().children(() -> {
-                new ChatUserListView(store);
+            dynamic(store.ui().usersCollapsed(), collapsed -> {
+                if (Boolean.TRUE.equals(collapsed)) {
+                    return null;
+                }
+                return row().growY().children(() -> {
+                    divider(Direction.Y);
+                    row().width(unit(80)).growY().children(() -> {
+                        new ChatUserListView(store);
+                    });
+                });
             });
         });
     }
