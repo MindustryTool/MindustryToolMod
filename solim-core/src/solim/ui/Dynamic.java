@@ -44,6 +44,8 @@ public final class Dynamic<T> extends BaseComponent
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.factory = Objects.requireNonNull(factory, "factory must not be null");
         this.container.userObject = this;
+        this.container.top().left();
+        this.container.defaults().top().left();
     }
 
     public static <T> Dynamic<T> of(Readable<T> source, Function<T, Component> factory) {

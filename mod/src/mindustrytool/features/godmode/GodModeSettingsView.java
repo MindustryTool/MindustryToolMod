@@ -21,13 +21,44 @@ public class GodModeSettingsView extends BaseComponent {
             scroll().center().children(() -> {
                 column().growX().gap(unit(2.5f)).padding(unit(3)).children(() -> {
                     row().growX().gap(unit(2)).center().children(() -> {
-                        text(Core.bundle.get("feature.god-mode.settings.scale")).left().color(WebStyles.Colors.GHOST_FG);
+                        row().growX().center().children(() -> {
+
+                            text(Core.bundle.get("feature.god-mode.settings.display-mode")).left()
+                                    .color(WebStyles.Colors.GHOST_FG);
+
+                            spacer();
+                            row().gap(unit(1.5f)).children(() -> {
+                                button(() -> feature.displayModeConfig.set(GodModeFeature.DISPLAY_HUD))
+                                        .style(WebStyles.filterChip())
+                                        .checked(feature.displayModeConfig.signal()
+                                                .map(GodModeFeature.DISPLAY_HUD::equals))
+                                        .padding(unit(1.5f))
+                                        .children(() -> text(
+                                                Core.bundle.get("feature.god-mode.settings.display-mode.hud")));
+
+                                button(() -> feature.displayModeConfig.set(GodModeFeature.DISPLAY_POPUP))
+                                        .style(WebStyles.filterChip())
+                                        .checked(feature.displayModeConfig.signal()
+                                                .map(GodModeFeature.DISPLAY_POPUP::equals))
+                                        .padding(unit(1.5f))
+                                        .children(() -> text(
+                                                Core.bundle.get("feature.god-mode.settings.display-mode.popup")));
+                            });
+                        });
+                    });
+
+                    divider();
+
+                    row().growX().gap(unit(2)).center().children(() -> {
+                        text(Core.bundle.get("feature.god-mode.settings.scale")).left()
+                                .color(WebStyles.Colors.GHOST_FG);
 
                         spacer();
                         slider(feature.scaleConfig.signal(), 0.5f, 1.5f, 0.1f);
 
                         row().width(unit(14)).children(() -> {
-                            text(feature.scaleConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
+                            text(feature.scaleConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
                         });
                     });
 
@@ -37,7 +68,8 @@ public class GodModeSettingsView extends BaseComponent {
                     divider();
 
                     column().growX().gap(unit(1.5f)).children(() -> {
-                        text(Core.bundle.get("feature.god-mode.settings.provider")).left().color(WebStyles.Colors.GHOST_FG);
+                        text(Core.bundle.get("feature.god-mode.settings.provider")).left()
+                                .color(WebStyles.Colors.GHOST_FG);
 
                         wrap().gap(unit(1.5f)).children(() -> {
                             button(() -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_AUTO))
@@ -52,7 +84,8 @@ public class GodModeSettingsView extends BaseComponent {
                                     .checked(feature.providerModeConfig.signal()
                                             .map(GodModeFeature.PROVIDER_INTERNAL::equals))
                                     .padding(unit(1.5f))
-                                    .children(() -> text(Core.bundle.get("feature.god-mode.settings.provider.internal")));
+                                    .children(
+                                            () -> text(Core.bundle.get("feature.god-mode.settings.provider.internal")));
 
                             button(() -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_JS))
                                     .style(WebStyles.filterChip())

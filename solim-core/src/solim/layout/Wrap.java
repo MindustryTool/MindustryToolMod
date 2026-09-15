@@ -36,7 +36,8 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
     public Wrap() {
         this.table.name = "solim-wrap-table";
         this.table.userObject = this;
-        this.table.left();
+        this.table.top().left();
+        this.table.defaults().top().left();
     }
 
     public Table table() {

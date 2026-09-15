@@ -48,6 +48,30 @@ public class TimeControlSettingsView extends BaseComponent {
                     divider();
 
                     row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.time-control.settings.display-mode")).left();
+
+                        spacer();
+                        row().gap(unit(2)).children(() -> {
+                            button(Core.bundle.get("feature.time-control.settings.display-mode.hud"),
+                                    () -> feature.displayModeConfig.set(TimeControlFeature.DISPLAY_HUD))
+                                            .style(Styles.togglet)
+                                            .checked(feature.displayModeConfig.signal()
+                                                    .map(TimeControlFeature.DISPLAY_HUD::equals))
+                                            .height(unit(8.5f))
+                                            .margin(unit(1.5f), unit(4), unit(1.5f), unit(4));
+                            button(Core.bundle.get("feature.time-control.settings.display-mode.popup"),
+                                    () -> feature.displayModeConfig.set(TimeControlFeature.DISPLAY_POPUP))
+                                            .style(Styles.togglet)
+                                            .checked(feature.displayModeConfig.signal()
+                                                    .map(TimeControlFeature.DISPLAY_POPUP::equals))
+                                            .height(unit(8.5f))
+                                            .margin(unit(1.5f), unit(4), unit(1.5f), unit(4));
+                        });
+                    });
+
+                    divider();
+
+                    row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.time-control.settings.scale")).left();
 
                         spacer();

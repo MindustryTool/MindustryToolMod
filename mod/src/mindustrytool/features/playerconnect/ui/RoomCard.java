@@ -13,6 +13,7 @@ import mindustry.core.Version;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.ui.Styles;
+import mindustrytool.features.chat.ChatMessageHeightCalculator;
 import mindustrytool.features.playerconnect.net.NetworkProxy;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
@@ -76,13 +77,10 @@ public class RoomCard extends BaseComponent {
                 .border(1.5f, Color.darkGray)
                 .gap(unit(1.5f))
                 .padding(unit(2))
-                .left();
-
-        if (displayPlayerList) {
-            cardComp.grow().margin(unit(2.5f)).minHeight(unit(40));
-        } else {
-            cardComp.growX().height(unit(27));
-        }
+                .left()
+                .grow()
+                .margin(unit(2.5f))
+                .minHeight(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT);
 
         return cardComp.children(() -> {
             // Header row: Title + Copy link button

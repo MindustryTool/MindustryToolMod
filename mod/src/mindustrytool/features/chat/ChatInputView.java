@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+
 import java.time.Instant;
 import java.util.UUID;
 import mindustry.Vars;
@@ -45,7 +46,8 @@ public class ChatInputView extends BaseComponent {
                 && isValidInput(messageText.get()));
 
         effect(() -> {
-            if (chatInput != null && store.ui().replyTarget().get() != null){
+            ChatMessage target = store.ui().replyTarget().get();
+            if (target != null && chatInput != null) {
                 chatInput.focus();
             }
         });

@@ -14,6 +14,7 @@ import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.PopupDisplayFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -118,7 +119,14 @@ public class QuickAccessHudView extends BaseComponent {
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(f.getName())
-                    .onClick(() -> f.setEnabled(!f.isEnabled()))
+                    .onClick(() -> {
+                        if (f instanceof PopupDisplayFeature && ((PopupDisplayFeature) f).isPopupMode()) {
+                            Element bar = hud != null ? hud.element() : null;
+                            ((PopupDisplayFeature) f).openPopup(bar);
+                        } else {
+                            f.setEnabled(!f.isEnabled());
+                        }
+                    })
                     .onLongClick(300L, () -> {
                         Prov<SolimDialog> settingDlg = f.getSettingDialog();
                         if (settingDlg != null) {

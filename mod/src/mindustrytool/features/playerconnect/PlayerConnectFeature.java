@@ -62,6 +62,7 @@ import solim.signal.Readable;
 public class PlayerConnectFeature extends Feature {
 
     public static final String CUSTOM_PROVIDERS_KEY = "mindustrytool.player-connect.custom-providers";
+    public static final String PLAYER_CONNECT_PROTOCOL = "player-connect://";
     private static final String PAUSE_BUTTON_NAME = "pc-pause-button";
 
     public final ConfigGroup config;

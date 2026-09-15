@@ -542,51 +542,50 @@ public class ChatMessageListView extends BaseComponent {
             })
                     .height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT)
                     .growX()
-                    .name("pc-card-wrapper")
-                    .backgroundColor(Color.red);
+                    .name("pc-card-wrapper");
         }
 
         private Component buildFallbackRoomCardContent(String link) {
             return column()
+                    .grow()
                     .left()
                     .children(() -> {
                         row().growX().gap(unit(2)).children(() -> {
-                            icon(Icon.host).size(unit(5)).color(Pal.accent);
                             text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
                                     .color(Pal.accent)
                                     .fontScale(0.95f)
                                     .ellipsis()
                                     .growX()
                                     .left();
+
                             button(() -> {
                                 Core.app.setClipboardText(link);
                                 Vars.ui.showInfoFade("@copied");
-                            }).style(WebStyles.ghost()).size(unit(6)).children(() -> icon(Icon.copy).size(unit(4)));
+                            })
+                                    .style(WebStyles.ghost())
+                                    .size(unit(11))
+                                    .children(() -> icon(Icon.copy).size(unit(7)));
                         });
 
-                        row().growX().height(unit(4)).children(() -> {
-                            text(link).color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
+                        row().growX().children(() -> {
+                            text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, link))
+                                    .color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
                         });
 
-                        row().growX().height(unit(4)).children(() -> {
+                        row().growX().children(() -> {
                             text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
                                     .color(Color.gray)
                                     .fontScale(0.85f)
                                     .left();
                         });
 
-                        row().growX().height(unit(7)).gap(unit(1)).children(() -> {
-                            button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
-                                    () -> promptDirectJoin(link))
-                                            .style(WebStyles.secondary())
-                                            .growX()
-                                            .height(unit(7));
+                        spacer();
 
-                            button(Core.bundle.get("button.copy", "Copy Link"), () -> {
-                                Core.app.setClipboardText(link);
-                                Vars.ui.showInfoFade("@copied");
-                            }).style(Styles.defaultt).height(unit(7));
-                        });
+                        button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
+                                () -> promptDirectJoin(link))
+                                        .style(WebStyles.primary())
+                                        .growX()
+                                        .height(unit(11));
                     });
         }
 
@@ -604,6 +603,7 @@ public class ChatMessageListView extends BaseComponent {
             if (list == null || list.isEmpty() || link == null) {
                 return null;
             }
+
             String trimmed = link.trim();
             for (PlayerConnectRoom room : list) {
                 if (room != null && trimmed.equals(room.getLink())) {

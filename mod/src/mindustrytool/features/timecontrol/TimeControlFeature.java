@@ -9,7 +9,10 @@ import arc.util.Time;
 import mindustry.Vars;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.PopupDisplayFeature;
+import mindustrytool.features.quickaccess.QuickAccessFeature;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
@@ -24,7 +27,7 @@ import solim.ui.Units;
  * hosting or in single-player; speed is ephemeral and resets to 1x on disable,
  * world exit, client sessions, and interaction-mode switches.
  */
-public class TimeControlFeature extends Feature {
+public class TimeControlFeature extends Feature implements PopupDisplayFeature {
 
     public static final float[] SPEEDS = { 0.125f, 0.5f, 1f, 2f, 8f };
     public static final float SLIDER_MIN_U = -1f;
@@ -39,9 +42,12 @@ public class TimeControlFeature extends Feature {
     public static final float MAX_STEP = 32f;
     public static final String MODE_PRESETS = "presets";
     public static final String MODE_SLIDER = "slider";
+    public static final String DISPLAY_HUD = "hud";
+    public static final String DISPLAY_POPUP = "popup";
 
     public final ConfigGroup config;
     public final ConfigValue<String> modeConfig;
+    public final ConfigValue<String> displayModeConfig;
     public final ConfigValue<Float> scaleConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
 
@@ -66,11 +72,13 @@ public class TimeControlFeature extends Feature {
                 .icon(FileIcon.of("clock.png"))
                 .order(1)
                 .enabledByDefault(false)
+                .quickAccess(true)
                 .build());
 
         config = configGroup();
 
         modeConfig = config.stringValue("mode", MODE_PRESETS);
+        displayModeConfig = config.stringValue("displayMode", DISPLAY_HUD);
         scaleConfig = config.floatValue("scale", 1f);
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
 
@@ -115,6 +123,7 @@ public class TimeControlFeature extends Feature {
         });
 
         modeConfig.signal().subscribe(mode -> resetSpeed());
+        displayModeConfig.signal().subscribe(mode -> updateHud());
     }
 
     /**
@@ -232,13 +241,68 @@ public class TimeControlFeature extends Feature {
         }
     }
 
+    public boolean isPopupMode() {
+        return DISPLAY_POPUP.equals(displayModeConfig.get());
+    }
+
+    public boolean isPopupActive() {
+        if (!isPopupMode()) {
+            return false;
+        }
+        try {
+            QuickAccessFeature quickAccess = FeatureManager.getFeature(QuickAccessFeature.class);
+            return quickAccess != null && quickAccess.isEnabled();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    @Override
+    public void openPopup(@Nullable Element quickAccessBar) {
+        TimeControlPopup.show(this, quickAccessBar);
+    }
+
     @Override
     public void onEnable() {
-        if (hudView != null) {
-            hudView.element().remove();
-            hudView.dispose();
-        }
+        updateHud();
+    }
 
+    @Override
+    public void onDisable() {
+        resetSpeed();
+        removeHud();
+    }
+
+    private boolean quickAccessHooked = false;
+
+    private void updateHud() {
+        ensureQuickAccessHook();
+        if (!isEnabled() || isPopupActive()) {
+            removeHud();
+            return;
+        }
+        ensureHud();
+    }
+
+    private void ensureQuickAccessHook() {
+        if (quickAccessHooked) {
+            return;
+        }
+        try {
+            QuickAccessFeature quickAccess = FeatureManager.getFeature(QuickAccessFeature.class);
+            if (quickAccess == null) {
+                return;
+            }
+            quickAccessHooked = true;
+            quickAccess.enabled().subscribe(value -> updateHud());
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void ensureHud() {
+        if (hudView != null) {
+            return;
+        }
         hudView = new TimeControlHudView(this);
         Element el = hudView.element();
         el.name = "time-control-hud";
@@ -246,23 +310,22 @@ public class TimeControlFeature extends Feature {
                 && Boolean.FALSE.equals(Signals.netClient().peek()));
 
         Core.app.post(() -> {
-            if (hudView != null) {
+            if (hudView != null && !isPopupActive()) {
                 Vars.ui.hudGroup.addChild(el);
             }
         });
     }
 
-    @Override
-    public void onDisable() {
-        resetSpeed();
-        if (hudView != null) {
-            TimeControlHudView view = hudView;
-            hudView = null;
-            Core.app.post(() -> {
-                view.element().remove();
-                view.dispose();
-            });
+    private void removeHud() {
+        if (hudView == null) {
+            return;
         }
+        TimeControlHudView view = hudView;
+        hudView = null;
+        Core.app.post(() -> {
+            view.element().remove();
+            view.dispose();
+        });
     }
 
     @Override

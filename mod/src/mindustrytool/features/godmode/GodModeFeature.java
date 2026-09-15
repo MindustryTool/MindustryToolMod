@@ -10,7 +10,10 @@ import mindustry.game.EventType.PlayEvent;
 import mindustry.game.EventType.StateChangeEvent;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.PopupDisplayFeature;
+import mindustrytool.features.quickaccess.QuickAccessFeature;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
@@ -20,14 +23,17 @@ import solim.signal.Signal;
 import solim.signal.Signals;
 import solim.ui.Units;
 
-public class GodModeFeature extends Feature {
+public class GodModeFeature extends Feature implements PopupDisplayFeature {
 
     public static final String PROVIDER_AUTO = "auto";
     public static final String PROVIDER_INTERNAL = "internal";
     public static final String PROVIDER_JS = "js";
+    public static final String DISPLAY_HUD = "hud";
+    public static final String DISPLAY_POPUP = "popup";
 
     public final ConfigGroup config;
     public final ConfigValue<Float> scaleConfig;
+    public final ConfigValue<String> displayModeConfig;
     public final ConfigValue<String> providerModeConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
 
@@ -53,10 +59,12 @@ public class GodModeFeature extends Feature {
                 .icon(FileIcon.of("wand-sparkles.png"))
                 .order(5)
                 .enabledByDefault(false)
+                .quickAccess(true)
                 .build());
 
         config = configGroup();
         scaleConfig = config.floatValue("scale", 1f);
+        displayModeConfig = config.stringValue("displayMode", DISPLAY_HUD);
         providerModeConfig = config.stringValue("provider", PROVIDER_AUTO);
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
 
@@ -83,6 +91,7 @@ public class GodModeFeature extends Feature {
         ySignal = yConfig.signal();
 
         providerModeConfig.signal().subscribe(m -> checkProvider());
+        displayModeConfig.signal().subscribe(mode -> updateHud());
 
         Events.run(PlayEvent.class, () -> {
             fogDisabled.set(false);
@@ -153,26 +162,31 @@ public class GodModeFeature extends Feature {
         }
     }
 
+    public boolean isPopupMode() {
+        return DISPLAY_POPUP.equals(displayModeConfig.get());
+    }
+
+    public boolean isPopupActive() {
+        if (!isPopupMode()) {
+            return false;
+        }
+        try {
+            QuickAccessFeature quickAccess = FeatureManager.getFeature(QuickAccessFeature.class);
+            return quickAccess != null && quickAccess.isEnabled();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    @Override
+    public void openPopup(@Nullable Element quickAccessBar) {
+        GodModePopup.show(this, quickAccessBar);
+    }
+
     @Override
     public void onEnable() {
         checkProvider();
-
-        if (hudView != null) {
-            hudView.element().remove();
-            hudView.dispose();
-        }
-
-        hudView = new GodModeHudView(this);
-        Element el = hudView.element();
-        el.name = "god-mode-hud";
-        el.visible(() -> Vars.ui != null && Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown
-                && Vars.state != null && Vars.state.isGame());
-
-        Core.app.post(() -> {
-            if (hudView != null && Vars.ui != null && Vars.ui.hudGroup != null) {
-                Vars.ui.hudGroup.addChild(el);
-            }
-        });
+        updateHud();
     }
 
     @Override
@@ -180,14 +194,62 @@ public class GodModeFeature extends Feature {
         if (Boolean.TRUE.equals(fogDisabled.peek())) {
             toggleFog();
         }
-        if (hudView != null) {
-            GodModeHudView view = hudView;
-            hudView = null;
-            Core.app.post(() -> {
-                view.element().remove();
-                view.dispose();
-            });
+        removeHud();
+    }
+
+    private boolean quickAccessHooked = false;
+
+    private void updateHud() {
+        ensureQuickAccessHook();
+        if (!isEnabled() || isPopupActive()) {
+            removeHud();
+            return;
         }
+        ensureHud();
+    }
+
+    private void ensureQuickAccessHook() {
+        if (quickAccessHooked) {
+            return;
+        }
+        try {
+            QuickAccessFeature quickAccess = FeatureManager.getFeature(QuickAccessFeature.class);
+            if (quickAccess == null) {
+                return;
+            }
+            quickAccessHooked = true;
+            quickAccess.enabled().subscribe(value -> updateHud());
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void ensureHud() {
+        if (hudView != null) {
+            return;
+        }
+        hudView = new GodModeHudView(this);
+        Element el = hudView.element();
+        el.name = "god-mode-hud";
+        el.visible(() -> Vars.ui != null && Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown
+                && Vars.state != null && Vars.state.isGame());
+
+        Core.app.post(() -> {
+            if (hudView != null && Vars.ui != null && Vars.ui.hudGroup != null && !isPopupActive()) {
+                Vars.ui.hudGroup.addChild(el);
+            }
+        });
+    }
+
+    private void removeHud() {
+        if (hudView == null) {
+            return;
+        }
+        GodModeHudView view = hudView;
+        hudView = null;
+        Core.app.post(() -> {
+            view.element().remove();
+            view.dispose();
+        });
     }
 
     @Override
