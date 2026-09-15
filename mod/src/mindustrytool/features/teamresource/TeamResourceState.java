@@ -2,6 +2,7 @@ package mindustrytool.features.teamresource;
 
 import arc.func.Cons;
 import arc.graphics.Color;
+import arc.struct.ObjectIntMap;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Interval;
@@ -33,8 +34,8 @@ public class TeamResourceState {
     private @Nullable TeamResourceFeature feature;
     private @Nullable Team selectedTeam;
     private @Nullable ItemModule coreItems;
-    private @Nullable ItemModule lastSnapshot;
-    private @Nullable ItemModule rateDisplay;
+    private final ObjectIntMap<Item> lastSnapshot = new ObjectIntMap<>();
+    private final ObjectIntMap<Item> rateDisplay = new ObjectIntMap<>();
 
     private boolean viewingStats = false;
     private boolean holdingForStats = false;
@@ -104,12 +105,8 @@ public class TeamResourceState {
         usedUnits.clear();
         usedItemsSignal.set(new Seq<>());
         usedUnitsSignal.set(new Seq<>());
-        if (lastSnapshot != null) {
-            lastSnapshot.clear();
-        }
-        if (rateDisplay != null) {
-            rateDisplay.clear();
-        }
+        lastSnapshot.clear();
+        rateDisplay.clear();
         if (Vars.player != null && Vars.player.team() != null) {
             selectedTeam = Vars.player.team();
             selectedTeamSignal.set(selectedTeam);
@@ -211,12 +208,8 @@ public class TeamResourceState {
         this.selectedTeamSignal.set(team);
         this.usedUnits.clear();
         this.usedUnitsSignal.set(new Seq<>());
-        if (lastSnapshot != null) {
-            lastSnapshot.clear();
-        }
-        if (rateDisplay != null) {
-            rateDisplay.clear();
-        }
+        lastSnapshot.clear();
+        rateDisplay.clear();
         this.teamGraphs.clear();
         tickSignal.set(tickSignal.get() + 1);
     }
@@ -255,9 +248,7 @@ public class TeamResourceState {
     }
 
     public void clearSnapshot() {
-        if (lastSnapshot != null) {
-            lastSnapshot.clear();
-        }
+        lastSnapshot.clear();
     }
 
     public int getItemAmount(Item item) {
@@ -265,7 +256,7 @@ public class TeamResourceState {
     }
 
     public int getItemRate(Item item) {
-        return rateDisplay != null ? rateDisplay.get(item) : 0;
+        return rateDisplay.get(item, 0);
     }
 
     public String getFormattedAmount(Item item) {
@@ -361,7 +352,7 @@ public class TeamResourceState {
 
         try {
             int amount = coreItems.get(item);
-            int rate = rateDisplay != null ? rateDisplay.get(item) : 0;
+            int rate = rateDisplay.get(item, 0);
 
             boolean alwaysShow = feature == null || Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.get());
             if (alwaysShow) {
@@ -390,24 +381,22 @@ public class TeamResourceState {
         if (coreItems == null || Vars.content == null) {
             return;
         }
-        if (lastSnapshot == null) {
-            lastSnapshot = new ItemModule();
-        }
-        if (rateDisplay == null) {
-            rateDisplay = new ItemModule();
-        }
 
-        if (lastSnapshot.any()) {
-            int count = coreItems.length();
-            for (int id = 0; id < count; id++) {
-                int amount = coreItems.get(id);
-                Item item = Vars.content.item(id);
+        if (lastSnapshot.size > 0) {
+            for (Item item : Vars.content.items()) {
                 if (item != null) {
-                    rateDisplay.set(item, (amount - lastSnapshot.get(id)) * 2);
+                    int amount = coreItems.get(item);
+                    int previous = lastSnapshot.get(item, amount);
+                    rateDisplay.put(item, (amount - previous) * 2);
                 }
             }
         }
-        lastSnapshot.set(coreItems);
+        lastSnapshot.clear();
+        for (Item item : Vars.content.items()) {
+            if (item != null) {
+                lastSnapshot.put(item, coreItems.get(item));
+            }
+        }
     }
 
     private boolean updatePowerStats() {
