@@ -68,7 +68,7 @@ public abstract class BaseComponent implements Component {
 		}
 	}
 
-	public BaseComponent name(String name) {
+	public BaseComponent name(@Nullable String name) {
 		this.componentName = name;
 		if (cached != null) {
 			cached.name = name;

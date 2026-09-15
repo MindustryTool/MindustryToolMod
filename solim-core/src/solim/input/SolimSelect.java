@@ -5,6 +5,9 @@ import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.signal.Signal;
+import solim.modifier.ElementConfig;
+import solim.layout.CellConfig;
+import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 
 /**
@@ -12,10 +15,16 @@ import solim.runtime.ComponentContext;
  * SelectBox unavailable in this version). State held in signal; visual updates
  * on change.
  */
-public final class SolimSelect<T> implements Component {
+public final class SolimSelect<T> implements Component, ElementConfig<SolimSelect<T>>, CellConfig<SolimSelect<T>> {
     private final TextButton selectBox = new TextButton("");
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private int selectedIndex = 0;
     private Disposable binding;
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
+    }
 
     {
         selectBox.name = "solim-select-selectBox";

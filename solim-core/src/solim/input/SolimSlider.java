@@ -3,14 +3,23 @@ package solim.input;
 import arc.scene.ui.Slider;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.modifier.ElementConfig;
+import solim.layout.CellConfig;
+import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Signal;
 import java.util.Objects;
 
 /** Slider widget bound to Signal&lt;Float&gt;. */
-public final class SolimSlider implements Component {
+public final class SolimSlider implements Component, ElementConfig<SolimSlider>, CellConfig<SolimSlider> {
 	private final Slider slider = new Slider(0f, 1f, 0.1f, false);
+	private final PendingCellConfig constraints = new PendingCellConfig();
 	private Disposable binding;
+
+	@Override
+	public PendingCellConfig cellConfig() {
+		return constraints;
+	}
 
 	{
 		slider.name = "solim-slider-slider";

@@ -25,13 +25,14 @@ public abstract class Feature {
 		if (enabled == null) {
 			FeatureMetadata meta = getMetadata();
 			boolean defaultVal = meta != null && meta.isEnabledByDefault();
-			enabled = Signal.of(Core.settings.getBool(getSettingKey(), defaultVal));
+			boolean stored = Core.settings.getBool(getSettingKey(), defaultVal);
+			enabled = Signal.of(meta != null && meta.isDevelopment() ? false : stored);
 		}
 		return enabled;
 	}
 
 	public boolean isEnabled() {
-		return Boolean.TRUE.equals(enabled().get());
+		return Boolean.TRUE.equals(enabled().peek());
 	}
 
 	public void setEnabled(boolean enabled) {
@@ -43,6 +44,10 @@ public abstract class Feature {
 	}
 
 	public void enable() {
+		if (getMetadata() != null && getMetadata().isDevelopment()) {
+			return;
+		}
+
 		if (isEnabled()) {
 			return;
 		}

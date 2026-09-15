@@ -55,8 +55,8 @@ class ComponentDefaultNameTest {
 		assertEquals("solim-row-table", new Row().element().name);
 
 		Card card = new Card();
-		assertEquals("solim-card-cardButton", card.element().name);
-		assertEquals("solim-card-container", card.container().name);
+		assertEquals("solim-card-table", card.element().name);
+		assertEquals("solim-card-table", card.container().name);
 
 		assertEquals("solim-grid-table", new Grid().element().name);
 		assertEquals("solim-divider", new Divider().element().name);

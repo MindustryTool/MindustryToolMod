@@ -5,8 +5,8 @@ import arc.input.KeyCode;
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
+import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
-import arc.scene.ui.Button;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
@@ -22,14 +22,11 @@ import solim.runtime.ParentStack;
 import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.ui.Ui;
-import solim.graphics.RoundedDrawable;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.RoundedHelper;
 
 /**
- * Clickable and stylable card container component with support for inner
- * children, reactive width/height/color bindings, and click event bubbling
- * control.
+ * Clickable card container built on a single Arc Table with lazy click
+ * handling borrowed from Arc Button semantics.
  */
 public final class Card implements Component, CellConfig<Card>, ElementConfig<Card>, TableConfig<Card>, GapContainer {
 
@@ -47,91 +44,43 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         return cell;
     };
 
-    private final Button cardButton;
-    private final Table container = new Table();
+    private final Table table = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final List<Disposable> bindings = new ArrayList<>();
     private float gap = 0f;
     private @Nullable Runnable onClick;
+    private boolean hasClickListener = false;
 
     public Card() {
-        this(new Button.ButtonStyle());
+        this.table.userObject = this;
+        this.table.name = "solim-card-table";
+        this.table.top().left();
+        this.table.defaults().top().left();
     }
 
-    public Card(Drawable background) {
-        Button.ButtonStyle style = new Button.ButtonStyle();
+    public Card(@Nullable Drawable background) {
+        this();
         if (background != null) {
-            style.up = background;
+            background(background);
         }
-        this.cardButton = new Button(style);
-        this.cardButton.userObject = this;
-        this.cardButton.name = "solim-card-cardButton";
-        this.container.name = "solim-card-container";
-        this.container.userObject = this;
-        this.cardButton.top().left();
-        this.container.top().left();
-        this.container.defaults().top().left();
-        this.cardButton.add(container).grow().top().left();
     }
 
-    public Card(Button.ButtonStyle style) {
-        this.cardButton = new Button(style != null ? style : new Button.ButtonStyle());
-        this.cardButton.userObject = this;
-        this.cardButton.name = "solim-card-cardButton";
-        this.container.name = "solim-card-container";
-        this.container.userObject = this;
-        this.cardButton.top().left();
-        this.container.top().left();
-        this.container.defaults().top().left();
-        this.cardButton.add(container).grow().top().left();
-    }
-
-    public static Card of(Runnable children) {
+    public static Card of(@Nullable Runnable children) {
         return new Card();
     }
 
-    public static Card of(Button.ButtonStyle style, Runnable children) {
-        return new Card(style);
-    }
-
     public Table container() {
-        return container;
+        return table;
     }
 
     @Override
     public Table table() {
-        return container;
-    }
-
-    @Override
-    public RoundedDrawable getOrCreateRounded(int defaultRadius) {
-        return RoundedHelper.getOrCreateRounded(cardButton, defaultRadius);
-    }
-
-    @Override
-    public Card background(@Nullable Drawable bg) {
-        cardButton.setBackground(bg);
-        if (cardButton.getStyle() != null) {
-            cardButton.getStyle().up = bg;
-        }
-        return this;
-    }
-
-    @Override
-    public Card background(@Nullable Color color) {
-        if (color == null || color.a == 0f) {
-            return background((Drawable) null);
-        }
-        return rounded(0, color);
-    }
-
-    public Button cardButton() {
-        return cardButton;
+        return table;
     }
 
     @Override
     public Element element() {
-        return cardButton;
+        return table;
     }
 
     @Override
@@ -139,19 +88,19 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         return constraints;
     }
 
-    public Card color(Color color) {
+    public Card color(@Nullable Color color) {
         if (color != null) {
-            cardButton.setColor(color);
+            table.setColor(color);
         }
         return this;
     }
 
-    public Card color(Readable<Color> color) {
+    public Card color(@Nullable Readable<Color> color) {
         if (color != null) {
             Effect e = Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
-                    cardButton.setColor(c);
+                    table.setColor(c);
                 }
             });
             bindings.add(e);
@@ -161,7 +110,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
     }
 
     public Card children(@Nullable Runnable r) {
-        ParentStack.push(container, ATTACHER);
+        ParentStack.push(table, ATTACHER);
         try {
             if (r != null) {
                 r.run();
@@ -169,7 +118,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         } finally {
             ParentStack.pop();
         }
-        ParentStack.attachToParent(cardButton);
+        ParentStack.attachToParent(table);
         respace();
         return this;
     }
@@ -192,57 +141,46 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
 
     @Override
     public void respace() {
-        GapContainer.applySpacing(container, Direction.VERTICAL, gap);
+        GapContainer.applySpacing(table, Direction.VERTICAL, gap);
     }
 
-    public Card style(Button.ButtonStyle style) {
-        if (style != null) {
-            cardButton.setStyle(style);
-        }
-        return this;
-    }
-
-    public Card style(@Nullable Readable<? extends Button.ButtonStyle> style) {
-        if (style != null) {
-            Effect e = Effect.of(() -> {
-                Button.ButtonStyle s = style.get();
-                if (s != null) {
-                    style(s);
-                }
-            });
-            bindings.add(e);
-            ComponentContext.register(e);
-        }
-        return this;
-    }
-
-    public Card onClick(Runnable onClick) {
+    public Card onClick(@Nullable Runnable onClick) {
         this.onClick = onClick;
         if (onClick != null) {
-            cardButton.addListener(new ClickListener() {
-                @Override
-                public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                    if (cardButton.getScene() == null)
-                        return false;
-                    return super.touchDown(event, x, y, pointer, button);
-                }
-
-                @Override
-                public void clicked(InputEvent event, float x, float y) {
-                    if (event != null && event.stopped) {
-                        return;
-                    }
-                    if (Card.this.onClick != null) {
-                        try {
-                            Card.this.onClick.run();
-                        } catch (Exception e) {
-                            Log.err("Error executing card onClick", e);
-                        }
-                    }
-                }
-            });
+            ensureClickListener();
         }
         return this;
+    }
+
+    private void ensureClickListener() {
+        if (hasClickListener) {
+            return;
+        }
+        hasClickListener = true;
+        element().touchable = Touchable.enabled;
+        table.addListener(new ClickListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
+                if (table.getScene() == null) {
+                    return false;
+                }
+                return super.touchDown(event, x, y, pointer, button);
+            }
+
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (event != null && event.stopped) {
+                    return;
+                }
+                if (Card.this.onClick != null) {
+                    try {
+                        Card.this.onClick.run();
+                    } catch (Exception e) {
+                        Log.err("Error executing card onClick", e);
+                    }
+                }
+            }
+        });
     }
 
     @Override

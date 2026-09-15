@@ -13,6 +13,8 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SpacingAware;
 import solim.modifier.ElementConfig;
+import solim.layout.CellConfig;
+import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 import solim.signal.Computed;
 import solim.signal.Effect;
@@ -20,9 +22,10 @@ import solim.signal.Readable;
 import solim.signal.Signal;
 
 /** Display widget for text content. */
-public final class Text implements Component, SpacingAware, ElementConfig<Text> {
+public final class Text implements Component, SpacingAware, ElementConfig<Text>, CellConfig<Text> {
 
     private final Label label;
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private final List<Disposable> bindings = new ArrayList<>();
 
     private float padTop;
@@ -332,6 +335,11 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text> 
     public Label label() {
         applySpacing();
         return label;
+    }
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
     }
 
     @Override

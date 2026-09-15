@@ -282,4 +282,21 @@ class ReactiveGridTest {
 		assertEquals(cardEl.getWidth(), cardEl.getHeight(), 1.0f,
 				"Inner card is square with margin(4,0,4,0) while keeping column vertical gap");
 	}
+
+	@Test
+	void reactiveGridSupportsElementAndTableConfig() {
+		Signal<Integer> cols = Signal.of(2);
+		Signal<List<String>> items = Signal.of(Collections.emptyList());
+		ReactiveGrid<String, String> grid = new ReactiveGrid<>(cols, items, s -> s, (s, ctx) -> new ItemComp(s))
+				.width(400f)
+				.height(200f)
+				.visible(false)
+				.margin(16f);
+
+		assertEquals(400f, grid.element().getWidth());
+		assertEquals(200f, grid.element().getHeight());
+		assertFalse(grid.element().visible);
+		assertEquals(16f, grid.table().getMarginTop());
+		grid.dispose();
+	}
 }

@@ -877,6 +877,53 @@ This includes:
 
 Test framework behavior where it can be tested independently of the Mindustry runtime.
 
+## Value-Driven Testing Philosophy
+
+A small number of high-value tests is better than a large number of meaningless tests.
+
+Before writing a test, ask:
+
+> **"What real behavior would break if this test failed?"**
+
+If the answer is unclear, do not write the test.
+
+Tests should survive internal refactors: if the implementation is completely rewritten while preserving public behavior, the tests must still pass. Do not test private fields or internal implementation structure.
+
+### ❌ Do NOT Write Tests Simply To:
+
+* Verify a constant contains a specific value
+* Verify a collection has the expected hardcoded entries
+* Verify getters return non-null values
+* Verify strings are non-empty
+* Verify implementation details
+* Increase code coverage
+* Restate the production code in test form
+* Test that something does not contain an arbitrary historical bug unless that behavior is an explicit contract
+
+### ✅ Prefer Tests That Verify:
+
+* User-visible behavior
+* Public API contracts
+* State transitions
+* Component interaction
+* Event/signal propagation
+* Lifecycle/disposal behavior
+* Edge cases that have meaningful semantics
+* Regressions for bugs that actually occurred
+* Invariants that must remain true during refactoring
+
+### UI Component Testing
+
+For UI components, prioritize behavioral tests such as:
+
+* Correct children are created
+* Configuration actually affects layout/behavior
+* Signals update the UI
+* UI changes update the underlying state
+* Disposal removes listeners/effects
+* Repeated mounting/unmounting does not leak
+* User interaction produces the expected state change
+
 ---
 
 # Before Completing Any Task

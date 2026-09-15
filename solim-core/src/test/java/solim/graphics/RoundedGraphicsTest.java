@@ -197,7 +197,7 @@ class RoundedGraphicsTest {
 
         Card card = new Card();
         card.rounded(16, Color.black).border(2f, Color.cyan);
-        assertTrue(card.cardButton().getBackground() instanceof RoundedDrawable);
+        assertTrue(card.table().getBackground() instanceof RoundedDrawable);
 
         Popup<Object> popup = new Popup<>();
         popup.rounded(8, Color.gray).border(1f, Color.white);

@@ -55,7 +55,7 @@ public class FeatureManager {
 
 	public static void init() {
 		for (Feature feature : features.get()) {
-			if (feature.isEnabled()) {
+			if (!feature.getMetadata().isDevelopment() && feature.isEnabled()) {
 				feature.onEnable();
 			}
 		}

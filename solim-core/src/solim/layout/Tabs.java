@@ -18,13 +18,15 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.ui.Ui;
+import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.TableConfig;
 
 /**
  * Tabs layout component: provides a tab header button bar and switches between
  * tab content panels reactively.
  */
-public final class Tabs implements Component, CellConfig<Tabs> {
+public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Tabs>, TableConfig<Tabs> {
 
     private final Table root;
     private final Row headerBar;
@@ -170,13 +172,13 @@ public final class Tabs implements Component, CellConfig<Tabs> {
     }
 
     @Override
-    public PendingCellConfig cellConfig() {
-        return constraints;
+    public Table table() {
+        return root;
     }
 
-    public Tabs name(String name) {
-        root.name = name;
-        return this;
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
     }
 
     @Override

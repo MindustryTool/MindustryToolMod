@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import mindustry.gen.Icon;
-import mindustry.gen.Tex;
-import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -53,8 +51,8 @@ public class QuickAccessHudView extends BaseComponent {
     @Override
     protected Element build() {
         Readable<Float> scale = parentFeature.scaleConfig.signal();
-        Readable<Float> buttonSize = scale.map(s -> unit(14) * s);
-        Readable<Float> iconSize = scale.map(s -> unit(12) * s);
+        Readable<Float> buttonSize = scale.map(s -> unit(11f) * s);
+        Readable<Float> iconSize = scale.map(s -> unit(7f) * s);
 
         Readable<List<HudItem>> items = parentFeature.hiddenFeaturesConfig.signal().map(this::computeVisibleItems);
 
@@ -65,15 +63,8 @@ public class QuickAccessHudView extends BaseComponent {
                     .children(() -> icon(Icon.move).size(iconSize))
                     .draggable(parentFeature.xSignal, parentFeature.ySignal);
 
-            image(Tex.whiteui)
-                    .color(Pal.accent)
-                    .width(2f)
-                    .cellPaddingRight(2)
-                    .growY();
-
             grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items, HudItem::id,
-                    item -> createItemButton(item, buttonSize, iconSize))
-                            .gap(2);
+                    item -> createItemButton(item, buttonSize, iconSize));
         });
 
         hud.background(Styles.black6);
@@ -91,7 +82,7 @@ public class QuickAccessHudView extends BaseComponent {
                 continue;
 
             FeatureMetadata meta = f.getMetadata();
-            if (!meta.isQuickAccess())
+            if (meta.isDevelopment() || !meta.isQuickAccess())
                 continue;
             if (hidden != null && hidden.contains(meta.getId()))
                 continue;
@@ -120,7 +111,7 @@ public class QuickAccessHudView extends BaseComponent {
                         }
                     })
                     .children(() -> icon(meta.getIcon()).size(iconSize)
-                            .color(f.enabled().map(en -> en ? Color.white : Pal.gray)));
+                            .color(f.enabled().map(en -> en ? Color.white : Color.darkGray)));
         } else {
             return button()
                     .style(Styles.clearNonei)

@@ -281,6 +281,7 @@ public class ChatMessageListView extends BaseComponent {
                         column().growX().top().left().children(() -> {
                             // Author and timestamp header + action button
                             row().growX().top().left()
+                                    .gap(unit(1))
                                     .height(ChatMessageHeightCalculator.HEADER_HEIGHT
                                             + ChatMessageHeightCalculator.HEADER_GAP)
                                     .children(() -> {
@@ -571,7 +572,7 @@ public class ChatMessageListView extends BaseComponent {
                                 .style(Styles.clearNonei)
                                 .size(unit(6), unit(6))
                                 .tooltip(Core.bundle.get("info.title", "Info"))
-                                .children(() -> icon(Icon.infoSmall).size(unit(5), unit(5)));
+                                .children(() -> icon(FileIcon.of("info.png")).size(unit(5), unit(5)));
 
                         button(() -> Vars.ui.schematics.showExport(schematic))
                                 .style(Styles.clearNonei)

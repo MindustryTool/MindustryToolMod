@@ -66,7 +66,7 @@ public class SchematicCard extends BaseComponent {
                 .growX()
                 .gap(unit(2))
                 .children(() -> {
-                    card(WebStyles.previewCard().style())
+                    card(WebStyles.previewCardBackground())
                             .name("SchematicCard-preview-" + schematic.getItemId())
                             .growX()
                             .cellPadding(unit(1), 0f, unit(1), 0f)

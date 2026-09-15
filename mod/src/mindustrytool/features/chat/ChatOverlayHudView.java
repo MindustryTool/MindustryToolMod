@@ -10,6 +10,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Direction;
@@ -76,7 +77,6 @@ public class ChatOverlayHudView extends BaseComponent {
 
         return card()
                 .rounded(10, new Color(0f, 0f, 0f, 0.6f))
-                .cellPadding(unit(4))
                 .children(() -> {
                     button(() -> {
                         feature.collapsedConfig.set(false);
@@ -85,8 +85,7 @@ public class ChatOverlayHudView extends BaseComponent {
                             store.unread().markAsRead(activeId);
                         }
                     })
-                            .style(Styles.clearNonei)
-                            .size(unit(14), unit(14))
+                            .size(unit(14))
                             .draggable(hud, feature.xSignal, feature.ySignal)
                             .children(() -> {
                                 stack()
@@ -154,13 +153,13 @@ public class ChatOverlayHudView extends BaseComponent {
                                             dialog.show();
                                         }
                                     })
-                                            .style(Styles.clearNonei)
+                                            .style(WebStyles.ghost())
                                             .size(unit(10), unit(10))
                                             .tooltip(Core.bundle.get("feature.chat.ui.settings", "Settings"))
                                             .children(() -> icon(Icon.settings).size(unit(5)));
 
                                     button(() -> feature.collapsedConfig.set(true))
-                                            .style(Styles.clearNonei)
+                                            .style(WebStyles.ghost())
                                             .size(unit(10), unit(10))
                                             .tooltip(Core.bundle.get("feature.chat.ui.collapse", "Collapse"))
                                             .children(() -> icon(Icon.cancel).size(unit(5)));

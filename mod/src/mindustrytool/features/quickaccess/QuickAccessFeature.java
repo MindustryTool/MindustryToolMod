@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 import mindustry.Vars;
 import mindustry.game.EventType.ResizeEvent;
-import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
@@ -42,7 +42,7 @@ public class QuickAccessFeature extends Feature {
     public QuickAccessFeature() {
         super(FeatureMetadata.builder()
                 .id("quick-access")
-                .icon(Icon.menu)
+                .icon(FileIcon.of("grid-2x2.png"))
                 .order(10)
                 .enabledByDefault(true)
                 .quickAccess(false)
