@@ -11,6 +11,7 @@ import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.input.Button;
 import solim.overlay.Hud;
 import solim.signal.Readable;
 
@@ -48,9 +49,7 @@ public class GodModeHudView extends BaseComponent {
                             return null;
                         });
 
-                        dynamic(parentFeature.providerSignal(), provider -> provider != null
-                                ? buildActiveTools(provider, buttonSize, iconSize)
-                                : buildUnavailableContent(buttonSize, iconSize));
+                        buildControls(parentFeature, null);
                     });
         });
 
@@ -71,69 +70,102 @@ public class GodModeHudView extends BaseComponent {
         return hud.element();
     }
 
-    private Component buildActiveTools(GodModeProvider provider, Readable<Float> buttonSize, Readable<Float> iconSize) {
+    public static Component buildControls(GodModeFeature feature, @Nullable Readable<Boolean> canEdit) {
+        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
+        Readable<Float> iconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
+
+        return dynamic(feature.providerSignal(), provider -> provider != null
+                ? buildActiveTools(feature, provider, buttonSize, iconSize, canEdit)
+                : buildUnavailableContent(feature, buttonSize, iconSize, canEdit));
+    }
+
+    private static Component buildActiveTools(GodModeFeature feature, GodModeProvider provider,
+            Readable<Float> buttonSize, Readable<Float> iconSize, @Nullable Readable<Boolean> canEdit) {
         return row().gap(unit(1)).center().children(() -> {
-            button()
+            Button teamBtn = button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.team"))
                     .onClick(() -> new GodModeTeamDialog(provider).show())
                     .children(() -> icon(Icon.players).size(iconSize));
+            if (canEdit != null) {
+                teamBtn.enabled(canEdit);
+            }
 
-            button()
+            Button itemBtn = button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.items"))
                     .onClick(() -> new GodModeItemsDialog(provider).show())
                     .children(() -> icon(Icon.box).size(iconSize));
+            if (canEdit != null) {
+                itemBtn.enabled(canEdit);
+            }
 
-            button()
+            Button unitBtn = button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.units"))
                     .onClick(() -> new GodModeUnitsDialog(provider).show())
                     .children(() -> icon(Icon.units).size(iconSize));
+            if (canEdit != null) {
+                unitBtn.enabled(canEdit);
+            }
 
-            button()
+            Button effectBtn = button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.effects"))
                     .onClick(() -> new GodModeEffectsDialog(provider).show())
                     .children(() -> icon(Icon.effect).size(iconSize));
+            if (canEdit != null) {
+                effectBtn.enabled(canEdit);
+            }
 
-            button()
+            Button coreBtn = button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.core"))
                     .onClick(() -> new GodModeCoreDialog(provider).show())
                     .children(() -> icon(Icon.hammer).size(iconSize));
+            if (canEdit != null) {
+                coreBtn.enabled(canEdit);
+            }
 
-            button()
+            Button fogBtn = button()
                     .style(WebStyles.filterChip())
                     .size(buttonSize)
-                    .checked(parentFeature.fogDisabledSignal())
-                    .tooltip(parentFeature.fogDisabledSignal().map(disabled -> Boolean.TRUE.equals(disabled)
+                    .checked(feature.fogDisabledSignal())
+                    .tooltip(feature.fogDisabledSignal().map(disabled -> Boolean.TRUE.equals(disabled)
                             ? Core.bundle.get("feature.god-mode.hud.fog-off")
                             : Core.bundle.get("feature.god-mode.hud.fog-on")))
-                    .onClick(parentFeature::toggleFog)
+                    .onClick(feature::toggleFog)
                     .children(() -> icon(Icon.eye).size(iconSize).color(
-                            parentFeature.fogDisabledSignal()
+                            feature.fogDisabledSignal()
                                     .map(dis -> Boolean.TRUE.equals(dis) ? Color.gold : WebStyles.Colors.GHOST_FG)));
+            if (canEdit != null) {
+                fogBtn.enabled(canEdit);
+            }
         });
     }
 
-    private Component buildUnavailableContent(Readable<Float> buttonSize, Readable<Float> iconSize) {
+    private static Component buildUnavailableContent(GodModeFeature feature, Readable<Float> buttonSize,
+            Readable<Float> iconSize, @Nullable Readable<Boolean> canEdit) {
         return row().gap(unit(1.5f)).center().paddingLeft(unit(1)).paddingRight(unit(1)).children(() -> {
             text(Core.bundle.get("feature.god-mode.hud.no-provider"))
                     .color(WebStyles.Colors.DANGER)
                     .center();
 
-            button()
+            Button refreshBtn = button()
                     .style(WebStyles.outline())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.refresh-provider"))
-                    .onClick(parentFeature::checkProvider)
+                    .onClick(feature::checkProvider)
                     .children(() -> icon(Icon.refresh).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
+            if (canEdit != null) {
+                refreshBtn.enabled(canEdit);
+            }
         });
     }
 

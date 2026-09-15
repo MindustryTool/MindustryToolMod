@@ -25,12 +25,17 @@ The system SHALL list GodMode among QuickAccess HUD items (subject to existing v
 
 ### Requirement: GodMode display mode and popup shell
 
-The system SHALL persist a GodMode display-mode option (`ConfigValue<String>`, HUD/popup values, default HUD) and render a popup shell from its QuickAccess button under the same placement, suppression, fallback, and localization rules as the TimeControl popup, reusing the shared icon-only horizontal row layout from `GodModeHudView` (excluding drag handle, icon-only with tooltips, disabled state governed by `canEdit`) under a popup-only title header.
+The system SHALL persist a GodMode display-mode option (`ConfigValue<String>`, HUD/popup values, default HUD) and toggle a popup shell from its QuickAccess button (opening if closed, hiding if already showing or clicked again) under the same placement, suppression, fallback, and styling rules as the TimeControl popup, reusing the shared icon-only horizontal row layout from `GodModeHudView` (excluding drag handle, icon-only with tooltips, disabled state governed by `canEdit`) with no title header, wrapped in a container with a black background, `rounded(unit(2))`, `padding(unit(1))`, and `gap(unit(1))`.
 
 #### Scenario: GodMode popup shell opens
 
-- **WHEN** the player taps the GodMode QuickAccess button in popup mode with QuickAccess on
+- **WHEN** the player taps the GodMode QuickAccess button in popup mode with QuickAccess on while the popup is not showing
 - **THEN** a popup shell anchored above or below the QuickAccess bar opens and the standalone path stays suppressed
+
+#### Scenario: Clicking button again hides popup
+
+- **WHEN** the player taps the GodMode QuickAccess button in popup mode with QuickAccess on while the GodMode popup is already showing
+- **THEN** the popup closes and the feature enabled state is unchanged
 
 #### Scenario: GodMode falls back silently
 

@@ -2,7 +2,7 @@
 
 ### Requirement: Feature Interaction via Quick Access HUD
 
-The system SHALL display buttons for features that support quick access and are not in development, allowing toggling feature state and opening feature settings. For features in popup display mode, tapping the button SHALL open the feature popup instead of toggling; long-press SHALL still open settings.
+The system SHALL display buttons for features that support quick access and are not in development, allowing toggling feature state and opening feature settings. For features in popup display mode, tapping the button SHALL toggle the feature popup visibility (opening if closed, hiding if already showing or clicked again) instead of toggling feature enablement; long-press SHALL still open settings.
 
 #### Scenario: Single click toggles feature
 
@@ -11,8 +11,13 @@ The system SHALL display buttons for features that support quick access and are 
 
 #### Scenario: Single click opens popup in popup mode
 
-- **WHEN** the player clicks a feature button on the Quick Access HUD for a feature in popup display mode
+- **WHEN** the player clicks a feature button on the Quick Access HUD for a feature in popup display mode while its popup is not showing
 - **THEN** the feature popup opens and the enabled state is unchanged.
+
+#### Scenario: Clicking button again hides popup in popup mode
+
+- **WHEN** the player clicks a feature button on the Quick Access HUD for a feature in popup display mode while its popup is already showing
+- **THEN** the feature popup closes and the feature enabled state is unchanged.
 
 #### Scenario: Long press opens feature settings
 

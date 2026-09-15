@@ -21,24 +21,26 @@ TimeControl renders a standalone draggable Solim `hud()` overlay with per-orient
 
 All decisions in this section are user decisions gathered before proposal writing. Alternatives listed are the ones considered and rejected by the user.
 
-### 1. Tap opens popup instead of toggling (user-decided)
+### 1. Tap toggles popup visibility instead of toggling feature enablement (user-decided)
 
-In popup mode with QuickAccess on, tapping the feature's QuickAccess button opens its popup and never toggles enablement. Rejected: tap toggles and shows popup; tap toggles with popup on long-press; state-dependent tap meaning.
+In popup mode with QuickAccess on, tapping the feature's QuickAccess button toggles popup visibility: opens the popup if closed, and hides it if currently showing (or if clicked again during active popup display). Tapping never toggles feature enablement. Rejected: tap toggles feature enablement; clicking again keeps popup open or re-opens it.
 
 ### 2. Enable/disable lives only in settings and FeatureCard (user-decided)
 
 The popup contains no enable switch and opening it never auto-enables. Rejected: enable switch inside the popup; opening auto-enables.
 
-### 3. Shared horizontal row layout in static HudView function (user-decided)
+### 3. Shared horizontal row layout in static HudView function with black rounded container (user-decided)
 
 Popup content reuses the HUD's horizontal row layout directly via a static function in each feature's `HudView` (`TimeControlHudView`, `GodModeHudView`) rather than duplicating UI logic in a vertical stack:
 - **Mirror HUD row**: TimeControl and GodMode maintain horizontal row layouts mirroring the HUD control layout.
 - **Icon-only everywhere**: GodMode HUD is icon-only with tooltips; popup drops text labels and uses the exact same icon-only buttons with tooltips everywhere.
 - **Static in HudView**: The shared layout function lives as a static method in each feature's `HudView` (e.g., `TimeControlHudView.buildControls(...)`, `GodModeHudView.buildControls(...)`).
-- **Popup-only title**: The shared layout function does not include the title header; the popup component adds the title header above the shared layout.
+- **No title header**: The popup has no title header at the top.
+- **Black background & styling**: The popup wraps the shared layout in a container with a black background (`Styles.black6` or black rounded background), `rounded(unit(2))`, `padding(unit(1))`, and `gap(unit(1))`.
+- **Toggle-hide on click**: When the popup is currently showing, clicking the feature's QuickAccess button again hides the popup.
 - **`canEdit` parameter**: The shared layout function accepts a `Readable<Boolean> canEdit` parameter to govern interactivity. The HUD passes always-editable (or `null`/always true), while the popup passes a reactive signal disabling controls when the feature is disabled or when the player is a net client.
 - **Exclude drag handle**: Draggable move handles bound to position signals are strictly excluded from the shared layout function and remain in `HudView` only.
-Rejected: vertical stacked popup duplicating layout logic; text labels in GodMode popup; shared layout including title or drag handle; separate direction flag or adaptive layout.
+Rejected: vertical stacked popup duplicating layout logic; text labels in GodMode popup; title header in popup; shared layout including drag handle; separate direction flag or adaptive layout.
 
 ### 4. Anchor above or below the whole QuickAccess bar by bar position (user-decided)
 

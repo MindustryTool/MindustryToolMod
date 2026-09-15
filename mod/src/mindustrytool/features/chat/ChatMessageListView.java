@@ -593,7 +593,7 @@ public class ChatMessageListView extends BaseComponent {
                                                 .style(WebStyles.primary())
                                                 .growX()
                                                 .height(unit(11));
-                            });
+                            }).growX();
                             button(() -> {
                                 Core.app.setClipboardText(link);
                                 Vars.ui.showInfoFade("@copied");

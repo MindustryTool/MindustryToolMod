@@ -15,6 +15,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.input.Button;
 import solim.input.SolimSlider;
 import solim.overlay.Hud;
 import solim.signal.Computed;
@@ -39,11 +40,8 @@ public class TimeControlHudView extends BaseComponent {
     @Override
     protected Element build() {
         Readable<Float> scale = parentFeature.scaleConfig.signal();
-        Readable<Float> buttonSize = scale.map(s -> unit(11) * s);
-        Readable<Float> presetWidth = scale.map(s -> unit(15) * s);
-        Readable<Float> dragIconSize = scale.map(s -> unit(7) * s);
-        Readable<Float> resetIconSize = scale.map(s -> unit(7) * s);
-        Readable<Float> fontScale = scale.map(s -> s != null ? s : 1f);
+        Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
+        Readable<Float> dragIconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 
         hud = hud(() -> {
             dynamic(parentFeature.hideDragHandleConfig.signal(), hide -> {
@@ -58,8 +56,7 @@ public class TimeControlHudView extends BaseComponent {
                 return null;
             });
 
-            dynamic(parentFeature.modeConfig.signal(),
-                    mode -> buildModeContent(mode, buttonSize, presetWidth, resetIconSize, fontScale));
+            buildControls(parentFeature, null);
         }).gap(unit(1));
 
         hud.position(parentFeature.xSignal, parentFeature.ySignal);
@@ -83,28 +80,40 @@ public class TimeControlHudView extends BaseComponent {
         return hud.element();
     }
 
-    private Component buildModeContent(String mode, Readable<Float> buttonSize, Readable<Float> presetWidth,
-            Readable<Float> resetIconSize, Readable<Float> fontScale) {
-        return TimeControlFeature.MODE_SLIDER.equals(mode)
-                ? buildSliderContent(buttonSize, resetIconSize, fontScale)
-                : buildPresetContent(buttonSize, presetWidth, fontScale);
+    public static Component buildControls(TimeControlFeature feature, @Nullable Readable<Boolean> canEdit) {
+        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
+        Readable<Float> presetWidth = scale.map(s -> unit(15) * (s != null ? s : 1f));
+        Readable<Float> resetIconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
+        Readable<Float> fontScale = scale.map(s -> s != null ? s : 1f);
+
+        return dynamic(feature.modeConfig.signal(),
+                mode -> buildModeContent(feature, mode, buttonSize, presetWidth, resetIconSize, fontScale, canEdit));
     }
 
-    private Component buildPresetContent(Readable<Float> buttonSize, Readable<Float> presetWidth,
-            Readable<Float> fontScale) {
+    private static Component buildModeContent(TimeControlFeature feature, String mode, Readable<Float> buttonSize,
+            Readable<Float> presetWidth, Readable<Float> resetIconSize, Readable<Float> fontScale,
+            @Nullable Readable<Boolean> canEdit) {
+        return TimeControlFeature.MODE_SLIDER.equals(mode)
+                ? buildSliderContent(feature, buttonSize, resetIconSize, fontScale, canEdit)
+                : buildPresetContent(feature, buttonSize, presetWidth, fontScale, canEdit);
+    }
+
+    private static Component buildPresetContent(TimeControlFeature feature, Readable<Float> buttonSize,
+            Readable<Float> presetWidth, Readable<Float> fontScale, @Nullable Readable<Boolean> canEdit) {
         return row()
                 .children(() -> {
                     for (float preset : TimeControlFeature.SPEEDS) {
-                        presetButton(preset, buttonSize, presetWidth, fontScale);
+                        presetButton(feature, preset, buttonSize, presetWidth, fontScale, canEdit);
                     }
                 });
     }
 
-    private Component presetButton(float preset, Readable<Float> buttonSize, Readable<Float> presetWidth,
-            Readable<Float> fontScale) {
+    private static Component presetButton(TimeControlFeature feature, float preset, Readable<Float> buttonSize,
+            Readable<Float> presetWidth, Readable<Float> fontScale, @Nullable Readable<Boolean> canEdit) {
         Computed<String> label = Signal.computed(() -> {
-            float selected = parentFeature.selectedPresetSignal().get();
-            boolean isBoosted = Boolean.TRUE.equals(parentFeature.boostedSignal().get());
+            float selected = feature.selectedPresetSignal().get();
+            boolean isBoosted = Boolean.TRUE.equals(feature.boostedSignal().get());
             float shown = Float.compare(preset, selected) == 0 && isBoosted
                     ? TimeControlFeature.effectiveSpeed(preset, true)
                     : preset;
@@ -112,25 +121,26 @@ public class TimeControlHudView extends BaseComponent {
         });
 
         Computed<Color> color = Signal.computed(() -> {
-            boolean isSelected = Float.compare(preset, parentFeature.selectedPresetSignal().get()) == 0;
+            boolean isSelected = Float.compare(preset, feature.selectedPresetSignal().get()) == 0;
             if (!isSelected) {
                 return Pal.gray;
             }
-            return Boolean.TRUE.equals(parentFeature.boostedSignal().get()) ? Pal.accent : Color.white;
+            return Boolean.TRUE.equals(feature.boostedSignal().get()) ? Pal.accent : Color.white;
         });
 
-        return button()
+        Button btn = button()
                 .style(Styles.cleart)
                 .height(buttonSize)
                 .width(presetWidth)
-                .onClick(() -> parentFeature.selectPreset(preset))
+                .onClick(() -> feature.selectPreset(preset))
                 .children(() -> text(label).color(color).fontScale(fontScale));
+        return canEdit != null ? btn.enabled(canEdit) : btn;
     }
 
-    private Component buildSliderContent(Readable<Float> buttonSize, Readable<Float> resetIconSize,
-            Readable<Float> fontScale) {
+    private static Component buildSliderContent(TimeControlFeature feature, Readable<Float> buttonSize,
+            Readable<Float> resetIconSize, Readable<Float> fontScale, @Nullable Readable<Boolean> canEdit) {
         // Fixed-width reactive speed label so bar width never changes as value changes.
-        Computed<String> label = parentFeature.speedSignal()
+        Computed<String> label = feature.speedSignal()
                 .map(value -> Core.bundle.format("feature.time-control.speed.format",
                         TimeControlFeature.formatSpeed(value != null ? value : 1f)));
         Readable<Float> sliderHeight = buttonSize.map(h -> (h != null ? h : unit(10)) * 0.9f);
@@ -143,13 +153,17 @@ public class TimeControlHudView extends BaseComponent {
                     // u -> speed).
 
                     row().background(Styles.black6).height(buttonSize).center().children(() -> {
-                        SolimSlider slider = slider(parentFeature.sliderPositionSignal(),
+                        SolimSlider slider = slider(feature.sliderPositionSignal(),
                                 TimeControlFeature.SLIDER_MIN_U,
                                 TimeControlFeature.SLIDER_MAX_U,
                                 TimeControlFeature.SLIDER_STEP_U);
 
                         slider.slider().setWidth(unit(70));
                         effect(() -> {
+                            if (canEdit != null) {
+                                Boolean editable = canEdit.get();
+                                slider.slider().setDisabled(!Boolean.TRUE.equals(editable));
+                            }
                             Float sliderHeightValue = sliderHeight.get();
                             slider.slider().setHeight(
                                     sliderHeightValue != null ? sliderHeightValue : unit(9));
@@ -161,13 +175,16 @@ public class TimeControlHudView extends BaseComponent {
                     });
 
                     // Reset button: zeroes slider position so widget and speed land exactly on 1x.
-                    button()
+                    Button resetBtn = button()
                             .style(Styles.clearNonei)
                             .background(Styles.black6)
                             .size(buttonSize)
                             .tooltip(Core.bundle.get("feature.time-control.slider.reset.tooltip"))
-                            .onClick(() -> parentFeature.resetSlider())
+                            .onClick(() -> feature.resetSlider())
                             .children(() -> icon(Icon.refresh).size(resetIconSize));
+                    if (canEdit != null) {
+                        resetBtn.enabled(canEdit);
+                    }
                 });
     }
 

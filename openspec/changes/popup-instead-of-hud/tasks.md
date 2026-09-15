@@ -6,7 +6,7 @@
 
 ## 2. TimeControl popup surface
 
-- [ ] 2.1 Extract the shared horizontal row layout into static `TimeControlHudView.buildControls(...)` accepting `canEdit` (excluding drag handle), and update `TimeControlPopup` to render the popup-only title header and reuse `buildControls`.
+- [ ] 2.1 Update `TimeControlPopup` to remove the title header, wrap the shared layout in a black background with `rounded(unit(2))`, `padding(unit(1))`, and `gap(unit(1))`, and support toggle-hide when clicking the button while showing.
 - [x] 2.2 Anchor the popup above or below the whole QuickAccess bar based on the bar's screen position at open time; apply the feature UI scale mappings to popup content.
 - [x] 2.3 Render popup controls visibly disabled for net clients.
 - [x] 2.4 Suppress the standalone HUD entirely in popup mode while QuickAccess is on; restore it silently when QuickAccess is off with the setting left at popup.
@@ -14,13 +14,13 @@
 ## 3. QuickAccess tap branching
 
 - [x] 3.1 Mark TimeControl quick-access capable so its button renders in the QuickAccess grid under existing visibility rules.
-- [x] 3.2 Branch QuickAccess tap handling: popup-mode features open their popup without toggling; HUD-mode features toggle exactly as today; long-press opens settings in both modes.
+- [ ] 3.2 Branch QuickAccess tap handling: popup-mode features toggle popup visibility (hide if currently showing or clicked again, show if closed); HUD-mode features toggle exactly as today; long-press opens settings in both modes.
 - [x] 3.3 Ensure popup activation never propagates to the toggle path.
 
 ## 4. GodMode shell
 
 - [x] 4.1 De-dev GodMode into a real placeholder feature (enable signal, no cheat logic, no game-state effects) with QuickAccess membership.
-- [ ] 4.2 Extract the shared icon-only horizontal row layout into static `GodModeHudView.buildControls(...)` accepting `canEdit` (excluding drag handle), and update `GodModePopup` to render the popup-only title header and reuse `buildControls` with icon-only buttons everywhere.
+- [ ] 4.2 Update `GodModePopup` to remove the title header, wrap the shared layout in a black background with `rounded(unit(2))`, `padding(unit(1))`, and `gap(unit(1))`, and support toggle-hide when clicking the button while showing.
 - [x] 4.3 Update stub-registry and count-sensitive expectations for GodMode leaving the development set.
 
 ## 5. Verification

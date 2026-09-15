@@ -67,12 +67,17 @@ The feature SHALL expose a persisted per-feature display-mode option (`ConfigVal
 
 ### Requirement: Shared row popup control surface
 
-In popup mode with QuickAccess on, tapping the feature's QuickAccess button SHALL open a popup displaying the shared horizontal control row (presets or slider) matching the HUD layout, rendered via a static layout function in `TimeControlHudView` (excluding the drag handle) under a popup-only title header, anchored above or below the whole QuickAccess bar depending on the bar's screen position, sized per the feature UI scale setting, bound to the same speed, preset, boost, and mode signals as the HUD with automatic ownership. The popup controls SHALL support disabled state via a `canEdit` parameter (disabling controls when the feature is disabled or when the player is a net client). The popup SHALL NOT toggle enablement, SHALL contain no enable switch, and SHALL NOT propagate taps to any toggle path. Enable/disable SHALL remain available only via the settings dialog and FeatureCard.
+In popup mode with QuickAccess on, tapping the feature's QuickAccess button SHALL toggle popup visibility (opening if closed, hiding if already showing or clicked again). The popup SHALL display the shared horizontal control row (presets or slider) matching the HUD layout, rendered via a static layout function in `TimeControlHudView` (excluding the drag handle) with no title header, wrapped in a container with a black background, `rounded(unit(2))`, `padding(unit(1))`, and `gap(unit(1))`, anchored above or below the whole QuickAccess bar depending on the bar's screen position, sized per the feature UI scale setting, bound to the same speed, preset, boost, and mode signals as the HUD with automatic ownership. The popup controls SHALL support disabled state via a `canEdit` parameter (disabling controls when the feature is disabled or when the player is a net client). The popup SHALL NOT toggle enablement, SHALL contain no enable switch, and SHALL NOT propagate taps to any toggle path. Enable/disable SHALL remain available only via the settings dialog and FeatureCard.
 
 #### Scenario: Tap opens popup without toggling
 
-- **WHEN** the player taps the TimeControl QuickAccess button in popup mode with QuickAccess on while the feature is disabled
+- **WHEN** the player taps the TimeControl QuickAccess button in popup mode with QuickAccess on while the feature is disabled and the popup is not showing
 - **THEN** the popup opens and the feature remains disabled
+
+#### Scenario: Clicking button again hides popup
+
+- **WHEN** the player taps the TimeControl QuickAccess button in popup mode with QuickAccess on while the TimeControl popup is already showing
+- **THEN** the popup closes and the feature enabled state is unchanged
 
 #### Scenario: Popup drives speed while enabled
 
