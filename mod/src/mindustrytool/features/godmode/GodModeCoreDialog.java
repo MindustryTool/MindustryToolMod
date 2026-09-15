@@ -3,17 +3,16 @@ package mindustrytool.features.godmode;
 import static solim.UI.*;
 
 import arc.Core;
-import arc.graphics.Color;
+import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.game.Team;
 import mindustry.gen.Tex;
-import mindustry.ui.Styles;
 import mindustry.world.Block;
 import mindustry.world.blocks.storage.CoreBlock;
+import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
 import solim.signal.Computed;
-import solim.signal.Readable;
 import solim.signal.Signal;
 
 public class GodModeCoreDialog extends SolimDialog {
@@ -33,41 +32,42 @@ public class GodModeCoreDialog extends SolimDialog {
         Seq<Block> coreBlocks = Vars.content.blocks().select(b -> b instanceof CoreBlock);
         selectedCore = Signal.of(coreBlocks.size > 0 ? coreBlocks.first() : null);
 
-        Readable<String> posLabel = posX.combine(posY, (x, y) ->
+        Computed<String> posLabel = Signal.computed(() ->
                 Core.bundle.format("feature.god-mode.core.position",
-                        Math.round(x != null ? x : 0f),
-                        Math.round(y != null ? y : 0f)));
+                        Math.round(posX.get() != null ? posX.get() : 0f),
+                        Math.round(posY.get() != null ? posY.get() : 0f)));
 
         children(() -> {
-            column().gap(unit(2)).padding(unit(2)).children(() -> {
-                text(Core.bundle.get("feature.god-mode.core.select-core")).color(Color.lightGray);
+            column().gap(unit(2.5f)).padding(unit(3)).children(() -> {
+                text(Core.bundle.get("feature.god-mode.core.select-core")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(420f, 100f).children(() -> {
-                    grid(6).gap(unit(1)).children(() -> {
+                scroll().size(440f, 110f).children(() -> {
+                    grid(6).gap(unit(1.5f)).children(() -> {
                         for (Block b : coreBlocks) {
                             button()
-                                    .style(Styles.clearTogglei)
+                                    .style(WebStyles.filterChip())
                                     .checked(selectedCore.map(sel -> sel == b))
                                     .onClick(() -> selectedCore.set(b))
-                                    .size(unit(10), unit(10))
+                                    .size(unit(11), unit(11))
+                                    .padding(unit(1))
                                     .tooltip(b.localizedName)
-                                    .children(() -> image(b.uiIcon).size(unit(7)));
+                                    .children(() -> image(new TextureRegionDrawable(b.uiIcon)).size(unit(7.5f)));
                         }
                     });
                 });
 
-                text(Core.bundle.get("feature.god-mode.items.target-team")).color(Color.lightGray);
+                text(Core.bundle.get("feature.god-mode.items.target-team")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(420f, 50f).children(() -> {
-                    row().gap(unit(1)).children(() -> {
+                scroll().size(440f, 50f).children(() -> {
+                    row().gap(unit(1.5f)).children(() -> {
                         for (Team t : Team.baseTeams) {
                             button()
-                                    .style(Styles.clearTogglei)
+                                    .style(WebStyles.filterChip())
                                     .checked(selectedTeam.map(sel -> sel == t))
                                     .onClick(() -> selectedTeam.set(t))
-                                    .padding(unit(1))
+                                    .padding(unit(1.5f))
                                     .children(() -> {
-                                        row().gap(unit(1)).children(() -> {
+                                        row().gap(unit(1.5f)).center().children(() -> {
                                             image(Tex.whiteui).size(unit(3)).color(t.color);
                                             text(t.localized()).color(t.color);
                                         });
@@ -77,19 +77,22 @@ public class GodModeCoreDialog extends SolimDialog {
                 });
 
                 row().growX().gap(unit(2)).center().children(() -> {
-                    text(posLabel).color(Color.lightGray);
-                    button(Core.bundle.get("feature.god-mode.core.select-position"))
-                            .style(Styles.defaultt)
+                    text(posLabel).color(WebStyles.Colors.GHOST_FG);
+                    button()
+                            .style(WebStyles.secondary())
+                            .padding(unit(1.5f))
                             .onClick(() -> MapPositionPicker.pick(this::hide, (x, y) -> {
                                 posX.set(x);
                                 posY.set(y);
                                 show();
-                            }));
+                            }))
+                            .children(() -> text(Core.bundle.get("feature.god-mode.core.select-position")));
                 });
 
-                button(Core.bundle.get("feature.god-mode.core.place"))
-                        .style(Styles.defaultt)
+                button()
+                        .style(WebStyles.primary())
                         .growX()
+                        .padding(unit(2))
                         .onClick(() -> {
                             Block b = selectedCore.get();
                             Team tm = selectedTeam.get();
@@ -102,7 +105,8 @@ public class GodModeCoreDialog extends SolimDialog {
                                 }
                             }
                             hide();
-                        });
+                        })
+                        .children(() -> text(Core.bundle.get("feature.god-mode.core.place")));
             });
         });
     }

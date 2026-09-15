@@ -22,6 +22,6 @@
 
 ## 5. HUD & Feature Integration
 
-- [ ] 5.1 Implement `GodModeHudView` with floating draggable Solim panel and fog toggle switch
-- [ ] 5.2 Update `GodModeFeature` with configuration, lifecycle management, provider switching, and HUD mounting
-- [ ] 5.3 Verify Java 8 compatibility, Solim architecture rules, and compile check
+- [x] 5.1 Implement `GodModeHudView` with floating draggable Solim panel and fog toggle switch
+- [x] 5.2 Update `GodModeFeature` with configuration, lifecycle management, provider switching, and HUD mounting
+- [x] 5.3 Verify Java 8 compatibility, Solim architecture rules, and compile check

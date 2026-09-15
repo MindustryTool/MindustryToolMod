@@ -3,14 +3,13 @@ package mindustrytool.features.godmode;
 import static solim.UI.*;
 
 import arc.Core;
-import arc.graphics.Color;
+import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.type.StatusEffect;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
 import solim.signal.Readable;
 import solim.signal.Signal;
 
@@ -28,6 +27,16 @@ public class GodModeEffectsDialog extends SolimDialog {
         addCloseButton();
         closeOnBack();
 
+        durationString.subscribe(s -> {
+            if (s != null) {
+                try {
+                    float val = Float.parseFloat(s.trim());
+                    durationSeconds.set(Math.max(1f, val));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        });
+
         Seq<StatusEffect> allEffects = Vars.content.statusEffects();
         Readable<Seq<StatusEffect>> filteredEffects = searchQuery.map(q -> {
             if (q == null || q.trim().isEmpty()) {
@@ -38,56 +47,69 @@ public class GodModeEffectsDialog extends SolimDialog {
         });
 
         children(() -> {
-            column().gap(unit(2)).padding(unit(2)).children(() -> {
-                row().growX().gap(unit(1)).center().children(() -> {
-                    icon(Icon.zoom).size(unit(4));
-                    textField(searchQuery)
-                            .growX()
-                            .placeholder(Core.bundle.get("feature.god-mode.common.search"));
-                });
+            column().gap(unit(2.5f)).padding(unit(3)).children(() -> {
+                row().growX().gap(unit(1.5f))
+                        .padding(unit(1.5f))
+                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
+                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
+                        .center()
+                        .children(() -> {
+                            icon(Icon.zoom).size(unit(4.5f)).color(WebStyles.Colors.GHOST_FG);
+                            textField(searchQuery)
+                                    .growX()
+                                    .height(unit(8))
+                                    .style(WebStyles.clearInput())
+                                    .placeholder(Core.bundle.get("feature.god-mode.common.search"));
+                        });
 
-                text(Core.bundle.get("feature.god-mode.effects.select-effect")).color(Color.lightGray);
+                text(Core.bundle.get("feature.god-mode.effects.select-effect")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(420f, 140f).children(() -> {
-                    dynamic(filteredEffects, effects -> grid(6).gap(unit(1)).children(() -> {
+                scroll().size(440f, 140f).children(() -> {
+                    dynamic(filteredEffects, effects -> grid(6).gap(unit(1.5f)).children(() -> {
                         if (effects != null) {
                             for (StatusEffect ef : effects) {
                                 button()
-                                        .style(Styles.clearTogglei)
+                                        .style(WebStyles.filterChip())
                                         .checked(selectedEffect.map(sel -> sel == ef))
                                         .onClick(() -> selectedEffect.set(ef))
-                                        .size(unit(9), unit(9))
+                                        .size(unit(10), unit(10))
+                                        .padding(unit(1))
                                         .tooltip(ef.localizedName)
-                                        .children(() -> image(ef.uiIcon).size(unit(6)));
+                                        .children(() -> image(new TextureRegionDrawable(ef.uiIcon)).size(unit(6.5f)));
                             }
                         }
                     }));
                 });
 
-                row().growX().gap(unit(1)).center().children(() -> {
-                    text(Core.bundle.get("feature.god-mode.effects.duration") + ": ").color(Color.lightGray);
-                    textField(durationString)
-                            .width(unit(16))
-                            .onTextChange(s -> {
-                                try {
-                                    float val = Float.parseFloat(s.trim());
-                                    durationSeconds.set(Math.max(1f, val));
-                                } catch (NumberFormatException ignored) {
-                                }
+                row().growX().gap(unit(2)).center().children(() -> {
+                    text(Core.bundle.get("feature.god-mode.effects.duration") + ": ").color(WebStyles.Colors.GHOST_FG);
+
+                    row()
+                            .padding(unit(1))
+                            .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
+                            .border(1.5f, WebStyles.Colors.BORDER_INPUT)
+                            .children(() -> {
+                                textField(durationString)
+                                        .width(unit(18))
+                                        .height(unit(8))
+                                        .style(WebStyles.clearInput());
                             });
 
-                    button("10s", () -> setDuration(10f)).style(Styles.defaultt).size(unit(10), unit(6));
-                    button("60s", () -> setDuration(60f)).style(Styles.defaultt).size(unit(10), unit(6));
-                    button("5m", () -> setDuration(300f)).style(Styles.defaultt).size(unit(10), unit(6));
-                    button(Core.bundle.get("feature.god-mode.effects.infinite"), () -> setDuration(999999f))
-                            .style(Styles.defaultt)
-                            .size(unit(16), unit(6));
+                    button(() -> setDuration(10f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("10s"));
+                    button(() -> setDuration(60f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("60s"));
+                    button(() -> setDuration(300f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("5m"));
+                    button(() -> setDuration(999999f))
+                            .style(WebStyles.secondary())
+                            .padding(unit(1))
+                            .size(unit(16), unit(7))
+                            .children(() -> text(Core.bundle.get("feature.god-mode.effects.infinite")));
                 });
 
                 row().growX().gap(unit(2)).children(() -> {
-                    button(Core.bundle.get("feature.god-mode.effects.apply"))
-                            .style(Styles.defaultt)
+                    button()
+                            .style(WebStyles.primary())
                             .growX()
+                            .padding(unit(2))
                             .onClick(() -> {
                                 StatusEffect ef = selectedEffect.get();
                                 float sec = durationSeconds.get() != null ? durationSeconds.get() : 60f;
@@ -95,18 +117,21 @@ public class GodModeEffectsDialog extends SolimDialog {
                                     provider.applyEffect(ef, sec * 60f);
                                 }
                                 hide();
-                            });
+                            })
+                            .children(() -> text(Core.bundle.get("feature.god-mode.effects.apply")));
 
-                    button(Core.bundle.get("feature.god-mode.effects.clear"))
-                            .style(Styles.defaultt)
+                    button()
+                            .style(WebStyles.danger())
                             .growX()
+                            .padding(unit(2))
                             .onClick(() -> {
                                 StatusEffect ef = selectedEffect.get();
                                 if (ef != null) {
                                     provider.clearEffect(ef);
                                 }
                                 hide();
-                            });
+                            })
+                            .children(() -> text(Core.bundle.get("feature.god-mode.effects.clear")));
                 });
             });
         });

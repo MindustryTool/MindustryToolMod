@@ -3,14 +3,13 @@ package mindustrytool.features.godmode;
 import static solim.UI.*;
 
 import arc.Core;
-import arc.graphics.Color;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.game.Team;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
 import mindustry.gen.Tex;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
 import solim.signal.Signal;
 
@@ -35,19 +34,21 @@ public class GodModeTeamDialog extends SolimDialog {
         Team[] teams = Team.baseTeams;
 
         children(() -> {
-            column().gap(unit(2)).padding(unit(2)).children(() -> {
-                text(Core.bundle.get("feature.god-mode.team.select-player")).color(Color.lightGray);
+            column().gap(unit(2.5f)).padding(unit(3)).children(() -> {
+                text(Core.bundle.get("feature.god-mode.team.select-player")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(400f, 100f).children(() -> {
-                    column().gap(unit(1)).growX().children(() -> {
+                scroll().size(420f, 110f).children(() -> {
+                    column().gap(unit(1.5f)).growX().children(() -> {
                         for (Player p : players) {
                             button()
-                                    .style(Styles.clearTogglei)
+                                    .style(WebStyles.cardAction())
                                     .checked(selectedPlayer.map(sel -> sel == p))
                                     .onClick(() -> selectedPlayer.set(p))
                                     .growX()
+                                    .padding(unit(1.5f))
                                     .children(() -> {
-                                        row().left().gap(unit(1)).padding(unit(1)).children(() -> {
+                                        row().left().gap(unit(1.5f)).center().children(() -> {
+                                            image(Tex.whiteui).size(unit(2.5f)).color(p.team().color);
                                             text(p.name).color(p.team().color);
                                         });
                                     });
@@ -55,18 +56,19 @@ public class GodModeTeamDialog extends SolimDialog {
                     });
                 });
 
-                text(Core.bundle.get("feature.god-mode.team.select-team")).color(Color.lightGray);
+                text(Core.bundle.get("feature.god-mode.team.select-team")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(400f, 140f).children(() -> {
-                    grid(3).gap(unit(1)).children(() -> {
+                scroll().size(420f, 130f).children(() -> {
+                    grid(3).gap(unit(1.5f)).children(() -> {
                         for (Team t : teams) {
                             button()
-                                    .style(Styles.clearTogglei)
+                                    .style(WebStyles.filterChip())
                                     .checked(selectedTeam.map(sel -> sel == t))
                                     .onClick(() -> selectedTeam.set(t))
+                                    .padding(unit(1.5f))
                                     .growX()
                                     .children(() -> {
-                                        row().left().gap(unit(1)).padding(unit(1)).children(() -> {
+                                        row().left().gap(unit(1.5f)).center().children(() -> {
                                             image(Tex.whiteui).size(unit(3)).color(t.color);
                                             text(t.localized()).color(t.color);
                                         });
@@ -75,13 +77,15 @@ public class GodModeTeamDialog extends SolimDialog {
                     });
                 });
 
-                button(Core.bundle.get("feature.god-mode.team.apply"))
-                        .style(Styles.defaultt)
+                button()
+                        .style(WebStyles.primary())
                         .growX()
+                        .padding(unit(2))
                         .onClick(() -> {
                             provider.changeTeam(selectedPlayer.get(), selectedTeam.get());
                             hide();
-                        });
+                        })
+                        .children(() -> text(Core.bundle.get("feature.god-mode.team.apply")));
             });
         });
     }
