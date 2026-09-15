@@ -76,7 +76,7 @@ public class GodModeUnitsDialog extends SolimDialog {
                 text(Core.bundle.get("feature.god-mode.units.select-unit")).color(WebStyles.Colors.GHOST_FG);
 
                 scroll().size(440f, 130f).children(() -> {
-                    dynamic(filteredUnits, units -> grid(6).gap(unit(1.5f)).children(() -> {
+                    dynamic(filteredUnits, units -> wrap().left().gap(unit(1.5f)).children(() -> {
                         if (units != null) {
                             for (UnitType u : units) {
                                 button()
@@ -94,8 +94,8 @@ public class GodModeUnitsDialog extends SolimDialog {
 
                 text(Core.bundle.get("feature.god-mode.items.target-team")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(440f, 50f).children(() -> {
-                    row().gap(unit(1.5f)).children(() -> {
+                scroll().size(440f, 65f).children(() -> {
+                    wrap().left().gap(unit(1.5f)).children(() -> {
                         for (Team t : Team.baseTeams) {
                             button()
                                     .style(WebStyles.filterChip())
@@ -112,24 +112,28 @@ public class GodModeUnitsDialog extends SolimDialog {
                     });
                 });
 
-                row().growX().gap(unit(2)).center().children(() -> {
-                    text(Core.bundle.get("feature.god-mode.units.count") + ": ").color(WebStyles.Colors.GHOST_FG);
+                wrap().gap(unit(2)).center().children(() -> {
+                    row().gap(unit(1.5f)).center().children(() -> {
+                        text(Core.bundle.get("feature.god-mode.units.count") + ": ").color(WebStyles.Colors.GHOST_FG);
 
-                    row()
-                            .padding(unit(1))
-                            .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                            .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                            .children(() -> {
-                                textField(countString)
-                                        .width(unit(18))
-                                        .height(unit(8))
-                                        .style(WebStyles.clearInput());
-                            });
+                        row()
+                                .padding(unit(1))
+                                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
+                                .border(1.5f, WebStyles.Colors.BORDER_INPUT)
+                                .children(() -> {
+                                    textField(countString)
+                                            .width(unit(18))
+                                            .height(unit(8))
+                                            .style(WebStyles.clearInput());
+                                });
+                    });
 
-                    button(() -> addCount(1)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7)).children(() -> text("+1"));
-                    button(() -> addCount(5)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7)).children(() -> text("+5"));
-                    button(() -> addCount(10)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("+10"));
-                    button(() -> addCount(50)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("+50"));
+                    wrap().gap(unit(1.5f)).center().children(() -> {
+                        button(() -> addCount(1)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7)).children(() -> text("+1"));
+                        button(() -> addCount(5)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7)).children(() -> text("+5"));
+                        button(() -> addCount(10)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("+10"));
+                        button(() -> addCount(50)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("+50"));
+                    });
                 });
 
                 row().growX().gap(unit(2)).center().children(() -> {

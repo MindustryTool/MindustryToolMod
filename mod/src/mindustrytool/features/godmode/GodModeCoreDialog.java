@@ -42,7 +42,7 @@ public class GodModeCoreDialog extends SolimDialog {
                 text(Core.bundle.get("feature.god-mode.core.select-core")).color(WebStyles.Colors.GHOST_FG);
 
                 scroll().size(440f, 110f).children(() -> {
-                    grid(6).gap(unit(1.5f)).children(() -> {
+                    wrap().left().gap(unit(1.5f)).children(() -> {
                         for (Block b : coreBlocks) {
                             button()
                                     .style(WebStyles.filterChip())
@@ -58,8 +58,8 @@ public class GodModeCoreDialog extends SolimDialog {
 
                 text(Core.bundle.get("feature.god-mode.items.target-team")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(440f, 50f).children(() -> {
-                    row().gap(unit(1.5f)).children(() -> {
+                scroll().size(440f, 65f).children(() -> {
+                    wrap().left().gap(unit(1.5f)).children(() -> {
                         for (Team t : Team.baseTeams) {
                             button()
                                     .style(WebStyles.filterChip())

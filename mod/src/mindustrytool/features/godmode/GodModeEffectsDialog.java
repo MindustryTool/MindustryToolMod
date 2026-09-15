@@ -65,7 +65,7 @@ public class GodModeEffectsDialog extends SolimDialog {
                 text(Core.bundle.get("feature.god-mode.effects.select-effect")).color(WebStyles.Colors.GHOST_FG);
 
                 scroll().size(440f, 140f).children(() -> {
-                    dynamic(filteredEffects, effects -> grid(6).gap(unit(1.5f)).children(() -> {
+                    dynamic(filteredEffects, effects -> wrap().left().gap(unit(1.5f)).children(() -> {
                         if (effects != null) {
                             for (StatusEffect ef : effects) {
                                 button()
@@ -81,28 +81,32 @@ public class GodModeEffectsDialog extends SolimDialog {
                     }));
                 });
 
-                row().growX().gap(unit(2)).center().children(() -> {
-                    text(Core.bundle.get("feature.god-mode.effects.duration") + ": ").color(WebStyles.Colors.GHOST_FG);
+                wrap().gap(unit(2)).center().children(() -> {
+                    row().gap(unit(1.5f)).center().children(() -> {
+                        text(Core.bundle.get("feature.god-mode.effects.duration") + ": ").color(WebStyles.Colors.GHOST_FG);
 
-                    row()
-                            .padding(unit(1))
-                            .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                            .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                            .children(() -> {
-                                textField(durationString)
-                                        .width(unit(18))
-                                        .height(unit(8))
-                                        .style(WebStyles.clearInput());
-                            });
+                        row()
+                                .padding(unit(1))
+                                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
+                                .border(1.5f, WebStyles.Colors.BORDER_INPUT)
+                                .children(() -> {
+                                    textField(durationString)
+                                            .width(unit(18))
+                                            .height(unit(8))
+                                            .style(WebStyles.clearInput());
+                                });
+                    });
 
-                    button(() -> setDuration(10f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("10s"));
-                    button(() -> setDuration(60f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("60s"));
-                    button(() -> setDuration(300f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("5m"));
-                    button(() -> setDuration(999999f))
-                            .style(WebStyles.secondary())
-                            .padding(unit(1))
-                            .size(unit(16), unit(7))
-                            .children(() -> text(Core.bundle.get("feature.god-mode.effects.infinite")));
+                    wrap().gap(unit(1.5f)).center().children(() -> {
+                        button(() -> setDuration(10f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("10s"));
+                        button(() -> setDuration(60f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("60s"));
+                        button(() -> setDuration(300f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("5m"));
+                        button(() -> setDuration(999999f))
+                                .style(WebStyles.secondary())
+                                .padding(unit(1))
+                                .size(unit(16), unit(7))
+                                .children(() -> text(Core.bundle.get("feature.god-mode.effects.infinite")));
+                    });
                 });
 
                 row().growX().gap(unit(2)).children(() -> {

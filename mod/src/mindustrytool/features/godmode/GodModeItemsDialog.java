@@ -68,7 +68,7 @@ public class GodModeItemsDialog extends SolimDialog {
                 text(Core.bundle.get("feature.god-mode.items.select-item")).color(WebStyles.Colors.GHOST_FG);
 
                 scroll().size(440f, 130f).children(() -> {
-                    dynamic(filteredItems, items -> grid(6).gap(unit(1.5f)).children(() -> {
+                    dynamic(filteredItems, items -> wrap().left().gap(unit(1.5f)).children(() -> {
                         if (items != null) {
                             for (Item it : items) {
                                 button()
@@ -86,8 +86,8 @@ public class GodModeItemsDialog extends SolimDialog {
 
                 text(Core.bundle.get("feature.god-mode.items.target-team")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(440f, 50f).children(() -> {
-                    row().gap(unit(1.5f)).children(() -> {
+                scroll().size(440f, 65f).children(() -> {
+                    wrap().left().gap(unit(1.5f)).children(() -> {
                         for (Team t : Team.baseTeams) {
                             button()
                                     .style(WebStyles.filterChip())
@@ -119,7 +119,7 @@ public class GodModeItemsDialog extends SolimDialog {
                             });
                 });
 
-                row().gap(unit(1.5f)).center().children(() -> {
+                wrap().gap(unit(1.5f)).center().children(() -> {
                     button(() -> addDelta(10)).style(WebStyles.outline()).padding(unit(1)).size(unit(13), unit(7)).children(() -> text("+10"));
                     button(() -> addDelta(100)).style(WebStyles.outline()).padding(unit(1)).size(unit(13), unit(7)).children(() -> text("+100"));
                     button(() -> addDelta(1000)).style(WebStyles.outline()).padding(unit(1)).size(unit(15), unit(7)).children(() -> text("+1000"));

@@ -33,11 +33,10 @@ public class GodModeSettingsView extends BaseComponent {
 
                     divider();
 
-                    row().growX().gap(unit(2)).center().children(() -> {
+                    column().growX().gap(unit(1.5f)).children(() -> {
                         text(Core.bundle.get("feature.god-mode.settings.provider")).left().color(WebStyles.Colors.GHOST_FG);
 
-                        spacer();
-                        row().gap(unit(1.5f)).children(() -> {
+                        wrap().gap(unit(1.5f)).children(() -> {
                             button(() -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_AUTO))
                                     .style(WebStyles.filterChip())
                                     .checked(feature.providerModeConfig.signal()
