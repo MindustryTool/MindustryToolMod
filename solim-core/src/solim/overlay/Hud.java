@@ -442,6 +442,9 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
         if (disposed)
             return;
         disposed = true;
+        if (Core.scene != null) {
+            Core.scene.unfocus(root);
+        }
         Events.remove(ResizeEvent.class, resizeListener);
         for (Disposable d : bindings) {
             d.dispose();
