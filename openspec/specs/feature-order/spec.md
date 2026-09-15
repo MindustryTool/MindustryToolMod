@@ -1,8 +1,16 @@
-## ADDED Requirements
+# feature-order Specification
+
+## Purpose
+
+User-reorderable feature cards with persisted order across sessions, load-time normalization, boundary-aware chevron controls, and deterministic pinning of development features. Created by archiving change reorder-features.
+
+## Requirements
+
+**Source: reorder-features**
 
 ### Requirement: Ordered-ID list persistence
 
-The system SHALL persist the user-defined non-development feature order as an ordered list of feature ids in a `ConfigValue<Seq<String>>` JSON entry owned by `ModSettings`, using a custom ordered JSON persister that preserves list order across save/load cycles.
+The system SHALL persist the user-defined non-development feature order as an ordered list of feature ids in a ConfigValue<Seq<String>> JSON entry owned by ModSettings, using a custom ordered JSON persister that preserves list order across save/load cycles.
 
 #### Scenario: Order persists across sessions
 
@@ -16,7 +24,7 @@ The system SHALL persist the user-defined non-development feature order as an or
 
 ### Requirement: Load-time normalization
 
-The system SHALL normalize the persisted ordered list during `FeatureManager.init()` after all registrations by deduplicating keeping the first occurrence, dropping stale (unregistered) ids, dropping development ids, appending missing non-development ids sorted by metadata order then id, and persisting the reconciled list only when it differs from storage. An unparseable or corrupt payload SHALL reset to the default order of registered non-development ids sorted by metadata order then id and overwrite the stored key.
+The system SHALL normalize the persisted ordered list during FeatureManager.init() after all registrations by deduplicating keeping the first occurrence, dropping stale (unregistered) ids, dropping development ids, appending missing non-development ids sorted by metadata order then id, and persisting the reconciled list only when it differs from storage. An unparseable or corrupt payload SHALL reset to the default order of registered non-development ids sorted by metadata order then id and overwrite the stored key.
 
 #### Scenario: Duplicate ids healed
 
@@ -83,7 +91,7 @@ The system SHALL always render development features after all non-development fe
 
 ### Requirement: Status row layout with trailing chevrons
 
-Each non-development `FeatureCard` SHALL render its status text left-aligned in a row followed by a spacer pushing chevron-left and chevron-right buttons to the most-right position, keeping the divider accent below the row. Chevron activation SHALL NOT propagate to the card enable toggle, following the same click-consumption behavior as the existing header shortcut buttons.
+Each non-development FeatureCard SHALL render its status text left-aligned in a row followed by a spacer pushing chevron-left and chevron-right buttons to the most-right position, keeping the divider accent below the row. Chevron activation SHALL NOT propagate to the card enable toggle, following the same click-consumption behavior as the existing header shortcut buttons.
 
 #### Scenario: Status row arrangement
 
@@ -97,7 +105,7 @@ Each non-development `FeatureCard` SHALL render its status text left-aligned in 
 
 ### Requirement: Localized reorder controls
 
-The system SHALL resolve reorder chevron labels or tooltips from `Core.bundle` under documented keys carrying translator comments, with no hardcoded user-visible text.
+The system SHALL resolve reorder chevron labels or tooltips from Core.bundle under documented keys carrying translator comments, with no hardcoded user-visible text.
 
 #### Scenario: Reorder tooltips resolve
 

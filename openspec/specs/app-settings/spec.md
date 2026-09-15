@@ -103,7 +103,7 @@ The system SHALL register 14 metadata-only stub features with `development=true`
 
 #### Scenario: Registry contains stubs alongside real features
 - **WHEN** the mod starts and `Main` registers features
-- **THEN** `FeatureManager.getFeatures()` contains the 10 existing features plus the 14 development stubs sorted by metadata order
+- **THEN** `FeatureManager.getFeatures()` contains the 10 existing features plus the 14 development stubs ordered with non-development features in persisted ordered-ID list sequence followed by development stubs sorted by feature id
 
 #### Scenario: Stub exposes metadata only
 - **WHEN** a stub is inspected
