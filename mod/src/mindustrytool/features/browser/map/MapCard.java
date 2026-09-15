@@ -103,7 +103,7 @@ public class MapCard extends BaseComponent {
                                 Core.bundle.get("browser.map.details"));
                         statButton(
                                 BrowserStatsBadge.formatCount(BrowserImages.count(map.getComments())),
-                                Icon.chatSmall,
+                                FileIcon.of("message-circle.png"),
                                 Color.white,
                                 onDetails,
                                 Core.bundle.get("browser.map.details"));

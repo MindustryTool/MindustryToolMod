@@ -157,13 +157,17 @@ public class ChatMessageListView extends BaseComponent {
         });
 
         Readable<Boolean> channelsCol = store.ui().channelsCollapsed();
-        Readable<Drawable> channelsIcon = channelsCol.map(c -> Boolean.TRUE.equals(c) ? Icon.rightOpen : Icon.leftOpen);
+        Readable<Drawable> channelsIcon = channelsCol.map(c -> Boolean.TRUE.equals(c)
+                ? FileIcon.of("chevron-right.png", Icon.rightOpen)
+                : FileIcon.of("chevron-left.png", Icon.leftOpen));
         Readable<String> channelsTooltip = channelsCol.map(c -> Boolean.TRUE.equals(c)
                 ? Core.bundle.get("feature.chat.ui.expand-channels", "Show Channels")
                 : Core.bundle.get("feature.chat.ui.collapse-channels", "Hide Channels"));
 
         Readable<Boolean> usersCol = store.ui().usersCollapsed();
-        Readable<Drawable> usersIcon = usersCol.map(c -> Boolean.TRUE.equals(c) ? Icon.leftOpen : Icon.rightOpen);
+        Readable<Drawable> usersIcon = usersCol.map(c -> Boolean.TRUE.equals(c)
+                ? FileIcon.of("chevron-left.png", Icon.leftOpen)
+                : FileIcon.of("chevron-right.png", Icon.rightOpen));
         Readable<String> usersTooltip = usersCol.map(c -> Boolean.TRUE.equals(c)
                 ? Core.bundle.get("feature.chat.ui.expand-users", "Show Members")
                 : Core.bundle.get("feature.chat.ui.collapse-users", "Hide Members"));
@@ -175,10 +179,10 @@ public class ChatMessageListView extends BaseComponent {
             row().growX().center().height(unit(8)).children(() -> {
                 button(store.ui()::toggleChannelsCollapsed)
                         .style(WebStyles.ghost())
-                        .size(unit(7), unit(7))
+                        .size(unit(9))
                         .visible(isDesktop)
                         .tooltip(channelsTooltip)
-                        .children(() -> icon(channelsIcon).size(unit(4.5f)));
+                        .children(() -> icon(channelsIcon).size(unit(6f)));
 
                 text(channelTitle)
                         .color(Pal.accent)
@@ -190,10 +194,10 @@ public class ChatMessageListView extends BaseComponent {
 
                 button(store.ui()::toggleUsersCollapsed)
                         .style(WebStyles.ghost())
-                        .size(unit(7), unit(7))
+                        .size(unit(9))
                         .visible(isDesktop)
                         .tooltip(usersTooltip)
-                        .children(() -> icon(usersIcon).size(unit(4.5f)));
+                        .children(() -> icon(usersIcon).size(unit(6f)));
             });
 
             divider();

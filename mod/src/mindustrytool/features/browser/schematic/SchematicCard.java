@@ -108,7 +108,7 @@ public class SchematicCard extends BaseComponent {
                                 Core.bundle.get("browser.schematic.details"));
                         statButton(
                                 BrowserStatsBadge.formatCount(BrowserImages.count(schematic.getComments())),
-                                Icon.chatSmall,
+                                FileIcon.of("message-circle.png"),
                                 Color.white,
                                 onDetails,
                                 Core.bundle.get("browser.schematic.details"));

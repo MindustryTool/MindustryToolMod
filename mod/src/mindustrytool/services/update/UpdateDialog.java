@@ -72,7 +72,8 @@ public class UpdateDialog extends SolimDialog {
 				Vars.ui.mods.show();
 				String repoUrl = Config.ORG_NAME + "/" + Config.REPO_NAME;
 				if (releaseTag != null && !releaseTag.trim().isEmpty()) {
-					Vars.ui.mods.githubImportMod(repoUrl, true, releaseTag, true);
+					String tagParam = releaseTag.startsWith("tags/") || releaseTag.matches("\\d+") ? releaseTag : "tags/" + releaseTag;
+					Vars.ui.mods.githubImportMod(repoUrl, true, tagParam, true);
 				} else {
 					Vars.ui.mods.githubImportMod(repoUrl, true, true);
 				}

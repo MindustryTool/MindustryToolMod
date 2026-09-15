@@ -11,6 +11,7 @@ import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
+import mindustrytool.components.FileIcon;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Direction;
@@ -18,6 +19,7 @@ import solim.overlay.Hud;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.ui.Units;
+
 
 public class ChatOverlayHudView extends BaseComponent {
 
@@ -91,7 +93,8 @@ public class ChatOverlayHudView extends BaseComponent {
                                 stack()
                                         .grow()
                                         .center()
-                                        .layer(() -> icon(Icon.chat).size(unit(10)).center().grow().color(Color.white))
+                                        .layer(() -> icon(FileIcon.of("message-circle.png")).size(unit(10)).center()
+                                                .grow().color(Color.white))
                                         .layer(() -> row().top().right().grow().visible(hasUnread).children(() -> {
                                             image(circle())
                                                     .cellPadding(unit(1))

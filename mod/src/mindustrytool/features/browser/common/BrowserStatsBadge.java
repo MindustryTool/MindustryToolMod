@@ -32,7 +32,7 @@ public class BrowserStatsBadge extends BaseComponent {
             });
 
             row().gap(unit(2)).children(() -> {
-                icon(Icon.chatSmall).size(unit(4));
+                icon(FileIcon.of("message-circle.png")).size(unit(4));
                 text(formatCount(comments));
             });
 

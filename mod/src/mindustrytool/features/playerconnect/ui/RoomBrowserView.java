@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.models.response.PlayerConnectRoom;
@@ -112,7 +113,9 @@ public class RoomBrowserView extends BaseComponent {
                                 .style(WebStyles.outline())
                                 .size(unit(11))
                                 .children(() -> icon(
-                                        collapsed.map(c -> Boolean.TRUE.equals(c) ? Icon.rightOpen : Icon.downOpen))
+                                        collapsed.map(c -> Boolean.TRUE.equals(c)
+                                                ? FileIcon.of("chevron-right.png", Icon.rightOpen)
+                                                : FileIcon.of("chevron-down.png", Icon.downOpen)))
                                                 .width(unit(6)));
 
                         // Search field
