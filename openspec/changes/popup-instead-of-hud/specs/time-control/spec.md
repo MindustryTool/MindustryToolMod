@@ -65,9 +65,9 @@ The feature SHALL expose a persisted per-feature display-mode option (`ConfigVal
 - **WHEN** the user selects popup mode and the game restarts
 - **THEN** the option still reads popup
 
-### Requirement: Stacked popup control surface
+### Requirement: Shared row popup control surface
 
-In popup mode with QuickAccess on, tapping the feature's QuickAccess button SHALL open a stacked vertical mini-panel popup (presets and slider content arranged for the popup idiom) anchored above or below the whole QuickAccess bar depending on the bar's screen position, sized per the feature UI scale setting, bound to the same speed, preset, boost, and mode signals as the HUD with automatic ownership. The popup SHALL NOT toggle enablement, SHALL contain no enable switch, and SHALL NOT propagate taps to any toggle path. Enable/disable SHALL remain available only via the settings dialog and FeatureCard.
+In popup mode with QuickAccess on, tapping the feature's QuickAccess button SHALL open a popup displaying the shared horizontal control row (presets or slider) matching the HUD layout, rendered via a static layout function in `TimeControlHudView` (excluding the drag handle) under a popup-only title header, anchored above or below the whole QuickAccess bar depending on the bar's screen position, sized per the feature UI scale setting, bound to the same speed, preset, boost, and mode signals as the HUD with automatic ownership. The popup controls SHALL support disabled state via a `canEdit` parameter (disabling controls when the feature is disabled or when the player is a net client). The popup SHALL NOT toggle enablement, SHALL contain no enable switch, and SHALL NOT propagate taps to any toggle path. Enable/disable SHALL remain available only via the settings dialog and FeatureCard.
 
 #### Scenario: Tap opens popup without toggling
 

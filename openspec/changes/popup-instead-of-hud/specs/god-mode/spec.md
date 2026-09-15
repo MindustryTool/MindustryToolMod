@@ -25,7 +25,7 @@ The system SHALL list GodMode among QuickAccess HUD items (subject to existing v
 
 ### Requirement: GodMode display mode and popup shell
 
-The system SHALL persist a GodMode display-mode option (`ConfigValue<String>`, HUD/popup values, default HUD) and render a popup shell from its QuickAccess button under the same placement, suppression, fallback, and localization rules as the TimeControl popup, with shell content standing in for future cheat controls.
+The system SHALL persist a GodMode display-mode option (`ConfigValue<String>`, HUD/popup values, default HUD) and render a popup shell from its QuickAccess button under the same placement, suppression, fallback, and localization rules as the TimeControl popup, reusing the shared icon-only horizontal row layout from `GodModeHudView` (excluding drag handle, icon-only with tooltips, disabled state governed by `canEdit`) under a popup-only title header.
 
 #### Scenario: GodMode popup shell opens
 

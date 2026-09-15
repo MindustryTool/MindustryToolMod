@@ -161,7 +161,7 @@ public class RoomCard extends BaseComponent {
             } else {
                 row().gap(unit(1)).growX().children(() -> {
                     button(Core.bundle.get("join", "Join"), () -> promptJoin(secured, missingMods, unneededMods))
-                            .style(WebStyles.primary())
+                            .style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary())
                             .growX()
                             .height(unit(11));
 

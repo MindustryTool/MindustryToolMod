@@ -6,7 +6,7 @@
 
 ## 2. TimeControl popup surface
 
-- [x] 2.1 Build the stacked vertical mini-panel popup content bound to the existing speed, preset, boost, and mode signals with automatic ownership and no view-local state.
+- [ ] 2.1 Extract the shared horizontal row layout into static `TimeControlHudView.buildControls(...)` accepting `canEdit` (excluding drag handle), and update `TimeControlPopup` to render the popup-only title header and reuse `buildControls`.
 - [x] 2.2 Anchor the popup above or below the whole QuickAccess bar based on the bar's screen position at open time; apply the feature UI scale mappings to popup content.
 - [x] 2.3 Render popup controls visibly disabled for net clients.
 - [x] 2.4 Suppress the standalone HUD entirely in popup mode while QuickAccess is on; restore it silently when QuickAccess is off with the setting left at popup.
@@ -20,7 +20,7 @@
 ## 4. GodMode shell
 
 - [x] 4.1 De-dev GodMode into a real placeholder feature (enable signal, no cheat logic, no game-state effects) with QuickAccess membership.
-- [x] 4.2 Provide the GodMode popup shell under the same placement, suppression, fallback, and localization rules as the TimeControl popup.
+- [ ] 4.2 Extract the shared icon-only horizontal row layout into static `GodModeHudView.buildControls(...)` accepting `canEdit` (excluding drag handle), and update `GodModePopup` to render the popup-only title header and reuse `buildControls` with icon-only buttons everywhere.
 - [x] 4.3 Update stub-registry and count-sensitive expectations for GodMode leaving the development set.
 
 ## 5. Verification

@@ -191,7 +191,7 @@ public class ChatMessageListView extends BaseComponent {
                                     .grow()
                                     .gap(unit(0.75f))
                                     .overscan(3)
-                                    .onReachTop(150f, () -> {
+                                    .onReachTop(50f, () -> {
                                         String activeId = store.channels().currentActiveId();
                                         List<ChatMessage> msgs = store.messages().currentActive();
                                         if (activeId != null && !activeId.isEmpty() && service != null && msgs != null

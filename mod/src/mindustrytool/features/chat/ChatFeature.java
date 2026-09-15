@@ -28,6 +28,7 @@ public class ChatFeature extends Feature {
     public final ConfigValue<Boolean> sharePresenceConfig;
     public final ConfigValue<Boolean> channelsCollapsedConfig;
     public final ConfigValue<Boolean> usersCollapsedConfig;
+    public final ConfigValue<String> activeChannelConfig;
 
     public final ContextualConfigValue<Float, String> xConfig;
     public final ContextualConfigValue<Float, String> yConfig;
@@ -60,6 +61,7 @@ public class ChatFeature extends Feature {
         sharePresenceConfig = config.boolValue("share-presence", true);
         channelsCollapsedConfig = config.boolValue("channels-collapsed", false);
         usersCollapsedConfig = config.boolValue("users-collapsed", false);
+        activeChannelConfig = config.stringValue("active-channel", "");
 
         Readable<String> positionContext = Signal.computed(() -> {
             boolean isCol = Boolean.TRUE.equals(collapsedConfig.signal().get());
@@ -94,7 +96,7 @@ public class ChatFeature extends Feature {
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
 
-        store = new ChatStore();
+        store = new ChatStore(this);
         store.ui().setChannelsCollapsed(Boolean.TRUE.equals(channelsCollapsedConfig.get()));
         store.ui().setUsersCollapsed(Boolean.TRUE.equals(usersCollapsedConfig.get()));
 

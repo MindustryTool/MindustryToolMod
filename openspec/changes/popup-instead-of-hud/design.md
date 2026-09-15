@@ -29,9 +29,16 @@ In popup mode with QuickAccess on, tapping the feature's QuickAccess button open
 
 The popup contains no enable switch and opening it never auto-enables. Rejected: enable switch inside the popup; opening auto-enables.
 
-### 3. Stacked mini-panel content (user-decided)
+### 3. Shared horizontal row layout in static HudView function (user-decided)
 
-Popup content is a vertical mini-panel reimagined for the popup idiom, not a horizontal mirror of the HUD bar. Rejected: mirrored HUD bar in menu skin.
+Popup content reuses the HUD's horizontal row layout directly via a static function in each feature's `HudView` (`TimeControlHudView`, `GodModeHudView`) rather than duplicating UI logic in a vertical stack:
+- **Mirror HUD row**: TimeControl and GodMode maintain horizontal row layouts mirroring the HUD control layout.
+- **Icon-only everywhere**: GodMode HUD is icon-only with tooltips; popup drops text labels and uses the exact same icon-only buttons with tooltips everywhere.
+- **Static in HudView**: The shared layout function lives as a static method in each feature's `HudView` (e.g., `TimeControlHudView.buildControls(...)`, `GodModeHudView.buildControls(...)`).
+- **Popup-only title**: The shared layout function does not include the title header; the popup component adds the title header above the shared layout.
+- **`canEdit` parameter**: The shared layout function accepts a `Readable<Boolean> canEdit` parameter to govern interactivity. The HUD passes always-editable (or `null`/always true), while the popup passes a reactive signal disabling controls when the feature is disabled or when the player is a net client.
+- **Exclude drag handle**: Draggable move handles bound to position signals are strictly excluded from the shared layout function and remain in `HudView` only.
+Rejected: vertical stacked popup duplicating layout logic; text labels in GodMode popup; shared layout including title or drag handle; separate direction flag or adaptive layout.
 
 ### 4. Anchor above or below the whole QuickAccess bar by bar position (user-decided)
 
