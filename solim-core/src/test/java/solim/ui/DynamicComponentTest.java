@@ -553,4 +553,100 @@ class DynamicComponentTest {
         assertEquals(10f, dyn.table().getMarginTop());
         dyn.dispose();
     }
+
+    @Test
+    void dynamicFactoryInvokedWithNullWhenSourceEmitsNull() {
+        Signal<String> source = Signal.of("initial");
+        boolean[] calledWithNull = new boolean[] { false };
+        Dynamic<String> dyn = new Dynamic<>(source, val -> {
+            if (val == null) {
+                calledWithNull[0] = true;
+                return null;
+            }
+            return new TestComponent(val);
+        });
+        dyn.element();
+        assertFalse(calledWithNull[0], "Factory must not be called with null initially");
+
+        source.set(null);
+        SignalDispatcher.flush();
+        assertTrue(calledWithNull[0], "Factory must be called with null when source emits null");
+        dyn.dispose();
+    }
+
+    @Test
+    void dynamicRendersFallbackComponentWhenSourceEmitsNull() {
+        Signal<String> source = Signal.of(null);
+        Map<String, TestComponent> instances = new HashMap<>();
+        Dynamic<String> dyn = new Dynamic<>(source, val -> {
+            TestComponent comp = new TestComponent(val != null ? "active:" + val : "fallback");
+            instances.put(comp.id, comp);
+            return comp;
+        });
+
+        Table parent = new Table();
+        parent.add(dyn.element());
+        parent.pack();
+
+        assertTrue(dyn.container().visible, "Container must be visible when factory returns a fallback component for null source");
+        assertEquals(1, dyn.container().getChildren().size, "Fallback component must be added to container");
+        TestComponent fallbackComp = instances.get("fallback");
+        assertNotNull(fallbackComp, "Fallback component instance must exist");
+        assertFalse(fallbackComp.wasDisposed);
+
+        // Transition from null to non-null value
+        source.set("hello");
+        SignalDispatcher.flush();
+        parent.layout();
+
+        assertTrue(fallbackComp.wasDisposed, "Fallback component must be disposed when transitioning to active value");
+        TestComponent activeComp = instances.get("active:hello");
+        assertNotNull(activeComp);
+        assertFalse(activeComp.wasDisposed);
+        assertTrue(dyn.container().visible);
+        assertEquals(1, dyn.container().getChildren().size);
+
+        // Transition back to null
+        source.set(null);
+        SignalDispatcher.flush();
+        parent.layout();
+
+        assertTrue(activeComp.wasDisposed, "Active component must be disposed when transitioning back to null");
+        assertEquals(1, dyn.container().getChildren().size);
+        assertTrue(dyn.container().visible);
+
+        dyn.dispose();
+    }
+
+    @Test
+    void dynamicCollapsesWhenFactoryReturnsNullForNullSource() {
+        Signal<String> source = Signal.of("active");
+        Dynamic<String> dyn = new Dynamic<>(source, val -> val != null ? new TestComponent(val) : null);
+
+        Table parent = new Table();
+        parent.defaults().padTop(6f).padBottom(6f);
+        Cell<?> cell = parent.add(dyn.element());
+        parent.pack();
+
+        assertTrue(dyn.container().visible);
+        assertEquals(1, dyn.container().getChildren().size);
+
+        source.set(null);
+        SignalDispatcher.flush();
+        parent.layout();
+
+        assertFalse(dyn.container().visible, "Container must be hidden when factory returns null for null source");
+        assertEquals(0, dyn.container().getChildren().size);
+        assertEquals(0f, CellAccess.padTop(cell), 0.01f);
+        assertEquals(0f, CellAccess.padBottom(cell), 0.01f);
+
+        dyn.dispose();
+    }
+
+    @Test
+    void dynamicThrowsWhenFactoryIsNull() {
+        Signal<String> source = Signal.of("value");
+        assertThrows(NullPointerException.class, () -> new Dynamic<>(source, null));
+        assertThrows(NullPointerException.class, () -> Dynamic.of(source, null));
+    }
 }

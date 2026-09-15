@@ -339,7 +339,7 @@ The `:solim` subproject SHALL declare an `api` dependency on `:solim-core` using
 **Source: solim-dynamic**
 
 ### Requirement: Dynamic value equality guard
-The system SHALL skip rebuilding its child component when the source signal emits a value that is equal to the previous value, and SHALL cleanly manage parent cell sizing constraints across collapse and expand transitions.
+The system SHALL skip rebuilding its child component when the source signal emits a value that is equal to the previous value, and SHALL cleanly manage parent cell sizing constraints across collapse and expand transitions. The factory function SHALL be invoked for all distinct source values including null.
 
 #### Scenario: Same value does not trigger rebuild
 - **WHEN** the source signal emits a value that is `Objects.equals()` to the current value
@@ -353,12 +353,16 @@ The system SHALL skip rebuilding its child component when the source signal emit
 - **WHEN** the source signal emits for the first time (no previous value)
 - **THEN** the child component is created from the factory
 
-#### Scenario: Null value collapses parent cell
-- **WHEN** the source signal emits a null value or factory returns null
+#### Scenario: Null source value invokes factory
+- **WHEN** the source signal emits null and the previous value was not null
+- **THEN** the factory function is invoked with null as its argument
+
+#### Scenario: Factory returning null collapses parent cell
+- **WHEN** the factory returns null (for a null or non-null source value)
 - **THEN** the container is hidden (`visible = false`), the parent cell size is collapsed to `0f`, and padding is set to `0f`
 
-#### Scenario: Non-null value expands parent cell with unconstrained bounds
-- **WHEN** the source signal transitions from null to a non-null value
+#### Scenario: Factory returning component expands parent cell with unconstrained bounds
+- **WHEN** the factory transitions from returning null to returning a non-null Component (for a null or non-null source value)
 - **THEN** the container becomes visible (`visible = true`), parent cell min and max size constraints are restored to unconstrained sentinel (`Float.NEGATIVE_INFINITY`), size constraints configured on the Dynamic component are re-applied, and the layout hierarchy is invalidated
 
 ### Requirement: Nested dynamic subtree lifecycle
