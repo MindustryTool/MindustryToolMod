@@ -26,6 +26,7 @@ import mindustry.ui.Styles;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.chat.models.MessageGroup;
 import mindustrytool.features.chat.models.ParsedChatMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.ImageMessage;
@@ -33,7 +34,12 @@ import mindustrytool.features.chat.models.ParsedChatMessage.MindustryToolLinkMes
 import mindustrytool.features.chat.models.ParsedChatMessage.RoomInviteMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.SchematicMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.TextMessage;
+import mindustrytool.features.playerconnect.PlayerConnectFeature;
+import mindustrytool.features.playerconnect.net.PlayerConnectClient;
+import mindustrytool.features.playerconnect.net.PlayerConnectLink;
+import mindustrytool.features.playerconnect.ui.RoomCard;
 import mindustrytool.models.response.ChatMessage;
+import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.UserData;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -41,6 +47,7 @@ import solim.layout.Direction;
 import solim.layout.VirtualList;
 import solim.signal.Computed;
 import solim.signal.Effect;
+import solim.signal.Signal;
 import solim.display.Text;
 import solim.input.Button;
 import solim.signal.Readable;
@@ -414,25 +421,7 @@ public class ChatMessageListView extends BaseComponent {
 
             if (parsed instanceof RoomInviteMessage) {
                 RoomInviteMessage invite = (RoomInviteMessage) parsed;
-                final String link = invite.getConnectLink();
-                card().growX().top().left().children(() -> {
-                    column().growX().top().left().padding(unit(1.5f)).gap(unit(1)).children(() -> {
-                        row().growX().top().left().gap(unit(1)).children(() -> {
-                            icon(Icon.host).size(unit(5), unit(5)).color(Pal.accent);
-                            text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
-                                    .color(Pal.accent)
-                                    .fontScale(0.95f)
-                                    .left();
-                        });
-                        text(link).color(Color.lightGray).fontScale(0.85f).ellipsis().left();
-                        row().top().left().gap(unit(1)).children(() -> {
-                            button(Core.bundle.get("button.copy", "Copy Link"), () -> {
-                                Core.app.setClipboardText(link);
-                                Vars.ui.showInfoFade(Core.bundle.get("feature.chat.ui.copied", "Copied!"));
-                            }).style(Styles.defaultt).height(unit(7));
-                        });
-                    });
-                });
+                buildRoomInviteCard(invite.getConnectLink());
                 return;
             }
 
@@ -534,6 +523,101 @@ public class ChatMessageListView extends BaseComponent {
                     .left()
                     .wrap()
                     .growX();
+        }
+
+        private void buildRoomInviteCard(String link) {
+            PlayerConnectFeature pc = FeatureManager.getFeature(PlayerConnectFeature.class);
+            Readable<PlayerConnectRoom> roomSignal = (pc != null && pc.isEnabled())
+                    ? pc.getRooms().map(rooms -> findRoomByLink(rooms, link))
+                    : Signal.of(null);
+
+            dynamic(roomSignal, room -> (room != null)
+                    ? new RoomCard(room, false)
+                    : buildFallbackRoomCardContent(link))
+                            .height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT);
+        }
+
+        private Component buildFallbackRoomCardContent(String link) {
+            return card()
+                    .background(Styles.black8)
+                    .border(1.5f, Color.darkGray)
+                    .grow()
+                    .gap(unit(1.5f))
+                    .padding(unit(2))
+                    .left()
+                    .children(() -> {
+                        row().growX().height(unit(6)).gap(unit(2)).children(() -> {
+                            icon(Icon.host).size(unit(5), unit(5)).color(Pal.accent);
+                            text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
+                                    .color(Pal.accent)
+                                    .fontScale(0.95f)
+                                    .ellipsis()
+                                    .growX()
+                                    .left();
+                            button(() -> {
+                                Core.app.setClipboardText(link);
+                                Vars.ui.showInfoFade("@copied");
+                            }).style(WebStyles.ghost()).size(unit(6)).children(() -> icon(Icon.copy).size(unit(4)));
+                        });
+
+                        row().growX().height(unit(4)).children(() -> {
+                            text(link).color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
+                        });
+
+                        row().growX().height(unit(4)).children(() -> {
+                            text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
+                                    .color(Color.gray)
+                                    .fontScale(0.85f)
+                                    .left();
+                        });
+
+                        row().growX().height(unit(7)).gap(unit(1)).children(() -> {
+                            button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
+                                    () -> promptDirectJoin(link))
+                                            .style(WebStyles.secondary())
+                                            .growX()
+                                            .height(unit(7));
+
+                            button(Core.bundle.get("button.copy", "Copy Link"), () -> {
+                                Core.app.setClipboardText(link);
+                                Vars.ui.showInfoFade("@copied");
+                            }).style(Styles.defaultt).height(unit(7));
+                        });
+                    });
+        }
+
+        private void promptDirectJoin(String link) {
+            try {
+                PlayerConnectLink parsed = PlayerConnectLink.fromString(link);
+                PlayerConnectClient.join(parsed, "", () -> {
+                });
+            } catch (Exception e) {
+                Vars.ui.showErrorMessage(e.getMessage() != null ? e.getMessage() : "Failed to parse link");
+            }
+        }
+
+        private static @Nullable PlayerConnectRoom findRoomByLink(@Nullable List<PlayerConnectRoom> list, String link) {
+            if (list == null || list.isEmpty() || link == null) {
+                return null;
+            }
+            String trimmed = link.trim();
+            for (PlayerConnectRoom room : list) {
+                if (room != null && trimmed.equals(room.getLink())) {
+                    return room;
+                }
+            }
+            try {
+                PlayerConnectLink parsed = PlayerConnectLink.fromString(trimmed);
+                if (parsed != null && parsed.roomId != null) {
+                    for (PlayerConnectRoom room : list) {
+                        if (room != null && parsed.roomId.equals(room.getRoomId())) {
+                            return room;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            return null;
         }
 
         private void buildSchematicCard(Schematic schematic) {

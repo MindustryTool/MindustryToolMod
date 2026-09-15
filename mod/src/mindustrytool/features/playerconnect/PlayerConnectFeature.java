@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Flow;
+import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientServerConnectEvent;
 import mindustry.game.EventType.HostEvent;
@@ -52,6 +52,7 @@ import mindustrytool.services.MindustryTool;
 import mindustrytool.utils.JsonUtils;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.core.Provider;
 import solim.overlay.SolimDialog;
 import solim.signal.Computed;
 import solim.signal.Signal;
@@ -81,7 +82,7 @@ public class PlayerConnectFeature extends Feature {
     private @Nullable Thread proxyThread;
     private @Nullable PlayerConnectLink activeLink;
 
-    private @Nullable Flow.Subscription sseSubscription;
+    private @Nullable CompletableFuture<Void> sseRequest;
     private @Nullable Timer.Task sseReconnectTask;
     private @Nullable Timer.Task statsUpdateTask;
 
@@ -399,68 +400,54 @@ public class PlayerConnectFeature extends Feature {
 
         fetchRoomsRest();
 
-        MindustryTool.playerConnectStream()
-                .thenAccept(publisher -> publisher.subscribe(new Flow.Subscriber<String>() {
-                    @Override
-                    public void onSubscribe(Flow.Subscription subscription) {
-                        sseSubscription = subscription;
-                        subscription.request(Long.MAX_VALUE);
-                    }
-
-                    @Override
-                    public void onNext(String item) {
-                        if (item == null || item.trim().isEmpty() || item.startsWith(":")) {
-                            return;
-                        }
-                        String json = item.trim();
-                        if (json.startsWith("data:")) {
-                            json = json.substring(5).trim();
-                        }
-                        try {
-                            PlayerConnectRoomsResponse response = JsonUtils.fromJson(
-                                    PlayerConnectRoomsResponse.class, json);
-                            if (response != null && response.getRooms() != null) {
-                                Core.app.post(() -> rooms.set(response.getRooms()));
-                                return;
-                            }
-                        } catch (Exception ignored) {
-                        }
-                        try {
-                            List<PlayerConnectRoom> list = JsonUtils.fromJsonArray(PlayerConnectRoom.class, json);
-                            if (list != null) {
-                                Core.app.post(() -> rooms.set(list));
-                            }
-                        } catch (Exception e) {
-                            Log.debug("Failed to parse SSE room payload: @", e);
-                        }
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        Log.err("PlayerConnect SSE stream error", throwable);
-                        scheduleSseReconnect();
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        scheduleSseReconnect();
-                    }
-                }))
-                .exceptionally(err -> {
-                    Log.err("Failed to open PlayerConnect SSE stream", err);
-                    scheduleSseReconnect();
-                    return null;
-                });
+        CompletableFuture<Void> request = MindustryTool.playerConnectStream(this::handleSseLine);
+        sseRequest = request;
+        request.whenComplete((ignored, error) -> {
+            if (sseRequest != request) {
+                return;
+            }
+            if (error != null) {
+                Log.err("PlayerConnect SSE stream error", error);
+            }
+            scheduleSseReconnect();
+        });
     }
 
     private void stopSseSync() {
-        if (sseSubscription != null) {
-            sseSubscription.cancel();
-            sseSubscription = null;
+        if (sseRequest != null) {
+            CompletableFuture<Void> request = sseRequest;
+            sseRequest = null;
+            request.cancel(true);
         }
         if (sseReconnectTask != null) {
             sseReconnectTask.cancel();
             sseReconnectTask = null;
+        }
+    }
+
+    private void handleSseLine(String item) {
+        if (item == null || item.trim().isEmpty() || item.startsWith(":")) {
+            return;
+        }
+        String json = item.trim();
+        if (json.startsWith("data:")) {
+            json = json.substring(5).trim();
+        }
+        try {
+            PlayerConnectRoomsResponse response = JsonUtils.fromJson(PlayerConnectRoomsResponse.class, json);
+            if (response != null && response.getRooms() != null) {
+                Core.app.post(() -> rooms.set(response.getRooms()));
+                return;
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            List<PlayerConnectRoom> list = JsonUtils.fromJsonArray(PlayerConnectRoom.class, json);
+            if (list != null) {
+                Core.app.post(() -> rooms.set(list));
+            }
+        } catch (Exception e) {
+            Log.debug("Failed to parse SSE room payload: @", e);
         }
     }
 
@@ -687,7 +674,7 @@ public class PlayerConnectFeature extends Feature {
     }
 
     @Override
-    public @Nullable SolimDialog getSettingDialog() {
+    public @Nullable Provider<SolimDialog> getSettingDialog() {
         return null;
     }
 }

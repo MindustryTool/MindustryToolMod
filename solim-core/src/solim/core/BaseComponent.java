@@ -7,6 +7,8 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.Nullable;
+import mindustry.Vars;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -93,6 +95,9 @@ public abstract class BaseComponent implements Component {
 			applyName(cached);
 			return cached;
 		} catch (Throwable throwable) {
+            if (Vars.ui != null) {
+                Vars.ui.showException(throwable);
+            }
 			dispose();
 			throw throwable;
 		} finally {

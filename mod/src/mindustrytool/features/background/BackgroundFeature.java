@@ -17,6 +17,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.core.Provider;
 
 public class BackgroundFeature extends Feature {
 
@@ -47,11 +48,13 @@ public class BackgroundFeature extends Feature {
     }
 
     @Override
-    public @Nullable SolimDialog getSettingDialog() {
-        if (settingDialog == null) {
-            settingDialog = new BackgroundSettingsDialog(this);
-        }
-        return settingDialog;
+    public @Nullable Provider<SolimDialog> getSettingDialog() {
+        return () -> {
+            if (settingDialog == null) {
+                settingDialog = new BackgroundSettingsDialog(this);
+            }
+            return settingDialog;
+        };
     }
 
     @Override

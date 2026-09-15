@@ -4,6 +4,7 @@ import arc.Core;
 import arc.Events;
 import arc.func.Cons;
 import solim.overlay.SolimDialog;
+import solim.core.Provider;
 import arc.scene.ui.TextField;
 import arc.struct.Seq;
 import arc.util.Log;
@@ -426,11 +427,13 @@ public class TranslationFeature extends Feature {
 	}
 
 	@Override
-	public @Nullable SolimDialog getSettingDialog() {
-		if (settingsDialog == null) {
-			settingsDialog = new TranslationSettingsDialog(this);
-		}
-		return settingsDialog;
+	public @Nullable Provider<SolimDialog> getSettingDialog() {
+		return () -> {
+			if (settingsDialog == null) {
+				settingsDialog = new TranslationSettingsDialog(this);
+			}
+			return settingsDialog;
+		};
 	}
 
 	private @Nullable OutgoingLanguageDialog languageDialog;

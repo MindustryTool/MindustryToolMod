@@ -4,6 +4,7 @@ import arc.Core;
 import arc.Events;
 import arc.util.Nullable;
 import solim.config.ConfigGroup;
+import solim.core.Provider;
 import solim.overlay.SolimDialog;
 import solim.signal.Signal;
 
@@ -80,11 +81,11 @@ public abstract class Feature {
 		return ConfigGroup.of("mindustrytool.features." + getMetadata().getId());
 	}
 
-	public @Nullable SolimDialog getSettingDialog() {
+	public @Nullable Provider<SolimDialog> getSettingDialog() {
 		return null;
 	}
 
-	public @Nullable SolimDialog getMainDialog() {
+	public @Nullable Provider<SolimDialog> getMainDialog() {
 		return null;
 	}
 

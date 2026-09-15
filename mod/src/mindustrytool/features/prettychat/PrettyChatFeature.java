@@ -14,6 +14,7 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.prettychat.ui.PrettyChatSettingsDialog;
+import solim.core.Provider;
 import solim.overlay.SolimDialog;
 
 import java.util.List;
@@ -54,11 +55,13 @@ public class PrettyChatFeature extends Feature {
     }
 
     @Override
-    public @Nullable SolimDialog getSettingDialog() {
-        if (settingsDialog == null) {
-            settingsDialog = new PrettyChatSettingsDialog(this);
-        }
-        return settingsDialog;
+    public @Nullable Provider<SolimDialog> getSettingDialog() {
+        return () -> {
+            if (settingsDialog == null) {
+                settingsDialog = new PrettyChatSettingsDialog(this);
+            }
+            return settingsDialog;
+        };
     }
 
     private void updateChatHook() {

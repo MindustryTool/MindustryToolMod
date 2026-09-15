@@ -9,6 +9,7 @@ import arc.struct.Seq;
 import java.util.ArrayList;
 import java.util.List;
 import mindustry.Vars;
+import mindustry.core.Version;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.ui.Styles;
@@ -24,9 +25,15 @@ import mindustrytool.components.WebStyles;
 public class RoomCard extends BaseComponent {
 
     private final PlayerConnectRoom room;
+    private final boolean displayPlayerList;
 
     public RoomCard(PlayerConnectRoom room) {
+        this(room, true);
+    }
+
+    public RoomCard(PlayerConnectRoom room, boolean displayPlayerList) {
         this.room = room;
+        this.displayPlayerList = displayPlayerList;
     }
 
     @Override
@@ -61,68 +68,98 @@ public class RoomCard extends BaseComponent {
             }
         }
 
-        return card()
+        var cardComp = card()
                 .background(Styles.black8)
                 .border(1.5f, Color.darkGray)
-                .grow()
-                .margin(unit(2.5f))
                 .gap(unit(1.5f))
-                .minHeight(unit(40))
                 .padding(unit(2))
-                .left()
-                .children(() -> {
-                    // Header row: Title + Copy link button
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(title).style(Styles.outlineLabel).fontScale(1.1f).left();
-                        spacer();
-                        button(() -> {
-                            Core.app.setClipboardText(room.getLink());
-                            Vars.ui.showInfoFade("@copied");
-                        })
-                                .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .children(() -> icon(Icon.copy).size(unit(6)));
-                    });
+                .left();
 
-                    // Map and mode
-                    if (!mapMode.isEmpty()) {
-                        text(mapMode).left();
-                    }
+        if (displayPlayerList) {
+            cardComp.grow().margin(unit(2.5f)).minHeight(unit(40));
+        } else {
+            cardComp.growX().height(unit(27));
+        }
 
-                    // Players
-                    text(playerInfo).color(Color.lightGray).left();
+        return cardComp.children(() -> {
+            // Header row: Title + Copy link button
+            row().growX().height(unit(6)).gap(unit(2)).children(() -> {
+                text(title).style(Styles.outlineLabel).fontScale(displayPlayerList ? 1.1f : 0.95f).ellipsis().growX()
+                        .left();
+                spacer();
+                button(() -> {
+                    Core.app.setClipboardText(room.getLink());
+                    Vars.ui.showInfoFade("@copied");
+                })
+                        .style(WebStyles.ghost())
+                        .size(displayPlayerList ? unit(11) : unit(6))
+                        .children(() -> icon(Icon.copy).size(displayPlayerList ? unit(6) : unit(4)));
+            });
 
-                    // Mod conflicts indicator
-                    if (!missingMods.isEmpty()) {
-                        text("[scarlet]Missing mods: " + String.join(", ", missingMods)).wrap().growX().left();
-                    }
-                    if (!unneededMods.isEmpty()) {
-                        text("[orange]Unneeded mods: " + String.join(", ", unneededMods)).wrap().growX().left();
-                    }
+            // Map and mode
+            if (!mapMode.isEmpty()) {
+                text(mapMode).ellipsis().left();
+            }
 
-                    if (!protocolMatch) {
-                        text("[scarlet]Protocol mismatch: expected v" + NetworkProxy.PROTOCOL_VERSION).left();
-                    }
+            if (!Version.combined().equals(room.getData().getVersion())) {
+                text(room.getData().getVersion());
+            }
 
+            if (!displayPlayerList) {
+                String compatBadge = !protocolMatch
+                        ? "[scarlet]" + Core.bundle.get("feature.chat.ui.incompatible-protocol", "Incompatible")
+                        : (!missingMods.isEmpty() || !unneededMods.isEmpty()
+                                ? "[orange]" + Core.bundle.get("feature.chat.ui.mods-required", "Mods Required")
+                                : "[green]" + Core.bundle.get("feature.chat.ui.compatible", "Compatible"));
+                row().growX().height(unit(4)).children(() -> {
+                    text(playerInfo).color(Color.lightGray).ellipsis().left();
                     spacer();
+                    text(compatBadge).fontScale(0.85f).right();
+                });
+            } else {
+                // Players
+                text(playerInfo).color(Color.lightGray).left();
 
-                    // Join action button
-                    if (!protocolMatch) {
-                        button(Core.bundle.get("feature.player-connect.incompatible", "Incompatible"), () -> {
-                        })
-                                .style(WebStyles.outline())
-                                .growX()
-                                .height(unit(8))
-                                .paddingY(unit(1.5f))
-                                .enabled(Signal.of(false));
-                    } else {
-                        button(Core.bundle.get("join", "Join"), () -> promptJoin(secured, missingMods, unneededMods))
-                                .style(WebStyles.secondary())
-                                .growX()
-                                .height(unit(8))
-                                .paddingY(unit(1.5f));
-                    }
-                }).element();
+                if (room.getData() != null && room.getData().getPlayers() != null) {
+                    column(() -> {
+                        for (var player : room.getData().getPlayers()) {
+                            text("- " + player.getName());
+                        }
+                    });
+                }
+
+                // Mod conflicts indicator
+                if (!missingMods.isEmpty()) {
+                    text("[scarlet]Missing mods: " + String.join(", ", missingMods)).wrap().growX().left();
+                }
+                if (!unneededMods.isEmpty()) {
+                    text("[orange]Unneeded mods: " + String.join(", ", unneededMods)).wrap().growX().left();
+                }
+
+                if (!protocolMatch) {
+                    text("[scarlet]Protocol mismatch: expected v" + NetworkProxy.PROTOCOL_VERSION).left();
+                }
+            }
+
+            spacer();
+
+            // Join action button
+            if (!protocolMatch) {
+                button(Core.bundle.get("feature.player-connect.incompatible", "Incompatible"), () -> {
+                })
+                        .style(WebStyles.outline())
+                        .growX()
+                        .height(displayPlayerList ? unit(8) : unit(7))
+                        .paddingY(displayPlayerList ? unit(1.5f) : 0f)
+                        .enabled(Signal.of(false));
+            } else {
+                button(Core.bundle.get("join", "Join"), () -> promptJoin(secured, missingMods, unneededMods))
+                        .style(WebStyles.secondary())
+                        .growX()
+                        .height(displayPlayerList ? unit(8) : unit(7))
+                        .paddingY(displayPlayerList ? unit(1.5f) : 0f);
+            }
+        }).element();
     }
 
     private void promptJoin(boolean secured, List<String> missingMods, List<String> unneededMods) {

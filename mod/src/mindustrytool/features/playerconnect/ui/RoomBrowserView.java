@@ -168,7 +168,7 @@ public class RoomBrowserView extends BaseComponent {
                                             });
 
                                             // Grid of rooms for this provider
-                                            grid(columnCount, Signal.of(group.rooms), PlayerConnectRoom::getLink, RoomCard::new)
+                                            grid(columnCount, Signal.of(group.rooms), PlayerConnectRoom::getLink, r -> new RoomCard(r))
                                                     .gap(unit(2));
                                         });
                                     }

@@ -125,7 +125,7 @@ public class TeamResourceHudView extends BaseComponent {
                             .style(Styles.clearNonei)
                             .size(buttonSize)
                             .tooltip(Core.bundle.get("team-resources.settings.title", "Settings"))
-                            .onClick(() -> feature.getSettingDialog().show())
+                            .onClick(() -> feature.getSettingDialog().get().show())
                             .children(() -> icon(Icon.settings).scaling(Scaling.fit));
                 });
 

@@ -7,8 +7,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Flow;
-import java.util.concurrent.SubmissionPublisher;
+import java.util.function.Consumer;
 import mindustrytool.Config;
 import mindustrytool.models.request.CrashReportRequest;
 import mindustrytool.models.request.LogoutRequest;
@@ -227,41 +226,31 @@ public final class MindustryTool {
         });
     }
 
-    public static CompletableFuture<Flow.Publisher<String>> chatStream(String chatId) {
-        SubmissionPublisher<String> publisher = new SubmissionPublisher<>();
-        api.get("/chats/stream")
+    public static CompletableFuture<Void> chatStream(String chatId, Consumer<String> lineConsumer) {
+        return api.get("/chats/stream")
                 .header("Accept", "text/event-stream")
                 .header("x-chat-id", chatId)
                 .timeout(Duration.ofMillis(0))
                 .sendAsync(BodyHandlers.ofLines())
                 .thenAccept(response -> {
-                    response.body().forEach(publisher::submit);
-                    publisher.close();
-                })
-                .exceptionally(e -> {
-                    publisher.close();
-                    return null;
+                    try (var lines = response.body()) {
+                        lines.forEach(lineConsumer);
+                    }
                 });
-        return CompletableFuture.completedFuture(publisher);
     }
 
     // ─── Player Connect ────────────────────────────────────────────
 
-    public static CompletableFuture<Flow.Publisher<String>> playerConnectStream() {
-        SubmissionPublisher<String> publisher = new SubmissionPublisher<>();
-        publicApi.get("/player-connect/sse")
+    public static CompletableFuture<Void> playerConnectStream(Consumer<String> lineConsumer) {
+        return publicApi.get("/player-connect/sse")
                 .header("Accept", "text/event-stream")
                 .timeout(Duration.ofMillis(0))
                 .sendAsync(BodyHandlers.ofLines())
                 .thenAccept(response -> {
-                    response.body().forEach(publisher::submit);
-                    publisher.close();
-                })
-                .exceptionally(e -> {
-                    publisher.close();
-                    return null;
+                    try (var lines = response.body()) {
+                        lines.forEach(lineConsumer);
+                    }
                 });
-        return CompletableFuture.completedFuture(publisher);
     }
 
     public static CompletableFuture<List<PlayerConnectRoom>> getPlayerConnectRooms(@Nullable String query) {

@@ -5,6 +5,7 @@ import arc.Events;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
+import solim.core.Provider;
 import solim.overlay.SolimDialog;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -213,11 +214,13 @@ public class TeamResourceFeature extends Feature {
     }
 
     @Override
-    public @Nullable SolimDialog getSettingDialog() {
-        if (settingsDialog == null) {
-            settingsDialog = new TeamResourceSettingsDialog(this);
-        }
-        return settingsDialog;
+    public @Nullable Provider<SolimDialog> getSettingDialog() {
+        return () -> {
+            if (settingsDialog == null) {
+                settingsDialog = new TeamResourceSettingsDialog(this);
+            }
+            return settingsDialog;
+        };
     }
 
     public TeamResourceState getState() {

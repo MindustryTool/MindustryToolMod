@@ -11,6 +11,7 @@ import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.browser.common.BrowserKeybinds;
+import solim.core.Provider;
 import solim.overlay.SolimDialog;
 
 /**
@@ -47,16 +48,18 @@ public class SchematicBrowserFeature extends Feature {
     }
 
     @Override
-    public @Nullable SolimDialog getSettingDialog() {
+    public @Nullable Provider<SolimDialog> getSettingDialog() {
         return null;
     }
 
     @Override
-    public @Nullable SolimDialog getMainDialog() {
-        if (dialog == null) {
-            dialog = new SchematicBrowserDialog();
-        }
-        return dialog;
+    public @Nullable Provider<SolimDialog> getMainDialog() {
+        return () -> {
+            if (dialog == null) {
+                dialog = new SchematicBrowserDialog();
+            }
+            return dialog;
+        };
     }
 
     public void showDialog() {
