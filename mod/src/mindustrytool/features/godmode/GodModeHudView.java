@@ -27,7 +27,7 @@ public class GodModeHudView extends BaseComponent {
     protected Element build() {
         Readable<Float> scale = parentFeature.scaleConfig.signal();
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
-        Readable<Float> iconSize = scale.map(s -> unit(6) * (s != null ? s : 1f));
+        Readable<Float> iconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 
         hud = hud(() -> {
             row()

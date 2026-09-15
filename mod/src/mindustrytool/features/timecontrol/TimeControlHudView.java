@@ -39,10 +39,10 @@ public class TimeControlHudView extends BaseComponent {
     @Override
     protected Element build() {
         Readable<Float> scale = parentFeature.scaleConfig.signal();
-        Readable<Float> buttonSize = scale.map(s -> unit(10) * (s != null ? s : 1f));
-        Readable<Float> presetWidth = scale.map(s -> unit(15) * (s != null ? s : 1f));
-        Readable<Float> dragIconSize = scale.map(s -> unit(8) * (s != null ? s : 1f));
-        Readable<Float> resetIconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
+        Readable<Float> buttonSize = scale.map(s -> unit(11) * s);
+        Readable<Float> presetWidth = scale.map(s -> unit(15) * s);
+        Readable<Float> dragIconSize = scale.map(s -> unit(7) * s);
+        Readable<Float> resetIconSize = scale.map(s -> unit(7) * s);
         Readable<Float> fontScale = scale.map(s -> s != null ? s : 1f);
 
         hud = hud(() -> {
