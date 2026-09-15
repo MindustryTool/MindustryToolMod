@@ -4,7 +4,7 @@ import arc.Core;
 import arc.scene.Element;
 import solim.overlay.SolimDialog;
 import arc.util.Nullable;
-import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
@@ -42,7 +42,7 @@ public class ChatFeature extends Feature {
     public ChatFeature() {
         super(FeatureMetadata.builder()
                 .id("chat")
-                .icon(Icon.planet)
+                .icon(FileIcon.of("message-circle.png"))
                 .order(20)
                 .enabledByDefault(true)
                 .quickAccess(true)

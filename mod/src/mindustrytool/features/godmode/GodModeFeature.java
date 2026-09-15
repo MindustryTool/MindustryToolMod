@@ -1,6 +1,6 @@
 package mindustrytool.features.godmode;
 
-import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -12,7 +12,7 @@ public class GodModeFeature extends Feature {
     public GodModeFeature() {
         super(FeatureMetadata.builder()
                 .id("god-mode")
-                .icon(Icon.defense)
+                .icon(FileIcon.of("wand-sparkles.png"))
                 .enabledByDefault(false)
                 .development(true)
                 .build());

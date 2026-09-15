@@ -1,6 +1,6 @@
 package mindustrytool.features.smartupgrade;
 
-import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -12,7 +12,7 @@ public class SmartUpgradeFeature extends Feature {
     public SmartUpgradeFeature() {
         super(FeatureMetadata.builder()
                 .id("smart-upgrade")
-                .icon(Icon.up)
+                .icon(FileIcon.of("chevrons-up.png"))
                 .quickAccess(true)
                 .development(true)
                 .build());

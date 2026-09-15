@@ -17,7 +17,6 @@ import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.game.Team;
 import mindustry.gen.Building;
-import mindustry.gen.Icon;
 import mindustry.gen.TimeItem;
 import mindustry.graphics.Layer;
 import mindustry.type.Item;
@@ -32,6 +31,7 @@ import mindustry.world.blocks.distribution.DuctBridge.DuctBridgeBuild;
 import mindustry.world.blocks.distribution.ItemBridge;
 import mindustry.world.blocks.distribution.ItemBridge.ItemBridgeBuild;
 import mindustry.world.blocks.liquid.LiquidBridge.LiquidBridgeBuild;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
@@ -104,7 +104,7 @@ public class BridgeVisualizerFeature extends Feature {
     public BridgeVisualizerFeature() {
         super(FeatureMetadata.builder()
                 .id("bridge-visualizer")
-                .icon(Icon.distribution)
+                .icon(FileIcon.of("network.png"))
                 .order(5)
                 .enabledByDefault(true)
                 .quickAccess(true)
@@ -148,11 +148,11 @@ public class BridgeVisualizerFeature extends Feature {
     }
 
     public void resetToDefaults() {
-        showItemBridgesConfig.set(true);
-        showDuctBridgesConfig.set(true);
-        showLiquidBridgesConfig.set(true);
-        itemScaleConfig.set(1.0f);
-        opacityConfig.set(1.0f);
+        showItemBridgesConfig.reset();
+        showDuctBridgesConfig.reset();
+        showLiquidBridgesConfig.reset();
+        itemScaleConfig.reset();
+        opacityConfig.reset();
         syncConfigCache();
     }
 

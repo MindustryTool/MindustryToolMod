@@ -1,6 +1,6 @@
 package mindustrytool.features.smartdrill;
 
-import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -12,7 +12,7 @@ public class SmartDrillFeature extends Feature {
     public SmartDrillFeature() {
         super(FeatureMetadata.builder()
                 .id("smart-drill")
-                .icon(Icon.filter)
+                .icon(FileIcon.of("pickaxe.png"))
                 .quickAccess(true)
                 .development(true)
                 .build());

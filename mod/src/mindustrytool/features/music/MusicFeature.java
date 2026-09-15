@@ -1,6 +1,6 @@
 package mindustrytool.features.music;
 
-import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -12,7 +12,7 @@ public class MusicFeature extends Feature {
     public MusicFeature() {
         super(FeatureMetadata.builder()
                 .id("music")
-                .icon(Icon.play)
+                .icon(FileIcon.of("music.png"))
                 .development(true)
                 .build());
     }

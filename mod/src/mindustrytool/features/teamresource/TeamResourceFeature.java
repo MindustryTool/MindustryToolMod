@@ -147,17 +147,17 @@ public class TeamResourceFeature extends Feature {
     }
 
     public void resetToDefaults() {
-        opacityConfig.set(1f);
-        scaleConfig.set(1f);
-        overlayWidthConfig.set(0.28f);
-        overlayHeightConfig.set(0.60f);
-        showItemsConfig.set(true);
-        showUnitsConfig.set(false);
-        showPowerConfig.set(true);
-        showStoredPowerConfig.set(false);
-        hideBackgroundConfig.set(false);
-        alwaysShowFlowRateConfig.set(true);
-        expandedConfig.set(true);
+        opacityConfig.reset();
+        scaleConfig.reset();
+        overlayWidthConfig.reset();
+        overlayHeightConfig.reset();
+        showItemsConfig.reset();
+        showUnitsConfig.reset();
+        showPowerConfig.reset();
+        showStoredPowerConfig.reset();
+        hideBackgroundConfig.reset();
+        alwaysShowFlowRateConfig.reset();
+        expandedConfig.reset();
     }
 
     public void resetPosition() {

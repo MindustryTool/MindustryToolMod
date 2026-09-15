@@ -1,6 +1,6 @@
 package mindustrytool.features.playerconnect;
 
-import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -12,7 +12,7 @@ public class PlayerConnectFeature extends Feature {
     public PlayerConnectFeature() {
         super(FeatureMetadata.builder()
                 .id("player-connect")
-                .icon(Icon.planet)
+                .icon(FileIcon.of("signal.png"))
                 .order(3)
                 .development(true)
                 .build());

@@ -1,6 +1,6 @@
 package mindustrytool.features.wavepreview;
 
-import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -12,7 +12,7 @@ public class WavePreviewFeature extends Feature {
     public WavePreviewFeature() {
         super(FeatureMetadata.builder()
                 .id("wave-preview")
-                .icon(Icon.units)
+                .icon(FileIcon.of("swords.png"))
                 .order(1)
                 .quickAccess(true)
                 .development(true)

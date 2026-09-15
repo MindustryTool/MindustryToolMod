@@ -32,7 +32,7 @@ public abstract class Feature {
 	}
 
 	public boolean isEnabled() {
-		return Boolean.TRUE.equals(enabled().get());
+		return Boolean.TRUE.equals(enabled().peek());
 	}
 
 	public void setEnabled(boolean enabled) {

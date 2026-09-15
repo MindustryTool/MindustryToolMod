@@ -410,19 +410,19 @@ public class TranslationFeature extends Feature {
 	}
 
 	public void resetToDefaults() {
-		providerConfig.set(GeminiTranslationProvider.ID);
-		showOriginalConfig.set(true);
-		outgoingEnabledConfig.set(true);
-		outgoingTargetLangConfig.set("English");
-		outgoingFormatConfig.set("both");
-		outgoingShowOriginalConfig.set(true);
-		geminiModelConfig.set(GeminiTranslationProvider.MODELS[0]);
-		geminiTimeoutConfig.set(10);
-		geminiMaxHistoryConfig.set(5);
-		deeplTimeoutConfig.set(10);
-		mindustryToolTimeoutConfig.set(30);
-		devxTimeoutConfig.set(10);
-		devxMaxHistoryConfig.set(5);
+		providerConfig.reset();
+		showOriginalConfig.reset();
+		outgoingEnabledConfig.reset();
+		outgoingTargetLangConfig.reset();
+		outgoingFormatConfig.reset();
+		outgoingShowOriginalConfig.reset();
+		geminiModelConfig.reset();
+		geminiTimeoutConfig.reset();
+		geminiMaxHistoryConfig.reset();
+		deeplTimeoutConfig.reset();
+		mindustryToolTimeoutConfig.reset();
+		devxTimeoutConfig.reset();
+		devxMaxHistoryConfig.reset();
 	}
 
 	@Override

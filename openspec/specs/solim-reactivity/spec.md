@@ -3,12 +3,12 @@
 ## Purpose
 
 Mechanical merge of 10 specs per change `spec-domain-merge` (stage 3 core, concat-then-dedupe). Sources: solim-reactivity, automatic-effect-ownership, config-value-signal, contextual-config-value, orientation-signal, signal-callback-cleanup, solim-binding, solim-property-bindings, solim-signal-dispatcher, two-way-binding. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work.
-
 ## Requirements
 
 **Source: solim-reactivity**
 
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
+
 ### Requirement: Signal primitive
 `Signal<T>` SHALL be a mutable reactive value created via `Signal.of(initial)` with `T get()`, `void set(T)`, equality-guarded notification, `Subscription subscribe(Consumer<T>)` returning disposable handle, and `Computed<U> map(Function<T,U>)` convenience. `get()` SHALL register as dependency when called inside a `Computed` or `Effect` evaluation.
 
@@ -136,6 +136,7 @@ A shared dependency-tracking mechanism SHALL allow the currently executing `Comp
 **Source: automatic-effect-ownership**
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
+
 ### Requirement: Effects auto-register inside component scope
 When `Effect.of(...)` is called while a component's `build()` is executing (i.e., `ComponentContext` has an active component), the Effect SHALL be registered with that component's ownership list before its initial execution.
 
@@ -173,7 +174,6 @@ All three `Effect.of(Runnable)`, `Effect.of(Supplier<Runnable>)`, and `Effect.of
 
 Enables `ConfigValue<T>` configuration instances to provide stable, cached Solim reactive signals with bidirectional synchronization against underlying preference storage.
 
-
 ### Requirement: Reactive Signal Exposure
 `ConfigValue<T>` SHALL provide a stable, cached reactive `Signal<T>` instance via its `signal()` method.
 
@@ -208,7 +208,6 @@ Enables `ConfigValue<T>` configuration instances to provide stable, cached Solim
 
 Enables configuration values to dynamically switch their backing persistence storage key based on an ambient reactive discriminant signal (such as screen orientation).
 
-
 ### Requirement: ContextualConfigValue switches storage key on discriminant change
 `ContextualConfigValue<T, K>` SHALL be a reactive config value that accepts a `Readable<K>` discriminant and a `Function<K, String>` key-suffix mapper. When the discriminant emits a new value, the currently-active storage key SHALL change, the old value SHALL be persisted under the old key, the new value SHALL be loaded from `Core.settings` under the new key (falling back to `defaultValue`), and the reactive signal SHALL be updated to reflect the new value.
 
@@ -239,7 +238,6 @@ Enables configuration values to dynamically switch their backing persistence sto
 
 Provides a framework-level reactive signal tracking screen orientation (portrait vs landscape) via Arc's `ResizeEvent`.
 
-
 ### Requirement: Signals provides reactive isPortrait
 `Signals` SHALL provide a static `Readable<Boolean> isPortrait()` method returning a shared `Signal<Boolean>` that reflects `Core.graphics.isPortrait()`. Static initialization SHALL automatically initialize the signal's current value and install a `ResizeEvent` listener so the signal fires whenever the screen orientation changes.
 
@@ -262,6 +260,7 @@ Provides a framework-level reactive signal tracking screen orientation (portrait
 **Source: signal-callback-cleanup**
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
+
 ### Requirement: createSignal registrar returns a cleanup handle
 The `createSignal` method on `BaseComponent` SHALL accept a `Function<Runnable, Disposable>` as the registrar, where the returned `Disposable` represents the callback subscription. The returned disposable SHALL be owned by the component.
 
@@ -283,6 +282,7 @@ APIs that cannot actually unregister a callback SHALL NOT claim automatic cleanu
 **Source: solim-binding**
 
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
+
 ### Requirement: Widgets support static and reactive values
 Widget factory methods (e.g., `text(...)`, `button(...)`, `visible(...)`, `enabled(...)`) SHALL accept both plain values (`String`, `boolean`) and reactive values (`Signal<T>`, `Computed<T>`). Reactive overloads SHALL apply current value immediately and update on change.
 
@@ -344,6 +344,7 @@ Dynamic text SHALL use bundle formatting or `Computed` mapping, not manual `Core
 **Source: solim-property-bindings**
 
 TBD - created by archiving change clean-up-solim-refactor. Update Purpose after archive.
+
 ### Requirement: Direct Reactive Element Property Bindings
 Solim SHALL provide direct property binding mechanisms that mutate existing Arc scene elements when reactive signals or computeds change without requiring standalone `Effect` definitions in user code.
 
@@ -369,7 +370,6 @@ Arc layout lifecycle methods (`getPrefWidth`, `getPrefHeight`, `layout`, `draw`,
 **Source: solim-signal-dispatcher**
 
 One-flush-per-frame signal dispatching in Solim, providing lightweight batching and deduplication so reactive effects execute at most once per Mindustry frame even when multiple dependencies change during the same frame.
-
 
 ### Requirement: Signal effect batching and deduplication
 The reactive system SHALL queue invalidated `Effect`s and execute them at most once per Mindustry frame upon `flush()`, regardless of how many dependency signals were modified in that frame.
@@ -425,6 +425,7 @@ The reactive system SHALL register its frame hook with Mindustry's `Trigger.upda
 **Source: two-way-binding**
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
+
 ### Requirement: Shared TwoWayBinding utility
 A `TwoWayBinding<T>` utility SHALL exist in `solim.input` (package-private is acceptable) that implements the signal ↔ widget synchronization pattern with feedback loop prevention. It SHALL implement `Disposable`.
 
@@ -469,4 +470,22 @@ Shared reactive net-state signals in `Signals.java` so game features gate on one
 #### Scenario: Net signals initialize without a game running
 - **WHEN** `Signals` class is loaded in the menu with no session
 - **THEN** `active()`, `server()`, and `client()` peek as false and `singlePlayer()` peeks as true
+
+### Requirement: ConfigValue Reset
+`ConfigValue<T>` SHALL provide a `reset()` method that restores its value to its configured `defaultValue`. Invoking `reset()` SHALL persist the default value to underlying storage and emit the default value on its reactive `signal()`.
+
+#### Scenario: Calling reset restores defaultValue and updates storage and signal
+- **WHEN** a `ConfigValue<T>` has been modified to a non-default value via `set()` or `signal().set()`
+- **THEN** calling `reset()` sets the value back to `defaultValue`, updates preference storage, and causes `signal()` to emit the `defaultValue`.
+
+### Requirement: ConfigValue Modification Detection
+`ConfigValue<T>` SHALL provide an `isModified()` method that returns `true` if its current value differs from `defaultValue` (via `Objects.equals`), and `false` otherwise.
+
+#### Scenario: Value matches defaultValue
+- **WHEN** a `ConfigValue<T>` holds a value equal to `defaultValue`
+- **THEN** `isModified()` returns `false`.
+
+#### Scenario: Value differs from defaultValue
+- **WHEN** a `ConfigValue<T>` holds a value not equal to `defaultValue`
+- **THEN** `isModified()` returns `true`.
 

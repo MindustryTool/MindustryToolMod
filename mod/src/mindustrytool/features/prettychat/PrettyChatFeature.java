@@ -1,6 +1,6 @@
 package mindustrytool.features.prettychat;
 
-import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
@@ -12,7 +12,7 @@ public class PrettyChatFeature extends Feature {
     public PrettyChatFeature() {
         super(FeatureMetadata.builder()
                 .id("pretty-chat")
-                .icon(Icon.chat)
+                .icon(FileIcon.of("sparkles.png"))
                 .development(true)
                 .build());
     }
