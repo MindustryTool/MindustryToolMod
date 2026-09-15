@@ -71,4 +71,9 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     public PendingCellConfig cellConfig() {
         return constraints;
     }
+
+    @Override
+    public SolimStack self() {
+        return this;
+    }
 }

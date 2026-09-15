@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
+import arc.util.Log;
 import arc.util.Nullable;
 import mindustrytool.services.auth.AuthProvider;
 import mindustrytool.utils.JsonUtils;
@@ -210,27 +211,33 @@ public final class Request {
         // ─── Query parameters ──────────────────────────────────────
 
         public RequestBuilder query(String key, String value) {
-            if (key == null) return this;
-            if (value == null || value.isEmpty()) return this;
+            if (key == null)
+                return this;
+            if (value == null || value.isEmpty())
+                return this;
             queryParams.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
             return this;
         }
 
         public RequestBuilder query(String key, int value) {
-            if (key == null) return this;
+            if (key == null)
+                return this;
             queryParams.computeIfAbsent(key, k -> new ArrayList<>()).add(String.valueOf(value));
             return this;
         }
 
         public RequestBuilder query(String key, float value) {
-            if (key == null) return this;
+            if (key == null)
+                return this;
             queryParams.computeIfAbsent(key, k -> new ArrayList<>()).add(String.valueOf(value));
             return this;
         }
 
         public RequestBuilder query(String key, List<String> values) {
-            if (key == null) return this;
-            if (values == null || values.isEmpty()) return this;
+            if (key == null)
+                return this;
+            if (values == null || values.isEmpty())
+                return this;
             List<String> existing = queryParams.computeIfAbsent(key, k -> new ArrayList<>());
             for (String v : values) {
                 if (v != null && !v.isEmpty()) {
@@ -241,10 +248,12 @@ public final class Request {
         }
 
         public RequestBuilder query(Map<String, String> params) {
-            if (params == null || params.isEmpty()) return this;
+            if (params == null || params.isEmpty())
+                return this;
             for (Map.Entry<String, String> entry : params.entrySet()) {
                 String key = entry.getKey();
-                if (key == null) continue;
+                if (key == null)
+                    continue;
                 String value = entry.getValue();
                 if (value != null && !value.isEmpty()) {
                     queryParams.put(key, new ArrayList<>(Collections.singletonList(value)));
@@ -256,16 +265,22 @@ public final class Request {
         }
 
         private String buildQueryString() {
-            if (queryParams.isEmpty()) return "";
+            if (queryParams.isEmpty())
+                return "";
             StringBuilder sb = new StringBuilder(url.contains("?") ? "&" : "?");
             boolean first = true;
             for (Map.Entry<String, List<String>> entry : queryParams.entrySet()) {
                 for (String value : entry.getValue()) {
-                    if (!first) sb.append("&");
+                    if (!first)
+                        sb.append("&");
                     first = false;
-                    sb.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
-                    sb.append("=");
-                    sb.append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+                    try {
+                        sb.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                        sb.append("=");
+                        sb.append(URLEncoder.encode(value, "UTF-8"));
+                    } catch (Exception e) {
+                        Log.err(e);
+                    }
                 }
             }
             return sb.toString();
@@ -451,13 +466,15 @@ public final class Request {
 
     // ─── Multipart helper (kept for upload) ────────────────────────
 
-    public static byte[] buildMultipartFormData(String boundary, String fieldName, String fileName, String contentType, byte[] fileBytes) {
+    public static byte[] buildMultipartFormData(String boundary, String fieldName, String fileName, String contentType,
+            byte[] fileBytes) {
         String CRLF = "\r\n";
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             out.write(("--" + boundary + CRLF).getBytes(StandardCharsets.UTF_8));
-            out.write(("Content-Disposition: form-data; name=\"" + fieldName + "\"; filename=\"" + fileName + "\"" + CRLF)
-                    .getBytes(StandardCharsets.UTF_8));
+            out.write(
+                    ("Content-Disposition: form-data; name=\"" + fieldName + "\"; filename=\"" + fileName + "\"" + CRLF)
+                            .getBytes(StandardCharsets.UTF_8));
             out.write(("Content-Type: " + contentType + CRLF).getBytes(StandardCharsets.UTF_8));
             out.write(CRLF.getBytes(StandardCharsets.UTF_8));
             out.write(fileBytes);

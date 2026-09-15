@@ -26,10 +26,12 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 
 /**
- * Floating context menu: a scene-hosted, non-modal menu with reactive
- * provider content, anchor positioning, and built-in dismissal.
+ * Floating context menu: a scene-hosted, non-modal menu with reactive provider
+ * content, anchor positioning, and built-in dismissal.
  *
- * <p>Usage:
+ * <p>
+ * Usage:
+ * 
  * <pre>
  * Popup&lt;ChatMessage&gt; menu = popup()
  *         .children(request -> column()...rows...)
@@ -38,7 +40,8 @@ import solim.signal.Readable;
  * menu.hide();
  * </pre>
  *
- * <p>All mutating methods return this instance for chaining. Show and hide are
+ * <p>
+ * All mutating methods return this instance for chaining. Show and hide are
  * explicit and safe to call headless (no-ops without a scene).
  */
 public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T>> {
@@ -116,7 +119,8 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
         if (color != null) {
             Effect e = Effect.of(() -> {
                 Color c = color.get();
-                if (c != null) rd.fillColor(c);
+                if (c != null)
+                    rd.fillColor(c);
             });
             ComponentContext.register(e);
         }
@@ -153,9 +157,9 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     }
 
     /**
-     * Shows the menu for the given data anchored near the given stage
-     * coordinates. Re-showing while open rebuilds content and re-anchors.
-     * Null data hides instead. No-op without a scene.
+     * Shows the menu for the given data anchored near the given stage coordinates.
+     * Re-showing while open rebuilds content and re-anchors. Null data hides
+     * instead. No-op without a scene.
      */
     public Popup<T> show(@Nullable T data, float stageX, float stageY) {
         if (data == null || Core.scene == null || Core.scene.root == null) {
@@ -169,8 +173,8 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     }
 
     /**
-     * Removes the menu from the scene and detaches its listeners.
-     * Idempotent and safe to call headless.
+     * Removes the menu from the scene and detaches its listeners. Idempotent and
+     * safe to call headless.
      */
     public Popup<T> hide() {
         detachListeners();
@@ -181,8 +185,8 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
 
     /**
      * Computes menu placement: bottom edge at the anchor when it fits above,
-     * flipped below the anchor on overflow, clamped inside the stage on both
-     * axes. Pure function of its inputs, safe to unit test headless.
+     * flipped below the anchor on overflow, clamped inside the stage on both axes.
+     * Pure function of its inputs, safe to unit test headless.
      */
     public static Vec2 place(float anchorX, float anchorY, float menuWidth, float menuHeight,
             float stageWidth, float stageHeight) {
@@ -283,5 +287,10 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
             } catch (Throwable ignored) {
             }
         }
+    }
+
+    @Override
+    public Popup<T> self() {
+        return this;
     }
 }

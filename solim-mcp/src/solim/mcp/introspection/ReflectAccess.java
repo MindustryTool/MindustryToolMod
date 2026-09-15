@@ -15,7 +15,6 @@ import java.util.concurrent.ConcurrentMap;
  * to {@code null} on subsequent calls instead of throwing. This keeps the debug server functional
  * if a Solim field or method is renamed, moved, or removed.
  */
-@SuppressWarnings("deprecation")
 public final class ReflectAccess {
 	private static final ConcurrentMap<String, Field> FIELD_CACHE = new ConcurrentHashMap<>();
 	private static final ConcurrentMap<String, Method> METHOD_CACHE = new ConcurrentHashMap<>();

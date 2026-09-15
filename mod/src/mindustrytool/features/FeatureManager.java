@@ -276,7 +276,7 @@ public class FeatureManager {
 	}
 
 	public static <T extends Feature> T get(Class<T> featureClass) {
-		var feature = features.get().find(f -> f.getClass().equals(featureClass));
+		Feature feature = features.get().find(f -> f.getClass().equals(featureClass));
 		if (feature == null) {
 			throw new IllegalArgumentException("Feature not found: " + featureClass);
 		}

@@ -37,7 +37,7 @@ public class Packets {
     @SuppressWarnings("unchecked")
     public static <T extends Packet> T newPacket(byte id) {
         if (id >= 0 && id < packets.size) {
-            var prov = packets.getValueAt(id).get();
+            Packet prov = packets.getValueAt(id).get();
             return (T) prov;
         }
         throw new ArcRuntimeException("Unknown packet id: " + id);

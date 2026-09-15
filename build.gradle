@@ -41,10 +41,15 @@ subprojects{
 		}
 	}
 
-	java{
-		targetCompatibility = JavaVersion.VERSION_17
-		sourceCompatibility = JavaVersion.VERSION_17
-	}
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 8
+    }
 
 	ext{
 		// Mindustry version to depend on.

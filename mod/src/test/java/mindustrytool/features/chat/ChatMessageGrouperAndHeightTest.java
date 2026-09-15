@@ -93,7 +93,7 @@ class ChatMessageGrouperAndHeightTest {
 
     private static List<String> idsOf(MessageGroup group) {
         List<String> ids = new ArrayList<>();
-        for (var message : group.getMessages()) {
+        for (ParsedChatMessage message : group.getMessages()) {
             ids.add(message.getId());
         }
         return ids;

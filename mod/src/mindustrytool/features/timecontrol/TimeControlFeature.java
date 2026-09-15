@@ -1,6 +1,7 @@
 package mindustrytool.features.timecontrol;
 
 import arc.Core;
+import arc.func.Prov;
 import arc.math.Mathf;
 import arc.scene.Element;
 import arc.util.Nullable;
@@ -12,26 +13,29 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 import solim.signal.Signal;
 import solim.signal.Signals;
 import solim.ui.Units;
 
 /**
- * Controls game speed with a standalone draggable HUD.
- * Applies only while hosting or in single-player; speed is ephemeral and resets to 1x on
- * disable, world exit, client sessions, and interaction-mode switches.
+ * Controls game speed with a standalone draggable HUD. Applies only while
+ * hosting or in single-player; speed is ephemeral and resets to 1x on disable,
+ * world exit, client sessions, and interaction-mode switches.
  */
 public class TimeControlFeature extends Feature {
 
-    public static final float[] SPEEDS = {0.125f, 0.5f, 1f, 2f, 8f};
+    public static final float[] SPEEDS = { 0.125f, 0.5f, 1f, 2f, 8f };
     public static final float SLIDER_MIN_U = -1f;
     public static final float SLIDER_MAX_U = 1f;
     public static final float SLIDER_STEP_U = 0.1f;
     public static final float SLIDER_MIN_SPEED = 0.125f;
     public static final float SLIDER_MAX_SPEED = 8f;
-    /** Clamp applied after multiplication; 4x the top-preset nominal frame, mirroring vanilla headroom. */
+    /**
+     * Clamp applied after multiplication; 4x the top-preset nominal frame,
+     * mirroring vanilla headroom.
+     */
     public static final float MAX_STEP = 32f;
     public static final String MODE_PRESETS = "presets";
     public static final String MODE_SLIDER = "slider";
@@ -113,19 +117,28 @@ public class TimeControlFeature extends Feature {
         modeConfig.signal().subscribe(mode -> resetSpeed());
     }
 
-    /** Effective multiplier for a preset with the legacy double-tap boost; 1x never boosts. */
+    /**
+     * Effective multiplier for a preset with the legacy double-tap boost; 1x never
+     * boosts.
+     */
     public static float effectiveSpeed(float preset, boolean isBoosted) {
         return !isBoosted || Float.compare(preset, 1f) == 0 ? preset : preset >= 1f ? preset * 2f : preset / 2f;
     }
 
-    /** Two-sided-quadratic slider map around 1x; ratio-symmetric with u = 0 exactly 1x. */
+    /**
+     * Two-sided-quadratic slider map around 1x; ratio-symmetric with u = 0 exactly
+     * 1x.
+     */
     public static float speedFromSlider(float position) {
         float squared = position * position;
         return position >= 0f ? 1f + squared * (SLIDER_MAX_SPEED - 1f)
                 : 1f / (1f + squared * (1f / SLIDER_MIN_SPEED - 1f));
     }
 
-    /** Inverse of {@link #speedFromSlider(float)}; maps a speed back to slider position. */
+    /**
+     * Inverse of {@link #speedFromSlider(float)}; maps a speed back to slider
+     * position.
+     */
     public static float sliderFromSpeed(float value) {
         return value >= 1f ? Mathf.sqrt((value - 1f) / (SLIDER_MAX_SPEED - 1f))
                 : -Mathf.sqrt((1f / value - 1f) / (1f / SLIDER_MIN_SPEED - 1f));
@@ -149,7 +162,10 @@ public class TimeControlFeature extends Feature {
         return boosted;
     }
 
-    /** Returns the intermediate slider position signal (u in [-1, 1]); use this to bind the slider widget. */
+    /**
+     * Returns the intermediate slider position signal (u in [-1, 1]); use this to
+     * bind the slider widget.
+     */
     public Signal<Float> sliderPositionSignal() {
         return sliderPosition;
     }
@@ -163,7 +179,8 @@ public class TimeControlFeature extends Feature {
             return;
         }
         if (Float.compare(preset, 1f) == 0) {
-            // 1x is boost-locked: always resets to 1x and clears boost; double-tap is a no-op.
+            // 1x is boost-locked: always resets to 1x and clears boost; double-tap is a
+            // no-op.
             selectedPreset.set(1f);
             boosted.set(false);
             speed.set(1f);
@@ -179,8 +196,8 @@ public class TimeControlFeature extends Feature {
     }
 
     /**
-     * Resets slider position to 0 (exactly 1x), routing through position signal so widget and speed never desync.
-     * Use this for all slider-mode resets.
+     * Resets slider position to 0 (exactly 1x), routing through position signal so
+     * widget and speed never desync. Use this for all slider-mode resets.
      */
     public void resetSlider() {
         sliderPosition.set(0f);
@@ -249,7 +266,7 @@ public class TimeControlFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
                 settingsDialog = new TimeControlSettingsDialog(this);
@@ -270,11 +287,13 @@ public class TimeControlFeature extends Feature {
         });
     }
 
-    private void  restoreDefaultProvider() {
-        // Time exposes no getter or reset; restate the vanilla ClientLauncher form verbatim.
+    private void restoreDefaultProvider() {
+        // Time exposes no getter or reset; restate the vanilla ClientLauncher form
+        // verbatim.
         Time.setDeltaProvider(() -> {
             float result = Core.graphics.getDeltaTime() * 60f;
-            return (Float.isNaN(result) || Float.isInfinite(result)) ? 1f : Mathf.clamp(result, 0.0001f, Vars.maxDeltaClient);
+            return (Float.isNaN(result) || Float.isInfinite(result)) ? 1f
+                    : Mathf.clamp(result, 0.0001f, Vars.maxDeltaClient);
         });
     }
 }

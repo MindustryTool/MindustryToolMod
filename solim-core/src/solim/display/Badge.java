@@ -143,4 +143,9 @@ public final class Badge implements Component, CellConfig<Badge>, ElementConfig<
         bindings.clear();
         label.dispose();
     }
+
+    @Override
+    public Badge self() {
+        return this;
+    }
 }

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
+
 import mindustrytool.Config;
 import mindustrytool.models.request.CrashReportRequest;
 import mindustrytool.models.request.LogoutRequest;
@@ -32,6 +34,7 @@ import mindustrytool.models.response.TagCategory;
 import mindustrytool.models.response.UserData;
 import mindustrytool.models.response.UserSession;
 import mindustrytool.services.Request.BodyHandlers;
+import mindustrytool.services.Request.RequestBuilder;
 import mindustrytool.services.auth.MindustryAuthProvider;
 import mindustrytool.utils.JsonUtils;
 
@@ -233,7 +236,7 @@ public final class MindustryTool {
                 .timeout(Duration.ofMillis(0))
                 .sendAsync(BodyHandlers.ofLines())
                 .thenAccept(response -> {
-                    try (var lines = response.body()) {
+                    try (Stream<String> lines = response.body()) {
                         lines.forEach(lineConsumer);
                     }
                 });
@@ -247,14 +250,14 @@ public final class MindustryTool {
                 .timeout(Duration.ofMillis(0))
                 .sendAsync(BodyHandlers.ofLines())
                 .thenAccept(response -> {
-                    try (var lines = response.body()) {
+                    try (Stream<String> lines = response.body()) {
                         lines.forEach(lineConsumer);
                     }
                 });
     }
 
     public static CompletableFuture<List<PlayerConnectRoom>> getPlayerConnectRooms(@Nullable String query) {
-        var req = publicApi.get("/player-connect/rooms");
+        RequestBuilder req = publicApi.get("/player-connect/rooms");
         if (query != null && !query.trim().isEmpty()) {
             req.query("q", query);
         }

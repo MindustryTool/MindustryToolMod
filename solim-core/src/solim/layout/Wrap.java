@@ -150,4 +150,9 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
         respace();
         return this;
     }
+
+    @Override
+    public Wrap self() {
+        return this;
+    }
 }

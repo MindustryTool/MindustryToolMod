@@ -51,7 +51,7 @@ public class ServerService {
 								if (address == null || address.isEmpty()) {
 									continue;
 								}
-								var server = new Server();
+								Server server = new Server();
 								server.ip = address.replace("http://", "").replace("https://", "");
 								server.port = dto.getPort();
 								servers.add(server);

@@ -84,4 +84,9 @@ public final class SolimSelect<T> implements Component, ElementConfig<SolimSelec
             binding = null;
         }
     }
+
+    @Override
+    public SolimSelect<T> self() {
+        return this;
+    }
 }

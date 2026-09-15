@@ -2,6 +2,7 @@ package mindustrytool.features.browser.schematic;
 
 import arc.Core;
 import arc.Events;
+import arc.func.Prov;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -11,7 +12,7 @@ import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.browser.common.BrowserKeybinds;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 
 /**
@@ -48,12 +49,12 @@ public class SchematicBrowserFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return null;
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getMainDialog() {
+    public @Nullable Prov<SolimDialog> getMainDialog() {
         return () -> {
             if (dialog == null) {
                 dialog = new SchematicBrowserDialog();

@@ -2,6 +2,7 @@ package mindustrytool.features.quickaccess;
 
 import static solim.UI.*;
 
+import arc.func.Prov;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.struct.Seq;
@@ -17,6 +18,7 @@ import mindustrytool.features.settings.FeatureSettingDialog;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.Hud;
+import solim.overlay.SolimDialog;
 import solim.signal.Readable;
 import mindustrytool.components.WebStyles;
 
@@ -76,7 +78,8 @@ public class QuickAccessHudView extends BaseComponent {
 
                         grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items,
                                 HudItem::id,
-                                item -> createItemButton(item, buttonSize, iconSize));
+                                item -> createItemButton(item, buttonSize, iconSize))
+                                        .gap(unit(1));
                     });
         });
 
@@ -117,7 +120,7 @@ public class QuickAccessHudView extends BaseComponent {
                     .tooltip(f.getName())
                     .onClick(() -> f.setEnabled(!f.isEnabled()))
                     .onLongClick(300L, () -> {
-                        var settingDlg = f.getSettingDialog();
+                        Prov<SolimDialog> settingDlg = f.getSettingDialog();
                         if (settingDlg != null) {
                             settingDlg.get().show();
                         }

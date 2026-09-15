@@ -6,14 +6,16 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
 import solim.core.BaseComponent;
+import solim.display.NetworkImage;
 import solim.layout.Column;
 import solim.layout.SolimStack;
 import solim.signal.Readable;
 
 /**
- * Fixed-size user avatar: network photo on top of a deterministic initial-letter fallback.
- * Renders with continuous-curvature (Apple-style L4 superellipse) rounded corners on both
- * the fallback badge and the network image layer.
+ * Fixed-size user avatar: network photo on top of a deterministic
+ * initial-letter fallback. Renders with continuous-curvature (Apple-style L4
+ * superellipse) rounded corners on both the fallback badge and the network
+ * image layer.
  */
 public class ChatAvatar extends BaseComponent {
 
@@ -76,7 +78,7 @@ public class ChatAvatar extends BaseComponent {
                             });
                 })
                 .layer(() -> {
-                    var img = networkImage(avatarUrl).size(size, size).top().left();
+                    NetworkImage img = networkImage(avatarUrl).size(size, size).top().left();
                     if (radius > 0) {
                         img.rounded(radius);
                     }

@@ -2,6 +2,7 @@ package mindustrytool.features.wavepreview;
 
 import arc.Core;
 import arc.Events;
+import arc.func.Prov;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
@@ -14,11 +15,12 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 
 /**
- * Wave Preview feature providing upcoming wave unit compositions directly inside the HUD waves panel.
+ * Wave Preview feature providing upcoming wave unit compositions directly
+ * inside the HUD waves panel.
  */
 public class WavePreviewFeature extends Feature {
 
@@ -84,7 +86,7 @@ public class WavePreviewFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
                 settingsDialog = new WavePreviewSettingsDialog(this);

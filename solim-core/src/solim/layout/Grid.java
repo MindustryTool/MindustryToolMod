@@ -176,4 +176,9 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         respace();
         return this;
     }
+
+    @Override
+    public Grid self() {
+        return this;
+    }
 }

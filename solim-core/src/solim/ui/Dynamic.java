@@ -155,4 +155,9 @@ public final class Dynamic<T> extends BaseComponent
         currentBindings.clear();
         container.clearChildren();
     }
+
+    @Override
+    public Dynamic<T> self() {
+        return this;
+    }
 }

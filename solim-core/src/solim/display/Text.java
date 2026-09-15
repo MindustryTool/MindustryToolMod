@@ -46,12 +46,13 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
         this(text, (Label.LabelStyle) null);
     }
 
-	public Text(String text, Label.LabelStyle style) {
-		this.label = style != null
-				? new Label(text != null ? text : "", style)
-				: (Core.scene != null ? new Label(text != null ? text : "") : new Label(text != null ? text : "", new Label.LabelStyle()));
-		this.label.name = "solim-text-label";
-	}
+    public Text(String text, Label.LabelStyle style) {
+        this.label = style != null
+                ? new Label(text != null ? text : "", style)
+                : (Core.scene != null ? new Label(text != null ? text : "")
+                        : new Label(text != null ? text : "", new Label.LabelStyle()));
+        this.label.name = "solim-text-label";
+    }
 
     public static Text of(String text) {
         return new Text(text);
@@ -104,12 +105,12 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
         return this;
     }
 
-	public Text style(Label.LabelStyle style) {
-		if (style != null) {
-			label.setStyle(style);
-		}
-		return this;
-	}
+    public Text style(Label.LabelStyle style) {
+        if (style != null) {
+            label.setStyle(style);
+        }
+        return this;
+    }
 
     private boolean growX;
     private boolean growY;
@@ -354,5 +355,10 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
             d.dispose();
         }
         bindings.clear();
+    }
+
+    @Override
+    public Text self() {
+        return this;
     }
 }

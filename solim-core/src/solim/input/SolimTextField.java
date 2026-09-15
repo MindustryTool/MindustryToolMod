@@ -214,4 +214,9 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
 			disabledEffect = null;
 		}
 	}
+
+    @Override
+    public SolimTextField self() {
+        return this;
+    }
 }

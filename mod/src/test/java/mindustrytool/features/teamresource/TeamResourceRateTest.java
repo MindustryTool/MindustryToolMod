@@ -9,7 +9,9 @@ import arc.mock.MockSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import arc.graphics.Color;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.struct.Seq;
 
 class TeamResourceRateTest {
 
@@ -127,7 +129,8 @@ class TeamResourceRateTest {
         }
         table2.setSize(300, 100);
         table2.layout();
-        var cells2 = table2.getCells();
+        @SuppressWarnings("rawtypes")
+        Seq<Cell> cells2 = table2.getCells();
         assertEquals(4, cells2.size);
         assertEquals(75f, cells2.get(0).get().getWidth(), 0.1f);
         assertEquals(75f, cells2.get(1).get().getWidth(), 0.1f);
@@ -202,4 +205,3 @@ class TeamResourceRateTest {
         assertTrue(state.getFormattedStoredPower().contains("/"));
     }
 }
-

@@ -4,6 +4,7 @@ import arc.Core;
 import arc.Events;
 import arc.func.Boolf;
 import arc.func.Cons;
+import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
@@ -36,23 +37,21 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 
 import java.lang.reflect.Field;
 
 /**
- * Feature responsible for visualizing items and fluids travelling through bridges:
- * - Item Bridges (ItemBridge)
- * - Buffered Item Bridges (BufferedItemBridge)
- * - Duct Bridges (DuctBridge)
- * - Liquid Bridges (LiquidBridge & DirectionLiquidBridge)
+ * Feature responsible for visualizing items and fluids travelling through
+ * bridges: - Item Bridges (ItemBridge) - Buffered Item Bridges
+ * (BufferedItemBridge) - Duct Bridges (DuctBridge) - Liquid Bridges
+ * (LiquidBridge & DirectionLiquidBridge)
  *
- * Optimized for 60 FPS real-time rendering:
- * - Zero allocations in draw() loop (no capturing lambdas, no temporary arrays).
- * - Pre-allocated predicate and consumer delegates.
- * - Reactive primitive cache to eliminate boxing/unboxing and config signal overhead.
- * - Direct array/index iteration over ItemModule.
+ * Optimized for 60 FPS real-time rendering: - Zero allocations in draw() loop
+ * (no capturing lambdas, no temporary arrays). - Pre-allocated predicate and
+ * consumer delegates. - Reactive primitive cache to eliminate boxing/unboxing
+ * and config signal overhead. - Direct array/index iteration over ItemModule.
  */
 public class BridgeVisualizerFeature extends Feature {
 
@@ -72,7 +71,8 @@ public class BridgeVisualizerFeature extends Feature {
             || b instanceof DirectionBridgeBuild;
     private final Cons<Building> bridgeDrawer = this::drawBridge;
 
-    // Cached primitive configurations to avoid repeated getter calls, boxing, and unboxing in draw()
+    // Cached primitive configurations to avoid repeated getter calls, boxing, and
+    // unboxing in draw()
     private boolean cachedShowItemBridges = true;
     private boolean cachedShowDuctBridges = true;
     private boolean cachedShowLiquidBridges = true;
@@ -158,7 +158,7 @@ public class BridgeVisualizerFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
                 settingsDialog = new BridgeVisualizerSettingsDialog(this);
@@ -480,12 +480,14 @@ public class BridgeVisualizerFeature extends Feature {
 
         float baseSize = 5.2f * cachedItemScale;
 
-        // Preserve authentic aspect ratio from game database (e.g. 24x32 for water droplets)
+        // Preserve authentic aspect ratio from game database (e.g. 24x32 for water
+        // droplets)
         float aspect = icon.height > 0 ? (float) icon.width / (float) icon.height : 1.0f;
         float width = aspect >= 1.0f ? baseSize : baseSize * aspect;
         float height = aspect >= 1.0f ? baseSize / aspect : baseSize;
 
-        // Draw authentic icon with pure white color (preserving official database colors and shading)
+        // Draw authentic icon with pure white color (preserving official database
+        // colors and shading)
         Draw.color(1f, 1f, 1f, cachedOpacity);
         Draw.rect(icon, lx, ly, width, height);
     }

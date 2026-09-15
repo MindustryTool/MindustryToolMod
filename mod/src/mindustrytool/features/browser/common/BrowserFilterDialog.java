@@ -3,7 +3,6 @@ package mindustrytool.features.browser.common;
 import static solim.UI.*;
 
 import arc.Core;
-import arc.func.Boolf;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.TextureRegionDrawable;
@@ -239,7 +238,7 @@ public class BrowserFilterDialog extends SolimDialog {
             });
         }
 
-        private static class CategoryViewModel {
+        private class CategoryViewModel {
             final String name;
             final Color color;
             final List<TagData> tags;
@@ -406,7 +405,7 @@ public class BrowserFilterDialog extends SolimDialog {
             });
         }
 
-        private static boolean matchesPlanets(List<String> planetIds, Seq<String> planetFilter) {
+        private boolean matchesPlanets(List<String> planetIds, Seq<String> planetFilter) {
             if (planetFilter == null || planetFilter.size == 0) {
                 return false;
             }
@@ -461,12 +460,7 @@ public class BrowserFilterDialog extends SolimDialog {
 
     private static Seq<Block> availableBlocks() {
         try {
-            return Vars.content.blocks().select(new Boolf<Block>() {
-                @Override
-                public boolean get(Block block) {
-                    return block != null && block.isVisible();
-                }
-            });
+            return Vars.content.blocks().select(block -> block.isVisible());
         } catch (Exception ignored) {
             return new Seq<Block>();
         }

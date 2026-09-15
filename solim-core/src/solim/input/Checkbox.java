@@ -96,5 +96,10 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 			binding = null;
 		}
 	}
+
+    @Override
+    public Checkbox self() {
+        return this;
+    }
 }
 

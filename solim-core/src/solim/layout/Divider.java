@@ -117,4 +117,9 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
     public void dispose() {
         image.dispose();
     }
+
+    @Override
+    public Divider self() {
+        return this;
+    }
 }

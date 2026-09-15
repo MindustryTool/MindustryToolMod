@@ -1,5 +1,6 @@
 package mindustrytool.components;
 
+import arc.files.Fi;
 import arc.graphics.Texture;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
@@ -26,19 +27,19 @@ public class FileIcon {
             if (Main.self == null || Main.self.root == null) {
                 return fallback != null ? fallback : fallbackIcon();
             }
-            var file = Main.self.root.child("icons").child(name);
+            Fi file = Main.self.root.child("icons").child(name);
 
             if (!file.exists()) {
                 return fallback != null ? fallback : fallbackIcon();
             }
-            var texture = new TextureRegion(new Texture(file));
-            var drawable = new TextureRegionDrawable(texture);
+            TextureRegion texture = new TextureRegion(new Texture(file));
+            TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
             iconCache.put(name, drawable);
 
             return drawable;
         } catch (Exception e) {
             Log.err(e.getMessage());
-            var fb = fallback != null ? fallback : fallbackIcon();
+            TextureRegionDrawable fb = fallback != null ? fallback : fallbackIcon();
             iconCache.put(name, fb);
             return fb;
         }
