@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import mindustry.gen.Icon;
-import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
@@ -20,6 +19,7 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.Hud;
 import solim.signal.Readable;
+import mindustrytool.components.WebStyles;
 
 /**
  * Fully reactive and declarative QuickAccess HUD overlay. Uses reactive
@@ -57,17 +57,25 @@ public class QuickAccessHudView extends BaseComponent {
         Readable<List<HudItem>> items = parentFeature.hiddenFeaturesConfig.signal().map(this::computeVisibleItems);
 
         hud = hud(() -> {
-            button()
-                    .style(Styles.clearNonei)
-                    .size(buttonSize)
-                    .children(() -> icon(Icon.move).size(iconSize))
-                    .draggable(parentFeature.xSignal, parentFeature.ySignal);
+            row()
+                    .padding(unit(1))
+                    .gap(unit(1))
+                    .rounded(unit(2), WebStyles.Colors.SECTION_BG)
+                    .border(1.5f, WebStyles.Colors.BORDER)
+                    .center()
+                    .children(() -> {
+                        button()
+                                .style(WebStyles.ghost())
+                                .size(buttonSize)
+                                .children(() -> icon(Icon.move).size(iconSize))
+                                .draggable(parentFeature.xSignal, parentFeature.ySignal);
 
-            grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items, HudItem::id,
-                    item -> createItemButton(item, buttonSize, iconSize));
+                        grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items,
+                                HudItem::id,
+                                item -> createItemButton(item, buttonSize, iconSize));
+                    });
         });
 
-        hud.background(Styles.black6);
         hud.opacity(parentFeature.opacityConfig.signal());
         hud.position(parentFeature.xSignal, parentFeature.ySignal);
 
@@ -100,7 +108,7 @@ public class QuickAccessHudView extends BaseComponent {
             FeatureMetadata meta = f.getMetadata();
 
             return button()
-                    .style(Styles.clearNonei)
+                    .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(f.getName())
                     .onClick(() -> f.setEnabled(!f.isEnabled()))
@@ -114,7 +122,7 @@ public class QuickAccessHudView extends BaseComponent {
                             .color(f.enabled().map(en -> en ? Color.white : Color.darkGray)));
         } else {
             return button()
-                    .style(Styles.clearNonei)
+                    .style(WebStyles.ghost())
                     .size(buttonSize)
                     .onClick(() -> new FeatureSettingDialog().show())
                     .children(() -> icon(Icon.settings).size(iconSize));

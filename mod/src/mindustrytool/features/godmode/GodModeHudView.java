@@ -26,8 +26,8 @@ public class GodModeHudView extends BaseComponent {
     @Override
     protected Element build() {
         Readable<Float> scale = parentFeature.scaleConfig.signal();
-        Readable<Float> buttonSize = scale.map(s -> unit(10) * (s != null ? s : 1f));
-        Readable<Float> iconSize = scale.map(s -> unit(5.5f) * (s != null ? s : 1f));
+        Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
+        Readable<Float> iconSize = scale.map(s -> unit(6) * (s != null ? s : 1f));
 
         hud = hud(() -> {
             row()
@@ -40,7 +40,7 @@ public class GodModeHudView extends BaseComponent {
                         button()
                                 .style(WebStyles.ghost())
                                 .size(buttonSize)
-                                .children(() -> icon(Icon.move).size(iconSize).color(WebStyles.Colors.GHOST_FG))
+                                .children(() -> icon(Icon.move).size(iconSize))
                                 .draggable(parentFeature.xSignal, parentFeature.ySignal);
 
                         dynamic(parentFeature.providerSignal(), provider ->
