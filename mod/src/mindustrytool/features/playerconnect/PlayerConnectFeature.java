@@ -3,7 +3,7 @@ package mindustrytool.features.playerconnect;
 import arc.Core;
 import arc.Events;
 import arc.func.Cons;
-import arc.scene.ui.Button;
+import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.ArrayMap;
@@ -35,13 +35,16 @@ import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.playerconnect.models.HostingState;
 import mindustrytool.features.playerconnect.models.JoinRequest;
 import mindustrytool.features.playerconnect.net.NetworkProxy;
+import arc.scene.ui.layout.Scl;
+import arc.util.Reflect;
+import mindustry.ui.IntFormat;
+import mindustry.ui.Styles;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.features.playerconnect.ui.HostRoomDialog;
 import mindustrytool.features.playerconnect.ui.JoinApprovalHudView;
 import mindustrytool.features.playerconnect.ui.JoinDialogInjector;
 import mindustrytool.features.playerconnect.ui.ManageRoomDialog;
-import mindustrytool.features.playerconnect.ui.PingHudView;
 import mindustrytool.models.response.PlayerConnectProvider;
 import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.PlayerConnectRoomsResponse;
@@ -84,7 +87,6 @@ public class PlayerConnectFeature extends Feature {
     private @Nullable HostRoomDialog hostDialog;
     private @Nullable ManageRoomDialog manageDialog;
     private @Nullable JoinApprovalHudView approvalHud;
-    private @Nullable PingHudView pingHud;
     private @Nullable JoinDialogInjector joinInjector;
 
     public PlayerConnectFeature() {
@@ -128,6 +130,12 @@ public class PlayerConnectFeature extends Feature {
                 Vars.ui.showInfoFade("@feature.player-connect.auto-closed-on-client");
             }
         });
+
+        Events.run(HostEvent.class, () -> {
+            if (enabled().peek()) {
+                showHostDialog();
+            }
+        });
     }
 
     @Override
@@ -140,10 +148,7 @@ public class PlayerConnectFeature extends Feature {
                 approvalHud = new JoinApprovalHudView(this);
                 Vars.ui.hudGroup.addChild(approvalHud.element());
             }
-            if (pingHud == null) {
-                pingHud = new PingHudView(this);
-                Vars.ui.hudGroup.addChild(pingHud.element());
-            }
+            setupPingLabel();
             injectPauseMenuButton();
 
             if (joinInjector == null) {
@@ -170,10 +175,12 @@ public class PlayerConnectFeature extends Feature {
             approvalHud.dispose();
             approvalHud = null;
         }
-        if (pingHud != null) {
-            pingHud.element().remove();
-            pingHud.dispose();
-            pingHud = null;
+
+        if (Vars.ui != null && Vars.ui.hudGroup != null) {
+            Element pcPing = Vars.ui.hudGroup.find("pc-ping");
+            if (pcPing != null) {
+                pcPing.remove();
+            }
         }
 
         PlayerConnectClient.disposePinger();
@@ -538,7 +545,37 @@ public class PlayerConnectFeature extends Feature {
         }
     }
 
-    // ─── Pause Menu Injection ──────────────────────────────────────
+    // ─── Pause Menu Injection & HUD Ping ──────────────────────────
+
+    private void setupPingLabel() {
+        if (Vars.ui == null || Vars.ui.hudGroup == null) {
+            return;
+        }
+
+        Table parent = Vars.ui.hudGroup.find("fps/ping");
+        if (parent == null || parent.find("pc-ping") != null) {
+            return;
+        }
+
+        IntFormat pingFormat = new IntFormat("ping");
+        parent.label(() -> pingColor() + pingFormat.get(ping.get() != null ? ping.get() : 0))
+                .visible(this::isHosting)
+                .left()
+                .style(Styles.outlineLabel)
+                .name("pc-ping");
+        parent.row();
+    }
+
+    private String pingColor() {
+        Integer p = ping.get();
+        if (p == null || p <= 200) {
+            return "";
+        }
+        if (p <= 500) {
+            return "[yellow]";
+        }
+        return "[scarlet]";
+    }
 
     private void injectPauseMenuButton() {
         if (Vars.ui.paused == null) {
@@ -568,15 +605,41 @@ public class PlayerConnectFeature extends Feature {
                 ? Core.bundle.get("feature.player-connect.manage-room", "Manage Room")
                 : Core.bundle.get("feature.player-connect.host-room", "Host Room"));
 
-        Button btn = new Button();
-        btn.name = PAUSE_BUTTON_NAME;
-        btn.setStyle(mindustry.ui.Styles.defaultb);
-        btn.add(new arc.scene.ui.Image(Icon.planet)).padRight(6f);
-        btn.label(() -> btnText.get()).padRight(6f);
-        btn.clicked(this::onPauseMenuButtonClicked);
-        btn.setDisabled(Vars.net::client);
+        boolean hasColspan2 = cells.size >= 2
+                && Reflect.<Integer>get(cells.get(cells.size - 2), "colspan") == 2;
+        float btnWidth = Math.min(Core.graphics.getWidth() / Scl.scl() * 0.9f, 450f);
 
-        root.row().add(btn).growX().height(50f).padTop(4f).row();
+        Cell<?> addedCell;
+        root.row();
+        if (Vars.mobile) {
+            addedCell = root.buttonRow(btnText.get(), Icon.planet, this::onPauseMenuButtonClicked)
+                    .update(btn -> {
+                        btn.name = PAUSE_BUTTON_NAME;
+                        btn.setText(btnText.get());
+                    })
+                    .disabled(b -> Vars.net.client());
+        } else if (hasColspan2) {
+            addedCell = root.button(btnText.get(), Icon.planet, this::onPauseMenuButtonClicked)
+                    .colspan(2)
+                    .width(btnWidth)
+                    .update(btn -> {
+                        btn.name = PAUSE_BUTTON_NAME;
+                        btn.setText(btnText.get());
+                    })
+                    .disabled(b -> Vars.net.client());
+        } else {
+            addedCell = root.button(btnText.get(), Icon.planet, this::onPauseMenuButtonClicked)
+                    .update(btn -> {
+                        btn.name = PAUSE_BUTTON_NAME;
+                        btn.setText(btnText.get());
+                    })
+                    .disabled(b -> Vars.net.client());
+        }
+        root.row();
+
+        if (addedCell != null && addedCell.get() != null) {
+            addedCell.get().name = PAUSE_BUTTON_NAME;
+        }
 
         // Swap with quit button if present
         if (cells.size >= 2) {

@@ -11,7 +11,6 @@ import java.util.List;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
-import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.features.playerconnect.net.NetworkProxy;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
@@ -20,6 +19,7 @@ import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData;
 import solim.core.BaseComponent;
 import solim.signal.Signal;
+import mindustrytool.components.WebStyles;
 
 public class RoomCard extends BaseComponent {
 
@@ -42,7 +42,8 @@ public class RoomCard extends BaseComponent {
                 : "";
 
         int playerCount = data != null && data.getPlayers() != null ? data.getPlayers().size() : 0;
-        String playerInfo = Iconc.players + " " + playerCount + (data != null && data.getLocale() != null ? " (" + data.getLocale() + ")" : "");
+        String playerInfo = Iconc.players + " " + playerCount
+                + (data != null && data.getLocale() != null ? " (" + data.getLocale() + ")" : "");
 
         // Mod difference calculations
         List<String> roomMods = data != null && data.getMods() != null ? data.getMods() : new ArrayList<>();
@@ -60,20 +61,27 @@ public class RoomCard extends BaseComponent {
             }
         }
 
-        return column()
-                .growX()
+        return card()
+                .background(Styles.black8)
+                .border(1.5f, Color.darkGray)
+                .grow()
                 .margin(unit(2.5f))
                 .gap(unit(1.5f))
+                .minHeight(unit(40))
+                .padding(unit(2))
                 .left()
                 .children(() -> {
                     // Header row: Title + Copy link button
                     row().growX().children(() -> {
                         text(title).style(Styles.outlineLabel).fontScale(1.1f).left();
                         spacer();
-                        button(Icon.copy, () -> {
+                        button(() -> {
                             Core.app.setClipboardText(room.getLink());
                             Vars.ui.showInfoFade("@copied");
-                        }).style(Styles.clearNonei).size(unit(8));
+                        })
+                                .style(WebStyles.ghost())
+                                .size(unit(11))
+                                .children(() -> icon(Icon.copy).size(unit(6)));
                     });
 
                     // Map and mode
@@ -96,14 +104,15 @@ public class RoomCard extends BaseComponent {
                         text("[scarlet]Protocol mismatch: expected v" + NetworkProxy.PROTOCOL_VERSION).left();
                     }
 
+                    spacer();
+
                     // Join action button
                     if (!protocolMatch) {
                         button(Core.bundle.get("feature.player-connect.incompatible", "Incompatible"), () -> {
-                        }).style(Styles.defaultb).growX().height(unit(8)).enabled(Signal.of(false));
+                        }).style(WebStyles.outline()).growX().height(unit(8)).enabled(Signal.of(false));
                     } else {
                         button(Core.bundle.get("join", "Join"), () -> promptJoin(secured, missingMods, unneededMods))
-                                .style(Styles.defaultb)
-                                .color(Pal.accent)
+                                .style(WebStyles.secondary())
                                 .growX()
                                 .height(unit(8));
                     }

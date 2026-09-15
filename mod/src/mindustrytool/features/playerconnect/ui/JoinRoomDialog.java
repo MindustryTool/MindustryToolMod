@@ -24,6 +24,7 @@ public class JoinRoomDialog extends SolimDialog {
         name("joinRoomDialog");
         addCloseButton();
         closeOnBack();
+        cont().center();
 
         children(() -> new JoinRoomView(this));
     }
@@ -57,7 +58,8 @@ public class JoinRoomDialog extends SolimDialog {
                     : Core.bundle.get("feature.player-connect.link-invalid", "Invalid link (expected player-connect://host:port/roomId)"));
 
             return column()
-                    .growX()
+                    .width(dvw(90f).map(w -> Math.min(w, 500f)))
+                    .maxHeight(dvh(85f).map(h -> Math.min(h, 400f)))
                     .margin(unit(4))
                     .gap(unit(3))
                     .center()

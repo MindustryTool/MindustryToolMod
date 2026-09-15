@@ -27,6 +27,7 @@ public class JoinWarningDialog extends SolimDialog {
         name("joinWarningDialog");
         addCloseButton();
         closeOnBack();
+        cont().center();
 
         children(() -> new JoinWarningView(this, room, missingMods, unneededMods, password));
     }
@@ -54,7 +55,8 @@ public class JoinWarningDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column()
-                    .growX()
+                    .width(dvw(90f).map(w -> Math.min(w, 450f)))
+                    .maxHeight(dvh(85f).map(h -> Math.min(h, 450f)))
                     .margin(unit(4))
                     .gap(unit(2))
                     .center()

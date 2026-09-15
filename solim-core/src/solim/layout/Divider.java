@@ -33,7 +33,7 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
 
         this.image = new SolimImage(white);
         this.image.element().name = "solim-divider";
-        this.image.color(Color.lightGray);
+        this.image.color(Color.darkGray);
         // Stretch (not fit): the source is a square pixel, and fit would shrink it
         // into a centered dot instead of a line filling the cell.
         this.image.scaling(Scaling.stretch);

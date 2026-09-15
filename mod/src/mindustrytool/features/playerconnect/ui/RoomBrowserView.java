@@ -4,16 +4,15 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.graphics.Color;
+import arc.math.Mathf;
 import arc.scene.Element;
 import java.util.ArrayList;
 import java.util.List;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.models.response.PlayerConnectRoom;
 import solim.core.BaseComponent;
-import solim.core.Component;
 import solim.signal.Computed;
 import solim.signal.Signal;
 
@@ -22,6 +21,7 @@ public class RoomBrowserView extends BaseComponent {
     private final PlayerConnectFeature feature;
     private final Signal<String> searchQuery = Signal.of("");
     private final Signal<Boolean> collapsed = Signal.of(false);
+    private final Computed<Integer> columnCount = dvw(90f).map(w -> Mathf.clamp((int) (w / 550f), 1, 4));
 
     public RoomBrowserView(PlayerConnectFeature feature) {
         this.feature = feature;
@@ -48,39 +48,41 @@ public class RoomBrowserView extends BaseComponent {
             return result;
         });
 
+        Computed<Boolean> hasRooms = filteredRooms.map(r -> r != null && !r.isEmpty());
+
         return column()
                 .growX()
                 .margin(unit(2))
+                .gap(unit(2))
                 .left()
                 .children(() -> {
                     // Header Bar
                     row().growX().gap(unit(2)).center().children(() -> {
                         button(() -> collapsed.set(!Boolean.TRUE.equals(collapsed.get())))
-                                .style(Styles.clearNonei)
-                                .size(unit(8))
-                                .children(() -> icon(collapsed.map(c -> Boolean.TRUE.equals(c) ? Icon.rightOpen : Icon.downOpen)));
-
-                        text(Core.bundle.get("feature.player-connect.title", "PlayerConnect Rooms"))
-                                .style(Styles.outlineLabel)
-                                .color(Pal.accent)
-                                .left();
-
-                        spacer();
+                                .style(WebStyles.outline())
+                                .size(unit(11))
+                                .children(() -> icon(
+                                        collapsed.map(c -> Boolean.TRUE.equals(c) ? Icon.rightOpen : Icon.downOpen))
+                                                .size(unit(7)));
 
                         // Search field
-                        textField(searchQuery)
-                                .height(unit(8))
-                                .width(unit(36));
+                        row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2)).rounded(unit(2))
+                                .children(() -> {
+                                    textField(searchQuery)
+                                            .grow()
+                                            .style(WebStyles.clearInput());
 
+                                });
                         // Refresh button
-                        button(Icon.refresh, feature::fetchRoomsRest)
-                                .style(Styles.clearNonei)
-                                .size(unit(8));
+                        button(feature::fetchRoomsRest)
+                                .style(WebStyles.outline())
+                                .size(unit(11))
+                                .children(() -> icon(Icon.refresh).size(unit(7)));
 
                         // Join via Link button
                         button(Core.bundle.get("feature.player-connect.join-link-title", "Join via Link"), () -> {
                             new JoinRoomDialog().show();
-                        }).style(Styles.defaultb).height(unit(8));
+                        }).style(WebStyles.outline()).height(unit(11));
                     });
 
                     divider();
@@ -90,25 +92,20 @@ public class RoomBrowserView extends BaseComponent {
                         if (Boolean.TRUE.equals(isCollapsed)) {
                             return row();
                         }
-                        return dynamic(filteredRooms, this::buildRoomGrid).growX();
+                        return column().growX().children(() -> {
+                            column().growX().gap(unit(2)).visible(hasRooms).children(() -> {
+                                grid(columnCount, filteredRooms, room -> room.getLink(), RoomCard::new).gap(unit(2));
+                            });
+
+                            column().growX().margin(unit(3)).center().visible(hasRooms.map(h -> !h)).children(() -> {
+                                text(Core.bundle.get("feature.player-connect.no-rooms",
+                                        "No active PlayerConnect rooms found."))
+                                                .color(Color.lightGray);
+                            });
+                        });
                     }).growX();
 
                     divider();
                 }).element();
-    }
-
-    private Component buildRoomGrid(List<PlayerConnectRoom> roomList) {
-        if (roomList == null || roomList.isEmpty()) {
-            return column().growX().margin(unit(3)).center().children(() -> {
-                text(Core.bundle.get("feature.player-connect.no-rooms", "No active PlayerConnect rooms found."))
-                        .color(Color.lightGray);
-            });
-        }
-
-        return column().growX().gap(unit(2)).children(() -> {
-            for (PlayerConnectRoom room : roomList) {
-                new RoomCard(room);
-            }
-        });
     }
 }

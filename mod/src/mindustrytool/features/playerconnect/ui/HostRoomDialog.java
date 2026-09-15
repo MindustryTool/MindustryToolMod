@@ -26,6 +26,7 @@ public class HostRoomDialog extends SolimDialog {
         name("hostRoomDialog");
         addCloseButton();
         closeOnBack();
+        cont().center();
 
         children(() -> new HostRoomView(feature, this));
     }
@@ -46,8 +47,10 @@ public class HostRoomDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column()
-                    .growX()
-                    .margin(unit(3))
+                    .width(dvw(90f).map(w -> Math.min(w, 1100f)))
+                    .maxHeight(dvh(85f).map(h -> Math.min(h, 1200f)))
+                    .margin(unit(4))
+                    .gap(unit(3))
                     .center()
                     .children(() -> {
                         dynamic(step, currentStep -> currentStep == 1 ? buildStep1() : buildStep2());
@@ -57,26 +60,28 @@ public class HostRoomDialog extends SolimDialog {
         private Component buildStep1() {
             return column()
                     .growX()
-                    .gap(unit(2))
+                    .gap(unit(3.5f))
                     .center()
                     .children(() -> {
                         text(Core.bundle.get("feature.player-connect.step1-title", "Room Settings"))
                                 .color(Pal.accent);
 
                         // Room Name
-                        row().growX().gap(unit(2)).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).width(unit(28)).left();
+                        row().growX().gap(unit(3)).center().children(() -> {
+                            text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).width(unit(36))
+                                    .left();
                             textField(feature.roomNameConfig.signal())
                                     .growX()
-                                    .height(unit(9));
+                                    .height(unit(10));
                         });
 
                         // Password
-                        row().growX().gap(unit(2)).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.password", "Password:")).width(unit(28)).left();
+                        row().growX().gap(unit(3)).center().children(() -> {
+                            text(Core.bundle.get("feature.player-connect.password", "Password:")).width(unit(36))
+                                    .left();
                             textField(feature.passwordConfig.signal())
                                     .growX()
-                                    .height(unit(9));
+                                    .height(unit(10));
                         });
 
                         // Max Players
@@ -89,50 +94,71 @@ public class HostRoomDialog extends SolimDialog {
                             } catch (NumberFormatException ignored) {
                             }
                         });
-                        row().growX().gap(unit(2)).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.max-players", "Max Players (0=unlimited):")).width(unit(28)).left();
-                            textField(maxPlayersSig).growX().height(unit(9));
+                        row().growX().gap(unit(3)).center().children(() -> {
+                            text(Core.bundle.get("feature.player-connect.max-players", "Max Players (0=unlimited):"))
+                                    .width(unit(36)).left();
+                            textField(maxPlayersSig).growX().height(unit(10));
                         });
 
                         // Auto Accept
-                        row().growX().gap(unit(2)).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.auto-accept", "Auto-accept players:")).width(unit(28)).left();
+                        row().growX().gap(unit(3)).center().children(() -> {
+                            text(Core.bundle.get("feature.player-connect.auto-accept", "Auto-accept players:"))
+                                    .width(unit(36)).left();
                             button(feature.autoAcceptConfig.signal().map(v -> Boolean.TRUE.equals(v)
                                     ? Core.bundle.get("yes", "Yes")
                                     : Core.bundle.get("no", "No")), () -> {
-                                feature.autoAcceptConfig.set(!Boolean.TRUE.equals(feature.autoAcceptConfig.get()));
-                            }).style(Styles.defaultb).height(unit(8)).width(unit(20));
+                                        feature.autoAcceptConfig
+                                                .set(!Boolean.TRUE.equals(feature.autoAcceptConfig.get()));
+                                    })
+                                    .style(Styles.defaultb)
+                                    .height(unit(10))
+                                    .paddingX(unit(4))
+                                    .paddingY(unit(2))
+                                    .minWidth(unit(24));
                         });
 
                         button(Core.bundle.get("next", "Next"), () -> {
                             step.set(2);
                             pingAllProviders();
-                        }).style(Styles.defaultb).size(unit(36), unit(10));
+                        })
+                                .style(Styles.defaultb)
+                                .height(unit(11))
+                                .paddingX(unit(8))
+                                .paddingY(unit(2.5f))
+                                .minWidth(unit(36));
                     });
         }
 
         private Component buildStep2() {
             return column()
                     .growX()
-                    .gap(unit(2))
+                    .gap(unit(3))
                     .center()
                     .children(() -> {
-                        row().growX().children(() -> {
+                        row().growX().gap(unit(2)).center().children(() -> {
                             text(Core.bundle.get("feature.player-connect.select-provider", "Select Relay Provider"))
                                     .color(Pal.accent);
                             spacer();
                             button(Core.bundle.get("refresh", "Refresh"), () -> {
                                 feature.refreshProviders();
                                 pingAllProviders();
-                            }).style(Styles.defaultb).height(unit(8));
+                            })
+                                    .style(Styles.defaultb)
+                                    .height(unit(9))
+                                    .paddingX(unit(4))
+                                    .paddingY(unit(2));
+
                             button("+ " + Core.bundle.get("custom", "Custom"), this::showAddCustomDialog)
-                                    .style(Styles.defaultb).height(unit(8));
+                                    .style(Styles.defaultb)
+                                    .height(unit(9))
+                                    .paddingX(unit(4))
+                                    .paddingY(unit(2));
                         });
 
                         divider();
 
-                        scroll().height(unit(50)).growX().children(() -> {
-                            column().growX().gap(unit(1.5f)).children(() -> {
+                        scroll().height(unit(80)).growX().scrollX(false).children(() -> {
+                            column().growX().gap(unit(2)).children(() -> {
                                 for (PlayerConnectProvider p : feature.providersSignal().get()) {
                                     providerCard(p);
                                 }
@@ -141,28 +167,37 @@ public class HostRoomDialog extends SolimDialog {
 
                         divider();
 
-                        row().gap(unit(3)).center().children(() -> {
+                        row().gap(unit(4)).center().children(() -> {
                             button(Core.bundle.get("back", "Back"), () -> step.set(1))
                                     .style(Styles.defaultb)
-                                    .size(unit(28), unit(10));
+                                    .height(unit(11))
+                                    .paddingX(unit(6))
+                                    .paddingY(unit(2.5f))
+                                    .minWidth(unit(28));
 
-                            button(Core.bundle.get("feature.player-connect.start-hosting", "Start Hosting"), this::startHosting)
-                                    .style(Styles.defaultb)
-                                    .color(Pal.accent)
-                                    .size(unit(36), unit(10))
-                                    .enabled(selectedProvider.map(p -> p != null));
+                            button(Core.bundle.get("feature.player-connect.start-hosting", "Start Hosting"),
+                                    this::startHosting)
+                                            .style(Styles.defaultb)
+                                            .color(Pal.accent)
+                                            .height(unit(11))
+                                            .paddingX(unit(8))
+                                            .paddingY(unit(2.5f))
+                                            .minWidth(unit(36))
+                                            .enabled(selectedProvider.map(p -> p != null));
                         });
                     });
         }
 
         private Component providerCard(PlayerConnectProvider provider) {
             Signal<String> pingSignal = getOrCreatePingSignal(provider.getAddress());
-            Computed<Boolean> isSelected = selectedProvider.map(sel -> sel != null && sel.getAddress().equals(provider.getAddress()));
+            Computed<Boolean> isSelected = selectedProvider
+                    .map(sel -> sel != null && sel.getAddress().equals(provider.getAddress()));
 
             return button()
                     .style(Styles.clearNonei)
                     .growX()
-                    .height(unit(10))
+                    .height(unit(12))
+                    .padding(unit(2), unit(3), unit(2), unit(3))
                     .onClick(() -> selectedProvider.set(provider))
                     .children(() -> {
                         row().growX().margin(unit(1), unit(2), unit(1), unit(2)).gap(unit(2)).children(() -> {

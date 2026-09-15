@@ -23,6 +23,7 @@ public class ManageRoomDialog extends SolimDialog {
         name("manageRoomDialog");
         addCloseButton();
         closeOnBack();
+        cont().center();
 
         children(() -> new ManageRoomView(feature, this));
     }
@@ -47,34 +48,43 @@ public class ManageRoomDialog extends SolimDialog {
             Computed<String> pingText = feature.pingSignal().map(p -> (p != null ? p : 0) + "ms");
 
             return column()
-                    .growX()
-                    .margin(unit(4))
-                    .gap(unit(3))
+                    .width(dvw(90f).map(w -> Math.min(w, 900f)))
+                    .maxHeight(dvh(85f).map(h -> Math.min(h, 800f)))
+                    .margin(unit(5))
+                    .gap(unit(4))
                     .center()
                     .children(() -> {
                         text(Core.bundle.get("feature.player-connect.room-active",
                                 "Your room is live on the relay network!"))
                                         .color(Color.green);
 
-                        row().gap(unit(2)).center().children(() -> {
+                        row().gap(unit(3)).center().children(() -> {
                             text(Core.bundle.get("feature.player-connect.relay-ping", "Relay Ping: "))
                                     .color(Color.lightGray);
                             text(pingText).color(Pal.accent);
                         });
 
-                        row().gap(unit(2)).center().children(() -> {
+                        row().gap(unit(3)).center().children(() -> {
                             text(Core.bundle.get("feature.player-connect.join-link", "Link: ")).color(Color.lightGray);
                             text(linkText).color(Color.white);
                         });
 
-                        button(Core.bundle.get("feature.player-connect.copy-link", "Copy Join Link"), this::copyLink)
-                                .style(Styles.defaultb)
-                                .size(unit(40), unit(10));
+                        row().gap(unit(3)).center().children(() -> {
+                            button(Core.bundle.get("feature.player-connect.copy-link", "Copy Join Link"), this::copyLink)
+                                    .style(Styles.defaultb)
+                                    .height(unit(11))
+                                    .paddingX(unit(6))
+                                    .paddingY(unit(2.5f))
+                                    .minWidth(unit(36));
 
-                        button(Core.bundle.get("feature.player-connect.close-room", "Close Room"), this::closeRoom)
-                                .style(Styles.defaultb)
-                                .color(Color.scarlet)
-                                .size(unit(40), unit(10));
+                            button(Core.bundle.get("feature.player-connect.close-room", "Close Room"), this::closeRoom)
+                                    .style(Styles.defaultb)
+                                    .color(Color.scarlet)
+                                    .height(unit(11))
+                                    .paddingX(unit(6))
+                                    .paddingY(unit(2.5f))
+                                    .minWidth(unit(36));
+                        });
                     }).element();
         }
 

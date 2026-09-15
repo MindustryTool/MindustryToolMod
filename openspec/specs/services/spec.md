@@ -665,3 +665,44 @@ After wiring, `src/old/mindustrytool/services/UpdateService.java:1` and `UpdateA
 - **WHEN** `grep -R "old\\.mindustrytool\\.services\\.Update" src/mindustrytool` is run
 - **THEN** it returns no results
 
+**Source: cache-github-responses**
+
+Github response caching (memoization scope, prefetch, success-only caching with live retry on failure, `getProjectTasks` exclusion).
+
+### Requirement: Github memoizes cacheable responses
+`Github.getModHjson()` and `Github.getReleases()` SHALL return a shared memoized future per session: concurrent callers reuse the in-flight request and repeat callers reuse the completed response, issuing at most one network trip per endpoint per session. `Github.getReleases(page, perPage)` SHALL be memoized per `(page, perPage)` key on demand.
+
+#### Scenario: Repeat callers share one response
+- **WHEN** `getReleases()` is called twice in one session with a successful first response
+- **THEN** only one network request is issued and both callers receive the same body
+
+#### Scenario: Concurrent callers share the in-flight request
+- **WHEN** `getModHjson()` is called twice before the first request completes
+- **THEN** only one network request is issued and both callers receive the same body
+
+#### Scenario: Paged releases memoized per key
+- **WHEN** `getReleases(1, 20)` is called twice with a successful first response
+- **THEN** only one network request is issued for that key, and a different key issues its own request
+
+### Requirement: Github prefetches cacheable endpoints at startup
+`Github` SHALL expose `prefetchAll()` firing `getModHjson()` and `getReleases()` once, fire-and-forget on the existing `Request` executor without blocking the caller. The application SHALL invoke it once during startup next to the existing update check.
+
+#### Scenario: Prefetch warms the cache
+- **WHEN** `prefetchAll()` completes successfully at startup
+- **THEN** the subsequent update check's `getModHjson()` and `getReleases()` calls complete without new network requests
+
+#### Scenario: Prefetch never blocks startup
+- **WHEN** `prefetchAll()` is invoked
+- **THEN** it returns immediately and network work happens off the calling thread
+
+### Requirement: Github caches successes only
+Only successfully completed responses SHALL be retained; a failed request SHALL clear its memo holder so the next call re-issues live. `Github.getProjectTasks(status)` SHALL bypass all caching and issue a live request on every call.
+
+#### Scenario: Failed call retries live
+- **WHEN** a `getReleases()` call fails and it is called again
+- **THEN** the second call issues a new network request instead of replaying the failure
+
+#### Scenario: Project tasks always live
+- **WHEN** `getProjectTasks(status)` is called twice with the same status
+- **THEN** two network requests are issued
+
