@@ -6,7 +6,7 @@ Standalone Solim-first game-speed control gated to hosting or single-player, wit
 
 ## Requirements
 
-**Source: rewrite-time-control, time-control-refinements**
+**Source: rewrite-time-control, time-control-refinements, time-control-scale**
 
 ### Requirement: Host-or-single-player gating
 The time-control feature SHALL apply game speed only when the session is single-player (`!Vars.net.active()`) or locally hosted (`Vars.net.server()`). When the client state (`Vars.net.client()`) holds, speed application SHALL be refused and any active speed SHALL reset to 1x.
@@ -39,7 +39,7 @@ Speed SHALL live in a memory-only `Signal<Float>` defaulting to 1x and SHALL nev
 - **THEN** the feature starts at 1x with no stored speed value read
 
 ### Requirement: Standalone reactive HUD
-The feature SHALL render a standalone Solim `hud()` overlay (not a QuickAccess entry) with a drag handle bound via `.draggable(xSignal, ySignal)`, portrait/landscape position persistence following the QuickAccess `ConfigGroup` pattern, and `keepInScreen` on `ResizeEvent`. The HUD SHALL be visible only while the feature is enabled, `Vars.ui.hudfrag.shown` is true, `Vars.state.isGame()` is true, and the net gate is valid. The bar SHALL stay compact: preset buttons roughly `13x10` units with `1`-unit gaps beside a `10`-unit drag handle (about `320x40px` total), and slider mode roughly `280x40px`, never shrinking interactive elements below mobile touch floors. Construction SHALL NOT unwrap signals with `.get()` in `build()`; bindings SHALL be automatic with ambient ownership.
+The feature SHALL render a standalone Solim `hud()` overlay (not a QuickAccess entry) with a drag handle bound via `.draggable(xSignal, ySignal)`, portrait/landscape position persistence following the QuickAccess `ConfigGroup` pattern, and `keepInScreen` on `ResizeEvent`. The HUD SHALL be visible only while the feature is enabled, `Vars.ui.hudfrag.shown` is true, `Vars.state.isGame()` is true, and the net gate is valid. The bar SHALL stay compact at scale 1.0: preset buttons roughly `13x10` units with `1`-unit gaps beside a `10`-unit drag handle (about `320x40px` total), and slider mode roughly `280x40px`, never shrinking interactive elements below mobile touch floors at default scale. A persisted UI scale (`ConfigValue<Float>` `scale`, 0.5–1.5, default 1.0) SHALL resize button sizes, icon sizes, and speed-label font scales via per-element reactive mappings (no `Hud.scale()` container zoom); slider track width, speed label width, gaps, and padding SHALL stay fixed while container row heights follow the scaled button size so content never clips. At scale 1.0 the HUD SHALL render pixel-identical to the fixed-size layout with identical proportions when scaled. Construction SHALL NOT unwrap signals with `.get()` in `build()`; bindings SHALL be automatic with ambient ownership.
 
 #### Scenario: HUD shows during valid hosted game
 - **WHEN** the feature is enabled during active hosted gameplay with the HUD fragment shown
@@ -54,8 +54,20 @@ The feature SHALL render a standalone Solim `hud()` overlay (not a QuickAccess e
 - **THEN** coordinates persist under separate portrait/landscape keys and the bar stays within screen bounds
 
 #### Scenario: Bar stays compact
-- **WHEN** either interaction mode renders
+- **WHEN** either interaction mode renders at default scale
 - **THEN** the bar fits within its compact footprint with a fixed-width speed label that does not resize as values change
+
+#### Scenario: Scale resizes buttons icons and fonts proportionally
+- **WHEN** the user changes the scale setting
+- **THEN** drag-handle, preset, and reset button sizes plus all icons and speed-label fonts update reactively with identical proportions and no clipping
+
+#### Scenario: Identical at default scale
+- **WHEN** scale is 1.0
+- **THEN** button sizes, icon sizes, font sizes, track width, label width, gaps, and padding equal the pre-scale fixed layout exactly
+
+#### Scenario: Track and label widths stay fixed
+- **WHEN** scale changes
+- **THEN** slider track width, speed label width, gaps, and padding do not change
 
 ### Requirement: Preset interaction mode
 In preset mode the HUD SHALL offer the fixed preset list `0.125, 0.5, 1, 2, 8` with tap-to-select; tapping the already-selected preset SHALL toggle the double-tap boost (`>=1 ? x2 : /2`) EXCEPT for the `1x` preset, which SHALL be boost-locked. Tapping `1x` from any state SHALL clear boost and reset to 1x, and double-tapping `1x` SHALL be a no-op. Presets and boosted values SHALL interleave across every power of two from `2^-4` to `2^4` with no two provenances yielding the same speed. The selected highlight SHALL update reactively without rebuilding the view.
@@ -108,7 +120,7 @@ The interaction mode (presets or slider) SHALL persist via a `ConfigValue` while
 - **THEN** speed resets to 1x before the new mode renders
 
 ### Requirement: Settings dialog
-The feature SHALL expose a `TimeControlSettingsDialog` (Solim dialog with mode selector, reset-speed-to-1x action, reset-HUD-position action, and a hosting-only safety note) following the `QuickAccessSettingsDialog` structure. All rows SHALL bind declaratively with no manual subscriptions for ordinary state.
+The feature SHALL expose a `TimeControlSettingsDialog` (Solim dialog with mode selector, UI scale slider, reset-speed-to-1x action, reset-HUD-position action, and a hosting-only safety note) following the `QuickAccessSettingsDialog` structure. The scale slider SHALL range 0.5–1.5 with 0.1 step, bind directly to `scaleConfig.signal()`, and display a percent label. No reset action SHALL be provided for scale. All rows SHALL bind declaratively with no manual subscriptions for ordinary state.
 
 #### Scenario: Reset speed action
 - **WHEN** the user activates reset-speed in the settings dialog
@@ -118,8 +130,16 @@ The feature SHALL expose a `TimeControlSettingsDialog` (Solim dialog with mode s
 - **WHEN** the user activates reset-position in the settings dialog
 - **THEN** portrait and landscape positions return to screen center
 
+#### Scenario: Adjusting scale slider
+- **WHEN** the user drags the scale slider in the settings dialog
+- **THEN** the scale configuration persists immediately and the HUD button, icon, and font sizes update reactively
+
+#### Scenario: Scale survives restart
+- **WHEN** the user sets a non-default scale and restarts the game
+- **THEN** the scale value is restored while speed starts at 1x
+
 ### Requirement: Translated strings and rewritten help
-All user-visible time-control text SHALL resolve from `assets/bundles/bundle.properties` under `feature.time-control.*` keys with per-key translator comments; dynamic labels SHALL use `Core.bundle.format`. The mode-hint text SHALL document the boost gesture and the `1x` reset exception, and the slider reset button SHALL carry a translated tooltip. No new hardcoded display strings SHALL be introduced.
+All user-visible time-control text SHALL resolve from `assets/bundles/bundle.properties` under `feature.time-control.*` keys with per-key translator comments; dynamic labels SHALL use `Core.bundle.format`. The mode-hint text SHALL document the boost gesture and the `1x` reset exception, the slider reset button SHALL carry a translated tooltip, and the scale slider SHALL use `feature.time-control.settings.scale` with a comment documenting the 50%–150% range. No new hardcoded display strings SHALL be introduced.
 
 #### Scenario: Help describes gating and modes
 - **WHEN** the help dialog renders for time-control
@@ -128,6 +148,10 @@ All user-visible time-control text SHALL resolve from `assets/bundles/bundle.pro
 #### Scenario: Hint documents boost and reset
 - **WHEN** the settings dialog renders the mode hint
 - **THEN** the hint text explains tap-again-to-boost and that `1x` resets instead of boosting
+
+#### Scenario: Scale label is translated
+- **WHEN** the settings dialog renders the scale row
+- **THEN** its label resolves from `feature.time-control.settings.scale` with no hardcoded fallback
 
 ### Requirement: Clamped provider apply and restore
 Applying a multiplier SHALL use a provider that clamps the effective step after multiplication, and every reset path SHALL restore the default clamped provider form. The default form SHALL be documented at the restore call site since `Time` exposes no getter.

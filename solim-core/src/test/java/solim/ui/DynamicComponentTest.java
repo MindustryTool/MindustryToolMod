@@ -536,4 +536,21 @@ class DynamicComponentTest {
 
         root.dispose();
     }
+
+    @Test
+    void dynamicSupportsElementAndTableConfig() {
+        Signal<String> text = Signal.of("initial");
+        Dynamic<String> dyn = new Dynamic<>(text, TestComponent::new)
+                .width(250f)
+                .height(150f)
+                .visible(false)
+                .margin(10f);
+
+        Element el = dyn.element();
+        assertEquals(250f, el.getWidth());
+        assertEquals(150f, el.getHeight());
+        assertFalse(el.visible);
+        assertEquals(10f, dyn.table().getMarginTop());
+        dyn.dispose();
+    }
 }

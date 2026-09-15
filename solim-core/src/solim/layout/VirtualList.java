@@ -18,7 +18,9 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.runtime.StructuralReconciler;
+import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.TableConfig;
 
 /**
  * High-performance virtualized vertical list component.
@@ -30,7 +32,8 @@ import solim.modifier.PendingCellConfig;
  * @param <T> the item type
  * @param <K> the item key type
  */
-public final class VirtualList<T, K> extends BaseComponent implements CellConfig<VirtualList<T, K>> {
+public final class VirtualList<T, K> extends BaseComponent
+        implements CellConfig<VirtualList<T, K>>, ElementConfig<VirtualList<T, K>>, TableConfig<VirtualList<T, K>> {
 
     private final Table outer;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -205,6 +208,17 @@ public final class VirtualList<T, K> extends BaseComponent implements CellConfig
 
     public int getMountedCount() {
         return content.getChildren().size;
+    }
+
+    @Override
+    public Table table() {
+        return outer;
+    }
+
+    @Override
+    public VirtualList<T, K> name(@Nullable String name) {
+        super.name(name);
+        return this;
     }
 
     @Override

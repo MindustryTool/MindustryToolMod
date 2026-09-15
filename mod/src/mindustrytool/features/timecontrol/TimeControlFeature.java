@@ -37,6 +37,7 @@ public class TimeControlFeature extends Feature {
 
     public final ConfigGroup config;
     public final ConfigValue<String> modeConfig;
+    public final ConfigValue<Float> scaleConfig;
 
     public final ConfigGroup positionGroup;
     public final ContextualConfigValue<Float, Boolean> xConfig;
@@ -64,6 +65,7 @@ public class TimeControlFeature extends Feature {
         config = configGroup();
 
         modeConfig = config.stringValue("mode", MODE_PRESETS);
+        scaleConfig = config.floatValue("scale", 1f);
 
         positionGroup = config.group("position");
 

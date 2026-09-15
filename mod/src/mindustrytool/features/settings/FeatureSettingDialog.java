@@ -9,10 +9,10 @@ import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import mindustry.Vars;
-import mindustry.gen.Icon;
 import mindustrytool.Config;
 import mindustrytool.utils.JsonUtils;
 import solim.overlay.SolimDialog;
+import mindustrytool.components.FileIcon;
 
 public final class FeatureSettingDialog extends SolimDialog {
     public FeatureSettingDialog() {
@@ -23,7 +23,7 @@ public final class FeatureSettingDialog extends SolimDialog {
 
         actionButton(
                 Core.bundle.get("feature.button.report-bug"),
-                Icon.infoCircle,
+                FileIcon.of("info.png"),
                 200f,
                 64f,
                 () -> Core.app.openURI(Config.DISCORD_INVITE_URL));

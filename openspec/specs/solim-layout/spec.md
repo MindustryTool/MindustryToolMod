@@ -537,3 +537,31 @@ The system SHALL support configuring child flow alignment via .left(), .center()
 - **WHEN** developer calls wrap().left()
 - **THEN** the child items align to the left side of the container
 
+**Source: complete-component-modifiers**
+
+Complete ElementConfig and TableConfig mixin support across all Solim structural and compound components.
+
+### Requirement: Structural and compound components implement ElementConfig and TableConfig
+The Solim structural and compound components `Dynamic`, `ForEach`, `Tabs`, `ReactiveGrid`, and `VirtualList` SHALL implement `ElementConfig` and `TableConfig` in addition to `CellConfig`. Each component SHALL provide `element()` and `table()` methods pointing to its root Arc Table.
+
+#### Scenario: Sizing and visibility on Dynamic
+- **WHEN** `.width(200f)`, `.height(100f)`, or `.visible(false)` is invoked on `Dynamic`
+- **THEN** the underlying Arc Table and its cell configuration reflect the specified dimensions and visibility
+
+#### Scenario: Sizing and styling on ForEach
+- **WHEN** `.width(300f)` or `.margin(8f)` is invoked on `ForEach`
+- **THEN** the underlying container Table has width set to 300f and margin set to 8f
+
+#### Scenario: Element and table configuration on Tabs
+- **WHEN** `.width(400f)`, `.name("settings-tabs")`, or `.background(color)` is invoked on `Tabs`
+- **THEN** the root Table reflects the dimensions, name, and background styling
+
+#### Scenario: Element and table configuration on ReactiveGrid
+- **WHEN** `.width(500f)` or `.padding(10f)` is invoked on `ReactiveGrid`
+- **THEN** the underlying grid Table reflects the dimensions and padding
+
+#### Scenario: Element and table configuration on VirtualList
+- **WHEN** `.height(600f)` or `.margin(4f)` is invoked on `VirtualList`
+- **THEN** the outer Table of the virtual list reflects the height and margin
+
+

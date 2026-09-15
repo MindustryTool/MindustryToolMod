@@ -154,4 +154,21 @@ class TabsTest {
 
 		tabs.dispose();
 	}
+
+	@Test
+	void tabsSupportsElementAndTableConfig() {
+		Tabs tabs = new Tabs(Signal.of(0))
+				.width(500f)
+				.height(300f)
+				.visible(false)
+				.name("custom-tabs")
+				.margin(12f);
+
+		assertEquals(500f, tabs.element().getWidth());
+		assertEquals(300f, tabs.element().getHeight());
+		assertFalse(tabs.element().visible);
+		assertEquals("custom-tabs", tabs.element().name);
+		assertEquals(12f, tabs.table().getMarginTop());
+		tabs.dispose();
+	}
 }

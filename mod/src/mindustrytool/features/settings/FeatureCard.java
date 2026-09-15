@@ -11,6 +11,7 @@ import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import solim.core.BaseComponent;
 import solim.signal.Readable;
+import mindustrytool.components.FileIcon;
 
 /**
  * Component responsible for building and managing a single feature's visual
@@ -70,7 +71,7 @@ public class FeatureCard extends BaseComponent {
 
                             button(() -> new FeatureHelpDialog(feature).show()).style(Styles.clearNonei).size(unit(11))
                                     .tooltip(Core.bundle.get("feature.button.help"))
-                                    .children(() -> icon(Icon.infoCircle).size(unit(7)));
+                                    .children(() -> icon(FileIcon.of("info.png")).size(unit(7)));
                         });
 
                         text(feature.getDescription()).color(Color.lightGray).fontScale(0.9f).wrap(true).left();

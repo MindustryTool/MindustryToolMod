@@ -20,13 +20,17 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.ui.Units;
+import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.TableConfig;
 
 /**
  * Keyed reactive grid that reflows existing component cells when column count
  * changes and structurally reconciles items when the item collection changes.
  */
-public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfig<ReactiveGrid<T, K>>, GapContainer {
+public final class ReactiveGrid<T, K> extends BaseComponent
+        implements CellConfig<ReactiveGrid<T, K>>, ElementConfig<ReactiveGrid<T, K>>, TableConfig<ReactiveGrid<T, K>>,
+        GapContainer {
     private final Signal<Float> tableWidth = Signal.of(0f);
     private final Signal<Float> gapSignal = Signal.of(0f);
     private final Computed<Float> itemWidth;
@@ -187,8 +191,15 @@ public final class ReactiveGrid<T, K> extends BaseComponent implements CellConfi
         return this;
     }
 
+    @Override
     public Table table() {
         return table;
+    }
+
+    @Override
+    public ReactiveGrid<T, K> name(@Nullable String name) {
+        super.name(name);
+        return this;
     }
 
     @Override

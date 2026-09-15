@@ -47,6 +47,19 @@ public class TimeControlSettingsView extends BaseComponent {
 
                     divider();
 
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.time-control.settings.scale")).left();
+
+                        spacer();
+                        slider(feature.scaleConfig.signal(), 0.5f, 1.5f, 0.1f);
+
+                        row().width(unit(14)).children(() -> {
+                            text(feature.scaleConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
+                        });
+                    });
+
+                    divider();
+
                     text(Core.bundle.get("feature.time-control.settings.safety")).left().growX()
                             .color(Color.white);
 

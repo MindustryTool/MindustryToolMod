@@ -10,6 +10,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Direction;
@@ -152,13 +153,13 @@ public class ChatOverlayHudView extends BaseComponent {
                                             dialog.show();
                                         }
                                     })
-                                            .style(Styles.clearNonei)
+                                            .style(WebStyles.ghost())
                                             .size(unit(10), unit(10))
                                             .tooltip(Core.bundle.get("feature.chat.ui.settings", "Settings"))
                                             .children(() -> icon(Icon.settings).size(unit(5)));
 
                                     button(() -> feature.collapsedConfig.set(true))
-                                            .style(Styles.clearNonei)
+                                            .style(WebStyles.ghost())
                                             .size(unit(10), unit(10))
                                             .tooltip(Core.bundle.get("feature.chat.ui.collapse", "Collapse"))
                                             .children(() -> icon(Icon.cancel).size(unit(5)));

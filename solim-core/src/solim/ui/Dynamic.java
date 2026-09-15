@@ -3,12 +3,14 @@ package solim.ui;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
 import java.util.Objects;
 import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.CellConfig;
 import solim.layout.GapContainer;
+import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
@@ -23,7 +25,8 @@ import solim.core.Disposable;
  * Structural reactive component for switching dynamic subtrees based on a
  * reactive value.
  */
-public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>> {
+public final class Dynamic<T> extends BaseComponent
+        implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>>, ElementConfig<Dynamic<T>> {
     private static final Object SENTINEL = new Object();
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -51,6 +54,12 @@ public final class Dynamic<T> extends BaseComponent implements CellConfig<Dynami
     @Override
     public Table table() {
         return container;
+    }
+
+    @Override
+    public Dynamic<T> name(@Nullable String name) {
+        super.name(name);
+        return this;
     }
 
     @Override

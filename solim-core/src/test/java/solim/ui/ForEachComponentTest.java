@@ -151,4 +151,21 @@ class ForEachComponentTest {
 
         dyn.dispose();
     }
+
+    @Test
+    void forEachSupportsElementAndTableConfig() {
+        Signal<List<String>> items = Signal.of(Arrays.asList("1", "2"));
+        ForEach<String, String> fe = new ForEach<>(items, id -> id, TestComponent::new)
+                .width(300f)
+                .height(200f)
+                .visible(true)
+                .margin(8f);
+
+        Element el = fe.element();
+        assertEquals(300f, el.getWidth());
+        assertEquals(200f, el.getHeight());
+        assertTrue(el.visible);
+        assertEquals(8f, fe.table().getMarginTop());
+        fe.dispose();
+    }
 }

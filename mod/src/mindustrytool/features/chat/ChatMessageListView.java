@@ -572,7 +572,7 @@ public class ChatMessageListView extends BaseComponent {
                                 .style(Styles.clearNonei)
                                 .size(unit(6), unit(6))
                                 .tooltip(Core.bundle.get("info.title", "Info"))
-                                .children(() -> icon(Icon.infoSmall).size(unit(5), unit(5)));
+                                .children(() -> icon(FileIcon.of("info.png")).size(unit(5), unit(5)));
 
                         button(() -> Vars.ui.schematics.showExport(schematic))
                                 .style(Styles.clearNonei)
