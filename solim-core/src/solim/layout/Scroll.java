@@ -73,7 +73,8 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
                 public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
                     if (pane.isScrollingDisabledY() && !pane.isScrollingDisabledX() && amountY != 0f && amountX == 0f) {
                         float wheelX = Math.min(pane.getScrollWidth(), pane.getScrollWidth() * 0.9f / 4f);
-                        if (wheelX <= 0f) wheelX = 20f;
+                        if (wheelX <= 0f)
+                            wheelX = 20f;
                         pane.setScrollX(pane.getScrollX() + wheelX * amountY);
                         return true;
                     }
@@ -345,6 +346,11 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             cell.top().left();
         }
         cell.row();
+        return this;
+    }
+
+    @Override
+    public Scroll self() {
         return this;
     }
 

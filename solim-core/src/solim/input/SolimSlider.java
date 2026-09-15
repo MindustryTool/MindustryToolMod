@@ -88,4 +88,9 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 			binding = null;
 		}
 	}
+
+    @Override
+    public SolimSlider self() {
+        return this;
+    }
 }

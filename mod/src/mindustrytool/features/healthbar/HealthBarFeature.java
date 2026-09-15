@@ -4,6 +4,7 @@ import arc.Core;
 import arc.Events;
 import arc.func.Boolf;
 import arc.func.Cons;
+import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
@@ -22,15 +23,15 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 
 /**
  * Draws health bars above damaged units and a single shield bar with a
  * whole-bar count above shielded units, plus optional HP bars above damaged
- * buildings. Configuration is peeked once per frame into scratch fields;
- * the per-entity loops themselves perform no config reads, allocations,
- * or subscriptions.
+ * buildings. Configuration is peeked once per frame into scratch fields; the
+ * per-entity loops themselves perform no config reads, allocations, or
+ * subscriptions.
  */
 public class HealthBarFeature extends Feature {
 
@@ -96,7 +97,7 @@ public class HealthBarFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
                 settingsDialog = new HealthBarSettingsDialog(this);

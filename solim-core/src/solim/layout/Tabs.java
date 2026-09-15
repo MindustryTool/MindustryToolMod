@@ -192,4 +192,9 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
         }
         headerBar.dispose();
     }
+
+    @Override
+    public Tabs self() {
+        return this;
+    }
 }

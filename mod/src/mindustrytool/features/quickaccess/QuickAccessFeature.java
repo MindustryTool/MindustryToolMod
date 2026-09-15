@@ -1,6 +1,7 @@
 package mindustrytool.features.quickaccess;
 
 import arc.Core;
+import arc.func.Prov;
 import arc.scene.Element;
 import arc.util.Nullable;
 import java.util.Collections;
@@ -13,7 +14,7 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 import solim.signal.Signal;
 import solim.signal.Signals;
@@ -61,8 +62,10 @@ public class QuickAccessFeature extends Feature {
                 p -> {
                     float sw = Units.screenWidth();
                     float defX = sw > 0 ? sw / 2f : 400f;
-                    String oldKey = p ? "mindustrytool.quickaccess.x.portrait" : "mindustrytool.quickaccess.x.landscape";
-                    String groupKey = p ? "mindustrytool.quick-access.portrait.x" : "mindustrytool.quick-access.landscape.x";
+                    String oldKey = p ? "mindustrytool.quickaccess.x.portrait"
+                            : "mindustrytool.quickaccess.x.landscape";
+                    String groupKey = p ? "mindustrytool.quick-access.portrait.x"
+                            : "mindustrytool.quick-access.landscape.x";
                     if (Core.settings.has(groupKey)) {
                         return Core.settings.getFloat(groupKey);
                     }
@@ -76,8 +79,10 @@ public class QuickAccessFeature extends Feature {
                 p -> {
                     float sh = Units.screenHeight();
                     float defY = sh > 0 ? sh / 2f : 200f;
-                    String oldKey = p ? "mindustrytool.quickaccess.y.portrait" : "mindustrytool.quickaccess.y.landscape";
-                    String groupKey = p ? "mindustrytool.quick-access.portrait.y" : "mindustrytool.quick-access.landscape.y";
+                    String oldKey = p ? "mindustrytool.quickaccess.y.portrait"
+                            : "mindustrytool.quickaccess.y.landscape";
+                    String groupKey = p ? "mindustrytool.quick-access.portrait.y"
+                            : "mindustrytool.quick-access.landscape.y";
                     if (Core.settings.has(groupKey)) {
                         return Core.settings.getFloat(groupKey);
                     }
@@ -186,7 +191,7 @@ public class QuickAccessFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
                 settingsDialog = new QuickAccessSettingsDialog(this);

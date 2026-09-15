@@ -54,8 +54,8 @@ public final class FeatureSettingDialog extends SolimDialog {
             return;
         }
 
-        if (element instanceof Group group) {
-            for (Element child : group.getChildren()) {
+        if (element instanceof Group) {
+            for (Element child : ((Group) element).getChildren()) {
                 discoverSolimElements(parent, child, pred);
             }
         }
@@ -64,8 +64,8 @@ public final class FeatureSettingDialog extends SolimDialog {
     private UiNode buildUiTree(Element element) {
         UiNode node = createNode(element);
 
-        if (element instanceof Group group) {
-            for (Element child : group.getChildren()) {
+        if (element instanceof Group) {
+            for (Element child : ((Group) element).getChildren()) {
                 node.children.add(buildUiTree(child));
             }
         }

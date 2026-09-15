@@ -319,8 +319,5 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     // ---------- internal ----------
 
-    @SuppressWarnings("unchecked")
-    private SELF self() {
-        return (SELF) this;
-    }
+    SELF self();
 }

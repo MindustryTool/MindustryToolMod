@@ -318,4 +318,9 @@ public final class ReactiveGrid<T, K> extends BaseComponent
         }
         table.clear();
     }
+
+    @Override
+    public ReactiveGrid<T, K> self() {
+        return this;
+    }
 }

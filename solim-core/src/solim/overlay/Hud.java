@@ -457,4 +457,9 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
         }
         bindings.clear();
     }
+
+    @Override
+    public Hud self() {
+        return this;
+    }
 }

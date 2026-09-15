@@ -274,4 +274,9 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
         }
         bindings.clear();
     }
+
+    @Override
+    public SolimImage self() {
+        return this;
+    }
 }

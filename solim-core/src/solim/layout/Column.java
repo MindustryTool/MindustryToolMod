@@ -197,4 +197,9 @@ public final class Column
         respace();
         return cell;
     }
+
+    @Override
+    public Column self() {
+        return this;
+    }
 }

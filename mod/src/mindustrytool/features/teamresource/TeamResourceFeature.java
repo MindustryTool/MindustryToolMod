@@ -2,10 +2,11 @@ package mindustrytool.features.teamresource;
 
 import arc.Core;
 import arc.Events;
+import arc.func.Prov;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -23,8 +24,8 @@ import solim.signal.Signals;
 import solim.ui.Units;
 
 /**
- * Feature responsible for registering and managing the Team Resource Tracker overlay.
- * Follows Solim architecture and ConfigGroup reactive configuration.
+ * Feature responsible for registering and managing the Team Resource Tracker
+ * overlay. Follows Solim architecture and ConfigGroup reactive configuration.
  */
 public class TeamResourceFeature extends Feature {
 
@@ -83,8 +84,10 @@ public class TeamResourceFeature extends Feature {
                 p -> {
                     float sw = Units.screenWidth();
                     float defX = sw > 0 ? sw / 2f : 200f;
-                    String oldKey = p ? "mindustrytool.team-resource.x.portrait" : "mindustrytool.team-resource.x.landscape";
-                    String groupKey = p ? "mindustrytool.team-resources.portrait.x" : "mindustrytool.team-resources.landscape.x";
+                    String oldKey = p ? "mindustrytool.team-resource.x.portrait"
+                            : "mindustrytool.team-resource.x.landscape";
+                    String groupKey = p ? "mindustrytool.team-resources.portrait.x"
+                            : "mindustrytool.team-resources.landscape.x";
                     if (Core.settings.has(groupKey)) {
                         return Core.settings.getFloat(groupKey);
                     }
@@ -98,8 +101,10 @@ public class TeamResourceFeature extends Feature {
                 p -> {
                     float sh = Units.screenHeight();
                     float defY = sh > 0 ? sh / 2f : 200f;
-                    String oldKey = p ? "mindustrytool.team-resource.y.portrait" : "mindustrytool.team-resource.y.landscape";
-                    String groupKey = p ? "mindustrytool.team-resources.portrait.y" : "mindustrytool.team-resources.landscape.y";
+                    String oldKey = p ? "mindustrytool.team-resource.y.portrait"
+                            : "mindustrytool.team-resource.y.landscape";
+                    String groupKey = p ? "mindustrytool.team-resources.portrait.y"
+                            : "mindustrytool.team-resources.landscape.y";
                     if (Core.settings.has(groupKey)) {
                         return Core.settings.getFloat(groupKey);
                     }
@@ -188,7 +193,8 @@ public class TeamResourceFeature extends Feature {
             hudView = new TeamResourceHudView(this, state);
             Element el = hudView.element();
             el.name = "team-resources-hud";
-            el.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown && Vars.state != null && Vars.state.isGame());
+            el.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown && Vars.state != null
+                    && Vars.state.isGame());
 
             Core.settings.put("coreitems", false);
 
@@ -214,7 +220,7 @@ public class TeamResourceFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
                 settingsDialog = new TeamResourceSettingsDialog(this);

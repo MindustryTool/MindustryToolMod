@@ -43,6 +43,7 @@ import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.UserData;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.layout.Card;
 import solim.layout.Direction;
 import solim.layout.VirtualList;
 import solim.signal.Computed;
@@ -54,6 +55,7 @@ import solim.signal.Readable;
 import solim.overlay.SolimDialog;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
+import arc.scene.ui.ScrollPane;
 
 public class ChatMessageListView extends BaseComponent {
 
@@ -126,7 +128,7 @@ public class ChatMessageListView extends BaseComponent {
 
                 Core.app.post(() -> {
                     if (virtualList != null && virtualList.pane() != null) {
-                        var pane = virtualList.pane();
+                        ScrollPane pane = virtualList.pane();
                         pane.layout();
                         float newContentHeight = virtualList.getTotalHeight();
                         float heightDelta = newContentHeight - prevContentHeight;
@@ -138,7 +140,7 @@ public class ChatMessageListView extends BaseComponent {
                 });
             } else if (isNewAppended) {
                 if (virtualList != null && virtualList.pane() != null) {
-                    var pane = virtualList.pane();
+                    ScrollPane pane = virtualList.pane();
                     boolean wasNearBottom = (pane.getMaxY() - pane.getScrollY()) <= 150f;
                     if (wasNearBottom) {
                         scrollToBottom();
@@ -189,7 +191,7 @@ public class ChatMessageListView extends BaseComponent {
                                     .overscan(3)
                                     .onReachTop(150f, () -> {
                                         String activeId = store.channels().currentActiveId();
-                                        var msgs = store.messages().currentActive();
+                                        List<ChatMessage> msgs = store.messages().currentActive();
                                         if (activeId != null && !activeId.isEmpty() && service != null && msgs != null
                                                 && !msgs.isEmpty() && !store.messages().isLoadingOlder()
                                                 && !store.messages().isFullyLoaded(activeId)) {
@@ -214,13 +216,13 @@ public class ChatMessageListView extends BaseComponent {
         if (virtualList != null) {
             Core.app.post(() -> {
                 if (virtualList != null && virtualList.pane() != null) {
-                    var pane = virtualList.pane();
+                    ScrollPane pane = virtualList.pane();
                     pane.layout();
                     pane.setScrollYForce(pane.getMaxY());
                     pane.updateVisualScroll();
                     Core.app.post(() -> {
                         if (virtualList != null && virtualList.pane() != null) {
-                            var p = virtualList.pane();
+                            ScrollPane p = virtualList.pane();
                             p.layout();
                             p.setScrollYForce(p.getMaxY());
                             p.updateVisualScroll();
@@ -317,7 +319,7 @@ public class ChatMessageListView extends BaseComponent {
 
                             // Stacked message rows
                             column().growX().top().left().children(() -> {
-                                var messages = group.getMessages();
+                                List<ParsedChatMessage> messages = group.getMessages();
                                 for (int i = 0; i < messages.size(); i++) {
                                     buildMessageRow(messages.get(i), i > 0);
                                 }
@@ -334,7 +336,7 @@ public class ChatMessageListView extends BaseComponent {
             Readable<Boolean> isPending = store.delivery().isPending(msgId);
             Readable<Boolean> isFailed = store.delivery().isFailed(msgId);
 
-            var card = card().growX().top().left();
+            Card card = card().growX().top().left();
             card.onClick(() -> openActions(parsed, card.element()));
             if (hasPrevious) {
                 card.cellPaddingTop(ChatMessageHeightCalculator.MESSAGE_GAP);
@@ -378,7 +380,7 @@ public class ChatMessageListView extends BaseComponent {
 
         private void buildReplyPreview(String replyToId) {
             ChatMessage target = null;
-            var list = store.messages().currentActive();
+            List<ChatMessage> list = store.messages().currentActive();
             if (list != null) {
                 for (ChatMessage m : list) {
                     if (Objects.equals(m.getId(), replyToId)) {
@@ -531,23 +533,25 @@ public class ChatMessageListView extends BaseComponent {
                     ? pc.getRooms().map(rooms -> findRoomByLink(rooms, link))
                     : Signal.of(null);
 
-            dynamic(roomSignal, room -> (room != null)
-                    ? new RoomCard(room, false)
-                    : buildFallbackRoomCardContent(link))
-                            .height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT);
+            dynamic(roomSignal, room -> {
+                if (room != null) {
+                    return new RoomCard(room, false);
+                } else {
+                    return buildFallbackRoomCardContent(link);
+                }
+            })
+                    .height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT)
+                    .growX()
+                    .name("pc-card-wrapper")
+                    .backgroundColor(Color.red);
         }
 
         private Component buildFallbackRoomCardContent(String link) {
-            return card()
-                    .background(Styles.black8)
-                    .border(1.5f, Color.darkGray)
-                    .grow()
-                    .gap(unit(1.5f))
-                    .padding(unit(2))
+            return column()
                     .left()
                     .children(() -> {
-                        row().growX().height(unit(6)).gap(unit(2)).children(() -> {
-                            icon(Icon.host).size(unit(5), unit(5)).color(Pal.accent);
+                        row().growX().gap(unit(2)).children(() -> {
+                            icon(Icon.host).size(unit(5)).color(Pal.accent);
                             text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
                                     .color(Pal.accent)
                                     .fontScale(0.95f)

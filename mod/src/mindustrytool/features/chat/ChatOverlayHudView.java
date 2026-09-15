@@ -3,6 +3,7 @@ package mindustrytool.features.chat;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.func.Prov;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
@@ -17,6 +18,7 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Direction;
 import solim.overlay.Hud;
+import solim.overlay.SolimDialog;
 import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.ui.Units;
@@ -191,7 +193,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                             .children(() -> icon(usersIcon).size(unit(5)));
 
                                     button(() -> {
-                                        var dialog = feature.getSettingDialog();
+                                        Prov<SolimDialog> dialog = feature.getSettingDialog();
                                         if (dialog != null) {
                                             dialog.get().show();
                                         }

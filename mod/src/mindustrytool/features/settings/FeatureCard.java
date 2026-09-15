@@ -3,6 +3,7 @@ package mindustrytool.features.settings;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.func.Prov;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
@@ -12,8 +13,9 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
+import mindustrytool.features.FeatureMetadata;
 import solim.core.BaseComponent;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 import solim.signal.Readable;
 import solim.signal.Signal;
@@ -36,7 +38,7 @@ public class FeatureCard extends BaseComponent {
 
     @Override
     protected Element build() {
-        var metadata = feature.getMetadata();
+        FeatureMetadata metadata = feature.getMetadata();
         boolean inDevelopment = metadata.isDevelopment();
 
         Readable<Color> statusColor = inDevelopment
@@ -58,8 +60,8 @@ public class FeatureCard extends BaseComponent {
                 : Signal.computed(() -> Boolean.TRUE.equals(reorderAllowed.get())
                         && Boolean.TRUE.equals(FeatureManager.canMoveRightSignal(feature).get()));
 
-        @Nullable Provider<SolimDialog> mainDialog = feature.getMainDialog();
-        @Nullable Provider<SolimDialog> settingDialog = feature.getSettingDialog();
+        Prov<SolimDialog> mainDialog = feature.getMainDialog();
+        Prov<SolimDialog> settingDialog = feature.getSettingDialog();
 
         return card()
                 .name("FeatureCard-" + metadata.getId()).height(unit(60)).growX()
@@ -130,11 +132,12 @@ public class FeatureCard extends BaseComponent {
 
                         divider().color(statusColor);
                     });
-        }).element();
+                }).element();
     }
 
-    private void showDialog(Provider<SolimDialog> dialogProvider) {
-        @Nullable SolimDialog dialog = dialogProvider.get();
+    private void showDialog(Prov<SolimDialog> dialogProvider) {
+        @Nullable
+        SolimDialog dialog = dialogProvider.get();
         if (dialog != null) {
             dialog.show();
         }

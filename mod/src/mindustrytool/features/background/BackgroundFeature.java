@@ -2,6 +2,7 @@ package mindustrytool.features.background;
 
 import arc.Core;
 import arc.files.Fi;
+import arc.func.Prov;
 import arc.graphics.Texture;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
@@ -17,7 +18,6 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-import solim.core.Provider;
 
 public class BackgroundFeature extends Feature {
 
@@ -48,7 +48,7 @@ public class BackgroundFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingDialog == null) {
                 settingDialog = new BackgroundSettingsDialog(this);

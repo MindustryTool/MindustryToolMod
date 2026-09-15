@@ -74,4 +74,9 @@ public final class Switch implements Component, ElementConfig<Switch>, CellConfi
 			binding = null;
 		}
 	}
+
+    @Override
+    public Switch self() {
+        return this;
+    }
 }

@@ -448,4 +448,9 @@ public final class VirtualList<T, K> extends BaseComponent
             }
         }
     }
+
+    @Override
+    public VirtualList<T, K> self() {
+        return this;
+    }
 }

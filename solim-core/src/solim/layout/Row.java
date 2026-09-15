@@ -193,4 +193,9 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         respace();
         return cell;
     }
+
+    @Override
+    public Row self() {
+        return this;
+    }
 }

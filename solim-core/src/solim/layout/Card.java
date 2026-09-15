@@ -190,4 +190,9 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         }
         bindings.clear();
     }
+
+    @Override
+    public Card self() {
+        return this;
+    }
 }

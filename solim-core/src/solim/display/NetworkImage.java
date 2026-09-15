@@ -626,4 +626,9 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
             binding = null;
         }
     }
+
+    @Override
+    public NetworkImage self() {
+        return this;
+    }
 }

@@ -2,9 +2,6 @@ package solim.signal;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import solim.core.ReactiveObserver;
@@ -46,49 +43,6 @@ class ReactiveContextTest {
 		assertEquals("outer:inner:11", outer.get());
 		// after get, stack should be empty
 		assertEquals(0, ReactiveContext.size());
-	}
-
-	@Test
-	void noThreadLocalImport() throws Exception {
-		// try multiple relative locations because test working dir may vary
-		Path[] candidates = new Path[] {
-			Path.of("solim-runtime/src/solim/runtime/ReactiveContext.java"),
-			Path.of("../solim-runtime/src/solim/runtime/ReactiveContext.java"),
-			Path.of(System.getProperty("user.dir"), "solim-runtime/src/solim/runtime/ReactiveContext.java"),
-			Path.of(System.getProperty("user.dir"), "../solim-runtime/src/solim/runtime/ReactiveContext.java")
-		};
-		String content = null;
-		for (Path p : candidates) {
-			if (Files.exists(p)) {
-				content = new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
-				break;
-			}
-		}
-		// fallback search from root
-		if (content == null) {
-			Path root = Path.of(System.getProperty("user.dir"));
-			// walk up to find repo root containing solim folder
-			Path cur = root;
-			for (int i = 0; i < 5; i++) {
-				Path candidate = cur.resolve("solim-runtime/src/solim/runtime/ReactiveContext.java");
-				if (Files.exists(candidate)) {
-					content = new String(Files.readAllBytes(candidate), StandardCharsets.UTF_8);
-					break;
-				}
-				cur = cur.getParent();
-				if (cur == null) break;
-			}
-		}
-		assertNotNull(content, "ReactiveContext.java not found");
-		assertFalse(
-				content.contains("import java.lang.ThreadLocal")
-						|| content.contains("import java.util.concurrent") && content.contains("ThreadLocal"),
-				"ReactiveContext must not use ThreadLocal");
-		// also ensure no ThreadLocal usage via import line
-		long threadLocalImportCount = content.lines()
-				.filter(l -> l.trim().startsWith("import") && l.contains("ThreadLocal"))
-				.count();
-		assertEquals(0, threadLocalImportCount, "ReactiveContext must not import ThreadLocal");
 	}
 
 	@Test

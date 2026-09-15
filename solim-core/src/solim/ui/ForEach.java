@@ -109,4 +109,9 @@ public final class ForEach<T, K> extends BaseComponent
         reconciler.dispose();
         container.clearChildren();
     }
+
+    @Override
+    public ForEach<T, K> self() {
+        return this;
+    }
 }

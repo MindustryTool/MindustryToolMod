@@ -3,6 +3,7 @@ package mindustrytool.features.playerconnect;
 import arc.Core;
 import arc.Events;
 import arc.func.Cons;
+import arc.func.Prov;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -52,7 +53,7 @@ import mindustrytool.services.MindustryTool;
 import mindustrytool.utils.JsonUtils;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 import solim.signal.Computed;
 import solim.signal.Signal;
@@ -674,7 +675,7 @@ public class PlayerConnectFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return null;
     }
 }

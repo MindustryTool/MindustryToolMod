@@ -18,7 +18,9 @@ import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData;
+import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomPlayer;
 import solim.core.BaseComponent;
+import solim.layout.Card;
 import solim.signal.Signal;
 import mindustrytool.components.WebStyles;
 
@@ -68,7 +70,8 @@ public class RoomCard extends BaseComponent {
             }
         }
 
-        var cardComp = card()
+        Card cardComp = card()
+                .name("pc-card")
                 .background(Styles.black8)
                 .border(1.5f, Color.darkGray)
                 .gap(unit(1.5f))
@@ -122,7 +125,7 @@ public class RoomCard extends BaseComponent {
 
                 if (room.getData() != null && room.getData().getPlayers() != null) {
                     column(() -> {
-                        for (var player : room.getData().getPlayers()) {
+                        for (PlayerConnectRoomPlayer player : room.getData().getPlayers()) {
                             text("- " + player.getName());
                         }
                     });

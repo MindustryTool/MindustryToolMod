@@ -24,6 +24,9 @@ import solim.core.Disposable;
 /**
  * Structural reactive component for switching dynamic subtrees based on a
  * reactive value.
+ *
+ * <p>The factory function is invoked with the current source value (including {@code null}).
+ * If the factory returns {@code null}, no child component is mounted and the container collapses.</p>
  */
 public final class Dynamic<T> extends BaseComponent
         implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>>, ElementConfig<Dynamic<T>> {
@@ -38,8 +41,8 @@ public final class Dynamic<T> extends BaseComponent
     private final List<Disposable> currentBindings = new ArrayList<>();
 
     public Dynamic(Readable<T> source, Function<T, Component> factory) {
-        this.source = source;
-        this.factory = factory;
+        this.source = Objects.requireNonNull(source, "source must not be null");
+        this.factory = Objects.requireNonNull(factory, "factory must not be null");
         this.container.userObject = this;
     }
 
@@ -85,27 +88,25 @@ public final class Dynamic<T> extends BaseComponent
             }
             currentBindings.clear();
             container.clearChildren();
-            if (value != null && factory != null) {
-                currentComponent = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
-                    Component c = factory.apply(value);
-                    if (c != null) {
-                        c.element();
-                    }
-                    return c;
-                }));
-                if (currentComponent != null) {
-                    Element el = currentComponent.element();
-                    Cell<?> cell = container.add(el);
-                    cell.minWidth(0f);
-                    PendingCellConfig sc = PendingCellConfig.find(currentComponent);
-                    if (sc == null) {
-                        sc = PendingCellConfig.find(el);
-                    }
-                    if (sc != null) {
-                        currentBindings.addAll(sc.applyToCell(cell));
-                    } else if (Ui.isExpanding(el)) {
-                        cell.growX();
-                    }
+            currentComponent = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
+                Component c = factory.apply(value);
+                if (c != null) {
+                    c.element();
+                }
+                return c;
+            }));
+            if (currentComponent != null) {
+                Element el = currentComponent.element();
+                Cell<?> cell = container.add(el);
+                cell.minWidth(0f);
+                PendingCellConfig sc = PendingCellConfig.find(currentComponent);
+                if (sc == null) {
+                    sc = PendingCellConfig.find(el);
+                }
+                if (sc != null) {
+                    currentBindings.addAll(sc.applyToCell(cell));
+                } else if (Ui.isExpanding(el)) {
+                    cell.growX();
                 }
             }
             applyContainerAlign();
@@ -154,5 +155,10 @@ public final class Dynamic<T> extends BaseComponent
         }
         currentBindings.clear();
         container.clearChildren();
+    }
+
+    @Override
+    public Dynamic<T> self() {
+        return this;
     }
 }

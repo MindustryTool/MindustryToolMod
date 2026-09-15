@@ -270,8 +270,5 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
 
     // ---------- internal ----------
 
-    @SuppressWarnings("unchecked")
-    private SELF self() {
-        return (SELF) this;
-    }
+    SELF self();
 }

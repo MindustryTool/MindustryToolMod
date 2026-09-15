@@ -15,11 +15,13 @@ import mindustrytool.features.chat.models.ParsedChatMessage.RoomInviteMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.SchematicMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.TextMessage;
 import mindustrytool.models.response.ChatMessage;
+import mindustrytool.models.response.UserSession;
 import mindustrytool.services.auth.MindustryAuthProvider;
 
 /**
- * Parser that categorizes raw {@link ChatMessage} instances into typed {@link ParsedChatMessage}
- * domain models, caching results to ensure regexes and base64 schematic decoding execute only once.
+ * Parser that categorizes raw {@link ChatMessage} instances into typed
+ * {@link ParsedChatMessage} domain models, caching results to ensure regexes
+ * and base64 schematic decoding execute only once.
  */
 public final class ChatMessageParser {
 
@@ -102,8 +104,7 @@ public final class ChatMessageParser {
                             message,
                             schematic,
                             prev.isEmpty() ? null : prev,
-                            after.isEmpty() ? null : after
-                    );
+                            after.isEmpty() ? null : after);
                 }
             }
         }
@@ -118,7 +119,7 @@ public final class ChatMessageParser {
             return false;
         }
         try {
-            var session = MindustryAuthProvider.getInstance().getSession();
+            UserSession session = MindustryAuthProvider.getInstance().getSession();
             if (session == null || session.getName() == null || session.getName().isEmpty()) {
                 return false;
             }

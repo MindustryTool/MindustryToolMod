@@ -2,6 +2,7 @@ package mindustrytool.features.godmode;
 
 import arc.Core;
 import arc.Events;
+import arc.func.Prov;
 import arc.scene.Element;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -13,7 +14,7 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 import solim.signal.Signal;
 import solim.signal.Signals;
@@ -190,7 +191,7 @@ public class GodModeFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
                 settingsDialog = new GodModeSettingsDialog(this);

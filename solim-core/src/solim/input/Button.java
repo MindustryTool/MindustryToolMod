@@ -40,7 +40,8 @@ import arc.util.Time;
  * Pure Button container widget supporting explicit children composition, custom
  * width/height sizing, and reactive state.
  */
-public final class Button implements Component, GapContainer, ElementConfig<Button>, TableConfig<Button>, CellConfig<Button> {
+public final class Button
+        implements Component, GapContainer, ElementConfig<Button>, TableConfig<Button>, CellConfig<Button> {
 
     private final arc.scene.ui.Button button;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -396,6 +397,7 @@ public final class Button implements Component, GapContainer, ElementConfig<Butt
     public arc.scene.ui.Button sizedButton() {
         return button;
     }
+
     public Button color(Color color) {
         button.setColor(color);
         return this;
@@ -542,5 +544,10 @@ public final class Button implements Component, GapContainer, ElementConfig<Butt
             d.dispose();
         }
         bindings.clear();
+    }
+
+    @Override
+    public Button self() {
+        return this;
     }
 }

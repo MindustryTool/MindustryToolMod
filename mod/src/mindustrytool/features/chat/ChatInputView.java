@@ -17,6 +17,7 @@ import mindustrytool.models.response.UserData;
 import mindustrytool.services.auth.AuthOverlay;
 import mindustrytool.services.auth.MindustryAuthProvider;
 import solim.core.BaseComponent;
+import solim.input.SolimTextField;
 import solim.signal.Computed;
 import solim.signal.Readable;
 import solim.signal.Signal;
@@ -29,6 +30,8 @@ public class ChatInputView extends BaseComponent {
     private final Signal<String> messageText = Signal.of("");
     private final Signal<Boolean> isSending = Signal.of(false);
 
+    private SolimTextField chatInput;
+
     public ChatInputView(ChatStore store, ChatService service) {
         this.store = store;
         this.service = service;
@@ -40,6 +43,12 @@ public class ChatInputView extends BaseComponent {
         Readable<Boolean> isNotLoggedIn = isLoggedIn.map(l -> !Boolean.TRUE.equals(l));
         Readable<Boolean> canSend = new Computed<>(() -> !Boolean.TRUE.equals(isSending.get())
                 && isValidInput(messageText.get()));
+
+        effect(() -> {
+            if (chatInput != null && store.ui().replyTarget().get() != null){
+                chatInput.focus();
+            }
+        });
 
         return column().growX().gap(unit(1)).padding(unit(2)).children(() -> {
             // Login banner when not logged in
@@ -88,7 +97,7 @@ public class ChatInputView extends BaseComponent {
                                     .border(1.5f, Color.darkGray)
                                     .center()
                                     .children(() -> {
-                                        textField(messageText)
+                                        chatInput = textField(messageText)
                                                 .style(WebStyles.clearInput())
                                                 .placeholder(
                                                         Core.bundle.get("feature.chat.ui.placeholder", "Message..."))

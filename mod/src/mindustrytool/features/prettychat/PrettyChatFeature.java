@@ -2,6 +2,7 @@ package mindustrytool.features.prettychat;
 
 import arc.Core;
 import arc.Events;
+import arc.func.Prov;
 import arc.scene.ui.TextField;
 import arc.struct.Seq;
 import arc.util.Log;
@@ -14,13 +15,14 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.prettychat.ui.PrettyChatSettingsDialog;
-import solim.core.Provider;
+
 import solim.overlay.SolimDialog;
 
 import java.util.List;
 
 /**
- * Pretty Chat feature: transforms outgoing chat messages with customizable styles.
+ * Pretty Chat feature: transforms outgoing chat messages with customizable
+ * styles.
  */
 public class PrettyChatFeature extends Feature {
 
@@ -55,7 +57,7 @@ public class PrettyChatFeature extends Feature {
     }
 
     @Override
-    public @Nullable Provider<SolimDialog> getSettingDialog() {
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
                 settingsDialog = new PrettyChatSettingsDialog(this);
@@ -100,8 +102,8 @@ public class PrettyChatFeature extends Feature {
     }
 
     /**
-     * Transforms an input message through the active prettier pipeline.
-     * Preserves server commands except /t and /a.
+     * Transforms an input message through the active prettier pipeline. Preserves
+     * server commands except /t and /a.
      *
      * @param message text to transform
      * @return transformed text

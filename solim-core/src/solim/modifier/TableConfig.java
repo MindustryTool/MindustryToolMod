@@ -11,12 +11,13 @@ import solim.signal.Effect;
 import solim.signal.Readable;
 
 /**
- * Mixin interface for operations that configure an Arc {@link Table}'s content defaults
- * and child spacing.
+ * Mixin interface for operations that configure an Arc {@link Table}'s content
+ * defaults and child spacing.
  *
  * <p>
- * Implementing components provide {@link #table()} to supply their underlying Arc Table.
- * All methods are default methods that operate on the table returned by {@code table()}.
+ * Implementing components provide {@link #table()} to supply their underlying
+ * Arc Table. All methods are default methods that operate on the table returned
+ * by {@code table()}.
  *
  * <p>
  * Targets:
@@ -39,42 +40,48 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     /** Sets the table's content alignment. */
     default SELF align(int align) {
         Table t = table();
-        if (t != null) t.align(align);
+        if (t != null)
+            t.align(align);
         return self();
     }
 
     /** Aligns table content to the top. */
     default SELF top() {
         Table t = table();
-        if (t != null) t.top();
+        if (t != null)
+            t.top();
         return self();
     }
 
     /** Aligns table content to the bottom. */
     default SELF bottom() {
         Table t = table();
-        if (t != null) t.bottom();
+        if (t != null)
+            t.bottom();
         return self();
     }
 
     /** Aligns table content to the left. */
     default SELF left() {
         Table t = table();
-        if (t != null) t.left();
+        if (t != null)
+            t.left();
         return self();
     }
 
     /** Aligns table content to the right. */
     default SELF right() {
         Table t = table();
-        if (t != null) t.right();
+        if (t != null)
+            t.right();
         return self();
     }
 
     /** Centers table content. */
     default SELF center() {
         Table t = table();
-        if (t != null) t.center();
+        if (t != null)
+            t.center();
         return self();
     }
 
@@ -83,42 +90,48 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     /** Sets outer margins equally on all four sides. */
     default SELF margin(float margin) {
         Table t = table();
-        if (t != null) t.margin(margin);
+        if (t != null)
+            t.margin(margin);
         return self();
     }
 
     /** Sets outer margins on all four sides individually. */
     default SELF margin(float top, float left, float bottom, float right) {
         Table t = table();
-        if (t != null) t.margin(top, left, bottom, right);
+        if (t != null)
+            t.margin(top, left, bottom, right);
         return self();
     }
 
     /** Sets top outer margin. */
     default SELF marginTop(float top) {
         Table t = table();
-        if (t != null) t.marginTop(top);
+        if (t != null)
+            t.marginTop(top);
         return self();
     }
 
     /** Sets bottom outer margin. */
     default SELF marginBottom(float bottom) {
         Table t = table();
-        if (t != null) t.marginBottom(bottom);
+        if (t != null)
+            t.marginBottom(bottom);
         return self();
     }
 
     /** Sets left outer margin. */
     default SELF marginLeft(float left) {
         Table t = table();
-        if (t != null) t.marginLeft(left);
+        if (t != null)
+            t.marginLeft(left);
         return self();
     }
 
     /** Sets right outer margin. */
     default SELF marginRight(float right) {
         Table t = table();
-        if (t != null) t.marginRight(right);
+        if (t != null)
+            t.marginRight(right);
         return self();
     }
 
@@ -146,10 +159,12 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets outer margins equally on all four sides reactively. */
     default SELF margin(@Nullable Readable<Float> margin) {
-        if (margin == null) return self();
+        if (margin == null)
+            return self();
         Effect e = Effect.of(() -> {
             Float v = margin.get();
-            if (v != null) margin(v);
+            if (v != null)
+                margin(v);
         });
         ComponentContext.register(e);
         return self();
@@ -177,10 +192,12 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets top outer margin reactively. */
     default SELF marginTop(@Nullable Readable<Float> top) {
-        if (top == null) return self();
+        if (top == null)
+            return self();
         Effect e = Effect.of(() -> {
             Float v = top.get();
-            if (v != null) marginTop(v);
+            if (v != null)
+                marginTop(v);
         });
         ComponentContext.register(e);
         return self();
@@ -188,10 +205,12 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets bottom outer margin reactively. */
     default SELF marginBottom(@Nullable Readable<Float> bottom) {
-        if (bottom == null) return self();
+        if (bottom == null)
+            return self();
         Effect e = Effect.of(() -> {
             Float v = bottom.get();
-            if (v != null) marginBottom(v);
+            if (v != null)
+                marginBottom(v);
         });
         ComponentContext.register(e);
         return self();
@@ -199,10 +218,12 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets left outer margin reactively. */
     default SELF marginLeft(@Nullable Readable<Float> left) {
-        if (left == null) return self();
+        if (left == null)
+            return self();
         Effect e = Effect.of(() -> {
             Float v = left.get();
-            if (v != null) marginLeft(v);
+            if (v != null)
+                marginLeft(v);
         });
         ComponentContext.register(e);
         return self();
@@ -210,10 +231,12 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets right outer margin reactively. */
     default SELF marginRight(@Nullable Readable<Float> right) {
-        if (right == null) return self();
+        if (right == null)
+            return self();
         Effect e = Effect.of(() -> {
             Float v = right.get();
-            if (v != null) marginRight(v);
+            if (v != null)
+                marginRight(v);
         });
         ComponentContext.register(e);
         return self();
@@ -221,10 +244,12 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets horizontal outer margins reactively. */
     default SELF marginX(@Nullable Readable<Float> x) {
-        if (x == null) return self();
+        if (x == null)
+            return self();
         Effect e = Effect.of(() -> {
             Float v = x.get();
-            if (v != null) marginX(v);
+            if (v != null)
+                marginX(v);
         });
         ComponentContext.register(e);
         return self();
@@ -232,10 +257,12 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets vertical outer margins reactively. */
     default SELF marginY(@Nullable Readable<Float> y) {
-        if (y == null) return self();
+        if (y == null)
+            return self();
         Effect e = Effect.of(() -> {
             Float v = y.get();
-            if (v != null) marginY(v);
+            if (v != null)
+                marginY(v);
         });
         ComponentContext.register(e);
         return self();
@@ -339,10 +366,12 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets gap reactively. */
     default SELF gap(@Nullable Readable<Float> gap) {
-        if (gap == null) return self();
+        if (gap == null)
+            return self();
         Effect e = Effect.of(() -> {
             Float v = gap.get();
-            if (v != null) gap(v);
+            if (v != null)
+                gap(v);
         });
         ComponentContext.register(e);
         return self();
@@ -368,7 +397,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     /** Sets rounded corners with a fixed radius and color. */
     default SELF rounded(int radius, @Nullable Color color) {
         Table t = table();
-        if (t == null) return self();
+        if (t == null)
+            return self();
         RoundedDrawable rd = getOrCreateRounded(radius);
         rd.radius(radius);
         if (color != null) {
@@ -380,13 +410,15 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     /** Sets rounded corners with a reactive color. */
     default SELF rounded(int radius, @Nullable Readable<Color> color) {
         Table t = table();
-        if (t == null) return self();
+        if (t == null)
+            return self();
         RoundedDrawable rd = getOrCreateRounded(radius);
         rd.radius(radius);
         if (color != null) {
             Effect e = Effect.of(() -> {
                 Color c = color.get();
-                if (c != null) rd.fillColor(c);
+                if (c != null)
+                    rd.fillColor(c);
             });
             ComponentContext.register(e);
         }
@@ -398,7 +430,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     /** Sets a border with fixed stroke and color. */
     default SELF border(float stroke, @Nullable Color color) {
         Table t = table();
-        if (t == null) return self();
+        if (t == null)
+            return self();
         RoundedDrawable rd = getOrCreateRounded(8);
         rd.border(stroke, color != null ? color : Color.white);
         return self();
@@ -407,7 +440,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     /** Sets a border with reactive color. */
     default SELF border(float stroke, @Nullable Readable<Color> color) {
         Table t = table();
-        if (t == null) return self();
+        if (t == null)
+            return self();
         RoundedDrawable rd = getOrCreateRounded(8);
         if (color != null) {
             Effect e = Effect.of(() -> {
@@ -426,7 +460,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     /** Sets the table's background drawable. */
     default SELF background(@Nullable Drawable bg) {
         Table t = table();
-        if (t == null) return self();
+        if (t == null)
+            return self();
         if (t.getBackground() instanceof RoundedDrawable) {
             ((RoundedDrawable) t.getBackground()).baseDrawable(bg);
         } else {
@@ -437,7 +472,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets the table's background drawable reactively. */
     default SELF background(@Nullable Readable<Drawable> bg) {
-        if (bg == null) return self();
+        if (bg == null)
+            return self();
         Table t = table();
         if (t != null) {
             Effect e = Effect.of(() -> {
@@ -452,7 +488,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     /** Sets the table's background color. */
     default SELF background(@Nullable Color color) {
         Table t = table();
-        if (t == null) return self();
+        if (t == null)
+            return self();
         RoundedDrawable rd = getOrCreateRounded(8);
         rd.fillColor(color != null ? color : Color.clear);
         return self();
@@ -465,7 +502,8 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     /** Sets the table's background color reactively. */
     default SELF backgroundColor(@Nullable Readable<Color> color) {
-        if (color == null) return self();
+        if (color == null)
+            return self();
         Table t = table();
         if (t != null) {
             RoundedDrawable rd = getOrCreateRounded(8);
@@ -476,8 +514,5 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     // ---------- internal ----------
 
-    @SuppressWarnings("unchecked")
-    private SELF self() {
-        return (SELF) this;
-    }
+     SELF self();
 }
