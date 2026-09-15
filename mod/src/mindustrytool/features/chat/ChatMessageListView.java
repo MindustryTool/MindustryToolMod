@@ -571,18 +571,29 @@ public class ChatMessageListView extends BaseComponent {
                                     .left();
                         });
 
-                        text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, link))
+                        text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, ""))
                                 .color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
 
                         spacer();
 
                         row().growX().gap(unit(1)).children(() -> {
-                            button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
-                                    () -> promptDirectJoin(link))
-                                            .style(WebStyles.primary())
-                                            .growX()
-                                            .height(unit(11));
+                            dynamic(FeatureManager.get(PlayerConnectFeature.class).enabled(), enabled -> {
+                                if (Boolean.TRUE.equals(enabled)) {
+                                    return button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
+                                            () -> promptDirectJoin(link))
+                                                    .style(WebStyles.primary())
+                                                    .growX()
+                                                    .height(unit(11));
+                                }
 
+                                return button(
+                                        Core.bundle.get("feature.chat.ui.enable-player-connect",
+                                                "Enable Player Connect"),
+                                        () -> FeatureManager.getFeature(PlayerConnectFeature.class).enable())
+                                                .style(WebStyles.primary())
+                                                .growX()
+                                                .height(unit(11));
+                            });
                             button(() -> {
                                 Core.app.setClipboardText(link);
                                 Vars.ui.showInfoFade("@copied");

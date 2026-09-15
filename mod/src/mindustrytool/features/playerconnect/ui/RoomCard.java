@@ -85,25 +85,32 @@ public class RoomCard extends BaseComponent {
         return cardComp.children(() -> {
             // Header row: Title + Copy link button
             row().growX().height(unit(6)).gap(unit(2)).children(() -> {
-                text(title).style(Styles.outlineLabel).fontScale(displayPlayerList ? 1.1f : 0.95f).ellipsis().growX()
+                text(title)
+                        .style(Styles.outlineLabel)
+                        .fontScale(displayPlayerList ? 1.1f : 0.95f)
+                        .ellipsis()
+                        .growX()
                         .left();
                 spacer();
-                button(() -> {
-                    Core.app.setClipboardText(room.getLink());
-                    Vars.ui.showInfoFade("@copied");
-                })
-                        .style(WebStyles.ghost())
-                        .size(displayPlayerList ? unit(11) : unit(6))
-                        .children(() -> icon(Icon.copy).size(displayPlayerList ? unit(6) : unit(4)));
+
+                if (displayPlayerList) {
+                    button(() -> {
+                        Core.app.setClipboardText(room.getLink());
+                        Vars.ui.showInfoFade("@copied");
+                    })
+                            .style(WebStyles.ghost())
+                            .size(unit(11))
+                            .children(() -> icon(Icon.copy).size(unit(6)));
+                }
             });
 
             // Map and mode
             if (!mapMode.isEmpty()) {
-                text(mapMode).ellipsis().left();
+                text(mapMode).growX().ellipsis().left();
             }
 
             if (!Version.combined().equals(room.getData().getVersion())) {
-                text(room.getData().getVersion());
+                text(room.getData().getVersion()).growX().ellipsis();
             }
 
             if (!displayPlayerList) {
@@ -111,10 +118,9 @@ public class RoomCard extends BaseComponent {
                         ? "[scarlet]" + Core.bundle.get("feature.chat.ui.incompatible-protocol", "Incompatible")
                         : (!missingMods.isEmpty() || !unneededMods.isEmpty()
                                 ? "[orange]" + Core.bundle.get("feature.chat.ui.mods-required", "Mods Required")
-                                : "[green]" + Core.bundle.get("feature.chat.ui.compatible", "Compatible"));
+                                : "");
                 row().growX().height(unit(4)).children(() -> {
-                    text(playerInfo).color(Color.lightGray).ellipsis().left();
-                    spacer();
+                    text(playerInfo).color(Color.lightGray).ellipsis().growX().left();
                     text(compatBadge).fontScale(0.85f).right();
                 });
             } else {
@@ -150,15 +156,25 @@ public class RoomCard extends BaseComponent {
                 })
                         .style(WebStyles.outline())
                         .growX()
-                        .height(displayPlayerList ? unit(8) : unit(7))
-                        .paddingY(displayPlayerList ? unit(1.5f) : 0f)
+                        .height(unit(7))
                         .enabled(Signal.of(false));
             } else {
-                button(Core.bundle.get("join", "Join"), () -> promptJoin(secured, missingMods, unneededMods))
-                        .style(WebStyles.secondary())
-                        .growX()
-                        .height(displayPlayerList ? unit(8) : unit(7))
-                        .paddingY(displayPlayerList ? unit(1.5f) : 0f);
+                row().gap(unit(1)).growX().children(() -> {
+                    button(Core.bundle.get("join", "Join"), () -> promptJoin(secured, missingMods, unneededMods))
+                            .style(WebStyles.primary())
+                            .growX()
+                            .height(unit(11));
+
+                    if (!displayPlayerList) {
+                        button(() -> {
+                            Core.app.setClipboardText(room.getLink());
+                            Vars.ui.showInfoFade("@copied");
+                        })
+                                .style(WebStyles.outline())
+                                .size(unit(11))
+                                .children(() -> icon(Icon.copy).size(unit(5)));
+                    }
+                });
             }
         }).element();
     }

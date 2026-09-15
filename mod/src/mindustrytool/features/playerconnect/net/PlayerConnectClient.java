@@ -144,7 +144,7 @@ public class PlayerConnectClient {
 
                 synchronized (pingerThread) {
                     long start = Time.millis();
-                    pinger.connect(2000, ip, port);
+                    pinger.connect(10000, ip, port);
                     long elapsed = Time.timeSinceMillis(start);
                     pinger.close();
                     Core.app.post(() -> success.get(elapsed));
