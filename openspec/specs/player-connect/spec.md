@@ -1,5 +1,8 @@
-## ADDED Requirements
+# player-connect Specification
 
+## Purpose
+Provides relay-based peer-to-peer multiplayer hosting and joining (CLA-J protocol v159), real-time room discovery via Server-Sent Events (SSE), declarative Solim hosting/management dialogs, join approval HUD banners, and mod compatibility inspection in the Mindustry join screen.
+## Requirements
 ### Requirement: Relay Network Engine and Wire Compatibility
 The system SHALL provide an encapsulated relay networking engine implementing the CLA-J protocol version 159. When hosting a game through a relay server, the engine SHALL wrap Mindustry's `NetProvider` with `ProxyProvider` and forward wrapped TCP and UDP packets through a single client connection to the relay server. Remote players connecting via the relay SHALL be managed as `VirtualConnection` instances. On the client side, joining via `player-connect://` URLs SHALL inject the custom `Serializer` and send a `RoomJoinPacket`. Relay server IP addresses SHALL be automatically unbanned to prevent accidental lockout of the proxy.
 
@@ -62,3 +65,4 @@ The system SHALL inject a Solim room browser section into Mindustry's `JoinDialo
 #### Scenario: Mod mismatch warning on join
 - **WHEN** a user clicks to join a room requiring different mods
 - **THEN** a warning dialog lists missing and unneeded mods, with options to disable conflicting mods and proceed or cancel
+

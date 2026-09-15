@@ -3,6 +3,7 @@ package mindustrytool.features.chat;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.ui.Styles;
 import solim.core.BaseComponent;
@@ -48,6 +49,19 @@ public class ChatSettingsView extends BaseComponent {
                         row().width(unit(14)).children(() -> {
                             text(feature.heightRatioConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 0.6f) * 100)));
                         });
+                    });
+
+                    // Share presence
+                    checkbox(
+                            Core.bundle.get("feature.chat.settings.share-presence", "Share Game Status"),
+                            feature.sharePresenceConfig.signal()).growX();
+
+                    row().growX().children(() -> {
+                        text(Core.bundle.get("feature.chat.settings.share-presence.description",
+                                "Show your current game activity to other chat members."))
+                                        .color(Color.gray)
+                                        .fontScale(0.8f)
+                                        .left();
                     });
 
                     divider();

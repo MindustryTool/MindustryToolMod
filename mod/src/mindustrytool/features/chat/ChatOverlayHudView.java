@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.scene.style.Drawable;
 import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
@@ -124,6 +125,29 @@ public class ChatOverlayHudView extends BaseComponent {
         });
 
         Readable<Boolean> isConnected = store.session().connected();
+        Readable<Boolean> isDesktop = Units.width().map(w -> w != null && w >= 1200f);
+        Readable<String> channelTitle = store.channels().active().map(c -> {
+            if (c != null && c.getName() != null && !c.getName().trim().isEmpty()) {
+                return "# " + c.getName().trim();
+            }
+            return "";
+        });
+
+        Readable<Boolean> channelsCol = store.ui().channelsCollapsed();
+        Readable<Drawable> channelsIcon = channelsCol.map(c -> Boolean.TRUE.equals(c)
+                ? FileIcon.of("panel-left-open.png", Icon.rightOpen)
+                : FileIcon.of("panel-left.png", Icon.leftOpen));
+        Readable<String> channelsTooltip = channelsCol.map(c -> Boolean.TRUE.equals(c)
+                ? Core.bundle.get("feature.chat.ui.expand-channels", "Show Channels")
+                : Core.bundle.get("feature.chat.ui.collapse-channels", "Hide Channels"));
+
+        Readable<Boolean> usersCol = store.ui().usersCollapsed();
+        Readable<Drawable> usersIcon = usersCol.map(c -> Boolean.TRUE.equals(c)
+                ? FileIcon.of("panel-right-open.png", Icon.leftOpen)
+                : FileIcon.of("panel-right.png", Icon.rightOpen));
+        Readable<String> usersTooltip = usersCol.map(c -> Boolean.TRUE.equals(c)
+                ? Core.bundle.get("feature.chat.ui.expand-users", "Show Members")
+                : Core.bundle.get("feature.chat.ui.collapse-users", "Hide Members"));
 
         // Shared floating message-action popup (zero-footprint overlay driver).
         ChatActionPopup.install(store);
@@ -148,7 +172,26 @@ public class ChatOverlayHudView extends BaseComponent {
                                             .size(unit(3))
                                             .color(isConnected.map(c -> c ? Pal.heal : Color.scarlet));
 
+                                    text(channelTitle)
+                                            .color(Pal.accent)
+                                            .fontScale(0.95f)
+                                            .left();
+
                                     spacer();
+
+                                    button(store.ui()::toggleChannelsCollapsed)
+                                            .style(WebStyles.ghost())
+                                            .size(unit(10), unit(10))
+                                            .visible(isDesktop)
+                                            .tooltip(channelsTooltip)
+                                            .children(() -> icon(channelsIcon).size(unit(5)));
+
+                                    button(store.ui()::toggleUsersCollapsed)
+                                            .style(WebStyles.ghost())
+                                            .size(unit(10), unit(10))
+                                            .visible(isDesktop)
+                                            .tooltip(usersTooltip)
+                                            .children(() -> icon(usersIcon).size(unit(5)));
 
                                     button(() -> {
                                         var dialog = feature.getSettingDialog();

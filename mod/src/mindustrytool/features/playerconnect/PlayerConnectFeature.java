@@ -254,6 +254,7 @@ public class PlayerConnectFeature extends Feature {
                             activeLink = new PlayerConnectLink(host, port, roomId);
                             state.set(HostingState.HOSTING);
                             PlayerConnectClient.unbanProxyIp(host);
+                            Events.fire(new PcRoomOpened(roomNameConfig.get()));
                             onSuccess.get(activeLink);
                         }),
                         closeReason -> Core.app.post(() -> {
@@ -274,6 +275,7 @@ public class PlayerConnectFeature extends Feature {
     }
 
     public void closeRoom() {
+        boolean wasActive = activeProxy != null || activeLink != null;
         if (activeProxy != null) {
             activeProxy.closeRoom();
             activeProxy.stop();
@@ -291,6 +293,9 @@ public class PlayerConnectFeature extends Feature {
         state.set(HostingState.IDLE);
         ping.set(0);
         clearPendingRequests();
+        if (wasActive) {
+            Events.fire(new PcRoomClosed());
+        }
     }
 
     public void updateRoomStats() {

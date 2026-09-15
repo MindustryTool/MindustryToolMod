@@ -22,6 +22,7 @@ public class ChatFeature extends Feature {
     public final ConfigValue<Float> widthRatioConfig;
     public final ConfigValue<Float> heightRatioConfig;
     public final ConfigValue<Boolean> collapsedConfig;
+    public final ConfigValue<Boolean> sharePresenceConfig;
     public final ConfigValue<Boolean> channelsCollapsedConfig;
     public final ConfigValue<Boolean> usersCollapsedConfig;
 
@@ -38,6 +39,7 @@ public class ChatFeature extends Feature {
 
     private final ChatStore store;
     private final ChatService service;
+    private final ChatPresence presence;
 
     private @Nullable ChatOverlayHudView hudView;
     private @Nullable ChatSettingsDialog settingsDialog;
@@ -57,6 +59,7 @@ public class ChatFeature extends Feature {
         widthRatioConfig = config.floatValue("width-ratio", 0.9f);
         heightRatioConfig = config.floatValue("height-ratio", 0.9f);
         collapsedConfig = config.boolValue("collapsed", false);
+        sharePresenceConfig = config.boolValue("share-presence", true);
         channelsCollapsedConfig = config.boolValue("channels-collapsed", false);
         usersCollapsedConfig = config.boolValue("users-collapsed", false);
 
@@ -132,6 +135,7 @@ public class ChatFeature extends Feature {
         });
 
         service = new ChatService(store, () -> !Boolean.TRUE.equals(collapsedConfig.get()));
+        presence = new ChatPresence(store.session(), sharePresenceConfig, enabled());
 
         collapsedConfig.signal().subscribe(col -> {
             boolean isCollapsed = Boolean.TRUE.equals(col);
@@ -155,6 +159,10 @@ public class ChatFeature extends Feature {
 
     public ChatStore getStore() {
         return store;
+    }
+
+    public ChatPresence getChatPresence() {
+        return presence;
     }
 
     public ChatService getService() {

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# chat-presence Specification
+
+## Purpose
+
+Outbound game-presence publishing: the client publishes the player's current game activity (menu, server, relay room, campaign, editor, custom game) to the backend chat service so other users see accurate presence.
+
+## Requirements
 
 ### Requirement: Sticky presence state in ChatSession
 The system SHALL hold outbound presence in `ChatSession` as a current-presence signal and a last-non-menu signal, both initialized to `menu`, using the legacy wire strings verbatim (`menu`, `server: <name>`, `player-connect: <name>`, `campaign: <map>`, `editing: <map>`, `custom-game`).

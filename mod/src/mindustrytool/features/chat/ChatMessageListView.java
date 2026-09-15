@@ -6,12 +6,9 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
-import arc.scene.style.Drawable;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import arc.util.Timer;
-import solim.ui.Units;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -147,61 +144,9 @@ public class ChatMessageListView extends BaseComponent {
             lastMessageCount = count;
             lastFirstMessageId = firstId;
         });
-
-        Readable<Boolean> isDesktop = Units.width().map(w -> w != null && w >= 1200f);
-        Readable<String> channelTitle = store.channels().active().map(c -> {
-            if (c != null && c.getName() != null && !c.getName().trim().isEmpty()) {
-                return "# " + c.getName().trim();
-            }
-            return "";
-        });
-
-        Readable<Boolean> channelsCol = store.ui().channelsCollapsed();
-        Readable<Drawable> channelsIcon = channelsCol.map(c -> Boolean.TRUE.equals(c)
-                ? FileIcon.of("chevron-right.png", Icon.rightOpen)
-                : FileIcon.of("chevron-left.png", Icon.leftOpen));
-        Readable<String> channelsTooltip = channelsCol.map(c -> Boolean.TRUE.equals(c)
-                ? Core.bundle.get("feature.chat.ui.expand-channels", "Show Channels")
-                : Core.bundle.get("feature.chat.ui.collapse-channels", "Hide Channels"));
-
-        Readable<Boolean> usersCol = store.ui().usersCollapsed();
-        Readable<Drawable> usersIcon = usersCol.map(c -> Boolean.TRUE.equals(c)
-                ? FileIcon.of("chevron-left.png", Icon.leftOpen)
-                : FileIcon.of("chevron-right.png", Icon.rightOpen));
-        Readable<String> usersTooltip = usersCol.map(c -> Boolean.TRUE.equals(c)
-                ? Core.bundle.get("feature.chat.ui.expand-users", "Show Members")
-                : Core.bundle.get("feature.chat.ui.collapse-users", "Hide Members"));
-
         Timer.schedule(this::scrollToBottom, 1);
 
         return column().grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
-            // Header Bar
-            row().growX().center().height(unit(8)).children(() -> {
-                button(store.ui()::toggleChannelsCollapsed)
-                        .style(WebStyles.ghost())
-                        .size(unit(9))
-                        .visible(isDesktop)
-                        .tooltip(channelsTooltip)
-                        .children(() -> icon(channelsIcon).size(unit(6f)));
-
-                text(channelTitle)
-                        .color(Pal.accent)
-                        .fontScale(0.95f)
-                        .left()
-                        .cellPaddingLeft(unit(1));
-
-                spacer();
-
-                button(store.ui()::toggleUsersCollapsed)
-                        .style(WebStyles.ghost())
-                        .size(unit(9))
-                        .visible(isDesktop)
-                        .tooltip(usersTooltip)
-                        .children(() -> icon(usersIcon).size(unit(6f)));
-            });
-
-            divider();
-
             dynamic(showEndOfHistory, show -> {
                 if (Boolean.TRUE.equals(show)) {
                     return row().top().center().growX().padding(unit(2)).children(() -> {
