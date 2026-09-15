@@ -3,7 +3,6 @@ package mindustrytool.features.browser.map;
 import arc.Core;
 import arc.Events;
 import arc.scene.ui.Button;
-import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -52,11 +51,11 @@ public class MapBrowserFeature extends Feature {
     }
 
     @Override
-    public @Nullable Dialog getMainDialog() {
+    public @Nullable SolimDialog getMainDialog() {
         if (dialog == null) {
             dialog = new MapBrowserDialog();
         }
-        return dialog.dialog();
+        return dialog;
     }
 
     public void showDialog() {

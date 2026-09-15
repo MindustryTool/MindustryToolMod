@@ -158,7 +158,6 @@ public class ChatOverlayHudView extends BaseComponent {
                 .maxWidth(Units.dvw(95f))
                 .maxHeight(Units.dvh(95f))
                 .children(() -> {
-
                     column().grow().children(() -> {
                         // Window Action Bar (draggable bar wrapping title & action buttons)
                         row().growX()
