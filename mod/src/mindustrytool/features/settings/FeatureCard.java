@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.util.Nullable;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
@@ -12,6 +13,8 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import solim.core.BaseComponent;
+import solim.core.Provider;
+import solim.overlay.SolimDialog;
 import solim.signal.Readable;
 import solim.signal.Signal;
 
@@ -55,6 +58,9 @@ public class FeatureCard extends BaseComponent {
                 : Signal.computed(() -> Boolean.TRUE.equals(reorderAllowed.get())
                         && Boolean.TRUE.equals(FeatureManager.canMoveRightSignal(feature).get()));
 
+        @Nullable Provider<SolimDialog> mainDialog = feature.getMainDialog();
+        @Nullable Provider<SolimDialog> settingDialog = feature.getSettingDialog();
+
         return card()
                 .name("FeatureCard-" + metadata.getId()).height(unit(60)).growX()
                 .rounded(unit(4))
@@ -74,14 +80,16 @@ public class FeatureCard extends BaseComponent {
 
                             spacer();
 
-                            if (feature.getMainDialog() != null) {
-                                button(() -> feature.getMainDialog().show()).style(WebStyles.ghost()).size(unit(11))
+                            if (mainDialog != null) {
+                                button(() -> showDialog(mainDialog)).style(WebStyles.ghost())
+                                        .size(unit(11))
                                         .tooltip(Core.bundle.get("feature.button.open-dialog"))
                                         .children(() -> icon(Icon.linkSmall).size(unit(7)));
                             }
 
-                            if (feature.getSettingDialog() != null) {
-                                button(() -> feature.getSettingDialog().show()).style(WebStyles.ghost()).size(unit(11))
+                            if (settingDialog != null) {
+                                button(() -> showDialog(settingDialog)).style(WebStyles.ghost())
+                                        .size(unit(11))
                                         .tooltip(Core.bundle.get("feature.button.settings"))
                                         .children(() -> icon(Icon.settings).size(unit(7)));
                             }
@@ -115,12 +123,20 @@ public class FeatureCard extends BaseComponent {
                                         .size(unit(9))
                                         .enabled(canMoveRight)
                                         .tooltip(Core.bundle.get("feature.button.move-right"))
-                                        .children(() -> icon(FileIcon.of("chevron-right.png", Icon.right)).size(unit(6)));
+                                        .children(
+                                                () -> icon(FileIcon.of("chevron-right.png", Icon.right)).size(unit(6)));
                             }
                         });
 
                         divider().color(statusColor);
                     });
-                }).element();
+        }).element();
+    }
+
+    private void showDialog(Provider<SolimDialog> dialogProvider) {
+        @Nullable SolimDialog dialog = dialogProvider.get();
+        if (dialog != null) {
+            dialog.show();
+        }
     }
 }

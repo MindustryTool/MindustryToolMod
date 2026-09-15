@@ -36,6 +36,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.core.Provider;
 import solim.overlay.SolimDialog;
 
 import java.lang.reflect.Field;
@@ -157,11 +158,13 @@ public class BridgeVisualizerFeature extends Feature {
     }
 
     @Override
-    public @Nullable SolimDialog getSettingDialog() {
-        if (settingsDialog == null) {
-            settingsDialog = new BridgeVisualizerSettingsDialog(this);
-        }
-        return settingsDialog;
+    public @Nullable Provider<SolimDialog> getSettingDialog() {
+        return () -> {
+            if (settingsDialog == null) {
+                settingsDialog = new BridgeVisualizerSettingsDialog(this);
+            }
+            return settingsDialog;
+        };
     }
 
     private void draw() {

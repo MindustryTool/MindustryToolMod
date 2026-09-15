@@ -4,7 +4,6 @@ import static solim.UI.*;
 
 import arc.graphics.Color;
 import arc.scene.Element;
-import solim.overlay.SolimDialog;
 import arc.struct.Seq;
 import arc.util.Nullable;
 import java.util.ArrayList;
@@ -118,9 +117,9 @@ public class QuickAccessHudView extends BaseComponent {
                     .tooltip(f.getName())
                     .onClick(() -> f.setEnabled(!f.isEnabled()))
                     .onLongClick(300L, () -> {
-                        SolimDialog settingDlg = f.getSettingDialog();
+                        var settingDlg = f.getSettingDialog();
                         if (settingDlg != null) {
-                            settingDlg.show();
+                            settingDlg.get().show();
                         }
                     })
                     .children(() -> icon(meta.getIcon()).size(iconSize)

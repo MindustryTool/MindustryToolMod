@@ -193,7 +193,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                     button(() -> {
                                         var dialog = feature.getSettingDialog();
                                         if (dialog != null) {
-                                            dialog.show();
+                                            dialog.get().show();
                                         }
                                     })
                                             .style(WebStyles.ghost())

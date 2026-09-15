@@ -4,6 +4,7 @@
     import arc.scene.Element;
     import java.util.Objects;
     import solim.overlay.SolimDialog;
+    import solim.core.Provider;
     import arc.util.Nullable;
     import mindustrytool.components.FileIcon;
     import mindustrytool.features.Feature;
@@ -215,10 +216,12 @@
         }
 
         @Override
-        public @Nullable SolimDialog getSettingDialog() {
-            if (settingsDialog == null) {
-                settingsDialog = new ChatSettingsDialog(this);
-            }
-            return settingsDialog;
+        public @Nullable Provider<SolimDialog> getSettingDialog() {
+            return () -> {
+                if (settingsDialog == null) {
+                    settingsDialog = new ChatSettingsDialog(this);
+                }
+                return settingsDialog;
+            };
         }
     }

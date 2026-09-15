@@ -52,6 +52,7 @@ import mindustrytool.services.MindustryTool;
 import mindustrytool.utils.JsonUtils;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.core.Provider;
 import solim.overlay.SolimDialog;
 import solim.signal.Computed;
 import solim.signal.Signal;
@@ -673,7 +674,7 @@ public class PlayerConnectFeature extends Feature {
     }
 
     @Override
-    public @Nullable SolimDialog getSettingDialog() {
+    public @Nullable Provider<SolimDialog> getSettingDialog() {
         return null;
     }
 }

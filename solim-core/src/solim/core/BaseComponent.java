@@ -95,7 +95,9 @@ public abstract class BaseComponent implements Component {
 			applyName(cached);
 			return cached;
 		} catch (Throwable throwable) {
-            Vars.ui.showException(throwable);
+            if (Vars.ui != null) {
+                Vars.ui.showException(throwable);
+            }
 			dispose();
 			throw throwable;
 		} finally {

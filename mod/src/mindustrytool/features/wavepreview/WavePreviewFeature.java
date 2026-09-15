@@ -14,6 +14,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.core.Provider;
 import solim.overlay.SolimDialog;
 
 /**
@@ -83,11 +84,13 @@ public class WavePreviewFeature extends Feature {
     }
 
     @Override
-    public @Nullable SolimDialog getSettingDialog() {
-        if (settingsDialog == null) {
-            settingsDialog = new WavePreviewSettingsDialog(this);
-        }
-        return settingsDialog;
+    public @Nullable Provider<SolimDialog> getSettingDialog() {
+        return () -> {
+            if (settingsDialog == null) {
+                settingsDialog = new WavePreviewSettingsDialog(this);
+            }
+            return settingsDialog;
+        };
     }
 
     public void injectPanel() {

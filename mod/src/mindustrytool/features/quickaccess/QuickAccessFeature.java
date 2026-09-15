@@ -13,6 +13,7 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
+import solim.core.Provider;
 import solim.overlay.SolimDialog;
 import solim.signal.Signal;
 import solim.signal.Signals;
@@ -185,10 +186,12 @@ public class QuickAccessFeature extends Feature {
     }
 
     @Override
-    public @Nullable SolimDialog getSettingDialog() {
-        if (settingsDialog == null) {
-            settingsDialog = new QuickAccessSettingsDialog(this);
-        }
-        return settingsDialog;
+    public @Nullable Provider<SolimDialog> getSettingDialog() {
+        return () -> {
+            if (settingsDialog == null) {
+                settingsDialog = new QuickAccessSettingsDialog(this);
+            }
+            return settingsDialog;
+        };
     }
 }
