@@ -20,6 +20,7 @@ public final class SolimSelect<T> implements Component, ElementConfig<SolimSelec
     private final PendingCellConfig constraints = new PendingCellConfig();
     private int selectedIndex = 0;
     private Disposable binding;
+    private boolean disposed = false;
 
     @Override
     public PendingCellConfig cellConfig() {
@@ -79,10 +80,19 @@ public final class SolimSelect<T> implements Component, ElementConfig<SolimSelec
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         if (binding != null) {
             binding.dispose();
             binding = null;
         }
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

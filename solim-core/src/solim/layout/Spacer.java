@@ -3,15 +3,18 @@ package solim.layout;
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import solim.core.Component;
+import solim.runtime.ComponentContext;
 
 /** Spacer that consumes remaining space in a row/column. */
 public final class Spacer implements Component {
 	private final Table table = new Table();
+	private boolean disposed = false;
 
 	public Spacer() {
 		table.name = "solim-spacer-table";
 		table.userObject = "expanding";
 		table.add().growX().growY();
+		ComponentContext.register(this);
 	}
 
 	@Override
@@ -22,5 +25,18 @@ public final class Spacer implements Component {
 	public Spacer name(String name) {
 		table.name = name;
 		return this;
+	}
+
+	@Override
+	public void dispose() {
+		if (disposed) {
+			return;
+		}
+		disposed = true;
+	}
+
+	@Override
+	public boolean isDisposed() {
+		return disposed;
 	}
 }

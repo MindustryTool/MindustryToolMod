@@ -94,6 +94,7 @@ public final class SettingsPanel extends BaseComponent {
 		if (logger != null) {
 			logger.dispose();
 		}
+		super.dispose();
 	}
 
 	public Signal<Boolean> darkMode() {

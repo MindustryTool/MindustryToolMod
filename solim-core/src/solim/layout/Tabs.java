@@ -36,6 +36,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
     private final List<Button> tabButtons = new ArrayList<>();
     private final List<Table> tabContents = new ArrayList<>();
     private final List<Disposable> bindings = new ArrayList<>();
+    private boolean disposed = false;
     private final PendingCellConfig constraints = new PendingCellConfig();
 
     public Tabs(Signal<Integer> activeTab) {
@@ -183,6 +184,10 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         for (Disposable d : bindings) {
             d.dispose();
         }
@@ -191,6 +196,11 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
             b.dispose();
         }
         headerBar.dispose();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

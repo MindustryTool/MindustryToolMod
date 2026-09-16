@@ -15,6 +15,7 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 	private final Slider slider = new Slider(0f, 1f, 0.1f, false);
 	private final PendingCellConfig constraints = new PendingCellConfig();
 	private Disposable binding;
+	private boolean disposed = false;
 
 	@Override
 	public PendingCellConfig cellConfig() {
@@ -83,10 +84,19 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 
 	@Override
 	public void dispose() {
+		if (disposed) {
+			return;
+		}
+		disposed = true;
 		if (binding != null) {
 			binding.dispose();
 			binding = null;
 		}
+	}
+
+	@Override
+	public boolean isDisposed() {
+		return disposed;
 	}
 
     @Override

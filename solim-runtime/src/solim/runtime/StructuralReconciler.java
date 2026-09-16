@@ -25,6 +25,7 @@ import solim.core.Disposable;
  */
 public final class StructuralReconciler<K, C extends Component> implements Disposable {
 	private final Map<K, C> activeComponents = new LinkedHashMap<>();
+	private boolean disposed = false;
 
 	/**
 	 * Reconciles the given items against currently active components.
@@ -89,6 +90,10 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 	/** Disposes all active components and clears the state. */
 	@Override
 	public void dispose() {
+		if (disposed) {
+			return;
+		}
+		disposed = true;
 		for (C comp : activeComponents.values()) {
 			try {
 				comp.dispose();
@@ -97,5 +102,10 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 			}
 		}
 		activeComponents.clear();
+	}
+
+	@Override
+	public boolean isDisposed() {
+		return disposed;
 	}
 }

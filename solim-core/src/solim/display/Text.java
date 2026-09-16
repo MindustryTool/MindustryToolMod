@@ -27,6 +27,7 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
     private final Label label;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final List<Disposable> bindings = new ArrayList<>();
+    private boolean disposed = false;
 
     private float padTop;
     private float padLeft;
@@ -52,6 +53,7 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
                 : (Core.scene != null ? new Label(text != null ? text : "")
                         : new Label(text != null ? text : "", new Label.LabelStyle()));
         this.label.name = "solim-text-label";
+        ComponentContext.register(this);
     }
 
     public static Text of(String text) {
@@ -351,10 +353,19 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         for (Disposable d : bindings) {
             d.dispose();
         }
         bindings.clear();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

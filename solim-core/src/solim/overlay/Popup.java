@@ -13,6 +13,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Time;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import mindustry.game.EventType.ResizeEvent;
@@ -57,6 +58,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     private final Table table = new Table();
     private @Nullable Function<T, Component> provider;
     private @Nullable Component currentContent;
+    private final List<Disposable> currentBindings = new ArrayList<>();
     private boolean touchAttached = false;
     private boolean keyAttached = false;
     private long lastHideTime = 0L;
@@ -249,6 +251,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                 }
                 if (config != null) {
                     List<Disposable> effects = config.applyToCell(cell);
+                    currentBindings.addAll(effects);
                     for (Disposable effect : effects) {
                         ComponentContext.register(effect);
                     }
@@ -270,6 +273,13 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
 
     private void clearContent() {
         table.clearChildren();
+        for (Disposable d : currentBindings) {
+            try {
+                d.dispose();
+            } catch (Throwable ignored) {
+            }
+        }
+        currentBindings.clear();
         if (currentContent != null) {
             try {
                 currentContent.dispose();

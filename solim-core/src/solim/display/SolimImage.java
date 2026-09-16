@@ -25,6 +25,7 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
 
     private final Image image;
     private final List<Disposable> bindings = new ArrayList<>();
+    private boolean disposed = false;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private Scaling scaling = Scaling.fit;
 
@@ -50,6 +51,7 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
         this.image = new Image(d, scaling);
         this.image.userObject = this;
         this.image.name = "solim-image-image";
+        ComponentContext.register(this);
     }
 
     public static SolimImage of(Drawable d) {
@@ -267,10 +269,19 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         for (Disposable d : bindings) {
             d.dispose();
         }
         bindings.clear();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

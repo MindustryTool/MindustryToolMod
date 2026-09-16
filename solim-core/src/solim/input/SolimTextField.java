@@ -31,6 +31,7 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable TwoWayBinding<String> binding;
     private Effect disabledEffect;
+    private boolean disposed = false;
     private Predicate<String> validator;
     private final Signal<Boolean> valid = Signal.of(true);
 
@@ -220,6 +221,10 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         if (binding != null) {
             binding.dispose();
             binding = null;
@@ -228,6 +233,11 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
             disabledEffect.dispose();
             disabledEffect = null;
         }
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

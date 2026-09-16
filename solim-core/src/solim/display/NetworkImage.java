@@ -19,6 +19,8 @@ import arc.util.Nullable;
 import arc.util.Scaling;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import arc.scene.ui.Image;
@@ -298,6 +300,8 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
     private @Nullable Drawable placeholder;
     private @Nullable Drawable fallback;
     private @Nullable Disposable binding;
+    private final List<Disposable> bindings = new ArrayList<>();
+    private boolean disposed = false;
     private @Nullable String currentUrl;
     private boolean failed = false;
     private Scaling scaling = Scaling.fit;
@@ -524,6 +528,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
                 if (c != null)
                     image.setColor(c);
             });
+            bindings.add(e);
             ComponentContext.register(e);
         }
         return this;
@@ -619,10 +624,23 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         if (binding != null) {
             binding.dispose();
             binding = null;
         }
+        for (Disposable d : bindings) {
+            d.dispose();
+        }
+        bindings.clear();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override
