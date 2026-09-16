@@ -44,7 +44,7 @@ public class PrettyChatFeature extends Feature {
                 .icon(FileIcon.of("sparkles.png"))
                 .quickAccess(true)
                 .development(false)
-                .enabledByDefault(true)
+                .enabledByDefault(false)
                 .build());
 
         this.config = new PrettyChatConfig(configGroup());
