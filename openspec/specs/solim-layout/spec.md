@@ -3,12 +3,12 @@
 ## Purpose
 
 Mechanical merge of 9 specs per change `spec-domain-merge` (stage 4 framework-ui, concat-then-dedupe). Sources: solim-layout, element-config-mixin, grid-item-context, modifier-clarity, pending-cell-config, solim-shared-modifiers, solim-units, table-config-mixin, wrap-flow-layout. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work.
-
 ## Requirements
 
 **Source: solim-layout**
 
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
+
 ### Requirement: Column and Row with flex-like modifiers
 `Column` and `Row` SHALL be vertical/horizontal layout containers supporting fluent configuration modifiers `gap(int/float)`, `gap(Readable<Float>)`, `align(Align)` (START/CENTER/END/STRETCH), `padding(int)`, and `grow()`, followed by `.children(Runnable)` for declaring children. `Row` and `Column` SHALL apply gap as directional sibling padding along their primary axis (horizontal `padLeft` for `Row`, vertical `padTop` for `Column`) strictly to subsequent visible siblings, with zero gap padding on the leading child, zero gap padding on trailing edges, and zero gap padding on the cross-axis. `Row` and `Column` SHALL default children to top-left alignment (see Top-left default child alignment).
 
@@ -143,15 +143,16 @@ When a child element inside a `Row` or `Column` changes visibility or collapses 
 - **THEN** the second child is promoted to the leading visible element and its `padLeft` gap offset is reduced to 0px
 
 ### Requirement: PendingCellConfig replaces SizeConstraints
-The deferred parent-cell configuration buffer SHALL be named `PendingCellConfig` instead of `SizeConstraints`. All references to `SizeConstraints` SHALL be renamed.
+All references to `SizeConstraints` in the codebase SHALL be renamed to `PendingCellConfig`. The class SHALL move from `solim.layout` to `solim.modifier` (or stay in `solim.layout` if preferred).
 
-#### Scenario: PendingCellConfig used by ParentStack
-- **WHEN** ParentStack adds a child element to a parent Table
-- **THEN** `PendingCellConfig.find(child)` resolves the pending config and `applyToCell(cell)` applies stored values
+#### Scenario: No SizeConstraints references remain
+- **WHEN** the codebase is searched for `SizeConstraints`
+- **THEN** zero results are found (all renamed to `PendingCellConfig`)
 
-**Source: element-config-mixin**
+**Source: solim-shared-modifiers**
 
-TBD - created by archiving change refactor-element-config-mixins. Update Purpose after archive.
+Provides shared element modifier utilities and fluent component chaining for sizing, positioning, padding, and styling.
+
 ### Requirement: ElementConfig is a mixin interface with default methods
 `ElementConfig<SELF>` SHALL be a public interface in `solim.modifier` with generic parameter `<SELF extends ElementConfig<SELF>>`. Implementing components SHALL provide `Element element()` to supply their root Arc Element.
 
@@ -202,7 +203,6 @@ TBD - created by archiving change refactor-element-config-mixins. Update Purpose
 
 Exposes contextual metrics from `ReactiveGrid` to child item component factories.
 
-
 ### Requirement: ReactiveGrid Item Context
 `ReactiveGrid` SHALL provide a `GridItemContext` interface to child item factories, exposing reactive layout metrics including the computed usable item width and current column count.
 
@@ -228,6 +228,7 @@ Exposes contextual metrics from `ReactiveGrid` to child item component factories
 **Source: modifier-clarity**
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
+
 ### Requirement: Modifier categories are non-overlapping and clearly defined
 Every fluent modifier SHALL target exactly one of: (A) the component's own Arc Element via `ElementConfig`, (B) the component's Table container via `TableConfig`, or (C) the component's cell in its parent layout via `CellConfig`. Each mixin SHALL provide only methods for its domain. `CellConfig` SHALL provide only parent-cell methods (`grow*`, `min/max*`, `margin*`). `TableConfig` SHALL provide inner container insets via `padding*`. `cellPadding` and `TableConfig.margin` SHALL NOT exist. Element-targeted margin/padding overloads that dispatch via `instanceof Table` SHALL NOT exist.
 
@@ -274,6 +275,7 @@ Element-targeted overloads of `margin`/`padding` that check `instanceof Table` t
 **Source: pending-cell-config**
 
 TBD - created by archiving change refactor-element-config-mixins. Update Purpose after archive.
+
 ### Requirement: PendingCellConfig stores pending parent-cell values
 `PendingCellConfig` SHALL store pending values for: `prefWidth`, `prefHeight`, `minWidth`, `minHeight`, `maxWidth`, `maxHeight` (all `Readable<Float>`), `growX`, `growY` (boolean), `padTop`, `padLeft`, `padBottom`, `padRight` (all `Readable<Float>`), and `align` (Integer).
 
@@ -312,6 +314,7 @@ All references to `SizeConstraints` in the codebase SHALL be renamed to `Pending
 **Source: solim-shared-modifiers**
 
 Provides shared element modifier utilities and fluent component chaining for sizing, positioning, padding, and styling.
+
 ### Requirement: Centralized ElementModifiers utility for element sizing and positioning
 The Solim framework SHALL provide an `ElementConfig<SELF>` mixin interface in package `solim.modifier` to handle sizing (`width`, `height`, `size`), positioning (`x`, `y`, `position`), visibility, opacity, and naming on Arc `Element` instances. Implementing components SHALL provide `Element element()`.
 
@@ -425,7 +428,6 @@ The `ElementConfig` and `TableConfig` interfaces SHALL NOT provide `margin(Eleme
 
 Reactive viewport unit signals (`dvw`, `dvh`) and percentage calculation utilities that automatically synchronize with window resize events.
 
-
 ### Requirement: Reactive Viewport Signals
 The `Units` class SHALL expose reactive signals `dvw` and `dvh` representing 1% of the dynamic viewport width and 1% of the dynamic viewport height in Arc scene coordinates (`(Core.graphics.getWidth() / Scl.scl()) / 100f` and `(Core.graphics.getHeight() / Scl.scl()) / 100f`).
 
@@ -462,6 +464,7 @@ The `Units` class SHALL provide access to full viewport dimensions in scene coor
 **Source: table-config-mixin**
 
 TBD - created by archiving change refactor-element-config-mixins. Update Purpose after archive.
+
 ### Requirement: TableConfig is a mixin interface with default methods
 `TableConfig<SELF>` SHALL be a public interface in `solim.modifier` with generic parameter `<SELF extends TableConfig<SELF>>`. Implementing components SHALL provide `Table table()` to supply their underlying Arc Table.
 
@@ -589,4 +592,29 @@ The Solim structural and compound components `Dynamic`, `ForEach`, `Tabs`, `Reac
 - **WHEN** a popup's content provider returns a component with `.margin(12f)`
 - **THEN** the cell inside the popup table receives 12px padding around the content element
 
+### Requirement: ElementConfig provides generic click handling
+`ElementConfig<SELF>` SHALL provide a default `onClick(Runnable)` method that attaches a click listener to the element returned by `element()`, makes that element touchable, and replaces any previously registered handler rather than stacking additional listeners. The registered handler SHALL NOT execute when the triggering event was already stopped by a descendant element.
+
+#### Scenario: Registering a click handler
+- **WHEN** `onClick(action)` is called on an `ElementConfig` component
+- **THEN** the element becomes touchable and invoking the installed click listener executes `action`
+
+#### Scenario: Replacing a handler
+- **WHEN** `onClick(first)` then `onClick(second)` are called on the same component
+- **THEN** only `second` executes on a subsequent click
+
+#### Scenario: Clicking an already-stopped event
+- **WHEN** the triggering event is already stopped before the generic click listener runs
+- **THEN** the registered handler does not execute
+
+### Requirement: ElementConfig provides opt-in click propagation control
+`ElementConfig<SELF>` SHALL provide a default `stopClickPropagation(boolean)` method that controls whether the generic click listener stops the event. Propagation SHALL NOT be stopped unless explicitly enabled. Components with established conflicting behavior (such as `Button`) MAY override `onClick` and `stopClickPropagation` while preserving their existing defaults.
+
+#### Scenario: Propagation is not stopped by default
+- **WHEN** an element has a click handler and no explicit propagation setting
+- **THEN** an ancestor click listener also receives and handles the event
+
+#### Scenario: Opting in to stop propagation
+- **WHEN** `stopClickPropagation(true)` is set on a clickable element
+- **THEN** the event is stopped and an ancestor click listener does not handle the click
 

@@ -97,6 +97,7 @@ public final class Button
         return this;
     }
 
+    @Override
     public Button onClick(@Nullable Runnable action) {
         this.onClick = action;
         if (action != null) {
@@ -176,6 +177,7 @@ public final class Button
         });
     }
 
+    @Override
     public Button stopClickPropagation(boolean stop) {
         this.stopClickPropagation = stop;
         return this;
