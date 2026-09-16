@@ -122,7 +122,7 @@ public class WavePreviewFeature extends Feature {
 
             panelView = new WavePreviewPanelView(this);
             waves.row();
-            waves.add(panelView.element()).growX();
+            waves.add(panelView.element()).growX().padTop(2);
             if (waves.getChildren().size > 2) {
                 waves.getChildren().swap(waves.getChildren().size - 2, waves.getChildren().size - 1);
             }
