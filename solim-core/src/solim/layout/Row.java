@@ -5,7 +5,10 @@ import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import solim.core.Component;
+import solim.core.Disposable;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
@@ -33,6 +36,8 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 0f;
+    private final List<Disposable> bindings = new ArrayList<>();
+    private boolean disposed = false;
 
     public Row() {
         this.table = new Table();
@@ -40,6 +45,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         this.table.name = "solim-row-table";
         this.table.top().left();
         this.table.defaults().top().left();
+        ComponentContext.register(this);
     }
 
     public Table table() {
@@ -84,6 +90,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
                     gap(g);
                 }
             });
+            bindings.add(e);
             ComponentContext.register(e);
         }
         return this;
@@ -192,6 +199,23 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         Cell<?> cell = table.add(e);
         respace();
         return cell;
+    }
+
+    @Override
+    public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
+        for (Disposable d : bindings) {
+            d.dispose();
+        }
+        bindings.clear();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

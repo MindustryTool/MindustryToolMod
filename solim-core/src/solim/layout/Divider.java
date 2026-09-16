@@ -12,6 +12,7 @@ import solim.display.SolimImage;
 import solim.modifier.ElementConfig;
 import solim.signal.Readable;
 import solim.modifier.PendingCellConfig;
+import solim.runtime.ComponentContext;
 
 /**
  * Divider line supporting horizontal (X) and vertical (Y) directions. Uses an
@@ -20,6 +21,7 @@ import solim.modifier.PendingCellConfig;
 public final class Divider implements Component, CellConfig<Divider>, ElementConfig<Divider> {
     private final SolimImage image;
     private final Direction direction;
+    private boolean disposed = false;
 
     public Divider() {
         this(Direction.X);
@@ -49,6 +51,7 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
             minHeight(1.5f);
             marginRight(1);
         }
+        ComponentContext.register(this);
     }
 
     public Direction direction() {
@@ -115,7 +118,16 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         image.dispose();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

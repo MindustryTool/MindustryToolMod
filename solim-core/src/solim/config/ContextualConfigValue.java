@@ -163,13 +163,16 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 		return def != null ? !def.equals(get()) : get() != null;
 	}
 
-	@Override
-	public void dispose() {
-		if (discriminantSub != null) {
-			discriminantSub.dispose();
-		}
-		super.dispose();
-	}
+    @Override
+    public void dispose() {
+        if (isDisposed()) {
+            return;
+        }
+        if (discriminantSub != null) {
+            discriminantSub.dispose();
+        }
+        super.dispose();
+    }
 
 	public interface ContextualPersister<T> extends ConfigPersister<T> {
 		@Nullable

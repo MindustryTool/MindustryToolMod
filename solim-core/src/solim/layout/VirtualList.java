@@ -413,6 +413,8 @@ public final class VirtualList<T, K> extends BaseComponent
     @Override
     protected void onDispose() {
         reconciler.dispose();
+        reachTopListeners.clear();
+        reachBottomListeners.clear();
         content.clearChildren();
     }
 

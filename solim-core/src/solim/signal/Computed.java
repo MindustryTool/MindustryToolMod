@@ -10,12 +10,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import solim.core.Disposable;
 import solim.core.ReactiveObserver;
 import solim.runtime.ComponentContext;
 import solim.runtime.ReactiveContext;
 
 /** Lazy computed value with dynamic dependency tracking. */
-public final class Computed<T> implements ReactiveObserver, Readable<T> {
+public final class Computed<T> implements Disposable, ReactiveObserver, Readable<T> {
 	private final Supplier<T> supplier;
 	private T cachedValue;
 	private boolean hasValue = false;
@@ -185,6 +186,7 @@ public final class Computed<T> implements ReactiveObserver, Readable<T> {
 		return Signal.computed(() -> mapper.apply(get()));
 	}
 
+	@Override
 	public void dispose() {
 		if (disposed) return;
 		disposed = true;
@@ -229,7 +231,8 @@ public final class Computed<T> implements ReactiveObserver, Readable<T> {
 		return dirty;
 	}
 
-	boolean isDisposed() {
+	@Override
+	public boolean isDisposed() {
 		return disposed;
 	}
 }

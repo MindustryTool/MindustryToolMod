@@ -12,6 +12,7 @@ public final class Badge implements Disposable {
 	private final Table table = new Table();
 	private final Label label = new Label("");
 	private Effect binding;
+	private boolean disposed = false;
 
 	public Badge() {
 		table.add(label);
@@ -34,6 +35,15 @@ public final class Badge implements Disposable {
 
 	@Override
 	public void dispose() {
+		if (disposed) {
+			return;
+		}
+		disposed = true;
 		if (binding != null) binding.dispose();
+	}
+
+	@Override
+	public boolean isDisposed() {
+		return disposed;
 	}
 }

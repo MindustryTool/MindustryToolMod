@@ -30,6 +30,7 @@ import java.util.function.BiPredicate;
 class TwoWayBinding<T> implements Disposable {
 
     private boolean updating = false;
+    private boolean disposed = false;
     private final Effect effect;
     private final Disposable listenerDisposable;
 
@@ -55,7 +56,7 @@ class TwoWayBinding<T> implements Disposable {
 
         // Widget → Signal: install the change listener
         this.listenerDisposable = listenerInstaller.install(() -> {
-            if (updating) {
+            if (disposed || updating) {
                 return;
             }
             T widgetValue = widgetGetter.get();
@@ -93,13 +94,17 @@ class TwoWayBinding<T> implements Disposable {
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         effect.dispose();
         listenerDisposable.dispose();
     }
 
     @Override
     public boolean isDisposed() {
-        return effect.isDisposed();
+        return disposed;
     }
 
     /**

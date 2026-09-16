@@ -18,6 +18,7 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 	private final CheckBox checkBox;
 	private final PendingCellConfig constraints = new PendingCellConfig();
 	private @Nullable TwoWayBinding<Boolean> binding;
+	private boolean disposed = false;
 
 	@Override
 	public PendingCellConfig cellConfig() {
@@ -91,10 +92,19 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 
 	@Override
 	public void dispose() {
+		if (disposed) {
+			return;
+		}
+		disposed = true;
 		if (binding != null) {
 			binding.dispose();
 			binding = null;
 		}
+	}
+
+	@Override
+	public boolean isDisposed() {
+		return disposed;
 	}
 
     @Override

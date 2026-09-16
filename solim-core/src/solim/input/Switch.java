@@ -18,6 +18,7 @@ public final class Switch implements Component, ElementConfig<Switch>, CellConfi
 	private final PendingCellConfig constraints = new PendingCellConfig();
 	private boolean state;
 	private Disposable binding;
+	private boolean disposed = false;
 
 	@Override
 	public PendingCellConfig cellConfig() {
@@ -69,10 +70,19 @@ public final class Switch implements Component, ElementConfig<Switch>, CellConfi
 
 	@Override
 	public void dispose() {
+		if (disposed) {
+			return;
+		}
+		disposed = true;
 		if (binding != null) {
 			binding.dispose();
 			binding = null;
 		}
+	}
+
+	@Override
+	public boolean isDisposed() {
+		return disposed;
 	}
 
     @Override

@@ -46,6 +46,7 @@ public final class Button
     private final arc.scene.ui.Button button;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final List<Disposable> bindings = new ArrayList<>();
+    private boolean disposed = false;
     private float gap = 0f;
     private boolean stopClickPropagation = true;
     private @Nullable Runnable onClick;
@@ -79,6 +80,7 @@ public final class Button
         this.button.userObject = this;
         this.button.name = "solim-button-sizedButton";
         this.button.center();
+        ComponentContext.register(this);
     }
 
     public Button children(@Nullable Runnable r) {
@@ -512,10 +514,19 @@ public final class Button
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         for (Disposable d : bindings) {
             d.dispose();
         }
         bindings.clear();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

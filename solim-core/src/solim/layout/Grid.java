@@ -6,7 +6,10 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import solim.core.Component;
+import solim.core.Disposable;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
@@ -24,6 +27,8 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
     private int columns = 1;
     private float gap = 4f;
     private int currentCell = 0;
+    private final List<Disposable> bindings = new ArrayList<>();
+    private boolean disposed = false;
 
     public Grid() {
         this.table = new Table();
@@ -32,6 +37,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         this.table.top().left();
         this.table.defaults().top().left();
         respace();
+        ComponentContext.register(this);
     }
 
     public Grid(int columns) {
@@ -68,6 +74,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
                     reflow();
                 }
             });
+            bindings.add(e);
             ComponentContext.register(e);
         }
         return this;
@@ -87,6 +94,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
                     gap(g);
                 }
             });
+            bindings.add(e);
             ComponentContext.register(e);
         }
         return this;
@@ -175,6 +183,23 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         }
         respace();
         return this;
+    }
+
+    @Override
+    public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
+        for (Disposable d : bindings) {
+            d.dispose();
+        }
+        bindings.clear();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

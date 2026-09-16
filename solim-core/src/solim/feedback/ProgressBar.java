@@ -12,6 +12,7 @@ public final class ProgressBar implements Disposable {
 	private final Table bar = new Table();
 	private final Signal<Float> signal;
 	private Effect effect;
+	private boolean disposed = false;
 	private float current = 0f;
 
 	public ProgressBar(Signal<Float> signal) {
@@ -44,6 +45,15 @@ public final class ProgressBar implements Disposable {
 
 	@Override
 	public void dispose() {
+		if (disposed) {
+			return;
+		}
+		disposed = true;
 		if (effect != null) effect.dispose();
+	}
+
+	@Override
+	public boolean isDisposed() {
+		return disposed;
 	}
 }
