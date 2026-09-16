@@ -1,4 +1,12 @@
-﻿## ADDED Requirements
+# progress-display Specification
+
+## Purpose
+
+World-space countdown text overlay showing the remaining production time above active unit-production and crafter buildings, with per-block opt-out toggles and persisted global appearance settings. Created by archiving change progress-display-rewrite.
+
+## Requirements
+
+**Source: progress-display-rewrite**
 
 ### Requirement: Feature activates and registers draw hook
 The feature SHALL remove the `development` guard and set `enabledByDefault(true)`. It SHALL register a `Trigger.draw` listener in its constructor that runs `draw()` every frame.
@@ -61,13 +69,16 @@ The draw predicate SHALL match buildings of four types:
 
 Buildings outside these types SHALL be ignored.
 
+All types expose a normalized `fraction` in `0..1` and remaining seconds are computed uniformly as
+`(1f - fraction) * totalTime / 60f / b.timeScale()`.
+
 #### Scenario: Unit factory is producing
 - **WHEN** a `UnitFactoryBuild` has a valid `currentPlan` and `progress > 0`
-- **THEN** remaining seconds are computed as `(plan.time - b.progress) / 60f / b.timeScale()` and displayed
+- **THEN** `fraction = b.progress / plan.time`, remaining seconds are computed as `(1f - fraction) * plan.time / 60f / b.timeScale()` and displayed
 
 #### Scenario: Crafter is crafting
 - **WHEN** a `GenericCrafterBuild` has `craftTime > 0` and `progress > 0`
-- **THEN** remaining seconds are computed as `(block.craftTime - b.progress) / 60f / b.timeScale()` and displayed
+- **THEN** `fraction = b.progress`, remaining seconds are computed as `(1f - fraction) * block.craftTime / 60f / b.timeScale()` and displayed
 
 ---
 
