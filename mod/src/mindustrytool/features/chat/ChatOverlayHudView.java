@@ -109,7 +109,7 @@ public class ChatOverlayHudView extends BaseComponent {
     private Component buildExpandedWindow() {
         Readable<Float> winWidth = feature.widthRatioConfig.signal().map(r -> {
             float sw = Units.width().get();
-            float maxW = sw * 0.95f;
+            float maxW = sw * 0.90f;
             float ratio = r != null ? r : 0.6f;
             float target = sw * Math.max(0.3f, Math.min(0.95f, ratio));
             float minW = Math.min(320f, maxW);
@@ -117,7 +117,7 @@ public class ChatOverlayHudView extends BaseComponent {
         });
         Readable<Float> winHeight = feature.heightRatioConfig.signal().map(r -> {
             float sh = Units.height().get();
-            float maxH = sh * 0.95f;
+            float maxH = sh * 0.90f;
             float ratio = r != null ? r : 0.6f;
             float target = sh * Math.max(0.3f, Math.min(0.95f, ratio));
             float minH = Math.min(240f, maxH);
@@ -153,10 +153,6 @@ public class ChatOverlayHudView extends BaseComponent {
         ChatActionPopup.install(store);
 
         return card(Styles.black9)
-                .width(winWidth)
-                .height(winHeight)
-                .maxWidth(Units.dvw(95f))
-                .maxHeight(Units.dvh(95f))
                 .children(() -> {
                     column().grow().children(() -> {
                         // Window Action Bar (draggable bar wrapping title & action buttons)
@@ -223,6 +219,8 @@ public class ChatOverlayHudView extends BaseComponent {
                                 return buildDesktopBody();
                             }
                         })
+                                .width(winWidth)
+                                .height(winHeight)
                                 .grow();
                     });
                 });
