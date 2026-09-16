@@ -9,7 +9,10 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
 import arc.math.geom.Rect;
+import arc.struct.ObjectMap;
+import arc.struct.ObjectMap.Entry;
 import arc.util.Nullable;
+import java.util.BitSet;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.game.Team;
@@ -18,6 +21,7 @@ import mindustry.gen.Groups;
 import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
+import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.defense.BuildTurret;
 import mindustry.world.blocks.defense.ForceProjector;
@@ -38,6 +42,7 @@ import mindustrytool.features.rangedisplay.ui.RangeDisplaySettingsDialog;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
+import solim.signal.Signal;
 
 /**
  * Feature responsible for rendering real-time range visualizations for turrets,
@@ -46,6 +51,7 @@ import solim.overlay.SolimDialog;
  * Optimized for high performance and zero GC allocations during the frame render loop:
  * - Pre-allocated drawer delegates and predicates.
  * - Viewport frustum culling.
+ * - Granular per-block range toggles backed by BitSet indexed by block.id.
  * - Frame-cached configuration snapshots to avoid reactive overhead in hot loops.
  */
 public class RangeDisplayFeature extends Feature {
@@ -80,6 +86,10 @@ public class RangeDisplayFeature extends Feature {
     private final Rect viewBounds = new Rect();
     private final Color colorScratch = new Color();
     private @Nullable RangeDisplaySettingsDialog settingsDialog;
+
+    // Per-block enabled bitset indexed by block.id for zero-allocation O(1) checks during 60 FPS draw
+    private @Nullable BitSet blockEnabled;
+    private final ObjectMap<String, Signal<Boolean>> blockSignals = new ObjectMap<>();
 
     // Per-frame scratch values read once per draw frame
     private float frameOpacity = 1.0f;
@@ -117,6 +127,92 @@ public class RangeDisplayFeature extends Feature {
         Events.run(Trigger.draw, this::draw);
     }
 
+    public static String blockSettingKey(Block block) {
+        return "mindustrytool.features.range-display.block." + block.name;
+    }
+
+    public boolean isTurretBlock(Block block) {
+        return block instanceof BaseTurret && !(block instanceof BuildTurret);
+    }
+
+    public boolean isSupportBlock(Block block) {
+        return block instanceof OverdriveProjector
+                || block instanceof MassDriver
+                || block instanceof BuildTurret
+                || block instanceof MendProjector
+                || block instanceof RegenProjector
+                || block instanceof ForceProjector;
+    }
+
+    public boolean isRangeBlock(Block block) {
+        return isTurretBlock(block) || isSupportBlock(block);
+    }
+
+    public void rebuildBitSet() {
+        if (Vars.content == null || Vars.content.blocks() == null) {
+            return;
+        }
+
+        int max = Vars.content.blocks().size;
+        BitSet bitSet = new BitSet(Math.max(max, 256));
+
+        for (Block block : Vars.content.blocks()) {
+            if (block != null && isRangeBlock(block)) {
+                boolean enabled = Core.settings.getBool(blockSettingKey(block), true);
+                bitSet.set(block.id, enabled);
+            }
+        }
+        this.blockEnabled = bitSet;
+    }
+
+    public Signal<Boolean> getBlockSignal(Block block) {
+        Signal<Boolean> signal = blockSignals.get(block.name);
+        if (signal == null) {
+            boolean initial = Core.settings.getBool(blockSettingKey(block), true);
+            signal = Signal.of(initial);
+            signal.subscribe(enabled -> {
+                Core.settings.put(blockSettingKey(block), enabled);
+                if (blockEnabled == null && Vars.content != null && Vars.content.blocks() != null) {
+                    rebuildBitSet();
+                } else if (blockEnabled != null && block.id >= 0) {
+                    blockEnabled.set(block.id, enabled);
+                }
+            });
+            blockSignals.put(block.name, signal);
+        }
+        return signal;
+    }
+
+    public boolean isBlockEnabled(Block block) {
+        if (block == null) {
+            return false;
+        }
+        return blockEnabled != null && block.id >= 0 && block.id < blockEnabled.size()
+                ? blockEnabled.get(block.id)
+                : Core.settings.getBool(blockSettingKey(block), true);
+    }
+
+    public void setBlockEnabled(Block block, boolean enabled) {
+        if (block == null) {
+            return;
+        }
+        getBlockSignal(block).set(enabled);
+    }
+
+    public void setCategoryEnabled(boolean isTurret, boolean enabled) {
+        if (Vars.content == null || Vars.content.blocks() == null) {
+            return;
+        }
+        for (Block block : Vars.content.blocks()) {
+            if (block == null) {
+                continue;
+            }
+            if (isTurret ? isTurretBlock(block) : isSupportBlock(block)) {
+                getBlockSignal(block).set(enabled);
+            }
+        }
+    }
+
     public void resetToDefaults() {
         opacityConfig.reset();
         drawTurretRangeAllyConfig.reset();
@@ -127,6 +223,19 @@ public class RangeDisplayFeature extends Feature {
         drawBlockRangeEnemyConfig.reset();
         drawSpawnerRangeConfig.reset();
         dashedConfig.reset();
+
+        for (Entry<String, Signal<Boolean>> entry : blockSignals.entries()) {
+            entry.value.set(true);
+        }
+
+        if (Vars.content != null && Vars.content.blocks() != null) {
+            for (Block b : Vars.content.blocks()) {
+                if (b != null && isRangeBlock(b)) {
+                    Core.settings.remove(blockSettingKey(b));
+                }
+            }
+        }
+        rebuildBitSet();
     }
 
     @Override
@@ -138,6 +247,10 @@ public class RangeDisplayFeature extends Feature {
         if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.ui == null
                 || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown || Core.camera == null) {
             return;
+        }
+
+        if (blockEnabled == null && Vars.content != null && Vars.content.blocks() != null) {
+            rebuildBitSet();
         }
 
         Float op = opacityConfig.get();
@@ -253,11 +366,15 @@ public class RangeDisplayFeature extends Feature {
             return;
         }
 
+        if (blockEnabled != null && build.block.id >= 0 && !blockEnabled.get(build.block.id)) {
+            return;
+        }
+
         if (build.block instanceof LightBlock || build.block instanceof LogicBlock) {
             return;
         }
 
-        boolean isTurret = build.block instanceof BaseTurret;
+        boolean isTurret = isTurretBlock(build.block);
         boolean isAlly = framePlayerTeam != null && build.team == framePlayerTeam;
 
         if (isTurret) {
