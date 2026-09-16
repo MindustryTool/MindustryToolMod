@@ -1,5 +1,6 @@
 package solim.input;
 
+import arc.func.Boolp;
 import arc.graphics.Color;
 import arc.graphics.g2d.Font;
 import arc.input.KeyCode;
@@ -449,6 +450,11 @@ public final class Button
             return background((Drawable) null);
         }
         return rounded(0, color);
+    }
+
+    public Button disabled(Boolp prov) {
+        button.setDisabled(prov);
+        return this;
     }
 
     public Button border(float stroke, @Nullable Color color) {

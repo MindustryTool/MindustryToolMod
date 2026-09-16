@@ -5,11 +5,14 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import java.util.List;
 import mindustry.ui.Styles;
+import mindustrytool.components.FileIcon;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
-import mindustrytool.features.FeatureMetadata;
 import solim.core.BaseComponent;
+import solim.signal.Readable;
+import solim.signal.Signal;
 
 public class QuickAccessSettingsView extends BaseComponent {
 
@@ -21,6 +24,7 @@ public class QuickAccessSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
+        feature.healDisplayOrder();
         return column().grow().center().children(() -> {
             scroll().center().children(() -> {
                 column().growX().gap(unit(2)).children(() -> {
@@ -63,14 +67,12 @@ public class QuickAccessSettingsView extends BaseComponent {
                     text(Core.bundle.get("feature.quick-access.settings.visible-features")).left().growX()
                             .color(Color.white);
 
-                    for (Feature f : FeatureManager.getFeatures().select(
-                            f -> f != feature && f.getMetadata().isQuickAccess() && !f.getMetadata().isDevelopment())) {
+                    Readable<List<Feature>> orderedRows = feature.orderedFeaturesSignal();
 
-                        FeatureMetadata meta = f.getMetadata();
-
-                        checkbox(f.getName(), feature.isFeatureVisible(meta.getId()),
-                                visible -> feature.setFeatureVisible(meta.getId(), visible)).growX();
-                    }
+                    reactiveGrid(Signal.of(1), orderedRows, f -> f.getMetadata().getId(),
+                            f -> new FeatureOrderRow(feature, f))
+                                    .growX()
+                                    .gap(unit(2));
 
                     divider();
 
@@ -79,5 +81,42 @@ public class QuickAccessSettingsView extends BaseComponent {
                 });
             });
         }).element();
+    }
+
+    private static final class FeatureOrderRow extends BaseComponent {
+        private final QuickAccessFeature feature;
+        private final Feature f;
+
+        FeatureOrderRow(QuickAccessFeature feature, Feature f) {
+            this.feature = feature;
+            this.f = f;
+        }
+
+        @Override
+        protected Element build() {
+            String id = f.getMetadata().getId();
+            Readable<Boolean> canMoveUp = feature.canMoveUpSignal(id);
+            Readable<Boolean> canMoveDown = feature.canMoveDownSignal(id);
+
+            return row().growX().gap(unit(2)).children(() -> {
+                checkbox(f.getName(), feature.isFeatureVisible(id),
+                        visible -> feature.setFeatureVisible(id, visible))
+                                .growX();
+
+                button(() -> feature.moveUp(id))
+                        .style(WebStyles.ghost())
+                        .size(unit(11))
+                        .tooltip(Core.bundle.get("feature.quick-access.settings.move-up"))
+                        .disabled(() -> !canMoveUp.peek())
+                        .children(() -> icon(FileIcon.of("chevron-up.png")));
+
+                button(() -> feature.moveDown(id))
+                        .style(WebStyles.ghost())
+                        .size(unit(11))
+                        .tooltip(Core.bundle.get("feature.quick-access.settings.move-down"))
+                        .disabled(() -> !canMoveDown.peek())
+                        .children(() -> icon(FileIcon.of("chevron-down.png")));
+            }).element();
+        }
     }
 }

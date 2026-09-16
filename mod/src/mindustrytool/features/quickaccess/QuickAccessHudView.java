@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.PopupDisplayFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
@@ -21,6 +20,7 @@ import solim.core.Component;
 import solim.overlay.Hud;
 import solim.overlay.SolimDialog;
 import solim.signal.Readable;
+import solim.signal.Signal;
 import mindustrytool.components.WebStyles;
 
 /**
@@ -52,11 +52,18 @@ public class QuickAccessHudView extends BaseComponent {
 
     @Override
     protected Element build() {
+        parentFeature.healDisplayOrder();
         Readable<Float> scale = parentFeature.scaleConfig.signal();
         Readable<Float> buttonSize = scale.map(s -> unit(11f) * s);
         Readable<Float> iconSize = scale.map(s -> unit(7f) * s);
 
-        Readable<List<HudItem>> items = parentFeature.hiddenFeaturesConfig.signal().map(this::computeVisibleItems);
+        Readable<List<HudItem>> items = Signal.computed(() -> {
+            Seq<String> stored = parentFeature.displayOrderConfig.signal().get();
+            Set<String> hidden = parentFeature.hiddenFeaturesConfig.signal().get();
+            Seq<String> normalized = QuickAccessFeature.normalizeDisplayOrder(
+                    parentFeature.quickAccessFeatures(), stored);
+            return computeVisibleItems(normalized, hidden);
+        });
 
         hud = hud(() -> {
             row()
@@ -90,19 +97,13 @@ public class QuickAccessHudView extends BaseComponent {
         return hud.element();
     }
 
-    private List<HudItem> computeVisibleItems(@Nullable Set<String> hidden) {
+    private List<HudItem> computeVisibleItems(@Nullable Seq<String> order, @Nullable Set<String> hidden) {
         List<HudItem> list = new ArrayList<>();
-        Seq<Feature> features = FeatureManager.getFeatures();
-        for (Feature f : features) {
-            if (f == parentFeature)
-                continue;
-
+        for (Feature f : parentFeature.orderedFeatures(order)) {
             FeatureMetadata meta = f.getMetadata();
-            if (meta.isDevelopment() || !meta.isQuickAccess())
+            if (hidden != null && hidden.contains(meta.getId())) {
                 continue;
-            if (hidden != null && hidden.contains(meta.getId()))
-                continue;
-
+            }
             list.add(new HudItem(meta.getId(), f));
         }
         list.add(new HudItem("__settings__", null));
