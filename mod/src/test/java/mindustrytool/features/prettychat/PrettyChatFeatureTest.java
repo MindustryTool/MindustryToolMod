@@ -74,6 +74,16 @@ class PrettyChatFeatureTest {
         // Clamps with balanced tags
         String closed = PrettyChatFeature.clampSafe("[#ff0000]hello[]", 16);
         assertTrue(closed.endsWith("[]"), "Color tags should close properly");
+
+        // Clamps strictly without exceeding maxLength when open color tag is cut
+        String rainbow = "[#ff0000]a[#00ff00]b[#0000ff]c[#ffff00]d[#ff00ff]e[]";
+        for (int limit = 1; limit <= rainbow.length(); limit++) {
+            String clamped = PrettyChatFeature.clampSafe(rainbow, limit);
+            assertTrue(clamped.length() <= limit, "Length " + clamped.length() + " must be <= limit " + limit);
+            if (clamped.contains("[")) {
+                assertTrue(clamped.endsWith("[]"), "FAILED for limit=" + limit + ": clamped='" + clamped + "'");
+            }
+        }
     }
 
     @Test
@@ -96,5 +106,15 @@ class PrettyChatFeatureTest {
         List<String> current = config.getEnabledIds();
         assertEquals("uwu", current.get(1));
         assertEquals("reverse", current.get(2));
+    }
+
+    @Test
+    void testEnabledByDefault() {
+        assertTrue(feature.isEnabled(), "PrettyChat should be enabled by default");
+    }
+
+    @Test
+    void testConstructorDoesNotThrow() {
+        assertDoesNotThrow(() -> new PrettyChatFeature(), "Instantiating PrettyChatFeature should not throw");
     }
 }

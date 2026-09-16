@@ -82,6 +82,10 @@ public class PrettyChatSettingsView extends BaseComponent {
                     row().growX().gap(unit(2)).children(() -> {
                         text(resultLabel).color(Color.lightGray).left();
                         text(resultComputed).color(Pal.accent).wrap().left().growX();
+                        text(resultComputed.map(r -> r.length() + "/150"))
+                                .color(resultComputed.map(r -> r.length() > 150 ? Color.scarlet
+                                        : (r.length() > 130 ? Color.gold : Color.lightGray)))
+                                .right();
                     });
 
                     divider();
