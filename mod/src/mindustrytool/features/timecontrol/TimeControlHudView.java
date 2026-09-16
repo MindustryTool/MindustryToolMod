@@ -10,7 +10,6 @@ import mindustry.game.EventType.ClientServerConnectEvent;
 import mindustry.game.EventType.ResetEvent;
 import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
-import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
@@ -60,9 +59,9 @@ public class TimeControlHudView extends BaseComponent {
             buildControls(parentFeature, null);
         }).gap(unit(1));
 
-        hud.position(parentFeature.xSignal, parentFeature.ySignal);
-        hud.background(parentFeature.modeConfig.signal()
-                .map(mode -> TimeControlFeature.MODE_SLIDER.equals(mode) ? Tex.clear : Styles.black6));
+        hud.position(parentFeature.xSignal, parentFeature.ySignal)
+                .rounded(unit(2))
+                .background(Styles.black6);
 
         listen(ResizeEvent.class, e -> {
             keepInScreen();
@@ -120,7 +119,7 @@ public class TimeControlHudView extends BaseComponent {
             float shown = Float.compare(preset, selected) == 0 && isBoosted
                     ? TimeControlFeature.effectiveSpeed(preset, true)
                     : preset;
-            
+
             return Core.bundle.format("feature.time-control.speed.format", TimeControlFeature.formatSpeed(shown));
         });
 
