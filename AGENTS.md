@@ -452,6 +452,60 @@ public Readable<Boolean> enabled() {
 
 Mod code must use the public `solim.UI.*` declarative facades. Attempting to reference `:solim-runtime` classes or calling `own()` will result in compile-time errors.
 
+## Dialogs, Buttons & Layout Conventions — Mandatory
+
+### Dialog Content: Centered & Width-Constrained
+
+Every settings/HUD dialog must center its content and constrain its width:
+
+1. Call `maxWidth(500f)` on the dialog so content columns never stretch full-width.
+2. The view's root must be `column().grow().center()` so content is centered both ways.
+
+```java
+// Dialog
+name("musicSettingDialog");
+addCloseButton();
+closeOnBack();
+maxWidth(500f);
+children(() -> new MusicSettingsView(feature));
+```
+
+```java
+// View root
+@Override
+protected Element build() {
+    return column().grow().center().children(() -> {
+        scroll().growY().children(() -> { /* sections */ });
+    }).element();
+}
+```
+
+### Button Sizes — Mandatory
+
+Standard buttons use a uniform size of `unit(11)` with an icon size of `unit(6)`:
+
+```java
+button()
+        .style(WebStyles.ghost())
+        .size(unit(11))
+        .tooltip(...)
+        .children(() -> icon(Icon.add).size(unit(6)));
+```
+
+Small inline exceptions (e.g. dense list rows) may use smaller sizes, but default to `unit(11)` / `unit(6)`.
+
+### Collections: Prefer `reactiveGrid` — Mandatory
+
+For item collections (lists, grids, cards):
+
+* **Prefer `reactiveGrid(...)`** for reactive, keyed collections.
+* **Never use the static `grid(...)` layout** for dynamic content; it severs reactivity.
+* **Use `wrap()` for flexible flowing layouts** (e.g. chips, tags, buttons that flow across multiple lines).
+
+### WebStyles — Mandatory
+
+Use `WebStyles` (`WebStyles.ghost()`, `WebStyles.secondary()`, `WebStyles.outline()`, `WebStyles.filterChip()`, `WebStyles.Colors.*`) for button styles and colors whenever possible instead of ad-hoc colors and raw Arc button styles.
+
 ## Solim-First
 
 **All application UI must use Solim and follow its declarative style.**

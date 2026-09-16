@@ -168,12 +168,21 @@ public class QuickAccessFeature extends Feature {
     }
 
     public Seq<String> getDisplayOrder() {
+        return healDisplayOrder();
+    }
+
+    public Seq<String> healDisplayOrder() {
         Seq<String> stored = displayOrderConfig.get();
         Seq<String> healed = normalizeDisplayOrder(quickAccessFeatures(), stored);
         if (isDisplayOrderDirty(stored, healed)) {
             displayOrderConfig.set(healed);
         }
         return healed;
+    }
+
+    public Readable<List<Feature>> orderedFeaturesSignal() {
+        return displayOrderConfig.signal().map(stored -> orderedFeatures(
+                normalizeDisplayOrder(quickAccessFeatures(), stored)));
     }
 
     public static Seq<String> normalizeDisplayOrder(Seq<Feature> candidates, @Nullable Seq<String> stored) {
@@ -235,13 +244,13 @@ public class QuickAccessFeature extends Feature {
     }
 
     public boolean canMoveUp(@Nullable String id) {
-        Seq<String> order = displayOrderConfig.get();
-        return id != null && order != null && order.indexOf(id) > 0;
+        Seq<String> order = getDisplayOrder();
+        return id != null && order.indexOf(id) > 0;
     }
 
     public boolean canMoveDown(@Nullable String id) {
-        Seq<String> order = displayOrderConfig.get();
-        if (id == null || order == null) {
+        Seq<String> order = getDisplayOrder();
+        if (id == null) {
             return false;
         }
         int index = order.indexOf(id);
@@ -249,16 +258,20 @@ public class QuickAccessFeature extends Feature {
     }
 
     public Readable<Boolean> canMoveUpSignal(String id) {
-        return displayOrderConfig.signal().map(order -> id != null && order != null && order.indexOf(id) > 0);
+        return displayOrderConfig.signal().map(order -> {
+            Seq<String> normalized = normalizeDisplayOrder(quickAccessFeatures(), order);
+            return id != null && normalized.indexOf(id) > 0;
+        });
     }
 
     public Readable<Boolean> canMoveDownSignal(String id) {
         return displayOrderConfig.signal().map(order -> {
-            if (id == null || order == null) {
+            Seq<String> normalized = normalizeDisplayOrder(quickAccessFeatures(), order);
+            if (id == null) {
                 return false;
             }
-            int index = order.indexOf(id);
-            return index >= 0 && index < order.size - 1;
+            int index = normalized.indexOf(id);
+            return index >= 0 && index < normalized.size - 1;
         });
     }
 
@@ -281,6 +294,7 @@ public class QuickAccessFeature extends Feature {
 
     @Override
     public void onEnable() {
+        healDisplayOrder();
         if (Vars.ui.hudGroup != null) {
             if (hudView != null) {
                 hudView.element().remove();
@@ -316,6 +330,7 @@ public class QuickAccessFeature extends Feature {
     @Override
     public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
+            healDisplayOrder();
             if (settingsDialog == null) {
                 settingsDialog = new QuickAccessSettingsDialog(this);
             }

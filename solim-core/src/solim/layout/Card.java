@@ -1,15 +1,10 @@
 package solim.layout;
 
 import arc.graphics.Color;
-import arc.input.KeyCode;
 import arc.scene.Element;
-import arc.scene.event.ClickListener;
-import arc.scene.event.InputEvent;
-import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Log;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +44,6 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
     private final List<Disposable> bindings = new ArrayList<>();
     private boolean disposed = false;
     private float gap = 0f;
-    private @Nullable Runnable onClick;
-    private boolean hasClickListener = false;
 
     public Card() {
         this.table.userObject = this;
@@ -144,45 +137,6 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
     @Override
     public void respace() {
         GapContainer.applySpacing(table, Direction.VERTICAL, gap);
-    }
-
-    public Card onClick(@Nullable Runnable onClick) {
-        this.onClick = onClick;
-        if (onClick != null) {
-            ensureClickListener();
-        }
-        return this;
-    }
-
-    private void ensureClickListener() {
-        if (hasClickListener) {
-            return;
-        }
-        hasClickListener = true;
-        element().touchable = Touchable.enabled;
-        table.addListener(new ClickListener() {
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                if (table.getScene() == null) {
-                    return false;
-                }
-                return super.touchDown(event, x, y, pointer, button);
-            }
-
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                if (event != null && event.stopped) {
-                    return;
-                }
-                if (Card.this.onClick != null) {
-                    try {
-                        Card.this.onClick.run();
-                    } catch (Exception e) {
-                        Log.err("Error executing card onClick", e);
-                    }
-                }
-            }
-        });
     }
 
     @Override

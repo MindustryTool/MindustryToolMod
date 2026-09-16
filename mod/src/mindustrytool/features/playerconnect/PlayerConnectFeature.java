@@ -427,7 +427,7 @@ public class PlayerConnectFeature extends Feature {
                 return;
             }
             if (error != null) {
-                Log.err("PlayerConnect SSE stream error", error);
+                Log.err("PlayerConnect SSE stream error", error.getMessage());
             }
             scheduleSseReconnect();
         });

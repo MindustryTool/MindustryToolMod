@@ -14,6 +14,7 @@ import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.chat.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
+import mindustrytool.features.joystick.JoystickFeature;
 import mindustrytool.features.music.MusicFeature;
 import mindustrytool.features.pathfinding.PathfindingFeature;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
@@ -85,7 +86,8 @@ public class Main extends Mod {
                 new MusicFeature(),
                 new ProgressDisplayFeature(),
                 new ToggleRenderingFeature(),
-                new TimeControlFeature());
+                new TimeControlFeature(),
+                new JoystickFeature());
 
         Events.on(ClientLoadEvent.class, event -> {
             registerMindustryToolButton();

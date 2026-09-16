@@ -440,6 +440,8 @@ public class ChatMessageListView extends BaseComponent {
                 column().growX().top().left().gap(unit(1)).children(() -> {
                     text(imageUrl).color(Color.lightGray).fontScale(0.85f).wrap().left().growX();
                     networkImage(imageUrl)
+                            .onClick(() -> new ChatImagePreviewDialog(imageUrl).show())
+                            .stopClickPropagation(true)
                             .placeholder(Icon.image)
                             .fallback(Icon.cancel)
                             .size(unit(40), unit(30))
