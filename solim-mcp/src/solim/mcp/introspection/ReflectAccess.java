@@ -89,7 +89,8 @@ public final class ReflectAccess {
 	}
 
 	/** Sets accessible on a field and returns it, or {@code null} if the field could not be made usable. */
-	public static @Nullable Field accessible(Field field) {
+	@SuppressWarnings("deprecation")
+    public static @Nullable Field accessible(Field field) {
 		if (field == null) return null;
 		if (!field.isAccessible()) {
 			try {
@@ -124,7 +125,8 @@ public final class ReflectAccess {
 		}
 	}
 
-	private static boolean makeAccessible(Method method) {
+	@SuppressWarnings("deprecation")
+    private static boolean makeAccessible(Method method) {
 		if (!method.isAccessible()) {
 			try {
 				method.setAccessible(true);

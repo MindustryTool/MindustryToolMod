@@ -13,6 +13,7 @@ import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Threads;
 import arc.util.Timer;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,6 +79,7 @@ public class PlayerConnectFeature extends Feature {
     private final Signal<List<PlayerConnectRoom>> rooms = Signal.of(Collections.emptyList());
     private final Signal<List<PlayerConnectProvider>> providers = Signal.of(Collections.emptyList());
     private final Signal<JoinRequest> currentRequest = Signal.of(null);
+    private final Signal<Boolean> isFetching = Signal.of(false);
 
     private final Deque<JoinRequest> pendingQueue = new ArrayDeque<>();
     private final ExecutorService worker = Threads.unboundedExecutor("PlayerConnect-Worker", 1);
@@ -203,6 +205,10 @@ public class PlayerConnectFeature extends Feature {
     }
 
     // ─── Signals & Properties ──────────────────────────────────────
+
+    public Readable<Boolean> isFetching() {
+        return isFetching;
+    }
 
     public Signal<HostingState> stateSignal() {
         return state;
@@ -477,6 +483,8 @@ public class PlayerConnectFeature extends Feature {
     }
 
     public void fetchRoomsRest() {
+        Core.app.post(() -> isFetching.set(true));
+
         MindustryTool.getPlayerConnectRooms("")
                 .thenAccept(data -> {
                     if (data != null) {
@@ -486,6 +494,9 @@ public class PlayerConnectFeature extends Feature {
                 .exceptionally(e -> {
                     Log.err("Failed to fetch initial PlayerConnect rooms", e);
                     return null;
+                })
+                .whenComplete((r, e) -> {
+                    Core.app.post(() -> isFetching.set(false));
                 });
     }
 

@@ -47,6 +47,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
     private final Table table = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final List<Disposable> bindings = new ArrayList<>();
+    private boolean disposed = false;
     private float gap = 0f;
     private @Nullable Runnable onClick;
     private boolean hasClickListener = false;
@@ -56,6 +57,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         this.table.name = "solim-card-table";
         this.table.top().left();
         this.table.defaults().top().left();
+        ComponentContext.register(this);
     }
 
     public Card(@Nullable Drawable background) {
@@ -185,10 +187,19 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         for (Disposable d : bindings) {
             d.dispose();
         }
         bindings.clear();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

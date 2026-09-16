@@ -9,6 +9,7 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
+import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
 import solim.modifier.PendingCellConfig;
@@ -32,12 +33,14 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
     private final WrapTable table = new WrapTable();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 4f;
+    private boolean disposed = false;
 
     public Wrap() {
         this.table.name = "solim-wrap-table";
         this.table.userObject = this;
         this.table.top().left();
         this.table.defaults().top().left();
+        ComponentContext.register(this);
     }
 
     public Table table() {
@@ -150,6 +153,19 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
         table.add(child);
         respace();
         return this;
+    }
+
+    @Override
+    public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

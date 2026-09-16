@@ -98,6 +98,7 @@ public class ChatChannelListView extends BaseComponent {
                                 .style(style)
                                 .left()
                                 .grow()
+                                .paddingX(unit(1))
                                 .children(() -> {
                                     text("# " + channel.getName()).left();
 

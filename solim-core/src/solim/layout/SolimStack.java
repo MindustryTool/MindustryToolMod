@@ -7,15 +7,18 @@ import solim.modifier.ElementConfig;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import solim.modifier.PendingCellConfig;
+import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 
 /** Stack container: overlays children on top of each other. */
 public final class SolimStack implements Component, CellConfig<SolimStack>, ElementConfig<SolimStack> {
     private final Stack stack = new Stack();
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private boolean disposed = false;
 
     public SolimStack() {
         this.stack.name = "solim-stack-stack";
+        ComponentContext.register(this);
     }
 
     public Stack stack() {
@@ -70,6 +73,19 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    @Override
+    public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

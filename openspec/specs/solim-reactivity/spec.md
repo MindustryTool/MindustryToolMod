@@ -29,7 +29,7 @@ TBD - created by archiving change create-solim-core. Update Purpose after archiv
 - **THEN** the Computed/Effect is automatically subscribed to `count` and re-evaluates when `count` changes
 
 ### Requirement: Computed with lazy recomputation and dynamic dependencies
-`Computed<T>` SHALL be created via `Signal.computed(Supplier<T>)` or `signal.map(...)`, with automatic dependency tracking, lazy recomputation (recompute on `get()` after invalidation), dynamic dependency cleanup when source branch changes, cycle detection, and `Subscription subscribe(Consumer<T>)` + `void dispose()`.
+`Computed<T>` SHALL be created via `Signal.computed(Supplier<T>)` or `signal.map(...)`, SHALL implement `solim.core.Disposable` so it can be passed to `own()` and `registerDisposable()` like `Effect` and `Subscription`, with automatic dependency tracking, lazy recomputation (recompute on `get()` after invalidation), dynamic dependency cleanup when source branch changes, cycle detection, public `isDisposed()` reporting `true` after disposal, and `Subscription subscribe(Consumer<T>)` + `void dispose()`.
 
 #### Scenario: Lazy recomputation only on get
 - **WHEN** `Computed<String> title = Signal.computed(() -> "Count: " + count.get())` and `count.set(10)` invalidates `title`
@@ -50,6 +50,10 @@ TBD - created by archiving change create-solim-core. Update Purpose after archiv
 #### Scenario: Computed subscription and dispose
 - **WHEN** `Subscription s = computed.subscribe(v -> render(v))` then `computed.dispose()` is called
 - **THEN** `computed` unsubscribes from all dependencies, clears listeners, and no longer recomputes or notifies
+
+#### Scenario: Computed is ownable as a Disposable
+- **WHEN** a `Computed` is passed to `own()` or a dialog `registerDisposable()` inside a component build and the owner is disposed
+- **THEN** the computed is disposed with the owner and `isDisposed()` returns `true`
 
 ### Requirement: Effect with auto-tracking and dynamic dependencies
 `Effect` SHALL be created via `Effect.of(Runnable|Supplier<Disposable>|Consumer<Cleanup>)` or `Ui.effect(...)`, automatically track every `Signal`/`Computed` read during execution, subscribe to those dependencies, re-run when any dependency changes, remove old dependencies before collecting new ones, handle dynamic branches, prevent leaks, log errors without crashing, and be disposable via `void dispose()`.

@@ -120,12 +120,16 @@ public class QuickAccessHudView extends BaseComponent {
                     .size(buttonSize)
                     .tooltip(f.getName())
                     .onClick(() -> {
-                        if (f instanceof PopupDisplayFeature && ((PopupDisplayFeature) f).isPopupMode()) {
-                            Element bar = hud != null ? hud.element() : null;
-                            ((PopupDisplayFeature) f).togglePopup(bar);
-                        } else {
-                            f.setEnabled(!f.isEnabled());
+                        if (f instanceof PopupDisplayFeature) {
+                            PopupDisplayFeature popup = (PopupDisplayFeature) f;
+                            if (popup.isPopupMode()) {
+                                Element bar = hud != null ? hud.element() : null;
+                                popup.togglePopup(bar);
+                                return;
+                            }
                         }
+
+                        f.setEnabled(!f.isEnabled());
                     })
                     .onLongClick(300L, () -> {
                         Prov<SolimDialog> settingDlg = f.getSettingDialog();

@@ -15,6 +15,7 @@ public class ConfigValue<T> implements Disposable {
 	protected final Signal<T> signal;
 	protected final Subscription signalSub;
 	protected boolean updating = false;
+	protected boolean disposed = false;
 
 	public ConfigValue(
 			String key,
@@ -71,7 +72,7 @@ public class ConfigValue<T> implements Disposable {
 	}
 
 	public void set(@Nullable T value) {
-		if (updating) {
+		if (disposed || updating) {
 			return;
 		}
 		updating = true;
@@ -99,8 +100,17 @@ public class ConfigValue<T> implements Disposable {
 
 	@Override
 	public void dispose() {
+		if (disposed) {
+			return;
+		}
+		disposed = true;
 		if (signalSub != null) {
 			signalSub.dispose();
 		}
+	}
+
+	@Override
+	public boolean isDisposed() {
+		return disposed;
 	}
 }

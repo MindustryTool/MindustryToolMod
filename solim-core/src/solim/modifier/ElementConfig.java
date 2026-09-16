@@ -1,5 +1,6 @@
 package solim.modifier;
 
+import arc.func.Cons;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -314,6 +315,21 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
      */
     default SELF draggable(@Nullable Hud hud, @Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
         Hud.makeDraggable(element(), hud, xSignal, ySignal);
+        return self();
+    }
+
+    default SELF update(Cons<Element> fn) {
+        element().update(() -> fn.get(element()));
+        return self();
+    }
+
+    default SELF origin(int align) {
+        element().setOrigin(align);
+        return self();
+    }
+
+    default SELF rotation(float degree) {
+        element().rotation = degree;
         return self();
     }
 

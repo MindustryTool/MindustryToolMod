@@ -2,7 +2,6 @@ package mindustrytool.features.timecontrol;
 
 import static solim.UI.*;
 
-import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
 import arc.util.Time;
@@ -44,7 +43,7 @@ public final class TimeControlPopup {
         }
         if (menu == null) {
             menu = popup();
-            menu.children(TimeControlPopup::buildContent).rounded(unit(2), Color.black);
+            menu.children(TimeControlPopup::buildContent);
         }
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
     }

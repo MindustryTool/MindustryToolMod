@@ -12,7 +12,7 @@ import solim.overlay.Popup;
  */
 public final class QuickAccessPopupHelper {
 
-    public static final float DEFAULT_GAP = unit(1.5f);
+    public static final float DEFAULT_GAP = unit(1f);
 
     private QuickAccessPopupHelper() {
     }
@@ -28,12 +28,14 @@ public final class QuickAccessPopupHelper {
         float barY = 0f;
         float barW = 0f;
         float barH = 0f;
+
         if (quickAccessBar != null) {
             barX = quickAccessBar.x;
             barY = quickAccessBar.y;
             barW = quickAccessBar.getWidth();
             barH = quickAccessBar.getHeight();
         }
+        
         float barCenterX = barX + barW / 2f;
         float barTop = barY + barH;
         float barCenterY = barY + barH / 2f;

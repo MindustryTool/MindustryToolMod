@@ -459,6 +459,11 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     }
 
     @Override
+    public boolean isDisposed() {
+        return disposed;
+    }
+
+    @Override
     public Hud self() {
         return this;
     }

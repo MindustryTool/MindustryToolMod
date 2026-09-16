@@ -28,6 +28,7 @@ public final class Badge implements Component, CellConfig<Badge>, ElementConfig<
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Text label;
     private final List<Disposable> bindings = new ArrayList<>();
+    private boolean disposed = false;
     private boolean hideOnZero = false;
     private @Nullable Effect visibilityEffect;
     private @Nullable Readable<Integer> countSignal;
@@ -137,11 +138,20 @@ public final class Badge implements Component, CellConfig<Badge>, ElementConfig<
 
     @Override
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
         for (Disposable d : bindings) {
             d.dispose();
         }
         bindings.clear();
         label.dispose();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override

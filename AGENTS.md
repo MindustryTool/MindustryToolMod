@@ -874,6 +874,7 @@ This includes:
 * Signals
 * Lifecycle ownership
 * Structural reactivity
+* Clean up/Dispose test
 
 Test framework behavior where it can be tested independently of the Mindustry runtime.
 

@@ -2,7 +2,6 @@ package mindustrytool.features.godmode;
 
 import static solim.UI.*;
 
-import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
 import arc.util.Time;
@@ -41,7 +40,7 @@ public final class GodModePopup {
         }
         if (menu == null) {
             menu = popup();
-            menu.children(GodModePopup::buildContent).rounded(unit(2), Color.black);
+            menu.children(GodModePopup::buildContent);
         }
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
     }

@@ -32,6 +32,8 @@ import mindustrytool.features.translation.providers.DevXTranslationProvider;
 import mindustrytool.features.translation.providers.GeminiTranslationProvider;
 import mindustrytool.features.translation.ui.OutgoingLanguageDialog;
 import mindustrytool.features.translation.ui.TranslationSettingsDialog;
+import mindustrytool.features.FeatureManager;
+import mindustrytool.features.prettychat.PrettyChatFeature;
 import mindustrytool.services.PacketReplacer;
 import solim.signal.Signal;
 
@@ -277,7 +279,15 @@ public class TranslationFeature extends Feature {
         if ("translated_only".equalsIgnoreCase(format) || !Boolean.TRUE.equals(outgoingShowOriginalConfig.get())) {
             return translated;
         }
-        return translated + " (" + original + ")";
+        String combined = translated + " (" + original + ")";
+        if (combined.length() <= Vars.maxTextLength) {
+            return combined;
+        }
+        int remainingForOriginal = Vars.maxTextLength - translated.length() - 5;
+        if (remainingForOriginal >= 5) {
+            return translated + " (" + original.substring(0, remainingForOriginal) + "...)";
+        }
+        return translated.length() <= Vars.maxTextLength ? translated : translated.substring(0, Vars.maxTextLength);
     }
 
     public void handleOutgoingMessage(String rawMessage, Cons<String> onDeliver) {
@@ -333,9 +343,8 @@ public class TranslationFeature extends Feature {
             }
             String text = raw.trim();
 
-            // Escape prefix: //message sends "message" directly without translation
+            // Escape prefix: //message sends "message" directly without translation or prettifying
             if (text.startsWith("//")) {
-                chatfield.setText(text.substring(2));
                 return;
             }
 
@@ -348,7 +357,16 @@ public class TranslationFeature extends Feature {
             chatfield.setText("");
 
             handleOutgoingMessage(text, translatedMsg -> {
-                Core.app.post(() -> Call.sendChatMessage(translatedMsg));
+                PrettyChatFeature prettyChat = FeatureManager.getFeature(PrettyChatFeature.class);
+                String toSend = translatedMsg;
+                if (prettyChat != null && prettyChat.isEnabled()) {
+                    toSend = prettyChat.transform(toSend);
+                }
+                if (toSend.length() > Vars.maxTextLength) {
+                    toSend = PrettyChatFeature.clampSafe(toSend, Vars.maxTextLength);
+                }
+                final String finalMsg = toSend;
+                Core.app.post(() -> Call.sendChatMessage(finalMsg));
             });
         } catch (Exception e) {
             Log.err("Error handling outgoing chat translation: @", e.getMessage());

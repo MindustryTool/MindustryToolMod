@@ -16,6 +16,7 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
+import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.ui.Ui;
 import solim.modifier.PendingCellConfig;
@@ -47,6 +48,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     private boolean inTopZone = false;
     private boolean inBottomZone = false;
     private boolean updateHooked = false;
+    private boolean disposed = false;
 
     public Scroll() {
         this.outer = new Table();
@@ -86,6 +88,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             this.pane = null;
             outer.add(content).grow();
         }
+        ComponentContext.register(this);
     }
 
     public Table outer() {
@@ -348,6 +351,21 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         }
         cell.row();
         return this;
+    }
+
+    @Override
+    public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
+        reachTopListeners.clear();
+        reachBottomListeners.clear();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return disposed;
     }
 
     @Override
