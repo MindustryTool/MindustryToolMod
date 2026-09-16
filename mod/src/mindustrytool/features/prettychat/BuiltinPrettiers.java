@@ -30,10 +30,10 @@ public final class BuiltinPrettiers {
         return list;
     }
 
-    /** Rainbow color tags across words. */
+    /** Rainbow color tags across words with adaptive clustering to respect message length limits. */
     public static class RainbowPrettier implements Prettier {
         private static final String[] COLORS = {
-                "[#ff5555]", "[#ffa500]", "[#ffff55]", "[#55ff55]", "[#55ffff]", "[#5599ff]", "[#cc66ff]"
+                "[red]", "[gold]", "[lime]", "[cyan]", "[sky]", "[pink]"
         };
 
         @Override
@@ -63,16 +63,78 @@ public final class BuiltinPrettiers {
 
         @Override
         public String transform(String input) {
+            return transform(input, Vars.maxTextLength);
+        }
+
+        public String transform(String input, int maxLength) {
             if (input == null || input.isEmpty()) {
                 return "";
             }
+            if (maxLength <= 0) {
+                return input;
+            }
+
+            int closingTagLen = 2; // "[]"
+            int availableForTags = maxLength - input.length() - closingTagLen;
+            if (availableForTags < 5) { // Minimum tag length is 5 ("[red]")
+                return input;
+            }
+
             String[] words = input.split(" ");
-            StringBuilder sb = new StringBuilder(input.length() + words.length * 10);
+            if (words.length == 0) {
+                return input;
+            }
+            if (words.length == 1) {
+                return COLORS[0] + words[0] + "[]";
+            }
+
+            // Calculate maximum number of color tags that fit within available budget
+            int k = 0;
+            int currentTagCost = 0;
             for (int i = 0; i < words.length; i++) {
-                if (i > 0) {
+                int nextCost = COLORS[i % COLORS.length].length();
+                if (currentTagCost + nextCost <= availableForTags) {
+                    currentTagCost += nextCost;
+                    k++;
+                } else {
+                    break;
+                }
+            }
+
+            if (k <= 0) {
+                return input;
+            }
+
+            // If we can afford a color tag for every word, color every word individually
+            if (k >= words.length) {
+                StringBuilder sb = new StringBuilder(input.length() + currentTagCost + closingTagLen);
+                for (int i = 0; i < words.length; i++) {
+                    if (i > 0) {
+                        sb.append(' ');
+                    }
+                    sb.append(COLORS[i % COLORS.length]).append(words[i]);
+                }
+                sb.append("[]");
+                return sb.toString();
+            }
+
+            // Otherwise, group words into k clusters so the entire message is preserved
+            StringBuilder sb = new StringBuilder(input.length() + currentTagCost + closingTagLen);
+            int numWords = words.length;
+            for (int cluster = 0; cluster < k; cluster++) {
+                int startWord = cluster * numWords / k;
+                int endWord = (cluster + 1) * numWords / k;
+
+                if (cluster > 0) {
                     sb.append(' ');
                 }
-                sb.append(COLORS[i % COLORS.length]).append(words[i]);
+                sb.append(COLORS[cluster % COLORS.length]);
+                for (int w = startWord; w < endWord; w++) {
+                    if (w > startWord) {
+                        sb.append(' ');
+                    }
+                    sb.append(words[w]);
+                }
             }
             sb.append("[]");
             return sb.toString();
@@ -111,13 +173,19 @@ public final class BuiltinPrettiers {
             if (input == null || input.isEmpty()) {
                 return "";
             }
-            return input.replace("r", "w")
+            String base = mapTextOutsideTags(input, text -> text.replace("r", "w")
                     .replace("R", "W")
                     .replace("l", "w")
                     .replace("L", "W")
                     .replace("ove", "uv")
-                    .replace("OVE", "UV")
-                    + " uwu";
+                    .replace("OVE", "UV"));
+            if (base.length() + 4 <= Vars.maxTextLength) {
+                if (base.endsWith("[]")) {
+                    return base.substring(0, base.length() - 2) + " uwu[]";
+                }
+                return base + " uwu";
+            }
+            return base;
         }
     }
 
@@ -153,18 +221,20 @@ public final class BuiltinPrettiers {
             if (input == null || input.isEmpty()) {
                 return "";
             }
-            StringBuilder sb = new StringBuilder(input.length());
-            boolean upper = false;
-            for (int i = 0; i < input.length(); i++) {
-                char c = input.charAt(i);
-                if (Character.isLetter(c)) {
-                    sb.append(upper ? Character.toUpperCase(c) : Character.toLowerCase(c));
-                    upper = !upper;
-                } else {
-                    sb.append(c);
+            return mapTextOutsideTags(input, text -> {
+                StringBuilder sb = new StringBuilder(text.length());
+                boolean upper = false;
+                for (int i = 0; i < text.length(); i++) {
+                    char c = text.charAt(i);
+                    if (Character.isLetter(c)) {
+                        sb.append(upper ? Character.toUpperCase(c) : Character.toLowerCase(c));
+                        upper = !upper;
+                    } else {
+                        sb.append(c);
+                    }
                 }
-            }
-            return sb.toString();
+                return sb.toString();
+            });
         }
     }
 
@@ -302,18 +372,20 @@ public final class BuiltinPrettiers {
             if (input == null || input.isEmpty()) {
                 return "";
             }
-            StringBuilder sb = new StringBuilder(input.length());
-            for (int i = 0; i < input.length(); i++) {
-                char c = input.charAt(i);
-                char lower = Character.toLowerCase(c);
-                int idx = NORMAL.indexOf(lower);
-                if (idx != -1) {
-                    sb.append(SMALL.charAt(idx));
-                } else {
-                    sb.append(c);
+            return mapTextOutsideTags(input, text -> {
+                StringBuilder sb = new StringBuilder(text.length());
+                for (int i = 0; i < text.length(); i++) {
+                    char c = text.charAt(i);
+                    char lower = Character.toLowerCase(c);
+                    int idx = NORMAL.indexOf(lower);
+                    if (idx != -1) {
+                        sb.append(SMALL.charAt(idx));
+                    } else {
+                        sb.append(c);
+                    }
                 }
-            }
-            return sb.toString();
+                return sb.toString();
+            });
         }
     }
 
@@ -349,22 +421,24 @@ public final class BuiltinPrettiers {
             if (input == null || input.isEmpty()) {
                 return "";
             }
-            StringBuilder sb = new StringBuilder(input.length());
-            for (int i = 0; i < input.length(); i++) {
-                char c = input.charAt(i);
-                if (c >= 'a' && c <= 'z') {
-                    sb.append((char) (0x24D0 + (c - 'a')));
-                } else if (c >= 'A' && c <= 'Z') {
-                    sb.append((char) (0x24B6 + (c - 'A')));
-                } else if (c >= '1' && c <= '9') {
-                    sb.append((char) (0x2460 + (c - '1')));
-                } else if (c == '0') {
-                    sb.append('\u24EA');
-                } else {
-                    sb.append(c);
+            return mapTextOutsideTags(input, text -> {
+                StringBuilder sb = new StringBuilder(text.length());
+                for (int i = 0; i < text.length(); i++) {
+                    char c = text.charAt(i);
+                    if (c >= 'a' && c <= 'z') {
+                        sb.append((char) (0x24D0 + (c - 'a')));
+                    } else if (c >= 'A' && c <= 'Z') {
+                        sb.append((char) (0x24B6 + (c - 'A')));
+                    } else if (c >= '1' && c <= '9') {
+                        sb.append((char) (0x2460 + (c - '1')));
+                    } else if (c == '0') {
+                        sb.append('\u24EA');
+                    } else {
+                        sb.append(c);
+                    }
                 }
-            }
-            return sb.toString();
+                return sb.toString();
+            });
         }
     }
 
@@ -464,5 +538,41 @@ public final class BuiltinPrettiers {
 
             return script.replace("<message>", input);
         }
+    }
+
+    /**
+     * Applies a mapping function only to text segments outside of square brackets [...].
+     * Preserves color tags and icon codes untouched.
+     */
+    public static String mapTextOutsideTags(String input, TextMapper mapper) {
+        if (input == null || !input.contains("[")) {
+            return mapper.map(input != null ? input : "");
+        }
+        StringBuilder sb = new StringBuilder(input.length());
+        int len = input.length();
+        int i = 0;
+        while (i < len) {
+            int open = input.indexOf('[', i);
+            if (open == -1) {
+                sb.append(mapper.map(input.substring(i)));
+                break;
+            }
+            if (open > i) {
+                sb.append(mapper.map(input.substring(i, open)));
+            }
+            int close = input.indexOf(']', open);
+            if (close == -1) {
+                sb.append(input.substring(open));
+                break;
+            }
+            sb.append(input.substring(open, close + 1));
+            i = close + 1;
+        }
+        return sb.toString();
+    }
+
+    @FunctionalInterface
+    public interface TextMapper {
+        String map(String text);
     }
 }
