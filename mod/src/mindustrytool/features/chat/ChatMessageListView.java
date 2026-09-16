@@ -557,19 +557,17 @@ public class ChatMessageListView extends BaseComponent {
                     .grow()
                     .gap(unit(1))
                     .children(() -> {
-                        row().growX().children(() -> {
-                            text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
-                                    .color(Pal.accent)
-                                    .fontScale(0.95f)
-                                    .ellipsis()
-                                    .growX()
-                                    .left();
+                        text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
+                                .color(Pal.accent)
+                                .fontScale(0.95f)
+                                .ellipsis()
+                                .growX()
+                                .left();
 
-                            text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
-                                    .color(Color.scarlet)
-                                    .fontScale(0.85f)
-                                    .left();
-                        });
+                        text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
+                                .color(Color.scarlet)
+                                .fontScale(0.85f)
+                                .left();
 
                         text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, ""))
                                 .color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
@@ -581,7 +579,7 @@ public class ChatMessageListView extends BaseComponent {
                                 if (Boolean.TRUE.equals(enabled)) {
                                     return button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
                                             () -> promptDirectJoin(link))
-                                                    .style(WebStyles.primary())
+                                                    .style(WebStyles.secondary())
                                                     .growX()
                                                     .height(unit(11));
                                 }
@@ -590,7 +588,7 @@ public class ChatMessageListView extends BaseComponent {
                                         Core.bundle.get("feature.chat.ui.enable-player-connect",
                                                 "Enable Player Connect"),
                                         () -> FeatureManager.getFeature(PlayerConnectFeature.class).enable())
-                                                .style(WebStyles.primary())
+                                                .style(WebStyles.secondary())
                                                 .growX()
                                                 .height(unit(11));
                             }).growX();

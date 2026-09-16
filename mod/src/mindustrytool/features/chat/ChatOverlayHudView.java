@@ -79,7 +79,7 @@ public class ChatOverlayHudView extends BaseComponent {
         Readable<Boolean> hasUnread = store.unread().total().map(count -> count != null && count > 0);
 
         return card()
-                .rounded(10, new Color(0f, 0f, 0f, 0.6f))
+                .rounded(10, new Color(0f, 0f, 0f, 0.95f))
                 .children(() -> {
                     button(() -> {
                         feature.collapsedConfig.set(false);
