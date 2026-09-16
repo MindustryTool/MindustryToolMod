@@ -3,19 +3,25 @@ package mindustrytool.features.prettychat;
 import arc.Core;
 import arc.Events;
 import arc.func.Prov;
+import arc.input.KeyCode;
+import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
 import arc.scene.ui.TextField;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Reflect;
 import mindustry.Vars;
+import mindustry.game.EventType.ClientChatEvent;
+import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.input.Binding;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.prettychat.ui.PrettyChatSettingsDialog;
-
+import mindustrytool.features.translation.TranslationFeature;
 import solim.overlay.SolimDialog;
 
 import java.util.List;
@@ -29,19 +35,25 @@ public class PrettyChatFeature extends Feature {
     private final PrettyChatConfig config;
     private final Seq<Prettier> prettiers;
     private @Nullable PrettyChatSettingsDialog settingsDialog;
+    private @Nullable String lastTransformed;
+    private boolean chatHookAttached;
 
     public PrettyChatFeature() {
         super(FeatureMetadata.builder()
                 .id("pretty-chat")
                 .icon(FileIcon.of("sparkles.png"))
+                .quickAccess(true)
                 .development(false)
-                .enabledByDefault(false)
+                .enabledByDefault(true)
                 .build());
 
         this.config = new PrettyChatConfig(configGroup());
         this.prettiers = BuiltinPrettiers.createDefaultPrettiers();
 
+        Events.on(ClientLoadEvent.class, e -> attachChatHook());
+        Events.on(ClientChatEvent.class, e -> lastTransformed = null);
         Events.run(Trigger.update, this::updateChatHook);
+        attachChatHook();
     }
 
     public PrettyChatConfig config() {
@@ -66,14 +78,51 @@ public class PrettyChatFeature extends Feature {
         };
     }
 
-    private void updateChatHook() {
-        if (!isEnabled() || Vars.ui == null || Vars.ui.chatfrag == null || !Vars.ui.chatfrag.shown()) {
+    private void attachChatHook() {
+        if (Vars.ui == null || Vars.ui.chatfrag == null || chatHookAttached) {
             return;
         }
-        if (Core.input == null || !Core.input.keyTap(Binding.chat)) {
-            return;
+        try {
+            TextField chatfield = Reflect.get(Vars.ui.chatfrag, "chatfield");
+            if (chatfield != null) {
+                chatfield.setOnlyFontChars(false);
+                chatfield.setMaxLength(Vars.maxTextLength);
+                chatfield.addListener(new InputListener() {
+                    @Override
+                    public boolean keyDown(InputEvent event, KeyCode keycode) {
+                        if (keycode == KeyCode.enter) {
+                            handleChatSend();
+                        }
+                        return false;
+                    }
+                });
+                chatHookAttached = true;
+            }
+        } catch (Exception e) {
+            Log.err("Error attaching PrettyChat field hook: @", e.getMessage());
         }
+    }
 
+    private void updateChatHook() {
+        if (!chatHookAttached) {
+            attachChatHook();
+        }
+        if (!isEnabled() || Vars.ui == null || Vars.ui.chatfrag == null) {
+            return;
+        }
+        if (!Vars.ui.chatfrag.shown()) {
+            lastTransformed = null;
+            return;
+        }
+        if (Core.input != null && Core.input.keyTap(Binding.chat)) {
+            handleChatSend();
+        }
+    }
+
+    private void handleChatSend() {
+        if (!isEnabled() || Vars.ui == null || Vars.ui.chatfrag == null) {
+            return;
+        }
         try {
             TextField chatfield = Reflect.get(Vars.ui.chatfrag, "chatfield");
             if (chatfield == null) {
@@ -84,10 +133,26 @@ public class PrettyChatFeature extends Feature {
                 return;
             }
             String text = raw.trim();
+            if (text.equals(lastTransformed)) {
+                return;
+            }
 
-            // Escape prefix: //message sends /message directly without transformation
+            // Escape prefix: //message sends message directly without transformation
             if (text.startsWith("//")) {
-                chatfield.setText(text.substring(1));
+                String unescaped = text.substring(2);
+                lastTransformed = unescaped;
+                chatfield.setOnlyFontChars(false);
+                chatfield.setMaxLength(Vars.maxTextLength);
+                chatfield.setText(unescaped);
+                return;
+            }
+
+            // If TranslationFeature will handle outgoing translation, let it translate the
+            // clean text.
+            // PrettyChat styling will be applied by TranslationFeature when delivering the
+            // message.
+            TranslationFeature translation = FeatureManager.getFeature(TranslationFeature.class);
+            if (translation != null && translation.isEnabled() && translation.shouldTranslateOutgoing(text)) {
                 return;
             }
 
@@ -95,6 +160,9 @@ public class PrettyChatFeature extends Feature {
             if (transformed.length() > Vars.maxTextLength) {
                 transformed = clampSafe(transformed, Vars.maxTextLength);
             }
+            lastTransformed = transformed;
+            chatfield.setOnlyFontChars(false);
+            chatfield.setMaxLength(Vars.maxTextLength);
             chatfield.setText(transformed);
         } catch (Exception e) {
             Log.err("Error in PrettyChat hook: @", e.getMessage());
@@ -134,12 +202,20 @@ public class PrettyChatFeature extends Feature {
             return message;
         }
 
+        int targetMax = Math.max(0, Vars.maxTextLength - cmd.length());
         String result = toTransform;
         for (String id : enabledIds) {
             Prettier p = getPrettier(id);
             if (p != null) {
-                result = p.transform(result);
+                if (p instanceof BuiltinPrettiers.RainbowPrettier) {
+                    result = ((BuiltinPrettiers.RainbowPrettier) p).transform(result, targetMax);
+                } else {
+                    result = p.transform(result);
+                }
             }
+        }
+        if (result.length() > targetMax) {
+            result = clampSafe(result, targetMax);
         }
 
         return cmd + result;
@@ -152,6 +228,9 @@ public class PrettyChatFeature extends Feature {
         if (text == null || text.length() <= maxLength) {
             return text != null ? text : "";
         }
+        if (maxLength <= 0) {
+            return "";
+        }
         String cut = text.substring(0, maxLength);
         int lastOpenBracket = cut.lastIndexOf('[');
         int lastCloseBracket = cut.lastIndexOf(']');
@@ -161,6 +240,14 @@ public class PrettyChatFeature extends Feature {
         }
         // If the original text had color tags, ensure color tags close cleanly
         if (cut.contains("[") && !cut.endsWith("[]")) {
+            if (cut.length() + 2 > maxLength && maxLength >= 2) {
+                cut = cut.substring(0, maxLength - 2);
+                int open = cut.lastIndexOf('[');
+                int close = cut.lastIndexOf(']');
+                if (open > close) {
+                    cut = cut.substring(0, open);
+                }
+            }
             if (cut.length() + 2 <= maxLength) {
                 cut = cut + "[]";
             }

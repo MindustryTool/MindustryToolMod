@@ -23,10 +23,22 @@ class BuiltinPrettiersTest {
         Prettier p = new BuiltinPrettiers.RainbowPrettier();
         assertEquals("rainbow", p.id());
         String out = p.transform("hello world");
-        assertTrue(out.startsWith("[#"), "Should start with a color tag");
+        assertTrue(out.startsWith("["), "Should start with a color tag");
         assertTrue(out.endsWith("[]"), "Should end with clear tag");
         assertTrue(out.contains("hello"));
         assertTrue(out.contains("world"));
+    }
+
+    @Test
+    void testRainbowPrettierAdaptiveClustering() {
+        BuiltinPrettiers.RainbowPrettier p = new BuiltinPrettiers.RainbowPrettier();
+        String longText = "This is a rather long sentence with fifteen different words to test adaptive clustering";
+        String out = p.transform(longText);
+        assertTrue(out.length() <= 150, "Output length must stay <= 150 (was " + out.length() + ")");
+        assertTrue(out.endsWith("[]"), "Should end with clear tag");
+        for (String w : longText.split(" ")) {
+            assertTrue(out.contains(w), "Word '" + w + "' should be preserved");
+        }
     }
 
     @Test
@@ -35,6 +47,14 @@ class BuiltinPrettiersTest {
         assertEquals("uwu", p.id());
         String out = p.transform("real love");
         assertEquals("weaw wuv uwu", out);
+    }
+
+    @Test
+    void testUwuPrettierPreservesColorTags() {
+        Prettier p = new BuiltinPrettiers.UwuPrettier();
+        String out = p.transform("[red]real love[]");
+        assertTrue(out.startsWith("[red]"), "Color tag [red] should not be corrupted");
+        assertTrue(out.contains("weaw wuv"), "Text should be uwuified");
     }
 
     @Test
