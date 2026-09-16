@@ -100,29 +100,34 @@ public class WavePreviewFeature extends Feature {
             return;
         }
 
-        if (Vars.ui == null || Vars.ui.hudGroup == null) {
-            return;
+        try {
+
+            if (Vars.ui == null || Vars.ui.hudGroup == null) {
+                return;
+            }
+
+            Stack parent = Vars.ui.hudGroup.find("waves/editor");
+            if (parent == null) {
+                Log.err("WavePreviewFeature: waves/editor not found");
+                return;
+            }
+
+            Table waves = parent.find("waves");
+            if (waves == null) {
+                Log.err("WavePreviewFeature: waves not found");
+                return;
+            }
+
+            detachPanel();
+
+            panelView = new WavePreviewPanelView(this);
+            waves.row();
+            waves.add(panelView.element()).growX().padTop(10f);
+
+            recompute();
+        } catch (Exception e) {
+            Log.err(e);
         }
-
-        Stack parent = Vars.ui.hudGroup.find("waves/editor");
-        if (parent == null) {
-            Log.err("WavePreviewFeature: waves/editor not found");
-            return;
-        }
-
-        Table waves = parent.find("waves");
-        if (waves == null) {
-            Log.err("WavePreviewFeature: waves not found");
-            return;
-        }
-
-        detachPanel();
-
-        panelView = new WavePreviewPanelView(this);
-        waves.row();
-        waves.add(panelView.element()).growX().padTop(10f);
-
-        recompute();
     }
 
     public void detachPanel() {
