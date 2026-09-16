@@ -13,6 +13,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.input.Button;
@@ -94,6 +95,7 @@ public class TimeControlHudView extends BaseComponent {
     private static Component buildModeContent(TimeControlFeature feature, String mode, Readable<Float> buttonSize,
             Readable<Float> presetWidth, Readable<Float> resetIconSize, Readable<Float> fontScale,
             @Nullable Readable<Boolean> canEdit) {
+
         return TimeControlFeature.MODE_SLIDER.equals(mode)
                 ? buildSliderContent(feature, buttonSize, resetIconSize, fontScale, canEdit)
                 : buildPresetContent(feature, buttonSize, presetWidth, fontScale, canEdit);
@@ -111,12 +113,14 @@ public class TimeControlHudView extends BaseComponent {
 
     private static Component presetButton(TimeControlFeature feature, float preset, Readable<Float> buttonSize,
             Readable<Float> presetWidth, Readable<Float> fontScale, @Nullable Readable<Boolean> canEdit) {
+
         Computed<String> label = Signal.computed(() -> {
             float selected = feature.selectedPresetSignal().get();
             boolean isBoosted = Boolean.TRUE.equals(feature.boostedSignal().get());
             float shown = Float.compare(preset, selected) == 0 && isBoosted
                     ? TimeControlFeature.effectiveSpeed(preset, true)
                     : preset;
+            
             return Core.bundle.format("feature.time-control.speed.format", TimeControlFeature.formatSpeed(shown));
         });
 
@@ -129,7 +133,7 @@ public class TimeControlHudView extends BaseComponent {
         });
 
         Button btn = button()
-                .style(Styles.cleart)
+                .style(WebStyles.ghost())
                 .height(buttonSize)
                 .width(presetWidth)
                 .onClick(() -> feature.selectPreset(preset))

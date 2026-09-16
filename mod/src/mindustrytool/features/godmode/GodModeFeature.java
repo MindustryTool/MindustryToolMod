@@ -64,7 +64,7 @@ public class GodModeFeature extends Feature implements PopupDisplayFeature {
 
         config = configGroup();
         scaleConfig = config.floatValue("scale", 1f);
-        displayModeConfig = config.stringValue("displayMode", DISPLAY_HUD);
+        displayModeConfig = config.stringValue("displayMode", DISPLAY_POPUP);
         providerModeConfig = config.stringValue("provider", PROVIDER_AUTO);
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
 
@@ -170,12 +170,9 @@ public class GodModeFeature extends Feature implements PopupDisplayFeature {
         if (!isPopupMode()) {
             return false;
         }
-        try {
-            QuickAccessFeature quickAccess = FeatureManager.getFeature(QuickAccessFeature.class);
-            return quickAccess != null && quickAccess.isEnabled();
-        } catch (Exception ignored) {
-            return false;
-        }
+
+        QuickAccessFeature quickAccess = FeatureManager.getFeature(QuickAccessFeature.class);
+        return quickAccess != null && quickAccess.isEnabled();
     }
 
     @Override

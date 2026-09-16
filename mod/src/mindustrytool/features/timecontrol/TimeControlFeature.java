@@ -78,7 +78,7 @@ public class TimeControlFeature extends Feature implements PopupDisplayFeature {
         config = configGroup();
 
         modeConfig = config.stringValue("mode", MODE_PRESETS);
-        displayModeConfig = config.stringValue("displayMode", DISPLAY_HUD);
+        displayModeConfig = config.stringValue("displayMode", DISPLAY_POPUP);
         scaleConfig = config.floatValue("scale", 1f);
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
 
