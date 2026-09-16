@@ -3,19 +3,25 @@ package mindustrytool.features.quickaccess;
 import arc.Core;
 import arc.func.Prov;
 import arc.scene.Element;
+import arc.struct.Seq;
 import arc.util.Nullable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import mindustry.Vars;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
+import solim.config.OrderedSeqPersister;
 
 import solim.overlay.SolimDialog;
+import solim.signal.Readable;
 import solim.signal.Signal;
 import solim.signal.Signals;
 import solim.ui.Units;
@@ -28,6 +34,7 @@ public class QuickAccessFeature extends Feature {
     public final ConfigValue<Integer> colsConfig;
     public final ConfigValue<Set<String>> hiddenFeaturesConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
+    public final ConfigValue<Seq<String>> displayOrderConfig;
 
     public final ContextualConfigValue<Float, Boolean> xConfig;
     public final ContextualConfigValue<Float, Boolean> yConfig;
@@ -54,6 +61,7 @@ public class QuickAccessFeature extends Feature {
         colsConfig = config.intValue("cols", 6);
         hiddenFeaturesConfig = config.setValue("hidden", String.class, Collections.emptySet());
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
+        displayOrderConfig = config.value("display-order", Seq.with(), new OrderedSeqPersister());
 
         xConfig = config.floatValueKeyed(
                 "x",
@@ -137,6 +145,121 @@ public class QuickAccessFeature extends Feature {
             hidden.add(id);
         }
         hiddenFeaturesConfig.set(hidden);
+    }
+
+    public Seq<Feature> quickAccessFeatures() {
+        return FeatureManager.getFeatures().select(
+                f -> f != this && f.getMetadata().isQuickAccess() && !f.getMetadata().isDevelopment());
+    }
+
+    public List<Feature> orderedFeatures(@Nullable Seq<String> order) {
+        List<Feature> result = new ArrayList<>();
+        if (order == null) {
+            return result;
+        }
+        Seq<Feature> candidates = quickAccessFeatures();
+        for (String id : order) {
+            Feature found = candidates.find(f -> f.getMetadata().getId().equals(id));
+            if (found != null && !result.contains(found)) {
+                result.add(found);
+            }
+        }
+        return result;
+    }
+
+    public Seq<String> getDisplayOrder() {
+        Seq<String> stored = displayOrderConfig.get();
+        Seq<String> healed = normalizeDisplayOrder(quickAccessFeatures(), stored);
+        if (isDisplayOrderDirty(stored, healed)) {
+            displayOrderConfig.set(healed);
+        }
+        return healed;
+    }
+
+    public static Seq<String> normalizeDisplayOrder(Seq<Feature> candidates, @Nullable Seq<String> stored) {
+        Seq<String> result = new Seq<>();
+        if (stored != null) {
+            for (String id : stored) {
+                if (id == null || result.contains(id)) {
+                    continue;
+                }
+                Feature found = candidates.find(f -> f.getMetadata().getId().equals(id));
+                if (found != null) {
+                    result.add(id);
+                }
+            }
+        }
+        for (Feature f : candidates) {
+            String id = f.getMetadata().getId();
+            if (!result.contains(id)) {
+                result.add(id);
+            }
+        }
+        return result;
+    }
+
+    public static boolean isDisplayOrderDirty(@Nullable Seq<String> stored, Seq<String> normalized) {
+        if (stored == null || stored.size != normalized.size) {
+            return true;
+        }
+        for (int i = 0; i < stored.size; i++) {
+            if (!stored.get(i).equals(normalized.get(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean moveUp(String id) {
+        return swapDisplayOrder(id, -1);
+    }
+
+    public boolean moveDown(String id) {
+        return swapDisplayOrder(id, 1);
+    }
+
+    private boolean swapDisplayOrder(@Nullable String id, int delta) {
+        if (id == null) {
+            return false;
+        }
+        Seq<String> current = getDisplayOrder();
+        int index = current.indexOf(id);
+        int target = index + delta;
+        if (index < 0 || target < 0 || target >= current.size) {
+            return false;
+        }
+        Seq<String> updated = new Seq<>(current);
+        updated.swap(index, target);
+        displayOrderConfig.set(updated);
+        return true;
+    }
+
+    public boolean canMoveUp(@Nullable String id) {
+        Seq<String> order = displayOrderConfig.get();
+        return id != null && order != null && order.indexOf(id) > 0;
+    }
+
+    public boolean canMoveDown(@Nullable String id) {
+        Seq<String> order = displayOrderConfig.get();
+        if (id == null || order == null) {
+            return false;
+        }
+        int index = order.indexOf(id);
+        return index >= 0 && index < order.size - 1;
+    }
+
+    public Readable<Boolean> canMoveUpSignal(String id) {
+        return displayOrderConfig.signal().map(order -> id != null && order != null && order.indexOf(id) > 0);
+    }
+
+    public Readable<Boolean> canMoveDownSignal(String id) {
+        return displayOrderConfig.signal().map(order -> {
+            if (id == null || order == null) {
+                return false;
+            }
+            int index = order.indexOf(id);
+            return index >= 0 && index < order.size - 1;
+        });
     }
 
     public void resetPosition() {

@@ -328,6 +328,11 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
+    default SELF rotation(float degree) {
+        element().rotation = degree;
+        return self();
+    }
+
     // ---------- internal ----------
 
     SELF self();
