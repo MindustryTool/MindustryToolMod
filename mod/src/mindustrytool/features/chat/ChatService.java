@@ -91,10 +91,19 @@ public class ChatService {
         });
     }
 
+    public void refresh(String channelId) {
+        if (channelId == null || channelId.isEmpty()) {
+            return;
+        }
+
+        loadMessages(channelId);
+    }
+
     public void loadMessages(String channelId) {
         if (channelId == null || channelId.isEmpty()) {
             return;
         }
+
         MindustryTool.getChatMessages(channelId, null).thenAccept(messages -> {
             Core.app.post(() -> {
                 if (messages != null) {
@@ -165,6 +174,7 @@ public class ChatService {
         if (channelId == null || channelId.isEmpty()) {
             return;
         }
+
         MindustryTool.getChatUsers(channelId).thenAccept(users -> {
             Core.app.post(() -> store.members().replace(channelId, users));
         }).exceptionally(e -> {
@@ -259,7 +269,8 @@ public class ChatService {
                         for (ChatMessage msg : list) {
                             boolean added = store.messages().append(msg);
                             if (added) {
-                                boolean isActive = Objects.equals(store.channels().currentActiveId(), msg.getChannelId());
+                                boolean isActive = Objects.equals(store.channels().currentActiveId(),
+                                        msg.getChannelId());
                                 if (msg.getId() != null) {
                                     store.unread().setLatestMessage(msg.getChannelId(), msg.getId());
                                 }

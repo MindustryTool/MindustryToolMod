@@ -55,6 +55,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         this.outer.top().left();
         this.content = new Table();
         this.content.top().left();
+
         this.content.name = "solim-scroll-pane-content";
         if (Core.scene != null) {
             this.pane = outer.pane(content).grow().scrollX(false).scrollY(true).get();

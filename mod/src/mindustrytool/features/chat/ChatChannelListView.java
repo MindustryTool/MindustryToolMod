@@ -90,15 +90,15 @@ public class ChatChannelListView extends BaseComponent {
 
             return row()
                     .growX()
-                    .cellPaddingTop(unit(1))
-                    .height(unit(10))
+                    .height(unit(12))
+                    .padding(unit(1))
                     .left()
                     .children(() -> {
                         button(() -> store.selectChannel(channel.getId()))
                                 .style(style)
-                                .margin(unit(1))
                                 .left()
                                 .grow()
+                                .paddingX(unit(1))
                                 .children(() -> {
                                     text("# " + channel.getName()).left();
 

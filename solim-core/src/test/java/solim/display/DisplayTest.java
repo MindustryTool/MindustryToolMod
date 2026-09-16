@@ -138,13 +138,13 @@ class DisplayTest {
 		Table root = new Table();
 		ParentStack.push(root);
 
-		SolimImage img = image((Drawable) null).padding(6f).cellPadding(2f);
+		SolimImage img = image((Drawable) null).padding(6f).margin(2f);
 		assertEquals(8f, CellAccess.padTop(root.getCell(img.element())), 0.01f);
 		assertEquals(8f, CellAccess.padLeft(root.getCell(img.element())), 0.01f);
 		assertEquals(8f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);
 		assertEquals(8f, CellAccess.padRight(root.getCell(img.element())), 0.01f);
 
-		img.padding(1f, 2f, 3f, 4f).cellPadding(4f, 3f, 2f, 1f);
+		img.padding(1f, 2f, 3f, 4f).margin(4f, 3f, 2f, 1f);
 		assertEquals(5f, CellAccess.padTop(root.getCell(img.element())), 0.01f);
 		assertEquals(5f, CellAccess.padLeft(root.getCell(img.element())), 0.01f);
 		assertEquals(5f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);
@@ -152,7 +152,7 @@ class DisplayTest {
 
 		img.paddingBottom(10f);
 		assertEquals(12f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);
-		img.cellPaddingBottom(5f);
+		img.marginBottom(5f);
 		assertEquals(15f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);
 
 		ParentStack.pop();
@@ -161,7 +161,7 @@ class DisplayTest {
 	@Test
 	void solimImageComponentPaddingAndMargin() {
 		Table root = new Table();
-		SolimImage comp = new SolimImage().padding(5f).cellPadding(3f);
+		SolimImage comp = new SolimImage().padding(5f).margin(3f);
 		root.add(comp.element());
 		comp.applySpacing();
 

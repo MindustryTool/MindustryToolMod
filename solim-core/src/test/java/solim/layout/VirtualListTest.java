@@ -238,7 +238,7 @@ class VirtualListTest {
                 .width(350f)
                 .height(500f)
                 .visible(false)
-                .margin(6f);
+                .padding(6f);
 
         assertEquals(350f, list.element().getWidth());
         assertEquals(500f, list.element().getHeight());

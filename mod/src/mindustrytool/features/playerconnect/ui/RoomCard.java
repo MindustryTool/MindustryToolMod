@@ -13,6 +13,7 @@ import mindustry.core.Version;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.ui.Styles;
+import mindustrytool.features.chat.ChatMessageHeightCalculator;
 import mindustrytool.features.playerconnect.net.NetworkProxy;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
@@ -76,36 +77,39 @@ public class RoomCard extends BaseComponent {
                 .border(1.5f, Color.darkGray)
                 .gap(unit(1.5f))
                 .padding(unit(2))
-                .left();
-
-        if (displayPlayerList) {
-            cardComp.grow().margin(unit(2.5f)).minHeight(unit(40));
-        } else {
-            cardComp.growX().height(unit(27));
-        }
+                .left()
+                .grow()
+                .minHeight(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT);
 
         return cardComp.children(() -> {
             // Header row: Title + Copy link button
             row().growX().height(unit(6)).gap(unit(2)).children(() -> {
-                text(title).style(Styles.outlineLabel).fontScale(displayPlayerList ? 1.1f : 0.95f).ellipsis().growX()
+                text(title)
+                        .style(Styles.outlineLabel)
+                        .fontScale(displayPlayerList ? 1.1f : 0.95f)
+                        .ellipsis()
+                        .growX()
                         .left();
                 spacer();
-                button(() -> {
-                    Core.app.setClipboardText(room.getLink());
-                    Vars.ui.showInfoFade("@copied");
-                })
-                        .style(WebStyles.ghost())
-                        .size(displayPlayerList ? unit(11) : unit(6))
-                        .children(() -> icon(Icon.copy).size(displayPlayerList ? unit(6) : unit(4)));
+
+                if (displayPlayerList) {
+                    button(() -> {
+                        Core.app.setClipboardText(room.getLink());
+                        Vars.ui.showInfoFade("@copied");
+                    })
+                            .style(WebStyles.ghost())
+                            .size(unit(11))
+                            .children(() -> icon(Icon.copy).size(unit(6)));
+                }
             });
 
             // Map and mode
             if (!mapMode.isEmpty()) {
-                text(mapMode).ellipsis().left();
+                text(mapMode).growX().ellipsis().left();
             }
 
             if (!Version.combined().equals(room.getData().getVersion())) {
-                text(room.getData().getVersion());
+                text(room.getData().getVersion()).growX().ellipsis();
             }
 
             if (!displayPlayerList) {
@@ -113,10 +117,9 @@ public class RoomCard extends BaseComponent {
                         ? "[scarlet]" + Core.bundle.get("feature.chat.ui.incompatible-protocol", "Incompatible")
                         : (!missingMods.isEmpty() || !unneededMods.isEmpty()
                                 ? "[orange]" + Core.bundle.get("feature.chat.ui.mods-required", "Mods Required")
-                                : "[green]" + Core.bundle.get("feature.chat.ui.compatible", "Compatible"));
+                                : "");
                 row().growX().height(unit(4)).children(() -> {
-                    text(playerInfo).color(Color.lightGray).ellipsis().left();
-                    spacer();
+                    text(playerInfo).color(Color.lightGray).ellipsis().growX().left();
                     text(compatBadge).fontScale(0.85f).right();
                 });
             } else {
@@ -152,15 +155,25 @@ public class RoomCard extends BaseComponent {
                 })
                         .style(WebStyles.outline())
                         .growX()
-                        .height(displayPlayerList ? unit(8) : unit(7))
-                        .paddingY(displayPlayerList ? unit(1.5f) : 0f)
+                        .height(unit(7))
                         .enabled(Signal.of(false));
             } else {
-                button(Core.bundle.get("join", "Join"), () -> promptJoin(secured, missingMods, unneededMods))
-                        .style(WebStyles.secondary())
-                        .growX()
-                        .height(displayPlayerList ? unit(8) : unit(7))
-                        .paddingY(displayPlayerList ? unit(1.5f) : 0f);
+                row().gap(unit(1)).growX().children(() -> {
+                    button(Core.bundle.get("join", "Join"), () -> promptJoin(secured, missingMods, unneededMods))
+                            .style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary())
+                            .growX()
+                            .height(unit(11));
+
+                    if (!displayPlayerList) {
+                        button(() -> {
+                            Core.app.setClipboardText(room.getLink());
+                            Vars.ui.showInfoFade("@copied");
+                        })
+                                .style(WebStyles.outline())
+                                .size(unit(11))
+                                .children(() -> icon(Icon.copy).size(unit(5)));
+                    }
+                });
             }
         }).element();
     }

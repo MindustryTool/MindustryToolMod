@@ -7,7 +7,9 @@ import arc.graphics.Color;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
+import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.graphics.RoundedDrawable;
@@ -56,7 +58,7 @@ class ElementModifiersTest {
     }
 
     @Test
-    void tableConfigPaddingAndMarginOnRow() {
+    void tableConfigPaddingOnRow() {
         Row row = new Row();
         row.padding(10f);
         assertEquals(10f, row.table().getMarginLeft(), 0.01f);
@@ -75,24 +77,33 @@ class ElementModifiersTest {
         assertEquals(12f, row.table().getMarginRight(), 0.01f);
         assertEquals(6f, row.table().getMarginTop(), 0.01f);
         assertEquals(6f, row.table().getMarginBottom(), 0.01f);
+    }
 
+    @Test
+    void cellConfigMarginOnRow() {
+        Table parent = new Table();
+        Row row = new Row();
         row.margin(8f);
-        assertEquals(8f, row.table().getMarginLeft(), 0.01f);
-        assertEquals(8f, row.table().getMarginRight(), 0.01f);
-        assertEquals(8f, row.table().getMarginTop(), 0.01f);
-        assertEquals(8f, row.table().getMarginBottom(), 0.01f);
+        Cell<?> cell = parent.add(row.element());
+        row.cellConfig().applyToCell(cell);
+        assertEquals(8f, CellAccess.padLeft(cell), 0.01f);
+        assertEquals(8f, CellAccess.padRight(cell), 0.01f);
+        assertEquals(8f, CellAccess.padTop(cell), 0.01f);
+        assertEquals(8f, CellAccess.padBottom(cell), 0.01f);
 
         row.marginX(14f).marginY(8f);
-        assertEquals(14f, row.table().getMarginLeft(), 0.01f);
-        assertEquals(14f, row.table().getMarginRight(), 0.01f);
-        assertEquals(8f, row.table().getMarginTop(), 0.01f);
-        assertEquals(8f, row.table().getMarginBottom(), 0.01f);
+        row.cellConfig().applyToCell(cell);
+        assertEquals(14f, CellAccess.padLeft(cell), 0.01f);
+        assertEquals(14f, CellAccess.padRight(cell), 0.01f);
+        assertEquals(8f, CellAccess.padTop(cell), 0.01f);
+        assertEquals(8f, CellAccess.padBottom(cell), 0.01f);
 
         row.marginTop(12f).marginLeft(14f).marginBottom(16f).marginRight(18f);
-        assertEquals(12f, row.table().getMarginTop(), 0.01f);
-        assertEquals(14f, row.table().getMarginLeft(), 0.01f);
-        assertEquals(16f, row.table().getMarginBottom(), 0.01f);
-        assertEquals(18f, row.table().getMarginRight(), 0.01f);
+        row.cellConfig().applyToCell(cell);
+        assertEquals(12f, CellAccess.padTop(cell), 0.01f);
+        assertEquals(14f, CellAccess.padLeft(cell), 0.01f);
+        assertEquals(16f, CellAccess.padBottom(cell), 0.01f);
+        assertEquals(18f, CellAccess.padRight(cell), 0.01f);
     }
 
     @Test

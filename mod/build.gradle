@@ -4,7 +4,7 @@ dependencies{
 	compileOnly 'org.projectlombok:lombok:1.18.36'
 	annotationProcessor 'org.projectlombok:lombok:1.18.36'
 	implementation project(':solim')
-	implementation project(':solim-mcp')
+	// implementation project(':solim-mcp')
 	testImplementation "Anuken:Mindustry:${mindustryVersion}"
 }
 
@@ -104,7 +104,8 @@ tasks.register('jarAndroid'){
 }
 
 jar{
-	dependsOn(':solim-api:jar', ':solim-runtime:jar', ':solim-core:jar', ':solim:jar', ':solim-mcp:jar')
+	// dependsOn(':solim-api:jar', ':solim-runtime:jar', ':solim-core:jar', ':solim:jar', ':solim-mcp:jar')
+	dependsOn(':solim-api:jar', ':solim-runtime:jar', ':solim-core:jar', ':solim:jar')
 	dependsOn(configurations.runtimeClasspath)
 	duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 

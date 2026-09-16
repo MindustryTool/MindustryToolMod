@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mindustry.Vars;
@@ -41,6 +42,7 @@ import mindustrytool.features.playerconnect.ui.RoomCard;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.UserData;
+import mindustrytool.models.response.ChatUser.SimpleRole;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Card;
@@ -189,7 +191,7 @@ public class ChatMessageListView extends BaseComponent {
                                     .grow()
                                     .gap(unit(0.75f))
                                     .overscan(3)
-                                    .onReachTop(150f, () -> {
+                                    .onReachTop(50f, () -> {
                                         String activeId = store.channels().currentActiveId();
                                         List<ChatMessage> msgs = store.messages().currentActive();
                                         if (activeId != null && !activeId.isEmpty() && service != null && msgs != null
@@ -199,7 +201,7 @@ public class ChatMessageListView extends BaseComponent {
                                         }
                                     });
 
-                    return virtualList.cellPaddingBottom(unit(2)).grow();
+                    return virtualList.marginBottom(unit(2)).grow();
                 } else {
                     return column().padding(unit(4)).top().left().children(() -> {
                         text(Core.bundle.get("feature.chat.ui.empty-messages", "No messages yet."))
@@ -255,7 +257,12 @@ public class ChatMessageListView extends BaseComponent {
                     : (authorId != null ? authorId : "Unknown"));
 
             Readable<Color> authorColor = user.map(u -> {
-                if (u != null && u.getHighestRole().isPresent()) {
+                if (u == null) {
+                    return Color.white;
+                }
+
+                Optional<SimpleRole> role = u.getHighestRole();
+                if (role.isPresent()) {
                     try {
                         String hex = u.getHighestRole().get().getColor();
                         if (hex != null && !hex.isEmpty()) {
@@ -264,7 +271,7 @@ public class ChatMessageListView extends BaseComponent {
                     } catch (Exception ignored) {
                     }
                 }
-                return Pal.accent;
+                return Color.white;
             });
 
             Readable<String> avatarUrl = user
@@ -287,13 +294,12 @@ public class ChatMessageListView extends BaseComponent {
                         column().growX().top().left().children(() -> {
                             // Author and timestamp header + action button
                             row().growX().top().left()
-                                    .gap(unit(1))
+                                    .gap(unit(2))
                                     .height(ChatMessageHeightCalculator.HEADER_HEIGHT
                                             + ChatMessageHeightCalculator.HEADER_GAP)
                                     .children(() -> {
                                         text(authorName)
                                                 .color(authorColor)
-                                                .fontScale(0.95f)
                                                 .left();
 
                                         if (!timeStr.isEmpty()) {
@@ -337,22 +343,23 @@ public class ChatMessageListView extends BaseComponent {
             Readable<Boolean> isFailed = store.delivery().isFailed(msgId);
 
             Card card = card().growX().top().left();
+
             card.onClick(() -> openActions(parsed, card.element()));
             if (hasPrevious) {
-                card.cellPaddingTop(ChatMessageHeightCalculator.MESSAGE_GAP);
+                card.marginTop(ChatMessageHeightCalculator.MESSAGE_GAP);
             }
+
             card.children(() -> {
                 row().growX().top().left()
-                        .padding(ChatMessageHeightCalculator.MESSAGE_CARD_PADDING / 2f)
                         .children(() -> {
                             if (mentioned) {
-                                divider(Direction.Y).color(Pal.accent).width(unit(1)).cellPaddingRight(unit(1));
+                                divider(Direction.Y).color(Pal.accent).width(unit(1)).marginRight(unit(1));
                             }
 
                             if (raw.getReplyTo() != null && !raw.getReplyTo().isEmpty()) {
                                 column().growX().top().left().children(() -> {
                                     buildReplyPreview(raw.getReplyTo());
-                                    column().growX().top().left().cellPaddingTop(ChatMessageHeightCalculator.REPLY_GAP)
+                                    column().growX().top().left().marginTop(ChatMessageHeightCalculator.REPLY_GAP)
                                             .children(() -> {
                                                 buildMessageBody(parsed, isPending, isFailed);
                                             });
@@ -400,7 +407,7 @@ public class ChatMessageListView extends BaseComponent {
 
             final String displaySnippet = targetSnippet;
             row().growX().top().left().height(ChatMessageHeightCalculator.REPLY_PREVIEW_HEIGHT).children(() -> {
-                icon(Icon.rightSmall).size(unit(4), unit(4)).color(Color.gray).cellPaddingRight(unit(1));
+                icon(Icon.rightSmall).size(unit(4), unit(4)).color(Color.gray).marginRight(unit(1));
                 text(displaySnippet)
                         .color(Color.gray)
                         .fontScale(0.8f)
@@ -495,7 +502,7 @@ public class ChatMessageListView extends BaseComponent {
                         return null;
                     }
                     final String translatedText = translated;
-                    return column().growX().top().left().cellPaddingTop(unit(1)).children(() -> {
+                    return column().growX().top().left().marginTop(unit(1)).children(() -> {
                         text(Core.bundle.get("feature.chat.ui.translated-badge", "Translated"))
                                 .color(Pal.accent)
                                 .fontScale(0.8f)
@@ -542,50 +549,56 @@ public class ChatMessageListView extends BaseComponent {
             })
                     .height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT)
                     .growX()
-                    .name("pc-card-wrapper")
-                    .backgroundColor(Color.red);
+                    .name("pc-card-wrapper");
         }
 
         private Component buildFallbackRoomCardContent(String link) {
             return column()
-                    .left()
+                    .grow()
+                    .gap(unit(1))
                     .children(() -> {
-                        row().growX().gap(unit(2)).children(() -> {
-                            icon(Icon.host).size(unit(5)).color(Pal.accent);
-                            text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
-                                    .color(Pal.accent)
-                                    .fontScale(0.95f)
-                                    .ellipsis()
-                                    .growX()
-                                    .left();
+                        text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
+                                .color(Pal.accent)
+                                .fontScale(0.95f)
+                                .ellipsis()
+                                .growX()
+                                .left();
+
+                        text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
+                                .color(Color.scarlet)
+                                .fontScale(0.85f)
+                                .left();
+
+                        text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, ""))
+                                .color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
+
+                        spacer();
+
+                        row().growX().gap(unit(1)).children(() -> {
+                            dynamic(FeatureManager.get(PlayerConnectFeature.class).enabled(), enabled -> {
+                                if (Boolean.TRUE.equals(enabled)) {
+                                    return button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
+                                            () -> promptDirectJoin(link))
+                                                    .style(WebStyles.secondary())
+                                                    .growX()
+                                                    .height(unit(11));
+                                }
+
+                                return button(
+                                        Core.bundle.get("feature.chat.ui.enable-player-connect",
+                                                "Enable Player Connect"),
+                                        () -> FeatureManager.getFeature(PlayerConnectFeature.class).enable())
+                                                .style(WebStyles.secondary())
+                                                .growX()
+                                                .height(unit(11));
+                            }).growX();
                             button(() -> {
                                 Core.app.setClipboardText(link);
                                 Vars.ui.showInfoFade("@copied");
-                            }).style(WebStyles.ghost()).size(unit(6)).children(() -> icon(Icon.copy).size(unit(4)));
-                        });
-
-                        row().growX().height(unit(4)).children(() -> {
-                            text(link).color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
-                        });
-
-                        row().growX().height(unit(4)).children(() -> {
-                            text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
-                                    .color(Color.gray)
-                                    .fontScale(0.85f)
-                                    .left();
-                        });
-
-                        row().growX().height(unit(7)).gap(unit(1)).children(() -> {
-                            button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
-                                    () -> promptDirectJoin(link))
-                                            .style(WebStyles.secondary())
-                                            .growX()
-                                            .height(unit(7));
-
-                            button(Core.bundle.get("button.copy", "Copy Link"), () -> {
-                                Core.app.setClipboardText(link);
-                                Vars.ui.showInfoFade("@copied");
-                            }).style(Styles.defaultt).height(unit(7));
+                            })
+                                    .style(WebStyles.outline())
+                                    .size(unit(11))
+                                    .children(() -> icon(Icon.copy).size(unit(5)));
                         });
                     });
         }
@@ -604,6 +617,7 @@ public class ChatMessageListView extends BaseComponent {
             if (list == null || list.isEmpty() || link == null) {
                 return null;
             }
+
             String trimmed = link.trim();
             for (PlayerConnectRoom room : list) {
                 if (room != null && trimmed.equals(room.getLink())) {

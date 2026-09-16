@@ -79,7 +79,7 @@ public class ChatOverlayHudView extends BaseComponent {
         Readable<Boolean> hasUnread = store.unread().total().map(count -> count != null && count > 0);
 
         return card()
-                .rounded(10, new Color(0f, 0f, 0f, 0.6f))
+                .rounded(10, new Color(0f, 0f, 0f, 0.95f))
                 .children(() -> {
                     button(() -> {
                         feature.collapsedConfig.set(false);
@@ -98,7 +98,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                                 .grow().color(Color.white))
                                         .layer(() -> row().top().right().grow().visible(hasUnread).children(() -> {
                                             image(circle())
-                                                    .cellPadding(unit(1))
+                                                    .margin(unit(1))
                                                     .size(unit(3))
                                                     .color(Color.scarlet);
                                         }));
@@ -152,7 +152,7 @@ public class ChatOverlayHudView extends BaseComponent {
         // Shared floating message-action popup (zero-footprint overlay driver).
         ChatActionPopup.install(store);
 
-        return card(Styles.black8)
+        return card(Styles.black9)
                 .width(winWidth)
                 .height(winHeight)
                 .maxWidth(Units.dvw(95f))
@@ -180,17 +180,21 @@ public class ChatOverlayHudView extends BaseComponent {
 
                                     button(store.ui()::toggleChannelsCollapsed)
                                             .style(WebStyles.ghost())
-                                            .size(unit(10), unit(10))
+                                            .size(unit(10))
                                             .visible(isDesktop)
                                             .tooltip(channelsTooltip)
-                                            .children(() -> icon(channelsIcon).size(unit(5)));
+                                            .children(() -> icon(channelsIcon).size(unit(6)));
 
                                     button(store.ui()::toggleUsersCollapsed)
                                             .style(WebStyles.ghost())
-                                            .size(unit(10), unit(10))
+                                            .size(unit(10))
                                             .visible(isDesktop)
                                             .tooltip(usersTooltip)
-                                            .children(() -> icon(usersIcon).size(unit(5)));
+                                            .children(() -> icon(usersIcon).size(unit(6)));
+
+                                    button(() -> service.refresh(store.channels().activeId().peek()))
+                                            .size(unit(10))
+                                            .children(() -> icon(Icon.refresh).size(unit(5)));
 
                                     button(() -> {
                                         Prov<SolimDialog> dialog = feature.getSettingDialog();
@@ -199,13 +203,13 @@ public class ChatOverlayHudView extends BaseComponent {
                                         }
                                     })
                                             .style(WebStyles.ghost())
-                                            .size(unit(10), unit(10))
+                                            .size(unit(10))
                                             .tooltip(Core.bundle.get("feature.chat.ui.settings", "Settings"))
                                             .children(() -> icon(Icon.settings).size(unit(5)));
 
                                     button(() -> feature.collapsedConfig.set(true))
                                             .style(WebStyles.ghost())
-                                            .size(unit(10), unit(10))
+                                            .size(unit(10))
                                             .tooltip(Core.bundle.get("feature.chat.ui.collapse", "Collapse"))
                                             .children(() -> icon(Icon.cancel).size(unit(5)));
                                 });

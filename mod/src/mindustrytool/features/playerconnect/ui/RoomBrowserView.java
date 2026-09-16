@@ -6,6 +6,9 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.scene.Element;
+import arc.util.Align;
+import arc.util.Time;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -34,8 +37,10 @@ public class RoomBrowserView extends BaseComponent {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             ProviderRoomGroup that = (ProviderRoomGroup) o;
             return Objects.equals(providerName, that.providerName)
                     && Objects.equals(rooms, that.rooms);
@@ -116,7 +121,7 @@ public class RoomBrowserView extends BaseComponent {
                                         collapsed.map(c -> Boolean.TRUE.equals(c)
                                                 ? FileIcon.of("chevron-right.png", Icon.rightOpen)
                                                 : FileIcon.of("chevron-down.png", Icon.downOpen)))
-                                                .width(unit(6)));
+                                                        .width(unit(6)));
 
                         // Search field
                         row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2)).rounded(unit(2))
@@ -130,7 +135,23 @@ public class RoomBrowserView extends BaseComponent {
                         button(feature::fetchRoomsRest)
                                 .style(WebStyles.outline())
                                 .size(unit(11))
-                                .children(() -> icon(Icon.refresh).size(unit(7)));
+                                .children(() -> icon(Icon.refresh).origin(Align.center).size(unit(7))
+                                        .update((element) -> {
+                                            if (feature.isFetching().peek()) {
+                                                element.rotation -= 5 * Time.delta;
+                                                return;
+                                            }
+
+                                            if (element.rotation != 0) {
+                                                float last = element.rotation;
+                                                element.rotation %= 360;
+                                                element.rotation -= 5 * Time.delta;
+
+                                                if (last < element.rotation) {
+                                                    element.rotation = 0;
+                                                }
+                                            }
+                                        }));
 
                         // Join via Link button
                         button(Core.bundle.get("feature.player-connect.join-link-title", "Join via Link"), () -> {
@@ -168,8 +189,9 @@ public class RoomBrowserView extends BaseComponent {
                                             });
 
                                             // Grid of rooms for this provider
-                                            grid(columnCount, Signal.of(group.rooms), PlayerConnectRoom::getLink, r -> new RoomCard(r))
-                                                    .gap(unit(2));
+                                            grid(columnCount, Signal.of(group.rooms), PlayerConnectRoom::getLink,
+                                                    r -> new RoomCard(r))
+                                                            .gap(unit(2));
                                         });
                                     }
                                 });

@@ -87,14 +87,16 @@ public final class ChatMessages {
     }
 
     public void setFullyLoaded(@Nullable String channelId, boolean isFullyLoaded) {
-        if (channelId == null) return;
+        if (channelId == null)
+            return;
         Map<String, Boolean> next = new HashMap<>(fullyLoaded.peek());
         next.put(channelId, isFullyLoaded);
         fullyLoaded.set(next);
     }
 
     public void replace(@Nullable String channelId, @Nullable List<ChatMessage> newMessages) {
-        if (channelId == null) return;
+        if (channelId == null)
+            return;
         List<ChatMessage> list = newMessages != null ? new ArrayList<>(newMessages) : Collections.emptyList();
         Map<String, List<ChatMessage>> next = copyState();
         next.put(channelId, Collections.unmodifiableList(list));
@@ -202,7 +204,8 @@ public final class ChatMessages {
     }
 
     private boolean containsMessage(@Nullable List<ChatMessage> list, @Nullable String id) {
-        if (list == null || id == null) return false;
+        if (list == null || id == null)
+            return false;
         for (ChatMessage m : list) {
             if (Objects.equals(m.getId(), id)) {
                 return true;
@@ -212,7 +215,8 @@ public final class ChatMessages {
     }
 
     private boolean removeMessage(List<ChatMessage> list, @Nullable String id) {
-        if (id == null) return false;
+        if (id == null)
+            return false;
         for (int i = 0; i < list.size(); i++) {
             if (Objects.equals(list.get(i).getId(), id)) {
                 list.remove(i);

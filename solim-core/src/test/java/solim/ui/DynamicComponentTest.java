@@ -544,7 +544,7 @@ class DynamicComponentTest {
                 .width(250f)
                 .height(150f)
                 .visible(false)
-                .margin(10f);
+                .padding(10f);
 
         Element el = dyn.element();
         assertEquals(250f, el.getWidth());

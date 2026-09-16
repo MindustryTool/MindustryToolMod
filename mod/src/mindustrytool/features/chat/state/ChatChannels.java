@@ -1,6 +1,7 @@
 package mindustrytool.features.chat.state;
 
 import arc.util.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,20 +14,25 @@ import solim.signal.Signal;
 public final class ChatChannels {
 
     private final Signal<List<ChannelDto>> channels = Signal.of(Collections.emptyList());
-    private final Signal<String> activeChannelId = Signal.of(null);
+    private final Signal<String> activeChannelId;
 
-    private final Computed<ChannelDto> active = new Computed<>(() -> {
-        String id = activeChannelId.get();
-        if (id == null) {
-            return null;
-        }
-        for (ChannelDto c : channels.get()) {
-            if (Objects.equals(c.getId(), id)) {
-                return c;
+    private final Computed<ChannelDto> active;
+
+    public ChatChannels(Signal<String> activeChannelId) {
+        this.activeChannelId = activeChannelId;
+        this.active = new Computed<>(() -> {
+            String id = activeChannelId.get();
+            if (id == null) {
+                return null;
             }
-        }
-        return null;
-    });
+            for (ChannelDto c : channels.get()) {
+                if (Objects.equals(c.getId(), id)) {
+                    return c;
+                }
+            }
+            return null;
+        });
+    }
 
     public Readable<List<ChannelDto>> all() {
         return channels;
