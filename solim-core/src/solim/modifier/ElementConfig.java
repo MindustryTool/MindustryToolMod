@@ -2,6 +2,7 @@ package solim.modifier;
 
 import arc.func.Cons;
 import arc.scene.Element;
+import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -30,6 +31,7 @@ import solim.layout.GapContainer;
  * <li>{@code visible} — element's visibility</li>
  * <li>{@code opacity/alpha} — element's transparency</li>
  * <li>{@code name} — element's debug name</li>
+ * <li>{@code onClick/stopClickPropagation} — element click handling</li>
  * <li>{@code draggable} — element drag-to-move integration</li>
  * </ul>
  *
@@ -286,6 +288,38 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         Element el = element();
         if (el != null)
             el.name = name;
+        return self();
+    }
+
+    // ---------- click ----------
+
+    /**
+     * Makes this element clickable, replacing any previously registered handler.
+     * The element becomes touchable automatically. Propagation is not stopped
+     * unless {@link #stopClickPropagation(boolean)} is enabled.
+     */
+    default SELF onClick(Runnable action) {
+        Element el = element();
+        if (el == null)
+            return self();
+        ElementClickBinding binding = ElementClickBinding.find(el);
+        if (binding == null) {
+            binding = new ElementClickBinding();
+            el.addListener(binding);
+        }
+        binding.handler = action;
+        el.touchable = Touchable.enabled;
+        return self();
+    }
+
+    /** Sets whether this element's click listener stops propagation. */
+    default SELF stopClickPropagation(boolean stop) {
+        Element el = element();
+        if (el == null)
+            return self();
+        ElementClickBinding binding = ElementClickBinding.find(el);
+        if (binding != null)
+            binding.stop = stop;
         return self();
     }
 

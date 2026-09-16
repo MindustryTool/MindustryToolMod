@@ -645,3 +645,18 @@ The system SHALL persist the collapsed states of the channel list and user list 
 - **WHEN** a user toggles the collapsed state of either sidebar
 - **THEN** the new state is saved to the mod configuration and loaded on subsequent application launches
 
+### Requirement: Image message fullscreen preview
+The chat message view SHALL render each `ImageMessage` thumbnail as tappable, and tapping it SHALL open a near-fullscreen image preview dialog showing the image with a back/close button and back-navigation support, without triggering the message action popup. Tapping the message body outside the thumbnail SHALL continue to open the message action popup as before. The preview dialog SHALL dispose itself when hidden.
+
+#### Scenario: Tapping an image thumbnail
+- **WHEN** the user taps an `ImageMessage` thumbnail
+- **THEN** a near-fullscreen preview dialog opens showing the image with a back button, and the message action popup does not open
+
+#### Scenario: Closing the preview
+- **WHEN** the user activates the back button or back navigation
+- **THEN** the preview dialog closes and is disposed
+
+#### Scenario: Tapping outside the thumbnail
+- **WHEN** the user taps the message body outside the thumbnail
+- **THEN** the existing message action popup opens as before
+

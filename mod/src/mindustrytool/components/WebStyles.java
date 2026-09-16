@@ -110,7 +110,6 @@ public class WebStyles {
             .up(u -> u.background(Color.clear))
             .over(o -> o.background(Colors.GHOST_HOVER))
             .down(d -> d.background(Colors.GHOST_DOWN))
-            .disabled(dis -> dis.background(Colors.DISABLED_BG))
             .build();
 
     private static final SolimButtonStyle DANGER_STYLE = new SolimButtonStyleBuilder()

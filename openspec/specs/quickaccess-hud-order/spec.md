@@ -1,4 +1,12 @@
-## ADDED Requirements
+# quickaccess-hud-order Specification
+
+## Purpose
+
+Persisted per-feature display order for the Quick Access HUD, independent of the settings-grid order and metadata order, with lazy normalization and swap-based up/down reordering from the settings dialog. Created by archiving change quickaccess-hud-reorder.
+
+## Requirements
+
+**Source: quickaccess-hud-reorder**
 
 ### Requirement: Persisted display order list
 
