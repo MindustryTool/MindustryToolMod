@@ -42,6 +42,7 @@ public class PrettyChatFeature extends Feature {
         super(FeatureMetadata.builder()
                 .id("pretty-chat")
                 .icon(FileIcon.of("sparkles.png"))
+                .quickAccess(true)
                 .development(false)
                 .enabledByDefault(true)
                 .build());
@@ -146,8 +147,10 @@ public class PrettyChatFeature extends Feature {
                 return;
             }
 
-            // If TranslationFeature will handle outgoing translation, let it translate the clean text.
-            // PrettyChat styling will be applied by TranslationFeature when delivering the message.
+            // If TranslationFeature will handle outgoing translation, let it translate the
+            // clean text.
+            // PrettyChat styling will be applied by TranslationFeature when delivering the
+            // message.
             TranslationFeature translation = FeatureManager.getFeature(TranslationFeature.class);
             if (translation != null && translation.isEnabled() && translation.shouldTranslateOutgoing(text)) {
                 return;
