@@ -4,6 +4,7 @@ import arc.Core;
 import arc.Events;
 import arc.util.Timer;
 import mindustry.Vars;
+import mindustry.core.GameState;
 import mindustry.game.EventType.ClientServerConnectEvent;
 import mindustry.game.EventType.ConnectionEvent;
 import mindustry.game.EventType.DisposeEvent;
@@ -25,6 +26,7 @@ public final class Signals {
     private static final Signal<Boolean> singlePlayer = Signal.of(true);
     private static final Signal<Boolean> localHosting = Signal.of(false);
     private static final Signal<Boolean> clientPlaying = Signal.of(false);
+    private static final Signal<GameState.State> state = Signal.of(GameState.State.menu);
     private static final float netPollInterval = 1f;
     private static boolean initialized = false;
 
@@ -57,6 +59,7 @@ public final class Signals {
         Events.on(GameOverEvent.class, e -> requestRefresh());
         Events.on(DisposeEvent.class, e -> requestRefresh());
         Timer.schedule(Signals::requestRefresh, netPollInterval, netPollInterval);
+        Events.on(StateChangeEvent.class, event -> state.set(event.to));
         initialized = true;
     }
 
@@ -101,6 +104,10 @@ public final class Signals {
     /** Whether connected as a client while in-world. */
     public static Signal<Boolean> clientPlaying() {
         return clientPlaying;
+    }
+
+    public static Signal<GameState.State> state() {
+        return state;
     }
 
     /**

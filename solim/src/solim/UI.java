@@ -231,11 +231,11 @@ public final class UI {
     }
 
     public static SolimImage icon(Drawable drawable) {
-        return image(Drawables.scalable(drawable)).scaling(Scaling.fit);
+        return image(Drawables.scalable(drawable)).scaling(Scaling.fit).size(unit(6));
     }
 
     public static SolimImage icon(Readable<Drawable> drawable) {
-        return image(drawable != null ? drawable.map(Drawables::scalable) : null).scaling(Scaling.fit);
+        return image(drawable != null ? drawable.map(Drawables::scalable) : null).scaling(Scaling.fit).size(unit(6));
     }
 
     public static NetworkImage networkImage() {

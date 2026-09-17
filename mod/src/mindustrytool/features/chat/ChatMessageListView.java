@@ -8,7 +8,6 @@ import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.util.Nullable;
 import arc.util.Scaling;
-import arc.util.Timer;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -162,7 +161,8 @@ public class ChatMessageListView extends BaseComponent {
             lastMessageCount = count;
             lastFirstMessageId = firstId;
         });
-        Timer.schedule(this::scrollToBottom, 1);
+
+        scrollToBottom();
 
         return column().grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
             dynamic(hasChannel, channelSelected -> {
@@ -191,7 +191,8 @@ public class ChatMessageListView extends BaseComponent {
                                             .height(unit(10))
                                             .children(() -> {
                                                 icon(Icon.refresh).size(unit(4));
-                                                text(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"));
+                                                text(Core.bundle.get("feature.chat.ui.retry-channels",
+                                                        "Retry Channels"));
                                             });
                                 });
                             }
@@ -212,11 +213,12 @@ public class ChatMessageListView extends BaseComponent {
                             return card().growX().padding(unit(1.5f)).children(() -> {
                                 row().growX().gap(unit(1)).center().children(() -> {
                                     icon(Icon.warning).size(unit(4)).color(Color.scarlet);
-                                    text(Core.bundle.get("feature.chat.ui.refresh-failed", "Failed to refresh messages."))
-                                            .color(Color.scarlet)
-                                            .fontScale(0.85f)
-                                            .growX()
-                                            .left();
+                                    text(Core.bundle.get("feature.chat.ui.refresh-failed",
+                                            "Failed to refresh messages."))
+                                                    .color(Color.scarlet)
+                                                    .fontScale(0.85f)
+                                                    .growX()
+                                                    .left();
                                     button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
                                         String activeId = store.channels().currentActiveId();
                                         if (activeId != null && service != null) {
@@ -271,7 +273,8 @@ public class ChatMessageListView extends BaseComponent {
                                             .onReachTop(50f, () -> {
                                                 String activeId = store.channels().currentActiveId();
                                                 List<ChatMessage> msgs = store.messages().currentActive();
-                                                if (activeId != null && !activeId.isEmpty() && service != null && msgs != null
+                                                if (activeId != null && !activeId.isEmpty() && service != null
+                                                        && msgs != null
                                                         && !msgs.isEmpty() && !store.messages().isLoadingOlder()
                                                         && !store.messages().isFullyLoaded(activeId)) {
                                                     service.fetchOlderMessages(activeId);
@@ -290,11 +293,12 @@ public class ChatMessageListView extends BaseComponent {
                                 if (err != null && !err.trim().isEmpty()) {
                                     return column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
                                         icon(Icon.warning).size(unit(6)).color(Color.scarlet);
-                                        text(Core.bundle.get("feature.chat.ui.error.messages", "Failed to load messages."))
-                                                .color(Color.scarlet)
-                                                .fontScale(1.0f)
-                                                .wrap()
-                                                .center();
+                                        text(Core.bundle.get("feature.chat.ui.error.messages",
+                                                "Failed to load messages."))
+                                                        .color(Color.scarlet)
+                                                        .fontScale(1.0f)
+                                                        .wrap()
+                                                        .center();
                                         text(err).color(Color.gray).fontScale(0.85f).wrap().center();
                                         button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
                                             String activeId = store.channels().currentActiveId();
@@ -326,24 +330,14 @@ public class ChatMessageListView extends BaseComponent {
     }
 
     public void scrollToBottom() {
-        if (virtualList != null) {
-            Core.app.post(() -> {
-                if (virtualList != null && virtualList.pane() != null) {
-                    ScrollPane pane = virtualList.pane();
-                    pane.layout();
-                    pane.setScrollYForce(pane.getMaxY());
-                    pane.updateVisualScroll();
-                    Core.app.post(() -> {
-                        if (virtualList != null && virtualList.pane() != null) {
-                            ScrollPane p = virtualList.pane();
-                            p.layout();
-                            p.setScrollYForce(p.getMaxY());
-                            p.updateVisualScroll();
-                        }
-                    });
-                }
-            });
-        }
+        Core.app.post(() -> {
+            if (virtualList != null && virtualList.pane() != null) {
+                ScrollPane pane = virtualList.pane();
+                pane.layout();
+                pane.setScrollYForce(pane.getMaxY());
+                pane.updateVisualScroll();
+            }
+        });
     }
 
     static class MessageGroupView extends BaseComponent {
