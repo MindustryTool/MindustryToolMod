@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import solim.display.SolimImage;
 import solim.input.Button;
 import solim.runtime.SignalDispatcher;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import arc.mock.MockGraphics;

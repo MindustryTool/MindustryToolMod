@@ -28,6 +28,9 @@ public class JoystickFeature extends Feature {
     /** Normalized movement vector (-1..1 per axis) driven by the joystick knob; zero when idle. */
     public final Vec2 moveVector = new Vec2();
 
+    /** Pointer ID currently touching the joystick knob, or -1 when idle. */
+    public int activePointer = -1;
+
     public final ConfigGroup config;
     public final ConfigValue<Float> sizeConfig;
     public final ConfigValue<Float> opacityConfig;
@@ -72,6 +75,17 @@ public class JoystickFeature extends Feature {
         restoreInput();
         unmountHud();
         moveVector.setZero();
+        activePointer = -1;
+    }
+
+    public boolean isKnobHeld() {
+        return activePointer != -1;
+    }
+
+    public void cancelPanDelay() {
+        if (Vars.control != null && Vars.control.input instanceof JoystickMobileInput) {
+            ((JoystickMobileInput) Vars.control.input).cancelPanDelay();
+        }
     }
 
     /** Replaces the active input handler with a joystick-aware one, remembering the original. */

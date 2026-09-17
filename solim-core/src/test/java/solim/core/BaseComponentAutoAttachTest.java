@@ -16,7 +16,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.runtime.ParentStack;
-import solim.ui.Ui;
 
 class BaseComponentAutoAttachTest {
 

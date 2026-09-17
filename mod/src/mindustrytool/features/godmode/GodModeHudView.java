@@ -13,20 +13,20 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.input.Button;
 import solim.overlay.Hud;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 public class GodModeHudView extends BaseComponent {
 
-    private final GodModeFeature parentFeature;
+    private final GodModeFeature feature;
     private @Nullable Hud hud;
 
-    public GodModeHudView(GodModeFeature parentFeature) {
-        this.parentFeature = parentFeature;
+    public GodModeHudView(GodModeFeature feature) {
+        this.feature = feature;
     }
 
     @Override
     protected Element build() {
-        Readable<Float> scale = parentFeature.scaleConfig.signal();
+        Readable<Float> scale = feature.scaleConfig.signal();
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 
@@ -38,22 +38,22 @@ public class GodModeHudView extends BaseComponent {
                     .border(1.5f, WebStyles.Colors.BORDER)
                     .center()
                     .children(() -> {
-                        dynamic(parentFeature.hideDragHandleConfig.signal(), hide -> {
+                        dynamic(feature.hideDragHandleConfig.signal(), hide -> {
                             if (!Boolean.TRUE.equals(hide)) {
                                 return button()
                                         .style(WebStyles.ghost())
                                         .size(buttonSize)
                                         .children(() -> icon(Icon.move).size(iconSize))
-                                        .draggable(parentFeature.xSignal, parentFeature.ySignal);
+                                        .draggable(feature.xSignal, feature.ySignal);
                             }
                             return null;
                         });
 
-                        buildControls(parentFeature, null);
+                        buildControls(feature, null);
                     });
         });
 
-        hud.position(parentFeature.xSignal, parentFeature.ySignal);
+        hud.position(feature.xSignal, feature.ySignal);
 
         listen(ResizeEvent.class, e -> {
             keepInScreen();

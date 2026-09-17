@@ -4,9 +4,9 @@ import arc.Core;
 import arc.util.Nullable;
 import java.util.HashMap;
 import java.util.Map;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public final class ChatUnread {
 

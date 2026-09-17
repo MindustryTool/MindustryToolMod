@@ -10,8 +10,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import solim.mcp.introspection.SnapshotRoot;
-import solim.perf.PerfTable;
-import solim.perf.UiProfiler;
+import solim.performance.PerfTable;
+import solim.performance.UiProfiler;
 
 class UiPerfMetricsToolTest {
 

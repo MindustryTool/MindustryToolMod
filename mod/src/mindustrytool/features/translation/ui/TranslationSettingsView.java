@@ -14,9 +14,9 @@ import mindustrytool.features.translation.providers.DevXTranslationProvider;
 import mindustrytool.features.translation.providers.GeminiTranslationProvider;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.signal.Subscription;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.reactive.Subscription;
 
 /**
  * Minimalist Solim settings view for Chat Translation.

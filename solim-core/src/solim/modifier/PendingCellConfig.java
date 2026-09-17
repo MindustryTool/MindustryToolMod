@@ -9,9 +9,8 @@ import java.util.List;
 import solim.core.Disposable;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
-import solim.signal.Effect;
-import solim.signal.Readable;
-import solim.layout.CellConfig;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 import solim.layout.GapContainer;
 import arc.util.Align;
 

@@ -8,7 +8,7 @@ import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.util.Nullable;
 import java.util.function.Consumer;
 import solim.graphics.RoundedDrawable;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Fluent chained builder for button styles supporting root properties,

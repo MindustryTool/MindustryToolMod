@@ -1,4 +1,5 @@
 package solim.layout;
+import solim.modifier.CellConfig;
 
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -14,10 +15,10 @@ import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
-import solim.signal.Effect;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.ui.Ui;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.core.Ui;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;

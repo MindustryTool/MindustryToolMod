@@ -12,7 +12,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Solim HUD panel view injected into the vanilla waves table.

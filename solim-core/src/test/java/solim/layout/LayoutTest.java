@@ -18,9 +18,9 @@ import java.util.Arrays;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.display.Text;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import solim.runtime.ParentStack;
-import solim.ui.Ui;
+import solim.core.Ui;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;
@@ -895,4 +895,3 @@ class LayoutTest {
         assertFalse(Core.scene.hasScroll(), "scrollFocus should be released when mouse is not hovering over pane");
     }
 }
-

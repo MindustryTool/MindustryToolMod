@@ -7,7 +7,7 @@ import arc.input.KeyCode;
 import arc.scene.event.InputEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;

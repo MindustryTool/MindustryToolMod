@@ -15,7 +15,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 /**
  * Base class with lazy single-build semantics, ambient lifecycle resource

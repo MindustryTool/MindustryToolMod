@@ -14,8 +14,8 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.web.WebFeature;
 import mindustrytool.features.web.WebFeatureCard;
 import solim.core.BaseComponent;
-import solim.signal.Computed;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 public final class FeatureSettingsView extends BaseComponent {
     private final Signal<String> filter = Signal.of("");

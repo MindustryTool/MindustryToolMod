@@ -14,7 +14,7 @@ import solim.input.Button;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.overlay.Popup;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import arc.Core;
 import mindustry.ui.Styles;
 import solim.runtime.SignalDispatcher;

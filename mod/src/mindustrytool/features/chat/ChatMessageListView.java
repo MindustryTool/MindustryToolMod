@@ -8,7 +8,6 @@ import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.util.Nullable;
 import arc.util.Scaling;
-import arc.util.Timer;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -26,6 +25,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.FileIcon;
+import mindustrytool.components.Loader;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.chat.models.MessageGroup;
@@ -48,12 +48,12 @@ import solim.core.Component;
 import solim.layout.Card;
 import solim.layout.Direction;
 import solim.layout.VirtualList;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 import solim.display.Text;
 import solim.input.Button;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 import solim.overlay.SolimDialog;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
@@ -82,11 +82,17 @@ public class ChatMessageListView extends BaseComponent {
 
     @Override
     protected Element build() {
+        Readable<Boolean> hasChannel = store.channels().activeId().map(id -> id != null && !id.isEmpty());
         Readable<Boolean> hasMessages = store.messages().active().map(list -> list != null && !list.isEmpty());
         Readable<Boolean> showEndOfHistory = new Computed<>(() -> {
             Boolean fully = store.messages().activeFullyLoaded().get();
             Boolean has = hasMessages.get();
             return Boolean.TRUE.equals(fully) && Boolean.TRUE.equals(has);
+        });
+        Readable<Boolean> showRefreshErrorBanner = new Computed<>(() -> {
+            String err = store.messages().activeError().get();
+            Boolean has = hasMessages.get();
+            return err != null && !err.trim().isEmpty() && Boolean.TRUE.equals(has);
         });
 
         Readable<List<MessageGroup>> groupedMessages = new Computed<>(() -> {
@@ -155,84 +161,183 @@ public class ChatMessageListView extends BaseComponent {
             lastMessageCount = count;
             lastFirstMessageId = firstId;
         });
-        Timer.schedule(this::scrollToBottom, 1);
+
+        scrollToBottom();
 
         return column().grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
-            dynamic(showEndOfHistory, show -> {
-                if (Boolean.TRUE.equals(show)) {
-                    return row().top().center().growX().padding(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.chat.ui.end-of-history", "Beginning of chat history"))
-                                .color(Color.gray)
-                                .fontScale(0.85f);
-                    });
-                }
-                return null;
-            });
+            dynamic(hasChannel, channelSelected -> {
+                if (!Boolean.TRUE.equals(channelSelected)) {
+                    return dynamic(store.channels().loading(), chanLoading -> {
+                        if (Boolean.TRUE.equals(chanLoading)) {
+                            return Loader.centered();
+                        }
 
-            dynamic(store.messages().loadingOlder(), loading -> {
-                if (Boolean.TRUE.equals(loading)) {
-                    return row().top().left().padding(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.chat.ui.loading-older", "Loading older messages..."))
-                                .color(Color.gray)
-                                .fontScale(0.85f)
-                                .left();
-                    });
-                }
-                return null;
-            });
-
-            dynamic(hasMessages, available -> {
-                if (Boolean.TRUE.equals(available)) {
-                    virtualList = virtualList(
-                            groupedMessages,
-                            MessageGroup::getKey,
-                            ChatMessageHeightCalculator::calculateHeight,
-                            item -> new MessageGroupView(item, store, service))
-                                    .grow()
-                                    .gap(unit(0.75f))
-                                    .overscan(3)
-                                    .onReachTop(50f, () -> {
-                                        String activeId = store.channels().currentActiveId();
-                                        List<ChatMessage> msgs = store.messages().currentActive();
-                                        if (activeId != null && !activeId.isEmpty() && service != null && msgs != null
-                                                && !msgs.isEmpty() && !store.messages().isLoadingOlder()
-                                                && !store.messages().isFullyLoaded(activeId)) {
-                                            service.fetchOlderMessages(activeId);
+                        return dynamic(store.channels().error(), chanErr -> {
+                            if (chanErr != null && !chanErr.trim().isEmpty()) {
+                                return column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
+                                    icon(Icon.warning).size(unit(6)).color(Color.scarlet);
+                                    text(Core.bundle.get("feature.chat.ui.channels-failed", "Channels failed to load."))
+                                            .color(Color.scarlet)
+                                            .fontScale(1.0f)
+                                            .wrap()
+                                            .center();
+                                    text(chanErr).color(Color.gray).fontScale(0.85f).wrap().center();
+                                    button(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"), () -> {
+                                        if (service != null) {
+                                            service.refreshChannels();
                                         }
-                                    });
+                                    })
+                                            .style(WebStyles.secondary())
+                                            .height(unit(10))
+                                            .children(() -> {
+                                                icon(Icon.refresh).size(unit(4));
+                                                text(Core.bundle.get("feature.chat.ui.retry-channels",
+                                                        "Retry Channels"));
+                                            });
+                                });
+                            }
 
-                    return virtualList.marginBottom(unit(2)).grow();
-                } else {
-                    return column().padding(unit(4)).top().left().children(() -> {
-                        text(Core.bundle.get("feature.chat.ui.empty-messages", "No messages yet."))
-                                .color(Color.gray)
-                                .fontScale(0.9f)
-                                .left();
-                    });
+                            return column().padding(unit(4)).top().left().children(() -> {
+                                text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
+                                        .color(Color.gray)
+                                        .fontScale(0.9f)
+                                        .left();
+                            });
+                        }).grow();
+                    }).grow();
                 }
+
+                return column().grow().top().left().gap(unit(1)).children(() -> {
+                    dynamic(showRefreshErrorBanner, show -> {
+                        if (Boolean.TRUE.equals(show)) {
+                            return card().growX().padding(unit(1.5f)).children(() -> {
+                                row().growX().gap(unit(1)).center().children(() -> {
+                                    icon(Icon.warning).size(unit(4)).color(Color.scarlet);
+                                    text(Core.bundle.get("feature.chat.ui.refresh-failed",
+                                            "Failed to refresh messages."))
+                                                    .color(Color.scarlet)
+                                                    .fontScale(0.85f)
+                                                    .growX()
+                                                    .left();
+                                    button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
+                                        String activeId = store.channels().currentActiveId();
+                                        if (activeId != null && service != null) {
+                                            service.loadMessages(activeId);
+                                        }
+                                    })
+                                            .style(WebStyles.secondary())
+                                            .height(unit(8))
+                                            .children(() -> {
+                                                icon(Icon.refresh).size(unit(4));
+                                                text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
+                                            });
+                                });
+                            });
+                        }
+                        return null;
+                    });
+
+                    dynamic(showEndOfHistory, show -> {
+                        if (Boolean.TRUE.equals(show)) {
+                            return row().top().center().growX().padding(unit(2)).children(() -> {
+                                text(Core.bundle.get("feature.chat.ui.end-of-history", "Beginning of chat history"))
+                                        .color(Color.gray)
+                                        .fontScale(0.85f);
+                            });
+                        }
+                        return null;
+                    });
+
+                    dynamic(store.messages().loadingOlder(), loading -> {
+                        if (Boolean.TRUE.equals(loading)) {
+                            return row().top().left().padding(unit(2)).children(() -> {
+                                text(Core.bundle.get("feature.chat.ui.loading-older", "Loading older messages..."))
+                                        .color(Color.gray)
+                                        .fontScale(0.85f)
+                                        .left();
+                            });
+                        }
+                        return null;
+                    });
+
+                    dynamic(hasMessages, available -> {
+                        if (Boolean.TRUE.equals(available)) {
+                            virtualList = virtualList(
+                                    groupedMessages,
+                                    MessageGroup::getKey,
+                                    ChatMessageHeightCalculator::calculateHeight,
+                                    item -> new MessageGroupView(item, store, service))
+                                            .grow()
+                                            .gap(unit(0.75f))
+                                            .overscan(3)
+                                            .onReachTop(50f, () -> {
+                                                String activeId = store.channels().currentActiveId();
+                                                List<ChatMessage> msgs = store.messages().currentActive();
+                                                if (activeId != null && !activeId.isEmpty() && service != null
+                                                        && msgs != null
+                                                        && !msgs.isEmpty() && !store.messages().isLoadingOlder()
+                                                        && !store.messages().isFullyLoaded(activeId)) {
+                                                    service.fetchOlderMessages(activeId);
+                                                }
+                                            });
+
+                            return virtualList.marginBottom(unit(2)).grow();
+                        }
+
+                        return dynamic(store.messages().activeLoadingInitial(), isLoading -> {
+                            if (Boolean.TRUE.equals(isLoading)) {
+                                return Loader.centered();
+                            }
+
+                            return dynamic(store.messages().activeError(), err -> {
+                                if (err != null && !err.trim().isEmpty()) {
+                                    return column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
+                                        icon(Icon.warning).size(unit(6)).color(Color.scarlet);
+                                        text(Core.bundle.get("feature.chat.ui.error.messages",
+                                                "Failed to load messages."))
+                                                        .color(Color.scarlet)
+                                                        .fontScale(1.0f)
+                                                        .wrap()
+                                                        .center();
+                                        text(err).color(Color.gray).fontScale(0.85f).wrap().center();
+                                        button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
+                                            String activeId = store.channels().currentActiveId();
+                                            if (activeId != null && service != null) {
+                                                service.loadMessages(activeId);
+                                            }
+                                        })
+                                                .style(WebStyles.secondary())
+                                                .height(unit(10))
+                                                .children(() -> {
+                                                    icon(Icon.refresh).size(unit(4));
+                                                    text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
+                                                });
+                                    });
+                                }
+
+                                return column().padding(unit(4)).top().left().children(() -> {
+                                    text(Core.bundle.get("feature.chat.ui.empty-messages", "No messages yet."))
+                                            .color(Color.gray)
+                                            .fontScale(0.9f)
+                                            .left();
+                                });
+                            }).grow();
+                        }).grow();
+                    }).grow();
+                }).grow();
             }).grow();
         }).element();
     }
 
     public void scrollToBottom() {
-        if (virtualList != null) {
-            Core.app.post(() -> {
-                if (virtualList != null && virtualList.pane() != null) {
-                    ScrollPane pane = virtualList.pane();
-                    pane.layout();
-                    pane.setScrollYForce(pane.getMaxY());
-                    pane.updateVisualScroll();
-                    Core.app.post(() -> {
-                        if (virtualList != null && virtualList.pane() != null) {
-                            ScrollPane p = virtualList.pane();
-                            p.layout();
-                            p.setScrollYForce(p.getMaxY());
-                            p.updateVisualScroll();
-                        }
-                    });
-                }
-            });
-        }
+        Core.app.post(() -> {
+            if (virtualList != null && virtualList.pane() != null) {
+                ScrollPane pane = virtualList.pane();
+                pane.layout();
+                pane.setScrollYForce(pane.getMaxY());
+                pane.updateVisualScroll();
+            }
+        });
     }
 
     static class MessageGroupView extends BaseComponent {

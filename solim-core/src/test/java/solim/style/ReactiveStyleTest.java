@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.runtime.SignalDispatcher;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 class ReactiveStyleTest {
 

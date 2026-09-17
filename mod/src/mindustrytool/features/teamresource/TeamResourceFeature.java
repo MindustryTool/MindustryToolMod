@@ -19,9 +19,9 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
-import solim.signal.Signal;
-import solim.signal.Signals;
-import solim.ui.Units;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
+import solim.core.Units;
 
 /**
  * Feature responsible for registering and managing the Team Resource Tracker

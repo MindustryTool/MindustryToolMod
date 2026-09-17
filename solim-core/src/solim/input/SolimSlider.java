@@ -1,13 +1,14 @@
 package solim.input;
+import solim.reactive.TwoWayBinding;
 
 import arc.scene.ui.Slider;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.modifier.ElementConfig;
-import solim.layout.CellConfig;
+import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import java.util.Objects;
 
 /** Slider widget bound to Signal&lt;Float&gt;. */

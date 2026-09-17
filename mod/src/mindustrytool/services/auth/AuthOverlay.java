@@ -14,7 +14,7 @@ import mindustry.ui.Styles;
 import mindustrytool.events.LoginUriEvent;
 import mindustrytool.models.response.UserSession;
 import solim.core.Component;
-import solim.signal.Computed;
+import solim.reactive.Computed;
 
 public class AuthOverlay {
     private static AuthOverlay instance;

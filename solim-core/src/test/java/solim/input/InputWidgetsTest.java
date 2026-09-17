@@ -7,7 +7,7 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 class InputWidgetsTest {
 

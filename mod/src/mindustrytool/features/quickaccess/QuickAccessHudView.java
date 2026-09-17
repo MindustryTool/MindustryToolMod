@@ -19,8 +19,8 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.Hud;
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 import mindustrytool.components.WebStyles;
 
 /**
@@ -43,26 +43,27 @@ public class QuickAccessHudView extends BaseComponent {
         }
     }
 
-    private final QuickAccessFeature parentFeature;
+    private final QuickAccessFeature feature;
     private @Nullable Hud hud;
 
-    public QuickAccessHudView(QuickAccessFeature parentFeature) {
-        this.parentFeature = parentFeature;
+    public QuickAccessHudView(QuickAccessFeature feature) {
+        this.feature = feature;
     }
 
     @Override
     protected Element build() {
-        parentFeature.healDisplayOrder();
-        Readable<Float> scale = parentFeature.scaleConfig.signal();
+        feature.healDisplayOrder();
+        Readable<Float> scale = feature.scaleConfig.signal();
         Readable<Float> buttonSize = scale.map(s -> unit(11f) * s);
         Readable<Float> iconSize = scale.map(s -> unit(7f) * s);
 
         Readable<List<HudItem>> items = Signal.computed(() -> {
-            Seq<String> stored = parentFeature.displayOrderConfig.signal().get();
-            Set<String> hidden = parentFeature.hiddenFeaturesConfig.signal().get();
+            Seq<String> stored = feature.displayOrderConfig.signal().get();
+            Set<String> hidden = feature.hiddenFeaturesConfig.signal().get();
+            Set<String> shown = feature.shownFeaturesConfig.signal().get();
             Seq<String> normalized = QuickAccessFeature.normalizeDisplayOrder(
-                    parentFeature.quickAccessFeatures(), stored);
-            return computeVisibleItems(normalized, hidden);
+                    feature.quickAccessFeatures(), stored);
+            return computeVisibleItems(normalized, hidden, shown);
         });
 
         hud = hud(() -> {
@@ -73,45 +74,52 @@ public class QuickAccessHudView extends BaseComponent {
                     .border(1.5f, WebStyles.Colors.BORDER)
                     .center()
                     .children(() -> {
-                        dynamic(parentFeature.hideDragHandleConfig.signal(), hide -> {
+                        dynamic(feature.hideDragHandleConfig.signal(), hide -> {
                             if (!Boolean.TRUE.equals(hide)) {
                                 return button()
                                         .style(WebStyles.ghost())
                                         .size(buttonSize)
                                         .children(() -> icon(Icon.move).size(iconSize))
-                                        .draggable(parentFeature.xSignal, parentFeature.ySignal);
+                                        .draggable(feature.xSignal, feature.ySignal);
                             }
                             return null;
                         });
 
-                        grid(parentFeature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items,
+                        grid(feature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items,
                                 HudItem::id,
-                                item -> createItemButton(item, buttonSize, iconSize))
+                                item -> createItemButton(feature, item, buttonSize, iconSize))
                                         .gap(unit(1));
                     });
         });
 
-        hud.opacity(parentFeature.opacityConfig.signal());
-        hud.position(parentFeature.xSignal, parentFeature.ySignal);
+        hud.opacity(feature.opacityConfig.signal());
+        hud.position(feature.xSignal, feature.ySignal);
 
         return hud.element();
     }
 
-    private List<HudItem> computeVisibleItems(@Nullable Seq<String> order, @Nullable Set<String> hidden) {
+    private List<HudItem> computeVisibleItems(
+            @Nullable Seq<String> order,
+            @Nullable Set<String> hidden,
+            @Nullable Set<String> shown) {
         List<HudItem> list = new ArrayList<>();
-        for (Feature f : parentFeature.orderedFeatures(order)) {
+        for (Feature f : feature.orderedFeatures(order)) {
             FeatureMetadata meta = f.getMetadata();
-            if (hidden != null && hidden.contains(meta.getId())) {
+            String id = meta.getId();
+            boolean isHidden = hidden != null && hidden.contains(id);
+            boolean isShown = shown != null && shown.contains(id);
+            boolean visible = isHidden ? false : (isShown ? true : meta.isQuickAccessByDefault());
+            if (!visible) {
                 continue;
             }
-            list.add(new HudItem(meta.getId(), f));
+            list.add(new HudItem(id, f));
         }
         list.add(new HudItem("__settings__", null));
         return list;
     }
 
-    private Component createItemButton(HudItem item, Readable<Float> buttonSize, Readable<Float> iconSize) {
-
+    private Component createItemButton(QuickAccessFeature feature, HudItem item, Readable<Float> buttonSize,
+            Readable<Float> iconSize) {
         if (item.feature != null) {
             Feature f = item.feature;
             FeatureMetadata meta = f.getMetadata();
@@ -133,9 +141,9 @@ public class QuickAccessHudView extends BaseComponent {
                         f.setEnabled(!f.isEnabled());
                     })
                     .onLongClick(300L, () -> {
-                        Prov<SolimDialog> settingDlg = f.getSettingDialog();
-                        if (settingDlg != null) {
-                            settingDlg.get().show();
+                        Prov<SolimDialog> dlg = f.getSettingDialog() != null ? f.getSettingDialog() : f.getMainDialog();
+                        if (dlg != null) {
+                            dlg.get().show();
                         }
                     })
                     .children(() -> icon(meta.getIcon()).size(iconSize)
@@ -145,6 +153,12 @@ public class QuickAccessHudView extends BaseComponent {
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .onClick(() -> new FeatureSettingDialog().show())
+                    .onLongClick(300L, () -> {
+                        Prov<SolimDialog> dlg = feature.getSettingDialog();
+                        if (dlg != null) {
+                            dlg.get().show();
+                        }
+                    })
                     .children(() -> icon(Icon.settings).size(iconSize));
         }
     }

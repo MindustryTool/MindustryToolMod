@@ -11,7 +11,7 @@ import arc.util.Scaling;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 
 class NetworkImageTest {

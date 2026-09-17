@@ -3,7 +3,6 @@
 ## Purpose
 
 Provide an on-screen virtual joystick that decouples player unit movement from camera panning, letting players move freely while independently panning and scouting across the map on mobile and desktop, with a repositionable, customizable widget.
-
 ## Requirements
 ### Requirement: Virtual Joystick Display
 
@@ -50,31 +49,43 @@ The system SHALL provide a drag handle adjacent to the joystick base that reposi
 
 ### Requirement: Decoupled Movement and Camera
 
-The system SHALL move the player unit in the direction of the joystick knob while the knob is held at the unit's speed, SHALL stop the unit when the knob is released, SHALL allow camera panning without moving the unit, and SHALL snap the camera onto the player unit when the knob is double-tapped.
+The system SHALL move the player unit in the direction of the joystick knob while the knob is held at the unit's speed, SHALL stop the unit when the knob is released, SHALL allow camera panning without moving the unit, and SHALL snap the camera onto the player unit when the knob is double-tapped. When the free-camera setting is disabled, the camera SHALL smoothly follow the player unit during joystick movement, with temporary pan override support. When one finger holds the joystick knob and a second finger touches the screen, the system SHALL convert the second finger gesture into camera panning and SHALL suppress pinch-to-zoom.
 
 #### Scenario: Knob moves the unit
-
 - **WHEN** the player holds a joystick direction
 - **THEN** the player unit moves in that direction at its speed
 
 #### Scenario: Release stops the unit
-
 - **WHEN** the player releases the knob
 - **THEN** the unit stops moving
 
-#### Scenario: Camera pan is decoupled
+#### Scenario: Camera follows unit when free-camera disabled
+- **WHEN** the player moves using the joystick and free-camera is disabled
+- **THEN** the camera smoothly tracks the player unit position
 
-- **WHEN** the player swipes the screen to pan the camera
-- **THEN** the camera moves freely and the player unit does not follow
+#### Scenario: Temporary pan override
+- **WHEN** the player drags the map while free-camera is disabled
+- **THEN** the camera pans freely to inspect the world, and smoothly returns to the unit 0.5s after touch release
+
+#### Scenario: Second finger pans instead of zooming while joystick is held
+- **WHEN** the player holds the joystick knob with one finger and drags the screen with a second finger
+- **THEN** the second finger movement pans the camera and pinch-to-zoom is suppressed
+
+#### Scenario: Normal pinch zoom when joystick idle
+- **WHEN** the player performs a two-finger pinch gesture while the joystick knob is not held
+- **THEN** standard camera zoom scaling occurs
+
+#### Scenario: Free camera mode allows independent panning
+- **WHEN** free-camera is enabled
+- **THEN** the camera does not follow the unit during joystick movement and only moves when panned
 
 #### Scenario: Double-tap recenters the camera
-
 - **WHEN** the player double-taps the knob within the tap interval
 - **THEN** the camera position snaps directly onto the player unit
 
 ### Requirement: Input Handler Override
 
-The system SHALL replace `Vars.control.input` via `Vars.control.setInput(...)` while the feature is enabled, using a `MobileInput` subclass on mobile and a `DesktopInput` subclass on desktop, and SHALL restore the original handler when the feature is disabled.
+The system SHALL replace `Vars.control.input` via `Vars.control.setInput(...)` while the feature is enabled, using a `MobileInput` subclass on mobile and a `DesktopInput` subclass on desktop, and SHALL restore the original handler when the feature is disabled. The `MobileInput` subclass SHALL NOT directly override any method marked final in `InputHandler` on Android (such as `pinch` or `pinchStop`), delegating gesture interception to an independent `GestureListener` instead.
 
 #### Scenario: Mobile uses the joystick mobile handler
 
@@ -91,27 +102,32 @@ The system SHALL replace `Vars.control.input` via `Vars.control.setInput(...)` w
 - **WHEN** the feature is disabled
 - **THEN** the original `InputHandler` captured before the swap is restored
 
+#### Scenario: Android bytecode verification passes
+
+- **WHEN** the mod is loaded on Android Mindustry 160.4+
+- **THEN** `JoystickMobileInput` loads without `LinkageError`
+
 ### Requirement: Customization and Settings
 
-The system SHALL provide a scale slider for the joystick diameter, an opacity slider for its transparency, a reset button restoring the default position, and SHALL be disabled by default.
+The system SHALL provide a scale slider for the joystick diameter, an opacity slider for its transparency, a free camera toggle, a reset button restoring the default position, and SHALL be disabled by default.
 
 #### Scenario: Size slider changes diameter
-
 - **WHEN** the player adjusts the size slider
 - **THEN** the joystick diameter updates reactively
 
 #### Scenario: Opacity slider changes transparency
-
 - **WHEN** the player adjusts the opacity slider
 - **THEN** the joystick transparency updates reactively
 
-#### Scenario: Reset restores default position
+#### Scenario: Free camera toggle
+- **WHEN** the player toggles the free camera setting in the joystick settings view
+- **THEN** the free-camera configuration in ModSettings updates reactively
 
+#### Scenario: Reset restores default position
 - **WHEN** the player presses the reset button
 - **THEN** the joystick returns to the default bottom-left position
 
 #### Scenario: Disabled by default
-
 - **WHEN** the mod is loaded for the first time
 - **THEN** the joystick feature is disabled
 

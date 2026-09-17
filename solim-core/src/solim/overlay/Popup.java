@@ -28,8 +28,8 @@ import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
-import solim.signal.Effect;
-import solim.signal.Readable;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 
 /**
  * Floating context menu: a scene-hosted, non-modal menu with reactive provider

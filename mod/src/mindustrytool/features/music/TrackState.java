@@ -2,7 +2,7 @@ package mindustrytool.features.music;
 
 import arc.audio.Music;
 import arc.struct.Seq;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Reactive view over a single {@link Music} track shown in the settings UI.

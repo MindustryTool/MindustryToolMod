@@ -1,6 +1,9 @@
 package mindustrytool.features.joystick;
 
 import arc.Core;
+import arc.input.GestureDetector;
+import arc.input.GestureDetector.GestureListener;
+import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.math.geom.Rect;
 import arc.math.geom.Vec2;
@@ -20,6 +23,7 @@ import mindustry.gen.Payloadc;
 import mindustry.gen.Unit;
 import mindustry.input.MobileInput;
 import mindustry.type.UnitType;
+import mindustrytool.features.settings.ModSettings;
 
 import static mindustry.Vars.*;
 
@@ -34,9 +38,78 @@ public class JoystickMobileInput extends MobileInput {
     private static final float JOYSTICK_OFFSET = 80f;
 
     private final JoystickFeature feature;
+    private final Vec2 lastPinchPan = new Vec2();
+    private boolean pinchPanning;
+    private boolean isPanning;
+    private long lastPanTime;
 
     public JoystickMobileInput(JoystickFeature feature) {
         this.feature = feature;
+    }
+
+    public void cancelPanDelay() {
+        isPanning = false;
+        pinchPanning = false;
+        lastPanTime = 0;
+    }
+
+    @Override
+    public void add() {
+        super.add();
+        Core.input.removeProcessor(detector);
+        detector = new GestureDetector(20, 0.5f, 2, 0.15f, new JoystickGestureListener());
+        Core.input.addProcessor(detector);
+    }
+
+    @Override
+    public void remove() {
+        super.remove();
+        pinchPanning = false;
+        isPanning = false;
+    }
+
+    @Override
+    public void update() {
+        super.update();
+        updateCamera();
+    }
+
+    private void updateCamera() {
+        if (Boolean.TRUE.equals(ModSettings.freeCamera.get())) {
+            return;
+        }
+        if (state == null || !state.isGame() || player == null || player.dead()) {
+            return;
+        }
+        Unit unit = player.unit();
+        if (unit == null || unit.dead) {
+            return;
+        }
+        if (!isPanning && !pinchPanning && Time.timeSinceMillis(lastPanTime) > 500) {
+            Core.camera.position.lerpDelta(unit, 0.08f);
+        }
+    }
+
+    @Override
+    public boolean pan(float x, float y, float deltaX, float deltaY) {
+        isPanning = true;
+        lastPanTime = Time.millis();
+        return super.pan(x, y, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean panStop(float x, float y, int pointer, KeyCode button) {
+        isPanning = false;
+        lastPanTime = Time.millis();
+        return super.panStop(x, y, pointer, button);
+    }
+
+    @Override
+    public boolean zoom(float initialDistance, float distance) {
+        if (feature.isKnobHeld()) {
+            return false;
+        }
+        return super.zoom(initialDistance, distance);
     }
 
     @Override
@@ -171,5 +244,76 @@ public class JoystickMobileInput extends MobileInput {
             return blockUnit.tile() instanceof ControlBlock && !((ControlBlock) blockUnit.tile()).shouldAutoTarget();
         }
         return false;
+    }
+
+    /**
+     * Dedicated gesture listener that delegates to {@link JoystickMobileInput}.
+     * Intercepts pinch gestures to support camera panning while the joystick knob is held.
+     * By implementing {@link GestureListener} on an independent class rather than overriding
+     * {@link mindustry.input.InputHandler}, this avoids Dalvik LinkageErrors caused by R8 devirtualization.
+     */
+    private class JoystickGestureListener implements GestureListener {
+
+        @Override
+        public boolean touchDown(float x, float y, int pointer, KeyCode button) {
+            return false;
+        }
+
+        @Override
+        public boolean tap(float x, float y, int count, KeyCode button) {
+            return JoystickMobileInput.this.tap(x, y, count, button);
+        }
+
+        @Override
+        public boolean longPress(float x, float y) {
+            return JoystickMobileInput.this.longPress(x, y);
+        }
+
+        @Override
+        public boolean fling(float velocityX, float velocityY, KeyCode button) {
+            return false;
+        }
+
+        @Override
+        public boolean pan(float x, float y, float deltaX, float deltaY) {
+            return JoystickMobileInput.this.pan(x, y, deltaX, deltaY);
+        }
+
+        @Override
+        public boolean panStop(float x, float y, int pointer, KeyCode button) {
+            return JoystickMobileInput.this.panStop(x, y, pointer, button);
+        }
+
+        @Override
+        public boolean zoom(float initialDistance, float distance) {
+            return JoystickMobileInput.this.zoom(initialDistance, distance);
+        }
+
+        @Override
+        public boolean pinch(Vec2 initialPointer1, Vec2 initialPointer2, Vec2 pointer1, Vec2 pointer2) {
+            if (feature.isKnobHeld()) {
+                Vec2 panPointer = feature.activePointer == 0 ? pointer2 : pointer1;
+                if (!pinchPanning) {
+                    pinchPanning = true;
+                    lastPinchPan.set(panPointer);
+                } else {
+                    float dx = panPointer.x - lastPinchPan.x;
+                    float dy = panPointer.y - lastPinchPan.y;
+                    lastPinchPan.set(panPointer);
+                    JoystickMobileInput.this.pan(panPointer.x, panPointer.y, dx, dy);
+                }
+                isPanning = true;
+                lastPanTime = Time.millis();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void pinchStop() {
+            pinchPanning = false;
+            isPanning = false;
+            lastPanTime = Time.millis();
+        }
     }
 }

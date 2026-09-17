@@ -16,7 +16,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.input.SolimTextField;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import arc.mock.MockApplication;
 import arc.mock.MockGL20;
 import arc.mock.MockGraphics;

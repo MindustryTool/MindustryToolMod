@@ -9,7 +9,7 @@ import solim.core.BaseComponent;
 import solim.display.NetworkImage;
 import solim.layout.Column;
 import solim.layout.SolimStack;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Fixed-size user avatar: network photo on top of a deterministic

@@ -12,8 +12,8 @@ import mindustry.world.Block;
 import mindustry.world.blocks.storage.CoreBlock;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 public class GodModeCoreDialog extends SolimDialog {
 

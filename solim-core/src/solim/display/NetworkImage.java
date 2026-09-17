@@ -29,11 +29,11 @@ import mindustry.core.Version;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.runtime.ComponentContext;
-import solim.layout.CellConfig;
+import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
-import solim.signal.Effect;
-import solim.signal.Readable;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 import solim.graphics.RoundedGenerator;
 
 public final class NetworkImage implements Component, CellConfig<NetworkImage>, ElementConfig<NetworkImage> {

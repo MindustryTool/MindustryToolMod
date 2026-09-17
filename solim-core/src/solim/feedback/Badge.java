@@ -4,8 +4,8 @@ import arc.scene.ui.Label;
 import arc.scene.ui.layout.Table;
 import java.util.function.Consumer;
 import solim.core.Disposable;
-import solim.signal.Computed;
-import solim.signal.Effect;
+import solim.reactive.Computed;
+import solim.reactive.Effect;
 
 /** Badge - lightweight label for counts/status. */
 public final class Badge implements Disposable {

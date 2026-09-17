@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
 import solim.runtime.ComponentContext;
-import solim.signal.Effect;
-import solim.signal.Readable;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 
 /**
  * Composite continuous-curvature rounded drawable supporting independent background fill

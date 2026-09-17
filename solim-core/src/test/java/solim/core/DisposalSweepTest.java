@@ -55,17 +55,16 @@ import solim.layout.Wrap;
 import solim.overlay.Popup;
 import solim.runtime.ComponentContext;
 import solim.runtime.SignalDispatcher;
-import solim.signal.Computed;
-import solim.signal.Signal;
-import solim.ui.Dynamic;
-import solim.ui.ForEach;
-import solim.ui.SettingsPanel;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
+import solim.reactive.Dynamic;
+import solim.reactive.ForEach;
 
 /**
  * Uniform disposal sweep over every {@link Disposable} in solim packages.
  *
  * <p>Deep behavior for inputs lives in {@code solim.input.TwoWayBindingDisposalTest},
- * reactive primitives in {@code solim.signal.DisposalPrimitivesTest}, the reconciler in
+ * reactive primitives in {@code solim.reactive.DisposalPrimitivesTest}, the reconciler in
  * {@code solim.runtime.StructuralReconcilerDisposalTest}, overlays in
  * {@code solim.overlay} disposal tests, and config/graphics/feedback in their own
  * disposal tests. This sweep pins the shared contract plus mounting modes here.

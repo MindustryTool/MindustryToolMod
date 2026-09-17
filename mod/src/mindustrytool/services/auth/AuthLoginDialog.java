@@ -7,8 +7,8 @@ import mindustry.Vars;
 import mindustrytool.components.Loader;
 import solim.UI;
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public class AuthLoginDialog extends SolimDialog {
 

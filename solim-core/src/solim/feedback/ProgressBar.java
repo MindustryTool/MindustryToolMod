@@ -4,8 +4,8 @@ import arc.scene.ui.Image;
 import arc.scene.ui.layout.Table;
 import java.util.function.Consumer;
 import solim.core.Disposable;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 
 /** ProgressBar bound to Signal&lt;Float&gt; 0..1. */
 public final class ProgressBar implements Disposable {

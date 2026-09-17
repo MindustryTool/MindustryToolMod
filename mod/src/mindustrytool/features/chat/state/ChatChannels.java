@@ -7,14 +7,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import mindustrytool.models.response.ChannelDto;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public final class ChatChannels {
 
     private final Signal<List<ChannelDto>> channels = Signal.of(Collections.emptyList());
     private final Signal<String> activeChannelId;
+    private final Signal<Boolean> loading = Signal.of(false);
+    private final Signal<String> error = Signal.of(null);
 
     private final Computed<ChannelDto> active;
 
@@ -36,6 +38,30 @@ public final class ChatChannels {
 
     public Readable<List<ChannelDto>> all() {
         return channels;
+    }
+
+    public Readable<Boolean> loading() {
+        return loading;
+    }
+
+    public boolean isLoading() {
+        return Boolean.TRUE.equals(loading.peek());
+    }
+
+    public void setLoading(boolean isLoading) {
+        loading.set(isLoading);
+    }
+
+    public Readable<String> error() {
+        return error;
+    }
+
+    public @Nullable String currentError() {
+        return error.peek();
+    }
+
+    public void setError(@Nullable String errorMessage) {
+        error.set(errorMessage);
     }
 
     public Signal<String> activeId() {

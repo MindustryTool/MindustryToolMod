@@ -17,7 +17,7 @@ import mindustrytool.features.playerconnect.PcRoomClosed;
 import mindustrytool.features.playerconnect.PcRoomOpened;
 import mindustrytool.services.MindustryTool;
 import solim.config.ConfigValue;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 public class ChatPresence {
 

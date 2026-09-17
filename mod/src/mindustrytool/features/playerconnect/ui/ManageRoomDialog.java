@@ -12,8 +12,8 @@ import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import solim.core.BaseComponent;
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 public class ManageRoomDialog extends SolimDialog {
 

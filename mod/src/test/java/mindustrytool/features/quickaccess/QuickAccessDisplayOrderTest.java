@@ -206,4 +206,20 @@ class QuickAccessDisplayOrderTest {
         assertSame(b, ordered.get(0));
         assertSame(a, ordered.get(1));
     }
+
+    @Test
+    void quickAccessFeatures_includesDefaultFalseAndExcludesDev() {
+        TestFeature defaultOn = new TestFeature("qa-on", true, false);
+        TestFeature defaultOff = new TestFeature("qa-off", false, false);
+        TestFeature devStub = new TestFeature("qa-dev", true, true);
+        FeatureManager.register(defaultOn, defaultOff, devStub);
+
+        QuickAccessFeature feature = new QuickAccessFeature();
+        Seq<Feature> candidates = feature.quickAccessFeatures();
+
+        assertTrue(candidates.contains(defaultOn));
+        assertTrue(candidates.contains(defaultOff));
+        assertFalse(candidates.contains(devStub));
+        assertFalse(candidates.contains(feature));
+    }
 }

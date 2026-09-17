@@ -1,4 +1,5 @@
 package solim.layout;
+import solim.modifier.CellConfig;
 
 import arc.scene.Element;
 import arc.scene.event.Touchable;
@@ -12,11 +13,11 @@ import solim.core.Disposable;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
-import solim.signal.Readable;
-import solim.ui.Ui;
+import solim.reactive.Readable;
+import solim.core.Ui;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
-import solim.signal.Effect;
+import solim.reactive.Effect;
 
 /** Row layout — horizontal Table wrapper. */
 public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {

@@ -21,8 +21,8 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.models.response.PlayerConnectRoom;
 import solim.core.BaseComponent;
-import solim.signal.Computed;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 public class RoomBrowserView extends BaseComponent {
 

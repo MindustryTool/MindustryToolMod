@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.display.SolimImage;
 import solim.runtime.ParentStack;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import arc.mock.MockGraphics;
 
 class IconTest {

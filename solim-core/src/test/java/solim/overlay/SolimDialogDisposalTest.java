@@ -31,7 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.display.Text;
 import solim.runtime.SignalDispatcher;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 class SolimDialogDisposalTest {
 

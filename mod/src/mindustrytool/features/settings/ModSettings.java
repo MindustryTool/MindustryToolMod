@@ -15,6 +15,8 @@ public final class ModSettings {
 
     public static final ConfigValue<Seq<String>> featureOrder = GROUP.value("feature-order", Seq.with(), new OrderedSeqPersister());
     public static final ConfigValue<Boolean> betaParticipate = GROUP.boolValue("betaParticipate", false);
+    public static final ConfigValue<Boolean> sharePresence = GROUP.boolValue("share-presence", true);
+    public static final ConfigValue<Boolean> freeCamera = GROUP.boolValue("free-camera", false);
 
     private ModSettings() {}
 }

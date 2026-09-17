@@ -18,9 +18,9 @@ import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
-import solim.signal.Signals;
-import solim.ui.Units;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
+import solim.core.Units;
 
 /**
  * Controls game speed with a standalone draggable HUD. Applies only while

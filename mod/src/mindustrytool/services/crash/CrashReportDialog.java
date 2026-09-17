@@ -6,7 +6,7 @@ import arc.Core;
 import arc.files.Fi;
 import arc.util.Log;
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 /**
  * UI dialog for crash report opt-in and submission. Single Responsibility: render consent UI and

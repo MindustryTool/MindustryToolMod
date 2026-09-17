@@ -17,8 +17,8 @@ import mindustrytool.features.FeatureMetadata;
 import solim.core.BaseComponent;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Component responsible for building and managing a single feature's visual
@@ -88,7 +88,7 @@ public class FeatureCard extends BaseComponent {
                                 button(() -> showDialog(mainDialog)).style(WebStyles.ghost())
                                         .size(unit(11))
                                         .tooltip(Core.bundle.get("feature.button.open-dialog"))
-                                        .children(() -> icon(Icon.linkSmall).size(unit(7)));
+                                        .children(() -> icon(FileIcon.of("external-link.png")).size(unit(7)));
                             }
 
                             if (settingDialog != null) {

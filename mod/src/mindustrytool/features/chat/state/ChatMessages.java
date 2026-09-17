@@ -8,20 +8,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import mindustrytool.models.response.ChatMessage;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public final class ChatMessages {
 
     private final Signal<Map<String, List<ChatMessage>>> messages = Signal.of(new HashMap<>());
     private final Signal<Map<String, Boolean>> fullyLoaded = Signal.of(new HashMap<>());
     private final Signal<Boolean> loadingOlder = Signal.of(false);
+    private final Signal<Map<String, Boolean>> loadingInitial = Signal.of(new HashMap<>());
+    private final Signal<Map<String, String>> errors = Signal.of(new HashMap<>());
 
     private final Map<String, Readable<List<ChatMessage>>> channelComputeds = new HashMap<>();
 
     private final Computed<List<ChatMessage>> active;
     private final Computed<Boolean> activeFullyLoaded;
+    private final Computed<Boolean> activeLoadingInitial;
+    private final Computed<String> activeError;
 
     public ChatMessages(Readable<String> activeChannelId) {
         this.active = new Computed<>(() -> {
@@ -37,6 +41,16 @@ public final class ChatMessages {
             String id = activeChannelId.get();
             return id != null && Boolean.TRUE.equals(fullyLoaded.get().get(id));
         });
+
+        this.activeLoadingInitial = new Computed<>(() -> {
+            String id = activeChannelId.get();
+            return id != null && Boolean.TRUE.equals(loadingInitial.get().get(id));
+        });
+
+        this.activeError = new Computed<>(() -> {
+            String id = activeChannelId.get();
+            return id != null ? errors.get().get(id) : null;
+        });
     }
 
     public Readable<List<ChatMessage>> active() {
@@ -49,6 +63,52 @@ public final class ChatMessages {
 
     public Readable<Boolean> activeFullyLoaded() {
         return activeFullyLoaded;
+    }
+
+    public Readable<Boolean> activeLoadingInitial() {
+        return activeLoadingInitial;
+    }
+
+    public boolean isActiveLoadingInitial() {
+        return Boolean.TRUE.equals(activeLoadingInitial.peek());
+    }
+
+    public Readable<String> activeError() {
+        return activeError;
+    }
+
+    public @Nullable String currentActiveError() {
+        return activeError.peek();
+    }
+
+    public void setLoadingInitial(@Nullable String channelId, boolean loading) {
+        if (channelId == null) {
+            return;
+        }
+        Map<String, Boolean> next = new HashMap<>(loadingInitial.peek());
+        next.put(channelId, loading);
+        loadingInitial.set(next);
+    }
+
+    public boolean isLoadingInitial(@Nullable String channelId) {
+        return channelId != null && Boolean.TRUE.equals(loadingInitial.peek().get(channelId));
+    }
+
+    public void setError(@Nullable String channelId, @Nullable String errorMessage) {
+        if (channelId == null) {
+            return;
+        }
+        Map<String, String> next = new HashMap<>(errors.peek());
+        if (errorMessage != null) {
+            next.put(channelId, errorMessage);
+        } else {
+            next.remove(channelId);
+        }
+        errors.set(next);
+    }
+
+    public @Nullable String getError(@Nullable String channelId) {
+        return channelId != null ? errors.peek().get(channelId) : null;
     }
 
     public Readable<Boolean> loadingOlder() {
@@ -101,6 +161,7 @@ public final class ChatMessages {
         Map<String, List<ChatMessage>> next = copyState();
         next.put(channelId, Collections.unmodifiableList(list));
         messages.set(next);
+        setError(channelId, null);
     }
 
     public int prepend(@Nullable String channelId, @Nullable List<ChatMessage> oldMessages) {

@@ -3,8 +3,8 @@ package mindustrytool.features.chat.state;
 import arc.util.Nullable;
 import java.util.HashMap;
 import java.util.Map;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public final class ChatTranslations {
 
