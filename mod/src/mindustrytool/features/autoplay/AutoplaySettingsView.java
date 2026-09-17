@@ -8,10 +8,12 @@ import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.util.Strings;
 import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.layout.Direction;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -82,55 +84,72 @@ public class AutoplaySettingsView extends BaseComponent {
             Readable<Boolean> enabled = feature.disabledTasks.signal().map(disabled ->
                     disabled == null || !disabled.contains(task.getId()));
 
+            Readable<Boolean> isCurrent = feature.currentTaskId().map(id -> task.getId().equals(id));
+
+            Readable<Color> borderColor = isCurrent.map(current ->
+                    Boolean.TRUE.equals(current) ? WebStyles.Colors.CHIP_CHECKED_BORDER : WebStyles.Colors.SECTION_BORDER);
+
             Readable<Drawable> expandIcon = expanded.map(exp ->
-                    Boolean.TRUE.equals(exp) ? Icon.up : Icon.down);
+                    Boolean.TRUE.equals(exp)
+                            ? FileIcon.of("chevron-up.png", Icon.up)
+                            : FileIcon.of("chevron-down.png", Icon.down));
 
-            return column().growX().gap(unit(1)).children(() -> {
-                row().growX().gap(unit(1)).center().children(() -> {
-                    button()
-                            .style(WebStyles.ghost())
-                            .size(unit(11))
-                            .tooltip(Core.bundle.get("feature.autoplay.tooltip.reorder-up"))
-                            .onClick(() -> feature.moveTaskUp(task.getId()))
-                            .children(() -> icon(Icon.up).size(unit(6)));
+            return card()
+                    .growX()
+                    .padding(unit(2))
+                    .rounded(unit(2), WebStyles.Colors.SECTION_BG)
+                    .border(1f, borderColor)
+                    .onClick(() -> feature.setTaskEnabled(task.getId(), !Boolean.TRUE.equals(enabled.peek())))
+                    .children(() -> {
+                        column().growX().gap(unit(2)).children(() -> {
+                            row().growX().gap(unit(2)).children(() -> {
+                                column().gap(unit(1)).center().children(() -> {
+                                    button()
+                                            .style(WebStyles.ghost())
+                                            .size(unit(11))
+                                            .tooltip(Core.bundle.get("feature.autoplay.tooltip.reorder-up"))
+                                            .onClick(() -> feature.moveTaskUp(task.getId()))
+                                            .children(() -> icon(FileIcon.of("chevron-up.png", Icon.up)).size(unit(7)));
 
-                    button()
-                            .style(WebStyles.ghost())
-                            .size(unit(11))
-                            .tooltip(Core.bundle.get("feature.autoplay.tooltip.reorder-down"))
-                            .onClick(() -> feature.moveTaskDown(task.getId()))
-                            .children(() -> icon(Icon.down).size(unit(6)));
+                                    button()
+                                            .style(WebStyles.ghost())
+                                            .size(unit(11))
+                                            .tooltip(Core.bundle.get("feature.autoplay.tooltip.reorder-down"))
+                                            .onClick(() -> feature.moveTaskDown(task.getId()))
+                                            .children(() -> icon(FileIcon.of("chevron-down.png", Icon.down)).size(unit(7)));
+                                });
 
-                    button(() -> feature.setTaskEnabled(task.getId(), !Boolean.TRUE.equals(enabled.peek())))
-                            .style(WebStyles.filterChipText())
-                            .checked(enabled)
-                            .paddingX(unit(2))
-                            .height(unit(8))
-                            .children(() -> {
-                                icon(task.getIcon()).size(unit(4));
-                                text(task.getName()).color(enabled.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray));
+                                divider(Direction.Y);
+
+                                column().growX().paddingTop(unit(2)).gap(unit(2)).children(() -> {
+                                    row().growX().gap(unit(2)).left().children(() -> {
+                                        icon(task.getIcon()).size(unit(5));
+                                        text(task.getName())
+                                                .color(enabled.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray))
+                                                .wrap(true);
+                                    });
+
+                                    text(task.status()).growX().left().wrap(true).color(WebStyles.Colors.GHOST_FG);
+                                });
+
+                                if (task.hasSettings()) {
+                                    button()
+                                            .style(WebStyles.ghost())
+                                            .size(unit(11))
+                                            .tooltip(Core.bundle.get("feature.autoplay.tooltip.configure"))
+                                            .onClick(() -> expanded.set(!Boolean.TRUE.equals(expanded.peek())))
+                                            .children(() -> icon(expandIcon).size(unit(7)));
+                                }
                             });
 
-                    spacer();
-
-                    text(task.status()).color(WebStyles.Colors.GHOST_FG);
-
-                    if (task.hasSettings()) {
-                        button()
-                                .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .tooltip(Core.bundle.get("feature.autoplay.tooltip.configure"))
-                                .onClick(() -> expanded.set(!Boolean.TRUE.equals(expanded.peek())))
-                                .children(() -> icon(expandIcon).size(unit(6)));
-                    }
-                });
-
-                if (task.hasSettings()) {
-                    card().growX().padding(unit(2)).visible(expanded).children(() -> {
-                        task.buildSettings(feature);
-                    });
-                }
-            }).element();
+                            if (task.hasSettings()) {
+                                collapser(expanded, () -> {
+                                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                                    task.buildSettings(feature);
+                                }).gap(unit(2)).growX();
+                            }
+                        });
+                    }).element();
         }
     }
 }

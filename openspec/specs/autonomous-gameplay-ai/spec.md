@@ -27,8 +27,10 @@
    - MUST kite or maintain maximum weapon range while engaging targets.
 
 6. **Task 4 - Repair:**
-   - MUST detect healing capability across healing weapons, repair beam abilities, and build beams.
-   - MUST repair damaged friendly buildings and heal damaged allied units across the map.
+    - MUST detect healing capability across healing weapons (`w.bullet.heals()` or `RepairBeamWeapon`) and repair field abilities (`RepairFieldAbility`).
+    - Units lacking both healing weapons and repair field abilities MUST be deemed incapable of healing and yield immediately, regardless of building capabilities (`canBuild()`).
+    - When a unit only possesses `RepairFieldAbility` without healing weapons, it MUST navigate within aura distance to heal targets passively and suppress non-healing weapon firing against allied blocks or units.
+    - MUST repair damaged friendly buildings and heal damaged allied units across the map.
 
 7. **Task 5 - Follow & Assist:**
    - MUST allow following another player in multiplayer (either a selected player or any building player).
@@ -51,8 +53,11 @@
     - MUST render the active task icon above the player unit and a dashed line pointing to the current objective.
 
 11. **Settings & Internationalization:**
-    - MUST provide task reordering (up/down), per-task enable toggles, and live task statuses.
-    - All user-visible strings MUST be translatable via `bundle.properties`.
+     - MUST provide task reordering (up/down), per-task enable toggles, and live task statuses.
+     - Each task row MUST be enclosed in a rounded Card with a background and border.
+     - The task status / reason to skip MUST be positioned on a dedicated row beneath the task control buttons to prevent overlapping the toggle button.
+     - Expandable per-task settings MUST be wrapped in a SolimCollapser to prevent blank space when collapsed.
+     - All user-visible strings MUST be translatable via `bundle.properties`.
 
 12. **Base AI Null Safety and Boundary Protection:**
     - The `BaseAutoplayAI` controller SHALL strictly guard against unassigned units (`unit == null`) and null target positions (`target == null` or `pos == null`) in all movement and steering delegations.

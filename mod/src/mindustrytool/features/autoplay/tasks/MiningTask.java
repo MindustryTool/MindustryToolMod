@@ -11,8 +11,10 @@ import mindustry.Vars;
 import mindustry.gen.Building;
 import mindustry.gen.Call;
 import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
 import mindustry.gen.Unit;
 import mindustry.type.Item;
+import mindustry.ui.Fonts;
 import mindustry.world.Tile;
 import mindustry.world.blocks.environment.Floor;
 import mindustrytool.components.WebStyles;
@@ -145,7 +147,14 @@ public class MiningTask implements AutoplayTask {
         unit.mineTile = bestTile;
         ai.targetItem = bestItem;
         ai.ore = bestTile;
-        status.set(Core.bundle.format("feature.autoplay.status.mining", bestItem.localizedName));
+        String uni = Fonts.getUnicodeStr(bestItem.name);
+
+        if ((uni == null || uni.isEmpty()) && Iconc.codes.containsKey(bestItem.name)) {
+            uni = Character.toString((char) Iconc.codes.get(bestItem.name));
+        }
+
+        status.set(Core.bundle.format("feature.autoplay.status.mining",
+                uni != null && !uni.isEmpty() ? uni : bestItem.localizedName));
         return true;
     }
 
@@ -162,7 +171,8 @@ public class MiningTask implements AutoplayTask {
     @Override
     public void buildSettings(AutoplayFeature feature) {
         column().growX().gap(unit(1)).children(() -> {
-            text(Core.bundle.get("feature.autoplay.settings.mining.filter")).growX().left().color(WebStyles.Colors.GHOST_FG);
+            text(Core.bundle.get("feature.autoplay.settings.mining.filter")).growX().left()
+                    .color(WebStyles.Colors.GHOST_FG);
 
             wrap().growX().gap(unit(1)).children(() -> {
                 for (Item item : Vars.content.items()) {
@@ -170,8 +180,8 @@ public class MiningTask implements AutoplayTask {
                         continue;
                     }
 
-                    Readable<Boolean> checked = selectedItems.signal().map(seq ->
-                            seq == null || seq.isEmpty() || seq.contains(item.name));
+                    Readable<Boolean> checked = selectedItems.signal()
+                            .map(seq -> seq == null || seq.isEmpty() || seq.contains(item.name));
 
                     button(() -> toggleItem(item, !Boolean.TRUE.equals(checked.peek())))
                             .style(WebStyles.filterChipText())
@@ -180,7 +190,8 @@ public class MiningTask implements AutoplayTask {
                             .height(unit(8))
                             .children(() -> {
                                 icon(new TextureRegionDrawable(item.uiIcon)).size(unit(4));
-                                text(item.localizedName).color(checked.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray));
+                                text(item.localizedName)
+                                        .color(checked.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray));
                             });
                 }
             });

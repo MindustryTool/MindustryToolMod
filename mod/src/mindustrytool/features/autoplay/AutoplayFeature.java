@@ -58,6 +58,7 @@ public class AutoplayFeature extends Feature {
 
     private final ObjectMap<String, AutoplayTask> taskMap = new ObjectMap<>();
     private final Signal<Seq<AutoplayTask>> tasksSignal = Signal.of(new Seq<>());
+    private final Signal<String> currentTaskIdSignal = Signal.of(null);
     private @Nullable AutoplayTask currentTask;
     private float resumeTime = 0f;
 
@@ -173,11 +174,20 @@ public class AutoplayFeature extends Feature {
             resetUnitState(unit);
             unit.controller(Vars.player);
         }
-        currentTask = null;
+        setCurrentTask(null);
     }
 
     public @Nullable AutoplayTask getCurrentTask() {
         return currentTask;
+    }
+
+    public Readable<String> currentTaskId() {
+        return currentTaskIdSignal;
+    }
+
+    private void setCurrentTask(@Nullable AutoplayTask task) {
+        currentTask = task;
+        currentTaskIdSignal.set(task != null ? task.getId() : null);
     }
 
     private void update() {
@@ -187,7 +197,7 @@ public class AutoplayFeature extends Feature {
 
         Unit unit = Vars.player.unit();
         if (unit == null || !unit.isValid()) {
-            currentTask = null;
+            setCurrentTask(null);
             return;
         }
 
@@ -199,7 +209,7 @@ public class AutoplayFeature extends Feature {
             }
             if (currentTask != null) {
                 resetUnitState(unit);
-                currentTask = null;
+                setCurrentTask(null);
             }
             return;
         }
@@ -210,14 +220,14 @@ public class AutoplayFeature extends Feature {
             }
             if (currentTask != null) {
                 resetUnitState(unit);
-                currentTask = null;
+                setCurrentTask(null);
             }
             return;
         }
 
         if (currentTask != null && currentTask.getAI().unit() != unit) {
             resetUnitState(unit);
-            currentTask = null;
+            setCurrentTask(null);
         }
 
         AutoplayTask nextTask = null;
@@ -236,7 +246,7 @@ public class AutoplayFeature extends Feature {
                 BaseAutoplayAI ai = nextTask.getAI();
                 ai.unit(unit);
             }
-            currentTask = nextTask;
+            setCurrentTask(nextTask);
         }
 
         if (currentTask != null) {
