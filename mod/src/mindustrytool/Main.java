@@ -41,6 +41,8 @@ import mindustrytool.services.auth.AuthOverlay;
 import mindustrytool.services.auth.MindustryAuthProvider;
 import mindustrytool.services.crash.CrashReportService;
 import mindustrytool.services.update.UpdateService;
+import solim.mcp.McpConfig;
+import solim.mcp.SolimMcpServer;
 
 public class Main extends Mod {
     public static LoadedMod self;
@@ -53,7 +55,7 @@ public class Main extends Mod {
 
     @Override
     public void init() {
-        // SolimMcpServer.start(McpConfig.fromProperties());
+        SolimMcpServer.start(McpConfig.fromProperties());
 
         self = Vars.mods.getMod(Main.class);
 
