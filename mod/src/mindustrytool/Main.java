@@ -11,6 +11,7 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
+import mindustrytool.features.camerazoom.CameraZoomFeature;
 import mindustrytool.features.chat.ChatFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
@@ -74,6 +75,7 @@ public class Main extends Mod {
                 new BridgeVisualizerFeature(),
                 new PlayerConnectFeature(),
                 new HealthBarFeature(),
+                new CameraZoomFeature(),
                 new PathfindingFeature(),
                 new RangeDisplayFeature(),
                 new PrettyChatFeature(),

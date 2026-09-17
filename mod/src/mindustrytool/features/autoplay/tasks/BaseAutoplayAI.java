@@ -13,9 +13,14 @@ import mindustry.gen.Teamc;
 public abstract class BaseAutoplayAI extends AIController {
 
     public final Vec2 targetPos = new Vec2();
+    public boolean hasTargetPos = false;
 
     public void setTarget(@Nullable Teamc target) {
         this.target = target;
+    }
+
+    public void clearTargetPos() {
+        hasTargetPos = false;
     }
 
     @Override
@@ -24,6 +29,7 @@ public abstract class BaseAutoplayAI extends AIController {
             return;
         }
         unit.updateBuilding = true;
+        hasTargetPos = false;
         super.updateUnit();
     }
 
@@ -38,6 +44,7 @@ public abstract class BaseAutoplayAI extends AIController {
             return;
         }
         targetPos.set(target.getX(), target.getY());
+        hasTargetPos = true;
         super.moveTo(target, circleLength, smooth, keepDistance, offset, arrive);
     }
 
@@ -47,9 +54,9 @@ public abstract class BaseAutoplayAI extends AIController {
             return;
         }
         targetPos.set(target.getX(), target.getY());
+        hasTargetPos = true;
         super.moveTo(target, circleLength, smooth);
     }
-
 
     @Override
     public void circle(Position target, float circleLength) {
@@ -57,6 +64,7 @@ public abstract class BaseAutoplayAI extends AIController {
             return;
         }
         targetPos.set(target.getX(), target.getY());
+        hasTargetPos = true;
         super.circle(target, circleLength);
     }
 
@@ -66,6 +74,7 @@ public abstract class BaseAutoplayAI extends AIController {
             return;
         }
         targetPos.set(target.getX(), target.getY());
+        hasTargetPos = true;
         super.circle(target, circleLength, speed);
     }
 }

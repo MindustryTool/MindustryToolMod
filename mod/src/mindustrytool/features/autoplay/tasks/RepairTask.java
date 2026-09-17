@@ -2,6 +2,8 @@ package mindustrytool.features.autoplay.tasks;
 
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
+import arc.struct.Seq;
+import mindustry.Vars;
 import mindustry.entities.Units;
 import mindustry.entities.abilities.RepairFieldAbility;
 import mindustry.gen.Building;
@@ -59,9 +61,22 @@ public class RepairTask implements AutoplayTask {
             return false;
         }
 
-        Building damagedBuilding = Units.findDamagedTile(unit.team, unit.x, unit.y);
-        if (damagedBuilding instanceof ConstructBuild) {
-            damagedBuilding = null;
+        Building damagedBuilding = null;
+        if (Vars.indexer != null) {
+            Seq<Building> damagedList = Vars.indexer.getDamaged(unit.team);
+            if (damagedList != null && !damagedList.isEmpty()) {
+                float minDst = Float.MAX_VALUE;
+                for (int i = 0; i < damagedList.size; i++) {
+                    Building b = damagedList.get(i);
+                    if (b != null && b.damaged() && !(b instanceof ConstructBuild)) {
+                        float dst = unit.dst2(b);
+                        if (dst < minDst) {
+                            minDst = dst;
+                            damagedBuilding = b;
+                        }
+                    }
+                }
+            }
         }
 
         Unit damagedAlly = (hasHealWeapon || hasRepairField)

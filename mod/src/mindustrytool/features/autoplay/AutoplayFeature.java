@@ -230,10 +230,13 @@ public class AutoplayFeature extends Feature {
         }
     }
 
-    private void resetUnitState(Unit unit) {
+    void resetUnitState(@Nullable Unit unit) {
         if (unit != null) {
             unit.isShooting(false);
             unit.mineTile = null;
+        }
+        if (currentTask != null && currentTask.getAI() != null) {
+            currentTask.getAI().clearTargetPos();
         }
     }
 

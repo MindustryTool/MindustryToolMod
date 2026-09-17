@@ -6,6 +6,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
+import arc.struct.Seq;
 import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
@@ -72,8 +73,23 @@ public class AutoplaySettingsView extends BaseComponent {
 
         @Override
         protected Element build() {
-            Readable<Boolean> enabled = feature.disabledTasks.signal()
-                    .map(disabled -> disabled == null || !disabled.contains(task.getId()));
+            Signal<Boolean> taskEnabled = Signal.of(feature.isTaskEnabled(task.getId()));
+
+            effect(() -> {
+                Seq<String> disabled = feature.disabledTasks.get();
+                boolean isEn = disabled == null || !disabled.contains(task.getId());
+                if (taskEnabled.peek() != isEn) {
+                    taskEnabled.set(isEn);
+                }
+            });
+
+            taskEnabled.subscribe(val -> {
+                if (feature.isTaskEnabled(task.getId()) != Boolean.TRUE.equals(val)) {
+                    feature.setTaskEnabled(task.getId(), Boolean.TRUE.equals(val));
+                }
+            });
+
+            Readable<Boolean> enabled = taskEnabled;
 
             Readable<Boolean> isCurrent = feature.currentTaskId().map(id -> task.getId().equals(id));
 
@@ -92,7 +108,6 @@ public class AutoplaySettingsView extends BaseComponent {
                     .padding(unit(2))
                     .rounded(unit(2), WebStyles.Colors.SECTION_BG)
                     .border(1f, borderColor)
-                    .onClick(() -> feature.setTaskEnabled(task.getId(), !Boolean.TRUE.equals(enabled.peek())))
                     .children(() -> {
                         column().growX().gap(unit(2)).children(() -> {
                             row().growX().gap(unit(2)).children(() -> {
@@ -127,14 +142,20 @@ public class AutoplaySettingsView extends BaseComponent {
                                     text(task.status()).growX().left().wrap(true).color(color);
                                 });
 
-                                if (task.hasSettings()) {
-                                    button()
-                                            .style(WebStyles.ghost())
-                                            .size(unit(11))
-                                            .tooltip(Core.bundle.get("feature.autoplay.tooltip.configure"))
-                                            .onClick(() -> expanded.set(!Boolean.TRUE.equals(expanded.peek())))
-                                            .children(() -> icon(expandIcon).size(unit(7)));
-                                }
+                                row().gap(unit(1)).center().children(() -> {
+                                    if (task.hasSettings()) {
+                                        button()
+                                                .style(WebStyles.ghost())
+                                                .size(unit(11))
+                                                .tooltip(Core.bundle.get("feature.autoplay.tooltip.configure"))
+                                                .onClick(() -> expanded.set(!Boolean.TRUE.equals(expanded.peek())))
+                                                .children(() -> icon(expandIcon).size(unit(7)));
+                                    }
+
+                                    checkbox("", taskEnabled)
+                                            .size(unit(8))
+                                            .tooltip(Core.bundle.get("feature.autoplay.tooltip.toggle-task"));
+                                });
                             });
 
                             if (task.hasSettings()) {
