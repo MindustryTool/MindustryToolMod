@@ -40,6 +40,7 @@ import solim.layout.GridItemContext;
 import solim.layout.ReactiveGrid;
 import solim.layout.Row;
 import solim.layout.Scroll;
+import solim.layout.SolimCollapser;
 import solim.layout.SolimStack;
 import solim.layout.Spacer;
 import solim.layout.Tabs;
@@ -167,6 +168,22 @@ public final class UI {
 
     public static Scroll scroll(@Nullable Runnable r) {
         return scroll().children(r);
+    }
+
+    public static SolimCollapser collapser() {
+        return new SolimCollapser();
+    }
+
+    public static SolimCollapser collapser(@Nullable Runnable r) {
+        return collapser().children(r);
+    }
+
+    public static SolimCollapser collapser(Readable<Boolean> expanded) {
+        return new SolimCollapser().expanded(expanded);
+    }
+
+    public static SolimCollapser collapser(Readable<Boolean> expanded, @Nullable Runnable r) {
+        return collapser(expanded).children(r);
     }
 
     public static Column container() {

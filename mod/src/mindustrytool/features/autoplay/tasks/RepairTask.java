@@ -43,17 +43,18 @@ public class RepairTask implements AutoplayTask {
 
     @Override
     public boolean update(Unit unit) {
-        boolean hasHealWeapon = unit.type.weapons.contains(w -> w.bullet.heals() || w instanceof RepairBeamWeapon);
+        boolean hasHealWeapon = unit.type != null && unit.type.weapons != null
+                && unit.type.weapons.contains(w -> (w.bullet != null && w.bullet.heals()) || w instanceof RepairBeamWeapon);
         boolean hasRepairField = false;
-        for (int i = 0; i < unit.type.abilities.size; i++) {
-            if (unit.type.abilities.get(i) instanceof RepairFieldAbility) {
-                hasRepairField = true;
-                break;
+        if (unit.type != null && unit.type.abilities != null) {
+            for (int i = 0; i < unit.type.abilities.size; i++) {
+                if (unit.type.abilities.get(i) instanceof RepairFieldAbility) {
+                    hasRepairField = true;
+                    break;
+                }
             }
         }
-        boolean canBuild = unit.canBuild();
-
-        if (!hasHealWeapon && !hasRepairField && !canBuild) {
+        if (!hasHealWeapon && !hasRepairField) {
             status.set(Core.bundle.get("feature.autoplay.status.cannot-heal"));
             return false;
         }
@@ -93,27 +94,48 @@ public class RepairTask implements AutoplayTask {
                 return;
             }
 
+            boolean hasHealWeapon = unit.type != null && unit.type.weapons != null
+                    && unit.type.weapons.contains(w -> (w.bullet != null && w.bullet.heals()) || w instanceof RepairBeamWeapon);
+            RepairFieldAbility repairField = null;
+            if (unit.type != null && unit.type.abilities != null) {
+                for (int i = 0; i < unit.type.abilities.size; i++) {
+                    if (unit.type.abilities.get(i) instanceof RepairFieldAbility) {
+                        repairField = (RepairFieldAbility) unit.type.abilities.get(i);
+                        break;
+                    }
+                }
+            }
+
             if (target instanceof Building) {
                 Building b = (Building) target;
                 if (b.health() >= b.maxHealth()) {
                     target = null;
                     return;
                 }
-                float range = unit.canBuild() ? Math.min(unit.type.buildRange - 10f, 80f) : unit.type.range * 0.7f;
-                moveTo(target, Math.max(range, 20f));
-                unit.lookAt(target);
-                unit.aim(target);
-                unit.controlWeapons(unit.within(target, unit.type.range));
+                float healRange = hasHealWeapon ? unit.type.range * 0.7f : (repairField != null ? Math.min(repairField.range * 0.8f, 50f) : 30f);
+                moveTo(target, Math.max(healRange, 20f));
+                if (hasHealWeapon) {
+                    unit.lookAt(target);
+                    unit.aim(target);
+                    unit.controlWeapons(unit.within(target, unit.type.range));
+                } else {
+                    unit.controlWeapons(false, false);
+                }
             } else if (target instanceof Unit) {
                 Unit u = (Unit) target;
                 if (u.health() >= u.maxHealth()) {
                     target = null;
                     return;
                 }
-                moveTo(target, 40f);
-                unit.lookAt(target);
-                unit.aim(target);
-                unit.controlWeapons(unit.within(target, unit.type.range));
+                float healRange = hasHealWeapon ? unit.type.range * 0.7f : (repairField != null ? Math.min(repairField.range * 0.8f, 50f) : 30f);
+                moveTo(target, Math.max(healRange, 20f));
+                if (hasHealWeapon) {
+                    unit.lookAt(target);
+                    unit.aim(target);
+                    unit.controlWeapons(unit.within(target, unit.type.range));
+                } else {
+                    unit.controlWeapons(false, false);
+                }
             }
         }
     }

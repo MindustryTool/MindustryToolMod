@@ -34,21 +34,38 @@ public abstract class BaseAutoplayAI extends AIController {
 
     @Override
     public void moveTo(Position target, float circleLength, float smooth, boolean keepDistance, @Nullable Vec2 offset, boolean arrive) {
-        if (target != null) {
-            targetPos.set(target.getX(), target.getY());
-        } else if (unit != null) {
-            targetPos.set(unit.x, unit.y);
+        if (unit == null || target == null) {
+            return;
         }
+        targetPos.set(target.getX(), target.getY());
         super.moveTo(target, circleLength, smooth, keepDistance, offset, arrive);
     }
 
     @Override
-    public void moveTo(Position pos, float offset, float cornerRadius) {
-        if (pos != null) {
-            targetPos.set(pos.getX(), pos.getY());
-        } else if (unit != null) {
-            targetPos.set(unit.x, unit.y);
+    public void moveTo(Position target, float circleLength, float smooth) {
+        if (unit == null || target == null) {
+            return;
         }
-        super.moveTo(pos, offset, cornerRadius);
+        targetPos.set(target.getX(), target.getY());
+        super.moveTo(target, circleLength, smooth);
+    }
+
+
+    @Override
+    public void circle(Position target, float circleLength) {
+        if (unit == null || target == null) {
+            return;
+        }
+        targetPos.set(target.getX(), target.getY());
+        super.circle(target, circleLength);
+    }
+
+    @Override
+    public void circle(Position target, float circleLength, float speed) {
+        if (unit == null || target == null) {
+            return;
+        }
+        targetPos.set(target.getX(), target.getY());
+        super.circle(target, circleLength, speed);
     }
 }

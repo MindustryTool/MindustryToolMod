@@ -72,10 +72,6 @@ public class SelfHealTask implements AutoplayTask {
             }
 
             status.set(Core.bundle.get("feature.autoplay.status.low-hp"));
-            Building repair = Geometry.findClosest(unit.x, unit.y, repairPoints);
-            if (repair != null) {
-                ai.moveTo(repair, 50f);
-            }
             return true;
         }
 
@@ -107,6 +103,9 @@ public class SelfHealTask implements AutoplayTask {
     public static class SelfHealAI extends BaseAutoplayAI {
         @Override
         public void updateMovement() {
+            if (unit == null) {
+                return;
+            }
             Seq<Building> repairPoints = Vars.indexer.getFlagged(unit.team, BlockFlag.repair);
             if (repairPoints != null && !repairPoints.isEmpty()) {
                 Building repair = Geometry.findClosest(unit.x, unit.y, repairPoints);

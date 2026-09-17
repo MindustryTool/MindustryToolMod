@@ -78,7 +78,10 @@ public class AttackTask implements AutoplayTask {
     public static class AttackAI extends BaseAutoplayAI {
         @Override
         public void updateMovement() {
-            if (target == null || (target instanceof Healthc && ((Healthc) target).dead())) {
+            if (unit == null) {
+                return;
+            }
+            if (target == null || !target.isAdded() || (target instanceof Healthc && ((Healthc) target).dead())) {
                 target = null;
                 unit.isShooting(false);
                 return;

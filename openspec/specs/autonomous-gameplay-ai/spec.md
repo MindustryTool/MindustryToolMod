@@ -1,4 +1,4 @@
-﻿# Autonomous Gameplay AI
+# Autonomous Gameplay AI
 
 ## Requirements
 

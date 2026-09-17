@@ -3,7 +3,6 @@
 ## Purpose
 
 Feature visibility model for the Quick Access HUD based on dual overrides (`hidden` and `shown` string sets), metadata default visibility (`quickAccessByDefault`), and HUD button long-press fallback to `getMainDialog()`. Created by archiving change quickaccess-all-features.
-
 ## Requirements
 
 **Source: quickaccess-all-features**
@@ -46,12 +45,37 @@ The system SHALL persist user HUD visibility overrides in `QuickAccessFeature` u
 
 ### Requirement: HUD button long-press dialog routing
 
-The system SHALL open a feature's `getSettingDialog()` on long-press (>= 300ms) if available; if `getSettingDialog()` is null but `getMainDialog()` is non-null, the system SHALL open `getMainDialog()`.
+The system SHALL delegate Quick Access HUD button long-press (>= 300ms) to `Feature#onQuickAccessLongClick(@Nullable Element anchor)`. By default in `Feature`, `onQuickAccessLongClick` SHALL delegate to `onQuickAccessLongClick()`, which opens `getSettingDialog()` if available; if `getSettingDialog()` is null but `getMainDialog()` is non-null, it SHALL open `getMainDialog()`. Features MAY override `onQuickAccessLongClick` to customize hold behavior.
 
-#### Scenario: Feature has setting dialog
-- **WHEN** player long-presses a feature button whose `getSettingDialog()` is non-null
-- **THEN** the feature setting dialog is displayed
+#### Scenario: Long-press opens setting dialog when present
+- **WHEN** user long-presses (>= 300ms) a HUD feature button whose feature has non-null `getSettingDialog()`
+- **THEN** `onQuickAccessLongClick` executes and that setting dialog is shown
 
-#### Scenario: Feature has main dialog and no setting dialog
-- **WHEN** player long-presses a feature button whose `getSettingDialog()` is null and `getMainDialog()` is non-null
-- **THEN** the feature main dialog is displayed
+#### Scenario: Long-press falls back to main dialog when setting dialog is null
+- **WHEN** user long-presses (>= 300ms) a HUD feature button whose feature has null `getSettingDialog()` and non-null `getMainDialog()`
+- **THEN** `onQuickAccessLongClick` executes and that main dialog is shown
+
+#### Scenario: Long-press no-op when both dialogs are null
+- **WHEN** user long-presses (>= 300ms) a HUD feature button whose feature has both dialogs null
+- **THEN** no dialog is opened and no exception occurs
+
+### Requirement: HUD button click delegation to Feature
+
+The system SHALL delegate Quick Access HUD button single-clicks directly to `Feature#onQuickAccessClick(@Nullable Element anchor)` passing the Quick Access HUD element as the anchor. In `Feature`, `onQuickAccessClick(@Nullable Element anchor)` SHALL delegate to `onQuickAccessClick()`, which defaults to toggling `setEnabled(!isEnabled())`. Features MAY override either method to customize click behavior.
+
+#### Scenario: Default feature click toggles enabled state
+- **WHEN** user clicks a feature button that uses default `Feature#onQuickAccessClick()`
+- **THEN** the feature's enabled state is inverted (`setEnabled(!isEnabled())`)
+
+#### Scenario: GodMode and TimeControl click toggles popup when in popup mode
+- **WHEN** user clicks GodMode or TimeControl button in Quick Access HUD while in popup mode
+- **THEN** the respective popup is toggled anchored to the Quick Access HUD element
+
+#### Scenario: GodMode and TimeControl click falls back to toggle when not in popup mode
+- **WHEN** user clicks GodMode or TimeControl button in Quick Access HUD while not in popup mode
+- **THEN** default click behavior is executed, toggling the feature's enabled state
+
+#### Scenario: ChatFeature click toggles overlay collapse state
+- **WHEN** user clicks the Chat button in Quick Access HUD
+- **THEN** `ChatFeature` toggles its chat overlay collapse state (`collapsedConfig`)
+

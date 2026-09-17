@@ -4,6 +4,8 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.graphics.Color;
+import arc.math.geom.Position;
+import arc.math.geom.Vec2;
 import arc.scene.style.TextureRegionDrawable;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -132,6 +134,9 @@ public class FollowAssistTask implements AutoplayTask {
 
         @Override
         public void updateMovement() {
+            if (unit == null) {
+                return;
+            }
             if (following == null || !following.isAdded() || following.dead()) {
                 following = null;
                 return;
@@ -141,8 +146,9 @@ public class FollowAssistTask implements AutoplayTask {
                 BuildPlan plan = following.buildPlan();
                 if (plan != null) {
                     unit.plans.addFirst(plan);
+                    Position target = plan.tile() != null ? plan.tile() : new Vec2(plan.x * Vars.tilesize, plan.y * Vars.tilesize);
                     float range = Math.min(unit.type.buildRange - 20f, 100f);
-                    moveTo(plan.tile(), Math.max(range - 10f, 20f), 20f);
+                    moveTo(target, Math.max(range - 10f, 20f), 20f);
                     return;
                 }
             }
@@ -161,7 +167,7 @@ public class FollowAssistTask implements AutoplayTask {
                 }
             }
 
-            if (following.mineTile != null && unit.canMine(following.mineTile.drop())) {
+            if (following.mineTile != null && following.mineTile.drop() != null && unit.canMine(following.mineTile.drop())) {
                 moveTo(following.mineTile, unit.type.mineRange / 2f, 20f);
                 if (unit.within(following.mineTile, unit.type.mineRange) && unit.validMine(following.mineTile)) {
                     unit.mineTile = following.mineTile;

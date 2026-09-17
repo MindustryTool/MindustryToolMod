@@ -13,7 +13,6 @@ import java.util.Set;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.features.PopupDisplayFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -123,29 +122,14 @@ public class QuickAccessHudView extends BaseComponent {
         if (item.feature != null) {
             Feature f = item.feature;
             FeatureMetadata meta = f.getMetadata();
+            Element bar = hud != null ? hud.element() : null;
 
             return button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(f.getName())
-                    .onClick(() -> {
-                        if (f instanceof PopupDisplayFeature) {
-                            PopupDisplayFeature popup = (PopupDisplayFeature) f;
-                            if (popup.isPopupMode()) {
-                                Element bar = hud != null ? hud.element() : null;
-                                popup.togglePopup(bar);
-                                return;
-                            }
-                        }
-
-                        f.setEnabled(!f.isEnabled());
-                    })
-                    .onLongClick(300L, () -> {
-                        Prov<SolimDialog> dlg = f.getSettingDialog() != null ? f.getSettingDialog() : f.getMainDialog();
-                        if (dlg != null) {
-                            dlg.get().show();
-                        }
-                    })
+                    .onClick(() -> f.onQuickAccessClick(bar))
+                    .onLongClick(300L, () -> f.onQuickAccessLongClick(bar))
                     .children(() -> icon(meta.getIcon()).size(iconSize)
                             .color(f.enabled().map(en -> en ? Color.white : Color.darkGray)));
         } else {
