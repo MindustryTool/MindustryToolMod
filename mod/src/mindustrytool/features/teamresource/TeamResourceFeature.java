@@ -19,9 +19,9 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
+import arc.scene.ui.layout.Scl;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
-import solim.core.Units;
 
 /**
  * Feature responsible for registering and managing the Team Resource Tracker
@@ -82,7 +82,7 @@ public class TeamResourceFeature extends Feature {
                 Signals.isPortrait(),
                 p -> p ? "portrait" : "landscape",
                 p -> {
-                    float sw = Units.screenWidth();
+                    float sw = getSceneWidth();
                     Float wFrac = overlayWidthConfig != null ? overlayWidthConfig.get() : 0.28f;
                     float width = sw * (wFrac != null ? wFrac : 0.28f);
                     float defX = sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
@@ -111,7 +111,7 @@ public class TeamResourceFeature extends Feature {
                 Signals.isPortrait(),
                 p -> p ? "portrait" : "landscape",
                 p -> {
-                    float sh = Units.screenHeight();
+                    float sh = getSceneHeight();
                     float defY = sh > 0 ? sh / 2f : 200f;
                     String oldKey = p ? "mindustrytool.team-resource.y.portrait"
                             : "mindustrytool.team-resource.y.landscape";
@@ -152,7 +152,7 @@ public class TeamResourceFeature extends Feature {
         if (val != null) {
             return val;
         }
-        float sw = Units.screenWidth();
+        float sw = getSceneWidth();
         Float wFrac = overlayWidthConfig != null ? overlayWidthConfig.get() : 0.28f;
         float width = sw * (wFrac != null ? wFrac : 0.28f);
         return sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
@@ -164,7 +164,7 @@ public class TeamResourceFeature extends Feature {
 
     public float y() {
         Float val = yConfig.get();
-        return val != null ? val : Units.screenHeight() / 2f;
+        return val != null ? val : (getSceneHeight() > 0f ? getSceneHeight() / 2f : 200f);
     }
 
     public void y(float value) {
@@ -192,11 +192,11 @@ public class TeamResourceFeature extends Feature {
     }
 
     public void resetPosition() {
-        float sw = Units.screenWidth();
+        float sw = getSceneWidth();
         Float wFrac = overlayWidthConfig.get();
         float width = sw * (wFrac != null ? wFrac : 0.28f);
         float cx = sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
-        float cy = Units.screenHeight() > 0 ? Units.screenHeight() / 2f : 200f;
+        float cy = getSceneHeight() > 0 ? getSceneHeight() / 2f : 200f;
 
         xConfig.set(cx);
         yConfig.set(cy);
@@ -272,5 +272,21 @@ public class TeamResourceFeature extends Feature {
         } catch (Throwable ignored) {
         }
         return Icon.layers != null ? Icon.layers : new TextureRegionDrawable();
+    }
+
+    public static float getSceneWidth() {
+        if (Core.scene != null && Core.scene.getWidth() > 0f) {
+            return Core.scene.getWidth();
+        }
+        float scl = Scl.scl();
+        return (Core.graphics != null ? Core.graphics.getWidth() : 800f) / (scl > 0f ? scl : 1f);
+    }
+
+    public static float getSceneHeight() {
+        if (Core.scene != null && Core.scene.getHeight() > 0f) {
+            return Core.scene.getHeight();
+        }
+        float scl = Scl.scl();
+        return (Core.graphics != null ? Core.graphics.getHeight() : 600f) / (scl > 0f ? scl : 1f);
     }
 }

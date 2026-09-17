@@ -1,15 +1,45 @@
 package mindustrytool.features.teamresource;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import arc.Core;
+import arc.graphics.Color;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.Font.Glyph;
+import arc.graphics.g2d.TextureRegion;
+import arc.input.KeyCode;
 import arc.mock.MockApplication;
+import arc.mock.MockGL20;
 import arc.mock.MockGraphics;
 import arc.mock.MockSettings;
 import arc.scene.Element;
 import arc.scene.Scene;
+import arc.scene.event.ClickListener;
+import arc.scene.event.EventListener;
+import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
+import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.Button.ButtonStyle;
+import arc.scene.ui.ImageButton.ImageButtonStyle;
+import arc.scene.ui.Label.LabelStyle;
+import arc.scene.ui.TextButton.TextButtonStyle;
+import arc.scene.ui.layout.Scl;
+import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.WidgetGroup;
+import arc.struct.Seq;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import mindustry.Vars;
+import mindustry.core.UI;
+import mindustry.ctype.Content;
+import mindustry.game.Team;
+import mindustry.type.Item;
+import mindustry.ui.Fonts;
+import mindustry.ui.Styles;
+import mindustry.world.blocks.power.PowerGraph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,28 +69,29 @@ class TeamResourcePositionTest {
         Core.graphics = mockGraphics;
         Core.settings = new MockSettings();
         if (Core.gl == null) {
-            Core.gl = new arc.mock.MockGL20();
-            Core.gl20 = (arc.mock.MockGL20) Core.gl;
+            Core.gl = new MockGL20();
+            Core.gl20 = (MockGL20) Core.gl;
         }
         Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-        java.lang.reflect.Field f = unsafeClass.getDeclaredField("theUnsafe");
+        Field f = unsafeClass.getDeclaredField("theUnsafe");
         f.setAccessible(true);
         Object unsafe = f.get(null);
-        java.lang.reflect.Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
-        Vars.ui = (mindustry.core.UI) allocateInstance.invoke(unsafe, mindustry.core.UI.class);
+        Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+        Vars.ui = (UI) allocateInstance.invoke(unsafe, UI.class);
         Vars.ui.hudGroup = new WidgetGroup();
         Core.scene = new Scene();
-        arc.graphics.g2d.Font.FontData fontData = new arc.graphics.g2d.Font.FontData() {
+        Core.scene.resize(mockGraphics.width, mockGraphics.height);
+        FontData fontData = new FontData() {
             @Override
             public boolean hasGlyph(char ch) {
                 return true;
             }
 
             @Override
-            public arc.graphics.g2d.Font.Glyph getGlyph(char ch) {
-                arc.graphics.g2d.Font.Glyph g = super.getGlyph(ch);
+            public Glyph getGlyph(char ch) {
+                Glyph g = super.getGlyph(ch);
                 if (g == null) {
-                    g = new arc.graphics.g2d.Font.Glyph();
+                    g = new Glyph();
                     g.id = ch;
                     g.width = 8;
                     g.height = 12;
@@ -72,30 +103,30 @@ class TeamResourcePositionTest {
         };
         fontData.lineHeight = 18f;
         fontData.capHeight = 14f;
-        arc.graphics.g2d.Font font = new arc.graphics.g2d.Font(fontData, new arc.graphics.g2d.TextureRegion(), false);
-        mindustry.ui.Fonts.def = font;
+        Font font = new Font(fontData, new TextureRegion(), false);
+        Fonts.def = font;
 
-        arc.scene.ui.Label.LabelStyle labelStyle = new arc.scene.ui.Label.LabelStyle(font, arc.graphics.Color.white);
-        Core.scene.addStyle(arc.scene.ui.Label.LabelStyle.class, labelStyle);
-        Core.scene.addStyle(arc.scene.ui.Button.ButtonStyle.class, new arc.scene.ui.Button.ButtonStyle());
-        Core.scene.addStyle(arc.scene.ui.ImageButton.ImageButtonStyle.class, new arc.scene.ui.ImageButton.ImageButtonStyle());
-        arc.scene.ui.TextButton.TextButtonStyle textBtnStyle = new arc.scene.ui.TextButton.TextButtonStyle();
+        LabelStyle labelStyle = new LabelStyle(font, Color.white);
+        Core.scene.addStyle(LabelStyle.class, labelStyle);
+        Core.scene.addStyle(ButtonStyle.class, new ButtonStyle());
+        Core.scene.addStyle(ImageButtonStyle.class, new ImageButtonStyle());
+        TextButtonStyle textBtnStyle = new TextButtonStyle();
         textBtnStyle.font = font;
-        Core.scene.addStyle(arc.scene.ui.TextButton.TextButtonStyle.class, textBtnStyle);
+        Core.scene.addStyle(TextButtonStyle.class, textBtnStyle);
 
-        arc.scene.style.Drawable emptyDrawable = new arc.scene.style.TextureRegionDrawable(new arc.graphics.g2d.TextureRegion());
-        mindustry.ui.Styles.outlineLabel = labelStyle;
-        mindustry.ui.Styles.clearNonei = new arc.scene.ui.ImageButton.ImageButtonStyle();
-        mindustry.ui.Styles.clearTogglei = new arc.scene.ui.ImageButton.ImageButtonStyle();
-        mindustry.ui.Styles.flatBordert = textBtnStyle;
-        mindustry.ui.Styles.black3 = emptyDrawable;
-        mindustry.ui.Styles.black6 = emptyDrawable;
+        Drawable emptyDrawable = new TextureRegionDrawable(new TextureRegion());
+        Styles.outlineLabel = labelStyle;
+        Styles.clearNonei = new ImageButtonStyle();
+        Styles.clearTogglei = new ImageButtonStyle();
+        Styles.flatBordert = textBtnStyle;
+        Styles.black3 = emptyDrawable;
+        Styles.black6 = emptyDrawable;
     }
 
     @Test
     void testDefaultPositionIsCentered() {
         TeamResourceFeature feature = new TeamResourceFeature();
-        
+
         // With screen width = 1000 and overlay-width = 0.28 (280px),
         // centered X should be (1000 - 280) / 2 = 360px
         float expectedX = (1000f - 1000f * 0.28f) / 2f;
@@ -133,18 +164,15 @@ class TeamResourcePositionTest {
         feature.onEnable();
         Element root = feature.getHudView().element();
 
-        // Find the drag handle button (first button in header)
-        // Root table -> container table -> Column -> Row -> buttons
-        arc.scene.ui.layout.Table container = (arc.scene.ui.layout.Table) ((arc.scene.ui.layout.Table) root).getChildren().first();
-        arc.scene.ui.layout.Table column = (arc.scene.ui.layout.Table) container.getChildren().first();
-        arc.scene.ui.layout.Table headerRow = (arc.scene.ui.layout.Table) column.getChildren().first();
+        Table container = (Table) ((Table) root).getChildren().first();
+        Table column = (Table) container.getChildren().first();
+        Table headerRow = (Table) column.getChildren().first();
         Element moveButton = headerRow.getChildren().first();
 
-        // Find InputListener on moveButton
-        arc.scene.event.InputListener dragListener = null;
-        for (arc.scene.event.EventListener l : moveButton.getListeners()) {
-            if (l instanceof arc.scene.event.InputListener && !(l instanceof arc.scene.event.ClickListener)) {
-                dragListener = (arc.scene.event.InputListener) l;
+        InputListener dragListener = null;
+        for (EventListener l : moveButton.getListeners()) {
+            if (l instanceof InputListener && !(l instanceof ClickListener)) {
+                dragListener = (InputListener) l;
                 break;
             }
         }
@@ -154,24 +182,175 @@ class TeamResourcePositionTest {
         float startX = root.x;
 
         // Drag to the left by 150px
-        arc.scene.event.InputEvent ev = new arc.scene.event.InputEvent();
+        InputEvent ev = new InputEvent();
         ev.stageX = 300f;
         ev.stageY = 300f;
-        dragListener.touchDown(ev, 10f, 10f, 0, arc.input.KeyCode.mouseLeft);
+        dragListener.touchDown(ev, 10f, 10f, 0, KeyCode.mouseLeft);
 
         ev.stageX = 150f;
         ev.stageY = 300f;
         dragListener.touchDragged(ev, 10f, 10f, 0);
-        dragListener.touchUp(ev, 10f, 10f, 0, arc.input.KeyCode.mouseLeft);
+        dragListener.touchUp(ev, 10f, 10f, 0, KeyCode.mouseLeft);
 
         float draggedX = feature.x();
         assertEquals(startX - 150f, draggedX, 1.0f);
 
-        // Now toggle off and on!
+        // Now toggle off and on
         feature.onDisable();
         feature.onEnable();
 
         float afterReEnableX = feature.x();
         assertEquals(draggedX, afterReEnableX, 1.0f, "Position must be retained after re-enabling");
+    }
+
+    @Test
+    void testPositionOnTeamSelectAndItemChanges() {
+        TeamResourceFeature feature = new TeamResourceFeature();
+        feature.onEnable();
+        TeamResourceState state = feature.getState();
+        Element root = feature.getHudView().element();
+
+        float initialX = feature.x();
+
+        // Simulate teams existing
+        Seq<Team> teams = new Seq<>();
+        teams.add(Team.sharded);
+        teams.add(Team.crux);
+        state.validTeamsSignal.set(teams);
+
+        root.validate();
+        assertEquals(initialX, feature.x(), 1.0f, "Position must not change when teams are updated");
+        assertEquals(initialX, root.x, 1.0f, "Root X must match feature X");
+
+        // Select team (previously reported as causing position change)
+        state.setSelectedTeam(Team.crux);
+        root.validate();
+        assertEquals(initialX, feature.x(), 1.0f, "Position must not change when team is selected");
+        assertEquals(initialX, root.x, 1.0f, "Root X must match feature X");
+
+        // Toggle feature off and on
+        feature.onDisable();
+        feature.onEnable();
+        Element root2 = feature.getHudView().element();
+        root2.validate();
+        assertEquals(initialX, feature.x(), 1.0f, "Position must not snap after re-enabling");
+        assertEquals(initialX, root2.x, 1.0f, "New root X must match feature X");
+    }
+
+    @Test
+    void testLayoutPrefWidthWithItems() {
+        mockGraphics.width = 1000;
+        mockGraphics.height = 800;
+        Scl.setProduct(1.0f);
+
+        TeamResourceFeature feature = new TeamResourceFeature();
+        feature.onEnable();
+        TeamResourceState state = feature.getState();
+        Element root = feature.getHudView().element();
+
+        float initialX = feature.x();
+
+        // Add 16 items
+        Seq<Item> items = new Seq<>();
+        try {
+            Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+            Field f = unsafeClass.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            Object unsafe = f.get(null);
+            Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+            Field nameField = Content.class.getDeclaredField("name");
+            nameField.setAccessible(true);
+            for (int i = 0; i < 16; i++) {
+                Item it = (Item) allocateInstance.invoke(unsafe, Item.class);
+                nameField.set(it, "item-" + i);
+                it.uiIcon = new TextureRegion();
+                items.add(it);
+            }
+        } catch (Exception ignored) {
+        }
+        state.usedItemsSignal.set(items);
+
+        // Add teams
+        Seq<Team> teams = new Seq<>();
+        teams.add(Team.sharded);
+        teams.add(Team.crux);
+        state.validTeamsSignal.set(teams);
+
+        root.validate();
+
+        assertEquals(initialX, feature.x(), 1.0f, "Feature X must remain stable with items");
+        assertEquals(initialX, root.x, 1.0f, "Root X must remain stable with items");
+
+        // Toggle off and on
+        feature.onDisable();
+        feature.onEnable();
+        Element root2 = feature.getHudView().element();
+        root2.validate();
+
+        assertEquals(initialX, feature.x(), 1.0f, "Feature X must remain stable after toggle with items");
+        assertEquals(initialX, root2.x, 1.0f, "Root2 X must remain stable after toggle with items");
+
+        // Select team
+        state.setSelectedTeam(Team.crux);
+        root2.validate();
+
+        assertEquals(initialX, feature.x(), 1.0f, "Feature X must remain stable after team selection with items");
+        assertEquals(initialX, root2.x, 1.0f, "Root2 X must remain stable after team selection with items");
+    }
+
+    @Test
+    void testTransientLayoutDoesNotCorruptSignal() {
+        TeamResourceFeature feature = new TeamResourceFeature();
+        feature.onEnable();
+        Element root = feature.getHudView().element();
+
+        feature.x(100f);
+        feature.y(150f);
+        root.validate();
+
+        assertEquals(100f, feature.x(), 1.0f);
+        assertEquals(150f, feature.y(), 1.0f);
+
+        // Manually expand root width beyond screen boundary to simulate transient large layout
+        root.setSize(1200f, 600f);
+        root.validate();
+
+        // The signal must NOT be corrupted to sw - w (which would be 0 or clamped right-aligned)
+        assertEquals(100f, feature.x(), 1.0f, "boundXSignal must not be overwritten during layout validation");
+        assertEquals(150f, feature.y(), 1.0f, "boundYSignal must not be overwritten during layout validation");
+    }
+
+    @Test
+    void testLongTextExpandsPrefWidth() {
+        mockGraphics.width = 1000;
+        mockGraphics.height = 800;
+        Scl.setProduct(1.0f);
+
+        TeamResourceFeature feature = new TeamResourceFeature();
+        feature.onEnable();
+        TeamResourceState state = feature.getState();
+        Element root = feature.getHudView().element();
+
+        float initialX = feature.x();
+
+        // Enable power and stored power
+        feature.showPowerConfig.set(true);
+        feature.showStoredPowerConfig.set(true);
+
+        // Add a mock power graph with huge stored power
+        PowerGraph graph = new PowerGraph();
+        try {
+            Field capField = PowerGraph.class.getDeclaredField("lastCapacity");
+            capField.setAccessible(true);
+            capField.set(graph, 99999999f);
+        } catch (Exception ignored) {
+        }
+        state.getTeamGraphs().add(graph);
+        state.tickSignal.set(state.tickSignal.get() + 1);
+
+        root.validate();
+
+        assertEquals(initialX, feature.x(), 1.0f, "Feature X must remain stable with power stats");
+        assertEquals(initialX, root.x, 1.0f, "Root X must remain stable with power stats");
     }
 }
