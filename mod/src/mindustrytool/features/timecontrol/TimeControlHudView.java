@@ -30,36 +30,36 @@ import solim.signal.Signal;
  */
 public class TimeControlHudView extends BaseComponent {
 
-    private final TimeControlFeature parentFeature;
+    private final TimeControlFeature feature;
     private @Nullable Hud hud;
 
-    public TimeControlHudView(TimeControlFeature parentFeature) {
-        this.parentFeature = parentFeature;
+    public TimeControlHudView(TimeControlFeature feature) {
+        this.feature = feature;
     }
 
     @Override
     protected Element build() {
-        Readable<Float> scale = parentFeature.scaleConfig.signal();
+        Readable<Float> scale = feature.scaleConfig.signal();
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> dragIconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 
         hud = hud(() -> {
-            dynamic(parentFeature.hideDragHandleConfig.signal(), hide -> {
+            dynamic(feature.hideDragHandleConfig.signal(), hide -> {
                 if (!Boolean.TRUE.equals(hide)) {
                     return button()
                             .style(Styles.clearNonei)
                             .background(Styles.black6)
                             .size(buttonSize)
                             .children(() -> icon(Icon.move).size(dragIconSize))
-                            .draggable(parentFeature.xSignal, parentFeature.ySignal);
+                            .draggable(feature.xSignal, feature.ySignal);
                 }
                 return null;
             });
 
-            buildControls(parentFeature, null);
+            buildControls(feature, null);
         }).gap(unit(1));
 
-        hud.position(parentFeature.xSignal, parentFeature.ySignal)
+        hud.position(feature.xSignal, feature.ySignal)
                 .rounded(unit(2))
                 .background(Styles.black6);
 
@@ -67,8 +67,8 @@ public class TimeControlHudView extends BaseComponent {
             keepInScreen();
             Core.app.post(this::keepInScreen);
         });
-        listen(ResetEvent.class, e -> parentFeature.resetSpeed());
-        listen(ClientServerConnectEvent.class, e -> parentFeature.resetSpeed());
+        listen(ResetEvent.class, e -> feature.resetSpeed());
+        listen(ClientServerConnectEvent.class, e -> feature.resetSpeed());
 
         effect(() -> {
             scale.get();

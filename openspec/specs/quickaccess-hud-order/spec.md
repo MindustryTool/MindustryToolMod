@@ -18,14 +18,14 @@ The system SHALL persist the Quick Access feature display order as an ordered li
 
 ### Requirement: Lazy order normalization
 
-The system SHALL heal the stored list on every read by dropping ids with no registered feature, dropping development feature ids, and appending missing registered quick-access non-development feature ids at the end, writing back only when the healed list differs.
+The system SHALL heal the stored list on every read by dropping ids with no registered feature, dropping development feature ids, and appending missing registered non-development feature ids (excluding QuickAccessFeature) at the end, writing back only when the healed list differs.
 
 #### Scenario: Stale ids removed
 - **WHEN** the stored list contains an unregistered id
 - **THEN** reads exclude it and persist the cleaned list
 
 #### Scenario: New features appended at end
-- **WHEN** a registered quick-access non-development feature id is absent from the stored list
+- **WHEN** a registered non-development feature id is absent from the stored list
 - **THEN** reads place it last and persist the extended list
 
 ### Requirement: Swap-based up/down reordering
