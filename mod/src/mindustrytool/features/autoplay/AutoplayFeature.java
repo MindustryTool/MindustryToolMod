@@ -4,7 +4,6 @@ import arc.Core;
 import arc.Events;
 import arc.func.Prov;
 import arc.graphics.g2d.Draw;
-import arc.input.KeyCode;
 import arc.math.geom.Vec2;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.ObjectMap;
@@ -47,8 +46,7 @@ public class AutoplayFeature extends Feature {
             FollowAssistTask.ID,
             SelfBuildTask.ID,
             RebuildTask.ID,
-            MiningTask.ID
-    );
+            MiningTask.ID);
 
     public final ConfigValue<Boolean> followUnit;
     public final ConfigValue<Seq<String>> taskOrder;
@@ -194,17 +192,6 @@ public class AutoplayFeature extends Feature {
         Unit unit = Vars.player.unit();
         if (unit == null || !unit.isValid()) {
             setCurrentTask(null);
-            return;
-        }
-
-        if (Core.input.isTouched() || Core.input.keyDown(KeyCode.anyKey)) {
-            if (unit.controller() != Vars.player) {
-                unit.controller(Vars.player);
-            }
-            if (currentTask != null) {
-                resetUnitState(unit);
-                setCurrentTask(null);
-            }
             return;
         }
 

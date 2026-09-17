@@ -9,7 +9,8 @@
 
 2. **Player Manual Override:**
    - When player manual input (touch or key press) is detected, Autoplay MUST immediately yield control to the player.
-   - Autoplay MUST remain paused for a configurable cooldown duration (slider 0.5s - 5.0s, default 2.0s) after player input ceases.
+   - As soon as manual input ceases, Autoplay MUST resume task evaluation on the next frame with no timed lockout.
+   - There is no configurable override-cooldown setting.
 
 3. **Task 1 - Self-Heal:**
    - MUST trigger when unit health falls below a configurable threshold (slider 20% - 80%, default 60%), healing until 100%.
