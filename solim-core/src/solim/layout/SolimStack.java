@@ -1,5 +1,6 @@
 package solim.layout;
 
+import arc.func.Cons;
 import arc.scene.Element;
 import arc.scene.ui.layout.Stack;
 import solim.core.Component;
@@ -66,6 +67,13 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     public SolimStack children(Runnable r) {
         if (r != null) {
             layer(r);
+        }
+        return this;
+    }
+
+    public SolimStack children(Cons<Element> r) {
+        if (r != null) {
+            layer(() -> r.get(element()));
         }
         return this;
     }

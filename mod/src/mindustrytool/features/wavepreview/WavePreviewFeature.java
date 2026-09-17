@@ -25,7 +25,7 @@ import solim.overlay.SolimDialog;
 public class WavePreviewFeature extends Feature {
 
     public static final int MIN_DEPTH = 1;
-    public static final int MAX_DEPTH = 5;
+    public static final int MAX_DEPTH = 10;
     public static final int DEFAULT_DEPTH = 1;
 
     public final ConfigGroup config;
