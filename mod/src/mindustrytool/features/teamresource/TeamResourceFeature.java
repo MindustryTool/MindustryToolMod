@@ -83,13 +83,25 @@ public class TeamResourceFeature extends Feature {
                 p -> p ? "portrait" : "landscape",
                 p -> {
                     float sw = Units.screenWidth();
-                    float defX = sw > 0 ? sw / 2f : 200f;
+                    Float wFrac = overlayWidthConfig != null ? overlayWidthConfig.get() : 0.28f;
+                    float width = sw * (wFrac != null ? wFrac : 0.28f);
+                    float defX = sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
                     String oldKey = p ? "mindustrytool.team-resource.x.portrait"
                             : "mindustrytool.team-resource.x.landscape";
-                    String groupKey = p ? "mindustrytool.team-resources.portrait.x"
+                    String groupKey = p ? "mindustrytool.features.team-resources.x.portrait"
+                            : "mindustrytool.features.team-resources.x.landscape";
+                    String fallbackKey1 = p ? "mindustrytool.team-resources.x.portrait"
+                            : "mindustrytool.team-resources.x.landscape";
+                    String fallbackKey2 = p ? "mindustrytool.team-resources.portrait.x"
                             : "mindustrytool.team-resources.landscape.x";
                     if (Core.settings.has(groupKey)) {
                         return Core.settings.getFloat(groupKey);
+                    }
+                    if (Core.settings.has(fallbackKey1)) {
+                        return Core.settings.getFloat(fallbackKey1);
+                    }
+                    if (Core.settings.has(fallbackKey2)) {
+                        return Core.settings.getFloat(fallbackKey2);
                     }
                     return Core.settings.getFloat(oldKey, defX);
                 });
@@ -103,10 +115,20 @@ public class TeamResourceFeature extends Feature {
                     float defY = sh > 0 ? sh / 2f : 200f;
                     String oldKey = p ? "mindustrytool.team-resource.y.portrait"
                             : "mindustrytool.team-resource.y.landscape";
-                    String groupKey = p ? "mindustrytool.team-resources.portrait.y"
+                    String groupKey = p ? "mindustrytool.features.team-resources.y.portrait"
+                            : "mindustrytool.features.team-resources.y.landscape";
+                    String fallbackKey1 = p ? "mindustrytool.team-resources.y.portrait"
+                            : "mindustrytool.team-resources.y.landscape";
+                    String fallbackKey2 = p ? "mindustrytool.team-resources.portrait.y"
                             : "mindustrytool.team-resources.landscape.y";
                     if (Core.settings.has(groupKey)) {
                         return Core.settings.getFloat(groupKey);
+                    }
+                    if (Core.settings.has(fallbackKey1)) {
+                        return Core.settings.getFloat(fallbackKey1);
+                    }
+                    if (Core.settings.has(fallbackKey2)) {
+                        return Core.settings.getFloat(fallbackKey2);
                     }
                     return Core.settings.getFloat(oldKey, defY);
                 });
@@ -127,7 +149,13 @@ public class TeamResourceFeature extends Feature {
 
     public float x() {
         Float val = xConfig.get();
-        return val != null ? val : Units.screenWidth() / 2f;
+        if (val != null) {
+            return val;
+        }
+        float sw = Units.screenWidth();
+        Float wFrac = overlayWidthConfig != null ? overlayWidthConfig.get() : 0.28f;
+        float width = sw * (wFrac != null ? wFrac : 0.28f);
+        return sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
     }
 
     public void x(float value) {
@@ -164,16 +192,14 @@ public class TeamResourceFeature extends Feature {
     }
 
     public void resetPosition() {
-        float cx = Units.screenWidth() / 2f;
-        float cy = Units.screenHeight() / 2f;
+        float sw = Units.screenWidth();
+        Float wFrac = overlayWidthConfig.get();
+        float width = sw * (wFrac != null ? wFrac : 0.28f);
+        float cx = sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
+        float cy = Units.screenHeight() > 0 ? Units.screenHeight() / 2f : 200f;
 
-        Core.settings.put("mindustrytool.team-resources.x.portrait", cx);
-        Core.settings.put("mindustrytool.team-resources.x.landscape", cx);
-        Core.settings.put("mindustrytool.team-resources.y.portrait", cy);
-        Core.settings.put("mindustrytool.team-resources.y.landscape", cy);
-
-        xConfig.reset();
-        yConfig.reset();
+        xConfig.set(cx);
+        yConfig.set(cy);
 
         if (hudView != null) {
             Core.app.post(hudView::keepInScreen);

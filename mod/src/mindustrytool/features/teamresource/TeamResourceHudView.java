@@ -86,7 +86,7 @@ public class TeamResourceHudView extends BaseComponent {
                             .style(Styles.clearNonei)
                             .size(buttonSize)
                             .children(() -> icon(Icon.move).scaling(Scaling.fit))
-                            .draggable(hud, feature.xSignal, feature.ySignal);
+                            .draggable(feature.xSignal, feature.ySignal);
 
                     // Expand / Collapse toggle button
                     button()
