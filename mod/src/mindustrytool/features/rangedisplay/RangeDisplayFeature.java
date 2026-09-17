@@ -8,6 +8,7 @@ import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
+import arc.input.KeyCode;
 import arc.math.geom.Rect;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -113,6 +114,9 @@ public class RangeDisplayFeature extends Feature {
         drawBlockRangeEnemyConfig = config.boolValue("draw-block-range-enemy", true);
         drawSpawnerRangeConfig = config.boolValue("draw-spawner-range", true);
         dashedConfig = config.boolValue("dashed", true);
+
+        bindToggle("rangeDisplay", KeyCode.unset);
+        bindDialog("rangeDisplaySettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
     }

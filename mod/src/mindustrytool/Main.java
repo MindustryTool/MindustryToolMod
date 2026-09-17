@@ -119,7 +119,7 @@ public class Main extends Mod {
     private void registerMindustryToolButton() {
         Core.app.post(() -> {
             try {
-                Vars.ui.menufrag.addButton("Mindustry Tool", FileIcon.of("mod.png"), () -> {
+                Vars.ui.menufrag.addButton("Mindustry Tool", FileIcon.of("mindustrytool.png"), () -> {
                     if (featureSettingDialog == null) {
                         featureSettingDialog = new FeatureSettingDialog();
                     }

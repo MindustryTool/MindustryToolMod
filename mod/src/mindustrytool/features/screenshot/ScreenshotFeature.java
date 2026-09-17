@@ -3,6 +3,7 @@ package mindustrytool.features.screenshot;
 import arc.Core;
 import arc.files.Fi;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.scene.Element;
 import arc.util.Log;
 import arc.util.Nullable;
@@ -43,6 +44,9 @@ public class ScreenshotFeature extends Feature {
         this.service = service;
         config = configGroup();
         includeUiConfig = config.boolValue("include-ui", false);
+
+        bindAction("screenshotCapture", KeyCode.unset, this::capture, false);
+        bindDialog("screenshotSettings", KeyCode.unset, getSettingDialog(), false);
     }
 
     public void resetToDefaults() {

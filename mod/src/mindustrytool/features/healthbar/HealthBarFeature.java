@@ -8,6 +8,7 @@ import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
+import arc.input.KeyCode;
 import arc.util.Align;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -81,6 +82,9 @@ public class HealthBarFeature extends Feature {
         opacityConfig = config.floatValue("opacity", 1f);
         scaleConfig = config.floatValue("scale", 1f);
         widthConfig = config.floatValue("width", 1f);
+
+        bindToggle("healthBar", KeyCode.unset);
+        bindDialog("healthBarSettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
     }

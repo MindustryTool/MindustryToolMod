@@ -9,6 +9,7 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
 import arc.graphics.g2d.TextureRegion;
+import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.math.geom.Rect;
 import arc.util.Log;
@@ -127,6 +128,9 @@ public class BridgeVisualizerFeature extends Feature {
 
         // Initialize cache values
         syncConfigCache();
+
+        bindToggle("bridgeVisualizer", KeyCode.unset);
+        bindDialog("bridgeVisualizerSettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
     }

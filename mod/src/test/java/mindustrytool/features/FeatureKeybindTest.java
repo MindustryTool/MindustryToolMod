@@ -11,6 +11,11 @@ import arc.mock.MockGraphics;
 import arc.scene.style.TextureRegionDrawable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import mindustry.gen.Icon;
+import mindustrytool.features.bridgevisualizer.BridgeVisualizerFeature;
+import mindustrytool.features.healthbar.HealthBarFeature;
+import mindustrytool.features.rangedisplay.RangeDisplayFeature;
+import mindustrytool.features.screenshot.ScreenshotFeature;
+import mindustrytool.features.wavepreview.WavePreviewFeature;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -185,5 +190,92 @@ class FeatureKeybindTest {
 
         FeatureKeybind keybind = feature.getKeybinds().first();
         assertFalse(FeatureKeybindManager.shouldTrigger(feature, keybind, false, false));
+    }
+
+    @Test
+    void screenshotFeature_registersCaptureAndSettingsKeybinds() {
+        ScreenshotFeature feature = new ScreenshotFeature();
+        assertEquals(2, feature.getKeybinds().size);
+
+        FeatureKeybind captureBind = feature.getKeybinds().find(k -> k.getBind().name.equals("screenshotCapture"));
+        assertNotNull(captureBind);
+        assertFalse(captureBind.isRequireEnabled());
+        assertTrue(FeatureKeybindManager.shouldTrigger(feature, captureBind, false, true));
+
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("screenshotSettings"));
+        assertNotNull(settingsBind);
+        assertFalse(settingsBind.isRequireEnabled());
+    }
+
+    @Test
+    void rangeDisplayFeature_registersToggleAndSettingsKeybinds() {
+        RangeDisplayFeature feature = new RangeDisplayFeature();
+        assertEquals(2, feature.getKeybinds().size);
+
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("rangeDisplay"));
+        assertNotNull(toggleBind);
+        assertFalse(toggleBind.isRequireEnabled());
+
+        boolean initial = feature.isEnabled();
+        toggleBind.getAction().run();
+        assertEquals(!initial, feature.isEnabled());
+
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("rangeDisplaySettings"));
+        assertNotNull(settingsBind);
+        assertFalse(settingsBind.isRequireEnabled());
+    }
+
+    @Test
+    void healthBarFeature_registersToggleAndSettingsKeybinds() {
+        HealthBarFeature feature = new HealthBarFeature();
+        assertEquals(2, feature.getKeybinds().size);
+
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("healthBar"));
+        assertNotNull(toggleBind);
+        assertFalse(toggleBind.isRequireEnabled());
+
+        boolean initial = feature.isEnabled();
+        toggleBind.getAction().run();
+        assertEquals(!initial, feature.isEnabled());
+
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("healthBarSettings"));
+        assertNotNull(settingsBind);
+        assertFalse(settingsBind.isRequireEnabled());
+    }
+
+    @Test
+    void bridgeVisualizerFeature_registersToggleAndSettingsKeybinds() {
+        BridgeVisualizerFeature feature = new BridgeVisualizerFeature();
+        assertEquals(2, feature.getKeybinds().size);
+
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("bridgeVisualizer"));
+        assertNotNull(toggleBind);
+        assertFalse(toggleBind.isRequireEnabled());
+
+        boolean initial = feature.isEnabled();
+        toggleBind.getAction().run();
+        assertEquals(!initial, feature.isEnabled());
+
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("bridgeVisualizerSettings"));
+        assertNotNull(settingsBind);
+        assertFalse(settingsBind.isRequireEnabled());
+    }
+
+    @Test
+    void wavePreviewFeature_registersToggleAndSettingsKeybinds() {
+        WavePreviewFeature feature = new WavePreviewFeature();
+        assertEquals(2, feature.getKeybinds().size);
+
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("wavePreview"));
+        assertNotNull(toggleBind);
+        assertFalse(toggleBind.isRequireEnabled());
+
+        boolean initial = feature.isEnabled();
+        toggleBind.getAction().run();
+        assertEquals(!initial, feature.isEnabled());
+
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("wavePreviewSettings"));
+        assertNotNull(settingsBind);
+        assertFalse(settingsBind.isRequireEnabled());
     }
 }
