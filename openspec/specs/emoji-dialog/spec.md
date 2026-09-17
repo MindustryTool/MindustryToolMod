@@ -1,5 +1,8 @@
-## ADDED Requirements
+# emoji-dialog Specification
 
+## Purpose
+TBD - created by archiving change add-emoji-dialog. Update Purpose after archive.
+## Requirements
 ### Requirement: Emoji glyph source from Iconc reflection
 
 The system SHALL build the emoji list by reflecting over `mindustry.gen.Iconc` declared fields, keeping fields whose value is a `Character`, pairing each with its field name, and caching the result once for reuse.
@@ -74,3 +77,4 @@ The system SHALL present the browser as a Solim dialog with centered width-const
 
 - **WHEN** the user views the Emoji feature card or help
 - **THEN** the feature name, description, and help text come from the locale bundle.
+
