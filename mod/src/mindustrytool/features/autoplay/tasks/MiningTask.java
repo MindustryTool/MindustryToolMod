@@ -14,6 +14,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustry.type.Item;
 import mindustry.world.Tile;
+import mindustry.world.blocks.environment.Floor;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.config.ConfigValue;
@@ -193,6 +194,9 @@ public class MiningTask implements AutoplayTask {
 
         @Override
         public void updateMovement() {
+            if (unit == null) {
+                return;
+            }
             Building core = unit.closestCore();
             if (!unit.canMine() || core == null) {
                 return;
@@ -248,8 +252,9 @@ public class MiningTask implements AutoplayTask {
             }
 
             if (!unit.type.flying) {
-                unit.updateBoosting(unit.type.boostWhenMining || unit.floorOn().isDuct
-                        || unit.floorOn().damageTaken > 0f || unit.floorOn().isDeep());
+                Floor floor = unit.floorOn();
+                boolean hazard = floor != null && (floor.isDuct || floor.damageTaken > 0f || floor.isDeep());
+                unit.updateBoosting(unit.type.boostWhenMining || hazard);
             }
         }
     }

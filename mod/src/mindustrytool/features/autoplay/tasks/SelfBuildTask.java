@@ -3,6 +3,8 @@ package mindustrytool.features.autoplay.tasks;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.math.geom.Position;
+import arc.math.geom.Vec2;
 import arc.scene.style.TextureRegionDrawable;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -69,7 +71,7 @@ public class SelfBuildTask implements AutoplayTask {
             }
 
             if (plan.breaking || canAffordPlan(core, plan)) {
-                float dst = unit.dst2(plan.tile());
+                float dst = unit.dst2(plan.x * Vars.tilesize, plan.y * Vars.tilesize);
                 if (dst < minDst) {
                     minDst = dst;
                     bestPlan = plan;
@@ -91,7 +93,10 @@ public class SelfBuildTask implements AutoplayTask {
         return true;
     }
 
-    private static boolean canAffordPlan(@Nullable Building core, BuildPlan plan) {
+    private static boolean canAffordPlan(@Nullable Building core, @Nullable BuildPlan plan) {
+        if (plan == null) {
+            return false;
+        }
         if (plan.breaking) {
             return true;
         }
@@ -148,10 +153,14 @@ public class SelfBuildTask implements AutoplayTask {
     public static class SelfBuildAI extends BaseAutoplayAI {
         @Override
         public void updateMovement() {
+            if (unit == null) {
+                return;
+            }
             BuildPlan req = unit.buildPlan();
             if (req != null) {
+                Position target = req.tile() != null ? req.tile() : new Vec2(req.x * Vars.tilesize, req.y * Vars.tilesize);
                 float range = Math.min(unit.type.buildRange - 20f, 100f);
-                moveTo(req.tile(), Math.max(range - 10f, 20f), 20f);
+                moveTo(target, Math.max(range - 10f, 20f), 20f);
             }
         }
     }

@@ -169,7 +169,8 @@ public class AutoplayFeature extends Feature {
     @Override
     public void onDisable() {
         Unit unit = Vars.player.unit();
-        if (unit != null && !unit.dead()) {
+        if (unit != null && unit.isValid()) {
+            resetUnitState(unit);
             unit.controller(Vars.player);
         }
         currentTask = null;
@@ -185,7 +186,7 @@ public class AutoplayFeature extends Feature {
         }
 
         Unit unit = Vars.player.unit();
-        if (unit == null || unit.dead()) {
+        if (unit == null || !unit.isValid()) {
             currentTask = null;
             return;
         }
@@ -196,7 +197,10 @@ public class AutoplayFeature extends Feature {
             if (unit.controller() != Vars.player) {
                 unit.controller(Vars.player);
             }
-            currentTask = null;
+            if (currentTask != null) {
+                resetUnitState(unit);
+                currentTask = null;
+            }
             return;
         }
 
@@ -204,11 +208,15 @@ public class AutoplayFeature extends Feature {
             if (unit.controller() != Vars.player) {
                 unit.controller(Vars.player);
             }
-            currentTask = null;
+            if (currentTask != null) {
+                resetUnitState(unit);
+                currentTask = null;
+            }
             return;
         }
 
         if (currentTask != null && currentTask.getAI().unit() != unit) {
+            resetUnitState(unit);
             currentTask = null;
         }
 
@@ -221,6 +229,9 @@ public class AutoplayFeature extends Feature {
         }
 
         if (nextTask != currentTask) {
+            if (currentTask != null) {
+                resetUnitState(unit);
+            }
             if (nextTask != null) {
                 BaseAutoplayAI ai = nextTask.getAI();
                 ai.unit(unit);
@@ -239,13 +250,20 @@ public class AutoplayFeature extends Feature {
         }
     }
 
+    private void resetUnitState(Unit unit) {
+        if (unit != null) {
+            unit.isShooting(false);
+            unit.mineTile = null;
+        }
+    }
+
     private void draw() {
         if (!isEnabled() || !Vars.state.isPlaying()) {
             return;
         }
 
         Unit unit = Vars.player.unit();
-        if (unit == null || unit.dead()) {
+        if (unit == null || !unit.isValid()) {
             return;
         }
 

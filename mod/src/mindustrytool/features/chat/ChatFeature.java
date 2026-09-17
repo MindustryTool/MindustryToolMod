@@ -182,6 +182,20 @@ public class ChatFeature extends Feature {
         heightRatioConfig.reset();
     }
 
+    public void toggleCollapsed() {
+        if (!isEnabled()) {
+            setEnabled(true);
+            collapsedConfig.set(false);
+            return;
+        }
+        collapsedConfig.set(!Boolean.TRUE.equals(collapsedConfig.get()));
+    }
+
+    @Override
+    public void onQuickAccessClick() {
+        toggleCollapsed();
+    }
+
     @Override
     public void onEnable() {
         service.start();

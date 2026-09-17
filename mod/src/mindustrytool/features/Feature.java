@@ -3,6 +3,7 @@ package mindustrytool.features;
 import arc.Core;
 import arc.Events;
 import arc.func.Prov;
+import arc.scene.Element;
 import arc.util.Nullable;
 import solim.config.ConfigGroup;
 import solim.overlay.SolimDialog;
@@ -87,6 +88,25 @@ public abstract class Feature {
 
 	public @Nullable Prov<SolimDialog> getMainDialog() {
 		return null;
+	}
+
+	public void onQuickAccessClick(@Nullable Element anchor) {
+		onQuickAccessClick();
+	}
+
+	public void onQuickAccessClick() {
+		setEnabled(!isEnabled());
+	}
+
+	public void onQuickAccessLongClick(@Nullable Element anchor) {
+		onQuickAccessLongClick();
+	}
+
+	public void onQuickAccessLongClick() {
+		Prov<SolimDialog> dlg = getSettingDialog() != null ? getSettingDialog() : getMainDialog();
+		if (dlg != null) {
+			dlg.get().show();
+		}
 	}
 
 	public String getName() {

@@ -3,6 +3,7 @@ package mindustrytool.features.autoplay;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
+import arc.math.geom.Vec2;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import arc.mock.MockSettings;
@@ -10,10 +11,19 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.I18NBundle;
+import mindustry.Vars;
+import mindustry.ai.BlockIndexer;
+import mindustry.core.ContentLoader;
+import mindustry.game.Team;
 import mindustry.gen.Icon;
+import mindustry.gen.Unit;
+import mindustry.gen.UnitEntity;
+import mindustry.type.UnitType;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
+import mindustrytool.features.autoplay.tasks.BaseAutoplayAI;
 import mindustrytool.features.autoplay.tasks.FleeTask;
 import mindustrytool.features.autoplay.tasks.MiningTask;
+import mindustrytool.features.autoplay.tasks.RepairTask;
 import mindustrytool.features.autoplay.tasks.SelfHealTask;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +49,8 @@ class AutoplayFeatureTest {
         Icon.up = new TextureRegionDrawable();
         Icon.down = new TextureRegionDrawable();
         Icon.none = new TextureRegionDrawable();
+
+        Vars.content = new ContentLoader();
 
         feature = new AutoplayFeature();
     }
@@ -93,5 +105,60 @@ class AutoplayFeatureTest {
         Seq<AutoplayTask> movedUp = feature.tasks().peek();
         assertEquals(SelfHealTask.ID, movedUp.get(0).getId());
         assertEquals(FleeTask.ID, movedUp.get(1).getId());
+    }
+
+    @Test
+    void repairTaskYieldsWhenUnitCannotHeal() {
+        RepairTask task = new RepairTask();
+        UnitType type = new UnitType("test-cannot-heal");
+        type.weapons = new Seq<>();
+        type.abilities = new Seq<>();
+        Unit unit = UnitEntity.create();
+        unit.setType(type);
+
+        boolean canExecute = task.update(unit);
+
+        assertFalse(canExecute, "RepairTask should yield when unit lacks heal weapons/abilities");
+        assertEquals(Core.bundle.get("feature.autoplay.status.cannot-heal"), task.status().peek());
+    }
+
+    @Test
+    void baseAutoplayAINullSafety() {
+        BaseAutoplayAI ai = new BaseAutoplayAI() {};
+
+        // When unit is null, movement methods must safely return without NPE
+        assertDoesNotThrow(() -> ai.moveTo(new Vec2(100f, 100f), 50f));
+        assertDoesNotThrow(() -> ai.moveTo(new Vec2(100f, 100f), 50f, 20f));
+        assertDoesNotThrow(() -> ai.moveTo(new Vec2(100f, 100f), 50f, 20f, true, null));
+        assertDoesNotThrow(() -> ai.moveTo(new Vec2(100f, 100f), 50f, 20f, true, null, false));
+        assertDoesNotThrow(() -> ai.circle(new Vec2(100f, 100f), 50f));
+        assertDoesNotThrow(() -> ai.circle(new Vec2(100f, 100f), 50f, 10f));
+
+        // When target is null, must safely return without NPE
+        assertDoesNotThrow(() -> ai.moveTo(null, 50f));
+        assertDoesNotThrow(() -> ai.moveTo(null, 50f, 20f));
+        assertDoesNotThrow(() -> ai.moveTo(null, 50f, 20f, true, null));
+        assertDoesNotThrow(() -> ai.circle(null, 50f));
+        assertDoesNotThrow(() -> ai.circle(null, 50f, 10f));
+        assertDoesNotThrow(ai::updateUnit);
+    }
+
+    @Test
+    void selfHealTaskArbitrationDoesNotMoveAI() {
+        SelfHealTask task = new SelfHealTask(feature);
+        assertNull(task.getAI().unit(), "AI unit must initially be null");
+
+        Vars.indexer = new BlockIndexer();
+        Unit unit = UnitEntity.create();
+        unit.team = Team.sharded;
+        unit.health = 100f;
+        unit.maxHealth = 100f;
+
+        assertDoesNotThrow(() -> {
+            boolean active = task.update(unit);
+            assertFalse(active, "Healthy unit should not trigger self-heal");
+        });
+
+        assertNull(task.getAI().unit(), "Arbitration must never attach or mutate AI unit");
     }
 }

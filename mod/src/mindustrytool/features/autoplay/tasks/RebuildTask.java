@@ -1,6 +1,8 @@
 package mindustrytool.features.autoplay.tasks;
 
 import arc.Core;
+import arc.math.geom.Position;
+import arc.math.geom.Vec2;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Queue;
 import arc.util.Nullable;
@@ -51,8 +53,13 @@ public class RebuildTask implements AutoplayTask {
             return false;
         }
 
+        if (unit.team.data() == null) {
+            status.set(Core.bundle.get("feature.autoplay.status.no-build-plans"));
+            return false;
+        }
+
         Queue<BlockPlan> plans = unit.team.data().plans;
-        if (plans.isEmpty()) {
+        if (plans == null || plans.isEmpty()) {
             status.set(Core.bundle.get("feature.autoplay.status.no-build-plans"));
             return false;
         }
@@ -93,8 +100,8 @@ public class RebuildTask implements AutoplayTask {
         return true;
     }
 
-    private static boolean canAffordPlan(@Nullable Building core, BlockPlan plan) {
-        if (core == null || plan.block == null) {
+    private static boolean canAffordPlan(@Nullable Building core, @Nullable BlockPlan plan) {
+        if (plan == null || core == null || plan.block == null) {
             return false;
         }
         if (plan.block.requirements == null) {
@@ -116,7 +123,13 @@ public class RebuildTask implements AutoplayTask {
     public static class RebuildAI extends BaseAutoplayAI {
         @Override
         public void updateMovement() {
+            if (unit == null || unit.team.data() == null) {
+                return;
+            }
             Queue<BlockPlan> plans = unit.team.data().plans;
+            if (plans == null) {
+                return;
+            }
             if (unit.buildPlan() == null && !plans.isEmpty()) {
                 BlockPlan block = plans.first();
 
@@ -147,8 +160,9 @@ public class RebuildTask implements AutoplayTask {
                     }
                 }
 
+                Position target = req.tile() != null ? req.tile() : new Vec2(req.x * Vars.tilesize, req.y * Vars.tilesize);
                 float range = Math.min(unit.type.buildRange - 20f, 100f);
-                moveTo(req.tile(), Math.max(range - 10f, 20f), 20f);
+                moveTo(target, Math.max(range - 10f, 20f), 20f);
             }
         }
     }

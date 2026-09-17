@@ -9,6 +9,8 @@ import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.entities.Units;
 import mindustry.gen.Building;
+import mindustry.gen.Entityc;
+import mindustry.gen.Healthc;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustry.world.blocks.defense.turrets.Turret;
@@ -102,6 +104,15 @@ public class FleeTask implements AutoplayTask {
 
         @Override
         public void updateMovement() {
+            if (unit == null) {
+                return;
+            }
+            if (threat instanceof Entityc && !((Entityc) threat).isAdded()) {
+                threat = null;
+            } else if (threat instanceof Healthc && ((Healthc) threat).dead()) {
+                threat = null;
+            }
+
             Building core = unit.closestCore();
             if (core != null) {
                 moveTo(core, 40f);

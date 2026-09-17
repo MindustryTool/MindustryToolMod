@@ -11,7 +11,6 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.features.PopupDisplayFeature;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
@@ -27,7 +26,7 @@ import solim.core.Units;
  * hosting or in single-player; speed is ephemeral and resets to 1x on disable,
  * world exit, client sessions, and interaction-mode switches.
  */
-public class TimeControlFeature extends Feature implements PopupDisplayFeature {
+public class TimeControlFeature extends Feature {
 
     public static final float[] SPEEDS = { 0.125f, 0.5f, 1f, 2f, 8f };
     public static final float SLIDER_MIN_U = -1f;
@@ -258,11 +257,18 @@ public class TimeControlFeature extends Feature implements PopupDisplayFeature {
     }
 
     @Override
+    public void onQuickAccessClick(@Nullable Element anchor) {
+        if (isPopupMode()) {
+            togglePopup(anchor);
+            return;
+        }
+        super.onQuickAccessClick(anchor);
+    }
+
     public void togglePopup(@Nullable Element quickAccessBar) {
         TimeControlPopup.toggle(this, quickAccessBar);
     }
 
-    @Override
     public void openPopup(@Nullable Element quickAccessBar) {
         TimeControlPopup.toggle(this, quickAccessBar);
     }
