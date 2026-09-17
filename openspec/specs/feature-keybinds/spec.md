@@ -1,4 +1,11 @@
-## ADDED Requirements
+# feature-keybinds Specification
+
+## Purpose
+
+Multi-keybind registration and centralized dispatch system for mod features with action callbacks, enabled-state guards, and vanilla Controls menu integration. Created by archiving change feature-keybind-system.
+## Requirements
+
+**Source: feature-keybind-system**
 
 ### Requirement: Multi-Keybind Registration
 The system SHALL allow features to register one or more keybinds, each associated with a unique name, an Arc `KeyBind` instance, a `Runnable` action callback, and an execution precondition.

@@ -4,6 +4,7 @@ import arc.Core;
 import arc.Events;
 import arc.func.Prov;
 import arc.graphics.g2d.Draw;
+import arc.input.KeyCode;
 import arc.math.geom.Vec2;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.ObjectMap;
@@ -81,6 +82,8 @@ public class AutoplayFeature extends Feature {
         taskMap.put(MiningTask.ID, new MiningTask(this));
 
         syncOrderedTasks();
+
+        bindToggle("autoPlay", KeyCode.unset);
 
         Events.run(Trigger.update, this::update);
         Events.run(Trigger.draw, this::draw);
