@@ -2,4 +2,4 @@
 - Map rule view
 - Emoji list
 - Entity status rendering
-- 
+- Screenshot

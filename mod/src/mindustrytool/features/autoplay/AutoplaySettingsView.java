@@ -39,8 +39,8 @@ public class AutoplaySettingsView extends BaseComponent {
     }
 
     private Component globalSection() {
-        Readable<String> cooldownLabel = feature.overrideCooldown.signal().map(val ->
-                Core.bundle.format("feature.autoplay.settings.override-cooldown", Strings.fixed(val != null ? val : 2.0f, 1)));
+        Readable<String> cooldownLabel = feature.overrideCooldown.signal().map(val -> Core.bundle
+                .format("feature.autoplay.settings.override-cooldown", Strings.fixed(val != null ? val : 2.0f, 1)));
 
         return column().growX().gap(unit(2)).children(() -> {
             checkbox(Core.bundle.get("feature.autoplay.settings.follow-unit"), feature.followUnit.signal());
@@ -64,8 +64,8 @@ public class AutoplaySettingsView extends BaseComponent {
             reactiveGrid(Signal.of(1), feature.tasks(),
                     AutoplayTask::getId,
                     task -> new TaskRow(feature, task))
-                    .gap(unit(2))
-                    .growX();
+                            .gap(unit(2))
+                            .growX();
         });
     }
 
@@ -81,18 +81,20 @@ public class AutoplaySettingsView extends BaseComponent {
 
         @Override
         protected Element build() {
-            Readable<Boolean> enabled = feature.disabledTasks.signal().map(disabled ->
-                    disabled == null || !disabled.contains(task.getId()));
+            Readable<Boolean> enabled = feature.disabledTasks.signal()
+                    .map(disabled -> disabled == null || !disabled.contains(task.getId()));
 
             Readable<Boolean> isCurrent = feature.currentTaskId().map(id -> task.getId().equals(id));
 
-            Readable<Color> borderColor = isCurrent.map(current ->
-                    Boolean.TRUE.equals(current) ? WebStyles.Colors.CHIP_CHECKED_BORDER : WebStyles.Colors.SECTION_BORDER);
+            Readable<Color> borderColor = isCurrent
+                    .map(current -> Boolean.TRUE.equals(current) ? WebStyles.Colors.CHIP_CHECKED_BORDER
+                            : Boolean.TRUE.equals(enabled.get()) ? Color.lightGray : WebStyles.Colors.SECTION_BORDER);
 
-            Readable<Drawable> expandIcon = expanded.map(exp ->
-                    Boolean.TRUE.equals(exp)
-                            ? FileIcon.of("chevron-up.png", Icon.up)
-                            : FileIcon.of("chevron-down.png", Icon.down));
+            Readable<Drawable> expandIcon = expanded.map(exp -> Boolean.TRUE.equals(exp)
+                    ? FileIcon.of("chevron-up.png", Icon.up)
+                    : FileIcon.of("chevron-down.png", Icon.down));
+
+            Readable<Color> color = enabled.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.darkGray);
 
             return card()
                     .growX()
@@ -116,20 +118,22 @@ public class AutoplaySettingsView extends BaseComponent {
                                             .size(unit(11))
                                             .tooltip(Core.bundle.get("feature.autoplay.tooltip.reorder-down"))
                                             .onClick(() -> feature.moveTaskDown(task.getId()))
-                                            .children(() -> icon(FileIcon.of("chevron-down.png", Icon.down)).size(unit(7)));
+                                            .children(() -> icon(FileIcon.of("chevron-down.png", Icon.down))
+                                                    .size(unit(7)));
                                 });
 
                                 divider(Direction.Y);
 
                                 column().growX().paddingTop(unit(2)).gap(unit(2)).children(() -> {
                                     row().growX().gap(unit(2)).left().children(() -> {
-                                        icon(task.getIcon()).size(unit(5));
+                                        icon(task.getIcon()).size(unit(5))
+                                                .color(color);
                                         text(task.getName())
-                                                .color(enabled.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray))
+                                                .color(color)
                                                 .wrap(true);
                                     });
 
-                                    text(task.status()).growX().left().wrap(true).color(WebStyles.Colors.GHOST_FG);
+                                    text(task.status()).growX().left().wrap(true).color(color);
                                 });
 
                                 if (task.hasSettings()) {
