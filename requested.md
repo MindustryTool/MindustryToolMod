@@ -1,2 +1,0 @@
-- Quick schematic grid 
-- Map rule view

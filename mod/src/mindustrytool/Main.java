@@ -25,6 +25,7 @@ import mindustrytool.features.progressdisplay.ProgressDisplayFeature;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import mindustrytool.features.savesync.SaveSyncFeature;
+import mindustrytool.features.screenshot.ScreenshotFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
 import mindustrytool.features.teamresource.TeamResourceFeature;
@@ -91,6 +92,7 @@ public class Main extends Mod {
                 new ToggleRenderingFeature(),
                 new TimeControlFeature(),
                 new JoystickFeature(),
+                new ScreenshotFeature(),
                 new EmojiFeature());
 
         Events.on(ClientLoadEvent.class, event -> {

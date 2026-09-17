@@ -388,7 +388,7 @@ public final class Request {
                 byte[] errBytes = errIn != null ? readAllBytes(errIn) : new byte[0];
                 String rawBody = errBytes.length > 0 ? new String(errBytes, StandardCharsets.UTF_8) : null;
                 JsonNode errorBody = parseErrorBody(rawBody);
-                throw new HttpException(statusCode, errorBody, rawBody, respHeaders);
+                throw new HttpException(resolvedUrl, statusCode, errorBody, rawBody, respHeaders);
             }
 
             InputStream in;
