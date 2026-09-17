@@ -5,6 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.Core;
 import arc.Settings;
 import arc.struct.Seq;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,12 +29,14 @@ class ModSettingsTest {
         Core.settings.clear();
         ModSettings.betaParticipate.set(false);
         ModSettings.featureOrder.set(new Seq<>());
+        ModSettings.favoriteFeatures.set(java.util.Collections.emptySet());
     }
 
     @AfterEach
     void resetSettings() {
         ModSettings.betaParticipate.set(false);
         ModSettings.featureOrder.set(new Seq<>());
+        ModSettings.favoriteFeatures.set(java.util.Collections.emptySet());
         Core.settings.clear();
     }
 
@@ -97,5 +103,59 @@ class ModSettingsTest {
     @Test
     void featureOrder_keyNamespaced() {
         assertEquals("mindustrytool.settings.feature-order", ModSettings.featureOrder.getKey());
+    }
+
+    @Test
+    void favoriteFeatures_defaultsEmpty() {
+        assertNotNull(ModSettings.favoriteFeatures.get());
+        assertTrue(ModSettings.favoriteFeatures.get().isEmpty());
+    }
+
+    @Test
+    void favoriteFeatures_persistsAndReloads() {
+        Set<String> favs = new HashSet<>(Arrays.asList("feat-a", "feat-b"));
+        ModSettings.favoriteFeatures.set(favs);
+
+        assertEquals(2, ModSettings.favoriteFeatures.get().size());
+        assertTrue(ModSettings.favoriteFeatures.get().contains("feat-a"));
+        assertTrue(ModSettings.favoriteFeatures.get().contains("feat-b"));
+
+        ConfigValue<Set<String>> reloaded =
+                ModSettings.GROUP.setValue("favorites", String.class, Collections.emptySet());
+        assertEquals(2, reloaded.get().size());
+        assertTrue(reloaded.get().contains("feat-a"));
+        assertTrue(reloaded.get().contains("feat-b"));
+    }
+
+    @Test
+    void favoriteFeatures_keyNamespaced() {
+        assertEquals("mindustrytool.settings.favorites", ModSettings.favoriteFeatures.getKey());
+    }
+
+    @Test
+    void favoriteFeatures_signalReflectsSet() {
+        Set<String> favs = new HashSet<>(Collections.singletonList("feat-x"));
+        ModSettings.favoriteFeatures.set(favs);
+        assertEquals(favs, ModSettings.favoriteFeatures.signal().peek());
+
+        ModSettings.favoriteFeatures.set(Collections.emptySet());
+        assertEquals(Collections.emptySet(), ModSettings.favoriteFeatures.signal().peek());
+    }
+
+    @Test
+    void favoriteFeatures_toggleMembership() {
+        String id = "feat-toggle";
+        Set<String> current = ModSettings.favoriteFeatures.get();
+        Set<String> updated = current != null ? new HashSet<>(current) : new HashSet<>();
+        updated.add(id);
+        ModSettings.favoriteFeatures.set(updated);
+
+        assertTrue(ModSettings.favoriteFeatures.get().contains(id));
+
+        Set<String> next = new HashSet<>(ModSettings.favoriteFeatures.get());
+        next.remove(id);
+        ModSettings.favoriteFeatures.set(next);
+
+        assertFalse(ModSettings.favoriteFeatures.get().contains(id));
     }
 }

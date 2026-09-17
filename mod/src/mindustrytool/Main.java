@@ -25,6 +25,7 @@ import mindustrytool.features.progressdisplay.ProgressDisplayFeature;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import mindustrytool.features.savesync.SaveSyncFeature;
+import mindustrytool.features.screenshot.ScreenshotFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
 import mindustrytool.features.teamresource.TeamResourceFeature;
@@ -93,6 +94,7 @@ public class Main extends Mod {
                 new ToggleRenderingFeature(),
                 new TimeControlFeature(),
                 new JoystickFeature(),
+                new ScreenshotFeature(),
                 new EmojiFeature());
 
         Events.on(ClientLoadEvent.class, event -> {
@@ -119,7 +121,7 @@ public class Main extends Mod {
     private void registerMindustryToolButton() {
         Core.app.post(() -> {
             try {
-                Vars.ui.menufrag.addButton("Mindustry Tool", FileIcon.of("mod.png"), () -> {
+                Vars.ui.menufrag.addButton("Mindustry Tool", FileIcon.of("mindustrytool.png"), () -> {
                     if (featureSettingDialog == null) {
                         featureSettingDialog = new FeatureSettingDialog();
                     }

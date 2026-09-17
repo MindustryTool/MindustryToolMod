@@ -74,6 +74,7 @@ public class FeatureManager {
 
 	public static void init() {
 		normalizeAndApplyOrder();
+		FeatureKeybindManager.init();
 
 		for (Feature feature : features.get()) {
 			if (!feature.getMetadata().isDevelopment() && feature.isEnabled()) {

@@ -22,7 +22,7 @@ public class EmojiFeature extends Feature {
                 .icon(FileIcon.of("smile.png"))
                 .order(6)
                 .enabledByDefault(true)
-                .quickAccess(true)
+                .quickAccess(false)
                 .build());
     }
 
