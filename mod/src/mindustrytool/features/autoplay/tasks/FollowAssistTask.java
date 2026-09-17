@@ -145,7 +145,17 @@ public class FollowAssistTask implements AutoplayTask {
             if (following.activelyBuilding() && unit.canBuild()) {
                 BuildPlan plan = following.buildPlan();
                 if (plan != null) {
-                    unit.plans.addFirst(plan);
+                    boolean alreadyQueued = false;
+                    for (int i = 0; i < unit.plans.size; i++) {
+                        BuildPlan p = unit.plans.get(i);
+                        if (p != null && p.samePos(plan)) {
+                            alreadyQueued = true;
+                            break;
+                        }
+                    }
+                    if (!alreadyQueued) {
+                        unit.plans.addFirst(plan);
+                    }
                     Position target = plan.tile() != null ? plan.tile() : new Vec2(plan.x * Vars.tilesize, plan.y * Vars.tilesize);
                     float range = Math.min(unit.type.buildRange - 20f, 100f);
                     moveTo(target, Math.max(range - 10f, 20f), 20f);

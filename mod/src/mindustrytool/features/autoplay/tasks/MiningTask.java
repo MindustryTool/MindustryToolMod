@@ -8,11 +8,14 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import arc.util.Nullable;
 import mindustry.Vars;
+import mindustry.content.Blocks;
 import mindustry.gen.Building;
 import mindustry.gen.Call;
 import mindustry.gen.Icon;
+import mindustry.gen.Iconc;
 import mindustry.gen.Unit;
 import mindustry.type.Item;
+import mindustry.ui.Fonts;
 import mindustry.world.Tile;
 import mindustry.world.blocks.environment.Floor;
 import mindustrytool.components.WebStyles;
@@ -81,6 +84,50 @@ public class MiningTask implements AutoplayTask {
         selectedItems.set(current);
     }
 
+    private static @Nullable Tile findOreTile(Unit unit, Building core, Item item) {
+        if (core == null) {
+            return null;
+        }
+        float originX = core.x;
+        float originY = core.y;
+        if ((unit.type.mineFloor && Vars.indexer.hasOre(item))
+                || (unit.type.mineWalls && Vars.indexer.hasWallOre(item))) {
+            Tile tile = Vars.indexer.findClosestOre(originX, originY, item);
+            if (tile == null && unit.type.mineWalls) {
+                tile = Vars.indexer.findClosestWallOre(originX, originY, item);
+            }
+            if (tile != null && isValidOreTile(tile, item)) {
+                return tile;
+            }
+            if (tile != null) {
+                Tile validNearby = findNearbyUncoveredOre(tile, item, 12);
+                if (validNearby != null) {
+                    return validNearby;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static boolean isValidOreTile(@Nullable Tile tile, Item item) {
+        return tile != null && tile.drop() == item && (tile.block() == Blocks.air || tile.block() == null);
+    }
+
+    private static @Nullable Tile findNearbyUncoveredOre(Tile center, Item item, int radius) {
+        for (int r = 1; r <= radius; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dy = -r; dy <= r; dy++) {
+                    if (Math.abs(dx) != r && Math.abs(dy) != r) continue;
+                    Tile neighbor = Vars.world.tile(center.x + dx, center.y + dy);
+                    if (isValidOreTile(neighbor, item)) {
+                        return neighbor;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     @Override
     public boolean update(Unit unit) {
         if (!unit.canMine()) {
@@ -109,24 +156,27 @@ public class MiningTask implements AutoplayTask {
             }
             allFull = false;
 
-            if ((unit.type.mineFloor && Vars.indexer.hasOre(item))
-                    || (unit.type.mineWalls && Vars.indexer.hasWallOre(item))) {
+            Tile tile = findOreTile(unit, core, item);
+            if (tile == null) {
+                continue;
+            }
 
-                Tile tile = Vars.indexer.findClosestOre(unit.x, unit.y, item);
-                if (tile == null) {
-                    tile = Vars.indexer.findClosestWallOre(unit.x, unit.y, item);
-                }
+            int currentAmount = core.items.get(item);
+            if (currentAmount < minAmount) {
+                minAmount = currentAmount;
+                bestItem = item;
+                bestTile = tile;
+            }
+        }
 
-                if (tile == null) {
-                    continue;
-                }
-
-                int currentAmount = core.items.get(item);
-                if (currentAmount < minAmount) {
-                    minAmount = currentAmount;
-                    bestItem = item;
-                    bestTile = tile;
-                }
+        if (ai.committedItem != null && ai.tripsLeft > 0
+                && isSelected(ai.committedItem)
+                && unit.canMine(ai.committedItem)
+                && core.acceptStack(ai.committedItem, 1, unit) > 0) {
+            Tile committedTile = findOreTile(unit, core, ai.committedItem);
+            if (committedTile != null) {
+                bestItem = ai.committedItem;
+                bestTile = committedTile;
             }
         }
 
@@ -142,10 +192,21 @@ public class MiningTask implements AutoplayTask {
             return false;
         }
 
-        unit.mineTile = bestTile;
+        if (ai.mining) {
+            unit.mineTile = bestTile;
+        } else {
+            unit.mineTile = null;
+        }
         ai.targetItem = bestItem;
         ai.ore = bestTile;
-        status.set(Core.bundle.format("feature.autoplay.status.mining", bestItem.localizedName));
+        String uni = Fonts.getUnicodeStr(bestItem.name);
+
+        if ((uni == null || uni.isEmpty()) && Iconc.codes.containsKey(bestItem.name)) {
+            uni = Character.toString((char) Iconc.codes.get(bestItem.name));
+        }
+
+        status.set(Core.bundle.format("feature.autoplay.status.mining",
+                uni != null && !uni.isEmpty() ? uni : bestItem.localizedName));
         return true;
     }
 
@@ -162,7 +223,8 @@ public class MiningTask implements AutoplayTask {
     @Override
     public void buildSettings(AutoplayFeature feature) {
         column().growX().gap(unit(1)).children(() -> {
-            text(Core.bundle.get("feature.autoplay.settings.mining.filter")).growX().left().color(WebStyles.Colors.GHOST_FG);
+            text(Core.bundle.get("feature.autoplay.settings.mining.filter")).growX().left()
+                    .color(WebStyles.Colors.GHOST_FG);
 
             wrap().growX().gap(unit(1)).children(() -> {
                 for (Item item : Vars.content.items()) {
@@ -170,8 +232,8 @@ public class MiningTask implements AutoplayTask {
                         continue;
                     }
 
-                    Readable<Boolean> checked = selectedItems.signal().map(seq ->
-                            seq == null || seq.isEmpty() || seq.contains(item.name));
+                    Readable<Boolean> checked = selectedItems.signal()
+                            .map(seq -> seq == null || seq.isEmpty() || seq.contains(item.name));
 
                     button(() -> toggleItem(item, !Boolean.TRUE.equals(checked.peek())))
                             .style(WebStyles.filterChipText())
@@ -180,7 +242,8 @@ public class MiningTask implements AutoplayTask {
                             .height(unit(8))
                             .children(() -> {
                                 icon(new TextureRegionDrawable(item.uiIcon)).size(unit(4));
-                                text(item.localizedName).color(checked.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray));
+                                text(item.localizedName)
+                                        .color(checked.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray));
                             });
                 }
             });
@@ -188,9 +251,14 @@ public class MiningTask implements AutoplayTask {
     }
 
     public static class MinerAI extends BaseAutoplayAI {
+        /** Consecutive trips mined on one ore before the task may switch to another ore. */
+        public static final int COMMIT_TRIPS = 3;
+
         public boolean mining = true;
         public @Nullable Item targetItem;
         public @Nullable Tile ore;
+        public @Nullable Item committedItem;
+        public int tripsLeft;
 
         @Override
         public void updateMovement() {
@@ -200,6 +268,11 @@ public class MiningTask implements AutoplayTask {
             Building core = unit.closestCore();
             if (!unit.canMine() || core == null) {
                 return;
+            }
+
+            if (targetItem != null && targetItem != committedItem) {
+                committedItem = targetItem;
+                tripsLeft = COMMIT_TRIPS;
             }
 
             if (!unit.validMine(unit.mineTile)) {
@@ -219,13 +292,7 @@ public class MiningTask implements AutoplayTask {
                     mining = false;
                 } else {
                     if (timer.get(timerTarget3, 60f) && targetItem != null) {
-                        ore = null;
-                        if (unit.type.mineFloor) {
-                            ore = Vars.indexer.findClosestOre(core.x, core.y, targetItem);
-                        }
-                        if (ore == null && unit.type.mineWalls) {
-                            ore = Vars.indexer.findClosestWallOre(core.x, core.y, targetItem);
-                        }
+                        ore = findOreTile(unit, core, targetItem);
                     }
 
                     if (ore != null) {
@@ -246,6 +313,12 @@ public class MiningTask implements AutoplayTask {
                 if (unit.within(core, unit.type.range)) {
                     Call.transferInventory(Vars.player, core);
                     mining = true;
+                    if (tripsLeft > 0) {
+                        tripsLeft--;
+                        if (tripsLeft == 0) {
+                            committedItem = null;
+                        }
+                    }
                 }
 
                 circle(core, unit.type.range / 1.8f);

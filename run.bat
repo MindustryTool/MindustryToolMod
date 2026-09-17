@@ -1,7 +1,11 @@
 @echo off
 cls
+setlocal
 
-:: Use %APPDATA% for user data and remember last selected launcher
+:: ============================================================
+:: Configuration
+:: ============================================================
+
 set "BASE_APPDATA=%APPDATA%"
 set "TARGET_FILE=%BASE_APPDATA%\Mindustry\mods\mindustrytoolmindustrytoolmod.zip"
 set "BUILD_TOOL=.\gradlew :mod:jar"
@@ -9,56 +13,80 @@ set "JAR_PATH=%~dp0\mod\build\libs\MindustryToolModDesktop.jar"
 set "DEST_FOLDER=%BASE_APPDATA%\Mindustry\mods"
 set "LAST_PATH_FILE=%BASE_APPDATA%\Mindustry\lastpath.txt"
 
-:: Ensure folder for storing last path exists
+:: ============================================================
+:: Ensure Mindustry folder exists
+:: ============================================================
+
 if not exist "%BASE_APPDATA%\Mindustry" (
     mkdir "%BASE_APPDATA%\Mindustry"
 )
 
-:: Read last saved path (if any)
+:: ============================================================
+:: Read last saved path
+:: ============================================================
+
 set "SAVED_PATH="
+
 if exist "%LAST_PATH_FILE%" (
-    for /f "usebackq delims=" %%a in ("%LAST_PATH_FILE%") do (
-        set "SAVED_PATH=%%~a"
+    for /f "usebackq delims=" %%A in ("%LAST_PATH_FILE%") do (
+        set "SAVED_PATH=%%A"
     )
 )
 
-:: Determine default directory / application to run
+:: ============================================================
+:: Determine default directory / application
+:: ============================================================
+
 set "DEFAULT_DIR="
 set "APP_TO_RUN="
 
 if defined SAVED_PATH (
     if exist "%SAVED_PATH%" (
-        :: If SAVED_PATH is a directory, use it as default directory
+
         if exist "%SAVED_PATH%\" (
             set "DEFAULT_DIR=%SAVED_PATH%"
         ) else (
-            :: It's a file: use its directory and run it directly
-            for %%D in ("%SAVED_PATH%") do set "DEFAULT_DIR=%%~dpD"
+            for %%D in ("%SAVED_PATH%") do (
+                set "DEFAULT_DIR=%%~dpD"
+            )
+
             set "APP_TO_RUN=%SAVED_PATH%"
         )
     )
 )
 
-:: Ask user to pick mindustry.exe or mindustry.jar using a GUI file dialog
+:: ============================================================
+:: Select Mindustry executable
+:: ============================================================
+
 if not defined APP_TO_RUN (
-    for /f "usebackq delims=" %%I in (`powershell -NoProfile -STA -Command "Add-Type -AssemblyName System.Windows.Forms; $ofd = New-Object System.Windows.Forms.OpenFileDialog; $ofd.Filter = 'Mindustry executables or jars (*.exe;*.jar)|*.exe;*.jar|All files (*.*)|*.*'; $ofd.InitialDirectory = '%DEFAULT_DIR%'; $ofd.Title = 'Chọn mindustry.exe hoặc mindustry.jar'; if($ofd.ShowDialog() -eq 'OK'){ Write-Output $ofd.FileName }"`) do (
+
+    for /f "usebackq delims=" %%I in (`powershell -NoProfile -STA -Command "Add-Type -AssemblyName System.Windows.Forms; $ofd = New-Object System.Windows.Forms.OpenFileDialog; $ofd.Filter = 'Mindustry executables or jars (*.exe;*.jar)|*.exe;*.jar|All files (*.*)|*.*'; if ('%DEFAULT_DIR%' -ne '') { $ofd.InitialDirectory = '%DEFAULT_DIR%' }; $ofd.Title = 'Chọn mindustry.exe hoặc mindustry.jar'; if($ofd.ShowDialog() -eq 'OK'){ Write-Output $ofd.FileName }"`) do (
         set "APP_TO_RUN=%%I"
     )
 
     if not defined APP_TO_RUN (
+        echo.
         echo Khong co file duoc chon. Thoat.
         pause
         exit /b 1
     )
+
 ) else (
     echo Using saved application:
     echo %APP_TO_RUN%
 )
 
-:: Save the chosen path for next time
+:: ============================================================
+:: Save selected path
+:: ============================================================
+
 > "%LAST_PATH_FILE%" echo %APP_TO_RUN%
 
-:: Remove specific file if it exists
+:: ============================================================
+:: Remove old mod
+:: ============================================================
+
 if exist "%TARGET_FILE%" (
     del "%TARGET_FILE%"
     echo Deleted %TARGET_FILE%
@@ -66,9 +94,13 @@ if exist "%TARGET_FILE%" (
     echo File %TARGET_FILE% does not exist.
 )
 
-:: Build the JAR using Gradle
+:: ============================================================
+:: Build
+:: ============================================================
+
 echo.
 echo Building JAR...
+
 call %BUILD_TOOL%
 
 if %ERRORLEVEL% neq 0 (
@@ -78,7 +110,10 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-:: Check if JAR was built
+:: ============================================================
+:: Check JAR
+:: ============================================================
+
 if not exist "%JAR_PATH%" (
     echo.
     echo JAR build failed!
@@ -86,56 +121,81 @@ if not exist "%JAR_PATH%" (
     exit /b 1
 )
 
-:: Ensure destination mods folder exists
+:: ============================================================
+:: Ensure mods directory exists
+:: ============================================================
+
 if not exist "%DEST_FOLDER%" (
     mkdir "%DEST_FOLDER%"
 )
 
-:: Copy JAR to destination folder
+:: ============================================================
+:: Copy JAR to Mindustry mods
+:: ============================================================
+
 echo.
 echo Copying %JAR_PATH% to %DEST_FOLDER%...
+
 copy "%JAR_PATH%" "%DEST_FOLDER%" /y
 
-:: Copy to saves\mods if it exists
+:: ============================================================
+:: Copy JAR to saves\mods
+:: ============================================================
+
 if exist "%DEFAULT_DIR%saves\mods" (
     echo.
     echo Copying %JAR_PATH% to %DEFAULT_DIR%saves\mods...
+
     copy "%JAR_PATH%" "%DEFAULT_DIR%saves\mods" /y
 )
 
-:: Run the selected application
+:: ============================================================
+:: Launch Mindustry
+::
+:: PowerShell automatically determines the PID of the CMD
+:: process that launched it.
+::
+:: If this batch script is terminated, the CMD process disappears.
+:: PowerShell then terminates Mindustry.
+:: ============================================================
+
 echo.
 echo Running %APP_TO_RUN%...
-
-set "ext=%APP_TO_RUN:~-4%"
-
-if /I "%ext%"==".jar" (
-    :: Start the JAR and get its process ID
-    for /f "delims=" %%P in ('powershell -NoProfile -Command "$p = Start-Process -FilePath 'javaw.exe' -ArgumentList '-Dsolim.mcp.enabled=true','-jar','%APP_TO_RUN%' -WorkingDirectory '%DEFAULT_DIR%' -PassThru; $p.Id"') do (
-        set "APP_PID=%%P"
-    )
-) else (
-    :: Start the EXE and get its process ID
-    for /f "delims=" %%P in ('powershell -NoProfile -Command "$p = Start-Process -FilePath '%APP_TO_RUN%' -WorkingDirectory '%DEFAULT_DIR%' -PassThru; $p.Id"') do (
-        set "APP_PID=%%P"
-    )
-)
-
-:: Check that the process started
-if not defined APP_PID (
-    echo.
-    echo Failed to start Mindustry.
-    pause
-    exit /b 1
-)
-
-echo Mindustry started with PID %APP_PID%.
 echo.
-echo Waiting for Mindustry to close...
 
-:: Wait until the exact process we started exits
-powershell -NoProfile -Command "Wait-Process -Id %APP_PID%"
+if /I "%APP_TO_RUN:~-4%"==".jar" (
+
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+        "$parentPid = (Get-CimInstance Win32_Process -Filter ('ProcessId=' + $PID)).ParentProcessId; " ^
+        "$mindustry = Start-Process -FilePath 'javaw.exe' -ArgumentList '-Dsolim.mcp.enabled=true','-jar','%APP_TO_RUN%' -WorkingDirectory '%DEFAULT_DIR%' -PassThru; " ^
+        "Write-Host ('Mindustry started with PID ' + $mindustry.Id); " ^
+        "while (-not $mindustry.HasExited) { " ^
+        "    Start-Sleep -Milliseconds 500; " ^
+        "    if (-not (Get-Process -Id $parentPid -ErrorAction SilentlyContinue)) { " ^
+        "        Write-Host 'Launcher terminated. Stopping Mindustry...'; " ^
+        "        Stop-Process -Id $mindustry.Id -Force -ErrorAction SilentlyContinue; " ^
+        "        break; " ^
+        "    } " ^
+        "}"
+
+) else (
+
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+        "$parentPid = (Get-CimInstance Win32_Process -Filter ('ProcessId=' + $PID)).ParentProcessId; " ^
+        "$mindustry = Start-Process -FilePath '%APP_TO_RUN%' -WorkingDirectory '%DEFAULT_DIR%' -PassThru; " ^
+        "Write-Host ('Mindustry started with PID ' + $mindustry.Id); " ^
+        "while (-not $mindustry.HasExited) { " ^
+        "    Start-Sleep -Milliseconds 500; " ^
+        "    if (-not (Get-Process -Id $parentPid -ErrorAction SilentlyContinue)) { " ^
+        "        Write-Host 'Launcher terminated. Stopping Mindustry...'; " ^
+        "        Stop-Process -Id $mindustry.Id -Force -ErrorAction SilentlyContinue; " ^
+        "        break; " ^
+        "    } " ^
+        "}"
+)
 
 echo.
 echo Mindustry has been closed.
 echo Done.
+
+endlocal

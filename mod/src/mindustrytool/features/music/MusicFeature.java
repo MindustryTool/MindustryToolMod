@@ -9,6 +9,9 @@ import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Nullable;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import mindustry.Vars;
 import mindustry.game.EventType.MusicRegisterEvent;
 import mindustry.game.EventType.Trigger;
@@ -413,28 +416,231 @@ public class MusicFeature extends Feature {
     // region Track operations
 
     /**
+     * Checks if a file exists or is readable. On Android (SAF), {@link Fi#exists()}
+     * returns false because content URIs are not filesystem paths, but {@link Fi#read()}
+     * can successfully open an InputStream.
+     */
+    static boolean isReadable(@Nullable Fi file) {
+        if (file == null) {
+            return false;
+        }
+        if (file.exists()) {
+            return true;
+        }
+        try (InputStream in = file.read()) {
+            return in != null;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * Queries Android ContentResolver for the document's DISPLAY_NAME via reflection.
+     */
+    @Nullable
+    static String getAndroidDisplayName(Fi file) {
+        if (!Vars.android) {
+            return null;
+        }
+        try {
+            Object uriObj = null;
+            for (Field field : file.getClass().getDeclaredFields()) {
+                field.setAccessible(true);
+                Object val = field.get(file);
+                if (val != null && val.getClass().getName().contains("Uri")) {
+                    uriObj = val;
+                    break;
+                }
+            }
+            if (uriObj == null) {
+                return null;
+            }
+
+            Method getContentResolver = Core.app.getClass().getMethod("getContentResolver");
+            Object resolver = getContentResolver.invoke(Core.app);
+            if (resolver == null) {
+                return null;
+            }
+
+            Method queryMethod = null;
+            for (Method m : resolver.getClass().getMethods()) {
+                if ("query".equals(m.getName()) && m.getParameterTypes().length == 5) {
+                    queryMethod = m;
+                    break;
+                }
+            }
+            if (queryMethod == null) {
+                return null;
+            }
+
+            String[] projection = new String[]{"_display_name"};
+            Object cursor = queryMethod.invoke(resolver, uriObj, projection, null, null, null);
+            if (cursor == null) {
+                return null;
+            }
+
+            try {
+                Method moveToFirst = cursor.getClass().getMethod("moveToFirst");
+                Method getColumnIndex = cursor.getClass().getMethod("getColumnIndex", String.class);
+                Method getString = cursor.getClass().getMethod("getString", int.class);
+
+                boolean hasFirst = (Boolean) moveToFirst.invoke(cursor);
+                if (hasFirst) {
+                    int colIndex = (Integer) getColumnIndex.invoke(cursor, "_display_name");
+                    if (colIndex >= 0) {
+                        return (String) getString.invoke(cursor, colIndex);
+                    }
+                }
+            } finally {
+                Method close = cursor.getClass().getMethod("close");
+                close.invoke(cursor);
+            }
+        } catch (Throwable t) {
+            Log.warn("Failed to query Android display name: " + t.getMessage());
+        }
+        return null;
+    }
+
+    /** Returns the lower-case file extension without dot, or empty string if none. */
+    static String extensionOf(String name) {
+        int dot = name.lastIndexOf('.');
+        return dot >= 0 ? name.substring(dot + 1).toLowerCase() : "";
+    }
+
+    /** Sanitizes a filename by replacing illegal filesystem characters with underscores. */
+    static String sanitizeFileName(String name) {
+        String sanitized = name.replaceAll("[\\\\/:*?\"<>|]+", "_").trim();
+        while (sanitized.startsWith("_")) {
+            sanitized = sanitized.substring(1);
+        }
+        while (sanitized.endsWith("_")) {
+            sanitized = sanitized.substring(0, sanitized.length() - 1);
+        }
+        return sanitized.isEmpty() ? "track" : sanitized;
+    }
+
+    /**
+     * Resolves the real or fallback track name for a chosen file, ensuring safe
+     * characters and an audio extension.
+     */
+    static String resolveTrackName(Fi file) {
+        String name = getAndroidDisplayName(file);
+        if (name == null || name.trim().isEmpty()) {
+            name = file.name();
+        }
+        name = sanitizeFileName(name);
+        String ext = extensionOf(name);
+        if (ext.isEmpty()) {
+            // Android SAF document ID without extension (e.g. audio_12345), default to .mp3
+            name = name + ".mp3";
+        }
+        return name;
+    }
+
+    /**
      * Imports a file into the mod's music directory and registers it for a music
      * type.
      */
     public void addTrack(MusicType type, @Nullable Fi file) {
-        if (file == null || !file.exists()) {
+        if (!isReadable(file)) {
             Vars.ui.showErrorMessage(Core.bundle.get("feature.music.error.invalid-file"));
             return;
         }
 
-        if (!VALID_EXTENSIONS.contains(file.extension().toLowerCase())) {
+        String resolvedName = resolveTrackName(file);
+        String ext = extensionOf(resolvedName);
+        if (!VALID_EXTENSIONS.contains(ext)) {
             Vars.ui.showErrorMessage(
                     Core.bundle.format("feature.music.error.invalid-type", VALID_EXTENSIONS.toString(", ")));
             return;
         }
 
         try {
-            Fi copy = uniqueTarget(Folders.musicsDir.child(file.name()));
-            file.copyTo(copy);
+            Fi copy = uniqueTarget(Folders.musicsDir.child(resolvedName));
+            copy.write(file.read(), false);
 
             Seq<String> paths = pathsFor(type).copy();
             paths.add(copy.name());
             setPaths(type, paths);
+            loadMusicType(type);
+        } catch (Exception e) {
+            Vars.ui.showException(e);
+        }
+    }
+
+    /**
+     * Shows a text input dialog prompting the user to rename a custom track.
+     */
+    public void showRenameDialog(TrackState state) {
+        if (!state.isCustom || state.music == null || state.music.file == null) {
+            return;
+        }
+        Vars.ui.showTextInput(
+                Core.bundle.get("feature.music.dialog.rename.title"),
+                Core.bundle.get("feature.music.dialog.rename.text"),
+                state.name,
+                newName -> renameTrack(state.type, state, newName));
+    }
+
+    /**
+     * Renames a custom track's file in storage and updates configuration.
+     */
+    public void renameTrack(MusicType type, TrackState state, @Nullable String newName) {
+        if (newName == null) {
+            return;
+        }
+        String cleanName = sanitizeFileName(newName.trim());
+        if (cleanName.isEmpty() || cleanName.equalsIgnoreCase(state.name)) {
+            return;
+        }
+
+        Fi oldFile = state.music.file;
+        if (oldFile == null || !state.isCustom) {
+            return;
+        }
+
+        String ext = oldFile.extension();
+        String newFileName = ext.isEmpty()
+                ? cleanName
+                : (cleanName.toLowerCase().endsWith("." + ext.toLowerCase()) ? cleanName : cleanName + "." + ext);
+        Fi newFile = uniqueTarget(Folders.musicsDir.child(newFileName));
+        if (oldFile.equals(newFile)) {
+            return;
+        }
+
+        try {
+            if (Vars.control != null && Vars.control.sound != null && Vars.control.sound.getCurrent() == state.music) {
+                Vars.control.sound.stop();
+            }
+
+            oldFile.moveTo(newFile);
+
+            Seq<String> paths = pathsFor(type).copy();
+            int index = paths.indexOf(oldFile.name());
+            if (index < 0) {
+                index = paths.indexOf(oldFile.nameWithoutExtension());
+            }
+            if (index >= 0) {
+                paths.set(index, newFile.name());
+                setPaths(type, paths);
+            }
+
+            Seq<String> disabled = disabledTracks.get();
+            if (disabled != null) {
+                String oldKey = state.disabledKey();
+                String newKey = TrackState.disabledKey(type, newFile.nameWithoutExtension(), true);
+                if (disabled.contains(oldKey)) {
+                    Seq<String> nextDisabled = new Seq<>(disabled);
+                    nextDisabled.remove(oldKey);
+                    nextDisabled.add(newKey);
+                    disabledTracks.set(nextDisabled);
+                }
+            }
+
+            state.music.dispose();
+            musicCache.remove(oldFile.name());
+            trackStates.remove(state.disabledKey());
+
             loadMusicType(type);
         } catch (Exception e) {
             Vars.ui.showException(e);

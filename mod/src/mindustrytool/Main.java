@@ -11,7 +11,9 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
+import mindustrytool.features.camerazoom.CameraZoomFeature;
 import mindustrytool.features.chat.ChatFeature;
+import mindustrytool.features.emoji.EmojiFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
 import mindustrytool.features.joystick.JoystickFeature;
@@ -76,6 +78,7 @@ public class Main extends Mod {
                 new BridgeVisualizerFeature(),
                 new PlayerConnectFeature(),
                 new HealthBarFeature(),
+                new CameraZoomFeature(),
                 new PathfindingFeature(),
                 new RangeDisplayFeature(),
                 new PrettyChatFeature(),
@@ -89,7 +92,8 @@ public class Main extends Mod {
                 new ProgressDisplayFeature(),
                 new ToggleRenderingFeature(),
                 new TimeControlFeature(),
-                new JoystickFeature());
+                new JoystickFeature(),
+                new EmojiFeature());
 
         Events.on(ClientLoadEvent.class, event -> {
             registerMindustryToolButton();

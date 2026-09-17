@@ -9,6 +9,7 @@ import mindustry.gen.Healthc;
 import mindustry.gen.Icon;
 import mindustry.gen.Teamc;
 import mindustry.gen.Unit;
+import mindustry.type.Weapon;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -88,12 +89,34 @@ public class AttackTask implements AutoplayTask {
             }
 
             float weaponRange = unit.range() > 0 ? unit.range() : unit.type.range;
-            float kiteDistance = Math.max(weaponRange * 0.85f, 20f);
-            moveTo(target, kiteDistance, 40f, true, null);
+            boolean isSuicideOrMelee = isSuicideOrMeleeUnit(unit, weaponRange);
+
+            if (isSuicideOrMelee) {
+                moveTo(target, 0f, 20f);
+            } else {
+                float kiteDistance = Math.max(weaponRange * 0.85f, 20f);
+                moveTo(target, kiteDistance, 40f, true, null);
+            }
+
             unit.lookAt(target);
             unit.aim(target);
-            unit.controlWeapons(unit.within(target, weaponRange));
+            unit.controlWeapons(unit.within(target, Math.max(weaponRange, 20f)));
             unit.isShooting(true);
+        }
+
+        public static boolean isSuicideOrMeleeUnit(Unit unit, float weaponRange) {
+            if (weaponRange <= 25f) {
+                return true;
+            }
+            if (unit.type != null && unit.type.weapons != null) {
+                for (int i = 0; i < unit.type.weapons.size; i++) {
+                    Weapon w = unit.type.weapons.get(i);
+                    if (w != null && w.bullet != null && w.bullet.killShooter) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

@@ -154,6 +154,13 @@ public class MusicSettingsView extends BaseComponent {
                             button()
                                     .style(WebStyles.ghost())
                                     .size(unit(11))
+                                    .tooltip(Core.bundle.get("feature.music.tooltip.rename-custom"))
+                                    .onClick(() -> feature.showRenameDialog(state))
+                                    .children(() -> icon(Icon.edit).size(unit(6)).color(labelColor));
+
+                            button()
+                                    .style(WebStyles.ghost())
+                                    .size(unit(11))
                                     .tooltip(Core.bundle.get("feature.music.tooltip.remove-custom"))
                                     .onClick(() -> feature.removeTrack(state.type, state))
                                     .children(() -> icon(Icon.trash).size(unit(6)).color(labelColor));
