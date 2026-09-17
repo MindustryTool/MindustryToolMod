@@ -68,7 +68,6 @@ class AutoplayFeatureTest {
     @Test
     void configDefaults() {
         assertFalse(feature.followUnit.get(), "followUnit should default to false");
-        assertEquals(2.0f, feature.overrideCooldown.get(), 0.001f, "overrideCooldown should default to 2.0s");
 
         Seq<AutoplayTask> tasks = feature.tasks().peek();
         assertEquals(8, tasks.size, "Should have 8 autoplay tasks");

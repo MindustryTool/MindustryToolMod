@@ -83,6 +83,15 @@ public class MiningTask implements AutoplayTask {
         selectedItems.set(current);
     }
 
+    private static @Nullable Tile findOreTile(Unit unit, Item item) {
+        if ((unit.type.mineFloor && Vars.indexer.hasOre(item))
+                || (unit.type.mineWalls && Vars.indexer.hasWallOre(item))) {
+            Tile tile = Vars.indexer.findClosestOre(unit.x, unit.y, item);
+            return tile != null ? tile : Vars.indexer.findClosestWallOre(unit.x, unit.y, item);
+        }
+        return null;
+    }
+
     @Override
     public boolean update(Unit unit) {
         if (!unit.canMine()) {
@@ -111,24 +120,27 @@ public class MiningTask implements AutoplayTask {
             }
             allFull = false;
 
-            if ((unit.type.mineFloor && Vars.indexer.hasOre(item))
-                    || (unit.type.mineWalls && Vars.indexer.hasWallOre(item))) {
+            Tile tile = findOreTile(unit, item);
+            if (tile == null) {
+                continue;
+            }
 
-                Tile tile = Vars.indexer.findClosestOre(unit.x, unit.y, item);
-                if (tile == null) {
-                    tile = Vars.indexer.findClosestWallOre(unit.x, unit.y, item);
-                }
+            int currentAmount = core.items.get(item);
+            if (currentAmount < minAmount) {
+                minAmount = currentAmount;
+                bestItem = item;
+                bestTile = tile;
+            }
+        }
 
-                if (tile == null) {
-                    continue;
-                }
-
-                int currentAmount = core.items.get(item);
-                if (currentAmount < minAmount) {
-                    minAmount = currentAmount;
-                    bestItem = item;
-                    bestTile = tile;
-                }
+        if (ai.committedItem != null && ai.tripsLeft > 0
+                && isSelected(ai.committedItem)
+                && unit.canMine(ai.committedItem)
+                && core.acceptStack(ai.committedItem, 1, unit) > 0) {
+            Tile committedTile = findOreTile(unit, ai.committedItem);
+            if (committedTile != null) {
+                bestItem = ai.committedItem;
+                bestTile = committedTile;
             }
         }
 
@@ -199,9 +211,14 @@ public class MiningTask implements AutoplayTask {
     }
 
     public static class MinerAI extends BaseAutoplayAI {
+        /** Consecutive trips mined on one ore before the task may switch to another ore. */
+        public static final int COMMIT_TRIPS = 3;
+
         public boolean mining = true;
         public @Nullable Item targetItem;
         public @Nullable Tile ore;
+        public @Nullable Item committedItem;
+        public int tripsLeft;
 
         @Override
         public void updateMovement() {
@@ -211,6 +228,11 @@ public class MiningTask implements AutoplayTask {
             Building core = unit.closestCore();
             if (!unit.canMine() || core == null) {
                 return;
+            }
+
+            if (targetItem != null && targetItem != committedItem) {
+                committedItem = targetItem;
+                tripsLeft = COMMIT_TRIPS;
             }
 
             if (!unit.validMine(unit.mineTile)) {
@@ -232,10 +254,10 @@ public class MiningTask implements AutoplayTask {
                     if (timer.get(timerTarget3, 60f) && targetItem != null) {
                         ore = null;
                         if (unit.type.mineFloor) {
-                            ore = Vars.indexer.findClosestOre(core.x, core.y, targetItem);
+                            ore = Vars.indexer.findClosestOre(unit.x, unit.y, targetItem);
                         }
                         if (ore == null && unit.type.mineWalls) {
-                            ore = Vars.indexer.findClosestWallOre(core.x, core.y, targetItem);
+                            ore = Vars.indexer.findClosestWallOre(unit.x, unit.y, targetItem);
                         }
                     }
 
@@ -257,6 +279,12 @@ public class MiningTask implements AutoplayTask {
                 if (unit.within(core, unit.type.range)) {
                     Call.transferInventory(Vars.player, core);
                     mining = true;
+                    if (tripsLeft > 0) {
+                        tripsLeft--;
+                        if (tripsLeft == 0) {
+                            committedItem = null;
+                        }
+                    }
                 }
 
                 circle(core, unit.type.range / 1.8f);

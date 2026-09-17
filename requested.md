@@ -3,3 +3,4 @@
 - Emoji list
 - Entity status rendering
 - Screenshot
+- Keybind

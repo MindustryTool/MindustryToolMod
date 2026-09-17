@@ -10,7 +10,6 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Nullable;
-import arc.util.Time;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
@@ -52,7 +51,6 @@ public class AutoplayFeature extends Feature {
     );
 
     public final ConfigValue<Boolean> followUnit;
-    public final ConfigValue<Float> overrideCooldown;
     public final ConfigValue<Seq<String>> taskOrder;
     public final ConfigValue<Seq<String>> disabledTasks;
 
@@ -60,7 +58,6 @@ public class AutoplayFeature extends Feature {
     private final Signal<Seq<AutoplayTask>> tasksSignal = Signal.of(new Seq<>());
     private final Signal<String> currentTaskIdSignal = Signal.of(null);
     private @Nullable AutoplayTask currentTask;
-    private float resumeTime = 0f;
 
     public AutoplayFeature() {
         super(FeatureMetadata.builder()
@@ -73,7 +70,6 @@ public class AutoplayFeature extends Feature {
         ConfigGroup config = configGroup();
         OrderedSeqPersister seqPersister = new OrderedSeqPersister();
         followUnit = config.boolValue("follow-unit", false);
-        overrideCooldown = config.floatValue("override-cooldown", 2.0f);
         taskOrder = config.value("task-order", new Seq<>(), seqPersister);
         disabledTasks = config.value("disabled-tasks", new Seq<>(), seqPersister);
 
@@ -202,19 +198,6 @@ public class AutoplayFeature extends Feature {
         }
 
         if (Core.input.isTouched() || Core.input.keyDown(KeyCode.anyKey)) {
-            float cooldown = overrideCooldown.get() != null ? overrideCooldown.get() : 2.0f;
-            resumeTime = Time.time + (cooldown * 60f);
-            if (unit.controller() != Vars.player) {
-                unit.controller(Vars.player);
-            }
-            if (currentTask != null) {
-                resetUnitState(unit);
-                setCurrentTask(null);
-            }
-            return;
-        }
-
-        if (Time.time < resumeTime) {
             if (unit.controller() != Vars.player) {
                 unit.controller(Vars.player);
             }

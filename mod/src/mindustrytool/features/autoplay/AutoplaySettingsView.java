@@ -6,7 +6,6 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
-import arc.util.Strings;
 import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
@@ -39,16 +38,8 @@ public class AutoplaySettingsView extends BaseComponent {
     }
 
     private Component globalSection() {
-        Readable<String> cooldownLabel = feature.overrideCooldown.signal().map(val -> Core.bundle
-                .format("feature.autoplay.settings.override-cooldown", Strings.fixed(val != null ? val : 2.0f, 1)));
-
         return column().growX().gap(unit(2)).children(() -> {
             checkbox(Core.bundle.get("feature.autoplay.settings.follow-unit"), feature.followUnit.signal());
-
-            column().growX().gap(unit(1)).children(() -> {
-                text(cooldownLabel).growX().left().color(WebStyles.Colors.GHOST_FG);
-                slider(feature.overrideCooldown.signal(), 0.5f, 5.0f, 0.1f).growX();
-            });
         });
     }
 
