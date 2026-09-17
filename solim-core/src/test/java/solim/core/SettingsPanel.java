@@ -1,16 +1,15 @@
-package solim.ui;
+package solim.core;
 
-import static solim.ui.Ui.*;
+import static solim.core.Ui.*;
 
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.util.Log;
-import solim.core.BaseComponent;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 
 /** Example final API settings panel from requirement.md §16. */
 public final class SettingsPanel extends BaseComponent {

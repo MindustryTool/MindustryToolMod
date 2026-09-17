@@ -19,9 +19,9 @@ import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
-import solim.signal.Signals;
-import solim.ui.Units;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
+import solim.core.Units;
 
 public class GodModeFeature extends Feature implements PopupDisplayFeature {
 

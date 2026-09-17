@@ -11,8 +11,8 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import solim.core.BaseComponent;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public class QuickAccessSettingsView extends BaseComponent {
 

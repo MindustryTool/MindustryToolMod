@@ -14,10 +14,10 @@ import mindustrytool.features.settings.ModSettings;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.signal.Signals;
-import solim.ui.Units;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
+import solim.core.Units;
 
 public class ChatFeature extends Feature {
 

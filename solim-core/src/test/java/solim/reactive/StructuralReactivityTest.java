@@ -1,7 +1,7 @@
-package solim.ui;
+package solim.reactive;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static solim.ui.Ui.card;
+import static solim.core.Ui.card;
 
 import arc.Core;
 import arc.mock.MockApplication;
@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.layout.ReactiveGrid;
-import solim.signal.Signal;
 import solim.runtime.SignalDispatcher;
 
 class StructuralReactivityTest {

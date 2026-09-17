@@ -1,4 +1,4 @@
-package solim.ui;
+package solim.reactive;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,9 +9,6 @@ import arc.scene.ui.Button;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Signal;
 import solim.runtime.SignalDispatcher;
 
 class BindingTest {

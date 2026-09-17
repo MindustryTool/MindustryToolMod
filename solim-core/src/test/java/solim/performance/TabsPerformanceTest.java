@@ -1,4 +1,4 @@
-package solim.perf;
+package solim.performance;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Tabs;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;

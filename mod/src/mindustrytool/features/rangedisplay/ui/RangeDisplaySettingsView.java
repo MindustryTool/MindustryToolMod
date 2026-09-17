@@ -6,7 +6,7 @@ import arc.Core;
 import arc.scene.Element;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import solim.core.BaseComponent;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Declarative Solim settings view for Range Display options.

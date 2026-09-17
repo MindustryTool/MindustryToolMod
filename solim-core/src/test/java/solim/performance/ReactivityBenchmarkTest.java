@@ -1,13 +1,13 @@
-package solim.perf;
+package solim.performance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 
 public class ReactivityBenchmarkTest {

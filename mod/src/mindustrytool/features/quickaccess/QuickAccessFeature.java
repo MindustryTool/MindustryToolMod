@@ -21,10 +21,10 @@ import solim.config.ContextualConfigValue;
 import solim.config.OrderedSeqPersister;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.signal.Signals;
-import solim.ui.Units;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
+import solim.core.Units;
 
 public class QuickAccessFeature extends Feature {
 

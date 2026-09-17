@@ -11,7 +11,7 @@ import mindustry.ui.FileChooser;
 import mindustry.ui.Styles;
 import mindustrytool.Folders;
 import solim.core.BaseComponent;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 public class BackgroundSettingsView extends BaseComponent {
 

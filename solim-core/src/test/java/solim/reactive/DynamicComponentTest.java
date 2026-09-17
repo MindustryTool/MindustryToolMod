@@ -1,4 +1,4 @@
-package solim.ui;
+package solim.reactive;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,7 +9,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
-import solim.signal.Signal;
+import solim.core.Ui;
 import solim.runtime.SignalDispatcher;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
@@ -19,7 +19,6 @@ import arc.scene.ui.layout.Table;
 import solim.layout.Column;
 import solim.layout.Row;
 import solim.runtime.ParentStack;
-import solim.signal.Readable;
 
 class DynamicComponentTest {
 

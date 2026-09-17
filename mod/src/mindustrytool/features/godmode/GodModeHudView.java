@@ -13,7 +13,7 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.input.Button;
 import solim.overlay.Hud;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 public class GodModeHudView extends BaseComponent {
 

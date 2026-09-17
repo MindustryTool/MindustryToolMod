@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 class ReflectAccessTest {
 

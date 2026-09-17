@@ -1,4 +1,4 @@
-package solim.ui;
+package solim.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 

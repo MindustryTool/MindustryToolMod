@@ -1,12 +1,12 @@
-package solim.ui;
+package solim.core;
 
 import arc.Core;
 import arc.Events;
 import arc.scene.ui.layout.Scl;
 import mindustry.game.EventType.ResizeEvent;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Viewport unit signals and helpers for Solim. Exposes reactive {@link #dvw} and {@link #dvh}

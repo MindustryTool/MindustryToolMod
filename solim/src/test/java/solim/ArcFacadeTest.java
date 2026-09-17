@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import solim.input.SolimSelect;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 class ArcFacadeTest {
 

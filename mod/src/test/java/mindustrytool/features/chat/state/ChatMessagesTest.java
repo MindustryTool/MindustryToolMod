@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import mindustrytool.models.response.ChatMessage;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 class ChatMessagesTest {
 

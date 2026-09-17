@@ -11,8 +11,8 @@ import mindustrytool.components.Loader;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ChatUser;
 import solim.core.BaseComponent;
-import solim.signal.Computed;
-import solim.signal.Readable;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
 
 public class ChatUserListView extends BaseComponent {
 

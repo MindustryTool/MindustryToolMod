@@ -1,4 +1,5 @@
 package solim.layout;
+import solim.modifier.CellConfig;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -10,7 +11,7 @@ import arc.util.Scaling;
 import solim.core.Component;
 import solim.display.SolimImage;
 import solim.modifier.ElementConfig;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 

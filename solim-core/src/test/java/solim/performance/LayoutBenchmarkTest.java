@@ -1,4 +1,4 @@
-package solim.perf;
+package solim.performance;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

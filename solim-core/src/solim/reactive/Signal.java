@@ -1,4 +1,4 @@
-package solim.signal;
+package solim.reactive;
 
 import arc.util.Log;
 import java.util.ArrayList;

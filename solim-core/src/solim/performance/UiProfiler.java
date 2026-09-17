@@ -1,4 +1,4 @@
-package solim.perf;
+package solim.performance;
 
 import arc.Core;
 import arc.scene.Element;

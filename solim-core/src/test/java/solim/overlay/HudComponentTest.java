@@ -16,7 +16,7 @@ import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import arc.scene.ui.layout.Table;
 import solim.runtime.SignalDispatcher;
 

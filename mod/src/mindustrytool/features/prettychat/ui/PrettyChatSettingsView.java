@@ -14,9 +14,9 @@ import mindustrytool.features.prettychat.Prettier;
 import mindustrytool.features.prettychat.PrettyChatFeature;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 import java.util.List;
 

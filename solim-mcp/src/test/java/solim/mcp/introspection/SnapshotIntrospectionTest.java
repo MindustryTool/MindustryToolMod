@@ -8,9 +8,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 
 class SnapshotIntrospectionTest {
 

@@ -14,7 +14,7 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.junit.jupiter.api.Test;
 import solim.mcp.introspection.SnapshotRoot;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import arc.scene.ui.layout.Table;
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CountDownLatch;

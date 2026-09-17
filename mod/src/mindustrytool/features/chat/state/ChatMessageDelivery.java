@@ -4,8 +4,8 @@ import arc.util.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import mindustrytool.features.chat.MessageStatus;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public final class ChatMessageDelivery {
 

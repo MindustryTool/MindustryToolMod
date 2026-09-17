@@ -18,9 +18,9 @@ import solim.core.Component;
 import solim.input.Button;
 import solim.input.SolimSlider;
 import solim.overlay.Hud;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Standalone reactive TimeControl HUD overlay. Shows preset buttons or a slider

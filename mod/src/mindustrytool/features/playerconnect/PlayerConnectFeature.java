@@ -58,9 +58,9 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
-import solim.signal.Signal;
-import solim.signal.Readable;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
+import solim.reactive.Readable;
 
 public class PlayerConnectFeature extends Feature {
 

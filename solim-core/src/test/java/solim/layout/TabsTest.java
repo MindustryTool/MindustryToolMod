@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import solim.display.Text;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import org.junit.jupiter.api.Assumptions;
 
 class TabsTest {

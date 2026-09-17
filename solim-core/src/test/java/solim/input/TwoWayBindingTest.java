@@ -5,7 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
+import solim.reactive.TwoWayBinding;
 import solim.runtime.SignalDispatcher;
 
 class TwoWayBindingTest {

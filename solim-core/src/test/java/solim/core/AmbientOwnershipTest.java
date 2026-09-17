@@ -9,8 +9,8 @@ import arc.scene.Element;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import solim.input.SolimTextField;
-import solim.signal.Signal;
-import solim.ui.Binding;
+import solim.reactive.Signal;
+import solim.reactive.Binding;
 import solim.runtime.SignalDispatcher;
 
 class AmbientOwnershipTest {

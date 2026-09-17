@@ -4,8 +4,8 @@ import arc.Core;
 import arc.struct.Seq;
 import arc.util.Nullable;
 import mindustrytool.features.settings.ModSettings;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public class FeatureManager {
 	private static final Seq<Feature> registered = new Seq<>();

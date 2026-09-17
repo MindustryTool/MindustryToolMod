@@ -1,9 +1,8 @@
-package solim.layout;
+package solim.modifier;
 
-import solim.signal.Readable;
+import solim.reactive.Readable;
 import arc.scene.Element;
 import solim.core.Component;
-import solim.modifier.PendingCellConfig;
 
 /**
  * Parent-cell configuration mixin.

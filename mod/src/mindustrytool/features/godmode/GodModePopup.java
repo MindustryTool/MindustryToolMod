@@ -9,7 +9,7 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.quickaccess.QuickAccessPopupHelper;
 import solim.core.Component;
 import solim.overlay.Popup;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * QuickAccess popup shell for GodMode. Reuses the shared icon-only horizontal

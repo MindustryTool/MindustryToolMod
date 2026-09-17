@@ -2,7 +2,7 @@ package solim.overlay;
 
 import arc.graphics.Color;
 import arc.Core;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 import arc.Events;
 import arc.func.Cons;
 import arc.func.Func;
@@ -24,8 +24,8 @@ import solim.core.Disposable;
 import solim.graphics.RoundedDrawable;
 import solim.modifier.RoundedHelper;
 import solim.runtime.ParentStack;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 import java.util.function.Function;
 
 /**

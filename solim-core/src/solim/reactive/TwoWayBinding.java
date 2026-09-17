@@ -1,11 +1,9 @@
-package solim.input;
+package solim.reactive;
 
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import solim.core.Disposable;
-import solim.signal.Effect;
-import solim.signal.Signal;
 import java.util.function.BiPredicate;
 
 /**
@@ -27,7 +25,7 @@ import java.util.function.BiPredicate;
  *
  * @param <T> the value type shared by the signal and the widget
  */
-class TwoWayBinding<T> implements Disposable {
+public final class TwoWayBinding<T> implements Disposable {
 
     private boolean updating = false;
     private boolean disposed = false;
@@ -47,7 +45,7 @@ class TwoWayBinding<T> implements Disposable {
      * @param equalityChecker  returns {@code true} if two values are considered equal (used to
      *                         suppress unnecessary updates in both directions)
      */
-    TwoWayBinding(
+    public TwoWayBinding(
             Signal<T> signal,
             Supplier<T> widgetGetter,
             Consumer<T> widgetSetter,
@@ -84,7 +82,7 @@ class TwoWayBinding<T> implements Disposable {
     /**
      * Convenience constructor using {@link Objects#equals} for equality checks.
      */
-    TwoWayBinding(
+    public TwoWayBinding(
             Signal<T> signal,
             Supplier<T> widgetGetter,
             Consumer<T> widgetSetter,
@@ -111,7 +109,7 @@ class TwoWayBinding<T> implements Disposable {
      * Functional interface for installing a widget change listener that returns a cleanup handle.
      */
     @FunctionalInterface
-    interface ListenerInstaller {
+    public interface ListenerInstaller {
         /**
          * Installs the given {@code onChange} callback on the widget. Returns a {@link Disposable}
          * that removes the listener, or a no-op {@code Disposable} if the widget API does not

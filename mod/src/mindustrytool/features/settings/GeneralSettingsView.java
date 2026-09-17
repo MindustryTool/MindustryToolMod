@@ -132,4 +132,3 @@ public class GeneralSettingsView extends BaseComponent {
         return latest;
     }
 }
-

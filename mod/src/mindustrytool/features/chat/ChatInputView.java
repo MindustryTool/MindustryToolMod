@@ -19,9 +19,9 @@ import mindustrytool.services.auth.AuthOverlay;
 import mindustrytool.services.auth.MindustryAuthProvider;
 import solim.core.BaseComponent;
 import solim.input.SolimTextField;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 import mindustrytool.components.FileIcon;
 
 public class ChatInputView extends BaseComponent {

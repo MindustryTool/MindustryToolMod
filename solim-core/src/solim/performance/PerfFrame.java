@@ -1,4 +1,4 @@
-package solim.perf;
+package solim.performance;
 
 public class PerfFrame {
     public long timestamp;

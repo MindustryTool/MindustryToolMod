@@ -21,8 +21,8 @@ import mindustrytool.models.response.SchematicData;
 import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
-import solim.signal.Readable;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
 import java.util.Collections;
 
 /**

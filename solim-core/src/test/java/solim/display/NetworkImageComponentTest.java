@@ -12,7 +12,7 @@ import arc.util.Scaling;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import solim.runtime.SignalDispatcher;

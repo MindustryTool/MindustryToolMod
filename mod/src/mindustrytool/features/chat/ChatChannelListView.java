@@ -17,8 +17,8 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ChannelDto;
 import solim.core.BaseComponent;
 import solim.graphics.RoundedDrawable;
-import solim.signal.Computed;
-import solim.signal.Readable;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
 
 public class ChatChannelListView extends BaseComponent {
 

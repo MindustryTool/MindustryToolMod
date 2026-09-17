@@ -6,12 +6,12 @@ import arc.scene.Element;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import solim.runtime.SignalDispatcher;
-import solim.signal.Effect;
+import solim.reactive.Effect;
 
 class ComponentContractTest {
 

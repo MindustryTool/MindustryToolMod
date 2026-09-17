@@ -6,7 +6,7 @@ import java.util.Collections;
 import mindustrytool.models.response.ChannelDto;
 import mindustrytool.models.response.ChatUser;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 class ChatChannelsAndMembersTest {
 

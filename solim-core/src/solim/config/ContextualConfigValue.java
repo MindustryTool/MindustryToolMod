@@ -2,10 +2,10 @@ package solim.config;
 
 import arc.util.Nullable;
 import java.util.function.Function;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.signal.Subscription;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.reactive.Subscription;
 
 public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 	private final ConfigGroup group;

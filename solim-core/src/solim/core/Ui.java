@@ -1,4 +1,6 @@
-package solim.ui;
+package solim.core;
+import solim.reactive.ForEach;
+import solim.reactive.Dynamic;
 
 import arc.func.Cons;
 import arc.func.Func;
@@ -10,9 +12,6 @@ import arc.util.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import solim.core.Component;
-import solim.core.Disposable;
-import solim.core.EventsUtil;
 import solim.display.Badge;
 import solim.display.NetworkImage;
 import solim.display.SolimImage;
@@ -36,9 +35,9 @@ import solim.layout.Tabs;
 import solim.overlay.Hud;
 import solim.overlay.SolimDialog;
 import solim.runtime.ParentStack;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 import arc.graphics.Color;
 
 /** Declarative UI facades for Solim. */

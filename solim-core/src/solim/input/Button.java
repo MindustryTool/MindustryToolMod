@@ -27,12 +27,12 @@ import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
-import solim.signal.Effect;
-import solim.signal.Readable;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
 import arc.scene.style.Drawable;
-import solim.layout.CellConfig;
+import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import arc.util.Time;
 

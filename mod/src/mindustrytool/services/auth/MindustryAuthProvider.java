@@ -17,8 +17,8 @@ import mindustrytool.models.response.UserSession;
 import mindustrytool.services.HttpException;
 import mindustrytool.services.MindustryTool;
 import mindustrytool.services.Request;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 import java.net.SocketTimeoutException;
 
 /**

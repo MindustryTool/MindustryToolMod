@@ -17,8 +17,8 @@ import mindustrytool.features.FeatureMetadata;
 import solim.core.BaseComponent;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Component responsible for building and managing a single feature's visual

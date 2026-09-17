@@ -1,4 +1,4 @@
-package solim.ui;
+package solim.reactive;
 
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -6,10 +6,6 @@ import arc.scene.ui.Button;
 import arc.scene.ui.Label;
 import java.util.function.Consumer;
 import solim.runtime.ComponentContext;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Readable;
-import solim.signal.Signal;
 
 /**
  * Reactive property binding utilities for Arc Scene2D elements. Automatically registered with the

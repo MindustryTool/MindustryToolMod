@@ -22,8 +22,8 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.OrderedSeqPersister;
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Custom music loader. Backs up the game's ambient/dark/boss music lists and

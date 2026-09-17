@@ -19,8 +19,8 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.Hud;
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 import mindustrytool.components.WebStyles;
 
 /**

@@ -19,9 +19,9 @@ import solim.core.Component;
 import solim.layout.Direction;
 import solim.overlay.Hud;
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.ui.Units;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.core.Units;
 
 public class ChatOverlayHudView extends BaseComponent {
 

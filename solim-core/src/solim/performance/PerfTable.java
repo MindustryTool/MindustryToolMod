@@ -1,4 +1,4 @@
-package solim.perf;
+package solim.performance;
 
 import arc.scene.ui.layout.Table;
 

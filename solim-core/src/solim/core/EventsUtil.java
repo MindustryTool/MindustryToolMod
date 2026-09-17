@@ -5,7 +5,7 @@ import arc.func.Cons;
 import arc.func.Func;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 /** Utility for lifecycle-safe Arc event listening and reactive signal creation. */
 public final class EventsUtil {

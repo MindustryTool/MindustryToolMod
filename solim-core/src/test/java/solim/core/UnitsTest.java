@@ -1,4 +1,4 @@
-package solim.ui;
+package solim.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -10,8 +10,8 @@ import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.signal.Computed;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 class UnitsTest {
 

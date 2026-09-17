@@ -6,7 +6,7 @@ import arc.func.Prov;
 import arc.util.Nullable;
 import solim.config.ConfigGroup;
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 public abstract class Feature {
 

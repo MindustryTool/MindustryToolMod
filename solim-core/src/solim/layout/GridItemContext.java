@@ -1,6 +1,6 @@
 package solim.layout;
 
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Contextual metrics provided by {@link ReactiveGrid} to child item component factories.

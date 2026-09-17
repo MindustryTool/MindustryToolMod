@@ -28,9 +28,9 @@ import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.layout.Direction;
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Filter dialog with sort selection, dynamic tag categories fetched from the

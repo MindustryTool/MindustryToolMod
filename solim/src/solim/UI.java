@@ -48,17 +48,17 @@ import solim.layout.ItemHeightProvider;
 import solim.overlay.Hud;
 import solim.overlay.Popup;
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 import solim.style.SolimButtonStyleBuilder;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
-import solim.signal.Signals;
-import solim.ui.Dynamic;
-import solim.ui.ForEach;
-import solim.ui.Units;
+import solim.reactive.Signals;
+import solim.reactive.Dynamic;
+import solim.reactive.ForEach;
+import solim.core.Units;
 
 /**
  * Public entry point and declarative UI facade for Solim. This class exposes

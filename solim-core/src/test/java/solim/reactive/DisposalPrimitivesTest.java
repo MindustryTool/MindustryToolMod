@@ -1,4 +1,4 @@
-package solim.signal;
+package solim.reactive;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -21,8 +21,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
-import solim.signal.Computed;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 class FeedbackDisposalTest {
 

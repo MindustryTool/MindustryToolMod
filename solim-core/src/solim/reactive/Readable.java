@@ -1,4 +1,4 @@
-package solim.signal;
+package solim.reactive;
 
 import java.util.function.Function;
 import java.util.function.Supplier;

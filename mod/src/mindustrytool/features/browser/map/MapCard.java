@@ -15,7 +15,7 @@ import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.MapData;
 import solim.core.BaseComponent;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 import mindustrytool.components.WebStyles;
 
 /**

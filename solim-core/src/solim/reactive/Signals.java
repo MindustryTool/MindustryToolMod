@@ -1,4 +1,4 @@
-package solim.signal;
+package solim.reactive;
 
 import arc.Core;
 import arc.Events;

@@ -12,8 +12,8 @@ import mindustry.ui.FileChooser;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Settings view for the Custom Music feature: Ambient, Dark, and Boss sections,

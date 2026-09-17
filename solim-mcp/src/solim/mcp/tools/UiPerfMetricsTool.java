@@ -5,8 +5,8 @@ import arc.scene.Element;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import solim.mcp.introspection.SnapshotRoot;
-import solim.perf.PerfFrame;
-import solim.perf.UiProfiler;
+import solim.performance.PerfFrame;
+import solim.performance.UiProfiler;
 
 /**
  * MCP tool that queries real-time UI performance metrics and phase breakdowns

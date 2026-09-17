@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * Reports reactive bindings/effects attached to the inspected UI. Bindings are the {@link
- * solim.signal.Effect} instances discovered on components and elements, output with their source
+ * solim.reactive.Effect} instances discovered on components and elements, output with their source
  * location and subscribed state.
  */
 public final class BindingInspector {

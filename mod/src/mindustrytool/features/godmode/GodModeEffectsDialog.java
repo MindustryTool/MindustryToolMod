@@ -10,8 +10,8 @@ import mindustry.gen.Icon;
 import mindustry.type.StatusEffect;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public class GodModeEffectsDialog extends SolimDialog {
 

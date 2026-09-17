@@ -5,8 +5,8 @@ import arc.struct.Seq;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustrytool.Config;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 
 /**
  * Generic reactive state for a paged browser with search, tag filtering, and

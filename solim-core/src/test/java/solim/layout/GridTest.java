@@ -9,7 +9,7 @@ import arc.scene.Element;
 import arc.scene.ui.layout.CellAccess;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
 

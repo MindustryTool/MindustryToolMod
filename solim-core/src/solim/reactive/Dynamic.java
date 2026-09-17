@@ -1,4 +1,4 @@
-package solim.ui;
+package solim.reactive;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
@@ -8,15 +8,14 @@ import java.util.Objects;
 import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.CellConfig;
+import solim.core.Ui;
+import solim.modifier.CellConfig;
 import solim.layout.GapContainer;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
-import solim.signal.Effect;
-import solim.signal.Readable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;

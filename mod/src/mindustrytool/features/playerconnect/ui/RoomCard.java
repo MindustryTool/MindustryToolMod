@@ -22,7 +22,7 @@ import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData;
 import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomPlayer;
 import solim.core.BaseComponent;
 import solim.layout.Card;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import mindustrytool.components.WebStyles;
 
 public class RoomCard extends BaseComponent {

@@ -14,7 +14,7 @@ import solim.overlay.SolimDialog;
 
 import arc.util.Log;
 import mindustrytool.services.MindustryTool;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 public class AttachContentDialog extends SolimDialog {
 

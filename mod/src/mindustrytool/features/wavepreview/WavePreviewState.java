@@ -2,8 +2,8 @@ package mindustrytool.features.wavepreview;
 
 import arc.struct.Seq;
 import mindustry.Vars;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Reactive state holder for computed wave preview sections.

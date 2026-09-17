@@ -2,7 +2,7 @@ package solim.mcp.introspection;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.lang.reflect.Method;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 /**
  * Reads the current state of a discovered reactive instance via reflection and maps it to a stable

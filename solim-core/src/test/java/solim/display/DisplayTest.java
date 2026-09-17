@@ -9,10 +9,10 @@ import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.signal.Computed;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 import solim.runtime.ParentStack;
-import static solim.ui.Ui.*;
+import static solim.core.Ui.*;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
 
