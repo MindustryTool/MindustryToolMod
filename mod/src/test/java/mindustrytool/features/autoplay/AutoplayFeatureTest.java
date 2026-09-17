@@ -14,6 +14,7 @@ import arc.util.I18NBundle;
 import mindustry.Vars;
 import mindustry.ai.BlockIndexer;
 import mindustry.core.ContentLoader;
+import mindustry.core.GameState;
 import mindustry.game.Team;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
@@ -51,6 +52,7 @@ class AutoplayFeatureTest {
         Icon.none = new TextureRegionDrawable();
 
         Vars.content = new ContentLoader();
+        Vars.state = new GameState();
 
         feature = new AutoplayFeature();
     }
