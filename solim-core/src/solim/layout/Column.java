@@ -1,5 +1,6 @@
 package solim.layout;
 
+import arc.func.Cons;
 import arc.scene.Element;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Cell;
@@ -190,6 +191,20 @@ public final class Column
         try {
             if (r != null) {
                 r.run();
+            }
+        } finally {
+            ParentStack.pop();
+        }
+        ParentStack.attachToParent(table);
+        respace();
+        return this;
+    }
+  
+    public Column children(@Nullable Cons<Element> r) {
+        ParentStack.push(table, ATTACHER);
+        try {
+            if (r != null) {
+                r.get(element());
             }
         } finally {
             ParentStack.pop();

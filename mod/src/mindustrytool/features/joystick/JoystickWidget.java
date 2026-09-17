@@ -131,8 +131,9 @@ public class JoystickWidget extends Element {
         Float opacity = feature.opacityConfig.get();
         float alpha = opacity != null ? Mathf.clamp(opacity) : 1f;
 
-        float cx = getWidth() / 2f;
-        float cy = getHeight() / 2f;
+        //draw() runs in the parent's coordinate space; offset by this element's own position
+        float cx = x + getWidth() / 2f;
+        float cy = y + getHeight() / 2f;
         float radius = radius();
 
         //outer base
