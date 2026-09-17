@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.scene.Element;
 import mindustrytool.components.WebStyles;
+import mindustrytool.features.settings.ModSettings;
 import solim.core.BaseComponent;
 
 /**
@@ -56,6 +57,11 @@ public class JoystickSettingsView extends BaseComponent {
 
                     checkbox(Core.bundle.get("feature.joystick.settings.show-handle"),
                             feature.showHandleConfig.signal()).growX();
+
+                    divider();
+
+                    checkbox(Core.bundle.get("setting.free-camera", "Free Camera"),
+                            ModSettings.freeCamera.signal()).growX();
 
                     divider();
 

@@ -51,10 +51,12 @@ public class JoystickWidget extends Element {
                 if (dist <= knobRadius() && now - lastKnobTapMillis < TAP_INTERVAL_MILLIS
                         && Vars.player != null && !Vars.player.dead()) {
                     Core.camera.position.set(Vars.player.x, Vars.player.y);
+                    feature.cancelPanDelay();
                 }
                 lastKnobTapMillis = now;
 
                 activePointer = pointer;
+                feature.activePointer = pointer;
                 updateKnob(x, y);
                 return true;
             }
@@ -70,12 +72,21 @@ public class JoystickWidget extends Element {
             public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
                 if (pointer == activePointer) {
                     activePointer = -1;
+                    feature.activePointer = -1;
                     knobX = 0f;
                     knobY = 0f;
                     feature.moveVector.setZero();
                 }
             }
         });
+    }
+
+    public int getActivePointer() {
+        return activePointer;
+    }
+
+    public boolean isHeld() {
+        return activePointer != -1;
     }
 
     private float diameter() {

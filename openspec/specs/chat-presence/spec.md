@@ -3,9 +3,7 @@
 ## Purpose
 
 Outbound game-presence publishing: the client publishes the player's current game activity (menu, server, relay room, campaign, editor, custom game) to the backend chat service so other users see accurate presence.
-
 ## Requirements
-
 ### Requirement: Sticky presence state in ChatSession
 The system SHALL hold outbound presence in `ChatSession` as a current-presence signal and a last-non-menu signal, both initialized to `menu`, using the legacy wire strings verbatim (`menu`, `server: <name>`, `player-connect: <name>`, `campaign: <map>`, `editing: <map>`, `custom-game`).
 
@@ -60,14 +58,14 @@ The system SHALL publish presence via `MindustryTool.updateChatState`, coalescin
 - **THEN** the current presence is re-PUT
 
 ### Requirement: Always-on sync with opt-out setting
-The system SHALL run presence sync whenever the user is logged in and the `share-presence` chat setting (enabled by default) is on, independent of chat overlay state, stream connectivity, and Chat feature enablement; when the setting is off or the user is logged out, the system SHALL stop sending presence PUTs without transmitting a final state.
+The system SHALL run presence sync whenever the user is logged in and the global `ModSettings.sharePresence` setting (enabled by default) is on, independent of chat overlay state, stream connectivity, and Chat feature enablement; when the setting is off or the user is logged out, the system SHALL stop sending presence PUTs without transmitting a final state.
 
 #### Scenario: Sync works without open chat or stream
 - **WHEN** the user is logged in with sharing enabled while the chat overlay is closed and the stream is disconnected
 - **THEN** presence intents are still published via PUT
 
 #### Scenario: Opting out stops sync silently
-- **WHEN** the user turns off the sharing setting
+- **WHEN** the user turns off the sharing setting in `ModSettings` (via `GeneralSettingsDialog`)
 - **THEN** no further presence PUTs are sent and no final state is transmitted
 
 #### Scenario: Sharing resumes on opt-in
@@ -77,3 +75,4 @@ The system SHALL run presence sync whenever the user is logged in and the `share
 #### Scenario: Logout stops sync silently
 - **WHEN** the user logs out
 - **THEN** no further presence PUTs are sent and no final state is transmitted
+

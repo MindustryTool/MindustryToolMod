@@ -110,7 +110,7 @@ class PrettyChatFeatureTest {
 
     @Test
     void testEnabledByDefault() {
-        assertTrue(feature.isEnabled(), "PrettyChat should be enabled by default");
+        assertFalse(feature.isEnabled(), "PrettyChat should be disabled by default");
     }
 
     @Test

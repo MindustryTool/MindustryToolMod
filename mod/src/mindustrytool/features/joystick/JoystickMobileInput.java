@@ -1,6 +1,7 @@
 package mindustrytool.features.joystick;
 
 import arc.Core;
+import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.math.geom.Rect;
 import arc.math.geom.Vec2;
@@ -20,6 +21,7 @@ import mindustry.gen.Payloadc;
 import mindustry.gen.Unit;
 import mindustry.input.MobileInput;
 import mindustry.type.UnitType;
+import mindustrytool.features.settings.ModSettings;
 
 import static mindustry.Vars.*;
 
@@ -34,9 +36,91 @@ public class JoystickMobileInput extends MobileInput {
     private static final float JOYSTICK_OFFSET = 80f;
 
     private final JoystickFeature feature;
+    private final Vec2 lastPinchPan = new Vec2();
+    private boolean pinchPanning;
+    private boolean isPanning;
+    private long lastPanTime;
 
     public JoystickMobileInput(JoystickFeature feature) {
         this.feature = feature;
+    }
+
+    public void cancelPanDelay() {
+        isPanning = false;
+        pinchPanning = false;
+        lastPanTime = 0;
+    }
+
+    @Override
+    public void update() {
+        super.update();
+        updateCamera();
+    }
+
+    private void updateCamera() {
+        if (Boolean.TRUE.equals(ModSettings.freeCamera.get())) {
+            return;
+        }
+        if (state == null || !state.isGame() || player == null || player.dead()) {
+            return;
+        }
+        Unit unit = player.unit();
+        if (unit == null || unit.dead) {
+            return;
+        }
+        if (!isPanning && !pinchPanning && Time.timeSinceMillis(lastPanTime) > 500) {
+            Core.camera.position.lerpDelta(unit, 0.08f);
+        }
+    }
+
+    @Override
+    public boolean pan(float x, float y, float deltaX, float deltaY) {
+        isPanning = true;
+        lastPanTime = Time.millis();
+        return super.pan(x, y, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean panStop(float x, float y, int pointer, KeyCode button) {
+        isPanning = false;
+        lastPanTime = Time.millis();
+        return super.panStop(x, y, pointer, button);
+    }
+
+    @Override
+    public boolean zoom(float initialDistance, float distance) {
+        if (feature.isKnobHeld()) {
+            return false;
+        }
+        return super.zoom(initialDistance, distance);
+    }
+
+    @Override
+    public boolean pinch(Vec2 initialPointer1, Vec2 initialPointer2, Vec2 pointer1, Vec2 pointer2) {
+        if (feature.isKnobHeld()) {
+            Vec2 panPointer = feature.activePointer == 0 ? pointer2 : pointer1;
+            if (!pinchPanning) {
+                pinchPanning = true;
+                lastPinchPan.set(panPointer);
+            } else {
+                float dx = panPointer.x - lastPinchPan.x;
+                float dy = panPointer.y - lastPinchPan.y;
+                lastPinchPan.set(panPointer);
+                super.pan(panPointer.x, panPointer.y, dx, dy);
+            }
+            isPanning = true;
+            lastPanTime = Time.millis();
+            return true;
+        }
+        return super.pinch(initialPointer1, initialPointer2, pointer1, pointer2);
+    }
+
+    @Override
+    public void pinchStop() {
+        pinchPanning = false;
+        isPanning = false;
+        lastPanTime = Time.millis();
+        super.pinchStop();
     }
 
     @Override

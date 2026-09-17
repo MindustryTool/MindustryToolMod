@@ -189,6 +189,7 @@ public class ChatOverlayHudView extends BaseComponent {
                                             .children(() -> icon(usersIcon).size(unit(6)));
 
                                     button(() -> service.refresh(store.channels().activeId().peek()))
+                                            .style(WebStyles.ghost())
                                             .size(unit(10))
                                             .children(() -> icon(Icon.refresh).size(unit(5)));
 
