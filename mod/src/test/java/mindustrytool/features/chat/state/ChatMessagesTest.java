@@ -135,4 +135,37 @@ class ChatMessagesTest {
         activeId.set(null);
         assertTrue(messages.active().get().isEmpty());
     }
+
+    @Test
+    void testInitialLoadingAndErrorLifecycle() {
+        Signal<String> activeId = Signal.of("ch1");
+        ChatMessages messages = new ChatMessages(activeId);
+
+        assertFalse(messages.isActiveLoadingInitial());
+        assertFalse(messages.activeLoadingInitial().get());
+        assertNull(messages.currentActiveError());
+        assertNull(messages.activeError().get());
+
+        messages.setLoadingInitial("ch1", true);
+        assertTrue(messages.isActiveLoadingInitial());
+        assertTrue(messages.activeLoadingInitial().get());
+
+        messages.setLoadingInitial("ch1", false);
+        messages.setError("ch1", "Connection timed out");
+        assertFalse(messages.isActiveLoadingInitial());
+        assertEquals("Connection timed out", messages.currentActiveError());
+        assertEquals("Connection timed out", messages.activeError().get());
+
+        // Channel switch reflects respective channel's state
+        activeId.set("ch2");
+        assertFalse(messages.isActiveLoadingInitial());
+        assertNull(messages.currentActiveError());
+
+        // Replace clears error
+        activeId.set("ch1");
+        assertEquals("Connection timed out", messages.currentActiveError());
+        messages.replace("ch1", Arrays.asList(msg("10", "ch1", "Hi")));
+        assertNull(messages.currentActiveError());
+        assertEquals(1, messages.active().get().size());
+    }
 }

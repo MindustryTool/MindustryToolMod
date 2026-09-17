@@ -2,7 +2,10 @@ package solim.modifier;
 
 import arc.func.Cons;
 import arc.scene.Element;
+import arc.scene.event.EventListener;
 import arc.scene.event.Touchable;
+import arc.scene.ui.Label;
+import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -320,6 +323,68 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         ElementClickBinding binding = ElementClickBinding.find(el);
         if (binding != null)
             binding.stop = stop;
+        return self();
+    }
+
+    // ---------- tooltip ----------
+
+    /** Removes all Tooltip listeners attached to the given element. */
+    static void removeTooltips(@Nullable Element el) {
+        if (el == null)
+            return;
+        for (int i = el.getListeners().size - 1; i >= 0; i--) {
+            EventListener l = el.getListeners().get(i);
+            if (l instanceof Tooltip) {
+                el.removeListener(l);
+            }
+        }
+    }
+
+    /**
+     * Attaches a static text tooltip to this element, replacing any previous tooltip.
+     * Passing {@code null} or an empty string removes existing tooltips.
+     */
+    default SELF tooltip(@Nullable String tip) {
+        if (tip == null || tip.isEmpty()) {
+            removeTooltips(element());
+            return self();
+        }
+        return tooltip(t -> t.add(tip));
+    }
+
+    /**
+     * Attaches a reactive text tooltip to this element, replacing any previous tooltip.
+     * The tooltip text updates whenever the signal changes, and its effect is owned
+     * by the active component context. Passing {@code null} removes existing tooltips.
+     */
+    default SELF tooltip(@Nullable Readable<String> tip) {
+        if (tip == null) {
+            removeTooltips(element());
+            return self();
+        }
+        return tooltip(t -> {
+            Label label = new Label("");
+            Effect e = Effect.of(() -> label.setText(tip.get() != null ? tip.get() : ""));
+            ComponentContext.register(e);
+            t.add(label);
+        });
+    }
+
+    /**
+     * Attaches a custom tooltip built with the given container builder, replacing any previous tooltip.
+     * Passing {@code null} removes existing tooltips.
+     */
+    default SELF tooltip(@Nullable Cons<Table> tooltipBuilder) {
+        Element el = element();
+        if (el == null)
+            return self();
+        removeTooltips(el);
+        if (tooltipBuilder != null) {
+            try {
+                el.addListener(new Tooltip(tooltipBuilder));
+            } catch (Throwable ignored) {
+            }
+        }
         return self();
     }
 

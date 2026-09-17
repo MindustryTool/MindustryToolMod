@@ -236,7 +236,7 @@ public class ChatOverlayHudView extends BaseComponent {
                 }
                 return row().growY().children(() -> {
                     row().width(unit(80)).growY().children(() -> {
-                        new ChatChannelListView(store);
+                        new ChatChannelListView(store, service);
                     });
                     divider(Direction.Y);
                 });
@@ -257,7 +257,7 @@ public class ChatOverlayHudView extends BaseComponent {
                 return row().growY().children(() -> {
                     divider(Direction.Y);
                     row().width(unit(80)).growY().children(() -> {
-                        new ChatUserListView(store);
+                        new ChatUserListView(store, service);
                     });
                 });
             }).growY();
@@ -268,7 +268,7 @@ public class ChatOverlayHudView extends BaseComponent {
         return tabs(mobileTab)
                 .grow()
                 .tab(Core.bundle.get("feature.chat.ui.channels", "Channels"), () -> {
-                    new ChatChannelListView(store);
+                    new ChatChannelListView(store, service);
                 })
                 .tab(Core.bundle.get("feature.chat.ui.messages", "Messages"), () -> {
                     column().grow().gap(unit(1)).children(() -> {
@@ -278,7 +278,7 @@ public class ChatOverlayHudView extends BaseComponent {
                     });
                 })
                 .tab(Core.bundle.get("feature.chat.ui.members", "Members"), () -> {
-                    new ChatUserListView(store);
+                    new ChatUserListView(store, service);
                 });
     }
 

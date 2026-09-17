@@ -64,9 +64,19 @@ public class ChatService {
         Core.app.post(() -> store.session().setConnected(false));
     }
 
+    private static String extractError(Throwable throwable) {
+        Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
+        String msg = cause.getMessage();
+        return (msg != null && !msg.trim().isEmpty()) ? msg.trim() : cause.getClass().getSimpleName();
+    }
+
     public void refreshChannels() {
+        store.channels().setLoading(true);
+        store.channels().setError(null);
+
         MindustryTool.getChatChannels().thenAccept(channels -> {
             Core.app.post(() -> {
+                store.channels().setLoading(false);
                 store.channels().replace(channels);
                 if (channels != null) {
                     for (ChannelDto c : channels) {
@@ -86,17 +96,26 @@ public class ChatService {
                 }
             });
         }).exceptionally(e -> {
+            Core.app.post(() -> {
+                store.channels().setLoading(false);
+                store.channels().setError(extractError(e));
+            });
             Log.err("Failed to fetch chat channels", e);
             return null;
         });
     }
 
-    public void refresh(String channelId) {
+    public void refresh(@Nullable String channelId) {
         if (channelId == null || channelId.isEmpty()) {
+            refreshChannels();
             return;
         }
 
         loadMessages(channelId);
+        loadUsers(channelId);
+        if (!Boolean.TRUE.equals(store.session().connected().peek())) {
+            connectStream();
+        }
     }
 
     public void loadMessages(String channelId) {
@@ -104,8 +123,12 @@ public class ChatService {
             return;
         }
 
+        store.messages().setLoadingInitial(channelId, true);
+        store.messages().setError(channelId, null);
+
         MindustryTool.getChatMessages(channelId, null).thenAccept(messages -> {
             Core.app.post(() -> {
+                store.messages().setLoadingInitial(channelId, false);
                 if (messages != null) {
                     Collections.reverse(messages);
                 }
@@ -125,6 +148,10 @@ public class ChatService {
                 fetchMissingUsers(messages);
             });
         }).exceptionally(e -> {
+            Core.app.post(() -> {
+                store.messages().setLoadingInitial(channelId, false);
+                store.messages().setError(channelId, extractError(e));
+            });
             Log.err("Failed to fetch chat messages for " + channelId, e);
             return null;
         });
@@ -175,9 +202,19 @@ public class ChatService {
             return;
         }
 
+        store.members().setLoading(channelId, true);
+        store.members().setError(channelId, null);
+
         MindustryTool.getChatUsers(channelId).thenAccept(users -> {
-            Core.app.post(() -> store.members().replace(channelId, users));
+            Core.app.post(() -> {
+                store.members().setLoading(channelId, false);
+                store.members().replace(channelId, users);
+            });
         }).exceptionally(e -> {
+            Core.app.post(() -> {
+                store.members().setLoading(channelId, false);
+                store.members().setError(channelId, extractError(e));
+            });
             Log.err("Failed to fetch chat users for " + channelId, e);
             return null;
         });

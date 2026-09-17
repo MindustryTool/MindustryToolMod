@@ -5,7 +5,6 @@ import static solim.UI.*;
 import arc.Core;
 import arc.files.Fi;
 import arc.scene.Element;
-import arc.scene.ui.Tooltip;
 import arc.util.Log;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -13,7 +12,6 @@ import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.services.crash.CrashTimestampParser;
 import solim.core.BaseComponent;
-import solim.layout.Row;
 
 /**
  * Settings view for mod-wide preferences and diagnostics.
@@ -27,29 +25,23 @@ public class GeneralSettingsView extends BaseComponent {
         return column().grow().center().children(() -> {
             scroll().growY().scrollX(false).children(() -> {
                 column().growX().gap(unit(2)).padding(unit(2)).children(() -> {
-                    Row betaRow = row().growX().gap(unit(2)).children(() -> {
-                        checkbox(
-                                Core.bundle.get("setting.beta.participate"),
-                                ModSettings.betaParticipate.signal()).growX();
-                    });
-                    betaRow.table().addListener(new Tooltip(t -> t.add(Core.bundle.get(
-                            "setting.beta.participate.tooltip"))));
+                    checkbox(
+                            Core.bundle.get("setting.beta.participate"),
+                            ModSettings.betaParticipate.signal())
+                            .growX()
+                            .tooltip(Core.bundle.get("setting.beta.participate.tooltip"));
 
-                    Row sharePresenceRow = row().growX().gap(unit(2)).children(() -> {
-                        checkbox(
-                                Core.bundle.get("setting.share-presence"),
-                                ModSettings.sharePresence.signal()).growX();
-                    });
-                    sharePresenceRow.table().addListener(new Tooltip(t -> t.add(Core.bundle.get(
-                            "setting.share-presence.description"))));
+                    checkbox(
+                            Core.bundle.get("setting.share-presence"),
+                            ModSettings.sharePresence.signal())
+                            .growX()
+                            .tooltip(Core.bundle.get("setting.share-presence.description"));
 
-                    Row freeCameraRow = row().growX().gap(unit(2)).children(() -> {
-                        checkbox(
-                                Core.bundle.get("setting.free-camera"),
-                                ModSettings.freeCamera.signal()).growX();
-                    });
-                    freeCameraRow.table().addListener(new Tooltip(t -> t.add(Core.bundle.get(
-                            "setting.free-camera.description"))));
+                    checkbox(
+                            Core.bundle.get("setting.free-camera"),
+                            ModSettings.freeCamera.signal())
+                            .growX()
+                            .tooltip(Core.bundle.get("setting.free-camera.description"));
 
                     divider();
 

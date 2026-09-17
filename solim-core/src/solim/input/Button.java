@@ -11,7 +11,6 @@ import arc.scene.event.InputEvent;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.Label;
 import arc.scene.ui.Label.LabelStyle;
-import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
@@ -180,32 +179,6 @@ public final class Button
     @Override
     public Button stopClickPropagation(boolean stop) {
         this.stopClickPropagation = stop;
-        return this;
-    }
-
-    public Button tooltip(@Nullable String tip) {
-        if (tip != null && !tip.isEmpty()) {
-            try {
-                button.addListener(new Tooltip(t -> t.add(tip)));
-            } catch (Throwable ignored) {
-            }
-        }
-        return this;
-    }
-
-    public Button tooltip(@Nullable Readable<String> tip) {
-        if (tip != null) {
-            try {
-                button.addListener(new Tooltip(t -> {
-                    Label label = new Label("");
-                    Effect e = Effect.of(() -> label.setText(tip.get() != null ? tip.get() : ""));
-                    bindings.add(e);
-                    ComponentContext.register(e);
-                    t.add(label);
-                }));
-            } catch (Throwable ignored) {
-            }
-        }
         return this;
     }
 
