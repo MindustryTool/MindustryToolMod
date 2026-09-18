@@ -10,7 +10,6 @@ import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
-import arc.scene.ui.layout.Scl;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import mindustry.Vars;

@@ -50,6 +50,7 @@ class RangeDisplayFeatureTest {
         RangeDisplayFeature feature = new RangeDisplayFeature();
 
         assertEquals(1.0f, feature.opacityConfig.get(), 0.001f);
+        assertEquals(0.5f, feature.zoomThresholdConfig.get(), 0.001f);
         assertTrue(feature.drawTurretRangeAllyConfig.get());
         assertTrue(feature.drawTurretRangeEnemyConfig.get());
         assertTrue(feature.drawUnitRangeAllyConfig.get());
@@ -65,6 +66,7 @@ class RangeDisplayFeatureTest {
         RangeDisplayFeature feature = new RangeDisplayFeature();
 
         feature.opacityConfig.set(0.35f);
+        feature.zoomThresholdConfig.set(1.5f);
         feature.drawTurretRangeAllyConfig.set(false);
         feature.drawTurretRangeEnemyConfig.set(false);
         feature.drawUnitRangeAllyConfig.set(false);
@@ -75,6 +77,7 @@ class RangeDisplayFeatureTest {
         feature.dashedConfig.set(false);
 
         assertEquals(0.35f, feature.opacityConfig.get(), 0.001f);
+        assertEquals(1.5f, feature.zoomThresholdConfig.get(), 0.001f);
         assertFalse(feature.drawTurretRangeAllyConfig.get());
         assertFalse(feature.drawTurretRangeEnemyConfig.get());
         assertFalse(feature.drawUnitRangeAllyConfig.get());
@@ -87,6 +90,7 @@ class RangeDisplayFeatureTest {
         feature.resetToDefaults();
 
         assertEquals(1.0f, feature.opacityConfig.get(), 0.001f);
+        assertEquals(0.5f, feature.zoomThresholdConfig.get(), 0.001f);
         assertTrue(feature.drawTurretRangeAllyConfig.get());
         assertTrue(feature.drawTurretRangeEnemyConfig.get());
         assertTrue(feature.drawUnitRangeAllyConfig.get());
@@ -110,16 +114,25 @@ class RangeDisplayFeatureTest {
     }
 
     @Test
-    void testBlockClassification() {
+    void testBlockClassificationAndBaseRange() {
         RangeDisplayFeature feature = new RangeDisplayFeature();
 
         ItemTurret turret = new ItemTurret("test-duo");
+        turret.range = 110f;
         BuildTurret buildTurret = new BuildTurret("test-build-tower");
+        buildTurret.range = 150f;
         MendProjector mend = new MendProjector("test-mender");
+        mend.range = 80f;
         OverdriveProjector overdrive = new OverdriveProjector("test-overdrive");
+        overdrive.range = 100f;
+        overdrive.phaseRangeBoost = 50f;
         MassDriver massDriver = new MassDriver("test-driver");
+        massDriver.range = 440f;
         ForceProjector force = new ForceProjector("test-force");
+        force.radius = 120f;
+        force.phaseRadiusBoost = 30f;
         RegenProjector regen = new RegenProjector("test-regen");
+        regen.range = 20; // in tiles
         Wall wall = new Wall("test-wall");
 
         // Turret classification: combat turrets only (not build turrets)
@@ -142,6 +155,13 @@ class RangeDisplayFeatureTest {
         assertTrue(feature.isRangeBlock(turret));
         assertTrue(feature.isRangeBlock(mend));
         assertFalse(feature.isRangeBlock(wall));
+
+        // Base range tests
+        assertEquals(110f, feature.getBlockBaseRange(turret), 0.001f);
+        assertEquals(150f, feature.getBlockBaseRange(overdrive), 0.001f);
+        assertEquals(150f, feature.getBlockBaseRange(force), 0.001f);
+        assertEquals(440f, feature.getBlockBaseRange(massDriver), 0.001f);
+        assertEquals(0f, feature.getBlockBaseRange(wall), 0.001f);
     }
 
     @Test
