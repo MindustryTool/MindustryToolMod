@@ -3,12 +3,12 @@
 ## Purpose
 
 Mechanical merge of 3 specs per change `spec-domain-merge` (stage 1 pilot, concat-then-dedupe). Sources: browser-common, map-browser, schematic-browser. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work.
-
 ## Requirements
 
 **Source: browser-common**
 
 TBD - created by archiving change rewrite-browser-features. Update Purpose after archive.
+
 ### Requirement: Reactive Browser State Management
 The system SHALL maintain a reactive BrowserState<T> holding search query, selected tags, sort option, current page index, total items, loading flag, and error message.
 
@@ -134,6 +134,7 @@ Textfields embedded inside custom containers SHALL use `WebStyles.clearInput()` 
 **Source: map-browser**
 
 TBD - created by archiving change rewrite-browser-features. Update Purpose after archive.
+
 ### Requirement: Browse Online Maps
 The system SHALL provide a MapBrowserFeature and MapBrowserDialog with a solid black background displaying verified maps queried from MindustryTool.searchMaps(). The dialog SHALL render map cards as physical tiles with subtle borders, rounded corners, inner padding, and WebStyles action buttons, omitting vanilla Mindustry close buttons in favor of the aligned footer close action.
 
@@ -166,17 +167,17 @@ The system SHALL provide a MapDetailDialog showing full map preview image, autho
 - **THEN** the map preview image and details SHALL render side-by-side in a two-column row
 
 ### Requirement: Mindustry UI and Keybind Integration
-The system SHALL inject a Browse button into Mindustry's maps dialog (Vars.ui.maps) and register a customizable keybinding.
+The system SHALL inject a Browse button into Mindustry's vanilla schematics dialog (Vars.ui.schematics) and register a customizable keybinding.
 
-#### Scenario: Maps dialog button integration
-- **WHEN** MapBrowserFeature is enabled
-- **THEN** a Browse Online button SHALL be present in Vars.ui.maps.buttons
-- **WHEN** MapBrowserFeature is disabled
+#### Scenario: Schematics dialog button integration
+- **WHEN** SchematicBrowserFeature is enabled
+- **THEN** a Browse Online button SHALL be present in Vars.ui.schematics.buttons
+- **WHEN** SchematicBrowserFeature is disabled
 - **THEN** the button SHALL be removed cleanly
 
 #### Scenario: Hotkey trigger
-- **WHEN** user presses the configured map browser keybind and no text field is focused
-- **THEN** the map browser dialog SHALL be displayed
+- **WHEN** user presses the configured schematic browser keybind and no text field is focused
+- **THEN** the schematic browser dialog SHALL be displayed
 
 ### Requirement: Image-First Map Hero Card
 `MapCard` SHALL prioritize the map terrain preview image as the hero visual element across the top of the card inside a preview card container whose height dynamically matches its width (1:1 square aspect ratio) via a reactive preview height signal. The map title SHALL be rendered inside a translucent dark overlay centered along the bottom edge of the image with text truncation. The card SHALL provide a single bottom action row with compact interactive buttons using vanilla Mindustry icons with stat counts (heart icon + likes opening details, `Icon.chatSmall` + comments opening details, `Icon.downloadSmall` + downloads triggering download, `Icon.play` triggering play). The card SHALL NOT render separate redundant non-interactive stat badge rows.
@@ -206,6 +207,7 @@ Map preview images in cards and detail dialogs SHALL be rendered within pre-allo
 **Source: schematic-browser**
 
 TBD - created by archiving change rewrite-browser-features. Update Purpose after archive.
+
 ### Requirement: Browse Online Schematics
 The system SHALL provide a SchematicBrowserFeature and SchematicBrowserDialog with a solid black background displaying verified schematics queried from MindustryTool.searchSchematics(). The dialog SHALL render schematic cards as physical tiles with subtle borders, rounded corners, inner padding, and WebStyles action buttons, omitting vanilla Mindustry close buttons in favor of the aligned footer close action.
 
