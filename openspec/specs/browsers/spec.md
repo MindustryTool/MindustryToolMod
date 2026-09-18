@@ -10,7 +10,7 @@ Mechanical merge of 3 specs per change `spec-domain-merge` (stage 1 pilot, conca
 TBD - created by archiving change rewrite-browser-features. Update Purpose after archive.
 
 ### Requirement: Reactive Browser State Management
-The system SHALL maintain a reactive BrowserState<T> holding search query, selected tags, sort option, current page index, total items, loading flag, and error message.
+The system SHALL maintain a reactive BrowserState<T> holding search query, selected tags, sort option, current page index, total items, dynamic page size, loading flag, and error message.
 
 #### Scenario: Update search query triggers reload
 - **WHEN** user modifies the search query text field
@@ -20,16 +20,28 @@ The system SHALL maintain a reactive BrowserState<T> holding search query, selec
 - **WHEN** user toggles a tag category filter
 - **THEN** the state SHALL reset to page 1 and execute a search query including the updated tag list
 
+#### Scenario: Dynamic page size update
+- **WHEN** the browser viewport capacity is determined or changes
+- **THEN** the state SHALL update its pageSize signal clamped between 20 and 100 and reset the page to 0, triggering a reload if active
+
 #### Scenario: Handle API failure
 - **WHEN** network request fails or returns non-200
 - **THEN** the state SHALL set error message and clear loading state, prompting user with retry option
 
 ### Requirement: Responsive Card Grid Layout
-The system SHALL dynamically compute column count, content width, and capacity based on viewport dimensions (`dvw`, `dvh`), budgeting symmetrical scrollbar gutters on both sides of the card grid to ensure the scrollbar never clips cards or obscures action buttons.
+The system SHALL dynamically compute column count, row count, content width, card sizing, and viewport capacity based on viewport dimensions (`dvw`, `dvh`), budgeting symmetrical scrollbar gutters on both sides of the card grid to ensure the scrollbar never clips cards or obscures action buttons, and SHALL center the content column on the horizontal X-axis matching the grid width.
 
 #### Scenario: Screen orientation change on mobile
 - **WHEN** mobile screen orientation changes from portrait to landscape
 - **THEN** the grid SHALL recalculate column count from 1-2 columns to 2-3 columns without rebuilding unaffected card elements
+
+#### Scenario: Centered layout on horizontal axis
+- **WHEN** the browser dialog is displayed on wide or high-resolution viewports
+- **THEN** the content container holding the search header, scrollable grid, and footer SHALL have width equal to `cols * cardWidth + (cols - 1) * gap` and be horizontally centered within the full-screen dialog
+
+#### Scenario: Viewport capacity determines query page size
+- **WHEN** the browser dialog is displayed on screen
+- **THEN** the system SHALL compute total card capacity from columns multiplied by rows and set query page size clamped between 20 and 100
 
 #### Scenario: Touch-friendly targets on mobile
 - **WHEN** rendered on mobile devices
@@ -42,6 +54,37 @@ The system SHALL dynamically compute column count, content width, and capacity b
 #### Scenario: Safe vertical overhead prevents spurious scrollbar
 - **WHEN** available height is calculated for capacity and page sizing
 - **THEN** the system SHALL subtract a safe vertical overhead of `unit(50f)` (200px), ensuring single-page item capacity does not exceed viewport height
+
+### Requirement: Image-First Schematic Hero Card
+`SchematicCard` SHALL prioritize the schematic preview image as the hero visual element across the top of the card inside a preview card container with fixed square dimensions (`unit(58f)` / 232px, 1:1 aspect ratio). The schematic title SHALL be rendered inside a translucent dark overlay centered along the bottom edge of the image with text truncation. The card SHALL provide a single bottom action row with four compact interactive buttons using vanilla Mindustry icons with stat counts:
+1. Like button with like count (heart icon + count)
+2. Comment button with comment count (`Icon.chatSmall` + count)
+3. Download/save button with download count (`Icon.downloadSmall` + count)
+4. Copy string button (`Icon.copy`)
+The card SHALL NOT render separate redundant non-interactive stat badge rows.
+
+#### Scenario: Schematic card visual presentation
+- **WHEN** `SchematicCard` is rendered
+- **THEN** the preview container occupies the upper area with a fixed square preview (`unit(58f)` / 232px) and title centered along the bottom, followed by a 4-button action row
+
+#### Scenario: Direct action interaction
+- **WHEN** user clicks the download button on a card
+- **THEN** it executes the save action directly without requiring the detail dialog
+
+#### Scenario: Square aspect ratio preservation
+- **WHEN** the schematic card is rendered in the grid or rescaled on small viewports
+- **THEN** the preview card container height SHALL match the card width to maintain a 1:1 square aspect ratio
+
+### Requirement: Image-First Map Hero Card
+`MapCard` SHALL prioritize the map terrain preview image as the hero visual element across the top of the card inside a preview card container with fixed square dimensions (`unit(58f)` / 232px, 1:1 aspect ratio). The map title SHALL be rendered inside a translucent dark overlay centered along the bottom edge of the image with text truncation. The card SHALL provide a single bottom action row with compact interactive buttons using vanilla Mindustry icons with stat counts (heart icon + likes opening details, `Icon.chatSmall` + comments opening details, `Icon.downloadSmall` + downloads triggering download, `Icon.play` triggering play). The card SHALL NOT render separate redundant non-interactive stat badge rows.
+
+#### Scenario: Map card visual presentation
+- **WHEN** `MapCard` is rendered
+- **THEN** the preview container occupies the upper area with a fixed square preview (`unit(58f)` / 232px) and title centered along the bottom, followed by a compact action button row
+
+#### Scenario: Square aspect ratio preservation
+- **WHEN** the map card is rendered in the grid or rescaled on small viewports
+- **THEN** the preview card container height SHALL match the card width to maintain a 1:1 square aspect ratio
 
 ### Requirement: Paged Navigation Controls
 The system SHALL provide balanced 3-section paged footer navigation with a custom Close/Back button on the left, Previous, Next, and Direct Page Jump controls centered, and an Upload action on the right, all styled with WebStyles.

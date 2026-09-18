@@ -266,4 +266,76 @@ class QuickSchematicGridTest {
         assertNull(QuickSchematicGridFeature.resolveIn(all, "missing.msch", "Missing"));
         assertNull(QuickSchematicGridFeature.resolveIn(null, "alpha.msch", "Alpha"));
     }
+
+    @Test
+    void coordinates_roundTripAndEquality() {
+        QuickSchematicEntry entry = QuickSchematicEntry.of(2, 1, 3, "Thorium", "thorium.msch");
+        assertEquals(2, entry.page);
+        assertEquals(1, entry.row);
+        assertEquals(3, entry.col);
+
+        String json = QuickSchematicEntry.toJson(Arrays.asList(entry));
+        List<QuickSchematicEntry> parsed = QuickSchematicEntry.fromJson(json);
+        assertEquals(1, parsed.size());
+        assertEquals(entry, parsed.get(0));
+        assertEquals(2, parsed.get(0).page);
+        assertEquals(1, parsed.get(0).row);
+        assertEquals(3, parsed.get(0).col);
+    }
+
+    @Test
+    void slotManagement_setGetAndClear() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+        feature.addSchematic(0, 1, 2, "Reactor", "reactor.msch");
+
+        QuickSchematicEntry entry = feature.getEntryAt(0, 1, 2);
+        assertNotNull(entry);
+        assertEquals("Reactor", entry.schematicName);
+
+        assertNull(feature.getEntryAt(0, 0, 0));
+        assertNull(feature.getEntryAt(1, 1, 2));
+
+        // Overwrite slot
+        feature.addSchematic(0, 1, 2, "Solar", "solar.msch");
+        assertEquals(1, feature.getEntries().size());
+        assertEquals("Solar", feature.getEntryAt(0, 1, 2).schematicName);
+
+        // Clear slot
+        assertTrue(feature.clearSlotAt(0, 1, 2));
+        assertNull(feature.getEntryAt(0, 1, 2));
+        assertFalse(feature.clearSlotAt(0, 1, 2));
+    }
+
+    @Test
+    void pageManagement_addDeleteAndReindex() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+        assertEquals(1, feature.pageCountConfig.get().intValue());
+
+        assertTrue(feature.addPage());
+        assertEquals(2, feature.pageCountConfig.get().intValue());
+        assertEquals(1, feature.getActivePage());
+
+        feature.addSchematic(0, 0, 0, "Page0Item", null);
+        feature.addSchematic(1, 0, 0, "Page1Item", null);
+
+        assertTrue(feature.addPage()); // pageCount = 3
+        feature.addSchematic(2, 0, 0, "Page2Item", null);
+
+        // Delete middle page (page 1)
+        assertTrue(feature.deletePage(1));
+        assertEquals(2, feature.pageCountConfig.get().intValue());
+
+        // Page 0 entry intact
+        assertNotNull(feature.getEntryAt(0, 0, 0));
+        assertEquals("Page0Item", feature.getEntryAt(0, 0, 0).schematicName);
+
+        // Former Page 2 entry shifted to Page 1
+        assertNotNull(feature.getEntryAt(1, 0, 0));
+        assertEquals("Page2Item", feature.getEntryAt(1, 0, 0).schematicName);
+
+        // Cannot delete below 1 page
+        assertTrue(feature.deletePage(1));
+        assertEquals(1, feature.pageCountConfig.get().intValue());
+        assertFalse(feature.deletePage(0)); // Only 1 page left
+    }
 }

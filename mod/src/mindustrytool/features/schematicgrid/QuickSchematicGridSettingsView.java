@@ -5,13 +5,12 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
-import arc.util.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
-import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -31,6 +30,7 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
         return column().grow().center().children(() -> {
             scroll().grow().center().children(() -> {
                 column().growX().gap(unit(2)).children(() -> {
+                    // Display Mode (HUD vs Popup)
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode")).left();
 
@@ -54,6 +54,21 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
 
                     divider();
 
+                    // Rows Slider (1-7)
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.quick-schematic-grid.settings.rows")).left();
+
+                        spacer();
+                        slider(feature.rowsConfig.signal(),
+                                QuickSchematicGridFeature.MIN_ROWS,
+                                QuickSchematicGridFeature.MAX_ROWS, 1);
+
+                        row().width(unit(14)).children(() -> {
+                            text(feature.rowsConfig.signal().map(String::valueOf));
+                        });
+                    });
+
+                    // Columns Slider (1-7)
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.cols")).left();
 
@@ -67,6 +82,7 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                         });
                     });
 
+                    // Button Size Slider
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.button-size")).left();
 
@@ -79,6 +95,7 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                         });
                     });
 
+                    // Button Gap Slider
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.button-gap")).left();
 
@@ -93,36 +110,65 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                         });
                     });
 
+                    // Hide Drag Handle Checkbox
                     checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
                             feature.hideDragHandleConfig.signal()).growX();
 
                     divider();
 
-                    text(Core.bundle.get("feature.quick-schematic-grid.settings.entries")).left().growX()
-                            .color(Color.white);
+                    // Page Management Bar
+                    row().growX().gap(unit(2)).center().children(() -> {
+                        text(Core.bundle.get("feature.quick-schematic-grid.settings.pages")).left().color(Color.white);
 
-                    dynamic(feature.entries(), entries -> {
-                        if (entries == null || entries.isEmpty()) {
-                            return text(Core.bundle.get("feature.quick-schematic-grid.settings.empty"))
-                                    .color(Color.gray)
-                                    .padding(unit(4))
-                                    .center();
+                        spacer();
+
+                        button(Core.bundle.get("feature.quick-schematic-grid.settings.add-page"), feature::addPage)
+                                .style(WebStyles.secondary())
+                                .enabled(feature.pageCountConfig.signal()
+                                        .map(count -> count != null && count < QuickSchematicGridFeature.MAX_PAGES))
+                                .height(unit(8.5f));
+
+                        button(Core.bundle.get("feature.quick-schematic-grid.settings.delete-page"), this::confirmDeletePage)
+                                .style(WebStyles.ghost())
+                                .enabled(feature.pageCountConfig.signal()
+                                        .map(count -> count != null && count > QuickSchematicGridFeature.MIN_PAGES))
+                                .height(unit(8.5f));
+                    });
+
+                    Readable<List<Integer>> pagesList = feature.pageCountConfig.signal().map(count -> {
+                        int total = Math.max(1, Math.min(QuickSchematicGridFeature.MAX_PAGES, count != null ? count : 1));
+                        List<Integer> list = new ArrayList<>(total);
+                        for (int i = 0; i < total; i++) {
+                            list.add(i);
                         }
-                        return reactiveGrid(
-                                Signal.of(1),
-                                feature.entries(),
-                                entry -> entry != null && entry.id != null ? entry.id : "",
-                                entry -> new EntryRow(feature, entry))
-                                .growX()
-                                .gap(unit(2));
-                    }).growX();
+                        return list;
+                    });
 
-                    button(Core.bundle.get("feature.quick-schematic-grid.settings.add"), this::openPicker)
-                            .style(WebStyles.secondary())
-                            .growX();
+                    row().growX().gap(unit(1)).children(() -> {
+                        reactiveGrid(
+                                feature.pageCountConfig.signal(),
+                                pagesList,
+                                String::valueOf,
+                                pageIndex -> button(
+                                        Core.bundle.format("feature.quick-schematic-grid.settings.page-tab", pageIndex + 1),
+                                        () -> feature.setActivePage(pageIndex))
+                                                .style(WebStyles.filterChipText())
+                                                .checked(feature.activePage.map(p -> p != null && p.intValue() == pageIndex))
+                                                .height(unit(8.5f)))
+                                .gap(unit(1));
+                    });
 
                     divider();
 
+                    // Interactive 2D Grid Editor
+                    text(Core.bundle.get("feature.quick-schematic-grid.settings.entries")).left().growX()
+                            .color(Color.white);
+
+                    buildSettingsGrid();
+
+                    divider();
+
+                    // Reset Position
                     button(Core.bundle.get("feature.quick-schematic-grid.settings.reset-position"),
                             feature::resetPosition)
                             .style(Styles.defaultb).growX();
@@ -131,102 +177,100 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
         }).element();
     }
 
-    private void openPicker() {
+    private void buildSettingsGrid() {
+        Readable<Float> gap = feature.buttonGapConfig.signal();
+
+        Readable<List<QuickSchematicGridHudView.SlotModel>> slots = Signal.computed(() -> {
+            int p = feature.getActivePage();
+            int rows = Math.max(1, Math.min(QuickSchematicGridFeature.MAX_ROWS, feature.rowsConfig.signal().get()));
+            int cols = Math.max(1, Math.min(QuickSchematicGridFeature.MAX_COLS, feature.colsConfig.signal().get()));
+            List<QuickSchematicEntry> allEntries = feature.entries().get();
+
+            List<QuickSchematicGridHudView.SlotModel> list = new ArrayList<>(rows * cols);
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    QuickSchematicEntry found = null;
+                    if (allEntries != null) {
+                        for (QuickSchematicEntry entry : allEntries) {
+                            if (entry != null && entry.page == p && entry.row == r && entry.col == c) {
+                                found = entry;
+                                break;
+                            }
+                        }
+                    }
+                    list.add(new QuickSchematicGridHudView.SlotModel(p, r, c, found));
+                }
+            }
+            return list;
+        });
+
+        row().growX().center().children(() -> {
+            reactiveGrid(
+                    feature.colsConfig.signal(),
+                    slots,
+                    QuickSchematicGridHudView.SlotModel::key,
+                    this::settingsSlotComponent)
+                    .gap(gap);
+        });
+    }
+
+    private Component settingsSlotComponent(QuickSchematicGridHudView.SlotModel slot) {
+        Readable<Float> buttonSize = feature.buttonSizeConfig.signal();
+        if (slot.entry == null) {
+            return button(() -> openSlotPicker(slot.page, slot.row, slot.col))
+                    .style(WebStyles.secondary())
+                    .size(buttonSize)
+                    .tooltip(Core.bundle.get("feature.quick-schematic-grid.settings.add"))
+                    .children(() -> icon(Icon.add).size(buttonSize.map(s -> (s != null ? s : 48f) * 0.4f))
+                            .color(Color.lightGray));
+        }
+
+        Schematic schematic = feature.resolveSchematic(slot.entry);
+        String tooltip = slot.entry.displayName();
+
+        if (slot.entry.hasCustomIcon()) {
+            String glyph = slot.entry.customIcon;
+            return button(() -> openSlotDialog(slot.entry.id))
+                    .style(WebStyles.ghost())
+                    .size(buttonSize)
+                    .tooltip(tooltip)
+                    .children(() -> text(glyph != null ? glyph : "")
+                            .fontScale(buttonSize.map(s -> (s != null ? s : 48f) / 32f))
+                            .center());
+        }
+
+        if (schematic == null) {
+            return button(() -> openSlotDialog(slot.entry.id))
+                    .style(WebStyles.ghost())
+                    .size(buttonSize)
+                    .tooltip(Core.bundle.format("feature.quick-schematic-grid.tooltip.missing", tooltip))
+                    .children(() -> icon(Icon.warning).size(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f))
+                            .color(Color.scarlet));
+        }
+
+        return button(() -> openSlotDialog(slot.entry.id))
+                .style(WebStyles.ghost())
+                .size(buttonSize)
+                .tooltip(tooltip)
+                .children(() -> new BoundedSchematicImage(schematic, buttonSize, 48f));
+    }
+
+    private void openSlotPicker(int page, int row, int col) {
         new SchematicPickerDialog(schematic -> {
             String fileName = schematic.file != null ? schematic.file.name() : null;
-            feature.addSchematic(schematic.name(), fileName);
+            feature.addSchematic(page, row, col, schematic.name(), fileName);
         }).show();
     }
 
-    private static final class EntryRow extends BaseComponent {
+    private void openSlotDialog(String entryId) {
+        new QuickSchematicGridSlotDialog(feature, entryId).show();
+    }
 
-        private final QuickSchematicGridFeature feature;
-        private final QuickSchematicEntry entry;
-
-        EntryRow(
-                QuickSchematicGridFeature feature,
-                QuickSchematicEntry entry) {
-            this.feature = feature;
-            this.entry = entry;
-        }
-
-        @Override
-        protected Element build() {
-            String id = entry.id;
-            Schematic schematic = feature.resolveSchematic(entry);
-            String title = schematic != null && schematic.name() != null
-                    ? schematic.name()
-                    : entry.displayName();
-            String subtitle = schematic != null
-                    ? schematic.width + " x " + schematic.height
-                    : Core.bundle.get("feature.quick-schematic-grid.warning.missing");
-            Readable<Color> titleColor = Signal.of(schematic != null ? Color.white : Color.scarlet);
-
-            return row().growX().gap(unit(1)).center().children(() -> {
-                slotVisual(schematic);
-
-                column().growX().gap(unit(0.5f)).children(() -> {
-                    text(title).growX().left().ellipsis(true).color(titleColor);
-                    text(subtitle).growX().left().color(Color.lightGray).fontScale(0.85f);
-                });
-
-                button(() -> new QuickSchematicGridSlotDialog(feature, id).show())
-                        .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.quick-schematic-grid.button.edit"))
-                        .children(() -> icon(Icon.pencil).size(unit(6)));
-
-                button(() -> feature.moveEarlier(id))
-                        .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.quick-schematic-grid.button.move-left"))
-                        .children(() -> icon(FileIcon.of("chevron-up.png")).size(unit(6))
-                                .color(canMoveEarlier() ? Color.white : Color.darkGray));
-
-                button(() -> feature.moveLater(id))
-                        .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.quick-schematic-grid.button.move-right"))
-                        .children(() -> icon(FileIcon.of("chevron-down.png")).size(unit(6))
-                                .color(canMoveLater() ? Color.white : Color.darkGray));
-
-                button(this::confirmRemove)
-                        .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.quick-schematic-grid.button.remove"))
-                        .children(() -> icon(Icon.cancel).size(unit(6)).color(Color.scarlet));
-            }).element();
-        }
-
-        private Component slotVisual(@Nullable Schematic schematic) {
-            if (entry.hasCustomIcon()) {
-                String glyph = entry.customIcon;
-                return text(glyph != null ? glyph : "").fontScale(1.2f).center().width(unit(8f));
-            }
-            if (schematic == null) {
-                return icon(Icon.warning).size(unit(6)).color(Color.scarlet).center().width(unit(8f));
-            }
-            return new BoundedSchematicImage(schematic, Readable.of(unit(8f)), unit(8f));
-        }
-
-        private void confirmRemove() {
-            QuickSchematicEntry current = feature.getEntry(entry.id);
-            String name = current != null ? current.displayName() : entry.displayName();
-            Vars.ui.showConfirm(
-                    Core.bundle.get("feature.quick-schematic-grid.delete.title"),
-                    Core.bundle.format("feature.quick-schematic-grid.delete.message",
-                            name != null ? name : ""),
-                    () -> feature.removeEntry(entry.id));
-        }
-
-        private boolean canMoveEarlier() {
-            List<QuickSchematicEntry> current = feature.getEntries();
-            return QuickSchematicGridFeature.canMoveEarlier(current, entry.id);
-        }
-
-        private boolean canMoveLater() {
-            List<QuickSchematicEntry> current = feature.getEntries();
-            return QuickSchematicGridFeature.canMoveLater(current, entry.id);
-        }
+    private void confirmDeletePage() {
+        int pageIndex = feature.getActivePage();
+        Vars.ui.showConfirm(
+                Core.bundle.get("feature.quick-schematic-grid.delete-page.title"),
+                Core.bundle.format("feature.quick-schematic-grid.delete-page.message", pageIndex + 1),
+                () -> feature.deletePage(pageIndex));
     }
 }

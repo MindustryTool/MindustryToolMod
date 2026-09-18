@@ -118,8 +118,24 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                             .style(WebStyles.ghost())
                             .height(unit(9));
                 });
+
+                divider();
+
+                button(this::clearSlot)
+                        .style(WebStyles.ghost())
+                        .children(() -> {
+                            icon(Icon.cancel).size(unit(5)).color(Color.scarlet);
+                            text(Core.bundle.get("feature.quick-schematic-grid.edit.clear-slot")).color(Color.scarlet);
+                        })
+                        .growX()
+                        .height(unit(9));
             });
         });
+    }
+
+    private void clearSlot() {
+        feature.removeEntry(entryId);
+        hide();
     }
 
     private void repickSchematic() {

@@ -33,17 +33,25 @@ public class QuickSchematicGridFeature extends Feature {
     public static final String DISPLAY_POPUP = "popup";
 
     public static final int MIN_COLS = 1;
-    public static final int MAX_COLS = 10;
+    public static final int MAX_COLS = 7;
+    public static final int MIN_ROWS = 1;
+    public static final int MAX_ROWS = 7;
+    public static final int MIN_PAGES = 1;
+    public static final int MAX_PAGES = 5;
     public static final float MIN_GAP = 0f;
     public static final float MAX_GAP = 16f;
 
     public final ConfigGroup config;
     public final ConfigValue<String> displayModeConfig;
+    public final ConfigValue<Integer> rowsConfig;
     public final ConfigValue<Integer> colsConfig;
+    public final ConfigValue<Integer> pageCountConfig;
     public final ConfigValue<Float> buttonSizeConfig;
     public final ConfigValue<Float> buttonGapConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
     public final ConfigValue<String> entriesJsonConfig;
+
+    public final Signal<Integer> activePage = Signal.of(0);
 
     public final ConfigGroup positionGroup;
     public final ContextualConfigValue<Float, Boolean> xConfig;
@@ -71,11 +79,20 @@ public class QuickSchematicGridFeature extends Feature {
         config = configGroup();
 
         displayModeConfig = config.stringValue("displayMode", DISPLAY_POPUP);
-        colsConfig = config.intValue("cols", 5);
+        rowsConfig = config.intValue("rows", 3);
+        colsConfig = config.intValue("cols", 4);
+        pageCountConfig = config.intValue("pageCount", 1);
         buttonSizeConfig = config.floatValue("buttonSize", 48f);
         buttonGapConfig = config.floatValue("buttonGap", 4f);
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
         entriesJsonConfig = config.stringValue("entries", "[]");
+
+        pageCountConfig.signal().subscribe(count -> {
+            int max = Math.max(0, (count != null ? count : 1) - 1);
+            if (activePage.get() > max) {
+                activePage.set(max);
+            }
+        });
 
         positionGroup = config.group("position");
 
@@ -136,17 +153,125 @@ public class QuickSchematicGridFeature extends Feature {
         }
     }
 
+    public @Nullable QuickSchematicEntry getEntryAt(int page, int row, int col) {
+        for (QuickSchematicEntry entry : getEntries()) {
+            if (entry != null && entry.page == page && entry.row == row && entry.col == col) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    public void setEntryAt(int page, int row, int col, @Nullable QuickSchematicEntry entry) {
+        List<QuickSchematicEntry> next = getEntries();
+        for (int i = next.size() - 1; i >= 0; i--) {
+            QuickSchematicEntry existing = next.get(i);
+            if (existing != null && existing.page == page && existing.row == row && existing.col == col) {
+                next.remove(i);
+            }
+        }
+        if (entry != null) {
+            entry.page = page;
+            entry.row = row;
+            entry.col = col;
+            next.add(entry);
+        }
+        persist(next);
+    }
+
+    public boolean clearSlotAt(int page, int row, int col) {
+        List<QuickSchematicEntry> next = getEntries();
+        boolean removed = false;
+        for (int i = next.size() - 1; i >= 0; i--) {
+            QuickSchematicEntry existing = next.get(i);
+            if (existing != null && existing.page == page && existing.row == row && existing.col == col) {
+                next.remove(i);
+                removed = true;
+            }
+        }
+        if (removed) {
+            persist(next);
+        }
+        return removed;
+    }
+
+    public boolean addPage() {
+        int current = pageCountConfig.get();
+        if (current < MAX_PAGES) {
+            pageCountConfig.set(current + 1);
+            activePage.set(current);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean deletePage(int pageIndex) {
+        int count = pageCountConfig.get();
+        if (count <= MIN_PAGES || pageIndex < 0 || pageIndex >= count) {
+            return false;
+        }
+        List<QuickSchematicEntry> next = getEntries();
+        for (int i = next.size() - 1; i >= 0; i--) {
+            QuickSchematicEntry entry = next.get(i);
+            if (entry != null) {
+                if (entry.page == pageIndex) {
+                    next.remove(i);
+                } else if (entry.page > pageIndex) {
+                    entry.page -= 1;
+                }
+            }
+        }
+        pageCountConfig.set(count - 1);
+        if (activePage.get() >= count - 1) {
+            activePage.set(Math.max(0, count - 2));
+        }
+        persist(next);
+        return true;
+    }
+
+    public int getActivePage() {
+        return activePage.get();
+    }
+
+    public void setActivePage(int page) {
+        int max = Math.max(0, pageCountConfig.get() - 1);
+        activePage.set(Math.max(0, Math.min(max, page)));
+    }
+
+    public List<QuickSchematicEntry> getEntriesForPage(int page) {
+        List<QuickSchematicEntry> result = new ArrayList<>();
+        for (QuickSchematicEntry entry : getEntries()) {
+            if (entry != null && entry.page == page) {
+                result.add(entry);
+            }
+        }
+        return result;
+    }
+
+    public void addSchematic(int page, int row, int col, String schematicName, @Nullable String schematicFile) {
+        setEntryAt(page, row, col, QuickSchematicEntry.of(page, row, col, schematicName, schematicFile));
+    }
+
     public void addEntry(QuickSchematicEntry entry) {
         if (entry == null) {
             return;
         }
-        List<QuickSchematicEntry> next = getEntries();
-        next.add(entry);
-        persist(next);
+        setEntryAt(entry.page, entry.row, entry.col, entry);
     }
 
     public void addSchematic(String schematicName, @Nullable String schematicFile) {
-        addEntry(QuickSchematicEntry.of(schematicName, schematicFile));
+        int p = activePage.get();
+        int rows = Math.max(1, Math.min(MAX_ROWS, rowsConfig.get()));
+        int cols = Math.max(1, Math.min(MAX_COLS, colsConfig.get()));
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                if (getEntryAt(p, r, c) == null) {
+                    addSchematic(p, r, c, schematicName, schematicFile);
+                    return;
+                }
+            }
+        }
+        addSchematic(p, 0, 0, schematicName, schematicFile);
     }
 
     public boolean removeEntry(String id) {

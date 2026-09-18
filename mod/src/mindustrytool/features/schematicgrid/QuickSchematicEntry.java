@@ -13,6 +13,9 @@ import mindustrytool.utils.JsonUtils;
 public class QuickSchematicEntry {
 
     public String id;
+    public int page;
+    public int row;
+    public int col;
     public String schematicName;
     public @Nullable String schematicFile;
     public @Nullable String customIcon;
@@ -23,20 +26,39 @@ public class QuickSchematicEntry {
 
     public QuickSchematicEntry(
             String id,
+            int page,
+            int row,
+            int col,
             String schematicName,
             @Nullable String schematicFile,
             @Nullable String customIcon,
             @Nullable String customLabel) {
         this.id = id;
+        this.page = page;
+        this.row = row;
+        this.col = col;
         this.schematicName = schematicName;
         this.schematicFile = schematicFile;
         this.customIcon = customIcon;
         this.customLabel = customLabel;
     }
 
-    public static QuickSchematicEntry of(String schematicName, @Nullable String schematicFile) {
+    public QuickSchematicEntry(
+            String id,
+            String schematicName,
+            @Nullable String schematicFile,
+            @Nullable String customIcon,
+            @Nullable String customLabel) {
+        this(id, 0, 0, 0, schematicName, schematicFile, customIcon, customLabel);
+    }
+
+    public static QuickSchematicEntry of(int page, int row, int col, String schematicName, @Nullable String schematicFile) {
         String name = schematicName != null ? schematicName : "";
-        return new QuickSchematicEntry(UUID.randomUUID().toString(), name, schematicFile, null, null);
+        return new QuickSchematicEntry(UUID.randomUUID().toString(), page, row, col, name, schematicFile, null, null);
+    }
+
+    public static QuickSchematicEntry of(String schematicName, @Nullable String schematicFile) {
+        return of(0, 0, 0, schematicName, schematicFile);
     }
 
     public boolean hasCustomIcon() {
@@ -80,7 +102,10 @@ public class QuickSchematicEntry {
             return false;
         }
         QuickSchematicEntry that = (QuickSchematicEntry) other;
-        return equalsNullable(id, that.id)
+        return page == that.page
+                && row == that.row
+                && col == that.col
+                && equalsNullable(id, that.id)
                 && equalsNullable(schematicName, that.schematicName)
                 && equalsNullable(schematicFile, that.schematicFile)
                 && equalsNullable(customIcon, that.customIcon)
@@ -90,6 +115,9 @@ public class QuickSchematicEntry {
     @Override
     public int hashCode() {
         int result = hashNullable(id);
+        result = 31 * result + page;
+        result = 31 * result + row;
+        result = 31 * result + col;
         result = 31 * result + hashNullable(schematicName);
         result = 31 * result + hashNullable(schematicFile);
         result = 31 * result + hashNullable(customIcon);

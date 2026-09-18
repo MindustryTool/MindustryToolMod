@@ -5,7 +5,6 @@ import static solim.UI.*;
 import arc.scene.Element;
 import arc.util.Nullable;
 import arc.util.Time;
-import mindustrytool.components.WebStyles;
 import mindustrytool.features.quickaccess.QuickAccessPopupHelper;
 import solim.core.Component;
 import solim.overlay.Popup;
@@ -54,12 +53,6 @@ public final class QuickSchematicGridPopup {
         if (feature == null) {
             return row();
         }
-        return row()
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.BORDER)
-                .padding(unit(1))
-                .gap(unit(1))
-                .center()
-                .children(() -> QuickSchematicGridHudView.buildGrid(feature, QuickSchematicGridPopup::hide));
+        return QuickSchematicGridHudView.buildFullLayout(feature, QuickSchematicGridPopup::hide, false);
     }
 }
