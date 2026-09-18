@@ -4,6 +4,9 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
+import mindustry.Vars;
+import mindustry.ui.Styles;
+import mindustry.world.Block;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import solim.core.BaseComponent;
 import solim.reactive.Readable;
@@ -24,9 +27,13 @@ public class RangeDisplaySettingsView extends BaseComponent {
         Readable<String> opacityText = feature.opacityConfig.signal()
                 .map(v -> Math.round((v != null ? v : 1f) * 100) + "%");
 
+        float contentWidth = Core.graphics != null
+                ? Math.min(Core.graphics.getWidth() / 1.2f, 540f)
+                : 540f;
+
         return column().grow().center().children(() -> {
             scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
+                column().width(contentWidth).growX().gap(unit(2)).children(() -> {
                     // Opacity Slider
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.range-display.settings.opacity")).left();
@@ -75,6 +82,64 @@ public class RangeDisplaySettingsView extends BaseComponent {
                     // Spawner Drop Zones
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-spawners"),
                             feature.drawSpawnerRangeConfig.signal()).growX();
+
+                    // --- Turrets Granular Toggles ---
+                    divider();
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.range-display.settings.section.turrets")).left();
+                        spacer();
+                        row().gap(unit(1)).children(() -> {
+                            button(Core.bundle.get("feature.range-display.settings.all"),
+                                    () -> feature.setCategoryEnabled(true, true))
+                                    .style(Styles.defaultb)
+                                    .height(unit(6))
+                                    .margin(unit(1), unit(2), unit(1), unit(2));
+                            button(Core.bundle.get("feature.range-display.settings.none"),
+                                    () -> feature.setCategoryEnabled(true, false))
+                                    .style(Styles.defaultb)
+                                    .height(unit(6))
+                                    .margin(unit(1), unit(2), unit(1), unit(2));
+                        });
+                    });
+
+                    wrap().growX().left().gap(unit(1)).children(() -> {
+                        if (Vars.content != null && Vars.content.blocks() != null) {
+                            for (Block block : Vars.content.blocks()) {
+                                if (block != null && feature.isTurretBlock(block)) {
+                                    checkbox(block.localizedName, feature.getBlockSignal(block));
+                                }
+                            }
+                        }
+                    });
+
+                    // --- Support Blocks Granular Toggles ---
+                    divider();
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.range-display.settings.section.support-blocks")).left();
+                        spacer();
+                        row().gap(unit(1)).children(() -> {
+                            button(Core.bundle.get("feature.range-display.settings.all"),
+                                    () -> feature.setCategoryEnabled(false, true))
+                                    .style(Styles.defaultb)
+                                    .height(unit(6))
+                                    .margin(unit(1), unit(2), unit(1), unit(2));
+                            button(Core.bundle.get("feature.range-display.settings.none"),
+                                    () -> feature.setCategoryEnabled(false, false))
+                                    .style(Styles.defaultb)
+                                    .height(unit(6))
+                                    .margin(unit(1), unit(2), unit(1), unit(2));
+                        });
+                    });
+
+                    wrap().growX().left().gap(unit(1)).children(() -> {
+                        if (Vars.content != null && Vars.content.blocks() != null) {
+                            for (Block block : Vars.content.blocks()) {
+                                if (block != null && feature.isSupportBlock(block)) {
+                                    checkbox(block.localizedName, feature.getBlockSignal(block));
+                                }
+                            }
+                        }
+                    });
                 });
             });
         }).element();
