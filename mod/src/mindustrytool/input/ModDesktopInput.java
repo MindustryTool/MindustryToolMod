@@ -1,28 +1,41 @@
-package mindustrytool.features.joystick;
+package mindustrytool.input;
 
 import arc.Core;
 import arc.math.Angles;
 import arc.math.geom.Vec2;
 import arc.util.Time;
+import mindustry.Vars;
 import mindustry.gen.Mechc;
 import mindustry.gen.Payloadc;
 import mindustry.gen.Unit;
 import mindustry.input.Binding;
 import mindustry.input.DesktopInput;
-
-import static mindustry.Vars.player;
+import mindustrytool.features.FeatureManager;
+import mindustrytool.features.freecamera.FreeCameraFeature;
+import mindustrytool.features.joystick.JoystickFeature;
 
 /**
- * Desktop input handler that supports joystick movement alongside keyboard and mouse.
- * While the joystick knob is held, its vector is combined with the WASD axes.
- * All other desktop behaviors stay identical to vanilla.
+ * Unified desktop input handler for MindustryTool.
+ * Decouples camera snapping when FreeCameraFeature is active,
+ * blends virtual joystick input with WASD when JoystickFeature is active,
+ * and falls back to vanilla DesktopInput behavior when features are inactive.
  */
-public class JoystickDesktopInput extends DesktopInput {
+public class ModDesktopInput extends DesktopInput {
 
-    private final JoystickFeature feature;
-
-    public JoystickDesktopInput(JoystickFeature feature) {
-        this.feature = feature;
+    @Override
+    public void update() {
+        boolean freeCam = FreeCameraFeature.isFreeCam();
+        boolean origDetach = Core.settings.getBool("detach-camera", false);
+        if (freeCam) {
+            Core.settings.put("detach-camera", true);
+        }
+        try {
+            super.update();
+        } finally {
+            if (freeCam && !origDetach) {
+                Core.settings.put("detach-camera", origDetach);
+            }
+        }
     }
 
     @Override
@@ -33,7 +46,9 @@ public class JoystickDesktopInput extends DesktopInput {
         float xa = Core.input.axis(Binding.moveX);
         float ya = Core.input.axis(Binding.moveY);
         boolean boosted = (unit instanceof Mechc && unit.isFlying());
-        Vec2 joystick = feature.moveVector;
+
+        JoystickFeature jf = FeatureManager.getFeature(JoystickFeature.class);
+        Vec2 joystick = (jf != null && jf.isEnabled()) ? jf.moveVector : Vec2.ZERO;
 
         if (!joystick.isZero()) {
             movement.set(xa, ya);
@@ -45,14 +60,14 @@ public class JoystickDesktopInput extends DesktopInput {
         } else if (Core.input.keyDown(Binding.mouseMove)) {
             movement.set(xa, ya).nor().scl(speed);
             float mousePull = 1f / 25f * speed;
-            movement.add((Core.input.mouseWorldX() - player.x) * mousePull, (Core.input.mouseWorldY() - player.y) * mousePull)
+            movement.add((Core.input.mouseWorldX() - Vars.player.x) * mousePull, (Core.input.mouseWorldY() - Vars.player.y) * mousePull)
                     .limit(speed);
         } else {
             movement.set(xa, ya).nor().scl(speed);
         }
 
         float mouseAngle = Angles.mouseAngle(unit.x, unit.y);
-        boolean aimCursor = omni && player.shooting && unit.type.hasWeapons() && unit.type.faceTarget && !boosted;
+        boolean aimCursor = omni && Vars.player.shooting && unit.type.hasWeapons() && unit.type.faceTarget && !boosted;
 
         if (aimCursor) {
             unit.lookAt(mouseAngle);
@@ -63,13 +78,12 @@ public class JoystickDesktopInput extends DesktopInput {
         unit.movePref(movement);
 
         unit.aim(Core.input.mouseWorldX(), Core.input.mouseWorldY(), true);
-        unit.controlWeapons(true, player.shooting && !boosted);
+        unit.controlWeapons(true, Vars.player.shooting && !boosted);
 
-        player.boosting = Core.input.keyDown(Binding.boost);
-        player.mouseX = unit.aimX();
-        player.mouseY = unit.aimY();
+        Vars.player.boosting = Core.input.keyDown(Binding.boost);
+        Vars.player.mouseX = unit.aimX();
+        Vars.player.mouseY = unit.aimY();
 
-        //update payload input
         if (unit instanceof Payloadc) {
             if (Core.input.keyTap(Binding.pickupCargo)) {
                 tryPickupPayload();

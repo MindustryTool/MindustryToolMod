@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Mod-Wide Settings Config Group
-The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares global `ConfigValue` entries as public static fields, including `betaParticipate: ConfigValue<Boolean>` (default `false`) and `sharePresence: ConfigValue<Boolean>` (default `true`). The legacy `freeCamera: ConfigValue<Boolean>` field SHALL be deprecated and synchronized with `FreeCameraFeature.get().enabled()`.
+The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares global `ConfigValue` entries as public static fields, including `betaParticipate: ConfigValue<Boolean>` (default `false`) and `sharePresence: ConfigValue<Boolean>` (default `true`). The legacy `freeCamera` config SHALL be removed in favor of `FreeCameraFeature`.
 
 #### Scenario: Beta flag is false by default
 - **WHEN** `ModSettings.betaParticipate` is read without any prior user interaction
@@ -14,10 +14,6 @@ The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` 
 #### Scenario: Share presence flag is true by default
 - **WHEN** `ModSettings.sharePresence` is read without prior interaction
 - **THEN** `ModSettings.sharePresence.get()` returns `true`
-
-#### Scenario: Free camera flag mirrors FreeCameraFeature
-- **WHEN** `ModSettings.freeCamera` is read
-- **THEN** its value reflects `FreeCameraFeature.get().isEnabled()`
 
 #### Scenario: Global settings persist across sessions
 - **WHEN** the user changes `sharePresence` or `betaParticipate` and the game restarts

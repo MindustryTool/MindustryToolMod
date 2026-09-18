@@ -14,7 +14,7 @@ Promoting Free Camera into a dedicated, first-class feature (`FreeCameraFeature`
 - **Settings UI Cleanup**:
   - `JoystickSettingsView`: Retains the Free Camera checkbox as a convenient 2-way binding to `FreeCameraFeature.enabled()`.
   - `GeneralSettingsView`: Removes the redundant `freeCamera` checkbox row, centralizing feature management in `FeatureSettingsView`.
-  - `ModSettings.freeCamera`: Deprecated / synchronized with `FreeCameraFeature.enabled()`.
+  - `ModSettings.freeCamera`: Removed in favor of `FreeCameraFeature.enabled()`.
 
 ## Capabilities
 

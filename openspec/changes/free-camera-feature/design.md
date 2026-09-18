@@ -61,7 +61,7 @@ Previously, Free Camera was merely a static boolean configuration (`ModSettings.
 
 - **Decision**:
   - `GeneralSettingsView`: Remove the `freeCamera` checkbox row from general mod settings.
-  - `ModSettings.freeCamera`: Deprecate and synchronize with `FreeCameraFeature.get().enabled()` so any external or legacy references remain fully functional.
+  - `ModSettings.freeCamera`: Removed entirely, relying on `FreeCameraFeature.get().enabled()` as the single source of truth.
 
 ## Risks / Trade-offs
 

@@ -19,7 +19,6 @@ public final class ModSettings {
     public static final ConfigValue<Set<String>> favoriteFeatures = GROUP.setValue("favorites", String.class, Collections.emptySet());
     public static final ConfigValue<Boolean> betaParticipate = GROUP.boolValue("betaParticipate", false);
     public static final ConfigValue<Boolean> sharePresence = GROUP.boolValue("share-presence", true);
-    public static final ConfigValue<Boolean> freeCamera = GROUP.boolValue("free-camera", false);
 
     private ModSettings() {}
 }

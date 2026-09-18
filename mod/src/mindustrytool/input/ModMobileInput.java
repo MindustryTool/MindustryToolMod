@@ -1,51 +1,47 @@
-package mindustrytool.features.joystick;
+package mindustrytool.input;
 
 import arc.Core;
 import arc.input.GestureDetector;
 import arc.input.GestureDetector.GestureListener;
 import arc.input.KeyCode;
 import arc.math.Mathf;
+import arc.math.geom.Geometry;
 import arc.math.geom.Rect;
 import arc.math.geom.Vec2;
-import arc.util.Tmp;
 import arc.util.Time;
+import arc.util.Tmp;
+import mindustry.Vars;
 import mindustry.entities.EntityCollisions;
-import arc.math.geom.Geometry;
 import mindustry.entities.Predict;
 import mindustry.entities.Units;
+import mindustry.gen.BlockUnitUnit;
 import mindustry.gen.Building;
 import mindustry.gen.Call;
-import mindustry.world.blocks.ControlBlock;
 import mindustry.gen.Healthc;
 import mindustry.gen.Mechc;
-import mindustry.gen.BlockUnitUnit;
 import mindustry.gen.Payloadc;
 import mindustry.gen.Unit;
 import mindustry.input.MobileInput;
 import mindustry.type.UnitType;
-import mindustrytool.features.settings.ModSettings;
-
-import static mindustry.Vars.*;
+import mindustry.world.blocks.ControlBlock;
+import mindustrytool.features.FeatureManager;
+import mindustrytool.features.freecamera.FreeCameraFeature;
+import mindustrytool.features.joystick.JoystickFeature;
 
 /**
- * Mobile input handler that drives unit movement purely from the joystick vector.
- * The unit no longer follows the camera center, so panning moves the camera freely.
- * Targeting, shooting, boosting and payload behaviors stay identical to vanilla.
+ * Unified mobile input handler for MindustryTool.
+ * Drives unit movement purely from virtual joystick vector when JoystickFeature is enabled,
+ * falls back to camera-centered movement when disabled, suppresses camera lerp when
+ * FreeCameraFeature is active, and intercepts pinch gestures during joystick holding.
  */
-public class JoystickMobileInput extends MobileInput {
+public class ModMobileInput extends MobileInput {
 
-    /** World-space offset applied along the joystick direction so the unit always runs at full speed. */
     private static final float JOYSTICK_OFFSET = 80f;
 
-    private final JoystickFeature feature;
     private final Vec2 lastPinchPan = new Vec2();
     private boolean pinchPanning;
     private boolean isPanning;
     private long lastPanTime;
-
-    public JoystickMobileInput(JoystickFeature feature) {
-        this.feature = feature;
-    }
 
     public void cancelPanDelay() {
         isPanning = false;
@@ -57,7 +53,7 @@ public class JoystickMobileInput extends MobileInput {
     public void add() {
         super.add();
         Core.input.removeProcessor(detector);
-        detector = new GestureDetector(20, 0.5f, 2, 0.15f, new JoystickGestureListener());
+        detector = new GestureDetector(20, 0.5f, 2, 0.15f, new ModGestureListener());
         Core.input.addProcessor(detector);
     }
 
@@ -75,13 +71,13 @@ public class JoystickMobileInput extends MobileInput {
     }
 
     private void updateCamera() {
-        if (Boolean.TRUE.equals(ModSettings.freeCamera.get())) {
+        if (FreeCameraFeature.isFreeCam()) {
             return;
         }
-        if (state == null || !state.isGame() || player == null || player.dead()) {
+        if (Vars.state == null || !Vars.state.isGame() || Vars.player == null || Vars.player.dead()) {
             return;
         }
-        Unit unit = player.unit();
+        Unit unit = Vars.player.unit();
         if (unit == null || unit.dead) {
             return;
         }
@@ -106,7 +102,8 @@ public class JoystickMobileInput extends MobileInput {
 
     @Override
     public boolean zoom(float initialDistance, float distance) {
-        if (feature.isKnobHeld()) {
+        JoystickFeature jf = FeatureManager.getFeature(JoystickFeature.class);
+        if (jf != null && jf.isEnabled() && jf.isKnobHeld()) {
             return false;
         }
         return super.zoom(initialDistance, distance);
@@ -117,33 +114,40 @@ public class JoystickMobileInput extends MobileInput {
         Rect rect = Tmp.r3;
 
         UnitType type = unit.type;
-        if (type == null) return;
+        if (type == null) {
+            return;
+        }
 
         boolean omni = unit.type.omniMovement;
         boolean allowHealing = type.canHeal;
         boolean validHealTarget = allowHealing && target instanceof Building && ((Building) target).isValid()
                 && target.team() == unit.team && ((Building) target).damaged() && target.within(unit, type.range);
         boolean boosted = (unit instanceof Mechc && unit.isFlying());
-        //reset target if:
-        // - in the editor, or...
-        // - it's both an invalid standard target and an invalid heal target
-        if ((Units.invalidateTarget(target, unit, type.range) && !validHealTarget) || state.isEditor()) {
+
+        if ((Units.invalidateTarget(target, unit, type.range) && !validHealTarget) || Vars.state.isEditor()) {
             target = null;
         }
 
-        //decouple from camera: movement target comes from the joystick, not the camera center
-        Vec2 vec = feature.moveVector;
-        if (!vec.isZero() && !player.dead()) {
-            targetPos.set(player).add(Tmp.v2.set(vec).nor().scl(JOYSTICK_OFFSET));
+        JoystickFeature jf = FeatureManager.getFeature(JoystickFeature.class);
+        boolean joystickActive = jf != null && jf.isEnabled();
+
+        if (joystickActive) {
+            Vec2 vec = jf.moveVector;
+            if (!vec.isZero() && !Vars.player.dead()) {
+                targetPos.set(Vars.player).add(Tmp.v2.set(vec).nor().scl(JOYSTICK_OFFSET));
+            } else {
+                targetPos.set(Vars.player);
+            }
         } else {
-            targetPos.set(player);
+            // Faithful vanilla fallback: unit moves towards camera position on mobile
+            targetPos.set(Core.camera.position);
         }
 
         float attractDst = 15f;
         float speed = unit.speed();
         float range = unit.hasWeapons() ? unit.range() : 0f;
         float mouseAngle = unit.angleTo(unit.aimX(), unit.aimY());
-        boolean aimCursor = omni && player.shooting && type.hasWeapons() && !boosted && type.faceTarget;
+        boolean aimCursor = omni && Vars.player.shooting && type.hasWeapons() && !boosted && type.faceTarget;
 
         if (aimCursor) {
             unit.lookAt(mouseAngle);
@@ -151,7 +155,6 @@ public class JoystickMobileInput extends MobileInput {
             unit.lookAt(unit.prefRotation());
         }
 
-        //validate payload, if it's a destroyed unit/building, remove it
         if (payloadTarget instanceof Healthc && !((Healthc) payloadTarget).isValid()) {
             payloadTarget = null;
         }
@@ -163,16 +166,13 @@ public class JoystickMobileInput extends MobileInput {
 
             if (unit.within(payloadTarget, 3f * Time.delta)) {
                 if (pay.hasPayload() && (payloadTarget instanceof Vec2
-                        || (payloadTarget instanceof Building && ((Building) payloadTarget).team == player.team()
+                        || (payloadTarget instanceof Building && ((Building) payloadTarget).team == Vars.player.team()
                                 && ((Building) payloadTarget).acceptPayload((Building) payloadTarget, pay.payloads().peek())))) {
-                    //vec -> dropping something
                     tryDropPayload();
                 } else if (payloadTarget instanceof Building && ((Building) payloadTarget).team == unit.team) {
-                    //building -> picking building up
-                    Call.requestBuildPayload(player, (Building) payloadTarget);
+                    Call.requestBuildPayload(Vars.player, (Building) payloadTarget);
                 } else if (payloadTarget instanceof Unit && pay.canPickup((Unit) payloadTarget)) {
-                    //unit -> picking unit up
-                    Call.requestUnitPayload(player, (Unit) payloadTarget);
+                    Call.requestUnitPayload(Vars.player, (Unit) payloadTarget);
                 }
 
                 payloadTarget = null;
@@ -181,10 +181,10 @@ public class JoystickMobileInput extends MobileInput {
             payloadTarget = null;
         }
 
-        movement.set(targetPos).sub(player).limit(speed);
+        movement.set(targetPos).sub(Vars.player).limit(speed);
         movement.setAngle(Mathf.slerp(movement.angle(), unit.vel.angle(), 0.05f));
 
-        if (player.within(targetPos, attractDst)) {
+        if (Vars.player.within(targetPos, attractDst)) {
             movement.setZero();
             unit.vel.approachDelta(Vec2.ZERO, unit.speed() * type.accel / 2f);
         }
@@ -192,19 +192,16 @@ public class JoystickMobileInput extends MobileInput {
         unit.hitbox(rect);
         rect.grow(4f);
 
-        player.boosting = collisions.overlapsTile(rect, EntityCollisions::solid) || !unit.within(targetPos, 85f);
+        Vars.player.boosting = Vars.collisions.overlapsTile(rect, EntityCollisions::solid) || !unit.within(targetPos, 85f);
 
         unit.movePref(movement);
 
-        //update shooting if not building + not mining
-        if (!unit.activelyBuilding() && unit.mineTile == null && !state.isEditor()) {
-
-            //autofire targeting
+        if (!unit.activelyBuilding() && unit.mineTile == null && !Vars.state.isEditor()) {
             if (manualShooting) {
-                player.shooting = !boosted;
-                unit.aim(player.mouseX = Core.input.mouseWorldX(), player.mouseY = Core.input.mouseWorldY(), true);
+                Vars.player.shooting = !boosted;
+                unit.aim(Vars.player.mouseX = Core.input.mouseWorldX(), Vars.player.mouseY = Core.input.mouseWorldY(), true);
             } else if (target == null) {
-                player.shooting = false;
+                Vars.player.shooting = false;
                 if (Core.settings.getBool("autotarget") && !isControlledBlockUnit()) {
                     if (unit.type.canAttack) {
                         target = Units.closestTarget(unit.team, unit.x, unit.y, range, u -> u.checkTarget(type.targetAir, type.targetGround),
@@ -212,33 +209,31 @@ public class JoystickMobileInput extends MobileInput {
                     }
 
                     if (allowHealing && target == null) {
-                        target = Geometry.findClosest(unit.x, unit.y, indexer.getDamaged(player.team()));
+                        target = Geometry.findClosest(unit.x, unit.y, Vars.indexer.getDamaged(Vars.player.team()));
                         if (target != null && !unit.within(target, range)) {
                             target = null;
                         }
                     }
                 }
 
-                //when not shooting, aim at mouse cursor
                 unit.aim(Core.input.mouseWorldX(), Core.input.mouseWorldY(), true);
             } else {
-                Vec2 intercept = player.unit().type.weapons.contains(w -> w.predictTarget) ? Predict.intercept(unit, target, type.weapons.first().bullet)
+                Vec2 intercept = Vars.player.unit().type.weapons.contains(w -> w.predictTarget) ? Predict.intercept(unit, target, type.weapons.first().bullet)
                         : Tmp.v1.set(target);
 
-                player.mouseX = intercept.x;
-                player.mouseY = intercept.y;
-                player.shooting = !boosted;
+                Vars.player.mouseX = intercept.x;
+                Vars.player.mouseY = intercept.y;
+                Vars.player.shooting = !boosted;
 
-                unit.aim(player.mouseX, player.mouseY, true);
+                unit.aim(Vars.player.mouseX, Vars.player.mouseY, true);
             }
         }
 
-        unit.controlWeapons(player.shooting && !boosted);
+        unit.controlWeapons(Vars.player.shooting && !boosted);
     }
 
-    /** Mirrors the vanilla check: true when the player controls a block unit whose block must not auto-target. */
     private static boolean isControlledBlockUnit() {
-        Unit unit = player.unit();
+        Unit unit = Vars.player.unit();
         if (unit instanceof BlockUnitUnit) {
             BlockUnitUnit blockUnit = (BlockUnitUnit) unit;
             return blockUnit.tile() instanceof ControlBlock && !((ControlBlock) blockUnit.tile()).shouldAutoTarget();
@@ -246,13 +241,7 @@ public class JoystickMobileInput extends MobileInput {
         return false;
     }
 
-    /**
-     * Dedicated gesture listener that delegates to {@link JoystickMobileInput}.
-     * Intercepts pinch gestures to support camera panning while the joystick knob is held.
-     * By implementing {@link GestureListener} on an independent class rather than overriding
-     * {@link mindustry.input.InputHandler}, this avoids Dalvik LinkageErrors caused by R8 devirtualization.
-     */
-    private class JoystickGestureListener implements GestureListener {
+    private class ModGestureListener implements GestureListener {
 
         @Override
         public boolean touchDown(float x, float y, int pointer, KeyCode button) {
@@ -261,12 +250,12 @@ public class JoystickMobileInput extends MobileInput {
 
         @Override
         public boolean tap(float x, float y, int count, KeyCode button) {
-            return JoystickMobileInput.this.tap(x, y, count, button);
+            return ModMobileInput.this.tap(x, y, count, button);
         }
 
         @Override
         public boolean longPress(float x, float y) {
-            return JoystickMobileInput.this.longPress(x, y);
+            return ModMobileInput.this.longPress(x, y);
         }
 
         @Override
@@ -276,23 +265,24 @@ public class JoystickMobileInput extends MobileInput {
 
         @Override
         public boolean pan(float x, float y, float deltaX, float deltaY) {
-            return JoystickMobileInput.this.pan(x, y, deltaX, deltaY);
+            return ModMobileInput.this.pan(x, y, deltaX, deltaY);
         }
 
         @Override
         public boolean panStop(float x, float y, int pointer, KeyCode button) {
-            return JoystickMobileInput.this.panStop(x, y, pointer, button);
+            return ModMobileInput.this.panStop(x, y, pointer, button);
         }
 
         @Override
         public boolean zoom(float initialDistance, float distance) {
-            return JoystickMobileInput.this.zoom(initialDistance, distance);
+            return ModMobileInput.this.zoom(initialDistance, distance);
         }
 
         @Override
         public boolean pinch(Vec2 initialPointer1, Vec2 initialPointer2, Vec2 pointer1, Vec2 pointer2) {
-            if (feature.isKnobHeld()) {
-                Vec2 panPointer = feature.activePointer == 0 ? pointer2 : pointer1;
+            JoystickFeature jf = FeatureManager.getFeature(JoystickFeature.class);
+            if (jf != null && jf.isEnabled() && jf.isKnobHeld()) {
+                Vec2 panPointer = jf.activePointer == 0 ? pointer2 : pointer1;
                 if (!pinchPanning) {
                     pinchPanning = true;
                     lastPinchPan.set(panPointer);
@@ -300,7 +290,7 @@ public class JoystickMobileInput extends MobileInput {
                     float dx = panPointer.x - lastPinchPan.x;
                     float dy = panPointer.y - lastPinchPan.y;
                     lastPinchPan.set(panPointer);
-                    JoystickMobileInput.this.pan(panPointer.x, panPointer.y, dx, dy);
+                    ModMobileInput.this.pan(panPointer.x, panPointer.y, dx, dy);
                 }
                 isPanning = true;
                 lastPanTime = Time.millis();

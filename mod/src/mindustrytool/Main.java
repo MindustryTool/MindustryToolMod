@@ -14,6 +14,7 @@ import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.camerazoom.CameraZoomFeature;
 import mindustrytool.features.chat.ChatFeature;
 import mindustrytool.features.emoji.EmojiFeature;
+import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
 import mindustrytool.features.joystick.JoystickFeature;
@@ -37,6 +38,7 @@ import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.bridgevisualizer.BridgeVisualizerFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
+import mindustrytool.input.ModInputManager;
 import mindustrytool.services.Github;
 import mindustrytool.services.PacketReplacer;
 import mindustrytool.services.ServerService;
@@ -66,6 +68,8 @@ public class Main extends Mod {
             return;
         }
 
+        ModInputManager.init();
+
         FeatureManager.register(
                 new BackgroundFeature(),
                 new QuickAccessFeature(),
@@ -78,6 +82,7 @@ public class Main extends Mod {
                 new PlayerConnectFeature(),
                 new HealthBarFeature(),
                 new CameraZoomFeature(),
+                new FreeCameraFeature(),
                 new PathfindingFeature(),
                 new RangeDisplayFeature(),
                 new PrettyChatFeature(),
