@@ -22,6 +22,7 @@ import mindustry.gen.Mechc;
 import mindustry.gen.Payloadc;
 import mindustry.gen.Unit;
 import mindustry.input.MobileInput;
+import mindustry.input.PlaceMode;
 import mindustry.type.UnitType;
 import mindustry.world.blocks.ControlBlock;
 import mindustrytool.features.FeatureManager;
@@ -39,10 +40,10 @@ public class ModMobileInput extends MobileInput {
 
     private static final float JOYSTICK_OFFSET = 80f;
 
-    private final Vec2 lastPinchPan = new Vec2();
-    private boolean pinchPanning;
-    private boolean isPanning;
-    private long lastPanTime;
+    final Vec2 lastPinchPan = new Vec2();
+    boolean pinchPanning;
+    boolean isPanning;
+    long lastPanTime;
 
     public void cancelPanDelay() {
         isPanning = false;
@@ -54,8 +55,10 @@ public class ModMobileInput extends MobileInput {
     public void add() {
         super.add();
         Core.input.removeProcessor(detector);
-        detector = new GestureDetector(20, 0.5f, 2, 0.15f, new ModGestureListener());
+        Core.input.removeProcessor(this);
+        detector = new GestureDetector(20, 0.5f, 0.3f, 0.15f, new ModGestureListener());
         Core.input.addProcessor(detector);
+        Core.input.addProcessor(this);
     }
 
     @Override
@@ -71,8 +74,9 @@ public class ModMobileInput extends MobileInput {
         updateCamera();
     }
 
-    private void updateCamera() {
-        if (FreeCameraFeature.isFreeCam()) {
+    void updateCamera() {
+        JoystickFeature jf = FeatureManager.getFeature(JoystickFeature.class);
+        if (jf == null || !jf.isEnabled() || FreeCameraFeature.isFreeCam()) {
             return;
         }
         if (Vars.state == null || !Vars.state.isGame() || Vars.player == null || Vars.player.dead()) {
@@ -82,7 +86,8 @@ public class ModMobileInput extends MobileInput {
         if (unit == null || unit.dead) {
             return;
         }
-        if (!isPanning && !pinchPanning && Time.timeSinceMillis(lastPanTime) > 500) {
+        if (!isPanning && !pinchPanning && !lineMode && !selecting && mode == PlaceMode.none
+                && Time.timeSinceMillis(lastPanTime) > 500) {
             Core.camera.position.lerpDelta(unit, 0.08f);
         }
     }

@@ -48,7 +48,7 @@ class QuickSchematicGridTest {
     }
 
     private static QuickSchematicEntry entry(String id, String name, String file) {
-        return new QuickSchematicEntry(id, name, file, null, null, null);
+        return new QuickSchematicEntry(id, name, file, null, null);
     }
 
     private static List<QuickSchematicEntry> threeEntries() {
@@ -163,6 +163,89 @@ class QuickSchematicGridTest {
         assertTrue(feature.removeEntry(firstId));
         assertEquals(1, feature.getEntries().size());
         assertEquals(feature.getEntries(), QuickSchematicEntry.fromJson(feature.entriesJsonConfig.get()));
+    }
+
+    @Test
+    void customIcon_serializationRoundTrip() {
+        List<QuickSchematicEntry> original = threeEntries();
+        original.get(1).customIcon = "X";
+
+        List<QuickSchematicEntry> parsed = QuickSchematicEntry.fromJson(QuickSchematicEntry.toJson(original));
+        assertEquals(original, parsed);
+        assertEquals("X", parsed.get(1).customIcon);
+        assertTrue(parsed.get(1).hasCustomIcon());
+    }
+
+    @Test
+    void hasCustomIcon_reflectsValue() {
+        assertFalse(entry("a", "Alpha", "alpha.msch").hasCustomIcon());
+
+        QuickSchematicEntry blank = entry("b", "Beta", "beta.msch");
+        blank.customIcon = "   ";
+        assertFalse(blank.hasCustomIcon());
+
+        QuickSchematicEntry set = entry("c", "Gamma", "gamma.msch");
+        set.customIcon = "Y";
+        assertTrue(set.hasCustomIcon());
+    }
+
+    @Test
+    void fromJson_ignoresLegacyIconFields() {
+        String legacy = "[{\"id\":\"a\",\"schematicName\":\"Alpha\",\"schematicFile\":\"alpha.msch\","
+                + "\"customIconType\":\"icon\",\"customIconName\":\"home\",\"customLabel\":null}]";
+
+        List<QuickSchematicEntry> parsed = QuickSchematicEntry.fromJson(legacy);
+        assertEquals(1, parsed.size());
+        assertEquals("a", parsed.get(0).id);
+        assertEquals("Alpha", parsed.get(0).schematicName);
+        assertNull(parsed.get(0).customIcon);
+        assertFalse(parsed.get(0).hasCustomIcon());
+    }
+
+    @Test
+    void updateEntry_mutatesAndPersists() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+        feature.addSchematic("Alpha", "alpha.msch");
+        String id = feature.getEntries().get(0).id;
+
+        assertTrue(feature.updateEntry(id, entry -> {
+            entry.customLabel = "Custom";
+            entry.customIcon = "Z";
+        }));
+
+        QuickSchematicEntry stored = feature.getEntry(id);
+        assertNotNull(stored);
+        assertEquals("Custom", stored.customLabel);
+        assertEquals("Z", stored.customIcon);
+        assertEquals("Custom", stored.displayName());
+        assertEquals(feature.getEntries(), QuickSchematicEntry.fromJson(feature.entriesJsonConfig.get()));
+
+        assertFalse(feature.updateEntry("unknown", entry -> entry.customLabel = "X"));
+        assertFalse(feature.updateEntry(null, entry -> entry.customLabel = "X"));
+        assertFalse(feature.updateEntry(id, null));
+        assertNull(feature.getEntry("unknown"));
+    }
+
+    @Test
+    void replaceEntries_persistsFullOrder() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+        feature.addSchematic("Alpha", "alpha.msch");
+        feature.addSchematic("Beta", "beta.msch");
+        feature.addSchematic("Gamma", "gamma.msch");
+
+        List<QuickSchematicEntry> reordered = new ArrayList<>(feature.getEntries());
+        QuickSchematicEntry first = reordered.remove(0);
+        reordered.add(first);
+        feature.replaceEntries(reordered);
+
+        List<QuickSchematicEntry> stored = feature.getEntries();
+        assertEquals(3, stored.size());
+        assertEquals("Beta", stored.get(0).schematicName);
+        assertEquals("Alpha", stored.get(2).schematicName);
+        assertEquals(stored, QuickSchematicEntry.fromJson(feature.entriesJsonConfig.get()));
+
+        feature.replaceEntries(null);
+        assertTrue(feature.getEntries().isEmpty());
     }
 
     @Test

@@ -1,5 +1,8 @@
-## ADDED Requirements
+# quick-schematic-grid-polish Specification
 
+## Purpose
+TBD - created by archiving change quick-schematic-grid-polish. Update Purpose after archive.
+## Requirements
 ### Requirement: Centered Aspect-Correct Thumbnails
 The system SHALL render each schematic preview centered within its square button bounds, preserving aspect ratio with letterboxing, in the HUD grid, the popup grid, and the picker cards.
 
@@ -85,3 +88,4 @@ The system SHALL allow reordering settings entries by long-pressing a row to gra
 #### Scenario: Presses on row buttons stay tappable
 - **WHEN** a press starts on an interactive row button
 - **THEN** the button behaves normally and no reorder grab occurs
+

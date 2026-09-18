@@ -45,7 +45,7 @@ The system SHALL persist user HUD visibility overrides in `QuickAccessFeature` u
 
 ### Requirement: HUD button long-press dialog routing
 
-The system SHALL delegate Quick Access HUD button long-press (>= 300ms) to `Feature#onQuickAccessLongClick(@Nullable Element anchor)`. By default in `Feature`, `onQuickAccessLongClick` SHALL delegate to `onQuickAccessLongClick()`, which opens `getSettingDialog()` if available; if `getSettingDialog()` is null but `getMainDialog()` is non-null, it SHALL open `getMainDialog()`. Features MAY override `onQuickAccessLongClick` to customize hold behavior.
+The system SHALL delegate Quick Access HUD button long-press (>= 300ms) to `Feature#onQuickAccessLongClick(@Nullable Element anchor)` passing the active Quick Access HUD root element resolved dynamically at long-click time as the anchor. By default in `Feature`, `onQuickAccessLongClick` SHALL delegate to `onQuickAccessLongClick()`, which opens `getSettingDialog()` if available; if `getSettingDialog()` is null but `getMainDialog()` is non-null, it SHALL open `getMainDialog()`. Features MAY override `onQuickAccessLongClick` to customize hold behavior.
 
 #### Scenario: Long-press opens setting dialog when present
 - **WHEN** user long-presses (>= 300ms) a HUD feature button whose feature has non-null `getSettingDialog()`
@@ -59,9 +59,13 @@ The system SHALL delegate Quick Access HUD button long-press (>= 300ms) to `Feat
 - **WHEN** user long-presses (>= 300ms) a HUD feature button whose feature has both dialogs null
 - **THEN** no dialog is opened and no exception occurs
 
+#### Scenario: Long-press anchor element is non-null when HUD is active
+- **WHEN** user long-presses (>= 300ms) any feature button on the active Quick Access HUD
+- **THEN** the anchor passed to `onQuickAccessLongClick(anchor)` is the non-null Quick Access HUD root element
+
 ### Requirement: HUD button click delegation to Feature
 
-The system SHALL delegate Quick Access HUD button single-clicks directly to `Feature#onQuickAccessClick(@Nullable Element anchor)` passing the Quick Access HUD element as the anchor. In `Feature`, `onQuickAccessClick(@Nullable Element anchor)` SHALL delegate to `onQuickAccessClick()`, which defaults to toggling `setEnabled(!isEnabled())`. Features MAY override either method to customize click behavior.
+The system SHALL delegate Quick Access HUD button single-clicks directly to `Feature#onQuickAccessClick(@Nullable Element anchor)` passing the active Quick Access HUD root element resolved dynamically at click time as the anchor. In `Feature`, `onQuickAccessClick(@Nullable Element anchor)` SHALL delegate to `onQuickAccessClick()`, which defaults to toggling `setEnabled(!isEnabled())`. Features MAY override either method to customize click behavior.
 
 #### Scenario: Default feature click toggles enabled state
 - **WHEN** user clicks a feature button that uses default `Feature#onQuickAccessClick()`
@@ -69,7 +73,7 @@ The system SHALL delegate Quick Access HUD button single-clicks directly to `Fea
 
 #### Scenario: GodMode and TimeControl click toggles popup when in popup mode
 - **WHEN** user clicks GodMode or TimeControl button in Quick Access HUD while in popup mode
-- **THEN** the respective popup is toggled anchored to the Quick Access HUD element
+- **THEN** the respective popup is toggled anchored to the active Quick Access HUD element
 
 #### Scenario: GodMode and TimeControl click falls back to toggle when not in popup mode
 - **WHEN** user clicks GodMode or TimeControl button in Quick Access HUD while not in popup mode
@@ -78,4 +82,8 @@ The system SHALL delegate Quick Access HUD button single-clicks directly to `Fea
 #### Scenario: ChatFeature click toggles overlay collapse state
 - **WHEN** user clicks the Chat button in Quick Access HUD
 - **THEN** `ChatFeature` toggles its chat overlay collapse state (`collapsedConfig`)
+
+#### Scenario: Anchor element is non-null when HUD is active
+- **WHEN** user clicks any feature button on the active Quick Access HUD
+- **THEN** the anchor passed to `onQuickAccessClick(anchor)` is the non-null Quick Access HUD root element
 

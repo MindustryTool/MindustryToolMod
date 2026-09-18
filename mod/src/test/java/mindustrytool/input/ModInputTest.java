@@ -10,17 +10,22 @@ import arc.mock.MockApplication;
 import arc.mock.MockFiles;
 import arc.mock.MockGraphics;
 import arc.mock.MockInput;
-import arc.struct.Queue;
+import arc.input.InputProcessor;
 import arc.math.geom.Vec2;
+import arc.struct.Queue;
+import arc.struct.Seq;
+import arc.util.Time;
 import mindustry.Vars;
 import mindustry.core.ContentLoader;
 import mindustry.core.Control;
 import mindustry.core.GameState;
+import mindustry.core.World;
 import mindustry.game.Rules;
 import mindustry.gen.Player;
 import mindustry.gen.UnitEntity;
 import mindustry.input.DesktopInput;
 import mindustry.input.MobileInput;
+import mindustry.input.PlaceMode;
 import mindustry.type.UnitType;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.autoplay.AutoplayFeature;
@@ -68,8 +73,10 @@ class ModInputTest {
         FeatureManager.clear();
         Vars.control = createMockControl();
         Vars.mobile = false;
+        Vars.world = new World();
         Vars.state = new GameState();
         Vars.state.rules = new Rules();
+        Time.delta = 1f;
     }
 
     @AfterEach
@@ -78,7 +85,9 @@ class ModInputTest {
         Core.settings.clear();
         Vars.control = null;
         Vars.player = null;
+        Vars.world = null;
         Vars.state = null;
+        Time.delta = 1f;
     }
 
     @Test
@@ -449,5 +458,222 @@ class ModInputTest {
 
         // Active joystick dragging overrides autoplay movement
         assertTrue(capturedMovePref.x > 0f);
+    }
+
+    @Test
+    void modMobileInput_add_registersDetectorWithVanillaTimingBeforeThis() {
+        Core.scene = null;
+        ModMobileInput input = new ModMobileInput();
+        input.add();
+
+        assertNotNull(input.detector);
+        Seq<InputProcessor> processors = Core.input.getInputProcessors();
+        int detectorIndex = processors.indexOf(input.detector, true);
+        int inputIndex = processors.indexOf(input, true);
+        assertTrue(detectorIndex >= 0);
+        assertTrue(inputIndex >= 0);
+        assertTrue(detectorIndex < inputIndex);
+
+        input.remove();
+    }
+
+    @Test
+    void modMobileInput_updateCamera_doesNotLerpWhenJoystickDisabled() {
+        Core.camera.position.set(500f, 500f);
+        ModMobileInput input = new ModMobileInput();
+
+        UnitType type = new UnitType("test-mobile-cam-no-joystick");
+        UnitEntity playerUnit = new UnitEntity() {};
+        playerUnit.type = type;
+        playerUnit.x = 100f;
+        playerUnit.y = 100f;
+
+        Player player = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+
+            @Override
+            public mindustry.gen.Unit unit() {
+                return playerUnit;
+            }
+        };
+        Vars.player = player;
+        Vars.state = new GameState() {
+            @Override
+            public boolean isGame() {
+                return true;
+            }
+        };
+
+        input.isPanning = false;
+        input.pinchPanning = false;
+        input.lastPanTime = 0;
+
+        input.updateCamera();
+
+        // Strict vanilla behavior: camera must remain at (500, 500) and NOT lerp to player
+        assertEquals(500f, Core.camera.position.x, 0.001f);
+        assertEquals(500f, Core.camera.position.y, 0.001f);
+    }
+
+    @Test
+    void modMobileInput_updateCamera_lerpsWhenJoystickEnabledAndIdle() {
+        JoystickFeature joystick = new JoystickFeature();
+        FeatureManager.register(joystick);
+        joystick.setEnabled(true);
+
+        FreeCameraFeature freeCam = new FreeCameraFeature();
+        FeatureManager.register(freeCam);
+        freeCam.setEnabled(false);
+
+        Core.camera.position.set(500f, 500f);
+        ModMobileInput input = new ModMobileInput();
+
+        UnitType type = new UnitType("test-mobile-cam-joystick");
+        UnitEntity playerUnit = new UnitEntity() {};
+        playerUnit.type = type;
+        playerUnit.x = 100f;
+        playerUnit.y = 100f;
+
+        Player player = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+
+            @Override
+            public mindustry.gen.Unit unit() {
+                return playerUnit;
+            }
+        };
+        Vars.player = player;
+        Vars.state = new GameState() {
+            @Override
+            public boolean isGame() {
+                return true;
+            }
+        };
+
+        input.isPanning = false;
+        input.pinchPanning = false;
+        input.lastPanTime = 0;
+
+        input.updateCamera();
+
+        // Camera lerps towards player unit (100, 100)
+        assertTrue(Core.camera.position.x < 500f);
+        assertTrue(Core.camera.position.y < 500f);
+    }
+
+    @Test
+    void modMobileInput_updateCamera_suppressesLerpDuringLinePlacementOrSelecting() {
+        JoystickFeature joystick = new JoystickFeature();
+        FeatureManager.register(joystick);
+        joystick.setEnabled(true);
+
+        FreeCameraFeature freeCam = new FreeCameraFeature();
+        FeatureManager.register(freeCam);
+        freeCam.setEnabled(false);
+
+        Core.camera.position.set(500f, 500f);
+        ModMobileInput input = new ModMobileInput();
+
+        UnitType type = new UnitType("test-mobile-cam-linemode");
+        UnitEntity playerUnit = new UnitEntity() {};
+        playerUnit.type = type;
+        playerUnit.x = 100f;
+        playerUnit.y = 100f;
+
+        Player player = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+
+            @Override
+            public mindustry.gen.Unit unit() {
+                return playerUnit;
+            }
+        };
+        Vars.player = player;
+        Vars.state = new GameState() {
+            @Override
+            public boolean isGame() {
+                return true;
+            }
+        };
+
+        input.isPanning = false;
+        input.pinchPanning = false;
+        input.lastPanTime = 0;
+
+        // When in lineMode, camera must NOT lerp
+        input.lineMode = true;
+        input.updateCamera();
+        assertEquals(500f, Core.camera.position.x, 0.001f);
+        assertEquals(500f, Core.camera.position.y, 0.001f);
+
+        // When selecting, camera must NOT lerp
+        input.lineMode = false;
+        input.selecting = true;
+        input.updateCamera();
+        assertEquals(500f, Core.camera.position.x, 0.001f);
+        assertEquals(500f, Core.camera.position.y, 0.001f);
+
+        // When mode != PlaceMode.none, camera must NOT lerp
+        input.selecting = false;
+        input.mode = PlaceMode.placing;
+        input.updateCamera();
+        assertEquals(500f, Core.camera.position.x, 0.001f);
+        assertEquals(500f, Core.camera.position.y, 0.001f);
+    }
+
+    @Test
+    void modMobileInput_updateCamera_suppressesLerpWhenFreeCamActive() {
+        JoystickFeature joystick = new JoystickFeature();
+        FeatureManager.register(joystick);
+        joystick.setEnabled(true);
+
+        FreeCameraFeature freeCam = new FreeCameraFeature();
+        FeatureManager.register(freeCam);
+        freeCam.setEnabled(true);
+
+        Core.camera.position.set(500f, 500f);
+        ModMobileInput input = new ModMobileInput();
+
+        UnitType type = new UnitType("test-mobile-cam-freecam");
+        UnitEntity playerUnit = new UnitEntity() {};
+        playerUnit.type = type;
+        playerUnit.x = 100f;
+        playerUnit.y = 100f;
+
+        Player player = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+
+            @Override
+            public mindustry.gen.Unit unit() {
+                return playerUnit;
+            }
+        };
+        Vars.player = player;
+        Vars.state = new GameState() {
+            @Override
+            public boolean isGame() {
+                return true;
+            }
+        };
+
+        input.isPanning = false;
+        input.pinchPanning = false;
+        input.lastPanTime = 0;
+
+        input.updateCamera();
+        assertEquals(500f, Core.camera.position.x, 0.001f);
+        assertEquals(500f, Core.camera.position.y, 0.001f);
     }
 }

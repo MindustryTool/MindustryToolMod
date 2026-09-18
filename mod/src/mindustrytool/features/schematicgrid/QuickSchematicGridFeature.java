@@ -7,6 +7,7 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustrytool.components.FileIcon;
@@ -173,6 +174,37 @@ public class QuickSchematicGridFeature extends Feature {
             persist(next);
         }
         return moved;
+    }
+
+    public void replaceEntries(List<QuickSchematicEntry> entries) {
+        persist(entries != null ? new ArrayList<>(entries) : new ArrayList<QuickSchematicEntry>());
+    }
+
+    public @Nullable QuickSchematicEntry getEntry(String id) {
+        if (id == null) {
+            return null;
+        }
+        for (QuickSchematicEntry entry : getEntries()) {
+            if (entry != null && id.equals(entry.id)) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    public boolean updateEntry(String id, Consumer<QuickSchematicEntry> mutator) {
+        if (id == null || mutator == null) {
+            return false;
+        }
+        List<QuickSchematicEntry> next = getEntries();
+        for (QuickSchematicEntry entry : next) {
+            if (entry != null && id.equals(entry.id)) {
+                mutator.accept(entry);
+                persist(next);
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean removeById(List<QuickSchematicEntry> list, @Nullable String id) {

@@ -15,8 +15,7 @@ public class QuickSchematicEntry {
     public String id;
     public String schematicName;
     public @Nullable String schematicFile;
-    public @Nullable String customIconType;
-    public @Nullable String customIconName;
+    public @Nullable String customIcon;
     public @Nullable String customLabel;
 
     public QuickSchematicEntry() {
@@ -26,20 +25,22 @@ public class QuickSchematicEntry {
             String id,
             String schematicName,
             @Nullable String schematicFile,
-            @Nullable String customIconType,
-            @Nullable String customIconName,
+            @Nullable String customIcon,
             @Nullable String customLabel) {
         this.id = id;
         this.schematicName = schematicName;
         this.schematicFile = schematicFile;
-        this.customIconType = customIconType;
-        this.customIconName = customIconName;
+        this.customIcon = customIcon;
         this.customLabel = customLabel;
     }
 
     public static QuickSchematicEntry of(String schematicName, @Nullable String schematicFile) {
         String name = schematicName != null ? schematicName : "";
-        return new QuickSchematicEntry(UUID.randomUUID().toString(), name, schematicFile, null, null, null);
+        return new QuickSchematicEntry(UUID.randomUUID().toString(), name, schematicFile, null, null);
+    }
+
+    public boolean hasCustomIcon() {
+        return customIcon != null && !customIcon.trim().isEmpty();
     }
 
     public String displayName() {
@@ -82,8 +83,7 @@ public class QuickSchematicEntry {
         return equalsNullable(id, that.id)
                 && equalsNullable(schematicName, that.schematicName)
                 && equalsNullable(schematicFile, that.schematicFile)
-                && equalsNullable(customIconType, that.customIconType)
-                && equalsNullable(customIconName, that.customIconName)
+                && equalsNullable(customIcon, that.customIcon)
                 && equalsNullable(customLabel, that.customLabel);
     }
 
@@ -92,8 +92,7 @@ public class QuickSchematicEntry {
         int result = hashNullable(id);
         result = 31 * result + hashNullable(schematicName);
         result = 31 * result + hashNullable(schematicFile);
-        result = 31 * result + hashNullable(customIconType);
-        result = 31 * result + hashNullable(customIconName);
+        result = 31 * result + hashNullable(customIcon);
         result = 31 * result + hashNullable(customLabel);
         return result;
     }

@@ -6,13 +6,11 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
-import arc.util.Scaling;
 import java.util.List;
 import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
-import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -79,6 +77,12 @@ public class QuickSchematicGridHudView extends BaseComponent {
                 entries,
                 entry -> entry != null && entry.id != null ? entry.id : "",
                 entry -> schematicButton(feature, entry, onBeforeActivate))
+                .empty(() -> {
+                    text(Core.bundle.get("feature.quick-schematic-grid.hud.empty"))
+                            .color(Color.gray)
+                            .padding(unit(4))
+                            .center();
+                })
                 .gap(feature.buttonGapConfig.signal());
     }
 
@@ -89,12 +93,14 @@ public class QuickSchematicGridHudView extends BaseComponent {
         if (entry == null) {
             return row();
         }
+        
         Readable<Float> buttonSize = feature.buttonSizeConfig.signal();
         Schematic schematic = feature.resolveSchematic(entry);
         if (schematic == null) {
             String missingLabel = entry.displayName() != null && !entry.displayName().trim().isEmpty()
                     ? entry.displayName()
                     : entry.schematicName;
+
             return button(() -> {
                 if (onBeforeActivate != null) {
                     onBeforeActivate.run();
@@ -108,25 +114,31 @@ public class QuickSchematicGridHudView extends BaseComponent {
                     .children(() -> icon(Icon.warning).size(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f))
                             .color(Color.scarlet));
         }
-        String tooltip = Core.bundle.format("feature.quick-schematic-grid.tooltip.use", schematic.name());
-        return button(() -> {
+
+        String tooltip = Core.bundle.format("feature.quick-schematic-grid.tooltip.use", entry.displayName());
+        Runnable activate = () -> {
             if (onBeforeActivate != null) {
                 onBeforeActivate.run();
             }
             feature.useSchematic(schematic);
-        })
+        };
+
+        if (entry.hasCustomIcon()) {
+            String glyph = entry.customIcon;
+            return button(activate)
+                    .style(WebStyles.ghost())
+                    .size(buttonSize)
+                    .tooltip(tooltip)
+                    .children(() -> text(glyph != null ? glyph : "")
+                            .fontScale(buttonSize.map(s -> (s != null ? s : 48f) / 32f))
+                            .center());
+        }
+
+        return button(activate)
                 .style(WebStyles.ghost())
                 .size(buttonSize)
                 .tooltip(tooltip)
-                .children(() -> {
-                    // FillParent makes the image track the fixed-size button bounds so
-                    // Scaling.fit centers the preview instead of anchoring top-left
-                    // at its native preferred size.
-                    SchematicImage image = new SchematicImage(schematic);
-                    image.setScaling(Scaling.fit);
-                    image.setFillParent(true);
-                    arc(image);
-                });
+                .children(() -> new BoundedSchematicImage(schematic, buttonSize, 48f));
     }
 
     public @Nullable Hud getHud() {

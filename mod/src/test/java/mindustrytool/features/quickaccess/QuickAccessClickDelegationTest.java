@@ -17,14 +17,23 @@ import arc.mock.MockAudio;
 import arc.mock.MockGL20;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
+import arc.scene.Group;
 import arc.scene.Scene;
+import arc.scene.event.ClickListener;
+import arc.scene.event.EventListener;
+import arc.scene.event.InputEvent;
 import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.Button;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.Dialog.DialogStyle;
+import arc.scene.ui.Image;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
 import arc.util.Nullable;
+import java.lang.reflect.Field;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -73,6 +82,36 @@ class QuickAccessClickDelegationTest {
         public void onQuickAccessClick(@Nullable Element anchor) {
             clicked = true;
             receivedAnchor = anchor;
+        }
+    }
+
+    static class AnchorRecordingFeature extends Feature {
+        final TextureRegionDrawable iconDrawable;
+        boolean clicked;
+        boolean longClicked;
+        @Nullable Element clickAnchor;
+        @Nullable Element longClickAnchor;
+
+        AnchorRecordingFeature(TextureRegionDrawable iconDrawable) {
+            super(FeatureMetadata.builder()
+                    .id("anchor-recording-test")
+                    .icon(iconDrawable)
+                    .enabledByDefault(false)
+                    .quickAccess(true)
+                    .build());
+            this.iconDrawable = iconDrawable;
+        }
+
+        @Override
+        public void onQuickAccessClick(@Nullable Element anchor) {
+            clicked = true;
+            clickAnchor = anchor;
+        }
+
+        @Override
+        public void onQuickAccessLongClick(@Nullable Element anchor) {
+            longClicked = true;
+            longClickAnchor = anchor;
         }
     }
 
@@ -184,6 +223,12 @@ class QuickAccessClickDelegationTest {
         }
 
         Icon.book = new TextureRegionDrawable();
+        if (Icon.move == null) {
+            Icon.move = new TextureRegionDrawable();
+        }
+        if (Icon.settings == null) {
+            Icon.settings = new TextureRegionDrawable();
+        }
     }
 
     @AfterAll
@@ -278,5 +323,111 @@ class QuickAccessClickDelegationTest {
         chat.onQuickAccessClick();
         assertTrue(chat.isEnabled(), "Clicking disabled chat enables it");
         assertFalse(chat.collapsedConfig.get(), "Clicking disabled chat uncollapses it");
+    }
+
+    @Test
+    void hudButtonClick_passesLiveHudElementAsAnchor() {
+        AnchorRecordingFeature feat = new AnchorRecordingFeature(new TextureRegionDrawable());
+        QuickAccessHudView view = mountHudWith(feat);
+        try {
+            Element hudRoot = view.getHud().element();
+            assertNotNull(hudRoot, "HUD root element must exist after build");
+
+            Button button = findFeatureButton(hudRoot, feat.iconDrawable);
+            assertNotNull(button, "Feature button should exist in the HUD");
+
+            fireClick(button);
+
+            assertTrue(feat.clicked, "Click should reach the feature");
+            assertNotNull(feat.clickAnchor, "Anchor must be non-null when HUD is active");
+            assertSame(hudRoot, feat.clickAnchor, "Anchor must be the live HUD root element");
+        } finally {
+            view.dispose();
+        }
+    }
+
+    @Test
+    void hudButtonLongClick_passesLiveHudElementAsAnchor() throws Exception {
+        AnchorRecordingFeature feat = new AnchorRecordingFeature(new TextureRegionDrawable());
+        QuickAccessHudView view = mountHudWith(feat);
+        try {
+            Element hudRoot = view.getHud().element();
+            assertNotNull(hudRoot, "HUD root element must exist after build");
+
+            Button button = findFeatureButton(hudRoot, feat.iconDrawable);
+            assertNotNull(button, "Feature button should exist in the HUD");
+
+            fireLongClick(button);
+
+            assertTrue(feat.longClicked, "Long-click should reach the feature");
+            assertNotNull(feat.longClickAnchor, "Anchor must be non-null when HUD is active");
+            assertSame(hudRoot, feat.longClickAnchor, "Anchor must be the live HUD root element");
+        } finally {
+            view.dispose();
+        }
+    }
+
+    private static QuickAccessHudView mountHudWith(Feature... extras) {
+        QuickAccessFeature quickAccess = new QuickAccessFeature();
+        FeatureManager.register(quickAccess);
+        FeatureManager.register(extras);
+        QuickAccessHudView view = new QuickAccessHudView(quickAccess);
+        view.element();
+        assertNotNull(view.getHud(), "HUD must be initialized after build");
+        return view;
+    }
+
+    private static Button findFeatureButton(Element root, TextureRegionDrawable icon) {
+        Deque<Element> queue = new ArrayDeque<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            Element current = queue.poll();
+            if (current instanceof Button
+                    && containsDrawable(current, icon)) {
+                return (Button) current;
+            }
+            if (current instanceof Group) {
+                for (Element child : ((Group) current).getChildren()) {
+                    queue.add(child);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean containsDrawable(Element root, TextureRegionDrawable icon) {
+        Deque<Element> queue = new ArrayDeque<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            Element current = queue.poll();
+            if (current instanceof Image && ((Image) current).getDrawable() == icon) {
+                return true;
+            }
+            if (current instanceof Group) {
+                for (Element child : ((Group) current).getChildren()) {
+                    queue.add(child);
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void fireClick(Button button) {
+        InputEvent event = new InputEvent();
+        for (EventListener listener : button.getListeners()) {
+            if (listener instanceof ClickListener) {
+                ((ClickListener) listener).clicked(event, 0f, 0f);
+            }
+        }
+    }
+
+    private static void fireLongClick(Button button) throws Exception {
+        assertTrue(button.userObject instanceof solim.input.Button,
+                "HUD buttons must be Solim buttons");
+        Field field = solim.input.Button.class.getDeclaredField("onLongClick");
+        field.setAccessible(true);
+        Runnable action = (Runnable) field.get(button.userObject);
+        assertNotNull(action, "Button must have a long-click handler");
+        action.run();
     }
 }

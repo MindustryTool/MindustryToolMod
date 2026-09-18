@@ -30,7 +30,7 @@ The system SHALL install and maintain custom input handlers (`ModDesktopInput` o
 - **THEN** the joystick vector is blended with the keyboard axis movement
 
 ### Requirement: Mobile Free Camera and Joystick Integration
-`ModMobileInput` SHALL drive unit movement via `JoystickFeature` when active, suppress camera lerping when `FreeCameraFeature` is active, and fall back to 100% vanilla `MobileInput` behavior when both features are disabled.
+`ModMobileInput` SHALL drive unit movement via `JoystickFeature` when active, smoothly follow the player unit only during idle gameplay while `JoystickFeature` is active and `FreeCameraFeature` is inactive, and fall back to 100% vanilla `MobileInput` behavior without camera auto-following when `JoystickFeature` is disabled.
 
 #### Scenario: Joystick active on mobile
 - **WHEN** `JoystickFeature` is enabled
@@ -38,11 +38,22 @@ The system SHALL install and maintain custom input handlers (`ModDesktopInput` o
 
 #### Scenario: Joystick inactive on mobile
 - **WHEN** `JoystickFeature` is disabled
-- **THEN** player unit movement targets `Core.camera.position` matching vanilla mobile behavior
+- **THEN** player unit movement targets `Core.camera.position` matching vanilla mobile behavior, and the camera does not automatically lerp toward the player unit
 
-#### Scenario: Free camera disabled on mobile
-- **WHEN** `FreeCameraFeature.isFreeCam()` is false and the player is not actively panning
+#### Scenario: Camera follow active only during idle with joystick
+- **WHEN** `JoystickFeature` is enabled, `FreeCameraFeature.isFreeCam()` is false, the player is not actively panning, not in line placement mode (`!lineMode`), not shifting plans (`!selecting`), and not in placement mode (`mode == none`)
 - **THEN** the camera smoothly lerps toward the player unit
+
+#### Scenario: Camera follow suppressed during building with joystick
+- **WHEN** `JoystickFeature` is enabled and the player is in line mode (`lineMode`), shifting plans (`selecting`), or in an active placement mode (`mode != none`)
+- **THEN** the camera does not auto-lerp toward the player unit, keeping screen coordinates stable
+
+### Requirement: Mobile Line Placement Gesture Timing
+`ModMobileInput` SHALL configure its gesture detector with a 0.3-second long-press threshold matching vanilla Mindustry to support responsive dragging of block and conveyor lines.
+
+#### Scenario: Long-press triggers line mode
+- **WHEN** the player touches down on a buildable tile and holds without moving beyond the tap square for 0.3 seconds
+- **THEN** `longPress` triggers, activating `lineMode` and allowing the player to drag a connected placement line
 
 ### Requirement: Feature Decoupling and State Cleanup
 Neither `FreeCameraFeature` nor `JoystickFeature` SHALL track original input handlers or invoke `Vars.control.setInput()` during their enable, disable, or toggle lifecycles.

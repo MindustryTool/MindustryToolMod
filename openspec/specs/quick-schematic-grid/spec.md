@@ -1,5 +1,8 @@
-## ADDED Requirements
+# quick-schematic-grid Specification
 
+## Purpose
+TBD - created by archiving change quick-schematic-grid. Update Purpose after archive.
+## Requirements
 ### Requirement: Display Variants
 The system SHALL support two distinct display variants for the Quick Schematic Grid: a floating persistent HUD and an on-demand Popup.
 
@@ -74,3 +77,4 @@ The system SHALL display a visual thumbnail preview for each configured schemati
 #### Scenario: Missing or deleted schematic handling
 - **WHEN** a linked schematic can no longer be located in the player's local library
 - **THEN** the system displays a warning placeholder icon and disables activation
+

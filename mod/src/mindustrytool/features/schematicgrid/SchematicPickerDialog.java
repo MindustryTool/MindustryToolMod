@@ -7,14 +7,12 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.struct.Seq;
 import arc.util.Nullable;
-import arc.util.Scaling;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
-import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -227,13 +225,8 @@ public class SchematicPickerDialog extends SolimDialog {
                                 .onClick(onClick)
                                 .tooltip(title)
                                 .children(() -> {
-                                    // FillParent makes the image track the fixed-height card bounds so
-                                    // Scaling.fit centers the preview instead of anchoring top-left
-                                    // at its native preferred size.
-                                    SchematicImage image = new SchematicImage(schematic);
-                                    image.setScaling(Scaling.fit);
-                                    image.setFillParent(true);
-                                    arc(image);
+                                    new BoundedSchematicImage(
+                                            schematic, Readable.of(unit(42f)), unit(42f));
                                 });
 
                         text(title)

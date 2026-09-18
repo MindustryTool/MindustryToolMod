@@ -5,12 +5,16 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.util.Nullable;
 import java.util.List;
+import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -139,7 +143,9 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
         private final QuickSchematicGridFeature feature;
         private final QuickSchematicEntry entry;
 
-        EntryRow(QuickSchematicGridFeature feature, QuickSchematicEntry entry) {
+        EntryRow(
+                QuickSchematicGridFeature feature,
+                QuickSchematicEntry entry) {
             this.feature = feature;
             this.entry = entry;
         }
@@ -157,29 +163,60 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
             Readable<Color> titleColor = Signal.of(schematic != null ? Color.white : Color.scarlet);
 
             return row().growX().gap(unit(1)).center().children(() -> {
+                slotVisual(schematic);
+
                 column().growX().gap(unit(0.5f)).children(() -> {
                     text(title).growX().left().ellipsis(true).color(titleColor);
                     text(subtitle).growX().left().color(Color.lightGray).fontScale(0.85f);
                 });
 
+                button(() -> new QuickSchematicGridSlotDialog(feature, id).show())
+                        .style(WebStyles.ghost())
+                        .size(unit(11))
+                        .tooltip(Core.bundle.get("feature.quick-schematic-grid.button.edit"))
+                        .children(() -> icon(Icon.pencil).size(unit(6)));
+
                 button(() -> feature.moveEarlier(id))
                         .style(WebStyles.ghost())
                         .size(unit(11))
                         .tooltip(Core.bundle.get("feature.quick-schematic-grid.button.move-left"))
-                        .children(() -> text("◄").color(canMoveEarlier() ? Color.white : Color.darkGray));
+                        .children(() -> icon(FileIcon.of("chevron-up.png")).size(unit(6))
+                                .color(canMoveEarlier() ? Color.white : Color.darkGray));
 
                 button(() -> feature.moveLater(id))
                         .style(WebStyles.ghost())
                         .size(unit(11))
                         .tooltip(Core.bundle.get("feature.quick-schematic-grid.button.move-right"))
-                        .children(() -> text("►").color(canMoveLater() ? Color.white : Color.darkGray));
+                        .children(() -> icon(FileIcon.of("chevron-down.png")).size(unit(6))
+                                .color(canMoveLater() ? Color.white : Color.darkGray));
 
-                button(() -> feature.removeEntry(id))
+                button(this::confirmRemove)
                         .style(WebStyles.ghost())
                         .size(unit(11))
                         .tooltip(Core.bundle.get("feature.quick-schematic-grid.button.remove"))
                         .children(() -> icon(Icon.cancel).size(unit(6)).color(Color.scarlet));
             }).element();
+        }
+
+        private Component slotVisual(@Nullable Schematic schematic) {
+            if (entry.hasCustomIcon()) {
+                String glyph = entry.customIcon;
+                return text(glyph != null ? glyph : "").fontScale(1.2f).center().width(unit(8f));
+            }
+            if (schematic == null) {
+                return icon(Icon.warning).size(unit(6)).color(Color.scarlet).center().width(unit(8f));
+            }
+            return new BoundedSchematicImage(schematic, Readable.of(unit(8f)), unit(8f));
+        }
+
+        private void confirmRemove() {
+            QuickSchematicEntry current = feature.getEntry(entry.id);
+            String name = current != null ? current.displayName() : entry.displayName();
+            Vars.ui.showConfirm(
+                    Core.bundle.get("feature.quick-schematic-grid.delete.title"),
+                    Core.bundle.format("feature.quick-schematic-grid.delete.message",
+                            name != null ? name : ""),
+                    () -> feature.removeEntry(entry.id));
         }
 
         private boolean canMoveEarlier() {
