@@ -72,34 +72,39 @@ public final class CrashReportService {
 	 * @return true if a dialog was shown (caller may disable features)
 	 */
 	public boolean checkForCrashes() {
-		Fi latest = locator.findLatest();
-		if (latest == null) return false;
-
-		long latestTime = CrashTimestampParser.parse(latest);
-		if (latestTime == 0) return false;
-
-		long savedLatest = 0L;
 		try {
-			savedLatest = Core.settings.getLong(KEY_LATEST, 0);
-		} catch (Exception e) {
-			Log.err("Failed to read " + KEY_LATEST, e);
-		}
+			Fi latest = locator.findLatest();
+			if (latest == null) return false;
 
-		if (latestTime == savedLatest) {
+			long latestTime = CrashTimestampParser.parse(latest);
+			if (latestTime == 0) return false;
+
+			long savedLatest = 0L;
+			try {
+				savedLatest = Core.settings.getLong(KEY_LATEST, 0);
+			} catch (Exception e) {
+				Log.err("Failed to read " + KEY_LATEST, e);
+			}
+
+			if (latestTime == savedLatest) {
+				return false;
+			}
+
+			Core.settings.put(KEY_LATEST, latestTime);
+
+			showCrashDialog(latest);
+			return true;
+		} catch (Throwable t) {
+			Log.err("Unexpected failure during crash check", t);
 			return false;
 		}
-
-		Core.settings.put(KEY_LATEST, latestTime);
-
-		showCrashDialog(latest);
-		return true;
 	}
 
 	private void showCrashDialog(Fi file) {
 		String log;
 		try {
 			log = file.readString();
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			Log.err("Failed to read crash file: " + file.absolutePath(), e);
 			return;
 		}
@@ -108,7 +113,11 @@ public final class CrashReportService {
 			return;
 		}
 
-		String enriched = enricher.enrich(log);
-		Core.app.post(() -> new CrashReportDialog(file, enriched, sender).show());
+		try {
+			String enriched = enricher.enrich(log);
+			Core.app.post(() -> new CrashReportDialog(file, enriched, sender).show());
+		} catch (Throwable e) {
+			Log.err("Failed to display crash report dialog", e);
+		}
 	}
 }
