@@ -5,7 +5,8 @@ import static solim.UI.*;
 import arc.Core;
 import arc.scene.Element;
 import mindustrytool.components.WebStyles;
-import mindustrytool.features.settings.ModSettings;
+import mindustrytool.features.FeatureManager;
+import mindustrytool.features.freecamera.FreeCameraFeature;
 import solim.core.BaseComponent;
 
 /**
@@ -60,10 +61,13 @@ public class JoystickSettingsView extends BaseComponent {
 
                     divider();
 
-                    checkbox(Core.bundle.get("setting.free-camera", "Free Camera"),
-                            ModSettings.freeCamera.signal()).growX();
+                    FreeCameraFeature freeCam = FeatureManager.getFeature(FreeCameraFeature.class);
+                    if (freeCam != null) {
+                        checkbox(Core.bundle.get("feature.free-camera.name", "Free Camera"),
+                                freeCam.enabled()).growX();
 
-                    divider();
+                        divider();
+                    }
 
                     button(feature::resetPosition)
                             .style(WebStyles.secondary())

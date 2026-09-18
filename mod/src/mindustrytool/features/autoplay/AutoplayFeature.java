@@ -20,6 +20,7 @@ import mindustry.graphics.Pal;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.autoplay.tasks.AttackTask;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import mindustrytool.features.autoplay.tasks.BaseAutoplayAI;
@@ -227,7 +228,7 @@ public class AutoplayFeature extends Feature {
                 currentTask.getAI().updateUnit();
             }
 
-            if (Boolean.TRUE.equals(followUnit.get())) {
+            if (Boolean.TRUE.equals(followUnit.get()) && !FreeCameraFeature.isFreeCam()) {
                 Core.camera.position.lerp(unit.x, unit.y, 0.1f);
             }
         }

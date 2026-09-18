@@ -9,9 +9,15 @@ import mindustry.game.SpawnGroup;
 import mindustry.type.UnitType;
 
 /**
- * Computes upcoming-wave unit compositions matching legacy parity with domain grouping and sorting.
+ * Computes upcoming-wave unit compositions matching legacy parity with domain grouping and sorting,
+ * scaled by the number of matching map spawn points.
  */
 public final class WavePreviewCalculator {
+
+    @FunctionalInterface
+    public interface SpawnerCounter {
+        int count(SpawnGroup group);
+    }
 
     private WavePreviewCalculator() {}
 
@@ -20,6 +26,15 @@ public final class WavePreviewCalculator {
             @Nullable Iterable<SpawnGroup> spawns,
             boolean isCampaign,
             float enemySpawnMultiplier) {
+        return computeWave(waveNumber, spawns, isCampaign, enemySpawnMultiplier, group -> 1);
+    }
+
+    public static WaveSectionData computeWave(
+            int waveNumber,
+            @Nullable Iterable<SpawnGroup> spawns,
+            boolean isCampaign,
+            float enemySpawnMultiplier,
+            @Nullable SpawnerCounter spawnerCounter) {
         ObjectIntMap<UnitType> counts = new ObjectIntMap<>();
 
         if (spawns != null) {
@@ -39,8 +54,11 @@ public final class WavePreviewCalculator {
                             : Mathf.round(amount * enemySpawnMultiplier));
                 }
 
-                if (amount > 0) {
-                    counts.put(group.type, counts.get(group.type, 0) + amount);
+                int spawners = spawnerCounter != null ? spawnerCounter.count(group) : 1;
+                int totalAmount = amount * Math.max(0, spawners);
+
+                if (totalAmount > 0) {
+                    counts.put(group.type, counts.get(group.type, 0) + totalAmount);
                 }
             }
         }

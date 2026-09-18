@@ -71,9 +71,17 @@ public class WavePreviewPanelView extends BaseComponent {
                         .fontScale(scale);
             }
 
-            renderDomainRow(Core.bundle.get("feature.wave-preview.domain.ground"), section.ground, scale);
-            renderDomainRow(Core.bundle.get("feature.wave-preview.domain.air"), section.air, scale);
-            renderDomainRow(Core.bundle.get("feature.wave-preview.domain.naval"), section.naval, scale);
+            if (section.isEmpty()) {
+                text(Core.bundle.get("feature.wave-preview.empty"))
+                        .left()
+                        .style(Styles.outlineLabel)
+                        .color(Color.lightGray)
+                        .fontScale(scale.map(s -> 0.9f * (s != null ? s : 1f)));
+            } else {
+                renderDomainRow(Core.bundle.get("feature.wave-preview.domain.ground"), section.ground, scale);
+                renderDomainRow(Core.bundle.get("feature.wave-preview.domain.air"), section.air, scale);
+                renderDomainRow(Core.bundle.get("feature.wave-preview.domain.naval"), section.naval, scale);
+            }
         });
     }
 
