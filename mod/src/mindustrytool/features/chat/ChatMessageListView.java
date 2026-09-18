@@ -30,11 +30,15 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.chat.models.MessageGroup;
 import mindustrytool.features.chat.models.ParsedChatMessage;
+import mindustrytool.features.chat.models.ParsedChatMessage.CommandKind;
+import mindustrytool.features.chat.models.ParsedChatMessage.CommandMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.ImageMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.MindustryToolLinkMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.RoomInviteMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.SchematicMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.TextMessage;
+import mindustrytool.features.browser.map.MapBrowserFeature;
+import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
@@ -586,6 +590,11 @@ public class ChatMessageListView extends BaseComponent {
                 return;
             }
 
+            if (parsed instanceof CommandMessage) {
+                buildCommandCard(((CommandMessage) parsed).getKind());
+                return;
+            }
+
             if (parsed instanceof SchematicMessage) {
                 SchematicMessage schemMsg = (SchematicMessage) parsed;
                 if (schemMsg.getPrefixText() != null && !schemMsg.getPrefixText().isEmpty()) {
@@ -800,6 +809,50 @@ public class ChatMessageListView extends BaseComponent {
                     });
                 });
             });
+        }
+
+        private void buildCommandCard(CommandKind kind) {
+            boolean schematic = kind == CommandKind.SCHEMATIC;
+            String title = schematic
+                    ? Core.bundle.get("feature.chat.ui.command.schematic.title", "Browse Schematics")
+                    : Core.bundle.get("feature.chat.ui.command.map.title", "Browse Maps");
+            String openLabel = schematic
+                    ? Core.bundle.get("feature.chat.ui.command.schematic.open", "Open Schematic Browser")
+                    : Core.bundle.get("feature.chat.ui.command.map.open", "Open Map Browser");
+
+            card().name("command-card").growX().top().left().height(ChatMessageHeightCalculator.COMMAND_CARD_HEIGHT)
+                    .children(() -> {
+                        column().growX().top().left().padding(unit(1.5f)).gap(unit(1)).children(() -> {
+                            row().growX().top().left().gap(unit(1)).children(() -> {
+                                icon(schematic ? Icon.paste : Icon.map).size(unit(5), unit(5)).color(Pal.accent);
+                                text(title)
+                                        .color(Pal.accent)
+                                        .fontScale(0.95f)
+                                        .ellipsis()
+                                        .left();
+                            });
+                            row().growX().top().left().children(() -> {
+                                button(openLabel, () -> openCommandBrowser(kind))
+                                        .style(WebStyles.secondary())
+                                        .growX()
+                                        .height(unit(11));
+                            });
+                        });
+                    });
+        }
+
+        private void openCommandBrowser(CommandKind kind) {
+            if (kind == CommandKind.SCHEMATIC) {
+                SchematicBrowserFeature feature = FeatureManager.getFeature(SchematicBrowserFeature.class);
+                if (feature != null) {
+                    feature.showDialog();
+                }
+            } else {
+                MapBrowserFeature feature = FeatureManager.getFeature(MapBrowserFeature.class);
+                if (feature != null) {
+                    feature.showDialog();
+                }
+            }
         }
 
         private Component buildMessageText(String messageText, Readable<Color> bodyColor) {

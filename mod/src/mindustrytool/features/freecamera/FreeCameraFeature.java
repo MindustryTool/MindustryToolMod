@@ -25,7 +25,7 @@ public class FreeCameraFeature extends Feature {
                 .id("free-camera")
                 .icon(FileIcon.of("camera.png"))
                 .order(6)
-                .enabledByDefault(true)
+                .enabledByDefault(false)
                 .quickAccessByDefault(true)
                 .build());
 

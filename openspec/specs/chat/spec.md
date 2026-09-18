@@ -731,3 +731,52 @@ The system SHALL allow the top-bar refresh button to recover from missing channe
 - **WHEN** the top-bar refresh button is clicked while a channel is active
 - **THEN** ChatService refreshes both messages and members for the active channel and reconnects the live stream if disconnected
 
+### Requirement: Chat command message parsing
+The chat system SHALL recognize a raw `ChatMessage` whose whole trimmed content exactly equals a registered command token as a typed command message instead of plain text.
+
+#### Scenario: Schematic token parses to schematic command
+- **WHEN** a raw message has content `:schematic:` (ignoring leading/trailing whitespace)
+- **THEN** it is parsed into a command message of kind schematic rather than any other message type
+
+#### Scenario: Map token parses to map command
+- **WHEN** a raw message has content `:map:` (ignoring leading/trailing whitespace)
+- **THEN** it is parsed into a command message of kind map rather than any other message type
+
+#### Scenario: Non-exact content stays plain text
+- **WHEN** message content contains extra text (e.g. `look :schematic: cool`) or differs in case (e.g. `:Schematic:`)
+- **THEN** it is parsed as a standard text message with no command kind
+
+#### Scenario: Command parsing is cached by message id
+- **WHEN** the same command message id is parsed twice
+- **THEN** the same parsed instance is returned without re-evaluating patterns
+
+### Requirement: Chat command card rendering
+The chat system SHALL render command messages as button-only cards that open the matching browser on explicit tap and never auto-execute on receipt.
+
+#### Scenario: Schematic command opens schematic browser
+- **WHEN** a schematic command message is displayed and the user taps its open button
+- **THEN** the schematic browser dialog is shown via the schematic browser feature
+
+#### Scenario: Map command opens map browser
+- **WHEN** a map command message is displayed and the user taps its open button
+- **THEN** the map browser dialog is shown via the map browser feature
+
+#### Scenario: Raw token is replaced by the card
+- **WHEN** a command message is displayed
+- **THEN** the raw token text is not shown and only the button card is rendered
+
+#### Scenario: Command works regardless of browser feature toggle
+- **WHEN** the target browser feature is disabled and the user taps the command button
+- **THEN** the corresponding browser dialog is still shown
+
+#### Scenario: Command card layout height is fixed
+- **WHEN** `ChatMessageHeightCalculator` measures a command message
+- **THEN** it contributes a fixed command card height independent of container width (plus reply-preview height when the message has a reply target)
+
+### Requirement: Chat command labels are translatable
+The chat system SHALL resolve all user-visible command card strings from the translation bundle.
+
+#### Scenario: Command buttons show translated labels
+- **WHEN** a command card is displayed under any locale
+- **THEN** its title and open-button labels come from bundle keys (with English defaults) rather than hardcoded text
+
