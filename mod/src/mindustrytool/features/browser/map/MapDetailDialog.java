@@ -78,23 +78,24 @@ public class MapDetailDialog extends SolimDialog {
         }
 
         private void previewImagePortrait() {
-            row().maxHeight(dvw(50)).grow().children(() -> {
+            row().grow().children(() -> {
                 networkImage(BrowserImages.mapImageUrl(itemId))
                         .placeholder(Icon.terrain)
                         .origin(Align.top | Align.left)
                         .fallback(Icon.terrain)
-                        .grow()
+                        .growX()
+                        .rounded(8)
                         .scaling(Scaling.fit);
             });
         }
 
         private void previewImageLandscape() {
-            row().maxWidth(dvw(50)).grow().children(() -> {
+            row().grow().children(() -> {
                 networkImage(BrowserImages.mapImageUrl(itemId))
                         .placeholder(Icon.terrain)
                         .origin(Align.top)
                         .fallback(Icon.terrain)
-                        .grow()
+                        .growX()
                         .scaling(Scaling.fit);
             });
         }

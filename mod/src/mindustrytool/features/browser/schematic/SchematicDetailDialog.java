@@ -90,7 +90,7 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private void previewImagePortrait() {
-            row().grow().maxHeight(dvh(50)).children(() -> {
+            row().grow().children(() -> {
                 networkImage(BrowserImages.schematicImageUrl(itemId))
                         .placeholder(Icon.image)
                         .fallback(Icon.image)
@@ -102,7 +102,7 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private void previewImageLandscape() {
-            row().grow().maxWidth(dvw(50)).children(() -> {
+            row().grow().children(() -> {
                 networkImage(BrowserImages.schematicImageUrl(itemId))
                         .origin(Align.top)
                         .placeholder(Icon.image)
