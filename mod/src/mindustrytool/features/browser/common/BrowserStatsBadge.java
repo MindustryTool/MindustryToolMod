@@ -25,19 +25,19 @@ public class BrowserStatsBadge extends BaseComponent {
 
     @Override
     protected Element build() {
-        return row().gap(unit(4)).children(() -> {
-            row().gap(unit(2)).children(() -> {
-                icon(FileIcon.of("heart.png")).size(unit(4));
+        return row().growX().gap(unit(4)).children(() -> {
+            row().gap(unit(2)).center().children(() -> {
+                icon(FileIcon.of("heart.png")).size(unit(5));
                 text(formatCount(likes));
             });
 
-            row().gap(unit(2)).children(() -> {
-                icon(FileIcon.of("message-circle.png")).size(unit(4));
+            row().gap(unit(2)).center().children(() -> {
+                icon(FileIcon.of("message-circle.png")).size(unit(5));
                 text(formatCount(comments));
             });
 
-            row().gap(unit(2)).children(() -> {
-                icon(Icon.downloadSmall).size(unit(4));
+            row().gap(unit(2)).center().children(() -> {
+                icon(Icon.downloadSmall).size(unit(5));
                 text(formatCount(downloads));
             });
         }).element();

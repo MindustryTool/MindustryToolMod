@@ -1,9 +1,18 @@
 package mindustrytool.features.browser.common;
 
-import static solim.UI.unit;
+import static solim.UI.*;
+
+import java.util.List;
+
+import arc.Core;
+import arc.graphics.Color;
+import mindustrytool.components.WebStyles;
+import mindustrytool.models.response.TagData;
+
 
 /**
- * Layout constants and responsive capacity calculations for schematic and map browsers.
+ * Layout constants and responsive capacity calculations for schematic and map
+ * browsers.
  */
 public final class BrowserLayout {
 
@@ -52,4 +61,23 @@ public final class BrowserLayout {
         int capacity = calculateCapacity(viewportWidth, viewportHeight);
         return Math.min(PAGE_SIZE_MAX, Math.max(PAGE_SIZE_MIN, capacity));
     }
+
+    public static void renderTags(List<TagData> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return;
+        }
+
+        card(WebStyles.previewCardBackground()).growX().top().left().padding(unit(4)).gap(unit(4)).children(() -> {
+            text(Core.bundle.get("browser.detail.tags")).color(Color.white).growX().left();
+            wrap().growX().left().gap(unit(2)).children(() -> {
+                for (TagData tag : tags) {
+                    row().rounded(12).paddingX(unit(3)).paddingY(unit(1)).border(2, Color.darkGray).children(() -> {
+                        text(tag.getName())
+                                .color(tag.color());
+                    });
+                }
+            });
+        });
+    }
+
 }
