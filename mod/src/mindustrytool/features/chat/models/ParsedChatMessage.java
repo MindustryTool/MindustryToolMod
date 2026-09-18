@@ -141,4 +141,29 @@ public abstract class ParsedChatMessage {
             return itemId;
         }
     }
+
+    public enum CommandKind {
+        SCHEMATIC,
+        MAP;
+
+        public static @Nullable CommandKind fromToken(@Nullable String trimmedContent) {
+            if (":schematic:".equals(trimmedContent)) {
+                return SCHEMATIC;
+            }
+            return ":map:".equals(trimmedContent) ? MAP : null;
+        }
+    }
+
+    public static class CommandMessage extends ParsedChatMessage {
+        private final CommandKind kind;
+
+        public CommandMessage(ChatMessage raw, CommandKind kind) {
+            super(raw);
+            this.kind = kind;
+        }
+
+        public CommandKind getKind() {
+            return kind;
+        }
+    }
 }

@@ -109,13 +109,13 @@ public class ChatInputView extends BaseComponent {
                                                 .growX();
 
                                         button(() -> new AttachContentDialog(this::handleAttachContent).show())
-                                                .style(Styles.cleart)
+                                                .style(WebStyles.ghost())
                                                 .size(unit(10))
                                                 .children(
                                                         () -> image(FileIcon.of("upload.png")).size(unit(6), unit(6)));
 
                                         button(this::onSend)
-                                                .style(Styles.cleart)
+                                                .style(WebStyles.ghost())
                                                 .enabled(canSend)
                                                 .size(unit(10))
                                                 .children(() -> image(FileIcon.of("send.png")).size(unit(6), unit(6))

@@ -133,7 +133,9 @@ public class ChatFeature extends Feature {
                 String activeId = store.channels().currentActiveId();
                 if (activeId != null) {
                     store.unread().markAsRead(activeId);
+                    service.syncActiveChannelSilently(activeId);
                 }
+                service.checkConnectionAndReconnect();
             }
             if (hudView != null) {
                 Core.app.post(hudView::keepInScreen);

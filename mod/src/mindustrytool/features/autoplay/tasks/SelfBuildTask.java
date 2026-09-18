@@ -114,7 +114,7 @@ public class SelfBuildTask implements AutoplayTask {
             return true;
         }
         for (ItemStack stack : plan.block.requirements) {
-            if (core.items.get(stack.item) < Math.min(stack.amount, 5)) {
+            if (core.items.get(stack.item) < Math.min(stack.amount, 50)) {
                 return false;
             }
         }

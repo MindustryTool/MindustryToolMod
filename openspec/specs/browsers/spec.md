@@ -3,14 +3,14 @@
 ## Purpose
 
 Mechanical merge of 3 specs per change `spec-domain-merge` (stage 1 pilot, concat-then-dedupe). Sources: browser-common, map-browser, schematic-browser. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work.
-
 ## Requirements
 
 **Source: browser-common**
 
 TBD - created by archiving change rewrite-browser-features. Update Purpose after archive.
+
 ### Requirement: Reactive Browser State Management
-The system SHALL maintain a reactive BrowserState<T> holding search query, selected tags, sort option, current page index, total items, loading flag, and error message.
+The system SHALL maintain a reactive BrowserState<T> holding search query, selected tags, sort option, current page index, total items, dynamic page size, loading flag, and error message.
 
 #### Scenario: Update search query triggers reload
 - **WHEN** user modifies the search query text field
@@ -20,20 +20,71 @@ The system SHALL maintain a reactive BrowserState<T> holding search query, selec
 - **WHEN** user toggles a tag category filter
 - **THEN** the state SHALL reset to page 1 and execute a search query including the updated tag list
 
+#### Scenario: Dynamic page size update
+- **WHEN** the browser viewport capacity is determined or changes
+- **THEN** the state SHALL update its pageSize signal clamped between 20 and 100 and reset the page to 0, triggering a reload if active
+
 #### Scenario: Handle API failure
 - **WHEN** network request fails or returns non-200
 - **THEN** the state SHALL set error message and clear loading state, prompting user with retry option
 
 ### Requirement: Responsive Card Grid Layout
-The system SHALL dynamically compute column count and card sizing based on viewport dimensions (dvw) and screen orientation (isPortrait).
+The system SHALL dynamically compute column count, row count, content width, card sizing, and viewport capacity based on viewport dimensions (`dvw`, `dvh`), budgeting symmetrical scrollbar gutters on both sides of the card grid to ensure the scrollbar never clips cards or obscures action buttons, and SHALL center the content column on the horizontal X-axis matching the grid width.
 
 #### Scenario: Screen orientation change on mobile
 - **WHEN** mobile screen orientation changes from portrait to landscape
 - **THEN** the grid SHALL recalculate column count from 1-2 columns to 2-3 columns without rebuilding unaffected card elements
 
+#### Scenario: Centered layout on horizontal axis
+- **WHEN** the browser dialog is displayed on wide or high-resolution viewports
+- **THEN** the content container holding the search header, scrollable grid, and footer SHALL have width equal to `cols * cardWidth + (cols - 1) * gap` and be horizontally centered within the full-screen dialog
+
+#### Scenario: Viewport capacity determines query page size
+- **WHEN** the browser dialog is displayed on screen
+- **THEN** the system SHALL compute total card capacity from columns multiplied by rows and set query page size clamped between 20 and 100
+
 #### Scenario: Touch-friendly targets on mobile
 - **WHEN** rendered on mobile devices
 - **THEN** all clickable buttons and card action triggers SHALL have a minimum touch target size of 40 units
+
+#### Scenario: Symmetrical scrollbar gutter budgeting
+- **WHEN** column count and content width are calculated for the browser grid
+- **THEN** available width SHALL deduct both horizontal padding and symmetrical scrollbar gutters (`SCROLLBAR_GUTTER * 2`), and the rightmost column action buttons SHALL remain unobscured by the scrollbar track and knob
+
+#### Scenario: Safe vertical overhead prevents spurious scrollbar
+- **WHEN** available height is calculated for capacity and page sizing
+- **THEN** the system SHALL subtract a safe vertical overhead of `unit(50f)` (200px), ensuring single-page item capacity does not exceed viewport height
+
+### Requirement: Image-First Schematic Hero Card
+`SchematicCard` SHALL prioritize the schematic preview image as the hero visual element across the top of the card inside a preview card container with fixed square dimensions (`unit(58f)` / 232px, 1:1 aspect ratio). The schematic title SHALL be rendered inside a translucent dark overlay centered along the bottom edge of the image with text truncation. The card SHALL provide a single bottom action row with four compact interactive buttons using vanilla Mindustry icons with stat counts:
+1. Like button with like count (heart icon + count)
+2. Comment button with comment count (`Icon.chatSmall` + count)
+3. Download/save button with download count (`Icon.downloadSmall` + count)
+4. Copy string button (`Icon.copy`)
+The card SHALL NOT render separate redundant non-interactive stat badge rows.
+
+#### Scenario: Schematic card visual presentation
+- **WHEN** `SchematicCard` is rendered
+- **THEN** the preview container occupies the upper area with a fixed square preview (`unit(58f)` / 232px) and title centered along the bottom, followed by a 4-button action row
+
+#### Scenario: Direct action interaction
+- **WHEN** user clicks the download button on a card
+- **THEN** it executes the save action directly without requiring the detail dialog
+
+#### Scenario: Square aspect ratio preservation
+- **WHEN** the schematic card is rendered in the grid or rescaled on small viewports
+- **THEN** the preview card container height SHALL match the card width to maintain a 1:1 square aspect ratio
+
+### Requirement: Image-First Map Hero Card
+`MapCard` SHALL prioritize the map terrain preview image as the hero visual element across the top of the card inside a preview card container with fixed square dimensions (`unit(58f)` / 232px, 1:1 aspect ratio). The map title SHALL be rendered inside a translucent dark overlay centered along the bottom edge of the image with text truncation. The card SHALL provide a single bottom action row with compact interactive buttons using vanilla Mindustry icons with stat counts (heart icon + likes opening details, `Icon.chatSmall` + comments opening details, `Icon.downloadSmall` + downloads triggering download, `Icon.play` triggering play). The card SHALL NOT render separate redundant non-interactive stat badge rows.
+
+#### Scenario: Map card visual presentation
+- **WHEN** `MapCard` is rendered
+- **THEN** the preview container occupies the upper area with a fixed square preview (`unit(58f)` / 232px) and title centered along the bottom, followed by a compact action button row
+
+#### Scenario: Square aspect ratio preservation
+- **WHEN** the map card is rendered in the grid or rescaled on small viewports
+- **THEN** the preview card container height SHALL match the card width to maintain a 1:1 square aspect ratio
 
 ### Requirement: Paged Navigation Controls
 The system SHALL provide balanced 3-section paged footer navigation with a custom Close/Back button on the left, Previous, Next, and Direct Page Jump controls centered, and an Upload action on the right, all styled with WebStyles.
@@ -126,6 +177,7 @@ Textfields embedded inside custom containers SHALL use `WebStyles.clearInput()` 
 **Source: map-browser**
 
 TBD - created by archiving change rewrite-browser-features. Update Purpose after archive.
+
 ### Requirement: Browse Online Maps
 The system SHALL provide a MapBrowserFeature and MapBrowserDialog with a solid black background displaying verified maps queried from MindustryTool.searchMaps(). The dialog SHALL render map cards as physical tiles with subtle borders, rounded corners, inner padding, and WebStyles action buttons, omitting vanilla Mindustry close buttons in favor of the aligned footer close action.
 
@@ -158,17 +210,17 @@ The system SHALL provide a MapDetailDialog showing full map preview image, autho
 - **THEN** the map preview image and details SHALL render side-by-side in a two-column row
 
 ### Requirement: Mindustry UI and Keybind Integration
-The system SHALL inject a Browse button into Mindustry's maps dialog (Vars.ui.maps) and register a customizable keybinding.
+The system SHALL inject a Browse button into Mindustry's vanilla schematics dialog (Vars.ui.schematics) and register a customizable keybinding.
 
-#### Scenario: Maps dialog button integration
-- **WHEN** MapBrowserFeature is enabled
-- **THEN** a Browse Online button SHALL be present in Vars.ui.maps.buttons
-- **WHEN** MapBrowserFeature is disabled
+#### Scenario: Schematics dialog button integration
+- **WHEN** SchematicBrowserFeature is enabled
+- **THEN** a Browse Online button SHALL be present in Vars.ui.schematics.buttons
+- **WHEN** SchematicBrowserFeature is disabled
 - **THEN** the button SHALL be removed cleanly
 
 #### Scenario: Hotkey trigger
-- **WHEN** user presses the configured map browser keybind and no text field is focused
-- **THEN** the map browser dialog SHALL be displayed
+- **WHEN** user presses the configured schematic browser keybind and no text field is focused
+- **THEN** the schematic browser dialog SHALL be displayed
 
 ### Requirement: Image-First Map Hero Card
 `MapCard` SHALL prioritize the map terrain preview image as the hero visual element across the top of the card inside a preview card container whose height dynamically matches its width (1:1 square aspect ratio) via a reactive preview height signal. The map title SHALL be rendered inside a translucent dark overlay centered along the bottom edge of the image with text truncation. The card SHALL provide a single bottom action row with compact interactive buttons using vanilla Mindustry icons with stat counts (heart icon + likes opening details, `Icon.chatSmall` + comments opening details, `Icon.downloadSmall` + downloads triggering download, `Icon.play` triggering play). The card SHALL NOT render separate redundant non-interactive stat badge rows.
@@ -198,6 +250,7 @@ Map preview images in cards and detail dialogs SHALL be rendered within pre-allo
 **Source: schematic-browser**
 
 TBD - created by archiving change rewrite-browser-features. Update Purpose after archive.
+
 ### Requirement: Browse Online Schematics
 The system SHALL provide a SchematicBrowserFeature and SchematicBrowserDialog with a solid black background displaying verified schematics queried from MindustryTool.searchSchematics(). The dialog SHALL render schematic cards as physical tiles with subtle borders, rounded corners, inner padding, and WebStyles action buttons, omitting vanilla Mindustry close buttons in favor of the aligned footer close action.
 

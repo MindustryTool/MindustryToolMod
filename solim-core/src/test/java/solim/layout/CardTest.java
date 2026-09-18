@@ -11,6 +11,7 @@ import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
+import arc.scene.ui.layout.Scl;
 import arc.util.Align;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -535,6 +536,105 @@ class CardTest {
         parent.table().validate();
         parent.table().layout();
         assertEquals(20f, parent.table().getPrefWidth(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void heightBeforeAttachSetsParentCellFixedSlot() {
+        Row parent = new Row();
+        Card card = new Card().height(70f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        // Arc Cell.height() pins min==max with Scl scaling, so the parent cell
+        // holds scaled pixels. In-game inspect showing Scl.scl(70) (e.g. 49 at
+        // 0.7 UI scale) instead of raw 70 means propagation worked, not broke.
+        assertEquals(Scl.scl(70f), CellAccess.minHeight(cell), 0.01f);
+        assertEquals(Scl.scl(70f), CellAccess.maxHeight(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void heightAfterAttachMatchesBeforeAttach() {
+        Row beforeParent = new Row();
+        Card before = new Card().height(70f);
+        beforeParent.children(() -> {
+            before.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        Row afterParent = new Row();
+        Card after = new Card();
+        afterParent.children(() -> {
+            after.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+        after.height(70f);
+
+        beforeParent.table().validate();
+        beforeParent.table().layout();
+        afterParent.table().validate();
+        afterParent.table().layout();
+
+        assertEquals(before.table().getHeight(), after.table().getHeight(), 0.01f);
+        assertEquals(Scl.scl(70f), after.table().getHeight(), 0.5f);
+        before.dispose();
+        after.dispose();
+    }
+
+    @Test
+    void heightLiftsShortContentToFixedSlot() {
+        Row parent = new Row();
+        Card card = new Card().height(70f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(Scl.scl(70f), card.table().getHeight(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void heightClampsTallContentToFixedSlot() {
+        Row parent = new Row();
+        Card card = new Card().height(70f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 300f));
+            });
+        });
+
+        parent.table().setSize(500f, 500f);
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(Scl.scl(70f), card.table().getHeight(), 0.5f);
+        card.dispose();
+    }
+
+    @Test
+    void heightInColumnParentMatchesRow() {
+        Column parent = new Column();
+        Card card = new Card().height(70f);
+        parent.children(() -> {
+            card.children(() -> {
+                ParentStack.add(fixedSize(20f, 20f));
+            });
+        });
+
+        parent.table().validate();
+        parent.table().layout();
+        assertEquals(Scl.scl(70f), card.table().getHeight(), 0.5f);
         card.dispose();
     }
 

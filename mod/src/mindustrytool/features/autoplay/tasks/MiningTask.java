@@ -169,14 +169,21 @@ public class MiningTask implements AutoplayTask {
             }
         }
 
-        if (ai.committedItem != null && ai.tripsLeft > 0
-                && isSelected(ai.committedItem)
-                && unit.canMine(ai.committedItem)
-                && core.acceptStack(ai.committedItem, 1, unit) > 0) {
-            Tile committedTile = findOreTile(unit, core, ai.committedItem);
-            if (committedTile != null) {
-                bestItem = ai.committedItem;
-                bestTile = committedTile;
+        // If the current target item is still valid, only switch away if another
+        // selected candidate has fewer items in the core by at least the hysteresis threshold.
+        // This avoids 1-item ping-pong near the core and batches trips far from the core.
+        if (ai.targetItem != null
+                && isSelected(ai.targetItem)
+                && unit.canMine(ai.targetItem)
+                && core.acceptStack(ai.targetItem, 1, unit) > 0) {
+            Tile currentTile = findOreTile(unit, core, ai.targetItem);
+            if (currentTile != null) {
+                int currentTargetAmount = core.items.get(ai.targetItem);
+                int threshold = Math.max(unit.type.itemCapacity * 2, 60);
+                if (minAmount >= currentTargetAmount - threshold) {
+                    bestItem = ai.targetItem;
+                    bestTile = currentTile;
+                }
             }
         }
 
@@ -251,14 +258,9 @@ public class MiningTask implements AutoplayTask {
     }
 
     public static class MinerAI extends BaseAutoplayAI {
-        /** Consecutive trips mined on one ore before the task may switch to another ore. */
-        public static final int COMMIT_TRIPS = 3;
-
         public boolean mining = true;
         public @Nullable Item targetItem;
         public @Nullable Tile ore;
-        public @Nullable Item committedItem;
-        public int tripsLeft;
 
         @Override
         public void updateMovement() {
@@ -270,10 +272,6 @@ public class MiningTask implements AutoplayTask {
                 return;
             }
 
-            if (targetItem != null && targetItem != committedItem) {
-                committedItem = targetItem;
-                tripsLeft = COMMIT_TRIPS;
-            }
 
             if (!unit.validMine(unit.mineTile)) {
                 unit.mineTile = null;
@@ -313,12 +311,6 @@ public class MiningTask implements AutoplayTask {
                 if (unit.within(core, unit.type.range)) {
                     Call.transferInventory(Vars.player, core);
                     mining = true;
-                    if (tripsLeft > 0) {
-                        tripsLeft--;
-                        if (tripsLeft == 0) {
-                            committedItem = null;
-                        }
-                    }
                 }
 
                 circle(core, unit.type.range / 1.8f);

@@ -54,7 +54,7 @@ public class CameraZoomFeature extends Feature {
     public CameraZoomFeature() {
         super(FeatureMetadata.builder()
                 .id("camera-zoom")
-                .icon(FileIcon.of("camera.png"))
+                .icon(FileIcon.of("zoom-in.png"))
                 .order(5)
                 .enabledByDefault(false)
                 .quickAccess(false)
