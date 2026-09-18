@@ -83,7 +83,7 @@ public class MapDetailDialog extends SolimDialog {
                         .placeholder(Icon.terrain)
                         .origin(Align.top | Align.left)
                         .fallback(Icon.terrain)
-                        .growX()
+                        .grow()
                         .scaling(Scaling.fit);
             });
         }
@@ -94,7 +94,7 @@ public class MapDetailDialog extends SolimDialog {
                         .placeholder(Icon.terrain)
                         .origin(Align.top)
                         .fallback(Icon.terrain)
-                        .growX()
+                        .grow()
                         .scaling(Scaling.fit);
             });
         }

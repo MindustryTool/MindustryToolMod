@@ -90,29 +90,25 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private void previewImagePortrait() {
-            row().grow().children(() -> {
+            row().grow().maxHeight(dvh(50)).children(() -> {
                 networkImage(BrowserImages.schematicImageUrl(itemId))
                         .placeholder(Icon.image)
                         .fallback(Icon.image)
                         .origin(Align.top | Align.left)
-                        .growX()
+                        .grow()
                         .top()
-                        .height(dvh(50))
-                        .rounded(8)
                         .scaling(Scaling.fit);
             });
         }
 
         private void previewImageLandscape() {
-            row().grow().children(() -> {
+            row().grow().maxWidth(dvw(50)).children(() -> {
                 networkImage(BrowserImages.schematicImageUrl(itemId))
                         .origin(Align.top)
                         .placeholder(Icon.image)
                         .fallback(Icon.image)
-                        .width(dvw(50))
-                        .growX()
+                        .grow()
                         .top()
-                        .rounded(8)
                         .scaling(Scaling.fit);
             });
         }
