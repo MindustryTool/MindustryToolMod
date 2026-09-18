@@ -14,7 +14,8 @@ public final class BrowserLayout {
     public static final float CARD_HEIGHT = CARD_SIZE + CARD_INTERNAL_GAP + CARD_ACTION_ROW_HEIGHT;
     public static final float CARD_GAP = unit(4f);
     public static final float HORIZONTAL_PADDING = unit(4f);
-    public static final float VERTICAL_OVERHEAD = unit(44f);
+    public static final float SCROLLBAR_GUTTER = unit(0f);
+    public static final float VERTICAL_OVERHEAD = unit(50f);
 
     public static final int PAGE_SIZE_MIN = 20;
     public static final int PAGE_SIZE_MAX = 100;
@@ -23,20 +24,24 @@ public final class BrowserLayout {
     }
 
     public static int calculateColumns(float viewportWidth) {
-        float availableWidth = Math.max(0f, viewportWidth - HORIZONTAL_PADDING * 2f);
+        float availableWidth = Math.max(0f, viewportWidth - HORIZONTAL_PADDING * 2f - SCROLLBAR_GUTTER * 2f);
         return Math.max(1, (int) ((availableWidth + CARD_GAP) / (CARD_WIDTH + CARD_GAP)));
     }
 
-    public static float calculateContentWidth(float viewportWidth) {
-        float availableWidth = Math.max(0f, viewportWidth - HORIZONTAL_PADDING * 2f);
+    public static float calculateCardsWidth(float viewportWidth) {
+        float availableWidth = Math.max(0f, viewportWidth - HORIZONTAL_PADDING * 2f - SCROLLBAR_GUTTER * 2f);
         int cols = calculateColumns(viewportWidth);
         float calculatedWidth = cols * CARD_WIDTH + (cols - 1) * CARD_GAP;
         return Math.min(availableWidth, calculatedWidth);
     }
 
+    public static float calculateContentWidth(float viewportWidth) {
+        return calculateCardsWidth(viewportWidth) + SCROLLBAR_GUTTER * 2f;
+    }
+
     public static int calculateRows(float viewportHeight) {
         float availableHeight = Math.max(0f, viewportHeight - VERTICAL_OVERHEAD);
-        return Math.max(1, (int) ((availableHeight + CARD_GAP) / (CARD_HEIGHT + CARD_GAP)));
+        return Math.max(1, (int) ((availableHeight + CARD_GAP) / (CARD_HEIGHT + CARD_GAP))) + 1;
     }
 
     public static int calculateCapacity(float viewportWidth, float viewportHeight) {

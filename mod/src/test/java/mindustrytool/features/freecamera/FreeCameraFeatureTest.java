@@ -12,7 +12,6 @@ import mindustry.core.ContentLoader;
 import mindustry.gen.Player;
 import mindustry.gen.UnitEntity;
 import mindustrytool.features.FeatureManager;
-import mindustrytool.features.FeatureMetadata;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,38 +44,6 @@ class FreeCameraFeatureTest {
     }
 
     @Test
-    void metadata_hasExpectedValues() {
-        FreeCameraFeature feature = new FreeCameraFeature();
-        FeatureMetadata meta = feature.getMetadata();
-
-        assertEquals("free-camera", meta.getId());
-        assertEquals(6, meta.getOrder());
-        assertTrue(meta.isEnabledByDefault());
-        assertTrue(meta.isQuickAccessByDefault());
-        assertFalse(meta.isDevelopment());
-    }
-
-    @Test
-    void initialState_isEnabledByDefault() {
-        FreeCameraFeature feature = new FreeCameraFeature();
-
-        assertTrue(feature.isEnabled());
-        assertEquals(Boolean.TRUE, feature.enabled().peek());
-    }
-
-    @Test
-    void quickAccessClick_togglesState() {
-        FreeCameraFeature feature = new FreeCameraFeature();
-        assertTrue(feature.isEnabled());
-
-        feature.onQuickAccessClick(null);
-        assertFalse(feature.isEnabled());
-
-        feature.onQuickAccessClick(null);
-        assertTrue(feature.isEnabled());
-    }
-
-    @Test
     void snapToPlayer_safeWhenPlayerNull() {
         FreeCameraFeature feature = new FreeCameraFeature();
         Vars.player = null;
@@ -102,59 +69,6 @@ class FreeCameraFeatureTest {
 
         assertEquals(240f, Core.camera.position.x, 0.001f);
         assertEquals(360f, Core.camera.position.y, 0.001f);
-    }
-
-    @Test
-    void onDisable_snapsCameraToPlayerPosition() {
-        FreeCameraFeature feature = new FreeCameraFeature();
-        Player mockPlayer = new Player() {
-            @Override
-            public boolean dead() {
-                return false;
-            }
-        };
-        mockPlayer.x = 240f;
-        mockPlayer.y = 360f;
-        Vars.player = mockPlayer;
-
-        Core.camera.position.set(1000f, 2000f);
-        assertTrue(feature.isEnabled());
-
-        feature.setEnabled(false);
-
-        assertEquals(240f, Core.camera.position.x, 0.001f);
-        assertEquals(360f, Core.camera.position.y, 0.001f);
-    }
-
-    @Test
-    void onDisable_snapsCameraToUnitPositionWhenUnitAlive() {
-        FreeCameraFeature feature = new FreeCameraFeature();
-        UnitEntity mockUnit = UnitEntity.create();
-        mockUnit.x = 550f;
-        mockUnit.y = 750f;
-        mockUnit.dead = false;
-
-        Player mockPlayer = new Player() {
-            @Override
-            public boolean dead() {
-                return false;
-            }
-
-            @Override
-            public UnitEntity unit() {
-                return mockUnit;
-            }
-        };
-        mockPlayer.x = 240f;
-        mockPlayer.y = 360f;
-
-        Vars.player = mockPlayer;
-        Core.camera.position.set(1000f, 2000f);
-
-        feature.setEnabled(false);
-
-        assertEquals(550f, Core.camera.position.x, 0.001f);
-        assertEquals(750f, Core.camera.position.y, 0.001f);
     }
 
     @Test

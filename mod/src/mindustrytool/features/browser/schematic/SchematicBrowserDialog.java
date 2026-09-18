@@ -73,11 +73,15 @@ public class SchematicBrowserDialog extends SolimDialog {
             Float width = viewportWidth.get();
             return BrowserLayout.calculateColumns(width != null ? width : 800f);
         });
+        private final Computed<Float> cardsWidth = new Computed<>(() -> {
+            Float width = viewportWidth.get();
+            return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
+        });
         private final Computed<Float> contentWidth = new Computed<>(() -> {
             Float width = viewportWidth.get();
             return BrowserLayout.calculateContentWidth(width != null ? width : 800f);
         });
-        private final Computed<Float> cardSize = contentWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
+        private final Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
         private final Computed<Integer> calculatedPageSize = new Computed<>(() -> {
             Float width = viewportWidth.get();
             Float height = viewportHeight.get();
@@ -125,7 +129,7 @@ public class SchematicBrowserDialog extends SolimDialog {
                                 });
                             }
 
-                            return scroll().grow().children(() -> {
+                            return scroll().style(Styles.noBarPane).grow().paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
                                 reactiveGrid(
                                         columnCount,
                                         state.items(),

@@ -13,7 +13,7 @@ class BrowserLayoutTest {
     void calculateColumnsAcrossResolutions() {
         assertEquals(1, BrowserLayout.calculateColumns(200f));
         assertEquals(1, BrowserLayout.calculateColumns(400f));
-        assertEquals(5, BrowserLayout.calculateColumns(1280f));
+        assertEquals(4, BrowserLayout.calculateColumns(1280f));
         assertEquals(7, BrowserLayout.calculateColumns(1920f));
         assertEquals(10, BrowserLayout.calculateColumns(2560f));
         assertEquals(15, BrowserLayout.calculateColumns(3840f));
@@ -34,8 +34,8 @@ class BrowserLayoutTest {
         assertEquals(3, BrowserLayout.calculateCapacity(800f, 600f));
         assertEquals(BrowserLayout.PAGE_SIZE_MIN, BrowserLayout.calculatePageSize(800f, 600f));
 
-        // 720p: 5 cols * 1 row = 5 items, clamped to 20
-        assertEquals(5, BrowserLayout.calculateCapacity(1280f, 720f));
+        // 720p: 4 cols * 1 row = 4 items, clamped to 20
+        assertEquals(4, BrowserLayout.calculateCapacity(1280f, 720f));
         assertEquals(BrowserLayout.PAGE_SIZE_MIN, BrowserLayout.calculatePageSize(1280f, 720f));
 
         // 1080p: 7 cols * 3 rows = 21 items
@@ -56,13 +56,16 @@ class BrowserLayoutTest {
     }
 
     @Test
-    void calculateContentWidthDoesNotExceedAvailableWidth() {
+    void calculateContentWidthAndGutterSymmetry() {
         float viewportWidth = 1920f;
         float availableWidth = viewportWidth - BrowserLayout.HORIZONTAL_PADDING * 2f;
+        float cardsWidth = BrowserLayout.calculateCardsWidth(viewportWidth);
         float contentWidth = BrowserLayout.calculateContentWidth(viewportWidth);
 
+        // Content width includes symmetrical gutters on both sides
+        assertEquals(cardsWidth + BrowserLayout.SCROLLBAR_GUTTER * 2f, contentWidth);
         assertTrue(contentWidth <= availableWidth);
-        assertTrue(contentWidth > 0f);
+        assertTrue(cardsWidth > 0f);
     }
 
     @Test

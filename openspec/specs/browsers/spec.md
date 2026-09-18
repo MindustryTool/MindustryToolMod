@@ -25,7 +25,7 @@ The system SHALL maintain a reactive BrowserState<T> holding search query, selec
 - **THEN** the state SHALL set error message and clear loading state, prompting user with retry option
 
 ### Requirement: Responsive Card Grid Layout
-The system SHALL dynamically compute column count and card sizing based on viewport dimensions (dvw) and screen orientation (isPortrait).
+The system SHALL dynamically compute column count, content width, and capacity based on viewport dimensions (`dvw`, `dvh`), budgeting symmetrical scrollbar gutters on both sides of the card grid to ensure the scrollbar never clips cards or obscures action buttons.
 
 #### Scenario: Screen orientation change on mobile
 - **WHEN** mobile screen orientation changes from portrait to landscape
@@ -34,6 +34,14 @@ The system SHALL dynamically compute column count and card sizing based on viewp
 #### Scenario: Touch-friendly targets on mobile
 - **WHEN** rendered on mobile devices
 - **THEN** all clickable buttons and card action triggers SHALL have a minimum touch target size of 40 units
+
+#### Scenario: Symmetrical scrollbar gutter budgeting
+- **WHEN** column count and content width are calculated for the browser grid
+- **THEN** available width SHALL deduct both horizontal padding and symmetrical scrollbar gutters (`SCROLLBAR_GUTTER * 2`), and the rightmost column action buttons SHALL remain unobscured by the scrollbar track and knob
+
+#### Scenario: Safe vertical overhead prevents spurious scrollbar
+- **WHEN** available height is calculated for capacity and page sizing
+- **THEN** the system SHALL subtract a safe vertical overhead of `unit(50f)` (200px), ensuring single-page item capacity does not exceed viewport height
 
 ### Requirement: Paged Navigation Controls
 The system SHALL provide balanced 3-section paged footer navigation with a custom Close/Back button on the left, Previous, Next, and Direct Page Jump controls centered, and an Upload action on the right, all styled with WebStyles.
