@@ -827,7 +827,6 @@ public class ChatMessageListView extends BaseComponent {
                                 icon(schematic ? Icon.paste : Icon.map).size(unit(5), unit(5)).color(Pal.accent);
                                 text(title)
                                         .color(Pal.accent)
-                                        .fontScale(0.95f)
                                         .ellipsis()
                                         .left();
                             });

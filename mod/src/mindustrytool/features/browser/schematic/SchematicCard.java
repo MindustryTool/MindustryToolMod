@@ -12,6 +12,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.browser.common.BrowserImages;
+import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.SchematicData;
@@ -23,6 +24,8 @@ import solim.reactive.Readable;
  * title strip and a compact row of interactive stat action buttons.
  */
 public class SchematicCard extends BaseComponent {
+
+    public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;
 
     private final SchematicData schematic;
     private final @Nullable Readable<Float> previewHeight;
@@ -61,15 +64,16 @@ public class SchematicCard extends BaseComponent {
         String title = schematic.getName() != null ? schematic.getName()
                 : Core.bundle.get("browser.schematic.unnamed");
 
+        Readable<Float> size = previewHeight != null ? previewHeight : Readable.of(CARD_SIZE);
+
         return column()
                 .name("SchematicCard-" + schematic.getItemId())
-                .growX()
+                .width(size)
                 .gap(unit(2))
                 .children(() -> {
                     card(WebStyles.previewCardBackground())
                             .name("SchematicCard-preview-" + schematic.getItemId())
-                            .growX()
-                            .height(previewHeight != null ? previewHeight : Readable.of(unit(58f)))
+                            .size(size)
                             .onClick(onClick)
                             .children(() -> {
                                 stack().grow().children(() -> {
@@ -98,7 +102,7 @@ public class SchematicCard extends BaseComponent {
                                 });
                             });
 
-                    row().growX().gap(unit(1.5f)).children(() -> {
+                    row().width(size).gap(unit(1.5f)).children(() -> {
                         statButton(
                                 BrowserStatsBadge.formatCount(BrowserImages.count(schematic.getLikes())),
                                 FileIcon.of("heart.png", Icon.upOpenSmall),

@@ -656,3 +656,14 @@ Reactive tooltips (`Readable<String>`) SHALL bind a `Label` to the tooltip conta
 - **WHEN** the bound expanded signal changes from `false` to `true`
 - **THEN** the `SolimCollapser` expands to fit its content with animated transition
 
+### Requirement: Height vs min-max clarification probes
+The system SHALL clarify via probes whether `ElementConfig.height(float)` on layout containers (`Card`, `Row`, `Column`) is pref-only or a fixed slot, and whether call order relative to `children()/attach` affects the parent `Cell`.
+
+#### Scenario: Order dependence is recorded
+- **WHEN** `height(70f)` is called before `children()` versus after attach for otherwise identical hierarchies
+- **THEN** both resulting layout heights are recorded so any `PendingCellConfig` propagation gap is explicit
+
+#### Scenario: Pref vs fixed is learned not assumed
+- **WHEN** small (20px) and large (120px) fixed content are each combined with `height(70f)` and laid out
+- **THEN** results distinguish pref-only (`small < 70`, `large > 70`) from fixed (`always 70`) without changing production behavior in this change
+

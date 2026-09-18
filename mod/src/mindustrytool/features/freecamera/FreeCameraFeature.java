@@ -23,7 +23,7 @@ public class FreeCameraFeature extends Feature {
     public FreeCameraFeature() {
         super(FeatureMetadata.builder()
                 .id("free-camera")
-                .icon(FileIcon.of("camera.png"))
+                .icon(FileIcon.of("move.png"))
                 .order(6)
                 .enabledByDefault(false)
                 .quickAccessByDefault(true)
