@@ -11,13 +11,15 @@ import mindustry.gen.Unit;
 import mindustry.input.Binding;
 import mindustry.input.DesktopInput;
 import mindustrytool.features.FeatureManager;
+import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.joystick.JoystickFeature;
 
 /**
  * Unified desktop input handler for MindustryTool.
- * Decouples camera snapping when FreeCameraFeature is active,
- * blends virtual joystick input with WASD when JoystickFeature is active,
+ * Pans the camera via WASD when FreeCameraFeature is active,
+ * blends virtual joystick input with keyboard axis when JoystickFeature is active,
+ * yields unit control to AutoplayFeature when autonomous gameplay is enabled,
  * and falls back to vanilla DesktopInput behavior when features are inactive.
  */
 public class ModDesktopInput extends DesktopInput {
@@ -40,11 +42,15 @@ public class ModDesktopInput extends DesktopInput {
 
     @Override
     protected void updateMovement(Unit unit) {
+        AutoplayFeature af = FeatureManager.getFeature(AutoplayFeature.class);
+        boolean autoplaying = af != null && af.isEnabled();
+        boolean freeCam = FreeCameraFeature.isFreeCam();
+
         boolean omni = unit.type.omniMovement;
 
         float speed = unit.speed();
-        float xa = Core.input.axis(Binding.moveX);
-        float ya = Core.input.axis(Binding.moveY);
+        float xa = freeCam ? 0f : Core.input.axis(Binding.moveX);
+        float ya = freeCam ? 0f : Core.input.axis(Binding.moveY);
         boolean boosted = (unit instanceof Mechc && unit.isFlying());
 
         JoystickFeature jf = FeatureManager.getFeature(JoystickFeature.class);
@@ -57,7 +63,7 @@ public class ModDesktopInput extends DesktopInput {
             }
             movement.add(joystick).limit(1f);
             movement.scl(speed);
-        } else if (Core.input.keyDown(Binding.mouseMove)) {
+        } else if (!freeCam && Core.input.keyDown(Binding.mouseMove)) {
             movement.set(xa, ya).nor().scl(speed);
             float mousePull = 1f / 25f * speed;
             movement.add((Core.input.mouseWorldX() - Vars.player.x) * mousePull, (Core.input.mouseWorldY() - Vars.player.y) * mousePull)
@@ -66,23 +72,27 @@ public class ModDesktopInput extends DesktopInput {
             movement.set(xa, ya).nor().scl(speed);
         }
 
-        float mouseAngle = Angles.mouseAngle(unit.x, unit.y);
-        boolean aimCursor = omni && Vars.player.shooting && unit.type.hasWeapons() && unit.type.faceTarget && !boosted;
+        if (!autoplaying) {
+            float mouseAngle = Angles.mouseAngle(unit.x, unit.y);
+            boolean aimCursor = omni && Vars.player.shooting && unit.type.hasWeapons() && unit.type.faceTarget && !boosted;
 
-        if (aimCursor) {
-            unit.lookAt(mouseAngle);
-        } else {
-            unit.lookAt(unit.prefRotation());
+            if (aimCursor) {
+                unit.lookAt(mouseAngle);
+            } else {
+                unit.lookAt(unit.prefRotation());
+            }
+
+            unit.movePref(movement);
+
+            unit.aim(Core.input.mouseWorldX(), Core.input.mouseWorldY(), true);
+            unit.controlWeapons(true, Vars.player.shooting && !boosted);
+
+            Vars.player.boosting = Core.input.keyDown(Binding.boost);
+            Vars.player.mouseX = unit.aimX();
+            Vars.player.mouseY = unit.aimY();
+        } else if (!movement.isZero()) {
+            unit.movePref(movement);
         }
-
-        unit.movePref(movement);
-
-        unit.aim(Core.input.mouseWorldX(), Core.input.mouseWorldY(), true);
-        unit.controlWeapons(true, Vars.player.shooting && !boosted);
-
-        Vars.player.boosting = Core.input.keyDown(Binding.boost);
-        Vars.player.mouseX = unit.aimX();
-        Vars.player.mouseY = unit.aimY();
 
         if (unit instanceof Payloadc) {
             if (Core.input.keyTap(Binding.pickupCargo)) {

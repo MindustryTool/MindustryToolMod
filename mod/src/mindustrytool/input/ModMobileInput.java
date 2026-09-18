@@ -25,6 +25,7 @@ import mindustry.input.MobileInput;
 import mindustry.type.UnitType;
 import mindustry.world.blocks.ControlBlock;
 import mindustrytool.features.FeatureManager;
+import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.joystick.JoystickFeature;
 
@@ -130,6 +131,9 @@ public class ModMobileInput extends MobileInput {
 
         JoystickFeature jf = FeatureManager.getFeature(JoystickFeature.class);
         boolean joystickActive = jf != null && jf.isEnabled();
+        boolean freeCam = FreeCameraFeature.isFreeCam();
+        AutoplayFeature af = FeatureManager.getFeature(AutoplayFeature.class);
+        boolean autoplaying = af != null && af.isEnabled();
 
         if (joystickActive) {
             Vec2 vec = jf.moveVector;
@@ -138,6 +142,8 @@ public class ModMobileInput extends MobileInput {
             } else {
                 targetPos.set(Vars.player);
             }
+        } else if (freeCam) {
+            targetPos.set(Vars.player);
         } else {
             // Faithful vanilla fallback: unit moves towards camera position on mobile
             targetPos.set(Core.camera.position);
@@ -149,10 +155,12 @@ public class ModMobileInput extends MobileInput {
         float mouseAngle = unit.angleTo(unit.aimX(), unit.aimY());
         boolean aimCursor = omni && Vars.player.shooting && type.hasWeapons() && !boosted && type.faceTarget;
 
-        if (aimCursor) {
-            unit.lookAt(mouseAngle);
-        } else {
-            unit.lookAt(unit.prefRotation());
+        if (!autoplaying) {
+            if (aimCursor) {
+                unit.lookAt(mouseAngle);
+            } else {
+                unit.lookAt(unit.prefRotation());
+            }
         }
 
         if (payloadTarget instanceof Healthc && !((Healthc) payloadTarget).isValid()) {
@@ -192,7 +200,15 @@ public class ModMobileInput extends MobileInput {
         unit.hitbox(rect);
         rect.grow(4f);
 
-        Vars.player.boosting = Vars.collisions.overlapsTile(rect, EntityCollisions::solid) || !unit.within(targetPos, 85f);
+        Vars.player.boosting = (Vars.collisions != null && Vars.collisions.overlapsTile(rect, EntityCollisions::solid))
+                || !unit.within(targetPos, 85f);
+
+        if (autoplaying) {
+            if (joystickActive && jf.isKnobHeld() && !movement.isZero()) {
+                unit.movePref(movement);
+            }
+            return;
+        }
 
         unit.movePref(movement);
 

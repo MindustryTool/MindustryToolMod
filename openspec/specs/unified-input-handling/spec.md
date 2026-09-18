@@ -1,7 +1,8 @@
-# Unified Input Handling
+# unified-input-handling Specification
 
-## ADDED Requirements
-
+## Purpose
+TBD - created by archiving change unified-input-handling. Update Purpose after archive.
+## Requirements
 ### Requirement: Persistent Mod Input Handlers
 The system SHALL install and maintain custom input handlers (`ModDesktopInput` on desktop and `ModMobileInput` on mobile) as the active `Vars.control.input` without requiring dynamic runtime swap or restore cycles when features are toggled.
 
@@ -49,3 +50,4 @@ Neither `FreeCameraFeature` nor `JoystickFeature` SHALL track original input han
 #### Scenario: Toggling features does not swap input
 - **WHEN** `FreeCameraFeature` or `JoystickFeature` is enabled or disabled
 - **THEN** `Vars.control.input` remains the exact same instance and active touch or key input is not dropped
+

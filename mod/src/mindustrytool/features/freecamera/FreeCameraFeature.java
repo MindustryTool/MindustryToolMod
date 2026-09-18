@@ -6,6 +6,7 @@ import arc.scene.Element;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.gen.Unit;
+import mindustry.input.DesktopInput;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -63,8 +64,12 @@ public class FreeCameraFeature extends Feature {
             Core.camera.position.set(Vars.player.x, Vars.player.y);
         }
 
-        if (Vars.control != null && Vars.control.input instanceof ModMobileInput) {
-            ((ModMobileInput) Vars.control.input).cancelPanDelay();
+        if (Vars.control != null) {
+            if (Vars.control.input instanceof ModMobileInput) {
+                ((ModMobileInput) Vars.control.input).cancelPanDelay();
+            } else if (Vars.control.input instanceof DesktopInput) {
+                ((DesktopInput) Vars.control.input).panning = false;
+            }
         }
     }
 

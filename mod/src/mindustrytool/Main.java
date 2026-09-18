@@ -29,6 +29,7 @@ import mindustrytool.features.savesync.SaveSyncFeature;
 import mindustrytool.features.screenshot.ScreenshotFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
+import mindustrytool.features.schematicgrid.QuickSchematicGridFeature;
 import mindustrytool.features.teamresource.TeamResourceFeature;
 import mindustrytool.features.timecontrol.TimeControlFeature;
 import mindustrytool.features.togglerendering.ToggleRenderingFeature;
@@ -97,6 +98,7 @@ public class Main extends Mod {
                 new ToggleRenderingFeature(),
                 new TimeControlFeature(),
                 new JoystickFeature(),
+                new QuickSchematicGridFeature(),
                 new ScreenshotFeature(),
                 new EmojiFeature());
 

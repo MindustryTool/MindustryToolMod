@@ -1,10 +1,8 @@
-# Free Camera
+# free-camera Specification
 
 ## Purpose
-Provides an unconstrained, decoupled camera mode that allows players to inspect the map freely while moving on both mobile and desktop platforms, with 1-tap toggling and instant recentering via the QuickAccess HUD.
-
+TBD - created by archiving change free-camera-feature. Update Purpose after archive.
 ## Requirements
-
 ### Requirement: Free Camera Feature Lifecycle & Metadata
 The system SHALL register a dedicated `FreeCameraFeature` under `mindustrytool.features.freecamera` extending `Feature`. The feature SHALL have metadata ID `"free-camera"`, icon `FileIcon.of("camera.png")`, order 6, `enabledByDefault(true)`, and `quickAccessByDefault(true)`.
 
@@ -27,16 +25,27 @@ The `FreeCameraFeature` SHALL handle QuickAccess HUD interactions such that clic
 - **WHEN** the player long-presses the Free Camera icon in the QuickAccess HUD during active gameplay
 - **THEN** the camera position immediately centers onto `Vars.player.x, Vars.player.y`
 
-### Requirement: Desktop Movement Decoupling
-On Desktop platforms, while `FreeCameraFeature` is enabled, moving the player unit with directional controls (WASD) SHALL NOT forcibly snap the camera back to the player unit. When `FreeCameraFeature` is disabled, standard vanilla camera tracking (WASD resetting pan state and centering on player) SHALL be restored.
+### Requirement: Desktop WASD Camera Panning
+On Desktop platforms, while `FreeCameraFeature` is enabled, directional controls (WASD) SHALL pan the camera position across the map instead of steering the player unit. When `FreeCameraFeature` is disabled, standard vanilla camera tracking (WASD steering unit and camera following player) SHALL be restored.
 
-#### Scenario: WASD movement with Free Camera enabled
-- **WHEN** the player pans the camera away from the unit and moves using WASD while Free Camera is enabled
-- **THEN** the player unit moves according to WASD input while the camera remains at its panned position
+#### Scenario: WASD input with Free Camera enabled
+- **WHEN** the player presses directional controls (WASD) while Free Camera is enabled on Desktop
+- **THEN** the camera position shifts across the map in the indicated direction at camera pan speed, and the player unit's movement is not driven by the keyboard
 
-#### Scenario: WASD movement with Free Camera disabled
-- **WHEN** the player moves using WASD while Free Camera is disabled
-- **THEN** the camera smoothly lerps and centers onto the player unit
+#### Scenario: WASD input with Free Camera disabled
+- **WHEN** the player moves using WASD while Free Camera is disabled on Desktop
+- **THEN** the player unit moves according to WASD input and the camera smoothly follows the player unit
+
+### Requirement: Mobile Free Camera Movement Decoupling
+On Mobile platforms, while `FreeCameraFeature` is enabled and `JoystickFeature` is disabled, the player unit SHALL remain stationary instead of moving toward the panned camera position. When `AutoplayFeature` is active, manual unit controls (movement, auto-aim, and weapon controls) in `ModMobileInput` SHALL yield to the autonomous bot AI unless the virtual joystick knob is actively dragged.
+
+#### Scenario: Mobile Free Camera panning without Virtual Joystick
+- **WHEN** the player pans the camera away while Free Camera is enabled and Virtual Joystick is disabled
+- **THEN** the camera pans to inspect the map and the player unit remains stationary without chasing the camera
+
+#### Scenario: Mobile Free Camera with Autoplay active
+- **WHEN** Autoplay and Free Camera are active on mobile and the joystick knob is not being dragged
+- **THEN** `ModMobileInput` does not override unit movement, aiming, or weapon controls, allowing the bot AI to operate uninterrupted
 
 ### Requirement: Snapping to Player Unit
 The system SHALL provide a `snapToPlayer()` method and bindable hotkey that immediately sets `Core.camera.position` to the player unit's coordinates `(Vars.player.x, Vars.player.y)` whenever the player is alive.
@@ -55,3 +64,4 @@ All user-facing strings for Free Camera (name, description, help, keybinds, and 
 #### Scenario: Free Camera bundle keys resolve
 - **WHEN** `getName()` and `getDescription()` are called on `FreeCameraFeature`
 - **THEN** the text resolves from `feature.free-camera.name` and `feature.free-camera.description`
+

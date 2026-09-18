@@ -134,7 +134,7 @@ Count-sensitive tests SHALL reflect the enlarged registry of 11 real features pl
 - **THEN** expectations account for 24 registered features (or explicitly filter out development features where the test targets enabled-capable features only)
 
 ### Requirement: Mod-Wide Settings Config Group
-The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares all global `ConfigValue` entries as public static fields, including `betaParticipate: ConfigValue<Boolean>` (default `false`), `sharePresence: ConfigValue<Boolean>` (default `true`), and `freeCamera: ConfigValue<Boolean>` (default `false`).
+The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares global `ConfigValue` entries as public static fields, including `betaParticipate: ConfigValue<Boolean>` (default `false`) and `sharePresence: ConfigValue<Boolean>` (default `true`). The legacy `freeCamera` config SHALL be removed in favor of `FreeCameraFeature`.
 
 #### Scenario: Beta flag is false by default
 - **WHEN** `ModSettings.betaParticipate` is read without any prior user interaction
@@ -148,16 +148,12 @@ The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` 
 - **WHEN** `ModSettings.sharePresence` is read without prior interaction
 - **THEN** `ModSettings.sharePresence.get()` returns `true`
 
-#### Scenario: Free camera flag is false by default
-- **WHEN** `ModSettings.freeCamera` is read without prior interaction
-- **THEN** `ModSettings.freeCamera.get()` returns `false`
-
 #### Scenario: Global settings persist across sessions
-- **WHEN** the user changes `sharePresence` or `freeCamera` and the game restarts
+- **WHEN** the user changes `sharePresence` or `betaParticipate` and the game restarts
 - **THEN** the modified values persist on subsequent loads
 
 ### Requirement: General Settings Dialog Rendering
-The `GeneralSettingsDialog` SHALL extend `SolimDialog` and host a `GeneralSettingsView` component with a centered and width-constrained layout (`maxWidth(500f)`). The view SHALL render a scrollable vertical list of setting rows for mod-wide preferences without horizontal overflow or hardcoded fixed width, including beta updates, share game status, and free camera. Each row SHALL display a label (from `Core.bundle`), optional description or tooltip, and a `checkBox` bound directly to the corresponding `ConfigValue.signal()`. The dialog SHALL have a "Settings" title (bundle key `dialog.general-settings.title`) and a close button.
+The `GeneralSettingsDialog` SHALL extend `SolimDialog` and host a `GeneralSettingsView` component with a centered and width-constrained layout (`maxWidth(500f)`). The view SHALL render a scrollable vertical list of setting rows for mod-wide preferences without horizontal overflow or hardcoded fixed width, including beta updates and share game status. Each row SHALL display a label (from `Core.bundle`), optional description or tooltip, and a `checkBox` bound directly to the corresponding `ConfigValue.signal()`. The dialog SHALL have a "Settings" title (bundle key `dialog.general-settings.title`) and a close button.
 
 #### Scenario: Dialog opens with correct initial toggle state
 - **WHEN** `GeneralSettingsDialog` is shown
@@ -166,14 +162,6 @@ The `GeneralSettingsDialog` SHALL extend `SolimDialog` and host a `GeneralSettin
 #### Scenario: Toggling checkbox persists immediately
 - **WHEN** the user clicks any setting checkbox in `GeneralSettingsDialog`
 - **THEN** the corresponding `ModSettings` config reflects the new value without an additional confirm action and persists to `Core.settings`
-
-#### Scenario: Tooltip visible on hover
-- **WHEN** the user hovers over a setting row
-- **THEN** a tooltip or descriptive label is displayed explaining the preference
-
-#### Scenario: Responsive width constraint
-- **WHEN** `GeneralSettingsDialog` is rendered on any display width
-- **THEN** its content scales fluidly without hardcoded fixed width and never overflows horizontally
 
 ### Requirement: Beta Participation Drives Update Channel
 When `ModSettings.betaParticipate.get()` is `false`, `UpdateService` SHALL consult it when processing the GitHub releases response as before: prereleases (entries where `"prerelease": true` in the JSON) SHALL be excluded from the changelog, and the stable `mod.hjson` version gate is unchanged. When the flag is `true`, `UpdateService` SHALL skip the `mod.hjson` fetch and determine the latest version solely from the GitHub releases list as the maximum tag over all entries (stable and prerelease) compared with `VersionUtils` semantics. If that latest tag is greater than the installed version, the update dialog SHALL be shown with the latest version displayed as the raw release tag (e.g. `v5.0.3-v8-beta`), a prerelease-inclusive changelog, and an Update action that installs that exact tag via the `githubImportMod(repo, isJava, release, forceEnable)` overload. Release fetch failure, an empty release list, and same-number ties after suffix stripping (e.g. `v5.0.3-v8` vs `v5.0.3-v8-beta`) SHALL resolve to silent (log and finish with no dialog).
