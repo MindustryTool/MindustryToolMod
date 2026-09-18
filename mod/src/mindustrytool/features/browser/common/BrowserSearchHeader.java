@@ -10,7 +10,7 @@ import arc.util.Timer;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import solim.core.BaseComponent;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 import mindustrytool.components.WebStyles;
 

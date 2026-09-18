@@ -9,7 +9,7 @@ import mindustry.ui.Styles;
 import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.features.translation.TranslationFeature;
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Language selection dialog for outgoing chat translations.

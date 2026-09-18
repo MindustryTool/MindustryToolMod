@@ -12,8 +12,8 @@ import mindustry.ui.FileChooser;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Settings view for the Custom Music feature: Ambient, Dark, and Boss sections,
@@ -151,6 +151,13 @@ public class MusicSettingsView extends BaseComponent {
                         });
 
                         if (state.isCustom) {
+                            button()
+                                    .style(WebStyles.ghost())
+                                    .size(unit(11))
+                                    .tooltip(Core.bundle.get("feature.music.tooltip.rename-custom"))
+                                    .onClick(() -> feature.showRenameDialog(state))
+                                    .children(() -> icon(Icon.edit).size(unit(6)).color(labelColor));
+
                             button()
                                     .style(WebStyles.ghost())
                                     .size(unit(11))

@@ -1,4 +1,5 @@
 package solim.layout;
+import solim.modifier.CellConfig;
 
 import arc.Core;
 import arc.scene.Element;
@@ -15,11 +16,11 @@ import solim.core.Disposable;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.runtime.StructuralReconciler;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.ui.Units;
+import solim.reactive.Computed;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.core.Units;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;

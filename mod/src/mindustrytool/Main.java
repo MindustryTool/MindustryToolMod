@@ -11,7 +11,9 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
+import mindustrytool.features.camerazoom.CameraZoomFeature;
 import mindustrytool.features.chat.ChatFeature;
+import mindustrytool.features.emoji.EmojiFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
 import mindustrytool.features.joystick.JoystickFeature;
@@ -23,6 +25,7 @@ import mindustrytool.features.progressdisplay.ProgressDisplayFeature;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import mindustrytool.features.savesync.SaveSyncFeature;
+import mindustrytool.features.screenshot.ScreenshotFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
 import mindustrytool.features.teamresource.TeamResourceFeature;
@@ -74,6 +77,7 @@ public class Main extends Mod {
                 new BridgeVisualizerFeature(),
                 new PlayerConnectFeature(),
                 new HealthBarFeature(),
+                new CameraZoomFeature(),
                 new PathfindingFeature(),
                 new RangeDisplayFeature(),
                 new PrettyChatFeature(),
@@ -87,7 +91,9 @@ public class Main extends Mod {
                 new ProgressDisplayFeature(),
                 new ToggleRenderingFeature(),
                 new TimeControlFeature(),
-                new JoystickFeature());
+                new JoystickFeature(),
+                new ScreenshotFeature(),
+                new EmojiFeature());
 
         Events.on(ClientLoadEvent.class, event -> {
             registerMindustryToolButton();
@@ -113,7 +119,7 @@ public class Main extends Mod {
     private void registerMindustryToolButton() {
         Core.app.post(() -> {
             try {
-                Vars.ui.menufrag.addButton("Mindustry Tool", FileIcon.of("mod.png"), () -> {
+                Vars.ui.menufrag.addButton("Mindustry Tool", FileIcon.of("mindustrytool.png"), () -> {
                     if (featureSettingDialog == null) {
                         featureSettingDialog = new FeatureSettingDialog();
                     }

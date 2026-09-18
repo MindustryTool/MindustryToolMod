@@ -5,7 +5,6 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
-import arc.scene.ui.Tooltip;
 import arc.struct.Seq;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
@@ -15,10 +14,9 @@ import mindustrytool.features.prettychat.Prettier;
 import mindustrytool.features.prettychat.PrettyChatFeature;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Row;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 import java.util.List;
 
@@ -121,18 +119,13 @@ public class PrettyChatSettingsView extends BaseComponent {
                 int enabledIndex = isEnabled ? enabledIds.indexOf(p.id()) : -1;
                 int enabledCount = enabledIds.size();
 
-                Row cardRow = row()
+                row()
                         .growX()
                         .padding(unit(2.5f))
                         .rounded(unit(2))
-                        .border(1.5f, isEnabled ? Pal.accent : WebStyles.Colors.BORDER);
-
-                // Show description on hover via tooltip
-                cardRow.table().addListener(new Tooltip(t -> {
-                    t.background(Styles.black6).margin(6f).add(p.description()).color(Color.lightGray);
-                }));
-
-                cardRow.children(() -> {
+                        .border(1.5f, isEnabled ? Pal.accent : WebStyles.Colors.BORDER)
+                        .tooltip(t -> t.background(Styles.black6).margin(6f).add(p.description()).color(Color.lightGray))
+                        .children(() -> {
                     // Left Information Column: Name & Direct Preview
                     column().growX().gap(unit(1)).left().children(() -> {
                         row().growX().gap(unit(1.5f)).left().children(() -> {

@@ -35,7 +35,7 @@ import mindustrytool.features.translation.ui.TranslationSettingsDialog;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.prettychat.PrettyChatFeature;
 import mindustrytool.services.PacketReplacer;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 /**
  * Feature that provides in-game multiplayer chat translation.

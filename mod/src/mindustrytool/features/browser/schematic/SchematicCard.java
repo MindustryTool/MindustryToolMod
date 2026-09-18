@@ -16,7 +16,7 @@ import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.SchematicData;
 import solim.core.BaseComponent;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Image-first card layout showing a dedicated preview card with a centered

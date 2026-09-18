@@ -21,10 +21,10 @@ import solim.config.ContextualConfigValue;
 import solim.config.OrderedSeqPersister;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.signal.Signals;
-import solim.ui.Units;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
+import solim.core.Units;
 
 public class QuickAccessFeature extends Feature {
 
@@ -33,6 +33,7 @@ public class QuickAccessFeature extends Feature {
     public final ConfigValue<Float> scaleConfig;
     public final ConfigValue<Integer> colsConfig;
     public final ConfigValue<Set<String>> hiddenFeaturesConfig;
+    public final ConfigValue<Set<String>> shownFeaturesConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
     public final ConfigValue<Seq<String>> displayOrderConfig;
 
@@ -60,6 +61,7 @@ public class QuickAccessFeature extends Feature {
         scaleConfig = config.floatValue("scale", 1f);
         colsConfig = config.intValue("cols", 6);
         hiddenFeaturesConfig = config.setValue("hidden", String.class, Collections.emptySet());
+        shownFeaturesConfig = config.setValue("shown", String.class, Collections.emptySet());
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
         displayOrderConfig = config.value("display-order", Seq.with(), new OrderedSeqPersister());
 
@@ -133,23 +135,49 @@ public class QuickAccessFeature extends Feature {
 
     public boolean isFeatureVisible(String id) {
         Set<String> hidden = hiddenFeaturesConfig.get();
-        return hidden == null || !hidden.contains(id);
+        if (hidden != null && hidden.contains(id)) {
+            return false;
+        }
+        Set<String> shown = shownFeaturesConfig.get();
+        if (shown != null && shown.contains(id)) {
+            return true;
+        }
+        Feature f = FeatureManager.getFeatures().find(feat -> feat.getMetadata().getId().equals(id));
+        return f != null && f.getMetadata().isQuickAccessByDefault();
     }
 
     public void setFeatureVisible(String id, boolean visible) {
-        Set<String> current = hiddenFeaturesConfig.get();
-        Set<String> hidden = current != null ? new HashSet<>(current) : new HashSet<>();
+        Feature f = FeatureManager.getFeatures().find(feat -> feat.getMetadata().getId().equals(id));
+        boolean defaultOn = f != null && f.getMetadata().isQuickAccessByDefault();
+
+        Set<String> currentHidden = hiddenFeaturesConfig.get();
+        Set<String> hidden = currentHidden != null ? new HashSet<>(currentHidden) : new HashSet<>();
+
+        Set<String> currentShown = shownFeaturesConfig.get();
+        Set<String> shown = currentShown != null ? new HashSet<>(currentShown) : new HashSet<>();
+
+        boolean hiddenChanged;
+        boolean shownChanged;
+
         if (visible) {
-            hidden.remove(id);
+            hiddenChanged = hidden.remove(id);
+            shownChanged = !defaultOn ? shown.add(id) : shown.remove(id);
         } else {
-            hidden.add(id);
+            shownChanged = shown.remove(id);
+            hiddenChanged = defaultOn ? hidden.add(id) : hidden.remove(id);
         }
-        hiddenFeaturesConfig.set(hidden);
+
+        if (hiddenChanged) {
+            hiddenFeaturesConfig.set(hidden);
+        }
+        if (shownChanged) {
+            shownFeaturesConfig.set(shown);
+        }
     }
 
     public Seq<Feature> quickAccessFeatures() {
         return FeatureManager.getFeatures().select(
-                f -> f != this && f.getMetadata().isQuickAccess() && !f.getMetadata().isDevelopment());
+                f -> f != this && !f.getMetadata().isDevelopment());
     }
 
     public List<Feature> orderedFeatures(@Nullable Seq<String> order) {

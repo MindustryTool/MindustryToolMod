@@ -10,9 +10,9 @@ import arc.scene.ui.layout.CellAccess;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
-import solim.signal.Signal;
-import solim.ui.Dynamic;
-import solim.ui.Ui;
+import solim.reactive.Signal;
+import solim.reactive.Dynamic;
+import solim.core.Ui;
 import solim.runtime.ParentStack;
 
 class GapCoexistenceTest {

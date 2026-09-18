@@ -10,13 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.layout.CellConfig;
+import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
-import solim.signal.Effect;
-import solim.signal.Readable;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 
 /**
  * Compact pill-shaped badge component for notification counters and tag

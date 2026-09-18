@@ -1,4 +1,5 @@
 package solim.layout;
+import solim.modifier.CellConfig;
 
 import arc.Core;
 import arc.scene.Element;
@@ -14,9 +15,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.signal.Effect;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 import solim.runtime.StructuralReconciler;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;

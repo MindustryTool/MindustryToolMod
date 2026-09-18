@@ -1,7 +1,7 @@
 package solim.style;
 
 import arc.util.Nullable;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Base abstractions for Solim style builders providing common layout properties.

@@ -3,8 +3,8 @@ package solim.display;
 import arc.scene.style.Drawable;
 import arc.scene.ui.Image;
 import java.util.function.Consumer;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 
 /** Display widget for icon drawables. */
 public final class Icon {

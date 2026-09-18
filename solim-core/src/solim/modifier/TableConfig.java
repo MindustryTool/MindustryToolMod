@@ -7,8 +7,8 @@ import arc.util.Nullable;
 import solim.graphics.RoundedDrawable;
 import solim.layout.GapContainer;
 import solim.runtime.ComponentContext;
-import solim.signal.Effect;
-import solim.signal.Readable;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 
 /**
  * Mixin interface for operations that configure an Arc {@link Table}'s content

@@ -8,20 +8,30 @@ import arc.scene.Element;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import java.util.Objects;
+import arc.util.Nullable;
+import mindustry.gen.Icon;
 import mindustry.ui.Fonts;
 import mindustry.ui.Styles;
+import mindustrytool.components.Loader;
+import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ChannelDto;
 import solim.core.BaseComponent;
 import solim.graphics.RoundedDrawable;
-import solim.signal.Computed;
-import solim.signal.Readable;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
 
 public class ChatChannelListView extends BaseComponent {
 
     private final ChatStore store;
+    private final @Nullable ChatService service;
 
     public ChatChannelListView(ChatStore store) {
+        this(store, null);
+    }
+
+    public ChatChannelListView(ChatStore store, @Nullable ChatService service) {
         this.store = store;
+        this.service = service;
     }
 
     @Override
@@ -29,24 +39,58 @@ public class ChatChannelListView extends BaseComponent {
         Readable<Boolean> hasChannels = store.channels().all().map(list -> list != null && !list.isEmpty());
 
         return column().grow().gap(unit(1)).padding(unit(2)).children(() -> {
-            scroll().grow().children(() -> {
-                column().growX().gap(unit(1)).children(() -> {
-                    dynamic(hasChannels, available -> {
-                        if (Boolean.TRUE.equals(available)) {
-                            return forEach(store.channels().all(), ChannelDto::getId,
-                                    channel -> new ChannelItem(channel, store))
-                                            .growX();
-                        } else {
-                            return column().padding(unit(2)).children(() -> {
-                                text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
-                                        .color(Color.gray)
-                                        .fontScale(0.9f);
-                            });
-                        }
-                    })
-                            .growX();
-                });
-            });
+            dynamic(store.channels().loading(), isLoading -> {
+                if (Boolean.TRUE.equals(isLoading)) {
+                    return Loader.centered();
+                }
+
+                return dynamic(store.channels().error(), err -> {
+                    if (err != null && !err.trim().isEmpty()) {
+                        return column().grow().center().gap(unit(2)).padding(unit(2)).children(() -> {
+                            icon(Icon.warning).size(unit(6)).color(Color.scarlet);
+                            text(Core.bundle.get("feature.chat.ui.error.channels", "Failed to load channels."))
+                                    .color(Color.scarlet)
+                                    .fontScale(0.95f)
+                                    .wrap()
+                                    .center();
+                            text(err)
+                                    .color(Color.gray)
+                                    .fontScale(0.8f)
+                                    .wrap()
+                                    .center();
+                            button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
+                                if (service != null) {
+                                    service.refreshChannels();
+                                }
+                            })
+                                    .style(WebStyles.secondary())
+                                    .height(unit(9))
+                                    .children(() -> {
+                                        icon(Icon.refresh).size(unit(4));
+                                        text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
+                                    });
+                        });
+                    }
+
+                    return scroll().grow().children(() -> {
+                        column().growX().gap(unit(1)).children(() -> {
+                            dynamic(hasChannels, available -> {
+                                if (Boolean.TRUE.equals(available)) {
+                                    return forEach(store.channels().all(), ChannelDto::getId,
+                                            channel -> new ChannelItem(channel, store))
+                                                    .growX();
+                                } else {
+                                    return column().padding(unit(2)).children(() -> {
+                                        text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
+                                                .color(Color.gray)
+                                                .fontScale(0.9f);
+                                    });
+                                }
+                            }).growX();
+                        });
+                    });
+                }).grow();
+            }).grow();
         }).element();
     }
 

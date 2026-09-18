@@ -85,4 +85,12 @@ class ChangelogFormatterTest {
         String out = ChangelogFormatter.format((String) null);
         assertTrue(out.contains("Could not parse"));
     }
+
+    @Test
+    void format_withPublishedAt_formatsDateWithoutError() {
+        String json = "[{\"tag_name\":\"v1.0\",\"body\":\"hello\",\"published_at\":\"2024-01-01T12:00:00Z\",\"assets\":[]}]";
+        String out = ChangelogFormatter.format(json);
+        assertTrue(out.contains("[accent]v1.0[white]"));
+        assertTrue(out.contains("[lightgray]"));
+    }
 }

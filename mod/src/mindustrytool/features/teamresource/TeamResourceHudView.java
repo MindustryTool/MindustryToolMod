@@ -25,9 +25,9 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Card;
 import solim.overlay.Hud;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Fully reactive and declarative Team Resource HUD overlay.

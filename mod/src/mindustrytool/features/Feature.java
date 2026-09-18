@@ -3,15 +3,21 @@ package mindustrytool.features;
 import arc.Core;
 import arc.Events;
 import arc.func.Prov;
+import arc.input.KeyBind;
+import arc.input.KeyCode;
+import arc.scene.Element;
+import arc.struct.Seq;
 import arc.util.Nullable;
 import solim.config.ConfigGroup;
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 public abstract class Feature {
+	private static final String KEYBIND_CATEGORY = "MindustryTool";
 
 	private final FeatureMetadata metadata;
 	private @Nullable Signal<Boolean> enabled;
+	private final Seq<FeatureKeybind> keybinds = new Seq<>();
 
 	public Feature(FeatureMetadata metadata) {
 		this.metadata = metadata;
@@ -87,6 +93,65 @@ public abstract class Feature {
 
 	public @Nullable Prov<SolimDialog> getMainDialog() {
 		return null;
+	}
+
+	public Seq<FeatureKeybind> getKeybinds() {
+		return keybinds;
+	}
+
+	protected final KeyBind bindToggle(String name, KeyCode defaultKey) {
+		return bindAction(name, defaultKey, () -> setEnabled(!isEnabled()), false);
+	}
+
+	protected final KeyBind bindAction(String name, KeyCode defaultKey, Runnable action) {
+		return bindAction(name, defaultKey, action, true);
+	}
+
+	protected final KeyBind bindAction(String name, KeyCode defaultKey, Runnable action, boolean requireEnabled) {
+		KeyBind bind = KeyBind.add(name, defaultKey, KEYBIND_CATEGORY);
+		keybinds.add(new FeatureKeybind(bind, action, requireEnabled));
+		return bind;
+	}
+
+	protected final KeyBind bindDialog(String name, KeyCode defaultKey, Runnable showDialog) {
+		return bindDialog(name, defaultKey, showDialog, true);
+	}
+
+	protected final KeyBind bindDialog(String name, KeyCode defaultKey, Runnable showDialog, boolean requireEnabled) {
+		return bindAction(name, defaultKey, showDialog, requireEnabled);
+	}
+
+	protected final KeyBind bindDialog(String name, KeyCode defaultKey, @Nullable Prov<SolimDialog> dialogProvider) {
+		return bindDialog(name, defaultKey, dialogProvider, true);
+	}
+
+	protected final KeyBind bindDialog(String name, KeyCode defaultKey, @Nullable Prov<SolimDialog> dialogProvider,
+			boolean requireEnabled) {
+		return bindAction(name, defaultKey, () -> {
+			SolimDialog dialog = dialogProvider != null ? dialogProvider.get() : null;
+			if (dialog != null) {
+				dialog.show();
+			}
+		}, requireEnabled);
+	}
+
+	public void onQuickAccessClick(@Nullable Element anchor) {
+		onQuickAccessClick();
+	}
+
+	public void onQuickAccessClick() {
+		setEnabled(!isEnabled());
+	}
+
+	public void onQuickAccessLongClick(@Nullable Element anchor) {
+		onQuickAccessLongClick();
+	}
+
+	public void onQuickAccessLongClick() {
+		Prov<SolimDialog> dlg = getSettingDialog() != null ? getSettingDialog() : getMainDialog();
+		if (dlg != null) {
+			dlg.get().show();
+		}
 	}
 
 	public String getName() {

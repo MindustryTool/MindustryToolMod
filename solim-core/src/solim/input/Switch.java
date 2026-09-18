@@ -1,11 +1,12 @@
 package solim.input;
+import solim.reactive.TwoWayBinding;
 
 import arc.scene.ui.TextButton;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import solim.modifier.ElementConfig;
-import solim.layout.CellConfig;
+import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 

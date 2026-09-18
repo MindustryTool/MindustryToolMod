@@ -8,10 +8,10 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Signal;
-import solim.signal.Subscription;
+import solim.reactive.Computed;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
+import solim.reactive.Subscription;
 import java.lang.reflect.Array;
 
 /**

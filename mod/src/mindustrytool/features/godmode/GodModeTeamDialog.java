@@ -11,7 +11,7 @@ import mindustry.gen.Player;
 import mindustry.gen.Tex;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 public class GodModeTeamDialog extends SolimDialog {
 

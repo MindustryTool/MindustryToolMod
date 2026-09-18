@@ -13,7 +13,7 @@ import mindustrytool.features.playerconnect.models.JoinRequest;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.Hud;
-import solim.ui.Units;
+import solim.core.Units;
 
 public class JoinApprovalHudView extends BaseComponent {
 

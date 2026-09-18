@@ -3,7 +3,7 @@ package solim.style;
 import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.util.Nullable;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * State-specific visual configuration for a single button interaction state

@@ -20,7 +20,7 @@ import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 /**
  * Detail dialog showing a full map preview, author, dimensions, stats, tags,

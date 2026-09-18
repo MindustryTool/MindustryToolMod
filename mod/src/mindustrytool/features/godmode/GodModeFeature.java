@@ -12,18 +12,17 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.features.PopupDisplayFeature;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
-import solim.signal.Signals;
-import solim.ui.Units;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
+import solim.core.Units;
 
-public class GodModeFeature extends Feature implements PopupDisplayFeature {
+public class GodModeFeature extends Feature {
 
     public static final String PROVIDER_AUTO = "auto";
     public static final String PROVIDER_INTERNAL = "internal";
@@ -176,11 +175,18 @@ public class GodModeFeature extends Feature implements PopupDisplayFeature {
     }
 
     @Override
+    public void onQuickAccessClick(@Nullable Element anchor) {
+        if (isPopupMode()) {
+            togglePopup(anchor);
+            return;
+        }
+        super.onQuickAccessClick(anchor);
+    }
+
     public void togglePopup(@Nullable Element quickAccessBar) {
         GodModePopup.toggle(this, quickAccessBar);
     }
 
-    @Override
     public void openPopup(@Nullable Element quickAccessBar) {
         GodModePopup.toggle(this, quickAccessBar);
     }

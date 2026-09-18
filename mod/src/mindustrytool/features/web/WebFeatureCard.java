@@ -8,8 +8,8 @@ import arc.scene.Element;
 import arc.util.Log;
 import lombok.AllArgsConstructor;
 import mindustry.Vars;
-import mindustry.gen.Icon;
 import mindustry.ui.Styles;
+import mindustrytool.components.FileIcon;
 import solim.core.BaseComponent;
 
 @AllArgsConstructor
@@ -39,7 +39,7 @@ public class WebFeatureCard extends BaseComponent {
 
                             button(this::openWebFeature).style(Styles.clearNonei).size(unit(11))
                                     .tooltip(Core.bundle.get("web-feature.button.open", "Open in browser"))
-                                    .children(() -> icon(Icon.linkSmall).size(unit(7)));
+                                    .children(() -> icon(FileIcon.of("external-link.png")).size(unit(7)));
                         });
 
                         text(webFeature.getDescription()).color(Color.lightGray).fontScale(0.9f).wrap(true).left();

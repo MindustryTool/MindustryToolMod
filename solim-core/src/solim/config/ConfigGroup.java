@@ -3,7 +3,7 @@ package solim.config;
 import arc.util.Nullable;
 import java.util.Set;
 import java.util.function.Function;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 public class ConfigGroup {
 	private final String namespace;

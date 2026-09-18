@@ -1,4 +1,5 @@
 package solim.layout;
+import solim.modifier.CellConfig;
 
 import arc.scene.Element;
 import arc.scene.style.Drawable;
@@ -11,7 +12,7 @@ import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
-import solim.ui.Ui;
+import solim.core.Ui;
 import solim.modifier.PendingCellConfig;
 
 /**

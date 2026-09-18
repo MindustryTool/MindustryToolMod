@@ -28,7 +28,7 @@ import solim.layout.SolimStack;
 import solim.layout.Spacer;
 import solim.layout.Wrap;
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 class ComponentDefaultNameTest {
 

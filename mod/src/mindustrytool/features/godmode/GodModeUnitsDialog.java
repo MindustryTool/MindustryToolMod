@@ -12,9 +12,9 @@ import mindustry.gen.Tex;
 import mindustry.type.UnitType;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public class GodModeUnitsDialog extends SolimDialog {
 

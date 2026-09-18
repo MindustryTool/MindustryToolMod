@@ -9,9 +9,9 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.quickaccess.QuickAccessPopupHelper;
 import solim.core.Component;
 import solim.overlay.Popup;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.signal.Signals;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
 
 /**
  * QuickAccess popup for TimeControl, opened from QuickAccess in popup display

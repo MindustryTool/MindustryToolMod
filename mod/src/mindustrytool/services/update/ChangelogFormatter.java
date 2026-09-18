@@ -8,6 +8,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import mindustrytool.utils.TimeZones;
 
 /**
  * Pure changelog formatting extracted from {@code UpdateService.fetchReleasesAndShowDialog}. No
@@ -17,7 +18,7 @@ public final class ChangelogFormatter {
 
 	private static final int MAX_RELEASES = 20;
 	private static final DateTimeFormatter DATE_FORMATTER =
-			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
+			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(TimeZones.systemDefaultOrUtc());
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	private ChangelogFormatter() {}
@@ -90,7 +91,7 @@ public final class ChangelogFormatter {
 
 	/** Pure formatting from structured releases. */
 	public static String formatReleases(List<ReleaseInfo> releases) {
-		return formatReleases(releases, ZoneId.systemDefault(), DATE_FORMATTER);
+		return formatReleases(releases, TimeZones.systemDefaultOrUtc(), DATE_FORMATTER);
 	}
 
 	/**

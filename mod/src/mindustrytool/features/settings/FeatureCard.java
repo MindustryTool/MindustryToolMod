@@ -6,8 +6,12 @@ import arc.Core;
 import arc.func.Prov;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.scene.style.TextureRegionDrawable;
 import arc.util.Nullable;
+import java.util.HashSet;
+import java.util.Set;
 import mindustry.gen.Icon;
+import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
@@ -17,8 +21,8 @@ import mindustrytool.features.FeatureMetadata;
 import solim.core.BaseComponent;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Component responsible for building and managing a single feature's visual
@@ -63,6 +67,13 @@ public class FeatureCard extends BaseComponent {
         Prov<SolimDialog> mainDialog = feature.getMainDialog();
         Prov<SolimDialog> settingDialog = feature.getSettingDialog();
 
+        String id = metadata.getId();
+        Readable<Boolean> isFavorite = ModSettings.favoriteFeatures.signal().map(set -> set != null && set.contains(id));
+        Readable<Color> starColor = isFavorite.map(fav -> Boolean.TRUE.equals(fav) ? Pal.accent : Color.gray);
+        Readable<String> favoriteTooltip = isFavorite.map(fav -> Boolean.TRUE.equals(fav)
+                ? Core.bundle.get("feature.button.favorite.remove")
+                : Core.bundle.get("feature.button.favorite.add"));
+
         return card()
                 .name("FeatureCard-" + metadata.getId()).height(unit(60)).growX()
                 .rounded(unit(4))
@@ -84,11 +95,18 @@ public class FeatureCard extends BaseComponent {
 
                             spacer();
 
+                            button(() -> toggleFavorite(id)).style(WebStyles.ghost())
+                                    .size(unit(11))
+                                    .tooltip(favoriteTooltip)
+                                    .children(() -> icon(Icon.star != null ? Icon.star : new TextureRegionDrawable())
+                                            .size(unit(7))
+                                            .color(starColor));
+
                             if (mainDialog != null) {
                                 button(() -> showDialog(mainDialog)).style(WebStyles.ghost())
                                         .size(unit(11))
                                         .tooltip(Core.bundle.get("feature.button.open-dialog"))
-                                        .children(() -> icon(Icon.linkSmall).size(unit(7)));
+                                        .children(() -> icon(FileIcon.of("external-link.png")).size(unit(7)));
                             }
 
                             if (settingDialog != null) {
@@ -143,5 +161,16 @@ public class FeatureCard extends BaseComponent {
         if (dialog != null) {
             dialog.show();
         }
+    }
+
+    private void toggleFavorite(String id) {
+        Set<String> current = ModSettings.favoriteFeatures.get();
+        Set<String> updated = current != null ? new HashSet<>(current) : new HashSet<>();
+        if (updated.contains(id)) {
+            updated.remove(id);
+        } else {
+            updated.add(id);
+        }
+        ModSettings.favoriteFeatures.set(updated);
     }
 }

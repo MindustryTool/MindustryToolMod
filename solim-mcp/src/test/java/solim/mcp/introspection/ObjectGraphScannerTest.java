@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
-import solim.signal.Computed;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 
 class ObjectGraphScannerTest {
 

@@ -1,17 +1,15 @@
 package mindustrytool.features.browser.map;
 
 import arc.Core;
-import arc.Events;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import mindustry.Vars;
-import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.features.browser.common.BrowserKeybinds;
 
 import solim.overlay.SolimDialog;
 
@@ -31,10 +29,9 @@ public class MapBrowserFeature extends Feature {
                 .order(35)
                 .enabledByDefault(true)
                 .quickAccess(false)
-                .keybind(BrowserKeybinds.mapBrowser)
                 .build());
 
-        Events.run(Trigger.update, this::updateKeybind);
+        bindDialog("mapBrowser", KeyCode.unset, this::showDialog);
     }
 
     @Override
@@ -67,15 +64,6 @@ public class MapBrowserFeature extends Feature {
             dialog = new MapBrowserDialog();
         }
         dialog.show();
-    }
-
-    private void updateKeybind() {
-        if (!isEnabled() || !BrowserKeybinds.noInputFocused()) {
-            return;
-        }
-        if (Core.input.keyRelease(BrowserKeybinds.mapBrowser)) {
-            Core.app.post(this::showDialog);
-        }
     }
 
     private void injectBrowseButton() {

@@ -20,8 +20,8 @@ import mindustrytool.models.response.MapData;
 import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
-import solim.signal.Readable;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
 
 /**
  * Main map browser dialog with reactive column reflow and a keyed reactive grid

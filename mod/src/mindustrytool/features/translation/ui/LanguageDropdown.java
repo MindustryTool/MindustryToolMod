@@ -21,8 +21,8 @@ import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.features.translation.TranslationFeature;
 import solim.core.BaseComponent;
 import solim.input.Button;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Dropdown selector for Outgoing Translation target language.

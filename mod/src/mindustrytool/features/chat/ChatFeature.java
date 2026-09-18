@@ -2,6 +2,7 @@ package mindustrytool.features.chat;
 
 import arc.Core;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.scene.Element;
 import java.util.Objects;
 import solim.overlay.SolimDialog;
@@ -10,13 +11,14 @@ import arc.util.Nullable;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.settings.ModSettings;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
-import solim.signal.Readable;
-import solim.signal.Signal;
-import solim.signal.Signals;
-import solim.ui.Units;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
+import solim.core.Units;
 
 public class ChatFeature extends Feature {
 
@@ -25,7 +27,6 @@ public class ChatFeature extends Feature {
     public final ConfigValue<Float> widthRatioConfig;
     public final ConfigValue<Float> heightRatioConfig;
     public final ConfigValue<Boolean> collapsedConfig;
-    public final ConfigValue<Boolean> sharePresenceConfig;
     public final ConfigValue<Boolean> channelsCollapsedConfig;
     public final ConfigValue<Boolean> usersCollapsedConfig;
     public final ConfigValue<String> activeChannelConfig;
@@ -58,7 +59,6 @@ public class ChatFeature extends Feature {
         widthRatioConfig = config.floatValue("width-ratio", 0.9f);
         heightRatioConfig = config.floatValue("height-ratio", 0.9f);
         collapsedConfig = config.boolValue("collapsed", false);
-        sharePresenceConfig = config.boolValue("share-presence", true);
         channelsCollapsedConfig = config.boolValue("channels-collapsed", false);
         usersCollapsedConfig = config.boolValue("users-collapsed", false);
         activeChannelConfig = config.stringValue("active-channel", "");
@@ -123,7 +123,9 @@ public class ChatFeature extends Feature {
         });
 
         service = new ChatService(store, () -> !Boolean.TRUE.equals(collapsedConfig.get()));
-        presence = new ChatPresence(store.session(), sharePresenceConfig, enabled());
+        presence = new ChatPresence(store.session(), ModSettings.sharePresence, enabled());
+
+        bindAction("chatOverlay", KeyCode.unset, this::toggleCollapsed, false);
 
         collapsedConfig.signal().subscribe(col -> {
             boolean isCollapsed = Boolean.TRUE.equals(col);
@@ -181,6 +183,20 @@ public class ChatFeature extends Feature {
         opacityConfig.reset();
         widthRatioConfig.reset();
         heightRatioConfig.reset();
+    }
+
+    public void toggleCollapsed() {
+        if (!isEnabled()) {
+            setEnabled(true);
+            collapsedConfig.set(false);
+            return;
+        }
+        collapsedConfig.set(!Boolean.TRUE.equals(collapsedConfig.get()));
+    }
+
+    @Override
+    public void onQuickAccessClick() {
+        toggleCollapsed();
     }
 
     @Override

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import java.util.ArrayList;
 import java.util.List;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 class SolimDialogComponentTest {
 

@@ -1,4 +1,5 @@
 package solim.input;
+import solim.reactive.TwoWayBinding;
 
 import arc.Core;
 import arc.scene.ui.CheckBox;
@@ -7,10 +8,10 @@ import arc.util.Nullable;
 import java.util.function.Consumer;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
-import solim.layout.CellConfig;
+import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 /** Checkbox widget bound to Signal&lt;Boolean&gt;. */
 public final class Checkbox implements Component, ElementConfig<Checkbox>, CellConfig<Checkbox> {
@@ -112,4 +113,3 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
         return this;
     }
 }
-

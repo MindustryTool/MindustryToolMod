@@ -6,6 +6,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.struct.Seq;
+import java.util.Set;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
@@ -14,8 +15,8 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.web.WebFeature;
 import mindustrytool.features.web.WebFeatureCard;
 import solim.core.BaseComponent;
-import solim.signal.Computed;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 public final class FeatureSettingsView extends BaseComponent {
     private final Signal<String> filter = Signal.of("");
@@ -28,18 +29,42 @@ public final class FeatureSettingsView extends BaseComponent {
         return FeatureManager.features().get().select(f -> matchesFilter(f, query));
     });
 
+    private final Computed<Seq<Feature>> favoritedFeatures = Signal.computed(() -> {
+        Seq<Feature> all = filteredFeatures.get();
+        Set<String> favs = ModSettings.favoriteFeatures.signal().get();
+        if (all == null || favs == null || favs.isEmpty()) {
+            return new Seq<>();
+        }
+        return all.select(f -> favs.contains(f.getMetadata().getId()));
+    });
+
+    private final Computed<Seq<Feature>> standardFeatures = Signal.computed(() -> {
+        Seq<Feature> all = filteredFeatures.get();
+        Set<String> favs = ModSettings.favoriteFeatures.signal().get();
+        if (all == null) {
+            return new Seq<>();
+        }
+        if (favs == null || favs.isEmpty()) {
+            return all;
+        }
+        return all.select(f -> !favs.contains(f.getMetadata().getId()));
+    });
+
     private final Computed<Boolean> reorderAllowed = filter.map(q -> q == null || q.trim().isEmpty());
 
     private final Computed<Seq<WebFeature>> filteredWebFeatures = filter.map(
             q -> WebFeature.defaults.select(w -> matchesWebFilter(w, q != null ? q.trim().toLowerCase() : "")));
 
-    private final Computed<Boolean> hasFeatures = filteredFeatures.map(seq -> seq != null && !seq.isEmpty());
+    private final Computed<Boolean> hasFavorites = favoritedFeatures.map(seq -> seq != null && !seq.isEmpty());
+    private final Computed<Boolean> hasStandardFeatures = standardFeatures.map(seq -> seq != null && !seq.isEmpty());
+    private final Computed<Boolean> hasFeatures = Signal.computed(() ->
+            Boolean.TRUE.equals(hasFavorites.get()) || Boolean.TRUE.equals(hasStandardFeatures.get()));
     private final Computed<Boolean> hasWebFeatures = filteredWebFeatures.map(seq -> seq != null && !seq.isEmpty());
 
     private final Computed<Boolean> isEmpty = Signal.computed(() -> {
-        Seq<Feature> f = filteredFeatures.get();
+        Boolean hf = hasFeatures.get();
         Seq<WebFeature> w = filteredWebFeatures.get();
-        return (f == null || f.isEmpty()) && (w == null || w.isEmpty());
+        return !Boolean.TRUE.equals(hf) && (w == null || w.isEmpty());
     });
 
     @Override
@@ -48,21 +73,39 @@ public final class FeatureSettingsView extends BaseComponent {
             toolbar();
             scroll().grow().scrollX(false).children(() -> {
                 column().growX().gap(unit(3)).children(() -> {
+                    // Favorites Section
+                    column().growX().gap(unit(2)).visible(hasFavorites).children(() -> {
+                        row().growX().paddingTop(unit(1)).paddingBottom(unit(1)).children(() -> {
+                            text(Core.bundle.get("feature.section.favorites", "Favorites"))
+                                    .style(Styles.defaultLabel)
+                                    .left();
+                        });
+                        grid(columnCount,
+                                favoritedFeatures,
+                                feature -> feature.getMetadata().getId(),
+                                feature -> new FeatureCard(feature, reorderAllowed)
+                        ).gap(unit(2));
+                    });
+
+                    divider().visible(Signal.computed(() ->
+                            Boolean.TRUE.equals(hasFavorites.get()) && Boolean.TRUE.equals(hasStandardFeatures.get())));
+
                     // Mod Features Section
-                    column().growX().gap(unit(2)).visible(hasFeatures).children(() -> {
+                    column().growX().gap(unit(2)).visible(hasStandardFeatures).children(() -> {
                         row().growX().paddingTop(unit(1)).paddingBottom(unit(1)).children(() -> {
                             text(Core.bundle.get("feature.section.mod-features", "Mod Features"))
                                     .style(Styles.defaultLabel)
                                     .left();
                         });
                         grid(columnCount,
-                                filteredFeatures,
+                                standardFeatures,
                                 feature -> feature.getMetadata().getId(),
                                 feature -> new FeatureCard(feature, reorderAllowed)
                         ).gap(unit(2));
                     });
 
-                    divider();
+                    divider().visible(Signal.computed(() ->
+                            Boolean.TRUE.equals(hasFeatures.get()) && Boolean.TRUE.equals(hasWebFeatures.get())));
 
                     // Web Tools Section
                     column().growX().gap(unit(2)).visible(hasWebFeatures).children(() -> {

@@ -2,6 +2,7 @@ package mindustrytool.features.timecontrol;
 
 import arc.Core;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.scene.Element;
 import arc.util.Nullable;
@@ -11,23 +12,22 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
-import mindustrytool.features.PopupDisplayFeature;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
-import solim.signal.Signals;
-import solim.ui.Units;
+import solim.reactive.Signal;
+import solim.reactive.Signals;
+import solim.core.Units;
 
 /**
  * Controls game speed with a standalone draggable HUD. Applies only while
  * hosting or in single-player; speed is ephemeral and resets to 1x on disable,
  * world exit, client sessions, and interaction-mode switches.
  */
-public class TimeControlFeature extends Feature implements PopupDisplayFeature {
+public class TimeControlFeature extends Feature {
 
     public static final float[] SPEEDS = { 0.125f, 0.5f, 1f, 2f, 8f };
     public static final float SLIDER_MIN_U = -1f;
@@ -62,6 +62,7 @@ public class TimeControlFeature extends Feature implements PopupDisplayFeature {
     private final Signal<Float> selectedPreset = Signal.of(1f);
     private final Signal<Boolean> boosted = Signal.of(false);
     private final Signal<Float> sliderPosition = Signal.of(0f);
+    private float prePauseSpeed = 1f;
 
     private @Nullable TimeControlHudView hudView;
     private @Nullable TimeControlSettingsDialog settingsDialog;
@@ -124,6 +125,10 @@ public class TimeControlFeature extends Feature implements PopupDisplayFeature {
 
         modeConfig.signal().subscribe(mode -> resetSpeed());
         displayModeConfig.signal().subscribe(mode -> updateHud());
+
+        bindAction("timecontrolPause", KeyCode.unset, this::togglePause);
+        bindAction("timecontrolSpeedUp", KeyCode.unset, this::speedUp);
+        bindAction("timecontrolSpeedDown", KeyCode.unset, this::speedDown);
     }
 
     /**
@@ -213,6 +218,60 @@ public class TimeControlFeature extends Feature implements PopupDisplayFeature {
         // speed will be updated reactively via the sliderPosition subscriber.
     }
 
+    public void togglePause() {
+        if (!canApply()) {
+            return;
+        }
+        Float current = speed.peek();
+        float value = current != null ? current : 1f;
+        if (Float.compare(value, 0f) == 0) {
+            speed.set(prePauseSpeed != 0f ? prePauseSpeed : 1f);
+        } else {
+            prePauseSpeed = value;
+            speed.set(0f);
+        }
+    }
+
+    public void speedUp() {
+        if (!canApply()) {
+            return;
+        }
+        if (isPresetMode()) {
+            selectPreset(stepPreset(1));
+        } else {
+            Float position = sliderPosition.peek();
+            float value = position != null ? position : 0f;
+            sliderPosition.set(Mathf.clamp(value + SLIDER_STEP_U, SLIDER_MIN_U, SLIDER_MAX_U));
+        }
+    }
+
+    public void speedDown() {
+        if (!canApply()) {
+            return;
+        }
+        if (isPresetMode()) {
+            selectPreset(stepPreset(-1));
+        } else {
+            Float position = sliderPosition.peek();
+            float value = position != null ? position : 0f;
+            sliderPosition.set(Mathf.clamp(value - SLIDER_STEP_U, SLIDER_MIN_U, SLIDER_MAX_U));
+        }
+    }
+
+    private float stepPreset(int delta) {
+        Float selected = selectedPreset.peek();
+        float current = selected != null ? selected : 1f;
+        int index = 0;
+        for (int i = 0; i < SPEEDS.length; i++) {
+            if (Float.compare(SPEEDS[i], current) == 0) {
+                index = i;
+                break;
+            }
+        }
+        int next = Mathf.clamp(index + delta, 0, SPEEDS.length - 1);
+        return SPEEDS[next];
+    }
+
     public void resetSpeed() {
         selectedPreset.set(1f);
         boosted.set(false);
@@ -258,11 +317,18 @@ public class TimeControlFeature extends Feature implements PopupDisplayFeature {
     }
 
     @Override
+    public void onQuickAccessClick(@Nullable Element anchor) {
+        if (isPopupMode()) {
+            togglePopup(anchor);
+            return;
+        }
+        super.onQuickAccessClick(anchor);
+    }
+
     public void togglePopup(@Nullable Element quickAccessBar) {
         TimeControlPopup.toggle(this, quickAccessBar);
     }
 
-    @Override
     public void openPopup(@Nullable Element quickAccessBar) {
         TimeControlPopup.toggle(this, quickAccessBar);
     }

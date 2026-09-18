@@ -1,4 +1,5 @@
 package solim.input;
+import solim.reactive.TwoWayBinding;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -11,14 +12,14 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import solim.core.Component;
 import solim.modifier.ElementConfig;
-import solim.layout.CellConfig;
+import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
-import solim.signal.Effect;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 import solim.style.InputStyle;
-import solim.ui.Binding;
+import solim.reactive.Binding;
 
 /**
  * TextField widget with two-way binding to a Signal&lt;String&gt;. Equality

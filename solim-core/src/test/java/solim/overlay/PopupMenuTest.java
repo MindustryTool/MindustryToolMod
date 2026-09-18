@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
-import solim.ui.Ui;
+import solim.core.Ui;
 import arc.mock.MockApplication;
 import arc.mock.MockGL20;
 import arc.mock.MockGraphics;

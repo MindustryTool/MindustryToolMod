@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.OrderedSeqPersister;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Verifies the list-based disabled model: persistence across reloads, the

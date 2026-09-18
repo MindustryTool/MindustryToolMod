@@ -8,6 +8,7 @@ import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
+import arc.input.KeyCode;
 import arc.math.geom.Rect;
 import arc.struct.ObjectMap;
 import arc.struct.ObjectMap.Entry;
@@ -42,7 +43,7 @@ import mindustrytool.features.rangedisplay.ui.RangeDisplaySettingsDialog;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 /**
  * Feature responsible for rendering real-time range visualizations for turrets,
@@ -123,6 +124,9 @@ public class RangeDisplayFeature extends Feature {
         drawBlockRangeEnemyConfig = config.boolValue("draw-block-range-enemy", true);
         drawSpawnerRangeConfig = config.boolValue("draw-spawner-range", true);
         dashedConfig = config.boolValue("dashed", true);
+
+        bindToggle("rangeDisplay", KeyCode.unset);
+        bindDialog("rangeDisplaySettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
     }

@@ -3,6 +3,7 @@ package mindustrytool.features.wavepreview;
 import arc.Core;
 import arc.Events;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
@@ -68,6 +69,9 @@ public class WavePreviewFeature extends Feature {
                 recompute();
             }
         });
+
+        bindToggle("wavePreview", KeyCode.unset);
+        bindDialog("wavePreviewSettings", KeyCode.unset, getSettingDialog(), false);
     }
 
     public WavePreviewState getState() {

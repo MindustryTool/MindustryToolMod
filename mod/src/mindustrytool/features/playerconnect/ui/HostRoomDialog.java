@@ -16,8 +16,8 @@ import mindustrytool.models.response.PlayerConnectProvider;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
-import solim.signal.Computed;
-import solim.signal.Signal;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 public class HostRoomDialog extends SolimDialog {
 

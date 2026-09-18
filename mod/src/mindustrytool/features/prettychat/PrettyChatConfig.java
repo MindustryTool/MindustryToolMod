@@ -2,7 +2,7 @@ package mindustrytool.features.prettychat;
 
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 import java.util.ArrayList;
 import java.util.List;

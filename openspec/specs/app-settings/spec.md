@@ -134,7 +134,7 @@ Count-sensitive tests SHALL reflect the enlarged registry of 11 real features pl
 - **THEN** expectations account for 24 registered features (or explicitly filter out development features where the test targets enabled-capable features only)
 
 ### Requirement: Mod-Wide Settings Config Group
-The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares all global `ConfigValue` entries as public static fields, starting with `betaParticipate: ConfigValue<Boolean>` (default `false`).
+The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares all global `ConfigValue` entries as public static fields, including `betaParticipate: ConfigValue<Boolean>` (default `false`), `sharePresence: ConfigValue<Boolean>` (default `true`), and `freeCamera: ConfigValue<Boolean>` (default `false`).
 
 #### Scenario: Beta flag is false by default
 - **WHEN** `ModSettings.betaParticipate` is read without any prior user interaction
@@ -144,20 +144,36 @@ The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` 
 - **WHEN** the user sets `ModSettings.betaParticipate` to `true` and the game restarts
 - **THEN** `ModSettings.betaParticipate.get()` returns `true` on the next load
 
+#### Scenario: Share presence flag is true by default
+- **WHEN** `ModSettings.sharePresence` is read without prior interaction
+- **THEN** `ModSettings.sharePresence.get()` returns `true`
+
+#### Scenario: Free camera flag is false by default
+- **WHEN** `ModSettings.freeCamera` is read without prior interaction
+- **THEN** `ModSettings.freeCamera.get()` returns `false`
+
+#### Scenario: Global settings persist across sessions
+- **WHEN** the user changes `sharePresence` or `freeCamera` and the game restarts
+- **THEN** the modified values persist on subsequent loads
+
 ### Requirement: General Settings Dialog Rendering
-The `GeneralSettingsDialog` SHALL extend `SolimDialog` and render a scrollable vertical list of setting rows. Each row SHALL display a label (from `Core.bundle`) and a `checkBox` bound directly to the corresponding `ConfigValue.signal()`. The dialog SHALL have a "Settings" title (bundle key `dialog.general-settings.title`) and a close button.
+The `GeneralSettingsDialog` SHALL extend `SolimDialog` and host a `GeneralSettingsView` component with a centered and width-constrained layout (`maxWidth(500f)`). The view SHALL render a scrollable vertical list of setting rows for mod-wide preferences without horizontal overflow or hardcoded fixed width, including beta updates, share game status, and free camera. Each row SHALL display a label (from `Core.bundle`), optional description or tooltip, and a `checkBox` bound directly to the corresponding `ConfigValue.signal()`. The dialog SHALL have a "Settings" title (bundle key `dialog.general-settings.title`) and a close button.
 
 #### Scenario: Dialog opens with correct initial toggle state
-- **WHEN** `GeneralSettingsDialog` is shown and `ModSettings.betaParticipate.get()` is `false`
-- **THEN** the beta participation checkbox is rendered unchecked
+- **WHEN** `GeneralSettingsDialog` is shown
+- **THEN** each checkbox reflects the current value of its corresponding `ModSettings` config
 
 #### Scenario: Toggling checkbox persists immediately
-- **WHEN** the user clicks the beta participation checkbox
-- **THEN** `ModSettings.betaParticipate.get()` reflects the new value without any additional confirm action, and the value is persisted to `Core.settings`
+- **WHEN** the user clicks any setting checkbox in `GeneralSettingsDialog`
+- **THEN** the corresponding `ModSettings` config reflects the new value without an additional confirm action and persists to `Core.settings`
 
 #### Scenario: Tooltip visible on hover
-- **WHEN** the user hovers over the beta participation row
-- **THEN** a tooltip with localized text (`setting.beta.participate.tooltip`) is displayed warning that prereleases may be unstable
+- **WHEN** the user hovers over a setting row
+- **THEN** a tooltip or descriptive label is displayed explaining the preference
+
+#### Scenario: Responsive width constraint
+- **WHEN** `GeneralSettingsDialog` is rendered on any display width
+- **THEN** its content scales fluidly without hardcoded fixed width and never overflows horizontally
 
 ### Requirement: Beta Participation Drives Update Channel
 When `ModSettings.betaParticipate.get()` is `false`, `UpdateService` SHALL consult it when processing the GitHub releases response as before: prereleases (entries where `"prerelease": true` in the JSON) SHALL be excluded from the changelog, and the stable `mod.hjson` version gate is unchanged. When the flag is `true`, `UpdateService` SHALL skip the `mod.hjson` fetch and determine the latest version solely from the GitHub releases list as the maximum tag over all entries (stable and prerelease) compared with `VersionUtils` semantics. If that latest tag is greater than the installed version, the update dialog SHALL be shown with the latest version displayed as the raw release tag (e.g. `v5.0.3-v8-beta`), a prerelease-inclusive changelog, and an Update action that installs that exact tag via the `githubImportMod(repo, isJava, release, forceEnable)` overload. Release fetch failure, an empty release list, and same-number ties after suffix stripping (e.g. `v5.0.3-v8` vs `v5.0.3-v8-beta`) SHALL resolve to silent (log and finish with no dialog).
@@ -254,4 +270,23 @@ The system SHALL load all user-visible display text for Quick Access from transl
 #### Scenario: Loading display text from bundle
 - **WHEN** Quick Access feature names, tooltips, dialog titles, or setting labels are rendered
 - **THEN** all strings are resolved from `assets/bundles/bundle.properties` using `Core.bundle.get` or `Core.bundle.format`.
+
+### Requirement: General Settings Diagnostics Actions
+The `GeneralSettingsDialog` SHALL provide two diagnostic action buttons styled with `WebStyles.outline()` arranged horizontally: one to copy `last_log.txt` to the clipboard, and one to copy the latest crash report from `crashes/` to the clipboard.
+
+#### Scenario: Copy last log when file exists
+- **WHEN** the user activates the "Copy Last Log" button and `Vars.dataDirectory.child("last_log.txt")` exists
+- **THEN** the file's contents are copied to the system clipboard and a success toast (`setting.log.copied`) is displayed
+
+#### Scenario: Copy last log when file does not exist
+- **WHEN** the user activates the "Copy Last Log" button and `Vars.dataDirectory.child("last_log.txt")` does not exist
+- **THEN** a notification (`setting.log.not-found`) is displayed and the clipboard remains unchanged
+
+#### Scenario: Copy latest crash report when report exists
+- **WHEN** the user activates the "Copy Last Crash" button and crash report files exist in `Vars.dataDirectory.child("crashes")`
+- **THEN** the most recently created crash report is identified, its contents are copied to the system clipboard, and a success toast (`setting.crash.copied`) is displayed
+
+#### Scenario: Copy latest crash report when no reports exist
+- **WHEN** the user activates the "Copy Last Crash" button and no crash reports exist in `Vars.dataDirectory.child("crashes")`
+- **THEN** a notification (`setting.crash.not-found`) is displayed and the clipboard remains unchanged
 

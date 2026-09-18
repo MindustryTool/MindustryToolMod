@@ -5,8 +5,8 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import solim.core.Disposable;
-import solim.signal.Signal;
-import solim.signal.Subscription;
+import solim.reactive.Signal;
+import solim.reactive.Subscription;
 
 public class ConfigValue<T> implements Disposable {
 	protected String key;

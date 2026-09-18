@@ -8,7 +8,6 @@ import arc.mock.MockGraphics;
 import arc.mock.MockSettings;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.gen.Icon;
-import mindustrytool.features.autoplay.AutoplayFeature;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -76,7 +75,7 @@ class DevelopmentFlagTest {
 
     @Test
     void enableIsNoOpOnDevelopment() {
-        AutoplayFeature feature = new AutoplayFeature();
+        DevDouble feature = new DevDouble();
 
         feature.enable();
 
@@ -86,7 +85,7 @@ class DevelopmentFlagTest {
 
     @Test
     void setEnabledTrueIsNoOpOnDevelopment() {
-        AutoplayFeature feature = new AutoplayFeature();
+        DevDouble feature = new DevDouble();
 
         feature.setEnabled(true);
 

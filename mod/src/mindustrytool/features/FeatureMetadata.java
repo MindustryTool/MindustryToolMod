@@ -12,7 +12,7 @@ public class FeatureMetadata {
     private final Drawable icon;
     private final int order;
     private final boolean enabledByDefault;
-    private final boolean quickAccess;
+    private final boolean quickAccessByDefault;
     private final boolean development;
     private final Optional<KeyBind> keybind;
 
@@ -21,16 +21,20 @@ public class FeatureMetadata {
             Drawable icon,
             int order,
             boolean enabledByDefault,
-            boolean quickAccess,
+            boolean quickAccessByDefault,
             boolean development,
             @Nullable KeyBind keybind) {
         this.id = id;
         this.icon = icon;
         this.order = order;
         this.enabledByDefault = enabledByDefault;
-        this.quickAccess = quickAccess;
+        this.quickAccessByDefault = quickAccessByDefault;
         this.development = development;
         this.keybind = Optional.ofNullable(keybind);
+    }
+
+    public boolean isQuickAccess() {
+        return isQuickAccessByDefault();
     }
 
     public int getOrder() {
@@ -49,7 +53,7 @@ public class FeatureMetadata {
         private Drawable icon = null;
         private int order = 0;
         private boolean enabledByDefault = true;
-        private boolean quickAccess = false;
+        private boolean quickAccessByDefault = false;
         private boolean development = false;
         private @Nullable KeyBind keybind = null;
 
@@ -73,9 +77,13 @@ public class FeatureMetadata {
             return this;
         }
 
-        public Builder quickAccess(boolean quickAccess) {
-            this.quickAccess = quickAccess;
+        public Builder quickAccessByDefault(boolean quickAccessByDefault) {
+            this.quickAccessByDefault = quickAccessByDefault;
             return this;
+        }
+
+        public Builder quickAccess(boolean quickAccess) {
+            return quickAccessByDefault(quickAccess);
         }
 
         public Builder development(boolean development) {
@@ -96,7 +104,7 @@ public class FeatureMetadata {
                 throw new IllegalStateException("Icon is required");
             }
 
-            return new FeatureMetadata(id, icon, order, enabledByDefault, quickAccess, development, keybind);
+            return new FeatureMetadata(id, icon, order, enabledByDefault, quickAccessByDefault, development, keybind);
         }
     }
 }

@@ -17,7 +17,7 @@ import mindustry.type.Item;
 import mindustry.type.UnitType;
 import mindustry.world.blocks.power.PowerGraph;
 import mindustry.world.modules.ItemModule;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 import mindustry.gen.Groups;
 
 import java.util.Comparator;

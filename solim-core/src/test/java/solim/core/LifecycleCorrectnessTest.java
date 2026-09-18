@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import solim.signal.Effect;
-import solim.signal.Signal;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 import solim.runtime.StructuralReconciler;
 

@@ -1,4 +1,5 @@
 package solim.layout;
+import solim.modifier.CellConfig;
 
 import java.util.function.Consumer;
 
@@ -18,7 +19,7 @@ import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
-import solim.ui.Ui;
+import solim.core.Ui;
 import solim.modifier.PendingCellConfig;
 
 /** Scroll container wrapping a Table in a ScrollPane. */

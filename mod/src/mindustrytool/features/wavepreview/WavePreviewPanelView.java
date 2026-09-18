@@ -12,7 +12,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
-import solim.signal.Readable;
+import solim.reactive.Readable;
 
 /**
  * Solim HUD panel view injected into the vanilla waves table.
@@ -91,7 +91,7 @@ public class WavePreviewPanelView extends BaseComponent {
                     .color(Color.lightGray)
                     .fontScale(scale.map(s -> 0.85f * (s != null ? s : 1f)));
 
-            wrap().growX().gap(unit(1)).children(() -> {
+            wrap().growX().maxWidth(230).gap(unit(1)).children(() -> {
                 for (int i = 0; i < entries.size; i++) {
                     WaveUnitEntry entry = entries.get(i);
                     row().center().gap(unit(0.5f)).children(() -> {

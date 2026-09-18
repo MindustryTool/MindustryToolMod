@@ -3,12 +3,12 @@
 ## Purpose
 
 Mechanical merge of 8 specs per change `spec-domain-merge` (stage 2 services, concat-then-dedupe). Sources: http-client, api-models, auth-service, auth-session-signal, github-service, mindustrytool-api, request-query-builder, update-service. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work.
-
 ## Requirements
 
 **Source: http-client**
 
 Instance-based HTTP client for `mindustrytool.services` that wraps `java.net.http.HttpClient`/`HttpRequest`/`HttpResponse`, supports per-`Request` optional `AuthProvider` (Bearer only), fluent per-request builder, and multiple independent API clients.
+
 ### Requirement: Instance-based Request with builder
 
 `Request` SHALL be an instantiable class wrapping a shared `java.net.http.HttpClient`, with per-instance `baseUrl`, default `timeout`, and optional `AuthProvider`. It SHALL be created via builder `Request.builder().baseUrl(...).timeout(...).authProvider(...).build()` and MUST NOT use global static auth state.
@@ -166,6 +166,7 @@ The architecture SHALL support `mindustrytool` API with auth, another API with d
 **Source: api-models**
 
 Self-contained DTOs and JSON utilities under `mindustrytool.*` that support instance-based `Request` clients without depending on `old.*`.
+
 ### Requirement: Self-contained models under mindustrytool.models
 
 All DTOs used by `MindustryTool` and `Github` SHALL be copied from `src/old` into `src/mindustrytool/models` with package `mindustrytool.models` and MUST NOT import `old.*`. New auth code SHALL use `mindustrytool.models.UserSession` etc., copied from old, with no `old.` reference in `src/mindustrytool`.
@@ -225,6 +226,7 @@ A new `mindustrytool.utils.JsonUtils` SHALL be copied from `old.mindustrytool.Ut
 **Source: auth-service**
 
 TBD - created by archiving change rewrite-auth-service. Update Purpose after archive.
+
 ### Requirement: AuthService logic split from UI
 `mindustrytool.services.AuthService` SHALL be a pure-logic singleton with no Arc scene/UI imports, owning `UserSession currentSession`, `CompletableFuture<Void> loginFuture`, `KEY_*` constants (`mindustrytool.auth.access-token`, `mindustrytool.auth.refresh-token`, `mindustrytool.auth.login-id`, `mindustrytool.auth.login-expiry`), and delegating every HTTP call through `mindustrytool.services.MindustryTool` typed methods (`getSession`, `getLoginUri`, `pollLoginToken`, `logout`) rather than constructing `Request` directly. `mindustrytool.ui.AuthOverlay` (and `mindustrytool.ui.AuthLoginDialog`) SHALL be the sole UI owners of `authWindow`/`wholeViewport` and dialog rendering. `MindustryAuthProvider` SHALL remain preserved unchanged as the sole `AuthProvider` and `MindustryTool.api` wiring `authProvider(MindustryAuthProvider.getInstance())` SHALL NOT change.
 
@@ -611,7 +613,7 @@ Update HTTP SHALL be performed only via instance-based `mindustrytool.services.R
 
 ### Requirement: ChangelogFormatter is pure and bundle-aware
 
-`ChangelogFormatter` SHALL format up to 20 releases into Mindustry markup: `[accent]tag[white]`, optional `yyyy-MM-dd HH:mm` date in `ZoneId.systemDefault()`, `[gold]` download-count line from summed `assets[].download_count`, and `renderMarkdown(body)` conversion (links→`[sky]`, headers→`[accent]`, lists→`•`, bold/italic/code). Labels SHALL be bundle keys, not hard-coded English.
+`ChangelogFormatter` SHALL format up to 20 releases into Mindustry markup: `[accent]tag[white]`, optional `yyyy-MM-dd HH:mm` date formatted using `TimeZones.systemDefaultOrUtc()` (falling back to `ZoneOffset.UTC` if system timezone rules are unavailable), `[gold]` download-count line from summed `assets[].download_count`, and `renderMarkdown(body)` conversion (links→`[sky]`, headers→`[accent]`, lists→`•`, bold/italic/code). Labels SHALL be bundle keys, not hard-coded English.
 
 #### Scenario: Pure formatting without Arc runtime
 - **WHEN** `ChangelogFormatter.format(releases)` is called with a parsed release list
@@ -620,6 +622,10 @@ Update HTTP SHALL be performed only via instance-based `mindustrytool.services.R
 #### Scenario: Markdown transforms preserved
 - **WHEN** body contains `**bold**`, `*italic*`, `` `code` ``, `[text](url)`, `## header`, `- item`
 - **THEN** output contains `[white]bold[white]`, `[lightgray]italic[white]`, `[cyan]code[white]`, `[sky]text[white]`, `[accent]header[white]`, `• item` respectively
+
+#### Scenario: Resilient date formatting without tzdb
+- **WHEN** `ChangelogFormatter` formats release dates in an environment lacking `tzdb.dat`
+- **THEN** date formatting falls back to UTC without throwing `ExceptionInInitializerError` or `ZoneRulesException`
 
 ### Requirement: Update dialog uses bundle keys for all user-visible text
 
@@ -705,4 +711,44 @@ Only successfully completed responses SHALL be retained; a failed request SHALL 
 #### Scenario: Project tasks always live
 - **WHEN** `getProjectTasks(status)` is called twice with the same status
 - **THEN** two network requests are issued
+
+### Requirement: Resilient system timezone resolution
+
+`TimeZones.systemDefaultOrUtc()` SHALL attempt to return `ZoneId.systemDefault()`. If resolving the system default zone throws any `Throwable` (such as `ZoneRulesException`, `FileNotFoundException`, or `ExceptionInInitializerError` due to missing `tzdb.dat`), it SHALL catch the error and return `ZoneOffset.UTC`.
+
+#### Scenario: System timezone available
+- **WHEN** the underlying JRE has valid timezone database rules
+- **THEN** `TimeZones.systemDefaultOrUtc()` returns the host system's `ZoneId`
+
+#### Scenario: Timezone database missing or corrupted
+- **WHEN** resolving the system timezone throws a `Throwable`
+- **THEN** `TimeZones.systemDefaultOrUtc()` catches the failure and returns `ZoneOffset.UTC`
+
+### Requirement: Safe crash timestamp parsing
+
+`CrashTimestampParser.parse(Fi file)` SHALL parse timestamps from crash report file names into epoch milliseconds using `ZoneOffset.UTC`. If parsing fails due to invalid format, missing file, or any unexpected `Throwable`, it SHALL catch the error, log a warning, and return `0`.
+
+#### Scenario: Parse standard crash report filename
+- **WHEN** a valid crash file named `crash-report-MM_dd_yyyy_HH_mm_ss.txt` is parsed
+- **THEN** it returns the corresponding epoch milliseconds calculated at `ZoneOffset.UTC`
+
+#### Scenario: Parse crash timestamp with missing timezone rules
+- **WHEN** `CrashTimestampParser.parse(file)` is invoked in an environment where `tzdb.dat` is missing
+- **THEN** parsing succeeds without throwing any timezone or initialization error
+
+#### Scenario: Parse invalid crash report filename
+- **WHEN** an invalid or unparseable crash file is passed to `CrashTimestampParser.parse(file)`
+- **THEN** it catches all errors and returns `0`
+
+### Requirement: Non-fatal startup crash inspection
+
+`CrashReportService.checkForCrashes()` SHALL wrap its detection and dialog presentation in a defensive error boundary catching `Throwable`. Any unexpected failure encountered during crash detection SHALL be logged and SHALL NOT abort the client load sequence or crash the application.
+
+#### Scenario: Crash detection succeeds or finds no crashes
+- **WHEN** `checkForCrashes()` runs normally
+- **THEN** it returns `true` if a new crash dialog was shown, or `false` otherwise
+
+#### Scenario: Crash detection encounters unexpected runtime error
+- **WHEN** scanning the crash directory or parsing crash logs raises an unexpected `Throwable`
+- **THEN** the error is logged and `checkForCrashes()` returns `false` without terminating the game process
 

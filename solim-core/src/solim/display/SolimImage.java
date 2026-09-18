@@ -12,13 +12,13 @@ import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SpacingAware;
-import solim.layout.CellConfig;
+import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
 import solim.runtime.ComponentContext;
-import solim.signal.Effect;
-import solim.signal.Readable;
-import solim.signal.Signal;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /** Display widget for drawable content. */
 public final class SolimImage implements Component, CellConfig<SolimImage>, ElementConfig<SolimImage>, SpacingAware {
