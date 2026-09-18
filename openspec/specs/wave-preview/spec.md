@@ -2,20 +2,28 @@
 
 ## Purpose
 Preview upcoming wave unit compositions directly on the HUD with domain-split units and configurable lookahead.
-
 ## Requirements
-
 ### Requirement: Parity wave composition
 
-The system SHALL compute upcoming-wave unit counts from `Vars.state.rules.spawns`, skipping groups with null types and zero amounts, applying the campaign difficulty enemy-spawn multiplier (boss-effect groups truncated, others rounded, minimum 1), accumulating per `UnitType` exactly as the legacy implementation did.
+The system SHALL compute upcoming-wave unit counts from `Vars.state.rules.spawns`, skipping groups with null types and zero amounts, applying the campaign difficulty enemy-spawn multiplier (boss-effect groups truncated, others rounded, minimum 1), multiplying each group's spawned count by the number of active map spawn points that match the group (`group.spawn == -1` matches all active dropzone tiles or attack-mode wave cores; `group.spawn != -1` matches only a spawn point with the exact matching tile position), and accumulating total unit counts per `UnitType`.
 
-#### Scenario: Next-wave counts match legacy formula
+#### Scenario: Spawner count scales unit amounts
+- **WHEN** the map has multiple active dropzones and a spawn group specifies `group.spawn == -1`
+- **THEN** the computed unit count for that group equals the base spawned amount multiplied by the total number of active dropzones
 
-- **WHEN** the panel recomputes during a hosted wave game
-- **THEN** per-type counts equal the legacy `getSpawned`-based computation including campaign scaling
+#### Scenario: Targeted spawner matching
+- **WHEN** a spawn group specifies a specific `group.spawn` position
+- **THEN** the computed unit count equals the base spawned amount if that position matches an active dropzone/core, or zero if no matching dropzone/core exists
+
+#### Scenario: Attack mode core spawning fallback
+- **WHEN** the map has zero dropzone tiles, but rules specify `wavesSpawnAtCores` in attack mode with active enemy cores
+- **THEN** units scale by the number of active enemy cores matching the spawn group
+
+#### Scenario: Zero spawners yields zero units
+- **WHEN** the map has zero dropzones and no attack-mode core spawning
+- **THEN** zero units are accumulated for the upcoming wave
 
 #### Scenario: Null and empty groups skipped
-
 - **WHEN** spawn groups carry null types or compute zero amounts
 - **THEN** they contribute nothing to the displayed composition
 
@@ -102,3 +110,16 @@ The system SHALL default WavePreview to enabled and SHALL resolve name, descript
 
 - **WHEN** the mod updates with no prior WavePreview state
 - **THEN** the feature is enabled and its help no longer claims it cannot be enabled
+
+### Requirement: Empty wave state presentation
+
+The system SHALL display a localized empty wave status indicator when an upcoming wave has zero total units across all domains, including when the map has zero active spawn points.
+
+#### Scenario: Zero spawners shows empty indicator
+- **WHEN** an upcoming wave has zero active dropzones or spawn points and no attack core spawning
+- **THEN** the wave section displays a localized empty status label instead of blank space
+
+#### Scenario: Zero units computed shows empty indicator
+- **WHEN** an upcoming wave has active spawners but all spawn groups produce zero units
+- **THEN** the wave section displays a localized empty status label
+

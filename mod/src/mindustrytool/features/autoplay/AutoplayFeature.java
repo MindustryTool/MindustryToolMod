@@ -10,7 +10,6 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Nullable;
-import arc.util.Time;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
@@ -21,6 +20,7 @@ import mindustry.graphics.Pal;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.autoplay.tasks.AttackTask;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import mindustrytool.features.autoplay.tasks.BaseAutoplayAI;
@@ -48,18 +48,16 @@ public class AutoplayFeature extends Feature {
             FollowAssistTask.ID,
             SelfBuildTask.ID,
             RebuildTask.ID,
-            MiningTask.ID
-    );
+            MiningTask.ID);
 
     public final ConfigValue<Boolean> followUnit;
-    public final ConfigValue<Float> overrideCooldown;
     public final ConfigValue<Seq<String>> taskOrder;
     public final ConfigValue<Seq<String>> disabledTasks;
 
     private final ObjectMap<String, AutoplayTask> taskMap = new ObjectMap<>();
     private final Signal<Seq<AutoplayTask>> tasksSignal = Signal.of(new Seq<>());
+    private final Signal<String> currentTaskIdSignal = Signal.of(null);
     private @Nullable AutoplayTask currentTask;
-    private float resumeTime = 0f;
 
     public AutoplayFeature() {
         super(FeatureMetadata.builder()
@@ -72,7 +70,6 @@ public class AutoplayFeature extends Feature {
         ConfigGroup config = configGroup();
         OrderedSeqPersister seqPersister = new OrderedSeqPersister();
         followUnit = config.boolValue("follow-unit", false);
-        overrideCooldown = config.floatValue("override-cooldown", 2.0f);
         taskOrder = config.value("task-order", new Seq<>(), seqPersister);
         disabledTasks = config.value("disabled-tasks", new Seq<>(), seqPersister);
 
@@ -86,6 +83,8 @@ public class AutoplayFeature extends Feature {
         taskMap.put(MiningTask.ID, new MiningTask(this));
 
         syncOrderedTasks();
+
+        bindToggle("autoPlay", KeyCode.unset);
 
         Events.run(Trigger.update, this::update);
         Events.run(Trigger.draw, this::draw);
@@ -173,11 +172,20 @@ public class AutoplayFeature extends Feature {
             resetUnitState(unit);
             unit.controller(Vars.player);
         }
-        currentTask = null;
+        setCurrentTask(null);
     }
 
     public @Nullable AutoplayTask getCurrentTask() {
         return currentTask;
+    }
+
+    public Readable<String> currentTaskId() {
+        return currentTaskIdSignal;
+    }
+
+    private void setCurrentTask(@Nullable AutoplayTask task) {
+        currentTask = task;
+        currentTaskIdSignal.set(task != null ? task.getId() : null);
     }
 
     private void update() {
@@ -187,37 +195,13 @@ public class AutoplayFeature extends Feature {
 
         Unit unit = Vars.player.unit();
         if (unit == null || !unit.isValid()) {
-            currentTask = null;
-            return;
-        }
-
-        if (Core.input.isTouched() || Core.input.keyDown(KeyCode.anyKey)) {
-            float cooldown = overrideCooldown.get() != null ? overrideCooldown.get() : 2.0f;
-            resumeTime = Time.time + (cooldown * 60f);
-            if (unit.controller() != Vars.player) {
-                unit.controller(Vars.player);
-            }
-            if (currentTask != null) {
-                resetUnitState(unit);
-                currentTask = null;
-            }
-            return;
-        }
-
-        if (Time.time < resumeTime) {
-            if (unit.controller() != Vars.player) {
-                unit.controller(Vars.player);
-            }
-            if (currentTask != null) {
-                resetUnitState(unit);
-                currentTask = null;
-            }
+            setCurrentTask(null);
             return;
         }
 
         if (currentTask != null && currentTask.getAI().unit() != unit) {
             resetUnitState(unit);
-            currentTask = null;
+            setCurrentTask(null);
         }
 
         AutoplayTask nextTask = null;
@@ -236,7 +220,7 @@ public class AutoplayFeature extends Feature {
                 BaseAutoplayAI ai = nextTask.getAI();
                 ai.unit(unit);
             }
-            currentTask = nextTask;
+            setCurrentTask(nextTask);
         }
 
         if (currentTask != null) {
@@ -244,16 +228,19 @@ public class AutoplayFeature extends Feature {
                 currentTask.getAI().updateUnit();
             }
 
-            if (Boolean.TRUE.equals(followUnit.get())) {
+            if (Boolean.TRUE.equals(followUnit.get()) && !FreeCameraFeature.isFreeCam()) {
                 Core.camera.position.lerp(unit.x, unit.y, 0.1f);
             }
         }
     }
 
-    private void resetUnitState(Unit unit) {
+    void resetUnitState(@Nullable Unit unit) {
         if (unit != null) {
             unit.isShooting(false);
             unit.mineTile = null;
+        }
+        if (currentTask != null && currentTask.getAI() != null) {
+            currentTask.getAI().clearTargetPos();
         }
     }
 

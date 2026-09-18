@@ -63,12 +63,14 @@ public class SelfBuildTask implements AutoplayTask {
 
         BuildPlan bestPlan = null;
         float minDst = Float.MAX_VALUE;
+        int personalPlanCount = 0;
 
         for (int i = 0; i < unit.plans.size; i++) {
             BuildPlan plan = unit.plans.get(i);
-            if (plan == null) {
+            if (plan == null || RebuildTask.isRebuildPlan(plan)) {
                 continue;
             }
+            personalPlanCount++;
 
             if (plan.breaking || canAffordPlan(core, plan)) {
                 float dst = unit.dst2(plan.x * Vars.tilesize, plan.y * Vars.tilesize);
@@ -77,6 +79,11 @@ public class SelfBuildTask implements AutoplayTask {
                     bestPlan = plan;
                 }
             }
+        }
+
+        if (personalPlanCount == 0) {
+            status.set(Core.bundle.get("feature.autoplay.status.no-build-plans"));
+            return false;
         }
 
         if (bestPlan == null) {
@@ -89,7 +96,7 @@ public class SelfBuildTask implements AutoplayTask {
             unit.plans.addFirst(bestPlan);
         }
 
-        status.set(Core.bundle.format("feature.autoplay.status.building-self", unit.plans.size));
+        status.set(Core.bundle.format("feature.autoplay.status.building-self", personalPlanCount));
         return true;
     }
 
@@ -107,7 +114,7 @@ public class SelfBuildTask implements AutoplayTask {
             return true;
         }
         for (ItemStack stack : plan.block.requirements) {
-            if (core.items.get(stack.item) < Math.min(stack.amount, 5)) {
+            if (core.items.get(stack.item) < Math.min(stack.amount, 50)) {
                 return false;
             }
         }

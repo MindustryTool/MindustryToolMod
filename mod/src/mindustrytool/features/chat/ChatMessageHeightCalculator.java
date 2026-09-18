@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import mindustry.ui.Fonts;
 import mindustrytool.features.chat.models.MessageGroup;
 import mindustrytool.features.chat.models.ParsedChatMessage;
+import mindustrytool.features.chat.models.ParsedChatMessage.CommandMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.ImageMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.MindustryToolLinkMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.RoomInviteMessage;
@@ -37,6 +38,7 @@ public final class ChatMessageHeightCalculator {
     public static final float IMAGE_CARD_HEIGHT = 140f;
     public static final float INVITE_CARD_HEIGHT = 200f; // unit(50)
     public static final float TOOL_LINK_CARD_HEIGHT = 70f;
+    public static final float COMMAND_CARD_HEIGHT = 70f;
     public static final float HORIZONTAL_PADDINGS = 70f; // 4px outer left + 48px avatar + 6px gap + 4px inner left + 4px inner right + 4px outer right
     public static final float MENTION_EXTRA_PADDING = 8f; // unit(1) divider width + unit(1) gap
     public static final float MESSAGE_GAP = 3f; // unit(0.75f): gap between messages in a group
@@ -115,6 +117,8 @@ public final class ChatMessageHeightCalculator {
             height += Scl.scl(INVITE_CARD_HEIGHT);
         } else if (msg instanceof MindustryToolLinkMessage) {
             height += Scl.scl(TOOL_LINK_CARD_HEIGHT);
+        } else if (msg instanceof CommandMessage) {
+            height += Scl.scl(COMMAND_CARD_HEIGHT);
         } else {
             height += Scl.scl(24f);
         }

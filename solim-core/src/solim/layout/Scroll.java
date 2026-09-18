@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import java.util.function.Consumer;
@@ -11,6 +12,7 @@ import arc.scene.Element;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.ui.ScrollPane;
+import arc.scene.ui.ScrollPane.ScrollPaneStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -94,6 +96,11 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
 
     public Table outer() {
         return outer;
+    }
+
+    public Scroll style(ScrollPaneStyle style) {
+        this.pane.setStyle(style);
+        return this;
     }
 
     public Scroll outer(Consumer<Table> consumer) {

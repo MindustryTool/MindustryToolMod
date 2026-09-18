@@ -18,6 +18,7 @@ public class BrowserState<T> {
 
     public static final int PAGE_SIZE = 20;
 
+    private final Signal<Integer> pageSize = Signal.of(PAGE_SIZE);
     private final Signal<String> query = Signal.of("");
     private final Signal<Seq<String>> selectedTags = Signal.of(new Seq<String>());
     private final Signal<Seq<String>> selectedBlocks = Signal.of(new Seq<String>());
@@ -51,6 +52,7 @@ public class BrowserState<T> {
             sort.get();
             verification.get();
             page.get();
+            pageSize.get();
             doFetch();
         });
     }
@@ -183,6 +185,24 @@ public class BrowserState<T> {
 
     public Signal<Integer> page() {
         return page;
+    }
+
+    public Signal<Integer> pageSize() {
+        return pageSize;
+    }
+
+    public int getPageSize() {
+        Integer size = pageSize.peek();
+        return size != null ? size : PAGE_SIZE;
+    }
+
+    public void setPageSize(int size) {
+        int clamped = Math.min(BrowserLayout.PAGE_SIZE_MAX, Math.max(BrowserLayout.PAGE_SIZE_MIN, size));
+        Integer current = pageSize.peek();
+        if (current == null || current != clamped) {
+            pageSize.set(clamped);
+            resetPage();
+        }
     }
 
     public Signal<Seq<T>> items() {

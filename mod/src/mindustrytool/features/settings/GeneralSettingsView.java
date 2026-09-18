@@ -37,12 +37,6 @@ public class GeneralSettingsView extends BaseComponent {
                             .growX()
                             .tooltip(Core.bundle.get("setting.share-presence.description"));
 
-                    checkbox(
-                            Core.bundle.get("setting.free-camera"),
-                            ModSettings.freeCamera.signal())
-                            .growX()
-                            .tooltip(Core.bundle.get("setting.free-camera.description"));
-
                     divider();
 
                     row().growX().gap(unit(2)).children(() -> {

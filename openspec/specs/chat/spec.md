@@ -731,3 +731,88 @@ The system SHALL allow the top-bar refresh button to recover from missing channe
 - **WHEN** the top-bar refresh button is clicked while a channel is active
 - **THEN** ChatService refreshes both messages and members for the active channel and reconnects the live stream if disconnected
 
+### Requirement: Chat command message parsing
+The chat system SHALL recognize a raw `ChatMessage` whose whole trimmed content exactly equals a registered command token as a typed command message instead of plain text.
+
+#### Scenario: Schematic token parses to schematic command
+- **WHEN** a raw message has content `:schematic:` (ignoring leading/trailing whitespace)
+- **THEN** it is parsed into a command message of kind schematic rather than any other message type
+
+#### Scenario: Map token parses to map command
+- **WHEN** a raw message has content `:map:` (ignoring leading/trailing whitespace)
+- **THEN** it is parsed into a command message of kind map rather than any other message type
+
+#### Scenario: Non-exact content stays plain text
+- **WHEN** message content contains extra text (e.g. `look :schematic: cool`) or differs in case (e.g. `:Schematic:`)
+- **THEN** it is parsed as a standard text message with no command kind
+
+#### Scenario: Command parsing is cached by message id
+- **WHEN** the same command message id is parsed twice
+- **THEN** the same parsed instance is returned without re-evaluating patterns
+
+### Requirement: Chat command card rendering
+The chat system SHALL render command messages as button-only cards that open the matching browser on explicit tap and never auto-execute on receipt.
+
+#### Scenario: Schematic command opens schematic browser
+- **WHEN** a schematic command message is displayed and the user taps its open button
+- **THEN** the schematic browser dialog is shown via the schematic browser feature
+
+#### Scenario: Map command opens map browser
+- **WHEN** a map command message is displayed and the user taps its open button
+- **THEN** the map browser dialog is shown via the map browser feature
+
+#### Scenario: Raw token is replaced by the card
+- **WHEN** a command message is displayed
+- **THEN** the raw token text is not shown and only the button card is rendered
+
+#### Scenario: Command works regardless of browser feature toggle
+- **WHEN** the target browser feature is disabled and the user taps the command button
+- **THEN** the corresponding browser dialog is still shown
+
+#### Scenario: Command card layout height is fixed
+- **WHEN** `ChatMessageHeightCalculator` measures a command message
+- **THEN** it contributes a fixed command card height independent of container width (plus reply-preview height when the message has a reply target)
+
+### Requirement: Chat command labels are translatable
+The chat system SHALL resolve all user-visible command card strings from the translation bundle.
+
+#### Scenario: Command buttons show translated labels
+- **WHEN** a command card is displayed under any locale
+- **THEN** its title and open-button labels come from bundle keys (with English defaults) rather than hardcoded text
+
+### Requirement: SSE Heartbeat Watchdog and Health Management
+The system SHALL monitor the real-time SSE chat stream with a 45-second heartbeat watchdog timer, resetting the timer on every incoming event or heartbeat line, and terminating stalled connections to trigger reconnection if no data arrives within the timeout window.
+
+#### Scenario: Incoming data or heartbeat resets watchdog
+- **WHEN** any line (heartbeat `:heartbeat`, `event: heartbeat`, or data payload) is received by `ChatService`
+- **THEN** the watchdog timer is reset to the current timestamp
+
+#### Scenario: Stream stall triggers reconnection
+- **WHEN** no line has been received from the server for more than 45 seconds while streaming is enabled
+- **THEN** the active stream request is cancelled, connection state transitions to disconnected (`setConnected(false)`), and automatic reconnection is scheduled
+
+#### Scenario: Connection state reflects live handshake
+- **WHEN** the stream HTTP request is initiated
+- **THEN** connection state (`store.session().connected()`) only becomes `true` after the server sends a successful handshake (`Connected`), heartbeat, or event payload
+
+### Requirement: Catch-Up Synchronization on Reconnect
+The system SHALL automatically perform catch-up synchronization with the backend whenever the SSE stream connection is established or restored.
+
+#### Scenario: Reconnection syncs active channel messages
+- **WHEN** `ChatService` establishes or re-establishes a live stream connection
+- **THEN** it executes a catch-up fetch for the active channel via `loadMessages(activeChannelId)` and refreshes channel metadata via `refreshChannels()`
+
+### Requirement: Silent Background Catch-Up on Uncollapse
+The system SHALL automatically synchronize the active channel in the background when transitioning from collapsed state to expanded state.
+
+#### Scenario: Expanding chat triggers background refresh
+- **WHEN** `collapsedConfig` transitions from `true` to `false`
+- **THEN** the system verifies stream health (reconnecting if disconnected) and silently fetches recent messages for the active channel without displaying a blocking full-page loading indicator
+
+### Requirement: Resilient Manual Refresh
+The system SHALL perform a full health check on manual refresh, verifying the live stream state and reconnecting if stalled or disconnected.
+
+#### Scenario: Manual refresh revives dead or stalled stream
+- **WHEN** the user triggers manual refresh in `ChatOverlayHudView`
+- **THEN** `ChatService` reloads active channel messages and users, checks whether the stream is active, and forces a stream reconnect if disconnected or stalled
+

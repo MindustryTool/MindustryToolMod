@@ -10,6 +10,7 @@ import mindustrytool.features.chat.state.ChatTranslations;
 import mindustrytool.features.chat.state.ChatUiState;
 import mindustrytool.features.chat.state.ChatUnread;
 import mindustrytool.features.chat.state.ChatUsers;
+import solim.reactive.Signal;
 
 public final class ChatStore {
 
@@ -25,7 +26,11 @@ public final class ChatStore {
     private final ChatChannels channels;
 
     public ChatStore(ChatFeature feature) {
-        this.channels = new ChatChannels(feature.activeChannelConfig.signal());
+        this(feature.activeChannelConfig.signal());
+    }
+
+    ChatStore(Signal<String> activeChannelSignal) {
+        this.channels = new ChatChannels(activeChannelSignal);
         this.messages = new ChatMessages(channels.activeId());
         this.members = new ChatMembers(channels.activeId());
     }

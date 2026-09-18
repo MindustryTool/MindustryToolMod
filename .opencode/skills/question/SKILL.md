@@ -1,18 +1,13 @@
 ---
 name: question
-description: Used when user want AI to ask question about current proposal and giving multiple choices with suggestions.
-license: MIT
-compatibility: Openspec
-metadata:
-author: mindustry-tool
-version: "1.1"
+description: Ask the user multiple-choice questions about ambiguous decisions in the current proposal before implementation.
 ---
 
----
+When this skill is loaded:
 
-When youre prompted by this. Look at current proposal, current conversation and give user multiple questions with multiple choices and
-suggestions to allow user to make decisions, after that re-consider the proposal before proceeding
-
-## Importance
-
-You should not make assumption or make decision
+1. Read the current proposal and conversation.
+2. Identify decisions that have not been explicitly made.
+3. Ask focused questions with multiple choices.
+4. Explain trade-offs and provide suggestions.
+5. Do not make the decision for the user.
+6. After the user answers, reconsider the proposal before proceeding.

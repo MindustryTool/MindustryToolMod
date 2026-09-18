@@ -645,3 +645,25 @@ Reactive tooltips (`Readable<String>`) SHALL bind a `Label` to the tooltip conta
 - **WHEN** a component calls `.tooltip(t -> t.background(Styles.black6).add("Custom"))`
 - **THEN** a `Tooltip` is attached and configured via the provided `Cons<Table>` builder
 
+### Requirement: SolimCollapser layout container
+`SolimCollapser` SHALL wrap Arc's `arc.scene.ui.layout.Collapser` as a Solim component supporting children declaration, reactive expansion/collapse signals, smooth animation transitions (defaulting to 0.2s), and collapsing `prefHeight` and `minHeight` to 0 when collapsed so no leftover whitespace is allocated in parent table cells.
+
+#### Scenario: Collapsed state occupies zero height
+- **WHEN** a `SolimCollapser` is rendered in a collapsed state
+- **THEN** its reported `prefHeight` and `minHeight` are 0, and touchable is disabled
+
+#### Scenario: Reactive expansion
+- **WHEN** the bound expanded signal changes from `false` to `true`
+- **THEN** the `SolimCollapser` expands to fit its content with animated transition
+
+### Requirement: Height vs min-max clarification probes
+The system SHALL clarify via probes whether `ElementConfig.height(float)` on layout containers (`Card`, `Row`, `Column`) is pref-only or a fixed slot, and whether call order relative to `children()/attach` affects the parent `Cell`.
+
+#### Scenario: Order dependence is recorded
+- **WHEN** `height(70f)` is called before `children()` versus after attach for otherwise identical hierarchies
+- **THEN** both resulting layout heights are recorded so any `PendingCellConfig` propagation gap is explicit
+
+#### Scenario: Pref vs fixed is learned not assumed
+- **WHEN** small (20px) and large (120px) fixed content are each combined with `height(70f)` and laid out
+- **THEN** results distinguish pref-only (`small < 70`, `large > 70`) from fixed (`always 70`) without changing production behavior in this change
+

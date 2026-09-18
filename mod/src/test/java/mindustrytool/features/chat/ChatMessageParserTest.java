@@ -7,6 +7,8 @@ import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import arc.mock.MockSettings;
 import mindustrytool.features.chat.models.ParsedChatMessage;
+import mindustrytool.features.chat.models.ParsedChatMessage.CommandKind;
+import mindustrytool.features.chat.models.ParsedChatMessage.CommandMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.ImageMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.MindustryToolLinkMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.RoomInviteMessage;
@@ -110,5 +112,71 @@ class ChatMessageParserTest {
         ParsedChatMessage second = ChatMessageParser.parse(msg);
 
         assertSame(first, second);
+    }
+
+    @Test
+    void testParseSchematicCommand() {
+        ChatMessage msg = new ChatMessage();
+        msg.setId("cmd-schematic");
+        msg.setContent(":schematic:");
+
+        ParsedChatMessage parsed = ChatMessageParser.parse(msg);
+        assertTrue(parsed instanceof CommandMessage);
+        assertEquals(CommandKind.SCHEMATIC, ((CommandMessage) parsed).getKind());
+    }
+
+    @Test
+    void testParseMapCommand() {
+        ChatMessage msg = new ChatMessage();
+        msg.setId("cmd-map");
+        msg.setContent(":map:");
+
+        ParsedChatMessage parsed = ChatMessageParser.parse(msg);
+        assertTrue(parsed instanceof CommandMessage);
+        assertEquals(CommandKind.MAP, ((CommandMessage) parsed).getKind());
+    }
+
+    @Test
+    void testParseCommandWithWhitespace() {
+        ChatMessage msg = new ChatMessage();
+        msg.setId("cmd-whitespace");
+        msg.setContent("  :map:  ");
+
+        ParsedChatMessage parsed = ChatMessageParser.parse(msg);
+        assertTrue(parsed instanceof CommandMessage);
+        assertEquals(CommandKind.MAP, ((CommandMessage) parsed).getKind());
+    }
+
+    @Test
+    void testParseCommandIsCaseSensitive() {
+        ChatMessage msg = new ChatMessage();
+        msg.setId("cmd-case");
+        msg.setContent(":Schematic:");
+
+        ParsedChatMessage parsed = ChatMessageParser.parse(msg);
+        assertTrue(parsed instanceof TextMessage);
+    }
+
+    @Test
+    void testParseCommandWithExtraTextStaysText() {
+        ChatMessage msg = new ChatMessage();
+        msg.setId("cmd-extra");
+        msg.setContent("look :schematic: cool");
+
+        ParsedChatMessage parsed = ChatMessageParser.parse(msg);
+        assertTrue(parsed instanceof TextMessage);
+    }
+
+    @Test
+    void testCommandParserCaching() {
+        ChatMessage msg = new ChatMessage();
+        msg.setId("cmd-cached");
+        msg.setContent(":schematic:");
+
+        ParsedChatMessage first = ChatMessageParser.parse(msg);
+        ParsedChatMessage second = ChatMessageParser.parse(msg);
+
+        assertSame(first, second);
+        assertTrue(first instanceof CommandMessage);
     }
 }

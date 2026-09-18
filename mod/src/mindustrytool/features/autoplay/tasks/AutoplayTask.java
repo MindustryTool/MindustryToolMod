@@ -26,7 +26,7 @@ public interface AutoplayTask {
 
     default @Nullable Vec2 getTargetPos() {
         BaseAutoplayAI ai = getAI();
-        return ai != null ? ai.targetPos : null;
+        return ai != null && ai.hasTargetPos ? ai.targetPos : null;
     }
 
     default boolean hasSettings() {

@@ -4,8 +4,10 @@ import arc.Core;
 import arc.math.geom.Position;
 import arc.math.geom.Vec2;
 import arc.scene.style.TextureRegionDrawable;
+import arc.struct.ObjectSet;
 import arc.struct.Queue;
 import arc.util.Nullable;
+import java.util.Iterator;
 import mindustry.Vars;
 import mindustry.entities.units.BuildPlan;
 import mindustry.game.Teams.BlockPlan;
@@ -22,6 +24,29 @@ import solim.reactive.Signal;
 public class RebuildTask implements AutoplayTask {
 
     public static final String ID = "rebuild";
+
+    private static final ObjectSet<BuildPlan> rebuildPlans = new ObjectSet<>();
+
+    public static void registerRebuildPlan(BuildPlan plan) {
+        rebuildPlans.add(plan);
+    }
+
+    public static boolean isRebuildPlan(@Nullable BuildPlan plan) {
+        return plan != null && rebuildPlans.contains(plan);
+    }
+
+    public static void cleanStalePlans(@Nullable Unit unit) {
+        if (rebuildPlans.isEmpty() || unit == null || unit.plans == null) {
+            return;
+        }
+        Iterator<BuildPlan> it = rebuildPlans.iterator();
+        while (it.hasNext()) {
+            BuildPlan bp = it.next();
+            if (!unit.plans.contains(bp)) {
+                it.remove();
+            }
+        }
+    }
 
     private final Signal<String> status = Signal.of(Core.bundle.get("feature.autoplay.status.idle"));
     private final RebuildAI ai = new RebuildAI();
@@ -51,6 +76,13 @@ public class RebuildTask implements AutoplayTask {
         if (!unit.canBuild()) {
             status.set(Core.bundle.get("feature.autoplay.status.cannot-build"));
             return false;
+        }
+
+        cleanStalePlans(unit);
+
+        if (unit.buildPlan() != null && isRebuildPlan(unit.buildPlan())) {
+            status.set(Core.bundle.get("feature.autoplay.status.rebuilding"));
+            return true;
         }
 
         if (unit.team.data() == null) {
@@ -108,7 +140,7 @@ public class RebuildTask implements AutoplayTask {
             return true;
         }
         for (ItemStack stack : plan.block.requirements) {
-            if (core.items.get(stack.item) < Math.min(stack.amount, 5)) {
+            if (core.items.get(stack.item) < Math.min(stack.amount, 50)) {
                 return false;
             }
         }
@@ -136,7 +168,9 @@ public class RebuildTask implements AutoplayTask {
                 if (Vars.world.tile(block.x, block.y) != null && Vars.world.tile(block.x, block.y).block() == block.block) {
                     plans.removeFirst();
                 } else if (Build.validPlace(block.block, unit.team(), block.x, block.y, block.rotation)) {
-                    unit.addBuild(new BuildPlan(block.x, block.y, block.rotation, block.block, block.config));
+                    BuildPlan bp = new BuildPlan(block.x, block.y, block.rotation, block.block, block.config);
+                    registerRebuildPlan(bp);
+                    unit.addBuild(bp);
                     plans.addLast(plans.removeFirst());
                 } else {
                     plans.addLast(plans.removeFirst());

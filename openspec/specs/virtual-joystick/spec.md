@@ -49,7 +49,7 @@ The system SHALL provide a drag handle adjacent to the joystick base that reposi
 
 ### Requirement: Decoupled Movement and Camera
 
-The system SHALL move the player unit in the direction of the joystick knob while the knob is held at the unit's speed, SHALL stop the unit when the knob is released, SHALL allow camera panning without moving the unit, and SHALL snap the camera onto the player unit when the knob is double-tapped. When the free-camera setting is disabled, the camera SHALL smoothly follow the player unit during joystick movement, with temporary pan override support. When one finger holds the joystick knob and a second finger touches the screen, the system SHALL convert the second finger gesture into camera panning and SHALL suppress pinch-to-zoom.
+The system SHALL move the player unit in the direction of the joystick knob while the knob is held at the unit's speed, SHALL stop the unit when the knob is released, SHALL allow camera panning without moving the unit, and SHALL snap the camera onto the player unit when the knob is double-tapped. When the `FreeCameraFeature` is disabled, the camera SHALL smoothly follow the player unit during joystick movement, with temporary pan override support. When one finger holds the joystick knob and a second finger touches the screen, the system SHALL convert the second finger gesture into camera panning and SHALL suppress pinch-to-zoom.
 
 #### Scenario: Knob moves the unit
 - **WHEN** the player holds a joystick direction
@@ -60,11 +60,11 @@ The system SHALL move the player unit in the direction of the joystick knob whil
 - **THEN** the unit stops moving
 
 #### Scenario: Camera follows unit when free-camera disabled
-- **WHEN** the player moves using the joystick and free-camera is disabled
+- **WHEN** the player moves using the joystick and `FreeCameraFeature` is disabled
 - **THEN** the camera smoothly tracks the player unit position
 
 #### Scenario: Temporary pan override
-- **WHEN** the player drags the map while free-camera is disabled
+- **WHEN** the player drags the map while `FreeCameraFeature` is disabled
 - **THEN** the camera pans freely to inspect the world, and smoothly returns to the unit 0.5s after touch release
 
 #### Scenario: Second finger pans instead of zooming while joystick is held
@@ -76,7 +76,7 @@ The system SHALL move the player unit in the direction of the joystick knob whil
 - **THEN** standard camera zoom scaling occurs
 
 #### Scenario: Free camera mode allows independent panning
-- **WHEN** free-camera is enabled
+- **WHEN** `FreeCameraFeature` is enabled
 - **THEN** the camera does not follow the unit during joystick movement and only moves when panned
 
 #### Scenario: Double-tap recenters the camera
@@ -109,7 +109,7 @@ The system SHALL replace `Vars.control.input` via `Vars.control.setInput(...)` w
 
 ### Requirement: Customization and Settings
 
-The system SHALL provide a scale slider for the joystick diameter, an opacity slider for its transparency, a free camera toggle, a reset button restoring the default position, and SHALL be disabled by default.
+The system SHALL provide a scale slider for the joystick diameter, an opacity slider for its transparency, a free camera toggle bound to `FreeCameraFeature.get().enabled()`, a reset button restoring the default position, and SHALL be disabled by default.
 
 #### Scenario: Size slider changes diameter
 - **WHEN** the player adjusts the size slider
@@ -121,7 +121,7 @@ The system SHALL provide a scale slider for the joystick diameter, an opacity sl
 
 #### Scenario: Free camera toggle
 - **WHEN** the player toggles the free camera setting in the joystick settings view
-- **THEN** the free-camera configuration in ModSettings updates reactively
+- **THEN** the `FreeCameraFeature` enabled state updates reactively
 
 #### Scenario: Reset restores default position
 - **WHEN** the player presses the reset button

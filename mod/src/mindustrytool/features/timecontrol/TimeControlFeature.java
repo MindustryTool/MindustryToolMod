@@ -2,6 +2,7 @@ package mindustrytool.features.timecontrol;
 
 import arc.Core;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.scene.Element;
 import arc.util.Nullable;
@@ -61,6 +62,7 @@ public class TimeControlFeature extends Feature {
     private final Signal<Float> selectedPreset = Signal.of(1f);
     private final Signal<Boolean> boosted = Signal.of(false);
     private final Signal<Float> sliderPosition = Signal.of(0f);
+    private float prePauseSpeed = 1f;
 
     private @Nullable TimeControlHudView hudView;
     private @Nullable TimeControlSettingsDialog settingsDialog;
@@ -123,6 +125,10 @@ public class TimeControlFeature extends Feature {
 
         modeConfig.signal().subscribe(mode -> resetSpeed());
         displayModeConfig.signal().subscribe(mode -> updateHud());
+
+        bindAction("timecontrolPause", KeyCode.unset, this::togglePause);
+        bindAction("timecontrolSpeedUp", KeyCode.unset, this::speedUp);
+        bindAction("timecontrolSpeedDown", KeyCode.unset, this::speedDown);
     }
 
     /**
@@ -210,6 +216,60 @@ public class TimeControlFeature extends Feature {
     public void resetSlider() {
         sliderPosition.set(0f);
         // speed will be updated reactively via the sliderPosition subscriber.
+    }
+
+    public void togglePause() {
+        if (!canApply()) {
+            return;
+        }
+        Float current = speed.peek();
+        float value = current != null ? current : 1f;
+        if (Float.compare(value, 0f) == 0) {
+            speed.set(prePauseSpeed != 0f ? prePauseSpeed : 1f);
+        } else {
+            prePauseSpeed = value;
+            speed.set(0f);
+        }
+    }
+
+    public void speedUp() {
+        if (!canApply()) {
+            return;
+        }
+        if (isPresetMode()) {
+            selectPreset(stepPreset(1));
+        } else {
+            Float position = sliderPosition.peek();
+            float value = position != null ? position : 0f;
+            sliderPosition.set(Mathf.clamp(value + SLIDER_STEP_U, SLIDER_MIN_U, SLIDER_MAX_U));
+        }
+    }
+
+    public void speedDown() {
+        if (!canApply()) {
+            return;
+        }
+        if (isPresetMode()) {
+            selectPreset(stepPreset(-1));
+        } else {
+            Float position = sliderPosition.peek();
+            float value = position != null ? position : 0f;
+            sliderPosition.set(Mathf.clamp(value - SLIDER_STEP_U, SLIDER_MIN_U, SLIDER_MAX_U));
+        }
+    }
+
+    private float stepPreset(int delta) {
+        Float selected = selectedPreset.peek();
+        float current = selected != null ? selected : 1f;
+        int index = 0;
+        for (int i = 0; i < SPEEDS.length; i++) {
+            if (Float.compare(SPEEDS[i], current) == 0) {
+                index = i;
+                break;
+            }
+        }
+        int next = Mathf.clamp(index + delta, 0, SPEEDS.length - 1);
+        return SPEEDS[next];
     }
 
     public void resetSpeed() {

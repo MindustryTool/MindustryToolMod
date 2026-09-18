@@ -9,6 +9,8 @@ import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.game.Schematics;
 import mindustrytool.features.chat.models.ParsedChatMessage;
+import mindustrytool.features.chat.models.ParsedChatMessage.CommandKind;
+import mindustrytool.features.chat.models.ParsedChatMessage.CommandMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.ImageMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.MindustryToolLinkMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.RoomInviteMessage;
@@ -61,6 +63,12 @@ public final class ChatMessageParser {
 
     private static ParsedChatMessage parseInternal(ChatMessage message) {
         String content = message.getContent() != null ? message.getContent().trim() : "";
+
+        // 0. Exact-match command tokens (e.g. browser shortcuts)
+        CommandKind commandKind = CommandKind.fromToken(content);
+        if (commandKind != null) {
+            return new CommandMessage(message, commandKind);
+        }
 
         // 1. Room invite
         if (PlayerConnectLink.isValid(content)) {

@@ -2,6 +2,7 @@ package mindustrytool.features.chat;
 
 import arc.Core;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.scene.Element;
 import java.util.Objects;
 import solim.overlay.SolimDialog;
@@ -124,13 +125,17 @@ public class ChatFeature extends Feature {
         service = new ChatService(store, () -> !Boolean.TRUE.equals(collapsedConfig.get()));
         presence = new ChatPresence(store.session(), ModSettings.sharePresence, enabled());
 
+        bindAction("chatOverlay", KeyCode.unset, this::toggleCollapsed, false);
+
         collapsedConfig.signal().subscribe(col -> {
             boolean isCollapsed = Boolean.TRUE.equals(col);
             if (!isCollapsed) {
                 String activeId = store.channels().currentActiveId();
                 if (activeId != null) {
                     store.unread().markAsRead(activeId);
+                    service.syncActiveChannelSilently(activeId);
                 }
+                service.checkConnectionAndReconnect();
             }
             if (hudView != null) {
                 Core.app.post(hudView::keepInScreen);

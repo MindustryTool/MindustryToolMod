@@ -117,19 +117,22 @@ public class QuickAccessHudView extends BaseComponent {
         return list;
     }
 
+    private @Nullable Element getBar() {
+        return hud != null ? hud.element() : null;
+    }
+
     private Component createItemButton(QuickAccessFeature feature, HudItem item, Readable<Float> buttonSize,
             Readable<Float> iconSize) {
         if (item.feature != null) {
             Feature f = item.feature;
             FeatureMetadata meta = f.getMetadata();
-            Element bar = hud != null ? hud.element() : null;
 
             return button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(f.getName())
-                    .onClick(() -> f.onQuickAccessClick(bar))
-                    .onLongClick(300L, () -> f.onQuickAccessLongClick(bar))
+                    .onClick(() -> f.onQuickAccessClick(getBar()))
+                    .onLongClick(300L, () -> f.onQuickAccessLongClick(getBar()))
                     .children(() -> icon(meta.getIcon()).size(iconSize)
                             .color(f.enabled().map(en -> en ? Color.white : Color.darkGray)));
         } else {

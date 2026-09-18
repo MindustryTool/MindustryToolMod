@@ -21,3 +21,17 @@ Each target feature SHALL reference its designated icon in its `FeatureMetadata`
 - **WHEN** an icon file fails to load or does not exist
 - **THEN** `FileIcon.of` gracefully falls back to `Icon.book` or a default drawable without throwing an uncaught exception.
 
+### Requirement: Emoji feature icon asset
+
+The mod SHALL provide a Lucide `smile.png` icon asset in `assets/icons/` for the Emoji feature, and the Emoji feature metadata SHALL reference it via `FileIcon.of("smile.png")`.
+
+#### Scenario: Emoji icon asset availability
+
+- **WHEN** the mod is initialized or the Emoji feature queries its icon asset
+- **THEN** `assets/icons/smile.png` exists as a 24x24 white RGBA PNG.
+
+#### Scenario: Emoji metadata loads file icon
+
+- **WHEN** `Feature.getMetadata().getIcon()` is called on the Emoji feature
+- **THEN** it returns the `smile.png` drawable, falling back gracefully without throwing when the asset cannot load.
+
