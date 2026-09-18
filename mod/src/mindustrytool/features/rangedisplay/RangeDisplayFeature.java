@@ -43,7 +43,7 @@ import mindustrytool.features.rangedisplay.ui.RangeDisplaySettingsDialog;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
-import solim.signal.Signal;
+import solim.reactive.Signal;
 
 /**
  * Feature responsible for rendering real-time range visualizations for turrets,
