@@ -7,6 +7,7 @@ import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.reactive.Effect;
@@ -24,18 +25,18 @@ import arc.util.Align;
 public final class PendingCellConfig {
 
     static {
-        ParentStack.setCellConfigurator((cell, child) -> {
-            PendingCellConfig config = find(child);
+        ParentStack.setCellConfigurator((cell, child, comp) -> {
+            PendingCellConfig config = comp != null ? find(comp) : null;
+            if (config == null) {
+                config = find(child);
+            }
             if (config != null) {
                 List<Disposable> effects = config.applyToCell(cell);
                 for (Disposable effect : effects) {
                     ComponentContext.register(effect);
                 }
             }
-            Table t = cell.getTable();
-            if (t != null && t.userObject instanceof GapContainer) {
-                ((GapContainer) t.userObject).respace();
-            }
+            GapContainer.respace(cell.getTable());
         });
     }
 
@@ -124,7 +125,16 @@ public final class PendingCellConfig {
         }
         if (target instanceof Element) {
             Element el = (Element) target;
-            return find(el.userObject);
+            SolimToken token = SolimToken.get(el);
+            if (token != null) {
+                if (token.cellConfig != null) {
+                    return token.cellConfig;
+                }
+                if (token.component instanceof CellConfig) {
+                    return ((CellConfig<?>) token.component).cellConfig();
+                }
+            }
+            return null;
         }
         return null;
     }
@@ -149,32 +159,32 @@ public final class PendingCellConfig {
 
         effects.addAll(bind(cell, padTop, v -> {
             Table t = cell.getTable();
-            if (t != null && t.userObject instanceof GapContainer) {
-                ((GapContainer) t.userObject).respace();
+            if (GapContainer.isGapContainer(t)) {
+                GapContainer.respace(t);
             } else {
                 cell.padTop(Math.max(0f, v));
             }
         }));
         effects.addAll(bind(cell, padLeft, v -> {
             Table t = cell.getTable();
-            if (t != null && t.userObject instanceof GapContainer) {
-                ((GapContainer) t.userObject).respace();
+            if (GapContainer.isGapContainer(t)) {
+                GapContainer.respace(t);
             } else {
                 cell.padLeft(Math.max(0f, v));
             }
         }));
         effects.addAll(bind(cell, padBottom, v -> {
             Table t = cell.getTable();
-            if (t != null && t.userObject instanceof GapContainer) {
-                ((GapContainer) t.userObject).respace();
+            if (GapContainer.isGapContainer(t)) {
+                GapContainer.respace(t);
             } else {
                 cell.padBottom(Math.max(0f, v));
             }
         }));
         effects.addAll(bind(cell, padRight, v -> {
             Table t = cell.getTable();
-            if (t != null && t.userObject instanceof GapContainer) {
-                ((GapContainer) t.userObject).respace();
+            if (GapContainer.isGapContainer(t)) {
+                GapContainer.respace(t);
             } else {
                 cell.padRight(Math.max(0f, v));
             }
@@ -229,8 +239,8 @@ public final class PendingCellConfig {
     public void applyMarginToParentCell(@Nullable Element element) {
         if (element != null && element.parent instanceof Table) {
             Table parentTable = (Table) element.parent;
-            if (parentTable.userObject instanceof GapContainer) {
-                ((GapContainer) parentTable.userObject).respace();
+            if (GapContainer.isGapContainer(parentTable)) {
+                GapContainer.respace(parentTable);
                 return;
             }
             Cell<?> cell = parentTable.getCell(element);

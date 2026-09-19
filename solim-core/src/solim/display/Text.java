@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.core.SpacingAware;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
@@ -53,6 +54,7 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
                 : (Core.scene != null ? new Label(text != null ? text : "")
                         : new Label(text != null ? text : "", new Label.LabelStyle()));
         this.label.name = "solim-text-label";
+        SolimToken.bind(this.label, this, constraints);
         ComponentContext.register(this);
     }
 
@@ -120,7 +122,7 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
 
     public Text growX() {
         this.growX = true;
-        label.userObject = "expanding";
+        SolimToken.setExpanding(label, true);
         if (label.parent instanceof Table) {
             Cell<?> cell = ((Table) label.parent).getCell(label);
             if (cell != null) {
@@ -134,7 +136,7 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
 
     public Text growY() {
         this.growY = true;
-        label.userObject = "expanding";
+        SolimToken.setExpanding(label, true);
         if (label.parent instanceof Table) {
             Cell<?> cell = ((Table) label.parent).getCell(label);
             if (cell != null) {

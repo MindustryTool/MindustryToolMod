@@ -8,6 +8,7 @@ import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.WrapTable;
 import arc.util.Nullable;
 import solim.core.Component;
+import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
@@ -38,7 +39,7 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
 
     public Wrap() {
         this.table.name = "solim-wrap-table";
-        this.table.userObject = this;
+        SolimToken.bind(this.table, this, constraints);
         this.table.top().left();
         this.table.defaults().top().left();
         ComponentContext.register(this);

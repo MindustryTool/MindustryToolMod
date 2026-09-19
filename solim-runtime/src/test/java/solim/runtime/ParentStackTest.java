@@ -13,6 +13,7 @@ class ParentStackTest {
 	@AfterEach
 	void clear() {
 		ParentStack.clear();
+		ParentStack.setCellConfigurator((ParentStack.CellConfigurator) null);
 	}
 
 	@Test
@@ -196,5 +197,52 @@ class ParentStackTest {
 		ParentStack.pop();
 		assertEquals(2, root.getChildren().size);
 		assertTrue(root.getChildren().contains(e, true));
+	}
+
+	@Test
+	void cellConfiguratorReceivesComponentDirectlyWithoutUserObject() {
+		Table root = new Table();
+		ParentStack.push(root);
+
+		Element element = new Element();
+		assertNull(element.userObject);
+
+		Component comp = () -> element;
+		ParentStack.registerPendingComponent(comp, root);
+
+		final Component[] receivedComp = new Component[1];
+		final Element[] receivedElement = new Element[1];
+
+		ParentStack.setCellConfigurator((cell, child, component) -> {
+			receivedElement[0] = child;
+			receivedComp[0] = component;
+		});
+
+		ParentStack.pop();
+
+		assertSame(element, receivedElement[0]);
+		assertSame(comp, receivedComp[0]);
+		assertNull(element.userObject);
+	}
+
+	@Test
+	void cellConfiguratorReceivesNullComponentForRawElement() {
+		Table root = new Table();
+		ParentStack.push(root);
+
+		Element rawElement = new Element();
+		final Component[] receivedComp = new Component[1];
+		final Element[] receivedElement = new Element[1];
+
+		ParentStack.setCellConfigurator((cell, child, component) -> {
+			receivedElement[0] = child;
+			receivedComp[0] = component;
+		});
+
+		ParentStack.add(rawElement);
+		ParentStack.pop();
+
+		assertSame(rawElement, receivedElement[0]);
+		assertNull(receivedComp[0]);
 	}
 }

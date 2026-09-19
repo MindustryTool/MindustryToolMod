@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.runtime.StructuralReconciler;
@@ -78,7 +79,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent
             Function<T, K> keyExtractor,
             BiFunction<T, GridItemContext, Component> itemFactory) {
         this.table.name = "solim-reactive-grid-table";
-        this.table.userObject = this;
+        SolimToken.bind(this.table, this, constraints);
         this.table.top().left();
         this.table.defaults().top().left();
         this.table.update(() -> checkWidth(this.table.getWidth()));
@@ -275,12 +276,7 @@ public final class ReactiveGrid<T, K> extends BaseComponent
         for (Component comp : reconciler.activeComponents().values()) {
             Element el = comp.element();
             Cell<?> cell = table.add(el).top().left();
-            PendingCellConfig sc = null;
-            if (comp instanceof CellConfig) {
-                sc = ((CellConfig<?>) comp).cellConfig();
-            } else if (el.userObject instanceof CellConfig) {
-                sc = ((CellConfig<?>) el.userObject).cellConfig();
-            }
+            PendingCellConfig sc = PendingCellConfig.find(comp != null ? comp : el);
             if (sc != null) {
                 List<Disposable> effects = sc.applyToCell(cell);
                 itemBindings.addAll(effects);

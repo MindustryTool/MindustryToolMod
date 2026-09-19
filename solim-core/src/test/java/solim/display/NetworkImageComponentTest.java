@@ -17,6 +17,7 @@ import arc.util.Scaling;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.core.SolimToken;
 import solim.reactive.Signal;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
@@ -44,7 +45,7 @@ class NetworkImageComponentTest {
     void networkImageElementIsBackedImage() {
         NetworkImage img = new NetworkImage();
         assertSame(img.image(), img.element());
-        assertSame(img, img.image().userObject);
+        assertSame(img, SolimToken.getComponent(img.image()));
         img.dispose();
     }
 

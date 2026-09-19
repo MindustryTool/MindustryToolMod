@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.core.Ui;
 import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
@@ -32,8 +33,8 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
             cell.growY();
         }
         cell.row();
-        if (table.userObject instanceof GapContainer) {
-            GapContainer gc = (GapContainer) table.userObject;
+        GapContainer gc = GapContainer.find(table);
+        if (gc != null) {
             GapContainer.spaceAttachedCell(table, cell, Direction.VERTICAL, gc.gap());
         }
         return cell;
@@ -53,7 +54,7 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
     }
 
     public SolimCollapser(boolean collapsed) {
-        this.content.userObject = this;
+        SolimToken.bind(this.content, this, constraints);
         this.content.name = "solim-collapser-content";
         this.content.top().left();
         this.content.defaults().top().left();

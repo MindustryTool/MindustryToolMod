@@ -134,7 +134,7 @@ public final class Ui {
     public static boolean isExpanding(Element child) {
         if (child == null)
             return false;
-        if ("expanding".equals(child.userObject) || Boolean.TRUE.equals(child.userObject))
+        if (SolimToken.isExpanding(child))
             return true;
         if ("solim-spacer-table".equals(child.name) || "spacer".equals(child.name))
             return true;

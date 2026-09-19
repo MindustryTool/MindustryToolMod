@@ -37,15 +37,26 @@ public final class ParentStack {
 		}
 	}
 
+	@FunctionalInterface
+	public interface CellConfigurator {
+		void configure(Cell<?> cell, Element child, @Nullable Component component);
+	}
+
 	private static final Deque<Entry> stack = new ArrayDeque<>();
 	private static final Map<Table, List<Component>> pendingComponents = new HashMap<>();
 	private static final Map<Table, Attacher> tableAttachers = new HashMap<>();
-	private static @Nullable BiConsumer<Cell<?>, Element> cellConfigurator = null;
+	private static @Nullable CellConfigurator cellConfigurator = null;
 
 	private ParentStack() {}
 
-	public static void setCellConfigurator(@Nullable BiConsumer<Cell<?>, Element> configurator) {
+	public static void setCellConfigurator(@Nullable CellConfigurator configurator) {
 		cellConfigurator = configurator;
+	}
+
+	public static void setCellConfigurator(@Nullable BiConsumer<Cell<?>, Element> configurator) {
+		cellConfigurator = configurator != null
+				? (cell, child, comp) -> configurator.accept(cell, child)
+				: null;
 	}
 
 	public static void push(Table parent) {
@@ -155,7 +166,7 @@ public final class ParentStack {
 			for (Component comp : list) {
 				Element el = isolate(comp::element);
 				if (el != null && el.parent == null) {
-					doAttach(parent, el, attacher);
+					doAttach(parent, el, attacher, comp);
 				}
 				if (comp instanceof SpacingAware) {
 					((SpacingAware) comp).applySpacing();
@@ -171,10 +182,10 @@ public final class ParentStack {
 		}
 		Entry entry = stack.peek();
 		attachPendingComponents(entry.table);
-		doAttach(entry.table, child, entry.attacher);
+		doAttach(entry.table, child, entry.attacher, null);
 	}
 
-	private static void doAttach(Table parent, Element child, Attacher attacher) {
+	private static void doAttach(Table parent, Element child, Attacher attacher, @Nullable Component comp) {
 		if (parent != null && child != null) {
 			if (child.parent != parent && !parent.getChildren().contains(child, true)) {
 				Cell<?> cell;
@@ -184,7 +195,7 @@ public final class ParentStack {
 					cell = parent.add(child);
 				}
 				if (cell != null && cellConfigurator != null) {
-					cellConfigurator.accept(cell, child);
+					cellConfigurator.configure(cell, child, comp);
 				}
 			}
 		}

@@ -3,6 +3,7 @@ package solim.modifier;
 import solim.reactive.Readable;
 import arc.scene.Element;
 import solim.core.Component;
+import solim.core.SolimToken;
 
 /**
  * Parent-cell configuration mixin.
@@ -103,9 +104,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         if (this instanceof Component) {
             Element el = ((Component) this).element();
             if (el != null) {
-                if (el.userObject == null) {
-                    el.userObject = this;
-                }
+                SolimToken.bind(el, (Component) this, cellConfig());
                 cellConfig().applyGrowToParentCell(el);
             }
         }
@@ -121,9 +120,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         if (this instanceof Component) {
             Element el = ((Component) this).element();
             if (el != null) {
-                if (el.userObject == null) {
-                    el.userObject = this;
-                }
+                SolimToken.bind(el, (Component) this, cellConfig());
                 cellConfig().applyGrowToParentCell(el);
             }
         }

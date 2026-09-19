@@ -17,6 +17,7 @@ import java.util.List;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.modifier.CellConfig;
 import solim.layout.Row;
 import solim.modifier.PendingCellConfig;
@@ -78,12 +79,12 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
         this.root.touchable = Touchable.childrenOnly;
         this.root.toFront();
 
-        this.root.userObject = this;
+        SolimToken.bind(this.root, this, constraints);
 
         this.container = new Table();
         this.container.name = "solim-hud-container";
         this.container.touchable = Touchable.enabled;
-        this.container.userObject = this;
+        SolimToken.bind(this.container, this, constraints);
 
         this.root.add(container).pad(0).margin(0);
 
@@ -156,14 +157,18 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     public static @Nullable Hud find(@Nullable Element element) {
         Element cur = element;
         while (cur != null) {
-            if (cur.userObject instanceof Hud) {
-                return (Hud) cur.userObject;
+            Component comp = SolimToken.getComponent(cur);
+            if (comp instanceof Hud) {
+                return (Hud) comp;
             }
             cur = cur.parent;
         }
-        Table t = ParentStack.find(table -> table != null && table.userObject instanceof Hud);
-        if (t != null && t.userObject instanceof Hud) {
-            return (Hud) t.userObject;
+        Table t = ParentStack.find(table -> table != null && SolimToken.getComponent(table) instanceof Hud);
+        if (t != null) {
+            Component comp = SolimToken.getComponent(t);
+            if (comp instanceof Hud) {
+                return (Hud) comp;
+            }
         }
         return null;
     }

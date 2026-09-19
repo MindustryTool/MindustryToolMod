@@ -8,7 +8,6 @@ import arc.graphics.Pixmap;
 import arc.graphics.Texture;
 import arc.graphics.Texture.TextureFilter;
 import arc.graphics.g2d.TextureRegion;
-import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Cell;
@@ -19,24 +18,19 @@ import arc.util.Nullable;
 import arc.util.Scaling;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import arc.scene.ui.Image;
 import mindustry.Vars;
 import mindustry.core.Version;
-import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.LeafComponent;
 import solim.runtime.ComponentContext;
-import solim.modifier.CellConfig;
-import solim.modifier.PendingCellConfig;
-import solim.modifier.ElementConfig;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.graphics.RoundedGenerator;
 
-public final class NetworkImage implements Component, CellConfig<NetworkImage>, ElementConfig<NetworkImage> {
+public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 
     @FunctionalInterface
     public interface ImageLoader {
@@ -295,22 +289,17 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     // --- Instance ---
 
-    private final Image image;
-    private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Drawable placeholder;
     private @Nullable Drawable fallback;
     private @Nullable Disposable binding;
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private @Nullable String currentUrl;
     private boolean failed = false;
     private Scaling scaling = Scaling.fit;
     private int cornerRadius = 0;
+
     public NetworkImage() {
-        this.image = new Image((Drawable) null);
-        this.image.userObject = this;
-        this.image.setScaling(Scaling.fit);
-        ComponentContext.register(this);
+        super(new Image((Drawable) null));
+        this.element.setScaling(Scaling.fit);
     }
 
     public NetworkImage(String url) {
@@ -324,7 +313,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
     }
 
     public NetworkImage origin(int align) {
-        this.image.setOrigin(align);
+        this.element.setOrigin(align);
         return this;
     }
 
@@ -359,7 +348,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     public NetworkImage placeholder(@Nullable Drawable placeholder) {
         this.placeholder = placeholder;
-        if (image.getDrawable() == null && placeholder != null) {
+        if (element.getDrawable() == null && placeholder != null) {
             applyDrawable(placeholder);
         }
         return this;
@@ -375,7 +364,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     public NetworkImage scaling(Scaling scaling) {
         this.scaling = scaling;
-        image.setScaling(scaling);
+        element.setScaling(scaling);
         return this;
     }
 
@@ -509,13 +498,13 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     private void applyDrawable(@Nullable Drawable drawable) {
         if (drawable != null) {
-            image.setDrawable(drawable);
+            element.setDrawable(drawable);
         }
-        image.invalidateHierarchy();
+        element.invalidateHierarchy();
     }
 
     public NetworkImage color(Color color) {
-        image.setColor(color);
+        element.setColor(color);
         return this;
     }
 
@@ -524,105 +513,22 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
             Effect e = Effect.of(() -> {
                 Color c = color.get();
                 if (c != null)
-                    image.setColor(c);
+                    element.setColor(c);
             });
-            bindings.add(e);
+            own(e);
             ComponentContext.register(e);
         }
         return this;
     }
 
-    public NetworkImage own(@Nullable Disposable disposable) {
-        if (disposable != null) {
-            bindings.add(disposable);
-        }
-        return this;
-    }
-
-    public NetworkImage own(@Nullable Iterable<? extends Disposable> disposables) {
-        if (disposables != null) {
-            for (Disposable d : disposables) {
-                own(d);
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public NetworkImage width(@Nullable Readable<Float> width) {
-        if (width == null)
-            return this;
-        constraints.prefWidth = width;
-        Effect e = Effect.of(() -> {
-            Float w = width.get();
-            if (w != null)
-                width(w);
-        });
-        bindings.add(e);
-        ComponentContext.register(e);
-        return this;
-    }
-
-    @Override
-    public NetworkImage height(@Nullable Readable<Float> height) {
-        if (height == null)
-            return this;
-        constraints.prefHeight = height;
-        Effect e = Effect.of(() -> {
-            Float h = height.get();
-            if (h != null)
-                height(h);
-        });
-        bindings.add(e);
-        ComponentContext.register(e);
-        return this;
-    }
-
-    @Override
-    public NetworkImage visible(@Nullable Readable<Boolean> visible) {
-        if (visible == null)
-            return this;
-        Effect e = Effect.of(() -> {
-            Boolean v = visible.get();
-            visible(Boolean.TRUE.equals(v));
-        });
-        bindings.add(e);
-        ComponentContext.register(e);
-        return this;
-    }
-
-    @Override
-    public NetworkImage opacity(@Nullable Readable<Float> opacity) {
-        if (opacity == null)
-            return this;
-        Effect e = Effect.of(() -> {
-            Float v = opacity.get();
-            if (v != null)
-                opacity(v);
-        });
-        bindings.add(e);
-        ComponentContext.register(e);
-        return this;
-    }
-
-    @Override
-    public PendingCellConfig cellConfig() {
-        return constraints;
-    }
-
     public Image image() {
-        return image;
-    }
-
-    @Override
-    public Element element() {
-        return image;
+        return element;
     }
 
     public NetworkImage top() {
         constraints.alignTop();
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.top();
         }
@@ -631,8 +537,8 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     public NetworkImage bottom() {
         constraints.alignBottom();
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.bottom();
         }
@@ -641,8 +547,8 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     public NetworkImage left() {
         constraints.alignLeft();
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.left();
         }
@@ -651,8 +557,8 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     public NetworkImage right() {
         constraints.alignRight();
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.right();
         }
@@ -661,8 +567,8 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     public NetworkImage center() {
         constraints.alignCenter();
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.center();
         }
@@ -671,27 +577,13 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     @Override
     public void dispose() {
-        if (disposed) {
+        if (isDisposed()) {
             return;
         }
-        disposed = true;
         if (binding != null) {
             binding.dispose();
             binding = null;
         }
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
-    }
-
-    @Override
-    public NetworkImage self() {
-        return this;
+        super.dispose();
     }
 }

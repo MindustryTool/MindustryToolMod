@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
@@ -33,7 +34,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
 
     public Grid() {
         this.table = new Table();
-        this.table.userObject = this;
+        SolimToken.bind(this.table, this, constraints);
         this.table.name = "solim-grid-table";
         this.table.top().left();
         this.table.defaults().top().left();

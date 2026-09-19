@@ -1,6 +1,9 @@
 package solim.modifier;
 
+import arc.scene.Element;
 import arc.scene.ui.layout.Table;
+import solim.core.Component;
+import solim.core.SolimToken;
 import solim.layout.Direction;
 import solim.layout.GapContainer;
 import solim.input.Button;
@@ -14,7 +17,7 @@ import solim.layout.Wrap;
  * Package-private generic gap container for tables that don't have a dedicated
  * GapContainer implementation (Row, Column, Grid, etc.).
  */
-final class GenericGapContainer implements GapContainer {
+final class GenericGapContainer implements GapContainer, Component {
     private final Table table;
     private float gap;
 
@@ -25,8 +28,8 @@ final class GenericGapContainer implements GapContainer {
 
     static void setGap(Table table, float gap) {
         if (table == null) return;
-        if (table.userObject instanceof GapContainer) {
-            GapContainer gc = (GapContainer) table.userObject;
+        GapContainer gc = GapContainer.find(table);
+        if (gc != null) {
             if (gc instanceof Row) {
                 ((Row) gc).gap(gap);
             } else if (gc instanceof Column) {
@@ -46,7 +49,7 @@ final class GenericGapContainer implements GapContainer {
             }
         } else {
             GenericGapContainer ggc = new GenericGapContainer(table, gap);
-            table.userObject = ggc;
+            SolimToken.bind(table, ggc);
             ggc.respace();
         }
         table.invalidateHierarchy();
@@ -55,6 +58,11 @@ final class GenericGapContainer implements GapContainer {
     void setGap(float gap) {
         this.gap = gap;
         respace();
+    }
+
+    @Override
+    public Element element() {
+        return table;
     }
 
     @Override

@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.core.SolimToken;
 import solim.core.Ui;
 import solim.modifier.CellConfig;
 import solim.layout.GapContainer;
@@ -42,7 +43,7 @@ public final class Dynamic<T> extends BaseComponent
     public Dynamic(Readable<T> source, Function<T, Component> factory) {
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.factory = Objects.requireNonNull(factory, "factory must not be null");
-        this.container.userObject = this;
+        SolimToken.bind(this.container, this, constraints);
         this.container.top().left();
         this.container.defaults().top().left();
     }

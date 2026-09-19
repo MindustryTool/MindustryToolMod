@@ -2,17 +2,10 @@ package solim.display;
 
 import arc.Core;
 import arc.graphics.Color;
-import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import solim.core.Component;
-import solim.core.Disposable;
-import solim.modifier.CellConfig;
-import solim.modifier.PendingCellConfig;
-import solim.modifier.ElementConfig;
+import solim.core.LeafComponent;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.reactive.Effect;
@@ -22,13 +15,9 @@ import solim.reactive.Readable;
  * Compact pill-shaped badge component for notification counters and tag
  * indicators.
  */
-public final class Badge implements Component, CellConfig<Badge>, ElementConfig<Badge>, TableConfig<Badge> {
+public final class Badge extends LeafComponent<Table, Badge> implements TableConfig<Badge> {
 
-    private final Table table;
-    private final PendingCellConfig constraints = new PendingCellConfig();
     private final Text label;
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private boolean hideOnZero = false;
     private @Nullable Effect visibilityEffect;
     private @Nullable Readable<Integer> countSignal;
@@ -38,24 +27,21 @@ public final class Badge implements Component, CellConfig<Badge>, ElementConfig<
     }
 
     public Badge(Readable<String> text) {
-        this.table = new Table();
-        this.table.userObject = this;
-        this.table.name = "solim-badge-table";
-        this.table.center();
+        super(new Table());
+        this.element.name = "solim-badge-table";
+        this.element.center();
 
         Drawable bg = (Core.atlas != null && Core.atlas.has("whiteui"))
                 ? Core.atlas.drawable("whiteui")
                 : null;
         if (bg != null) {
-            table.setBackground(bg);
-            table.setColor(new Color(0.85f, 0.25f, 0.25f, 0.9f));
+            element.setBackground(bg);
+            element.setColor(new Color(0.85f, 0.25f, 0.25f, 0.9f));
         }
-        table.margin(2f, 6f, 2f, 6f);
+        element.margin(2f, 6f, 2f, 6f);
 
         this.label = Text.of(text);
-        table.add(label.label()).center();
-
-        ComponentContext.register(this);
+        element.add(label.label()).center();
     }
 
     public static Badge of(String text) {
@@ -91,25 +77,24 @@ public final class Badge implements Component, CellConfig<Badge>, ElementConfig<
     private void updateVisibilityBinding() {
         if (visibilityEffect != null) {
             visibilityEffect.dispose();
-            bindings.remove(visibilityEffect);
             visibilityEffect = null;
         }
         if (countSignal != null) {
             visibilityEffect = Effect.of(() -> {
                 Integer c = countSignal.get();
                 if (hideOnZero) {
-                    table.visible = (c != null && c > 0);
+                    element.visible = (c != null && c > 0);
                 } else {
-                    table.visible = true;
+                    element.visible = true;
                 }
             });
-            bindings.add(visibilityEffect);
+            own(visibilityEffect);
             ComponentContext.register(visibilityEffect);
         }
     }
 
     public Badge color(Color color) {
-        table.setColor(color);
+        element.setColor(color);
         return this;
     }
 
@@ -122,40 +107,17 @@ public final class Badge implements Component, CellConfig<Badge>, ElementConfig<
         return label;
     }
 
+    @Override
     public Table table() {
-        return table;
-    }
-
-    @Override
-    public Element element() {
-        return table;
-    }
-
-    @Override
-    public PendingCellConfig cellConfig() {
-        return constraints;
+        return element;
     }
 
     @Override
     public void dispose() {
-        if (disposed) {
+        if (isDisposed()) {
             return;
         }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
         label.dispose();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
-    }
-
-    @Override
-    public Badge self() {
-        return this;
+        super.dispose();
     }
 }
