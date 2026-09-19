@@ -291,11 +291,19 @@ TBD - created by archiving change refactor-element-config-mixins. Update Purpose
 - **THEN** `cell.width(100f)` and `cell.growX()` are called
 
 ### Requirement: PendingCellConfig provides apply helpers for immediate application
-`PendingCellConfig` SHALL provide `applyGrowToParentCell(Element)`, `applyMarginToParentCell(Element)`, and `applyAlignToParentCell(Element)` for immediate application when the element is already attached to a parent Table.
+`PendingCellConfig` SHALL provide `applyGrowToParentCell(Element)`, `applyMarginToParentCell(Element)`, `applyAlignToParentCell(Element)`, and `applySizeToParentCell(Element)` for immediate application when the element is already attached to a parent Table. `CellConfig` sizing methods (`minWidth`, `minHeight`, `maxWidth`, `maxHeight`) SHALL immediately invoke `applySizeToParentCell` so constraints take effect on the live Arc `Cell` when invoked on an already-attached component.
 
 #### Scenario: Applying grow to attached element
 - **WHEN** `applyGrowToParentCell(element)` is called and element's parent is a Table
 - **THEN** `cell.growX()` or `cell.growY()` is set on the parent cell
+
+#### Scenario: Sizing modifier applied to attached element
+- **WHEN** `minWidth(float)` or `maxWidth(float)` is called on a component that has already been attached to a parent Table
+- **THEN** the parent Table's Cell is immediately updated with the minimum or maximum width, and the parent table's layout hierarchy is invalidated
+
+#### Scenario: Reactive sizing modifier applied to attached element
+- **WHEN** `minWidth(Readable<Float>)` is called on an already-attached component
+- **THEN** the initial minimum width is applied immediately to the parent Cell, and an Effect is registered to keep the parent Cell in sync whenever the readable value changes
 
 ### Requirement: PendingCellConfig provides find helper
 `PendingCellConfig` SHALL provide a static `find(Object)` method that resolves a `PendingCellConfig` from an object chain: returns the object if it's a `PendingCellConfig`, calls `cellConfig()` if it's a `CellConfig`, or inspects `SolimToken` if it's an `Element`. Untyped legacy `userObject` recursion SHALL NOT be performed.
