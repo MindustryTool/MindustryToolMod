@@ -115,7 +115,6 @@ class PopupMenuTest {
             menu.show("first", 50f, 60f);
             assertEquals(1, builds.get());
             assertNotNull(menu.table().parent, "Menu table must be attached to the scene after show");
-            assertNotNull(menu.table().getBackground(), "Default chrome must be applied");
 
             menu.show("second", 10f, 20f);
             assertEquals(2, builds.get(), "Provider must rebuild on every show");

@@ -3,12 +3,12 @@
 ## Purpose
 
 Mechanical merge of 12 specs per change `spec-domain-merge` (stage 4 framework-ui, concat-then-dedupe). Sources: solim-widgets, animated-loader, solim-arc-interop-facade, solim-declarative-ui, solim-dialog, solim-hud, solim-input-extensions, solim-network-image, solim-popup-menu, solim-scroll-pagination, solim-tabs, solim-virtual-list. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work.
-
 ## Requirements
 
 **Source: solim-widgets**
 
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
+
 ### Requirement: Text widget with static and reactive content
 `Text` SHALL display string content via `text(String)` and `text(Readable<String>)` (reactive). It SHALL wrap `arc.scene.ui.Label` and provide fluent chained property modifiers including `.color(Color)`, `.color(Readable<Color>)`, `.style(LabelStyle)`, `.wrap(boolean)`, `.ellipsis(boolean)`, `.fontScale(float)`, text alignment (`.left()`, `.center()`, `.right()`), and padding/margin modifiers (`.padding(float)`, `.padding(float, float, float, float)`, `.paddingTop(float)`, `.paddingBottom(float)`, `.paddingLeft(float)`, `.paddingRight(float)`, `.margin(float)`, `.margin(float, float, float, float)`, `.marginTop(float)`, `.marginBottom(float)`, `.marginLeft(float)`, `.marginRight(float)`). Reactive bindings SHALL be managed internally by the component lifecycle.
 
@@ -188,7 +188,6 @@ The system SHALL display the animated circular loader instead of static loading 
 
 `UI.arc(Element el)` provides a named escape hatch for attaching raw Arc `Element` instances with no Solim equivalent, replacing the `component(() -> someElement)` workaround. The deliberate name discourages casual misuse.
 
-
 ### Requirement: UI.arc escape-hatch for raw Arc elements
 `UI` SHALL expose a static `arc(Element el)` method that attaches a raw Arc `Element` to the current `ParentStack` parent and returns it. This replaces the `component(() -> rawElement)` workaround for Arc elements that do not extend `BaseComponent`. The method is intentionally named `arc` — not `element` — to signal that it is an escape hatch for direct Arc layer access, making casual misuse for things like `arc(new Label("hi"))` visually incongruent with the available Solim equivalent `text("hi")`.
 
@@ -207,6 +206,7 @@ The system SHALL display the animated circular loader instead of static loading 
 **Source: solim-declarative-ui**
 
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
+
 ### Requirement: Implicit parent stack with lambda scopes
 The framework SHALL provide solim.ui.ParentStack (and Ui facade) with static helpers column(), 
 ow(), stack(), grid(int columns), wrap(), scroll(), container(), card(), and dialog(String title) returning fluent builder instances supporting .children(Runnable). Calling .children(Runnable) pushes the layout Element onto ParentStack, executes the lambda, pops with 	ry/finally, attaches the layout to the outer active parent container, and returns the container instance. Every child created inside the .children(Runnable) lambda SHALL auto-attach to current parent. This includes BaseComponent subclass instances — constructing a BaseComponent inside a children() block SHALL auto-attach it to the current parent without requiring an explicit component() call. The stack() helper SHALL create a solim.layout.SolimStack overlay container attached to ParentStack.
@@ -303,6 +303,7 @@ Each declarative helper SHALL return the created layout `Element` so callers can
 **Source: solim-dialog**
 
 Declarative dialog component providing reactive signals, layout helpers, and automatic lifecycle management and disposal of attached content components and resources.
+
 ### Requirement: Automatic Content Component Lifecycle Management
 The `SolimDialog` component SHALL manage content attachment declaratively via `children(Runnable)` using `ParentStack` and SHALL defer executing the content builder until the dialog is shown or unwrapped via `dialog()`. It SHALL automatically register any resources and components created within the content builder with its internal disposable registry. The legacy `content(Component)` method SHALL NOT be supported.
 
@@ -343,6 +344,7 @@ The `SolimDialog` component SHALL enable `fillParent(true)` by default to fill t
 **Source: solim-hud**
 
 TBD - created by archiving change solim-hud-components. Update Purpose after archive.
+
 ### Requirement: Floating Hud container
 The Solim framework SHALL provide a `Hud` container (`hud()`, `hud(Runnable children)`) in `solim.overlay` representing a floating, non-modal screen overlay. The `Hud` root element SHALL default to `touchable = childrenOnly` so unconsumed touches pass through to underlying game elements.
 
@@ -431,6 +433,7 @@ The system SHALL provide an immutable `InputStyle` value in `solim-core` describ
 **Source: solim-network-image**
 
 Provides asynchronous texture fetching and rendering with in-memory caching and reactive URL binding.
+
 ### Requirement: Declarative Network Image Component
 The system SHALL provide a NetworkImage component (solim.display.NetworkImage, Ui.networkImage) that asynchronously fetches an image from an HTTP/HTTPS URL and displays it in the Solim UI tree.
 
@@ -485,6 +488,7 @@ The `NetworkImage` component SHALL configure HTTP image requests with an extende
 **Source: solim-popup-menu**
 
 Native Solim floating context menu providing reactive provider content, explicit show/hide with stage-coordinate placement, prefer-above/flip/clamp positioning, tap-outside, Back/Escape, and resize dismissal, with headless-safe no-ops.
+
 ### Requirement: Reactive provider content
 The `Popup` component SHALL render its menu content from a caller-supplied provider function applied to the data passed at show time, rebuilding content on every `show()` call.
 
@@ -605,6 +609,7 @@ The system SHALL support programmatically setting and reading scroll positions o
 **Source: solim-tabs**
 
 Provides a declarative tabs component for organizing Solim views into selectable tab panels with reactive active tab binding.
+
 ### Requirement: Declarative Tabs Component
 The system SHALL provide a Tabs component (solim.layout.Tabs, Ui.tabs) for organizing views into selectable tab panels.
 
@@ -630,7 +635,6 @@ The Tabs component SHALL support lazy tab mounting where tab content is instanti
 **Source: solim-virtual-list**
 
 Reusable Solim virtual list layout primitive that measures item heights and mounts only elements intersecting the visible viewport plus an overscan buffer inside a scroll container.
-
 
 ### Requirement: Reusable virtual list layout component
 The Solim layout system SHALL provide a declarative `VirtualList` component (accessible via `solim.UI.virtualList(...)`) that accepts an item collection, key selector, item height provider, and item component builder, and mounts only elements that intersect the visible viewport plus an overscan buffer.
@@ -667,4 +671,41 @@ The `VirtualList` SHALL detect changes to container width and trigger re-measure
 #### Scenario: Width resize recalculates layout
 - **WHEN** the container width changes due to window or panel resizing
 - **THEN** variable-height items are re-measured against the new width, the prefix-sum array is updated, and the visible window is re-computed
+
+### Requirement: NetworkImage Layout Methods and Parent Cell Constraints
+NetworkImage SHALL implement CellConfig<NetworkImage> and ElementConfig<NetworkImage> for declarative layout geometry and parent cell constraints. Sizing methods (size(float, float), size(float), width(float), height(float), and reactive variants) SHALL set both element dimensions and preferred cell dimensions. Parent cell constraint modifiers (minWidth, maxWidth, minHeight, maxHeight, growX, growY, grow) SHALL be buffered in PendingCellConfig and automatically bound to the parent Cell when attached via ParentStack or applied immediately if already attached. NetworkImage SHALL NOT provide inner padding() or gap() methods and SHALL NOT implement SpacingAware.
+
+#### Scenario: Element dimension configuration
+- **WHEN** networkImage(url).size(64f, 48f) is configured
+- **THEN** the underlying Arc Image width is 64f and height is 48f, and the preferred width and height in cellConfig() are 64f and 48f.
+
+#### Scenario: Reactive width and height
+- **WHEN** networkImage(url).width(widthSignal).height(heightSignal) is declared and the signals emit new values
+- **THEN** the underlying Arc Image width and height update to match the emitted values, and updates cease after dispose().
+
+#### Scenario: Parent cell grow and bounds constraints
+- **WHEN** networkImage(url).minWidth(20f).maxWidth(100f).growX() is added inside a parent Table
+- **THEN** the parent cell's minWidth is 20f, maxWidth is 100f, and expandX and fillX are enabled.
+
+### Requirement: NetworkImage Declarative Alignment
+NetworkImage SHALL support declarative alignment via .top(), .left(), and .center(). Calling these methods before or after attachment to a parent Table SHALL configure the parent cell's alignment to the respective direction.
+
+#### Scenario: Alignment configured before parent attachment
+- **WHEN** networkImage(url).top().left() is declared before the image is added to a parent Table
+- **THEN** upon attachment to the Table, the resulting Cell has top-left alignment configured.
+
+#### Scenario: Alignment configured after parent attachment
+- **WHEN** top() or center() is called on a NetworkImage already attached to a Table
+- **THEN** the parent cell's alignment is updated immediately.
+
+### Requirement: NetworkImage Outer Margin via CellConfig
+NetworkImage SHALL delegate all outer spacing to CellConfig margins. Calling margin(float), margin(float, float, float, float), marginTop, marginBottom, marginLeft, marginRight, marginX, marginY, or their reactive overloads SHALL configure the parent cell's padding through PendingCellConfig.
+
+#### Scenario: Static margin configuration in Table
+- **WHEN** networkImage(url).margin(10f) is attached inside a parent Table
+- **THEN** the parent cell's padTop, padLeft, padBottom, and padRight are each equal to 10f.
+
+#### Scenario: Directional margin configuration in Table
+- **WHEN** networkImage(url).marginTop(4f).marginLeft(8f).marginBottom(12f).marginRight(16f) is attached inside a parent Table
+- **THEN** the parent cell's padding values reflect 4f top, 8f left, 12f bottom, and 16f right.
 
