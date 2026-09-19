@@ -8,6 +8,7 @@ import arc.math.Mathf;
 import arc.math.geom.Geometry;
 import arc.math.geom.Rect;
 import arc.math.geom.Vec2;
+import arc.util.Log;
 import arc.util.Time;
 import arc.util.Tmp;
 import mindustry.Vars;
@@ -89,6 +90,26 @@ public class ModMobileInput extends MobileInput {
         if (!isPanning && !pinchPanning && !lineMode && !selecting && mode == PlaceMode.none
                 && Time.timeSinceMillis(lastPanTime) > 500) {
             Core.camera.position.lerpDelta(unit, 0.08f);
+        }
+    }
+
+    @Override
+    public boolean tap(float x, float y, int count, KeyCode button) {
+        try {
+            return super.tap(x, y, count, button);
+        } catch (Throwable t) {
+            Log.err("Error processing mobile tap in ModMobileInput", t);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean longPress(float x, float y) {
+        try {
+            return super.longPress(x, y);
+        } catch (Throwable t) {
+            Log.err("Error processing mobile longPress in ModMobileInput", t);
+            return false;
         }
     }
 

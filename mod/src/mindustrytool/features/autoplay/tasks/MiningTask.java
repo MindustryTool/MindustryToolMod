@@ -6,6 +6,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
+import arc.util.Interval;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.content.Blocks;
@@ -32,6 +33,7 @@ public class MiningTask implements AutoplayTask {
     private final ConfigValue<Seq<String>> selectedItems;
     private final Signal<String> status = Signal.of(Core.bundle.get("feature.autoplay.status.idle"));
     private final MinerAI ai = new MinerAI();
+    private final Interval scanTimer = new Interval(1);
 
     public MiningTask(AutoplayFeature feature) {
         this.selectedItems = feature.configGroup().value("mining.items", new Seq<>(), new OrderedSeqPersister());
@@ -84,33 +86,62 @@ public class MiningTask implements AutoplayTask {
         selectedItems.set(current);
     }
 
+    private static @Nullable Tile safeFindClosestOre(float originX, float originY, Item item) {
+        try {
+            return Vars.indexer.findClosestOre(originX, originY, item);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static @Nullable Tile safeFindClosestWallOre(float originX, float originY, Item item) {
+        try {
+            return Vars.indexer.findClosestWallOre(originX, originY, item);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
     private static @Nullable Tile findOreTile(Unit unit, Building core, Item item) {
         if (core == null) {
             return null;
         }
         float originX = core.x;
         float originY = core.y;
-        if ((unit.type.mineFloor && Vars.indexer.hasOre(item))
-                || (unit.type.mineWalls && Vars.indexer.hasWallOre(item))) {
-            Tile tile = Vars.indexer.findClosestOre(originX, originY, item);
-            if (tile == null && unit.type.mineWalls) {
-                tile = Vars.indexer.findClosestWallOre(originX, originY, item);
-            }
-            if (tile != null && isValidOreTile(tile, item)) {
-                return tile;
-            }
+
+        Tile tile = null;
+        boolean isFloorOre = false;
+
+        if (unit.type.mineFloor && Vars.indexer.hasOre(item)) {
+            tile = safeFindClosestOre(originX, originY, item);
             if (tile != null) {
-                Tile validNearby = findNearbyUncoveredOre(tile, item, 12);
-                if (validNearby != null) {
-                    return validNearby;
-                }
+                isFloorOre = true;
+            }
+        }
+
+        if (tile == null && unit.type.mineWalls && Vars.indexer.hasWallOre(item)) {
+            tile = safeFindClosestWallOre(originX, originY, item);
+        }
+
+        if (tile != null && isValidOreTile(tile, item)) {
+            return tile;
+        }
+
+        if (tile != null && isFloorOre) {
+            Tile validNearby = findNearbyUncoveredOre(tile, item, 12);
+            if (validNearby != null) {
+                return validNearby;
             }
         }
         return null;
     }
 
     public static boolean isValidOreTile(@Nullable Tile tile, Item item) {
-        return tile != null && tile.drop() == item && (tile.block() == Blocks.air || tile.block() == null);
+        return tile != null && (
+                (tile.drop() == item && (tile.block() == Blocks.air || tile.block() == null))
+                || tile.wallDrop() == item
+                || (tile.block() != null && tile.block().itemDrop == item)
+        );
     }
 
     private static @Nullable Tile findNearbyUncoveredOre(Tile center, Item item, int radius) {
@@ -141,48 +172,56 @@ public class MiningTask implements AutoplayTask {
             return false;
         }
 
-        Item bestItem = null;
-        Tile bestTile = null;
-        int minAmount = Integer.MAX_VALUE;
-        boolean allFull = true;
-
-        for (Item item : Vars.content.items()) {
-            if (!isSelected(item) || !unit.canMine(item)) {
-                continue;
-            }
-
-            if (core.acceptStack(item, 1, unit) <= 0) {
-                continue;
-            }
-            allFull = false;
-
-            Tile tile = findOreTile(unit, core, item);
-            if (tile == null) {
-                continue;
-            }
-
-            int currentAmount = core.items.get(item);
-            if (currentAmount < minAmount) {
-                minAmount = currentAmount;
-                bestItem = item;
-                bestTile = tile;
-            }
-        }
-
-        // If the current target item is still valid, only switch away if another
-        // selected candidate has fewer items in the core by at least the hysteresis threshold.
-        // This avoids 1-item ping-pong near the core and batches trips far from the core.
-        if (ai.targetItem != null
+        boolean currentTargetValid = ai.targetItem != null
+                && ai.ore != null
                 && isSelected(ai.targetItem)
                 && unit.canMine(ai.targetItem)
-                && core.acceptStack(ai.targetItem, 1, unit) > 0) {
-            Tile currentTile = findOreTile(unit, core, ai.targetItem);
-            if (currentTile != null) {
+                && core.acceptStack(ai.targetItem, 1, unit) > 0
+                && isValidOreTile(ai.ore, ai.targetItem);
+
+        Item bestItem = null;
+        Tile bestTile = null;
+        boolean allFull = false;
+
+        if (currentTargetValid && !scanTimer.get(0, 30f)) {
+            bestItem = ai.targetItem;
+            bestTile = ai.ore;
+        } else {
+            int minAmount = Integer.MAX_VALUE;
+            allFull = true;
+
+            for (Item item : Vars.content.items()) {
+                if (!isSelected(item) || !unit.canMine(item)) {
+                    continue;
+                }
+
+                if (core.acceptStack(item, 1, unit) <= 0) {
+                    continue;
+                }
+                allFull = false;
+
+                Tile tile = findOreTile(unit, core, item);
+                if (tile == null) {
+                    continue;
+                }
+
+                int currentAmount = core.items.get(item);
+                if (currentAmount < minAmount) {
+                    minAmount = currentAmount;
+                    bestItem = item;
+                    bestTile = tile;
+                }
+            }
+
+            // If the current target item is still valid, only switch away if another
+            // selected candidate has fewer items in the core by at least the hysteresis threshold.
+            // This avoids 1-item ping-pong near the core and batches trips far from the core.
+            if (currentTargetValid) {
                 int currentTargetAmount = core.items.get(ai.targetItem);
                 int threshold = Math.max(unit.type.itemCapacity * 2, 60);
                 if (minAmount >= currentTargetAmount - threshold) {
                     bestItem = ai.targetItem;
-                    bestTile = currentTile;
+                    bestTile = ai.ore;
                 }
             }
         }

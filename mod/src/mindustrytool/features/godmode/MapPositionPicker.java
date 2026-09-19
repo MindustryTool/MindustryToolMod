@@ -8,25 +8,54 @@ import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.game.EventType.TapEvent;
 
-public class MapPositionPicker {
+public final class MapPositionPicker {
 
-    @SuppressWarnings("unchecked")
-    public static void pick(@Nullable Runnable onStart, Cons2<Float, Float> onPicked) {
+    static @Nullable Cons<TapEvent> currentListener;
+
+    private MapPositionPicker() {
+    }
+
+    public static synchronized void pick(@Nullable Runnable onStart, Cons2<Float, Float> onPicked) {
+        cancel();
+
         if (onStart != null) {
             onStart.run();
         }
 
-        if (Vars.ui != null && Vars.ui.hudfrag != null) {
+        if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
             Vars.ui.hudfrag.showToast(Core.bundle.get("feature.god-mode.picker.tap-instruction"));
         }
 
-        Cons<TapEvent>[] holder = (Cons<TapEvent>[]) new Cons[1];
-        holder[0] = event -> {
-            if (event.tile != null) {
-                Events.remove(TapEvent.class, holder[0]);
-                onPicked.get(event.tile.worldx(), event.tile.worldy());
+        Cons<TapEvent> listener = new Cons<TapEvent>() {
+            @Override
+            public void get(TapEvent event) {
+                if (currentListener != this) {
+                    return;
+                }
+                if (event.tile != null) {
+                    cancel();
+                    onPicked.get(event.tile.worldx(), event.tile.worldy());
+                }
             }
         };
-        Events.on(TapEvent.class, holder[0]);
+
+        currentListener = listener;
+        Events.on(TapEvent.class, listener);
+    }
+
+    public static synchronized void cancel() {
+        if (currentListener != null) {
+            Cons<TapEvent> listener = currentListener;
+            currentListener = null;
+            removeListener(listener);
+        }
+    }
+
+    private static void removeListener(Cons<TapEvent> listener) {
+        if (Core.app != null) {
+            Core.app.post(() -> Events.remove(TapEvent.class, listener));
+        } else {
+            Events.remove(TapEvent.class, listener);
+        }
     }
 }
