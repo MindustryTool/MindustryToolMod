@@ -3,6 +3,7 @@ package mindustrytool.features.chat;
 import arc.Core;
 import arc.util.Log;
 import arc.util.Nullable;
+import arc.util.Threads;
 import arc.util.Timer;
 import arc.util.Timer.Task;
 import java.util.ArrayList;
@@ -503,7 +504,7 @@ public class ChatService {
         if (!running.get() || !reconnecting.compareAndSet(false, true)) {
             return;
         }
-        new Thread(() -> {
+        Threads.daemon("ChatReconnectThread", () -> {
             try {
                 Thread.sleep(5000L);
             } catch (InterruptedException ignored) {
@@ -511,10 +512,14 @@ public class ChatService {
                 reconnecting.set(false);
             }
             if (running.get()) {
-                connectStream();
-                catchUpSync();
+                Core.app.post(() -> {
+                    if (running.get()) {
+                        connectStream();
+                        catchUpSync();
+                    }
+                });
             }
-        }, "ChatReconnectThread").start();
+        });
     }
 
     long getLastEventTime() {

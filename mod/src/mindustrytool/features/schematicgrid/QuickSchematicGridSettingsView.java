@@ -135,7 +135,9 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                                 .height(unit(8.5f));
                     });
 
-                    Readable<List<Integer>> pagesList = feature.pageCountConfig.signal().map(count -> {
+                    Readable<List<Integer>> pagesList = Signal.computed(() -> {
+                        Integer count = feature.pageCountConfig.signal().get();
+                        feature.pageIcons().get();
                         int total = Math.max(1, Math.min(QuickSchematicGridFeature.MAX_PAGES, count != null ? count : 1));
                         List<Integer> list = new ArrayList<>(total);
                         for (int i = 0; i < total; i++) {
@@ -144,18 +146,57 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                         return list;
                     });
 
-                    row().growX().gap(unit(1)).children(() -> {
-                        reactiveGrid(
-                                feature.pageCountConfig.signal(),
-                                pagesList,
-                                String::valueOf,
-                                pageIndex -> button(
-                                        Core.bundle.format("feature.quick-schematic-grid.settings.page-tab", pageIndex + 1),
-                                        () -> feature.setActivePage(pageIndex))
-                                                .style(WebStyles.filterChipText())
-                                                .checked(feature.activePage.map(p -> p != null && p.intValue() == pageIndex))
-                                                .height(unit(8.5f)))
-                                .gap(unit(1));
+                    dynamic(pagesList, pages -> wrap().growX().gap(unit(1)).children(() -> {
+                        if (pages != null) {
+                            for (int pageIndex : pages) {
+                                String icon = feature.getPageIcon(pageIndex);
+                                String label = icon != null && !icon.trim().isEmpty() ? icon : String.valueOf(pageIndex + 1);
+                                String tooltip = Core.bundle.format("feature.quick-schematic-grid.settings.page-tab", pageIndex + 1);
+
+                                button(label, () -> feature.setActivePage(pageIndex))
+                                        .style(WebStyles.filterChipText())
+                                        .checked(feature.activePage.map(p -> p != null && p.intValue() == pageIndex))
+                                        .tooltip(tooltip)
+                                        .height(unit(8.5f))
+                                        .minWidth(unit(14f));
+                            }
+                        }
+                    }));
+
+                    // Active Page Icon Configuration Row
+                    row().growX().gap(unit(2)).center().children(() -> {
+                        text(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon"))
+                                .left()
+                                .color(WebStyles.Colors.GHOST_FG);
+
+                        Readable<String> activeIcon = Signal.computed(() -> {
+                            int p = feature.activePage.get();
+                            feature.pageIcons().get();
+                            return feature.getPageIcon(p);
+                        });
+
+                        dynamic(activeIcon, icon -> {
+                            if (icon == null || icon.trim().isEmpty()) {
+                                return text(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.none"))
+                                        .color(Color.gray);
+                            }
+                            return text(icon).fontScale(1.3f);
+                        });
+
+                        spacer();
+
+                        button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.pick"), this::pickPageIcon)
+                                .style(WebStyles.secondary())
+                                .height(unit(8.5f));
+
+                        dynamic(activeIcon, icon -> {
+                            if (icon != null && !icon.trim().isEmpty()) {
+                                return button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.clear"), this::clearPageIcon)
+                                        .style(WebStyles.ghost())
+                                        .height(unit(8.5f));
+                            }
+                            return null;
+                        });
                     });
 
                     divider();
@@ -272,5 +313,14 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                 Core.bundle.get("feature.quick-schematic-grid.delete-page.title"),
                 Core.bundle.format("feature.quick-schematic-grid.delete-page.message", pageIndex + 1),
                 () -> feature.deletePage(pageIndex));
+    }
+
+    private void pickPageIcon() {
+        int pageIndex = feature.getActivePage();
+        new SchematicIconPickerDialog(icon -> feature.setPageIcon(pageIndex, icon)).show();
+    }
+
+    private void clearPageIcon() {
+        feature.clearPageIcon(feature.getActivePage());
     }
 }
