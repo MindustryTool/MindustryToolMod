@@ -13,17 +13,18 @@ import solim.core.Disposable;
  */
 public final class ComponentContext {
 	private static final Deque<Consumer<Disposable>> stack = new ArrayDeque<>();
-	private static int paused = 0;
 
 	private ComponentContext() {}
 
 	public static void push(Consumer<Disposable> registrar) {
+		SolimAssert.checkMainThread();
 		if (registrar != null) {
 			stack.push(registrar);
 		}
 	}
 
 	public static Consumer<Disposable> pop() {
+		SolimAssert.checkMainThread();
 		if (!stack.isEmpty()) {
 			return stack.pop();
 		}
@@ -31,30 +32,30 @@ public final class ComponentContext {
 	}
 
 	public static Consumer<Disposable> current() {
-		if (paused > 0) {
-			return null;
-		}
 		return stack.peek();
 	}
 
 	/**
 	 * Suspends automatic ownership registration for resources created within the given action.
+	 * Nested component scopes instantiated inside action will manage their own ownership.
 	 * Auto-ownership is guaranteed to be restored after {@code action} returns, even if it throws.
 	 */
 	public static void withoutAutoOwnership(Runnable action) {
-		paused++;
+		if (action == null) {
+			return;
+		}
+		Deque<Consumer<Disposable>> saved = new ArrayDeque<>(stack);
+		stack.clear();
 		try {
 			action.run();
 		} finally {
-			if (paused > 0) {
-				paused--;
-			}
+			stack.clear();
+			stack.addAll(saved);
 		}
 	}
 
 	public static void clear() {
 		stack.clear();
-		paused = 0;
 	}
 
 	public static int size() {
@@ -63,8 +64,8 @@ public final class ComponentContext {
 
 	/** Registers a disposable with the currently active building component, if any. */
 	public static <T extends Disposable> T register(T disposable) {
-		if (paused > 0 || disposable == null) {
-			return disposable;
+		if (disposable == null) {
+			return null;
 		}
 		Consumer<Disposable> current = stack.peek();
 		if (current != null) {
@@ -75,8 +76,8 @@ public final class ComponentContext {
 
 	/** Registers a child component with the currently active building component, if any. */
 	public static <T extends Component> T registerChild(T child) {
-		if (paused > 0 || child == null) {
-			return child;
+		if (child == null) {
+			return null;
 		}
 		Consumer<Disposable> current = stack.peek();
 		if (current != null) {

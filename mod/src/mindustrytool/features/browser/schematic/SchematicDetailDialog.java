@@ -16,14 +16,13 @@ import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.type.Item;
 import mindustry.type.ItemStack;
-import mindustry.ui.Styles;
 import mindustrytool.Config;
 import mindustrytool.features.browser.common.BrowserImages;
+import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.SchematicDetailData;
 import mindustrytool.models.response.SchematicDetailData.SchematicRequirement;
-import mindustrytool.models.response.TagData;
 import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -74,7 +73,7 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private Component portraitLayout() {
             return scroll().grow().children(() -> {
-                column().grow().top().left().gap(unit(2)).children(() -> {
+                column().grow().top().left().gap(unit(4)).children(() -> {
                     previewImagePortrait();
                     details();
                 });
@@ -83,7 +82,7 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private Component landscapeLayout() {
             return scroll().grow().children(() -> {
-                row().grow().top().left().gap(unit(2)).children(() -> {
+                row().grow().center().top().gap(unit(4)).children(() -> {
                     previewImageLandscape();
                     details();
                 });
@@ -91,34 +90,35 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private void previewImagePortrait() {
-            networkImage(BrowserImages.schematicImageUrl(itemId))
-                    .placeholder(Icon.image)
-                    .fallback(Icon.image)
-                    .origin(Align.top | Align.left)
-                    .growX()
-                    .top()
-                    .height(dvh(45))
-                    .rounded(8)
-                    .scaling(Scaling.fit);
+            row().grow().children(() -> {
+                networkImage(BrowserImages.schematicImageUrl(itemId))
+                        .placeholder(Icon.image)
+                        .fallback(Icon.image)
+                        .origin(Align.top | Align.left)
+                        .grow()
+                        .top()
+                        .scaling(Scaling.fit);
+            });
         }
 
         private void previewImageLandscape() {
-            networkImage(BrowserImages.schematicImageUrl(itemId))
-                    .origin(Align.top)
-                    .placeholder(Icon.image)
-                    .fallback(Icon.image)
-                    .width(dvw(45))
-                    .top()
-                    .rounded(8)
-                    .scaling(Scaling.fit);
+            row().grow().children(() -> {
+                networkImage(BrowserImages.schematicImageUrl(itemId))
+                        .origin(Align.top)
+                        .placeholder(Icon.image)
+                        .fallback(Icon.image)
+                        .grow()
+                        .top()
+                        .scaling(Scaling.fit);
+            });
         }
 
         private void details() {
-            column().growX().gap(unit(2)).children(() -> {
-                card(WebStyles.previewCardBackground()).padding(unit(2)).gap(unit(1)).growX().children(() -> {
+            column().grow().gap(unit(2)).children(() -> {
+                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
                     row().growX().gap(unit(1)).children(() -> {
-                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray);
-                        text(authorName).color(Color.white);
+                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.3f);
+                        text(authorName).color(Color.white).fontScale(1.3f);
                     });
 
                     row().growX().gap(unit(1)).children(() -> {
@@ -127,18 +127,19 @@ public class SchematicDetailDialog extends SolimDialog {
                     });
                 });
 
-                card(WebStyles.previewCardBackground()).padding(unit(2)).growX().children(() -> {
+                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
                     new BrowserStatsBadge(
                             BrowserImages.count(detail.getLikes()),
                             BrowserImages.count(detail.getComments()),
                             BrowserImages.count(detail.getDownloads()));
                 });
 
-                renderTags();
+                BrowserLayout.renderTags(detail.getTags());
+
                 renderRequirements();
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
-                    card(WebStyles.previewCardBackground()).growX().children(() -> {
+                    card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
                         text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
                     });
                 }
@@ -150,31 +151,13 @@ public class SchematicDetailDialog extends SolimDialog {
                             () -> SchematicActions.copyToClipboard(itemId))
                                     .style(WebStyles.primary())
                                     .growX()
-                                    .height(unit(9));
+                                    .height(unit(11));
 
                     button(Core.bundle.get("browser.schematic.save"),
                             () -> SchematicActions.saveToLocal(itemId))
                                     .style(WebStyles.primary())
                                     .growX()
-                                    .height(unit(9));
-                });
-            });
-        }
-
-        private void renderTags() {
-            List<TagData> tags = detail.getTags();
-            if (tags == null || tags.isEmpty()) {
-                return;
-            }
-
-            card(WebStyles.previewCardBackground()).growX().top().left().padding(unit(2)).children(() -> {
-                text(Core.bundle.get("browser.detail.tags")).color(Color.white).growX().left();
-                grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().left().gap(unit(1)).children(() -> {
-                    for (TagData tag : tags) {
-                        text(tag.getName())
-                                .style(Styles.defaultLabel)
-                                .color(tag.color());
-                    }
+                                    .height(unit(11));
                 });
             });
         }
@@ -187,13 +170,13 @@ public class SchematicDetailDialog extends SolimDialog {
                 return;
             }
 
-            card(WebStyles.previewCardBackground()).growX().top().left().padding(unit(2)).children(() -> {
+            card(WebStyles.previewCardBackground()).growX().top().left().padding(unit(4)).gap(unit(2)).children(() -> {
                 text(Core.bundle.get("browser.detail.requirements")).color(Color.white).growX().left();
-                grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().left().gap(unit(1)).children(() -> {
+                wrap().growX().left().gap(unit(2)).children(() -> {
                     for (ItemStack stack : requirements) {
-                        row().gap(unit(1)).left().children(() -> {
-                            image(new TextureRegionDrawable(stack.item.uiIcon)).size(unit(8));
-                            text(requirementLabel(stack)).fontScale(0.9f);
+                        row().center().gap(unit(1)).left().children(() -> {
+                            image(new TextureRegionDrawable(stack.item.uiIcon)).size(unit(6));
+                            text(requirementLabel(stack));
                         });
                     }
                 });
@@ -214,11 +197,13 @@ public class SchematicDetailDialog extends SolimDialog {
             if (createdBy == null || createdBy.isEmpty()) {
                 return;
             }
+
             MindustryTool.getUserBatch(Collections.singletonList(createdBy))
                     .whenComplete((users, throwable) -> {
                         if (throwable != null || users == null || users.isEmpty()) {
                             return;
                         }
+
                         Core.app.post(() -> {
                             if (!isDisposed() && users.get(0) != null && users.get(0).getName() != null) {
                                 authorName.set(users.get(0).getName());
@@ -232,6 +217,7 @@ public class SchematicDetailDialog extends SolimDialog {
             if (requirements == null) {
                 return seq;
             }
+
             for (SchematicRequirement requirement : requirements) {
                 if (requirement == null || requirement.getName() == null
                         || requirement.getAmount() == null) {

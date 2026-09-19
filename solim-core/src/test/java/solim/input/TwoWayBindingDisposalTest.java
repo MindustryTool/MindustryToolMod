@@ -23,6 +23,7 @@ import arc.graphics.g2d.TextureRegion;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import solim.core.DisposableAction;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -171,10 +172,10 @@ class TwoWayBindingDisposalTest {
 			v -> widget.value = v,
 			onChange -> {
 				widget.listeners.add(onChange);
-				return () -> {
+				return DisposableAction.of(() -> {
 					cleanupRan.set(true);
 					widget.listeners.remove(onChange);
-				};
+				});
 			});
 		assertFalse(binding.isDisposed());
 

@@ -13,6 +13,7 @@ class ParentStackTest {
 	@AfterEach
 	void clear() {
 		ParentStack.clear();
+		ParentStack.setCellConfigurator((ParentStack.CellConfigurator) null);
 	}
 
 	@Test
@@ -196,5 +197,97 @@ class ParentStackTest {
 		ParentStack.pop();
 		assertEquals(2, root.getChildren().size);
 		assertTrue(root.getChildren().contains(e, true));
+	}
+
+	@Test
+	void cellConfiguratorReceivesComponentDirectlyWithoutUserObject() {
+		Table root = new Table();
+		ParentStack.push(root);
+
+		Element element = new Element();
+		assertNull(element.userObject);
+
+		Component comp = () -> element;
+		ParentStack.registerPendingComponent(comp, root);
+
+		final Component[] receivedComp = new Component[1];
+		final Element[] receivedElement = new Element[1];
+
+		ParentStack.setCellConfigurator((cell, child, component) -> {
+			receivedElement[0] = child;
+			receivedComp[0] = component;
+		});
+
+		ParentStack.pop();
+
+		assertSame(element, receivedElement[0]);
+		assertSame(comp, receivedComp[0]);
+		assertNull(element.userObject);
+	}
+
+	@Test
+	void cellConfiguratorReceivesNullComponentForRawElement() {
+		Table root = new Table();
+		ParentStack.push(root);
+
+		Element rawElement = new Element();
+		final Component[] receivedComp = new Component[1];
+		final Element[] receivedElement = new Element[1];
+
+		ParentStack.setCellConfigurator((cell, child, component) -> {
+			receivedElement[0] = child;
+			receivedComp[0] = component;
+		});
+
+		ParentStack.add(rawElement);
+		ParentStack.pop();
+
+		assertSame(rawElement, receivedElement[0]);
+		assertNull(receivedComp[0]);
+	}
+
+	@Test
+	void isolateCompleteContextIsolation() {
+		Table outer = new Table();
+		Element outerEl = new Element();
+		Component outerComp = () -> outerEl;
+
+		boolean[] outerAttacherCalled = new boolean[1];
+		ParentStack.push(outer, (table, child) -> {
+			outerAttacherCalled[0] = true;
+			return table.add(child);
+		});
+		ParentStack.registerPendingComponent(outerComp, outer);
+
+		Table inner = ParentStack.isolate(() -> {
+			assertNull(ParentStack.current());
+			Table innerTable = new Table();
+			boolean[] innerAttacherCalled = new boolean[1];
+			ParentStack.push(innerTable, (t, c) -> {
+				innerAttacherCalled[0] = true;
+				return t.add(c);
+			});
+
+			Element innerEl = new Element();
+			ParentStack.add(innerEl);
+			ParentStack.pop();
+
+			assertTrue(innerAttacherCalled[0]);
+			assertFalse(outerAttacherCalled[0]);
+			assertEquals(1, innerTable.getChildren().size);
+			assertTrue(innerTable.getChildren().contains(innerEl, true));
+			return innerTable;
+		});
+
+		assertNotNull(inner);
+		assertEquals(outer, ParentStack.current());
+
+		// Now finish outer
+		ParentStack.pop();
+
+		assertTrue(outerAttacherCalled[0]);
+		assertEquals(1, outer.getChildren().size);
+		assertTrue(outer.getChildren().contains(outerEl, true));
+		assertFalse(outer.getChildren().contains(inner, true));
 	}
 }

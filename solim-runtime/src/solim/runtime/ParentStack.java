@@ -7,14 +7,12 @@ import arc.util.Nullable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import solim.core.Component;
 import solim.core.SpacingAware;
-import java.util.function.Predicate;
 
 /**
  * Implicit parent stack for declarative UI construction with guaranteed cleanup. Supports
@@ -30,6 +28,7 @@ public final class ParentStack {
 	public static class Entry {
 		public final Table table;
 		public final Attacher attacher;
+		public final List<Component> pendingComponents = new ArrayList<>();
 
 		public Entry(Table table, Attacher attacher) {
 			this.table = table;
@@ -37,15 +36,24 @@ public final class ParentStack {
 		}
 	}
 
+	@FunctionalInterface
+	public interface CellConfigurator {
+		void configure(Cell<?> cell, Element child, @Nullable Component component);
+	}
+
 	private static final Deque<Entry> stack = new ArrayDeque<>();
-	private static final Map<Table, List<Component>> pendingComponents = new HashMap<>();
-	private static final Map<Table, Attacher> tableAttachers = new HashMap<>();
-	private static @Nullable BiConsumer<Cell<?>, Element> cellConfigurator = null;
+	private static @Nullable CellConfigurator cellConfigurator = null;
 
 	private ParentStack() {}
 
-	public static void setCellConfigurator(@Nullable BiConsumer<Cell<?>, Element> configurator) {
+	public static void setCellConfigurator(@Nullable CellConfigurator configurator) {
 		cellConfigurator = configurator;
+	}
+
+	public static void setCellConfigurator(@Nullable BiConsumer<Cell<?>, Element> configurator) {
+		cellConfigurator = configurator != null
+				? (cell, child, comp) -> configurator.accept(cell, child)
+				: null;
 	}
 
 	public static void push(Table parent) {
@@ -53,19 +61,17 @@ public final class ParentStack {
 	}
 
 	public static void push(Table parent, Attacher attacher) {
+		SolimAssert.checkMainThread();
 		if (parent != null) {
 			stack.push(new Entry(parent, attacher));
-			if (attacher != null) {
-				tableAttachers.put(parent, attacher);
-			}
 		}
 	}
 
 	public static Table pop() {
+		SolimAssert.checkMainThread();
 		if (!stack.isEmpty()) {
 			Entry popped = stack.pop();
-			attachPendingComponents(popped.table);
-			tableAttachers.remove(popped.table);
+			attachPendingComponents(popped);
 			return popped.table;
 		}
 		return null;
@@ -87,8 +93,6 @@ public final class ParentStack {
 
 	public static void clear() {
 		stack.clear();
-		pendingComponents.clear();
-		tableAttachers.clear();
 	}
 
 	public static int size() {
@@ -135,12 +139,30 @@ public final class ParentStack {
 	 */
 	public static void registerPendingComponent(Component component, Table parent) {
 		if (component != null && parent != null) {
-			List<Component> list = pendingComponents.get(parent);
-			if (list == null) {
-				list = new ArrayList<>();
-				pendingComponents.put(parent, list);
+			for (Entry entry : stack) {
+				if (entry.table == parent) {
+					entry.pendingComponents.add(component);
+					break;
+				}
 			}
-			list.add(component);
+		}
+	}
+
+	/** Attaches all pending components registered for the given entry. */
+	public static void attachPendingComponents(Entry entry) {
+		if (entry == null || entry.pendingComponents.isEmpty()) {
+			return;
+		}
+		List<Component> list = new ArrayList<>(entry.pendingComponents);
+		entry.pendingComponents.clear();
+		for (Component comp : list) {
+			Element el = isolate(comp::element);
+			if (el != null && el.parent == null) {
+				doAttach(entry.table, el, entry.attacher, comp);
+			}
+			if (comp instanceof SpacingAware) {
+				((SpacingAware) comp).applySpacing();
+			}
 		}
 	}
 
@@ -149,17 +171,10 @@ public final class ParentStack {
 		if (parent == null) {
 			return;
 		}
-		List<Component> list = pendingComponents.remove(parent);
-		Attacher attacher = tableAttachers.get(parent);
-		if (list != null) {
-			for (Component comp : list) {
-				Element el = isolate(comp::element);
-				if (el != null && el.parent == null) {
-					doAttach(parent, el, attacher);
-				}
-				if (comp instanceof SpacingAware) {
-					((SpacingAware) comp).applySpacing();
-				}
+		for (Entry entry : stack) {
+			if (entry.table == parent) {
+				attachPendingComponents(entry);
+				break;
 			}
 		}
 	}
@@ -170,11 +185,11 @@ public final class ParentStack {
 			return;
 		}
 		Entry entry = stack.peek();
-		attachPendingComponents(entry.table);
-		doAttach(entry.table, child, entry.attacher);
+		attachPendingComponents(entry);
+		doAttach(entry.table, child, entry.attacher, null);
 	}
 
-	private static void doAttach(Table parent, Element child, Attacher attacher) {
+	private static void doAttach(Table parent, Element child, Attacher attacher, @Nullable Component comp) {
 		if (parent != null && child != null) {
 			if (child.parent != parent && !parent.getChildren().contains(child, true)) {
 				Cell<?> cell;
@@ -184,7 +199,7 @@ public final class ParentStack {
 					cell = parent.add(child);
 				}
 				if (cell != null && cellConfigurator != null) {
-					cellConfigurator.accept(cell, child);
+					cellConfigurator.configure(cell, child, comp);
 				}
 			}
 		}

@@ -39,7 +39,7 @@ public class ChatUserListView extends BaseComponent {
             return err != null && !err.trim().isEmpty() && Boolean.TRUE.equals(has);
         });
 
-        return column().grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
+        return column().name("user-list").grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
             dynamic(hasChannel, channelSelected -> {
                 if (!Boolean.TRUE.equals(channelSelected)) {
                     return dynamic(store.channels().loading(), chanLoading -> {

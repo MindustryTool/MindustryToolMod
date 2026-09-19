@@ -10,7 +10,6 @@ import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
-import arc.scene.ui.layout.Scl;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import mindustry.Vars;
@@ -51,11 +50,11 @@ public class TeamResourceHudView extends BaseComponent {
         Readable<Float> iconSize = scale.map(s -> 18f * (s != null ? s : 1f));
         Readable<Boolean> expanded = feature.expandedConfig.signal();
 
-        Signal<Float> screenWidth = createSignal(ResizeEvent.class, TeamResourceHudView::getSceneWidth);
+        Signal<Float> screenWidth = createSignal(ResizeEvent.class, TeamResourceFeature::getSceneWidth);
 
         Readable<Float> hudWidth = new Computed<>(() -> {
             Float sw = screenWidth.get();
-            float screenW = sw != null ? sw : getSceneWidth();
+            float screenW = sw != null ? sw : TeamResourceFeature.getSceneWidth();
             Float s = scale.get();
             float scaleVal = s != null ? s : 1f;
             Float cfgW = feature.overlayWidthConfig.signal().get();
@@ -78,7 +77,7 @@ public class TeamResourceHudView extends BaseComponent {
                 .map(hide -> Boolean.TRUE.equals(hide) ? null : Styles.black6);
 
         hud = hud(() -> {
-            column().width(hudWidth).left().gap(unit(1)).padding(unit(2)).children(() -> {
+            column().width(hudWidth).maxWidth(hudWidth).left().gap(unit(1)).padding(unit(2)).children(() -> {
                 // 1. Header Row
                 row().growX().gap(unit(1)).children(() -> {
                     // Drag handle
@@ -86,7 +85,7 @@ public class TeamResourceHudView extends BaseComponent {
                             .style(Styles.clearNonei)
                             .size(buttonSize)
                             .children(() -> icon(Icon.move).scaling(Scaling.fit))
-                            .draggable(hud, feature.xSignal, feature.ySignal);
+                            .draggable(feature.xSignal, feature.ySignal);
 
                     // Expand / Collapse toggle button
                     button()
@@ -314,13 +313,5 @@ public class TeamResourceHudView extends BaseComponent {
         if (hud != null) {
             hud.keepInScreen();
         }
-    }
-
-    private static float getSceneWidth() {
-        if (Core.scene != null && Core.scene.getWidth() > 0f) {
-            return Core.scene.getWidth();
-        }
-        float scl = Scl.scl();
-        return (Core.graphics != null ? Core.graphics.getWidth() : 800f) / (scl > 0f ? scl : 1f);
     }
 }

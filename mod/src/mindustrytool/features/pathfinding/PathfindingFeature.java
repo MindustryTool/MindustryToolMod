@@ -268,7 +268,7 @@ public class PathfindingFeature extends Feature {
             return;
         }
 
-        if (Vars.player != null && unit == Vars.player.unit()) {
+        if (unit.isPlayer()) {
             return;
         }
 
@@ -430,7 +430,7 @@ public class PathfindingFeature extends Feature {
             return;
         }
 
-        if (Vars.player != null && unit == Vars.player.unit()) {
+        if (unit.isPlayer()) {
             return;
         }
 

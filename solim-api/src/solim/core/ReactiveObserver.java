@@ -8,9 +8,9 @@ public interface ReactiveObserver {
 	/**
 	 * Tracks a dependency observed during computation.
 	 *
-	 * @param observable the signal or reactive source being observed
+	 * @param observable the reactive source being observed
 	 */
-	void addDependency(Object observable);
+	void addDependency(ReactiveSource observable);
 
 	/**
 	 * Called when an observed dependency changes its value.

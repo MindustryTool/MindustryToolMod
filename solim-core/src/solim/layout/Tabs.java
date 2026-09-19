@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.runtime.ComponentContext;
@@ -43,7 +44,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
     public Tabs(Signal<Integer> activeTab) {
         this.activeTab = activeTab;
         this.root = new Table();
-        this.root.userObject = this;
+        SolimToken.bind(this.root, this, constraints);
         this.root.name = "solim-tabs-root";
         this.root.top().left();
 
@@ -118,7 +119,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
 
         Table contentContainer = new Table();
         contentContainer.top().left();
-        contentContainer.userObject = "expanding";
+        SolimToken.setExpanding(contentContainer, true);
         tabContents.add(contentContainer);
         contentStack.add(contentContainer);
 

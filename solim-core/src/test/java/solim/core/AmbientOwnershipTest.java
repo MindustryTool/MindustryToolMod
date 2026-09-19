@@ -44,6 +44,11 @@ class AmbientOwnershipTest {
 		public void dispose() {
 			disposedFlag.set(true);
 		}
+
+		@Override
+		public boolean isDisposed() {
+			return disposedFlag.get();
+		}
 	}
 
 	static class ParentComponent extends BaseComponent {

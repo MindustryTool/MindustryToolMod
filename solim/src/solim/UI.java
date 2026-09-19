@@ -13,6 +13,7 @@ import arc.util.Nullable;
 import arc.util.Scaling;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -51,6 +52,7 @@ import solim.overlay.Popup;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
+import solim.reactive.MapSignal;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.style.SolimButtonStyleBuilder;
@@ -500,6 +502,14 @@ public final class UI {
 
     public static <T> Computed<T> computed(Supplier<T> compute) {
         return new Computed<>(compute);
+    }
+
+    public static <K, V> MapSignal<K, V> mapSignal() {
+        return MapSignal.of();
+    }
+
+    public static <K, V> MapSignal<K, V> mapSignal(@Nullable Map<K, V> initial) {
+        return MapSignal.of(initial);
     }
 
     public static Disposable effect(Runnable effect) {

@@ -14,6 +14,7 @@ import mindustrytool.components.Loader;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.browser.common.BrowserFilterDialog;
 import mindustrytool.features.browser.common.BrowserFooter;
+import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserSearchHeader;
 import mindustrytool.features.browser.common.BrowserState;
 import mindustrytool.models.response.MapData;
@@ -49,7 +50,7 @@ public class MapBrowserDialog extends SolimDialog {
     private static CompletableFuture<List<MapData>> fetchMaps(BrowserState<MapData> state) {
         return MindustryTool.searchMaps(
                 state.page().peek() != null ? state.page().peek() : 0,
-                BrowserState.PAGE_SIZE,
+                state.getPageSize(),
                 state.sort().peek(),
                 state.query().peek(),
                 state.selectedTags().peek().list(),
@@ -62,76 +63,94 @@ public class MapBrowserDialog extends SolimDialog {
         private final BrowserFilterDialog filterDialog;
         private final Runnable onClose;
         private final Computed<Float> viewportWidth = dvw(100f);
-        private final Readable<Boolean> portrait = isPortrait();
+        private final Computed<Float> viewportHeight = dvh(100f);
         private final Computed<Integer> columnCount = new Computed<>(() -> {
             Float width = viewportWidth.get();
-            float w = width != null ? width : 800f;
-            if (Boolean.TRUE.equals(portrait.get())) {
-                return w < 500f ? 1 : 2;
-            }
-            if (w < 650f) {
-                return 2;
-            }
-            if (w < 1100f) {
-                return 3;
-            }
-            return Math.max(3, Math.min(6, (int) (w / 300f)));
+            return BrowserLayout.calculateColumns(width != null ? width : 800f);
+        });
+        private final Computed<Float> cardsWidth = new Computed<>(() -> {
+            Float width = viewportWidth.get();
+            return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
+        });
+        private final Computed<Float> contentWidth = new Computed<>(() -> {
+            Float width = viewportWidth.get();
+            return BrowserLayout.calculateContentWidth(width != null ? width : 800f);
+        });
+        private final Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
+        private final Computed<Integer> calculatedPageSize = new Computed<>(() -> {
+            Float width = viewportWidth.get();
+            Float height = viewportHeight.get();
+            return BrowserLayout.calculatePageSize(
+                    width != null ? width : 800f,
+                    height != null ? height : 600f);
         });
 
         BrowserContent(BrowserState<MapData> state, BrowserFilterDialog filterDialog, Runnable onClose) {
             this.state = state;
             this.filterDialog = filterDialog;
             this.onClose = onClose;
+
+            effect(() -> {
+                Integer size = calculatedPageSize.get();
+                if (size != null) {
+                    state.setPageSize(size);
+                }
+            });
         }
 
         @Override
         protected Element build() {
             Readable<Boolean> hasError = state.error().map(e -> e != null && !e.trim().isEmpty());
 
-            return column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
-                new BrowserSearchHeader(state, () -> filterDialog.show());
+            return column().grow().center().paddingX(BrowserLayout.HORIZONTAL_PADDING).paddingY(unit(2))
+                    .children(() -> {
+                        column().width(contentWidth).growY().gap(unit(2)).children(() -> {
+                            new BrowserSearchHeader(state, () -> filterDialog.show());
 
-                dynamic(state.loading(), loading -> {
-                    if (Boolean.TRUE.equals(loading)) {
-                        return Loader.centered();
-                    }
+                            dynamic(state.loading(), loading -> {
+                                if (Boolean.TRUE.equals(loading)) {
+                                    return Loader.centered();
+                                }
 
-                    return dynamic(hasError, errorOccurred -> {
-                        if (Boolean.TRUE.equals(errorOccurred)) {
-                            return row().grow().gap(unit(1)).children(() -> {
-                                text(state.error().map(e -> e != null ? e : ""))
-                                        .color(Color.scarlet)
-                                        .wrap(true)
-                                        .growX();
-                                button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                        .style(WebStyles.outlineText())
-                                        .height(unit(10));
-                            });
-                        }
+                                return dynamic(hasError, errorOccurred -> {
+                                    if (Boolean.TRUE.equals(errorOccurred)) {
+                                        return row().grow().gap(unit(1)).children(() -> {
+                                            text(state.error().map(e -> e != null ? e : ""))
+                                                    .color(Color.scarlet)
+                                                    .wrap(true)
+                                                    .growX();
+                                            button(Core.bundle.get("browser.retry"), () -> state.refresh())
+                                                    .style(WebStyles.outlineText())
+                                                    .height(unit(10));
+                                        });
+                                    }
 
-                        return scroll().grow().children(() -> {
-                            reactiveGrid(
-                                    columnCount,
-                                    state.items(),
-                                    MapData::getItemId,
-                                    (item, ctx) -> new MapCard(
-                                            item,
-                                            ctx.itemWidth(),
-                                            () -> showDetails(item),
-                                            () -> MapActions.downloadAndImport(item.getItemId()),
-                                            () -> showDetails(item),
-                                            () -> MapActions.playMap(item.getItemId())))
-                                                    .empty(() -> {
-                                                        text(Core.bundle.get("browser.empty")).color(Color.gray)
-                                                                .padding(unit(4));
-                                                    })
-                                                    .gap(unit(4));
+                                    return scroll().style(Styles.noBarPane).grow()
+                                            .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
+                                                reactiveGrid(
+                                                        columnCount,
+                                                        state.items(),
+                                                        MapData::getItemId,
+                                                        item -> new MapCard(
+                                                                item,
+                                                                cardSize,
+                                                                () -> showDetails(item),
+                                                                () -> MapActions.downloadAndImport(item.getItemId()),
+                                                                () -> showDetails(item),
+                                                                () -> MapActions.playMap(item.getItemId())))
+                                                                        .empty(() -> {
+                                                                            text(Core.bundle.get("browser.empty"))
+                                                                                    .color(Color.gray)
+                                                                                    .padding(unit(4));
+                                                                        })
+                                                                        .gap(BrowserLayout.CARD_GAP);
+                                            });
+                                }).grow();
+                            }).grow();
+
+                            new BrowserFooter(state, Config.UPLOAD_MAP_URL, onClose);
                         });
-                    }).grow();
-                }).grow();
-
-                new BrowserFooter(state, Config.UPLOAD_MAP_URL, onClose);
-            }).element();
+                    }).element();
         }
 
         private void showDetails(MapData item) {

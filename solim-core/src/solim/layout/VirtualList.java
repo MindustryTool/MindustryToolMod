@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.core.SolimToken;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -86,7 +87,7 @@ public final class VirtualList<T, K> extends BaseComponent
                 return constraints.hasExplicitHeight() ? super.getMinHeight() : 0f;
             }
         };
-        this.outer.userObject = this;
+        SolimToken.bind(this.outer, this, constraints);
         this.outer.name = "solim-virtual-list-outer";
         this.outer.top().left();
 

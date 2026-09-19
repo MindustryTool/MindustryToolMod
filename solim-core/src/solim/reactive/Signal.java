@@ -6,16 +6,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import solim.core.ReactiveObserver;
-import solim.runtime.ComponentContext;
+import solim.core.ReactiveSource;
 import solim.runtime.ReactiveContext;
+import solim.runtime.SolimAssert;
 
 /** Mutable reactive value. */
-public final class Signal<T> implements Readable<T> {
+public final class Signal<T> implements Readable<T>, ReactiveSource {
 	private T value;
 	private final List<Consumer<T>> listeners = new ArrayList<>();
 	private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
@@ -50,10 +50,7 @@ public final class Signal<T> implements Readable<T> {
 
 	@Override
 	public T get() {
-		if (ReactiveContext.current() == null && ComponentContext.current() != null) {
-			Log.debug("[Solim Reactivity Warning] Signal.get() was called during build()! This severs reactivity. Pass the Signal/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
-		}
-		ReactiveContext.track(this);
+		ReactiveContext.trackWithWarning(this, "[Solim Reactivity Warning] Signal.get() was called during build()! This severs reactivity. Pass the Signal/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
 		return value;
 	}
 
@@ -63,6 +60,7 @@ public final class Signal<T> implements Readable<T> {
 	}
 
 	public void set(T newValue) {
+		SolimAssert.checkMainThread();
 		if (Objects.equals(value, newValue)) return;
 		this.value = newValue;
 		// notify listeners
@@ -71,9 +69,7 @@ public final class Signal<T> implements Readable<T> {
 			try {
 				c.accept(value);
 			} catch (Throwable e) {
-				// log but continue
-				System.err.println("[Signal] listener error: " + e.getMessage());
-				e.printStackTrace();
+				Log.err("[Signal] listener error", e);
 			}
 		}
 		// notify observers (Computeds/Effects)
@@ -82,8 +78,7 @@ public final class Signal<T> implements Readable<T> {
 			try {
 				o.invalidate();
 			} catch (Throwable e) {
-				System.err.println("[Signal] observer invalidate error: " + e.getMessage());
-				e.printStackTrace();
+				Log.err("[Signal] observer invalidate error", e);
 			}
 		}
 	}
@@ -94,18 +89,20 @@ public final class Signal<T> implements Readable<T> {
 
 	public Subscription subscribe(Consumer<T> listener) {
 		listeners.add(listener);
-		AtomicBoolean disposed = new AtomicBoolean(false);
 		return new Subscription() {
+			private boolean disposed = false;
+
 			@Override
 			public void dispose() {
-				if (disposed.compareAndSet(false, true)) {
+				if (!disposed) {
+					disposed = true;
 					listeners.remove(listener);
 				}
 			}
 
 			@Override
 			public boolean isDisposed() {
-				return disposed.get();
+				return disposed;
 			}
 		};
 	}
@@ -114,12 +111,13 @@ public final class Signal<T> implements Readable<T> {
 		return Signal.computed(() -> mapper.apply(get()));
 	}
 
-	// Observable support
-	void addObserver(ReactiveObserver observer) {
+	@Override
+	public void addObserver(ReactiveObserver observer) {
 		observers.add(observer);
 	}
 
-	void removeObserver(ReactiveObserver observer) {
+	@Override
+	public void removeObserver(ReactiveObserver observer) {
 		observers.remove(observer);
 	}
 

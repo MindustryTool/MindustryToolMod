@@ -84,9 +84,7 @@ public class ChatAvatar extends BaseComponent {
                         img.rounded(radius);
                     }
                 });
-        Element el = stack.element();
-        el.userObject = stack;
-        return el;
+        return stack.element();
     }
 
     static String initialOf(String name) {

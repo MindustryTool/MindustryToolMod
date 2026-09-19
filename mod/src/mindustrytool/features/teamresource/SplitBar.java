@@ -12,6 +12,7 @@ import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Fonts;
 import mindustry.world.blocks.power.PowerGraph;
+import solim.core.SolimToken;
 
 public class SplitBar extends Element {
     private final Seq<PowerGraph> graphs;
@@ -34,7 +35,7 @@ public class SplitBar extends Element {
         this.mode = mode;
         this.scaleSupplier = scaleSupplier;
         this.fontScale = scaleSupplier != null ? scaleSupplier.get() : 1f;
-        this.userObject = "expanding";
+        SolimToken.setExpanding(this, true);
     }
 
     @Override

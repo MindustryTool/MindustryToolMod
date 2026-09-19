@@ -25,9 +25,9 @@ class LifecycleCorrectnessTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> order.add("first"));
-				own(() -> order.add("second"));
-				own(() -> order.add("third"));
+				own(DisposableAction.of(() -> order.add("first")));
+				own(DisposableAction.of(() -> order.add("second")));
+				own(DisposableAction.of(() -> order.add("third")));
 				return new Element();
 			}
 		};
@@ -45,12 +45,12 @@ class LifecycleCorrectnessTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> disposed.add("first"));
-				own(() -> {
+				own(DisposableAction.of(() -> disposed.add("first")));
+				own(DisposableAction.of(() -> {
 					disposed.add("failing");
 					throw new RuntimeException("Simulated disposal failure");
-				});
-				own(() -> disposed.add("third"));
+				}));
+				own(DisposableAction.of(() -> disposed.add("third")));
 				return new Element();
 			}
 		};
@@ -81,7 +81,7 @@ class LifecycleCorrectnessTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(count::incrementAndGet);
+				own(DisposableAction.of(count::incrementAndGet));
 				return new Element();
 			}
 		};
@@ -99,7 +99,7 @@ class LifecycleCorrectnessTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> resourceDisposed.set(true));
+				own(DisposableAction.of(() -> resourceDisposed.set(true)));
 				throw new RuntimeException("Build crashed");
 			}
 		};
@@ -116,7 +116,7 @@ class LifecycleCorrectnessTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> resourceDisposed.set(true));
+				own(DisposableAction.of(() -> resourceDisposed.set(true)));
 				return null;
 			}
 		};
@@ -217,7 +217,7 @@ class LifecycleCorrectnessTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> owned.set(true));
+				own(DisposableAction.of(() -> owned.set(true)));
 				return new Element();
 			}
 		};
@@ -259,6 +259,34 @@ class LifecycleCorrectnessTest {
 		reconciler.dispose();
 		assertTrue(disposed.contains("B"));
 		assertTrue(disposed.contains("C"));
+	}
+
+	@Test
+	void nestedComponentBuildInsideWithoutAutoOwnershipManagesOwnOwnership() {
+		AtomicBoolean effectRan = new AtomicBoolean(false);
+		AtomicBoolean effectDisposed = new AtomicBoolean(false);
+		final BaseComponent[] innerComp = new BaseComponent[1];
+
+		ComponentContext.withoutAutoOwnership(() -> {
+			BaseComponent comp = new BaseComponent() {
+				@Override
+				protected Element build() {
+					Effect.of(() -> {
+						effectRan.set(true);
+						return () -> effectDisposed.set(true);
+					});
+					return new Element();
+				}
+			};
+			innerComp[0] = comp;
+			comp.element(); // build occurs inside withoutAutoOwnership
+		});
+
+		assertTrue(effectRan.get(), "Effect inside nested component build must run");
+		assertFalse(effectDisposed.get(), "Effect should not be disposed yet");
+
+		innerComp[0].dispose();
+		assertTrue(effectDisposed.get(), "Effect should be disposed when component is disposed");
 	}
 
 	static class TestComp extends BaseComponent {

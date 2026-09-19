@@ -1,32 +1,20 @@
 package solim.display;
 
 import arc.graphics.Color;
-import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Scaling;
-import java.util.ArrayList;
-import java.util.List;
-import solim.core.Component;
-import solim.core.Disposable;
+import solim.core.LeafComponent;
 import solim.core.SpacingAware;
-import solim.modifier.CellConfig;
-import solim.modifier.PendingCellConfig;
-import solim.modifier.ElementConfig;
-import solim.runtime.ComponentContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 /** Display widget for drawable content. */
-public final class SolimImage implements Component, CellConfig<SolimImage>, ElementConfig<SolimImage>, SpacingAware {
+public final class SolimImage extends LeafComponent<Image, SolimImage> implements SpacingAware {
 
-    private final Image image;
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
-    private final PendingCellConfig constraints = new PendingCellConfig();
     private Scaling scaling = Scaling.fit;
 
     private float padTop;
@@ -48,10 +36,8 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
     }
 
     public SolimImage(Drawable d, Scaling scaling) {
-        this.image = new Image(d, scaling);
-        this.image.userObject = this;
-        this.image.name = "solim-image-image";
-        ComponentContext.register(this);
+        super(new Image(d, scaling));
+        this.scaling = scaling;
     }
 
     public static SolimImage of(Drawable d) {
@@ -60,31 +46,25 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
 
     public static SolimImage of(Signal<Drawable> s) {
         SolimImage img = new SolimImage();
-        Effect e = Effect.of(() -> {
-            img.image.setDrawable(s.get());
-        });
-        img.bindings.add(e);
-        ComponentContext.register(e);
+        Effect.of(() -> img.element.setDrawable(s.get()));
         return img;
     }
 
     public SolimImage drawable(Drawable d) {
-        image.setDrawable(d);
+        element.setDrawable(d);
         return this;
     }
 
     public SolimImage drawable(Readable<Drawable> d) {
         if (d != null) {
-            Effect e = Effect.of(() -> image.setDrawable(d.get()));
-            bindings.add(e);
-            ComponentContext.register(e);
+            Effect.of(() -> element.setDrawable(d.get()));
         }
         return this;
     }
 
     public SolimImage scaling(Scaling scaling) {
         this.scaling = scaling;
-        image.setScaling(scaling);
+        element.setScaling(scaling);
         return this;
     }
 
@@ -92,28 +72,21 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
         return scaling;
     }
 
-    @Override
-    public PendingCellConfig cellConfig() {
-        return constraints;
-    }
-
     public SolimImage color(Color color) {
         if (color != null) {
-            image.setColor(color);
+            element.setColor(color);
         }
         return this;
     }
 
     public SolimImage color(Readable<Color> color) {
         if (color != null) {
-            Effect e = Effect.of(() -> {
+            Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
-                    image.setColor(c);
+                    element.setColor(c);
                 }
             });
-            bindings.add(e);
-            ComponentContext.register(e);
         }
         return this;
     }
@@ -220,9 +193,10 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
         return this;
     }
 
+    @Override
     public void applySpacing() {
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null) {
                 cell.pad(padTop + marginTop, padLeft + marginLeft, padBottom + marginBottom, padRight + marginRight);
             }
@@ -230,19 +204,12 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
     }
 
     public Image image() {
-        applySpacing();
-        return image;
-    }
-
-    @Override
-    public Element element() {
-        applySpacing();
-        return image;
+        return element();
     }
 
     public SolimImage top() {
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.top();
         }
@@ -250,8 +217,8 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
     }
 
     public SolimImage left() {
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.left();
         }
@@ -259,33 +226,11 @@ public final class SolimImage implements Component, CellConfig<SolimImage>, Elem
     }
 
     public SolimImage center() {
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.center();
         }
-        return this;
-    }
-
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
-    }
-
-    @Override
-    public SolimImage self() {
         return this;
     }
 }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import solim.core.ReactiveObserver;
+import solim.core.ReactiveSource;
 import solim.runtime.ReactiveContext;
 
 class ReactiveContextTest {
@@ -17,7 +18,7 @@ class ReactiveContextTest {
 	void pushPopCurrent() {
 		ReactiveObserver dummy = new ReactiveObserver() {
 			@Override
-			public void addDependency(Object observable) {}
+			public void addDependency(ReactiveSource observable) {}
 
 			@Override
 			public void invalidate() {}

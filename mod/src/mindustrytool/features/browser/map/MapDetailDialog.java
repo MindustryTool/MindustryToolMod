@@ -8,14 +8,13 @@ import arc.scene.Element;
 import arc.util.Align;
 import arc.util.Scaling;
 import java.util.Collections;
-import java.util.List;
 import mindustry.gen.Icon;
-import mindustry.ui.Styles;
 import mindustrytool.Config;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.browser.common.BrowserImages;
+import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.MapDetailData;
-import mindustrytool.models.response.TagData;
 import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -65,98 +64,86 @@ public class MapDetailDialog extends SolimDialog {
         }
 
         private Component portraitLayout() {
-            return column().grow().gap(unit(2)).children(() -> {
+            return column().grow().top().left().gap(unit(4)).children(() -> {
                 previewImagePortrait();
                 scroll().grow().children(() -> details());
             });
         }
 
         private Component landscapeLayout() {
-            return row().grow().gap(unit(4)).children(() -> {
+            return row().grow().center().top().gap(unit(4)).children(() -> {
                 previewImageLandscape();
                 scroll().grow().children(() -> details());
             });
         }
 
         private void previewImagePortrait() {
-            networkImage(BrowserImages.mapImageUrl(itemId))
-                    .placeholder(Icon.terrain)
-                    .origin(Align.top | Align.left)
-                    .fallback(Icon.terrain)
-                    .growX()
-                    .height(dvh(45f))
-                    .rounded(8)
-                    .scaling(Scaling.fit);
+            row().grow().children(() -> {
+                networkImage(BrowserImages.mapImageUrl(itemId))
+                        .placeholder(Icon.terrain)
+                        .origin(Align.top | Align.left)
+                        .fallback(Icon.terrain)
+                        .growX()
+                        .rounded(8)
+                        .scaling(Scaling.fit);
+            });
         }
 
         private void previewImageLandscape() {
-            networkImage(BrowserImages.mapImageUrl(itemId))
-                    .placeholder(Icon.terrain)
-                    .origin(Align.top)
-                    .fallback(Icon.terrain)
-                    .width(dvw(45f))
-                    .growY()
-                    .rounded(8)
-                    .scaling(Scaling.fit);
+            row().grow().children(() -> {
+                networkImage(BrowserImages.mapImageUrl(itemId))
+                        .placeholder(Icon.terrain)
+                        .origin(Align.top)
+                        .fallback(Icon.terrain)
+                        .growX()
+                        .scaling(Scaling.fit);
+            });
         }
 
         private void details() {
             column().growX().gap(unit(2)).children(() -> {
-                row().growX().gap(unit(1)).children(() -> {
-                    text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(0.9f);
-                    text(authorName).color(Color.white).fontScale(0.9f);
+                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.2f);
+                        text(authorName).color(Color.white).fontScale(1.2f);
+                    });
+
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray);
+                        text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white);
+                    });
                 });
 
-                row().growX().gap(unit(1)).children(() -> {
-                    text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray).fontScale(0.9f);
-                    text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white).fontScale(0.9f);
+                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
+                    new BrowserStatsBadge(
+                            BrowserImages.count(detail.getLikes()),
+                            BrowserImages.count(detail.getComments()),
+                            BrowserImages.count(detail.getDownloads()));
                 });
 
-                new BrowserStatsBadge(
-                        BrowserImages.count(detail.getLikes()),
-                        BrowserImages.count(detail.getComments()),
-                        BrowserImages.count(detail.getDownloads()));
-
-                renderTags();
+                BrowserLayout.renderTags(detail.getTags());
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
-                    text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
+                    card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
+                        text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
+                    });
                 }
 
-                spacer();
+                divider();
 
                 row().growX().gap(unit(2)).children(() -> {
                     button(Core.bundle.get("browser.map.download"),
                             () -> MapActions.downloadAndImport(itemId))
-                                    .style(Styles.defaultb)
+                                    .style(WebStyles.primary())
                                     .growX()
-                                    .height(unit(10));
+                                    .height(unit(11));
 
                     button(Core.bundle.get("browser.map.play"),
                             () -> MapActions.playMap(itemId))
-                                    .style(Styles.defaultb)
+                                    .style(WebStyles.primary())
                                     .growX()
-                                    .height(unit(10));
+                                    .height(unit(11));
                 });
-            });
-        }
-
-        private void renderTags() {
-            List<TagData> tags = detail.getTags();
-            if (tags == null || tags.isEmpty()) {
-                return;
-            }
-            text(Core.bundle.get("browser.detail.tags")).color(Color.white).left();
-            grid(isPortrait().map(p -> Boolean.TRUE.equals(p) ? 2 : 4)).growX().gap(unit(1)).children(() -> {
-                for (TagData tag : tags) {
-                    if (tag == null || tag.getName() == null) {
-                        continue;
-                    }
-                    text(tag.getName())
-                            .style(Styles.defaultLabel)
-                            .color(tag.color())
-                            .fontScale(0.85f);
-                }
             });
         }
 

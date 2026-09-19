@@ -5,6 +5,8 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Nullable;
+import solim.core.Component;
+import solim.core.SolimToken;
 import solim.modifier.PendingCellConfig;
 
 /**
@@ -22,12 +24,24 @@ public interface GapContainer {
     /** Re-evaluates and applies directional spacing across all children. */
     void respace();
 
+    /** Resolves the GapContainer instance associated with the table, if any. */
+    static @Nullable GapContainer find(@Nullable Table table) {
+        if (table == null)
+            return null;
+        Component comp = SolimToken.getComponent(table);
+        return comp instanceof GapContainer ? (GapContainer) comp : null;
+    }
+
+    /** Returns whether the given table belongs to a GapContainer. */
+    static boolean isGapContainer(@Nullable Table table) {
+        return find(table) != null;
+    }
+
     /** Re-evaluates spacing on the given table if it belongs to a GapContainer. */
     static void respace(@Nullable Table table) {
-        if (table == null)
-            return;
-        if (table.userObject instanceof GapContainer) {
-            ((GapContainer) table.userObject).respace();
+        GapContainer gc = find(table);
+        if (gc != null) {
+            gc.respace();
         }
     }
 

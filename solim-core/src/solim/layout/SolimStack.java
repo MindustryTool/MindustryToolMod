@@ -5,6 +5,7 @@ import arc.func.Cons;
 import arc.scene.Element;
 import arc.scene.ui.layout.Stack;
 import solim.core.Component;
+import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -19,6 +20,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     private boolean disposed = false;
 
     public SolimStack() {
+        SolimToken.bind(this.stack, this, constraints);
         this.stack.name = "solim-stack-stack";
         ComponentContext.register(this);
     }

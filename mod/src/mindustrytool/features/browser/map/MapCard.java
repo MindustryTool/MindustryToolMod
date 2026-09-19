@@ -12,6 +12,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.browser.common.BrowserImages;
+import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.MapData;
 import solim.core.BaseComponent;
@@ -23,6 +24,8 @@ import mindustrytool.components.WebStyles;
  * title strip and a compact row of interactive stat action buttons.
  */
 public class MapCard extends BaseComponent {
+
+    public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;
 
     private final MapData map;
     private final @Nullable Readable<Float> previewHeight;
@@ -56,15 +59,16 @@ public class MapCard extends BaseComponent {
         String title = map.getName() != null ? map.getName()
                 : Core.bundle.get("browser.map.unnamed");
 
+        Readable<Float> size = previewHeight != null ? previewHeight : Readable.of(CARD_SIZE);
+
         return column()
                 .name("MapCard-" + map.getItemId())
-                .growX()
+                .width(size)
                 .gap(unit(2))
                 .children(() -> {
                     card(WebStyles.previewCardBackground())
                             .name("MapCard-preview-" + map.getItemId())
-                            .growX()
-                            .height(previewHeight != null ? previewHeight : Readable.of(unit(58f)))
+                            .size(size)
                             .onClick(onClick)
                             .children(() -> {
                                 stack().grow().children(() -> {
@@ -93,7 +97,7 @@ public class MapCard extends BaseComponent {
                                 });
                             });
 
-                    row().growX().gap(unit(1.5f)).children(() -> {
+                    row().width(size).gap(unit(1.5f)).children(() -> {
                         statButton(
                                 BrowserStatsBadge.formatCount(BrowserImages.count(map.getLikes())),
                                 FileIcon.of("heart.png", Icon.upOpenSmall),

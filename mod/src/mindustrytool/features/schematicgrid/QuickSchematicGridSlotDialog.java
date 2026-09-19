@@ -6,14 +6,15 @@ import arc.Core;
 import arc.graphics.Color;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
+import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 /**
- * Per-slot edit dialog with live thumbnail (tap re-picks the schematic),
- * custom label field, and custom icon pick/clear actions. All edits persist
+ * Per-slot edit dialog with live thumbnail (tap re-picks the schematic), custom
+ * label field, and custom icon pick/clear actions. All edits persist
  * immediately to the feature.
  */
 public class QuickSchematicGridSlotDialog extends SolimDialog {
@@ -67,8 +68,9 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                                         icon(Icon.warning).size(unit(10)).color(Color.scarlet);
                                     });
                                 }
-                                return new BoundedSchematicImage(
-                                        schematic, Readable.of(unit(42f)), unit(42f));
+                                return row().grow().children(() -> {
+                                    arc(new SchematicImage(schematic));
+                                });
                             }).grow();
                         });
 
@@ -116,8 +118,24 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                             .style(WebStyles.ghost())
                             .height(unit(9));
                 });
+
+                divider();
+
+                button(this::clearSlot)
+                        .style(WebStyles.ghost())
+                        .children(() -> {
+                            icon(Icon.cancel).size(unit(5)).color(Color.scarlet);
+                            text(Core.bundle.get("feature.quick-schematic-grid.edit.clear-slot")).color(Color.scarlet);
+                        })
+                        .growX()
+                        .height(unit(9));
             });
         });
+    }
+
+    private void clearSlot() {
+        feature.removeEntry(entryId);
+        hide();
     }
 
     private void repickSchematic() {

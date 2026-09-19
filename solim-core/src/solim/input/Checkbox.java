@@ -7,6 +7,7 @@ import arc.scene.ui.CheckBox.CheckBoxStyle;
 import arc.util.Nullable;
 import java.util.function.Consumer;
 import solim.core.Component;
+import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
@@ -44,7 +45,7 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 			onChange -> {
 				checkBox.changed(onChange::run);
 				// Arc CheckBox.changed() does not return a cleanup handle; cannot unregister
-				return () -> {};
+				return DisposableAction.empty();
 			}
 		);
 		ComponentContext.register(this);

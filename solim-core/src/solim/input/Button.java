@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.layout.Direction;
 import solim.layout.GapContainer;
 import solim.layout.Row;
@@ -77,7 +78,7 @@ public final class Button
 
     public Button(arc.scene.ui.Button button) {
         this.button = button;
-        this.button.userObject = this;
+        SolimToken.bind(this.button, this, constraints);
         this.button.name = "solim-button-sizedButton";
         this.button.center();
         ComponentContext.register(this);

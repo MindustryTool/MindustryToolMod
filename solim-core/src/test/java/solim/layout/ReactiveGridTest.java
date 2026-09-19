@@ -13,7 +13,10 @@ import solim.runtime.SignalDispatcher;
 import solim.reactive.Signal;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.CellAccess;
 import solim.core.Ui;
+import solim.runtime.ParentStack;
 
 class ReactiveGridTest {
 
@@ -297,6 +300,85 @@ class ReactiveGridTest {
 		assertEquals(200f, grid.element().getHeight());
 		assertFalse(grid.element().visible);
 		assertEquals(16f, grid.table().getMarginTop());
+		grid.dispose();
+	}
+
+	static class CardWrapperProbe extends BaseComponent {
+		final float contentHeight;
+
+		CardWrapperProbe(float contentHeight) {
+			this.contentHeight = contentHeight;
+		}
+
+		@Override
+		protected Element build() {
+			return Ui.card()
+					.name("probe-card")
+					.left()
+					.grow()
+					.minHeight(200f)
+					.children(() -> {
+						Element content = new Element() {
+							@Override
+							public float getPrefWidth() {
+								return 100f;
+							}
+
+							@Override
+							public float getPrefHeight() {
+								return contentHeight;
+							}
+						};
+						ParentStack.add(content);
+					})
+					.element();
+		}
+	}
+
+	@Test
+	void baseComponentChildInReactiveGridAppliesCellConstraints() {
+		Signal<Integer> cols = Signal.of(2);
+		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B"));
+		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
+				cols,
+				items,
+				s -> s,
+				(item, ctx) -> new CardWrapperProbe(50f)
+		);
+		grid.element();
+
+		Element firstEl = grid.table().getChildren().get(0);
+		Cell<?> cell = grid.table().getCell(firstEl);
+		assertNotNull(cell, "Cell must exist in grid table");
+
+		assertEquals(1, CellAccess.expandY(cell), "Cell should have expandY = 1 from card.grow()");
+		assertEquals(1f, CellAccess.fillY(cell), 0.01f, "Cell should have fillY = 1 from card.grow()");
+		assertEquals(200f, CellAccess.minHeight(cell), 0.01f, "Cell should have minHeight = 200 from card.minHeight()");
+		grid.dispose();
+	}
+
+	@Test
+	void baseComponentChildInReactiveGridGrowsToMatchTallSibling() {
+		Signal<Integer> cols = Signal.of(2);
+		Signal<List<String>> items = Signal.of(Arrays.asList("short", "tall"));
+		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
+				cols,
+				items,
+				s -> s,
+				(item, ctx) -> "short".equals(item) ? new CardWrapperProbe(50f) : new CardWrapperProbe(350f)
+		);
+		grid.element();
+		grid.table().setWidth(600f);
+		grid.table().setHeight(grid.table().getPrefHeight());
+		grid.table().validate();
+		grid.table().layout();
+
+		Element shortEl = grid.table().getChildren().get(0);
+		Element tallEl = grid.table().getChildren().get(1);
+
+		assertTrue(tallEl.getHeight() >= 350f, "Tall element should have height >= 350");
+		assertEquals(tallEl.getHeight(), shortEl.getHeight(), 1.0f,
+				"Short card with grow() must expand vertically to match tall sibling in the same row");
 		grid.dispose();
 	}
 }

@@ -94,7 +94,7 @@ public class AttachContentDialog extends SolimDialog {
                                     });
                                 });
                     });
-                });
+                }).grow().center();
             });
         });
     }

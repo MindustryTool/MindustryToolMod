@@ -298,11 +298,11 @@ TBD - created by archiving change refactor-element-config-mixins. Update Purpose
 - **THEN** `cell.growX()` or `cell.growY()` is set on the parent cell
 
 ### Requirement: PendingCellConfig provides find helper
-`PendingCellConfig` SHALL provide a static `find(Object)` method that resolves a `PendingCellConfig` from an object chain: returns the object if it's a `PendingCellConfig`, calls `sizeConstraints()` if it's a `CellConfig`, or traverses `Element.userObject` if it's an `Element`.
+`PendingCellConfig` SHALL provide a static `find(Object)` method that resolves a `PendingCellConfig` from an object chain: returns the object if it's a `PendingCellConfig`, calls `cellConfig()` if it's a `CellConfig`, or inspects `SolimToken` if it's an `Element`. Untyped legacy `userObject` recursion SHALL NOT be performed.
 
 #### Scenario: Finding PendingCellConfig from Element
-- **WHEN** `PendingCellConfig.find(element)` is called where `element.userObject` implements `CellConfig`
-- **THEN** the `CellConfig.sizeConstraints()` result is returned
+- **WHEN** `PendingCellConfig.find(element)` is called where `element` is associated with a `SolimToken` containing a `CellConfig` or `PendingCellConfig`
+- **THEN** the resolved `PendingCellConfig` is returned
 
 ### Requirement: PendingCellConfig replaces SizeConstraints
 All references to `SizeConstraints` in the codebase SHALL be renamed to `PendingCellConfig`. The class SHALL move from `solim.layout` to `solim.modifier` (or stay in `solim.layout` if preferred).
@@ -655,4 +655,54 @@ Reactive tooltips (`Readable<String>`) SHALL bind a `Label` to the tooltip conta
 #### Scenario: Reactive expansion
 - **WHEN** the bound expanded signal changes from `false` to `true`
 - **THEN** the `SolimCollapser` expands to fit its content with animated transition
+
+### Requirement: Height vs min-max clarification probes
+The system SHALL clarify via probes whether `ElementConfig.height(float)` on layout containers (`Card`, `Row`, `Column`) is pref-only or a fixed slot, and whether call order relative to `children()/attach` affects the parent `Cell`.
+
+#### Scenario: Order dependence is recorded
+- **WHEN** `height(70f)` is called before `children()` versus after attach for otherwise identical hierarchies
+- **THEN** both resulting layout heights are recorded so any `PendingCellConfig` propagation gap is explicit
+
+#### Scenario: Pref vs fixed is learned not assumed
+- **WHEN** small (20px) and large (120px) fixed content are each combined with `height(70f)` and laid out
+- **THEN** results distinguish pref-only (`small < 70`, `large > 70`) from fixed (`always 70`) without changing production behavior in this change
+
+### Requirement: SolimToken provides structured element metadata envelope
+`SolimToken` SHALL be provided in package `solim.core` and stored on `Element.userObject` to encapsulate Solim-specific metadata without bare string or raw object collisions. It SHALL provide fields for `@Nullable Component component`, `@Nullable PendingCellConfig cellConfig`, `boolean expanding`, and `@Nullable Object userPayload`. When wrapping an element that already contains a non-Solim `userObject`, `SolimToken.getOrCreate(Element)` SHALL preserve the existing object in `userPayload`.
+
+#### Scenario: Preserving external user payload
+- **WHEN** an element has an existing non-Solim object assigned to `element.userObject` and `SolimToken.getOrCreate(element)` is called
+- **THEN** `element.userObject` becomes a `SolimToken` instance whose `userPayload` matches the original object
+
+#### Scenario: Tagging and checking expanding element
+- **WHEN** `SolimToken.setExpanding(element, true)` is called
+- **THEN** `SolimToken.isExpanding(element)` returns `true` and any existing `component` reference in the token remains intact
+
+### Requirement: ParentStack mounts components with direct cell configurator
+`ParentStack` SHALL pass `(Cell<?> cell, Element child, @Nullable Component component)` to the active `CellConfigurator`. When pending components are attached, the owning `Component` SHALL be passed directly without requiring backward element traversal.
+
+#### Scenario: Applying cell constraints from component during attachment
+- **WHEN** a component with pending cell constraints is mounted via `ParentStack`
+- **THEN** `CellConfigurator` receives the `Component` directly and applies constraints to the parent `Cell` without relying on `child.userObject`
+
+### Requirement: GapContainer respace via SolimToken
+`GapContainer.respace(Table)` SHALL inspect `SolimToken.getComponent(table)` to locate the container and recompute gap spacing. Layout attachers (`Column`, `Row`, `Card`, `Grid`) and modifier callbacks SHALL invoke `GapContainer.respace(table)` without checking or casting raw `table.userObject`.
+
+#### Scenario: Respacing container when child size changes
+- **WHEN** `GapContainer.respace(table)` is called where `table` is associated with a `SolimToken` whose component implements `GapContainer`
+- **THEN** the container's `respace()` method is invoked
+
+### Requirement: ReactiveGrid item cell configuration and growth
+`ReactiveGrid` SHALL inspect both the item component and its underlying element to resolve `PendingCellConfig`. If the item component itself does not provide a `PendingCellConfig` (such as when wrapping an element in a `BaseComponent`), `ReactiveGrid` SHALL fall back to inspecting the element's bound `PendingCellConfig` before configuring the parent cell.
+
+`ReactiveGrid` SHALL apply all resolved cell constraints to each item cell, including `growX()`, `growY()`, `minHeight()`, `maxHeight()`, `minWidth()`, `maxWidth()`, and margins. When an item specifies `growY()`, its cell SHALL expand vertically with `expandY = 1` and `fillY = 1f` within its row.
+
+#### Scenario: BaseComponent item cell configuration fallback
+- **WHEN** an item in `ReactiveGrid` is a `BaseComponent` whose `build()` method returns a component with `grow()`, `minHeight(200f)`, or other cell constraints
+- **THEN** `ReactiveGrid` successfully resolves the `PendingCellConfig` from the underlying element
+- **AND** applies `minHeight(200f)`, `expandY = 1`, and `fillY = 1f` to the item's cell
+
+#### Scenario: Item with growY fills row height
+- **WHEN** multiple items in the same row of a `ReactiveGrid` have unequal content heights and one item specifies `grow()` or `growY()`
+- **THEN** the cell with `growY()` expands to match the full height of the row
 

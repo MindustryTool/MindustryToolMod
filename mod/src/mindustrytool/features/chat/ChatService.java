@@ -3,6 +3,8 @@ package mindustrytool.features.chat;
 import arc.Core;
 import arc.util.Log;
 import arc.util.Nullable;
+import arc.util.Timer;
+import arc.util.Timer.Task;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +23,8 @@ import mindustrytool.utils.JsonUtils;
 public class ChatService {
 
     public static final int PAGE_SIZE = 50;
+    public static final long WATCHDOG_TIMEOUT_MS = 45_000L;
+    public static final float WATCHDOG_INTERVAL_SECONDS = 5f;
 
     private final ChatStore store;
     private final Supplier<Boolean> windowOpenSupplier;
@@ -30,6 +34,10 @@ public class ChatService {
     private @Nullable CompletableFuture<Void> streamRequest;
     private StringBuilder dataBuffer = new StringBuilder();
     private String currentEvent = "data";
+
+    private volatile long lastEventTime = 0L;
+    private @Nullable Task watchdogTask;
+    private final AtomicBoolean reconnecting = new AtomicBoolean(false);
 
     public ChatService(ChatStore store, Supplier<Boolean> windowOpenSupplier) {
         this.store = store;
@@ -50,10 +58,17 @@ public class ChatService {
         running.set(true);
         refreshChannels();
         connectStream();
+        if (watchdogTask == null) {
+            watchdogTask = Timer.schedule(this::checkWatchdog, WATCHDOG_INTERVAL_SECONDS, WATCHDOG_INTERVAL_SECONDS);
+        }
     }
 
     public synchronized void stop() {
         running.set(false);
+        if (watchdogTask != null) {
+            watchdogTask.cancel();
+            watchdogTask = null;
+        }
         if (streamRequest != null) {
             try {
                 streamRequest.cancel(true);
@@ -108,13 +123,99 @@ public class ChatService {
     public void refresh(@Nullable String channelId) {
         if (channelId == null || channelId.isEmpty()) {
             refreshChannels();
+            checkConnectionAndReconnect();
             return;
         }
 
         loadMessages(channelId);
         loadUsers(channelId);
-        if (!Boolean.TRUE.equals(store.session().connected().peek())) {
+        checkConnectionAndReconnect();
+    }
+
+    public void syncActiveChannelSilently(@Nullable String channelId) {
+        if (channelId == null || channelId.isEmpty()) {
+            return;
+        }
+
+        List<ChatMessage> existing = store.messages().currentActive();
+        boolean hasExisting = existing != null && !existing.isEmpty();
+        if (!hasExisting) {
+            store.messages().setLoadingInitial(channelId, true);
+        }
+
+        MindustryTool.getChatMessages(channelId, null).thenAccept(messages -> {
+            Core.app.post(() -> {
+                store.messages().setLoadingInitial(channelId, false);
+                if (messages != null) {
+                    Collections.reverse(messages);
+                }
+                store.messages().replace(channelId, messages);
+                store.messages().setFullyLoaded(channelId, messages == null || messages.size() < PAGE_SIZE);
+                if (messages != null && !messages.isEmpty()) {
+                    ChatMessage newest = messages.get(messages.size() - 1);
+                    if (newest.getId() != null) {
+                        store.unread().setLatestMessage(channelId, newest.getId());
+                        boolean open = windowOpenSupplier.get();
+                        boolean isActive = Objects.equals(store.channels().currentActiveId(), channelId);
+                        if (open && isActive) {
+                            store.unread().markAsRead(channelId, newest.getId());
+                        }
+                    }
+                }
+                fetchMissingUsers(messages);
+            });
+        }).exceptionally(e -> {
+            Core.app.post(() -> {
+                store.messages().setLoadingInitial(channelId, false);
+                if (!hasExisting) {
+                    store.messages().setError(channelId, extractError(e));
+                }
+            });
+            Log.err("Failed to silently sync chat messages for " + channelId, e);
+            return null;
+        });
+    }
+
+    public void catchUpSync() {
+        String activeId = store.channels().currentActiveId();
+        if (activeId != null && !activeId.isEmpty()) {
+            syncActiveChannelSilently(activeId);
+        }
+        MindustryTool.getChatChannels().thenAccept(channels -> {
+            Core.app.post(() -> {
+                store.channels().replace(channels);
+                if (channels != null) {
+                    for (ChannelDto c : channels) {
+                        if (c.getId() != null && c.getLastMessageId() != null) {
+                            store.unread().setLatestMessage(c.getId(), c.getLastMessageId());
+                        }
+                    }
+                }
+            });
+        }).exceptionally(e -> {
+            Log.err("Failed to catch up chat channels metadata", e);
+            return null;
+        });
+    }
+
+    public void checkConnectionAndReconnect() {
+        if (!running.get()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        boolean stalled = streamRequest != null && lastEventTime > 0 && (now - lastEventTime > WATCHDOG_TIMEOUT_MS);
+        boolean disconnected = streamRequest == null || !Boolean.TRUE.equals(store.session().connected().peek());
+        if (stalled || disconnected) {
+            if (streamRequest != null) {
+                try {
+                    streamRequest.cancel(true);
+                } catch (Exception ignored) {
+                }
+                streamRequest = null;
+            }
+            Core.app.post(() -> store.session().setConnected(false));
             connectStream();
+            catchUpSync();
         }
     }
 
@@ -242,23 +343,48 @@ public class ChatService {
                 });
     }
 
-    private void connectStream() {
+    synchronized void connectStream() {
         if (!running.get()) {
             return;
         }
 
-        Core.app.post(() -> store.session().setConnected(true));
-        streamRequest = MindustryTool.chatStream(chatId, this::handleStreamLine);
-        streamRequest.whenComplete((ignored, error) -> {
-            Core.app.post(() -> store.session().setConnected(false));
-            scheduleReconnect();
+        lastEventTime = System.currentTimeMillis();
+        CompletableFuture<Void> req = MindustryTool.chatStream(chatId, this::handleStreamLine);
+        streamRequest = req;
+        req.whenComplete((ignored, error) -> {
+            if (streamRequest == req) {
+                Core.app.post(() -> store.session().setConnected(false));
+                scheduleReconnect();
+            }
         });
     }
 
-    private void handleStreamLine(String line) {
+    void checkWatchdog() {
+        if (!running.get() || streamRequest == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        long elapsed = now - lastEventTime;
+        if (lastEventTime > 0 && elapsed > WATCHDOG_TIMEOUT_MS) {
+            Log.warn("Chat SSE stream stalled (no data for " + elapsed + "ms). Reconnecting...");
+            Core.app.post(() -> store.session().setConnected(false));
+            if (streamRequest != null) {
+                try {
+                    streamRequest.cancel(true);
+                } catch (Exception ignored) {
+                }
+                streamRequest = null;
+            }
+            scheduleReconnect();
+        }
+    }
+
+    void handleStreamLine(String line) {
         if (line == null) {
             return;
         }
+
+        lastEventTime = System.currentTimeMillis();
 
         if (line.isEmpty()) {
             dispatchCurrentEvent();
@@ -266,6 +392,7 @@ public class ChatService {
         }
 
         if (line.startsWith(":")) {
+            Core.app.post(() -> store.session().setConnected(true));
             return;
         }
 
@@ -302,6 +429,7 @@ public class ChatService {
                 List<ChatMessage> list = JsonUtils.fromJsonArray(ChatMessage.class, data);
                 if (list != null) {
                     Core.app.post(() -> {
+                        store.session().setConnected(true);
                         boolean open = windowOpenSupplier.get();
                         for (ChatMessage msg : list) {
                             boolean added = store.messages().append(msg);
@@ -325,6 +453,7 @@ public class ChatService {
                 ChatMessage msg = JsonUtils.fromJson(ChatMessage.class, data);
                 if (msg != null && msg.getId() != null) {
                     Core.app.post(() -> {
+                        store.session().setConnected(true);
                         boolean added = store.messages().append(msg);
                         if (added) {
                             boolean open = windowOpenSupplier.get();
@@ -370,18 +499,49 @@ public class ChatService {
         }
     }
 
-    private void scheduleReconnect() {
-        if (!running.get()) {
+    void scheduleReconnect() {
+        if (!running.get() || !reconnecting.compareAndSet(false, true)) {
             return;
         }
         new Thread(() -> {
             try {
                 Thread.sleep(5000L);
             } catch (InterruptedException ignored) {
+            } finally {
+                reconnecting.set(false);
             }
             if (running.get()) {
                 connectStream();
+                catchUpSync();
             }
         }, "ChatReconnectThread").start();
+    }
+
+    long getLastEventTime() {
+        return lastEventTime;
+    }
+
+    void setLastEventTime(long time) {
+        this.lastEventTime = time;
+    }
+
+    @Nullable Task getWatchdogTask() {
+        return watchdogTask;
+    }
+
+    boolean isStreamActive() {
+        return streamRequest != null && !streamRequest.isDone();
+    }
+
+    void setRunningForTest(boolean r) {
+        this.running.set(r);
+    }
+
+    void setStreamRequestForTest(@Nullable CompletableFuture<Void> req) {
+        this.streamRequest = req;
+    }
+
+    @Nullable CompletableFuture<Void> getStreamRequestForTest() {
+        return this.streamRequest;
     }
 }

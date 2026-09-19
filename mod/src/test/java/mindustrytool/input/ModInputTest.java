@@ -11,6 +11,7 @@ import arc.mock.MockFiles;
 import arc.mock.MockGraphics;
 import arc.mock.MockInput;
 import arc.input.InputProcessor;
+import arc.input.KeyCode;
 import arc.math.geom.Vec2;
 import arc.struct.Queue;
 import arc.struct.Seq;
@@ -675,5 +676,47 @@ class ModInputTest {
         input.updateCamera();
         assertEquals(500f, Core.camera.position.x, 0.001f);
         assertEquals(500f, Core.camera.position.y, 0.001f);
+    }
+
+    @Test
+    void modMobileInput_tap_catchesExceptionAndReturnsFalse() {
+        ModMobileInput input = new ModMobileInput();
+        Vars.state = null;
+
+        assertThrows(NullPointerException.class, () -> new MobileInput().tap(0f, 0f, 1, KeyCode.mouseLeft));
+        assertDoesNotThrow(() -> {
+            boolean result = input.tap(0f, 0f, 1, KeyCode.mouseLeft);
+            assertFalse(result);
+        });
+    }
+
+    @Test
+    void modMobileInput_longPress_catchesExceptionAndReturnsFalse() {
+        ModMobileInput input = new ModMobileInput();
+        Vars.state = null;
+
+        assertThrows(NullPointerException.class, () -> new MobileInput().longPress(0f, 0f));
+        assertDoesNotThrow(() -> {
+            boolean result = input.longPress(0f, 0f);
+            assertFalse(result);
+        });
+    }
+
+    @Test
+    void modMobileInput_tap_returnsNormallyWhenNoException() {
+        ModMobileInput input = new ModMobileInput();
+        Vars.state = new GameState();
+        Vars.state.rules = new Rules();
+        Vars.player = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+        };
+
+        assertDoesNotThrow(() -> {
+            boolean result = input.tap(0f, 0f, 1, KeyCode.mouseLeft);
+            assertFalse(result);
+        });
     }
 }

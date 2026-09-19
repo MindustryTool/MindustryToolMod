@@ -8,7 +8,6 @@ import arc.graphics.Pixmap;
 import arc.graphics.Texture;
 import arc.graphics.Texture.TextureFilter;
 import arc.graphics.g2d.TextureRegion;
-import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Cell;
@@ -19,24 +18,18 @@ import arc.util.Nullable;
 import arc.util.Scaling;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import arc.scene.ui.Image;
 import mindustry.Vars;
 import mindustry.core.Version;
-import solim.core.Component;
 import solim.core.Disposable;
-import solim.runtime.ComponentContext;
-import solim.modifier.CellConfig;
-import solim.modifier.PendingCellConfig;
-import solim.modifier.ElementConfig;
+import solim.core.LeafComponent;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.graphics.RoundedGenerator;
 
-public final class NetworkImage implements Component, CellConfig<NetworkImage>, ElementConfig<NetworkImage> {
+public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 
     @FunctionalInterface
     public interface ImageLoader {
@@ -295,24 +288,17 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     // --- Instance ---
 
-    private final Image image;
-    private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Drawable placeholder;
     private @Nullable Drawable fallback;
     private @Nullable Disposable binding;
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private @Nullable String currentUrl;
     private boolean failed = false;
     private Scaling scaling = Scaling.fit;
     private int cornerRadius = 0;
-    private float padTop, padLeft, padBottom, padRight;
-    private float marginTop, marginLeft, marginBottom, marginRight;
 
     public NetworkImage() {
-        this.image = new Image((Drawable) null);
-        this.image.setScaling(Scaling.fit);
-        ComponentContext.register(this);
+        super(new Image((Drawable) null));
+        this.element.setScaling(Scaling.fit);
     }
 
     public NetworkImage(String url) {
@@ -326,7 +312,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
     }
 
     public NetworkImage origin(int align) {
-        this.image.setOrigin(align);
+        this.element.setOrigin(align);
         return this;
     }
 
@@ -361,7 +347,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     public NetworkImage placeholder(@Nullable Drawable placeholder) {
         this.placeholder = placeholder;
-        if (image.getDrawable() == null && placeholder != null) {
+        if (element.getDrawable() == null && placeholder != null) {
             applyDrawable(placeholder);
         }
         return this;
@@ -377,7 +363,7 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     public NetworkImage scaling(Scaling scaling) {
         this.scaling = scaling;
-        image.setScaling(scaling);
+        element.setScaling(scaling);
         return this;
     }
 
@@ -511,111 +497,75 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     private void applyDrawable(@Nullable Drawable drawable) {
         if (drawable != null) {
-            image.setDrawable(drawable);
+            element.setDrawable(drawable);
         }
-        image.invalidateHierarchy();
+        element.invalidateHierarchy();
     }
 
     public NetworkImage color(Color color) {
-        image.setColor(color);
+        element.setColor(color);
         return this;
     }
 
     public NetworkImage color(Readable<Color> color) {
         if (color != null) {
-            Effect e = Effect.of(() -> {
+            Effect.of(() -> {
                 Color c = color.get();
                 if (c != null)
-                    image.setColor(c);
+                    element.setColor(c);
             });
-            bindings.add(e);
-            ComponentContext.register(e);
         }
         return this;
-    }
-
-    @Override
-    public PendingCellConfig cellConfig() {
-        return constraints;
     }
 
     public Image image() {
-        applySpacing();
-        return image;
-    }
-
-    @Override
-    public Element element() {
-        applySpacing();
-        return image;
-    }
-
-    public NetworkImage padding(float p) {
-        this.padTop = this.padLeft = this.padBottom = this.padRight = p;
-        applySpacing();
-        return this;
-    }
-
-    public NetworkImage paddingX(float x) {
-        this.padLeft = this.padRight = x;
-        applySpacing();
-        return this;
-    }
-
-    public NetworkImage paddingY(float y) {
-        this.padTop = this.padBottom = y;
-        applySpacing();
-        return this;
-    }
-
-    public NetworkImage margin(float m) {
-        this.marginTop = this.marginLeft = this.marginBottom = this.marginRight = m;
-        applySpacing();
-        return this;
-    }
-
-    public NetworkImage marginX(float x) {
-        this.marginLeft = this.marginRight = x;
-        applySpacing();
-        return this;
-    }
-
-    public NetworkImage marginY(float y) {
-        this.marginTop = this.marginBottom = y;
-        applySpacing();
-        return this;
-    }
-
-    public void applySpacing() {
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
-            if (cell != null) {
-                cell.pad(padTop + marginTop, padLeft + marginLeft, padBottom + marginBottom, padRight + marginRight);
-            }
-        }
+        return element;
     }
 
     public NetworkImage top() {
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        constraints.alignTop();
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.top();
         }
         return this;
     }
 
+    public NetworkImage bottom() {
+        constraints.alignBottom();
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
+            if (cell != null)
+                cell.bottom();
+        }
+        return this;
+    }
+
     public NetworkImage left() {
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        constraints.alignLeft();
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.left();
         }
         return this;
     }
 
+    public NetworkImage right() {
+        constraints.alignRight();
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
+            if (cell != null)
+                cell.right();
+        }
+        return this;
+    }
+
     public NetworkImage center() {
-        if (image.parent instanceof Table) {
-            Cell<?> cell = ((Table) image.parent).getCell(image);
+        constraints.alignCenter();
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
                 cell.center();
         }
@@ -624,27 +574,13 @@ public final class NetworkImage implements Component, CellConfig<NetworkImage>, 
 
     @Override
     public void dispose() {
-        if (disposed) {
+        if (isDisposed()) {
             return;
         }
-        disposed = true;
         if (binding != null) {
             binding.dispose();
             binding = null;
         }
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
-    }
-
-    @Override
-    public NetworkImage self() {
-        return this;
+        super.dispose();
     }
 }

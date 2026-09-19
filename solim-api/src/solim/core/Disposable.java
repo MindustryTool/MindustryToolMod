@@ -4,7 +4,5 @@ package solim.core;
 public interface Disposable {
 	void dispose();
 
-	default boolean isDisposed() {
-		return false;
-	}
+	boolean isDisposed();
 }

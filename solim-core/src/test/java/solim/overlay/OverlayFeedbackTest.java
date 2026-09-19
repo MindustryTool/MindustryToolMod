@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
+import solim.core.DisposableAction;
 import solim.feedback.Alert;
 import solim.feedback.Avatar;
 import solim.feedback.Badge;
@@ -92,7 +93,7 @@ class OverlayFeedbackTest {
 		// Test callback-based signal creation (e.g. this.resized(callback))
 		Signal<Integer> resizeSignal = d.createSignal(cb -> {
 			resizeCallbacks.add(cb);
-			return () -> resizeCallbacks.remove(cb);
+			return DisposableAction.of(() -> resizeCallbacks.remove(cb));
 		}, () -> counter[0]);
 		assertEquals(10, resizeSignal.get());
 

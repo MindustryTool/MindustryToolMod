@@ -75,7 +75,7 @@ public class SchematicPickerDialog extends SolimDialog {
                                     .placeholder(Core.bundle.get("feature.quick-schematic-grid.picker.search"));
                         });
 
-                scroll().growX().children(() -> {
+                scroll().minHeight(unit(16)).growX().children(() -> {
                     wrap().left().gap(unit(1.5f)).children(() -> {
                         tagChip(null, tags);
                         for (String tag : tags) {
