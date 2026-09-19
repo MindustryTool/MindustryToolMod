@@ -13,7 +13,7 @@ public final class EventsUtil {
 
 	public static <T> Disposable listen(Class<T> type, Cons<T> listener) {
 		Events.on(type, listener);
-		return () -> Events.remove(type, listener);
+		return DisposableAction.of(() -> Events.remove(type, listener));
 	}
 
 	/**

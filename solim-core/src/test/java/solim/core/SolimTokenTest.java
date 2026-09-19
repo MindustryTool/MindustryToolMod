@@ -1,0 +1,95 @@
+package solim.core;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import arc.scene.Element;
+import org.junit.jupiter.api.Test;
+import solim.modifier.PendingCellConfig;
+
+class SolimTokenTest {
+
+    @Test
+    void getOrCreateCreatesAndAssignsToken() {
+        Element el = new Element();
+        assertNull(el.userObject);
+
+        SolimToken token = SolimToken.getOrCreate(el);
+        assertNotNull(token);
+        assertSame(token, el.userObject);
+        assertSame(token, SolimToken.get(el));
+    }
+
+    @Test
+    void getOrCreatePreservesExistingUserObjectInPayload() {
+        Element el = new Element();
+        Object legacyPayload = new Object();
+        el.userObject = legacyPayload;
+
+        SolimToken token = SolimToken.getOrCreate(el);
+        assertSame(token, el.userObject);
+        assertSame(legacyPayload, token.userPayload);
+    }
+
+    @Test
+    void getOrCreateIdempotent() {
+        Element el = new Element();
+        SolimToken first = SolimToken.getOrCreate(el);
+        SolimToken second = SolimToken.getOrCreate(el);
+
+        assertSame(first, second);
+    }
+
+    @Test
+    void getReturnsNullWhenNoToken() {
+        assertNull(SolimToken.get(null));
+
+        Element el = new Element();
+        assertNull(SolimToken.get(el));
+
+        el.userObject = "not-a-token";
+        assertNull(SolimToken.get(el));
+    }
+
+    @Test
+    void bindAttachesComponentAndConfig() {
+        Element el = new Element();
+        Component comp = new Component() {
+            @Override
+            public Element element() {
+                return el;
+            }
+        };
+        PendingCellConfig config = new PendingCellConfig();
+
+        SolimToken.bind(el, comp, config);
+
+        assertSame(comp, SolimToken.getComponent(el));
+        SolimToken token = SolimToken.get(el);
+        assertNotNull(token);
+        assertSame(comp, token.component);
+        assertSame(config, token.cellConfig);
+    }
+
+    @Test
+    void setExpandingUpdatesFlagWithoutClobberingComponent() {
+        Element el = new Element();
+        Component comp = new Component() {
+            @Override
+            public Element element() {
+                return el;
+            }
+        };
+        SolimToken.bind(el, comp);
+
+        assertFalse(SolimToken.isExpanding(el));
+
+        SolimToken.setExpanding(el, true);
+        assertTrue(SolimToken.isExpanding(el));
+        // Component reference must not be destroyed by expanding flag
+        assertSame(comp, SolimToken.getComponent(el));
+
+        SolimToken.setExpanding(el, false);
+        assertFalse(SolimToken.isExpanding(el));
+        assertSame(comp, SolimToken.getComponent(el));
+    }
+}

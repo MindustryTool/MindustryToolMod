@@ -17,6 +17,9 @@ import arc.util.Scaling;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.List;
+import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.reactive.Signal;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
@@ -44,7 +47,7 @@ class NetworkImageComponentTest {
     void networkImageElementIsBackedImage() {
         NetworkImage img = new NetworkImage();
         assertSame(img.image(), img.element());
-        assertSame(img, img.image().userObject);
+        assertSame(img, SolimToken.getComponent(img.image()));
         img.dispose();
     }
 
@@ -243,7 +246,7 @@ class NetworkImageComponentTest {
 
         NetworkImage img = new NetworkImage().marginTop(topPad);
         Cell<?> cell = table.add(img.element());
-        img.own(img.cellConfig().applyToCell(cell));
+        List<Disposable> cellDisposables = img.cellConfig().applyToCell(cell);
 
         assertEquals(5f, CellAccess.padTop(cell), 0.01f);
 
@@ -252,6 +255,9 @@ class NetworkImageComponentTest {
         assertEquals(25f, CellAccess.padTop(cell), 0.01f);
 
         img.dispose();
+        for (Disposable d : cellDisposables) {
+            d.dispose();
+        }
 
         topPad.set(50f);
         SignalDispatcher.flush();

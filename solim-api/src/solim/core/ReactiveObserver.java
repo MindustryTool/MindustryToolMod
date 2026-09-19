@@ -10,6 +10,7 @@ public interface ReactiveObserver {
 	 *
 	 * @param observable the signal or reactive source being observed
 	 */
+    //TODO: SHould not be an object
 	void addDependency(Object observable);
 
 	/**

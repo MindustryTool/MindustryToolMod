@@ -61,9 +61,9 @@ class ComponentTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> order.append("first"));
-				own(() -> order.append("second"));
-				own(() -> order.append("third"));
+				own(DisposableAction.of(() -> order.append("first")));
+				own(DisposableAction.of(() -> order.append("second")));
+				own(DisposableAction.of(() -> order.append("third")));
 				return new Element();
 			}
 		};
@@ -81,7 +81,7 @@ class ComponentTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> disposeCount.incrementAndGet());
+				own(DisposableAction.of(() -> disposeCount.incrementAndGet()));
 				return new Element();
 			}
 		};
@@ -130,7 +130,7 @@ class ComponentTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> disposeCount.incrementAndGet());
+				own(DisposableAction.of(() -> disposeCount.incrementAndGet()));
 				return null;
 			}
 		};

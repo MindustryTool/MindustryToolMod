@@ -206,15 +206,19 @@ Application components SHALL have no callable manual ownership method. `Componen
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
 ### Requirement: withoutAutoOwnership replaces pause/resume
-`ComponentContext` SHALL provide a `withoutAutoOwnership(Runnable)` method that temporarily suspends auto-registration for the duration of the runnable. The suspension SHALL always be lifted after the runnable completes, even if it throws.
+`ComponentContext` SHALL provide a `withoutAutoOwnership(Runnable)` method that temporarily suspends auto-registration for the duration of the runnable using save, clear, and restore stack semantics. Nested component scopes instantiated within the runnable SHALL be able to push and manage their own local `ComponentContext` scopes. The outer stack context SHALL always be restored after the runnable completes, even if it throws.
 
 #### Scenario: Auto-ownership is suspended inside withoutAutoOwnership
 - **WHEN** `ComponentContext.withoutAutoOwnership(() -> Effect.of(...))` is called
 - **THEN** the Effect is NOT registered with the active component's ownership list
 
+#### Scenario: Nested component build in withoutAutoOwnership manages own ownership
+- **WHEN** a component is constructed and built inside `ComponentContext.withoutAutoOwnership(...)`
+- **THEN** resources created during its `build()` are owned by that component itself without attaching to the outer suspended scope
+
 #### Scenario: Auto-ownership is restored after the runnable throws
 - **WHEN** the runnable passed to `withoutAutoOwnership` throws an exception
-- **THEN** auto-ownership is restored for subsequent calls
+- **THEN** the original `ComponentContext` stack is restored for subsequent calls
 
 #### Scenario: Auto-ownership is restored after normal completion
 - **WHEN** the runnable passed to `withoutAutoOwnership` completes normally
@@ -473,11 +477,15 @@ The `Component` interface SHALL extend `Disposable` so that components can be pa
 - **THEN** it compiles as a `Disposable` and can be passed to any method accepting `Disposable`
 
 ### Requirement: Single own() method on BaseComponent
-`BaseComponent` SHALL expose a single internal-only `own(T extends Disposable)` method (package-private, no access modifier) that adds the given resource to the component's disposal list and returns it. It SHALL be callable only within package `solim.core`; application modules SHALL NOT be able to call it.
+`BaseComponent` SHALL expose a single internal-only `own(T extends Disposable)` method (package-private, no access modifier) that adds the given resource to the component's disposal list and returns it. If the component is already disposed, `own()` SHALL ignore the disposable and not register it. It SHALL be callable only within package `solim.core`; application modules and public consumers SHALL NOT be able to call it. `LeafComponent` SHALL NOT expose a public `own()` method.
 
 #### Scenario: own() adds to disposal list
 - **WHEN** `own(disposable)` is called on a component from within `solim.core`
 - **THEN** the disposable is added to the component's internal list and disposed when the component is disposed
+
+#### Scenario: own() on disposed component is ignored
+- **WHEN** `own(disposable)` is called on a component that has already been disposed
+- **THEN** the disposable is not added to the internal list
 
 #### Scenario: own() returns the disposable
 - **WHEN** `T result = own(disposable)` is called from within `solim.core`

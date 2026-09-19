@@ -168,7 +168,7 @@ public class ChatMessageListView extends BaseComponent {
 
         scrollToBottom();
 
-        return column().grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
+        return column().name("chat-list").grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
             dynamic(hasChannel, channelSelected -> {
                 if (!Boolean.TRUE.equals(channelSelected)) {
                     return dynamic(store.channels().loading(), chanLoading -> {

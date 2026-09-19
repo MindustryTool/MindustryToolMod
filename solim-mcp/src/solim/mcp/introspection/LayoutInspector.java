@@ -4,6 +4,7 @@ import arc.scene.Element;
 import arc.util.Nullable;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import solim.core.SolimToken;
 
 /** Reads layout metrics of an Arc element via its public API. */
 public final class LayoutInspector {
@@ -17,8 +18,7 @@ public final class LayoutInspector {
 		node.put("width", element.getWidth());
 		node.put("height", element.getHeight());
 		node.put("visible", element.visible);
-		Object userObject = element.userObject;
-		node.put("expanding", "expanding".equals(userObject) || Boolean.TRUE.equals(userObject));
+		node.put("expanding", SolimToken.isExpanding(element));
 		return node;
 	}
 }

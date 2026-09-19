@@ -7,6 +7,7 @@ import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import solim.core.SolimToken;
 
 class SpacerTest {
 
@@ -23,7 +24,7 @@ class SpacerTest {
 	@Test
 	void elementIsExpanding() {
 		Spacer s = new Spacer();
-		assertEquals("expanding", s.element().userObject);
+		assertTrue(SolimToken.isExpanding(s.element()));
 	}
 
 	@Test

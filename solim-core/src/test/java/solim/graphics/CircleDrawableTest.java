@@ -2,7 +2,6 @@ package solim.graphics;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import arc.scene.style.Drawable;
 import org.junit.jupiter.api.Test;
 import arc.Core;
 import arc.mock.MockApplication;
@@ -12,9 +11,10 @@ import arc.scene.ui.Image;
 class CircleDrawableTest {
 
 	@Test
-	void testInstanceNotNull() {
-		assertNotNull(CircleDrawable.INSTANCE);
-		assertTrue(CircleDrawable.INSTANCE instanceof Drawable);
+	void instanceIsSingletonWithMinimumDimensions() {
+		assertSame(CircleDrawable.INSTANCE, CircleDrawable.INSTANCE);
+		assertEquals(1f, CircleDrawable.INSTANCE.getMinWidth());
+		assertEquals(1f, CircleDrawable.INSTANCE.getMinHeight());
 	}
 
 	@Test

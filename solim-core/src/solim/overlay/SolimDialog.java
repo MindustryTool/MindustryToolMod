@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.DisposableAction;
 import solim.graphics.RoundedDrawable;
 import solim.modifier.RoundedHelper;
 import solim.runtime.ParentStack;
@@ -97,7 +98,7 @@ public class SolimDialog implements Component {
                     return wrapped.cont;
                 }
             };
-            registerDisposable(comp::dispose);
+            registerDisposable(comp);
             comp.element();
         }
     }
@@ -153,7 +154,7 @@ public class SolimDialog implements Component {
      */
     public <T> Disposable listen(Class<T> eventType, Cons<T> listener) {
         Events.on(eventType, listener);
-        Disposable d = () -> Events.remove(eventType, listener);
+        Disposable d = DisposableAction.of(() -> Events.remove(eventType, listener));
         disposables.add(d);
         return d;
     }

@@ -39,6 +39,8 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.chat.ChatFeature;
+import solim.core.Component;
+import solim.core.SolimToken;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -422,11 +424,12 @@ class QuickAccessClickDelegationTest {
     }
 
     private static void fireLongClick(Button button) throws Exception {
-        assertTrue(button.userObject instanceof solim.input.Button,
+        Component comp = SolimToken.getComponent(button);
+        assertTrue(comp instanceof solim.input.Button,
                 "HUD buttons must be Solim buttons");
         Field field = solim.input.Button.class.getDeclaredField("onLongClick");
         field.setAccessible(true);
-        Runnable action = (Runnable) field.get(button.userObject);
+        Runnable action = (Runnable) field.get(comp);
         assertNotNull(action, "Button must have a long-click handler");
         action.run();
     }

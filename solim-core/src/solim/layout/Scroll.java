@@ -17,6 +17,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
+import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
@@ -55,7 +56,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
 
     public Scroll() {
         this.outer = new Table();
-        this.outer.userObject = this;
+        SolimToken.bind(this.outer, this, constraints);
         this.outer.name = "solim-scroll-pane-outer";
         this.outer.top().left();
         this.content = new Table();

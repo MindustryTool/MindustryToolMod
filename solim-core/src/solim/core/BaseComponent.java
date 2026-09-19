@@ -114,7 +114,7 @@ public abstract class BaseComponent implements Component {
      * within solim.core framework code.
      */
     <T extends Disposable> T own(T disposable) {
-        if (disposable != null) {
+        if (disposable != null && !disposed) {
             disposables.add(disposable);
         }
         return disposable;
@@ -126,7 +126,7 @@ public abstract class BaseComponent implements Component {
      */
     public <T> Disposable listen(Class<T> eventType, Cons<T> listener) {
         Events.on(eventType, listener);
-        Disposable d = () -> Events.remove(eventType, listener);
+        Disposable d = DisposableAction.of(() -> Events.remove(eventType, listener));
         own(d);
         return d;
     }

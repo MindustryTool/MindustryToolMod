@@ -14,6 +14,7 @@ import arc.mock.MockGraphics;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
+import solim.core.SolimToken;
 import solim.modifier.CellConfig;
 
 class ForEachComponentTest {
@@ -124,7 +125,7 @@ class ForEachComponentTest {
         assertFalse(fe.cellConfig().growX);
         fe.growX();
         assertTrue(fe.cellConfig().growX);
-        assertSame(fe, fe.container().userObject);
+        assertSame(fe, SolimToken.getComponent(fe.container()));
         fe.dispose();
     }
 

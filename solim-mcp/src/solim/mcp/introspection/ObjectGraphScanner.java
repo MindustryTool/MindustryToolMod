@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import solim.core.SolimToken;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
@@ -121,9 +122,19 @@ public final class ObjectGraphScanner {
 					location + "/" + fieldName, elementName(element), fieldName));
 			}
 		}
-		Object userObject = element.userObject;
-		if (userObject != null && !isLeaf(userObject)) {
-			visit(userObject, depth + 1, location + "/userObject", elementName(element));
+		SolimToken token = SolimToken.get(element);
+		if (token != null) {
+			if (token.component != null && !isLeaf(token.component)) {
+				visit(token.component, depth + 1, location + "/component", elementName(element));
+			}
+			if (token.userPayload != null && !isLeaf(token.userPayload)) {
+				visit(token.userPayload, depth + 1, location + "/userPayload", elementName(element));
+			}
+		} else {
+			Object userObject = element.userObject;
+			if (userObject != null && !isLeaf(userObject)) {
+				visit(userObject, depth + 1, location + "/userObject", elementName(element));
+			}
 		}
 	}
 

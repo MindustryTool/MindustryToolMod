@@ -9,6 +9,7 @@ import arc.util.Scaling;
 import mindustry.game.Schematic;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import solim.core.BaseComponent;
+import solim.core.SolimToken;
 import solim.modifier.PendingCellConfig;
 import solim.reactive.Readable;
 
@@ -45,7 +46,7 @@ final class BoundedSchematicImage extends BaseComponent {
         image = new FixedPreview(schematic);
         PendingCellConfig cell = new PendingCellConfig();
         cell.align = align;
-        image.userObject = cell;
+        SolimToken.bind(image, this, cell);
         arc(image);
         effect(() -> {
             if (size != null) {

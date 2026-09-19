@@ -493,3 +493,33 @@ Shared reactive net-state signals in `Signals.java` so game features gate on one
 - **WHEN** a `ConfigValue<T>` holds a value not equal to `defaultValue`
 - **THEN** `isModified()` returns `true`.
 
+### Requirement: Transactional reconciliation and duplicate-key detection
+`StructuralReconciler` SHALL validate keys prior to component instantiation, rejecting duplicate keys with an `IllegalArgumentException`. If child component creation fails or throws during reconciliation, all components newly instantiated during that failed reconciliation attempt SHALL be disposed immediately, and previously active components SHALL remain untouched. Components removed during a successful reconciliation SHALL be disposed only after the new state is committed.
+
+#### Scenario: Duplicate key triggers IllegalArgumentException
+- **WHEN** reconciliation is invoked with an item collection containing duplicate extracted keys
+- **THEN** an `IllegalArgumentException` is thrown before any component is created or modified
+
+#### Scenario: Component factory failure rolls back newly created components
+- **WHEN** the component factory throws an exception on the N-th item during reconciliation
+- **THEN** the first N-1 newly created components are disposed, previously active components are preserved, and the exception is propagated
+
+#### Scenario: Removed components are disposed only after successful commit
+- **WHEN** reconciliation completes without errors
+- **THEN** removed components are disposed after updating the active component map
+
+### Requirement: Unified ParentStack entry encapsulation
+`ParentStack` SHALL bundle per-parent state, including its `Table`, `Attacher`, and `pendingComponents`, into a single `Entry` object. `ParentStack.isolate()` SHALL save and restore the complete stack context so that pending attachments and attachers do not leak across isolation boundaries.
+
+#### Scenario: Isolation preserves complete parent state
+- **WHEN** code executes inside `ParentStack.isolate(...)`
+- **THEN** no outer pending components or attachers are accessible or mutated, and the outer state is restored upon exit
+
+### Requirement: Unified reactive error logging
+`Signal`, `Computed`, and `Effect` SHALL log evaluation, listener, and observer errors using Arc's `Log.err(...)` rather than standard error streams.
+
+#### Scenario: Observer error logged via Log.err
+- **WHEN** an observer throws an unhandled exception during notification
+- **THEN** the error is logged through `Log.err` with stack trace and context
+
+

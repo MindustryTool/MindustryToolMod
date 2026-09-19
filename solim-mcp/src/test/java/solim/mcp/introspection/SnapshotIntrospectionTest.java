@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
+import solim.core.Component;
+import solim.core.SolimToken;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
@@ -20,10 +22,15 @@ class SnapshotIntrospectionTest {
 		final Computed<String> percent = progress.map(v -> Math.round(v * 100) + "%");
 	}
 
-	static class GadgetComponent {
+	static class GadgetComponent implements Component {
 		final Signal<Integer> scale = Signal.of(3);
 		final Computed<String> label = scale.map(v -> "x" + v);
 		final Effect fx = Effect.of(() -> scale.get());
+
+		@Override
+		public Element element() {
+			return new Element();
+		}
 	}
 
 	@Test
@@ -59,7 +66,7 @@ class SnapshotIntrospectionTest {
 	void signalsDiscoveredFromUserObjectComponent() throws Exception {
 		Table root = new Table();
 		root.name = "root";
-		root.userObject = new GadgetComponent();
+		SolimToken.bind(root, new GadgetComponent());
 
 		UiSnapshot snapshot = UiSnapshot.capture(root);
 		JsonNode signals = snapshot.signalsJson();

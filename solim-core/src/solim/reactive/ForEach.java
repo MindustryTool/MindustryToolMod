@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.core.SolimToken;
 import solim.core.Ui;
 
 import solim.modifier.CellConfig;
@@ -36,7 +37,7 @@ public final class ForEach<T, K> extends BaseComponent
         this.collection = collection;
         this.keyExtractor = keyExtractor;
         this.itemFactory = itemFactory;
-        this.container.userObject = this;
+        SolimToken.bind(this.container, this, constraints);
         this.container.top().left();
         this.container.defaults().top().left();
     }

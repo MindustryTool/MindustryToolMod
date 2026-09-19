@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
@@ -33,8 +34,8 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
             cell.growY();
         }
         cell.row();
-        if (table.userObject instanceof GapContainer) {
-            GapContainer gc = (GapContainer) table.userObject;
+        GapContainer gc = GapContainer.find(table);
+        if (gc != null) {
             GapContainer.spaceAttachedCell(table, cell, Direction.VERTICAL, gc.gap());
         }
         return cell;
@@ -47,7 +48,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
     private float gap = 0f;
 
     public Card() {
-        this.table.userObject = this;
+        SolimToken.bind(this.table, this, constraints);
         this.table.name = "solim-card-table";
         this.table.top().left();
         this.table.defaults().top().left();

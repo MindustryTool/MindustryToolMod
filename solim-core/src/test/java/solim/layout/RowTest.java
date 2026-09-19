@@ -9,6 +9,7 @@ import arc.scene.Element;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
+import solim.core.SolimToken;
 import solim.core.Ui;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
@@ -337,7 +338,7 @@ class RowTest {
         }
         scroll.content().layout();
 
-        Row row = (Row) scroll.content().getChildren().first().userObject;
+        Row row = (Row) SolimToken.getComponent(scroll.content().getChildren().first());
         row.table().layout();
 
         // Both img and det must be flush with the top of the row table (400)

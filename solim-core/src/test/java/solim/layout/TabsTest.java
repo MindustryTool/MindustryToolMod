@@ -17,6 +17,7 @@ import solim.display.Text;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
 import org.junit.jupiter.api.Assumptions;
 
 class TabsTest {
@@ -132,6 +133,7 @@ class TabsTest {
 
 		// Switch to Tab 1 via signal
 		activeTab.set(1);
+		SignalDispatcher.flush();
 		assertFalse(tabs.buttons().get(0).sizedButton().isChecked());
 		assertTrue(tabs.buttons().get(1).sizedButton().isChecked());
 		assertFalse(tabs.buttons().get(2).sizedButton().isChecked());
@@ -142,6 +144,7 @@ class TabsTest {
 
 		// Switch to Tab 2 via click
 		simulateClick(tabs.buttons().get(2));
+		SignalDispatcher.flush();
 		assertEquals(2, activeTab.get().intValue());
 
 		assertFalse(tabs.buttons().get(0).sizedButton().isChecked());

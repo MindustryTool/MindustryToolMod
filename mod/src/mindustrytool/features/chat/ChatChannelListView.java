@@ -38,7 +38,7 @@ public class ChatChannelListView extends BaseComponent {
     protected Element build() {
         Readable<Boolean> hasChannels = store.channels().all().map(list -> list != null && !list.isEmpty());
 
-        return column().grow().gap(unit(1)).padding(unit(2)).children(() -> {
+        return column().name("channel-list").grow().gap(unit(1)).padding(unit(2)).children(() -> {
             dynamic(store.channels().loading(), isLoading -> {
                 if (Boolean.TRUE.equals(isLoading)) {
                     return Loader.centered();

@@ -2,28 +2,21 @@ package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import arc.Core;
 import arc.scene.Element;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import java.util.concurrent.atomic.AtomicInteger;
+import solim.test.SolimTestHarness;
 
-class VirtualListTest {
+class VirtualListTest extends SolimTestHarness {
 
     @BeforeAll
     static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
+        SolimTestHarness.initArcHeadless();
     }
 
     static class TestItemComponent extends BaseComponent {
@@ -103,6 +96,10 @@ class VirtualListTest {
         );
         vl.overscan(2);
         vl.element();
+        if (vl.pane() != null) {
+            vl.pane().setSize(300f, 1000f);
+            vl.reconcileVisible();
+        }
         SignalDispatcher.flush();
 
         // Total height for 100 items @ 50px = 5000px

@@ -88,7 +88,7 @@ class ComponentContractTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(disposeCount::incrementAndGet);
+				own(DisposableAction.of(disposeCount::incrementAndGet));
 				return new Element();
 			}
 		};
@@ -104,7 +104,7 @@ class ComponentContractTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> disposed.set(true));
+				own(DisposableAction.of(() -> disposed.set(true)));
 				return new Element();
 			}
 		};
@@ -120,9 +120,9 @@ class ComponentContractTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> order.add("first"));
-				own(() -> order.add("second"));
-				own(() -> order.add("third"));
+				own(DisposableAction.of(() -> order.add("first")));
+				own(DisposableAction.of(() -> order.add("second")));
+				own(DisposableAction.of(() -> order.add("third")));
 				return new Element();
 			}
 		};
@@ -137,7 +137,7 @@ class ComponentContractTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> disposed.set(true));
+				own(DisposableAction.of(() -> disposed.set(true)));
 				throw new RuntimeException("build failed");
 			}
 		};
@@ -152,7 +152,7 @@ class ComponentContractTest {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				own(() -> disposed.set(true));
+				own(DisposableAction.of(() -> disposed.set(true)));
 				return null;
 			}
 		};

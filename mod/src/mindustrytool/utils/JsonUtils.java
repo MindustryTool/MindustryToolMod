@@ -10,50 +10,55 @@ import java.util.List;
 
 public final class JsonUtils {
 
-	private static final ObjectMapper mapper = new ObjectMapper()
-			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-			.registerModule(new JavaTimeModule());
+    private static ObjectMapper mapper;
 
-	public static ObjectMapper mapper() {
-		return mapper;
-	}
+    public static synchronized ObjectMapper mapper() {
+        if (mapper == null) {
+            mapper = new ObjectMapper()
+                    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                    .registerModule(new JavaTimeModule());
+        }
 
-	public static JsonNode readTree(String json) throws IOException {
-		return mapper.readTree(json);
-	}
+        return mapper;
+    }
 
-	private JsonUtils() {}
+    public static JsonNode readTree(String json) throws IOException {
+        return mapper().readTree(json);
+    }
 
-	public static String toJson(Object object) {
-		try {
-			return mapper.writeValueAsString(object);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    private JsonUtils() {
+    }
 
-	public static String toJsonPretty(Object object) {
-		try {
-			return mapper.copy().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(object);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    public static String toJson(Object object) {
+        try {
+            return mapper().writeValueAsString(object);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	public static <T> T fromJson(Class<T> clazz, String json) {
-		try {
-			return mapper.readValue(json, clazz);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    public static String toJsonPretty(Object object) {
+        try {
+            return mapper().copy().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(object);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	public static <T> List<T> fromJsonArray(Class<T> clazz, String json) {
-		try {
-			return mapper.readerForListOf(clazz).readValue(json);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    public static <T> T fromJson(Class<T> clazz, String json) {
+        try {
+            return mapper().readValue(json, clazz);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> List<T> fromJsonArray(Class<T> clazz, String json) {
+        try {
+            return mapper().readerForListOf(clazz).readValue(json);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

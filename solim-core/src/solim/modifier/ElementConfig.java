@@ -223,10 +223,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
             return self();
         el.visible = visible;
         if (el.parent instanceof Table) {
-            Table parentTable = (Table) el.parent;
-            if (parentTable.userObject instanceof GapContainer) {
-                ((GapContainer) parentTable.userObject).respace();
-            }
+            GapContainer.respace((Table) el.parent);
         }
         return self();
     }

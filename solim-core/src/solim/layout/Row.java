@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
@@ -27,8 +28,8 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         if (Ui.isExpanding(child)) {
             cell.growX();
         }
-        if (table.userObject instanceof GapContainer) {
-            GapContainer gc = (GapContainer) table.userObject;
+        GapContainer gc = GapContainer.find(table);
+        if (gc != null) {
             GapContainer.spaceAttachedCell(table, cell, Direction.HORIZONTAL, gc.gap());
         }
         return cell;
@@ -42,7 +43,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
 
     public Row() {
         this.table = new Table();
-        this.table.userObject = this;
+        SolimToken.bind(this.table, this, constraints);
         this.table.name = "solim-row-table";
         this.table.top().left();
         this.table.defaults().top().left();

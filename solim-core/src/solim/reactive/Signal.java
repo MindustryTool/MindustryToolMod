@@ -6,13 +6,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import solim.core.ReactiveObserver;
 import solim.runtime.ComponentContext;
 import solim.runtime.ReactiveContext;
+import solim.runtime.SolimAssert;
 
 /** Mutable reactive value. */
 public final class Signal<T> implements Readable<T> {
@@ -63,6 +63,7 @@ public final class Signal<T> implements Readable<T> {
 	}
 
 	public void set(T newValue) {
+		SolimAssert.checkMainThread();
 		if (Objects.equals(value, newValue)) return;
 		this.value = newValue;
 		// notify listeners
@@ -71,9 +72,7 @@ public final class Signal<T> implements Readable<T> {
 			try {
 				c.accept(value);
 			} catch (Throwable e) {
-				// log but continue
-				System.err.println("[Signal] listener error: " + e.getMessage());
-				e.printStackTrace();
+				Log.err("[Signal] listener error", e);
 			}
 		}
 		// notify observers (Computeds/Effects)
@@ -82,8 +81,7 @@ public final class Signal<T> implements Readable<T> {
 			try {
 				o.invalidate();
 			} catch (Throwable e) {
-				System.err.println("[Signal] observer invalidate error: " + e.getMessage());
-				e.printStackTrace();
+				Log.err("[Signal] observer invalidate error", e);
 			}
 		}
 	}
@@ -94,18 +92,20 @@ public final class Signal<T> implements Readable<T> {
 
 	public Subscription subscribe(Consumer<T> listener) {
 		listeners.add(listener);
-		AtomicBoolean disposed = new AtomicBoolean(false);
 		return new Subscription() {
+			private boolean disposed = false;
+
 			@Override
 			public void dispose() {
-				if (disposed.compareAndSet(false, true)) {
+				if (!disposed) {
+					disposed = true;
 					listeners.remove(listener);
 				}
 			}
 
 			@Override
 			public boolean isDisposed() {
-				return disposed.get();
+				return disposed;
 			}
 		};
 	}

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
+import solim.core.DisposableAction;
 import java.util.ArrayList;
 import java.util.List;
 import solim.reactive.Signal;
@@ -116,7 +117,7 @@ class SolimDialogComponentTest {
 
 		Signal<Integer> resizeSignal = d.createSignal(cb -> {
 			resizeCallbacks.add(cb);
-			return () -> resizeCallbacks.remove(cb);
+			return DisposableAction.of(() -> resizeCallbacks.remove(cb));
 		}, () -> counter[0]);
 		assertEquals(10, resizeSignal.get());
 
