@@ -47,8 +47,6 @@ import mindustrytool.services.auth.AuthOverlay;
 import mindustrytool.services.auth.MindustryAuthProvider;
 import mindustrytool.services.crash.CrashReportService;
 import mindustrytool.services.update.UpdateService;
-import solim.mcp.McpConfig;
-import solim.mcp.SolimMcpServer;
 
 public class Main extends Mod {
     public static LoadedMod self;

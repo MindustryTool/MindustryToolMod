@@ -43,11 +43,7 @@ public final class Signals {
         }
 
         Events.on(ResizeEvent.class, e -> {
-            Core.app.post(() -> {
-                if (Core.graphics != null && Core.graphics.getWidth() > 100 && Core.graphics.getHeight() > 100) {
-                    portrait.set(Core.graphics.isPortrait());
-                }
-            });
+            Core.app.post(() -> portrait.set(Core.graphics.isPortrait()));
         });
 
         refreshNetNow();

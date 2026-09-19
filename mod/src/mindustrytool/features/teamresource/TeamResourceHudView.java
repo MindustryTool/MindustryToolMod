@@ -4,7 +4,6 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.graphics.Color;
-import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.scene.Element;
 import arc.scene.event.InputEvent;
@@ -23,7 +22,6 @@ import mindustry.type.UnitType;
 import mindustry.ui.Styles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.input.Button;
 import solim.layout.Card;
 import solim.overlay.Hud;
 import solim.reactive.Computed;
@@ -83,7 +81,7 @@ public class TeamResourceHudView extends BaseComponent {
                 // 1. Header Row
                 row().growX().gap(unit(1)).children(() -> {
                     // Drag handle
-                    Button dragButton = button()
+                    button()
                             .style(Styles.clearNonei)
                             .size(buttonSize)
                             .children(() -> icon(Icon.move).scaling(Scaling.fit))
@@ -95,7 +93,7 @@ public class TeamResourceHudView extends BaseComponent {
                             .size(buttonSize)
                             .onClick(() -> feature.expandedConfig.set(!Boolean.TRUE.equals(feature.expandedConfig.get())))
                             .tooltip(expanded.map(exp -> Core.bundle.get(Boolean.TRUE.equals(exp) ? "team-resources.collapse" : "team-resources.expand", "Toggle Expand")))
-                            .children(() -> text(expanded.map(exp -> Boolean.TRUE.equals(exp) ? "\u25bc" : "\u25b6")));
+                            .children(() -> text(expanded.map(exp -> Boolean.TRUE.equals(exp) ? "▼" : "▶")));
 
                     // Team selector chips
                     dynamic(state.validTeamsSignal, teams -> row().gap(unit(1)).children(() -> {
@@ -139,12 +137,11 @@ public class TeamResourceHudView extends BaseComponent {
         hud.opacity(feature.opacityConfig.signal());
         hud.position(feature.xSignal, feature.ySignal);
         hud.toFrontOnTouch();
-        hud.keepInScreenOnResize(false);
 
         // Screen resize clamping with automatic ownership cleanup
         listen(ResizeEvent.class, e -> {
-            feature.updatePositionFromRatio();
-            Core.app.post(feature::updatePositionFromRatio);
+            keepInScreen();
+            Core.app.post(this::keepInScreen);
         });
 
         // Initial layout stabilization
@@ -152,7 +149,7 @@ public class TeamResourceHudView extends BaseComponent {
             if (hud != null) {
                 hud.root().invalidateHierarchy();
                 hud.pack();
-                feature.updatePositionFromRatio();
+                hud.keepInScreen();
                 hud.root().toFront();
             }
         });
@@ -167,27 +164,27 @@ public class TeamResourceHudView extends BaseComponent {
     }
 
     private Component buildExpandedContent(Readable<Float> scale, Readable<Integer> itemCols) {
-        Readable<Float> itemCardHeight = scale.map(s -> 32f * (s != null ? s : 1f));
-        Readable<Float> unitCardHeight = scale.map(s -> 30f * (s != null ? s : 1f));
+        Readable<Float> itemCardHeight = scale.map(s -> 34f * (s != null ? s : 1f));
+        Readable<Float> unitCardHeight = scale.map(s -> 28f * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> 18f * (s != null ? s : 1f));
 
-        return column(() -> {
+        return column().growX().gap(unit(1)).children(() -> {
             divider();
 
-            // Items Section
+            // Core Items Section
             dynamic(feature.showItemsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
                 dynamic(state.usedItemsSignal, items -> {
                     if (items == null || items.isEmpty()) {
-                        return row().left().children(() -> text(Core.bundle.get("team-resources.no-items", "No items recorded")).color(Color.gray).style(Styles.outlineLabel));
+                        return row().left().children(() -> text(Core.bundle.get("team-resources.no-items", "No core items")).color(Color.gray).style(Styles.outlineLabel));
                     }
                     return grid(
-                            itemCols,
-                            state.usedItemsSignal,
-                            item -> item.name,
-                            item -> createItemCard(item, itemCardHeight, iconSize, scale)
+                        itemCols,
+                        state.usedItemsSignal,
+                        item -> item.name,
+                        item -> createItemCard(item, itemCardHeight, iconSize, scale)
                     ).growX().gap(unit(1));
                 }).growX();
-            }).growX().gap(unit(1)) : row()).growX();
+            }).growX() : row()).growX();
 
             // Units Section
             dynamic(feature.showUnitsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
@@ -196,13 +193,13 @@ public class TeamResourceHudView extends BaseComponent {
                         return row().left().children(() -> text(Core.bundle.get("team-resources.no-units", "No active units")).color(Color.gray).style(Styles.outlineLabel));
                     }
                     return grid(
-                            itemCols,
-                            state.usedUnitsSignal,
-                            unit -> unit.name,
-                            unit -> createUnitCard(unit, unitCardHeight, iconSize, scale)
+                        itemCols,
+                        state.usedUnitsSignal,
+                        unit -> unit.name,
+                        unit -> createUnitCard(unit, unitCardHeight, iconSize, scale)
                     ).growX().gap(unit(1));
                 }).growX();
-            }).growX().gap(unit(1)) : row()).growX();
+            }).growX() : row()).growX();
 
             // Power Section
             dynamic(feature.showPowerConfig.signal(), show -> Boolean.TRUE.equals(show) ? createPowerSection(scale) : row()).growX();
@@ -220,13 +217,14 @@ public class TeamResourceHudView extends BaseComponent {
                     text(state.tickSignal.map(t -> (Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.get()) || state.isViewingStats()) ? state.getFormattedRate(item) : ""))
                             .color(state.tickSignal.map(t -> state.getRateColor(item)))
                             .style(Styles.outlineLabel)
-                            .fontScale(scale.map(s -> 0.65f * (s != null ? s : 1f)));
-                }).growX();
-            }).growX();
+                            .fontScale(scale.map(s -> 0.60f * (s != null ? s : 1f)));
+                });
+            });
         })
         .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
         .growX()
-        .height(cardHeight);
+        .height(cardHeight)
+        .onClick(() -> state.setViewingStats(!state.isViewingStats()));
 
         card.element().addListener(new InputListener() {
             @Override
@@ -309,10 +307,6 @@ public class TeamResourceHudView extends BaseComponent {
                     });
             }).growX().gap(unit(1)) : row()).growX();
         }).growX().gap(unit(1));
-    }
-
-    public @Nullable Hud getHud() {
-        return hud;
     }
 
     public void keepInScreen() {

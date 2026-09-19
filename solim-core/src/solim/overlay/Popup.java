@@ -25,11 +25,11 @@ import solim.layout.Spacer;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.RoundedHelper;
 import solim.modifier.TableConfig;
-import solim.reactive.Effect;
-import solim.reactive.Readable;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 
 /**
  * Floating context menu: a scene-hosted, non-modal menu with reactive provider
@@ -51,9 +51,6 @@ import solim.runtime.ReactiveContext;
  * explicit and safe to call headless (no-ops without a scene).
  */
 public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T>> {
-
-    private static final Color DEFAULT_FILL = new Color(0.09f, 0.09f, 0.12f, 0.96f);
-    private static final int DEFAULT_RADIUS = 8;
 
     private final Table table = new Table();
     private @Nullable Function<T, Component> provider;
@@ -257,10 +254,6 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                     }
                 }
             }
-        }
-
-        if (table.getBackground() == null) {
-            table.background(new RoundedDrawable(DEFAULT_RADIUS, new Color(DEFAULT_FILL)));
         }
 
         table.pack();

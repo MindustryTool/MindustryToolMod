@@ -6,17 +6,14 @@ import arc.Core;
 import arc.Graphics;
 import arc.Application;
 import arc.graphics.Color;
-import arc.graphics.g2d.TextureRegion;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.scene.Scene;
-import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import mindustry.ui.Styles;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.core.Ui;
@@ -34,9 +31,6 @@ class PopupMenuTest {
             Core.gl20 = (MockGL20) Core.gl;
         }
         Core.scene = new Scene();
-        if (Styles.black6 == null) {
-            Styles.black6 = new TextureRegionDrawable(new TextureRegion());
-        }
     }
 
     @Test

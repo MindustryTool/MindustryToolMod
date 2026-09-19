@@ -6,14 +6,10 @@ import arc.func.Cons;
 import arc.input.KeyCode;
 import arc.scene.Element;
 import arc.scene.Group;
-import arc.scene.event.ClickListener;
-import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
-import arc.scene.ui.Button;
-import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.ArrayList;
@@ -24,15 +20,18 @@ import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.modifier.CellConfig;
 import solim.layout.Row;
-import solim.modifier.CellConfig;
-import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
+import solim.runtime.ComponentContext;
+import solim.runtime.ParentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import arc.scene.event.ClickListener;
+import arc.scene.event.EventListener;
+import arc.scene.ui.Button;
+import arc.scene.ui.layout.Scl;
 
 /**
  * Floating non-modal HUD overlay component. Root element defaults to
@@ -50,8 +49,6 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     private @Nullable Signal<Float> boundXSignal;
     private @Nullable Signal<Float> boundYSignal;
     private boolean disposed = false;
-    private boolean keepInScreenOnResize = true;
-    private boolean dragging = false;
 
     public static class HudRootTable extends Table {
         private final Hud hud;
@@ -92,23 +89,12 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
         this.root.add(container).pad(0).margin(0);
 
         this.resizeListener = e -> {
-            if (keepInScreenOnResize) {
-                keepInScreen();
-                Core.app.post(this::keepInScreen);
-            }
+            keepInScreen();
+            Core.app.post(this::keepInScreen);
         };
         Events.on(ResizeEvent.class, resizeListener);
 
         ComponentContext.register(this);
-    }
-
-    public boolean isDragging() {
-        return dragging;
-    }
-
-    public Hud keepInScreenOnResize(boolean enable) {
-        this.keepInScreenOnResize = enable;
-        return this;
     }
 
     @Override
@@ -229,12 +215,6 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     public Hud x(Readable<Float> x) {
         if (x instanceof Signal) {
             this.boundXSignal = (Signal<Float>) x;
-            Disposable sub = ((Signal<Float>) x).subscribe(val -> {
-                if (val != null) {
-                    root.x = val;
-                }
-            });
-            bindings.add(sub);
         }
         ElementConfig.super.x(x);
         return this;
@@ -243,12 +223,6 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     public Hud y(Readable<Float> y) {
         if (y instanceof Signal) {
             this.boundYSignal = (Signal<Float>) y;
-            Disposable sub = ((Signal<Float>) y).subscribe(val -> {
-                if (val != null) {
-                    root.y = val;
-                }
-            });
-            bindings.add(sub);
         }
         ElementConfig.super.y(y);
         return this;
@@ -349,7 +323,6 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                 Hud targetHud = resolveHud();
                 if (targetHud == null)
                     return false;
-                targetHud.dragging = true;
                 didDrag = false;
                 lastX = x;
                 lastY = y;
@@ -403,20 +376,16 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                 Hud targetHud = resolveHud();
                 if (targetHud == null)
                     return;
-                try {
-                    if (didDrag) {
-                        targetHud.keepInScreen();
-                        if (xSignal != null) {
-                            xSignal.set(targetHud.element().x);
-                        }
-                        if (ySignal != null) {
-                            ySignal.set(targetHud.element().y);
-                        }
+                if (didDrag) {
+                    targetHud.keepInScreen();
+                    if (xSignal != null) {
+                        xSignal.set(targetHud.element().x);
                     }
-                } finally {
-                    targetHud.dragging = false;
-                    didDrag = false;
+                    if (ySignal != null) {
+                        ySignal.set(targetHud.element().y);
+                    }
                 }
+                didDrag = false;
             }
         });
     }
@@ -451,21 +420,14 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
             return;
 
         if (root.getWidth() <= 0f || root.getHeight() <= 0f) {
-             root.pack();
+            root.pack();
         }
 
         float w = root.getWidth();
         float h = root.getHeight();
 
-        // If screen is smaller than minimum valid viewport (e.g. minimized/iconified window <= 100px),
-        // do not clamp or corrupt positions/signals.
-        if (sw <= 100f || sh <= 100f || w <= 0f || h <= 0f)
-            return;
-
         float curX = root.x;
         float curY = root.y;
-        float origX = curX;
-        float origY = curY;
 
         if (curX + w > sw)
             curX = Math.max(0, sw - w);

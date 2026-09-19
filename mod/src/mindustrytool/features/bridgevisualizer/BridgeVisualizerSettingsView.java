@@ -42,11 +42,6 @@ public class BridgeVisualizerSettingsView extends BaseComponent {
                     checkbox(Core.bundle.get("feature.bridge-visualizer.settings.show-liquid-bridges", "Show Liquid Bridges"),
                             feature.showLiquidBridgesConfig.signal()).growX();
 
-                    // Show Transport Speed Checkbox (all bridge types)
-                    checkbox(Core.bundle.get("feature.bridge-visualizer.settings.show-speed",
-                                    Core.bundle.get("feature.bridge-visualizer.settings.show-item-speed", "Show Speed")),
-                            feature.showSpeedConfig.signal()).growX();
-
                     divider();
 
                     // Item Scale Slider

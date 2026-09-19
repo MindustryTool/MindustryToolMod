@@ -20,6 +20,7 @@ import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Groups;
 import mindustry.gen.Unit;
+import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.world.Block;
 import mindustry.world.Tile;
@@ -33,6 +34,8 @@ import mindustry.world.blocks.defense.RegenProjector;
 import mindustry.world.blocks.defense.turrets.BaseTurret;
 import mindustry.world.blocks.defense.turrets.Turret.TurretBuild;
 import mindustry.world.blocks.distribution.MassDriver;
+import mindustry.world.blocks.logic.LogicBlock;
+import mindustry.world.blocks.power.LightBlock;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
@@ -46,20 +49,16 @@ import solim.reactive.Signal;
  * Feature responsible for rendering real-time range visualizations for turrets,
  * units, support blocks (menders, overdrives, mass drivers, shields), and enemy drop zones.
  *
- * Highly optimized for smooth performance and zero GC allocations during the frame render loop:
- * - Zoom threshold gating (skips rendering when zoomed out past threshold, matching HealthBar).
- * - Dynamic max range calculation and bounded camera frustum queries (replaces arbitrary 1400f radius).
- * - O(1) BitSet lookups in block predicate without multi-class instanceof checks.
- * - Team-targeted queries to avoid iterating opposing teams when toggled off.
+ * Optimized for high performance and zero GC allocations during the frame render loop:
+ * - Pre-allocated drawer delegates and predicates.
  * - Viewport frustum culling.
- * - Frame-cached configuration snapshots via signal peek to avoid reactive overhead in hot loops.
- * - Draw state caching to eliminate redundant color and stroke changes.
+ * - Granular per-block range toggles backed by BitSet indexed by block.id.
+ * - Frame-cached configuration snapshots to avoid reactive overhead in hot loops.
  */
 public class RangeDisplayFeature extends Feature {
 
     public final ConfigGroup config;
     public final ConfigValue<Float> opacityConfig;
-    public final ConfigValue<Float> zoomThresholdConfig;
     public final ConfigValue<Boolean> drawTurretRangeAllyConfig;
     public final ConfigValue<Boolean> drawTurretRangeEnemyConfig;
     public final ConfigValue<Boolean> drawUnitRangeAllyConfig;
@@ -71,23 +70,30 @@ public class RangeDisplayFeature extends Feature {
 
     private final Cons<Unit> unitDrawer = this::drawUnitRange;
     private final Cons<Building> buildingDrawer = this::drawBuildingRange;
-    private final Boolf<Building> buildingPredicate = this::filterBuilding;
+
+    private static final Boolf<Building> RANGE_BUILDING_PREDICATE = b -> {
+        if (b == null || !b.isValid() || b.team == Team.derelict || b.block == null) {
+            return false;
+        }
+        return b.block instanceof BaseTurret
+                || b.block instanceof OverdriveProjector
+                || b.block instanceof MassDriver
+                || b.block instanceof BuildTurret
+                || b.block instanceof MendProjector
+                || b.block instanceof RegenProjector
+                || b.block instanceof ForceProjector;
+    };
 
     private final Rect viewBounds = new Rect();
     private final Color colorScratch = new Color();
-    private final Color lastColor = new Color();
-    private boolean hasLastColor = false;
     private @Nullable RangeDisplaySettingsDialog settingsDialog;
 
-    // Per-block enabled bitset indexed by block.id for zero-allocation O(1) checks during draw
+    // Per-block enabled bitset indexed by block.id for zero-allocation O(1) checks during 60 FPS draw
     private @Nullable BitSet blockEnabled;
-    private @Nullable BitSet rangeBlockMask;
-    private float cachedMaxBlockRange = 550f;
     private final ObjectMap<String, Signal<Boolean>> blockSignals = new ObjectMap<>();
 
     // Per-frame scratch values read once per draw frame
     private float frameOpacity = 1.0f;
-    private float frameZoomThreshold = 0.5f;
     private boolean frameDrawTurretRangeAlly = true;
     private boolean frameDrawTurretRangeEnemy = true;
     private boolean frameDrawUnitRangeAlly = true;
@@ -110,7 +116,6 @@ public class RangeDisplayFeature extends Feature {
 
         config = configGroup();
         opacityConfig = config.floatValue("opacity", 1.0f);
-        zoomThresholdConfig = config.floatValue("zoom-threshold", 0.5f);
         drawTurretRangeAllyConfig = config.boolValue("draw-turret-range-ally", true);
         drawTurretRangeEnemyConfig = config.boolValue("draw-turret-range-enemy", true);
         drawUnitRangeAllyConfig = config.boolValue("draw-unit-range-ally", true);
@@ -147,27 +152,6 @@ public class RangeDisplayFeature extends Feature {
         return isTurretBlock(block) || isSupportBlock(block);
     }
 
-    public float getBlockBaseRange(Block block) {
-        if (block instanceof BaseTurret) {
-            return ((BaseTurret) block).range;
-        } else if (block instanceof OverdriveProjector) {
-            OverdriveProjector op = (OverdriveProjector) block;
-            return op.range + op.phaseRangeBoost;
-        } else if (block instanceof MassDriver) {
-            return ((MassDriver) block).range;
-        } else if (block instanceof BuildTurret) {
-            return ((BuildTurret) block).range;
-        } else if (block instanceof MendProjector) {
-            return ((MendProjector) block).range;
-        } else if (block instanceof RegenProjector) {
-            return ((RegenProjector) block).range * Vars.tilesize;
-        } else if (block instanceof ForceProjector) {
-            ForceProjector fp = (ForceProjector) block;
-            return fp.radius + fp.phaseRadiusBoost;
-        }
-        return 0f;
-    }
-
     public void rebuildBitSet() {
         if (Vars.content == null || Vars.content.blocks() == null) {
             return;
@@ -175,24 +159,14 @@ public class RangeDisplayFeature extends Feature {
 
         int max = Vars.content.blocks().size;
         BitSet bitSet = new BitSet(Math.max(max, 256));
-        BitSet mask = new BitSet(Math.max(max, 256));
-        float maxRange = 500f;
 
         for (Block block : Vars.content.blocks()) {
             if (block != null && isRangeBlock(block)) {
-                mask.set(block.id);
                 boolean enabled = Core.settings.getBool(blockSettingKey(block), true);
                 bitSet.set(block.id, enabled);
-
-                float r = getBlockBaseRange(block);
-                if (r > maxRange) {
-                    maxRange = r;
-                }
             }
         }
         this.blockEnabled = bitSet;
-        this.rangeBlockMask = mask;
-        this.cachedMaxBlockRange = maxRange + 120f;
     }
 
     public Signal<Boolean> getBlockSignal(Block block) {
@@ -245,7 +219,6 @@ public class RangeDisplayFeature extends Feature {
 
     public void resetToDefaults() {
         opacityConfig.reset();
-        zoomThresholdConfig.reset();
         drawTurretRangeAllyConfig.reset();
         drawTurretRangeEnemyConfig.reset();
         drawUnitRangeAllyConfig.reset();
@@ -274,36 +247,9 @@ public class RangeDisplayFeature extends Feature {
         return () -> settingsDialog != null ? settingsDialog : (settingsDialog = new RangeDisplaySettingsDialog(this));
     }
 
-    private boolean filterBuilding(Building b) {
-        if (b == null || !b.isValid() || b.team == Team.derelict || b.block == null) {
-            return false;
-        }
-        int id = b.block.id;
-        if (rangeBlockMask == null || id < 0 || id >= rangeBlockMask.size() || !rangeBlockMask.get(id)) {
-            return false;
-        }
-        if (blockEnabled != null && !blockEnabled.get(id)) {
-            return false;
-        }
-        boolean isAlly = framePlayerTeam != null && b.team == framePlayerTeam;
-        if (isAlly) {
-            return frameDrawTurretRangeAlly || frameDrawBlockRangeAlly;
-        } else {
-            return frameDrawTurretRangeEnemy || frameDrawBlockRangeEnemy;
-        }
-    }
-
     private void draw() {
         if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.ui == null
                 || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown || Core.camera == null) {
-            return;
-        }
-
-        Float zt = zoomThresholdConfig.signal().peek();
-        frameZoomThreshold = zt != null ? zt : 0.5f;
-
-        float zoom = Vars.renderer != null ? Vars.renderer.getScale() : 1f;
-        if (frameZoomThreshold > 0.01f && zoom < frameZoomThreshold) {
             return;
         }
 
@@ -311,34 +257,34 @@ public class RangeDisplayFeature extends Feature {
             rebuildBitSet();
         }
 
-        Float op = opacityConfig.signal().peek();
+        Float op = opacityConfig.get();
         frameOpacity = op != null ? op : 1.0f;
         if (frameOpacity <= 0.001f) {
             return;
         }
 
-        Boolean dta = drawTurretRangeAllyConfig.signal().peek();
+        Boolean dta = drawTurretRangeAllyConfig.get();
         frameDrawTurretRangeAlly = dta != null ? dta : true;
 
-        Boolean dte = drawTurretRangeEnemyConfig.signal().peek();
+        Boolean dte = drawTurretRangeEnemyConfig.get();
         frameDrawTurretRangeEnemy = dte != null ? dte : true;
 
-        Boolean dua = drawUnitRangeAllyConfig.signal().peek();
+        Boolean dua = drawUnitRangeAllyConfig.get();
         frameDrawUnitRangeAlly = dua != null ? dua : true;
 
-        Boolean due = drawUnitRangeEnemyConfig.signal().peek();
+        Boolean due = drawUnitRangeEnemyConfig.get();
         frameDrawUnitRangeEnemy = due != null ? due : true;
 
-        Boolean dba = drawBlockRangeAllyConfig.signal().peek();
+        Boolean dba = drawBlockRangeAllyConfig.get();
         frameDrawBlockRangeAlly = dba != null ? dba : true;
 
-        Boolean dbe = drawBlockRangeEnemyConfig.signal().peek();
+        Boolean dbe = drawBlockRangeEnemyConfig.get();
         frameDrawBlockRangeEnemy = dbe != null ? dbe : true;
 
-        Boolean dsp = drawSpawnerRangeConfig.signal().peek();
+        Boolean dsp = drawSpawnerRangeConfig.get();
         frameDrawSpawnerRange = dsp != null ? dsp : true;
 
-        Boolean dsh = dashedConfig.signal().peek();
+        Boolean dsh = dashedConfig.get();
         frameDashed = dsh != null ? dsh : true;
 
         framePlayerTeam = Vars.player != null ? Vars.player.team() : null;
@@ -347,8 +293,6 @@ public class RangeDisplayFeature extends Feature {
 
         float z = Draw.z();
         Draw.z(Layer.overlayUI);
-        Lines.stroke(1f);
-        hasLastColor = false;
 
         // 1. Spawner Drop Zones
         if (frameDrawSpawnerRange && Vars.spawner != null && Vars.spawner.getSpawns() != null
@@ -370,7 +314,7 @@ public class RangeDisplayFeature extends Feature {
 
         // 2. Unit Weapon Ranges
         if (frameDrawUnitRangeAlly || frameDrawUnitRangeEnemy) {
-            float margin = 440f;
+            float margin = 1000f;
             float cx = Core.camera.position.x;
             float cy = Core.camera.position.y;
             float cw = Core.camera.width;
@@ -380,23 +324,17 @@ public class RangeDisplayFeature extends Feature {
         }
 
         // 3. Turret and Support Block Ranges
-        boolean hasAlly = frameDrawTurretRangeAlly || frameDrawBlockRangeAlly;
-        boolean hasEnemy = frameDrawTurretRangeEnemy || frameDrawBlockRangeEnemy;
-        if (hasAlly || hasEnemy) {
+        if (frameDrawTurretRangeAlly || frameDrawTurretRangeEnemy
+                || frameDrawBlockRangeAlly || frameDrawBlockRangeEnemy) {
             float cx = Core.camera.position.x;
             float cy = Core.camera.position.y;
             float cw = Core.camera.width;
             float ch = Core.camera.height;
-            float radius = Math.max(cw, ch) * 0.75f + cachedMaxBlockRange;
-            if (hasAlly && !hasEnemy && framePlayerTeam != null) {
-                Vars.indexer.eachBlock(framePlayerTeam, cx, cy, radius, buildingPredicate, buildingDrawer);
-            } else {
-                Vars.indexer.eachBlock(null, cx, cy, radius, buildingPredicate, buildingDrawer);
-            }
+            float radius = Math.max(cw, ch) * 0.75f + 1400f;
+            Vars.indexer.eachBlock(null, cx, cy, radius, RANGE_BUILDING_PREDICATE, buildingDrawer);
         }
 
         Draw.z(z);
-        hasLastColor = false;
         Draw.reset();
     }
 
@@ -419,17 +357,27 @@ public class RangeDisplayFeature extends Feature {
             return;
         }
 
-        float x = unit.x;
-        float y = unit.y;
-        if (x + range < viewBounds.x || x - range > viewBounds.x + viewBounds.width
-                || y + range < viewBounds.y || y - range > viewBounds.y + viewBounds.height) {
+        if (unit.x + range < viewBounds.x || unit.x - range > viewBounds.x + viewBounds.width
+                || unit.y + range < viewBounds.y || unit.y - range > viewBounds.y + viewBounds.height) {
             return;
         }
 
-        drawCircle(x, y, range, unit.team.color);
+        drawCircle(unit.x, unit.y, range, unit.team.color);
     }
 
     private void drawBuildingRange(Building build) {
+        if (build == null || !build.isValid() || build.team == Team.derelict || build.block == null) {
+            return;
+        }
+
+        if (blockEnabled != null && build.block.id >= 0 && !blockEnabled.get(build.block.id)) {
+            return;
+        }
+
+        if (build.block instanceof LightBlock || build.block instanceof LogicBlock) {
+            return;
+        }
+
         boolean isTurret = isTurretBlock(build.block);
         boolean isAlly = framePlayerTeam != null && build.team == framePlayerTeam;
 
@@ -493,17 +441,9 @@ public class RangeDisplayFeature extends Feature {
         }
     }
 
-    private void applyColor(Color color) {
-        colorScratch.set(color).a(frameOpacity);
-        if (!hasLastColor || !lastColor.equals(colorScratch)) {
-            Draw.color(colorScratch);
-            lastColor.set(colorScratch);
-            hasLastColor = true;
-        }
-    }
-
     private void drawCircle(float x, float y, float range, Color color) {
-        applyColor(color);
+        colorScratch.set(color).a(frameOpacity);
+        Lines.stroke(1f, colorScratch);
         if (frameDashed) {
             Lines.dashCircle(x, y, range);
         } else {
@@ -512,7 +452,12 @@ public class RangeDisplayFeature extends Feature {
     }
 
     private void drawSquare(float x, float y, float range, Color color) {
-        applyColor(color);
-        Lines.rect(x - range / 2f, y - range / 2f, range, range);
+        colorScratch.set(color).a(frameOpacity);
+        Lines.stroke(1f, colorScratch);
+        if (frameDashed) {
+            Drawf.dashSquareBasic(x, y, range);
+        } else {
+            Lines.rect(x - range / 2f, y - range / 2f, range, range);
+        }
     }
 }

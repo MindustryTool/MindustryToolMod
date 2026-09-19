@@ -7,19 +7,14 @@ import arc.func.Cons;
 import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
-import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Lines;
 import arc.graphics.g2d.TextureRegion;
 import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.math.geom.Rect;
-import arc.scene.ui.layout.Scl;
-import arc.util.Align;
 import arc.util.Log;
 import arc.util.Nullable;
-import arc.util.Strings;
 import arc.util.Time;
-import arc.util.Tmp;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.game.Team;
@@ -28,8 +23,6 @@ import mindustry.gen.TimeItem;
 import mindustry.graphics.Layer;
 import mindustry.type.Item;
 import mindustry.type.Liquid;
-import mindustry.ui.Fonts;
-import mindustry.world.Block;
 import mindustry.world.ItemBuffer;
 import mindustry.world.blocks.distribution.BufferedItemBridge;
 import mindustry.world.blocks.distribution.BufferedItemBridge.BufferedItemBridgeBuild;
@@ -40,12 +33,12 @@ import mindustry.world.blocks.distribution.DuctBridge.DuctBridgeBuild;
 import mindustry.world.blocks.distribution.ItemBridge;
 import mindustry.world.blocks.distribution.ItemBridge.ItemBridgeBuild;
 import mindustry.world.blocks.liquid.LiquidBridge.LiquidBridgeBuild;
-import mindustry.world.modules.LiquidModule;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+
 import solim.overlay.SolimDialog;
 
 import java.lang.reflect.Field;
@@ -67,9 +60,6 @@ public class BridgeVisualizerFeature extends Feature {
     public final ConfigValue<Boolean> showItemBridgesConfig;
     public final ConfigValue<Boolean> showDuctBridgesConfig;
     public final ConfigValue<Boolean> showLiquidBridgesConfig;
-    public final ConfigValue<Boolean> showSpeedConfig;
-    @Deprecated
-    public final ConfigValue<Boolean> showItemSpeedConfig;
     public final ConfigValue<Float> itemScaleConfig;
     public final ConfigValue<Float> opacityConfig;
 
@@ -87,7 +77,6 @@ public class BridgeVisualizerFeature extends Feature {
     private boolean cachedShowItemBridges = true;
     private boolean cachedShowDuctBridges = true;
     private boolean cachedShowLiquidBridges = true;
-    private boolean cachedShowSpeed = true;
     private float cachedItemScale = 1.0f;
     private float cachedOpacity = 1.0f;
 
@@ -127,10 +116,6 @@ public class BridgeVisualizerFeature extends Feature {
         showItemBridgesConfig = config.boolValue("show-item-bridges", true);
         showDuctBridgesConfig = config.boolValue("show-duct-bridges", true);
         showLiquidBridgesConfig = config.boolValue("show-liquid-bridges", true);
-        boolean initialShowSpeed = config.boolValue("show-speed",
-                config.boolValue("show-item-speed", true).get()).get();
-        showSpeedConfig = config.boolValue("show-speed", initialShowSpeed);
-        showItemSpeedConfig = showSpeedConfig;
         itemScaleConfig = config.floatValue("item-scale", 1.0f);
         opacityConfig = config.floatValue("opacity", 1.0f);
 
@@ -138,7 +123,6 @@ public class BridgeVisualizerFeature extends Feature {
         showItemBridgesConfig.signal().subscribe(v -> cachedShowItemBridges = v != null ? v : true);
         showDuctBridgesConfig.signal().subscribe(v -> cachedShowDuctBridges = v != null ? v : true);
         showLiquidBridgesConfig.signal().subscribe(v -> cachedShowLiquidBridges = v != null ? v : true);
-        showSpeedConfig.signal().subscribe(v -> cachedShowSpeed = v != null ? v : true);
         itemScaleConfig.signal().subscribe(v -> cachedItemScale = v != null ? v : 1.0f);
         opacityConfig.signal().subscribe(v -> cachedOpacity = v != null ? v : 1.0f);
 
@@ -161,9 +145,6 @@ public class BridgeVisualizerFeature extends Feature {
         Boolean showLiquids = showLiquidBridgesConfig.get();
         cachedShowLiquidBridges = showLiquids != null ? showLiquids : true;
 
-        Boolean showSpeed = showSpeedConfig.get();
-        cachedShowSpeed = showSpeed != null ? showSpeed : true;
-
         Float scale = itemScaleConfig.get();
         cachedItemScale = scale != null ? scale : 1.0f;
 
@@ -175,7 +156,6 @@ public class BridgeVisualizerFeature extends Feature {
         showItemBridgesConfig.reset();
         showDuctBridgesConfig.reset();
         showLiquidBridgesConfig.reset();
-        showSpeedConfig.reset();
         itemScaleConfig.reset();
         opacityConfig.reset();
         syncConfigCache();
@@ -189,43 +169,6 @@ public class BridgeVisualizerFeature extends Feature {
             }
             return settingsDialog;
         };
-    }
-
-    public static float calculateRate(int itemCount, float timeScale, float transportTimeOrSpeed) {
-        if (itemCount <= 0 || transportTimeOrSpeed <= 0.001f) {
-            return 0f;
-        }
-        float safeTimeScale = timeScale > 0.0001f ? timeScale : 1f;
-        return itemCount * (60f * safeTimeScale) / transportTimeOrSpeed;
-    }
-
-    public static float calculateLiquidRate(@Nullable LiquidModule liquids, @Nullable Block block,
-            float timeScale, float warmup, boolean isPulse) {
-        if (liquids == null || block == null) {
-            return 0f;
-        }
-        Liquid current = liquids.current();
-        if (current == null) {
-            return 0f;
-        }
-        float flowRate = liquids.getFlowRate(current);
-        if (flowRate > 0.05f) {
-            return flowRate;
-        }
-
-        float amount = liquids.get(current);
-        return calculateLiquidRate(amount, block.liquidCapacity, timeScale, warmup, isPulse);
-    }
-
-    public static float calculateLiquidRate(float currentAmount, float liquidCapacity,
-            float timeScale, float warmup, boolean isPulse) {
-        if (currentAmount <= 0.001f || liquidCapacity <= 0.001f) {
-            return 0f;
-        }
-        float safeTimeScale = Math.max(0f, timeScale);
-        float safeWarmup = Math.max(0.1f, Math.min(warmup, 2.0f));
-        float multiplier = isPulse ? 2.0f : 1.0f;
-        return Math.min(currentAmount, liquidCapacity) * multiplier * safeTimeScale * safeWarmup;
     }
 
     private void draw() {
@@ -273,17 +216,8 @@ public class BridgeVisualizerFeature extends Feature {
                 if (cachedShowLiquidBridges) {
                     drawDirectionLiquidBridge(dirBuild);
                 }
-            } else if (build instanceof DuctBridgeBuild) {
-                if (cachedShowDuctBridges) {
-                    drawDuctBridge((DuctBridgeBuild) build);
-                }
-            } else {
-                if (dirBuild.items != null && !dirBuild.items.empty() && cachedShowItemBridges) {
-                    drawDirectionBridgeItems(dirBuild);
-                } else if (dirBuild.liquids != null && dirBuild.liquids.currentAmount() > 0.01f
-                        && cachedShowLiquidBridges) {
-                    drawDirectionLiquidBridge(dirBuild);
-                }
+            } else if (build instanceof DuctBridgeBuild && cachedShowDuctBridges) {
+                drawDuctBridge((DuctBridgeBuild) build);
             }
         }
     }
@@ -335,11 +269,6 @@ public class BridgeVisualizerFeature extends Feature {
                             prevProgress = progress;
 
                             drawItemAt(x1, y1, x2, y2, item.fullIcon != null ? item.fullIcon : item.uiIcon, progress);
-                        }
-
-                        if (cachedShowSpeed) {
-                            float rate = calculateRate(count, build.timeScale(), safeSpeed);
-                            drawSpeedText(x1, y1, x2, y2, rate);
                         }
                     }
                 }
@@ -395,11 +324,6 @@ public class BridgeVisualizerFeature extends Feature {
                 index++;
             }
         }
-
-        if (cachedShowSpeed) {
-            float rate = calculateRate(total, build.timeScale(), transportTime);
-            drawSpeedText(x1, y1, x2, y2, rate);
-        }
     }
 
     private void drawDuctBridge(DuctBridgeBuild build) {
@@ -444,11 +368,6 @@ public class BridgeVisualizerFeature extends Feature {
                 index++;
             }
         }
-
-        if (cachedShowSpeed) {
-            float rate = calculateRate(total, build.timeScale(), safeSpeed);
-            drawSpeedText(x1, y1, x2, y2, rate);
-        }
     }
 
     private void drawLiquidBridge(LiquidBridgeBuild build) {
@@ -472,12 +391,6 @@ public class BridgeVisualizerFeature extends Feature {
         }
 
         drawFluidFlow(build.x, build.y, linked.x, linked.y, current);
-
-        if (cachedShowSpeed) {
-            boolean isPulse = build.block instanceof ItemBridge && ((ItemBridge) build.block).pulse;
-            float rate = calculateLiquidRate(build.liquids, build.block, build.timeScale(), build.warmup, isPulse);
-            drawSpeedText(build.x, build.y, linked.x, linked.y, rate);
-        }
     }
 
     private void drawDirectionLiquidBridge(DirectionBridgeBuild build) {
@@ -493,24 +406,6 @@ public class BridgeVisualizerFeature extends Feature {
         }
 
         drawFluidFlow(build.x, build.y, linked.x, linked.y, current);
-
-        if (cachedShowSpeed) {
-            float rate = calculateLiquidRate(build.liquids, build.block, build.timeScale(), build.efficiency, false);
-            drawSpeedText(build.x, build.y, linked.x, linked.y, rate);
-        }
-    }
-
-    private void drawDirectionBridgeItems(DirectionBridgeBuild build) {
-        if (build.items == null) {
-            return;
-        }
-
-        Building linked = build.findLink();
-        if (linked == null) {
-            return;
-        }
-
-        drawInventoryFlow(build, linked);
     }
 
     private void drawInventoryFlow(Building build, Building linked) {
@@ -541,68 +436,6 @@ public class BridgeVisualizerFeature extends Feature {
                 index--;
             }
         }
-
-        if (cachedShowSpeed) {
-            float speed = 1f;
-            if (build.block instanceof BufferedItemBridge) {
-                speed = ((BufferedItemBridge) build.block).speed;
-            } else if (build.block instanceof DuctBridge) {
-                speed = ((DuctBridge) build.block).speed;
-            } else if (build.block instanceof ItemBridge) {
-                speed = ((ItemBridge) build.block).transportTime;
-            }
-            float safeSpeed = speed > 0.001f ? speed : 1f;
-            float rate = calculateRate(total, build.timeScale(), safeSpeed);
-            drawSpeedText(build.x, build.y, linked.x, linked.y, rate);
-        }
-    }
-
-    private void drawSpeedText(float x1, float y1, float x2, float y2, float rate) {
-        if (Fonts.outline == null || rate <= 0.05f) {
-            return;
-        }
-
-        if (Vars.renderer != null && Vars.renderer.getScale() < 0.65f) {
-            return;
-        }
-
-        float scl = Scl.scl(1.0f);
-        float fontScale = (0.25f / (scl > 0.0001f ? scl : 1f)) * 0.55f * cachedItemScale;
-        if (fontScale <= 0.001f || Float.isNaN(fontScale) || Float.isInfinite(fontScale)) {
-            return;
-        }
-
-        float midX = (x1 + x2) / 2f;
-        float midY = (y1 + y2) / 2f;
-
-        float dx = x2 - x1;
-        float dy = y2 - y1;
-        float dist = Mathf.dst(dx, dy);
-
-        float offsetX = 0f;
-        float offsetY = 4.2f * cachedItemScale;
-        if (dist > 0.001f) {
-            float nx = -dy / dist;
-            float ny = dx / dist;
-            if (ny < 0f || (Math.abs(ny) < 0.001f && nx < 0f)) {
-                nx = -nx;
-                ny = -ny;
-            }
-            offsetX = nx * 4.2f * cachedItemScale;
-            offsetY = ny * 4.2f * cachedItemScale;
-        }
-
-        String text = Strings.autoFixed(rate, 1) + "/s";
-
-        Font font = Fonts.outline;
-        if (font.getData() == null) {
-            return;
-        }
-
-        font.draw(text, midX + offsetX, midY + offsetY,
-                Tmp.c1.set(Color.white).a(cachedOpacity),
-                fontScale, false, Align.center);
-        Draw.reset();
     }
 
     private void drawFluidFlow(float x1, float y1, float x2, float y2, Liquid liquid) {
@@ -644,13 +477,22 @@ public class BridgeVisualizerFeature extends Feature {
         if (icon == null) {
             return;
         }
+
         float p = Mathf.clamp(progress, 0f, 1f);
         float lx = Mathf.lerp(x1, x2, p);
         float ly = Mathf.lerp(y1, y2, p);
 
-        float baseSize = 4.8f * cachedItemScale;
+        float baseSize = 5.2f * cachedItemScale;
 
+        // Preserve authentic aspect ratio from game database (e.g. 24x32 for water
+        // droplets)
+        float aspect = icon.height > 0 ? (float) icon.width / (float) icon.height : 1.0f;
+        float width = aspect >= 1.0f ? baseSize : baseSize * aspect;
+        float height = aspect >= 1.0f ? baseSize / aspect : baseSize;
+
+        // Draw authentic icon with pure white color (preserving official database
+        // colors and shading)
         Draw.color(1f, 1f, 1f, cachedOpacity);
-        Draw.rect(icon, lx, ly, baseSize, baseSize);
+        Draw.rect(icon, lx, ly, width, height);
     }
 }

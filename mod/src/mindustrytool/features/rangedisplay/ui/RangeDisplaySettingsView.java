@@ -46,20 +46,6 @@ public class RangeDisplaySettingsView extends BaseComponent {
 
                     divider();
 
-                    // Min Zoom Slider
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.range-display.settings.min-zoom")).left();
-                        spacer();
-                        slider(feature.zoomThresholdConfig.signal(), 0f, 2f, 0.1f);
-                        row().width(unit(12)).children(() -> {
-                            text(feature.zoomThresholdConfig.signal().map(v -> (v != null ? v : 0.5f) <= 0.01f
-                                    ? Core.bundle.get("feature.range-display.settings.off")
-                                    : String.format("%.1fx", v)));
-                        });
-                    });
-
-                    divider();
-
                     // Dashed Lines Toggle
                     checkbox(Core.bundle.get("feature.range-display.settings.dashed"),
                             feature.dashedConfig.signal()).growX();
