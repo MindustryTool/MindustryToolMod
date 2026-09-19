@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import solim.core.DisposableAction;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
 import solim.runtime.SignalDispatcher;
@@ -24,7 +25,7 @@ class TwoWayBindingTest {
 					widgetVal[0] = val;
 					setterCalls.incrementAndGet();
 				},
-				onChange -> () -> {}
+				onChange -> DisposableAction.empty()
 		);
 
 		assertEquals(0, setterCalls.get(), "Initial equal value should not trigger setter");
@@ -53,7 +54,7 @@ class TwoWayBindingTest {
 				},
 				onChange -> {
 					trigger[0] = onChange;
-					return () -> {};
+					return DisposableAction.empty();
 				}
 		);
 
@@ -78,7 +79,7 @@ class TwoWayBindingTest {
 				sig,
 				() -> widgetVal[0],
 				val -> widgetVal[0] = val,
-				onChange -> () -> listenerRemoved.set(true)
+				onChange -> DisposableAction.of(() -> listenerRemoved.set(true))
 		);
 
 		assertFalse(binding.isDisposed());
@@ -103,7 +104,7 @@ class TwoWayBindingTest {
 				val -> widgetVal[0] = val,
 				onChange -> {
 					widgetChangeListener[0] = onChange;
-					return () -> {};
+					return DisposableAction.empty();
 				}
 		);
 

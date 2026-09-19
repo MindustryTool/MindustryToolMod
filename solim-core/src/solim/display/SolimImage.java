@@ -47,11 +47,7 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
 
     public static SolimImage of(Signal<Drawable> s) {
         SolimImage img = new SolimImage();
-        Effect e = Effect.of(() -> {
-            img.element.setDrawable(s.get());
-        });
-        img.own(e);
-        ComponentContext.register(e);
+        Effect.of(() -> img.element.setDrawable(s.get()));
         return img;
     }
 
@@ -62,9 +58,7 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
 
     public SolimImage drawable(Readable<Drawable> d) {
         if (d != null) {
-            Effect e = Effect.of(() -> element.setDrawable(d.get()));
-            own(e);
-            ComponentContext.register(e);
+            Effect.of(() -> element.setDrawable(d.get()));
         }
         return this;
     }
@@ -88,14 +82,12 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
 
     public SolimImage color(Readable<Color> color) {
         if (color != null) {
-            Effect e = Effect.of(() -> {
+            Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
                     element.setColor(c);
                 }
             });
-            own(e);
-            ComponentContext.register(e);
         }
         return this;
     }

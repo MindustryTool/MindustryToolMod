@@ -89,4 +89,64 @@ class StructuralReconcilerDisposalTest {
 		assertTrue(reconciler.isEmpty());
 		reconciler.dispose();
 	}
+
+	@Test
+	void duplicateKeysThrowIllegalArgumentExceptionBeforeBuilding() {
+		StructuralReconciler<String, TestComponent> reconciler = new StructuralReconciler<>();
+		List<String> built = new ArrayList<>();
+
+		assertThrows(IllegalArgumentException.class, () ->
+			reconciler.reconcile(
+				Arrays.asList("A", "B", "A"),
+				item -> item,
+				item -> {
+					built.add(item);
+					return new TestComponent(item);
+				}
+			)
+		);
+
+		assertTrue(built.isEmpty(), "No components should be constructed if duplicate keys exist");
+		assertTrue(reconciler.isEmpty());
+	}
+
+	@Test
+	void factoryFailureRollsBackNewlyCreatedComponentsAndPreservesActive() {
+		StructuralReconciler<String, TestComponent> reconciler = new StructuralReconciler<>();
+		Map<String, TestComponent> initial = reconciler.reconcile(
+			Arrays.asList("A", "B"), item -> item, TestComponent::new
+		);
+		TestComponent compA = initial.get("A");
+		TestComponent compB = initial.get("B");
+
+		List<TestComponent> newlyCreated = new ArrayList<>();
+
+		assertThrows(RuntimeException.class, () ->
+			reconciler.reconcile(
+				Arrays.asList("B", "C", "FAIL"),
+				item -> item,
+				item -> {
+					if ("FAIL".equals(item)) {
+						throw new RuntimeException("Simulated factory failure");
+					}
+					TestComponent tc = new TestComponent(item);
+					newlyCreated.add(tc);
+					return tc;
+				}
+			)
+		);
+
+		// Active components must still contain the original A and B, untouched!
+		assertEquals(2, reconciler.activeComponents().size());
+		assertSame(compA, reconciler.activeComponents().get("A"));
+		assertSame(compB, reconciler.activeComponents().get("B"));
+		assertFalse(compA.isDisposed(), "Active component A must not be disposed on failed reconcile");
+		assertFalse(compB.isDisposed(), "Active component B must not be disposed on failed reconcile");
+
+		// Newly created component C must have been rolled back and disposed
+		assertEquals(1, newlyCreated.size());
+		TestComponent compC = newlyCreated.get(0);
+		assertEquals("C", compC.id);
+		assertTrue(compC.isDisposed(), "Newly created component C must be disposed on rollback");
+	}
 }

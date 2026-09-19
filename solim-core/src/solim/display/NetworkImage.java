@@ -510,13 +510,11 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 
     public NetworkImage color(Readable<Color> color) {
         if (color != null) {
-            Effect e = Effect.of(() -> {
+            Effect.of(() -> {
                 Color c = color.get();
                 if (c != null)
                     element.setColor(c);
             });
-            own(e);
-            ComponentContext.register(e);
         }
         return this;
     }

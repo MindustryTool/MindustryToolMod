@@ -6,7 +6,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -80,8 +79,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 			updateDependencies(newDeps);
 			dirty = false;
 			if (error instanceof IllegalStateException) throw (IllegalStateException) error;
-			System.err.println("[Computed] supplier error: " + error.getMessage());
-			error.printStackTrace();
+			Log.err("[Computed] supplier error", error);
 			return;
 		}
 		boolean changed = !hasValue || !Objects.equals(cachedValue, newValue);
@@ -96,8 +94,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 				try {
 					l.accept(cachedValue);
 				} catch (Throwable e) {
-					System.err.println("[Computed] listener error: " + e.getMessage());
-					e.printStackTrace();
+					Log.err("[Computed] listener error", e);
 				}
 			}
 			// downstream already marked dirty via earlier invalidate, no need to re-propagate if value
@@ -151,8 +148,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 			try {
 				o.invalidate();
 			} catch (Throwable e) {
-				System.err.println("[Computed] downstream invalidate error: " + e.getMessage());
-				e.printStackTrace();
+				Log.err("[Computed] downstream invalidate error", e);
 			}
 		}
 		// eager recompute if has listeners
@@ -163,21 +159,20 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 
 	public Subscription subscribe(Consumer<T> listener) {
 		listeners.add(listener);
-		// eagerly ensure value computed and send current?
-		// Spec expects subscriber to be notified on future changes, not immediately. So don't call
-		// immediately.
-		AtomicBoolean disposedFlag = new AtomicBoolean(false);
 		return new Subscription() {
+			private boolean disposedFlag = false;
+
 			@Override
 			public void dispose() {
-				if (disposedFlag.compareAndSet(false, true)) {
+				if (!disposedFlag) {
+					disposedFlag = true;
 					listeners.remove(listener);
 				}
 			}
 
 			@Override
 			public boolean isDisposed() {
-				return disposedFlag.get();
+				return disposedFlag;
 			}
 		};
 	}

@@ -1,5 +1,6 @@
 package solim.reactive;
 
+import arc.util.Log;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -109,8 +110,7 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 				cleanupConsumer.accept(ci);
 			}
 		} catch (Throwable e) {
-			System.err.println("[Effect] error: " + e.getMessage());
-			e.printStackTrace();
+			Log.err("[Effect] error", e);
 		} finally {
 			ReactiveContext.pop();
 			collecting = null;
@@ -129,8 +129,7 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 			try {
 				r.run();
 			} catch (Throwable e) {
-				System.err.println("[Effect] cleanup error: " + e.getMessage());
-				e.printStackTrace();
+				Log.err("[Effect] cleanup error", e);
 			}
 		}
 	}

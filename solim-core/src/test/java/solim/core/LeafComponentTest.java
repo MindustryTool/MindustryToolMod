@@ -44,6 +44,10 @@ class LeafComponentTest {
         TestLeaf(Element el) {
             super(el);
         }
+
+        void addDisposable(Disposable d) {
+            disposables.add(d);
+        }
     }
 
     @Test
@@ -109,9 +113,9 @@ class LeafComponentTest {
         TestLeaf leaf = new TestLeaf();
         List<Integer> order = new ArrayList<>();
 
-        leaf.own(() -> order.add(1));
-        leaf.own(() -> order.add(2));
-        leaf.own(() -> order.add(3));
+        leaf.addDisposable(DisposableAction.of(() -> order.add(1)));
+        leaf.addDisposable(DisposableAction.of(() -> order.add(2)));
+        leaf.addDisposable(DisposableAction.of(() -> order.add(3)));
 
         assertFalse(leaf.isDisposed());
         leaf.dispose();
@@ -127,7 +131,7 @@ class LeafComponentTest {
     void disposalIsIdempotentAndForbidsElementAccess() {
         TestLeaf leaf = new TestLeaf();
         AtomicBoolean disposed = new AtomicBoolean(false);
-        leaf.own(() -> disposed.set(true));
+        leaf.addDisposable(DisposableAction.of(() -> disposed.set(true)));
 
         leaf.dispose();
         assertTrue(leaf.isDisposed());

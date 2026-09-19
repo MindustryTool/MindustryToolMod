@@ -26,7 +26,7 @@ public abstract class LeafComponent<E extends Element, SELF extends LeafComponen
 
     protected final E element;
     protected final PendingCellConfig constraints = new PendingCellConfig();
-    private final List<Disposable> disposables = new ArrayList<>();
+    protected final List<Disposable> disposables = new ArrayList<>();
     private boolean disposed = false;
     private @Nullable String componentName;
 
@@ -90,21 +90,7 @@ public abstract class LeafComponent<E extends Element, SELF extends LeafComponen
         return componentName != null ? componentName : element.name;
     }
 
-    public SELF own(@Nullable Disposable disposable) {
-        if (disposable != null && !disposed) {
-            disposables.add(disposable);
-        }
-        return self();
-    }
 
-    public SELF own(@Nullable Iterable<? extends Disposable> items) {
-        if (items != null) {
-            for (Disposable d : items) {
-                own(d);
-            }
-        }
-        return self();
-    }
 
     @Override
     public void dispose() {

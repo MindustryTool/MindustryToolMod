@@ -11,6 +11,7 @@ import arc.util.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import solim.core.Component;
+import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
@@ -68,8 +69,7 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
                             valid.set(validator.test(field.getText()));
                         }
                     });
-                    return () -> {
-                    };
+                    return DisposableAction.empty();
                 });
 
         ComponentContext.register(this);

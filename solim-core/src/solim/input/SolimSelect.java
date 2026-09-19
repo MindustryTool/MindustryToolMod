@@ -4,6 +4,7 @@ import arc.scene.ui.TextButton;
 import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.DisposableAction;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
 import solim.modifier.ElementConfig;
@@ -55,8 +56,7 @@ public final class SolimSelect<T> implements Component, ElementConfig<SolimSelec
                             onChange.run();
                         }
                     });
-                    return () -> {
-                    };
+                    return DisposableAction.empty();
                 });
         ComponentContext.register(this);
     }

@@ -1,9 +1,12 @@
 package solim.runtime;
 
 import arc.util.Log;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -17,7 +20,7 @@ import solim.core.Disposable;
  * <ul>
  *   <li>Existing keys: preserves the existing component instance without rebuilding.</li>
  *   <li>New keys: instantiates a new component in an isolated context and eagerly builds its element.</li>
- *   <li>Removed keys: disposes the removed component cleanly.</li>
+ *   <li>Removed keys: disposes the removed component cleanly after committing state.</li>
  * </ul>
  *
  * @param <K> the key type identifying each item
@@ -28,52 +31,95 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 	private boolean disposed = false;
 
 	/**
-	 * Reconciles the given items against currently active components.
+	 * Reconciles the given items against currently active components with transactional rollback.
+	 *
+	 * @throws IllegalArgumentException if duplicate keys are detected in the item collection.
 	 */
 	public <T> Map<K, C> reconcile(
 			Iterable<T> items,
 			Function<T, K> keyExtractor,
 			Function<T, C> factory) {
 		final Iterable<T> effectiveItems = items != null ? items : Collections.<T>emptyList();
+
+		// Phase 1: Extract and validate keys (detect duplicates)
+		List<T> itemList = new ArrayList<>();
+		List<K> keyList = new ArrayList<>();
+		Set<K> seenKeys = new HashSet<>();
+		for (T item : effectiveItems) {
+			K key = keyExtractor.apply(item);
+			if (!seenKeys.add(key)) {
+				throw new IllegalArgumentException("Duplicate key '" + key + "' in reconciler");
+			}
+			itemList.add(item);
+			keyList.add(key);
+		}
+
+		// Phase 2: Create / reuse components in isolated context
 		Map<K, C> nextComponents = new LinkedHashMap<>();
-		Set<K> currentKeys = new HashSet<>();
+		List<C> newlyCreated = new ArrayList<>();
 
-		ComponentContext.withoutAutoOwnership(() -> {
-			for (T item : effectiveItems) {
-				K key = keyExtractor.apply(item);
-				currentKeys.add(key);
+		try {
+			ComponentContext.withoutAutoOwnership(() -> {
+				for (int i = 0; i < itemList.size(); i++) {
+					T item = itemList.get(i);
+					K key = keyList.get(i);
 
-				C comp = activeComponents.get(key);
-				if (comp == null) {
-					comp = ReactiveContext.untracked(() ->
-						ParentStack.isolate(() -> {
-							C c = factory.apply(item);
-							if (c != null) {
-								c.element();
-							}
-							return c;
-						})
-					);
+					C comp = activeComponents.get(key);
+					if (comp == null) {
+						comp = ReactiveContext.untracked(() ->
+							ParentStack.isolate(() -> {
+								C c = factory.apply(item);
+								if (c != null) {
+									c.element();
+								}
+								return c;
+							})
+						);
+						if (comp != null) {
+							newlyCreated.add(comp);
+						}
+					}
+					if (comp != null) {
+						nextComponents.put(key, comp);
+					}
 				}
-				if (comp != null) {
-					nextComponents.put(key, comp);
+			});
+		} catch (Throwable t) {
+			// Rollback: dispose only newly created components; preserve activeComponents
+			for (C c : newlyCreated) {
+				try {
+					c.dispose();
+				} catch (Throwable ex) {
+					Log.err("Error disposing newly created component during reconciliation rollback", ex);
 				}
 			}
-		});
+			throw t;
+		}
 
-		// Dispose components no longer present in collection
-		for (Map.Entry<K, C> entry : activeComponents.entrySet()) {
-			if (!currentKeys.contains(entry.getKey())) {
-				try {
-					entry.getValue().dispose();
-				} catch (Throwable t) {
-					Log.err("Error disposing component during reconciliation", t);
-				}
+		// Phase 3: Commit next state
+		Set<K> removedKeys = new LinkedHashSet<>(activeComponents.keySet());
+		removedKeys.removeAll(nextComponents.keySet());
+
+		List<C> toDispose = new ArrayList<>();
+		for (K removedKey : removedKeys) {
+			C comp = activeComponents.get(removedKey);
+			if (comp != null) {
+				toDispose.add(comp);
 			}
 		}
 
 		activeComponents.clear();
 		activeComponents.putAll(nextComponents);
+
+		// Phase 4: Dispose removed components (after commit)
+		for (C comp : toDispose) {
+			try {
+				comp.dispose();
+			} catch (Throwable t) {
+				Log.err("Error disposing component during reconciliation", t);
+			}
+		}
+
 		return activeComponents;
 	}
 

@@ -4,6 +4,7 @@ import solim.reactive.TwoWayBinding;
 import arc.scene.ui.Slider;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
@@ -37,7 +38,7 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 			slider::setValue,
 			onChange -> {
 				slider.changed(onChange::run);
-				return () -> {};
+				return DisposableAction.empty();
 			},
 			(a, b) -> a != null && b != null && Math.abs(a - b) <= 0.0001f
 		);
@@ -54,7 +55,7 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 			val -> slider.setValue(val != null ? val : 0),
 			onChange -> {
 				slider.changed(onChange::run);
-				return () -> {};
+				return DisposableAction.empty();
 			},
 			Objects::equals
 		);

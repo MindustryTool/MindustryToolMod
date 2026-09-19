@@ -111,7 +111,7 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 		} else if (discriminant instanceof Computed) {
 			return ((Computed<K>) discriminant).subscribe(this::onDiscriminantChanged);
 		}
-		return () -> {};
+		return Subscription.EMPTY;
 	}
 
 	private void onDiscriminantChanged(K newDisc) {

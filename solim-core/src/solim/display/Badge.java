@@ -88,8 +88,6 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
                     element.visible = true;
                 }
             });
-            own(visibilityEffect);
-            ComponentContext.register(visibilityEffect);
         }
     }
 

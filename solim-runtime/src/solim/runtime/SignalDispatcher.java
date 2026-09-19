@@ -30,6 +30,9 @@ public final class SignalDispatcher {
 	public static void register() {
 		if (registered) return;
 		registered = true;
+		if (SolimAssert.getMainThread() == null) {
+			SolimAssert.setMainThread(Thread.currentThread());
+		}
 		Events.run(Trigger.update, SignalDispatcher::flush);
 	}
 
@@ -55,6 +58,7 @@ public final class SignalDispatcher {
 	 * Flushes and executes all pending effects in FIFO order on the caller's thread.
 	 */
 	public static void flush() {
+		SolimAssert.checkMainThread();
 		if (flushing) return;
 		flushing = true;
 		try {

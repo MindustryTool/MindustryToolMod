@@ -22,6 +22,7 @@ import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
 import java.util.concurrent.atomic.AtomicBoolean;
+import solim.core.DisposableAction;
 import java.util.concurrent.atomic.AtomicInteger;
 import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.AfterAll;
@@ -180,10 +181,10 @@ class SolimDialogDisposalTest {
 	void disposalIsErrorIsolated() {
 		SolimDialog dialog = new SolimDialog("Test");
 		AtomicBoolean cleaned = new AtomicBoolean(false);
-		dialog.registerDisposable(() -> {
+		dialog.registerDisposable(DisposableAction.of(() -> {
 			throw new IllegalStateException("Simulated disposal failure");
-		});
-		dialog.registerDisposable(() -> cleaned.set(true));
+		}));
+		dialog.registerDisposable(DisposableAction.of(() -> cleaned.set(true)));
 
 		assertDoesNotThrow(dialog::dispose, "Disposal must not throw when a disposable fails");
 		assertTrue(cleaned.get(), "Remaining disposables must run despite failures");

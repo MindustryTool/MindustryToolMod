@@ -8,4 +8,9 @@ public interface Component extends Disposable {
 
 	@Override
 	default void dispose() {}
+
+	@Override
+	default boolean isDisposed() {
+		return false;
+	}
 }
