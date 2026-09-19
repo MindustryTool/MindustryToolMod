@@ -25,7 +25,6 @@ import solim.display.Text;
 import solim.layout.Row;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
-import solim.runtime.ReactiveContext;
 import solim.runtime.StructuralReconciler;
 import solim.test.SolimTestHarness;
 import solim.test.TestObserver;
@@ -333,7 +332,6 @@ public class PropertyAndRandomizedRegressionTest extends SolimTestHarness {
 
 		// Run layout passes
 		TestObserver observer = new TestObserver("layout-test");
-		ReactiveContext.track(observer);
 		try {
 			label.layout();
 			label.getPrefWidth();

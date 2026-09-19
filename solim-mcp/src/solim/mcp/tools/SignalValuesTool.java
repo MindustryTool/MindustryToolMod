@@ -27,7 +27,7 @@ public final class SignalValuesTool implements McpTool {
 
 	@Override
 	public String description() {
-		return "Returns live Signal/Computed values with listener/observer/dependency counts.";
+		return "Returns live Signal/Computed/MapSignal values with listener/observer/dependency counts.";
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public final class SignalValuesTool implements McpTool {
 		ArrayNode signals = JsonNodeFactory.instance.arrayNode();
 		UiSnapshot snapshot = UiSnapshot.capture(snapshotRoot.get());
 		for (ReactiveRef ref : snapshot.reactiveRefs) {
-			if (ref.kind != ReactiveKind.SIGNAL && ref.kind != ReactiveKind.COMPUTED) continue;
+			if (ref.kind != ReactiveKind.SIGNAL && ref.kind != ReactiveKind.COMPUTED && ref.kind != ReactiveKind.MAP) continue;
 			if (!query.isEmpty() && !ref.location.toLowerCase().contains(query)) continue;
 			signals.add(SignalIntrospector.snapshot(ref, JsonNodeFactory.instance.objectNode()));
 		}

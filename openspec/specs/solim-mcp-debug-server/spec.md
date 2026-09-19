@@ -43,11 +43,15 @@ The server SHALL provide a tool `get_component_tree` that returns the live visib
 - **THEN** it returns only the subtree of the matching element
 
 ### Requirement: Signal and computed value introspection tool
-The server SHALL provide a tool `get_signal_values` that returns the current values of `Signal` and `Computed` instances reachable from the inspected component tree and reactive context, using reflection to read internal state (value fields, dependency/observer counts) where public accessors are insufficient.
+The server SHALL provide a tool `get_signal_values` that returns the current values of reactive sources reachable from the inspected component tree and reactive context, including `Signal`, `Computed`, `MapSignal`, and key readables, using reflection to read internal state (value fields, dependency/observer counts) where public accessors are insufficient.
 
 #### Scenario: Read signal values
 - **WHEN** `get_signal_values` is called
-- **THEN** it returns each discovered `Signal`/`Computed` with its current value and, when accessible, its listener/observer/dependency counts
+- **THEN** it returns each discovered reactive source with its current value and, when accessible, its listener/observer/dependency counts
+
+#### Scenario: MapSignal values are visible
+- **WHEN** `get_signal_values` is called while a `MapSignal` is reachable
+- **THEN** it returns the map entries and, when accessible, whole-map and per-key observer counts instead of omitting the source
 
 #### Scenario: Nearest matching signals filter
 - **WHEN** `get_signal_values` is called with a query/filter

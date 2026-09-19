@@ -312,7 +312,7 @@ The system SHALL manage all persistent chat settings using ConfigGroup and Confi
 - **THEN** collapsedConfig updates and persists the boolean state
 
 ### Requirement: Reactive Chat State Management
-The system SHALL maintain single-source-of-truth chat state composed within ChatStore via dedicated domain state modules (ChatSession, ChatChannels, ChatMessages, ChatMessageDelivery, ChatMembers, ChatUsers, ChatUnread, ChatTranslations, ChatUiState), with per-channel unread status evaluated against persistent read state and deriving total unread presence reactively.
+The system SHALL maintain single-source-of-truth chat state composed within ChatStore via dedicated domain state modules (ChatSession, ChatChannels, ChatMessages, ChatMessageDelivery, ChatMembers, ChatUsers, ChatUnread, ChatTranslations, ChatUiState), with per-channel unread status evaluated against persistent read state and deriving total unread presence reactively. Keyed collections in `ChatUsers` (user profile data), `ChatMessageDelivery` (optimistic message delivery status), and `ChatTranslations` (message translations) SHALL use `MapSignal` primitives without secondary derived computed caches, guaranteeing that transient UI component lifecycles do not dispose or disconnect store-held subscriptions.
 
 #### Scenario: New message received in inactive channel
 - **WHEN** a message is received for a channel that is not currently active
@@ -328,7 +328,7 @@ The system SHALL maintain single-source-of-truth chat state composed within Chat
 
 #### Scenario: Pending message tracking
 - **WHEN** a temporary message is created for optimistic display
-- **THEN** its ID is marked as PENDING in ChatMessageDelivery
+- **THEN** its ID is marked as PENDING in ChatMessageDelivery via MapSignal mutation
 
 #### Scenario: Pending message cleared on confirmation
 - **WHEN** a pending message is confirmed by server response
@@ -336,11 +336,19 @@ The system SHALL maintain single-source-of-truth chat state composed within Chat
 
 #### Scenario: Failed message tracking
 - **WHEN** a send request fails for a pending message
-- **THEN** its status transitions to FAILED in ChatMessageDelivery
+- **THEN** its status transitions to FAILED in ChatMessageDelivery via MapSignal mutation
 
 #### Scenario: Failed message cleared on retry
 - **WHEN** a failed message is retried
-- **THEN** its status transitions from FAILED back to PENDING in ChatMessageDelivery
+- **THEN** its status transitions from FAILED back to PENDING in ChatMessageDelivery via MapSignal mutation
+
+#### Scenario: Chat user profile data remains reactive across UI unmounts
+- **WHEN** a message group view unmounts as it scrolls off screen in a virtual list
+- **THEN** user data in ChatUsers remains undisposed and subsequent remounts or other views observing that user's data reactively receive updates
+
+#### Scenario: Translation and message status reactivity preserved across UI unmounts
+- **WHEN** message status or translation views are recycled or unmounted
+- **THEN** the underlying MapSignal state in ChatMessageDelivery and ChatTranslations is unaffected and retains live reactivity
 
 ### Requirement: Persistent Last-Read Message Tracking via UUIDv7
 The system SHALL persist the last-read message ID per channel in `Core.settings` (`mindustrytool.chat.lastread.<channelId>`), and determine channel unread status by comparing the latest known message ID (from `ChannelDto.lastMessageId` or incoming stream messages) against the stored ID using lexicographical UUIDv7 comparison.

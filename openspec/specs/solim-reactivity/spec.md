@@ -522,4 +522,15 @@ Shared reactive net-state signals in `Signals.java` so game features gate on one
 - **WHEN** an observer throws an unhandled exception during notification
 - **THEN** the error is logged through `Log.err` with stack trace and context
 
+### Requirement: Typed dependency dispatch preserves reactivity
+The system SHALL wire `Computed` and `Effect` dependencies through the shared reactive-source contract instead of concrete-type chains, preserving equality guards, lazy recomputation, dynamic cleanup, cycle handling, disposal parity, and main-thread assertions for `Signal`, `Computed`, `MapSignal`, and key readables.
+
+#### Scenario: Key-level isolation preserved after typing
+- **WHEN** an observer reads `mapSignal.readable(keyA).get()` and `mapSignal.put(keyB, value)` changes a different key
+- **THEN** the observer is not invalidated, while observers of `keyB` and whole-map observers are
+
+#### Scenario: Mixed-source effect re-runs on any dependency
+- **WHEN** an `Effect` reads a `Signal`, a `Computed`, and a `MapSignal` key readable
+- **THEN** a change to any of the three re-runs the effect, and disposing the effect detaches it from all three
+
 

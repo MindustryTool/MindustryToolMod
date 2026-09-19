@@ -11,11 +11,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import solim.core.Disposable;
 import solim.core.ReactiveObserver;
+import solim.core.ReactiveSource;
 import solim.runtime.ComponentContext;
 import solim.runtime.ReactiveContext;
 
 /** Lazy computed value with dynamic dependency tracking. */
-public final class Computed<T> implements Disposable, ReactiveObserver, Readable<T> {
+public final class Computed<T> implements Disposable, ReactiveObserver, Readable<T>, ReactiveSource {
 	private final Supplier<T> supplier;
 	private T cachedValue;
 	private boolean hasValue = false;
@@ -23,8 +24,8 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 	private boolean disposed = false;
 	private boolean computing = false;
 
-	private final Set<Object> dependencies = new LinkedHashSet<>();
-	private Set<Object> collecting = null;
+	private final Set<ReactiveSource> dependencies = new LinkedHashSet<>();
+	private Set<ReactiveSource> collecting = null;
 	private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
 	private final List<Consumer<T>> listeners = new ArrayList<>();
 
@@ -39,13 +40,10 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 			// still return cached if available, but no tracking
 			return cachedValue;
 		}
-		if (ReactiveContext.current() == null && ComponentContext.current() != null) {
-			Log.debug("[Solim Reactivity Warning] Computed.get() was called during build()! This severs reactivity. Pass the Computed/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
-		}
 		if (dirty || !hasValue) {
 			recompute();
 		}
-		ReactiveContext.track(this);
+		ReactiveContext.trackWithWarning(this, "[Solim Reactivity Warning] Computed.get() was called during build()! This severs reactivity. Pass the Computed/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
 		return cachedValue;
 	}
 
@@ -62,7 +60,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 			throw new IllegalStateException("Cycle detected in Computed");
 		}
 		computing = true;
-		Set<Object> newDeps = new LinkedHashSet<>();
+		Set<ReactiveSource> newDeps = new LinkedHashSet<>();
 		collecting = newDeps;
 		ReactiveContext.push(this);
 		T newValue = null;
@@ -106,33 +104,25 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		}
 	}
 
-	private void updateDependencies(Set<Object> newDeps) {
+	private void updateDependencies(Set<ReactiveSource> newDeps) {
 		// remove old not in new
-		Set<Object> toRemove = new LinkedHashSet<>(dependencies);
+		Set<ReactiveSource> toRemove = new LinkedHashSet<>(dependencies);
 		toRemove.removeAll(newDeps);
-		for (Object dep : toRemove) {
-			if (dep instanceof Signal) {
-				((Signal<?>) dep).removeObserver(this);
-			} else if (dep instanceof Computed) {
-				((Computed<?>) dep).removeObserver(this);
-			}
+		for (ReactiveSource dep : toRemove) {
+			dep.removeObserver(this);
 		}
 		// add new not in old
-		Set<Object> toAdd = new LinkedHashSet<>(newDeps);
+		Set<ReactiveSource> toAdd = new LinkedHashSet<>(newDeps);
 		toAdd.removeAll(dependencies);
-		for (Object dep : toAdd) {
-			if (dep instanceof Signal) {
-				((Signal<?>) dep).addObserver(this);
-			} else if (dep instanceof Computed) {
-				((Computed<?>) dep).addObserver(this);
-			}
+		for (ReactiveSource dep : toAdd) {
+			dep.addObserver(this);
 		}
 		dependencies.clear();
 		dependencies.addAll(newDeps);
 	}
 
 	@Override
-	public void addDependency(Object observable) {
+	public void addDependency(ReactiveSource observable) {
 		if (disposed) return;
 		if (collecting != null) {
 			collecting.add(observable);
@@ -187,12 +177,8 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		if (disposed) return;
 		disposed = true;
 		// remove from dependencies
-		for (Object dep : new ArrayList<>(dependencies)) {
-			if (dep instanceof Signal) {
-				((Signal<?>) dep).removeObserver(this);
-			} else if (dep instanceof Computed) {
-				((Computed<?>) dep).removeObserver(this);
-			}
+		for (ReactiveSource dep : new ArrayList<>(dependencies)) {
+			dep.removeObserver(this);
 		}
 		dependencies.clear();
 		observers.clear();
@@ -202,11 +188,13 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		cachedValue = null;
 	}
 
-	void addObserver(ReactiveObserver observer) {
+	@Override
+	public void addObserver(ReactiveObserver observer) {
 		observers.add(observer);
 	}
 
-	void removeObserver(ReactiveObserver observer) {
+	@Override
+	public void removeObserver(ReactiveObserver observer) {
 		observers.remove(observer);
 	}
 

@@ -2,6 +2,7 @@ package solim.mcp.introspection;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.lang.reflect.Method;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 /**
@@ -42,11 +43,20 @@ public final class SignalIntrospector {
 				node.put("dependencies", intOf(type, instance, "dependencyCount"));
 				node.put("disposed", boolOf(type, instance, "isDisposed"));
 				break;
-			case SUBSCRIPTION:
-				node.put("disposed", boolOf(type, instance, "isDisposed"));
-				break;
-			default:
-				break;
+		case SUBSCRIPTION:
+			node.put("disposed", boolOf(type, instance, "isDisposed"));
+			break;
+		case MAP:
+			Object peeked = instance instanceof Readable ? ((Readable<?>) instance).peek() : null;
+			node.set("value", IntrospectionJson.renderValue(peeked));
+			node.put("valueClass", peeked != null ? peeked.getClass().getName() : "null");
+			int mapObservers = intOf(type, instance, "mapObserverCount");
+			int keyObservers = intOf(type, instance, "observerCount");
+			node.put("observers", Math.max(mapObservers, keyObservers));
+			node.put("cachedReadables", intOf(type, instance, "cachedReadableCount"));
+			break;
+		default:
+			break;
 		}
 		return node;
 	}

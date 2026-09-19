@@ -1,4 +1,10 @@
-## ADDED Requirements
+# solim-test-harness Specification
+
+## Purpose
+
+Reusable test infrastructure for Solim framework tests, providing ambient context invariant guards, deterministic test scheduler, and leak/lifecycle tracking helpers. Created by archiving change solim-comprehensive-test-suite.
+
+## Requirements
 
 ### Requirement: Ambient Context Guard at Teardown
 The test infrastructure SHALL provide a base test fixture (`SolimTestHarness`) that executes after each test to verify that Solim runtime ambient contexts are completely balanced and empty, preventing context leakage between test runs. Specifically, it MUST assert that `ParentStack.current()` has no dangling elements, `ComponentContext.current()` is null, `ReactiveContext.current()` is null, and `SignalDispatcher` has no pending dirty effects or uncompleted flush flags.
