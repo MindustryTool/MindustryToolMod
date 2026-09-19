@@ -59,8 +59,6 @@ public class Main extends Mod {
 
     @Override
     public void init() {
-        // SolimMcpServer.start(McpConfig.fromProperties());
-
         self = Vars.mods.getMod(Main.class);
 
         if (self == null) {

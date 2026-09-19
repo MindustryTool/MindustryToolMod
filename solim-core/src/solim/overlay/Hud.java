@@ -65,7 +65,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                 if (pw > 0f && ph > 0f && (Math.abs(getWidth() - pw) > 1.0f || Math.abs(getHeight() - ph) > 1.0f)) {
                     setSize(pw, ph);
                     if (hud != null) {
-                        hud.keepInScreen();
+                        hud.keepInScreen(false);
                     }
                 }
             }
@@ -407,6 +407,10 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     }
 
     public void keepInScreen() {
+        keepInScreen(true);
+    }
+
+    public void keepInScreen(boolean updateSignals) {
         float scl = Scl.scl();
         float sw = Core.scene != null ? Core.scene.getWidth()
                 : (Core.graphics != null ? Core.graphics.getWidth() / (scl > 0f ? scl : 1f) : 0f);
@@ -436,11 +440,13 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
 
         root.setPosition(curX, curY);
 
-        if (boundXSignal != null && (boundXSignal.get() == null || Math.abs(boundXSignal.get() - curX) > 0.5f)) {
-            boundXSignal.set(curX);
-        }
-        if (boundYSignal != null && (boundYSignal.get() == null || Math.abs(boundYSignal.get() - curY) > 0.5f)) {
-            boundYSignal.set(curY);
+        if (updateSignals) {
+            if (boundXSignal != null && (boundXSignal.get() == null || Math.abs(boundXSignal.get() - curX) > 0.5f)) {
+                boundXSignal.set(curX);
+            }
+            if (boundYSignal != null && (boundYSignal.get() == null || Math.abs(boundYSignal.get() - curY) > 0.5f)) {
+                boundYSignal.set(curY);
+            }
         }
     }
 
