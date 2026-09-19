@@ -692,3 +692,17 @@ The system SHALL clarify via probes whether `ElementConfig.height(float)` on lay
 - **WHEN** `GapContainer.respace(table)` is called where `table` is associated with a `SolimToken` whose component implements `GapContainer`
 - **THEN** the container's `respace()` method is invoked
 
+### Requirement: ReactiveGrid item cell configuration and growth
+`ReactiveGrid` SHALL inspect both the item component and its underlying element to resolve `PendingCellConfig`. If the item component itself does not provide a `PendingCellConfig` (such as when wrapping an element in a `BaseComponent`), `ReactiveGrid` SHALL fall back to inspecting the element's bound `PendingCellConfig` before configuring the parent cell.
+
+`ReactiveGrid` SHALL apply all resolved cell constraints to each item cell, including `growX()`, `growY()`, `minHeight()`, `maxHeight()`, `minWidth()`, `maxWidth()`, and margins. When an item specifies `growY()`, its cell SHALL expand vertically with `expandY = 1` and `fillY = 1f` within its row.
+
+#### Scenario: BaseComponent item cell configuration fallback
+- **WHEN** an item in `ReactiveGrid` is a `BaseComponent` whose `build()` method returns a component with `grow()`, `minHeight(200f)`, or other cell constraints
+- **THEN** `ReactiveGrid` successfully resolves the `PendingCellConfig` from the underlying element
+- **AND** applies `minHeight(200f)`, `expandY = 1`, and `fillY = 1f` to the item's cell
+
+#### Scenario: Item with growY fills row height
+- **WHEN** multiple items in the same row of a `ReactiveGrid` have unequal content heights and one item specifies `grow()` or `growY()`
+- **THEN** the cell with `growY()` expands to match the full height of the row
+
