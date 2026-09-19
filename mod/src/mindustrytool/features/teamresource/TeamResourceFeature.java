@@ -6,8 +6,7 @@ import arc.func.Prov;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
-
-import solim.overlay.SolimDialog;
+import arc.scene.ui.layout.Scl;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.game.EventType.ResetEvent;
@@ -19,7 +18,7 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
-import arc.scene.ui.layout.Scl;
+import solim.overlay.SolimDialog;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
@@ -279,7 +278,8 @@ public class TeamResourceFeature extends Feature {
             return Core.scene.getWidth();
         }
         float scl = Scl.scl();
-        return (Core.graphics != null ? Core.graphics.getWidth() : 800f) / (scl > 0f ? scl : 1f);
+        return (Core.graphics != null && Core.graphics.getWidth() > 0 ? Core.graphics.getWidth() : 800f)
+                / (scl > 0f ? scl : 1f);
     }
 
     public static float getSceneHeight() {
@@ -287,6 +287,7 @@ public class TeamResourceFeature extends Feature {
             return Core.scene.getHeight();
         }
         float scl = Scl.scl();
-        return (Core.graphics != null ? Core.graphics.getHeight() : 600f) / (scl > 0f ? scl : 1f);
+        return (Core.graphics != null && Core.graphics.getHeight() > 0 ? Core.graphics.getHeight() : 600f)
+                / (scl > 0f ? scl : 1f);
     }
 }
