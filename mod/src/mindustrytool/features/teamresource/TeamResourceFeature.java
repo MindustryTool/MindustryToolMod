@@ -21,7 +21,7 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
-import solim.overlay.SolimDialog;
+import arc.scene.ui.layout.Scl;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
@@ -90,17 +90,10 @@ public class TeamResourceFeature extends Feature {
                 Signals.isPortrait(),
                 p -> p ? "portrait" : "landscape",
                 p -> {
-                    String ratioKey = p ? "mindustrytool.features.team-resources.x-ratio.portrait"
-                            : "mindustrytool.features.team-resources.x-ratio.landscape";
-                    if (Core.settings.has(ratioKey)) {
-                        return Core.settings.getFloat(ratioKey);
-                    }
-
                     float sw = getSceneWidth();
                     Float wFrac = overlayWidthConfig != null ? overlayWidthConfig.get() : 0.28f;
                     float width = sw * (wFrac != null ? wFrac : 0.28f);
-                    float availableW = Math.max(1f, sw - width);
-
+                    float defX = sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
                     String oldKey = p ? "mindustrytool.team-resource.x.portrait"
                             : "mindustrytool.team-resource.x.landscape";
                     String groupKey = p ? "mindustrytool.features.team-resources.x.portrait"
@@ -122,11 +115,13 @@ public class TeamResourceFeature extends Feature {
                         float val = Core.settings.getFloat(fallbackKey2);
                         return val <= 1.0f && val >= 0f ? val : Mathf.clamp(val / availableW, 0f, 1f);
                     }
-                    if (Core.settings.has(oldKey)) {
-                        float val = Core.settings.getFloat(oldKey);
-                        return val <= 1.0f && val >= 0f ? val : Mathf.clamp(val / availableW, 0f, 1f);
+                    if (Core.settings.has(fallbackKey1)) {
+                        return Core.settings.getFloat(fallbackKey1);
                     }
-                    return 0.5f;
+                    if (Core.settings.has(fallbackKey2)) {
+                        return Core.settings.getFloat(fallbackKey2);
+                    }
+                    return Core.settings.getFloat(oldKey, defX);
                 });
 
         yRatioConfig = config.floatValueKeyed(
@@ -134,16 +129,8 @@ public class TeamResourceFeature extends Feature {
                 Signals.isPortrait(),
                 p -> p ? "portrait" : "landscape",
                 p -> {
-                    String ratioKey = p ? "mindustrytool.features.team-resources.y-ratio.portrait"
-                            : "mindustrytool.features.team-resources.y-ratio.landscape";
-                    if (Core.settings.has(ratioKey)) {
-                        return Core.settings.getFloat(ratioKey);
-                    }
-
                     float sh = getSceneHeight();
-                    float h = getHudHeight();
-                    float availableH = Math.max(1f, sh - h);
-
+                    float defY = sh > 0 ? sh / 2f : 200f;
                     String oldKey = p ? "mindustrytool.team-resource.y.portrait"
                             : "mindustrytool.team-resource.y.landscape";
                     String groupKey = p ? "mindustrytool.features.team-resources.y.portrait"
@@ -165,35 +152,13 @@ public class TeamResourceFeature extends Feature {
                         float val = Core.settings.getFloat(fallbackKey2);
                         return val <= 1.0f && val >= 0f ? val : Mathf.clamp(val / availableH, 0f, 1f);
                     }
-                    if (Core.settings.has(oldKey)) {
-                        float val = Core.settings.getFloat(oldKey);
-                        return val <= 1.0f && val >= 0f ? val : Mathf.clamp(val / availableH, 0f, 1f);
+                    if (Core.settings.has(fallbackKey1)) {
+                        return Core.settings.getFloat(fallbackKey1);
                     }
-                    return 0.5f;
-                });
-
-        xConfig = config.floatValueKeyed(
-                "x",
-                Signals.isPortrait(),
-                p -> p ? "portrait" : "landscape",
-                p -> {
-                    float sw = getSceneWidth();
-                    Float wFrac = overlayWidthConfig != null ? overlayWidthConfig.get() : 0.28f;
-                    float width = sw * (wFrac != null ? wFrac : 0.28f);
-                    float availableW = Math.max(0f, sw - width);
-                    Float rx = xRatioConfig.get();
-                    return (rx != null ? rx : 0.5f) * availableW;
-                });
-
-        yConfig = config.floatValueKeyed(
-                "y",
-                Signals.isPortrait(),
-                p -> p ? "portrait" : "landscape",
-                p -> {
-                    float sh = getSceneHeight();
-                    float h = getHudHeight();
-                    Float ry = yRatioConfig.get();
-                    return (ry != null ? ry : 0.5f) * Math.max(0f, sh - h);
+                    if (Core.settings.has(fallbackKey2)) {
+                        return Core.settings.getFloat(fallbackKey2);
+                    }
+                    return Core.settings.getFloat(oldKey, defY);
                 });
 
         xSignal = xConfig.signal();
@@ -361,12 +326,14 @@ public class TeamResourceFeature extends Feature {
     }
 
     public float x() {
-        if (xSignal != null && xSignal.get() != null) {
-            return xSignal.get();
+        Float val = xConfig.get();
+        if (val != null) {
+            return val;
         }
         float sw = getSceneWidth();
-        float w = getHudWidth();
-        return getXRatio() * Math.max(0f, sw - w);
+        Float wFrac = overlayWidthConfig != null ? overlayWidthConfig.get() : 0.28f;
+        float width = sw * (wFrac != null ? wFrac : 0.28f);
+        return sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
     }
 
     public void x(float value) {
@@ -395,12 +362,8 @@ public class TeamResourceFeature extends Feature {
     }
 
     public float y() {
-        if (ySignal != null && ySignal.get() != null) {
-            return ySignal.get();
-        }
-        float sh = getSceneHeight();
-        float h = getHudHeight();
-        return getYRatio() * Math.max(0f, sh - h);
+        Float val = yConfig.get();
+        return val != null ? val : (getSceneHeight() > 0f ? getSceneHeight() / 2f : 200f);
     }
 
     public void y(float value) {
@@ -447,10 +410,14 @@ public class TeamResourceFeature extends Feature {
     }
 
     public void resetPosition() {
-        xRatioConfig.reset();
-        yRatioConfig.reset();
-        xConfig.reset();
-        yConfig.reset();
+        float sw = getSceneWidth();
+        Float wFrac = overlayWidthConfig.get();
+        float width = sw * (wFrac != null ? wFrac : 0.28f);
+        float cx = sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
+        float cy = getSceneHeight() > 0 ? getSceneHeight() / 2f : 200f;
+
+        xConfig.set(cx);
+        yConfig.set(cy);
 
         float sw = getSceneWidth();
         float sh = getSceneHeight();
@@ -545,13 +512,19 @@ public class TeamResourceFeature extends Feature {
         return Icon.layers != null ? Icon.layers : new TextureRegionDrawable();
     }
 
-    @Override
-    public @Nullable Prov<SolimDialog> getSettingDialog() {
-        return () -> {
-            if (settingsDialog == null) {
-                settingsDialog = new TeamResourceSettingsDialog(this);
-            }
-            return settingsDialog;
-        };
+    public static float getSceneWidth() {
+        if (Core.scene != null && Core.scene.getWidth() > 0f) {
+            return Core.scene.getWidth();
+        }
+        float scl = Scl.scl();
+        return (Core.graphics != null ? Core.graphics.getWidth() : 800f) / (scl > 0f ? scl : 1f);
+    }
+
+    public static float getSceneHeight() {
+        if (Core.scene != null && Core.scene.getHeight() > 0f) {
+            return Core.scene.getHeight();
+        }
+        float scl = Scl.scl();
+        return (Core.graphics != null ? Core.graphics.getHeight() : 600f) / (scl > 0f ? scl : 1f);
     }
 }

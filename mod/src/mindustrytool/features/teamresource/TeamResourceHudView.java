@@ -89,26 +89,6 @@ public class TeamResourceHudView extends BaseComponent {
                             .children(() -> icon(Icon.move).scaling(Scaling.fit))
                             .draggable(feature.xSignal, feature.ySignal);
 
-                    dragButton.element().addListener(new InputListener() {
-                        @Override
-                        public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                            feature.setIsDragging(true);
-                            return true;
-                        }
-
-                        @Override
-                        public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                            feature.setIsDragging(true);
-                            feature.saveRatioFromCurrentPosition();
-                        }
-
-                        @Override
-                        public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                            feature.saveRatioFromCurrentPosition();
-                            feature.setIsDragging(false);
-                        }
-                    });
-
                     // Expand / Collapse toggle button
                     button()
                             .style(Styles.clearNonei)
@@ -339,9 +319,5 @@ public class TeamResourceHudView extends BaseComponent {
         if (hud != null) {
             hud.keepInScreen();
         }
-    }
-
-    private static float getSceneWidth() {
-        return TeamResourceFeature.getSceneWidth();
     }
 }

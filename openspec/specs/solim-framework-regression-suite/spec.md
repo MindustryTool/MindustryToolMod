@@ -1,4 +1,10 @@
-## ADDED Requirements
+# solim-framework-regression-suite Specification
+
+## Purpose
+
+Comprehensive multi-phase behavioral regression test suite verifying Solim reactive runtime, lifecycle, reconciler, contexts, layout, and component integration. Created by archiving change solim-comprehensive-test-suite.
+
+## Requirements
 
 ### Requirement: Lifecycle and Ownership Regression Suite
 The test suite SHALL verify the complete component lifecycle contract: lazy build execution exactly once, immutable cached `element()`, nested ownership hierarchy, strict LIFO disposal order, exception containment when an owned resource fails during disposal, and partial build failure cleanup.

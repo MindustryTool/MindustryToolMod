@@ -1,8 +1,11 @@
 package solim.runtime;
 
+import arc.util.Log;
+import arc.util.Nullable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import solim.core.ReactiveObserver;
+import solim.core.ReactiveSource;
 import java.util.function.Supplier;
 
 /** Stack-based dependency tracking for single-threaded UI. No ThreadLocal by design. */
@@ -23,12 +26,23 @@ public final class ReactiveContext {
 		return stack.peek();
 	}
 
-	/** Called from Signal.get() / Computed.get() to register dependency with current observer. */
-	public static void track(Object observable) {
+	/** Called from reactive sources to register dependency with current observer. */
+	public static void track(@Nullable ReactiveSource observable) {
 		ReactiveObserver cur = current();
-		if (cur != null) {
+		if (cur != null && observable != null) {
 			cur.addDependency(observable);
 		}
+	}
+
+	/**
+	 * Shared tracking path for reactive reads. Emits a build-time warning when called
+	 * during {@code build()} without an active reactive context, then tracks the source.
+	 */
+	public static void trackWithWarning(ReactiveSource source, String warning) {
+		if (current() == null && ComponentContext.current() != null) {
+			Log.debug(warning);
+		}
+		track(source);
 	}
 
 	/** For tests: clear stack */

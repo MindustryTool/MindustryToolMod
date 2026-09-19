@@ -276,7 +276,10 @@ public final class ReactiveGrid<T, K> extends BaseComponent
         for (Component comp : reconciler.activeComponents().values()) {
             Element el = comp.element();
             Cell<?> cell = table.add(el).top().left();
-            PendingCellConfig sc = PendingCellConfig.find(comp != null ? comp : el);
+            PendingCellConfig sc = PendingCellConfig.find(comp);
+            if (sc == null) {
+                sc = PendingCellConfig.find(el);
+            }
             if (sc != null) {
                 List<Disposable> effects = sc.applyToCell(cell);
                 itemBindings.addAll(effects);

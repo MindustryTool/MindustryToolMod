@@ -8,9 +8,11 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import solim.core.ReactiveSource;
 import solim.core.SolimToken;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
+import solim.reactive.MapSignal;
 import solim.reactive.Signal;
 import solim.reactive.Subscription;
 import java.lang.reflect.Array;
@@ -163,8 +165,11 @@ public final class ObjectGraphScanner {
 	private static ReactiveKind kindOf(Object value) {
 		if (value instanceof Signal) return ReactiveKind.SIGNAL;
 		if (value instanceof Computed) return ReactiveKind.COMPUTED;
+		if (value instanceof MapSignal) return ReactiveKind.MAP;
+		if (value instanceof MapSignal.KeyReadable) return ReactiveKind.MAP;
 		if (value instanceof Effect) return ReactiveKind.EFFECT;
 		if (value instanceof Subscription) return ReactiveKind.SUBSCRIPTION;
+		if (value instanceof ReactiveSource) return ReactiveKind.MAP;
 		return null;
 	}
 

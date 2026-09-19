@@ -479,10 +479,10 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
         root.setPosition(curX, curY);
 
         if (updateSignals) {
-            if (boundXSignal != null && Math.abs(curX - origX) > 0.5f) {
+            if (boundXSignal != null && (boundXSignal.get() == null || Math.abs(boundXSignal.get() - curX) > 0.5f)) {
                 boundXSignal.set(curX);
             }
-            if (boundYSignal != null && Math.abs(curY - origY) > 0.5f) {
+            if (boundYSignal != null && (boundYSignal.get() == null || Math.abs(boundYSignal.get() - curY) > 0.5f)) {
                 boundYSignal.set(curY);
             }
         }

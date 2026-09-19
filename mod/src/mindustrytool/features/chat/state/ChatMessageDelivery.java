@@ -1,27 +1,16 @@
 package mindustrytool.features.chat.state;
 
 import arc.util.Nullable;
-import java.util.HashMap;
-import java.util.Map;
 import mindustrytool.features.chat.MessageStatus;
+import solim.reactive.MapSignal;
 import solim.reactive.Readable;
-import solim.reactive.Signal;
 
 public final class ChatMessageDelivery {
 
-    private final Signal<Map<String, MessageStatus>> statuses = Signal.of(new HashMap<>());
-    private final Map<String, Readable<MessageStatus>> statusComputeds = new HashMap<>();
+    private final MapSignal<String, MessageStatus> delivery = MapSignal.of();
 
     public Readable<MessageStatus> status(@Nullable String messageId) {
-        if (messageId == null) {
-            return Readable.of(null);
-        }
-        Readable<MessageStatus> existing = statusComputeds.get(messageId);
-        if (existing == null) {
-            existing = statuses.map(map -> map.get(messageId));
-            statusComputeds.put(messageId, existing);
-        }
-        return existing;
+        return messageId == null ? Readable.of(null) : delivery.readable(messageId);
     }
 
     public Readable<Boolean> isPending(@Nullable String messageId) {
@@ -33,38 +22,29 @@ public final class ChatMessageDelivery {
     }
 
     public boolean isPendingDirect(@Nullable String messageId) {
-        return messageId != null && statuses.peek().get(messageId) == MessageStatus.PENDING;
+        return messageId != null && delivery.peek().get(messageId) == MessageStatus.PENDING;
     }
 
     public boolean isFailedDirect(@Nullable String messageId) {
-        return messageId != null && statuses.peek().get(messageId) == MessageStatus.FAILED;
+        return messageId != null && delivery.peek().get(messageId) == MessageStatus.FAILED;
     }
 
     public void markPending(@Nullable String messageId) {
         if (messageId == null) return;
-        Map<String, MessageStatus> next = new HashMap<>(statuses.peek());
-        next.put(messageId, MessageStatus.PENDING);
-        statuses.set(next);
+        delivery.put(messageId, MessageStatus.PENDING);
     }
 
     public void markFailed(@Nullable String messageId) {
         if (messageId == null) return;
-        Map<String, MessageStatus> next = new HashMap<>(statuses.peek());
-        next.put(messageId, MessageStatus.FAILED);
-        statuses.set(next);
+        delivery.put(messageId, MessageStatus.FAILED);
     }
 
     public void clear(@Nullable String messageId) {
         if (messageId == null) return;
-        Map<String, MessageStatus> next = new HashMap<>(statuses.peek());
-        if (next.remove(messageId) != null) {
-            statuses.set(next);
-        }
+        delivery.remove(messageId);
     }
 
     public void clearAll() {
-        if (!statuses.peek().isEmpty()) {
-            statuses.set(new HashMap<>());
-        }
+        delivery.clear();
     }
 }

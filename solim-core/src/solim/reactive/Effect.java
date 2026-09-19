@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import solim.core.Disposable;
 import solim.core.ReactiveObserver;
+import solim.core.ReactiveSource;
 import solim.core.SchedulableEffect;
 import solim.runtime.ComponentContext;
 import solim.runtime.ReactiveContext;
@@ -25,8 +26,8 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 	private final Supplier<Runnable> supplierWithCleanup;
 	private final Consumer<Cleanup> cleanupConsumer;
 
-	private final Set<Object> dependencies = new LinkedHashSet<>();
-	private Set<Object> collecting = null;
+	private final Set<ReactiveSource> dependencies = new LinkedHashSet<>();
+	private Set<ReactiveSource> collecting = null;
 	private final List<Runnable> cleanups = new ArrayList<>();
 
 	private boolean disposed = false;
@@ -96,7 +97,7 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 		// run previous cleanups before re-running
 		runCleanups();
 
-		Set<Object> newDeps = new LinkedHashSet<>();
+		Set<ReactiveSource> newDeps = new LinkedHashSet<>();
 		collecting = newDeps;
 		ReactiveContext.push(this);
 		Runnable returned = null;
@@ -134,31 +135,23 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 		}
 	}
 
-	private void updateDependencies(Set<Object> newDeps) {
-		Set<Object> toRemove = new LinkedHashSet<>(dependencies);
+	private void updateDependencies(Set<ReactiveSource> newDeps) {
+		Set<ReactiveSource> toRemove = new LinkedHashSet<>(dependencies);
 		toRemove.removeAll(newDeps);
-		for (Object dep : toRemove) {
-			if (dep instanceof Signal) {
-				((Signal<?>) dep).removeObserver(this);
-			} else if (dep instanceof Computed) {
-				((Computed<?>) dep).removeObserver(this);
-			}
+		for (ReactiveSource dep : toRemove) {
+			dep.removeObserver(this);
 		}
-		Set<Object> toAdd = new LinkedHashSet<>(newDeps);
+		Set<ReactiveSource> toAdd = new LinkedHashSet<>(newDeps);
 		toAdd.removeAll(dependencies);
-		for (Object dep : toAdd) {
-			if (dep instanceof Signal) {
-				((Signal<?>) dep).addObserver(this);
-			} else if (dep instanceof Computed) {
-				((Computed<?>) dep).addObserver(this);
-			}
+		for (ReactiveSource dep : toAdd) {
+			dep.addObserver(this);
 		}
 		dependencies.clear();
 		dependencies.addAll(newDeps);
 	}
 
 	@Override
-	public void addDependency(Object observable) {
+	public void addDependency(ReactiveSource observable) {
 		if (disposed) return;
 		if (collecting != null) {
 			collecting.add(observable);
@@ -196,12 +189,8 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 		disposed = true;
 		pending = false;
 		// unsubscribe from dependencies
-		for (Object dep : new ArrayList<>(dependencies)) {
-			if (dep instanceof Signal) {
-				((Signal<?>) dep).removeObserver(this);
-			} else if (dep instanceof Computed) {
-				((Computed<?>) dep).removeObserver(this);
-			}
+		for (ReactiveSource dep : new ArrayList<>(dependencies)) {
+			dep.removeObserver(this);
 		}
 		dependencies.clear();
 		runCleanups();

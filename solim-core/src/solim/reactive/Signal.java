@@ -10,12 +10,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import solim.core.ReactiveObserver;
-import solim.runtime.ComponentContext;
+import solim.core.ReactiveSource;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SolimAssert;
 
 /** Mutable reactive value. */
-public final class Signal<T> implements Readable<T> {
+public final class Signal<T> implements Readable<T>, ReactiveSource {
 	private T value;
 	private final List<Consumer<T>> listeners = new ArrayList<>();
 	private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
@@ -50,10 +50,7 @@ public final class Signal<T> implements Readable<T> {
 
 	@Override
 	public T get() {
-		if (ReactiveContext.current() == null && ComponentContext.current() != null) {
-			Log.debug("[Solim Reactivity Warning] Signal.get() was called during build()! This severs reactivity. Pass the Signal/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
-		}
-		ReactiveContext.track(this);
+		ReactiveContext.trackWithWarning(this, "[Solim Reactivity Warning] Signal.get() was called during build()! This severs reactivity. Pass the Signal/Readable directly to the component or use .map(). If an untracked read is intentional, use .peek().");
 		return value;
 	}
 
@@ -114,12 +111,13 @@ public final class Signal<T> implements Readable<T> {
 		return Signal.computed(() -> mapper.apply(get()));
 	}
 
-	// Observable support
-	void addObserver(ReactiveObserver observer) {
+	@Override
+	public void addObserver(ReactiveObserver observer) {
 		observers.add(observer);
 	}
 
-	void removeObserver(ReactiveObserver observer) {
+	@Override
+	public void removeObserver(ReactiveObserver observer) {
 		observers.remove(observer);
 	}
 

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import arc.Core;
-import arc.Events;
 import arc.graphics.Color;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
@@ -36,7 +35,6 @@ import java.lang.reflect.Method;
 import mindustry.Vars;
 import mindustry.core.UI;
 import mindustry.ctype.Content;
-import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.Team;
 import mindustry.type.Item;
 import mindustry.ui.Fonts;
@@ -354,137 +352,5 @@ class TeamResourcePositionTest {
 
         assertEquals(initialX, feature.x(), 1.0f, "Feature X must remain stable with power stats");
         assertEquals(initialX, root.x, 1.0f, "Root X must remain stable with power stats");
-    }
-
-    @Test
-    void testMinimizeWindowDoesNotResetPosition() {
-        TeamResourceFeature feature = new TeamResourceFeature();
-        feature.onEnable();
-        Element root = feature.getHudView().element();
-
-        feature.x(100f);
-        feature.y(200f);
-        root.validate();
-        assertEquals(100f, feature.x(), 1.0f);
-        assertEquals(200f, feature.y(), 1.0f);
-
-        // Simulate iconic window minimization (e.g. Win32 SIZE_MINIMIZED 160x31)
-        mockGraphics.width = 160;
-        mockGraphics.height = 31;
-        Core.scene.resize(160, 31);
-        Events.fire(new ResizeEvent());
-
-        // Simulate restore back to 1000x800
-        mockGraphics.width = 1000;
-        mockGraphics.height = 800;
-        Core.scene.resize(1000, 800);
-        Events.fire(new ResizeEvent());
-
-        root.validate();
-        assertEquals(100f, feature.x(), 1.0f, "X must not reset on window minimize/restore");
-        assertEquals(200f, feature.y(), 1.0f, "Y must not reset on window minimize/restore");
-
-        // Also simulate 0x0 collapse
-        mockGraphics.width = 0;
-        mockGraphics.height = 0;
-        Core.scene.resize(0, 0);
-        Events.fire(new ResizeEvent());
-
-        mockGraphics.width = 1000;
-        mockGraphics.height = 800;
-        Core.scene.resize(1000, 800);
-        Events.fire(new ResizeEvent());
-
-        root.validate();
-        assertEquals(100f, feature.x(), 1.0f, "X must not reset on 0x0 minimize/restore");
-        assertEquals(200f, feature.y(), 1.0f, "Y must not reset on 0x0 minimize/restore");
-    }
-
-    @Test
-    void testFullscreenAndWindowedTransitionPreservesTopCenterPosition() {
-        // Start in Fullscreen 1920x1080
-        mockGraphics.width = 1920;
-        mockGraphics.height = 1080;
-        Core.scene.resize(1920, 1080);
-        Scl.setProduct(1.0f);
-
-        TeamResourceFeature feature = new TeamResourceFeature();
-        feature.onEnable();
-        Element root = feature.getHudView().element();
-        root.validate();
-
-        float hudW = feature.getHudWidth();
-        float hudH = feature.getHudHeight();
-
-        // Place HUD at top-center in Fullscreen
-        float topCenterXFs = (1920f - hudW) / 2f;
-        float topCenterYFs = 1080f - hudH;
-        feature.x(topCenterXFs);
-        feature.y(topCenterYFs);
-        root.validate();
-
-        assertEquals(topCenterXFs, feature.x(), 1.0f);
-        assertEquals(topCenterYFs, feature.y(), 1.0f);
-        assertEquals(0.5f, feature.getXRatio(), 0.05f);
-        assertEquals(1.0f, feature.getYRatio(), 0.05f);
-
-        // Switch to Windowed 1280x720
-        mockGraphics.width = 1280;
-        mockGraphics.height = 720;
-        Core.scene.resize(1280, 720);
-        Events.fire(new ResizeEvent());
-        root.validate();
-
-        float expectedWinX = (1280f - feature.getHudWidth()) / 2f;
-        float expectedWinY = 720f - feature.getHudHeight();
-        assertEquals(expectedWinX, feature.x(), 1.5f, "Should remain centered horizontally in windowed");
-        assertEquals(expectedWinY, feature.y(), 1.5f, "Should remain docked to top in windowed");
-
-        // Switch back to Fullscreen 1920x1080
-        mockGraphics.width = 1920;
-        mockGraphics.height = 1080;
-        Core.scene.resize(1920, 1080);
-        Events.fire(new ResizeEvent());
-        root.validate();
-
-        float expectedFsX = (1920f - feature.getHudWidth()) / 2f;
-        float expectedFsY = 1080f - feature.getHudHeight();
-        assertEquals(expectedFsX, feature.x(), 1.5f, "Should return to top-center in fullscreen");
-        assertEquals(expectedFsY, feature.y(), 1.5f, "Should return to top in fullscreen");
-    }
-
-    @Test
-    void testTopRightAnchorPreservedAcrossResolutions() {
-        // Start in 1920x1080
-        mockGraphics.width = 1920;
-        mockGraphics.height = 1080;
-        Core.scene.resize(1920, 1080);
-
-        TeamResourceFeature feature = new TeamResourceFeature();
-        feature.onEnable();
-        Element root = feature.getHudView().element();
-        root.validate();
-
-        // Dock to top-right
-        float trX = 1920f - feature.getHudWidth();
-        float trY = 1080f - feature.getHudHeight();
-        feature.x(trX);
-        feature.y(trY);
-        root.validate();
-
-        assertEquals(1.0f, feature.getXRatio(), 0.05f);
-        assertEquals(1.0f, feature.getYRatio(), 0.05f);
-
-        // Resize to 1280x720
-        mockGraphics.width = 1280;
-        mockGraphics.height = 720;
-        Core.scene.resize(1280, 720);
-        Events.fire(new ResizeEvent());
-        root.validate();
-
-        float expectedWinX = 1280f - feature.getHudWidth();
-        float expectedWinY = 720f - feature.getHudHeight();
-        assertEquals(expectedWinX, feature.x(), 1.5f, "Should stay docked to top-right in windowed");
-        assertEquals(expectedWinY, feature.y(), 1.5f, "Should stay docked to top in windowed");
     }
 }

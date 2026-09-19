@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import solim.core.ReactiveObserver;
+import solim.core.ReactiveSource;
 
 /**
  * Standard test double for ReactiveObserver tracking observed dependencies and invalidations.
  */
 public class TestObserver implements ReactiveObserver {
 	private final String id;
-	private final List<Object> dependencies = new ArrayList<>();
+	private final List<ReactiveSource> dependencies = new ArrayList<>();
 	private int invalidateCount = 0;
 
 	public TestObserver() {
@@ -22,7 +23,7 @@ public class TestObserver implements ReactiveObserver {
 	}
 
 	@Override
-	public void addDependency(Object observable) {
+	public void addDependency(ReactiveSource observable) {
 		dependencies.add(observable);
 	}
 
@@ -35,7 +36,7 @@ public class TestObserver implements ReactiveObserver {
 		return id;
 	}
 
-	public List<Object> getDependencies() {
+	public List<ReactiveSource> getDependencies() {
 		return Collections.unmodifiableList(dependencies);
 	}
 
