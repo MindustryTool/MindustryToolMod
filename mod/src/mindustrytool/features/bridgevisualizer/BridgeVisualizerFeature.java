@@ -566,6 +566,12 @@ public class BridgeVisualizerFeature extends Feature {
             return;
         }
 
+        float scl = Scl.scl(1.0f);
+        float fontScale = (0.25f / (scl > 0.0001f ? scl : 1f)) * 0.55f * cachedItemScale;
+        if (fontScale <= 0.001f || Float.isNaN(fontScale) || Float.isInfinite(fontScale)) {
+            return;
+        }
+
         float midX = (x1 + x2) / 2f;
         float midY = (y1 + y2) / 2f;
 
@@ -589,22 +595,13 @@ public class BridgeVisualizerFeature extends Feature {
         String text = Strings.autoFixed(rate, 1) + "/s";
 
         Font font = Fonts.outline;
-        float prevScaleX = font.getData().scaleX;
-        float prevScaleY = font.getData().scaleY;
-        boolean prevInteger = font.usesIntegerPositions();
-
-        try {
-            font.setUseIntegerPositions(false);
-            float fontScale = (0.25f / Scl.scl(1.0f)) * 0.55f * cachedItemScale;
-            font.getData().setScale(fontScale);
-
-            font.draw(text, midX + offsetX, midY + offsetY,
-                    Tmp.c1.set(Color.white).a(cachedOpacity),
-                    0f, false, Align.center);
-        } finally {
-            font.getData().setScale(prevScaleX, prevScaleY);
-            font.setUseIntegerPositions(prevInteger);
+        if (font.getData() == null) {
+            return;
         }
+
+        font.draw(text, midX + offsetX, midY + offsetY,
+                Tmp.c1.set(Color.white).a(cachedOpacity),
+                fontScale, false, Align.center);
         Draw.reset();
     }
 

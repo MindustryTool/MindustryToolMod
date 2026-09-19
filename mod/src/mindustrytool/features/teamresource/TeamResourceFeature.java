@@ -141,7 +141,8 @@ public class TeamResourceFeature extends Feature {
                     }
 
                     float sh = getSceneHeight();
-                    float availableH = Math.max(1f, sh);
+                    float h = getHudHeight();
+                    float availableH = Math.max(1f, sh - h);
 
                     String oldKey = p ? "mindustrytool.team-resource.y.portrait"
                             : "mindustrytool.team-resource.y.landscape";
@@ -190,20 +191,21 @@ public class TeamResourceFeature extends Feature {
                 p -> p ? "portrait" : "landscape",
                 p -> {
                     float sh = getSceneHeight();
+                    float h = getHudHeight();
                     Float ry = yRatioConfig.get();
-                    return (ry != null ? ry : 0.5f) * Math.max(0f, sh);
+                    return (ry != null ? ry : 0.5f) * Math.max(0f, sh - h);
                 });
 
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
 
         xSignal.subscribe(px -> {
-            if (!isInternalPositionUpdate && px != null) {
+            if (!isInternalPositionUpdate && isDragging() && px != null) {
                 saveRatioFromCurrentPosition();
             }
         });
         ySignal.subscribe(py -> {
-            if (!isInternalPositionUpdate && py != null) {
+            if (!isInternalPositionUpdate && isDragging() && py != null) {
                 saveRatioFromCurrentPosition();
             }
         });
@@ -248,7 +250,13 @@ public class TeamResourceFeature extends Feature {
     }
 
     public boolean isDragging() {
-        return isDragging;
+        if (isDragging) {
+            return true;
+        }
+        if (hudView != null && hudView.getHud() != null && hudView.getHud().isDragging()) {
+            return true;
+        }
+        return false;
     }
 
     public float getXRatio() {
@@ -486,6 +494,7 @@ public class TeamResourceFeature extends Feature {
             Core.app.post(() -> {
                 if (hudView != null && Vars.ui != null && Vars.ui.hudGroup != null) {
                     Vars.ui.hudGroup.addChild(el);
+                    updatePositionFromRatio();
                 }
             });
         }
@@ -494,24 +503,11 @@ public class TeamResourceFeature extends Feature {
     @Override
     public void onDisable() {
         if (hudView != null) {
-            TeamResourceHudView view = hudView;
+            hudView.element().remove();
+            hudView.dispose();
             hudView = null;
-            Core.app.post(() -> {
-                view.element().remove();
-                view.dispose();
-            });
         }
         Core.settings.put("coreitems", true);
-    }
-
-    @Override
-    public @Nullable Prov<SolimDialog> getSettingDialog() {
-        return () -> {
-            if (settingsDialog == null) {
-                settingsDialog = new TeamResourceSettingsDialog(this);
-            }
-            return settingsDialog;
-        };
     }
 
     public TeamResourceState getState() {
@@ -520,6 +516,22 @@ public class TeamResourceFeature extends Feature {
 
     public @Nullable TeamResourceHudView getHudView() {
         return hudView;
+    }
+
+    public static float getSceneWidth() {
+        if (Core.scene != null && Core.scene.getWidth() > 0f) {
+            return Core.scene.getWidth();
+        }
+        float scl = Scl.scl();
+        return Core.graphics != null ? Core.graphics.getWidth() / (scl > 0f ? scl : 1f) : 800f;
+    }
+
+    public static float getSceneHeight() {
+        if (Core.scene != null && Core.scene.getHeight() > 0f) {
+            return Core.scene.getHeight();
+        }
+        float scl = Scl.scl();
+        return Core.graphics != null ? Core.graphics.getHeight() / (scl > 0f ? scl : 1f) : 600f;
     }
 
     private static Drawable getFeatureIcon() {
@@ -533,21 +545,13 @@ public class TeamResourceFeature extends Feature {
         return Icon.layers != null ? Icon.layers : new TextureRegionDrawable();
     }
 
-    public static float getSceneWidth() {
-        if (Core.scene != null && Core.scene.getWidth() > 0f) {
-            return Core.scene.getWidth();
-        }
-        float scl = Scl.scl();
-        return (Core.graphics != null && Core.graphics.getWidth() > 0 ? Core.graphics.getWidth() : 800f)
-                / (scl > 0f ? scl : 1f);
-    }
-
-    public static float getSceneHeight() {
-        if (Core.scene != null && Core.scene.getHeight() > 0f) {
-            return Core.scene.getHeight();
-        }
-        float scl = Scl.scl();
-        return (Core.graphics != null && Core.graphics.getHeight() > 0 ? Core.graphics.getHeight() : 600f)
-                / (scl > 0f ? scl : 1f);
+    @Override
+    public @Nullable Prov<SolimDialog> getSettingDialog() {
+        return () -> {
+            if (settingsDialog == null) {
+                settingsDialog = new TeamResourceSettingsDialog(this);
+            }
+            return settingsDialog;
+        };
     }
 }

@@ -48,6 +48,8 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     private @Nullable Signal<Float> boundXSignal;
     private @Nullable Signal<Float> boundYSignal;
     private boolean disposed = false;
+    private boolean keepInScreenOnResize = true;
+    private boolean dragging = false;
 
     public static class HudRootTable extends Table {
         private final Hud hud;
@@ -88,12 +90,23 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
         this.root.add(container).pad(0).margin(0);
 
         this.resizeListener = e -> {
-            keepInScreen();
-            Core.app.post(this::keepInScreen);
+            if (keepInScreenOnResize) {
+                keepInScreen();
+                Core.app.post(this::keepInScreen);
+            }
         };
         Events.on(ResizeEvent.class, resizeListener);
 
         ComponentContext.register(this);
+    }
+
+    public boolean isDragging() {
+        return dragging;
+    }
+
+    public Hud keepInScreenOnResize(boolean enable) {
+        this.keepInScreenOnResize = enable;
+        return this;
     }
 
     @Override
@@ -330,6 +343,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                 Hud targetHud = resolveHud();
                 if (targetHud == null)
                     return false;
+                targetHud.dragging = true;
                 didDrag = false;
                 lastX = x;
                 lastY = y;
@@ -383,16 +397,20 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                 Hud targetHud = resolveHud();
                 if (targetHud == null)
                     return;
-                if (didDrag) {
-                    targetHud.keepInScreen();
-                    if (xSignal != null) {
-                        xSignal.set(targetHud.element().x);
+                try {
+                    if (didDrag) {
+                        targetHud.keepInScreen();
+                        if (xSignal != null) {
+                            xSignal.set(targetHud.element().x);
+                        }
+                        if (ySignal != null) {
+                            ySignal.set(targetHud.element().y);
+                        }
                     }
-                    if (ySignal != null) {
-                        ySignal.set(targetHud.element().y);
-                    }
+                } finally {
+                    targetHud.dragging = false;
+                    didDrag = false;
                 }
-                didDrag = false;
             }
         });
     }
