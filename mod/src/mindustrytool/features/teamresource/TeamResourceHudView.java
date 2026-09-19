@@ -4,6 +4,7 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.graphics.Color;
+import arc.input.KeyCode;
 import arc.math.Mathf;
 import arc.scene.Element;
 import arc.scene.event.InputEvent;
@@ -22,6 +23,7 @@ import mindustry.type.UnitType;
 import mindustry.ui.Styles;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.input.Button;
 import solim.layout.Card;
 import solim.overlay.Hud;
 import solim.reactive.Computed;
@@ -81,11 +83,30 @@ public class TeamResourceHudView extends BaseComponent {
                 // 1. Header Row
                 row().growX().gap(unit(1)).children(() -> {
                     // Drag handle
-                    button()
+                    Button dragButton = button()
                             .style(Styles.clearNonei)
                             .size(buttonSize)
                             .children(() -> icon(Icon.move).scaling(Scaling.fit))
                             .draggable(feature.xSignal, feature.ySignal);
+
+                    dragButton.element().addListener(new InputListener() {
+                        @Override
+                        public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
+                            feature.setIsDragging(true);
+                            return true;
+                        }
+
+                        @Override
+                        public void touchDragged(InputEvent event, float x, float y, int pointer) {
+                            feature.saveRatioFromCurrentPosition();
+                        }
+
+                        @Override
+                        public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
+                            feature.setIsDragging(false);
+                            feature.saveRatioFromCurrentPosition();
+                        }
+                    });
 
                     // Expand / Collapse toggle button
                     button()
@@ -93,7 +114,7 @@ public class TeamResourceHudView extends BaseComponent {
                             .size(buttonSize)
                             .onClick(() -> feature.expandedConfig.set(!Boolean.TRUE.equals(feature.expandedConfig.get())))
                             .tooltip(expanded.map(exp -> Core.bundle.get(Boolean.TRUE.equals(exp) ? "team-resources.collapse" : "team-resources.expand", "Toggle Expand")))
-                            .children(() -> text(expanded.map(exp -> Boolean.TRUE.equals(exp) ? "▼" : "▶")));
+                            .children(() -> text(expanded.map(exp -> Boolean.TRUE.equals(exp) ? "\u25bc" : "\u25b6")));
 
                     // Team selector chips
                     dynamic(state.validTeamsSignal, teams -> row().gap(unit(1)).children(() -> {
@@ -140,8 +161,8 @@ public class TeamResourceHudView extends BaseComponent {
 
         // Screen resize clamping with automatic ownership cleanup
         listen(ResizeEvent.class, e -> {
-            keepInScreen();
-            Core.app.post(this::keepInScreen);
+            feature.updatePositionFromRatio();
+            Core.app.post(feature::updatePositionFromRatio);
         });
 
         // Initial layout stabilization
@@ -149,7 +170,7 @@ public class TeamResourceHudView extends BaseComponent {
             if (hud != null) {
                 hud.root().invalidateHierarchy();
                 hud.pack();
-                hud.keepInScreen();
+                feature.updatePositionFromRatio();
                 hud.root().toFront();
             }
         });
@@ -178,13 +199,13 @@ public class TeamResourceHudView extends BaseComponent {
                         return row().left().children(() -> text(Core.bundle.get("team-resources.no-items", "No core items")).color(Color.gray).style(Styles.outlineLabel));
                     }
                     return grid(
-                        itemCols,
-                        state.usedItemsSignal,
-                        item -> item.name,
-                        item -> createItemCard(item, itemCardHeight, iconSize, scale)
+                            itemCols,
+                            state.usedItemsSignal,
+                            item -> item.name,
+                            item -> createItemCard(item, itemCardHeight, iconSize, scale)
                     ).growX().gap(unit(1));
                 }).growX();
-            }).growX() : row()).growX();
+            }).growX().gap(unit(1)) : row()).growX();
 
             // Units Section
             dynamic(feature.showUnitsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
@@ -193,13 +214,13 @@ public class TeamResourceHudView extends BaseComponent {
                         return row().left().children(() -> text(Core.bundle.get("team-resources.no-units", "No active units")).color(Color.gray).style(Styles.outlineLabel));
                     }
                     return grid(
-                        itemCols,
-                        state.usedUnitsSignal,
-                        unit -> unit.name,
-                        unit -> createUnitCard(unit, unitCardHeight, iconSize, scale)
+                            itemCols,
+                            state.usedUnitsSignal,
+                            unit -> unit.name,
+                            unit -> createUnitCard(unit, unitCardHeight, iconSize, scale)
                     ).growX().gap(unit(1));
                 }).growX();
-            }).growX() : row()).growX();
+            }).growX().gap(unit(1)) : row()).growX();
 
             // Power Section
             dynamic(feature.showPowerConfig.signal(), show -> Boolean.TRUE.equals(show) ? createPowerSection(scale) : row()).growX();
@@ -307,6 +328,10 @@ public class TeamResourceHudView extends BaseComponent {
                     });
             }).growX().gap(unit(1)) : row()).growX();
         }).growX().gap(unit(1));
+    }
+
+    public @Nullable Hud getHud() {
+        return hud;
     }
 
     public void keepInScreen() {
