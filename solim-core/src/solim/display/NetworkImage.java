@@ -25,7 +25,6 @@ import mindustry.Vars;
 import mindustry.core.Version;
 import solim.core.Disposable;
 import solim.core.LeafComponent;
-import solim.runtime.ComponentContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.graphics.RoundedGenerator;

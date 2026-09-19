@@ -8,7 +8,6 @@ import arc.scene.ui.layout.Table;
 import arc.util.Scaling;
 import solim.core.LeafComponent;
 import solim.core.SpacingAware;
-import solim.runtime.ComponentContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;

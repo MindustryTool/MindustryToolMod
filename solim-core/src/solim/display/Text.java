@@ -2,11 +2,15 @@ package solim.display;
 
 import arc.Core;
 import arc.graphics.Color;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
+import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
@@ -48,11 +52,27 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
         this(text, (Label.LabelStyle) null);
     }
 
+    private static @Nullable Label.LabelStyle defaultHeadlessStyle;
+
+    private static Label.LabelStyle getDefaultStyle() {
+        if (defaultHeadlessStyle == null) {
+            FontData fontData = new FontData() {
+                @Override
+                public boolean hasGlyph(char ch) {
+                    return true;
+                }
+            };
+            Font font = new Font(fontData, new TextureRegion(), false);
+            defaultHeadlessStyle = new Label.LabelStyle(font, Color.white);
+        }
+        return defaultHeadlessStyle;
+    }
+
     public Text(String text, Label.LabelStyle style) {
         this.label = style != null
                 ? new Label(text != null ? text : "", style)
                 : (Core.scene != null ? new Label(text != null ? text : "")
-                        : new Label(text != null ? text : "", new Label.LabelStyle()));
+                        : new Label(text != null ? text : "", getDefaultStyle()));
         this.label.name = "solim-text-label";
         SolimToken.bind(this.label, this, constraints);
         ComponentContext.register(this);

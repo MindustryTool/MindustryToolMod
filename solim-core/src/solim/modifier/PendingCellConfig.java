@@ -24,20 +24,26 @@ import arc.util.Align;
  */
 public final class PendingCellConfig {
 
+    public static final ParentStack.CellConfigurator DEFAULT_CONFIGURATOR = (cell, child, comp) -> {
+        PendingCellConfig config = comp != null ? find(comp) : null;
+        if (config == null) {
+            config = find(child);
+        }
+        if (config != null) {
+            List<Disposable> effects = config.applyToCell(cell);
+            for (Disposable effect : effects) {
+                ComponentContext.register(effect);
+            }
+        }
+        GapContainer.respace(cell.getTable());
+    };
+
     static {
-        ParentStack.setCellConfigurator((cell, child, comp) -> {
-            PendingCellConfig config = comp != null ? find(comp) : null;
-            if (config == null) {
-                config = find(child);
-            }
-            if (config != null) {
-                List<Disposable> effects = config.applyToCell(cell);
-                for (Disposable effect : effects) {
-                    ComponentContext.register(effect);
-                }
-            }
-            GapContainer.respace(cell.getTable());
-        });
+        install();
+    }
+
+    public static void install() {
+        ParentStack.setCellConfigurator(DEFAULT_CONFIGURATOR);
     }
 
     /** Preferred width. Null means "no constraint — use natural size". */

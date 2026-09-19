@@ -30,6 +30,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 
 	public Computed(Supplier<T> supplier) {
 		this.supplier = supplier;
+		ComponentContext.register(this);
 	}
 
 	@Override

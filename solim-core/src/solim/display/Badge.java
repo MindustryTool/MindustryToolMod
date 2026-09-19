@@ -5,9 +5,9 @@ import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
+import solim.core.Disposable;
 import solim.core.LeafComponent;
 import solim.modifier.TableConfig;
-import solim.runtime.ComponentContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
@@ -59,6 +59,9 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
     public static Badge ofCount(Readable<Integer> count) {
         Readable<String> text = count.map(c -> c != null ? String.valueOf(c) : "0");
         Badge badge = new Badge(text);
+        if (text instanceof Disposable) {
+            badge.disposables.add((Disposable) text);
+        }
         badge.countSignal = count;
         badge.hideOnZero(true);
         return badge;
@@ -77,6 +80,7 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
     private void updateVisibilityBinding() {
         if (visibilityEffect != null) {
             visibilityEffect.dispose();
+            disposables.remove(visibilityEffect);
             visibilityEffect = null;
         }
         if (countSignal != null) {
@@ -88,6 +92,7 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
                     element.visible = true;
                 }
             });
+            disposables.add(visibilityEffect);
         }
     }
 
@@ -114,6 +119,10 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
     public void dispose() {
         if (isDisposed()) {
             return;
+        }
+        if (visibilityEffect != null) {
+            visibilityEffect.dispose();
+            visibilityEffect = null;
         }
         label.dispose();
         super.dispose();
