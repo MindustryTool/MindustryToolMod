@@ -84,7 +84,9 @@ public class QuickSchematicGridHudView extends BaseComponent {
         Readable<Float> dragIconSize = buttonSize.map(s -> (s != null ? s : 48f) * 0.45f);
         Readable<Float> gap = feature.buttonGapConfig.signal();
 
-        Readable<List<Integer>> pagesList = feature.pageCountConfig.signal().map(count -> {
+        Readable<List<Integer>> pagesList = Signal.computed(() -> {
+            Integer count = feature.pageCountConfig.signal().get();
+            feature.pageIcons().get();
             int total = Math.max(1, Math.min(QuickSchematicGridFeature.MAX_PAGES, count != null ? count : 1));
             List<Integer> list = new ArrayList<>(total);
             for (int i = 0; i < total; i++) {
@@ -113,11 +115,8 @@ public class QuickSchematicGridHudView extends BaseComponent {
                 reactiveGrid(
                         Signal.of(1),
                         pagesList,
-                        pageIndex -> String.valueOf(pageIndex),
-                        pageIndex -> button(String.valueOf(pageIndex + 1), () -> feature.setActivePage(pageIndex))
-                                .style(WebStyles.filterChipText())
-                                .size(buttonSize)
-                                .checked(feature.activePage.map(p -> p != null && p.intValue() == pageIndex)))
+                        pageIndex -> pageIndex + ":" + (feature.getPageIcon(pageIndex) != null ? feature.getPageIcon(pageIndex) : ""),
+                        pageIndex -> pageTabButton(feature, pageIndex, buttonSize))
                         .gap(gap);
             });
 
@@ -159,6 +158,21 @@ public class QuickSchematicGridHudView extends BaseComponent {
                 SlotModel::key,
                 slot -> slotComponent(feature, slot, onBeforeActivate))
                 .gap(gap);
+    }
+
+    static Component pageTabButton(
+            QuickSchematicGridFeature feature,
+            int pageIndex,
+            Readable<Float> buttonSize) {
+        String icon = feature.getPageIcon(pageIndex);
+        String label = icon != null && !icon.trim().isEmpty() ? icon : String.valueOf(pageIndex + 1);
+        String tooltip = Core.bundle.format("feature.quick-schematic-grid.settings.page-tab", pageIndex + 1);
+
+        return button(label, () -> feature.setActivePage(pageIndex))
+                .style(WebStyles.filterChipText())
+                .size(buttonSize)
+                .tooltip(tooltip)
+                .checked(feature.activePage.map(p -> p != null && p.intValue() == pageIndex));
     }
 
     static Component slotComponent(

@@ -23,6 +23,8 @@ import solim.layout.Scroll;
 import solim.layout.SolimStack;
 import solim.layout.Spacer;
 import solim.layout.Wrap;
+import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
 
 class ElementModifiersTest {
 
@@ -228,5 +230,54 @@ class ElementModifiersTest {
         assertTrue(column.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd = (RoundedDrawable) column.table().getBackground();
         assertEquals(Color.crimson, rd.getFillColor(), "backgroundColor modifier must set fillColor on RoundedDrawable");
+    }
+
+    @Test
+    void cellSizeConstraintsAppliedToAttachedElement() {
+        Row parent = new Row();
+        Button button = new Button();
+        parent.table().add(button.element());
+
+        Cell<?> cell = parent.table().getCell(button.element());
+        assertNotNull(cell);
+
+        button.minWidth(64f).minHeight(32f).maxWidth(128f).maxHeight(96f);
+
+        assertEquals(64f, CellAccess.minWidth(cell), 0.01f);
+        assertEquals(32f, CellAccess.minHeight(cell), 0.01f);
+        assertEquals(128f, CellAccess.maxWidth(cell), 0.01f);
+        assertEquals(96f, CellAccess.maxHeight(cell), 0.01f);
+    }
+
+    @Test
+    void reactiveCellSizeConstraintsAppliedToAttachedElement() {
+        Row parent = new Row();
+        Button button = new Button();
+        parent.table().add(button.element());
+
+        Cell<?> cell = parent.table().getCell(button.element());
+        assertNotNull(cell);
+
+        Signal<Float> minWidthSig = Signal.of(50f);
+        Signal<Float> minHeightSig = Signal.of(30f);
+        Signal<Float> maxWidthSig = Signal.of(100f);
+        Signal<Float> maxHeightSig = Signal.of(80f);
+        button.minWidth(minWidthSig).minHeight(minHeightSig).maxWidth(maxWidthSig).maxHeight(maxHeightSig);
+
+        assertEquals(50f, CellAccess.minWidth(cell), 0.01f);
+        assertEquals(30f, CellAccess.minHeight(cell), 0.01f);
+        assertEquals(100f, CellAccess.maxWidth(cell), 0.01f);
+        assertEquals(80f, CellAccess.maxHeight(cell), 0.01f);
+
+        minWidthSig.set(75f);
+        minHeightSig.set(45f);
+        maxWidthSig.set(150f);
+        maxHeightSig.set(120f);
+        SignalDispatcher.flush();
+
+        assertEquals(75f, CellAccess.minWidth(cell), 0.01f);
+        assertEquals(45f, CellAccess.minHeight(cell), 0.01f);
+        assertEquals(150f, CellAccess.maxWidth(cell), 0.01f);
+        assertEquals(120f, CellAccess.maxHeight(cell), 0.01f);
     }
 }

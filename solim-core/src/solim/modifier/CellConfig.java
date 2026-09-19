@@ -1,6 +1,8 @@
 package solim.modifier;
 
 import solim.reactive.Readable;
+import solim.reactive.Effect;
+import solim.runtime.ComponentContext;
 import arc.scene.Element;
 import solim.core.Component;
 import solim.core.SolimToken;
@@ -46,24 +48,46 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     /** Sets the minimum width to a static value. */
     default SELF minWidth(float v) {
         cellConfig().minWidth = Readable.of(v);
+        if (this instanceof Component) {
+            cellConfig().applySizeToParentCell(((Component) this).element());
+        }
         return self();
     }
 
     /** Sets the minimum width to a reactive value. */
     default SELF minWidth(Readable<Float> v) {
         cellConfig().minWidth = v;
+        if (this instanceof Component) {
+            Element el = ((Component) this).element();
+            cellConfig().applySizeToParentCell(el);
+            if (el != null && v != null) {
+                Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
+                ComponentContext.register(e);
+            }
+        }
         return self();
     }
 
     /** Sets the minimum height to a static value. */
     default SELF minHeight(float v) {
         cellConfig().minHeight = Readable.of(v);
+        if (this instanceof Component) {
+            cellConfig().applySizeToParentCell(((Component) this).element());
+        }
         return self();
     }
 
     /** Sets the minimum height to a reactive value. */
     default SELF minHeight(Readable<Float> v) {
         cellConfig().minHeight = v;
+        if (this instanceof Component) {
+            Element el = ((Component) this).element();
+            cellConfig().applySizeToParentCell(el);
+            if (el != null && v != null) {
+                Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
+                ComponentContext.register(e);
+            }
+        }
         return self();
     }
 
@@ -72,24 +96,46 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     /** Sets the maximum width to a static value. */
     default SELF maxWidth(float v) {
         cellConfig().maxWidth = Readable.of(v);
+        if (this instanceof Component) {
+            cellConfig().applySizeToParentCell(((Component) this).element());
+        }
         return self();
     }
 
     /** Sets the maximum width to a reactive value. */
     default SELF maxWidth(Readable<Float> v) {
         cellConfig().maxWidth = v;
+        if (this instanceof Component) {
+            Element el = ((Component) this).element();
+            cellConfig().applySizeToParentCell(el);
+            if (el != null && v != null) {
+                Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
+                ComponentContext.register(e);
+            }
+        }
         return self();
     }
 
     /** Sets the maximum height to a static value. */
     default SELF maxHeight(float v) {
         cellConfig().maxHeight = Readable.of(v);
+        if (this instanceof Component) {
+            cellConfig().applySizeToParentCell(((Component) this).element());
+        }
         return self();
     }
 
     /** Sets the maximum height to a reactive value. */
     default SELF maxHeight(Readable<Float> v) {
         cellConfig().maxHeight = v;
+        if (this instanceof Component) {
+            Element el = ((Component) this).element();
+            cellConfig().applySizeToParentCell(el);
+            if (el != null && v != null) {
+                Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
+                ComponentContext.register(e);
+            }
+        }
         return self();
     }
 

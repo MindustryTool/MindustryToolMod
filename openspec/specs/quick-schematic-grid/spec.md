@@ -2,7 +2,6 @@
 
 ## Purpose
 Quick access palette for player schematics via a floating HUD or QuickAccess Popup with multi-page navigation, 2D grid matrix, and slot customization.
-
 ## Requirements
 ### Requirement: Display Variants
 The system SHALL support two distinct display variants for the Quick Schematic Grid: a floating persistent HUD and an on-demand Popup.
@@ -69,23 +68,35 @@ The system SHALL allow adding, editing, clearing, and re-picking schematic entri
 - **THEN** the entry is removed from configuration and the slot reverts to an unassigned empty slot
 
 ### Requirement: Multi-Page Navigation and Tab Column
-The system SHALL support up to 7 distinct pages of schematic slots with a dedicated vertical tab column rendered as the first column of the grid.
+The system SHALL support up to 8 distinct pages of schematic slots with a dedicated vertical tab column rendered as the first column of the grid in HUD/Popup, and a responsive wrapping tab bar in Settings. The system SHALL allow assigning a custom icon to each page and display that icon on the page tab button in place of the page number.
 
 #### Scenario: Switching pages via tab column
 - **WHEN** user clicks a page tab button in HUD or Popup
 - **THEN** the active page index switches immediately and the grid renders the schematics configured for that page without closing the popup
 
 #### Scenario: Adding a page in Settings
-- **WHEN** user clicks the Add Page button in Settings when current page count is less than 7
-- **THEN** a new page is created and added to the page tab bar
+- **WHEN** user clicks the Add Page button in Settings when current page count is less than 8
+- **THEN** a new page is created, appended to the page tabs, and selected as the active page
 
 #### Scenario: Removing a page in Settings
 - **WHEN** user confirms deletion of a page in Settings when more than 1 page exists
-- **THEN** the page and its contained entries are removed and the active page adjusts to a valid remaining page
+- **THEN** the page, its contained entries, and its assigned page icon are removed, any subsequent page icons shift down to match their new index, and the active page adjusts to a valid remaining page
 
 #### Scenario: Height adaptation when page count exceeds grid rows
 - **WHEN** the number of vertical items in the tab column exceeds the number of grid rows
 - **THEN** the overall layout height expands to match the tab column height so all tabs remain fully visible and uniform in size
+
+#### Scenario: Page tab displays assigned icon
+- **WHEN** a page has a custom icon (font glyph or game emoji) assigned
+- **THEN** the page tab button in HUD, Popup, and Settings renders that icon instead of the numeric index, with a tooltip indicating the page number
+
+#### Scenario: Page tab falls back to numeric index
+- **WHEN** a page has no custom icon assigned (or the icon is cleared)
+- **THEN** the page tab button in HUD, Popup, and Settings renders the 1-based page index (e.g. "1", "2")
+
+#### Scenario: Page tabs in Settings use wrapping layout
+- **WHEN** multiple page tabs exist in the Settings dialog
+- **THEN** the tabs are rendered inside a `wrap()` container so they flow cleanly across multiple lines when dialog width is constrained
 
 ### Requirement: Sparse Slots and Frameless Display
 The system SHALL render HUD and Popup displays framelessly without an outer background card or container border, displaying unassigned slots as subtle standalone dark tiles.
@@ -112,3 +123,19 @@ The system SHALL display a visual thumbnail preview for each configured schemati
 #### Scenario: Missing or deleted schematic handling
 - **WHEN** a linked schematic can no longer be located in the player's local library
 - **THEN** the system displays a warning placeholder icon and disables activation
+
+### Requirement: Page Icon Configuration in Settings
+The system SHALL allow players to view, pick, and clear the icon assigned to the active page in the Settings dialog.
+
+#### Scenario: Previewing active page icon
+- **WHEN** a page is selected in Settings
+- **THEN** the Page Icon row displays the current icon glyph or a placeholder indicating no icon is assigned
+
+#### Scenario: Picking a page icon
+- **WHEN** user clicks the Pick Icon button in the Page Icon row
+- **THEN** the icon picker dialog opens, and choosing an icon assigns it to the active page and persists the change immediately
+
+#### Scenario: Clearing a page icon
+- **WHEN** user clicks the Clear button in the Page Icon row for a page with an assigned icon
+- **THEN** the icon assignment is removed from configuration and the page tab reverts to displaying its numeric index
+

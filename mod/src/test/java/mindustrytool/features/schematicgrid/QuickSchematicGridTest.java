@@ -338,4 +338,63 @@ class QuickSchematicGridTest {
         assertEquals(1, feature.pageCountConfig.get().intValue());
         assertFalse(feature.deletePage(0)); // Only 1 page left
     }
+
+    @Test
+    void pageIcons_getSetAndClear() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+
+        assertNull(feature.getPageIcon(0));
+        assertNull(feature.getPageIcon(1));
+
+        feature.setPageIcon(0, "⚡");
+        feature.setPageIcon(2, "🛡");
+
+        assertEquals("⚡", feature.getPageIcon(0));
+        assertNull(feature.getPageIcon(1));
+        assertEquals("🛡", feature.getPageIcon(2));
+
+        String json = feature.pageIconsJsonConfig.get();
+        assertNotNull(json);
+        assertTrue(json.contains("⚡"));
+        assertTrue(json.contains("🛡"));
+
+        feature.clearPageIcon(0);
+        assertNull(feature.getPageIcon(0));
+        assertEquals("🛡", feature.getPageIcon(2));
+
+        // Blank string behaves as null
+        feature.setPageIcon(2, "   ");
+        assertNull(feature.getPageIcon(2));
+    }
+
+    @Test
+    void pageIcons_deletePageShiftsIcons() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+        assertTrue(feature.addPage()); // page 1
+        assertTrue(feature.addPage()); // page 2
+
+        feature.setPageIcon(0, "Icon0");
+        feature.setPageIcon(1, "Icon1");
+        feature.setPageIcon(2, "Icon2");
+
+        // Delete middle page (page 1)
+        assertTrue(feature.deletePage(1));
+
+        assertEquals("Icon0", feature.getPageIcon(0));
+        assertEquals("Icon2", feature.getPageIcon(1)); // Shifted from index 2 to index 1
+        assertNull(feature.getPageIcon(2));
+    }
+
+    @Test
+    void pageIcons_persistenceAcrossInstances() {
+        QuickSchematicGridFeature feature1 = new QuickSchematicGridFeature();
+        feature1.addPage();
+        feature1.setPageIcon(0, "First");
+        feature1.setPageIcon(1, "Second");
+
+        // New feature instance reading same settings
+        QuickSchematicGridFeature feature2 = new QuickSchematicGridFeature();
+        assertEquals("First", feature2.getPageIcon(0));
+        assertEquals("Second", feature2.getPageIcon(1));
+    }
 }

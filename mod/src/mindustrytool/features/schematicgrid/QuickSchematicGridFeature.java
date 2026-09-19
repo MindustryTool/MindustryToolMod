@@ -15,6 +15,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
+import mindustrytool.utils.JsonUtils;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
@@ -33,11 +34,11 @@ public class QuickSchematicGridFeature extends Feature {
     public static final String DISPLAY_POPUP = "popup";
 
     public static final int MIN_COLS = 1;
-    public static final int MAX_COLS = 7;
+    public static final int MAX_COLS = 14;
     public static final int MIN_ROWS = 1;
-    public static final int MAX_ROWS = 7;
+    public static final int MAX_ROWS = 14;
     public static final int MIN_PAGES = 1;
-    public static final int MAX_PAGES = 5;
+    public static final int MAX_PAGES = 8;
     public static final float MIN_GAP = 0f;
     public static final float MAX_GAP = 16f;
 
@@ -50,6 +51,7 @@ public class QuickSchematicGridFeature extends Feature {
     public final ConfigValue<Float> buttonGapConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
     public final ConfigValue<String> entriesJsonConfig;
+    public final ConfigValue<String> pageIconsJsonConfig;
 
     public final Signal<Integer> activePage = Signal.of(0);
 
@@ -61,11 +63,13 @@ public class QuickSchematicGridFeature extends Feature {
     public final Signal<Float> ySignal;
 
     private final Signal<List<QuickSchematicEntry>> entries = Signal.of(new ArrayList<QuickSchematicEntry>());
+    private final Signal<List<String>> pageIcons = Signal.of(new ArrayList<String>());
 
     private @Nullable QuickSchematicGridHudView hudView;
     private @Nullable QuickSchematicGridSettingsDialog settingsDialog;
     private boolean quickAccessHooked = false;
     private boolean syncingEntries = false;
+    private boolean syncingPageIcons = false;
 
     public QuickSchematicGridFeature() {
         super(FeatureMetadata.builder()
@@ -86,6 +90,7 @@ public class QuickSchematicGridFeature extends Feature {
         buttonGapConfig = config.floatValue("buttonGap", 4f);
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
         entriesJsonConfig = config.stringValue("entries", "[]");
+        pageIconsJsonConfig = config.stringValue("pageIcons", "[]");
 
         pageCountConfig.signal().subscribe(count -> {
             int max = Math.max(0, (count != null ? count : 1) - 1);
@@ -130,6 +135,20 @@ public class QuickSchematicGridFeature extends Feature {
             }
         });
 
+        pageIcons.set(parsePageIcons(pageIconsJsonConfig.get()));
+
+        pageIconsJsonConfig.signal().subscribe(json -> {
+            if (syncingPageIcons) {
+                return;
+            }
+            syncingPageIcons = true;
+            try {
+                pageIcons.set(parsePageIcons(json));
+            } finally {
+                syncingPageIcons = false;
+            }
+        });
+
         displayModeConfig.signal().subscribe(mode -> updateHud());
     }
 
@@ -151,6 +170,67 @@ public class QuickSchematicGridFeature extends Feature {
         } finally {
             syncingEntries = false;
         }
+    }
+
+    private static List<String> parsePageIcons(@Nullable String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return new ArrayList<String>();
+        }
+        try {
+            List<String> list = JsonUtils.fromJsonArray(String.class, json);
+            return list != null ? list : new ArrayList<String>();
+        } catch (Exception ignored) {
+            return new ArrayList<String>();
+        }
+    }
+
+    private void persistPageIcons(List<String> next) {
+        List<String> safe = next != null ? next : new ArrayList<String>();
+        syncingPageIcons = true;
+        try {
+            pageIcons.set(new ArrayList<>(safe));
+            pageIconsJsonConfig.set(JsonUtils.toJson(safe));
+        } finally {
+            syncingPageIcons = false;
+        }
+    }
+
+    public Readable<List<String>> pageIcons() {
+        return pageIcons;
+    }
+
+    public List<String> getPageIcons() {
+        List<String> current = pageIcons.peek();
+        return current != null ? new ArrayList<>(current) : new ArrayList<String>();
+    }
+
+    public @Nullable String getPageIcon(int pageIndex) {
+        if (pageIndex < 0) {
+            return null;
+        }
+        List<String> list = pageIcons.peek();
+        if (list != null && pageIndex < list.size()) {
+            String icon = list.get(pageIndex);
+            return icon != null && !icon.trim().isEmpty() ? icon : null;
+        }
+        return null;
+    }
+
+    public void setPageIcon(int pageIndex, @Nullable String icon) {
+        if (pageIndex < 0) {
+            return;
+        }
+        List<String> next = getPageIcons();
+        while (next.size() <= pageIndex) {
+            next.add(null);
+        }
+        String clean = icon != null && !icon.trim().isEmpty() ? icon : null;
+        next.set(pageIndex, clean);
+        persistPageIcons(next);
+    }
+
+    public void clearPageIcon(int pageIndex) {
+        setPageIcon(pageIndex, null);
     }
 
     public @Nullable QuickSchematicEntry getEntryAt(int page, int row, int col) {
@@ -220,6 +300,11 @@ public class QuickSchematicGridFeature extends Feature {
                     entry.page -= 1;
                 }
             }
+        }
+        List<String> icons = getPageIcons();
+        if (pageIndex < icons.size()) {
+            icons.remove(pageIndex);
+            persistPageIcons(icons);
         }
         pageCountConfig.set(count - 1);
         if (activePage.get() >= count - 1) {
