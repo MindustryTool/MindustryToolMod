@@ -147,18 +147,20 @@ public final class FeatureSettingsView extends BaseComponent {
 
             row().growX().top().left().gap(unit(2)).children(() -> {
                 spacer();
-                button(FeatureManager::reenable).style(WebStyles.outline()).height(unit(10))
+                button(FeatureManager::reenable).style(WebStyles.secondary()).height(unit(10))
                         .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {
                             icon(Icon.refresh);
                             text(Core.bundle.get("feature.button.re-enable"));
                         });
 
-                button(() -> new GeneralSettingsDialog().show()).style(WebStyles.outline()).height(unit(10))
+                button(() -> new GeneralSettingsDialog().show()).style(WebStyles.primary()).height(unit(10))
                         .tooltip(Core.bundle.get("feature.button.settings")).gap(unit(2)).children(() -> {
                             icon(Icon.settings);
                             text(Core.bundle.get("feature.button.settings"));
                         });
             });
+
+            divider();
         });
     }
 

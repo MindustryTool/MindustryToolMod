@@ -9,6 +9,8 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Scaling;
+import arc.util.Nullable;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import mindustry.Vars;
@@ -27,7 +29,8 @@ import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
-import solim.reactive.Signal;
+import solim.reactive.Query;
+import solim.reactive.QueryKey;
 
 /**
  * Detail dialog showing a high-resolution preview, author, stats, tags, item
@@ -50,13 +53,23 @@ public class SchematicDetailDialog extends SolimDialog {
     private static class DetailContent extends BaseComponent {
         private final SchematicDetailData detail;
         private final String itemId;
-        private final Signal<String> authorName;
+        private final @Nullable String authorId;
+        private final @Nullable Query<String> authorQuery;
 
         DetailContent(SchematicDetailData detail, String itemId) {
             this.detail = detail;
             this.itemId = itemId;
-            this.authorName = Signal.of(detail.getCreatedBy() != null ? detail.getCreatedBy() : "");
-            resolveAuthorName(detail.getCreatedBy());
+            this.authorId = detail.getCreatedBy();
+            this.authorQuery = authorId != null && !authorId.isEmpty()
+                    ? Query.<String>builder()
+                            .key(QueryKey.of("user", authorId))
+                            .fetch(() -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
+                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null && users.get(0).getName() != null
+                                            ? users.get(0).getName()
+                                            : authorId))
+                            .staleTime(Duration.ofMinutes(10))
+                            .build()
+                    : null;
         }
 
         @Override
@@ -118,7 +131,15 @@ public class SchematicDetailDialog extends SolimDialog {
                 card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
                     row().growX().gap(unit(1)).children(() -> {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.3f);
-                        text(authorName).color(Color.white).fontScale(1.3f);
+                        if (authorQuery != null) {
+                            query(authorQuery)
+                            .growX()
+                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
+                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
+                                    .data(name -> text(name).color(Color.white).fontScale(1.3f));
+                        } else {
+                            text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f);
+                        }
                     });
 
                     row().growX().gap(unit(1)).children(() -> {
@@ -191,25 +212,6 @@ public class SchematicDetailDialog extends SolimDialog {
             }
             return "[scarlet]" + Math.min(core.items.get(stack.item), stack.amount)
                     + "[lightgray]/" + stack.amount;
-        }
-
-        private void resolveAuthorName(String createdBy) {
-            if (createdBy == null || createdBy.isEmpty()) {
-                return;
-            }
-
-            MindustryTool.getUserBatch(Collections.singletonList(createdBy))
-                    .whenComplete((users, throwable) -> {
-                        if (throwable != null || users == null || users.isEmpty()) {
-                            return;
-                        }
-
-                        Core.app.post(() -> {
-                            if (!isDisposed() && users.get(0) != null && users.get(0).getName() != null) {
-                                authorName.set(users.get(0).getName());
-                            }
-                        });
-                    });
         }
 
         private static Seq<ItemStack> toItemSeq(List<SchematicRequirement> requirements) {

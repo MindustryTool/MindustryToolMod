@@ -264,6 +264,122 @@ class ModInputTest {
     }
 
     @Test
+    void snapToPlayer_clearsSpectatingTarget() {
+        FreeCameraFeature feature = new FreeCameraFeature();
+        Player mockPlayer = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+        };
+        mockPlayer.x = 240f;
+        mockPlayer.y = 360f;
+        Vars.player = mockPlayer;
+
+        DesktopInput desktopInput = new DesktopInput();
+        desktopInput.panning = true;
+        UnitEntity spectated = UnitEntity.create();
+        spectated.x = 999f;
+        spectated.y = 999f;
+        desktopInput.spectating = spectated;
+        Vars.control.input = desktopInput;
+
+        feature.snapToPlayer();
+
+        assertFalse(desktopInput.panning);
+        assertNull(desktopInput.spectating);
+        assertEquals(240f, Core.camera.position.x, 0.001f);
+        assertEquals(360f, Core.camera.position.y, 0.001f);
+    }
+
+    @Test
+    void modDesktopInput_updateMovement_chasesCameraWhenModOffAndVanillaDetachOn() {
+        FreeCameraFeature freeCam = new FreeCameraFeature();
+        FeatureManager.register(freeCam);
+        freeCam.setEnabled(false);
+        Core.settings.put("detach-camera", true);
+
+        ModDesktopInput input = new ModDesktopInput();
+        Core.camera.position.set(500f, 500f);
+
+        UnitType type = new UnitType("test-vanilla-detach-chase");
+        type.omniMovement = true;
+        UnitEntity unit = new UnitEntity() {
+            @Override
+            public float speed() {
+                return 2f;
+            }
+        };
+        unit.type = type;
+        unit.plans = new Queue<>();
+
+        Player player = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+
+            @Override
+            public mindustry.gen.Unit unit() {
+                return unit;
+            }
+        };
+        player.x = 100f;
+        player.y = 100f;
+        Vars.player = player;
+
+        input.updateMovement(unit);
+
+        // Stock vanilla behavior: unit moves toward the detached camera
+        assertTrue(input.movement.x > 0f);
+        assertTrue(input.movement.y > 0f);
+        assertEquals(2f, input.movement.len(), 0.01f);
+    }
+
+    @Test
+    void modDesktopInput_updateMovement_frozenWhenModOnDespiteVanillaDetach() {
+        FreeCameraFeature freeCam = new FreeCameraFeature();
+        FeatureManager.register(freeCam);
+        freeCam.setEnabled(true);
+        Core.settings.put("detach-camera", true);
+
+        ModDesktopInput input = new ModDesktopInput();
+        Core.camera.position.set(500f, 500f);
+
+        UnitType type = new UnitType("test-mod-detach-precedence");
+        type.omniMovement = true;
+        UnitEntity unit = new UnitEntity() {
+            @Override
+            public float speed() {
+                return 2f;
+            }
+        };
+        unit.type = type;
+        unit.plans = new Queue<>();
+
+        Player player = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+
+            @Override
+            public mindustry.gen.Unit unit() {
+                return unit;
+            }
+        };
+        player.x = 100f;
+        player.y = 100f;
+        Vars.player = player;
+
+        input.updateMovement(unit);
+
+        // Mod flag takes precedence: unit stays frozen while mod free camera is on
+        assertEquals(0f, input.movement.x, 0.001f);
+        assertEquals(0f, input.movement.y, 0.001f);
+    }
+
+    @Test
     void modMobileInput_updateMovement_keepsUnitStationaryWhenFreeCamActiveWithoutJoystick() {
         FreeCameraFeature freeCam = new FreeCameraFeature();
         FeatureManager.register(freeCam);

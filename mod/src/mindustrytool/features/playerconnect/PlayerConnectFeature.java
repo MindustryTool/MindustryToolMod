@@ -13,7 +13,7 @@ import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Threads;
 import arc.util.Timer;
-
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +23,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientServerConnectEvent;
+import solim.reactive.Query;
+import solim.reactive.QueryKey;
 import mindustry.game.EventType.ConnectionEvent;
 import mindustry.game.EventType.HostEvent;
 import mindustry.game.EventType.PlayerIpBanEvent;
@@ -76,10 +78,14 @@ public class PlayerConnectFeature extends Feature {
 
     private final Signal<HostingState> state = Signal.of(HostingState.IDLE);
     private final Signal<Integer> ping = Signal.of(0);
-    private final Signal<List<PlayerConnectRoom>> rooms = Signal.of(Collections.emptyList());
+    private final Query<List<PlayerConnectRoom>> roomsQuery = Query.<List<PlayerConnectRoom>>builder()
+            .key(QueryKey.of("playerconnect", "rooms"))
+            .fetch(() -> MindustryTool.getPlayerConnectRooms(""))
+            .staleTime(Duration.ofSeconds(15))
+            .build();
+            
     private final Signal<List<PlayerConnectProvider>> providers = Signal.of(Collections.emptyList());
     private final Signal<JoinRequest> currentRequest = Signal.of(null);
-    private final Signal<Boolean> isFetching = Signal.of(false);
 
     private final Deque<JoinRequest> pendingQueue = new ArrayDeque<>();
     private final ExecutorService worker = Threads.unboundedExecutor("PlayerConnect-Worker", 1);
@@ -115,7 +121,11 @@ public class PlayerConnectFeature extends Feature {
     }
 
     public Readable<List<PlayerConnectRoom>> getRooms() {
-        return rooms;
+        return roomsQuery.data().map(list -> list != null ? list : Collections.emptyList());
+    }
+
+    public Query<List<PlayerConnectRoom>> getRoomsQuery() {
+        return roomsQuery;
     }
 
     private void registerEventListeners() {
@@ -202,12 +212,13 @@ public class PlayerConnectFeature extends Feature {
         }
 
         PlayerConnectClient.disposePinger();
+        roomsQuery.dispose();
     }
 
     // ─── Signals & Properties ──────────────────────────────────────
 
     public Readable<Boolean> isFetching() {
-        return isFetching;
+        return roomsQuery.fetching();
     }
 
     public Signal<HostingState> stateSignal() {
@@ -218,8 +229,8 @@ public class PlayerConnectFeature extends Feature {
         return ping;
     }
 
-    public Signal<List<PlayerConnectRoom>> roomsSignal() {
-        return rooms;
+    public Readable<List<PlayerConnectRoom>> roomsSignal() {
+        return getRooms();
     }
 
     public Signal<List<PlayerConnectProvider>> providersSignal() {
@@ -456,7 +467,7 @@ public class PlayerConnectFeature extends Feature {
         try {
             PlayerConnectRoomsResponse response = JsonUtils.fromJson(PlayerConnectRoomsResponse.class, json);
             if (response != null && response.getRooms() != null) {
-                Core.app.post(() -> rooms.set(response.getRooms()));
+                Core.app.post(() -> roomsQuery.mutate(response.getRooms()));
                 return;
             }
         } catch (Exception ignored) {
@@ -464,7 +475,7 @@ public class PlayerConnectFeature extends Feature {
         try {
             List<PlayerConnectRoom> list = JsonUtils.fromJsonArray(PlayerConnectRoom.class, json);
             if (list != null) {
-                Core.app.post(() -> rooms.set(list));
+                Core.app.post(() -> roomsQuery.mutate(list));
             }
         } catch (Exception e) {
             Log.debug("Failed to parse SSE room payload: @", e);
@@ -483,21 +494,7 @@ public class PlayerConnectFeature extends Feature {
     }
 
     public void fetchRoomsRest() {
-        Core.app.post(() -> isFetching.set(true));
-
-        MindustryTool.getPlayerConnectRooms("")
-                .thenAccept(data -> {
-                    if (data != null) {
-                        Core.app.post(() -> rooms.set(data));
-                    }
-                })
-                .exceptionally(e -> {
-                    Log.err("Failed to fetch initial PlayerConnect rooms", e);
-                    return null;
-                })
-                .whenComplete((r, e) -> {
-                    Core.app.post(() -> isFetching.set(false));
-                });
+        roomsQuery.refetch();
     }
 
     // ─── Provider Management ───────────────────────────────────────

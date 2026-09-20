@@ -24,6 +24,7 @@ import arc.scene.ui.Label;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import mindustry.ui.Fonts;
+import solim.core.Units;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import arc.mock.MockGL20;
@@ -32,7 +33,14 @@ class ChatMessageGrouperAndHeightTest {
 
     private static Font testFont;
 
-    private static final ChatFeature feature = new ChatFeature();
+    private static ChatFeature feature;
+    
+    private static ChatFeature feature() {
+        if (feature == null) {
+            feature = new ChatFeature();
+        }
+        return feature;
+    }
 
     @BeforeEach
     void setUp() {
@@ -77,11 +85,18 @@ class ChatMessageGrouperAndHeightTest {
         }
         Fonts.def = testFont;
 
+        // Register the label style AFTER testFont exists: a style built before
+        // the font would carry a null font and break the first test in a fresh
+        // JVM ("Missing LabelStyle font").
         Label.LabelStyle labelStyle = new Label.LabelStyle(testFont, Color.white);
         Core.scene.addStyle(Label.LabelStyle.class, labelStyle);
 
         ChatMessageParser.clearCache();
         ChatMessageHeightCalculator.clearCache();
+        // Other test classes leave solim's static viewport signals sized to
+        // their own mock graphics; refresh so layout matches this suite's
+        // graphics and the height calculator's assumptions.
+        Units.update();
     }
 
     private static ChatMessage raw(String id, String author, String content) {
@@ -225,7 +240,7 @@ class ChatMessageGrouperAndHeightTest {
     }
 
     private float measureRealGroupHeight(MessageGroup group, float containerWidth) {
-        return measureRealGroupHeight(group, containerWidth, new ChatStore(feature));
+        return measureRealGroupHeight(group, containerWidth, new ChatStore(feature()));
     }
 
     private float measureRealGroupHeight(MessageGroup group, float containerWidth, ChatStore store) {
@@ -345,7 +360,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightReplySnippetTruncated() {
-        ChatStore store = new ChatStore(feature);
+        ChatStore store = new ChatStore(feature());
         store.selectChannel("ch1");
         ChatMessage target = raw("target-long", "charlie",
                 "This is a very long message that definitely exceeds forty characters in total length for reply testing.");
@@ -362,7 +377,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightReplySnippetShort() {
-        ChatStore store = new ChatStore(feature);
+        ChatStore store = new ChatStore(feature());
         store.selectChannel("ch1");
         ChatMessage target = raw("target-short", "charlie", "Short message");
         store.messages().replace("ch1", Collections.singletonList(target));
@@ -378,7 +393,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightReplyTargetContentNull() {
-        ChatStore store = new ChatStore(feature);
+        ChatStore store = new ChatStore(feature());
         store.selectChannel("ch1");
         ChatMessage target = raw("target-null", "charlie", null);
         store.messages().replace("ch1", Collections.singletonList(target));
@@ -394,7 +409,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightReplyTargetNotFound() {
-        ChatStore store = new ChatStore(feature);
+        ChatStore store = new ChatStore(feature());
         store.selectChannel("ch1");
 
         ChatMessage replyMsg = raw("reply-target-not-found", "bob", "Responding to non-existent");
@@ -408,7 +423,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightWithUserDataAndRoles() {
-        ChatStore store = new ChatStore(feature);
+        ChatStore store = new ChatStore(feature());
         UserData user = new UserData();
         user.setId("alice");
         user.setName("Alice In Wonderland");
@@ -430,7 +445,7 @@ class ChatMessageGrouperAndHeightTest {
 
     @Test
     void testRealComponentHeightWithInvalidRoleColorFallback() {
-        ChatStore store = new ChatStore(feature);
+        ChatStore store = new ChatStore(feature());
         UserData user = new UserData();
         user.setId("alice");
         user.setName("Alice");
@@ -719,3 +734,7 @@ class ChatMessageGrouperAndHeightTest {
         }
     }
 }
+
+
+
+

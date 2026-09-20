@@ -29,6 +29,7 @@ public class FollowAssistTask implements AutoplayTask {
     private final Signal<String> status = Signal.of(Core.bundle.get("feature.autoplay.status.idle"));
     private final FollowAI ai = new FollowAI();
 
+    // TODO: Skip if there r no active builder
     public FollowAssistTask(AutoplayFeature feature) {
         this.targetPlayerName = feature.configGroup().stringValue("follow-assist.target-player", "");
     }

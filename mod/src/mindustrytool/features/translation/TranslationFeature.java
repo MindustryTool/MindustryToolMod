@@ -302,14 +302,8 @@ public class TranslationFeature extends Feature {
             return;
         }
 
-        TranslationProvider provider = getActiveProvider();
-        if (!provider.isConfigured()) {
-            onDeliver.get(rawMessage);
-            return;
-        }
-
         String targetLang = getOutgoingTargetLanguage();
-        provider.translate(parts.content, targetLang)
+        translate(parts.content, targetLang)
                 .thenAccept(translated -> {
                     String formatted = formatOutgoingMessage(parts.content, translated);
                     String finalMessage = parts.commandPrefix + formatted;
@@ -385,14 +379,8 @@ public class TranslationFeature extends Feature {
             return;
         }
 
-        TranslationProvider provider = getActiveProvider();
-        if (!provider.isConfigured()) {
-            onDeliver.get(message);
-            return;
-        }
-
         String targetLang = getTargetLanguage();
-        provider.translate(cleanText, targetLang)
+        translate(cleanText, targetLang)
                 .thenAccept(translated -> {
                     Core.app.post(() -> {
                         if (translated == null || translated.trim().isEmpty()
@@ -422,12 +410,21 @@ public class TranslationFeature extends Feature {
     }
 
     public CompletableFuture<String> testTranslate(String text) {
-        String targetLang = getTargetLanguage();
-        return getActiveProvider().translate(text, targetLang);
+        return translate(text, getTargetLanguage());
     }
 
     public CompletableFuture<String> translate(String text, String targetLanguage) {
-        return getActiveProvider().translate(text, targetLanguage);
+        if (text == null || text.trim().isEmpty()) {
+            return CompletableFuture.completedFuture(text != null ? text : "");
+        }
+        TranslationProvider provider = getActiveProvider();
+        if (!provider.isConfigured()) {
+            return CompletableFuture.completedFuture(text);
+        }
+        // Network-only by contract: translation keys are unbounded per sentence,
+        // so no long-term QueryCache retention. Callers guard duplicate taps.
+        String cleanText = text.trim();
+        return provider.translate(cleanText, targetLanguage);
     }
 
     public void resetToDefaults() {

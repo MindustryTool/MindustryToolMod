@@ -6,6 +6,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -13,12 +14,17 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import solim.core.Component;
 import solim.core.SpacingAware;
+import solim.performance.PerfSpan;
 
 /**
  * Implicit parent stack for declarative UI construction with guaranteed cleanup. Supports
  * customizable cell attachment strategies per container.
+ *
+ * <p>The base class holds only structural state and declares empty profiling hooks. All static
+ * entry points delegate to a singleton instance, allowing a profiling-enabled subclass to be
+ * installed without the base class carrying any monitoring logic.
  */
-public final class ParentStack {
+public class ParentStack {
 
 	@FunctionalInterface
 	public interface Attacher {
@@ -41,47 +47,148 @@ public final class ParentStack {
 		void configure(Cell<?> cell, Element child, @Nullable Component component);
 	}
 
-	private static final Deque<Entry> stack = new ArrayDeque<>();
-	private static @Nullable CellConfigurator cellConfigurator = null;
+	private static volatile ParentStack INSTANCE = new ParentStack();
 
-	private ParentStack() {}
+	protected final Deque<Entry> stack = new ArrayDeque<>();
+	private @Nullable CellConfigurator cellConfigurator = null;
+
+	protected ParentStack() {}
+
+	/** Returns the active singleton instance. */
+	public static ParentStack instance() {
+		return INSTANCE;
+	}
+
+	/** Installs the active singleton instance, falling back to a fresh base instance for {@code null}. */
+	public static void install(@Nullable ParentStack instance) {
+		INSTANCE = instance != null ? instance : new ParentStack();
+	}
 
 	public static void setCellConfigurator(@Nullable CellConfigurator configurator) {
-		cellConfigurator = configurator;
+		INSTANCE.doSetCellConfigurator(configurator);
 	}
 
 	public static void setCellConfigurator(@Nullable BiConsumer<Cell<?>, Element> configurator) {
-		cellConfigurator = configurator != null
+		INSTANCE.doSetCellConfigurator(configurator != null
 				? (cell, child, comp) -> configurator.accept(cell, child)
-				: null;
+				: null);
 	}
 
 	public static void push(Table parent) {
-		push(parent, null);
+		INSTANCE.doPush(parent, null);
 	}
 
 	public static void push(Table parent, Attacher attacher) {
+		INSTANCE.doPush(parent, attacher);
+	}
+
+	public static Table pop() {
+		return INSTANCE.doPop();
+	}
+
+	public static Table current() {
+		return INSTANCE.doCurrent();
+	}
+
+	public static @Nullable Table find(Predicate<Table> predicate) {
+		return INSTANCE.doFind(predicate);
+	}
+
+	public static void clear() {
+		INSTANCE.doClear();
+	}
+
+	public static int size() {
+		return INSTANCE.doSize();
+	}
+
+	/**
+	 * Executes the given supplier in an isolated ParentStack context where no parent is on the stack.
+	 */
+	public static <T> T isolate(Supplier<T> supplier) {
+		return INSTANCE.doIsolate(supplier);
+	}
+
+	/**
+	 * Executes the given runnable in an isolated ParentStack context where no parent is on the stack.
+	 */
+	public static void isolate(Runnable runnable) {
+		INSTANCE.doIsolate(runnable);
+	}
+
+	/**
+	 * Registers a component to be attached when its parent is popped, ensuring the component is fully
+	 * constructed before element() is invoked.
+	 */
+	public static void registerPendingComponent(Component component, Table parent) {
+		INSTANCE.doRegisterPendingComponent(component, parent);
+	}
+
+	/** Attaches all pending components registered for the given entry. */
+	public static void attachPendingComponents(Entry entry) {
+		INSTANCE.doAttachPendingComponents(entry);
+	}
+
+	/** Attaches all pending components registered for the given table. */
+	public static void attachPendingComponents(Table parent) {
+		INSTANCE.doAttachPendingComponents(parent);
+	}
+
+	/** Attach child to current parent if one exists; otherwise no-op. */
+	public static void attachToParent(Element child) {
+		INSTANCE.doAttachToParent(child);
+	}
+
+	public static Element add(Object child) {
+		return INSTANCE.doAdd(child);
+	}
+
+	public static List<PerfSpan> snapshot(int max) {
+		return INSTANCE.doSnapshot(max);
+	}
+
+	public static int totalRecorded() {
+		return INSTANCE.doTotalRecorded();
+	}
+
+	public static void reset() {
+		INSTANCE.doReset();
+	}
+
+	public static void setThreshold(float ms) {
+		INSTANCE.doSetThreshold(ms);
+	}
+
+	public static int maxDepthObserved() {
+		return INSTANCE.doMaxDepthObserved();
+	}
+
+	protected void doSetCellConfigurator(@Nullable CellConfigurator configurator) {
+		this.cellConfigurator = configurator;
+	}
+
+	protected void doPush(Table parent, Attacher attacher) {
 		SolimAssert.checkMainThread();
 		if (parent != null) {
 			stack.push(new Entry(parent, attacher));
 		}
 	}
 
-	public static Table pop() {
+	protected Table doPop() {
 		SolimAssert.checkMainThread();
 		if (!stack.isEmpty()) {
 			Entry popped = stack.pop();
-			attachPendingComponents(popped);
+			doAttachPendingComponents(popped);
 			return popped.table;
 		}
 		return null;
 	}
 
-	public static Table current() {
+	protected Table doCurrent() {
 		return stack.isEmpty() ? null : stack.peek().table;
 	}
 
-	public static @Nullable Table find(Predicate<Table> predicate) {
+	protected @Nullable Table doFind(Predicate<Table> predicate) {
 		if (predicate == null) return null;
 		for (Entry entry : stack) {
 			if (predicate.test(entry.table)) {
@@ -91,18 +198,15 @@ public final class ParentStack {
 		return null;
 	}
 
-	public static void clear() {
+	protected void doClear() {
 		stack.clear();
 	}
 
-	public static int size() {
+	protected int doSize() {
 		return stack.size();
 	}
 
-	/**
-	 * Executes the given supplier in an isolated ParentStack context where no parent is on the stack.
-	 */
-	public static <T> T isolate(Supplier<T> supplier) {
+	protected <T> T doIsolate(Supplier<T> supplier) {
 		if (supplier == null) {
 			return null;
 		}
@@ -116,10 +220,7 @@ public final class ParentStack {
 		}
 	}
 
-	/**
-	 * Executes the given runnable in an isolated ParentStack context where no parent is on the stack.
-	 */
-	public static void isolate(Runnable runnable) {
+	protected void doIsolate(Runnable runnable) {
 		if (runnable == null) {
 			return;
 		}
@@ -133,11 +234,7 @@ public final class ParentStack {
 		}
 	}
 
-	/**
-	 * Registers a component to be attached when its parent is popped, ensuring the component is fully
-	 * constructed before element() is invoked.
-	 */
-	public static void registerPendingComponent(Component component, Table parent) {
+	protected void doRegisterPendingComponent(Component component, Table parent) {
 		if (component != null && parent != null) {
 			for (Entry entry : stack) {
 				if (entry.table == parent) {
@@ -148,15 +245,14 @@ public final class ParentStack {
 		}
 	}
 
-	/** Attaches all pending components registered for the given entry. */
-	public static void attachPendingComponents(Entry entry) {
+	protected void doAttachPendingComponents(Entry entry) {
 		if (entry == null || entry.pendingComponents.isEmpty()) {
 			return;
 		}
 		List<Component> list = new ArrayList<>(entry.pendingComponents);
 		entry.pendingComponents.clear();
 		for (Component comp : list) {
-			Element el = isolate(comp::element);
+			Element el = doIsolate(comp::element);
 			if (el != null && el.parent == null) {
 				doAttach(entry.table, el, entry.attacher, comp);
 			}
@@ -166,30 +262,34 @@ public final class ParentStack {
 		}
 	}
 
-	/** Attaches all pending components registered for the given table. */
-	public static void attachPendingComponents(Table parent) {
+	protected void doAttachPendingComponents(Table parent) {
 		if (parent == null) {
 			return;
 		}
 		for (Entry entry : stack) {
 			if (entry.table == parent) {
-				attachPendingComponents(entry);
+				doAttachPendingComponents(entry);
 				break;
 			}
 		}
 	}
 
-	/** Attach child to current parent if one exists; otherwise no-op. */
-	public static void attachToParent(Element child) {
+	protected void doAttachToParent(Element child) {
 		if (child == null || stack.isEmpty()) {
 			return;
 		}
 		Entry entry = stack.peek();
-		attachPendingComponents(entry);
+		doAttachPendingComponents(entry);
 		doAttach(entry.table, child, entry.attacher, null);
 	}
 
-	private static void doAttach(Table parent, Element child, Attacher attacher, @Nullable Component comp) {
+	protected Element doAdd(Object child) {
+		Element e = ElementResolver.resolve(child);
+		doAttachToParent(e);
+		return e;
+	}
+
+	private void doAttach(Table parent, Element child, Attacher attacher, @Nullable Component comp) {
 		if (parent != null && child != null) {
 			if (child.parent != parent && !parent.getChildren().contains(child, true)) {
 				Cell<?> cell;
@@ -205,9 +305,21 @@ public final class ParentStack {
 		}
 	}
 
-	public static Element add(Object child) {
-		Element e = ElementResolver.resolve(child);
-		attachToParent(e);
-		return e;
+	protected List<PerfSpan> doSnapshot(int max) {
+		return Collections.emptyList();
+	}
+
+	protected int doTotalRecorded() {
+		return 0;
+	}
+
+	protected void doReset() {
+	}
+
+	protected void doSetThreshold(float ms) {
+	}
+
+	protected int doMaxDepthObserved() {
+		return 0;
 	}
 }

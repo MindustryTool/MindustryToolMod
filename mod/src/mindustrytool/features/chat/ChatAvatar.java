@@ -71,7 +71,7 @@ public class ChatAvatar extends BaseComponent {
                             .size(size, size)
                             .center();
 
-                    (radius > 0 ? fallback.rounded(radius, background) : fallback.background(background))
+                    return (radius > 0 ? fallback.rounded(radius, background) : fallback.background(background))
                             .children(() -> {
                                 text(initial)
                                         .color(Color.white)
@@ -83,6 +83,7 @@ public class ChatAvatar extends BaseComponent {
                     if (radius > 0) {
                         img.rounded(radius);
                     }
+                    return img;
                 });
         return stack.element();
     }

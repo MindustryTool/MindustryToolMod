@@ -1,9 +1,9 @@
 package solim.layout;
 import solim.modifier.CellConfig;
 
-import arc.func.Cons;
 import arc.scene.Element;
 import arc.scene.ui.layout.Stack;
+import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
@@ -12,11 +12,17 @@ import arc.scene.ui.layout.Table;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
+import solim.runtime.ReactiveContext;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /** Stack container: overlays children on top of each other. */
 public final class SolimStack implements Component, CellConfig<SolimStack>, ElementConfig<SolimStack> {
     private final Stack stack = new Stack();
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private final List<Component> ownedLayers = new ArrayList<>();
     private boolean disposed = false;
 
     public SolimStack() {
@@ -57,28 +63,44 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
         return this;
     }
 
-    public SolimStack layer(Runnable r) {
-        Row layerRow = ParentStack.isolate(() -> {
-            Row row = new Row();
-            row.children(r);
-            return row;
-        });
-        stack.add(layerRow.element());
+    public SolimStack layer(@Nullable Supplier<Component> supplier) {
+        if (disposed || supplier == null) {
+            return this;
+        }
+        @Nullable Component component = ReactiveContext.untracked(() -> ParentStack.isolate(supplier));
+        attachLayer(component);
         return this;
     }
 
-    public SolimStack children(Runnable r) {
-        if (r != null) {
-            layer(r);
+    public SolimStack layer(@Nullable Function<Element, Component> factory) {
+        if (disposed || factory == null) {
+            return this;
         }
+        @Nullable Component component = ReactiveContext
+                .untracked(() -> ParentStack.isolate(() -> factory.apply(stack)));
+        attachLayer(component);
         return this;
     }
 
-    public SolimStack children(Cons<Element> r) {
-        if (r != null) {
-            layer(() -> r.get(element()));
+    private void attachLayer(@Nullable Component component) {
+        if (component == null) {
+            return;
         }
-        return this;
+        try {
+            Element child = component.element();
+            if (child != null && !disposed) {
+                stack.add(child);
+                ownedLayers.add(component);
+            } else {
+                component.dispose();
+            }
+        } catch (RuntimeException e) {
+            component.dispose();
+            throw e;
+        } catch (Error e) {
+            component.dispose();
+            throw e;
+        }
     }
 
     @Override
@@ -92,6 +114,10 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
             return;
         }
         disposed = true;
+        for (int i = ownedLayers.size() - 1; i >= 0; i--) {
+            ownedLayers.get(i).dispose();
+        }
+        ownedLayers.clear();
     }
 
     @Override

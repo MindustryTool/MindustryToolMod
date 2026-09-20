@@ -68,11 +68,19 @@ The system SHALL allow adding, editing, clearing, and re-picking schematic entri
 - **THEN** the entry is removed from configuration and the slot reverts to an unassigned empty slot
 
 ### Requirement: Multi-Page Navigation and Tab Column
-The system SHALL support up to 8 distinct pages of schematic slots with a dedicated vertical tab column rendered as the first column of the grid in HUD/Popup, and a responsive wrapping tab bar in Settings. The system SHALL allow assigning a custom icon to each page and display that icon on the page tab button in place of the page number.
+The system SHALL support up to 8 distinct pages of schematic slots with configurable placement on the left, right, top, or bottom of the schematic grid in HUD/Popup, and a responsive wrapping tab bar in Settings. The system SHALL allow assigning a custom icon to each page and display that icon on the page tab button in place of the page number.
 
-#### Scenario: Switching pages via tab column
+#### Scenario: Switching pages via tab bar
 - **WHEN** user clicks a page tab button in HUD or Popup
 - **THEN** the active page index switches immediately and the grid renders the schematics configured for that page without closing the popup
+
+#### Scenario: Left and Right tab placement
+- **WHEN** page navigation is configured to Left or Right
+- **THEN** the tabs are rendered as a vertical column on the specified side of the schematic grid with the drag handle at the top
+
+#### Scenario: Top and Bottom tab placement
+- **WHEN** page navigation is configured to Top or Bottom
+- **THEN** the tabs are rendered as a horizontal row on the specified side of the schematic grid with the drag handle at the start of the row
 
 #### Scenario: Adding a page in Settings
 - **WHEN** user clicks the Add Page button in Settings when current page count is less than 8
@@ -83,7 +91,7 @@ The system SHALL support up to 8 distinct pages of schematic slots with a dedica
 - **THEN** the page, its contained entries, and its assigned page icon are removed, any subsequent page icons shift down to match their new index, and the active page adjusts to a valid remaining page
 
 #### Scenario: Height adaptation when page count exceeds grid rows
-- **WHEN** the number of vertical items in the tab column exceeds the number of grid rows
+- **WHEN** the number of vertical items in the tab column exceeds the number of grid rows in Left or Right placement
 - **THEN** the overall layout height expands to match the tab column height so all tabs remain fully visible and uniform in size
 
 #### Scenario: Page tab displays assigned icon
@@ -138,4 +146,26 @@ The system SHALL allow players to view, pick, and clear the icon assigned to the
 #### Scenario: Clearing a page icon
 - **WHEN** user clicks the Clear button in the Page Icon row for a page with an assigned icon
 - **THEN** the icon assignment is removed from configuration and the page tab reverts to displaying its numeric index
+
+### Requirement: Configurable Buttons Opacity
+The system SHALL allow configuring the opacity of all HUD buttons rendered in the Quick Schematic Grid.
+
+#### Scenario: Adjusting button opacity
+- **WHEN** user adjusts the button opacity slider in Settings between 20% and 100%
+- **THEN** the opacity of all HUD buttons (drag handle, page tabs, empty slots, and schematic preview buttons) updates immediately to the configured level
+
+### Requirement: Lazy Schematic Picker Loading
+The system SHALL lazily load schematics and their preview textures in the Schematic Picker Dialog to eliminate UI freezes.
+
+#### Scenario: Incremental list batching
+- **WHEN** the user opens the Schematic Picker Dialog with a large library of schematics
+- **THEN** the dialog renders an initial batch of 36 items and expands incrementally as the user scrolls
+
+#### Scenario: Throttled preview rendering
+- **WHEN** schematics without cached preview textures are displayed in the picker
+- **THEN** the system displays a placeholder card and enqueues preview generation at a rate of at most 2 previews per frame
+
+#### Scenario: Resetting display on search or tag filter
+- **WHEN** the user modifies the search text or selects a different tag filter
+- **THEN** the displayed batch resets to the first 36 filtered items
 

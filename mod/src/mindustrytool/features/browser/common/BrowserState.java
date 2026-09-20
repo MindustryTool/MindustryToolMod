@@ -1,36 +1,39 @@
 package mindustrytool.features.browser.common;
 
-import arc.Core;
 import arc.struct.Seq;
+import arc.util.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustrytool.Config;
-import solim.reactive.Effect;
+import solim.core.Disposable;
+import solim.reactive.Query;
+import solim.reactive.QueryKey;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 /**
  * Generic reactive state for a paged browser with search, tag filtering, and
  * sort. Pages are zero-based internally, matching the API convention.
  *
+ * Created in dialog constructors outside any component scope, so it owns its
+ * {@code Query} explicitly: dialogs must dispose the state in
+ * {@code onDispose()} to release the {@code QueryCache} observer.
+ *
  * @param <T> the item type returned by the API
  */
-public class BrowserState<T> {
+public class BrowserState<T> implements Disposable {
 
     public static final int PAGE_SIZE = 20;
 
     private final Signal<Integer> pageSize = Signal.of(PAGE_SIZE);
-    private final Signal<String> query = Signal.of("");
+    private final Signal<String> searchQuery = Signal.of("");
     private final Signal<Seq<String>> selectedTags = Signal.of(new Seq<String>());
     private final Signal<Seq<String>> selectedBlocks = Signal.of(new Seq<String>());
     private final Signal<String> sort = Signal.of(Config.sorts.get(0).getValue());
     private final Signal<String> verification = Signal.of("VERIFIED");
     private final Signal<Integer> page = Signal.of(0);
-    private final Signal<Seq<T>> items = Signal.of(new Seq<T>());
-    private final Signal<Boolean> loading = Signal.of(false);
-    private final Signal<String> error = Signal.of(null);
-
-    private final Fetcher<T> fetcher;
-    private Effect autoFetch;
+    private final Signal<Boolean> active = Signal.of(false);
+    private final Query<List<T>> queryPrimitive;
 
     @FunctionalInterface
     public interface Fetcher<T> {
@@ -38,55 +41,51 @@ public class BrowserState<T> {
     }
 
     public BrowserState(Fetcher<T> fetcher) {
-        this.fetcher = fetcher;
+        this.queryPrimitive = Query.<List<T>>builder()
+                .key(this::queryKey)
+                .enabled(active)
+                .fetch(() -> fetcher.fetch(this))
+                .build();
+    }
+
+    /**
+     * Structural identity of the current request. Recomputed inside the query
+     * effect so every parameter change (pagination, search, filters, sort)
+     * triggers a fresh fetch and rapid parameter changes never join a
+     * request made for different parameters.
+     */
+    private QueryKey queryKey() {
+        return QueryKey.of("browser",
+                page.get(),
+                pageSize.get(),
+                sort.get(),
+                verification.get(),
+                searchQuery.get(),
+                selectedTags.get().list(),
+                selectedBlocks.get().list());
     }
 
     public void start() {
-        if (autoFetch != null) {
-            return;
-        }
-        autoFetch = Effect.of(() -> {
-            query.get();
-            selectedTags.get();
-            selectedBlocks.get();
-            sort.get();
-            verification.get();
-            page.get();
-            pageSize.get();
-            doFetch();
-        });
+        active.set(true);
     }
 
     public void stop() {
-        if (autoFetch != null) {
-            autoFetch.dispose();
-            autoFetch = null;
-        }
+        active.set(false);
+    }
+
+    @Override
+    public void dispose() {
+        stop();
+        queryPrimitive.dispose();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return queryPrimitive.isDisposed();
     }
 
     public void refresh() {
-        doFetch();
-    }
-
-    private void doFetch() {
-        loading.set(true);
-        error.set(null);
-
-        fetcher.fetch(this)
-                .whenComplete((result, throwable) -> {
-                    Core.app.post(() -> {
-                        loading.set(false);
-                        if (throwable != null) {
-                            Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
-                            String message = cause.getMessage() != null ? cause.getMessage() : cause.toString();
-                            error.set(message);
-                            items.set(new Seq<T>());
-                        } else {
-                            error.set(null);
-                            items.set(result != null ? Seq.with(result) : new Seq<T>());
-                        }
-                    });
-                });
+        queryPrimitive.refetch();
     }
 
     public void nextPage() {
@@ -163,8 +162,8 @@ public class BrowserState<T> {
         resetPage();
     }
 
-    public Signal<String> query() {
-        return query;
+    public Signal<String> searchQuery() {
+        return searchQuery;
     }
 
     public Signal<Seq<String>> selectedTags() {
@@ -205,15 +204,45 @@ public class BrowserState<T> {
         }
     }
 
-    public Signal<Seq<T>> items() {
-        return items;
+    public Query<List<T>> query() {
+        return queryPrimitive;
     }
 
-    public Signal<Boolean> loading() {
-        return loading;
+    public Readable<Seq<T>> items() {
+        return queryPrimitive.data().map(list -> list != null ? Seq.with(list) : new Seq<T>());
     }
 
-    public Signal<String> error() {
-        return error;
+    /**
+     * Pure slice helper for chunked rendering: returns a copy of the first
+     * {@code limit} items, or an empty sequence when the input is null.
+     */
+    public static <T> Seq<T> firstItems(@Nullable Seq<T> all, int limit) {
+        Seq<T> out = new Seq<>();
+        if (all == null) {
+            return out;
+        }
+        int count = Math.min(Math.max(0, limit), all.size);
+        for (int i = 0; i < count; i++) {
+            out.add(all.get(i));
+        }
+        return out;
+    }
+
+    /**
+     * Intentionally backed by {@code fetching()} rather than {@code loading()}:
+     * browser views render a full spinner on every background refetch
+     * (stale-while-revalidate at the view layer), so any in-flight fetch —
+     * initial or background — maps to the loading state.
+     */
+    public Readable<Boolean> loading() {
+        return queryPrimitive.fetching();
+    }
+
+    public Readable<String> error() {
+        return queryPrimitive.error().map(err -> {
+            if (err == null) return null;
+            Throwable cause = err.getCause() != null ? err.getCause() : err;
+            return cause.getMessage() != null ? cause.getMessage() : cause.toString();
+        });
     }
 }

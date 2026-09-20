@@ -20,6 +20,7 @@ import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
 import mindustrytool.services.MindustryTool;
 import mindustrytool.utils.JsonUtils;
+import solim.reactive.Effect;
 
 public class ChatService {
 
@@ -39,15 +40,46 @@ public class ChatService {
     private volatile long lastEventTime = 0L;
     private @Nullable Task watchdogTask;
     private final AtomicBoolean reconnecting = new AtomicBoolean(false);
+    private @Nullable String lastAutoLoadedChannelId;
 
     public ChatService(ChatStore store, Supplier<Boolean> windowOpenSupplier) {
         this.store = store;
         this.windowOpenSupplier = windowOpenSupplier;
 
-        store.channels().activeId().subscribe(channelId -> {
-            if (channelId != null && !channelId.isEmpty()) {
-                loadMessages(channelId);
-                loadUsers(channelId);
+        Effect.of(() -> {
+            String channelId = store.channels().activeId().get();
+            if (channelId == null || channelId.isEmpty()) {
+                return;
+            }
+            List<ChannelDto> channels = store.channels().channelsQuery().data().get();
+            if (channels == null || channels.isEmpty()) {
+                return;
+            }
+            boolean exists = false;
+            for (ChannelDto c : channels) {
+                if (Objects.equals(c.getId(), channelId)) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                return;
+            }
+            if (Objects.equals(lastAutoLoadedChannelId, channelId)) {
+                return;
+            }
+            lastAutoLoadedChannelId = channelId;
+            loadMessages(channelId);
+        });
+
+        Effect.of(() -> {
+            List<ChannelDto> channels = store.channels().channelsQuery().data().get();
+            if (channels != null) {
+                for (ChannelDto c : channels) {
+                    if (c.getId() != null && c.getLastMessageId() != null) {
+                        store.unread().setLatestMessage(c.getId(), c.getLastMessageId());
+                    }
+                }
             }
         });
     }
@@ -87,38 +119,7 @@ public class ChatService {
     }
 
     public void refreshChannels() {
-        store.channels().setLoading(true);
-        store.channels().setError(null);
-
-        MindustryTool.getChatChannels().thenAccept(channels -> {
-            Core.app.post(() -> {
-                store.channels().setLoading(false);
-                store.channels().replace(channels);
-                if (channels != null) {
-                    for (ChannelDto c : channels) {
-                        if (c.getId() != null && c.getLastMessageId() != null) {
-                            store.unread().setLatestMessage(c.getId(), c.getLastMessageId());
-                        }
-                    }
-                }
-                String activeId = store.channels().currentActiveId();
-                if (activeId != null && !activeId.isEmpty()) {
-                    boolean open = windowOpenSupplier.get();
-                    if (open) {
-                        store.unread().markAsRead(activeId);
-                    }
-                    loadMessages(activeId);
-                    loadUsers(activeId);
-                }
-            });
-        }).exceptionally(e -> {
-            Core.app.post(() -> {
-                store.channels().setLoading(false);
-                store.channels().setError(extractError(e));
-            });
-            Log.err("Failed to fetch chat channels", e);
-            return null;
-        });
+        store.channels().channelsQuery().refetch();
     }
 
     public void refresh(@Nullable String channelId) {
@@ -129,7 +130,7 @@ public class ChatService {
         }
 
         loadMessages(channelId);
-        loadUsers(channelId);
+        store.members().query().refetch();
         checkConnectionAndReconnect();
     }
 
@@ -295,29 +296,6 @@ public class ChatService {
         }).exceptionally(e -> {
             Core.app.post(() -> store.messages().setLoadingOlder(false));
             Log.err("Failed to fetch older chat messages for " + channelId, e);
-            return null;
-        });
-    }
-
-    public void loadUsers(String channelId) {
-        if (channelId == null || channelId.isEmpty()) {
-            return;
-        }
-
-        store.members().setLoading(channelId, true);
-        store.members().setError(channelId, null);
-
-        MindustryTool.getChatUsers(channelId).thenAccept(users -> {
-            Core.app.post(() -> {
-                store.members().setLoading(channelId, false);
-                store.members().replace(channelId, users);
-            });
-        }).exceptionally(e -> {
-            Core.app.post(() -> {
-                store.members().setLoading(channelId, false);
-                store.members().setError(channelId, extractError(e));
-            });
-            Log.err("Failed to fetch chat users for " + channelId, e);
             return null;
         });
     }
@@ -489,6 +467,9 @@ public class ChatService {
             }
         }
         if (!missing.isEmpty()) {
+            // Network-only by contract: user profiles are fetched directly per
+            // batch with no long-term QueryCache retention. The store itself
+            // dedupes repeat authors within the session.
             MindustryTool.getUserBatch(missing).thenAccept(userDataList -> {
                 if (userDataList != null) {
                     Core.app.post(() -> store.users().putAll(userDataList));

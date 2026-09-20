@@ -63,6 +63,9 @@ public class SchematicCard extends BaseComponent {
         String imageUrl = BrowserImages.schematicPreviewUrl(schematic.getItemId());
         String title = schematic.getName() != null ? schematic.getName()
                 : Core.bundle.get("browser.schematic.unnamed");
+        String likesText = BrowserStatsBadge.formatCount(BrowserImages.count(schematic.getLikes()));
+        String commentsText = BrowserStatsBadge.formatCount(BrowserImages.count(schematic.getComments()));
+        String downloadsText = BrowserStatsBadge.formatCount(BrowserImages.count(schematic.getDownloads()));
 
         Readable<Float> size = previewHeight != null ? previewHeight : Readable.of(CARD_SIZE);
 
@@ -76,47 +79,46 @@ public class SchematicCard extends BaseComponent {
                             .size(size)
                             .onClick(onClick)
                             .children(() -> {
-                                stack().grow().children(() -> {
-                                    networkImage(imageUrl)
-                                            .placeholder(Icon.image)
-                                            .fallback(Icon.image)
-                                            .grow()
-                                            .rounded(8)
-                                            .scaling(Scaling.fit);
-                                }).children(() -> {
-                                    column().grow().children(() -> {
-                                        spacer();
-                                        row().growX()
-                                                .background(Styles.black8)
-                                                .padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f))
-                                                .center()
-                                                .children(() -> {
-                                                    text(title)
-                                                            .style(Styles.defaultLabel)
-                                                            .color(Color.white)
-                                                            .ellipsis(true)
-                                                            .center()
-                                                            .growX();
-                                                });
-                                    });
-                                });
+                                stack().grow()
+                                        .layer(() -> networkImage()
+                                                .rounded(8)
+                                                .scaling(Scaling.fit)
+                                                .grow()
+                                                .url(imageUrl)
+                                                .placeholder(Icon.image)
+                                                .fallback(Icon.image))
+                                        .layer(() -> column().grow().children(() -> {
+                                            spacer();
+                                            row().growX()
+                                                    .background(Styles.black8)
+                                                    .padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f))
+                                                    .center()
+                                                    .children(() -> {
+                                                        text(title)
+                                                                .style(Styles.defaultLabel)
+                                                                .color(Color.white)
+                                                                .ellipsis(true)
+                                                                .center()
+                                                                .growX();
+                                                    });
+                                        }));
                             });
 
                     row().width(size).gap(unit(1.5f)).children(() -> {
                         statButton(
-                                BrowserStatsBadge.formatCount(BrowserImages.count(schematic.getLikes())),
+                                likesText,
                                 FileIcon.of("heart.png", Icon.upOpenSmall),
                                 Color.white,
                                 onDetails,
                                 Core.bundle.get("browser.schematic.details"));
                         statButton(
-                                BrowserStatsBadge.formatCount(BrowserImages.count(schematic.getComments())),
+                                commentsText,
                                 FileIcon.of("message-circle.png"),
                                 Color.white,
                                 onDetails,
                                 Core.bundle.get("browser.schematic.details"));
                         statButton(
-                                BrowserStatsBadge.formatCount(BrowserImages.count(schematic.getDownloads())),
+                                downloadsText,
                                 Icon.downloadSmall,
                                 schematic.getDownloads() != null && schematic.getDownloads() > 0 ? Color.sky
                                         : Color.white,

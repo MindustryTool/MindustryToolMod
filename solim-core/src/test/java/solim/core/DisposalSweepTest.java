@@ -415,7 +415,7 @@ class DisposalSweepTest {
 	@Test
 	void networkImageUrlBindingDies() {
 		AtomicInteger loads = new AtomicInteger(0);
-		NetworkImage.setImageLoader((url, onSuccess, onError) -> loads.incrementAndGet());
+		NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> loads.incrementAndGet());
 		Signal<String> url = Signal.of("sweep://a");
 		NetworkImage image = new NetworkImage(url);
 		assertEquals(1, loads.get());
@@ -661,3 +661,4 @@ class DisposalSweepTest {
 		assertEquals(0, ComponentContext.size());
 	}
 }
+

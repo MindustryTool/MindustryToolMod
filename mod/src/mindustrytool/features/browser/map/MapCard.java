@@ -58,6 +58,9 @@ public class MapCard extends BaseComponent {
         String imageUrl = BrowserImages.mapPreviewUrl(map.getItemId());
         String title = map.getName() != null ? map.getName()
                 : Core.bundle.get("browser.map.unnamed");
+        String likesText = BrowserStatsBadge.formatCount(BrowserImages.count(map.getLikes()));
+        String commentsText = BrowserStatsBadge.formatCount(BrowserImages.count(map.getComments()));
+        String downloadsText = BrowserStatsBadge.formatCount(BrowserImages.count(map.getDownloads()));
 
         Readable<Float> size = previewHeight != null ? previewHeight : Readable.of(CARD_SIZE);
 
@@ -66,52 +69,52 @@ public class MapCard extends BaseComponent {
                 .width(size)
                 .gap(unit(2))
                 .children(() -> {
-                    card(WebStyles.previewCardBackground())
+                    card()
+                            .background(Color.black)
                             .name("MapCard-preview-" + map.getItemId())
                             .size(size)
                             .onClick(onClick)
                             .children(() -> {
-                                stack().grow().children(() -> {
-                                    networkImage(imageUrl)
-                                            .placeholder(Icon.terrain)
-                                            .fallback(Icon.terrain)
-                                            .grow()
-                                            .rounded(8)
-                                            .scaling(Scaling.fit);
-                                }).children(() -> {
-                                    column().grow().children(() -> {
-                                        spacer();
-                                        row().growX()
-                                                .background(Styles.black8)
-                                                .padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f))
-                                                .center()
-                                                .children(() -> {
-                                                    text(title)
-                                                            .style(Styles.defaultLabel)
-                                                            .color(Color.white)
-                                                            .ellipsis(true)
-                                                            .center()
-                                                            .growX();
-                                                });
-                                    });
-                                });
+                                stack().grow()
+                                        .layer(() -> networkImage()
+                                                .rounded(8)
+                                                .scaling(Scaling.fit)
+                                                .grow()
+                                                .url(imageUrl)
+                                                .placeholder(Icon.terrain)
+                                                .fallback(Icon.terrain))
+                                        .layer(() -> column().grow().children(() -> {
+                                            spacer();
+                                            row().growX()
+                                                    .background(Styles.black8)
+                                                    .padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f))
+                                                    .center()
+                                                    .children(() -> {
+                                                        text(title)
+                                                                .style(Styles.defaultLabel)
+                                                                .color(Color.white)
+                                                                .ellipsis(true)
+                                                                .center()
+                                                                .growX();
+                                                    });
+                                        }));
                             });
 
                     row().width(size).gap(unit(1.5f)).children(() -> {
                         statButton(
-                                BrowserStatsBadge.formatCount(BrowserImages.count(map.getLikes())),
+                                likesText,
                                 FileIcon.of("heart.png", Icon.upOpenSmall),
                                 Color.white,
                                 onDetails,
                                 Core.bundle.get("browser.map.details"));
                         statButton(
-                                BrowserStatsBadge.formatCount(BrowserImages.count(map.getComments())),
+                                commentsText,
                                 FileIcon.of("message-circle.png"),
                                 Color.white,
                                 onDetails,
                                 Core.bundle.get("browser.map.details"));
                         statButton(
-                                BrowserStatsBadge.formatCount(BrowserImages.count(map.getDownloads())),
+                                downloadsText,
                                 Icon.downloadSmall,
                                 map.getDownloads() != null && map.getDownloads() > 0 ? Color.sky : Color.white,
                                 onDownload,

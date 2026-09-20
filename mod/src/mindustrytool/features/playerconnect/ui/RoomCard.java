@@ -179,11 +179,20 @@ public class RoomCard extends BaseComponent {
 
     private void promptJoin(boolean secured, List<String> missingMods, List<String> unneededMods) {
         if (secured) {
-            Vars.ui.showTextInput(
-                    Core.bundle.get("feature.player-connect.enter-password", "Enter Password"),
-                    Core.bundle.get("feature.player-connect.password", "Password:"),
-                    "",
-                    password -> handleJoinWithPassword(password != null ? password : "", missingMods, unneededMods));
+            try {
+                PlayerConnectLink link = PlayerConnectLink.fromString(room.getLink());
+                String roomId = link.roomId;
+                String saved = PlayerConnectClient.getSavedPassword(roomId);
+
+                Vars.ui.showTextInput(
+                        Core.bundle.get("feature.player-connect.enter-password", "Enter Password"),
+                        Core.bundle.get("feature.player-connect.password", "Password:"),
+                        saved,
+                        password -> handleJoinWithPassword(password != null ? password : "", missingMods,
+                                unneededMods));
+            } catch (Exception e) {
+                Vars.ui.showException(e);
+            }
         } else {
             handleJoinWithPassword("", missingMods, unneededMods);
         }

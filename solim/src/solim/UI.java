@@ -61,7 +61,12 @@ import solim.runtime.SignalDispatcher;
 import solim.reactive.Signals;
 import solim.reactive.Dynamic;
 import solim.reactive.ForEach;
+import solim.reactive.Mutation;
+import solim.reactive.Query;
+import solim.reactive.QueryKey;
+import solim.reactive.QueryView;
 import solim.core.Units;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Public entry point and declarative UI facade for Solim. This class exposes
@@ -124,10 +129,6 @@ public final class UI {
         SolimStack s = new SolimStack();
         ParentStack.attachToParent(s.element());
         return s;
-    }
-
-    public static SolimStack stack(@Nullable Runnable r) {
-        return stack().children(r);
     }
 
     public static Grid grid() {
@@ -530,6 +531,37 @@ public final class UI {
 
     public static Readable<Boolean> isPortrait() {
         return Signals.isPortrait();
+    }
+
+    public static <T> Query<T> query(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
+        return Query.of(key, fetcher);
+    }
+
+    public static <T> Query<T> query(QueryKey key, Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
+        return Query.of(key, enabled, fetcher);
+    }
+
+    /**
+     * Creates a stateless query under an anonymous key that cannot be targeted
+     * by cache invalidation. Use {@code Query.builder()} for keyed or
+     * configured queries.
+     */
+    public static <T> Query<T> query(Supplier<CompletableFuture<T>> fetcher) {
+        return Query.noKey(fetcher);
+    }
+
+    public static <T> QueryView<T> query(Query<T> query) {
+        QueryView<T> qv = QueryView.of(query);
+        ParentStack.attachToParent(qv.element());
+        return qv;
+    }
+
+    public static <T, R> Mutation<T, R> mutation(Function<T, CompletableFuture<R>> mutator) {
+        return Mutation.of(mutator);
+    }
+
+    public static <R> Mutation<Void, R> mutation(Supplier<CompletableFuture<R>> mutator) {
+        return Mutation.of(mutator);
     }
 
     // --- Structural & Dynamic ---

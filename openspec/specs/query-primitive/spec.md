@@ -1,7 +1,21 @@
-## ADDED Requirements
+# query-primitive Specification
+
+## Purpose
+
+Async reactive primitive `Query<T>` — the async counterpart to `Computed` — that tracks reactive dependencies, auto-fetches when deps change, auto-marshals results to the main thread, and exposes results as `Readable<>` signals. Established by change `solim-query` to unify data fetching patterns.
+
+## Requirements
 
 ### Requirement: Query Creation
-`Query<T>` SHALL be created via `Query.of(QueryKey key, Supplier<CompletableFuture<T>> fetcher)`. It SHALL automatically register with the active `ComponentContext` for lifecycle ownership.
+`Query<T>` SHALL be created via `Query.of(QueryKey key, Supplier<CompletableFuture<T>> fetcher)` for simple queries, or via `Query.builder()` for advanced configuration. The builder SHALL support:
+- `.key(QueryKey)` — static cache key
+- `.key(Supplier<QueryKey>)` — dynamic cache key recomputed per fetch
+- `.fetch(Supplier<CompletableFuture<T>>)` — required fetcher
+- `.enabled(Readable<Boolean>)` — enablement gate
+- `.staleTime(Duration)`, `.gcTime(Duration)`, `.retry(int)`, `.retryDelay(Duration)`, `.refetchInterval(Duration)` — options
+- `.build()` — constructs the Query
+
+`Query<T>` SHALL additionally be created via `Query.noKey(Supplier<CompletableFuture<T>>)` for stateless queries; such queries use an anonymous key and cannot be targeted by cache invalidation. All queries SHALL automatically register with the active `ComponentContext` for lifecycle ownership. `Query.ofDynamic(...)`, the post-construction chain configuration methods, and the `Query.of(Readable<Boolean>, Supplier)` overload SHALL NOT exist.
 
 #### Scenario: Query created in component build
 - **WHEN** `Query.of(key, fetcher)` is called inside a component's `build()` method
@@ -10,6 +24,26 @@
 #### Scenario: Query eager fetch
 - **WHEN** a Query is created
 - **THEN** it SHALL immediately trigger its first fetch (unless disabled or cache has fresh data)
+
+#### Scenario: Builder with static key
+- **WHEN** a Query is built via `Query.builder().key(QueryKey.of("user", id)).fetch(...).build()`
+- **THEN** the resulting Query SHALL behave identically to `Query.of(key, fetcher)` with the supplied options applied
+
+#### Scenario: Builder with dynamic key
+- **WHEN** a Query is built via `Query.builder().key(() -> QueryKey.of("page", page.get())).fetch(...).build()`
+- **THEN** the cache key SHALL be recomputed before every fetch from reactive state, and each parameter combination SHALL own its own cache entry and in-flight request
+
+#### Scenario: Builder with all options
+- **WHEN** a Query is built with `.staleTime(...)`, `.gcTime(...)`, `.retry(n)`, `.retryDelay(...)`, and `.refetchInterval(...)` applied before `.build()`
+- **THEN** all options SHALL be in effect before the first fetch is triggered
+
+#### Scenario: Builder without key
+- **WHEN** a Query is built via `Query.builder().fetch(...).build()` without a key
+- **THEN** the Query SHALL use an anonymous key equivalent to `Query.noKey(fetcher)`
+
+#### Scenario: Stateless noKey query
+- **WHEN** `Query.noKey(fetcher)` is called
+- **THEN** a Query with an anonymous key SHALL be created that cannot be targeted by `QueryCache.invalidate(QueryKey)`
 
 ### Requirement: Reactive Dependency Tracking
 `Query` SHALL automatically track reactive dependencies read inside the fetcher lambda, using the same `ReactiveContext` mechanism as `Computed` and `Effect`.
@@ -64,10 +98,10 @@ All signal mutations resulting from async fetch completion SHALL be executed on 
 - **THEN** fetch A's result SHALL be discarded and only fetch B's result SHALL be applied
 
 ### Requirement: Enabled/Disabled Queries
-`Query` SHALL support an `.enabled(Readable<Boolean>)` configuration. When disabled, the Query SHALL not fetch and SHALL retain its current state.
+`Query` SHALL support an `.enabled(Readable<Boolean>)` builder option. When disabled, the Query SHALL not fetch and SHALL retain its current state.
 
 #### Scenario: Disabled query does not fetch
-- **WHEN** a Query is created with `.enabled(Readable.of(false))`
+- **WHEN** a Query is created with `.enabled(Readable.of(false))` applied before `.build()`
 - **THEN** no fetch SHALL be triggered
 
 #### Scenario: Enabled transition triggers fetch
@@ -133,3 +167,34 @@ All signal mutations resulting from async fetch completion SHALL be executed on 
 #### Scenario: Auto-dispose on component dispose
 - **WHEN** the parent Solim component is disposed
 - **THEN** the Query SHALL be automatically disposed via `ComponentContext` ownership
+
+### Requirement: Mount-Aware Freshness Check
+`Query<T>` SHALL expose `isStale()`, `isError()`, and `ensureFresh()` methods to support mount-time refetching. `ensureFresh()` SHALL trigger `refetch()` if the query is not disposed, not currently fetching, and satisfies any of:
+1. `!hasData()` (no data fetched yet)
+2. `isError()` (previous fetch resulted in an error)
+3. `isStale()` (cached data has exceeded `staleTime`)
+
+If the query has cached data that is still fresh (within `staleTime`) and has not errored, `ensureFresh()` SHALL be a no-op.
+
+#### Scenario: Stale query refetches on ensureFresh
+- **WHEN** `query.ensureFresh()` is called on a query whose data has exceeded `staleTime`
+- **THEN** a background `refetch()` SHALL be triggered
+
+#### Scenario: Fresh query does not refetch on ensureFresh
+- **WHEN** `query.ensureFresh()` is called on a query whose data was fetched within `staleTime`
+- **THEN** no fetch SHALL be triggered
+
+#### Scenario: Errored query refetches on ensureFresh
+- **WHEN** `query.ensureFresh()` is called on a query whose last fetch failed with an error
+- **THEN** a `refetch()` SHALL be triggered to retry the request
+
+### Requirement: Dialog-Scoped Query Ownership
+Queries created for a dialog, including via dialog-owned state holders constructed inside the dialog's component scope, SHALL be disposed automatically when the dialog component disposes, detaching their `QueryCache` observers.
+
+#### Scenario: Open-close cycle releases observers
+- **WHEN** a browser dialog is opened and closed
+- **THEN** the `QueryCache` observer count for its query key SHALL return to its prior baseline and unobserved entries SHALL become GC-eligible
+
+#### Scenario: State holder created outside scope disposes explicitly
+- **WHEN** a state holder owning a `Query` is created outside any component scope
+- **THEN** the holder SHALL implement `Disposable` and dispose its `Query` explicitly on teardown

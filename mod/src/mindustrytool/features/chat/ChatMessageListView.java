@@ -171,44 +171,39 @@ public class ChatMessageListView extends BaseComponent {
         return column().name("chat-list").grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
             dynamic(hasChannel, channelSelected -> {
                 if (!Boolean.TRUE.equals(channelSelected)) {
-                    return dynamic(store.channels().loading(), chanLoading -> {
-                        if (Boolean.TRUE.equals(chanLoading)) {
-                            return Loader.centered();
-                        }
-
-                        return dynamic(store.channels().error(), chanErr -> {
-                            if (chanErr != null && !chanErr.trim().isEmpty()) {
-                                return column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
-                                    icon(Icon.warning).size(unit(6)).color(Color.scarlet);
-                                    text(Core.bundle.get("feature.chat.ui.channels-failed", "Channels failed to load."))
-                                            .color(Color.scarlet)
-                                            .fontScale(1.0f)
-                                            .wrap()
-                                            .center();
-                                    text(chanErr).color(Color.gray).fontScale(0.85f).wrap().center();
-                                    button(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"), () -> {
-                                        if (service != null) {
-                                            service.refreshChannels();
-                                        }
-                                    })
-                                            .style(WebStyles.secondary())
-                                            .height(unit(10))
-                                            .children(() -> {
-                                                icon(Icon.refresh).size(unit(4));
-                                                text(Core.bundle.get("feature.chat.ui.retry-channels",
-                                                        "Retry Channels"));
-                                            });
-                                });
-                            }
-
-                            return column().padding(unit(4)).top().left().children(() -> {
+                    return query(store.channels().channelsQuery())
+                            .grow()
+                            .loading(Loader::centered)
+                            .error(chanErr -> column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
+                                icon(Icon.warning).size(unit(6)).color(Color.scarlet);
+                                text(Core.bundle.get("feature.chat.ui.channels-failed", "Channels failed to load."))
+                                        .color(Color.scarlet)
+                                        .fontScale(1.0f)
+                                        .wrap()
+                                        .center();
+                                text(chanErr != null ? chanErr.getMessage() : "").color(Color.gray).fontScale(0.85f)
+                                        .wrap().center();
+                                button(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"), () -> {
+                                    if (service != null) {
+                                        service.refreshChannels();
+                                    } else {
+                                        store.channels().channelsQuery().refetch();
+                                    }
+                                })
+                                        .style(WebStyles.secondary())
+                                        .height(unit(10))
+                                        .children(() -> {
+                                            icon(Icon.refresh).size(unit(4));
+                                            text(Core.bundle.get("feature.chat.ui.retry-channels",
+                                                    "Retry Channels"));
+                                        });
+                            }))
+                            .data(channels -> column().padding(unit(4)).top().left().children(() -> {
                                 text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
                                         .color(Color.gray)
                                         .fontScale(0.9f)
                                         .left();
-                            });
-                        }).grow();
-                    }).grow();
+                            })).grow();
                 }
 
                 return column().grow().top().left().gap(unit(1)).children(() -> {
@@ -822,7 +817,7 @@ public class ChatMessageListView extends BaseComponent {
 
             card().name("command-card").growX().top().left().height(ChatMessageHeightCalculator.COMMAND_CARD_HEIGHT)
                     .children(() -> {
-                        column().growX().top().left().padding(unit(1.5f)).gap(unit(1)).children(() -> {
+                        column().growX().top().left().gap(unit(1)).children(() -> {
                             row().growX().top().left().gap(unit(1)).children(() -> {
                                 icon(schematic ? Icon.paste : Icon.map).size(unit(5), unit(5)).color(Pal.accent);
                                 text(title)

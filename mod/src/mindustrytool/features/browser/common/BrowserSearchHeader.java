@@ -49,7 +49,7 @@ public class BrowserSearchHeader extends BaseComponent {
             if (isDisposed()) {
                 return;
             }
-            state.query().set(value);
+            state.searchQuery().set(value);
             state.resetPage();
         }, DEBOUNCE_SECONDS);
     }
@@ -109,24 +109,26 @@ public class BrowserSearchHeader extends BaseComponent {
     }
 
     private void renderChip(String tag) {
-        button(tag, Icon.cancelSmall, () -> state.toggleTag(tag))
+        button(tag, () -> state.toggleTag(tag))
                 .gap(unit(1))
                 .style(Styles.cleart)
                 .border(1.5f, Color.lightGray)
-                .rounded(3)
-                .height(unit(9));
+                .rounded(6)
+                .paddingX(unit(3))
+                .height(unit(9))
+                .children(() -> icon(Icon.cancel));
     }
 
     private void submitNow() {
         cancelPendingSearch();
         String value = inputBuffer.peek();
-        state.query().set(value != null ? value.trim() : "");
+        state.searchQuery().set(value != null ? value.trim() : "");
         state.resetPage();
     }
 
     private void refresh() {
         cancelPendingSearch();
-        inputBuffer.set(state.query().peek() != null ? state.query().peek() : "");
+        inputBuffer.set(state.searchQuery().peek() != null ? state.searchQuery().peek() : "");
         state.refresh();
     }
 }

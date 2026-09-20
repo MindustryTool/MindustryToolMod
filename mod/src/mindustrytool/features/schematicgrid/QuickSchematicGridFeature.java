@@ -41,6 +41,12 @@ public class QuickSchematicGridFeature extends Feature {
     public static final int MAX_PAGES = 8;
     public static final float MIN_GAP = 0f;
     public static final float MAX_GAP = 16f;
+    public static final String PAGE_LEFT = "left";
+    public static final String PAGE_RIGHT = "right";
+    public static final String PAGE_TOP = "top";
+    public static final String PAGE_BOTTOM = "bottom";
+    public static final float MIN_BUTTON_OPACITY = 0.2f;
+    public static final float MAX_BUTTON_OPACITY = 1.0f;
 
     public final ConfigGroup config;
     public final ConfigValue<String> displayModeConfig;
@@ -50,6 +56,8 @@ public class QuickSchematicGridFeature extends Feature {
     public final ConfigValue<Float> buttonSizeConfig;
     public final ConfigValue<Float> buttonGapConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
+    public final ConfigValue<String> pagePositionConfig;
+    public final ConfigValue<Float> buttonOpacityConfig;
     public final ConfigValue<String> entriesJsonConfig;
     public final ConfigValue<String> pageIconsJsonConfig;
 
@@ -89,6 +97,8 @@ public class QuickSchematicGridFeature extends Feature {
         buttonSizeConfig = config.floatValue("buttonSize", 48f);
         buttonGapConfig = config.floatValue("buttonGap", 4f);
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
+        pagePositionConfig = config.stringValue("pagePosition", PAGE_LEFT);
+        buttonOpacityConfig = config.floatValue("buttonOpacity", MAX_BUTTON_OPACITY);
         entriesJsonConfig = config.stringValue("entries", "[]");
         pageIconsJsonConfig = config.stringValue("pageIcons", "[]");
 
@@ -563,6 +573,22 @@ public class QuickSchematicGridFeature extends Feature {
 
     public boolean isPopupMode() {
         return DISPLAY_POPUP.equals(displayModeConfig.get());
+    }
+
+    public String getPagePosition() {
+        String pos = pagePositionConfig.get();
+        return PAGE_RIGHT.equals(pos) || PAGE_TOP.equals(pos) || PAGE_BOTTOM.equals(pos) ? pos : PAGE_LEFT;
+    }
+
+    public boolean isPageHorizontal() {
+        String pos = getPagePosition();
+        return PAGE_TOP.equals(pos) || PAGE_BOTTOM.equals(pos);
+    }
+
+    public float getButtonOpacity() {
+        Float opacity = buttonOpacityConfig.get();
+        float value = opacity != null ? opacity : MAX_BUTTON_OPACITY;
+        return Math.max(MIN_BUTTON_OPACITY, Math.min(MAX_BUTTON_OPACITY, value));
     }
 
     public boolean isPopupActive() {

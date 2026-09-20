@@ -7,6 +7,8 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Align;
 import arc.util.Scaling;
+import arc.util.Nullable;
+import java.time.Duration;
 import java.util.Collections;
 import mindustry.gen.Icon;
 import mindustrytool.Config;
@@ -19,7 +21,8 @@ import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
-import solim.reactive.Signal;
+import solim.reactive.Query;
+import solim.reactive.QueryKey;
 
 /**
  * Detail dialog showing a full map preview, author, dimensions, stats, tags,
@@ -42,13 +45,24 @@ public class MapDetailDialog extends SolimDialog {
     private static class DetailContent extends BaseComponent {
         private final MapDetailData detail;
         private final String itemId;
-        private final Signal<String> authorName;
+        private final @Nullable String authorId;
+        private final @Nullable Query<String> authorQuery;
 
         DetailContent(MapDetailData detail, String itemId) {
             this.detail = detail;
             this.itemId = itemId;
-            this.authorName = Signal.of(detail.getCreatedBy() != null ? detail.getCreatedBy() : "");
-            resolveAuthorName(detail.getCreatedBy());
+            this.authorId = detail.getCreatedBy();
+            this.authorQuery = authorId != null && !authorId.isEmpty()
+                    ? Query.<String>builder()
+                            .key(QueryKey.of("user", authorId))
+                            .fetch(() -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
+                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null
+                                            && users.get(0).getName() != null
+                                                    ? users.get(0).getName()
+                                                    : authorId))
+                            .staleTime(Duration.ofMinutes(10))
+                            .build()
+                    : null;
         }
 
         @Override
@@ -105,7 +119,17 @@ public class MapDetailDialog extends SolimDialog {
                 card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.2f);
-                        text(authorName).color(Color.white).fontScale(1.2f);
+                        if (authorQuery != null) {
+                            query(authorQuery)
+                                    .growX()
+                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white)
+                                            .fontScale(1.2f))
+                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white)
+                                            .fontScale(1.2f))
+                                    .data(name -> text(name).color(Color.white).fontScale(1.2f));
+                        } else {
+                            text(authorId != null ? authorId : "").color(Color.white).fontScale(1.2f);
+                        }
                     });
 
                     row().growX().gap(unit(2)).children(() -> {
@@ -145,23 +169,6 @@ public class MapDetailDialog extends SolimDialog {
                                     .height(unit(11));
                 });
             });
-        }
-
-        private void resolveAuthorName(String createdBy) {
-            if (createdBy == null || createdBy.isEmpty()) {
-                return;
-            }
-            MindustryTool.getUserBatch(Collections.singletonList(createdBy))
-                    .whenComplete((users, throwable) -> {
-                        if (throwable != null || users == null || users.isEmpty()) {
-                            return;
-                        }
-                        Core.app.post(() -> {
-                            if (!isDisposed() && users.get(0) != null && users.get(0).getName() != null) {
-                                authorName.set(users.get(0).getName());
-                            }
-                        });
-                    });
         }
     }
 }

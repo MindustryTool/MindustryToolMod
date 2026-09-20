@@ -29,6 +29,9 @@ import solim.core.Disposable;
 public final class StructuralReconciler<K, C extends Component> implements Disposable {
 	private final Map<K, C> activeComponents = new LinkedHashMap<>();
 	private boolean disposed = false;
+	private volatile int lastNewCount = 0;
+	private volatile int lastReuseCount = 0;
+	private volatile int lastTotalCount = 0;
 
 	/**
 	 * Reconciles the given items against currently active components with transactional rollback.
@@ -120,6 +123,10 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 			}
 		}
 
+		lastNewCount = newlyCreated.size();
+		lastTotalCount = nextComponents.size();
+		lastReuseCount = Math.max(0, lastTotalCount - lastNewCount);
+
 		return activeComponents;
 	}
 
@@ -131,6 +138,21 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 	/** Returns whether there are no active components. */
 	public boolean isEmpty() {
 		return activeComponents.isEmpty();
+	}
+
+	/** Number of newly created components in the last reconcile. */
+	public int getLastNewCount() {
+		return lastNewCount;
+	}
+
+	/** Number of reused components in the last reconcile. */
+	public int getLastReuseCount() {
+		return lastReuseCount;
+	}
+
+	/** Total item count in the last reconcile. */
+	public int getLastTotalCount() {
+		return lastTotalCount;
 	}
 
 	/** Disposes all active components and clears the state. */

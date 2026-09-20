@@ -51,7 +51,7 @@ import solim.reactive.Readable;
  * explicit and safe to call headless (no-ops without a scene).
  */
 public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T>> {
-
+    // TODO: Popup show above existsing UI making them unusable
     private final Table table = new Table();
     private @Nullable Function<T, Component> provider;
     private @Nullable Component currentContent;

@@ -136,15 +136,11 @@ public class MusicSettingsView extends BaseComponent {
                             dynamic(state.isPlaying(), playing -> {
                                 if (Boolean.TRUE.equals(playing)) {
                                     return stack().growX()
-                                            .children(() -> {
-                                                divider().color(Color.white).growX().height(4);
-                                            })
-                                            .children((parent) -> {
-                                                divider().color(Color.green).height(4).update(div -> {
+                                            .layer(() -> divider().color(Color.white).growX().height(4))
+                                            .layer(parent -> divider().color(Color.green).height(4).update(div -> {
                                                     div.setWidth(state.music.getPosition() / state.music.getLength()
                                                             * parent.getWidth());
-                                                });
-                                            });
+                                                }));
                                 }
                                 return null;
                             }).growX();

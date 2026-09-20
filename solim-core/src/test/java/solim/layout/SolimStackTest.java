@@ -6,11 +6,29 @@ import arc.Core;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
+import java.lang.reflect.Method;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import arc.scene.ui.layout.Table;
+import solim.core.Component;
+import solim.runtime.ParentStack;
 
 class SolimStackTest {
+
+	private static final class TestComponent implements Component {
+		private final Element element = new Element();
+		private int disposeCount;
+
+		@Override
+		public Element element() {
+			return element;
+		}
+
+		@Override
+		public void dispose() {
+			disposeCount++;
+		}
+	}
 
 	@BeforeAll
 	static void initArc() {
@@ -56,11 +74,76 @@ class SolimStackTest {
 	}
 
 	@Test
-	void layerAddsRowChild() {
+	void layerAddsDirectChildWithoutRow() {
 		SolimStack s = new SolimStack();
-		s.layer(() -> new Row());
+		TestComponent component = new TestComponent();
+
+		s.layer(() -> component);
 
 		assertEquals(1, s.stack().getChildren().size);
-		assertTrue(s.stack().getChildren().get(0) instanceof Table);
+		assertSame(component.element(), s.stack().getChildren().get(0));
+	}
+
+	@Test
+	void layerCanCaptureStackElement() {
+		SolimStack s = new SolimStack();
+		TestComponent component = new TestComponent();
+
+		s.layer(parent -> {
+			assertSame(s.stack(), parent);
+			return component;
+		});
+
+		assertSame(component.element(), s.stack().getChildren().get(0));
+	}
+
+	@Test
+	void nullLayerDoesNothing() {
+		SolimStack s = new SolimStack();
+
+		s.layer((Supplier<Component>) null);
+		s.layer(() -> null);
+
+		assertTrue(s.stack().getChildren().isEmpty());
+	}
+
+	@Test
+	void layerDisposesOwnedComponentOnce() {
+		SolimStack s = new SolimStack();
+		TestComponent component = new TestComponent();
+		s.layer(() -> component);
+
+		s.dispose();
+		s.dispose();
+
+		assertEquals(1, component.disposeCount);
+	}
+
+	@Test
+	void layerRestoresParentStackAfterFailure() {
+		SolimStack s = new SolimStack();
+		int before = ParentStack.size();
+
+		assertThrows(RuntimeException.class, () -> s.layer(() -> {
+			throw new RuntimeException("layer failure");
+		}));
+
+		assertEquals(before, ParentStack.size());
+		assertTrue(s.stack().getChildren().isEmpty());
+	}
+
+	@Test
+	void legacyLayerAndChildrenMethodsAreRemoved() {
+		for (Method method : SolimStack.class.getMethods()) {
+			assertNotEquals("childrenComponent", method.getName(),
+					"childrenComponent must be removed");
+			assertNotEquals("children", method.getName(),
+					"SolimStack must not expose children(...)");
+			if ("layer".equals(method.getName())) {
+				for (Class<?> param : method.getParameterTypes()) {
+					assertNotEquals(Runnable.class, param, "layer(Runnable) must be removed");
+				}
+			}
+		}
 	}
 }

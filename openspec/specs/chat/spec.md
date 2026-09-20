@@ -366,11 +366,15 @@ The system SHALL persist the last-read message ID per channel in `Core.settings`
 - **THEN** if the chat window is open and the message belongs to the active channel, the stored last-read ID is immediately updated to that message's ID; if the window is closed or the message is for an inactive channel, the channel is marked as unread
 
 ### Requirement: MindustryTool Service Integration
-The system SHALL interact with chat REST endpoints and SSE event streams via mindustrytool.services.MindustryTool and marshal state updates to the main thread via Core.app.post().
+The system SHALL interact with chat REST endpoints and SSE event streams via mindustrytool.services.MindustryTool, leverage direct per-batch user profile fetching with no long-term `QueryCache` retention, and marshal state updates to the main thread via Core.app.post().
 
 #### Scenario: Initializing chat data
 - **WHEN** ChatService.init() is invoked
 - **THEN** channels and initial messages are fetched via MindustryTool.getChatChannels() and MindustryTool.getChatMessages(), and the live SSE stream is connected
+
+#### Scenario: User batch lookup fetches directly
+- **WHEN** missing author profiles are requested
+- **THEN** un-cached user profiles are requested via `MindustryTool.getUserBatch()` with no `QueryKey.of("user", userId)` retention; the store dedupes repeat authors within the session
 
 ### Requirement: Composer send gating on validity
 The chat composer send button SHALL be enabled only while no send is in flight and the message input is valid per its configured validator. The imperative validity guard in the send handler SHALL be retained as defense in depth.
@@ -690,6 +694,18 @@ The system SHALL track per-channel initial message loading and error states, dis
 - **WHEN** an active channel is selected and messages have not yet loaded
 - **THEN** ChatMessages marks initial loading as true for that channel and ChatMessageListView displays a centered loader
 
+#### Scenario: Persisted active channel loads without channel switch
+- **WHEN** the app starts with a persisted non-empty active channel id and the channel list confirms that id exists
+- **THEN** the system fetches messages for that channel automatically without requiring a manual channel switch
+
+#### Scenario: Expand-before-channels recovers on resolve
+- **WHEN** the overlay expands while no channel is active yet and channels later resolve to a first channel
+- **THEN** the system fetches messages for the resolved active channel automatically
+
+#### Scenario: Stale persisted channel waits for correction
+- **WHEN** the persisted active channel id is absent from the loaded channel list
+- **THEN** the system skips fetching for the stale id and fetches messages only after auto-correction to an existing channel
+
 #### Scenario: Initial message loading failure
 - **WHEN** the initial message request for a channel fails and no messages are currently cached for that channel
 - **THEN** ChatMessageListView renders a centered error state with a localized error message, technical cause, and a Retry button
@@ -703,19 +719,19 @@ The system SHALL track per-channel initial message loading and error states, dis
 - **THEN** ChatMessageListView preserves the existing visible message list and displays a non-intrusive error banner with a Retry action
 
 ### Requirement: Chat Member Roster Loading and Error Handling
-The system SHALL track per-channel member roster loading and error states, displaying a loading spinner during member fetch, a full-screen error with a Retry button if the fetch fails with an empty roster, and preserving existing members if a subsequent refresh fails.
+The system SHALL track per-channel member roster loading, error, and data states using a declarative query in `ChatMembers`, displaying a centered loading spinner during member fetch, rendering a retryable error state if the fetch fails with an empty roster, and automatically ensuring fresh data on mount and active channel changes without requiring imperative subscription hooks.
 
-#### Scenario: Member roster loading indicator
-- **WHEN** an active channel is selected and member fetch begins
-- **THEN** ChatMembers marks loading as true for that channel and ChatUserListView displays a centered loader
+#### Scenario: Member roster loading on mount or channel switch
+- **WHEN** ChatUserListView mounts or the active channel changes and members data is missing or stale
+- **THEN** ChatMembers initiates a query fetch for the active channel and ChatUserListView displays a centered loader
 
 #### Scenario: Member roster loading failure
-- **WHEN** fetching members for a channel fails and no members are cached for that channel
+- **WHEN** fetching members for a channel fails and no members are cached
 - **THEN** ChatUserListView renders a centered error state with a localized error message, technical cause, and a Retry button
 
 #### Scenario: Retrying member roster fetch
 - **WHEN** the user clicks the Retry button in ChatUserListView
-- **THEN** ChatService triggers loadUsers for the active channel, clears the channel error, and sets loading to true
+- **THEN** the members query refetches data for the active channel, setting loading to true
 
 ### Requirement: Mobile Default Tab Cross-State Error Awareness
 The system SHALL display channel error details and a Retry Channels action directly in the Messages and Members views when no channel is active due to channel loading failure.
@@ -817,10 +833,35 @@ The system SHALL automatically synchronize the active channel in the background 
 - **WHEN** `collapsedConfig` transitions from `true` to `false`
 - **THEN** the system verifies stream health (reconnecting if disconnected) and silently fetches recent messages for the active channel without displaying a blocking full-page loading indicator
 
+#### Scenario: Expanding with no active channel defers fetch
+- **WHEN** `collapsedConfig` transitions from `true` to `false` while no non-empty active channel is selected
+- **THEN** the system skips the immediate background fetch and fetches automatically once channels resolve to an active channel
+
 ### Requirement: Resilient Manual Refresh
 The system SHALL perform a full health check on manual refresh, verifying the live stream state and reconnecting if stalled or disconnected.
 
 #### Scenario: Manual refresh revives dead or stalled stream
 - **WHEN** the user triggers manual refresh in `ChatOverlayHudView`
 - **THEN** `ChatService` reloads active channel messages and users, checks whether the stream is active, and forces a stream reconnect if disconnected or stalled
+
+### Requirement: Declarative Query-Driven Chat Views
+The system SHALL render chat channels and message loading and error states using declarative `QueryView` (`solim.UI.query(...)`) instead of manual nested dynamic signal checks.
+
+#### Scenario: Channel list rendered via QueryView
+- **WHEN** `ChatChannelListView` builds its channel list UI
+- **THEN** it binds to the channels query using `solim.UI.query()`, rendering loading spinners, error retry messages, and channel items declaratively
+
+### Requirement: Single Source of Truth for Channels
+`ChatChannels` SHALL use `channelsQuery` as the single source of truth for channel data and SHALL NOT maintain a duplicate `channels` signal or bridge effects.
+- `all()` SHALL return a readable derived directly from `channelsQuery.data()`.
+- When channel data arrives, `ChatChannels` SHALL automatically set `activeChannelId` to the first channel if the current active channel ID is null or not found in the loaded channel list.
+- `ChatChannelListView` SHALL render channel rows directly from the data supplied by `QueryView` rather than an empty unpopulated signal.
+
+#### Scenario: Auto-selecting first channel on load
+- **WHEN** channel data finishes loading and `activeChannelId` is null
+- **THEN** `ChatChannels` SHALL automatically select the first channel in the list
+
+#### Scenario: Rendering channels directly from query data
+- **WHEN** `ChatChannelListView` mounts and `channelsQuery` resolves with channels
+- **THEN** it SHALL render `ChannelItem` components for all items in the query result without requiring a manual refresh
 
