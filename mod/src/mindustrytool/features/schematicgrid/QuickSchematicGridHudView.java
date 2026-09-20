@@ -24,7 +24,9 @@ import solim.reactive.Signal;
  * a dedicated page tab column, subtle empty slot tiles, and screen clamping.
  */
 public class QuickSchematicGridHudView extends BaseComponent {
-
+    //TODO: Right click to open edit UI
+    //TODO: Hover over button show a shadow of schematic
+    //TODO: Icon not render properly (it display schematic preview instead)
     public static final class SlotModel {
         public final int page;
         public final int row;

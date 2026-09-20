@@ -179,6 +179,7 @@ public class RoomBrowserView extends BaseComponent {
                         }
                         return column().growX().children(() -> {
                             query(feature.getRoomsQuery())
+                                    .grow()
                                     .loading(this::roomsLoading)
                                     .error(err -> column().growX().margin(unit(3)).center().children(() -> {
                                         text(err != null ? err.getMessage() : Core.bundle.get("error", "Error"))

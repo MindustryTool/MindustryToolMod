@@ -184,8 +184,12 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderPlanets() {
-            if (planetsQuery == null) return;
+            if (planetsQuery == null) {
+                return;
+            }
+
             query(planetsQuery)
+                    .grow()
                     .loading(() -> row().growX().center().padding(unit(2)).children(() -> new Loader(unit(6))))
                     .data(mods -> {
                         if (mods == null || mods.isEmpty()) {

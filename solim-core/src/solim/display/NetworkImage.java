@@ -16,18 +16,21 @@ import arc.util.Http;
 import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Scaling;
+import arc.util.Threads;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import arc.scene.ui.Image;
 import mindustry.Vars;
 import mindustry.core.Version;
 import solim.core.Disposable;
 import solim.core.LeafComponent;
+import solim.graphics.RoundedGenerator;
+import solim.performance.SlowTracker;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.graphics.RoundedGenerator;
 
 public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 
@@ -48,6 +51,13 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
     private static final Map<String, TextureRegionDrawable> cache = new ConcurrentHashMap<>();
     private static final long CACHE_MAX_AGE = 30L * 24 * 60 * 60 * 1000;
     private static volatile boolean cleanupDone = false;
+
+    /**
+     * Shared application-lifetime worker. It is intentionally not shut down:
+     * NetworkImage instances are short-lived, but the game process is the
+     * lifetime owner of this bounded decode executor.
+     */
+    private static final ExecutorService DECODE_WORKER = Threads.unboundedExecutor("solim-img-decode", 2);
 
     private static ImageLoader loader = defaultLoader();
 
@@ -84,15 +94,25 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
                                     return;
                                 }
                                 writeToDisk(url, bytes);
+                                Pixmap pixmap;
+                                try {
+                                    pixmap = decodePixmap(bytes, radius, targetW, targetH);
+                                } catch (Throwable t) {
+                                    if (onError != null)
+                                        onError.get(t);
+                                    return;
+                                }
                                 if (Core.app != null) {
                                     Core.app.post(() -> {
                                         try {
-                                            onSuccess.get(decodeTexture(bytes, radius, targetW, targetH));
+                                            onSuccess.get(toTexture(pixmap));
                                         } catch (Throwable t) {
                                             if (onError != null)
                                                 onError.get(t);
                                         }
                                     });
+                                } else {
+                                    pixmap.dispose();
                                 }
                             });
                 } catch (Throwable t) {
@@ -172,15 +192,39 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
     }
 
     public static TextureRegion decodeTexture(byte[] bytes, int radius, float targetW, float targetH) {
+        return toTexture(decodePixmap(bytes, radius, targetW, targetH));
+    }
+
+    /**
+     * CPU-only PNG decode plus rounded masking. Safe to call on any thread.
+     */
+    public static Pixmap decodePixmap(byte[] bytes, int radius, float targetW, float targetH) {
         Pixmap pixmap = new Pixmap(bytes);
         if (radius > 0) {
             applyRoundedMask(pixmap, radius, targetW, targetH);
         }
-        Texture texture = new Texture(pixmap);
-        texture.setFilter(TextureFilter.linear);
-        TextureRegion region = new TextureRegion(texture);
-        pixmap.dispose();
-        return region;
+        return pixmap;
+    }
+
+    /**
+     * GL texture upload. Must be called on the main thread.
+     */
+    private static TextureRegion toTexture(Pixmap pixmap) {
+        boolean track = SlowTracker.isEnabled();
+        long t0 = track ? System.nanoTime() : 0L;
+        int width = pixmap.getWidth();
+        int height = pixmap.getHeight();
+        try {
+            Texture texture = new Texture(pixmap);
+            texture.setFilter(TextureFilter.linear);
+            return new TextureRegion(texture);
+        } finally {
+            pixmap.dispose();
+            if (track) {
+                float ms = (System.nanoTime() - t0) / 1_000_000f;
+                SlowTracker.recordPhase("NetworkImage", "decode", ms, "px=" + width + "x" + height);
+            }
+        }
     }
 
     public static void applyRoundedMask(Pixmap pixmap, int radius) {
@@ -295,6 +339,7 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
     private boolean failed = false;
     private Scaling scaling = Scaling.fit;
     private int cornerRadius = 0;
+    private long loadGeneration = 0L;
 
     public NetworkImage() {
         super(new Image((Drawable) null));
@@ -407,20 +452,22 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
     private void loadUrl(@Nullable String url) {
         this.currentUrl = url;
         this.failed = false;
+        final long gen = ++loadGeneration;
         if (url == null || url.trim().isEmpty()) {
             this.failed = true;
             applyDrawable(fallback != null ? fallback : placeholder);
             return;
         }
 
-        float targetW = (constraints.prefWidth != null && constraints.prefWidth.get() != null)
+        final int radius = cornerRadius;
+        final float targetW = (constraints.prefWidth != null && constraints.prefWidth.get() != null)
                 ? constraints.prefWidth.get()
                 : 0f;
-        float targetH = (constraints.prefHeight != null && constraints.prefHeight.get() != null)
+        final float targetH = (constraints.prefHeight != null && constraints.prefHeight.get() != null)
                 ? constraints.prefHeight.get()
                 : 0f;
 
-        String key = cacheKey(url, cornerRadius, targetW);
+        String key = cacheKey(url, radius, targetW);
         TextureRegionDrawable cached = cache.get(key);
         if (cached != null) {
             applyDrawable(cached);
@@ -433,30 +480,35 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 
         scheduleCleanup();
 
-        if (loadFromDisk(url, targetW, targetH))
+        if (loadFromDisk(url, radius, targetW, targetH, gen))
             return;
 
-        loader.load(url, cornerRadius, targetW, targetH, region -> {
+        loader.load(url, radius, targetW, targetH, region -> {
             TextureRegionDrawable drawable = new TextureRegionDrawable(region);
-            cache.put(key, drawable);
-            if (url.equals(this.currentUrl)) {
+            cache.put(cacheKey(url, radius, targetW), drawable);
+            if (isCurrent(gen, url)) {
                 this.failed = false;
                 applyDrawable(drawable);
             }
         }, error -> {
-            if (url.equals(this.currentUrl)) {
+            if (isCurrent(gen, url)) {
                 this.failed = true;
                 applyDrawable(fallback != null ? fallback : placeholder);
             }
         });
     }
 
-    private boolean loadFromDisk(String url, float targetW, float targetH) {
+    private boolean isCurrent(long gen, String url) {
+        return gen == loadGeneration && url.equals(currentUrl);
+    }
+
+    private boolean loadFromDisk(String url, int radius, float targetW, float targetH, long gen) {
+        final Fi file;
         try {
             Fi dir = cacheDir();
             if (dir == null)
                 return false;
-            Fi file = dir.child(cacheName(url));
+            file = dir.child(cacheName(url));
             if (!file.exists() || file.isDirectory())
                 return false;
             long age = System.currentTimeMillis() - file.lastModified();
@@ -464,34 +516,92 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
                 file.delete();
                 return false;
             }
-            byte[] bytes = file.readBytes();
-            if (bytes == null || bytes.length == 0) {
-                file.delete();
-                return false;
-            }
-            Core.app.post(() -> {
+        } catch (Throwable t) {
+            return false;
+        }
+        try {
+            DECODE_WORKER.execute(() -> {
+                byte[] bytes;
                 try {
-                    TextureRegionDrawable drawable = new TextureRegionDrawable(
-                            decodeTexture(bytes, cornerRadius, targetW, targetH));
-                    cache.put(cacheKey(url, cornerRadius, targetW), drawable);
-                    if (url.equals(this.currentUrl)) {
+                    bytes = file.readBytes();
+                } catch (Throwable t) {
+                    postNetworkRetry(url, radius, targetW, targetH, gen);
+                    return;
+                }
+                if (bytes == null || bytes.length == 0) {
+                    deleteQuietly(file);
+                    postNetworkRetry(url, radius, targetW, targetH, gen);
+                    return;
+                }
+                Pixmap pixmap;
+                try {
+                    pixmap = decodePixmap(bytes, radius, targetW, targetH);
+                } catch (Throwable t) {
+                    deleteQuietly(file);
+                    postNetworkRetry(url, radius, targetW, targetH, gen);
+                    return;
+                }
+                if (Core.app == null) {
+                    pixmap.dispose();
+                    return;
+                }
+                Core.app.post(() -> {
+                    TextureRegionDrawable drawable;
+                    try {
+                        drawable = new TextureRegionDrawable(toTexture(pixmap));
+                    } catch (Throwable t) {
+                        deleteQuietly(file);
+                        if (isCurrent(gen, url)) {
+                            this.failed = true;
+                            applyDrawable(fallback != null ? fallback : placeholder);
+                        }
+                        return;
+                    }
+                    cache.put(cacheKey(url, radius, targetW), drawable);
+                    if (isCurrent(gen, url)) {
                         this.failed = false;
                         applyDrawable(drawable);
                     }
-                } catch (Throwable t) {
-                    try {
-                        file.delete();
-                    } catch (Throwable ignored) {
-                    }
-                    if (url.equals(this.currentUrl)) {
-                        this.failed = true;
-                        applyDrawable(fallback != null ? fallback : placeholder);
-                    }
-                }
+                });
             });
             return true;
         } catch (Throwable t) {
             return false;
+        }
+    }
+
+    private void postNetworkRetry(String url, int radius, float targetW, float targetH, long gen) {
+        if (Core.app == null) {
+            return;
+        }
+        Core.app.post(() -> retryNetwork(url, radius, targetW, targetH, gen));
+    }
+
+    private void retryNetwork(String url, int radius, float targetW, float targetH, long gen) {
+        if (!isCurrent(gen, url)) {
+            return;
+        }
+        loader.load(url, radius, targetW, targetH, region -> {
+            TextureRegionDrawable drawable = new TextureRegionDrawable(region);
+            cache.put(cacheKey(url, radius, targetW), drawable);
+            if (isCurrent(gen, url)) {
+                this.failed = false;
+                applyDrawable(drawable);
+            }
+        }, error -> {
+            if (isCurrent(gen, url)) {
+                this.failed = true;
+                applyDrawable(fallback != null ? fallback : placeholder);
+            }
+        });
+    }
+
+    private static void deleteQuietly(@Nullable Fi file) {
+        try {
+            if (file != null) {
+                file.delete();
+            }
+        } catch (Throwable ignored) {
         }
     }
 

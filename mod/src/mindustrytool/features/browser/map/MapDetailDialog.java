@@ -53,10 +53,13 @@ public class MapDetailDialog extends SolimDialog {
             this.itemId = itemId;
             this.authorId = detail.getCreatedBy();
             this.authorQuery = authorId != null && !authorId.isEmpty()
-                    ? Query.of(QueryKey.of("user", authorId), () -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
-                            .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null && users.get(0).getName() != null
-                                    ? users.get(0).getName()
-                                    : authorId)).staleTime(Duration.ofMinutes(10))
+                    ? Query.of(QueryKey.of("user", authorId),
+                            () -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
+                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null
+                                            && users.get(0).getName() != null
+                                                    ? users.get(0).getName()
+                                                    : authorId))
+                            .staleTime(Duration.ofMinutes(10))
                     : null;
         }
 
@@ -116,8 +119,11 @@ public class MapDetailDialog extends SolimDialog {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.2f);
                         if (authorQuery != null) {
                             query(authorQuery)
-                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.2f))
-                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.2f))
+                                    .growX()
+                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white)
+                                            .fontScale(1.2f))
+                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white)
+                                            .fontScale(1.2f))
                                     .data(name -> text(name).color(Color.white).fontScale(1.2f));
                         } else {
                             text(authorId != null ? authorId : "").color(Color.white).fontScale(1.2f);

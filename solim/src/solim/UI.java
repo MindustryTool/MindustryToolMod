@@ -131,10 +131,6 @@ public final class UI {
         return s;
     }
 
-    public static SolimStack stack(@Nullable Runnable r) {
-        return stack().children(r);
-    }
-
     public static Grid grid() {
         return new Grid();
     }

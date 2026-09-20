@@ -25,6 +25,7 @@ import solim.core.Units;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
+import solim.performance.SlowTracker;
 
 /**
  * Keyed reactive grid that reflows existing component cells when column count
@@ -229,8 +230,21 @@ public final class ReactiveGrid<T, K> extends BaseComponent
     }
 
     private void updateItemsAndReflow(Iterable<T> itemList, int cols) {
+        boolean track = SlowTracker.isEnabled();
+        long reconcileT0 = track ? System.nanoTime() : 0L;
         reconciler.reconcile(itemList, keyExtractor, item -> itemFactory.apply(item, context));
+        float reconcileMs = track ? (System.nanoTime() - reconcileT0) / 1_000_000f : 0f;
+        long reflowT0 = track ? System.nanoTime() : 0L;
         reflow(cols);
+        if (track) {
+            float reflowMs = (System.nanoTime() - reflowT0) / 1_000_000f;
+            String detail = "items=" + reconciler.getLastTotalCount()
+                    + " new=" + reconciler.getLastNewCount()
+                    + " reused=" + reconciler.getLastReuseCount()
+                    + " cols=" + cols;
+            SlowTracker.recordPhase("ReactiveGrid", "reconcile", reconcileMs, detail);
+            SlowTracker.recordPhase("ReactiveGrid", "reflow", reflowMs, detail);
+        }
     }
 
     private void reflow(int cols) {

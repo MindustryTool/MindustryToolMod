@@ -1,6 +1,7 @@
 package mindustrytool.features.browser.common;
 
 import arc.struct.Seq;
+import arc.util.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustrytool.Config;
@@ -196,6 +197,22 @@ public class BrowserState<T> implements Disposable {
 
     public Readable<Seq<T>> items() {
         return queryPrimitive.data().map(list -> list != null ? Seq.with(list) : new Seq<T>());
+    }
+
+    /**
+     * Pure slice helper for chunked rendering: returns a copy of the first
+     * {@code limit} items, or an empty sequence when the input is null.
+     */
+    public static <T> Seq<T> firstItems(@Nullable Seq<T> all, int limit) {
+        Seq<T> out = new Seq<>();
+        if (all == null) {
+            return out;
+        }
+        int count = Math.min(Math.max(0, limit), all.size);
+        for (int i = 0; i < count; i++) {
+            out.add(all.get(i));
+        }
+        return out;
     }
 
     /**

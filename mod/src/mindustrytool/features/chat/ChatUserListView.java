@@ -58,7 +58,8 @@ public class ChatUserListView extends BaseComponent {
                                             .height(unit(9))
                                             .children(() -> {
                                                 icon(Icon.refresh).size(unit(4));
-                                                text(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"));
+                                                text(Core.bundle.get("feature.chat.ui.retry-channels",
+                                                        "Retry Channels"));
                                             });
                                 });
                             }
@@ -73,6 +74,7 @@ public class ChatUserListView extends BaseComponent {
                 }
 
                 return query(store.members().query())
+                        .grow()
                         .loading(Loader::centered)
                         .error(err -> column().grow().center().gap(unit(2)).padding(unit(2)).children(() -> {
                             icon(Icon.warning).size(unit(6)).color(Color.scarlet);

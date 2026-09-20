@@ -31,6 +31,8 @@ import mindustrytool.input.ModMobileInput;
  */
 public class FreeCameraFeature extends Feature {
 
+
+    // TODO: Draw a line from center of the screen to player unit (optional)
     private static final float SCALE_DIVISOR = 1000f;
     private static final float TOP_MARGIN = 48f;
     private static final float PAD_X = 16f;

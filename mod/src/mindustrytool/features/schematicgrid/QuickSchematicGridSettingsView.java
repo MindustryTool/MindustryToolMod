@@ -18,7 +18,7 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public class QuickSchematicGridSettingsView extends BaseComponent {
-
+    // TODO: Allow to drag and drop schematic
     private final QuickSchematicGridFeature feature;
 
     public QuickSchematicGridSettingsView(QuickSchematicGridFeature feature) {

@@ -129,6 +129,7 @@ public class SchematicDetailDialog extends SolimDialog {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.3f);
                         if (authorQuery != null) {
                             query(authorQuery)
+                            .growX()
                                     .loading(() -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
                                     .error(err -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
                                     .data(name -> text(name).color(Color.white).fontScale(1.3f));

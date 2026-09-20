@@ -12,6 +12,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import solim.core.Component;
+import solim.core.PerfSink;
 import solim.core.SpacingAware;
 
 /**
@@ -29,6 +30,7 @@ public final class ParentStack {
 		public final Table table;
 		public final Attacher attacher;
 		public final List<Component> pendingComponents = new ArrayList<>();
+		long pushNanos = 0L;
 
 		public Entry(Table table, Attacher attacher) {
 			this.table = table;
@@ -43,8 +45,31 @@ public final class ParentStack {
 
 	private static final Deque<Entry> stack = new ArrayDeque<>();
 	private static @Nullable CellConfigurator cellConfigurator = null;
+	private static volatile @Nullable PerfSink perfSink = null;
+
+	/** Slow-subtree threshold in milliseconds. Only pops exceeding it emit spans. */
+	public static volatile float slowSubtreeThresholdMs = 50f;
+
+	private static volatile int maxDepthObserved = 0;
 
 	private ParentStack() {}
+
+	public static void setPerfSink(@Nullable PerfSink sink) {
+		perfSink = sink;
+	}
+
+	public static @Nullable PerfSink perfSink() {
+		return perfSink;
+	}
+
+	/** Deepest stack depth observed since the last {@link #resetPerfStats()} call. */
+	public static int maxDepthObserved() {
+		return maxDepthObserved;
+	}
+
+	public static void resetPerfStats() {
+		maxDepthObserved = 0;
+	}
 
 	public static void setCellConfigurator(@Nullable CellConfigurator configurator) {
 		cellConfigurator = configurator;
@@ -63,7 +88,16 @@ public final class ParentStack {
 	public static void push(Table parent, Attacher attacher) {
 		SolimAssert.checkMainThread();
 		if (parent != null) {
-			stack.push(new Entry(parent, attacher));
+			Entry entry = new Entry(parent, attacher);
+			stack.push(entry);
+			PerfSink sink = perfSink;
+			if (sink != null) {
+				entry.pushNanos = System.nanoTime();
+				int depth = stack.size();
+				if (depth > maxDepthObserved) {
+					maxDepthObserved = depth;
+				}
+			}
 		}
 	}
 
@@ -71,7 +105,20 @@ public final class ParentStack {
 		SolimAssert.checkMainThread();
 		if (!stack.isEmpty()) {
 			Entry popped = stack.pop();
+			int childCount = popped.pendingComponents.size();
 			attachPendingComponents(popped);
+			PerfSink sink = perfSink;
+			if (sink != null && popped.pushNanos != 0L) {
+				float ms = (System.nanoTime() - popped.pushNanos) / 1_000_000f;
+				if (ms >= slowSubtreeThresholdMs) {
+					int depth = stack.size() + 1;
+					String tableName = popped.table != null && popped.table.name != null
+							? popped.table.name
+							: "table";
+					sink.record("ParentStack", "subtree", ms,
+							"depth=" + depth + " children=" + childCount + " name=" + tableName);
+				}
+			}
 			return popped.table;
 		}
 		return null;
@@ -153,6 +200,9 @@ public final class ParentStack {
 		if (entry == null || entry.pendingComponents.isEmpty()) {
 			return;
 		}
+		PerfSink sink = perfSink;
+		long t0 = sink != null ? System.nanoTime() : 0L;
+		int childCount = entry.pendingComponents.size();
 		List<Component> list = new ArrayList<>(entry.pendingComponents);
 		entry.pendingComponents.clear();
 		for (Component comp : list) {
@@ -162,6 +212,15 @@ public final class ParentStack {
 			}
 			if (comp instanceof SpacingAware) {
 				((SpacingAware) comp).applySpacing();
+			}
+		}
+		if (sink != null) {
+			float ms = (System.nanoTime() - t0) / 1_000_000f;
+			if (ms >= slowSubtreeThresholdMs) {
+				String tableName = entry.table != null && entry.table.name != null
+						? entry.table.name
+						: "table";
+				sink.record("ParentStack", "attach", ms, "children=" + childCount + " parent=" + tableName);
 			}
 		}
 	}
