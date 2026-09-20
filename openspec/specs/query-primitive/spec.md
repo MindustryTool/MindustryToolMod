@@ -1,4 +1,10 @@
-## ADDED Requirements
+# query-primitive Specification
+
+## Purpose
+
+Async reactive primitive `Query<T>` — the async counterpart to `Computed` — that tracks reactive dependencies, auto-fetches when deps change, auto-marshals results to the main thread, and exposes results as `Readable<>` signals. Established by change `solim-query` to unify data fetching patterns.
+
+## Requirements
 
 ### Requirement: Query Creation
 `Query<T>` SHALL be created via `Query.of(QueryKey key, Supplier<CompletableFuture<T>> fetcher)`. It SHALL automatically register with the active `ComponentContext` for lifecycle ownership.

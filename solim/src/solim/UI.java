@@ -61,7 +61,11 @@ import solim.runtime.SignalDispatcher;
 import solim.reactive.Signals;
 import solim.reactive.Dynamic;
 import solim.reactive.ForEach;
+import solim.reactive.Mutation;
+import solim.reactive.Query;
+import solim.reactive.QueryKey;
 import solim.core.Units;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Public entry point and declarative UI facade for Solim. This class exposes
@@ -530,6 +534,30 @@ public final class UI {
 
     public static Readable<Boolean> isPortrait() {
         return Signals.isPortrait();
+    }
+
+    public static <T> Query<T> query(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
+        return Query.of(key, fetcher);
+    }
+
+    public static <T> Query<T> query(QueryKey key, Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
+        return Query.of(key, enabled, fetcher);
+    }
+
+    public static <T> Query<T> query(Supplier<CompletableFuture<T>> fetcher) {
+        return Query.of(fetcher);
+    }
+
+    public static <T> Query<T> query(Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
+        return Query.of(enabled, fetcher);
+    }
+
+    public static <T, R> Mutation<T, R> mutation(Function<T, CompletableFuture<R>> mutator) {
+        return Mutation.of(mutator);
+    }
+
+    public static <R> Mutation<Void, R> mutation(Supplier<CompletableFuture<R>> mutator) {
+        return Mutation.of(mutator);
     }
 
     // --- Structural & Dynamic ---

@@ -1,11 +1,11 @@
 package mindustrytool.features.browser.common;
 
-import arc.Core;
 import arc.struct.Seq;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustrytool.Config;
 import solim.reactive.Effect;
+import solim.reactive.Query;
 import solim.reactive.Signal;
 
 /**
@@ -29,8 +29,8 @@ public class BrowserState<T> {
     private final Signal<Boolean> loading = Signal.of(false);
     private final Signal<String> error = Signal.of(null);
 
-    private final Fetcher<T> fetcher;
-    private Effect autoFetch;
+    private final Signal<Boolean> active = Signal.of(false);
+    private final Query<List<T>> queryPrimitive;
 
     @FunctionalInterface
     public interface Fetcher<T> {
@@ -38,14 +38,7 @@ public class BrowserState<T> {
     }
 
     public BrowserState(Fetcher<T> fetcher) {
-        this.fetcher = fetcher;
-    }
-
-    public void start() {
-        if (autoFetch != null) {
-            return;
-        }
-        autoFetch = Effect.of(() -> {
+        this.queryPrimitive = Query.of(active, () -> {
             query.get();
             selectedTags.get();
             selectedBlocks.get();
@@ -53,40 +46,39 @@ public class BrowserState<T> {
             verification.get();
             page.get();
             pageSize.get();
-            doFetch();
+            return fetcher.fetch(this);
+        });
+
+        Effect.of(() -> {
+            List<T> list = queryPrimitive.data().get();
+            items.set(list != null ? Seq.with(list) : new Seq<T>());
+        });
+        Effect.of(() -> {
+            loading.set(Boolean.TRUE.equals(queryPrimitive.loading().get()));
+        });
+        Effect.of(() -> {
+            Throwable err = queryPrimitive.error().get();
+            if (err != null) {
+                Throwable cause = err.getCause() != null ? err.getCause() : err;
+                String message = cause.getMessage() != null ? cause.getMessage() : cause.toString();
+                error.set(message);
+                items.set(new Seq<T>());
+            } else {
+                error.set(null);
+            }
         });
     }
 
+    public void start() {
+        active.set(true);
+    }
+
     public void stop() {
-        if (autoFetch != null) {
-            autoFetch.dispose();
-            autoFetch = null;
-        }
+        active.set(false);
     }
 
     public void refresh() {
-        doFetch();
-    }
-
-    private void doFetch() {
-        loading.set(true);
-        error.set(null);
-
-        fetcher.fetch(this)
-                .whenComplete((result, throwable) -> {
-                    Core.app.post(() -> {
-                        loading.set(false);
-                        if (throwable != null) {
-                            Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
-                            String message = cause.getMessage() != null ? cause.getMessage() : cause.toString();
-                            error.set(message);
-                            items.set(new Seq<T>());
-                        } else {
-                            error.set(null);
-                            items.set(result != null ? Seq.with(result) : new Seq<T>());
-                        }
-                    });
-                });
+        queryPrimitive.refetch();
     }
 
     public void nextPage() {

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# mutation-primitive Specification
+
+## Purpose
+
+Async action primitive `Mutation<T,R>` for write operations (send, upload, delete) with pending/error/result tracking and lifecycle hooks for optimistic updates. Established by change `solim-query`.
+
+## Requirements
 
 ### Requirement: Mutation Creation
 `Mutation<T, R>` SHALL be created via `Mutation.of(Function<T, CompletableFuture<R>> mutator)` where `T` is the input type and `R` is the result type. It SHALL automatically register with the active `ComponentContext` for lifecycle ownership.

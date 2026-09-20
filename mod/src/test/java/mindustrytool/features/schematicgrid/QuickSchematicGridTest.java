@@ -397,4 +397,83 @@ class QuickSchematicGridTest {
         assertEquals("First", feature2.getPageIcon(0));
         assertEquals("Second", feature2.getPageIcon(1));
     }
+
+    @Test
+    void pagePosition_defaultsToLeftAndHorizontalReflectsValue() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+
+        assertEquals(QuickSchematicGridFeature.PAGE_LEFT, feature.pagePositionConfig.get());
+        assertEquals(QuickSchematicGridFeature.PAGE_LEFT, feature.getPagePosition());
+        assertFalse(feature.isPageHorizontal());
+
+        feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_TOP);
+        assertEquals(QuickSchematicGridFeature.PAGE_TOP, feature.getPagePosition());
+        assertTrue(feature.isPageHorizontal());
+
+        feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_BOTTOM);
+        assertTrue(feature.isPageHorizontal());
+
+        feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_RIGHT);
+        assertFalse(feature.isPageHorizontal());
+    }
+
+    @Test
+    void pagePosition_normalizesUnknownToLeft() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+        feature.pagePositionConfig.set("diagonal");
+
+        assertEquals(QuickSchematicGridFeature.PAGE_LEFT, feature.getPagePosition());
+        assertFalse(feature.isPageHorizontal());
+    }
+
+    @Test
+    void pagePosition_persistsAcrossInstances() {
+        QuickSchematicGridFeature feature1 = new QuickSchematicGridFeature();
+        feature1.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_RIGHT);
+
+        QuickSchematicGridFeature feature2 = new QuickSchematicGridFeature();
+        assertEquals(QuickSchematicGridFeature.PAGE_RIGHT, feature2.pagePositionConfig.get());
+        assertEquals(QuickSchematicGridFeature.PAGE_RIGHT, feature2.getPagePosition());
+    }
+
+    @Test
+    void buttonOpacity_defaultsToFullAndClampsOnRead() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+
+        assertEquals(1f, feature.buttonOpacityConfig.get(), 0.001f);
+        assertEquals(1f, feature.getButtonOpacity(), 0.001f);
+
+        feature.buttonOpacityConfig.set(0.5f);
+        assertEquals(0.5f, feature.buttonOpacityConfig.get(), 0.001f);
+        assertEquals(0.5f, feature.getButtonOpacity(), 0.001f);
+
+        feature.buttonOpacityConfig.set(0f);
+        assertEquals(QuickSchematicGridFeature.MIN_BUTTON_OPACITY, feature.getButtonOpacity(), 0.001f);
+
+        feature.buttonOpacityConfig.set(2f);
+        assertEquals(QuickSchematicGridFeature.MAX_BUTTON_OPACITY, feature.getButtonOpacity(), 0.001f);
+    }
+
+    @Test
+    void buttonOpacity_persistsAcrossInstances() {
+        QuickSchematicGridFeature feature1 = new QuickSchematicGridFeature();
+        feature1.buttonOpacityConfig.set(0.6f);
+
+        QuickSchematicGridFeature feature2 = new QuickSchematicGridFeature();
+        assertEquals(0.6f, feature2.buttonOpacityConfig.get(), 0.001f);
+        assertEquals(0.6f, feature2.getButtonOpacity(), 0.001f);
+    }
+
+    @Test
+    void pickerBatching_takeFirstCapsToAvailableItems() {
+        Seq<Schematic> all = Seq.with(
+                schematic("Alpha", "alpha.msch"),
+                schematic("Beta", "beta.msch"),
+                schematic("Gamma", "gamma.msch"));
+
+        assertEquals(2, SchematicPickerDialog.takeFirst(all, 2).size);
+        assertEquals(3, SchematicPickerDialog.takeFirst(all, 36).size);
+        assertEquals(0, SchematicPickerDialog.takeFirst(all, 0).size);
+        assertTrue(SchematicPickerDialog.takeFirst(null, 36).isEmpty());
+    }
 }

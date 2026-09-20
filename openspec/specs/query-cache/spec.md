@@ -1,4 +1,10 @@
-## ADDED Requirements
+# query-cache Specification
+
+## Purpose
+
+Global shared cache for Solim async queries, providing structured `QueryKey` identities, entry-level stale time, garbage collection, in-flight request deduplication, prefix-based invalidation, and prefetch support. Established by change `solim-query` to eliminate hand-rolled per-feature caches.
+
+## Requirements
 
 ### Requirement: Structured Query Key
 `QueryKey` SHALL be an immutable value type that wraps an ordered sequence of objects and provides structural equality via `equals()` and `hashCode()`. QueryKey SHALL be created via a static factory method `QueryKey.of(Object... parts)`.

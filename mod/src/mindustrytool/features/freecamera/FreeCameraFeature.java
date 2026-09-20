@@ -20,6 +20,8 @@ import mindustrytool.input.ModMobileInput;
  */
 public class FreeCameraFeature extends Feature {
 
+    private @Nullable FreeCameraHudView hudView;
+
     public FreeCameraFeature() {
         super(FeatureMetadata.builder()
                 .id("free-camera")
@@ -34,7 +36,13 @@ public class FreeCameraFeature extends Feature {
     }
 
     @Override
+    public void onEnable() {
+        mountHud();
+    }
+
+    @Override
     public void onDisable() {
+        unmountHud();
         snapToPlayer();
     }
 
@@ -79,5 +87,34 @@ public class FreeCameraFeature extends Feature {
     public static boolean isFreeCam() {
         FreeCameraFeature feat = FeatureManager.getFeature(FreeCameraFeature.class);
         return feat != null && feat.isEnabled();
+    }
+
+    private void mountHud() {
+        if (hudView != null) {
+            return;
+        }
+        hudView = new FreeCameraHudView(this);
+        Element el = hudView.element();
+        el.name = "free-camera-indicator-hud";
+        el.visible(() -> Vars.ui != null && Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown
+                && Vars.state != null && Vars.state.isGame());
+
+        Core.app.post(() -> {
+            if (hudView != null && Vars.ui != null && Vars.ui.hudGroup != null) {
+                Vars.ui.hudGroup.addChild(el);
+            }
+        });
+    }
+
+    private void unmountHud() {
+        if (hudView == null) {
+            return;
+        }
+        FreeCameraHudView view = hudView;
+        hudView = null;
+        Core.app.post(() -> {
+            view.element().remove();
+            view.dispose();
+        });
     }
 }

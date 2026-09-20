@@ -146,6 +146,7 @@ public class MindustryAuthProvider implements AuthProvider {
 						if (cause instanceof CompletionException && cause.getCause() != null) {
 							cause = cause.getCause();
 						}
+                        
 						if (cause instanceof HttpException) {
 							HttpException httpErr = (HttpException) cause;
 							if (httpErr.statusCode() == 401) {

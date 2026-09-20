@@ -13,6 +13,7 @@ import arc.util.Reflect;
 import arc.util.Threads;
 import arc.util.Time;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import mindustry.Vars;
 import mindustry.net.Net.NetProvider;
@@ -23,9 +24,38 @@ public class PlayerConnectClient {
     private static Client pinger;
     private static Thread pingerThread;
 
+    @SuppressWarnings("unchecked")
+    public static String getSavedPassword(String roomId) {
+        try {
+            HashMap<String, String> saved = Core.settings.getJson("player-connect.saved-password", HashMap.class,
+                    String.class, HashMap::new);
+
+            return saved.getOrDefault(roomId, "");
+        } catch (Exception e) {
+            Log.err(e);
+            return "";
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void savedPassword(String roomId, String password) {
+        try {
+            HashMap<String, String> saved = Core.settings.getJson("player-connect.saved-password", HashMap.class,
+                    String.class, HashMap::new);
+            saved.put(roomId, password);
+            Core.settings.put("player-connect.saved-password", saved);
+        } catch (Exception e) {
+            Log.err(e);
+        }
+    }
+
     public static void join(PlayerConnectLink link, String password, Runnable success) {
         if (link == null) {
             throw new IllegalArgumentException("Link cannot be null.");
+        }
+
+        if (password != null && !password.isEmpty()) {
+            savedPassword(link.roomId, password);
         }
 
         Vars.ui.loadfrag.show("@connecting");

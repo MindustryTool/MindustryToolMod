@@ -110,6 +110,57 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                         });
                     });
 
+                    // Page Position (Left, Right, Top, Bottom)
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.quick-schematic-grid.settings.page-position")).left();
+
+                        spacer();
+                        row().gap(unit(2)).children(() -> {
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.left"),
+                                    () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_LEFT))
+                                            .style(Styles.togglet)
+                                            .checked(feature.pagePositionConfig.signal()
+                                                    .map(QuickSchematicGridFeature.PAGE_LEFT::equals))
+                                            .height(unit(8.5f));
+
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.right"),
+                                    () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_RIGHT))
+                                            .style(Styles.togglet)
+                                            .checked(feature.pagePositionConfig.signal()
+                                                    .map(QuickSchematicGridFeature.PAGE_RIGHT::equals))
+                                            .height(unit(8.5f));
+
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.top"),
+                                    () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_TOP))
+                                            .style(Styles.togglet)
+                                            .checked(feature.pagePositionConfig.signal()
+                                                    .map(QuickSchematicGridFeature.PAGE_TOP::equals))
+                                            .height(unit(8.5f));
+
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.bottom"),
+                                    () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_BOTTOM))
+                                            .style(Styles.togglet)
+                                            .checked(feature.pagePositionConfig.signal()
+                                                    .map(QuickSchematicGridFeature.PAGE_BOTTOM::equals))
+                                            .height(unit(8.5f));
+                        });
+                    });
+
+                    // Button Opacity Slider (20% to 100%)
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.quick-schematic-grid.settings.button-opacity")).left();
+
+                        spacer();
+                        slider(feature.buttonOpacityConfig.signal(),
+                                QuickSchematicGridFeature.MIN_BUTTON_OPACITY,
+                                QuickSchematicGridFeature.MAX_BUTTON_OPACITY, 0.05f);
+
+                        row().width(unit(14)).children(() -> {
+                            text(feature.buttonOpacityConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
+                        });
+                    });
+
                     // Hide Drag Handle Checkbox
                     checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
                             feature.hideDragHandleConfig.signal()).growX();
@@ -128,17 +179,20 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                                         .map(count -> count != null && count < QuickSchematicGridFeature.MAX_PAGES))
                                 .height(unit(8.5f));
 
-                        button(Core.bundle.get("feature.quick-schematic-grid.settings.delete-page"), this::confirmDeletePage)
-                                .style(WebStyles.ghost())
-                                .enabled(feature.pageCountConfig.signal()
-                                        .map(count -> count != null && count > QuickSchematicGridFeature.MIN_PAGES))
-                                .height(unit(8.5f));
+                        button(Core.bundle.get("feature.quick-schematic-grid.settings.delete-page"),
+                                this::confirmDeletePage)
+                                        .style(WebStyles.ghost())
+                                        .enabled(feature.pageCountConfig.signal()
+                                                .map(count -> count != null
+                                                        && count > QuickSchematicGridFeature.MIN_PAGES))
+                                        .height(unit(8.5f));
                     });
 
                     Readable<List<Integer>> pagesList = Signal.computed(() -> {
                         Integer count = feature.pageCountConfig.signal().get();
                         feature.pageIcons().get();
-                        int total = Math.max(1, Math.min(QuickSchematicGridFeature.MAX_PAGES, count != null ? count : 1));
+                        int total = Math.max(1,
+                                Math.min(QuickSchematicGridFeature.MAX_PAGES, count != null ? count : 1));
                         List<Integer> list = new ArrayList<>(total);
                         for (int i = 0; i < total; i++) {
                             list.add(i);
@@ -150,8 +204,10 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                         if (pages != null) {
                             for (int pageIndex : pages) {
                                 String icon = feature.getPageIcon(pageIndex);
-                                String label = icon != null && !icon.trim().isEmpty() ? icon : String.valueOf(pageIndex + 1);
-                                String tooltip = Core.bundle.format("feature.quick-schematic-grid.settings.page-tab", pageIndex + 1);
+                                String label = icon != null && !icon.trim().isEmpty() ? icon
+                                        : String.valueOf(pageIndex + 1);
+                                String tooltip = Core.bundle.format("feature.quick-schematic-grid.settings.page-tab",
+                                        pageIndex + 1);
 
                                 button(label, () -> feature.setActivePage(pageIndex))
                                         .style(WebStyles.filterChipText())
@@ -185,15 +241,17 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
 
                         spacer();
 
-                        button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.pick"), this::pickPageIcon)
-                                .style(WebStyles.secondary())
-                                .height(unit(8.5f));
+                        button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.pick"),
+                                this::pickPageIcon)
+                                        .style(WebStyles.secondary())
+                                        .height(unit(8.5f));
 
                         dynamic(activeIcon, icon -> {
                             if (icon != null && !icon.trim().isEmpty()) {
-                                return button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.clear"), this::clearPageIcon)
-                                        .style(WebStyles.ghost())
-                                        .height(unit(8.5f));
+                                return button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.clear"),
+                                        this::clearPageIcon)
+                                                .style(WebStyles.ghost())
+                                                .height(unit(8.5f));
                             }
                             return null;
                         });
@@ -212,7 +270,7 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
                     // Reset Position
                     button(Core.bundle.get("feature.quick-schematic-grid.settings.reset-position"),
                             feature::resetPosition)
-                            .style(Styles.defaultb).growX();
+                                    .style(Styles.defaultb).growX();
                 });
             });
         }).element();
@@ -245,13 +303,13 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
             return list;
         });
 
-        row().growX().center().children(() -> {
+        scroll().scrollX(true).scrollY(true).center().children(() -> {
             reactiveGrid(
                     feature.colsConfig.signal(),
                     slots,
                     QuickSchematicGridHudView.SlotModel::key,
                     this::settingsSlotComponent)
-                    .gap(gap);
+                            .gap(gap);
         });
     }
 
