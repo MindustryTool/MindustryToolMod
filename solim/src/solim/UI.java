@@ -64,6 +64,7 @@ import solim.reactive.ForEach;
 import solim.reactive.Mutation;
 import solim.reactive.Query;
 import solim.reactive.QueryKey;
+import solim.reactive.QueryView;
 import solim.core.Units;
 import java.util.concurrent.CompletableFuture;
 
@@ -550,6 +551,12 @@ public final class UI {
 
     public static <T> Query<T> query(Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
         return Query.of(enabled, fetcher);
+    }
+
+    public static <T> QueryView<T> query(Query<T> query) {
+        QueryView<T> qv = QueryView.of(query);
+        ParentStack.attachToParent(qv.element());
+        return qv;
     }
 
     public static <T, R> Mutation<T, R> mutation(Function<T, CompletableFuture<R>> mutator) {

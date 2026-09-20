@@ -45,6 +45,7 @@ public class ModDesktopInput extends DesktopInput {
         AutoplayFeature af = FeatureManager.getFeature(AutoplayFeature.class);
         boolean autoplaying = af != null && af.isEnabled();
         boolean freeCam = FreeCameraFeature.isFreeCam();
+        boolean vanillaDetached = !freeCam && Core.settings.getBool("detach-camera", false);
 
         boolean omni = unit.type.omniMovement;
 
@@ -56,7 +57,15 @@ public class ModDesktopInput extends DesktopInput {
         JoystickFeature jf = FeatureManager.getFeature(JoystickFeature.class);
         Vec2 joystick = (jf != null && jf.isEnabled()) ? jf.moveVector : Vec2.ZERO;
 
-        if (!joystick.isZero()) {
+        if (vanillaDetached) {
+            // Stock vanilla detach-camera behavior (DesktopInput.updateMovement):
+            // the camera leads and the unit follows it.
+            movement.set(Core.camera.position).sub(Vars.player).limit(speed);
+            if (Vars.player.within(Core.camera.position, 15f)) {
+                movement.setZero();
+                unit.vel.approachDelta(Vec2.ZERO, unit.speed() * unit.type.accel / 2f);
+            }
+        } else if (!joystick.isZero()) {
             movement.set(xa, ya);
             if (movement.len() > 1f) {
                 movement.nor();
