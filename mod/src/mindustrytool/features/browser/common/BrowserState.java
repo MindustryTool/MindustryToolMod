@@ -4,8 +4,8 @@ import arc.struct.Seq;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustrytool.Config;
-import solim.reactive.Effect;
 import solim.reactive.Query;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 /**
@@ -19,16 +19,12 @@ public class BrowserState<T> {
     public static final int PAGE_SIZE = 20;
 
     private final Signal<Integer> pageSize = Signal.of(PAGE_SIZE);
-    private final Signal<String> query = Signal.of("");
+    private final Signal<String> searchQuery = Signal.of("");
     private final Signal<Seq<String>> selectedTags = Signal.of(new Seq<String>());
     private final Signal<Seq<String>> selectedBlocks = Signal.of(new Seq<String>());
     private final Signal<String> sort = Signal.of(Config.sorts.get(0).getValue());
     private final Signal<String> verification = Signal.of("VERIFIED");
     private final Signal<Integer> page = Signal.of(0);
-    private final Signal<Seq<T>> items = Signal.of(new Seq<T>());
-    private final Signal<Boolean> loading = Signal.of(false);
-    private final Signal<String> error = Signal.of(null);
-
     private final Signal<Boolean> active = Signal.of(false);
     private final Query<List<T>> queryPrimitive;
 
@@ -39,7 +35,7 @@ public class BrowserState<T> {
 
     public BrowserState(Fetcher<T> fetcher) {
         this.queryPrimitive = Query.of(active, () -> {
-            query.get();
+            searchQuery.get();
             selectedTags.get();
             selectedBlocks.get();
             sort.get();
@@ -47,25 +43,6 @@ public class BrowserState<T> {
             page.get();
             pageSize.get();
             return fetcher.fetch(this);
-        });
-
-        Effect.of(() -> {
-            List<T> list = queryPrimitive.data().get();
-            items.set(list != null ? Seq.with(list) : new Seq<T>());
-        });
-        Effect.of(() -> {
-            loading.set(Boolean.TRUE.equals(queryPrimitive.loading().get()));
-        });
-        Effect.of(() -> {
-            Throwable err = queryPrimitive.error().get();
-            if (err != null) {
-                Throwable cause = err.getCause() != null ? err.getCause() : err;
-                String message = cause.getMessage() != null ? cause.getMessage() : cause.toString();
-                error.set(message);
-                items.set(new Seq<T>());
-            } else {
-                error.set(null);
-            }
         });
     }
 
@@ -155,8 +132,8 @@ public class BrowserState<T> {
         resetPage();
     }
 
-    public Signal<String> query() {
-        return query;
+    public Signal<String> searchQuery() {
+        return searchQuery;
     }
 
     public Signal<Seq<String>> selectedTags() {
@@ -197,15 +174,23 @@ public class BrowserState<T> {
         }
     }
 
-    public Signal<Seq<T>> items() {
-        return items;
+    public Query<List<T>> query() {
+        return queryPrimitive;
     }
 
-    public Signal<Boolean> loading() {
-        return loading;
+    public Readable<Seq<T>> items() {
+        return queryPrimitive.data().map(list -> list != null ? Seq.with(list) : new Seq<T>());
     }
 
-    public Signal<String> error() {
-        return error;
+    public Readable<Boolean> loading() {
+        return queryPrimitive.fetching();
+    }
+
+    public Readable<String> error() {
+        return queryPrimitive.error().map(err -> {
+            if (err == null) return null;
+            Throwable cause = err.getCause() != null ? err.getCause() : err;
+            return cause.getMessage() != null ? cause.getMessage() : cause.toString();
+        });
     }
 }

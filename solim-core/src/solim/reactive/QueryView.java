@@ -66,7 +66,8 @@ public final class QueryView<T> extends BaseComponent
 		table.add(errorText.element()).padBottom(8f).row();
 
 		String btnText = Core.bundle != null ? Core.bundle.get("button.retry", "Retry") : "Retry";
-		Button btn = new Button().children(() -> new Text(btnText)).onClick(retry);
+		Button btn = new Button(retry);
+		btn.table().add(new Text(btnText).element());
 		table.add(btn.element());
 		return () -> table;
 	};
@@ -108,23 +109,50 @@ public final class QueryView<T> extends BaseComponent
 		defaultErrorFactory = Objects.requireNonNull(factory, "factory cannot be null");
 	}
 
+	private @Nullable Effect effect;
+	private boolean built = false;
+
 	public QueryView<T> data(Function<T, Component> dataFactory) {
 		this.dataFactory = dataFactory;
+		if (built && (currentViewState == ViewState.DATA || currentComponent == null)) {
+			currentViewState = ViewState.NONE;
+			if (effect != null) {
+				effect.runPending();
+			}
+		}
 		return this;
 	}
 
 	public QueryView<T> data(BiFunction<T, Boolean, Component> dataWithFetchingFactory) {
 		this.dataWithFetchingFactory = dataWithFetchingFactory;
+		if (built && (currentViewState == ViewState.DATA || currentComponent == null)) {
+			currentViewState = ViewState.NONE;
+			if (effect != null) {
+				effect.runPending();
+			}
+		}
 		return this;
 	}
 
 	public QueryView<T> loading(Supplier<Component> loadingFactory) {
 		this.loadingFactory = loadingFactory;
+		if (built && currentViewState == ViewState.LOADING) {
+			currentViewState = ViewState.NONE;
+			if (effect != null) {
+				effect.runPending();
+			}
+		}
 		return this;
 	}
 
 	public QueryView<T> error(Function<Throwable, Component> errorFactory) {
 		this.errorFactory = errorFactory;
+		if (built && currentViewState == ViewState.ERROR) {
+			currentViewState = ViewState.NONE;
+			if (effect != null) {
+				effect.runPending();
+			}
+		}
 		return this;
 	}
 
@@ -150,90 +178,97 @@ public final class QueryView<T> extends BaseComponent
 
 	@Override
 	protected Element build() {
+		built = true;
 		applyContainerAlign();
-		Effect.of(() -> {
-			boolean isLoading = Boolean.TRUE.equals(query.loading().get());
-			Throwable err = query.error().get();
-			T data = query.data().get();
-			boolean isFetching = Boolean.TRUE.equals(query.fetching().get());
-
-			ViewState targetState;
-			if (isLoading) {
-				targetState = ViewState.LOADING;
-			} else if (err != null && data == null) {
-				targetState = ViewState.ERROR;
-			} else if (data != null) {
-				targetState = ViewState.DATA;
-			} else {
-				targetState = ViewState.EMPTY;
-			}
-
-			// Avoid unnecessary rebuilding if neither state nor data changed
-			if (targetState == currentViewState) {
-				if (targetState == ViewState.DATA) {
-					if (Objects.equals(data, lastData) && Objects.equals(isFetching, lastFetching)) {
-						return;
-					}
-				} else if (targetState == ViewState.LOADING) {
-					return;
-				} else if (targetState == ViewState.ERROR && Objects.equals(err, lastError)) {
-					return;
-				}
-			}
-
-			currentViewState = targetState;
-			lastData = data;
-			lastError = err;
-			lastFetching = isFetching;
-
-			cleanupCurrent();
-
-			currentComponent = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
-				try {
-					switch (targetState) {
-						case LOADING:
-							return loadingFactory != null ? loadingFactory.get() : defaultLoadingFactory.get();
-						case ERROR:
-							return errorFactory != null
-									? errorFactory.apply(err)
-									: defaultErrorFactory.apply(err, query::refetch);
-						case DATA:
-							if (dataWithFetchingFactory != null) {
-								return dataWithFetchingFactory.apply(data, isFetching);
-							} else if (dataFactory != null) {
-								return dataFactory.apply(data);
-							}
-							return null;
-						case EMPTY:
-						default:
-							return null;
-					}
-				} catch (Throwable t) {
-					Log.err("[Solim] Error rendering QueryView", t);
-					return defaultErrorFactory.apply(t, query::refetch);
-				}
-			}));
-
-			if (currentComponent != null) {
-				Element el = currentComponent.element();
-				Cell<?> cell = container.add(el);
-				cell.minWidth(0f);
-				PendingCellConfig sc = PendingCellConfig.find(currentComponent);
-				if (sc == null) {
-					sc = PendingCellConfig.find(el);
-				}
-				if (sc != null) {
-					currentBindings.addAll(sc.applyToCell(cell));
-				} else if (Ui.isExpanding(el)) {
-					cell.growX();
-				}
-			}
-
-			applyContainerAlign();
-			updateParentCell();
-			container.invalidateHierarchy();
-		});
+		query.ensureFresh();
+		effect = Effect.of(this::updateView);
 		return container;
+	}
+
+	private void updateView() {
+		if (isDisposed()) return;
+
+		boolean isLoading = Boolean.TRUE.equals(query.loading().get());
+		Throwable err = query.error().get();
+		T data = query.data().get();
+		boolean isFetching = Boolean.TRUE.equals(query.fetching().get());
+
+		ViewState targetState;
+		if (isLoading) {
+			targetState = ViewState.LOADING;
+		} else if (err != null && data == null) {
+			targetState = ViewState.ERROR;
+		} else if (data != null) {
+			targetState = ViewState.DATA;
+		} else {
+			targetState = ViewState.EMPTY;
+		}
+
+		// Avoid unnecessary rebuilding if neither state nor data changed
+		if (currentComponent != null && targetState == currentViewState) {
+			if (targetState == ViewState.DATA) {
+				boolean isFetchingRelevant = dataWithFetchingFactory != null;
+				if (Objects.equals(data, lastData) && (!isFetchingRelevant || Objects.equals(isFetching, lastFetching))) {
+					return;
+				}
+			} else if (targetState == ViewState.LOADING) {
+				return;
+			} else if (targetState == ViewState.ERROR && Objects.equals(err, lastError)) {
+				return;
+			}
+		}
+
+		currentViewState = targetState;
+		lastData = data;
+		lastError = err;
+		lastFetching = isFetching;
+
+		cleanupCurrent();
+
+		currentComponent = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
+			try {
+				switch (targetState) {
+					case LOADING:
+						return loadingFactory != null ? loadingFactory.get() : defaultLoadingFactory.get();
+					case ERROR:
+						return errorFactory != null
+								? errorFactory.apply(err)
+								: defaultErrorFactory.apply(err, query::refetch);
+					case DATA:
+						if (dataWithFetchingFactory != null) {
+							return dataWithFetchingFactory.apply(data, isFetching);
+						} else if (dataFactory != null) {
+							return dataFactory.apply(data);
+						}
+						return null;
+					case EMPTY:
+					default:
+						return null;
+				}
+			} catch (Throwable t) {
+				Log.err("[Solim] Error rendering QueryView", t);
+				return defaultErrorFactory.apply(t, query::refetch);
+			}
+		}));
+
+		if (currentComponent != null) {
+			Element el = currentComponent.element();
+			Cell<?> cell = container.add(el);
+			cell.minWidth(0f);
+			PendingCellConfig sc = PendingCellConfig.find(currentComponent);
+			if (sc == null) {
+				sc = PendingCellConfig.find(el);
+			}
+			if (sc != null) {
+				currentBindings.addAll(sc.applyToCell(cell));
+			} else if (Ui.isExpanding(el)) {
+				cell.growX();
+			}
+		}
+
+		applyContainerAlign();
+		updateParentCell();
+		container.invalidateHierarchy();
 	}
 
 	private void cleanupCurrent() {
@@ -279,6 +314,10 @@ public final class QueryView<T> extends BaseComponent
 	@Override
 	protected void onDispose() {
 		cleanupCurrent();
+		if (effect != null) {
+			effect.dispose();
+			effect = null;
+		}
 	}
 
 	@Override

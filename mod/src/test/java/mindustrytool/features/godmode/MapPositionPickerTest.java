@@ -2,6 +2,7 @@ package mindustrytool.features.godmode;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import arc.Application;
 import arc.Core;
 import arc.Events;
 import arc.mock.MockApplication;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 class MapPositionPickerTest {
 
+    private Application originalApp;
     private Seq<Runnable> postedTasks;
 
     @BeforeAll
@@ -26,6 +28,7 @@ class MapPositionPickerTest {
 
     @BeforeEach
     void setUp() {
+        originalApp = Core.app;
         postedTasks = new Seq<>();
         Core.app = new MockApplication() {
             @Override
@@ -41,6 +44,7 @@ class MapPositionPickerTest {
     void tearDown() {
         MapPositionPicker.cancel();
         drainPostedTasks();
+        Core.app = originalApp;
     }
 
     private void drainPostedTasks() {

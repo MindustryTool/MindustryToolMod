@@ -23,7 +23,6 @@ import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
-import solim.reactive.Readable;
 import java.util.Collections;
 
 /**
@@ -56,7 +55,7 @@ public class SchematicBrowserDialog extends SolimDialog {
                 state.page().peek() != null ? state.page().peek() : 0,
                 state.getPageSize(),
                 state.sort().peek(),
-                state.query().peek(),
+                state.searchQuery().peek(),
                 state.selectedTags().peek().list(),
                 blockList,
                 null,
@@ -105,54 +104,51 @@ public class SchematicBrowserDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            Readable<Boolean> hasError = state.error().map(e -> e != null && !e.trim().isEmpty());
+            return column().grow().center().paddingX(BrowserLayout.HORIZONTAL_PADDING).paddingY(unit(2))
+                    .children(() -> {
+                        column().width(contentWidth).growY().gap(unit(2)).children(() -> {
+                            new BrowserSearchHeader(state, () -> filterDialog.show());
 
-            return column().grow().center().paddingX(BrowserLayout.HORIZONTAL_PADDING).paddingY(unit(2)).children(() -> {
-                column().width(contentWidth).growY().gap(unit(2)).children(() -> {
-                    new BrowserSearchHeader(state, () -> filterDialog.show());
+                            query(state.query())
+                                    .loading(Loader::centered)
+                                    .error(err -> row().grow().gap(unit(1)).children(() -> {
+                                        Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
+                                        String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
+                                                : (cause != null ? cause.toString() : "");
+                                        text(msg).color(Color.scarlet).wrap(true).growX();
+                                        button(Core.bundle.get("browser.retry"), () -> state.refresh())
+                                                .style(WebStyles.outlineText())
+                                                .height(unit(10));
+                                    }))
+                                    .data((list, fetching) -> fetching ? Loader.centered()
+                                            : scroll().style(Styles.noBarPane).grow()
+                                                    .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
+                                                        reactiveGrid(
+                                                                columnCount,
+                                                                state.items(),
+                                                                SchematicData::getItemId,
+                                                                item -> new SchematicCard(
+                                                                        item,
+                                                                        cardSize,
+                                                                        () -> onCardClick(item),
+                                                                        () -> SchematicActions
+                                                                                .copyToClipboard(item.getItemId()),
+                                                                        () -> SchematicActions
+                                                                                .saveToLocal(item.getItemId()),
+                                                                        () -> showDetails(item)))
+                                                                                .empty(() -> {
+                                                                                    text(Core.bundle
+                                                                                            .get("browser.empty"))
+                                                                                                    .color(Color.gray)
+                                                                                                    .padding(unit(4));
+                                                                                })
+                                                                                .gap(BrowserLayout.CARD_GAP);
+                                                    }))
+                                    .grow();
 
-                    dynamic(state.loading(), loading -> {
-                        if (Boolean.TRUE.equals(loading)) {
-                            return Loader.centered();
-                        }
-
-                        return dynamic(hasError, errorOccurred -> {
-                            if (Boolean.TRUE.equals(errorOccurred)) {
-                                return row().grow().gap(unit(1)).children(() -> {
-                                    text(state.error().map(e -> e != null ? e : ""))
-                                            .color(Color.scarlet)
-                                            .wrap(true)
-                                            .growX();
-                                    button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                            .style(WebStyles.outlineText())
-                                            .height(unit(10));
-                                });
-                            }
-
-                            return scroll().style(Styles.noBarPane).grow().paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
-                                reactiveGrid(
-                                        columnCount,
-                                        state.items(),
-                                        SchematicData::getItemId,
-                                        item -> new SchematicCard(
-                                                item,
-                                                cardSize,
-                                                () -> onCardClick(item),
-                                                () -> SchematicActions.copyToClipboard(item.getItemId()),
-                                                () -> SchematicActions.saveToLocal(item.getItemId()),
-                                                () -> showDetails(item)))
-                                                        .empty(() -> {
-                                                            text(Core.bundle.get("browser.empty")).color(Color.gray)
-                                                                    .padding(unit(4));
-                                                        })
-                                                        .gap(BrowserLayout.CARD_GAP);
-                            });
-                        }).grow();
-                    }).grow();
-
-                    new BrowserFooter(state, Config.UPLOAD_SCHEMATIC_URL, onClose);
-                });
-            }).element();
+                            new BrowserFooter(state, Config.UPLOAD_SCHEMATIC_URL, onClose);
+                        });
+                    }).element();
         }
 
         private void onCardClick(SchematicData item) {

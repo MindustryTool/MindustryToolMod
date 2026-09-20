@@ -170,4 +170,45 @@ class QueryTest {
 		inFlight.complete("ignored");
 		assertNull(query.data().get());
 	}
+
+	@Test
+	void ensureFreshBehavior() {
+		QueryKey key = QueryKey.of("ensure-fresh-test");
+		AtomicInteger fetchCount = new AtomicInteger(0);
+
+		Query<String> query = Query.of(key, () -> {
+			fetchCount.incrementAndGet();
+			return CompletableFuture.completedFuture("result");
+		});
+
+		assertEquals(1, fetchCount.get());
+		assertTrue(query.hasData());
+		assertFalse(query.isStale());
+		assertFalse(query.isError());
+
+		// Fresh query should not refetch on ensureFresh
+		query.ensureFresh();
+		assertEquals(1, fetchCount.get());
+
+		// When cache entry is invalidated or becomes stale
+		cache.getOrCreateEntry(key).clear();
+		assertTrue(query.isStale());
+		query.ensureFresh();
+		assertEquals(2, fetchCount.get());
+
+		// When query is in error state
+		AtomicInteger errFetchCount = new AtomicInteger(0);
+		AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(new CompletableFuture<>());
+		Query<String> retryQuery = Query.of(QueryKey.of("err-retry"), () -> {
+			errFetchCount.incrementAndGet();
+			return futureRef.get();
+		}).retry(0);
+
+		futureRef.get().completeExceptionally(new RuntimeException("first fail"));
+		assertTrue(retryQuery.isError());
+
+		futureRef.set(CompletableFuture.completedFuture("recovered"));
+		retryQuery.ensureFresh();
+		assertEquals("recovered", retryQuery.data().get());
+	}
 }

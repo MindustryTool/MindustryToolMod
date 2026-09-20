@@ -8,9 +8,12 @@ import arc.mock.MockSettings;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import mindustrytool.models.response.ChatMessage;
+import mindustrytool.models.response.UserData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.reactive.QueryCache;
+import solim.reactive.QueryKey;
 import solim.reactive.Signal;
 
 class ChatServiceWatchdogTest {
@@ -25,7 +28,7 @@ class ChatServiceWatchdogTest {
         Core.settings = new MockSettings();
 
         activeChannelSignal = Signal.of("ch1");
-        store = new ChatStore(activeChannelSignal);
+        store = new ChatStore(activeChannelSignal, Signal.of(false), Signal.of(false));
         service = new ChatService(store, () -> true);
     }
 
@@ -191,5 +194,24 @@ class ChatServiceWatchdogTest {
         assertFalse(store.session().connected().get());
 
         service.setRunningForTest(false);
+    }
+
+    @Test
+    void testFetchMissingUsersUsesQueryCache() {
+        UserData cachedUser = new UserData();
+        cachedUser.setId("author_123");
+        cachedUser.setName("CachedUser");
+        QueryCache.getInstance().put(QueryKey.of("user", "author_123"), cachedUser);
+
+        ChatMessage msg = new ChatMessage();
+        msg.setId("msg_1");
+        msg.setCreatedBy("author_123");
+        msg.setContent("Test message");
+
+        service.fetchMissingUsers(Collections.singletonList(msg));
+
+        UserData found = store.users().getDirect("author_123");
+        assertNotNull(found);
+        assertEquals("CachedUser", found.getName());
     }
 }

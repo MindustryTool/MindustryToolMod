@@ -1,4 +1,9 @@
-## ADDED Requirements
+# query-view Specification
+
+## Purpose
+Provides declarative reactive component rendering for `Query<T>` in Solim UI, supporting loading, error, and data states with stale-while-revalidate (SWR) awareness, built-in defaults, and lifecycle management.
+
+## Requirements
 
 ### Requirement: QueryView Component
 `QueryView<T>` SHALL be a declarative reactive component in `solim-core` extending `BaseComponent` that binds to a `Query<T>` and dynamically renders the appropriate UI for each query lifecycle state: loading, error, and data.

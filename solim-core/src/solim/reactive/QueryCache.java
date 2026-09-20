@@ -202,6 +202,38 @@ public final class QueryCache {
         }
     }
 
+    public <T> CompletableFuture<T> fetchCached(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
+        return fetchCached(key, DEFAULT_STALE_TIME_MS, fetcher);
+    }
+
+    public <T> CompletableFuture<T> fetchCached(QueryKey key, long staleTimeMs,
+            Supplier<CompletableFuture<T>> fetcher) {
+        CacheEntry<T> entry = getOrCreateEntry(key);
+        synchronized (entry) {
+            CompletableFuture<T> inflight = entry.getInflight();
+            if (inflight != null && !inflight.isDone()) {
+                return inflight;
+            }
+            if (entry.hasData() && !entry.isStale(staleTimeMs)) {
+                return CompletableFuture.completedFuture(entry.getData());
+            }
+
+            CompletableFuture<T> future = fetcher.get();
+            entry.setInflight(future);
+            future.whenComplete((result, throwable) -> {
+                synchronized (entry) {
+                    entry.setInflight(null);
+                    if (throwable != null) {
+                        entry.setError(throwable);
+                    } else {
+                        entry.setData(result);
+                    }
+                }
+            });
+            return future;
+        }
+    }
+
     public <T> CompletableFuture<T> fetchOrJoin(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
         CacheEntry<T> entry = getOrCreateEntry(key);
         synchronized (entry) {
@@ -224,6 +256,18 @@ public final class QueryCache {
             });
             return future;
         }
+    }
+
+    public <T> void put(QueryKey key, @Nullable T data) {
+        CacheEntry<T> entry = getOrCreateEntry(key);
+        synchronized (entry) {
+            entry.setData(data);
+        }
+    }
+
+    public <T> T get(QueryKey key) {
+        CacheEntry<T> entry = getEntry(key);
+        return entry != null ? entry.getData() : null;
     }
 
     public void clear() {

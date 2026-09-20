@@ -2,21 +2,27 @@ package mindustrytool.features.chat.state;
 
 import arc.util.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import mindustrytool.models.response.ChannelDto;
+import mindustrytool.services.MindustryTool;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
+import solim.reactive.Query;
+import solim.reactive.QueryKey;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public final class ChatChannels {
 
-    private final Signal<List<ChannelDto>> channels = Signal.of(Collections.emptyList());
+    private final Query<List<ChannelDto>> channelsQuery = Query.of(
+            QueryKey.of("chat", "channels"),
+            MindustryTool::getChatChannels
+    ).staleTime(Duration.ofSeconds(30));
     private final Signal<String> activeChannelId;
-    private final Signal<Boolean> loading = Signal.of(false);
-    private final Signal<String> error = Signal.of(null);
 
     private final Computed<ChannelDto> active;
 
@@ -27,41 +33,69 @@ public final class ChatChannels {
             if (id == null) {
                 return null;
             }
-            for (ChannelDto c : channels.get()) {
+            List<ChannelDto> list = channelsQuery.data().get();
+            if (list == null) {
+                return null;
+            }
+            for (ChannelDto c : list) {
                 if (Objects.equals(c.getId(), id)) {
                     return c;
                 }
             }
             return null;
         });
+
+        Effect.of(() -> {
+            List<ChannelDto> list = channelsQuery.data().get();
+            if (list != null && !list.isEmpty()) {
+                String current = activeChannelId.peek();
+                boolean exists = false;
+                if (current != null) {
+                    for (ChannelDto c : list) {
+                        if (Objects.equals(c.getId(), current)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                }
+                if (!exists) {
+                    activeChannelId.set(list.get(0).getId());
+                }
+            } else if (list != null && list.isEmpty()) {
+                activeChannelId.set(null);
+            }
+        });
+    }
+
+    public Query<List<ChannelDto>> channelsQuery() {
+        return channelsQuery;
     }
 
     public Readable<List<ChannelDto>> all() {
-        return channels;
+        return channelsQuery.data().map(list -> list != null ? list : Collections.emptyList());
     }
 
     public Readable<Boolean> loading() {
-        return loading;
+        return channelsQuery.loading();
     }
 
     public boolean isLoading() {
-        return Boolean.TRUE.equals(loading.peek());
+        return Boolean.TRUE.equals(channelsQuery.loading().peek());
     }
 
     public void setLoading(boolean isLoading) {
-        loading.set(isLoading);
     }
 
     public Readable<String> error() {
-        return error;
+        return channelsQuery.error().map(e -> e != null ? (e.getMessage() != null ? e.getMessage() : e.toString()) : null);
     }
 
     public @Nullable String currentError() {
-        return error.peek();
+        Throwable t = channelsQuery.error().peek();
+        return t != null ? (t.getMessage() != null ? t.getMessage() : t.toString()) : null;
     }
 
     public void setError(@Nullable String errorMessage) {
-        error.set(errorMessage);
     }
 
     public Signal<String> activeId() {
@@ -82,7 +116,7 @@ public final class ChatChannels {
 
     public void replace(@Nullable List<ChannelDto> newChannels) {
         List<ChannelDto> normalized = newChannels != null ? new ArrayList<>(newChannels) : Collections.emptyList();
-        channels.set(Collections.unmodifiableList(normalized));
+        channelsQuery.mutate(Collections.unmodifiableList(normalized));
 
         if (!normalized.isEmpty()) {
             String current = activeChannelId.peek();

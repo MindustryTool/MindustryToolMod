@@ -22,7 +22,6 @@ import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
-import solim.reactive.Readable;
 
 /**
  * Main map browser dialog with reactive column reflow and a keyed reactive grid
@@ -52,7 +51,7 @@ public class MapBrowserDialog extends SolimDialog {
                 state.page().peek() != null ? state.page().peek() : 0,
                 state.getPageSize(),
                 state.sort().peek(),
-                state.query().peek(),
+                state.searchQuery().peek(),
                 state.selectedTags().peek().list(),
                 null,
                 state.verification().peek());
@@ -100,53 +99,46 @@ public class MapBrowserDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            Readable<Boolean> hasError = state.error().map(e -> e != null && !e.trim().isEmpty());
-
             return column().grow().center().paddingX(BrowserLayout.HORIZONTAL_PADDING).paddingY(unit(2))
                     .children(() -> {
                         column().width(contentWidth).growY().gap(unit(2)).children(() -> {
                             new BrowserSearchHeader(state, () -> filterDialog.show());
 
-                            dynamic(state.loading(), loading -> {
-                                if (Boolean.TRUE.equals(loading)) {
-                                    return Loader.centered();
-                                }
-
-                                return dynamic(hasError, errorOccurred -> {
-                                    if (Boolean.TRUE.equals(errorOccurred)) {
-                                        return row().grow().gap(unit(1)).children(() -> {
-                                            text(state.error().map(e -> e != null ? e : ""))
-                                                    .color(Color.scarlet)
-                                                    .wrap(true)
-                                                    .growX();
-                                            button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                                    .style(WebStyles.outlineText())
-                                                    .height(unit(10));
-                                        });
-                                    }
-
-                                    return scroll().style(Styles.noBarPane).grow()
-                                            .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
-                                                reactiveGrid(
-                                                        columnCount,
-                                                        state.items(),
-                                                        MapData::getItemId,
-                                                        item -> new MapCard(
-                                                                item,
-                                                                cardSize,
-                                                                () -> showDetails(item),
-                                                                () -> MapActions.downloadAndImport(item.getItemId()),
-                                                                () -> showDetails(item),
-                                                                () -> MapActions.playMap(item.getItemId())))
-                                                                        .empty(() -> {
-                                                                            text(Core.bundle.get("browser.empty"))
-                                                                                    .color(Color.gray)
-                                                                                    .padding(unit(4));
-                                                                        })
-                                                                        .gap(BrowserLayout.CARD_GAP);
-                                            });
-                                }).grow();
-                            }).grow();
+                            query(state.query())
+                                    .loading(Loader::centered)
+                                    .error(err -> row().grow().gap(unit(1)).children(() -> {
+                                        Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
+                                        String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
+                                                : (cause != null ? cause.toString() : "");
+                                        text(msg).color(Color.scarlet).wrap(true).growX();
+                                        button(Core.bundle.get("browser.retry"), () -> state.refresh())
+                                                .style(WebStyles.outlineText())
+                                                .height(unit(10));
+                                    }))
+                                    .data((list, fecthing) -> fecthing ? Loader.centered()
+                                            : scroll().style(Styles.noBarPane).grow()
+                                                    .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
+                                                        reactiveGrid(
+                                                                columnCount,
+                                                                state.items(),
+                                                                MapData::getItemId,
+                                                                item -> new MapCard(
+                                                                        item,
+                                                                        cardSize,
+                                                                        () -> showDetails(item),
+                                                                        () -> MapActions
+                                                                                .downloadAndImport(item.getItemId()),
+                                                                        () -> showDetails(item),
+                                                                        () -> MapActions.playMap(item.getItemId())))
+                                                                                .empty(() -> {
+                                                                                    text(Core.bundle
+                                                                                            .get("browser.empty"))
+                                                                                                    .color(Color.gray)
+                                                                                                    .padding(unit(4));
+                                                                                })
+                                                                                .gap(BrowserLayout.CARD_GAP);
+                                                    }))
+                                    .grow();
 
                             new BrowserFooter(state, Config.UPLOAD_MAP_URL, onClose);
                         });

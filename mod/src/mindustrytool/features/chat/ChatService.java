@@ -20,6 +20,9 @@ import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
 import mindustrytool.services.MindustryTool;
 import mindustrytool.utils.JsonUtils;
+import solim.reactive.Effect;
+import solim.reactive.QueryCache;
+import solim.reactive.QueryKey;
 
 public class ChatService {
 
@@ -47,7 +50,17 @@ public class ChatService {
         store.channels().activeId().subscribe(channelId -> {
             if (channelId != null && !channelId.isEmpty()) {
                 loadMessages(channelId);
-                loadUsers(channelId);
+            }
+        });
+
+        Effect.of(() -> {
+            List<ChannelDto> channels = store.channels().channelsQuery().data().get();
+            if (channels != null) {
+                for (ChannelDto c : channels) {
+                    if (c.getId() != null && c.getLastMessageId() != null) {
+                        store.unread().setLatestMessage(c.getId(), c.getLastMessageId());
+                    }
+                }
             }
         });
     }
@@ -87,38 +100,7 @@ public class ChatService {
     }
 
     public void refreshChannels() {
-        store.channels().setLoading(true);
-        store.channels().setError(null);
-
-        MindustryTool.getChatChannels().thenAccept(channels -> {
-            Core.app.post(() -> {
-                store.channels().setLoading(false);
-                store.channels().replace(channels);
-                if (channels != null) {
-                    for (ChannelDto c : channels) {
-                        if (c.getId() != null && c.getLastMessageId() != null) {
-                            store.unread().setLatestMessage(c.getId(), c.getLastMessageId());
-                        }
-                    }
-                }
-                String activeId = store.channels().currentActiveId();
-                if (activeId != null && !activeId.isEmpty()) {
-                    boolean open = windowOpenSupplier.get();
-                    if (open) {
-                        store.unread().markAsRead(activeId);
-                    }
-                    loadMessages(activeId);
-                    loadUsers(activeId);
-                }
-            });
-        }).exceptionally(e -> {
-            Core.app.post(() -> {
-                store.channels().setLoading(false);
-                store.channels().setError(extractError(e));
-            });
-            Log.err("Failed to fetch chat channels", e);
-            return null;
-        });
+        store.channels().channelsQuery().refetch();
     }
 
     public void refresh(@Nullable String channelId) {
@@ -129,7 +111,7 @@ public class ChatService {
         }
 
         loadMessages(channelId);
-        loadUsers(channelId);
+        store.members().query().refetch();
         checkConnectionAndReconnect();
     }
 
@@ -299,29 +281,6 @@ public class ChatService {
         });
     }
 
-    public void loadUsers(String channelId) {
-        if (channelId == null || channelId.isEmpty()) {
-            return;
-        }
-
-        store.members().setLoading(channelId, true);
-        store.members().setError(channelId, null);
-
-        MindustryTool.getChatUsers(channelId).thenAccept(users -> {
-            Core.app.post(() -> {
-                store.members().setLoading(channelId, false);
-                store.members().replace(channelId, users);
-            });
-        }).exceptionally(e -> {
-            Core.app.post(() -> {
-                store.members().setLoading(channelId, false);
-                store.members().setError(channelId, extractError(e));
-            });
-            Log.err("Failed to fetch chat users for " + channelId, e);
-            return null;
-        });
-    }
-
     public CompletableFuture<ChatMessage> sendMessage(String content, @Nullable String replyTo) {
         String activeId = store.channels().currentActiveId();
         if (activeId == null || activeId.isEmpty()) {
@@ -484,13 +443,23 @@ public class ChatService {
             String authorId = msg.getCreatedBy();
             if (authorId != null && !authorId.isEmpty() && !cached.containsKey(authorId)) {
                 if (!missing.contains(authorId)) {
-                    missing.add(authorId);
+                    UserData fromCache = QueryCache.getInstance().get(QueryKey.of("user", authorId));
+                    if (fromCache != null) {
+                        store.users().put(fromCache);
+                    } else {
+                        missing.add(authorId);
+                    }
                 }
             }
         }
         if (!missing.isEmpty()) {
             MindustryTool.getUserBatch(missing).thenAccept(userDataList -> {
                 if (userDataList != null) {
+                    for (UserData u : userDataList) {
+                        if (u.getId() != null) {
+                            QueryCache.getInstance().put(QueryKey.of("user", u.getId()), u);
+                        }
+                    }
                     Core.app.post(() -> store.users().putAll(userDataList));
                 }
             }).exceptionally(e -> {

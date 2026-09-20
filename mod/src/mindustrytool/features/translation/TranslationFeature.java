@@ -35,6 +35,8 @@ import mindustrytool.features.translation.ui.TranslationSettingsDialog;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.prettychat.PrettyChatFeature;
 import mindustrytool.services.PacketReplacer;
+import solim.reactive.QueryCache;
+import solim.reactive.QueryKey;
 import solim.reactive.Signal;
 
 /**
@@ -302,14 +304,8 @@ public class TranslationFeature extends Feature {
             return;
         }
 
-        TranslationProvider provider = getActiveProvider();
-        if (!provider.isConfigured()) {
-            onDeliver.get(rawMessage);
-            return;
-        }
-
         String targetLang = getOutgoingTargetLanguage();
-        provider.translate(parts.content, targetLang)
+        translate(parts.content, targetLang)
                 .thenAccept(translated -> {
                     String formatted = formatOutgoingMessage(parts.content, translated);
                     String finalMessage = parts.commandPrefix + formatted;
@@ -385,14 +381,8 @@ public class TranslationFeature extends Feature {
             return;
         }
 
-        TranslationProvider provider = getActiveProvider();
-        if (!provider.isConfigured()) {
-            onDeliver.get(message);
-            return;
-        }
-
         String targetLang = getTargetLanguage();
-        provider.translate(cleanText, targetLang)
+        translate(cleanText, targetLang)
                 .thenAccept(translated -> {
                     Core.app.post(() -> {
                         if (translated == null || translated.trim().isEmpty()
@@ -422,12 +412,20 @@ public class TranslationFeature extends Feature {
     }
 
     public CompletableFuture<String> testTranslate(String text) {
-        String targetLang = getTargetLanguage();
-        return getActiveProvider().translate(text, targetLang);
+        return translate(text, getTargetLanguage());
     }
 
     public CompletableFuture<String> translate(String text, String targetLanguage) {
-        return getActiveProvider().translate(text, targetLanguage);
+        if (text == null || text.trim().isEmpty()) {
+            return CompletableFuture.completedFuture(text != null ? text : "");
+        }
+        TranslationProvider provider = getActiveProvider();
+        if (!provider.isConfigured()) {
+            return CompletableFuture.completedFuture(text);
+        }
+        String cleanText = text.trim();
+        QueryKey key = QueryKey.of("translation", provider.getId(), targetLanguage, cleanText);
+        return QueryCache.getInstance().fetchCached(key, 24 * 60 * 60 * 1000L, () -> provider.translate(cleanText, targetLanguage));
     }
 
     public void resetToDefaults() {

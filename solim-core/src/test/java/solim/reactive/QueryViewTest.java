@@ -17,15 +17,17 @@ import solim.core.Component;
 import solim.display.Text;
 import solim.input.Button;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimTestHarness;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class QueryViewTest {
+class QueryViewTest extends SolimTestHarness {
 
 	private QueryCache cache;
 
 	@BeforeEach
 	void setUp() {
+		setUpHarness();
 		cache = new QueryCache();
 		QueryCache.setInstanceForTest(cache);
 		SignalDispatcher.resetForTests();
@@ -140,27 +142,19 @@ class QueryViewTest {
 	@Test
 	void errorToRetryToSuccessTransition() {
 		QueryKey key = QueryKey.of("qv-retry-success");
-		AtomicInteger attempts = new AtomicInteger(0);
-		AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>();
+		CompletableFuture<String> f1 = new CompletableFuture<>();
+		AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(f1);
 
-		Query<String> query = Query.of(key, () -> {
-			int attempt = attempts.incrementAndGet();
-			CompletableFuture<String> f = new CompletableFuture<>();
-			futureRef.set(f);
-			if (attempt == 1) {
-				f.completeExceptionally(new RuntimeException("First fail"));
-			} else {
-				f.complete("Retry Success");
-			}
-			return f;
-		}).retry(0);
+		Query<String> query = Query.of(key, futureRef::get).retry(0);
+		f1.completeExceptionally(new RuntimeException("First fail"));
 
 		QueryView<String> view = QueryView.of(query)
 				.loading(() -> label("Loading..."))
 				.error(err -> {
 					Table table = new Table();
 					table.add(new Text("Failed").element());
-					Button btn = new Button().children(() -> new Text("Retry")).onClick(query::refetch);
+					Button btn = new Button(query::refetch);
+					btn.table().add(new Text("Retry").element());
 					table.add(btn.element());
 					return () -> table;
 				})
@@ -170,7 +164,9 @@ class QueryViewTest {
 		SignalDispatcher.flush();
 		assertTrue(getText(view).contains("Failed"));
 
-		// Trigger retry
+		// Prepare success for retry
+		futureRef.set(CompletableFuture.completedFuture("Retry Success"));
+		cache.getOrCreateEntry(key).clear();
 		query.refetch();
 		SignalDispatcher.flush();
 
@@ -459,5 +455,154 @@ class QueryViewTest {
 		dataSignal.set("v2");
 		SignalDispatcher.flush();
 		assertEquals(0, view.container().getChildren().size);
+	}
+
+	@Test
+	void ensureFreshCalledOnMount() {
+		QueryKey key = QueryKey.of("qv-mount-fresh");
+		AtomicInteger fetchCount = new AtomicInteger(0);
+
+		Query<String> query = Query.of(key, () -> {
+			int count = fetchCount.incrementAndGet();
+			return CompletableFuture.completedFuture("data v" + count);
+		});
+
+		assertEquals(1, fetchCount.get());
+
+		// Simulate query becoming stale
+		cache.getOrCreateEntry(key).clear();
+		assertTrue(query.isStale());
+
+		// When QueryView mounts (calls element()), it should invoke ensureFresh() and refetch!
+		QueryView<String> view = QueryView.of(query).data(QueryViewTest::label);
+		view.element();
+
+		assertEquals(2, fetchCount.get());
+		assertEquals("data v2", getText(view));
+	}
+
+	@Test
+	void queryWithInitialDataRendersViaFluentDataMethod() {
+		QueryKey key = QueryKey.of("qv-initial-data");
+		Query<String> query = Query.of(key, () -> CompletableFuture.completedFuture("initial-data"));
+
+		// Simulate UI.query(...) where element() is called BEFORE .data(...)
+		QueryView<String> view = QueryView.of(query);
+		view.element(); // build() runs while dataFactory is still null
+
+		// Now fluent .data() is called
+		view.data(QueryViewTest::label);
+		SignalDispatcher.flush();
+
+		assertEquals("initial-data", getText(view));
+	}
+
+	@Test
+	void queryWithAsyncDelayRendersDataAfterWaiting() throws Exception {
+		CompletableFuture<String> future = new CompletableFuture<>();
+		Query<String> query = Query.of(() -> future);
+
+		QueryView<String> view = QueryView.of(query);
+		view.element();
+		view.loading(() -> label("Async Loading..."));
+		view.data(QueryViewTest::label);
+
+		assertEquals("Async Loading...", getText(view));
+
+		// Complete future on background thread and wait for completion
+		Thread t = new Thread(() -> {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException ignored) {}
+			future.complete("delayed-data");
+		});
+		t.start();
+		t.join();
+
+		SignalDispatcher.flush();
+		assertEquals("delayed-data", getText(view));
+	}
+
+	@Test
+	void queryWithCustomLoadingViaFluentMethod() {
+		CompletableFuture<String> future = new CompletableFuture<>();
+		Query<String> query = Query.of(() -> future);
+
+		QueryView<String> view = QueryView.of(query);
+		view.element(); // build() runs with default loading
+		view.loading(() -> label("Custom Spinner"));
+		view.data(QueryViewTest::label);
+
+		assertEquals("Custom Spinner", getText(view));
+	}
+
+	@Test
+	void queryWithCustomErrorViaFluentMethod() {
+		CompletableFuture<String> future = new CompletableFuture<>();
+		Query<String> query = Query.of(() -> future).retry(0);
+		future.completeExceptionally(new RuntimeException("Crash"));
+
+		QueryView<String> view = QueryView.of(query);
+		view.element(); // build() runs with default error
+		view.error(err -> label("Custom Error: " + err.getMessage()));
+		view.data(QueryViewTest::label);
+
+		assertEquals("Custom Error: Crash", getText(view));
+	}
+
+	@Test
+	void queryEnabledToggledRendersData() {
+		Signal<Boolean> enabled = Signal.of(false);
+		Query<String> query = Query.of(enabled, () -> CompletableFuture.completedFuture("enabled-data"));
+
+		QueryView<String> view = QueryView.of(query);
+		view.element();
+		view.data(QueryViewTest::label);
+
+		// While disabled, should not display data
+		assertNotEquals("enabled-data", getText(view));
+
+		// Enable and flush
+		enabled.set(true);
+		SignalDispatcher.flush();
+
+		assertEquals("enabled-data", getText(view));
+	}
+
+	@Test
+	void fetchingChangesDoNotRebuildWhenUsingSimpleDataFactory() {
+		// Regression: fetching.set(true/false) was triggering full teardown+rebuild
+		// of the data component even when the data hadn't changed and the caller
+		// never used isFetching (simple Function<T,Component> variant).
+		CompletableFuture<String> future = new CompletableFuture<>();
+		Query<String> query = Query.of(() -> future);
+
+		QueryView<String> view = QueryView.of(query);
+		view.element();
+
+		AtomicInteger buildCount = new AtomicInteger(0);
+		view.data(data -> {
+			buildCount.incrementAndGet();
+			return label(data);
+		});
+		SignalDispatcher.flush();
+
+		// Deliver initial data
+		future.complete("page1");
+		SignalDispatcher.flush();
+
+		assertEquals("page1", getText(view));
+		int buildsAfterInitialLoad = buildCount.get();
+		assertEquals(1, buildsAfterInitialLoad, "should build exactly once for initial data");
+
+		// Simulate a refetch (fetching=true while data stays the same)
+		query.refetch();
+		SignalDispatcher.flush();
+
+		// fetching flipped true — but data hasn't changed and factory doesn't use isFetching
+		// Must NOT trigger a rebuild
+		assertEquals(buildsAfterInitialLoad, buildCount.get(),
+				"fetching=true must not rebuild when using simple dataFactory");
+		assertEquals("page1", getText(view));
 	}
 }

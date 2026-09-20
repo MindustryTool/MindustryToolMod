@@ -66,7 +66,8 @@ public class MapCard extends BaseComponent {
                 .width(size)
                 .gap(unit(2))
                 .children(() -> {
-                    card(WebStyles.previewCardBackground())
+                    card()
+                            .background(Color.black)
                             .name("MapCard-preview-" + map.getItemId())
                             .size(size)
                             .onClick(onClick)

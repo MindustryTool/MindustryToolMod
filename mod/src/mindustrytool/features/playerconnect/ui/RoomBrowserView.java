@@ -64,7 +64,7 @@ public class RoomBrowserView extends BaseComponent {
     @Override
     protected Element build() {
         Computed<List<PlayerConnectRoom>> filteredRooms = Signal.computed(() -> {
-            List<PlayerConnectRoom> all = feature.roomsSignal().get();
+            List<PlayerConnectRoom> all = feature.getRooms().get();
             String q = searchQuery.get();
             if (q == null || q.trim().isEmpty() || all == null) {
                 return all != null ? all : new ArrayList<>();
@@ -132,7 +132,7 @@ public class RoomBrowserView extends BaseComponent {
 
                                 });
                         // Refresh button
-                        button(feature::fetchRoomsRest)
+                        button(feature.getRoomsQuery()::refetch)
                                 .style(WebStyles.outline())
                                 .size(unit(11))
                                 .children(() -> icon(Icon.refresh).origin(Align.center).size(unit(7))
@@ -170,32 +170,47 @@ public class RoomBrowserView extends BaseComponent {
                             return row();
                         }
                         return column().growX().children(() -> {
-                            dynamic(groupedRooms, groups -> {
-                                if (groups == null || groups.isEmpty()) {
-                                    return column().growX().margin(unit(3)).center().children(() -> {
-                                        text(Core.bundle.get("feature.player-connect.no-rooms",
-                                                "No active PlayerConnect rooms found."))
-                                                        .color(Color.lightGray);
-                                    });
-                                }
+                            query(feature.getRoomsQuery())
+                                    .loading(() -> column().growX().margin(unit(3)).center().children(() -> {
+                                        icon(Icon.refresh).size(unit(8));
+                                        text(Core.bundle.get("loading", "Loading..."));
+                                    }))
+                                    .error(err -> column().growX().margin(unit(3)).center().children(() -> {
+                                        text(err != null ? err.getMessage() : Core.bundle.get("error", "Error"))
+                                                .color(Color.scarlet);
+                                        button(Core.bundle.get("retry", "Retry"), feature.getRoomsQuery()::refetch)
+                                                .style(WebStyles.outline())
+                                                .height(unit(10));
+                                    }))
+                                    .data(allRooms -> column().growX().children(() -> {
+                                        dynamic(groupedRooms, groups -> {
+                                            if (groups == null || groups.isEmpty()) {
+                                                return column().growX().margin(unit(3)).center().children(() -> {
+                                                    text(Core.bundle.get("feature.player-connect.no-rooms",
+                                                            "No active PlayerConnect rooms found."))
+                                                                    .color(Color.lightGray);
+                                                });
+                                            }
 
-                                return column().growX().gap(unit(3.5f)).children(() -> {
-                                    for (ProviderRoomGroup group : groups) {
-                                        column().growX().gap(unit(2)).left().children(() -> {
-                                            // Provider group header
-                                            row().growX().gap(unit(2)).children(() -> {
-                                                text(group.providerName).left();
-                                                text("(" + group.rooms.size() + ")");
+                                            return column().growX().gap(unit(3.5f)).children(() -> {
+                                                for (ProviderRoomGroup group : groups) {
+                                                    column().growX().gap(unit(2)).left().children(() -> {
+                                                        // Provider group header
+                                                        row().growX().gap(unit(2)).children(() -> {
+                                                            text(group.providerName).left();
+                                                            text("(" + group.rooms.size() + ")");
+                                                        });
+
+                                                        // Grid of rooms for this provider
+                                                        reactiveGrid(columnCount, Signal.of(group.rooms),
+                                                                PlayerConnectRoom::getLink,
+                                                                (PlayerConnectRoom r) -> new RoomCard(r))
+                                                                        .gap(unit(2));
+                                                    });
+                                                }
                                             });
-
-                                            // Grid of rooms for this provider
-                                            grid(columnCount, Signal.of(group.rooms), PlayerConnectRoom::getLink,
-                                                    r -> new RoomCard(r))
-                                                            .gap(unit(2));
-                                        });
-                                    }
-                                });
-                            }).growX();
+                                        }).growX();
+                                    }));
                         });
                     }).growX();
 
