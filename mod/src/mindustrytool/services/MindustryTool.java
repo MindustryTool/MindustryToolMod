@@ -363,7 +363,12 @@ public final class MindustryTool {
     }
 
     // ─── Translation ────────────────────────────────────────────────
+    // Network-only by contract: translation keys are unbounded per sentence,
+    // so no long-term QueryCache retention. Callers guard duplicate taps.
     public static CompletableFuture<String> translate(String content, String targetLanguage) {
+        if (content == null || content.trim().isEmpty()) {
+            return CompletableFuture.completedFuture(content != null ? content : "");
+        }
         Jval body = Jval.newObject();
         body.put("content", content);
         body.put("target", targetLanguage);

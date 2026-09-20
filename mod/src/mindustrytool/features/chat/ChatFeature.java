@@ -4,7 +4,6 @@ import arc.Core;
 import arc.func.Prov;
 import arc.input.KeyCode;
 import arc.scene.Element;
-import java.util.Objects;
 import solim.overlay.SolimDialog;
 
 import arc.util.Nullable;
@@ -97,30 +96,7 @@ public class ChatFeature extends Feature {
         ySignal = yConfig.signal();
 
         store = new ChatStore(this);
-        store.ui().setChannelsCollapsed(Boolean.TRUE.equals(channelsCollapsedConfig.get()));
-        store.ui().setUsersCollapsed(Boolean.TRUE.equals(usersCollapsedConfig.get()));
 
-        store.ui().channelsCollapsed().subscribe(col -> {
-            if (!Objects.equals(channelsCollapsedConfig.get(), col)) {
-                channelsCollapsedConfig.set(col);
-            }
-        });
-        store.ui().usersCollapsed().subscribe(col -> {
-            if (!Objects.equals(usersCollapsedConfig.get(), col)) {
-                usersCollapsedConfig.set(col);
-            }
-        });
-
-        channelsCollapsedConfig.signal().subscribe(col -> {
-            if (!Objects.equals(store.ui().channelsCollapsed().peek(), col)) {
-                store.ui().setChannelsCollapsed(Boolean.TRUE.equals(col));
-            }
-        });
-        usersCollapsedConfig.signal().subscribe(col -> {
-            if (!Objects.equals(store.ui().usersCollapsed().peek(), col)) {
-                store.ui().setUsersCollapsed(Boolean.TRUE.equals(col));
-            }
-        });
 
         service = new ChatService(store, () -> !Boolean.TRUE.equals(collapsedConfig.get()));
         presence = new ChatPresence(store.session(), ModSettings.sharePresence, enabled());
@@ -131,7 +107,7 @@ public class ChatFeature extends Feature {
             boolean isCollapsed = Boolean.TRUE.equals(col);
             if (!isCollapsed) {
                 String activeId = store.channels().currentActiveId();
-                if (activeId != null) {
+                if (activeId != null && !activeId.isEmpty()) {
                     store.unread().markAsRead(activeId);
                     service.syncActiveChannelSilently(activeId);
                 }

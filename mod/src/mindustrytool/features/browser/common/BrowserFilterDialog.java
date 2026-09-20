@@ -8,6 +8,8 @@ import arc.scene.Element;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import arc.util.Strings;
+import arc.util.Nullable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,6 +31,8 @@ import solim.core.BaseComponent;
 import solim.layout.Direction;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Query;
+import solim.reactive.QueryKey;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -50,15 +54,11 @@ public class BrowserFilterDialog extends SolimDialog {
     }
 
     private class FilterContent extends BaseComponent {
-        private final Signal<List<TagCategory>> cachedTags = Signal.of(Collections.<TagCategory>emptyList());
-        private final Signal<List<ModData>> cachedPlanets = Signal.of(Collections.<ModData>emptyList());
-        private boolean tagsLoaded = false;
-        private boolean planetsLoaded = false;
-
         private final BrowserState<?> state;
-        private final String tagGroup;
         private final boolean useBlocks;
         private final boolean usePlanets;
+        private final Query<List<TagCategory>> tagsQuery;
+        private final @Nullable Query<List<ModData>> planetsQuery;
         private final Signal<Seq<String>> selectedPlanets = Signal.of(new Seq<String>());
         private final Signal<String> filterText = Signal.of("");
         private final Computed<List<CategoryViewModel>> visibleCategories = new Computed<>(
@@ -66,15 +66,13 @@ public class BrowserFilterDialog extends SolimDialog {
 
         FilterContent(BrowserState<?> state, String tagGroup, boolean useBlocks, boolean usePlanets) {
             this.state = state;
-            this.tagGroup = tagGroup;
             this.useBlocks = useBlocks;
             this.usePlanets = usePlanets;
-            if (!tagsLoaded) {
-                fetchTags();
-            }
-            if (usePlanets && !planetsLoaded) {
-                fetchPlanets();
-            }
+            this.tagsQuery = Query.of(QueryKey.of("tags", tagGroup), () -> MindustryTool.getTags(tagGroup))
+                    .staleTime(Duration.ofMinutes(10));
+            this.planetsQuery = usePlanets
+                    ? Query.of(QueryKey.of("planets"), MindustryTool::getPlanets).staleTime(Duration.ofMinutes(10))
+                    : null;
         }
 
         @Override
@@ -186,26 +184,29 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderPlanets() {
-            dynamic(cachedPlanets, mods -> {
-                if (mods == null || mods.isEmpty()) {
-                    return row();
-                }
+            if (planetsQuery == null) return;
+            query(planetsQuery)
+                    .loading(() -> row().growX().center().padding(unit(2)).children(() -> new Loader(unit(6))))
+                    .data(mods -> {
+                        if (mods == null || mods.isEmpty()) {
+                            return row();
+                        }
 
-                List<ModData> sorted = new ArrayList<ModData>(mods);
-                Collections.sort(sorted, new Comparator<ModData>() {
-                    @Override
-                    public int compare(ModData a, ModData b) {
-                        int pa = a.getPosition() != null ? a.getPosition() : 0;
-                        int pb = b.getPosition() != null ? b.getPosition() : 0;
-                        return pa - pb;
-                    }
-                });
-                return wrap().left().gap(unit(1)).children(() -> {
-                    for (ModData mod : sorted) {
-                        renderPlanet(mod);
-                    }
-                });
-            });
+                        List<ModData> sorted = new ArrayList<ModData>(mods);
+                        Collections.sort(sorted, new Comparator<ModData>() {
+                            @Override
+                            public int compare(ModData a, ModData b) {
+                                int pa = a.getPosition() != null ? a.getPosition() : 0;
+                                int pb = b.getPosition() != null ? b.getPosition() : 0;
+                                return pa - pb;
+                            }
+                        });
+                        return wrap().left().gap(unit(1)).children(() -> {
+                            for (ModData mod : sorted) {
+                                renderPlanet(mod);
+                            }
+                        });
+                    });
         }
 
         private void renderPlanet(ModData mod) {
@@ -251,7 +252,7 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private List<CategoryViewModel> computeVisibleCategories() {
-            List<TagCategory> categories = cachedTags.get();
+            List<TagCategory> categories = tagsQuery.data().get();
             Seq<String> planetFilter = selectedPlanets.get();
             String query = filterText.get();
             final String loweredQuery = query != null ? query.toLowerCase().trim() : "";
@@ -287,22 +288,21 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderTagCategories() {
-            dynamic(visibleCategories, categories -> {
-                return column().growX().gap(unit(4)).children(() -> {
-                    if (categories == null || categories.isEmpty()) {
-                        if (cachedTags.peek().isEmpty()) {
-                            row().growX().center().padding(unit(4)).children(() -> new Loader(unit(6)));
-                        } else {
-                            text(Core.bundle.get("browser.empty")).color(Color.gray).left();
-                        }
-                        return;
-                    }
+            query(tagsQuery)
+                    .growX()
+                    .loading(() -> row().growX().center().padding(unit(4)).children(() -> new Loader(unit(6))))
+                    .data(tags -> dynamic(visibleCategories, categories -> {
+                        return column().growX().gap(unit(4)).children(() -> {
+                            if (categories == null || categories.isEmpty()) {
+                                text(Core.bundle.get("browser.empty")).color(Color.gray).left();
+                                return;
+                            }
 
-                    for (CategoryViewModel category : categories) {
-                        renderCategory(category);
-                    }
-                });
-            }).growX();
+                            for (CategoryViewModel category : categories) {
+                                renderCategory(category);
+                            }
+                        });
+                    }).growX());
         }
 
         private void renderCategory(CategoryViewModel category) {
@@ -424,30 +424,6 @@ public class BrowserFilterDialog extends SolimDialog {
             state.setVerification("ALL");
             selectedPlanets.set(new Seq<String>());
             filterText.set("");
-        }
-
-        private void fetchTags() {
-            MindustryTool.getTags(tagGroup).whenComplete((result, throwable) -> {
-                Core.app.post(() -> {
-                    if (isDisposed()) {
-                        return;
-                    }
-                    cachedTags.set(result != null ? result : Collections.<TagCategory>emptyList());
-                    tagsLoaded = true;
-                });
-            });
-        }
-
-        private void fetchPlanets() {
-            MindustryTool.getPlanets().whenComplete((result, throwable) -> {
-                Core.app.post(() -> {
-                    if (isDisposed()) {
-                        return;
-                    }
-                    cachedPlanets.set(result != null ? result : Collections.<ModData>emptyList());
-                    planetsLoaded = true;
-                });
-            });
         }
     }
 

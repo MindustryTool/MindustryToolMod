@@ -1,4 +1,9 @@
-## ADDED Requirements
+# query-view Specification
+
+## Purpose
+Provides declarative reactive component rendering for `Query<T>` in Solim UI, supporting loading, error, and data states with stale-while-revalidate (SWR) awareness, built-in defaults, and lifecycle management.
+
+## Requirements
 
 ### Requirement: QueryView Component
 `QueryView<T>` SHALL be a declarative reactive component in `solim-core` extending `BaseComponent` that binds to a `Query<T>` and dynamically renders the appropriate UI for each query lifecycle state: loading, error, and data.
@@ -40,7 +45,7 @@
 
 #### Scenario: Transition success to refetch to fetching
 - **WHEN** `query.refetch()` is called after a successful initial load
-- **THEN** `QueryView` SHALL keep the data component visible on screen, and pass `isFetching = true` to `.data((data, isFetching) -> ...)`
+- **THEN** `QueryView` SHALL replace the data component with the loading spinner until the refetch completes, and pass `isFetching = true` to `.data((data, isFetching) -> ...)` where applicable
 
 #### Scenario: Transition success to refetch to success
 - **WHEN** a background refetch completes successfully with updated data
@@ -117,3 +122,18 @@
 #### Scenario: QueryView disposal
 - **WHEN** the parent component or `QueryView` is disposed
 - **THEN** all active child components and bindings SHALL be disposed, and no further query updates SHALL be processed
+
+### Requirement: Mount-Time Freshness Trigger
+`QueryView<T>` SHALL invoke `query.ensureFresh()` inside its `build()` method when mounting into the component hierarchy.
+
+#### Scenario: QueryView mounts stale query
+- **WHEN** `QueryView` mounts while bound to a query whose data is stale
+- **THEN** it SHALL display the cached data immediately and trigger a background refetch without flickering
+
+#### Scenario: QueryView mounts errored query
+- **WHEN** `QueryView` mounts while bound to a query whose previous fetch failed
+- **THEN** it SHALL automatically trigger `refetch()` to retry loading
+
+#### Scenario: QueryView mounts fresh query
+- **WHEN** `QueryView` mounts while bound to a query whose data was fetched recently within `staleTime`
+- **THEN** it SHALL display the cached data without triggering a network fetch

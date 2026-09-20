@@ -19,20 +19,29 @@ public final class ChatStore {
     private final ChatUnread unread = new ChatUnread();
     private final ChatTranslations translations = new ChatTranslations();
     private final ChatMessageDelivery delivery = new ChatMessageDelivery();
-    private final ChatUiState ui = new ChatUiState();
+    private final ChatUiState ui;
 
     private final ChatMessages messages;
     private final ChatMembers members;
     private final ChatChannels channels;
 
     public ChatStore(ChatFeature feature) {
-        this(feature.activeChannelConfig.signal());
-    }
-
-    ChatStore(Signal<String> activeChannelSignal) {
+        Signal<String> activeChannelSignal = feature.activeChannelConfig.signal();
         this.channels = new ChatChannels(activeChannelSignal);
         this.messages = new ChatMessages(channels.activeId());
         this.members = new ChatMembers(channels.activeId());
+        // Panel collapse signals are backed directly by ConfigValue — single source of truth
+        this.ui = new ChatUiState(
+                feature.channelsCollapsedConfig.signal(),
+                feature.usersCollapsedConfig.signal());
+    }
+
+    /** Package-private constructor for unit tests. */
+    ChatStore(Signal<String> activeChannelSignal, Signal<Boolean> channelsCollapsed, Signal<Boolean> usersCollapsed) {
+        this.channels = new ChatChannels(activeChannelSignal);
+        this.messages = new ChatMessages(channels.activeId());
+        this.members = new ChatMembers(channels.activeId());
+        this.ui = new ChatUiState(channelsCollapsed, usersCollapsed);
     }
 
     public ChatSession session() {

@@ -1,10 +1,15 @@
 package solim.reactive;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.core.Disposable;
+import solim.runtime.ComponentContext;
 import solim.runtime.SignalDispatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -169,5 +174,98 @@ class QueryTest {
 		// In-flight completing after disposal must be ignored
 		inFlight.complete("ignored");
 		assertNull(query.data().get());
+	}
+
+	@Test
+	void disposalReleasesObserversAndEvictsWithZeroGcTime() {
+		QueryKey key = QueryKey.of("dispose-release");
+		int baselineObservers = cache.observerCount(key);
+
+		Query<String> query = Query.of(key, () -> CompletableFuture.completedFuture("x"))
+				.gcTime(Duration.ZERO);
+		assertEquals(baselineObservers + 1, cache.observerCount(key));
+		assertNotNull(cache.getEntry(key));
+
+		query.dispose();
+
+		assertEquals(baselineObservers, cache.observerCount(key),
+				"Disposal must release the cache observer");
+		assertNull(cache.getEntry(key), "gcTime ZERO must evict the entry immediately on dispose");
+	}
+
+	@Test
+	void queryRegistersWithAmbientComponentContext() {
+		QueryKey key = QueryKey.of("ambient-owned");
+		List<Disposable> owned = new ArrayList<>();
+		ComponentContext.push(owned::add);
+		Query<String> query;
+		try {
+			query = Query.of(key, () -> CompletableFuture.completedFuture("x"));
+		} finally {
+			ComponentContext.pop();
+		}
+
+		assertTrue(owned.contains(query), "Query created in component scope must register for disposal");
+		assertEquals(1, cache.observerCount(key));
+
+		for (Disposable d : owned) {
+			d.dispose();
+		}
+		assertTrue(query.isDisposed(), "Disposing the owner must dispose the query");
+		assertEquals(0, cache.observerCount(key));
+	}
+
+	@Test
+	void queryCreatedOutsideScopeRequiresExplicitDispose() {
+		assertEquals(0, ComponentContext.size());
+		QueryKey key = QueryKey.of("outside-scope");
+		Query<String> query = Query.of(key, () -> CompletableFuture.completedFuture("x"));
+
+		assertEquals(1, cache.observerCount(key),
+				"Outside component scope nothing owns the query; it must be disposed explicitly");
+
+		query.dispose();
+		assertEquals(0, cache.observerCount(key));
+	}
+
+	@Test
+	void ensureFreshBehavior() {
+		QueryKey key = QueryKey.of("ensure-fresh-test");
+		AtomicInteger fetchCount = new AtomicInteger(0);
+
+		Query<String> query = Query.of(key, () -> {
+			fetchCount.incrementAndGet();
+			return CompletableFuture.completedFuture("result");
+		});
+
+		assertEquals(1, fetchCount.get());
+		assertTrue(query.hasData());
+		assertFalse(query.isStale());
+		assertFalse(query.isError());
+
+		// Fresh query should not refetch on ensureFresh
+		query.ensureFresh();
+		assertEquals(1, fetchCount.get());
+
+		// When cache entry is invalidated or becomes stale
+		cache.getOrCreateEntry(key).clear();
+		assertTrue(query.isStale());
+		query.ensureFresh();
+		assertEquals(2, fetchCount.get());
+
+		// When query is in error state
+		AtomicInteger errFetchCount = new AtomicInteger(0);
+		AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(new CompletableFuture<>());
+		Query<String> retryQuery = Query.of(QueryKey.of("err-retry"), () -> {
+			errFetchCount.incrementAndGet();
+			return futureRef.get();
+		}).retry(0);
+
+		futureRef.get().completeExceptionally(new RuntimeException("first fail"));
+		assertTrue(retryQuery.isError());
+
+		futureRef.set(CompletableFuture.completedFuture("recovered"));
+		retryQuery.ensureFresh();
+		assertEquals("recovered", retryQuery.data().get());
 	}
 }

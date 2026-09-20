@@ -195,6 +195,10 @@ public final class Query<T> implements Readable<T>, Disposable {
 
 		CompletableFuture<T> future;
 		try {
+			// Forced fetch: dependency changes on the same key (e.g. browser
+			// pagination) and explicit refetch() must always hit the network.
+			// Freshness via per-query staleTimeMs is owned by initEffect() and
+			// ensureFresh(), which skip doFetch() entirely when data is fresh.
 			future = cache.fetchOrJoin(key, fetcher);
 		} catch (Throwable t) {
 			handleError(gen, t);
@@ -250,6 +254,16 @@ public final class Query<T> implements Readable<T>, Disposable {
 		doFetch();
 	}
 
+	public void mutate(@Nullable T newData) {
+		if (disposed) return;
+		data.set(newData);
+		error.set(null);
+		loading.set(false);
+		fetching.set(false);
+		hasData = true;
+		cache.put(key, newData);
+	}
+
 	public Readable<T> data() {
 		return data;
 	}
@@ -268,6 +282,36 @@ public final class Query<T> implements Readable<T>, Disposable {
 
 	public QueryKey getKey() {
 		return key;
+	}
+
+	public boolean hasData() {
+		return hasData;
+	}
+
+	public boolean isStale() {
+		CacheEntry<T> entry = cache.getEntry(key);
+		return entry == null || !entry.hasData() || entry.isStale(staleTimeMs);
+	}
+
+	public boolean isError() {
+		return error.peek() != null;
+	}
+
+	public boolean isFetching() {
+		return Boolean.TRUE.equals(fetching.peek());
+	}
+
+	public void ensureFresh() {
+		if (disposed || isFetching()) {
+			return;
+		}
+		boolean isEnabled = enabled == null || Boolean.TRUE.equals(enabled.peek());
+		if (!isEnabled) {
+			return;
+		}
+		if (!hasData || isError() || isStale()) {
+			refetch();
+		}
 	}
 
 	@Override

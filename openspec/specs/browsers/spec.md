@@ -357,3 +357,37 @@ Schematic preview images in cards and detail dialogs SHALL be rendered within pr
 - **WHEN** a schematic thumbnail or detail image is loading over the network
 - **THEN** the container maintains its allocated dimensions and displays a placeholder without shifting adjacent elements upon load completion
 
+### Requirement: Cached Browser Filter Metadata
+The browser filter dialog SHALL use cached `Query` instances for retrieving tag categories and planets, retaining data with a 10-minute stale time to avoid redundant network requests when reopening the filter dialog.
+
+#### Scenario: Cached tags reuse
+- **WHEN** user opens the browser filter dialog multiple times within 10 minutes
+- **THEN** the tag list SHALL be served from the query cache without making new HTTP requests
+
+#### Scenario: Cached planets reuse
+- **WHEN** user switches filter tabs to planets multiple times within 10 minutes
+- **THEN** the planet list SHALL be served from the query cache without making new HTTP requests
+
+### Requirement: Cached Detail Author Resolution
+Item detail dialogs (`MapDetailDialog` and `SchematicDetailDialog`) SHALL resolve item author profiles using a keyed `Query` (`QueryKey.of("user", authorId)`) rendered via `QueryView`.
+
+#### Scenario: Author profile resolution
+- **WHEN** a user opens a detail dialog for an item created by an author
+- **THEN** the author profile SHALL be fetched and rendered via `QueryView`
+
+#### Scenario: Deduplicated author lookups across dialogs
+- **WHEN** user inspects multiple items created by the same author
+- **THEN** only one network request SHALL be executed for that author, and subsequent detail dialogs SHALL render the cached author profile immediately
+
+### Requirement: Declarative QueryView in Browser Dialogs
+`BrowserState` SHALL expose `Query<List<T>>` directly and SHALL NOT maintain duplicate `items`, `loading`, and `error` signals or bridge effects.
+- `SchematicBrowserDialog` and `MapBrowserDialog` SHALL render content using declarative `query(state.query()).loading(...).error(...).data(...)`.
+
+#### Scenario: Declarative query rendering in schematic browser
+- **WHEN** `SchematicBrowserDialog` builds its content view
+- **THEN** it SHALL use `query(state.query())` to declaratively render loading, error, and schematic card grid states
+
+#### Scenario: Declarative query rendering in map browser
+- **WHEN** `MapBrowserDialog` builds its content view
+- **THEN** it SHALL use `query(state.query())` to declaratively render loading, error, and map card grid states
+

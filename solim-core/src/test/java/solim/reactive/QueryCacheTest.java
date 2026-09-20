@@ -95,6 +95,66 @@ class QueryCacheTest {
 	}
 
 	@Test
+	void fetchCachedServesFreshWithoutNetwork() {
+		QueryKey key = QueryKey.of("fetch-cached-hit");
+		cache.getOrCreateEntry(key).setData("cached");
+
+		AtomicInteger callCount = new AtomicInteger(0);
+		CompletableFuture<String> res = cache.fetchCached(key, 10_000L, () -> {
+			callCount.incrementAndGet();
+			return CompletableFuture.completedFuture("network");
+		});
+
+		assertEquals("cached", res.join());
+		assertEquals(0, callCount.get(), "Fresh cache entry must be served without network");
+	}
+
+	@Test
+	void fetchCachedRefetchesWhenStale() {
+		QueryKey key = QueryKey.of("fetch-cached-stale");
+		cache.getOrCreateEntry(key).setData("old");
+
+		AtomicInteger callCount = new AtomicInteger(0);
+		CompletableFuture<String> res = cache.fetchCached(key, -1L, () -> {
+			callCount.incrementAndGet();
+			return CompletableFuture.completedFuture("new");
+		});
+
+		assertEquals("new", res.join());
+		assertEquals(1, callCount.get());
+		assertEquals("new", cache.<String>getEntry(key).getData());
+	}
+
+	@Test
+	void fetchFailurePreservesLastGoodData() {
+		QueryKey key = QueryKey.of("fetch-keep-good");
+		cache.getOrCreateEntry(key).setData("good");
+
+		CompletableFuture<String> failed = new CompletableFuture<>();
+		failed.completeExceptionally(new RuntimeException("boom"));
+		cache.fetchCached(key, -1L, () -> failed);
+
+		CacheEntry<String> entry = cache.getEntry(key);
+		assertEquals("good", entry.getData(), "Failure must preserve last good data");
+		assertNull(entry.getError(), "Failure must not cache error");
+		assertNull(entry.getInflight());
+	}
+
+	@Test
+	void fetchOrJoinDropsErrors() {
+		QueryKey key = QueryKey.of("fetch-or-join-drop-error");
+		CompletableFuture<String> failed = new CompletableFuture<>();
+		failed.completeExceptionally(new RuntimeException("boom"));
+		cache.fetchOrJoin(key, () -> failed);
+
+		CacheEntry<String> entry = cache.getEntry(key);
+		assertNotNull(entry);
+		assertFalse(entry.hasData());
+		assertNull(entry.getError(), "Forced fetch failure must not cache error");
+		assertNull(entry.getData());
+	}
+
+	@Test
 	void staleTimeChecks() {
 		QueryKey key = QueryKey.of("stale");
 		CacheEntry<String> entry = cache.getOrCreateEntry(key);

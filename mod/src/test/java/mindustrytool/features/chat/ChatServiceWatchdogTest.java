@@ -8,6 +8,7 @@ import arc.mock.MockSettings;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import mindustrytool.models.response.ChatMessage;
+import mindustrytool.models.response.UserData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class ChatServiceWatchdogTest {
         Core.settings = new MockSettings();
 
         activeChannelSignal = Signal.of("ch1");
-        store = new ChatStore(activeChannelSignal);
+        store = new ChatStore(activeChannelSignal, Signal.of(false), Signal.of(false));
         service = new ChatService(store, () -> true);
     }
 
@@ -191,5 +192,25 @@ class ChatServiceWatchdogTest {
         assertFalse(store.session().connected().get());
 
         service.setRunningForTest(false);
+    }
+
+    @Test
+    void testFetchMissingUsersUsesStoreWithoutNetwork() {
+        UserData knownUser = new UserData();
+        knownUser.setId("author_123");
+        knownUser.setName("CachedUser");
+        store.users().put(knownUser);
+
+        ChatMessage msg = new ChatMessage();
+        msg.setId("msg_1");
+        msg.setCreatedBy("author_123");
+        msg.setContent("Test message");
+
+        // Author already in store: no batch fetch issued, user retained
+        service.fetchMissingUsers(Collections.singletonList(msg));
+
+        UserData found = store.users().getDirect("author_123");
+        assertNotNull(found);
+        assertEquals("CachedUser", found.getName());
     }
 }
