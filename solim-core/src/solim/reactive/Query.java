@@ -16,12 +16,30 @@ import solim.runtime.ComponentContext;
  * Asynchronous reactive query primitive with dependency tracking, caching,
  * stale-while-revalidate, retry, and lifecycle management.
  *
+ * <p>Create simple queries with {@link #of(QueryKey, Supplier)} or
+ * {@link #noKey(Supplier)}; use {@link #builder()} for advanced
+ * configuration. All options must be supplied before {@code build()} —
+ * configuration is fixed for the query's lifetime.
+ *
  * @param <T> query data type
  */
 public final class Query<T> implements Readable<T>, Disposable {
 
 	private static final int DEFAULT_RETRY_COUNT = 3;
 	private static final long DEFAULT_RETRY_DELAY_MS = 1_000L;
+
+	/**
+	 * Package-private configuration bundle. Accumulated by {@link Builder}
+	 * and consumed once by the {@link Query} constructor.
+	 */
+	static final class Options {
+		@Nullable Readable<Boolean> enabled;
+		long staleTimeMs = QueryCache.DEFAULT_STALE_TIME_MS;
+		long gcTimeMs = QueryCache.DEFAULT_GC_TIME_MS;
+		int retryCount = DEFAULT_RETRY_COUNT;
+		long retryDelayMs = DEFAULT_RETRY_DELAY_MS;
+		@Nullable Duration refetchInterval;
+	}
 
 	private final QueryKey key;
 	private final Supplier<CompletableFuture<T>> fetcher;
@@ -34,12 +52,12 @@ public final class Query<T> implements Readable<T>, Disposable {
 	private final Signal<Boolean> fetching = Signal.of(false);
 	private final Signal<Throwable> error = Signal.of(null);
 
-	private @Nullable Readable<Boolean> enabled;
-	private long staleTimeMs = QueryCache.DEFAULT_STALE_TIME_MS;
-	private long gcTimeMs = QueryCache.DEFAULT_GC_TIME_MS;
-	private int retryCount = DEFAULT_RETRY_COUNT;
-	private long retryDelayMs = DEFAULT_RETRY_DELAY_MS;
-	private @Nullable Duration refetchInterval;
+	private final @Nullable Readable<Boolean> enabled;
+	private final long staleTimeMs;
+	private final long gcTimeMs;
+	private final int retryCount;
+	private final long retryDelayMs;
+	private final @Nullable Duration refetchInterval;
 
 	private int fetchGeneration = 0;
 	private int currentRetry = 0;
@@ -53,13 +71,18 @@ public final class Query<T> implements Readable<T>, Disposable {
 	private final QueryCache.InvalidationListener cacheListener = this::refetch;
 
 	private Query(@Nullable QueryKey key, @Nullable Supplier<QueryKey> keySupplier,
-			@Nullable Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
+			Supplier<CompletableFuture<T>> fetcher, Options options) {
 		this.fetcher = Objects.requireNonNull(fetcher, "fetcher cannot be null");
 		this.keySupplier = keySupplier;
 		this.key = keySupplier != null
 				? Objects.requireNonNull(keySupplier.get(), "key supplier must return a key")
 				: Objects.requireNonNull(key, "key cannot be null");
-		this.enabled = enabled;
+		this.enabled = options.enabled;
+		this.staleTimeMs = options.staleTimeMs;
+		this.gcTimeMs = options.gcTimeMs;
+		this.retryCount = options.retryCount;
+		this.retryDelayMs = options.retryDelayMs;
+		this.refetchInterval = options.refetchInterval;
 		this.cache = QueryCache.getInstance();
 
 		ComponentContext.register(this);
@@ -74,38 +97,124 @@ public final class Query<T> implements Readable<T>, Disposable {
 		}
 
 		initEffect();
-	}
-
-	public static <T> Query<T> of(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
-		return new Query<>(key, null, null, fetcher);
-	}
-
-	public static <T> Query<T> of(QueryKey key, Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
-		return new Query<>(key, null, enabled, fetcher);
-	}
-
-	public static <T> Query<T> of(Supplier<CompletableFuture<T>> fetcher) {
-		return new Query<>(QueryKey.of(new Object()), null, null, fetcher);
-	}
-
-	public static <T> Query<T> of(Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
-		return new Query<>(QueryKey.of(new Object()), null, enabled, fetcher);
+		startIntervalTimer();
 	}
 
 	/**
-	 * Creates a query whose cache key is recomputed before every fetch from
-	 * reactive state, so each parameter combination (e.g. browser pagination,
-	 * search terms) owns its own cache entry and in-flight request. The supplier
-	 * must read the same reactive state the fetcher uses to build its request;
-	 * it is evaluated inside the query effect so dependency tracking stays
-	 * intact even when an identical in-flight request is joined.
-	 *
-	 * <p>Cache helpers operating on the fixed key ({@link #mutate(Object)},
-	 * {@link #isStale()}, {@link #getKey()}) address the initial key.
+	 * Creates a simple query with a static cache key. Equivalent to
+	 * {@code Query.builder().key(key).fetch(fetcher).build()}.
 	 */
-	public static <T> Query<T> ofDynamic(Readable<Boolean> enabled, Supplier<QueryKey> keySupplier,
-			Supplier<CompletableFuture<T>> fetcher) {
-		return new Query<>(null, keySupplier, enabled, fetcher);
+	public static <T> Query<T> of(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
+		return Query.<T>builder().key(key).fetch(fetcher).build();
+	}
+
+	/**
+	 * Creates a simple query with a static cache key and an enablement gate.
+	 * Equivalent to {@code Query.builder().key(key).enabled(enabled).fetch(fetcher).build()}.
+	 */
+	public static <T> Query<T> of(QueryKey key, Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
+		return Query.<T>builder().key(key).enabled(enabled).fetch(fetcher).build();
+	}
+
+	/**
+	 * Creates a stateless query under an anonymous key. The key cannot be
+	 * targeted by {@link QueryCache#invalidate(QueryKey)}, so this is only
+	 * appropriate for fetches with no cache identity (e.g. one-off loads).
+	 */
+	public static <T> Query<T> noKey(Supplier<CompletableFuture<T>> fetcher) {
+		return Query.<T>builder().fetch(fetcher).build();
+	}
+
+	public static <T> Builder<T> builder() {
+		return new Builder<>();
+	}
+
+	/**
+	 * Builder for advanced query configuration. All options are applied at
+	 * {@link #build()} time, before the query's fetch effect starts — late or
+	 * out-of-order configuration is impossible.
+	 *
+	 * @param <T> query data type
+	 */
+	public static final class Builder<T> {
+		private final Options options = new Options();
+		private @Nullable QueryKey key;
+		private @Nullable Supplier<QueryKey> keySupplier;
+		private @Nullable Supplier<CompletableFuture<T>> fetcher;
+
+		/**
+		 * Sets a static cache key. Clears any previously supplied key supplier.
+		 */
+		public Builder<T> key(QueryKey key) {
+			this.key = Objects.requireNonNull(key, "key cannot be null");
+			this.keySupplier = null;
+			return this;
+		}
+
+		/**
+		 * Sets a dynamic cache key recomputed before every fetch from reactive
+		 * state, so each parameter combination (e.g. browser pagination, search
+		 * terms) owns its own cache entry and in-flight request. The supplier
+		 * must read the same reactive state the fetcher uses to build its
+		 * request; it is evaluated inside the query effect so dependency
+		 * tracking stays intact even when an identical in-flight request is
+		 * joined.
+		 *
+		 * <p>Cache helpers operating on the fixed key ({@link Query#mutate},
+		 * {@link Query#isStale()}, {@link Query#getKey()}) address the initial
+		 * key. Clears any previously supplied static key.
+		 */
+		public Builder<T> key(Supplier<QueryKey> keySupplier) {
+			this.keySupplier = Objects.requireNonNull(keySupplier, "key supplier cannot be null");
+			this.key = null;
+			return this;
+		}
+
+		public Builder<T> enabled(Readable<Boolean> enabled) {
+			this.options.enabled = Objects.requireNonNull(enabled, "enabled cannot be null");
+			return this;
+		}
+
+		public Builder<T> fetch(Supplier<CompletableFuture<T>> fetcher) {
+			this.fetcher = Objects.requireNonNull(fetcher, "fetcher cannot be null");
+			return this;
+		}
+
+		public Builder<T> staleTime(Duration staleTime) {
+			this.options.staleTimeMs = staleTime != null ? staleTime.toMillis() : QueryCache.DEFAULT_STALE_TIME_MS;
+			return this;
+		}
+
+		public Builder<T> gcTime(Duration gcTime) {
+			this.options.gcTimeMs = gcTime != null ? gcTime.toMillis() : QueryCache.DEFAULT_GC_TIME_MS;
+			return this;
+		}
+
+		public Builder<T> retry(int count) {
+			this.options.retryCount = Math.max(0, count);
+			return this;
+		}
+
+		public Builder<T> retryDelay(Duration delay) {
+			this.options.retryDelayMs = delay != null
+					? Math.max(0, delay.toMillis())
+					: DEFAULT_RETRY_DELAY_MS;
+			return this;
+		}
+
+		public Builder<T> refetchInterval(Duration interval) {
+			this.options.refetchInterval = interval;
+			return this;
+		}
+
+		public Query<T> build() {
+			if (fetcher == null) {
+				throw new IllegalStateException("fetch must be set before build()");
+			}
+			// No key supplied: anonymous identity, same semantics as noKey(...)
+			QueryKey effectiveKey = key != null ? key : QueryKey.of(new Object());
+			return new Query<>(effectiveKey, keySupplier, fetcher, options);
+		}
 	}
 
 	private QueryKey keyForFetch() {
@@ -134,44 +243,6 @@ public final class Query<T> implements Readable<T>, Disposable {
 
 			doFetch();
 		});
-	}
-
-	public Query<T> enabled(Readable<Boolean> enabled) {
-		this.enabled = enabled;
-		if (enabled != null && !Boolean.TRUE.equals(enabled.peek())) {
-			fetchGeneration++;
-			fetching.set(false);
-		}
-		if (effect != null) {
-			effect.invalidate();
-		}
-		return this;
-	}
-
-	public Query<T> staleTime(Duration staleTime) {
-		this.staleTimeMs = staleTime != null ? staleTime.toMillis() : QueryCache.DEFAULT_STALE_TIME_MS;
-		return this;
-	}
-
-	public Query<T> gcTime(Duration gcTime) {
-		this.gcTimeMs = gcTime != null ? gcTime.toMillis() : QueryCache.DEFAULT_GC_TIME_MS;
-		return this;
-	}
-
-	public Query<T> retry(int count) {
-		this.retryCount = Math.max(0, count);
-		return this;
-	}
-
-	public Query<T> retryDelay(Duration delay) {
-		this.retryDelayMs = delay != null ? Math.max(0, delay.toMillis()) : DEFAULT_RETRY_DELAY_MS;
-		return this;
-	}
-
-	public Query<T> refetchInterval(Duration interval) {
-		this.refetchInterval = interval;
-		startIntervalTimer();
-		return this;
 	}
 
 	private void startIntervalTimer() {
@@ -402,7 +473,7 @@ public final class Query<T> implements Readable<T>, Disposable {
 				return null;
 			}
 			Timer.Task task = Timer.schedule(runnable, delaySeconds);
-            
+
 			return new Disposable() {
 				private boolean disposed = false;
 

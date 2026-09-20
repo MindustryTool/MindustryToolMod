@@ -26,8 +26,11 @@ public class ServerService {
 	private ServerService() {}
 
 	public void init() {
-		serverQuery = Query.of(QueryKey.of("servers"), () -> MindustryTool.getServers(0, 100))
-				.refetchInterval(Duration.ofMinutes(15));
+        serverQuery = Query.<List<ServerData>>builder()
+                .key(QueryKey.of("servers"))
+                .fetch(() -> MindustryTool.getServers(0, 100))
+                .refetchInterval(Duration.ofMinutes(15))
+                .build();
 
 		Effect.of(() -> {
 			List<ServerData> serverDtos = serverQuery.data().get();

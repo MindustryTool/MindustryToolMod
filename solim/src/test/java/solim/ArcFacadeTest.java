@@ -85,7 +85,7 @@ class ArcFacadeTest {
 
     @Test
     void queryAttachedViaUIQueryRendersData() {
-        Query<String> query = Query.of(() -> CompletableFuture.completedFuture("ui-query-data"));
+        Query<String> query = Query.noKey(() -> CompletableFuture.completedFuture("ui-query-data"));
         Table root = new Table();
         ParentStack.push(root);
         UI.query(query).data(d -> new Text(d));

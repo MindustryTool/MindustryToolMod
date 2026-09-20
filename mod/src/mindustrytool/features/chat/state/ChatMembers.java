@@ -16,15 +16,17 @@ public final class ChatMembers {
     private final Query<List<ChatUser>> query;
 
     public ChatMembers(Readable<String> activeChannelId) {
-        this.query = Query.of(
-                QueryKey.of("chat", "members"),
-                () -> {
+        this.query = Query.<List<ChatUser>>builder()
+                .key(QueryKey.of("chat", "members"))
+                .fetch(() -> {
                     String channelId = activeChannelId.get();
                     if (channelId == null || channelId.isEmpty()) {
                         return CompletableFuture.completedFuture(Collections.emptyList());
                     }
                     return MindustryTool.getChatUsers(channelId);
-                }).staleTime(Duration.ofSeconds(30));
+                })
+                .staleTime(Duration.ofSeconds(30))
+                .build();
     }
 
     public Query<List<ChatUser>> query() {

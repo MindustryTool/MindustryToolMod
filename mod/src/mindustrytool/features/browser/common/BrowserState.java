@@ -41,7 +41,11 @@ public class BrowserState<T> implements Disposable {
     }
 
     public BrowserState(Fetcher<T> fetcher) {
-        this.queryPrimitive = Query.ofDynamic(active, this::queryKey, () -> fetcher.fetch(this));
+        this.queryPrimitive = Query.<List<T>>builder()
+                .key(this::queryKey)
+                .enabled(active)
+                .fetch(() -> fetcher.fetch(this))
+                .build();
     }
 
     /**

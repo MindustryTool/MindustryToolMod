@@ -55,7 +55,11 @@ class QueryTest {
         CompletableFuture<String> future = new CompletableFuture<>();
         RuntimeException failure = new RuntimeException("Network down");
 
-        Query<String> query = Query.of(key, () -> future).retry(0);
+        Query<String> query = Query.<String>builder()
+                .key(key)
+                .fetch(() -> future)
+                .retry(0)
+                .build();
         future.completeExceptionally(failure);
 
         assertNull(query.data().get());
@@ -69,7 +73,7 @@ class QueryTest {
         Signal<Integer> page = Signal.of(1);
         AtomicInteger callCount = new AtomicInteger(0);
 
-        Query<String> query = Query.of(() -> {
+        Query<String> query = Query.noKey(() -> {
             int p = page.get();
             callCount.incrementAndGet();
             return CompletableFuture.completedFuture("Page " + p);
@@ -184,8 +188,11 @@ class QueryTest {
         QueryKey key = QueryKey.of("dispose-release");
         int baselineObservers = cache.observerCount(key);
 
-        Query<String> query = Query.of(key, () -> CompletableFuture.completedFuture("x"))
-                .gcTime(Duration.ZERO);
+        Query<String> query = Query.<String>builder()
+                .key(key)
+                .fetch(() -> CompletableFuture.completedFuture("x"))
+                .gcTime(Duration.ZERO)
+                .build();
         assertEquals(baselineObservers + 1, cache.observerCount(key));
         assertNotNull(cache.getEntry(key));
 
@@ -237,11 +244,14 @@ class QueryTest {
         AtomicInteger callCount = new AtomicInteger(0);
         Map<Integer, CompletableFuture<String>> futures = new HashMap<>();
 
-        Query<String> query = Query.ofDynamic(Signal.of(true), () -> QueryKey.of("page", page.get()), () -> {
-            int p = page.get();
-            callCount.incrementAndGet();
-            return futures.computeIfAbsent(p, k -> new CompletableFuture<>());
-        });
+        Query<String> query = Query.<String>builder()
+                .key(() -> QueryKey.of("page", page.get()))
+                .fetch(() -> {
+                    int p = page.get();
+                    callCount.incrementAndGet();
+                    return futures.computeIfAbsent(p, k -> new CompletableFuture<>());
+                })
+                .build();
 
         futures.get(0).complete("page0");
         assertEquals("page0", query.data().get());
@@ -268,11 +278,14 @@ class QueryTest {
         AtomicInteger callCount = new AtomicInteger(0);
         Map<Integer, CompletableFuture<String>> futures = new HashMap<>();
 
-        Query<String> query = Query.ofDynamic(Signal.of(true), () -> QueryKey.of("page", page.get()), () -> {
-            int p = page.get();
-            callCount.incrementAndGet();
-            return futures.computeIfAbsent(p, k -> new CompletableFuture<>());
-        });
+        Query<String> query = Query.<String>builder()
+                .key(() -> QueryKey.of("page", page.get()))
+                .fetch(() -> {
+                    int p = page.get();
+                    callCount.incrementAndGet();
+                    return futures.computeIfAbsent(p, k -> new CompletableFuture<>());
+                })
+                .build();
 
         // Page 0 request in flight, navigate away and back
         page.set(1);
@@ -299,11 +312,14 @@ class QueryTest {
         AtomicInteger callCount = new AtomicInteger(0);
         Map<Integer, CompletableFuture<String>> futures = new HashMap<>();
 
-        Query.ofDynamic(Signal.of(true), () -> QueryKey.of("page", page.get()), () -> {
-            int p = page.get();
-            callCount.incrementAndGet();
-            return futures.computeIfAbsent(p, k -> new CompletableFuture<>());
-        });
+        Query.<String>builder()
+                .key(() -> QueryKey.of("page", page.get()))
+                .fetch(() -> {
+                    int p = page.get();
+                    callCount.incrementAndGet();
+                    return futures.computeIfAbsent(p, k -> new CompletableFuture<>());
+                })
+                .build();
 
         page.set(1);
         SignalDispatcher.flush();
@@ -343,10 +359,14 @@ class QueryTest {
         // When query is in error state
         AtomicInteger errFetchCount = new AtomicInteger(0);
         AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(new CompletableFuture<>());
-        Query<String> retryQuery = Query.of(QueryKey.of("err-retry"), () -> {
-            errFetchCount.incrementAndGet();
-            return futureRef.get();
-        }).retry(0);
+        Query<String> retryQuery = Query.<String>builder()
+                .key(QueryKey.of("err-retry"))
+                .fetch(() -> {
+                    errFetchCount.incrementAndGet();
+                    return futureRef.get();
+                })
+                .retry(0)
+                .build();
 
         futureRef.get().completeExceptionally(new RuntimeException("first fail"));
         assertTrue(retryQuery.isError());
@@ -354,5 +374,93 @@ class QueryTest {
         futureRef.set(CompletableFuture.completedFuture("recovered"));
         retryQuery.ensureFresh();
         assertEquals("recovered", retryQuery.data().get());
+    }
+
+    @Test
+    void builderStaticKeyMatchesOf() {
+        QueryKey key = QueryKey.of("builder-static");
+        Query<String> built = Query.<String>builder()
+                .key(key)
+                .fetch(() -> CompletableFuture.completedFuture("built"))
+                .build();
+        Query<String> simple = Query.of(QueryKey.of("builder-static-2"), () -> CompletableFuture.completedFuture("of"));
+
+        assertEquals("built", built.data().get());
+        assertEquals("of", simple.data().get());
+        assertEquals(key, built.getKey());
+    }
+
+    @Test
+    void builderAllOptionsEffectiveBeforeFirstFetch() {
+        // Retry exhausted immediately (no retries) and no stale-time grace:
+        // options must be in effect for the very first fetch, not applied late.
+        QueryKey key = QueryKey.of("builder-options");
+        cache.getOrCreateEntry(key).clear();
+
+        AtomicInteger attempts = new AtomicInteger(0);
+        Query<String> query = Query.<String>builder()
+                .key(key)
+                .fetch(() -> {
+                    attempts.incrementAndGet();
+                    CompletableFuture<String> f = new CompletableFuture<>();
+                    f.completeExceptionally(new RuntimeException("down"));
+                    return f;
+                })
+                .staleTime(Duration.ZERO)
+                .retry(0)
+                .retryDelay(Duration.ofMillis(1))
+                .build();
+
+        assertTrue(query.isError(), "retry(0) must surface the error on the first fetch");
+        assertEquals(1, attempts.get(), "No retry may run after a retry(0) first fetch");
+        assertTrue(query.isStale(), "staleTime(ZERO) must make the entry stale immediately");
+    }
+
+    @Test
+    void builderWithoutKeyUsesAnonymousKey() {
+        Query<String> query = Query.<String>builder()
+                .fetch(() -> CompletableFuture.completedFuture("anon"))
+                .build();
+
+        assertEquals("anon", query.data().get());
+        assertNotNull(query.getKey());
+        assertEquals(1, cache.observerCount(query.getKey()));
+    }
+
+    @Test
+    void noKeyCreatesAnonymousKeyQuery() {
+        Query<String> query = Query.noKey(() -> CompletableFuture.completedFuture("stateless"));
+
+        assertEquals("stateless", query.data().get());
+        assertNotNull(query.getKey(), "noKey must still assign an anonymous identity key");
+    }
+
+    @Test
+    void builderDisabledNeverFetches() {
+        Signal<Boolean> enabled = Signal.of(false);
+        AtomicInteger fetchCount = new AtomicInteger(0);
+
+        Query<String> query = Query.<String>builder()
+                .key(QueryKey.of("builder-disabled"))
+                .enabled(enabled)
+                .fetch(() -> {
+                    fetchCount.incrementAndGet();
+                    return CompletableFuture.completedFuture("data");
+                })
+                .build();
+
+        assertEquals(0, fetchCount.get(), "Disabled builder query must not fetch");
+
+        enabled.set(true);
+        SignalDispatcher.flush();
+        assertEquals(1, fetchCount.get(), "Enabling must trigger the first fetch");
+        assertEquals("data", query.data().get());
+    }
+
+    @Test
+    void builderRequiresFetch() {
+        assertThrows(IllegalStateException.class, () -> Query.<String>builder()
+                .key(QueryKey.of("builder-missing-fetch"))
+                .build());
     }
 }

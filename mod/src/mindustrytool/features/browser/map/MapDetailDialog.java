@@ -53,13 +53,15 @@ public class MapDetailDialog extends SolimDialog {
             this.itemId = itemId;
             this.authorId = detail.getCreatedBy();
             this.authorQuery = authorId != null && !authorId.isEmpty()
-                    ? Query.of(QueryKey.of("user", authorId),
-                            () -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
+                    ? Query.<String>builder()
+                            .key(QueryKey.of("user", authorId))
+                            .fetch(() -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
                                     .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null
                                             && users.get(0).getName() != null
                                                     ? users.get(0).getName()
                                                     : authorId))
                             .staleTime(Duration.ofMinutes(10))
+                            .build()
                     : null;
         }
 
