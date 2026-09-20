@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import solim.reactive.QueryCache;
 import solim.reactive.QueryKey;
 import solim.reactive.Signal;
-import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class ChatChannelsAndMembersTest extends SolimEnv {
@@ -36,7 +35,7 @@ class ChatChannelsAndMembersTest extends SolimEnv {
         assertEquals(1, channels.all().get().size());
         assertEquals("General", channels.active().get().getName());
 
-        SignalDispatcher.flush();
+        flushEffects();
         channels.channelsQuery().dispose();
     }
 
@@ -58,7 +57,7 @@ class ChatChannelsAndMembersTest extends SolimEnv {
         assertFalse(members.isActiveLoading());
         assertNull(members.currentActiveError());
 
-        SignalDispatcher.flush();
+        flushEffects();
         members.query().dispose();
     }
 

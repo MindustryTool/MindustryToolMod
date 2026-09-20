@@ -7,7 +7,6 @@ dependencies{
 	implementation project(':solim-mcp')
 	testImplementation "Anuken:Mindustry:${mindustryVersion}"
 	testImplementation project(':solim-test')
-	testImplementation project(':solim-runtime')
 }
 
 def secretsOutputDir = layout.buildDirectory.dir("generated/resources/secrets").get().asFile

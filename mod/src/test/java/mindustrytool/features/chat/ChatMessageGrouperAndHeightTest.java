@@ -30,7 +30,6 @@ import mindustrytool.models.response.ChatUser;
 import mindustrytool.models.response.UserData;
 import mindustrytool.test.MindustryTestEnv;
 import solim.core.Units;
-import solim.runtime.SignalDispatcher;
 
 class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
@@ -116,7 +115,7 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
     void drainPendingEffects() {
         // Tests here build reactive components without disposing them; flush so
         // the env teardown sees an empty dispatcher.
-        SignalDispatcher.flush();
+        flushEffects();
     }
 
     @Test

@@ -42,7 +42,6 @@ import mindustrytool.test.MindustryTestEnv;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.overlay.SolimDialog;
-import solim.runtime.SignalDispatcher;
 
 class QuickAccessClickDelegationTest extends MindustryTestEnv {
 
@@ -248,7 +247,7 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
         chat.onQuickAccessClick();
         assertTrue(chat.isEnabled(), "Clicking disabled chat enables it");
         assertFalse(chat.collapsedConfig.get(), "Clicking disabled chat uncollapses it");
-        SignalDispatcher.flush();
+        flushEffects();
     }
 
     @Test

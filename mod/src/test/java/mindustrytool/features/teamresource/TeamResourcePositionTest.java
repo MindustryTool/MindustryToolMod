@@ -41,7 +41,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import mindustrytool.test.MindustryTestEnv;
-import solim.runtime.SignalDispatcher;
 
 class TeamResourcePositionTest extends MindustryTestEnv {
 
@@ -121,7 +120,7 @@ class TeamResourcePositionTest extends MindustryTestEnv {
     void drainPendingEffects() {
         // Tests here build reactive components without disposing them; flush so
         // the env teardown sees an empty dispatcher.
-        SignalDispatcher.flush();
+        flushEffects();
     }
 
     @AfterEach
@@ -129,7 +128,7 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         // Undo Vars.ui allocation so it cannot leak into other test classes
         // sharing this JVM.
         Vars.ui = null;
-        SignalDispatcher.flush();
+        flushEffects();
     }
 
     @Test

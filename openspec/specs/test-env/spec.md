@@ -1,6 +1,10 @@
-# test-env — Delta Spec
+# test-env Specification
 
-## ADDED Requirements
+## Purpose
+
+Shared, idempotent, layered test environment for Arc/solim/Mindustry tests, providing per-test fresh state, restoring teardown with leak asserts, and module-level wiring so tests run in reused worker JVMs without leaked static state. Created by archiving change solim-test.
+
+## Requirements
 
 ### Requirement: Shared test environment module
 The build SHALL provide a `solim-test` Java library module containing the shared test environment, and every testable module SHALL consume it via `testImplementation`.
@@ -13,6 +17,8 @@ The build SHALL provide a `solim-test` Java library module containing the shared
 - **WHEN** the mod jar is built
 - **THEN** no `solim-test` classes are included in the shipped jar
 
+---
+
 ### Requirement: Idempotent Arc environment initialization
 `ArcTestEnv` SHALL initialize Arc statics (`Core.app`, `Core.graphics`, `Core.gl`, `Core.gl20`) exactly once per JVM, only when they are not already initialized.
 
@@ -23,6 +29,8 @@ The build SHALL provide a `solim-test` Java library module containing the shared
 #### Scenario: Repeated initialization does not overwrite
 - **WHEN** a second test class using the env begins and `Core.app` is already set
 - **THEN** the existing `Core.*` instances are left untouched
+
+---
 
 ### Requirement: Per-test fresh state
 `ArcTestEnv` SHALL reset solim-relevant per-test state before each test: `Core.scene` SHALL be set to `null` (enabling headless component fallbacks, matching legacy `SolimTestHarness` behavior) and `Core.settings` SHALL be a fresh in-memory `Settings` instance. The env SHALL provide a `newScene()` helper that creates a fresh `Scene` with a minimal style set for tests needing a live scene.
@@ -39,6 +47,8 @@ The build SHALL provide a `solim-test` Java library module containing the shared
 - **WHEN** a test needs a live scene and calls the env's `newScene()` in setup
 - **THEN** `Core.scene` is a fresh `Scene` with minimal styles registered and teardown restores the previous value
 
+---
+
 ### Requirement: Restoring teardown with leak asserts
 The env SHALL restore all environment-owned globals (`Core.*` fields, `Core.scene`, `Core.settings`, and Mindustry-side stubbed globals such as the `Icon` registry where the mod extension applies) to their pre-test values in teardown, and SHALL fail the test if solim ambient state is non-empty at teardown.
 
@@ -54,12 +64,16 @@ The env SHALL restore all environment-owned globals (`Core.*` fields, `Core.scen
 - **WHEN** teardown runs on a failing test
 - **THEN** ambient state is still cleaned up so subsequent tests are not contaminated
 
+---
+
 ### Requirement: Layered environment classes
 The env SHALL be layered: `SolimEnv` extends `ArcTestEnv`; pure-logic tests SHALL use `ArcTestEnv` and UI/reactive tests SHALL use `SolimEnv`.
 
 #### Scenario: Pure-logic test without solim runtime
 - **WHEN** a test only exercises code needing Arc statics and extends `ArcTestEnv`
 - **THEN** it runs without any solim ambient state being initialized
+
+---
 
 ### Requirement: Mindustry test extension in mod
 The `mod` module SHALL provide a Mindustry-layer test extension (extending the shared env) that stubs Mindustry globals (`Icon` fields via save/restore, `FeatureManager` cleared) and restores them in teardown.
@@ -72,6 +86,8 @@ The `mod` module SHALL provide a Mindustry-layer test extension (extending the s
 - **WHEN** a test begins and a previous test registered features
 - **THEN** `FeatureManager` is empty at the start of the test
 
+---
+
 ### Requirement: forkEvery removed
 The root build SHALL NOT configure `forkEvery = 1`; test classes within and across modules SHALL execute in reused worker JVMs.
 
@@ -79,12 +95,16 @@ The root build SHALL NOT configure `forkEvery = 1`; test classes within and acro
 - **WHEN** multiple test classes in the same or different modules run in one Gradle worker
 - **THEN** no test fails due to another class's leaked static state
 
+---
+
 ### Requirement: SolimTestHarness replaced
 `SolimTestHarness` SHALL be removed and its tests re-parented onto `SolimEnv` with equivalent behavior.
 
 #### Scenario: Old harness no longer exists
 - **WHEN** the migration is complete
 - **THEN** `solim-core/src/test/java/solim/test/SolimTestHarness.java` does not exist and all its former subclasses extend `SolimEnv`
+
+---
 
 ### Requirement: All tests migrated
 All existing test classes SHALL use the shared env instead of hand-rolled `MockApplication`/`MockGraphics` setup; test bodies SHALL NOT be modified during migration.

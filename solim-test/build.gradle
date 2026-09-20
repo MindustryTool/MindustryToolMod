@@ -4,9 +4,10 @@
 // provided by the root compileOnly Mindustry dependency. Test-only: never shipped.
 
 dependencies {
-	// SolimEnv needs solim ambient types (solim-core's solim-runtime is implementation-scoped
-	// and not exposed to consumers, so declare it explicitly).
-	implementation project(':solim-core')
+	// SolimEnv needs the solim ambient types (ParentStack, ComponentContext,
+	// ReactiveContext, SignalDispatcher). Runtime-only: depending on solim-core
+	// here would create a build-path cycle, since solim-core's tests consume
+	// this module. Core-specific resets live in a solim-core test env instead.
 	implementation project(':solim-runtime')
 
 	// The env classes are JUnit extension points (annotations live in main sources).

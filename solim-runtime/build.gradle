@@ -5,5 +5,4 @@ apply plugin: 'java-library'
 dependencies {
 	api project(':solim-api')
 	testImplementation "Anuken:Mindustry:${mindustryVersion}"
-	testImplementation project(':solim-test')
 }
