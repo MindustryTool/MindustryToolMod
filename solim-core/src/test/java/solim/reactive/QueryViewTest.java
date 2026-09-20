@@ -208,6 +208,36 @@ class QueryViewTest extends SolimTestHarness {
 	}
 
 	@Test
+	void successToRefetchToFetchingShowsFullSpinner() {
+		QueryKey key = QueryKey.of("qv-full-spinner");
+		AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(
+				CompletableFuture.completedFuture("v1"));
+
+		Query<String> query = Query.of(key, futureRef::get);
+
+		// Browser/room view pattern: background fetching replaces content with the loader
+		QueryView<String> view = QueryView.of(query)
+				.loading(() -> label("Loading..."))
+				.data((data, isFetching) -> label(Boolean.TRUE.equals(isFetching) ? "Loading..." : data));
+
+		view.element();
+		SignalDispatcher.flush();
+		assertEquals("v1", getText(view));
+
+		CompletableFuture<String> f2 = new CompletableFuture<>();
+		futureRef.set(f2);
+		cache.getOrCreateEntry(key).clear();
+		query.refetch();
+		SignalDispatcher.flush();
+
+		assertEquals("Loading...", getText(view), "Fetching-aware views must show the loader during refetch");
+
+		f2.complete("v2");
+		SignalDispatcher.flush();
+		assertEquals("v2", getText(view));
+	}
+
+	@Test
 	void successToRefetchToErrorRetainsStaleData() {
 		QueryKey key = QueryKey.of("qv-swr-error");
 		AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(

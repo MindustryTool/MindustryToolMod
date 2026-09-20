@@ -83,9 +83,6 @@ public final class ChatChannels {
         return Boolean.TRUE.equals(channelsQuery.loading().peek());
     }
 
-    public void setLoading(boolean isLoading) {
-    }
-
     public Readable<String> error() {
         return channelsQuery.error().map(e -> e != null ? (e.getMessage() != null ? e.getMessage() : e.toString()) : null);
     }
@@ -93,9 +90,6 @@ public final class ChatChannels {
     public @Nullable String currentError() {
         Throwable t = channelsQuery.error().peek();
         return t != null ? (t.getMessage() != null ? t.getMessage() : t.toString()) : null;
-    }
-
-    public void setError(@Nullable String errorMessage) {
     }
 
     public Signal<String> activeId() {

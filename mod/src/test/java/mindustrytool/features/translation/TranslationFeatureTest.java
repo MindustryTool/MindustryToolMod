@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import mindustrytool.features.translation.providers.GeminiTranslationProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.reactive.QueryCache;
 
 class TranslationFeatureTest {
 
@@ -20,7 +19,6 @@ class TranslationFeatureTest {
         Core.app = new MockApplication();
         Core.graphics = new MockGraphics();
         Core.settings = new MockSettings();
-        QueryCache.getInstance().clear();
     }
 
     @Test
@@ -46,32 +44,31 @@ class TranslationFeatureTest {
     }
 
     @Test
-    void testTranslationCachingAndDeduplication() {
+    void testTranslationNetworkOnly() {
         TranslationFeature feature = new TranslationFeature();
         MockTranslationProvider mock = new MockTranslationProvider("mock-provider");
         feature.getProviders().add(mock);
         feature.providerConfig.set("mock-provider");
 
+        // Network-only by contract: every invocation hits the provider, nothing retained
         CompletableFuture<String> f1 = feature.translate("Hello", "Vietnamese");
         CompletableFuture<String> f2 = feature.translate("Hello", "Vietnamese");
 
-        assertEquals(1, mock.callCount.get(), "Provider should only be invoked once for cached query");
+        assertEquals(2, mock.callCount.get(), "Provider should be invoked on every call without caching");
         assertEquals("[Vietnamese]: Hello", f1.join());
         assertEquals("[Vietnamese]: Hello", f2.join());
 
-        // Different text triggers new call
         CompletableFuture<String> f3 = feature.translate("Goodbye", "Vietnamese");
-        assertEquals(2, mock.callCount.get());
+        assertEquals(3, mock.callCount.get());
         assertEquals("[Vietnamese]: Goodbye", f3.join());
 
-        // Different target language triggers new call
         CompletableFuture<String> f4 = feature.translate("Hello", "French");
-        assertEquals(3, mock.callCount.get());
+        assertEquals(4, mock.callCount.get());
         assertEquals("[French]: Hello", f4.join());
     }
 
     @Test
-    void testConcurrentTranslationDeduplication() {
+    void testConcurrentTranslationsAreIndependent() {
         TranslationFeature feature = new TranslationFeature();
         MockTranslationProvider mock = new MockTranslationProvider("mock-provider");
         feature.getProviders().add(mock);
@@ -83,7 +80,7 @@ class TranslationFeatureTest {
         CompletableFuture<String> f1 = feature.translate("Concurrent", "German");
         CompletableFuture<String> f2 = feature.translate("Concurrent", "German");
 
-        assertEquals(1, mock.callCount.get(), "Concurrent requests should be joined to 1 invocation");
+        assertEquals(2, mock.callCount.get(), "Concurrent requests each invoke the provider without joining");
         delayed.complete("[German]: Concurrent");
 
         assertEquals("[German]: Concurrent", f1.join());

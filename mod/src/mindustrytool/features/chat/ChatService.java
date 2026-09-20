@@ -21,8 +21,6 @@ import mindustrytool.models.response.UserData;
 import mindustrytool.services.MindustryTool;
 import mindustrytool.utils.JsonUtils;
 import solim.reactive.Effect;
-import solim.reactive.QueryCache;
-import solim.reactive.QueryKey;
 
 public class ChatService {
 
@@ -443,23 +441,16 @@ public class ChatService {
             String authorId = msg.getCreatedBy();
             if (authorId != null && !authorId.isEmpty() && !cached.containsKey(authorId)) {
                 if (!missing.contains(authorId)) {
-                    UserData fromCache = QueryCache.getInstance().get(QueryKey.of("user", authorId));
-                    if (fromCache != null) {
-                        store.users().put(fromCache);
-                    } else {
-                        missing.add(authorId);
-                    }
+                    missing.add(authorId);
                 }
             }
         }
         if (!missing.isEmpty()) {
+            // Network-only by contract: user profiles are fetched directly per
+            // batch with no long-term QueryCache retention. The store itself
+            // dedupes repeat authors within the session.
             MindustryTool.getUserBatch(missing).thenAccept(userDataList -> {
                 if (userDataList != null) {
-                    for (UserData u : userDataList) {
-                        if (u.getId() != null) {
-                            QueryCache.getInstance().put(QueryKey.of("user", u.getId()), u);
-                        }
-                    }
                     Core.app.post(() -> store.users().putAll(userDataList));
                 }
             }).exceptionally(e -> {

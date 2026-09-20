@@ -46,6 +46,11 @@ public class MapBrowserDialog extends SolimDialog {
         hidden(() -> state.stop());
     }
 
+    @Override
+    protected void onDispose() {
+        state.dispose();
+    }
+
     private static CompletableFuture<List<MapData>> fetchMaps(BrowserState<MapData> state) {
         return MindustryTool.searchMaps(
                 state.page().peek() != null ? state.page().peek() : 0,

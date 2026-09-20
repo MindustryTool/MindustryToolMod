@@ -178,28 +178,7 @@ public final class QueryCache {
     }
 
     public <T> CompletableFuture<T> prefetch(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
-        CacheEntry<T> entry = getOrCreateEntry(key);
-        synchronized (entry) {
-            CompletableFuture<T> inflight = entry.getInflight();
-            if (inflight != null && !inflight.isDone()) {
-                return inflight;
-            }
-            if (entry.hasData() && !entry.isStale(DEFAULT_STALE_TIME_MS)) {
-                return CompletableFuture.completedFuture(entry.getData());
-            }
-
-            CompletableFuture<T> future = fetcher.get();
-            entry.setInflight(future);
-            future.whenComplete((result, throwable) -> {
-                synchronized (entry) {
-                    entry.setInflight(null);
-                    if (throwable == null) {
-                        entry.setData(result);
-                    }
-                }
-            });
-            return future;
-        }
+        return fetchCached(key, DEFAULT_STALE_TIME_MS, fetcher);
     }
 
     public <T> CompletableFuture<T> fetchCached(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
@@ -217,20 +196,7 @@ public final class QueryCache {
             if (entry.hasData() && !entry.isStale(staleTimeMs)) {
                 return CompletableFuture.completedFuture(entry.getData());
             }
-
-            CompletableFuture<T> future = fetcher.get();
-            entry.setInflight(future);
-            future.whenComplete((result, throwable) -> {
-                synchronized (entry) {
-                    entry.setInflight(null);
-                    if (throwable != null) {
-                        entry.setError(throwable);
-                    } else {
-                        entry.setData(result);
-                    }
-                }
-            });
-            return future;
+            return startFetch(entry, fetcher);
         }
     }
 
@@ -241,21 +207,28 @@ public final class QueryCache {
             if (inflight != null && !inflight.isDone()) {
                 return inflight;
             }
-
-            CompletableFuture<T> future = fetcher.get();
-            entry.setInflight(future);
-            future.whenComplete((result, throwable) -> {
-                synchronized (entry) {
-                    entry.setInflight(null);
-                    if (throwable != null) {
-                        entry.setError(throwable);
-                    } else {
-                        entry.setData(result);
-                    }
-                }
-            });
-            return future;
+            return startFetch(entry, fetcher);
         }
+    }
+
+    /**
+     * Single fetch core shared by all cache paths: deduplicates concurrent
+     * requests, writes the entry on success, and never caches failures so the
+     * last good data is always preserved. Must be called holding the entry
+     * monitor.
+     */
+    private <T> CompletableFuture<T> startFetch(CacheEntry<T> entry, Supplier<CompletableFuture<T>> fetcher) {
+        CompletableFuture<T> future = fetcher.get();
+        entry.setInflight(future);
+        future.whenComplete((result, throwable) -> {
+            synchronized (entry) {
+                entry.setInflight(null);
+                if (throwable == null) {
+                    entry.setData(result);
+                }
+            }
+        });
+        return future;
     }
 
     public <T> void put(QueryKey key, @Nullable T data) {

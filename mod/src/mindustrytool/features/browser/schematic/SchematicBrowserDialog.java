@@ -48,6 +48,11 @@ public class SchematicBrowserDialog extends SolimDialog {
         hidden(() -> state.stop());
     }
 
+    @Override
+    protected void onDispose() {
+        state.dispose();
+    }
+
     private static CompletableFuture<List<SchematicData>> fetchSchematics(BrowserState<SchematicData> state) {
         Seq<String> blocks = state.selectedBlocks().get();
         List<String> blockList = blocks != null ? blocks.list() : Collections.emptyList();

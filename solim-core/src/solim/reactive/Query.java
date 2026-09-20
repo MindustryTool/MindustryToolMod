@@ -195,6 +195,10 @@ public final class Query<T> implements Readable<T>, Disposable {
 
 		CompletableFuture<T> future;
 		try {
+			// Forced fetch: dependency changes on the same key (e.g. browser
+			// pagination) and explicit refetch() must always hit the network.
+			// Freshness via per-query staleTimeMs is owned by initEffect() and
+			// ensureFresh(), which skip doFetch() entirely when data is fresh.
 			future = cache.fetchOrJoin(key, fetcher);
 		} catch (Throwable t) {
 			handleError(gen, t);

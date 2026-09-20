@@ -4,6 +4,7 @@ import arc.struct.Seq;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustrytool.Config;
+import solim.core.Disposable;
 import solim.reactive.Query;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -12,9 +13,13 @@ import solim.reactive.Signal;
  * Generic reactive state for a paged browser with search, tag filtering, and
  * sort. Pages are zero-based internally, matching the API convention.
  *
+ * Created in dialog constructors outside any component scope, so it owns its
+ * {@code Query} explicitly: dialogs must dispose the state in
+ * {@code onDispose()} to release the {@code QueryCache} observer.
+ *
  * @param <T> the item type returned by the API
  */
-public class BrowserState<T> {
+public class BrowserState<T> implements Disposable {
 
     public static final int PAGE_SIZE = 20;
 
@@ -52,6 +57,17 @@ public class BrowserState<T> {
 
     public void stop() {
         active.set(false);
+    }
+
+    @Override
+    public void dispose() {
+        stop();
+        queryPrimitive.dispose();
+    }
+
+    @Override
+    public boolean isDisposed() {
+        return queryPrimitive.isDisposed();
     }
 
     public void refresh() {
@@ -182,6 +198,12 @@ public class BrowserState<T> {
         return queryPrimitive.data().map(list -> list != null ? Seq.with(list) : new Seq<T>());
     }
 
+    /**
+     * Intentionally backed by {@code fetching()} rather than {@code loading()}:
+     * browser views render a full spinner on every background refetch
+     * (stale-while-revalidate at the view layer), so any in-flight fetch —
+     * initial or background — maps to the loading state.
+     */
     public Readable<Boolean> loading() {
         return queryPrimitive.fetching();
     }

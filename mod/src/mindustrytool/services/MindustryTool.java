@@ -9,8 +9,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import solim.reactive.QueryCache;
-import solim.reactive.QueryKey;
 
 import mindustrytool.Config;
 import mindustrytool.models.request.CrashReportRequest;
@@ -365,20 +363,19 @@ public final class MindustryTool {
     }
 
     // ─── Translation ────────────────────────────────────────────────
+    // Network-only by contract: translation keys are unbounded per sentence,
+    // so no long-term QueryCache retention. Callers guard duplicate taps.
     public static CompletableFuture<String> translate(String content, String targetLanguage) {
         if (content == null || content.trim().isEmpty()) {
             return CompletableFuture.completedFuture(content != null ? content : "");
         }
-        QueryKey key = QueryKey.of("translation", "mindustrytool", targetLanguage, content.trim());
-        return QueryCache.getInstance().fetchCached(key, 24 * 60 * 60 * 1000L, () -> {
-            Jval body = Jval.newObject();
-            body.put("content", content);
-            body.put("target", targetLanguage);
-            return api.post("/translations/translate")
-                    .json(body.toString())
-                    .sendAsync()
-                    .thenApply(Request.Response::body);
-        });
+        Jval body = Jval.newObject();
+        body.put("content", content);
+        body.put("target", targetLanguage);
+        return api.post("/translations/translate")
+                .json(body.toString())
+                .sendAsync()
+                .thenApply(Request.Response::body);
     }
 
     // ─── Media Upload ──────────────────────────────────────────────

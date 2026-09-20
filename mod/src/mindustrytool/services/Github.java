@@ -41,7 +41,7 @@ public final class Github {
 
 	/** Raw mod.hjson is not a JSON object mapping to a DTO; keep as String. */
 	public static CompletableFuture<String> getModHjson() {
-		return QueryCache.getInstance().fetchOrJoin(QueryKey.of("github", "mod.hjson"),
+		return QueryCache.getInstance().fetchCached(QueryKey.of("github", "mod.hjson"),
 				() -> rawApi.get(Config.MOD_HJSON_URL).sendAsync().thenApply(r -> r.body()));
 	}
 
@@ -52,12 +52,12 @@ public final class Github {
 	 * String to avoid coupling to GitHub schema; use JsonUtils if typed parsing needed.
 	 */
 	public static CompletableFuture<String> getReleases() {
-		return QueryCache.getInstance().fetchOrJoin(QueryKey.of("github", "releases"),
+		return QueryCache.getInstance().fetchCached(QueryKey.of("github", "releases"),
 				() -> githubApi.get("").sendAsync().thenApply(r -> r.body()));
 	}
 
 	public static CompletableFuture<String> getReleases(int page, int perPage) {
-		return QueryCache.getInstance().fetchOrJoin(QueryKey.of("github", "releases", page, perPage),
+		return QueryCache.getInstance().fetchCached(QueryKey.of("github", "releases", page, perPage),
 				() -> rawApi.get(Config.GITHUB_API_URL + "?page=" + page + "&per_page=" + perPage)
 						.sendAsync()
 						.thenApply(r -> r.body()));

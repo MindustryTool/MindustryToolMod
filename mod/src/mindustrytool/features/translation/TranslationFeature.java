@@ -35,8 +35,6 @@ import mindustrytool.features.translation.ui.TranslationSettingsDialog;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.prettychat.PrettyChatFeature;
 import mindustrytool.services.PacketReplacer;
-import solim.reactive.QueryCache;
-import solim.reactive.QueryKey;
 import solim.reactive.Signal;
 
 /**
@@ -423,9 +421,10 @@ public class TranslationFeature extends Feature {
         if (!provider.isConfigured()) {
             return CompletableFuture.completedFuture(text);
         }
+        // Network-only by contract: translation keys are unbounded per sentence,
+        // so no long-term QueryCache retention. Callers guard duplicate taps.
         String cleanText = text.trim();
-        QueryKey key = QueryKey.of("translation", provider.getId(), targetLanguage, cleanText);
-        return QueryCache.getInstance().fetchCached(key, 24 * 60 * 60 * 1000L, () -> provider.translate(cleanText, targetLanguage));
+        return provider.translate(cleanText, targetLanguage);
     }
 
     public void resetToDefaults() {

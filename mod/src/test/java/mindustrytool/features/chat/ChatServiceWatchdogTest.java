@@ -12,8 +12,6 @@ import mindustrytool.models.response.UserData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.reactive.QueryCache;
-import solim.reactive.QueryKey;
 import solim.reactive.Signal;
 
 class ChatServiceWatchdogTest {
@@ -197,17 +195,18 @@ class ChatServiceWatchdogTest {
     }
 
     @Test
-    void testFetchMissingUsersUsesQueryCache() {
-        UserData cachedUser = new UserData();
-        cachedUser.setId("author_123");
-        cachedUser.setName("CachedUser");
-        QueryCache.getInstance().put(QueryKey.of("user", "author_123"), cachedUser);
+    void testFetchMissingUsersUsesStoreWithoutNetwork() {
+        UserData knownUser = new UserData();
+        knownUser.setId("author_123");
+        knownUser.setName("CachedUser");
+        store.users().put(knownUser);
 
         ChatMessage msg = new ChatMessage();
         msg.setId("msg_1");
         msg.setCreatedBy("author_123");
         msg.setContent("Test message");
 
+        // Author already in store: no batch fetch issued, user retained
         service.fetchMissingUsers(Collections.singletonList(msg));
 
         UserData found = store.users().getDirect("author_123");

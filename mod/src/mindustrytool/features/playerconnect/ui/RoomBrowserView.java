@@ -21,6 +21,7 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.models.response.PlayerConnectRoom;
 import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 
@@ -59,6 +60,13 @@ public class RoomBrowserView extends BaseComponent {
 
     public RoomBrowserView(PlayerConnectFeature feature) {
         this.feature = feature;
+    }
+
+    private Component roomsLoading() {
+        return column().growX().margin(unit(3)).center().children(() -> {
+            icon(Icon.refresh).size(unit(8));
+            text(Core.bundle.get("loading", "Loading..."));
+        });
     }
 
     @Override
@@ -171,10 +179,7 @@ public class RoomBrowserView extends BaseComponent {
                         }
                         return column().growX().children(() -> {
                             query(feature.getRoomsQuery())
-                                    .loading(() -> column().growX().margin(unit(3)).center().children(() -> {
-                                        icon(Icon.refresh).size(unit(8));
-                                        text(Core.bundle.get("loading", "Loading..."));
-                                    }))
+                                    .loading(this::roomsLoading)
                                     .error(err -> column().growX().margin(unit(3)).center().children(() -> {
                                         text(err != null ? err.getMessage() : Core.bundle.get("error", "Error"))
                                                 .color(Color.scarlet);
@@ -182,35 +187,39 @@ public class RoomBrowserView extends BaseComponent {
                                                 .style(WebStyles.outline())
                                                 .height(unit(10));
                                     }))
-                                    .data(allRooms -> column().growX().children(() -> {
-                                        dynamic(groupedRooms, groups -> {
-                                            if (groups == null || groups.isEmpty()) {
-                                                return column().growX().margin(unit(3)).center().children(() -> {
-                                                    text(Core.bundle.get("feature.player-connect.no-rooms",
-                                                            "No active PlayerConnect rooms found."))
-                                                                    .color(Color.lightGray);
-                                                });
-                                            }
+                                    .data((allRooms, fetching) -> Boolean.TRUE.equals(fetching)
+                                            ? roomsLoading()
+                                            : column().growX().children(() -> {
+                                                dynamic(groupedRooms, groups -> {
+                                                    if (groups == null || groups.isEmpty()) {
+                                                        return column().growX().margin(unit(3)).center()
+                                                                .children(() -> {
+                                                                    text(Core.bundle.get(
+                                                                            "feature.player-connect.no-rooms",
+                                                                            "No active PlayerConnect rooms found."))
+                                                                                    .color(Color.lightGray);
+                                                                });
+                                                    }
 
-                                            return column().growX().gap(unit(3.5f)).children(() -> {
-                                                for (ProviderRoomGroup group : groups) {
-                                                    column().growX().gap(unit(2)).left().children(() -> {
-                                                        // Provider group header
-                                                        row().growX().gap(unit(2)).children(() -> {
-                                                            text(group.providerName).left();
-                                                            text("(" + group.rooms.size() + ")");
-                                                        });
+                                                    return column().growX().gap(unit(3.5f)).children(() -> {
+                                                        for (ProviderRoomGroup group : groups) {
+                                                            column().growX().gap(unit(2)).left().children(() -> {
+                                                                // Provider group header
+                                                                row().growX().gap(unit(2)).children(() -> {
+                                                                    text(group.providerName).left();
+                                                                    text("(" + group.rooms.size() + ")");
+                                                                });
 
-                                                        // Grid of rooms for this provider
-                                                        reactiveGrid(columnCount, Signal.of(group.rooms),
-                                                                PlayerConnectRoom::getLink,
-                                                                (PlayerConnectRoom r) -> new RoomCard(r))
-                                                                        .gap(unit(2));
+                                                                // Grid of rooms for this provider
+                                                                reactiveGrid(columnCount, Signal.of(group.rooms),
+                                                                        PlayerConnectRoom::getLink,
+                                                                        (PlayerConnectRoom r) -> new RoomCard(r))
+                                                                                .gap(unit(2));
+                                                            });
+                                                        }
                                                     });
-                                                }
-                                            });
-                                        }).growX();
-                                    }));
+                                                }).growX();
+                                            }));
                         });
                     }).growX();
 
