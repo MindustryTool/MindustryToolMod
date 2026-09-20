@@ -3,30 +3,29 @@ package mindustrytool.features.browser.schematic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
 import arc.scene.Scene;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Label;
 import arc.util.I18NBundle;
-import java.util.ArrayList;
-import java.util.List;
 import mindustry.gen.Icon;
 import mindustry.ui.Fonts;
 import mindustrytool.features.browser.map.MapCard;
 import mindustrytool.models.response.MapData;
 import mindustrytool.models.response.SchematicData;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 import solim.display.NetworkImage;
 import solim.layout.ReactiveGrid;
 import solim.performance.Perf;
@@ -39,7 +38,7 @@ import solim.reactive.Signal;
  * loading stubbed out. Asserts the structural subtree/attach spans emitted by
  * the profiling parent stack.
  */
-class SchematicBrowserPerfTest {
+class SchematicBrowserPerfTest extends MindustryTestEnv {
 
     private static final int PAGE_SIZE = 5;
     private static final Runnable NOOP = new Runnable() {
@@ -52,13 +51,6 @@ class SchematicBrowserPerfTest {
 
     @BeforeAll
     static void initArc() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
         if (Core.scene == null) {
             Core.scene = new Scene();
         }

@@ -1,48 +1,36 @@
 package solim.overlay;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Application;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import arc.Core;
 import arc.Events;
-import arc.Graphics;
-import arc.audio.Audio;
-import arc.graphics.GL20;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
 import arc.mock.MockAudio;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
-import arc.scene.Scene;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.Dialog.DialogStyle;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
-import java.util.concurrent.atomic.AtomicBoolean;
-import solim.core.DisposableAction;
-import java.util.concurrent.atomic.AtomicInteger;
 import mindustry.game.EventType.ResizeEvent;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import solim.core.DisposableAction;
 import solim.display.Text;
-import solim.runtime.SignalDispatcher;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class SolimDialogDisposalTest {
-
-	static Application prevApp;
-	static Graphics prevGraphics;
-	static GL20 prevGl;
-	static GL20 prevGl20;
-	static Audio prevAudio;
-	static Scene prevScene;
-	static boolean createdScene;
+class SolimDialogDisposalTest extends SolimEnv {
 
 	static Font testFont() {
 		FontData fontData = new FontData() {
@@ -54,31 +42,12 @@ class SolimDialogDisposalTest {
 		return new Font(fontData, new TextureRegion(), false);
 	}
 
-	@BeforeAll
-	static void initArc() {
-		prevApp = Core.app;
-		prevGraphics = Core.graphics;
-		prevGl = Core.gl;
-		prevGl20 = Core.gl20;
-		prevAudio = Core.audio;
-		prevScene = Core.scene;
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
+	@BeforeEach
+	void setUp() {
 		if (Core.audio == null) {
 			Core.audio = new MockAudio();
 		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-		if (Core.gl == null) {
-			Core.gl = new MockGL20();
-			Core.gl20 = (MockGL20) Core.gl;
-		}
-		if (Core.scene == null) {
-			Core.scene = new Scene();
-			createdScene = true;
-		}
+		newScene();
 		Font font = testFont();
 		try {
 			Core.scene.getStyle(ButtonStyle.class);
@@ -113,27 +82,6 @@ class SolimDialogDisposalTest {
 			style.font = font;
 			Core.scene.addStyle(TextFieldStyle.class, style);
 		}
-	}
-
-	@AfterAll
-	static void tearDownArc() {
-		Core.app = prevApp;
-		Core.graphics = prevGraphics;
-		Core.gl = prevGl;
-		Core.gl20 = prevGl20;
-		Core.audio = prevAudio;
-		Core.scene = createdScene ? null : prevScene;
-		prevApp = null;
-		prevGraphics = null;
-		prevGl = null;
-		prevGl20 = null;
-		prevAudio = null;
-		prevScene = null;
-		createdScene = false;
-	}
-
-	@BeforeEach
-	void setUp() {
 		SignalDispatcher.resetForTests();
 	}
 

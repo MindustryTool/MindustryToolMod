@@ -1,16 +1,33 @@
 package solim.core;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import arc.Application;
 import arc.Core;
+import arc.Events;
 import arc.Graphics;
 import arc.graphics.Color;
 import arc.graphics.GL20;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
+import arc.scene.Scene;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.CheckBox.CheckBoxStyle;
 import arc.scene.ui.Label.LabelStyle;
@@ -19,21 +36,7 @@ import arc.scene.ui.Slider.SliderStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
 import arc.scene.ui.layout.Table;
-import arc.graphics.g2d.Font;
-import arc.graphics.g2d.Font.FontData;
-import arc.graphics.g2d.TextureRegion;
-import arc.scene.Scene;
-import arc.Events;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import mindustry.game.EventType.ResizeEvent;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import solim.display.Badge;
 import solim.display.NetworkImage;
 import solim.display.SolimImage;
@@ -53,12 +56,13 @@ import solim.layout.Spacer;
 import solim.layout.VirtualList;
 import solim.layout.Wrap;
 import solim.overlay.Popup;
-import solim.runtime.ComponentContext;
-import solim.runtime.SignalDispatcher;
 import solim.reactive.Computed;
-import solim.reactive.Signal;
 import solim.reactive.Dynamic;
 import solim.reactive.ForEach;
+import solim.reactive.Signal;
+import solim.runtime.ComponentContext;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
 /**
  * Uniform disposal sweep over every {@link Disposable} in solim packages.
@@ -69,7 +73,7 @@ import solim.reactive.ForEach;
  * {@code solim.overlay} disposal tests, and config/graphics/feedback in their own
  * disposal tests. This sweep pins the shared contract plus mounting modes here.
  */
-class DisposalSweepTest {
+class DisposalSweepTest extends SolimEnv {
 
 	static Application prevApp;
 	static Graphics prevGraphics;
@@ -104,16 +108,6 @@ class DisposalSweepTest {
 		prevGl = Core.gl;
 		prevGl20 = Core.gl20;
 		prevScene = Core.scene;
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-		if (Core.gl == null) {
-			Core.gl = new MockGL20();
-			Core.gl20 = (MockGL20) Core.gl;
-		}
 		if (Core.scene == null) {
 			Core.scene = new Scene();
 			createdScene = true;

@@ -1,51 +1,34 @@
 package solim.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import solim.modifier.PendingCellConfig;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
 /**
- * Base test harness for all Solim unit and integration tests.
- * Automatically initializes headless Arc environment, and enforces strict
- * teardown assertions ensuring no ambient context leaks between tests.
+ * Test environment for solim runtime tests (components, signals, layouts).
+ *
+ * Extends {@link ArcTestEnv} with solim ambient state reset before each test
+ * and strict teardown assertions that fail the test if any ambient state
+ * leaked — this is what makes shared (reused) test JVMs safe, replacing the
+ * old forkEvery = 1 JVM-per-class approach.
  */
-public abstract class SolimTestHarness {
-
-	@BeforeAll
-	public static void initArcHeadless() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-		if (Core.gl == null) {
-			Core.gl = new MockGL20();
-			Core.gl20 = (MockGL20) Core.gl;
-		}
-		Core.scene = null;
-	}
+public class SolimEnv extends ArcTestEnv {
 
 	@BeforeEach
-	public void setUpHarness() {
+	public void setUpSolimEnv() {
 		resetAmbientState();
 	}
 
 	@AfterEach
-	public void verifyAndTearDownHarness() {
+	public void verifyAndTearDownSolimEnv() {
 		int parentStackSize = ParentStack.size();
 		int componentContextSize = ComponentContext.size();
 		int reactiveContextSize = ReactiveContext.size();
@@ -74,6 +57,5 @@ public abstract class SolimTestHarness {
 		ComponentContext.clear();
 		ReactiveContext.clear();
 		SignalDispatcher.resetForTests();
-		Core.scene = null;
 	}
 }

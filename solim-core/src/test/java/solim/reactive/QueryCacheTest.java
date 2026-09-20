@@ -9,8 +9,9 @@ import org.junit.jupiter.api.Test;
 import solim.core.Disposable;
 
 import static org.junit.jupiter.api.Assertions.*;
+import solim.test.SolimEnv;
 
-class QueryCacheTest {
+class QueryCacheTest extends SolimEnv {
 
 	private QueryCache cache;
 

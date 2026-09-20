@@ -2,22 +2,18 @@ package solim.graphics;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import arc.Core;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.style.BaseDrawable;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class DrawablesTest {
+class DrawablesTest extends SolimEnv {
 
 	@BeforeEach
 	void setUp() {
-		Core.app = new MockApplication();
-		Core.graphics = new MockGraphics();
 	}
 
 	static class CustomGlyphDrawable extends TextureRegionDrawable {

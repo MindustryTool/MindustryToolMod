@@ -5,8 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.scene.Element;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
+import solim.test.SolimEnv;
 
-class SignalReactivityWarningTest {
+class SignalReactivityWarningTest extends SolimEnv {
 
 	@Test
 	void peekReturnsValueWithoutTracking() {

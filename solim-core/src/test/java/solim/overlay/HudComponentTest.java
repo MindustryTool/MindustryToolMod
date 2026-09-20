@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.Core;
 import arc.Events;
 import arc.input.KeyCode;
-import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
 import arc.scene.event.EventListener;
@@ -19,8 +18,9 @@ import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
 import arc.scene.ui.layout.Table;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class HudComponentTest {
+class HudComponentTest extends SolimEnv {
 
 	static class ResizableMockGraphics extends MockGraphics {
 		int width = 1024;
@@ -41,9 +41,6 @@ class HudComponentTest {
 
 	@BeforeAll
 	static void initCore() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
 		mockGraphics = new ResizableMockGraphics();
 		Core.graphics = mockGraphics;
 	}
@@ -176,6 +173,10 @@ class HudComponentTest {
 		// Idempotent: second dispose is safe.
 		hud.dispose();
 		assertEquals(40f, hud.element().x, 0.01f);
+
+		// Drain any effect queued while the hud was alive; all effects are
+		// disposed now, so a flush runs nothing and leaves the queue empty.
+		SignalDispatcher.flush();
 	}
 
 	@Test
@@ -206,6 +207,7 @@ class HudComponentTest {
 		assertTrue(scaledW >= 0f, "Root pref width must be non-negative after scale");
 		assertTrue(scaledH >= 0f, "Root pref height must be non-negative after scale");
 
+		SignalDispatcher.flush();
 		hud.dispose();
 	}
 }

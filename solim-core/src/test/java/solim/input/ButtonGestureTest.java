@@ -2,9 +2,6 @@ package solim.input;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.Button.ButtonStyle;
 import org.junit.jupiter.api.BeforeAll;
@@ -16,13 +13,12 @@ import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
 import solim.layout.Row;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class ButtonGestureTest {
+class ButtonGestureTest extends SolimEnv {
 
 	@BeforeAll
 	static void init() {
-		if (Core.app == null) Core.app = new MockApplication();
-		if (Core.graphics == null) Core.graphics = new MockGraphics();
 	}
 
 	@Test

@@ -5,8 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.scene.Element;
 import org.junit.jupiter.api.Test;
 import solim.modifier.PendingCellConfig;
+import solim.test.SolimEnv;
 
-class SolimTokenTest {
+class SolimTokenTest extends SolimEnv {
 
     @Test
     void getOrCreateCreatesAndAssignsToken() {

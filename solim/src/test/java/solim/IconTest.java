@@ -1,36 +1,27 @@
 package solim;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
-import arc.Core;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Image;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.display.SolimImage;
-import solim.runtime.ParentStack;
 import solim.reactive.Signal;
-import arc.mock.MockGraphics;
+import solim.runtime.ParentStack;
+import solim.test.SolimEnv;
 
-class IconTest {
+class IconTest extends SolimEnv {
 
 	static class CustomIconDrawable extends TextureRegionDrawable {
 		CustomIconDrawable(TextureRegion region) {
 			super(region);
-		}
-	}
-
-	@BeforeAll
-	static void init() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
 		}
 	}
 

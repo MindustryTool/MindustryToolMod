@@ -15,8 +15,9 @@ import solim.runtime.ParentStack;
 import static solim.core.Ui.*;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
+import solim.test.SolimEnv;
 
-class DisplayTest {
+class DisplayTest extends SolimEnv {
 
 	@BeforeAll
 	static void checkArcContext() {

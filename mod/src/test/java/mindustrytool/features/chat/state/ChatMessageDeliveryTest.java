@@ -4,8 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import mindustrytool.features.chat.MessageStatus;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class ChatMessageDeliveryTest {
+class ChatMessageDeliveryTest extends SolimEnv {
 
     @Test
     void testInitialState() {

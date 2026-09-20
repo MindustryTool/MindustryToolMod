@@ -11,10 +11,10 @@ import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
 import solim.runtime.ParentStack;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 import solim.test.TestScheduler;
 
-public class ModifiersAndGapRegressionTest extends SolimTestHarness {
+public class ModifiersAndGapRegressionTest extends SolimEnv {
 
 	// ==========================================
 	// Phase 14: Modifier Pipeline & Cell Config

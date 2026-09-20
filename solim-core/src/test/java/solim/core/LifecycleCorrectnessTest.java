@@ -16,8 +16,9 @@ import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 import solim.runtime.StructuralReconciler;
+import solim.test.SolimEnv;
 
-class LifecycleCorrectnessTest {
+class LifecycleCorrectnessTest extends SolimEnv {
 
 	@Test
 	void disposalOrderIsLIFO() {

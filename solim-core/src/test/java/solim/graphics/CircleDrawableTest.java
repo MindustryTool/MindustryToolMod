@@ -1,14 +1,14 @@
 package solim.graphics;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.junit.jupiter.api.Test;
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.scene.ui.Image;
 
-class CircleDrawableTest {
+import arc.scene.ui.Image;
+import solim.test.SolimEnv;
+
+class CircleDrawableTest extends SolimEnv {
 
 	@Test
 	void instanceIsSingletonWithMinimumDimensions() {
@@ -30,8 +30,6 @@ class CircleDrawableTest {
 
 	@Test
 	void testImageLayout() {
-		if (Core.app == null) Core.app = new MockApplication();
-		if (Core.graphics == null) Core.graphics = new MockGraphics();
 		Image img = new Image(CircleDrawable.INSTANCE);
 		img.setSize(12f, 12f);
 		img.layout();

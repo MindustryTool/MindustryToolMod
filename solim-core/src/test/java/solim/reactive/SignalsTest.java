@@ -4,15 +4,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
 import arc.Events;
-import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
+import solim.test.SolimEnv;
 import java.util.concurrent.atomic.AtomicInteger;
 import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class SignalsTest {
+class SignalsTest extends SolimEnv {
 
 	static class ResizableMockGraphics extends MockGraphics {
 		int width = 1000;
@@ -38,9 +38,6 @@ class SignalsTest {
 
 	@BeforeAll
 	static void initCore() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
 		mockGraphics = new ResizableMockGraphics();
 		Core.graphics = mockGraphics;
 		Signals.init();

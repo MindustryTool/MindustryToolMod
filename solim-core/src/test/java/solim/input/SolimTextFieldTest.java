@@ -1,57 +1,24 @@
 package solim.input;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import arc.input.KeyCode;
 import arc.scene.event.InputEvent;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
-import arc.graphics.g2d.Font;
-import arc.graphics.g2d.Font.FontData;
-import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
-import arc.scene.Scene;
-import arc.scene.ui.TextField.TextFieldStyle;
-import org.junit.jupiter.api.AfterAll;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class SolimTextFieldTest {
+class SolimTextFieldTest extends SolimEnv {
 
-	@BeforeAll
-	static void checkArcContext() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-		if (Core.gl == null) {
-			Core.gl = new MockGL20();
-			Core.gl20 = (MockGL20) Core.gl;
-		}
-		if (Core.scene == null) {
-			Core.scene = new Scene();
-			TextFieldStyle style = new TextFieldStyle();
-			FontData fontData = new FontData() {
-				@Override
-				public boolean hasGlyph(char ch) {
-					return true;
-				}
-			};
-			style.font = new Font(fontData, new TextureRegion(), false);
-			Core.scene.addStyle(TextFieldStyle.class, style);
-		}
-	}
-
-	@AfterAll
-	static void tearDownArc() {
-		Core.scene = null;
-		Core.gl = null;
-		Core.gl20 = null;
+	@BeforeEach
+	void setUp() {
+		newScene();
 	}
 
 	private void simulateKey(SolimTextField tf, KeyCode key) {

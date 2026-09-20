@@ -1,91 +1,25 @@
 package solim.feedback;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Application;
-import arc.Core;
-import arc.Graphics;
-import arc.graphics.GL20;
-import arc.graphics.g2d.Font;
-import arc.graphics.g2d.Font.FontData;
-import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
-import arc.scene.Scene;
-import arc.scene.ui.Label;
-import arc.scene.ui.Label.LabelStyle;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.runtime.SignalDispatcher;
+
+import arc.scene.ui.Label;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class FeedbackDisposalTest {
-
-	static Application prevApp;
-	static Graphics prevGraphics;
-	static GL20 prevGl;
-	static GL20 prevGl20;
-	static Scene prevScene;
-	static boolean createdScene;
-
-	@BeforeAll
-	static void initArc() {
-		prevApp = Core.app;
-		prevGraphics = Core.graphics;
-		prevGl = Core.gl;
-		prevGl20 = Core.gl20;
-		prevScene = Core.scene;
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-		if (Core.gl == null) {
-			Core.gl = new MockGL20();
-			Core.gl20 = (MockGL20) Core.gl;
-		}
-		if (Core.scene == null) {
-			Core.scene = new Scene();
-			createdScene = true;
-		}
-		try {
-			Core.scene.getStyle(LabelStyle.class);
-		} catch (IllegalArgumentException missing) {
-			LabelStyle style = new LabelStyle();
-			FontData fontData = new FontData() {
-				@Override
-				public boolean hasGlyph(char ch) {
-					return true;
-				}
-			};
-			style.font = new Font(fontData, new TextureRegion(), false);
-			Core.scene.addStyle(LabelStyle.class, style);
-		}
-	}
-
-	@AfterAll
-	static void tearDownArc() {
-		Core.app = prevApp;
-		Core.graphics = prevGraphics;
-		Core.gl = prevGl;
-		Core.gl20 = prevGl20;
-		Core.scene = createdScene ? null : prevScene;
-		prevApp = null;
-		prevGraphics = null;
-		prevGl = null;
-		prevGl20 = null;
-		prevScene = null;
-		createdScene = false;
-	}
+class FeedbackDisposalTest extends SolimEnv {
 
 	@BeforeEach
 	void setUp() {
+		newScene();
 		SignalDispatcher.resetForTests();
 	}
 

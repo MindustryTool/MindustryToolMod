@@ -1,19 +1,22 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.scene.Element;
 import java.lang.reflect.Method;
 import java.util.function.Supplier;
-import org.junit.jupiter.api.BeforeAll;
+
 import org.junit.jupiter.api.Test;
+
+import arc.scene.Element;
 import solim.core.Component;
 import solim.runtime.ParentStack;
+import solim.test.SolimEnv;
 
-class SolimStackTest {
+class SolimStackTest extends SolimEnv {
 
 	private static final class TestComponent implements Component {
 		private final Element element = new Element();
@@ -30,15 +33,6 @@ class SolimStackTest {
 		}
 	}
 
-	@BeforeAll
-	static void initArc() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	@Test
 	void createsStackWithDefaultName() {

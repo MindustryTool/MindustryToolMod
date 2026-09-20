@@ -6,8 +6,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import solim.test.SolimEnv;
 
-class MutationTest {
+class MutationTest extends SolimEnv {
 
 	@Test
 	void initialAndSuccessState() {

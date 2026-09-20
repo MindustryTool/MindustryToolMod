@@ -9,8 +9,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class EffectTest {
+class EffectTest extends SolimEnv {
 
 	@BeforeEach
 	void setUp() {

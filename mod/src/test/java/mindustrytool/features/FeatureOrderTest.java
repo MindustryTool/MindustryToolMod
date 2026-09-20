@@ -1,21 +1,22 @@
 package mindustrytool.features;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.Settings;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.scene.style.TextureRegionDrawable;
-import arc.struct.Seq;
-import mindustry.gen.Icon;
-import mindustrytool.features.settings.ModSettings;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class FeatureOrderTest {
+import arc.Core;
+import arc.scene.style.TextureRegionDrawable;
+import arc.struct.Seq;
+import mindustry.gen.Icon;
+import mindustrytool.features.settings.ModSettings;
+import mindustrytool.test.MindustryTestEnv;
+
+class FeatureOrderTest extends MindustryTestEnv {
 
     static class TestFeature extends Feature {
         TestFeature(String id, int order, boolean dev) {
@@ -30,24 +31,17 @@ class FeatureOrderTest {
 
     @BeforeAll
     static void initCore() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
         Icon.book = new TextureRegionDrawable();
     }
 
     @BeforeEach
     void setUp() {
-        Core.settings = new Settings();
-        Core.settings.clear();
-        FeatureManager.clear();
         ModSettings.featureOrder.set(new Seq<>());
     }
 
     @AfterEach
     void tearDown() {
-        FeatureManager.clear();
         ModSettings.featureOrder.set(new Seq<>());
-        Core.settings.clear();
     }
 
     @Test

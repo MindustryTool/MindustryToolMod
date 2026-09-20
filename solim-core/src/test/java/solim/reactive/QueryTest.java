@@ -15,8 +15,9 @@ import solim.runtime.ComponentContext;
 import solim.runtime.SignalDispatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
+import solim.test.SolimEnv;
 
-class QueryTest {
+class QueryTest extends SolimEnv {
 
     private QueryCache cache;
 

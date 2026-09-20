@@ -12,8 +12,9 @@ import java.util.Arrays;
 import java.util.List;
 import solim.runtime.SignalDispatcher;
 import solim.reactive.Effect;
+import solim.test.SolimEnv;
 
-class ComponentContractTest {
+class ComponentContractTest extends SolimEnv {
 
 	@Test
 	void componentInterfaceDisposeIsNoOpAndPreservesElement() {

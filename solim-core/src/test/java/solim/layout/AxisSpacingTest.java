@@ -1,31 +1,20 @@
 package solim.layout;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
+
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
-import arc.Core;
-import arc.mock.MockApplication;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.display.SolimImage;
 import solim.input.Button;
-import solim.runtime.SignalDispatcher;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import arc.mock.MockGraphics;
+public class AxisSpacingTest extends SolimEnv {
 
-public class AxisSpacingTest {
-
-    @BeforeAll
-    static void setup() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @Test
     void columnAndRowAxisSpacing() {

@@ -4,24 +4,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
 import arc.scene.Scene;
-import java.lang.reflect.Field;
 import mindustry.ui.Fonts;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import mindustrytool.components.WebStyles;
+import mindustrytool.test.MindustryTestEnv;
 import solim.graphics.RoundedDrawable;
 import solim.style.SolimButtonStyle;
-import mindustrytool.components.WebStyles;
 
-class WebStylesTest {
+class WebStylesTest extends MindustryTestEnv {
 
     private static Font testFont;
 
@@ -31,13 +30,6 @@ class WebStylesTest {
 
     @BeforeAll
     static void setUp() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
         if (Core.scene == null) {
             Core.scene = new Scene();
         }

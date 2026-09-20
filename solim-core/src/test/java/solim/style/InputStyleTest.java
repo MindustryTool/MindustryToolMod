@@ -4,56 +4,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-import arc.Core;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import arc.graphics.Color;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.TextureRegion;
-import arc.scene.Scene;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.TextField.TextFieldStyle;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.input.SolimTextField;
 import solim.reactive.Signal;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
+import solim.test.SolimEnv;
 
-class InputStyleTest {
+class InputStyleTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
-        if (Core.scene == null) {
-            Core.scene = new Scene();
-        }
-        TextFieldStyle style = new TextFieldStyle();
-        Font.FontData fontData = new Font.FontData() {
-            @Override
-            public boolean hasGlyph(char ch) {
-                return true;
-            }
-        };
-        style.font = new Font(fontData, new TextureRegion(), false);
-        Core.scene.addStyle(TextFieldStyle.class, style);
-    }
-
-    @AfterAll
-    static void tearDownArc() {
-        Core.scene = null;
-        Core.gl = null;
-        Core.gl20 = null;
+    @BeforeEach
+    void setUp() {
+        newScene();
     }
 
     private static int rgba(Color color) {

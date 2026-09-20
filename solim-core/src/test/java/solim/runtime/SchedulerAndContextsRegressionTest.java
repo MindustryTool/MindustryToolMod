@@ -16,11 +16,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 import solim.test.TestObserver;
 import solim.test.TestScheduler;
 
-public class SchedulerAndContextsRegressionTest extends SolimTestHarness {
+public class SchedulerAndContextsRegressionTest extends SolimEnv {
 
 	// ==========================================
 	// Phase 8: Scheduler (SignalDispatcher)

@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.Core;
 import arc.Events;
 import arc.input.KeyCode;
-import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
+import solim.test.SolimEnv;
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
@@ -22,7 +22,7 @@ import solim.reactive.Signal;
 import solim.core.Ui;
 import solim.runtime.SignalDispatcher;
 
-class HudTest {
+class HudTest extends SolimEnv {
 
 	static class ResizableMockGraphics extends MockGraphics {
 		int width = 1024;
@@ -43,9 +43,6 @@ class HudTest {
 
 	@BeforeAll
 	static void initCore() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
 		mockGraphics = new ResizableMockGraphics();
 		Core.graphics = mockGraphics;
 	}
@@ -376,6 +373,7 @@ class HudTest {
 		assertEquals(600f, xSig.get(), 0.01f, "X signal should clamp on resize");
 		assertEquals(500f, ySig.get(), 0.01f, "Y signal should clamp on resize");
 
+		SignalDispatcher.flush();
 		hud.dispose();
 	}
 

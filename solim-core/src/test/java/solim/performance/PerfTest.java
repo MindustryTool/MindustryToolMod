@@ -8,8 +8,9 @@ import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import solim.runtime.ParentStack;
+import solim.test.SolimEnv;
 
-class PerfTest {
+class PerfTest extends SolimEnv {
 
     @AfterEach
     void tearDown() {

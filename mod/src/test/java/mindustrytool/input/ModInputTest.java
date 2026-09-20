@@ -1,18 +1,30 @@
 package mindustrytool.input;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import arc.Core;
-import arc.Settings;
 import arc.assets.AssetManager;
 import arc.graphics.Camera;
-import arc.mock.MockApplication;
-import arc.mock.MockFiles;
-import arc.mock.MockGraphics;
-import arc.mock.MockInput;
 import arc.input.InputProcessor;
 import arc.input.KeyCode;
 import arc.math.geom.Vec2;
+import arc.mock.MockFiles;
+import arc.mock.MockInput;
 import arc.struct.Queue;
 import arc.struct.Seq;
 import arc.util.Time;
@@ -32,14 +44,9 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.joystick.JoystickFeature;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 
-class ModInputTest {
+class ModInputTest extends MindustryTestEnv {
 
     private static Control createMockControl() {
         try {
@@ -56,8 +63,6 @@ class ModInputTest {
 
     @BeforeAll
     static void initCore() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
         Core.files = new MockFiles();
         Core.assets = new AssetManager();
         Core.camera = new Camera();
@@ -69,9 +74,6 @@ class ModInputTest {
 
     @BeforeEach
     void setUp() {
-        Core.settings = new Settings();
-        Core.settings.clear();
-        FeatureManager.clear();
         Vars.control = createMockControl();
         Vars.mobile = false;
         Vars.world = new World();
@@ -82,8 +84,6 @@ class ModInputTest {
 
     @AfterEach
     void tearDown() {
-        FeatureManager.clear();
-        Core.settings.clear();
         Vars.control = null;
         Vars.player = null;
         Vars.world = null;

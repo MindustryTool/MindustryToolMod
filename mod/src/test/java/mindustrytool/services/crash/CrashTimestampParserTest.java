@@ -7,8 +7,9 @@ import arc.files.Fi;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class CrashTimestampParserTest {
+class CrashTimestampParserTest extends SolimEnv {
 
     @Test
     void parse_nullFile_returnsZero() {

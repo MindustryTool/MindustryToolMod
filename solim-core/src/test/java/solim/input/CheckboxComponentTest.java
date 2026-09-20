@@ -7,8 +7,9 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class CheckboxComponentTest {
+class CheckboxComponentTest extends SolimEnv {
 
 	@BeforeAll
 	static void checkArcContext() {

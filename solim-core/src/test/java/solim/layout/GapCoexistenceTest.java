@@ -1,31 +1,20 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import solim.runtime.SignalDispatcher;
-import solim.reactive.Signal;
-import solim.reactive.Dynamic;
 import solim.core.Ui;
+import solim.reactive.Dynamic;
+import solim.reactive.Signal;
 import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class GapCoexistenceTest {
+class GapCoexistenceTest extends SolimEnv {
 
-	@BeforeAll
-	static void initArc() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	@Test
 	void childMarginAndContainerGapCoexistAdditivelyInRow() {

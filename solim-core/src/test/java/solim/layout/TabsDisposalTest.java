@@ -1,6 +1,14 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import arc.Application;
 import arc.Core;
@@ -9,23 +17,16 @@ import arc.graphics.GL20;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
 import arc.scene.Scene;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.Label.LabelStyle;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import solim.display.Text;
 import solim.input.Button;
-import solim.runtime.SignalDispatcher;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class TabsDisposalTest {
+class TabsDisposalTest extends SolimEnv {
 
 	static Application prevApp;
 	static Graphics prevGraphics;
@@ -41,16 +42,6 @@ class TabsDisposalTest {
 		prevGl = Core.gl;
 		prevGl20 = Core.gl20;
 		prevScene = Core.scene;
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-		if (Core.gl == null) {
-			Core.gl = new MockGL20();
-			Core.gl20 = (MockGL20) Core.gl;
-		}
 		if (Core.scene == null) {
 			Core.scene = new Scene();
 			createdScene = true;

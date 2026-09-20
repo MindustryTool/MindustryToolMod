@@ -8,8 +8,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class DisposalPrimitivesTest {
+class DisposalPrimitivesTest extends SolimEnv {
 
 	@BeforeEach
 	void setUp() {

@@ -1,34 +1,30 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.scene.Element;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.jupiter.api.BeforeAll;
+
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
-import solim.runtime.SignalDispatcher;
-import solim.reactive.Signal;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+
+import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
+import solim.core.BaseComponent;
 import solim.core.Ui;
+import solim.reactive.Signal;
 import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class ReactiveGridTest {
+class ReactiveGridTest extends SolimEnv {
 
-	@BeforeAll
-	static void initArc() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	static class ItemComp extends BaseComponent {
 		final String text;

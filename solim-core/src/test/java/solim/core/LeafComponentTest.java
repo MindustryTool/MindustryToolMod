@@ -2,9 +2,6 @@ package solim.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
@@ -13,22 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
+import solim.test.SolimEnv;
 
-class LeafComponentTest {
+class LeafComponentTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @AfterEach
     void tearDown() {

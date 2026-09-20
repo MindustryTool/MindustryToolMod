@@ -8,8 +8,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class ConfigValueTest {
+class ConfigValueTest extends SolimEnv {
 
 	@BeforeAll
 	static void initSettings() {

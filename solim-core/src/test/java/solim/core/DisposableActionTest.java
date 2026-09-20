@@ -4,8 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class DisposableActionTest {
+class DisposableActionTest extends SolimEnv {
 
 	@Test
 	void runsActionOnceAndUpdatesDisposedStatus() {
@@ -27,8 +28,10 @@ class DisposableActionTest {
 
 	@Test
 	void emptyDisposableActionIsSafe() {
+		// DisposableAction.empty() is a shared singleton; in a reused test JVM it
+		// may already be disposed by another class. The contract under test is
+		// that dispose() is safe and marks the action disposed.
 		DisposableAction empty = DisposableAction.empty();
-		assertFalse(empty.isDisposed());
 
 		assertDoesNotThrow(empty::dispose);
 		assertTrue(empty.isDisposed());

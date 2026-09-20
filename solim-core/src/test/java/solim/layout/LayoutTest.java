@@ -1,49 +1,44 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Arrays;
+
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 
 import arc.Core;
 import arc.graphics.Color;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
+import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
+import arc.scene.event.Touchable;
 import arc.scene.ui.Label;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
-import java.util.Arrays;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import solim.display.Text;
-import solim.reactive.Signal;
-import solim.runtime.ParentStack;
-import solim.core.Ui;
-import arc.graphics.g2d.Font;
-import arc.graphics.g2d.Font.FontData;
-import arc.graphics.g2d.TextureRegion;
-import arc.scene.event.EventListener;
-import arc.scene.event.InputListener;
-import arc.scene.event.Touchable;
 import arc.struct.Seq;
-import org.junit.jupiter.api.Assumptions;
+import solim.core.Ui;
+import solim.display.Text;
 import solim.input.Checkbox;
 import solim.input.SolimTextField;
+import solim.reactive.Signal;
+import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class LayoutTest {
+class LayoutTest extends SolimEnv {
 
-    @BeforeAll
-    static void checkArcContext() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @Test
     void rowAlignAndGap() {

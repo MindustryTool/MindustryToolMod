@@ -9,8 +9,9 @@ import solim.core.DisposableAction;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class TwoWayBindingTest {
+class TwoWayBindingTest extends SolimEnv {
 
 	@Test
 	void signalUpdatesWidget() {
@@ -66,6 +67,7 @@ class TwoWayBindingTest {
 		// Widget setter should NOT have been called when widget drove the change
 		assertEquals(0, setterCalls.get(), "Widget change should not loop back to widget setter");
 
+		SignalDispatcher.flush();
 		binding.dispose();
 	}
 
@@ -138,6 +140,7 @@ class TwoWayBindingTest {
 		assertEquals("Second message", widgetVal[0]);
 		assertEquals("Second message", messageSignal.get(), "Signal must reflect second message");
 
+		SignalDispatcher.flush();
 		binding.dispose();
 	}
 }

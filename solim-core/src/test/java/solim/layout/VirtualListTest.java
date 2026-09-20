@@ -5,19 +5,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.scene.Element;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 
-class VirtualListTest extends SolimTestHarness {
-
-    @BeforeAll
-    static void initArc() {
-        SolimTestHarness.initArcHeadless();
-    }
+class VirtualListTest extends SolimEnv {
 
     static class TestItemComponent extends BaseComponent {
         final String id;

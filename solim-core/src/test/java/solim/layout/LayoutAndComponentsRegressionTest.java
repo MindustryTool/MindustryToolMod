@@ -17,10 +17,10 @@ import solim.input.Button;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
 import solim.runtime.ParentStack;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 import solim.test.TestScheduler;
 
-public class LayoutAndComponentsRegressionTest extends SolimTestHarness {
+public class LayoutAndComponentsRegressionTest extends SolimEnv {
 
 	// ==========================================
 	// Phase 16: Layout Containers
