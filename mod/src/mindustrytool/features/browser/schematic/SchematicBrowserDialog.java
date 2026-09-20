@@ -35,8 +35,6 @@ public class SchematicBrowserDialog extends SolimDialog {
     private final BrowserState<SchematicData> state;
     private final BrowserFilterDialog filterDialog;
 
-    // TODO: Schematic browser broke when press next page button too fast
-
     public SchematicBrowserDialog() {
         super(Core.bundle.get("browser.schematic.title"));
 

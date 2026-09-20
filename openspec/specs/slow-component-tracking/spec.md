@@ -3,69 +3,101 @@
 ## Purpose
 TBD - created by archiving change schematic-browser-perf-tracker. Update Purpose after archive.
 ## Requirements
-### Requirement: Opt-in per-component build tracking
-
-The system SHALL provide opt-in timing of Solim component builds with zero measurable overhead when disabled.
-
-#### Scenario: Disabled tracker is a no-op
-
-- **WHEN** slow-component tracking is disabled (the default)
-- **THEN** component builds SHALL NOT allocate spans, write logs, or measurably change build latency.
-
-#### Scenario: Slow build emits a span and warning
-
-- **WHEN** tracking is enabled and a component build exceeds its slow threshold
-- **THEN** the system SHALL record a span with component name, phase, and duration and emit an internal diagnostic warning.
-
-### Requirement: Grid rebuild phase attribution
-
-The system SHALL attribute schematic browser grid rebuilds to card builds versus reconcile versus reflow versus image decode.
-
-#### Scenario: Page swap attributes reconcile and reflow
-
-- **WHEN** tracking is enabled and a `reactiveGrid` reconciles a fully new page of items
-- **THEN** the system SHALL record separate spans for reconcile (new-key builds) and reflow (table re-add plus spacing plus hierarchy invalidation) with item and new-key counts.
-
-#### Scenario: QueryView DATA update is timed
-
-- **WHEN** tracking is enabled and a `QueryView` mounts a DATA component for a new page
-- **THEN** the system SHALL record a span covering the DATA factory application with fetching state.
-
-#### Scenario: Image decode cost is separated
-
-- **WHEN** tracking is enabled and a `NetworkImage` decodes bytes to a texture
-- **THEN** the system SHALL record a decode span distinct from component build spans.
-
-#### Scenario: Container subtree cost is attributed
-
-- **WHEN** tracking is enabled and a layout container subtree exceeds the slow threshold
-- **THEN** the system SHALL record a span with container name, depth, and child count, and SHALL track the maximum observed stack depth.
-
 ### Requirement: Bounded span buffer and thresholds
 
-The system SHALL retain recent slow spans in a bounded in-process ring buffer with configurable slow thresholds.
+The system SHALL retain recent structural slow spans in a bounded in-process ring buffer owned by the debug stack variant, with a single configurable slow threshold applying to all structural spans.
 
 #### Scenario: Recent spans are queryable
 
-- **WHEN** tracking is enabled and slow spans have been recorded
+- **WHEN** profiling is enabled and slow structural spans have been recorded
 - **THEN** callers SHALL be able to snapshot recent spans in recency order up to the buffer bound.
 
 #### Scenario: Disabling clears state
 
-- **WHEN** tracking is disabled or reset
+- **WHEN** profiling is disabled or reset
 - **THEN** the buffer SHALL be cleared and no further spans SHALL be recorded.
+
+#### Scenario: Single threshold suppresses fast spans
+
+- **WHEN** a structural span completes faster than the configured threshold
+- **THEN** no span SHALL be recorded for it.
 
 ### Requirement: Browser repro coverage
 
-The system SHALL provide headless coverage that reproduces a schematic browser page change with real cards and separates structure cost from image decode cost.
+The system SHALL provide headless coverage that reproduces a schematic browser page change with real cards and asserts structural subtree spans for the card containers built during the page change.
 
-#### Scenario: Page change with fake image loading
+#### Scenario: Page change reports structural spans
 
 - **WHEN** a headless test builds a `reactiveGrid` of real `SchematicCard` items with a fake image loader and swaps to a fully disjoint page-2 key set
-- **THEN** the test SHALL report reconcile, reflow, and per-card build timings with image decode excluded.
+- **THEN** the test SHALL assert structural subtree spans named after the card containers, including duration and depth detail.
 
-#### Scenario: Decode variant quantifies image cost
+### Requirement: ParentStack-owned structural profiling
 
-- **WHEN** the same page-change reproduction runs with real image decode enabled
-- **THEN** the test SHALL report the additional decode contribution separately from structure cost.
+The Solim runtime SHALL own all slow-span profiling within `ParentStack`, recording structural spans for container subtree completion, pending-component attach batches, and the maximum observed stack depth, with no profiling state or branches in the always-on base class.
 
+#### Scenario: Subtree span on slow pop
+
+- **WHEN** profiling is enabled and a container subtree exceeds the slow threshold when popped
+- **THEN** the system SHALL record a structural span carrying container name, depth, and child count.
+
+#### Scenario: Attach batch span
+
+- **WHEN** profiling is enabled and a pending-component attach batch exceeds the slow threshold
+- **THEN** the system SHALL record a structural span carrying parent name and attached child count.
+
+#### Scenario: Maximum depth tracked
+
+- **WHEN** profiling is enabled and the stack reaches a new deepest level
+- **THEN** `maxDepthObserved` SHALL report the deepest level observed since the last reset.
+
+#### Scenario: Disabled base records nothing
+
+- **WHEN** profiling is disabled
+- **THEN** no spans SHALL be allocated and no logging SHALL occur.
+
+### Requirement: Debug stack variant isolation
+
+The runtime SHALL provide a base `ParentStack` containing zero profiling logic and a `DebugParentStack` subclass owning all profiling state; static methods SHALL delegate to a singleton instance that is a base instance by default and a debug instance only while profiling is enabled.
+
+#### Scenario: Default instance is the base variant
+
+- **WHEN** profiling has never been enabled
+- **THEN** the active singleton SHALL be the base `ParentStack` and the debug variant SHALL not be instantiated.
+
+#### Scenario: Enabling installs the debug variant
+
+- **WHEN** profiling is enabled
+- **THEN** a fresh `DebugParentStack` SHALL become the active singleton.
+
+#### Scenario: Disabling reverts and clears
+
+- **WHEN** profiling is disabled
+- **THEN** the active singleton SHALL revert to a base `ParentStack` and all recorded spans SHALL be cleared.
+
+#### Scenario: Timing state stays consistent across isolation
+
+- **WHEN** `isolate(...)` or `clear()` mutates the stack directly while the debug variant is active
+- **THEN** the debug variant's parallel push-time state SHALL be saved and restored in lockstep with the stack so that no timing desynchronization occurs.
+
+### Requirement: Public profiling facade
+
+The system SHALL expose profiling enablement and span queries through a public facade in `solim-core` that delegates to `ParentStack` without exposing `solim-runtime` on consumer classpaths.
+
+#### Scenario: Mod code can enable and query
+
+- **WHEN** mod code calls the public facade to enable profiling, build components, and snapshot spans
+- **THEN** it SHALL receive the recorded structural spans without referencing any `solim-runtime` type.
+
+#### Scenario: Facade surface
+
+- **WHEN** the public facade is inspected
+- **THEN** it SHALL provide `setEnabled(boolean)`, `isEnabled()`, `snapshot(int)`, `totalRecorded()`, `reset()`, `setThreshold(float)`, and `maxDepthObserved()`.
+
+### Requirement: Removal of the sink indirection and tracking singleton
+
+The system SHALL NOT expose a `PerfSink` injection seam, a `SlowTracker` singleton, or a `SlowSpan` type; span collection SHALL be internal to the debug stack variant and exposed only as `PerfSpan` values through the public facade.
+
+#### Scenario: No legacy tracking symbols remain
+
+- **WHEN** the codebase is searched for `SlowTracker`, `SlowSpan`, or `PerfSink`
+- **THEN** zero references SHALL remain in production and test sources.

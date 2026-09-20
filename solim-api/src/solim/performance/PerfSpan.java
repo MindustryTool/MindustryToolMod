@@ -3,19 +3,20 @@ package solim.performance;
 import arc.util.Nullable;
 
 /**
- * Immutable value describing a single slow component build or phase.
+ * Immutable value describing a single slow structural span recorded by the
+ * debug parent stack.
  */
-public final class SlowSpan {
+public final class PerfSpan {
     public final String component;
     public final String phase;
     public final float durationMs;
     public final long timestamp;
     public final @Nullable String detail;
 
-    public SlowSpan(String component, String phase, float durationMs, long timestamp,
+    public PerfSpan(String component, String phase, float durationMs, long timestamp,
             @Nullable String detail) {
         this.component = component != null ? component : "unknown";
-        this.phase = phase != null ? phase : "build";
+        this.phase = phase != null ? phase : "subtree";
         this.durationMs = durationMs;
         this.timestamp = timestamp;
         this.detail = detail;

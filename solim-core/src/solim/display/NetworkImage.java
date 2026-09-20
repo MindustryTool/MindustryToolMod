@@ -28,7 +28,6 @@ import mindustry.core.Version;
 import solim.core.Disposable;
 import solim.core.LeafComponent;
 import solim.graphics.RoundedGenerator;
-import solim.performance.SlowTracker;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
@@ -210,20 +209,12 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
      * GL texture upload. Must be called on the main thread.
      */
     private static TextureRegion toTexture(Pixmap pixmap) {
-        boolean track = SlowTracker.isEnabled();
-        long t0 = track ? System.nanoTime() : 0L;
-        int width = pixmap.getWidth();
-        int height = pixmap.getHeight();
         try {
             Texture texture = new Texture(pixmap);
             texture.setFilter(TextureFilter.linear);
             return new TextureRegion(texture);
         } finally {
             pixmap.dispose();
-            if (track) {
-                float ms = (System.nanoTime() - t0) / 1_000_000f;
-                SlowTracker.recordPhase("NetworkImage", "decode", ms, "px=" + width + "x" + height);
-            }
         }
     }
 

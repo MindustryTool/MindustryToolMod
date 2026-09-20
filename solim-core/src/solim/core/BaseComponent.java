@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import solim.performance.SlowTracker;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.reactive.Signal;
@@ -87,8 +86,6 @@ public abstract class BaseComponent implements Component {
         if (cached != null) {
             return cached;
         }
-        boolean track = SlowTracker.isEnabled();
-        long t0 = track ? System.nanoTime() : 0L;
         ComponentContext.push(this::own);
         try {
             cached = build();
@@ -108,10 +105,6 @@ public abstract class BaseComponent implements Component {
             throw throwable;
         } finally {
             ComponentContext.pop();
-            if (track) {
-                float ms = (System.nanoTime() - t0) / 1_000_000f;
-                SlowTracker.recordBuild(getClass().getSimpleName(), ms);
-            }
         }
     }
 

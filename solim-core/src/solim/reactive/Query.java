@@ -4,7 +4,9 @@ import arc.Core;
 import arc.util.Nullable;
 import arc.util.Timer;
 import java.time.Duration;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import solim.core.Disposable;
@@ -23,6 +25,8 @@ public final class Query<T> implements Readable<T>, Disposable {
 
 	private final QueryKey key;
 	private final Supplier<CompletableFuture<T>> fetcher;
+	private final @Nullable Supplier<QueryKey> keySupplier;
+	private final Set<QueryKey> fetchedKeys = new LinkedHashSet<>();
 	private final QueryCache cache;
 
 	private final Signal<T> data = Signal.of(null);
@@ -48,9 +52,13 @@ public final class Query<T> implements Readable<T>, Disposable {
 	private @Nullable Disposable intervalTask;
 	private final QueryCache.InvalidationListener cacheListener = this::refetch;
 
-	private Query(QueryKey key, @Nullable Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
-		this.key = Objects.requireNonNull(key, "key cannot be null");
+	private Query(@Nullable QueryKey key, @Nullable Supplier<QueryKey> keySupplier,
+			@Nullable Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
 		this.fetcher = Objects.requireNonNull(fetcher, "fetcher cannot be null");
+		this.keySupplier = keySupplier;
+		this.key = keySupplier != null
+				? Objects.requireNonNull(keySupplier.get(), "key supplier must return a key")
+				: Objects.requireNonNull(key, "key cannot be null");
 		this.enabled = enabled;
 		this.cache = QueryCache.getInstance();
 
@@ -69,19 +77,39 @@ public final class Query<T> implements Readable<T>, Disposable {
 	}
 
 	public static <T> Query<T> of(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
-		return new Query<>(key, null, fetcher);
+		return new Query<>(key, null, null, fetcher);
 	}
 
 	public static <T> Query<T> of(QueryKey key, Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
-		return new Query<>(key, enabled, fetcher);
+		return new Query<>(key, null, enabled, fetcher);
 	}
 
 	public static <T> Query<T> of(Supplier<CompletableFuture<T>> fetcher) {
-		return new Query<>(QueryKey.of(new Object()), null, fetcher);
+		return new Query<>(QueryKey.of(new Object()), null, null, fetcher);
 	}
 
 	public static <T> Query<T> of(Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
-		return new Query<>(QueryKey.of(new Object()), enabled, fetcher);
+		return new Query<>(QueryKey.of(new Object()), null, enabled, fetcher);
+	}
+
+	/**
+	 * Creates a query whose cache key is recomputed before every fetch from
+	 * reactive state, so each parameter combination (e.g. browser pagination,
+	 * search terms) owns its own cache entry and in-flight request. The supplier
+	 * must read the same reactive state the fetcher uses to build its request;
+	 * it is evaluated inside the query effect so dependency tracking stays
+	 * intact even when an identical in-flight request is joined.
+	 *
+	 * <p>Cache helpers operating on the fixed key ({@link #mutate(Object)},
+	 * {@link #isStale()}, {@link #getKey()}) address the initial key.
+	 */
+	public static <T> Query<T> ofDynamic(Readable<Boolean> enabled, Supplier<QueryKey> keySupplier,
+			Supplier<CompletableFuture<T>> fetcher) {
+		return new Query<>(null, keySupplier, enabled, fetcher);
+	}
+
+	private QueryKey keyForFetch() {
+		return keySupplier != null ? keySupplier.get() : key;
 	}
 
 	private void initEffect() {
@@ -97,7 +125,7 @@ public final class Query<T> implements Readable<T>, Disposable {
 
 			if (initialRun) {
 				initialRun = false;
-				CacheEntry<T> entry = cache.getEntry(key);
+				CacheEntry<T> entry = cache.getEntry(keyForFetch());
 				if (entry != null && entry.hasData() && !entry.isStale(staleTimeMs)) {
 					// Cached data is fresh on first run; do not trigger network fetch
 					return;
@@ -199,7 +227,12 @@ public final class Query<T> implements Readable<T>, Disposable {
 			// pagination) and explicit refetch() must always hit the network.
 			// Freshness via per-query staleTimeMs is owned by initEffect() and
 			// ensureFresh(), which skip doFetch() entirely when data is fresh.
-			future = cache.fetchOrJoin(key, fetcher);
+			// With dynamic keys the key is recomputed here (inside the effect,
+			// keeping dependency tracking intact) so joining only ever happens
+			// between requests with identical parameters.
+			QueryKey fetchKey = keyForFetch();
+			fetchedKeys.add(fetchKey);
+			future = cache.fetchOrJoin(fetchKey, fetcher);
 		} catch (Throwable t) {
 			handleError(gen, t);
 			return;
@@ -339,6 +372,15 @@ public final class Query<T> implements Readable<T>, Disposable {
 		}
 
 		cache.detachObserver(key, cacheListener, gcTimeMs);
+
+		// Parameter-keyed entries have no registered observers; schedule their
+		// eviction so browsing does not leak one cache entry per visited page.
+		for (QueryKey fetched : fetchedKeys) {
+			if (!fetched.equals(key)) {
+				cache.evictIfUnobserved(fetched, gcTimeMs);
+			}
+		}
+		fetchedKeys.clear();
 	}
 
 	@Override

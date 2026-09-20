@@ -29,7 +29,6 @@ import solim.core.Disposable;
 public final class StructuralReconciler<K, C extends Component> implements Disposable {
 	private final Map<K, C> activeComponents = new LinkedHashMap<>();
 	private boolean disposed = false;
-	private volatile float lastReconcileMs = 0f;
 	private volatile int lastNewCount = 0;
 	private volatile int lastReuseCount = 0;
 	private volatile int lastTotalCount = 0;
@@ -43,8 +42,6 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 			Iterable<T> items,
 			Function<T, K> keyExtractor,
 			Function<T, C> factory) {
-		boolean track = ParentStack.perfSink() != null;
-		long reconcileT0 = track ? System.nanoTime() : 0L;
 		final Iterable<T> effectiveItems = items != null ? items : Collections.<T>emptyList();
 
 		// Phase 1: Extract and validate keys (detect duplicates)
@@ -126,12 +123,9 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 			}
 		}
 
-		if (track) {
-			lastReconcileMs = (System.nanoTime() - reconcileT0) / 1_000_000f;
-			lastNewCount = newlyCreated.size();
-			lastTotalCount = nextComponents.size();
-			lastReuseCount = Math.max(0, lastTotalCount - lastNewCount);
-		}
+		lastNewCount = newlyCreated.size();
+		lastTotalCount = nextComponents.size();
+		lastReuseCount = Math.max(0, lastTotalCount - lastNewCount);
 
 		return activeComponents;
 	}
@@ -144,11 +138,6 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 	/** Returns whether there are no active components. */
 	public boolean isEmpty() {
 		return activeComponents.isEmpty();
-	}
-
-	/** Duration of the last successful reconcile in milliseconds. */
-	public float getLastReconcileMs() {
-		return lastReconcileMs;
 	}
 
 	/** Number of newly created components in the last reconcile. */

@@ -30,15 +30,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.display.NetworkImage;
 import solim.layout.ReactiveGrid;
-import solim.performance.SlowSpan;
-import solim.performance.SlowTracker;
+import solim.performance.Perf;
+import solim.performance.PerfSpan;
 import solim.reactive.Signal;
 
 /**
  * Headless reproduction of a schematic browser page change: real
  * {@link SchematicCard} lists built through {@link ReactiveGrid} with image
- * loading stubbed out, so structure cost is reported separately from image
- * decode cost.
+ * loading stubbed out. Asserts the structural subtree/attach spans emitted by
+ * the profiling parent stack.
  */
 class SchematicBrowserPerfTest {
 
@@ -116,15 +116,15 @@ class SchematicBrowserPerfTest {
                 onError.get(new RuntimeException("fake-offline"));
             }
         });
-        SlowTracker.setThresholds(0f, 0f);
-        SlowTracker.setEnabled(true);
-        SlowTracker.reset();
+        Perf.setEnabled(true);
+        Perf.setThreshold(0f);
+        Perf.reset();
     }
 
     @AfterEach
     void tearDown() {
-        SlowTracker.setEnabled(false);
-        SlowTracker.setThresholds(16f, 50f);
+        Perf.setEnabled(false);
+        Perf.setThreshold(50f);
         NetworkImage.setImageLoader(null);
         NetworkImage.clearCache();
     }
@@ -155,71 +155,51 @@ class SchematicBrowserPerfTest {
                 item -> new SchematicCard(item, NOOP, NOOP, NOOP, NOOP));
     }
 
-    private static int countSpans(List<SlowSpan> spans, String component, String phase) {
+    private static String spanName(PerfSpan span) {
+        if (span.detail == null) {
+            return null;
+        }
+        int idx = span.detail.indexOf("name=");
+        if (idx < 0) {
+            return null;
+        }
+        int start = idx + 5;
+        int end = span.detail.indexOf(' ', start);
+        return end < 0 ? span.detail.substring(start) : span.detail.substring(start, end);
+    }
+
+    private static boolean isCardSubtree(PerfSpan span, String prefix) {
+        if (!"subtree".equals(span.phase)) {
+            return false;
+        }
+        String name = spanName(span);
+        return name != null && name.startsWith(prefix) && !name.startsWith(prefix + "preview-");
+    }
+
+    private static int countCardSubtrees(List<PerfSpan> spans, String prefix) {
         int count = 0;
-        for (SlowSpan span : spans) {
-            boolean componentMatch = span.component.equals(component);
-            boolean phaseMatch = phase == null || span.phase.equals(phase);
-            if (componentMatch && phaseMatch) {
+        for (PerfSpan span : spans) {
+            if (isCardSubtree(span, prefix)) {
                 count++;
             }
         }
         return count;
     }
 
-    private static float totalMs(List<SlowSpan> spans, String component, String phase) {
+    private static float totalMs(List<PerfSpan> spans, String prefix) {
         float total = 0f;
-        for (SlowSpan span : spans) {
-            boolean componentMatch = span.component.equals(component);
-            boolean phaseMatch = phase == null || span.phase.equals(phase);
-            if (componentMatch && phaseMatch) {
+        for (PerfSpan span : spans) {
+            if (isCardSubtree(span, prefix)) {
                 total += span.durationMs;
             }
         }
         return total;
     }
 
-    private static void printBreakdown(String label, List<SlowSpan> spans) {
-        List<String> names = new ArrayList<>();
-        List<Float> totals = new ArrayList<>();
-        List<Integer> counts = new ArrayList<>();
-        for (SlowSpan span : spans) {
-            int idx = names.indexOf(span.component);
-            if (idx < 0) {
-                names.add(span.component);
-                totals.add(span.durationMs);
-                counts.add(1);
-            } else {
-                totals.set(idx, totals.get(idx) + span.durationMs);
-                counts.set(idx, counts.get(idx) + 1);
-            }
-        }
-        for (int i = 0; i < names.size(); i++) {
-            for (int j = i + 1; j < names.size(); j++) {
-                if (totals.get(j) > totals.get(i)) {
-                    String swapName = names.get(i);
-                    names.set(i, names.get(j));
-                    names.set(j, swapName);
-                    Float swapTotal = totals.get(i);
-                    totals.set(i, totals.get(j));
-                    totals.set(j, swapTotal);
-                    Integer swapCount = counts.get(i);
-                    counts.set(i, counts.get(j));
-                    counts.set(j, swapCount);
-                }
-            }
-        }
-        StringBuilder sb = new StringBuilder("SchematicBrowserPerf [breakdown ").append(label).append("]:");
-        for (int i = 0; i < names.size(); i++) {
-            sb.append(String.format(" %s=%dx%.2fms", names.get(i), counts.get(i), totals.get(i)));
-        }
-        System.out.println(sb.toString());
-    }
-
-    private static int maxDepthOf(List<SlowSpan> spans) {
+    private static int maxDepthOf(List<PerfSpan> spans) {
         int max = 0;
-        for (SlowSpan span : spans) {
-            if (!"ParentStack".equals(span.component) || span.detail == null) {
+        for (PerfSpan span : spans) {
+            if (!"subtree".equals(span.phase) || span.detail == null) {
                 continue;
             }
             int depthIdx = span.detail.indexOf("depth=");
@@ -227,7 +207,8 @@ class SchematicBrowserPerfTest {
                 continue;
             }
             int end = span.detail.indexOf(' ', depthIdx);
-            String number = end >= 0 ? span.detail.substring(depthIdx + 6, end) : span.detail.substring(depthIdx + 6);
+            String number = end >= 0 ? span.detail.substring(depthIdx + 6, end)
+                    : span.detail.substring(depthIdx + 6);
             try {
                 int depth = Integer.parseInt(number.trim());
                 if (depth > max) {
@@ -239,16 +220,15 @@ class SchematicBrowserPerfTest {
         return max;
     }
 
-    private static void printSubtreeBreakdown(String label, List<SlowSpan> spans) {
+    private static void printBreakdown(String label, List<PerfSpan> spans, String prefix) {
         List<String> names = new ArrayList<>();
         List<Float> totals = new ArrayList<>();
         List<Integer> counts = new ArrayList<>();
-        for (SlowSpan span : spans) {
-            if (!"ParentStack".equals(span.component) || !"subtree".equals(span.phase) || span.detail == null) {
+        for (PerfSpan span : spans) {
+            if (!isCardSubtree(span, prefix)) {
                 continue;
             }
-            int nameIdx = span.detail.indexOf("name=");
-            String name = nameIdx >= 0 ? span.detail.substring(nameIdx + 5) : span.detail;
+            String name = spanName(span);
             int idx = names.indexOf(name);
             if (idx < 0) {
                 names.add(name);
@@ -259,22 +239,7 @@ class SchematicBrowserPerfTest {
                 counts.set(idx, counts.get(idx) + 1);
             }
         }
-        for (int i = 0; i < names.size(); i++) {
-            for (int j = i + 1; j < names.size(); j++) {
-                if (totals.get(j) > totals.get(i)) {
-                    String swapName = names.get(i);
-                    names.set(i, names.get(j));
-                    names.set(j, swapName);
-                    Float swapTotal = totals.get(i);
-                    totals.set(i, totals.get(j));
-                    totals.set(j, swapTotal);
-                    Integer swapCount = counts.get(i);
-                    counts.set(i, counts.get(j));
-                    counts.set(j, swapCount);
-                }
-            }
-        }
-        StringBuilder sb = new StringBuilder("SchematicBrowserPerf [subtrees ").append(label).append("]:");
+        StringBuilder sb = new StringBuilder("SchematicBrowserPerf [breakdown ").append(label).append("]:");
         for (int i = 0; i < names.size(); i++) {
             sb.append(String.format(" %s=%dx%.2fms", names.get(i), counts.get(i), totals.get(i)));
         }
@@ -289,83 +254,71 @@ class SchematicBrowserPerfTest {
         pageOne.table().setSize(800f, 600f);
         pageOne.table().validate();
         long layoutMs = System.currentTimeMillis() - layoutT0;
-        List<SlowSpan> pageOneSpans = SlowTracker.snapshot(256);
-        System.out.printf("SchematicBrowserPerf [page-1 %d cards, fake images]: cards=%d cardMs=%.3f reconcileMs=%.3f reflowMs=%.3f layoutMs=%d%n",
+        List<PerfSpan> pageOneSpans = Perf.snapshot(256);
+        System.out.printf("SchematicBrowserPerf [page-1 %d cards, fake images]: cards=%d cardMs=%.3f layoutMs=%d maxDepth=%d%n",
                 PAGE_SIZE,
-                countSpans(pageOneSpans, "SchematicCard", "build"),
-                totalMs(pageOneSpans, "SchematicCard", "build"),
-                totalMs(pageOneSpans, "ReactiveGrid", "reconcile"),
-                totalMs(pageOneSpans, "ReactiveGrid", "reflow"),
-                layoutMs);
-        assertTrue(countSpans(pageOneSpans, "SchematicCard", "build") >= PAGE_SIZE);
+                countCardSubtrees(pageOneSpans, "SchematicCard-"),
+                totalMs(pageOneSpans, "SchematicCard-"),
+                layoutMs,
+                maxDepthOf(pageOneSpans));
+        assertTrue(countCardSubtrees(pageOneSpans, "SchematicCard-") >= PAGE_SIZE);
         pageOne.dispose();
 
-        SlowTracker.reset();
+        Perf.reset();
 
         ReactiveGrid<SchematicData, String> pageTwo = grid(page("perf-p2", PAGE_SIZE));
         pageTwo.element();
-        List<SlowSpan> pageTwoSpans = SlowTracker.snapshot(256);
-        System.out.printf("SchematicBrowserPerf [page-2 %d cards, disjoint keys]: cards=%d cardMs=%.3f reconcileMs=%.3f reflowMs=%.3f%n",
+        List<PerfSpan> pageTwoSpans = Perf.snapshot(256);
+        System.out.printf("SchematicBrowserPerf [page-2 %d cards, disjoint keys]: cards=%d cardMs=%.3f%n",
                 PAGE_SIZE,
-                countSpans(pageTwoSpans, "SchematicCard", "build"),
-                totalMs(pageTwoSpans, "SchematicCard", "build"),
-                totalMs(pageTwoSpans, "ReactiveGrid", "reconcile"),
-                totalMs(pageTwoSpans, "ReactiveGrid", "reflow"));
+                countCardSubtrees(pageTwoSpans, "SchematicCard-"),
+                totalMs(pageTwoSpans, "SchematicCard-"));
 
-        assertTrue(countSpans(pageTwoSpans, "SchematicCard", "build") >= PAGE_SIZE);
-        assertTrue(countSpans(pageTwoSpans, "ReactiveGrid", "reconcile") >= 1);
-        assertTrue(countSpans(pageTwoSpans, "ReactiveGrid", "reflow") >= 1);
+        assertTrue(countCardSubtrees(pageTwoSpans, "SchematicCard-") >= PAGE_SIZE);
         assertEquals(PAGE_SIZE, pageTwo.table().getChildren().size);
-        printBreakdown("page-2", pageTwoSpans);
-        printSubtreeBreakdown("page-2", pageTwoSpans);
+        printBreakdown("page-2", pageTwoSpans, "SchematicCard-");
         System.out.println("SchematicBrowserPerf [depth page-2]: maxDepth=" + maxDepthOf(pageTwoSpans));
         pageTwo.dispose();
     }
 
     @Test
     void chunkRendersUnderFrameBudget() {
-        SlowTracker.reset();
+        Perf.reset();
         ReactiveGrid<SchematicData, String> chunk = grid(page("perf-chunk", 8));
         chunk.element();
         long layoutT0 = System.currentTimeMillis();
         chunk.table().setSize(800f, 600f);
         chunk.table().validate();
         long layoutMs = System.currentTimeMillis() - layoutT0;
-        List<SlowSpan> spans = SlowTracker.snapshot(256);
-        System.out.printf("SchematicBrowserPerf [chunk 8 cards]: cards=%d cardMs=%.3f reconcileMs=%.3f reflowMs=%.3f layoutMs=%d%n",
-                countSpans(spans, "SchematicCard", "build"),
-                totalMs(spans, "SchematicCard", "build"),
-                totalMs(spans, "ReactiveGrid", "reconcile"),
-                totalMs(spans, "ReactiveGrid", "reflow"),
+        List<PerfSpan> spans = Perf.snapshot(256);
+        System.out.printf("SchematicBrowserPerf [chunk 8 cards]: cards=%d cardMs=%.3f layoutMs=%d%n",
+                countCardSubtrees(spans, "SchematicCard-"),
+                totalMs(spans, "SchematicCard-"),
                 layoutMs);
 
-        assertTrue(countSpans(spans, "SchematicCard", "build") >= 8);
+        assertTrue(countCardSubtrees(spans, "SchematicCard-") >= 8);
         assertEquals(8, chunk.table().getChildren().size);
         chunk.dispose();
     }
 
     @Test
     void realisticPageRendersTwentyCards() {
-        SlowTracker.reset();
-        // Keep the fixed profiler ring focused on card build spans for this
-        // full-page measurement; phase and subtree detail are covered elsewhere.
-        SlowTracker.setThresholds(0f, Float.MAX_VALUE);
+        Perf.reset();
         ReactiveGrid<SchematicData, String> fullPage = grid(page("perf-full", 20));
         fullPage.element();
         long layoutT0 = System.currentTimeMillis();
         fullPage.table().setSize(800f, 600f);
         fullPage.table().validate();
         long layoutMs = System.currentTimeMillis() - layoutT0;
-        List<SlowSpan> spans = SlowTracker.snapshot(256);
-        System.out.printf("SchematicBrowserPerf [full-page 20 cards]: cards=%d cardMs=%.3f reconcileMs=%.3f reflowMs=%.3f layoutMs=%d%n",
-                countSpans(spans, "SchematicCard", "build"),
-                totalMs(spans, "SchematicCard", "build"),
-                totalMs(spans, "ReactiveGrid", "reconcile"),
-                totalMs(spans, "ReactiveGrid", "reflow"),
-                layoutMs);
-        printSubtreeBreakdown("full-page", spans);
+        List<PerfSpan> spans = Perf.snapshot(256);
+        System.out.printf("SchematicBrowserPerf [full-page 20 cards]: cards=%d cardMs=%.3f layoutMs=%d totalRecorded=%d%n",
+                countCardSubtrees(spans, "SchematicCard-"),
+                totalMs(spans, "SchematicCard-"),
+                layoutMs,
+                Perf.totalRecorded());
+        printBreakdown("full-page", spans, "SchematicCard-");
 
-        assertTrue(countSpans(spans, "SchematicCard", "build") >= 20);
+        assertTrue(countCardSubtrees(spans, "SchematicCard-") >= 20);
         assertEquals(20, fullPage.table().getChildren().size);
         fullPage.dispose();
     }
@@ -388,18 +341,18 @@ class SchematicBrowserPerfTest {
                 MapData::getItemId,
                 item -> new MapCard(item, NOOP, NOOP, NOOP, NOOP));
         grid.element();
-        List<SlowSpan> spans = SlowTracker.snapshot(256);
+        List<PerfSpan> spans = Perf.snapshot(256);
         System.out.printf("SchematicBrowserPerf [maps 3 cards]: cards=%d cardMs=%.3f%n",
-                countSpans(spans, "MapCard", "build"),
-                totalMs(spans, "MapCard", "build"));
+                countCardSubtrees(spans, "MapCard-"),
+                totalMs(spans, "MapCard-"));
 
-        assertTrue(countSpans(spans, "MapCard", "build") >= 3);
+        assertTrue(countCardSubtrees(spans, "MapCard-") >= 3);
         assertEquals(3, grid.table().getChildren().size);
         grid.dispose();
     }
 
     @Test
-    void decodeCpuVariantReportsImageCostSeparately() {
+    void imageDecodeDoesNotSuppressStructuralSpans() {
         NetworkImage.setImageLoader(new NetworkImage.ImageLoader() {
             @Override
             public void load(String url, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
@@ -418,16 +371,13 @@ class SchematicBrowserPerfTest {
 
         ReactiveGrid<SchematicData, String> withImages = grid(page("perf-img", PAGE_SIZE));
         withImages.element();
-        List<SlowSpan> spans = SlowTracker.snapshot(256);
-        System.out.printf("SchematicBrowserPerf [decode-cpu %d cards]: cards=%d cardMs=%.3f reconcileMs=%.3f reflowMs=%.3f%n",
+        List<PerfSpan> spans = Perf.snapshot(256);
+        System.out.printf("SchematicBrowserPerf [decode-cpu %d cards]: cards=%d cardMs=%.3f%n",
                 PAGE_SIZE,
-                countSpans(spans, "SchematicCard", "build"),
-                totalMs(spans, "SchematicCard", "build"),
-                totalMs(spans, "ReactiveGrid", "reconcile"),
-                totalMs(spans, "ReactiveGrid", "reflow"));
+                countCardSubtrees(spans, "SchematicCard-"),
+                totalMs(spans, "SchematicCard-"));
 
-        assertTrue(countSpans(spans, "SchematicCard", "build") >= PAGE_SIZE);
-        assertTrue(countSpans(spans, "ReactiveGrid", "reconcile") >= 1);
+        assertTrue(countCardSubtrees(spans, "SchematicCard-") >= PAGE_SIZE);
         withImages.dispose();
     }
 }

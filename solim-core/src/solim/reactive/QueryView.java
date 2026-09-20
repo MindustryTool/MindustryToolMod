@@ -25,7 +25,6 @@ import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
-import solim.performance.SlowTracker;
 import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
 
@@ -226,9 +225,6 @@ public final class QueryView<T> extends BaseComponent
 
 		cleanupCurrent();
 
-		boolean trackData = SlowTracker.isEnabled() && targetState == ViewState.DATA;
-		long dataT0 = trackData ? System.nanoTime() : 0L;
-
 		currentComponent = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
 			try {
 				switch (targetState) {
@@ -254,12 +250,6 @@ public final class QueryView<T> extends BaseComponent
 				return defaultErrorFactory.apply(t, query::refetch);
 			}
 		}));
-
-		if (trackData) {
-			float dataMs = (System.nanoTime() - dataT0) / 1_000_000f;
-			SlowTracker.recordPhase("QueryView", "data", dataMs,
-					isFetching ? "fetching=true" : "fetching=false");
-		}
 
 		if (currentComponent != null) {
 			Element el = currentComponent.element();

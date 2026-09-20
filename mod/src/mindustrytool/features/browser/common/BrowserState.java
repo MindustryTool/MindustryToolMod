@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import mindustrytool.Config;
 import solim.core.Disposable;
 import solim.reactive.Query;
+import solim.reactive.QueryKey;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -40,16 +41,24 @@ public class BrowserState<T> implements Disposable {
     }
 
     public BrowserState(Fetcher<T> fetcher) {
-        this.queryPrimitive = Query.of(active, () -> {
-            searchQuery.get();
-            selectedTags.get();
-            selectedBlocks.get();
-            sort.get();
-            verification.get();
-            page.get();
-            pageSize.get();
-            return fetcher.fetch(this);
-        });
+        this.queryPrimitive = Query.ofDynamic(active, this::queryKey, () -> fetcher.fetch(this));
+    }
+
+    /**
+     * Structural identity of the current request. Recomputed inside the query
+     * effect so every parameter change (pagination, search, filters, sort)
+     * triggers a fresh fetch and rapid parameter changes never join a
+     * request made for different parameters.
+     */
+    private QueryKey queryKey() {
+        return QueryKey.of("browser",
+                page.get(),
+                pageSize.get(),
+                sort.get(),
+                verification.get(),
+                searchQuery.get(),
+                selectedTags.get().list(),
+                selectedBlocks.get().list());
     }
 
     public void start() {

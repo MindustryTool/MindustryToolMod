@@ -1,40 +1,17 @@
 package solim.runtime;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
-import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import solim.core.Component;
-import solim.core.PerfSink;
+import solim.performance.PerfSpan;
 
 class ParentStackPerfTest {
-
-    static final class Span {
-        final String component;
-        final String phase;
-        final float durationMs;
-        final String detail;
-
-        Span(String component, String phase, float durationMs, String detail) {
-            this.component = component;
-            this.phase = phase;
-            this.durationMs = durationMs;
-            this.detail = detail;
-        }
-    }
-
-    static final class FakeSink implements PerfSink {
-        final List<Span> spans = new ArrayList<>();
-
-        @Override
-        public void record(String component, String phase, float durationMs, String detail) {
-            spans.add(new Span(component, phase, durationMs, detail));
-        }
-    }
 
     static Component elementComponent() {
         return new Component() {
@@ -48,26 +25,25 @@ class ParentStackPerfTest {
     @AfterEach
     void cleanUp() {
         ParentStack.clear();
-        ParentStack.setPerfSink(null);
-        ParentStack.slowSubtreeThresholdMs = 50f;
-        ParentStack.resetPerfStats();
+        ParentStack.install(null);
+        ParentStack.reset();
     }
 
     @Test
-    void noSpansWithoutSink() {
-        ParentStack.setPerfSink(null);
+    void noSpansWhenDisabled() {
+        ParentStack.install(null);
         Table root = new Table();
         ParentStack.push(root);
         ParentStack.add(new Element());
         ParentStack.pop();
+        assertTrue(ParentStack.snapshot(10).isEmpty());
         assertEquals(0, ParentStack.maxDepthObserved());
     }
 
     @Test
     void popEmitsSubtreeSpanAndTracksDepth() {
-        FakeSink sink = new FakeSink();
-        ParentStack.setPerfSink(sink);
-        ParentStack.slowSubtreeThresholdMs = 0f;
+        ParentStack.install(new DebugParentStack());
+        ParentStack.setThreshold(0f);
 
         Table root = new Table();
         ParentStack.push(root);
@@ -78,8 +54,9 @@ class ParentStackPerfTest {
         ParentStack.pop();
 
         assertEquals(3, ParentStack.maxDepthObserved());
-        assertEquals(3, sink.spans.size());
-        for (Span span : sink.spans) {
+        List<PerfSpan> spans = ParentStack.snapshot(10);
+        assertEquals(3, spans.size());
+        for (PerfSpan span : spans) {
             assertEquals("ParentStack", span.component);
             assertEquals("subtree", span.phase);
             assertTrue(span.detail.contains("depth="));
@@ -89,22 +66,20 @@ class ParentStackPerfTest {
 
     @Test
     void thresholdSuppressesFastPops() {
-        FakeSink sink = new FakeSink();
-        ParentStack.setPerfSink(sink);
-        ParentStack.slowSubtreeThresholdMs = 10_000f;
+        ParentStack.install(new DebugParentStack());
+        ParentStack.setThreshold(10_000f);
 
         Table root = new Table();
         ParentStack.push(root);
         ParentStack.pop();
 
-        assertTrue(sink.spans.isEmpty());
+        assertTrue(ParentStack.snapshot(10).isEmpty());
     }
 
     @Test
     void attachBatchEmitsSpanWithParentName() {
-        FakeSink sink = new FakeSink();
-        ParentStack.setPerfSink(sink);
-        ParentStack.slowSubtreeThresholdMs = 0f;
+        ParentStack.install(new DebugParentStack());
+        ParentStack.setThreshold(0f);
 
         Table root = new Table();
         root.name = "test-parent";
@@ -115,7 +90,7 @@ class ParentStackPerfTest {
 
         assertEquals(2, root.getChildren().size);
         boolean foundAttach = false;
-        for (Span span : sink.spans) {
+        for (PerfSpan span : ParentStack.snapshot(10)) {
             if ("attach".equals(span.phase)) {
                 foundAttach = true;
                 assertTrue(span.detail.contains("children=2"));
@@ -126,14 +101,14 @@ class ParentStackPerfTest {
     }
 
     @Test
-    void resetPerfStatsClearsDepth() {
-        ParentStack.setPerfSink(new FakeSink());
+    void resetClearsDepth() {
+        ParentStack.install(new DebugParentStack());
         ParentStack.push(new Table());
         ParentStack.push(new Table());
         ParentStack.pop();
         ParentStack.pop();
         assertEquals(2, ParentStack.maxDepthObserved());
-        ParentStack.resetPerfStats();
+        ParentStack.reset();
         assertEquals(0, ParentStack.maxDepthObserved());
     }
 }
