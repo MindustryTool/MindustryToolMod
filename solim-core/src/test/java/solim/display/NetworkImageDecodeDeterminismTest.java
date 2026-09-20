@@ -33,15 +33,10 @@ class NetworkImageDecodeDeterminismTest {
     private final CapturingLoader loader = new CapturingLoader();
     private Fi previousDataDirectory;
 
-    static final class CapturingLoader implements NetworkImage.ImageLoader {
+    static final class CapturingLoader implements ImageLoader {
         final List<Cons<TextureRegion>> successes = new ArrayList<>();
         final List<Integer> radii = new ArrayList<>();
         volatile CountDownLatch onLoad;
-
-        @Override
-        public void load(String url, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
-            record(0, onSuccess, onError);
-        }
 
         @Override
         public void load(String url, int radius, float targetW, float targetH,

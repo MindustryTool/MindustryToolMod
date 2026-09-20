@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.Core;
-import arc.func.Cons;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.graphics.g2d.Font;
@@ -110,12 +109,8 @@ class SchematicBrowserPerfTest {
     @BeforeEach
     void setUp() {
         NetworkImage.clearCache();
-        NetworkImage.setImageLoader(new NetworkImage.ImageLoader() {
-            @Override
-            public void load(String url, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
-                onError.get(new RuntimeException("fake-offline"));
-            }
-        });
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) ->
+                onError.get(new RuntimeException("fake-offline")));
         Perf.setEnabled(true);
         Perf.setThreshold(0f);
         Perf.reset();
@@ -353,10 +348,8 @@ class SchematicBrowserPerfTest {
 
     @Test
     void imageDecodeDoesNotSuppressStructuralSpans() {
-        NetworkImage.setImageLoader(new NetworkImage.ImageLoader() {
-            @Override
-            public void load(String url, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
-                Pixmap pixmap = new Pixmap(30, 30);
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> {
+            Pixmap pixmap = new Pixmap(30, 30);
                 int opaqueWhite = Color.rgba8888(1f, 1f, 1f, 1f);
                 for (int y = 0; y < 30; y++) {
                     for (int x = 0; x < 30; x++) {
@@ -366,7 +359,6 @@ class SchematicBrowserPerfTest {
                 NetworkImage.applyRoundedMask(pixmap, 8);
                 pixmap.dispose();
                 onSuccess.get(new TextureRegion());
-            }
         });
 
         ReactiveGrid<SchematicData, String> withImages = grid(page("perf-img", PAGE_SIZE));

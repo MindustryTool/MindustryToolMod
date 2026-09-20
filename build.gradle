@@ -97,6 +97,10 @@ subprojects{
 
 	test{
 		useJUnitPlatform()
+		// Fresh JVM per test class: tests share global statics (arc Core, solim
+		// Signals/Units, font caches), and Gradle reuses worker JVMs across
+		// modules, letting one module's static state poison another's tests.
+		forkEvery = 1
 	}
 }
 

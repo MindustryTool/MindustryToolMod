@@ -3,7 +3,6 @@ package solim.display;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
-import arc.func.Cons;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.graphics.g2d.TextureRegion;
@@ -337,19 +336,11 @@ class NetworkImageComponentTest {
         TextureRegion regionSquare = new TextureRegion();
         TextureRegion regionRounded = new TextureRegion();
 
-        NetworkImage.setImageLoader(new NetworkImage.ImageLoader() {
-            @Override
-            public void load(String url, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
-                load(url, 0, onSuccess, onError);
-            }
-
-            @Override
-            public void load(String url, int radius, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
-                if (radius > 0) {
-                    onSuccess.get(regionRounded);
-                } else {
-                    onSuccess.get(regionSquare);
-                }
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> {
+            if (radius > 0) {
+                onSuccess.get(regionRounded);
+            } else {
+                onSuccess.get(regionSquare);
             }
         });
 

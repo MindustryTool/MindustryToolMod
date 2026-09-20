@@ -83,6 +83,7 @@ public class PlayerConnectFeature extends Feature {
             .fetch(() -> MindustryTool.getPlayerConnectRooms(""))
             .staleTime(Duration.ofSeconds(15))
             .build();
+            
     private final Signal<List<PlayerConnectProvider>> providers = Signal.of(Collections.emptyList());
     private final Signal<JoinRequest> currentRequest = Signal.of(null);
 

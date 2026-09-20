@@ -71,11 +71,11 @@ class NetworkImageDisposalTest {
 		NetworkImage.setImageLoader(null);
 	}
 
-	static final class CountingLoader implements NetworkImage.ImageLoader {
+	static final class CountingLoader implements ImageLoader {
 		final Map<String, Integer> loads = new HashMap<>();
 
 		@Override
-		public void load(String url, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
+		public void load(String url, int radius, float targetW, float targetH, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
 			loads.put(url, loads.containsKey(url) ? loads.get(url) + 1 : 1);
 		}
 
@@ -128,3 +128,4 @@ class NetworkImageDisposalTest {
 		assertTrue(image.isDisposed());
 	}
 }
+
