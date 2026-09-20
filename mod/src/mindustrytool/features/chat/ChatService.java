@@ -40,15 +40,36 @@ public class ChatService {
     private volatile long lastEventTime = 0L;
     private @Nullable Task watchdogTask;
     private final AtomicBoolean reconnecting = new AtomicBoolean(false);
+    private @Nullable String lastAutoLoadedChannelId;
 
     public ChatService(ChatStore store, Supplier<Boolean> windowOpenSupplier) {
         this.store = store;
         this.windowOpenSupplier = windowOpenSupplier;
 
-        store.channels().activeId().subscribe(channelId -> {
-            if (channelId != null && !channelId.isEmpty()) {
-                loadMessages(channelId);
+        Effect.of(() -> {
+            String channelId = store.channels().activeId().get();
+            if (channelId == null || channelId.isEmpty()) {
+                return;
             }
+            List<ChannelDto> channels = store.channels().channelsQuery().data().get();
+            if (channels == null || channels.isEmpty()) {
+                return;
+            }
+            boolean exists = false;
+            for (ChannelDto c : channels) {
+                if (Objects.equals(c.getId(), channelId)) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                return;
+            }
+            if (Objects.equals(lastAutoLoadedChannelId, channelId)) {
+                return;
+            }
+            lastAutoLoadedChannelId = channelId;
+            loadMessages(channelId);
         });
 
         Effect.of(() -> {

@@ -107,7 +107,7 @@ public class ChatFeature extends Feature {
             boolean isCollapsed = Boolean.TRUE.equals(col);
             if (!isCollapsed) {
                 String activeId = store.channels().currentActiveId();
-                if (activeId != null) {
+                if (activeId != null && !activeId.isEmpty()) {
                     store.unread().markAsRead(activeId);
                     service.syncActiveChannelSilently(activeId);
                 }

@@ -694,6 +694,18 @@ The system SHALL track per-channel initial message loading and error states, dis
 - **WHEN** an active channel is selected and messages have not yet loaded
 - **THEN** ChatMessages marks initial loading as true for that channel and ChatMessageListView displays a centered loader
 
+#### Scenario: Persisted active channel loads without channel switch
+- **WHEN** the app starts with a persisted non-empty active channel id and the channel list confirms that id exists
+- **THEN** the system fetches messages for that channel automatically without requiring a manual channel switch
+
+#### Scenario: Expand-before-channels recovers on resolve
+- **WHEN** the overlay expands while no channel is active yet and channels later resolve to a first channel
+- **THEN** the system fetches messages for the resolved active channel automatically
+
+#### Scenario: Stale persisted channel waits for correction
+- **WHEN** the persisted active channel id is absent from the loaded channel list
+- **THEN** the system skips fetching for the stale id and fetches messages only after auto-correction to an existing channel
+
 #### Scenario: Initial message loading failure
 - **WHEN** the initial message request for a channel fails and no messages are currently cached for that channel
 - **THEN** ChatMessageListView renders a centered error state with a localized error message, technical cause, and a Retry button
@@ -820,6 +832,10 @@ The system SHALL automatically synchronize the active channel in the background 
 #### Scenario: Expanding chat triggers background refresh
 - **WHEN** `collapsedConfig` transitions from `true` to `false`
 - **THEN** the system verifies stream health (reconnecting if disconnected) and silently fetches recent messages for the active channel without displaying a blocking full-page loading indicator
+
+#### Scenario: Expanding with no active channel defers fetch
+- **WHEN** `collapsedConfig` transitions from `true` to `false` while no non-empty active channel is selected
+- **THEN** the system skips the immediate background fetch and fetches automatically once channels resolve to an active channel
 
 ### Requirement: Resilient Manual Refresh
 The system SHALL perform a full health check on manual refresh, verifying the live stream state and reconnecting if stalled or disconnected.

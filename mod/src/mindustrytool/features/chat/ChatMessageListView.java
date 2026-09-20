@@ -815,7 +815,7 @@ public class ChatMessageListView extends BaseComponent {
 
             card().name("command-card").growX().top().left().height(ChatMessageHeightCalculator.COMMAND_CARD_HEIGHT)
                     .children(() -> {
-                        column().growX().top().left().padding(unit(1.5f)).gap(unit(1)).children(() -> {
+                        column().growX().top().left().gap(unit(1)).children(() -> {
                             row().growX().top().left().gap(unit(1)).children(() -> {
                                 icon(schematic ? Icon.paste : Icon.map).size(unit(5), unit(5)).color(Pal.accent);
                                 text(title)
