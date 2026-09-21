@@ -3,14 +3,20 @@ package mindustrytool.features.rangedisplay.ui;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.graphics.Color;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
+import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
 import java.util.Locale;
 import mindustry.Vars;
-import mindustry.ui.Styles;
+import mindustry.gen.Tex;
 import mindustry.world.Block;
+import mindustrytool.components.WebStyles;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import solim.core.BaseComponent;
 import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Declarative Solim settings view for Range Display options.
@@ -32,13 +38,9 @@ public class RangeDisplaySettingsView extends BaseComponent {
         Readable<String> proximityText = feature.proximityRadiusConfig.signal()
                 .map(v -> Math.round(v != null ? v : 30f) + " tiles");
 
-        float contentWidth = Core.graphics != null
-                ? Math.min(Core.graphics.getWidth() / 1.2f, 540f)
-                : 540f;
-
         return column().grow().center().children(() -> {
             scroll().center().children(() -> {
-                column().width(contentWidth).growX().gap(unit(2)).children(() -> {
+                column().growX().gap(unit(2)).children(() -> {
                     // Opacity Slider
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.range-display.settings.opacity")).left();
@@ -139,28 +141,29 @@ public class RangeDisplaySettingsView extends BaseComponent {
 
                     // --- Turrets Granular Toggles ---
                     divider();
-                    row().growX().gap(unit(2)).children(() -> {
+                    row().growX().gap(unit(2)).center().children(() -> {
                         text(Core.bundle.get("feature.range-display.settings.section.turrets")).left();
                         spacer();
                         row().gap(unit(1)).children(() -> {
-                            button(Core.bundle.get("feature.range-display.settings.all"),
-                                    () -> feature.setCategoryEnabled(true, true))
-                                    .style(Styles.defaultb)
-                                    .height(unit(6))
-                                    .margin(unit(1), unit(2), unit(1), unit(2));
-                            button(Core.bundle.get("feature.range-display.settings.none"),
-                                    () -> feature.setCategoryEnabled(true, false))
-                                    .style(Styles.defaultb)
-                                    .height(unit(6))
-                                    .margin(unit(1), unit(2), unit(1), unit(2));
+                            button(() -> feature.setCategoryEnabled(true, true))
+                                    .style(WebStyles.outline())
+                                    .height(unit(7))
+                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f))
+                                    .children(() -> text(Core.bundle.get("feature.range-display.settings.all")));
+
+                            button(() -> feature.setCategoryEnabled(true, false))
+                                    .style(WebStyles.ghost())
+                                    .height(unit(7))
+                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f))
+                                    .children(() -> text(Core.bundle.get("feature.range-display.settings.none")));
                         });
                     });
 
-                    wrap().growX().left().gap(unit(1)).children(() -> {
+                    wrap().growX().left().gap(unit(1.5f)).children(() -> {
                         if (Vars.content != null && Vars.content.blocks() != null) {
                             for (Block block : Vars.content.blocks()) {
                                 if (block != null && feature.isTurretBlock(block)) {
-                                    checkbox(block.localizedName, feature.getBlockSignal(block));
+                                    blockChip(block);
                                 }
                             }
                         }
@@ -168,28 +171,29 @@ public class RangeDisplaySettingsView extends BaseComponent {
 
                     // --- Support Blocks Granular Toggles ---
                     divider();
-                    row().growX().gap(unit(2)).children(() -> {
+                    row().growX().gap(unit(2)).center().children(() -> {
                         text(Core.bundle.get("feature.range-display.settings.section.support-blocks")).left();
                         spacer();
                         row().gap(unit(1)).children(() -> {
-                            button(Core.bundle.get("feature.range-display.settings.all"),
-                                    () -> feature.setCategoryEnabled(false, true))
-                                    .style(Styles.defaultb)
-                                    .height(unit(6))
-                                    .margin(unit(1), unit(2), unit(1), unit(2));
-                            button(Core.bundle.get("feature.range-display.settings.none"),
-                                    () -> feature.setCategoryEnabled(false, false))
-                                    .style(Styles.defaultb)
-                                    .height(unit(6))
-                                    .margin(unit(1), unit(2), unit(1), unit(2));
+                            button(() -> feature.setCategoryEnabled(false, true))
+                                    .style(WebStyles.outline())
+                                    .height(unit(7))
+                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f))
+                                    .children(() -> text(Core.bundle.get("feature.range-display.settings.all")));
+
+                            button(() -> feature.setCategoryEnabled(false, false))
+                                    .style(WebStyles.ghost())
+                                    .height(unit(7))
+                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f))
+                                    .children(() -> text(Core.bundle.get("feature.range-display.settings.none")));
                         });
                     });
 
-                    wrap().growX().left().gap(unit(1)).children(() -> {
+                    wrap().growX().left().gap(unit(1.5f)).children(() -> {
                         if (Vars.content != null && Vars.content.blocks() != null) {
                             for (Block block : Vars.content.blocks()) {
                                 if (block != null && feature.isSupportBlock(block)) {
-                                    checkbox(block.localizedName, feature.getBlockSignal(block));
+                                    blockChip(block);
                                 }
                             }
                         }
@@ -197,5 +201,26 @@ public class RangeDisplaySettingsView extends BaseComponent {
                 });
             });
         }).element();
+    }
+
+    private void blockChip(Block block) {
+        Signal<Boolean> signal = feature.getBlockSignal(block);
+        TextureRegion region = block.uiIcon != null ? block.uiIcon : block.fullIcon;
+        Drawable drawable = region != null ? new TextureRegionDrawable(region) : Tex.clear;
+
+        button()
+                .style(WebStyles.filterChip())
+                .size(unit(11))
+                .padding(unit(1))
+                .tooltip(block.localizedName)
+                .checked(signal)
+                .onClick(() -> feature.setBlockEnabled(block, !feature.isBlockEnabled(block)))
+                .children(() -> {
+                    icon(drawable)
+                            .size(unit(6))
+                            .color(signal.map(enabled ->
+                                    Boolean.TRUE.equals(enabled) ? Color.white : new Color(1f, 1f, 1f, 0.35f)
+                            ));
+                });
     }
 }
