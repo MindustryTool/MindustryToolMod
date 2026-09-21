@@ -156,11 +156,11 @@ public class PrettyChatSettingsView extends BaseComponent {
                     // Right Action Buttons
                     row().gap(unit(1)).right().children(() -> {
                         if (p.isEditable()) {
-                            button(Icon.edit, () -> {
+                            button(() -> {
                                 new PrettyChatEditDialog(p, () -> {
                                     feature.config().setEnabledIds(feature.config().getEnabledIds());
                                 }).show();
-                            })
+                            }).icon(Icon.edit)
                                     .style(Styles.emptyi)
                                     .size(unit(8))
                                     .tooltip(Core.bundle != null
@@ -170,7 +170,7 @@ public class PrettyChatSettingsView extends BaseComponent {
 
                         if (isEnabled) {
                             if (enabledIndex > 0) {
-                                button(Icon.up, () -> feature.config().move(p.id(), -1))
+                                button(() -> feature.config().move(p.id(), -1)).icon(Icon.up)
                                         .style(Styles.emptyi)
                                         .size(unit(8))
                                         .tooltip(Core.bundle != null
@@ -181,7 +181,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                             }
 
                             if (enabledIndex < enabledCount - 1) {
-                                button(Icon.down, () -> feature.config().move(p.id(), 1))
+                                button(() -> feature.config().move(p.id(), 1)).icon(Icon.down)
                                         .style(Styles.emptyi)
                                         .size(unit(8))
                                         .tooltip(Core.bundle != null

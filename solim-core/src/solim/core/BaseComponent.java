@@ -177,6 +177,15 @@ public abstract class BaseComponent implements Component {
     }
 
     /**
+     * Returns whether {@link #element()} has built the underlying Arc element.
+     * Used by components whose required content arrives after construction
+     * (e.g. terminal fluent configuration) to refresh already-built content.
+     */
+    protected final boolean isBuilt() {
+        return cached != null;
+    }
+
+    /**
      * Subclass hook executed during disposal before owned resources are disposed.
      */
     protected void onDispose() {

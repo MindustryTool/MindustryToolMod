@@ -19,7 +19,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
-import solim.core.Ui;
+import solim.input.Button;
+import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
 
 class HudTest extends SolimEnv {
@@ -55,7 +56,7 @@ class HudTest extends SolimEnv {
 
 	@Test
 	void hudDefaultsAndTouchable() {
-		Hud hud = Ui.hud();
+		Hud hud = new Hud();
 		assertEquals("solim-hud-root", hud.element().name);
 		assertEquals(Touchable.childrenOnly, hud.element().touchable, "HUD root should allow touch pass-through");
 		assertEquals(Touchable.enabled, hud.container().touchable, "HUD container should be enabled for touches");
@@ -185,9 +186,11 @@ class HudTest extends SolimEnv {
 		Signal<Float> xSig = Signal.of(50f);
 		Signal<Float> ySig = Signal.of(60f);
 
-		Hud hud = Ui.hud(() -> {
-			Ui.button()
-					.draggable(xSig, ySig);
+		Hud hud = new Hud();
+		hud.children(() -> {
+			Button button = new Button();
+			ParentStack.attachToParent(button.element());
+			button.draggable(xSig, ySig);
 		});
 
 		hud.element().setSize(100f, 50f);
@@ -227,14 +230,20 @@ class HudTest extends SolimEnv {
 		Signal<Float> x2 = Signal.of(100f);
 		Signal<Float> y2 = Signal.of(200f);
 
-		Hud hud1 = Ui.hud(() -> {
-			Ui.button().draggable(x1, y1);
+		Hud hud1 = new Hud();
+		hud1.children(() -> {
+			Button button1 = new Button();
+			ParentStack.attachToParent(button1.element());
+			button1.draggable(x1, y1);
 		});
 		hud1.element().setSize(50f, 50f);
 		hud1.position(10f, 20f);
 
-		Hud hud2 = Ui.hud(() -> {
-			Ui.button().draggable(x2, y2);
+		Hud hud2 = new Hud();
+		hud2.children(() -> {
+			Button button2 = new Button();
+			ParentStack.attachToParent(button2.element());
+			button2.draggable(x2, y2);
 		});
 		hud2.element().setSize(50f, 50f);
 		hud2.position(100f, 200f);
@@ -299,8 +308,11 @@ class HudTest extends SolimEnv {
 		Signal<Float> x = Signal.of(30f);
 		Signal<Float> y = Signal.of(40f);
 
-		Hud hud = Ui.hud(h -> {
-			Ui.button().draggable(h, x, y);
+		Hud hud = new Hud();
+		hud.children(() -> {
+			Button button = new Button();
+			ParentStack.attachToParent(button.element());
+			button.draggable(hud, x, y);
 		});
 		hud.element().setSize(50f, 50f);
 		hud.position(30f, 40f);

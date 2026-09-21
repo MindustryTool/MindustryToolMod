@@ -24,6 +24,18 @@ public final class Units {
 
 	private Units() {}
 
+	private static final float BASE_UNIT = 4f;
+
+	/** Scales a value by the base UI unit. */
+	public static float unit(float value) {
+		return value * BASE_UNIT;
+	}
+
+	/** Scales a value by the base UI unit. */
+	public static int unit(int value) {
+		return value * (int) BASE_UNIT;
+	}
+
 	/** Recalculates and updates both {@link #dvw} and {@link #dvh} signals. */
 	public static void update() {
 		dvw.set(calcDvw());

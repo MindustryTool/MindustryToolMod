@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static solim.core.Ui.card;
+import solim.layout.Card;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -80,7 +80,9 @@ class StructuralReactivityTest extends SolimEnv {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
 		Map<String, TestComponent> created = new HashMap<>();
 
-		ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> {
+		ForEach<String> fe = new ForEach<>(items);
+		fe.key(id -> id);
+		fe.children(id -> {
 			TestComponent tc = new TestComponent(id);
 			created.put(id, tc);
 			return tc;
@@ -124,7 +126,9 @@ class StructuralReactivityTest extends SolimEnv {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C", "D", "E"));
 		Map<String, Integer> factoryCallCount = new HashMap<>();
 
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(cols, items, id -> id, id -> {
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(id -> id);
+		grid.children(id -> {
 			factoryCallCount.put(id, factoryCallCount.getOrDefault(id, 0) + 1);
 			return new TestComponent(id);
 		});
@@ -158,7 +162,9 @@ class StructuralReactivityTest extends SolimEnv {
 	@Test
 	void testForEachChildrenDoNotGrowByDefault() {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-		ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new TestComponent(id));
+		ForEach<String> fe = new ForEach<>(items);
+		fe.key(id -> id);
+		fe.children(id -> new TestComponent(id));
 		fe.element();
 		Cell<?> cell = fe.container().getCells().first();
 		assertEquals(0, CellAccess.expandX(cell), "ForEach item must not growX by default");
@@ -182,12 +188,14 @@ class StructuralReactivityTest extends SolimEnv {
 		class ConstrainedComp extends BaseComponent {
 			@Override
 			protected Element build() {
-				return card().growX().element();
+				return new Card().growX().element();
 			}
 		}
 
 		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-		ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new ConstrainedComp());
+		ForEach<String> fe = new ForEach<>(items);
+		fe.key(id -> id);
+		fe.children(id -> new ConstrainedComp());
 		fe.element();
 		Cell<?> cell = fe.container().getCells().first();
 		assertEquals(1, CellAccess.expandX(cell), "Constrained child in ForEach must growX");

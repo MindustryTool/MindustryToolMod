@@ -18,7 +18,6 @@ import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.core.Ui;
 import solim.modifier.PendingCellConfig;
 
 /** Simple grid with fixed or reactive column count and customizable gap. */
@@ -127,7 +126,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         ParentStack.push(table, (tbl, child) -> {
             Cell<?> cell = tbl.add(child);
             cell.top().left();
-            if (Ui.isExpanding(child)) {
+            if (SolimToken.isExpandingChild(child)) {
                 cell.growX().fillX();
             }
             cell.uniformX();
@@ -158,7 +157,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         for (Element child : children) {
             Cell<?> cell = table.add(child);
             cell.top().left();
-            if (Ui.isExpanding(child)) {
+            if (SolimToken.isExpandingChild(child)) {
                 cell.growX().fillX();
             }
             cell.uniformX();
@@ -174,7 +173,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
     public Grid add(Element child) {
         Cell<?> cell = table.add(child);
         cell.top().left();
-        if (Ui.isExpanding(child)) {
+        if (SolimToken.isExpandingChild(child)) {
             cell.growX().fillX();
         }
         cell.uniformX();

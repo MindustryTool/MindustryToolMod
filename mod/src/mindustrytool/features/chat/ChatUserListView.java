@@ -101,7 +101,8 @@ public class ChatUserListView extends BaseComponent {
                             if (users != null && !users.isEmpty()) {
                                 return scroll().grow().left().children(() -> {
                                     column().growX().top().left().gap(unit(1)).children(() -> {
-                                        forEach(store.members().active(), ChatUser::getName, UserItem::new);
+                                        forEach(store.members().active()).key(ChatUser::getName)
+                                                .children(UserItem::new);
                                     });
                                 });
                             }

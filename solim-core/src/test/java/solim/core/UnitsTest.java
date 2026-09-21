@@ -93,8 +93,8 @@ class UnitsTest extends SolimEnv {
 
 	@Test
 	void testUiFacadeMethods() {
-		Computed<Float> w = Ui.dvw(25f);
-		Computed<Float> h = Ui.dvh(10f);
+		Computed<Float> w = Units.dvw(25f);
+		Computed<Float> h = Units.dvh(10f);
 
 		assertEquals(250f, w.get(), 0.001f);
 		assertEquals(50f, h.get(), 0.001f);

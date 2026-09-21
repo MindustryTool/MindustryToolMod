@@ -49,7 +49,9 @@ class ForEachComponentTest extends SolimEnv {
     void forEachRendersItemsInOrder() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
         Map<String, TestComponent> created = new HashMap<>();
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> {
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> {
             TestComponent tc = new TestComponent(id);
             created.put(id, tc);
             return tc;
@@ -67,7 +69,9 @@ class ForEachComponentTest extends SolimEnv {
     void forEachKeyedReuse() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
         Map<String, TestComponent> created = new HashMap<>();
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> {
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> {
             TestComponent tc = new TestComponent(id);
             created.put(id, tc);
             return tc;
@@ -90,7 +94,9 @@ class ForEachComponentTest extends SolimEnv {
     void forEachDisposal() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A", "B"));
         Map<String, TestComponent> created = new HashMap<>();
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> {
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> {
             TestComponent tc = new TestComponent(id);
             created.put(id, tc);
             return tc;
@@ -104,7 +110,9 @@ class ForEachComponentTest extends SolimEnv {
     @Test
     void forEachChildrenDoNotGrowByDefault() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new TestComponent(id));
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> new TestComponent(id));
         fe.element();
         Cell<?> cell = fe.container().getCells().first();
         assertEquals(0, CellAccess.expandX(cell));
@@ -116,7 +124,9 @@ class ForEachComponentTest extends SolimEnv {
     @Test
     void forEachImplementsLayoutModifiersAndSupportsGrowX() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new TestComponent(id));
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> new TestComponent(id));
         assertTrue(fe instanceof CellConfig);
         assertNotNull(fe.cellConfig());
         assertFalse(fe.cellConfig().growX);
@@ -133,7 +143,10 @@ class ForEachComponentTest extends SolimEnv {
 
         Dynamic<Boolean> dyn = Dynamic.of(hasItems, available -> {
             if (Boolean.TRUE.equals(available)) {
-                return ForEach.of(items, id -> id, id -> new TestComponent(id)).growX();
+                ForEach<String> list = new ForEach<>(items);
+                list.key(id -> id);
+                list.children(TestComponent::new);
+                return list.growX();
             }
             return null;
         });
@@ -152,8 +165,10 @@ class ForEachComponentTest extends SolimEnv {
     @Test
     void forEachSupportsElementAndTableConfig() {
         Signal<List<String>> items = Signal.of(Arrays.asList("1", "2"));
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, TestComponent::new)
-                .width(300f)
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(TestComponent::new);
+        fe.width(300f)
                 .height(200f)
                 .visible(true)
                 .padding(8f);

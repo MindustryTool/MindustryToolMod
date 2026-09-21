@@ -134,12 +134,11 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
         return out;
     }
 
-    private static ReactiveGrid<SchematicData, String> grid(List<SchematicData> items) {
-        return new ReactiveGrid<>(
-                Signal.of(4),
-                Signal.of(items),
-                SchematicData::getItemId,
-                item -> new SchematicCard(item, NOOP, NOOP, NOOP, NOOP));
+    private static ReactiveGrid<SchematicData> grid(List<SchematicData> items) {
+        ReactiveGrid<SchematicData> grid = new ReactiveGrid<>(Signal.of(items));
+        grid.columns(4).key(SchematicData::getItemId);
+        grid.children(item -> new SchematicCard(item, NOOP, NOOP, NOOP, NOOP));
+        return grid;
     }
 
     private static String spanName(PerfSpan span) {
@@ -235,7 +234,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
 
     @Test
     void pageChangeBuildsRealCardsAndCapturesSpans() {
-        ReactiveGrid<SchematicData, String> pageOne = grid(page("perf-p1", PAGE_SIZE));
+        ReactiveGrid<SchematicData> pageOne = grid(page("perf-p1", PAGE_SIZE));
         pageOne.element();
         long layoutT0 = System.currentTimeMillis();
         pageOne.table().setSize(800f, 600f);
@@ -253,7 +252,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
 
         Perf.reset();
 
-        ReactiveGrid<SchematicData, String> pageTwo = grid(page("perf-p2", PAGE_SIZE));
+        ReactiveGrid<SchematicData> pageTwo = grid(page("perf-p2", PAGE_SIZE));
         pageTwo.element();
         List<PerfSpan> pageTwoSpans = Perf.snapshot(256);
         System.out.printf("SchematicBrowserPerf [page-2 %d cards, disjoint keys]: cards=%d cardMs=%.3f%n",
@@ -271,7 +270,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
     @Test
     void chunkRendersUnderFrameBudget() {
         Perf.reset();
-        ReactiveGrid<SchematicData, String> chunk = grid(page("perf-chunk", 8));
+        ReactiveGrid<SchematicData> chunk = grid(page("perf-chunk", 8));
         chunk.element();
         long layoutT0 = System.currentTimeMillis();
         chunk.table().setSize(800f, 600f);
@@ -291,7 +290,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
     @Test
     void realisticPageRendersTwentyCards() {
         Perf.reset();
-        ReactiveGrid<SchematicData, String> fullPage = grid(page("perf-full", 20));
+        ReactiveGrid<SchematicData> fullPage = grid(page("perf-full", 20));
         fullPage.element();
         long layoutT0 = System.currentTimeMillis();
         fullPage.table().setSize(800f, 600f);
@@ -322,11 +321,9 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
             data.setComments(1L);
             maps.add(data);
         }
-        ReactiveGrid<MapData, String> grid = new ReactiveGrid<>(
-                Signal.of(4),
-                Signal.of(maps),
-                MapData::getItemId,
-                item -> new MapCard(item, NOOP, NOOP, NOOP, NOOP));
+        ReactiveGrid<MapData> grid = new ReactiveGrid<>(Signal.of(maps));
+        grid.columns(4).key(MapData::getItemId);
+        grid.children(item -> new MapCard(item, NOOP, NOOP, NOOP, NOOP));
         grid.element();
         List<PerfSpan> spans = Perf.snapshot(256);
         System.out.printf("SchematicBrowserPerf [maps 3 cards]: cards=%d cardMs=%.3f%n",
@@ -353,7 +350,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
                 onSuccess.get(new TextureRegion());
         });
 
-        ReactiveGrid<SchematicData, String> withImages = grid(page("perf-img", PAGE_SIZE));
+        ReactiveGrid<SchematicData> withImages = grid(page("perf-img", PAGE_SIZE));
         withImages.element();
         List<PerfSpan> spans = Perf.snapshot(256);
         System.out.printf("SchematicBrowserPerf [decode-cpu %d cards]: cards=%d cardMs=%.3f%n",

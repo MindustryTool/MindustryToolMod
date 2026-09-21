@@ -14,7 +14,6 @@ import arc.util.Scaling;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -37,7 +36,6 @@ import solim.layout.Direction;
 import solim.layout.Divider;
 import solim.layout.Grid;
 import solim.layout.Wrap;
-import solim.layout.GridItemContext;
 import solim.layout.ReactiveGrid;
 import solim.layout.Row;
 import solim.layout.Scroll;
@@ -55,7 +53,6 @@ import solim.reactive.Effect;
 import solim.reactive.MapSignal;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.style.SolimButtonStyleBuilder;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
 import solim.reactive.Signals;
@@ -88,8 +85,6 @@ public final class UI {
     public static void init() {
         SignalDispatcher.register();
     }
-
-    private static final float BASE_UNIT = 4f;
 
     // --- Layout ---
 
@@ -189,14 +184,6 @@ public final class UI {
         return collapser(expanded).children(r);
     }
 
-    public static Column container() {
-        return column();
-    }
-
-    public static Column container(@Nullable Runnable r) {
-        return column().children(r);
-    }
-
     public static Divider divider() {
         return divider(Direction.X);
     }
@@ -207,24 +194,10 @@ public final class UI {
         return d;
     }
 
-    public static Divider divider(String direction) {
-        if (direction != null && direction.equalsIgnoreCase("y")) {
-            return divider(Direction.Y);
-        }
-        return divider(Direction.X);
-    }
-
-    public static Divider divider(char direction) {
-        if (direction == 'y' || direction == 'Y') {
-            return divider(Direction.Y);
-        }
-        return divider(Direction.X);
-    }
-
-    public static Element spacer() {
+    public static Spacer spacer() {
         Spacer s = new Spacer();
         ParentStack.attachToParent(s.element());
-        return s.element();
+        return s;
     }
 
     // --- Display ---
@@ -244,10 +217,6 @@ public final class UI {
         img.drawable(drawable);
         ParentStack.attachToParent(img.element());
         return img;
-    }
-
-    public static SolimImage icon() {
-        return image();
     }
 
     public static SolimImage icon(Drawable drawable) {
@@ -282,18 +251,6 @@ public final class UI {
         return t;
     }
 
-    public static Text text(Signal<String> s) {
-        Text t = Text.of(s);
-        ParentStack.attachToParent(t.label());
-        return t;
-    }
-
-    public static Text text(Computed<String> s) {
-        Text t = Text.of(s);
-        ParentStack.attachToParent(t.label());
-        return t;
-    }
-
     public static Text text(Readable<String> s) {
         Text t = Text.of(s);
         ParentStack.attachToParent(t.label());
@@ -318,12 +275,6 @@ public final class UI {
         return b;
     }
 
-    public static Badge badgeCount(Readable<Integer> count) {
-        Badge b = Badge.ofCount(count);
-        ParentStack.attachToParent(b.element());
-        return b;
-    }
-
     // --- Input ---
 
     public static Button button() {
@@ -340,71 +291,14 @@ public final class UI {
 
     public static Button button(String text, @Nullable Runnable onClick) {
         Button b = button(onClick);
-        b.children(() -> text(text));
+        b.text(text);
         return b;
     }
 
     public static Button button(Readable<String> text, @Nullable Runnable onClick) {
         Button b = button(onClick);
-        b.children(() -> text(text));
+        b.text(text);
         return b;
-    }
-
-    public static Button button(String text, Drawable icon, @Nullable Runnable onClick) {
-        Button b = button(onClick);
-        b.children(() -> {
-            if (icon != null) {
-                icon(icon);
-            }
-            if (text != null) {
-                text(text);
-            }
-        });
-        return b;
-    }
-
-    public static Button button(Drawable icon, @Nullable Runnable onClick) {
-        Button b = button(onClick);
-        b.children(() -> {
-            if (icon != null) {
-                icon(icon);
-            }
-        });
-        return b;
-    }
-
-    public static Button button(Drawable icon) {
-        return button(icon, (Runnable) null);
-    }
-
-    public static Button button(String text, @Nullable Runnable onClick,
-            @Nullable Consumer<SolimButtonStyleBuilder> style) {
-        Button b = button(text, onClick);
-        if (style != null) {
-            b.style(style);
-        }
-        return b;
-    }
-
-    public static Button button(Readable<String> text, @Nullable Runnable onClick,
-            @Nullable Consumer<SolimButtonStyleBuilder> style) {
-        Button b = button(text, onClick);
-        if (style != null) {
-            b.style(style);
-        }
-        return b;
-    }
-
-    public static SolimButtonStyleBuilder buttonStyle() {
-        return new SolimButtonStyleBuilder();
-    }
-
-    public static SolimButtonStyleBuilder buttonStyle(@Nullable Consumer<SolimButtonStyleBuilder> config) {
-        SolimButtonStyleBuilder builder = new SolimButtonStyleBuilder();
-        if (config != null) {
-            config.accept(builder);
-        }
-        return builder;
     }
 
     public static SolimTextField textField(Signal<String> signal) {
@@ -468,16 +362,6 @@ public final class UI {
     public static Hud hud(@Nullable Runnable content) {
         Hud h = hud();
         h.children(content);
-        return h;
-    }
-
-    public static Hud hud(@Nullable Cons<Hud> content) {
-        Hud h = hud();
-        h.children(() -> {
-            if (content != null) {
-                content.get(h);
-            }
-        });
         return h;
     }
 
@@ -572,67 +456,42 @@ public final class UI {
         return d;
     }
 
-    public static <T, K> ForEach<T, K> forEach(
-            Readable<? extends Iterable<T>> collection,
-            Function<T, K> keyExtractor,
-            Function<T, Component> itemFactory) {
-        ForEach<T, K> fe = ForEach.of(collection, keyExtractor, itemFactory);
+    public static Dynamic<Boolean> when(Readable<Boolean> condition, Supplier<Component> supplier) {
+        return dynamic(condition, value -> Boolean.TRUE.equals(value) && supplier != null ? supplier.get() : null);
+    }
+
+    public static <T> ForEach<T> forEach(Readable<? extends Iterable<T>> collection) {
+        ForEach<T> fe = ForEach.of(collection);
         ParentStack.attachToParent(fe.element());
         return fe;
     }
 
-    public static <T, K> ReactiveGrid<T, K> grid(
-            Readable<Integer> columnCount,
-            Readable<? extends Iterable<T>> items,
-            Function<T, K> keyExtractor,
-            Function<T, Component> itemFactory) {
-        ReactiveGrid<T, K> grid = ReactiveGrid.of(columnCount, items, keyExtractor, itemFactory);
+    public static <T> ForEach<T> forEach(Iterable<T> collection) {
+        return forEach(Readable.of(collection));
+    }
+
+    public static <T> ReactiveGrid<T> reactiveGrid(Readable<? extends Iterable<T>> items) {
+        ReactiveGrid<T> grid = ReactiveGrid.of(items);
         ParentStack.attachToParent(grid.element());
         return grid;
     }
 
-    public static <T, K> ReactiveGrid<T, K> grid(
-            Readable<Integer> columnCount,
-            Readable<? extends Iterable<T>> items,
-            Function<T, K> keyExtractor,
-            BiFunction<T, GridItemContext, Component> itemFactory) {
-        ReactiveGrid<T, K> grid = ReactiveGrid.of(columnCount, items, keyExtractor, itemFactory);
-        ParentStack.attachToParent(grid.element());
-        return grid;
+    public static <T> ReactiveGrid<T> reactiveGrid(Iterable<T> items) {
+        return reactiveGrid(Readable.of(items));
     }
 
-    public static <T, K> ReactiveGrid<T, K> reactiveGrid(
-            Readable<Integer> columnCount,
-            Readable<? extends Iterable<T>> items,
-            Function<T, K> keyExtractor,
-            Function<T, Component> itemFactory) {
-        return grid(columnCount, items, keyExtractor, itemFactory);
-    }
-
-    public static <T, K> ReactiveGrid<T, K> reactiveGrid(
-            Readable<Integer> columnCount,
-            Readable<? extends Iterable<T>> items,
-            Function<T, K> keyExtractor,
-            BiFunction<T, GridItemContext, Component> itemFactory) {
-        return grid(columnCount, items, keyExtractor, itemFactory);
-    }
-
-    public static <T, K> VirtualList<T, K> virtualList(
+    public static <T> VirtualList<T> virtualList(
             Readable<? extends List<T>> collection,
-            Function<T, K> keyExtractor,
-            ItemHeightProvider<T> heightProvider,
-            Function<T, Component> itemFactory) {
-        VirtualList<T, K> vl = VirtualList.of(collection, keyExtractor, heightProvider, itemFactory);
+            ItemHeightProvider<T> heightProvider) {
+        VirtualList<T> vl = VirtualList.of(collection, heightProvider);
         ParentStack.attachToParent(vl.element());
         return vl;
     }
 
-    public static <T, K> VirtualList<T, K> virtualList(
+    public static <T> VirtualList<T> virtualList(
             List<T> items,
-            Function<T, K> keyExtractor,
-            ItemHeightProvider<T> heightProvider,
-            Function<T, Component> itemFactory) {
-        VirtualList<T, K> vl = VirtualList.of(items, keyExtractor, heightProvider, itemFactory);
+            ItemHeightProvider<T> heightProvider) {
+        VirtualList<T> vl = VirtualList.of(items, heightProvider);
         ParentStack.attachToParent(vl.element());
         return vl;
     }
@@ -650,11 +509,11 @@ public final class UI {
     // --- Units ---
 
     public static float unit(float value) {
-        return value * BASE_UNIT;
+        return Units.unit(value);
     }
 
     public static int unit(int value) {
-        return value * (int) BASE_UNIT;
+        return Units.unit(value);
     }
 
     public static Computed<Float> dvw(float percentage) {

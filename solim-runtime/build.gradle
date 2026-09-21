@@ -3,6 +3,7 @@
 apply plugin: 'java-library'
 
 dependencies {
+    // The import must not change unless i asked for it
 	api project(':solim-api')
 	testImplementation "Anuken:Mindustry:${mindustryVersion}"
 }

@@ -187,10 +187,6 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
         return this;
     }
 
-    public Hud backgroundDrawable(@Nullable Readable<Drawable> bg) {
-        return background(bg);
-    }
-
     public Hud children(@Nullable Runnable r) {
         ParentStack.push(container, Row.ATTACHER);
         try {

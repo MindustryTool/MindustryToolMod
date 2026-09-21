@@ -23,6 +23,7 @@ import mindustry.ui.Styles;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Card;
+import solim.layout.ReactiveGrid;
 import solim.overlay.Hud;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
@@ -177,12 +178,10 @@ public class TeamResourceHudView extends BaseComponent {
                     if (items == null || items.isEmpty()) {
                         return row().left().children(() -> text(Core.bundle.get("team-resources.no-items", "No core items")).color(Color.gray).style(Styles.outlineLabel));
                     }
-                    return grid(
-                        itemCols,
-                        state.usedItemsSignal,
-                        item -> item.name,
-                        item -> createItemCard(item, itemCardHeight, iconSize, scale)
-                    ).growX().gap(unit(1));
+                    ReactiveGrid<Item> itemsGrid = reactiveGrid(state.usedItemsSignal).columns(itemCols)
+                            .key(item -> item.name).growX().gap(unit(1));
+                    itemsGrid.children(item -> createItemCard(item, itemCardHeight, iconSize, scale));
+                    return itemsGrid;
                 }).growX();
             }).growX() : row()).growX();
 
@@ -192,12 +191,10 @@ public class TeamResourceHudView extends BaseComponent {
                     if (units == null || units.isEmpty()) {
                         return row().left().children(() -> text(Core.bundle.get("team-resources.no-units", "No active units")).color(Color.gray).style(Styles.outlineLabel));
                     }
-                    return grid(
-                        itemCols,
-                        state.usedUnitsSignal,
-                        unit -> unit.name,
-                        unit -> createUnitCard(unit, unitCardHeight, iconSize, scale)
-                    ).growX().gap(unit(1));
+                    ReactiveGrid<UnitType> unitsGrid = reactiveGrid(state.usedUnitsSignal).columns(itemCols)
+                            .key(unit -> unit.name).growX().gap(unit(1));
+                    unitsGrid.children(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
+                    return unitsGrid;
                 }).growX();
             }).growX() : row()).growX();
 

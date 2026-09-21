@@ -18,7 +18,6 @@ import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.core.Ui;
 import solim.modifier.PendingCellConfig;
 
 /**
@@ -30,7 +29,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
         cell.top().left();
-        if (Ui.isExpanding(child)) {
+        if (SolimToken.isExpandingChild(child)) {
             cell.growY();
         }
         cell.row();
@@ -60,10 +59,6 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         if (background != null) {
             background(background);
         }
-    }
-
-    public static Card of(@Nullable Runnable children) {
-        return new Card();
     }
 
     public Table container() {

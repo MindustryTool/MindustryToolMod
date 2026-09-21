@@ -107,22 +107,19 @@ public class SchematicPickerDialog extends SolimDialog {
 
                 gridScroll = scroll().grow().onReachBottom(100f, () -> expandBatch(filtered));
                 gridScroll.children(() -> {
-                    reactiveGrid(
-                            columnCount,
-                            displayed,
-                            SchematicPickerDialog::keyOf,
-                            schematic -> new SchematicPickerCard(schematic, () -> {
-                                if (onSelect != null) {
-                                    onSelect.accept(schematic);
-                                }
-                                hide();
-                            }))
+                    reactiveGrid(displayed).columns(columnCount).key(SchematicPickerDialog::keyOf)
                             .empty(() -> {
                                 text(Core.bundle.get("feature.quick-schematic-grid.picker.empty"))
                                         .color(Color.gray)
                                         .padding(unit(4));
                             })
-                            .gap(unit(3));
+                            .gap(unit(3))
+                            .children(schematic -> new SchematicPickerCard(schematic, () -> {
+                                if (onSelect != null) {
+                                    onSelect.accept(schematic);
+                                }
+                                hide();
+                            }));
 
                     dynamic(remaining, left -> {
                         Integer count = left != null ? left : 0;

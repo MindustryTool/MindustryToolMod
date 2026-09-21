@@ -31,7 +31,7 @@ public class CrashReportDialog extends SolimDialog {
 
 		String path = file != null ? file.absolutePath() : "";
 
-		content(() -> {
+		children(() -> {
 			column().growX().gap(unit(2)).padding(unit(2)).width(500f).children(() -> {
 				text(Core.bundle.get("crash-report.content"))
 						.wrap();

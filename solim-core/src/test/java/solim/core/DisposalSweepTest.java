@@ -471,7 +471,9 @@ class DisposalSweepTest extends SolimEnv {
 		Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("a", "b")));
 		Signal<String> label = Signal.of("item");
 		List<Text> created = new ArrayList<>();
-		ForEach<String, String> forEach = new ForEach<>(items, item -> item, item -> {
+		ForEach<String> forEach = new ForEach<>(items);
+		forEach.key(item -> item);
+		forEach.children(item -> {
 			Text text = Text.of(label);
 			created.add(text);
 			return text;
@@ -504,7 +506,9 @@ class DisposalSweepTest extends SolimEnv {
 		Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("a", "b", "c", "d")));
 		Signal<String> label = Signal.of("cell");
 		List<Text> created = new ArrayList<>();
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(columns, items, item -> item, item -> {
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(columns).key(item -> item);
+		grid.children(item -> {
 			Text text = Text.of(label);
 			created.add(text);
 			return text;
@@ -567,12 +571,13 @@ class DisposalSweepTest extends SolimEnv {
 		Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("a", "b", "c")));
 		Signal<String> label = Signal.of("row");
 		List<Text> created = new ArrayList<>();
-		VirtualList<String, String> list = new VirtualList<>(items, item -> item,
-			(item, width) -> 48f, item -> {
-				Text text = Text.of(label);
-				created.add(text);
-				return text;
-			});
+		VirtualList<String> list = new VirtualList<>(items, (item, width) -> 48f);
+		list.key(item -> item);
+		list.children(item -> {
+			Text text = Text.of(label);
+			created.add(text);
+			return text;
+		});
 		list.element();
 		assertFalse(list.isDisposed());
 

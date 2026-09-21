@@ -80,11 +80,9 @@ public final class FeatureSettingsView extends BaseComponent {
                                     .style(Styles.defaultLabel)
                                     .left();
                         });
-                        grid(columnCount,
-                                favoritedFeatures,
-                                feature -> feature.getMetadata().getId(),
-                                feature -> new FeatureCard(feature, reorderAllowed)
-                        ).gap(unit(2));
+                        reactiveGrid(favoritedFeatures).columns(columnCount)
+                                .key(feature -> feature.getMetadata().getId()).gap(unit(2))
+                                .children(feature -> new FeatureCard(feature, reorderAllowed));
                     });
 
                     divider().visible(Signal.computed(() ->
@@ -97,11 +95,9 @@ public final class FeatureSettingsView extends BaseComponent {
                                     .style(Styles.defaultLabel)
                                     .left();
                         });
-                        grid(columnCount,
-                                standardFeatures,
-                                feature -> feature.getMetadata().getId(),
-                                feature -> new FeatureCard(feature, reorderAllowed)
-                        ).gap(unit(2));
+                        reactiveGrid(standardFeatures).columns(columnCount)
+                                .key(feature -> feature.getMetadata().getId()).gap(unit(2))
+                                .children(feature -> new FeatureCard(feature, reorderAllowed));
                     });
 
                     divider().visible(Signal.computed(() ->
@@ -114,11 +110,8 @@ public final class FeatureSettingsView extends BaseComponent {
                                     .style(Styles.defaultLabel)
                                     .left();
                         });
-                        grid(columnCount,
-                                filteredWebFeatures,
-                                WebFeature::getId,
-                                WebFeatureCard::new
-                        ).gap(unit(2));
+                        reactiveGrid(filteredWebFeatures).columns(columnCount).key(WebFeature::getId).gap(unit(2))
+                                .children(WebFeatureCard::new);
                     });
 
                     // Empty state when no features or web features match search

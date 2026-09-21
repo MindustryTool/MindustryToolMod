@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
-import solim.core.Ui;
+import solim.layout.Card;
 import solim.test.SolimEnv;
 
 class PopupMenuTest extends SolimEnv {
@@ -151,7 +151,7 @@ class PopupMenuTest extends SolimEnv {
         Popup<String> popup = new Popup<>();
         try {
             ensureScene();
-            popup.children(data -> Ui.card().margin(10f, 15f, 20f, 25f));
+            popup.children(data -> new Card().margin(10f, 15f, 20f, 25f));
             popup.show("test", 100f, 100f);
             Table table = popup.table();
             Cell<?> cell = table.getCells().first();

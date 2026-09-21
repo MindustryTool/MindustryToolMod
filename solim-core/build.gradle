@@ -3,10 +3,13 @@
 apply plugin: 'java-library'
 
 dependencies {
+    // The import must not change unless i asked for it
 	api project(':solim-api')
 	implementation project(':solim-runtime')
 
 	// Mindustry/Arc needed at test runtime for Element instantiation in component tests
 	testImplementation "Anuken:Mindustry:${mindustryVersion}"
 	testImplementation project(':solim-test')
+	// Public facade for tests exercising factory behavior (test-scope only; main stays decoupled)
+	// solim-core is not allowed to import solim 
 }

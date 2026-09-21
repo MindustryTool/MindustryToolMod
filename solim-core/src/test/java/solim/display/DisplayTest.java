@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 import solim.runtime.ParentStack;
-import static solim.core.Ui.*;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
 import solim.test.SolimEnv;
@@ -114,7 +113,9 @@ class DisplayTest extends SolimEnv {
 		Table root = new Table();
 		ParentStack.push(root);
 
-		Text t = text("Hello").padding(8f).margin(4f);
+		Text t = Text.of("Hello");
+		ParentStack.attachToParent(t.label());
+		t.padding(8f).margin(4f);
 		assertEquals(12f, CellAccess.padTop(root.getCell(t.label())), 0.01f);
 		assertEquals(12f, CellAccess.padLeft(root.getCell(t.label())), 0.01f);
 		assertEquals(12f, CellAccess.padBottom(root.getCell(t.label())), 0.01f);
@@ -139,7 +140,9 @@ class DisplayTest extends SolimEnv {
 		Table root = new Table();
 		ParentStack.push(root);
 
-		SolimImage img = image((Drawable) null).padding(6f).margin(2f);
+		SolimImage img = new SolimImage((Drawable) null);
+		ParentStack.attachToParent(img.element());
+		img.padding(6f).margin(2f);
 		assertEquals(8f, CellAccess.padTop(root.getCell(img.element())), 0.01f);
 		assertEquals(8f, CellAccess.padLeft(root.getCell(img.element())), 0.01f);
 		assertEquals(8f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);

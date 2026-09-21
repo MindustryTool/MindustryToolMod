@@ -15,12 +15,17 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.Nullable;
+import arc.util.Scaling;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
+import solim.core.Units;
+import solim.display.SolimImage;
+import solim.display.Text;
+import solim.graphics.Drawables;
 import solim.layout.Direction;
 import solim.layout.GapContainer;
 import solim.layout.Row;
@@ -94,6 +99,53 @@ public final class Button
             ParentStack.pop();
         }
         respace();
+        return this;
+    }
+
+    public Button text(@Nullable String s) {
+        children(() -> {
+            if (s != null) {
+                Text text = Text.of(s);
+                bindings.add(text);
+                ParentStack.attachToParent(text.label());
+            }
+        });
+        return this;
+    }
+
+    public Button text(@Nullable Readable<String> s) {
+        children(() -> {
+            if (s != null) {
+                Text text = Text.of(s);
+                bindings.add(text);
+                ParentStack.attachToParent(text.label());
+            }
+        });
+        return this;
+    }
+
+    public Button icon(@Nullable Drawable drawable) {
+        children(() -> {
+            if (drawable != null) {
+                SolimImage img = new SolimImage(Drawables.scalable(drawable));
+                img.scaling(Scaling.fit).size(Units.unit(6));
+                bindings.add(img);
+                ParentStack.attachToParent(img.element());
+            }
+        });
+        return this;
+    }
+
+    public Button icon(@Nullable Readable<Drawable> drawable) {
+        children(() -> {
+            if (drawable != null) {
+                SolimImage img = new SolimImage();
+                img.drawable(drawable.map(Drawables::scalable));
+                img.scaling(Scaling.fit).size(Units.unit(6));
+                bindings.add(img);
+                ParentStack.attachToParent(img.element());
+            }
+        });
         return this;
     }
 
@@ -342,10 +394,6 @@ public final class Button
     }
 
     public arc.scene.ui.Button button() {
-        return button;
-    }
-
-    public arc.scene.ui.Button sizedButton() {
         return button;
     }
 
