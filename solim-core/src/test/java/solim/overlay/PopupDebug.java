@@ -3,6 +3,7 @@ package solim.overlay;
 import arc.Core;
 import arc.scene.Scene;
 import arc.scene.Element;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 
 public class PopupDebug {
@@ -24,7 +25,7 @@ public class PopupDebug {
         Table t = menu.table();
         System.out.println("table w=" + t.getWidth() + " h=" + t.getHeight() + " pos=" + t.x + "," + t.y);
         System.out.println("cells=" + t.getCells().size);
-        for (arc.scene.ui.layout.Cell c : t.getCells()) {
+        for (Cell<?> c : t.getCells()) {
             Element a = c.get();
             System.out.println("cell actor=" + a + " pos=" + a.x + "," + a.y + " " + a.getWidth() + "x" + a.getHeight());
         }

@@ -15,7 +15,6 @@ import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.ReactiveGrid;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -25,9 +24,10 @@ import solim.reactive.Signal;
  * a dedicated page tab column, subtle empty slot tiles, and screen clamping.
  */
 public class QuickSchematicGridHudView extends BaseComponent {
-    //TODO: Right click to open edit UI
-    //TODO: Hover over button show a shadow of schematic
-    //TODO: Icon not render properly af set (it display schematic preview instead of newly set icon)
+    // TODO: Right click to open edit UI
+    // TODO: Hover over button show a shadow of schematic
+    // TODO: Icon not render properly af set (it display schematic preview instead
+    // of newly set icon)
     public static final class SlotModel {
         public final int page;
         public final int row;
@@ -165,7 +165,8 @@ public class QuickSchematicGridHudView extends BaseComponent {
                 buildDragHandle(feature, buttonSize, dragIconSize, buttonOpacity);
             }
             reactiveGrid(pagesList)
-                    .key(pageIndex -> pageIndex + ":" + (feature.getPageIcon(pageIndex) != null ? feature.getPageIcon(pageIndex) : ""))
+                    .key(pageIndex -> pageIndex + ":"
+                            + (feature.getPageIcon(pageIndex) != null ? feature.getPageIcon(pageIndex) : ""))
                     .gap(gap)
                     .children(pageIndex -> pageTabButton(feature, pageIndex, buttonSize, buttonOpacity));
         });
@@ -185,7 +186,8 @@ public class QuickSchematicGridHudView extends BaseComponent {
                 buildDragHandle(feature, buttonSize, dragIconSize, buttonOpacity);
             }
             reactiveGrid(pagesList).columns(tabColumns)
-                    .key(pageIndex -> pageIndex + ":" + (feature.getPageIcon(pageIndex) != null ? feature.getPageIcon(pageIndex) : ""))
+                    .key(pageIndex -> pageIndex + ":"
+                            + (feature.getPageIcon(pageIndex) != null ? feature.getPageIcon(pageIndex) : ""))
                     .gap(gap)
                     .children(pageIndex -> pageTabButton(feature, pageIndex, buttonSize, buttonOpacity));
         });
@@ -210,7 +212,7 @@ public class QuickSchematicGridHudView extends BaseComponent {
         });
     }
 
-    public static Component buildGrid(QuickSchematicGridFeature feature, @Nullable Runnable onBeforeActivate) {
+    public static void buildGrid(QuickSchematicGridFeature feature, @Nullable Runnable onBeforeActivate) {
         Readable<Float> gap = feature.buttonGapConfig.signal();
         Readable<Float> buttonOpacity = feature.buttonOpacityConfig.signal();
 
@@ -238,10 +240,11 @@ public class QuickSchematicGridHudView extends BaseComponent {
             return list;
         });
 
-        ReactiveGrid<SlotModel> grid = reactiveGrid(slots).columns(feature.colsConfig.signal()).key(SlotModel::key)
-                .gap(gap);
-        grid.children(slot -> slotComponent(feature, slot, onBeforeActivate, buttonOpacity));
-        return grid;
+        reactiveGrid(slots)
+                .gap(gap)
+                .columns(feature.colsConfig.signal())
+                .key(SlotModel::key)
+                .children(slot -> slotComponent(feature, slot, onBeforeActivate, buttonOpacity));
     }
 
     static Component pageTabButton(
