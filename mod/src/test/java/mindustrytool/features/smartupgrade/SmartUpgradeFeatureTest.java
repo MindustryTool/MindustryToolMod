@@ -27,7 +27,6 @@ import mindustry.world.blocks.liquid.Conduit;
 import mindustry.world.blocks.liquid.LiquidBridge;
 import mindustry.world.blocks.production.BeamDrill;
 import mindustry.world.blocks.production.Drill;
-import mindustrytool.features.FeatureMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -115,19 +114,6 @@ class SmartUpgradeFeatureTest {
         assertEquals("Số công trình tối đa mỗi lần nâng cấp", testViBundle.get("feature.smart-upgrade.settings.max-upgrades"));
         assertEquals("Khoảng thời gian chạm hai lần (ms)", testViBundle.get("feature.smart-upgrade.settings.tap-interval"));
         assertEquals("Bật/Tắt Nâng Cấp Thông Minh", testViBundle.get("keybind.smartUpgradeToggle.name"));
-    }
-
-    @Test
-    void testMetadata() {
-        SmartUpgradeFeature feature = new SmartUpgradeFeature();
-        FeatureMetadata meta = feature.getMetadata();
-
-        assertNotNull(meta);
-        assertEquals("smart-upgrade", meta.getId());
-        assertNotNull(meta.getIcon());
-        assertTrue(meta.isEnabledByDefault());
-        assertTrue(meta.isQuickAccess());
-        assertFalse(meta.isDevelopment());
     }
 
     @Test

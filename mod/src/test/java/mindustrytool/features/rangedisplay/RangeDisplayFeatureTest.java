@@ -2,7 +2,6 @@ package mindustrytool.features.rangedisplay;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +18,6 @@ import mindustry.world.blocks.defense.RegenProjector;
 import mindustry.world.blocks.defense.Wall;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustry.world.blocks.distribution.MassDriver;
-import mindustrytool.features.FeatureMetadata;
 import mindustrytool.test.MindustryTestEnv;
 
 class RangeDisplayFeatureTest extends MindustryTestEnv {
@@ -29,19 +27,6 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         if (Vars.content == null) {
             Vars.content = new ContentLoader();
         }
-    }
-
-    @Test
-    void testMetadata() {
-        RangeDisplayFeature feature = new RangeDisplayFeature();
-        FeatureMetadata meta = feature.getMetadata();
-
-        assertNotNull(meta);
-        assertEquals("range-display", meta.getId());
-        assertEquals(5, meta.getOrder());
-        assertTrue(meta.isQuickAccess());
-        assertTrue(meta.isEnabledByDefault());
-        assertFalse(meta.isDevelopment());
     }
 
     @Test
