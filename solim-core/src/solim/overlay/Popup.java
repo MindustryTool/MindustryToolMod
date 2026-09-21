@@ -48,13 +48,15 @@ import solim.reactive.Readable;
  *
  * <p>
  * All mutating methods return this instance for chaining. Show and hide are
- * explicit and safe to call headless (no-ops without a scene).
+ * explicit and safe to call headless (no-ops without a scene). Outside taps
+ * dismiss the menu without consuming the touch, so underlying UI stays
+ * usable.
  */
 public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T>> {
-    // TODO: Popup show above existsing UI making them unusable
     private final Table table = new Table();
     private @Nullable Func<T, Component> provider;
     private @Nullable Component currentContent;
+    private @Nullable Element layerAnchor;
     private final List<Disposable> currentBindings = new ArrayList<>();
     private boolean touchAttached = false;
     private boolean keyAttached = false;
@@ -82,7 +84,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                 }
             }
             hide();
-            return true;
+            return false;
         }
     };
 
@@ -149,6 +151,17 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
         } else {
             rd.border(stroke, Color.white);
         }
+        return this;
+    }
+
+    /**
+     * Sets an anchor element the menu mounts behind: on show, the menu is
+     * inserted into the anchor's parent before the anchor so the anchor draws
+     * above the menu. Falls back to the scene root when the anchor is null or
+     * detached. Returns this for chaining.
+     */
+    public Popup<T> layerBehind(@Nullable Element anchor) {
+        this.layerAnchor = anchor;
         return this;
     }
 
@@ -260,10 +273,23 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
         Vec2 pos = place(stageX, stageY, table.getWidth(), table.getHeight(),
                 Core.scene.getWidth(), Core.scene.getHeight());
         table.setPosition(pos.x, pos.y);
-        if (table.parent == null) {
+        mount();
+        attachListeners();
+    }
+
+    /**
+     * Attaches the menu table to the scene: behind the configured anchor when
+     * it has a live parent, otherwise at the scene root.
+     */
+    private void mount() {
+        if (table.parent != null) {
+            return;
+        }
+        if (layerAnchor != null && layerAnchor.parent != null) {
+            layerAnchor.parent.addChildBefore(layerAnchor, table);
+        } else {
             Core.scene.add(table);
         }
-        attachListeners();
     }
 
     private void clearContent() {

@@ -526,6 +526,25 @@ The `Popup` component SHALL expose explicit `show(data, x, y)` and `hide()` cont
 - **WHEN** `hide()` is called while the menu is visible
 - **THEN** the menu element is removed from the scene and all menu listeners are detached
 
+### Requirement: Layer-behind-anchor mounting
+The `Popup` component SHALL support mounting the menu behind a caller-supplied anchor element: when the anchor has a live parent at show time, the menu element SHALL be inserted into the anchor's parent before the anchor (`Group.addChildBefore`) so the anchor draws above the menu; when no anchor is configured or the anchor is detached, the menu SHALL mount to the scene root as before.
+
+#### Scenario: Menu renders behind its anchor
+- **WHEN** `layerBehind(anchor)` is configured and `show()` is called with an anchor that has a live parent
+- **THEN** the menu element is a sibling of the anchor, positioned before it in draw order, so the anchor renders above the menu
+
+#### Scenario: Menu falls back to scene root without an anchor
+- **WHEN** `show()` is called without a configured anchor
+- **THEN** the menu element is added to the scene root (existing behavior)
+
+#### Scenario: Menu falls back to scene root with a detached anchor
+- **WHEN** `show()` is called with a configured anchor whose parent is null
+- **THEN** the menu element is added to the scene root (existing behavior)
+
+#### Scenario: Stage coordinates need no conversion
+- **WHEN** a layer-behind popup is mounted into a full-screen transform-free parent group
+- **THEN** stage-coordinate placement and clamping behave identically to scene-root mounting
+
 ### Requirement: Prefer-above anchor positioning with clamping
 The `Popup` component SHALL position the menu with its bottom edge at the anchor vertical coordinate (floating above the anchor), flipping below the anchor when there is insufficient space above, and clamping both axes so the menu stays fully within the stage bounds.
 
@@ -542,11 +561,11 @@ The `Popup` component SHALL position the menu with its bottom edge at the anchor
 - **THEN** the menu is fully visible inside the stage on both axes
 
 ### Requirement: Tap-outside dismissal
-The `Popup` component SHALL dismiss the menu when the user touches anywhere outside the menu bounds, swallowing that touch so no underlying element receives it. Touches inside the menu SHALL reach menu children normally.
+The `Popup` component SHALL dismiss the menu when the user touches anywhere outside the menu bounds, and the dismissing touch SHALL NOT be consumed, so the touched underlying element also receives it. Touches inside the menu SHALL reach menu children normally.
 
-#### Scenario: Outside tap dismisses and swallows
+#### Scenario: Outside tap dismisses and passes through
 - **WHEN** the user touches down outside the visible menu bounds
-- **THEN** the menu is dismissed and the touch is consumed (underlying elements do not activate)
+- **THEN** the menu is dismissed and the touch continues to the underlying element (the element activates in the same gesture)
 
 #### Scenario: Inside tap reaches menu
 - **WHEN** the user touches down inside the visible menu bounds
