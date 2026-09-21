@@ -704,19 +704,25 @@ public class VisualizerFeature extends Feature {
 
         float sizePx = turret.block.size * Vars.tilesize;
         float half = sizePx / 2f;
-        float badgeSize = Math.max(6f, Math.min(12f, turret.block.size * 3.5f)) * cachedTurretBadgeScale;
+        float badgeSize = calculateBadgeSize(turret.block.size);
 
-        // Position badge at bottom-right of turret footprint
-        float bx = turret.x + half - badgeSize * 0.5f - 1.5f;
-        float by = turret.y - half + badgeSize * 0.5f + 1.5f;
+        // Position badge at bottom-right of turret footprint with adaptive margin
+        float margin = Math.min(1.2f, turret.block.size * 0.5f);
+        float bx = turret.x + half - badgeSize * 0.5f - margin;
+        float by = turret.y - half + badgeSize * 0.5f + margin;
 
         // Dark circular backing for contrast against busy backgrounds
         Draw.color(0f, 0f, 0f, 0.65f);
-        Fill.circle(bx, by, badgeSize * 0.6f);
+        Fill.circle(bx, by, badgeSize * 0.55f);
 
         // Render official ammo icon
         Draw.color(Color.white);
         Draw.rect(icon, bx, by, badgeSize, badgeSize);
+    }
+
+    public float calculateBadgeSize(int blockSize) {
+        float baseBadgeSize = Math.min(11f, 2.4f + blockSize * 1.5f);
+        return baseBadgeSize * cachedTurretBadgeScale;
     }
 
     private void drawTargetLine(TurretBuild turret, boolean isAlly) {

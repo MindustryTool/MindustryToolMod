@@ -59,7 +59,7 @@ public class VisualizerSettingsView extends BaseComponent {
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.visualizer.settings.bridge-item-scale", "Bridge Item Scale")).left();
                         spacer();
-                        slider(feature.bridgeItemScaleConfig.signal(), 0.5f, 2.0f, 0.1f);
+                        slider(feature.bridgeItemScaleConfig.signal(), 0.3f, 2.0f, 0.05f);
                         row().width(unit(12)).children(() -> {
                             text(bScaleText);
                         });
@@ -97,7 +97,7 @@ public class VisualizerSettingsView extends BaseComponent {
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.visualizer.settings.turret-badge-scale", "Turret Badge Scale")).left();
                         spacer();
-                        slider(feature.turretBadgeScaleConfig.signal(), 0.5f, 2.0f, 0.1f);
+                        slider(feature.turretBadgeScaleConfig.signal(), 0.2f, 2.0f, 0.05f);
                         row().width(unit(12)).children(() -> {
                             text(tScaleText);
                         });

@@ -173,4 +173,22 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         feature.resetToDefaults();
         assertTrue(feature.isTurretEnabled(duo));
     }
+
+    @Test
+    void testCalculateBadgeSize() {
+        VisualizerFeature feature = new VisualizerFeature();
+
+        // Default scale (1.0f):
+        // 1x1 turret: 2.4 + 1.5 = 3.9f
+        assertEquals(3.9f, feature.calculateBadgeSize(1), 0.001f);
+        // 2x2 turret: 2.4 + 3.0 = 5.4f
+        assertEquals(5.4f, feature.calculateBadgeSize(2), 0.001f);
+        // 3x3 turret: 2.4 + 4.5 = 6.9f
+        assertEquals(6.9f, feature.calculateBadgeSize(3), 0.001f);
+
+        // Mutated scale (0.5f)
+        feature.turretBadgeScaleConfig.set(0.5f);
+        assertEquals(1.95f, feature.calculateBadgeSize(1), 0.001f);
+        assertEquals(2.7f, feature.calculateBadgeSize(2), 0.001f);
+    }
 }
