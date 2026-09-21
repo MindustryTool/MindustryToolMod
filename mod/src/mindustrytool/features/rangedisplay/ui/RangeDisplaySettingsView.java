@@ -4,6 +4,7 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
+import java.util.Locale;
 import mindustry.Vars;
 import mindustry.ui.Styles;
 import mindustry.world.Block;
@@ -26,6 +27,10 @@ public class RangeDisplaySettingsView extends BaseComponent {
     protected Element build() {
         Readable<String> opacityText = feature.opacityConfig.signal()
                 .map(v -> Math.round((v != null ? v : 1f) * 100) + "%");
+        Readable<String> strokeWidthText = feature.strokeWidthConfig.signal()
+                .map(v -> String.format(Locale.US, "%.1fx", v != null ? v : 1f));
+        Readable<String> proximityText = feature.proximityRadiusConfig.signal()
+                .map(v -> Math.round(v != null ? v : 30f) + " tiles");
 
         float contentWidth = Core.graphics != null
                 ? Math.min(Core.graphics.getWidth() / 1.2f, 540f)
@@ -44,13 +49,62 @@ public class RangeDisplaySettingsView extends BaseComponent {
                         });
                     });
 
+                    // Stroke Width Slider
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.range-display.settings.stroke-width")).left();
+                        spacer();
+                        slider(feature.strokeWidthConfig.signal(), 1.0f, 3.0f, 0.5f);
+                        row().width(unit(12)).children(() -> {
+                            text(strokeWidthText);
+                        });
+                    });
+
                     divider();
+
+                    // Hover-Only Mode Toggle
+                    checkbox(Core.bundle.get("feature.range-display.settings.hover-only"),
+                            feature.hoverOnlyConfig.signal()).growX();
 
                     // Dashed Lines Toggle
                     checkbox(Core.bundle.get("feature.range-display.settings.dashed"),
                             feature.dashedConfig.signal()).growX();
 
                     divider();
+
+                    // --- Filters Section ---
+                    row().growX().children(() -> {
+                        text(Core.bundle.get("feature.range-display.settings.section.filters")).left();
+                    });
+
+                    // Proximity Filter
+                    checkbox(Core.bundle.get("feature.range-display.settings.proximity-filter"),
+                            feature.proximityFilterConfig.signal()).growX();
+
+                    // Proximity Radius Slider
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.range-display.settings.proximity-radius")).left();
+                        spacer();
+                        slider(feature.proximityRadiusConfig.signal(), 10f, 60f, 5f);
+                        row().width(unit(14)).children(() -> {
+                            text(proximityText);
+                        });
+                    });
+
+                    // Turret Target & Ammo Filters
+                    checkbox(Core.bundle.get("feature.range-display.settings.filter-target-air"),
+                            feature.filterTargetAirConfig.signal()).growX();
+
+                    checkbox(Core.bundle.get("feature.range-display.settings.filter-target-ground"),
+                            feature.filterTargetGroundConfig.signal()).growX();
+
+                    checkbox(Core.bundle.get("feature.range-display.settings.only-with-ammo"),
+                            feature.onlyWithAmmoConfig.signal()).growX();
+
+                    divider();
+
+                    // Player Unit Range
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-player-unit"),
+                            feature.drawUnitRangePlayerConfig.signal()).growX();
 
                     // Turret Ranges
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-turrets"),
