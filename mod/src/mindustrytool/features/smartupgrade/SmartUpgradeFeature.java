@@ -65,7 +65,7 @@ import solim.overlay.SolimDialog;
 
 /**
  * Smart Upgrade feature: bulk upgrades connected distribution chains
- * (conveyors, ducts), conduits, bridges, walls, and drills with a single tap or keybind.
+ * (conveyors, ducts), conduits, bridges, walls, and drills with a double-tap or keybind.
  */
 public class SmartUpgradeFeature extends Feature {
 
@@ -75,12 +75,12 @@ public class SmartUpgradeFeature extends Feature {
 
     public final ConfigGroup config;
     public final ConfigValue<Integer> maxUpdatesConfig;
-    public final ConfigValue<Integer> holdDurationConfig;
+    public final ConfigValue<Integer> tapIntervalConfig;
     public final ConfigValue<Boolean> onlySameTypeConfig;
     public final ConfigValue<Boolean> traverseBridgesConfig;
 
     private int cachedMaxUpdates = 500;
-    private int cachedHoldDuration = 300;
+    private int cachedTapInterval = 300;
     private boolean cachedOnlySameType = false;
     private boolean cachedTraverseBridges = true;
 
@@ -88,9 +88,8 @@ public class SmartUpgradeFeature extends Feature {
     private @Nullable Table currentMenu;
     private @Nullable Tile selectedTile;
 
-    private @Nullable Tile touchTile;
-    private long touchTime;
-    private boolean holdTriggered;
+    private @Nullable Building lastTapBuild;
+    private long lastTapTime;
 
     public SmartUpgradeFeature() {
         super(FeatureMetadata.builder()
@@ -103,12 +102,12 @@ public class SmartUpgradeFeature extends Feature {
 
         config = configGroup();
         maxUpdatesConfig = config.intValue("max-updates", 500);
-        holdDurationConfig = config.intValue("hold-duration", 300);
+        tapIntervalConfig = config.intValue("tap-interval", 300);
         onlySameTypeConfig = config.boolValue("only-same-type", false);
         traverseBridgesConfig = config.boolValue("traverse-bridges", true);
 
         maxUpdatesConfig.signal().subscribe(v -> cachedMaxUpdates = v != null ? v : 500);
-        holdDurationConfig.signal().subscribe(v -> cachedHoldDuration = v != null ? v : 300);
+        tapIntervalConfig.signal().subscribe(v -> cachedTapInterval = v != null ? v : 300);
         onlySameTypeConfig.signal().subscribe(v -> cachedOnlySameType = v != null ? v : false);
         traverseBridgesConfig.signal().subscribe(v -> cachedTraverseBridges = v != null ? v : true);
 
@@ -122,15 +121,51 @@ public class SmartUpgradeFeature extends Feature {
         Events.run(Trigger.draw, this::draw);
 
         Events.on(TapEvent.class, e -> {
-            if (currentMenu != null && !isMenuTouched()) {
+            if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.player == null) {
+                return;
+            }
+
+            if (currentMenu != null) {
+                if (isMenuTouched()) {
+                    return;
+                }
                 closeMenu();
+            }
+
+            if (Core.scene != null && Core.scene.hasMouse()) {
+                resetTap();
+                return;
+            }
+
+            if (Vars.control != null && Vars.control.input != null && Vars.control.input.isBuilding) {
+                resetTap();
+                return;
+            }
+
+            if (e == null || e.tile == null || e.tile.build == null
+                    || e.tile.team() != Vars.player.team()
+                    || getGroup(e.tile.block()) == BlockGroup.NONE) {
+                resetTap();
+                return;
+            }
+
+            Building tapped = e.tile.build;
+            long now = Time.millis();
+            boolean isDoubleTap = lastTapBuild != null && lastTapBuild == tapped
+                    && now - lastTapTime <= cachedTapInterval;
+            if (isDoubleTap) {
+                resetTap();
+                showMenu(e.tile);
+            } else {
+                lastTapBuild = tapped;
+                lastTapTime = now;
             }
         });
 
         Events.on(StateChangeEvent.class, e -> {
             if (e.to == State.menu) {
                 closeMenu();
-                resetHold();
+                resetTap();
             }
         });
     }
@@ -139,8 +174,8 @@ public class SmartUpgradeFeature extends Feature {
         Integer max = maxUpdatesConfig.get();
         cachedMaxUpdates = max != null ? max : 500;
 
-        Integer hold = holdDurationConfig.get();
-        cachedHoldDuration = hold != null ? hold : 300;
+        Integer interval = tapIntervalConfig.get();
+        cachedTapInterval = interval != null ? interval : 300;
 
         Boolean sameType = onlySameTypeConfig.get();
         cachedOnlySameType = sameType != null ? sameType : false;
@@ -151,7 +186,7 @@ public class SmartUpgradeFeature extends Feature {
 
     public void resetToDefaults() {
         maxUpdatesConfig.reset();
-        holdDurationConfig.reset();
+        tapIntervalConfig.reset();
         onlySameTypeConfig.reset();
         traverseBridgesConfig.reset();
         syncConfigCache();
@@ -160,7 +195,7 @@ public class SmartUpgradeFeature extends Feature {
     @Override
     public void onDisable() {
         closeMenu();
-        resetHold();
+        resetTap();
     }
 
     @Override
@@ -366,7 +401,7 @@ public class SmartUpgradeFeature extends Feature {
     private void update() {
         if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.player == null) {
             closeMenu();
-            resetHold();
+            resetTap();
             return;
         }
 
@@ -375,56 +410,15 @@ public class SmartUpgradeFeature extends Feature {
                 closeMenu();
                 return;
             }
-        }
-
-        if (Core.input != null && Core.input.isTouched()) {
-            if (currentMenu != null) {
-                if (Core.input.justTouched() && !isMenuTouched()) {
-                    closeMenu();
-                }
-                return;
+            if (Core.input.isTouched() && Core.input.justTouched() && !isMenuTouched()) {
+                closeMenu();
             }
-
-            if (Core.scene != null && Core.scene.hasMouse()) {
-                resetHold();
-                return;
-            }
-
-            if (Vars.control != null && Vars.control.input != null && Vars.control.input.isBuilding) {
-                resetHold();
-                return;
-            }
-
-            if (Vars.world == null) {
-                resetHold();
-                return;
-            }
-
-            Tile tile = Vars.world.tileWorld(Core.input.mouseWorldX(), Core.input.mouseWorldY());
-            if (tile == null || tile.build == null || tile.team() != Vars.player.team()
-                    || getGroup(tile.block()) == BlockGroup.NONE) {
-                resetHold();
-                return;
-            }
-
-            if (touchTile == null || touchTile != tile) {
-                touchTile = tile;
-                touchTime = Time.millis();
-                holdTriggered = false;
-            } else if (!holdTriggered) {
-                if (Time.timeSinceMillis(touchTime) >= cachedHoldDuration) {
-                    holdTriggered = true;
-                    showMenu(tile);
-                }
-            }
-        } else {
-            resetHold();
         }
     }
 
-    private void resetHold() {
-        touchTile = null;
-        holdTriggered = false;
+    private void resetTap() {
+        lastTapBuild = null;
+        lastTapTime = 0L;
     }
 
     private void draw() {
