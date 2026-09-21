@@ -6,8 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import mindustrytool.services.update.ChangelogFormatter;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class ChangelogFormatterTest {
+class ChangelogFormatterTest extends SolimEnv {
 
     @Test
     void renderMarkdown_link() {

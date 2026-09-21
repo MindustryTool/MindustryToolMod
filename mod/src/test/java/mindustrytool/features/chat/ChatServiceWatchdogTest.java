@@ -1,20 +1,25 @@
 package mindustrytool.features.chat;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockSettings;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import mindustrytool.models.response.ChatMessage;
-import mindustrytool.models.response.UserData;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import mindustrytool.models.response.ChatMessage;
+import mindustrytool.models.response.UserData;
+import mindustrytool.test.MindustryTestEnv;
 import solim.reactive.Signal;
 
-class ChatServiceWatchdogTest {
+class ChatServiceWatchdogTest extends MindustryTestEnv {
 
     private Signal<String> activeChannelSignal;
     private ChatStore store;
@@ -22,8 +27,6 @@ class ChatServiceWatchdogTest {
 
     @BeforeEach
     void setUp() {
-        Core.app = new MockApplication();
-        Core.settings = new MockSettings();
 
         activeChannelSignal = Signal.of("ch1");
         store = new ChatStore(activeChannelSignal, Signal.of(false), Signal.of(false));

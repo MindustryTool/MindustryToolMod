@@ -15,7 +15,7 @@ import solim.runtime.ParentStack;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
-class SolimTestHarnessTest extends SolimTestHarness {
+class SolimTestHarnessTest extends SolimEnv {
 
 	@Test
 	void harnessEnsuresCleanAmbientContexts() {

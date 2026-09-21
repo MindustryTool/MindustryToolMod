@@ -1,40 +1,33 @@
 package solim.display;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.func.Cons;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import arc.util.Scaling;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import java.util.List;
 import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.reactive.Signal;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class NetworkImageComponentTest {
+class NetworkImageComponentTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @BeforeEach
     void setup() {
@@ -337,19 +330,11 @@ class NetworkImageComponentTest {
         TextureRegion regionSquare = new TextureRegion();
         TextureRegion regionRounded = new TextureRegion();
 
-        NetworkImage.setImageLoader(new NetworkImage.ImageLoader() {
-            @Override
-            public void load(String url, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
-                load(url, 0, onSuccess, onError);
-            }
-
-            @Override
-            public void load(String url, int radius, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
-                if (radius > 0) {
-                    onSuccess.get(regionRounded);
-                } else {
-                    onSuccess.get(regionSquare);
-                }
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> {
+            if (radius > 0) {
+                onSuccess.get(regionRounded);
+            } else {
+                onSuccess.get(regionSquare);
             }
         });
 

@@ -8,4 +8,5 @@ dependencies {
 
 	// Mindustry/Arc needed at test runtime for Element instantiation in component tests
 	testImplementation "Anuken:Mindustry:${mindustryVersion}"
+	testImplementation project(':solim-test')
 }

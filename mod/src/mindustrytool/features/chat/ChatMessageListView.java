@@ -172,6 +172,7 @@ public class ChatMessageListView extends BaseComponent {
             dynamic(hasChannel, channelSelected -> {
                 if (!Boolean.TRUE.equals(channelSelected)) {
                     return query(store.channels().channelsQuery())
+                            .grow()
                             .loading(Loader::centered)
                             .error(chanErr -> column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
                                 icon(Icon.warning).size(unit(6)).color(Color.scarlet);
@@ -180,7 +181,8 @@ public class ChatMessageListView extends BaseComponent {
                                         .fontScale(1.0f)
                                         .wrap()
                                         .center();
-                                text(chanErr != null ? chanErr.getMessage() : "").color(Color.gray).fontScale(0.85f).wrap().center();
+                                text(chanErr != null ? chanErr.getMessage() : "").color(Color.gray).fontScale(0.85f)
+                                        .wrap().center();
                                 button(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"), () -> {
                                     if (service != null) {
                                         service.refreshChannels();

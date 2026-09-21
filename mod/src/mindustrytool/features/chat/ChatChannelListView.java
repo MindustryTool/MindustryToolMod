@@ -38,6 +38,7 @@ public class ChatChannelListView extends BaseComponent {
     protected Element build() {
         return column().name("channel-list").grow().gap(unit(1)).padding(unit(2)).children(() -> {
             query(store.channels().channelsQuery())
+                    .grow()
                     .loading(Loader::centered)
                     .error(err -> column().grow().center().gap(unit(2)).padding(unit(2)).children(() -> {
                         icon(Icon.warning).size(unit(6)).color(Color.scarlet);

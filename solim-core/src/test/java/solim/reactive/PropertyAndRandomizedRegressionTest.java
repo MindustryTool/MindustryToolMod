@@ -26,11 +26,11 @@ import solim.layout.Row;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.runtime.StructuralReconciler;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 import solim.test.TestObserver;
 import solim.test.TestScheduler;
 
-public class PropertyAndRandomizedRegressionTest extends SolimTestHarness {
+public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 
 	// ==========================================
 	// Phase 22: Randomized Property Tests

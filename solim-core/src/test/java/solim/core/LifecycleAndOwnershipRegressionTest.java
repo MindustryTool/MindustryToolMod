@@ -18,11 +18,11 @@ import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
 import solim.runtime.ComponentContext;
 import solim.runtime.StructuralReconciler;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 import solim.test.TestComponent;
 import solim.test.TestDisposable;
 
-public class LifecycleAndOwnershipRegressionTest extends SolimTestHarness {
+public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 
 	@Test
 	void lazyBuildExecutesOnlyOnFirstElementCall() {

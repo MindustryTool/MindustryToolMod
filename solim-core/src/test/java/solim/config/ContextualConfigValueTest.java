@@ -9,8 +9,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class ContextualConfigValueTest {
+class ContextualConfigValueTest extends SolimEnv {
 
 	@BeforeAll
 	static void initSettings() {

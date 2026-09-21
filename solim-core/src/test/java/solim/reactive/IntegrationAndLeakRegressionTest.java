@@ -22,10 +22,10 @@ import solim.layout.Column;
 import solim.layout.Row;
 import solim.runtime.ParentStack;
 import solim.runtime.StructuralReconciler;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 import solim.test.TestScheduler;
 
-public class IntegrationAndLeakRegressionTest extends SolimTestHarness {
+public class IntegrationAndLeakRegressionTest extends SolimEnv {
 
 	// ==========================================
 	// Phase 19: Async & Lifecycle Behavior

@@ -8,8 +8,9 @@ import arc.struct.Seq;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class OrderedSeqPersisterTest {
+class OrderedSeqPersisterTest extends SolimEnv {
 
 	private OrderedSeqPersister persister;
 

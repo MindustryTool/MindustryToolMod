@@ -1,24 +1,26 @@
 package mindustrytool.features.quickaccess;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Application;
+import java.lang.reflect.Field;
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import arc.Core;
-import arc.Graphics;
-import arc.Settings;
-import arc.audio.Audio;
 import arc.func.Prov;
-import arc.graphics.GL20;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
 import arc.mock.MockAudio;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
 import arc.scene.Element;
 import arc.scene.Group;
-import arc.scene.Scene;
 import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
@@ -31,30 +33,17 @@ import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
 import arc.util.Nullable;
-import java.lang.reflect.Field;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.chat.ChatFeature;
+import mindustrytool.test.MindustryTestEnv;
 import solim.core.Component;
 import solim.core.SolimToken;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import solim.overlay.SolimDialog;
 
-class QuickAccessClickDelegationTest {
-
-    static Application prevApp;
-    static Graphics prevGraphics;
-    static GL20 prevGl;
-    static Audio prevAudio;
-    static Scene prevScene;
+class QuickAccessClickDelegationTest extends MindustryTestEnv {
 
     static class DefaultTestFeature extends Feature {
         DefaultTestFeature() {
@@ -157,31 +146,12 @@ class QuickAccessClickDelegationTest {
         }
     }
 
-    @BeforeAll
-    static void initArc() {
-        prevApp = Core.app;
-        prevGraphics = Core.graphics;
-        prevGl = Core.gl;
-        prevAudio = Core.audio;
-        prevScene = Core.scene;
-
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
+    @BeforeEach
+    void setUpScene() {
         if (Core.audio == null) {
             Core.audio = new MockAudio();
         }
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
-        if (Core.scene == null) {
-            Core.scene = new Scene();
-        }
-
+        newScene();
         FontData fontData = new FontData() {
             @Override
             public boolean hasGlyph(char ch) {
@@ -190,69 +160,21 @@ class QuickAccessClickDelegationTest {
         };
         Font font = new Font(fontData, new TextureRegion(), false);
 
-        try {
-            Core.scene.getStyle(ButtonStyle.class);
-        } catch (IllegalArgumentException missing) {
-            Core.scene.addStyle(ButtonStyle.class, new ButtonStyle());
-        }
-        try {
-            Core.scene.getStyle(DialogStyle.class);
-        } catch (IllegalArgumentException missing) {
-            DialogStyle style = new DialogStyle();
-            style.titleFont = font;
-            Core.scene.addStyle(DialogStyle.class, style);
-        }
-        try {
-            Core.scene.getStyle(TextButtonStyle.class);
-        } catch (IllegalArgumentException missing) {
-            TextButtonStyle style = new TextButtonStyle();
-            style.font = font;
-            Core.scene.addStyle(TextButtonStyle.class, style);
-        }
-        try {
-            Core.scene.getStyle(LabelStyle.class);
-        } catch (IllegalArgumentException missing) {
-            LabelStyle style = new LabelStyle();
-            style.font = font;
-            Core.scene.addStyle(LabelStyle.class, style);
-        }
-        try {
-            Core.scene.getStyle(TextFieldStyle.class);
-        } catch (IllegalArgumentException missing) {
-            TextFieldStyle style = new TextFieldStyle();
-            style.font = font;
-            Core.scene.addStyle(TextFieldStyle.class, style);
-        }
+        Core.scene.addStyle(ButtonStyle.class, new ButtonStyle());
+        DialogStyle dialogStyle = new DialogStyle();
+        dialogStyle.titleFont = font;
+        Core.scene.addStyle(DialogStyle.class, dialogStyle);
+        TextButtonStyle textButtonStyle = new TextButtonStyle();
+        textButtonStyle.font = font;
+        Core.scene.addStyle(TextButtonStyle.class, textButtonStyle);
+        Core.scene.addStyle(LabelStyle.class, new LabelStyle(font, null));
+        TextFieldStyle textFieldStyle = new TextFieldStyle();
+        textFieldStyle.font = font;
+        Core.scene.addStyle(TextFieldStyle.class, textFieldStyle);
 
         Icon.book = new TextureRegionDrawable();
-        if (Icon.move == null) {
-            Icon.move = new TextureRegionDrawable();
-        }
-        if (Icon.settings == null) {
-            Icon.settings = new TextureRegionDrawable();
-        }
-    }
-
-    @AfterAll
-    static void tearDownArc() {
-        Core.app = prevApp;
-        Core.graphics = prevGraphics;
-        Core.gl = prevGl;
-        Core.audio = prevAudio;
-        Core.scene = prevScene;
-    }
-
-    @BeforeEach
-    void setUp() {
-        Core.settings = new Settings();
-        Core.settings.clear();
-        FeatureManager.clear();
-    }
-
-    @AfterEach
-    void tearDown() {
-        FeatureManager.clear();
-        Core.settings.clear();
+        Icon.move = new TextureRegionDrawable();
+        Icon.settings = new TextureRegionDrawable();
     }
 
     @Test
@@ -325,6 +247,7 @@ class QuickAccessClickDelegationTest {
         chat.onQuickAccessClick();
         assertTrue(chat.isEnabled(), "Clicking disabled chat enables it");
         assertFalse(chat.collapsedConfig.get(), "Clicking disabled chat uncollapses it");
+        flushEffects();
     }
 
     @Test

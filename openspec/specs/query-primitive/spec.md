@@ -7,7 +7,15 @@ Async reactive primitive `Query<T>` — the async counterpart to `Computed` — 
 ## Requirements
 
 ### Requirement: Query Creation
-`Query<T>` SHALL be created via `Query.of(QueryKey key, Supplier<CompletableFuture<T>> fetcher)`. It SHALL automatically register with the active `ComponentContext` for lifecycle ownership.
+`Query<T>` SHALL be created via `Query.of(QueryKey key, Supplier<CompletableFuture<T>> fetcher)` for simple queries, or via `Query.builder()` for advanced configuration. The builder SHALL support:
+- `.key(QueryKey)` — static cache key
+- `.key(Supplier<QueryKey>)` — dynamic cache key recomputed per fetch
+- `.fetch(Supplier<CompletableFuture<T>>)` — required fetcher
+- `.enabled(Readable<Boolean>)` — enablement gate
+- `.staleTime(Duration)`, `.gcTime(Duration)`, `.retry(int)`, `.retryDelay(Duration)`, `.refetchInterval(Duration)` — options
+- `.build()` — constructs the Query
+
+`Query<T>` SHALL additionally be created via `Query.noKey(Supplier<CompletableFuture<T>>)` for stateless queries; such queries use an anonymous key and cannot be targeted by cache invalidation. All queries SHALL automatically register with the active `ComponentContext` for lifecycle ownership. `Query.ofDynamic(...)`, the post-construction chain configuration methods, and the `Query.of(Readable<Boolean>, Supplier)` overload SHALL NOT exist.
 
 #### Scenario: Query created in component build
 - **WHEN** `Query.of(key, fetcher)` is called inside a component's `build()` method
@@ -16,6 +24,26 @@ Async reactive primitive `Query<T>` — the async counterpart to `Computed` — 
 #### Scenario: Query eager fetch
 - **WHEN** a Query is created
 - **THEN** it SHALL immediately trigger its first fetch (unless disabled or cache has fresh data)
+
+#### Scenario: Builder with static key
+- **WHEN** a Query is built via `Query.builder().key(QueryKey.of("user", id)).fetch(...).build()`
+- **THEN** the resulting Query SHALL behave identically to `Query.of(key, fetcher)` with the supplied options applied
+
+#### Scenario: Builder with dynamic key
+- **WHEN** a Query is built via `Query.builder().key(() -> QueryKey.of("page", page.get())).fetch(...).build()`
+- **THEN** the cache key SHALL be recomputed before every fetch from reactive state, and each parameter combination SHALL own its own cache entry and in-flight request
+
+#### Scenario: Builder with all options
+- **WHEN** a Query is built with `.staleTime(...)`, `.gcTime(...)`, `.retry(n)`, `.retryDelay(...)`, and `.refetchInterval(...)` applied before `.build()`
+- **THEN** all options SHALL be in effect before the first fetch is triggered
+
+#### Scenario: Builder without key
+- **WHEN** a Query is built via `Query.builder().fetch(...).build()` without a key
+- **THEN** the Query SHALL use an anonymous key equivalent to `Query.noKey(fetcher)`
+
+#### Scenario: Stateless noKey query
+- **WHEN** `Query.noKey(fetcher)` is called
+- **THEN** a Query with an anonymous key SHALL be created that cannot be targeted by `QueryCache.invalidate(QueryKey)`
 
 ### Requirement: Reactive Dependency Tracking
 `Query` SHALL automatically track reactive dependencies read inside the fetcher lambda, using the same `ReactiveContext` mechanism as `Computed` and `Effect`.
@@ -70,10 +98,10 @@ All signal mutations resulting from async fetch completion SHALL be executed on 
 - **THEN** fetch A's result SHALL be discarded and only fetch B's result SHALL be applied
 
 ### Requirement: Enabled/Disabled Queries
-`Query` SHALL support an `.enabled(Readable<Boolean>)` configuration. When disabled, the Query SHALL not fetch and SHALL retain its current state.
+`Query` SHALL support an `.enabled(Readable<Boolean>)` builder option. When disabled, the Query SHALL not fetch and SHALL retain its current state.
 
 #### Scenario: Disabled query does not fetch
-- **WHEN** a Query is created with `.enabled(Readable.of(false))`
+- **WHEN** a Query is created with `.enabled(Readable.of(false))` applied before `.build()`
 - **THEN** no fetch SHALL be triggered
 
 #### Scenario: Enabled transition triggers fetch

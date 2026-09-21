@@ -16,9 +16,9 @@ import org.junit.jupiter.api.Test;
 import solim.runtime.ComponentContext;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 
-class MapSignalTest extends SolimTestHarness {
+class MapSignalTest extends SolimEnv {
 
     @Test
     void wholeMapReactivity() {

@@ -114,30 +114,52 @@ public final class QueryCache {
             }
         }
 
-        CacheEntry<?> entry = getEntry(key);
-        if (entry != null) {
-            int remaining = entry.decrementObservers();
-            if (remaining <= 0) {
-                if (gcTimeMillis <= 0) {
-                    entries.remove(key);
-                    observers.remove(key);
-                    entry.clear();
-                } else {
-                    float delaySeconds = Math.max(0.001f, gcTimeMillis / 1000f);
-                    Disposable task = scheduler.schedule(() -> {
-                        synchronized (entry) {
-                            if (entry.getActiveObservers() <= 0) {
-                                entries.remove(key);
-                                observers.remove(key);
-                                entry.clear();
-                            }
-                        }
-                    }, delaySeconds);
-                    entry.setGcTask(task);
-                }
-            }
-        }
-    }
+		CacheEntry<?> entry = getEntry(key);
+		if (entry != null) {
+			int remaining = entry.decrementObservers();
+			if (remaining <= 0) {
+				scheduleEviction(key, entry, gcTimeMillis);
+			}
+		}
+	}
+
+	/**
+	 * Evicts the entry for {@code key} after {@code gcTimeMillis} only when it
+	 * has no active observers. Used for parameter-keyed entries fetched without
+	 * a registered observer (e.g. dynamic-key queries) so they do not leak.
+	 */
+	public void evictIfUnobserved(QueryKey key, long gcTimeMillis) {
+		Objects.requireNonNull(key, "key cannot be null");
+		CacheEntry<?> entry = getEntry(key);
+		if (entry != null) {
+			scheduleEviction(key, entry, gcTimeMillis);
+		}
+	}
+
+	private void scheduleEviction(QueryKey key, CacheEntry<?> entry, long gcTimeMillis) {
+		if (gcTimeMillis <= 0) {
+			removeEntry(key, entry);
+		} else {
+			float delaySeconds = Math.max(0.001f, gcTimeMillis / 1000f);
+			Disposable task = scheduler.schedule(() -> {
+				synchronized (entry) {
+					if (entry.getActiveObservers() <= 0) {
+						removeEntry(key, entry);
+					}
+				}
+			}, delaySeconds);
+			entry.setGcTask(task);
+		}
+	}
+
+	private void removeEntry(QueryKey key, CacheEntry<?> entry) {
+		entries.remove(key);
+		entry.clear();
+		List<InvalidationListener> list = observers.get(key);
+		if (list != null && list.isEmpty()) {
+			observers.remove(key);
+		}
+	}
 
     public void invalidate(QueryKey key) {
         Objects.requireNonNull(key, "key cannot be null");

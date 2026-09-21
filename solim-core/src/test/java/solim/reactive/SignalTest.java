@@ -9,8 +9,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
+import solim.test.SolimEnv;
 
-class SignalTest {
+class SignalTest extends SolimEnv {
 
 	@Test
 	void equalityGuardedNotification() {

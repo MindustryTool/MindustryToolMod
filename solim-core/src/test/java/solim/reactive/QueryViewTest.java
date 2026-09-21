@@ -17,17 +17,17 @@ import solim.core.Component;
 import solim.display.Text;
 import solim.input.Button;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class QueryViewTest extends SolimTestHarness {
+class QueryViewTest extends SolimEnv {
 
 	private QueryCache cache;
 
 	@BeforeEach
 	void setUp() {
-		setUpHarness();
+		setUpSolimEnv();
 		cache = new QueryCache();
 		QueryCache.setInstanceForTest(cache);
 		SignalDispatcher.resetForTests();
@@ -84,7 +84,11 @@ class QueryViewTest extends SolimTestHarness {
 	void defaultLoadingAndError() {
 		QueryKey key = QueryKey.of("qv-default");
 		CompletableFuture<String> future = new CompletableFuture<>();
-		Query<String> query = Query.of(key, () -> future).retry(0);
+		Query<String> query = Query.<String>builder()
+				.key(key)
+				.fetch(() -> future)
+				.retry(0)
+				.build();
 
 		QueryView<String> view = QueryView.of(query).data(QueryViewTest::label);
 		view.element();
@@ -123,7 +127,11 @@ class QueryViewTest extends SolimTestHarness {
 	void loadingToErrorTransition() {
 		QueryKey key = QueryKey.of("qv-load-to-error");
 		CompletableFuture<String> future = new CompletableFuture<>();
-		Query<String> query = Query.of(key, () -> future).retry(0);
+		Query<String> query = Query.<String>builder()
+				.key(key)
+				.fetch(() -> future)
+				.retry(0)
+				.build();
 
 		QueryView<String> view = QueryView.of(query)
 				.loading(() -> label("Loading..."))
@@ -145,7 +153,11 @@ class QueryViewTest extends SolimTestHarness {
 		CompletableFuture<String> f1 = new CompletableFuture<>();
 		AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(f1);
 
-		Query<String> query = Query.of(key, futureRef::get).retry(0);
+		Query<String> query = Query.<String>builder()
+				.key(key)
+				.fetch(futureRef::get)
+				.retry(0)
+				.build();
 		f1.completeExceptionally(new RuntimeException("First fail"));
 
 		QueryView<String> view = QueryView.of(query)
@@ -243,7 +255,11 @@ class QueryViewTest extends SolimTestHarness {
 		AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(
 				CompletableFuture.completedFuture("initial-data"));
 
-		Query<String> query = Query.of(key, futureRef::get).retry(0);
+		Query<String> query = Query.<String>builder()
+				.key(key)
+				.fetch(futureRef::get)
+				.retry(0)
+				.build();
 
 		QueryView<String> view = QueryView.of(query)
 				.error(err -> label("Error View"))
@@ -271,7 +287,7 @@ class QueryViewTest extends SolimTestHarness {
 	@Test
 	void dataChangesUpdatesView() {
 		Signal<Integer> id = Signal.of(1);
-		Query<String> query = Query.of(() -> CompletableFuture.completedFuture("User " + id.get()));
+		Query<String> query = Query.noKey(() -> CompletableFuture.completedFuture("User " + id.get()));
 
 		QueryView<String> view = QueryView.of(query).data(QueryViewTest::label);
 		view.element();
@@ -285,7 +301,7 @@ class QueryViewTest extends SolimTestHarness {
 
 	@Test
 	void emptyDataHandling() {
-		Query<List<String>> query = Query.of(() -> CompletableFuture.completedFuture(Collections.emptyList()));
+		Query<List<String>> query = Query.noKey(() -> CompletableFuture.completedFuture(Collections.emptyList()));
 
 		QueryView<List<String>> view = QueryView.of(query)
 				.data(list -> label("Count: " + list.size()));
@@ -300,7 +316,7 @@ class QueryViewTest extends SolimTestHarness {
 		List<String> itemsV1 = Arrays.asList("A", "B", "C");
 
 		Signal<List<String>> itemsSignal = Signal.of(itemsV1);
-		Query<List<String>> query = Query.of(() -> CompletableFuture.completedFuture(itemsSignal.get()));
+		Query<List<String>> query = Query.noKey(() -> CompletableFuture.completedFuture(itemsSignal.get()));
 
 		List<Element> mountedElements = new ArrayList<>();
 		QueryView<List<String>> view = QueryView.of(query).data(items -> () -> {
@@ -324,7 +340,7 @@ class QueryViewTest extends SolimTestHarness {
 		AtomicInteger buildCount = new AtomicInteger(0);
 		Signal<String> dep = Signal.of("same");
 
-		Query<String> query = Query.of(() -> {
+		Query<String> query = Query.noKey(() -> {
 			dep.get();
 			return CompletableFuture.completedFuture("static-value");
 		});
@@ -377,7 +393,7 @@ class QueryViewTest extends SolimTestHarness {
 
 	@Test
 	void callbackExceptionDoesNotCrash() {
-		Query<String> query = Query.of(() -> CompletableFuture.completedFuture("boom"));
+		Query<String> query = Query.noKey(() -> CompletableFuture.completedFuture("boom"));
 
 		QueryView<String> view = QueryView.of(query).data(data -> {
 			throw new RuntimeException("UI callback crash");
@@ -420,7 +436,7 @@ class QueryViewTest extends SolimTestHarness {
 
 	@Test
 	void querySharedByMultipleComponents() {
-		Query<String> sharedQuery = Query.of(() -> CompletableFuture.completedFuture("initial"));
+		Query<String> sharedQuery = Query.noKey(() -> CompletableFuture.completedFuture("initial"));
 
 		QueryView<String> v1 = QueryView.of(sharedQuery).data(QueryViewTest::label);
 		QueryView<String> v2 = QueryView.of(sharedQuery).data(QueryViewTest::label);
@@ -455,7 +471,7 @@ class QueryViewTest extends SolimTestHarness {
 	@Test
 	void disposalCleansUpChildrenAndStopsUpdates() {
 		Signal<String> dataSignal = Signal.of("v1");
-		Query<String> query = Query.of(() -> CompletableFuture.completedFuture(dataSignal.get()));
+		Query<String> query = Query.noKey(() -> CompletableFuture.completedFuture(dataSignal.get()));
 
 		AtomicBoolean childDisposed = new AtomicBoolean(false);
 		QueryView<String> view = QueryView.of(query).data(data -> new Component() {
@@ -530,7 +546,7 @@ class QueryViewTest extends SolimTestHarness {
 	@Test
 	void queryWithAsyncDelayRendersDataAfterWaiting() throws Exception {
 		CompletableFuture<String> future = new CompletableFuture<>();
-		Query<String> query = Query.of(() -> future);
+		Query<String> query = Query.noKey(() -> future);
 
 		QueryView<String> view = QueryView.of(query);
 		view.element();
@@ -556,7 +572,7 @@ class QueryViewTest extends SolimTestHarness {
 	@Test
 	void queryWithCustomLoadingViaFluentMethod() {
 		CompletableFuture<String> future = new CompletableFuture<>();
-		Query<String> query = Query.of(() -> future);
+		Query<String> query = Query.noKey(() -> future);
 
 		QueryView<String> view = QueryView.of(query);
 		view.element(); // build() runs with default loading
@@ -569,7 +585,10 @@ class QueryViewTest extends SolimTestHarness {
 	@Test
 	void queryWithCustomErrorViaFluentMethod() {
 		CompletableFuture<String> future = new CompletableFuture<>();
-		Query<String> query = Query.of(() -> future).retry(0);
+		Query<String> query = Query.<String>builder()
+				.fetch(() -> future)
+				.retry(0)
+				.build();
 		future.completeExceptionally(new RuntimeException("Crash"));
 
 		QueryView<String> view = QueryView.of(query);
@@ -583,7 +602,10 @@ class QueryViewTest extends SolimTestHarness {
 	@Test
 	void queryEnabledToggledRendersData() {
 		Signal<Boolean> enabled = Signal.of(false);
-		Query<String> query = Query.of(enabled, () -> CompletableFuture.completedFuture("enabled-data"));
+		Query<String> query = Query.<String>builder()
+				.enabled(enabled)
+				.fetch(() -> CompletableFuture.completedFuture("enabled-data"))
+				.build();
 
 		QueryView<String> view = QueryView.of(query);
 		view.element();
@@ -605,7 +627,7 @@ class QueryViewTest extends SolimTestHarness {
 		// of the data component even when the data hadn't changed and the caller
 		// never used isFetching (simple Function<T,Component> variant).
 		CompletableFuture<String> future = new CompletableFuture<>();
-		Query<String> query = Query.of(() -> future);
+		Query<String> query = Query.noKey(() -> future);
 
 		QueryView<String> view = QueryView.of(query);
 		view.element();

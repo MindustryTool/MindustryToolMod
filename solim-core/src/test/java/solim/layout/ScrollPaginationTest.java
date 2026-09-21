@@ -4,8 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class ScrollPaginationTest {
+class ScrollPaginationTest extends SolimEnv {
 
 	@Test
 	void reachTopTriggersOnThresholdAndDebounces() {

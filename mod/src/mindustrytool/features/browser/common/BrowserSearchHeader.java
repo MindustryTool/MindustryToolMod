@@ -109,12 +109,14 @@ public class BrowserSearchHeader extends BaseComponent {
     }
 
     private void renderChip(String tag) {
-        button(tag, Icon.cancelSmall, () -> state.toggleTag(tag))
+        button(tag, () -> state.toggleTag(tag))
                 .gap(unit(1))
                 .style(Styles.cleart)
                 .border(1.5f, Color.lightGray)
-                .rounded(3)
-                .height(unit(9));
+                .rounded(6)
+                .paddingX(unit(3))
+                .height(unit(9))
+                .children(() -> icon(Icon.cancel));
     }
 
     private void submitNow() {

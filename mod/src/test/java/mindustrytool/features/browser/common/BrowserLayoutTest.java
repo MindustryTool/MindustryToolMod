@@ -3,11 +3,13 @@ package mindustrytool.features.browser.common;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import arc.struct.Seq;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class BrowserLayoutTest {
+class BrowserLayoutTest extends SolimEnv {
 
     @Test
     void calculateContentWidthAndGutterSymmetry() {
@@ -49,5 +51,18 @@ class BrowserLayoutTest {
         state.goToPage(2);
         state.setPageSize(BrowserLayout.PAGE_SIZE_MAX);
         assertEquals(2, state.page().peek());
+    }
+
+    @Test
+    void firstItemsSlicesForChunkedRendering() {
+        Seq<String> all = Seq.with("a", "b", "c", "d");
+
+        assertEquals(2, BrowserState.firstItems(all, 2).size);
+        assertEquals("a", BrowserState.firstItems(all, 2).get(0));
+        assertEquals("b", BrowserState.firstItems(all, 2).get(1));
+        assertEquals(4, BrowserState.firstItems(all, 100).size);
+        assertTrue(BrowserState.firstItems(all, 0).isEmpty());
+        assertTrue(BrowserState.firstItems(all, -5).isEmpty());
+        assertTrue(BrowserState.<String>firstItems(null, 8).isEmpty());
     }
 }

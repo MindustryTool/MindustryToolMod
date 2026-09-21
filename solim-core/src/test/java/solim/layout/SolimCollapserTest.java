@@ -1,29 +1,19 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.scene.Element;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import arc.scene.Element;
 import solim.reactive.Signal;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class SolimCollapserTest {
-
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-        SignalDispatcher.register();
-    }
+class SolimCollapserTest extends SolimEnv {
 
     @Test
     void defaultStateIsCollapsed() {

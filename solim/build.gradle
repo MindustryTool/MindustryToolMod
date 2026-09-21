@@ -6,4 +6,5 @@ dependencies {
 	api project(':solim-core')
 	implementation project(':solim-runtime')
 	testImplementation "Anuken:Mindustry:${mindustryVersion}"
+	testImplementation project(':solim-test')
 }

@@ -1,72 +1,27 @@
 package solim.modifier;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.graphics.g2d.Font;
-import arc.graphics.g2d.Font.FontData;
-import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.Element;
-import arc.scene.Scene;
 import arc.scene.event.EventListener;
 import arc.scene.ui.Label;
-import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Table;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.input.Button;
-import solim.runtime.SignalDispatcher;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class ElementConfigTooltipTest {
+class ElementConfigTooltipTest extends SolimEnv {
 
-    private static Scene prevScene;
-    private static boolean createdScene;
-
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
-        prevScene = Core.scene;
-        if (Core.scene == null) {
-            Core.scene = new Scene();
-            createdScene = true;
-        }
-        try {
-            Core.scene.getStyle(LabelStyle.class);
-        } catch (IllegalArgumentException missing) {
-            LabelStyle style = new LabelStyle();
-            FontData fontData = new FontData() {
-                @Override
-                public boolean hasGlyph(char ch) {
-                    return true;
-                }
-            };
-            style.font = new Font(fontData, new TextureRegion(), false);
-            Core.scene.addStyle(LabelStyle.class, style);
-        }
-    }
-
-    @AfterAll
-    static void tearDownArc() {
-        if (createdScene) {
-            Core.scene = null;
-        } else {
-            Core.scene = prevScene;
-        }
+    @BeforeEach
+    void setUp() {
+        newScene();
     }
 
     @Test

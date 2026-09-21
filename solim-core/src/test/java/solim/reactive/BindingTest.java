@@ -10,8 +10,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class BindingTest {
+class BindingTest extends SolimEnv {
 
 	static class TestElement {
 		String text = "";

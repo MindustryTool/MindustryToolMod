@@ -7,8 +7,9 @@ import java.util.List;
 import mindustrytool.models.response.ChatMessage;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class ChatMessagesTest {
+class ChatMessagesTest extends SolimEnv {
 
     private static ChatMessage msg(String id, String channelId, String content) {
         ChatMessage m = new ChatMessage();

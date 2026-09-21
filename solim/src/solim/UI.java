@@ -131,10 +131,6 @@ public final class UI {
         return s;
     }
 
-    public static SolimStack stack(@Nullable Runnable r) {
-        return stack().children(r);
-    }
-
     public static Grid grid() {
         return new Grid();
     }
@@ -545,12 +541,13 @@ public final class UI {
         return Query.of(key, enabled, fetcher);
     }
 
+    /**
+     * Creates a stateless query under an anonymous key that cannot be targeted
+     * by cache invalidation. Use {@code Query.builder()} for keyed or
+     * configured queries.
+     */
     public static <T> Query<T> query(Supplier<CompletableFuture<T>> fetcher) {
-        return Query.of(fetcher);
-    }
-
-    public static <T> Query<T> query(Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
-        return Query.of(enabled, fetcher);
+        return Query.noKey(fetcher);
     }
 
     public static <T> QueryView<T> query(Query<T> query) {

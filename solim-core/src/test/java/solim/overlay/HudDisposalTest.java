@@ -1,25 +1,28 @@
 package solim.overlay;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import arc.Application;
 import arc.Core;
 import arc.Events;
 import arc.Graphics;
 import arc.graphics.GL20;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
 import arc.mock.MockGraphics;
 import mindustry.game.EventType.ResizeEvent;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import solim.runtime.SignalDispatcher;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class HudDisposalTest {
+class HudDisposalTest extends SolimEnv {
 
 	static class ResizableMockGraphics extends MockGraphics {
 		int width = 1024;
@@ -48,13 +51,6 @@ class HudDisposalTest {
 		prevGraphics = Core.graphics;
 		prevGl = Core.gl;
 		prevGl20 = Core.gl20;
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.gl == null) {
-			Core.gl = new MockGL20();
-			Core.gl20 = (MockGL20) Core.gl;
-		}
 		mockGraphics = new ResizableMockGraphics();
 		Core.graphics = mockGraphics;
 	}

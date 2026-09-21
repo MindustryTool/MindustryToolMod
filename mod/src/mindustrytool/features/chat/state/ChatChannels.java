@@ -18,10 +18,11 @@ import solim.reactive.Signal;
 
 public final class ChatChannels {
 
-    private final Query<List<ChannelDto>> channelsQuery = Query.of(
-            QueryKey.of("chat", "channels"),
-            MindustryTool::getChatChannels
-    ).staleTime(Duration.ofSeconds(30));
+    private final Query<List<ChannelDto>> channelsQuery = Query.<List<ChannelDto>>builder()
+            .key(QueryKey.of("chat", "channels"))
+            .fetch(MindustryTool::getChatChannels)
+            .staleTime(Duration.ofSeconds(30))
+            .build();
     private final Signal<String> activeChannelId;
 
     private final Computed<ChannelDto> active;

@@ -6,9 +6,15 @@ import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.BaseDrawable;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class DrawablesTest {
+class DrawablesTest extends SolimEnv {
+
+	@BeforeEach
+	void setUp() {
+	}
 
 	static class CustomGlyphDrawable extends TextureRegionDrawable {
 		CustomGlyphDrawable(TextureRegion region) {

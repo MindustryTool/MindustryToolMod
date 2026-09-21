@@ -7,8 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import solim.test.SolimEnv;
 
-class ScreenshotNamingTest {
+class ScreenshotNamingTest extends SolimEnv {
 
     @Test
     void resolveFilenameProducesFixedTimestampedPng() {

@@ -16,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.OrderedSeqPersister;
+import solim.test.SolimEnv;
 
-class ModSettingsTest {
+class ModSettingsTest extends SolimEnv {
 
     @BeforeAll
     static void initSettings() {

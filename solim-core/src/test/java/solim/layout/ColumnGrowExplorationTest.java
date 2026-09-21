@@ -1,32 +1,22 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.core.Ui;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
+import solim.test.SolimEnv;
 
-class ColumnGrowExplorationTest {
+class ColumnGrowExplorationTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @AfterEach
     void tearDown() {

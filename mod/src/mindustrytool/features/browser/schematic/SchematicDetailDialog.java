@@ -61,10 +61,14 @@ public class SchematicDetailDialog extends SolimDialog {
             this.itemId = itemId;
             this.authorId = detail.getCreatedBy();
             this.authorQuery = authorId != null && !authorId.isEmpty()
-                    ? Query.of(QueryKey.of("user", authorId), () -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
-                            .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null && users.get(0).getName() != null
-                                    ? users.get(0).getName()
-                                    : authorId)).staleTime(Duration.ofMinutes(10))
+                    ? Query.<String>builder()
+                            .key(QueryKey.of("user", authorId))
+                            .fetch(() -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
+                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null && users.get(0).getName() != null
+                                            ? users.get(0).getName()
+                                            : authorId))
+                            .staleTime(Duration.ofMinutes(10))
+                            .build()
                     : null;
         }
 
@@ -129,6 +133,7 @@ public class SchematicDetailDialog extends SolimDialog {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.3f);
                         if (authorQuery != null) {
                             query(authorQuery)
+                            .growX()
                                     .loading(() -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
                                     .error(err -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
                                     .data(name -> text(name).color(Color.white).fontScale(1.3f));

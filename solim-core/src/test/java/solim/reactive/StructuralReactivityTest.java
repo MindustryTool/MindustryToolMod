@@ -1,32 +1,28 @@
 package solim.reactive;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static solim.core.Ui.card;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import java.util.*;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.layout.ReactiveGrid;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class StructuralReactivityTest {
+class StructuralReactivityTest extends SolimEnv {
 
-	@BeforeAll
-	static void initArc() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	static class TestComponent extends BaseComponent {
 		final String id;
@@ -154,6 +150,7 @@ class StructuralReactivityTest {
 		// Table still has 5 children reflowed
 		assertEquals(5, grid.table().getChildren().size);
 
+		SignalDispatcher.flush();
 		grid.dispose();
 		assertTrue(grid.isDisposed());
 	}

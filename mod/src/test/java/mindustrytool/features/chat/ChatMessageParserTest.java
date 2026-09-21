@@ -1,11 +1,13 @@
 package mindustrytool.features.chat;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import mindustrytool.features.chat.models.ParsedChatMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.CommandKind;
 import mindustrytool.features.chat.models.ParsedChatMessage.CommandMessage;
@@ -14,16 +16,12 @@ import mindustrytool.features.chat.models.ParsedChatMessage.MindustryToolLinkMes
 import mindustrytool.features.chat.models.ParsedChatMessage.RoomInviteMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.TextMessage;
 import mindustrytool.models.response.ChatMessage;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 
-class ChatMessageParserTest {
+class ChatMessageParserTest extends MindustryTestEnv {
 
     @BeforeEach
     void setUp() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
         ChatMessageParser.clearCache();
     }
 

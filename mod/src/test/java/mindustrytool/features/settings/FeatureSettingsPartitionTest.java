@@ -1,27 +1,27 @@
 package mindustrytool.features.settings;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.Settings;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.scene.style.TextureRegionDrawable;
-import arc.struct.Seq;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import mindustry.gen.Icon;
-import mindustrytool.features.Feature;
-import mindustrytool.features.FeatureManager;
-import mindustrytool.features.FeatureMetadata;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class FeatureSettingsPartitionTest {
+import arc.scene.style.TextureRegionDrawable;
+import arc.struct.Seq;
+import mindustry.gen.Icon;
+import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureMetadata;
+import mindustrytool.test.MindustryTestEnv;
+
+class FeatureSettingsPartitionTest extends MindustryTestEnv {
 
     static class DummyFeature extends Feature {
         private final String customName;
@@ -43,27 +43,20 @@ class FeatureSettingsPartitionTest {
 
     @BeforeAll
     static void initCore() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
         Icon.book = new TextureRegionDrawable();
         Icon.star = new TextureRegionDrawable();
     }
 
     @BeforeEach
     void setUp() {
-        Core.settings = new Settings();
-        Core.settings.clear();
-        FeatureManager.clear();
         ModSettings.featureOrder.set(new Seq<>());
         ModSettings.favoriteFeatures.set(Collections.emptySet());
     }
 
     @AfterEach
     void tearDown() {
-        FeatureManager.clear();
         ModSettings.featureOrder.set(new Seq<>());
         ModSettings.favoriteFeatures.set(Collections.emptySet());
-        Core.settings.clear();
     }
 
     @Test

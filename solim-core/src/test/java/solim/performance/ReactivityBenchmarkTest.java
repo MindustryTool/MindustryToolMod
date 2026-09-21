@@ -9,8 +9,9 @@ import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-public class ReactivityBenchmarkTest {
+public class ReactivityBenchmarkTest extends SolimEnv {
 
     @Test
     void benchmark10000SignalUpdates() {

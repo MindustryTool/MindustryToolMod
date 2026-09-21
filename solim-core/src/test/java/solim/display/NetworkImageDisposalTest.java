@@ -1,6 +1,18 @@
 package solim.display;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import arc.Application;
 import arc.Core;
@@ -8,20 +20,11 @@ import arc.Graphics;
 import arc.func.Cons;
 import arc.graphics.GL20;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
-import java.util.HashMap;
-import java.util.Map;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import solim.runtime.SignalDispatcher;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class NetworkImageDisposalTest {
+class NetworkImageDisposalTest extends SolimEnv {
 
 	static Application prevApp;
 	static Graphics prevGraphics;
@@ -34,16 +37,6 @@ class NetworkImageDisposalTest {
 		prevGraphics = Core.graphics;
 		prevGl = Core.gl;
 		prevGl20 = Core.gl20;
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-		if (Core.gl == null) {
-			Core.gl = new MockGL20();
-			Core.gl20 = (MockGL20) Core.gl;
-		}
 	}
 
 	@AfterAll
@@ -71,11 +64,11 @@ class NetworkImageDisposalTest {
 		NetworkImage.setImageLoader(null);
 	}
 
-	static final class CountingLoader implements NetworkImage.ImageLoader {
+	static final class CountingLoader implements ImageLoader {
 		final Map<String, Integer> loads = new HashMap<>();
 
 		@Override
-		public void load(String url, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
+		public void load(String url, int radius, float targetW, float targetH, Cons<TextureRegion> onSuccess, Cons<Throwable> onError) {
 			loads.put(url, loads.containsKey(url) ? loads.get(url) + 1 : 1);
 		}
 
@@ -128,3 +121,4 @@ class NetworkImageDisposalTest {
 		assertTrue(image.isDisposed());
 	}
 }
+

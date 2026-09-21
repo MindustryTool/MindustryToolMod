@@ -68,10 +68,17 @@ public class BrowserFilterDialog extends SolimDialog {
             this.state = state;
             this.useBlocks = useBlocks;
             this.usePlanets = usePlanets;
-            this.tagsQuery = Query.of(QueryKey.of("tags", tagGroup), () -> MindustryTool.getTags(tagGroup))
-                    .staleTime(Duration.ofMinutes(10));
+            this.tagsQuery = Query.<List<TagCategory>>builder()
+                    .key(QueryKey.of("tags", tagGroup))
+                    .fetch(() -> MindustryTool.getTags(tagGroup))
+                    .staleTime(Duration.ofMinutes(10))
+                    .build();
             this.planetsQuery = usePlanets
-                    ? Query.of(QueryKey.of("planets"), MindustryTool::getPlanets).staleTime(Duration.ofMinutes(10))
+                    ? Query.<List<ModData>>builder()
+                            .key(QueryKey.of("planets"))
+                            .fetch(MindustryTool::getPlanets)
+                            .staleTime(Duration.ofMinutes(10))
+                            .build()
                     : null;
         }
 
@@ -184,8 +191,12 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderPlanets() {
-            if (planetsQuery == null) return;
+            if (planetsQuery == null) {
+                return;
+            }
+
             query(planetsQuery)
+                    .grow()
                     .loading(() -> row().growX().center().padding(unit(2)).children(() -> new Loader(unit(6))))
                     .data(mods -> {
                         if (mods == null || mods.isEmpty()) {

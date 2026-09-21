@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.struct.Seq;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
@@ -22,6 +23,7 @@ import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 /**
  * Main map browser dialog with reactive column reflow and a keyed reactive grid
@@ -88,17 +90,53 @@ public class MapBrowserDialog extends SolimDialog {
                     width != null ? width : 800f,
                     height != null ? height : 600f);
         });
+        private final Signal<Integer> visibleCount;
+        private final Computed<Seq<MapData>> visibleItems;
 
         BrowserContent(BrowserState<MapData> state, BrowserFilterDialog filterDialog, Runnable onClose) {
             this.state = state;
             this.filterDialog = filterDialog;
             this.onClose = onClose;
+            this.visibleCount = Signal.of(BrowserLayout.RENDER_CHUNK_SIZE);
+            this.visibleItems = new Computed<>(() -> {
+                Seq<MapData> all = state.items().get();
+                Integer limit = visibleCount.get();
+                return BrowserState.firstItems(all, limit != null ? limit : 0);
+            });
 
             effect(() -> {
                 Integer size = calculatedPageSize.get();
                 if (size != null) {
                     state.setPageSize(size);
                 }
+            });
+
+            effect(() -> {
+                Seq<MapData> all = state.items().get();
+                int total = all != null ? all.size : 0;
+                Integer page = state.page().get();
+                visibleCount.set(Math.min(BrowserLayout.RENDER_CHUNK_SIZE, total));
+                expandVisible(total, page != null ? page : 0);
+            });
+        }
+
+        private void expandVisible(int total, int page) {
+            Integer current = visibleCount.peek();
+            if (current == null || current >= total) {
+                return;
+            }
+            Core.app.post(() -> {
+                if (isDisposed()) {
+                    return;
+                }
+                Integer currentPage = state.page().peek();
+                if (currentPage == null || currentPage != page) {
+                    return;
+                }
+                Integer shown = visibleCount.peek();
+                int next = Math.min(total, (shown != null ? shown : 0) + BrowserLayout.RENDER_CHUNK_SIZE);
+                visibleCount.set(next);
+                expandVisible(total, page);
             });
         }
 
@@ -110,6 +148,7 @@ public class MapBrowserDialog extends SolimDialog {
                             new BrowserSearchHeader(state, () -> filterDialog.show());
 
                             query(state.query())
+                                    .grow()
                                     .loading(Loader::centered)
                                     .error(err -> row().grow().gap(unit(1)).children(() -> {
                                         Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
@@ -125,7 +164,7 @@ public class MapBrowserDialog extends SolimDialog {
                                                     .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
                                                         reactiveGrid(
                                                                 columnCount,
-                                                                state.items(),
+                                                                visibleItems,
                                                                 MapData::getItemId,
                                                                 item -> new MapCard(
                                                                         item,

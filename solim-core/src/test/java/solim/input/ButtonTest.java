@@ -11,8 +11,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
 import solim.runtime.ParentStack;
+import solim.test.SolimEnv;
 
-class ButtonTest {
+class ButtonTest extends SolimEnv {
 
 	@BeforeAll
 	static void checkArcContext() {

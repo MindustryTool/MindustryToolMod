@@ -1,50 +1,31 @@
 package mindustrytool.features.schematicgrid;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.Settings;
-import arc.files.Fi;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.scene.style.TextureRegionDrawable;
-import arc.struct.Seq;
-import arc.struct.StringMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import mindustry.game.Schematic;
-import mindustry.gen.Icon;
-import mindustrytool.features.FeatureManager;
-import org.junit.jupiter.api.AfterEach;
+
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class QuickSchematicGridTest {
+import arc.files.Fi;
+import arc.scene.style.TextureRegionDrawable;
+import arc.struct.Seq;
+import arc.struct.StringMap;
+import mindustry.game.Schematic;
+import mindustry.gen.Icon;
+import mindustrytool.test.MindustryTestEnv;
+
+class QuickSchematicGridTest extends MindustryTestEnv {
 
     @BeforeAll
     static void initCore() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
         Icon.book = new TextureRegionDrawable();
-    }
-
-    @BeforeEach
-    void setUp() {
-        Core.settings = new Settings();
-        Core.settings.clear();
-        FeatureManager.clear();
-    }
-
-    @AfterEach
-    void tearDown() {
-        FeatureManager.clear();
-        Core.settings.clear();
     }
 
     private static QuickSchematicEntry entry(String id, String name, String file) {

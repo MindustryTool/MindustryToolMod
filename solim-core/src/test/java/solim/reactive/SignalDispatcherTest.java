@@ -11,8 +11,9 @@ import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
 import java.util.ArrayList;
 import java.util.List;
+import solim.test.SolimEnv;
 
-class SignalDispatcherTest {
+class SignalDispatcherTest extends SolimEnv {
 
 	@BeforeEach
 	void setUp() {

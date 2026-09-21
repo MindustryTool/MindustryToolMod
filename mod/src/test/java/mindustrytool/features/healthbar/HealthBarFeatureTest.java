@@ -1,22 +1,14 @@
 package mindustrytool.features.healthbar;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class HealthBarFeatureTest {
+import mindustrytool.test.MindustryTestEnv;
 
-    @BeforeEach
-    void setUp() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
-    }
+class HealthBarFeatureTest extends MindustryTestEnv {
 
     @Test
     void testResetToDefaults() {

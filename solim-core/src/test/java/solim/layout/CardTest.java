@@ -1,11 +1,14 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
+import org.junit.jupiter.api.Test;
+
 import arc.graphics.Color;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
@@ -13,23 +16,13 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Scl;
 import arc.util.Align;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
-import solim.runtime.SignalDispatcher;
 import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class CardTest {
+class CardTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @Test
     void createsWithDefaultNames() {

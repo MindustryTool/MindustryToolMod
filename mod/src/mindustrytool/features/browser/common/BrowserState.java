@@ -1,11 +1,13 @@
 package mindustrytool.features.browser.common;
 
 import arc.struct.Seq;
+import arc.util.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustrytool.Config;
 import solim.core.Disposable;
 import solim.reactive.Query;
+import solim.reactive.QueryKey;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -39,16 +41,28 @@ public class BrowserState<T> implements Disposable {
     }
 
     public BrowserState(Fetcher<T> fetcher) {
-        this.queryPrimitive = Query.of(active, () -> {
-            searchQuery.get();
-            selectedTags.get();
-            selectedBlocks.get();
-            sort.get();
-            verification.get();
-            page.get();
-            pageSize.get();
-            return fetcher.fetch(this);
-        });
+        this.queryPrimitive = Query.<List<T>>builder()
+                .key(this::queryKey)
+                .enabled(active)
+                .fetch(() -> fetcher.fetch(this))
+                .build();
+    }
+
+    /**
+     * Structural identity of the current request. Recomputed inside the query
+     * effect so every parameter change (pagination, search, filters, sort)
+     * triggers a fresh fetch and rapid parameter changes never join a
+     * request made for different parameters.
+     */
+    private QueryKey queryKey() {
+        return QueryKey.of("browser",
+                page.get(),
+                pageSize.get(),
+                sort.get(),
+                verification.get(),
+                searchQuery.get(),
+                selectedTags.get().list(),
+                selectedBlocks.get().list());
     }
 
     public void start() {
@@ -196,6 +210,22 @@ public class BrowserState<T> implements Disposable {
 
     public Readable<Seq<T>> items() {
         return queryPrimitive.data().map(list -> list != null ? Seq.with(list) : new Seq<T>());
+    }
+
+    /**
+     * Pure slice helper for chunked rendering: returns a copy of the first
+     * {@code limit} items, or an empty sequence when the input is null.
+     */
+    public static <T> Seq<T> firstItems(@Nullable Seq<T> all, int limit) {
+        Seq<T> out = new Seq<>();
+        if (all == null) {
+            return out;
+        }
+        int count = Math.min(Math.max(0, limit), all.size);
+        for (int i = 0; i < count; i++) {
+            out.add(all.get(i));
+        }
+        return out;
     }
 
     /**

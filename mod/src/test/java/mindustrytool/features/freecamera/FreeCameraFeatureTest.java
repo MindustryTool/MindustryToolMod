@@ -1,45 +1,32 @@
 package mindustrytool.features.freecamera;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import arc.Core;
-import arc.Settings;
 import arc.graphics.Camera;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import mindustry.Vars;
 import mindustry.core.ContentLoader;
 import mindustry.gen.Player;
 import mindustry.gen.UnitEntity;
-import mindustrytool.features.FeatureManager;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 
-class FreeCameraFeatureTest {
+class FreeCameraFeatureTest extends MindustryTestEnv {
 
     @BeforeAll
     static void initCore() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
         Core.camera = new Camera();
         if (Vars.content == null) {
             Vars.content = new ContentLoader();
         }
     }
 
-    @BeforeEach
-    void setUp() {
-        Core.settings = new Settings();
-        Core.settings.clear();
-        FeatureManager.clear();
-    }
-
     @AfterEach
     void tearDown() {
-        FeatureManager.clear();
-        Core.settings.clear();
         Vars.player = null;
     }
 

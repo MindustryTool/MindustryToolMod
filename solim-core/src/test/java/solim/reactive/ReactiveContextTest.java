@@ -7,8 +7,9 @@ import org.junit.jupiter.api.Test;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.runtime.ReactiveContext;
+import solim.test.SolimEnv;
 
-class ReactiveContextTest {
+class ReactiveContextTest extends SolimEnv {
 	@AfterEach
 	void clear() {
 		ReactiveContext.clear();

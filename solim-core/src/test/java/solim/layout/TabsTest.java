@@ -1,36 +1,30 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 
 import arc.Core;
 import arc.graphics.Color;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.layout.CellAccess;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.display.Text;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import org.junit.jupiter.api.Assumptions;
+import solim.test.SolimEnv;
 
-class TabsTest {
+class TabsTest extends SolimEnv {
 
-	@BeforeAll
-	static void checkArcContext() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	private void simulateClick(Button button) {
 		InputEvent event = new InputEvent();

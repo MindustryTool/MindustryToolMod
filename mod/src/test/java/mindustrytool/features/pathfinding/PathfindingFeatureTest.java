@@ -6,21 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
-import arc.util.I18NBundle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class PathfindingFeatureTest {
+import arc.Core;
+import arc.util.I18NBundle;
+import mindustrytool.test.MindustryTestEnv;
+
+class PathfindingFeatureTest extends MindustryTestEnv {
 
     @BeforeEach
     void setUp() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
         if (Core.bundle == null) {
             Core.bundle = I18NBundle.createEmptyBundle();
         }

@@ -1,33 +1,24 @@
 package solim.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
+import arc.scene.Element;
+import arc.scene.ui.layout.Table;
 import solim.layout.Column;
 import solim.layout.Divider;
 import solim.layout.Row;
 import solim.runtime.ComponentContext;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.scene.Element;
-import arc.scene.ui.layout.Table;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.runtime.ParentStack;
+import solim.test.SolimEnv;
 
-class BaseComponentAutoAttachTest {
+class BaseComponentAutoAttachTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     static class Probe extends BaseComponent {
         @Override

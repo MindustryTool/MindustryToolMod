@@ -23,6 +23,7 @@ import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Signal;
 import java.util.Collections;
 
 /**
@@ -93,17 +94,53 @@ public class SchematicBrowserDialog extends SolimDialog {
                     width != null ? width : 800f,
                     height != null ? height : 600f);
         });
+        private final Signal<Integer> visibleCount;
+        private final Computed<Seq<SchematicData>> visibleItems;
 
         BrowserContent(BrowserState<SchematicData> state, BrowserFilterDialog filterDialog, Runnable onClose) {
             this.state = state;
             this.filterDialog = filterDialog;
             this.onClose = onClose;
+            this.visibleCount = Signal.of(BrowserLayout.RENDER_CHUNK_SIZE);
+            this.visibleItems = new Computed<>(() -> {
+                Seq<SchematicData> all = state.items().get();
+                Integer limit = visibleCount.get();
+                return BrowserState.firstItems(all, limit != null ? limit : 0);
+            });
 
             effect(() -> {
                 Integer size = calculatedPageSize.get();
                 if (size != null) {
                     state.setPageSize(size);
                 }
+            });
+
+            effect(() -> {
+                Seq<SchematicData> all = state.items().get();
+                int total = all != null ? all.size : 0;
+                Integer page = state.page().get();
+                visibleCount.set(Math.min(BrowserLayout.RENDER_CHUNK_SIZE, total));
+                expandVisible(total, page != null ? page : 0);
+            });
+        }
+
+        private void expandVisible(int total, int page) {
+            Integer current = visibleCount.peek();
+            if (current == null || current >= total) {
+                return;
+            }
+            Core.app.post(() -> {
+                if (isDisposed()) {
+                    return;
+                }
+                Integer currentPage = state.page().peek();
+                if (currentPage == null || currentPage != page) {
+                    return;
+                }
+                Integer shown = visibleCount.peek();
+                int next = Math.min(total, (shown != null ? shown : 0) + BrowserLayout.RENDER_CHUNK_SIZE);
+                visibleCount.set(next);
+                expandVisible(total, page);
             });
         }
 
@@ -115,6 +152,7 @@ public class SchematicBrowserDialog extends SolimDialog {
                             new BrowserSearchHeader(state, () -> filterDialog.show());
 
                             query(state.query())
+                                    .grow()
                                     .loading(Loader::centered)
                                     .error(err -> row().grow().gap(unit(1)).children(() -> {
                                         Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
@@ -130,7 +168,7 @@ public class SchematicBrowserDialog extends SolimDialog {
                                                     .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
                                                         reactiveGrid(
                                                                 columnCount,
-                                                                state.items(),
+                                                                visibleItems,
                                                                 SchematicData::getItemId,
                                                                 item -> new SchematicCard(
                                                                         item,

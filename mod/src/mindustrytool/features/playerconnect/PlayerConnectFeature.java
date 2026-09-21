@@ -78,10 +78,12 @@ public class PlayerConnectFeature extends Feature {
 
     private final Signal<HostingState> state = Signal.of(HostingState.IDLE);
     private final Signal<Integer> ping = Signal.of(0);
-    private final Query<List<PlayerConnectRoom>> roomsQuery = Query.of(
-            QueryKey.of("playerconnect", "rooms"),
-            () -> MindustryTool.getPlayerConnectRooms("")
-    ).staleTime(Duration.ofSeconds(15));
+    private final Query<List<PlayerConnectRoom>> roomsQuery = Query.<List<PlayerConnectRoom>>builder()
+            .key(QueryKey.of("playerconnect", "rooms"))
+            .fetch(() -> MindustryTool.getPlayerConnectRooms(""))
+            .staleTime(Duration.ofSeconds(15))
+            .build();
+            
     private final Signal<List<PlayerConnectProvider>> providers = Signal.of(Collections.emptyList());
     private final Signal<JoinRequest> currentRequest = Signal.of(null);
 

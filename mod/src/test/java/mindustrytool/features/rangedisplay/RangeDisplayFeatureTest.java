@@ -1,11 +1,14 @@
 package mindustrytool.features.rangedisplay;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
 import mindustry.Vars;
 import mindustry.core.ContentLoader;
 import mindustry.world.blocks.defense.BuildTurret;
@@ -17,16 +20,12 @@ import mindustry.world.blocks.defense.Wall;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustry.world.blocks.distribution.MassDriver;
 import mindustrytool.features.FeatureMetadata;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 
-class RangeDisplayFeatureTest {
+class RangeDisplayFeatureTest extends MindustryTestEnv {
 
     @BeforeEach
     void setUp() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
         if (Vars.content == null) {
             Vars.content = new ContentLoader();
         }

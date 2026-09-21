@@ -2,29 +2,17 @@ package solim.display;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import arc.Core;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.style.TextureRegionDrawable;
 import arc.util.Scaling;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class NetworkImageTest {
+class NetworkImageTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @BeforeEach
     void setup() {
@@ -36,7 +24,7 @@ class NetworkImageTest {
         TextureRegion region = new TextureRegion();
         TextureRegionDrawable placeholder = new TextureRegionDrawable(region);
 
-        NetworkImage.setImageLoader((url, success, error) -> {
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, success, error) -> {
         });
 
         NetworkImage img = new NetworkImage("https://example.com/test.png")
@@ -50,7 +38,7 @@ class NetworkImageTest {
     void successLoadsImageAndCaches() {
         TextureRegion mockRegion = new TextureRegion();
 
-        NetworkImage.setImageLoader((url, success, error) -> {
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, success, error) -> {
             success.get(mockRegion);
         });
 
@@ -59,7 +47,7 @@ class NetworkImageTest {
         assertTrue(NetworkImage.isCached("https://example.com/avatar.png"));
 
         // Second image loads from cache immediately even if loader is empty
-        NetworkImage.setImageLoader((url, success, error) -> {
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, success, error) -> {
             fail("Loader should not be called when cached");
         });
 
@@ -76,7 +64,7 @@ class NetworkImageTest {
         TextureRegion mockFallbackRegion = new TextureRegion();
         TextureRegionDrawable fallback = new TextureRegionDrawable(mockFallbackRegion);
 
-        NetworkImage.setImageLoader((url, success, error) -> {
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, success, error) -> {
             error.get(new RuntimeException("404 Not Found"));
         });
 
@@ -92,7 +80,7 @@ class NetworkImageTest {
         TextureRegion regionA = new TextureRegion();
         TextureRegion regionB = new TextureRegion();
 
-        NetworkImage.setImageLoader((url, success, error) -> {
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, success, error) -> {
             if ("https://example.com/a.png".equals(url)) {
                 success.get(regionA);
             } else if ("https://example.com/b.png".equals(url)) {
@@ -130,7 +118,7 @@ class NetworkImageTest {
         largeRegion.width = 512;
         largeRegion.height = 512;
 
-        NetworkImage.setImageLoader((url, success, error) -> success.get(largeRegion));
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, success, error) -> success.get(largeRegion));
 
         NetworkImage img = new NetworkImage("https://example.com/large-avatar.png")
                 .size(32f, 32f);
@@ -140,3 +128,4 @@ class NetworkImageTest {
         img.dispose();
     }
 }
+

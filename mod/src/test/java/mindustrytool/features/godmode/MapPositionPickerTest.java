@@ -1,34 +1,37 @@
 package mindustrytool.features.godmode;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import arc.Application;
 import arc.Core;
 import arc.Events;
 import arc.mock.MockApplication;
 import arc.struct.Seq;
+import mindustry.Vars;
 import mindustry.game.EventType.TapEvent;
+import mindustry.core.UI;
 import mindustry.world.Tile;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class MapPositionPickerTest {
+class MapPositionPickerTest extends SolimEnv {
 
     private Application originalApp;
+    private UI originalUi;
     private Seq<Runnable> postedTasks;
 
-    @BeforeAll
-    static void initCore() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-    }
 
     @BeforeEach
     void setUp() {
         originalApp = Core.app;
+        originalUi = Vars.ui;
         postedTasks = new Seq<>();
         Core.app = new MockApplication() {
             @Override
@@ -36,6 +39,9 @@ class MapPositionPickerTest {
                 postedTasks.add(runnable);
             }
         };
+        // Hermetic: without a live HUD the picker skips the toast path and the
+        // test observes exactly the picker's own posted tasks.
+        Vars.ui = null;
         MapPositionPicker.cancel();
         drainPostedTasks();
     }
@@ -45,6 +51,7 @@ class MapPositionPickerTest {
         MapPositionPicker.cancel();
         drainPostedTasks();
         Core.app = originalApp;
+        Vars.ui = originalUi;
     }
 
     private void drainPostedTasks() {

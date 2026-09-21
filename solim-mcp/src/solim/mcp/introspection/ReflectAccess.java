@@ -1,12 +1,13 @@
 package solim.mcp.introspection;
 
-import arc.util.Log;
-import arc.util.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import arc.util.Log;
+import arc.util.Nullable;
 
 /**
  * Cached, gracefully-degrading reflective access to Solim internals.
@@ -89,8 +90,7 @@ public final class ReflectAccess {
 	}
 
 	/** Sets accessible on a field and returns it, or {@code null} if the field could not be made usable. */
-	@SuppressWarnings("deprecation")
-    public static @Nullable Field accessible(Field field) {
+	public static @Nullable Field accessible(Field field) {
 		if (field == null) return null;
 		if (!field.isAccessible()) {
 			try {
@@ -125,8 +125,7 @@ public final class ReflectAccess {
 		}
 	}
 
-	@SuppressWarnings("deprecation")
-    private static boolean makeAccessible(Method method) {
+	private static boolean makeAccessible(Method method) {
 		if (!method.isAccessible()) {
 			try {
 				method.setAccessible(true);

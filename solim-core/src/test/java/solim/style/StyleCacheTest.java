@@ -3,26 +3,15 @@ package solim.style;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-import arc.graphics.Color;
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import arc.graphics.Color;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class StyleCacheTest {
+class StyleCacheTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @BeforeEach
     void clearCache() {
