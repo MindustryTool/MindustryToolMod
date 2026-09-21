@@ -4,7 +4,7 @@ import arc.Events;
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
-import arc.util.Reflect;
+import mindustrytool.utils.ReflectUtil;
 import mindustry.Vars;
 import mindustry.game.EventType.ResizeEvent;
 import mindustry.ui.dialogs.JoinDialog;
@@ -44,7 +44,7 @@ public class JoinDialogInjector {
             return;
         }
 
-        Table hosts = Reflect.get(dialog, "hosts");
+        Table hosts = ReflectUtil.getOrNull(dialog, "hosts");
         
         if (hosts == null) {
             return;

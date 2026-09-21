@@ -10,7 +10,7 @@ import arc.scene.ui.TextField;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Nullable;
-import arc.util.Reflect;
+import mindustrytool.utils.ReflectUtil;
 import arc.util.Strings;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
@@ -327,7 +327,7 @@ public class TranslationFeature extends Feature {
             return;
         }
         try {
-            TextField chatfield = Reflect.get(Vars.ui.chatfrag, "chatfield");
+            TextField chatfield = ReflectUtil.getOrNull(Vars.ui.chatfrag, "chatfield");
             if (chatfield == null) {
                 return;
             }
