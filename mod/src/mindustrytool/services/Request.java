@@ -320,7 +320,9 @@ public final class Request {
             if (useAuth && outer.authProvider != null) {
                 return outer.authProvider.refreshIfNeeded().thenCompose(v -> {
                     String token = outer.authProvider.getAccessToken();
-                    this.headers.put("Authorization", "Bearer " + token);
+                    if (token != null && !token.trim().isEmpty()) {
+                        this.headers.put("Authorization", "Bearer " + token);
+                    }
                     return executeAsync(resolvedUrl, effectiveTimeout, this.headers, handler);
                 });
             } else {
