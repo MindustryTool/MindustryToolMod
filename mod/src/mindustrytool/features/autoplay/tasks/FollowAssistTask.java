@@ -9,6 +9,7 @@ import arc.math.geom.Vec2;
 import arc.scene.style.TextureRegionDrawable;
 import arc.util.Nullable;
 import mindustry.Vars;
+import mindustry.game.Team;
 import mindustry.entities.units.BuildPlan;
 import mindustry.entities.units.WeaponMount;
 import mindustry.gen.Groups;
@@ -29,7 +30,6 @@ public class FollowAssistTask implements AutoplayTask {
     private final Signal<String> status = Signal.of(Core.bundle.get("feature.autoplay.status.idle"));
     private final FollowAI ai = new FollowAI();
 
-    // TODO: Skip if there r no active builder
     public FollowAssistTask(AutoplayFeature feature) {
         this.targetPlayerName = feature.configGroup().stringValue("follow-assist.target-player", "");
     }
@@ -54,6 +54,11 @@ public class FollowAssistTask implements AutoplayTask {
         return status;
     }
 
+    private boolean isActiveBuilder(Player p, Team team) {
+        return p != Vars.player && p.team() == team && p.unit() != null && !p.unit().dead
+                && (p.unit().activelyBuilding() || !p.unit().plans.isEmpty());
+    }
+
     @Override
     public boolean update(Unit unit) {
         if (!Vars.net.active() || Groups.player.size() <= 1) {
@@ -62,23 +67,18 @@ public class FollowAssistTask implements AutoplayTask {
             return false;
         }
 
-        Player target = null;
         String preferredName = targetPlayerName.get();
-        if (preferredName != null && !preferredName.trim().isEmpty()) {
-            target = Groups.player.find(p -> p != Vars.player && p.team() == unit.team && preferredName.equals(p.name) && p.unit() != null && !p.unit().dead);
-        }
+        Player target = preferredName != null && !preferredName.trim().isEmpty()
+                ? Groups.player.find(p -> p != Vars.player && p.team() == unit.team && preferredName.equals(p.name) && p.unit() != null && !p.unit().dead)
+                : null;
 
         if (target == null) {
-            target = Groups.player.find(p -> p != Vars.player && p.team() == unit.team && p.unit() != null && !p.unit().dead && p.unit().activelyBuilding());
-        }
-
-        if (target == null) {
-            target = Groups.player.find(p -> p != Vars.player && p.team() == unit.team && p.unit() != null && !p.unit().dead);
+            target = Groups.player.find(p -> isActiveBuilder(p, unit.team));
         }
 
         if (target == null) {
             ai.following = null;
-            status.set(Core.bundle.get("feature.autoplay.status.no-one-to-follow"));
+            status.set(Core.bundle.get("feature.autoplay.status.no-active-builders"));
             return false;
         }
 
