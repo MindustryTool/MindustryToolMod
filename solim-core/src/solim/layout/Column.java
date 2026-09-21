@@ -17,7 +17,6 @@ import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.core.Ui;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 
@@ -27,7 +26,7 @@ public final class Column
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
-        if (Ui.isExpanding(child)) {
+        if (SolimToken.isExpandingChild(child)) {
             cell.growY();
         }
         cell.row();

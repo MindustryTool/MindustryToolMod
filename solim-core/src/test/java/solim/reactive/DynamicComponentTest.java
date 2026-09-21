@@ -19,7 +19,6 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import solim.core.BaseComponent;
-import solim.core.Ui;
 import solim.layout.Column;
 import solim.layout.Row;
 import solim.runtime.ParentStack;
@@ -254,7 +253,7 @@ class DynamicComponentTest extends SolimEnv {
     void dynamicPreservesTopRightAlignmentWithoutGrowX() {
         Signal<Boolean> state = Signal.of(true);
         Dynamic<Boolean> dyn = Dynamic.of(state, s -> {
-            Row row = Ui.row();
+            Row row = new Row();
             row.cellConfig().prefWidth = Readable.of(100f);
             row.cellConfig().prefHeight = Readable.of(40f);
             return row;
@@ -262,7 +261,7 @@ class DynamicComponentTest extends SolimEnv {
 
         assertFalse(dyn.cellConfig().growX, "Dynamic must not growX by default");
 
-        Column col = Ui.column().fillParent().top().right().children(() -> {
+        Column col = new Column().fillParent().top().right().children(() -> {
             ParentStack.add(dyn);
         });
 
@@ -497,8 +496,8 @@ class DynamicComponentTest extends SolimEnv {
         Dynamic<Boolean> root = Dynamic.of(outer, showOuter -> {
             if (!Boolean.TRUE.equals(showOuter))
                 return null;
-            return Ui.column(() -> {
-                Ui.dynamic(inner, showInner -> {
+            return new Column().children(() -> {
+                Dynamic.of(inner, showInner -> {
                     if (!Boolean.TRUE.equals(showInner))
                         return null;
                     return new TestComponent("leaf");

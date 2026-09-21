@@ -74,10 +74,6 @@ public class SolimDialog implements Component {
         return d;
     }
 
-    public SolimDialog content(@Nullable Runnable contentBuilder) {
-        return children(contentBuilder);
-    }
-
     public SolimDialog children(@Nullable Runnable contentBuilder) {
         this.contentBuilder = contentBuilder;
         return this;
@@ -235,11 +231,6 @@ public class SolimDialog implements Component {
 
     public SolimDialog closeOnBack() {
         wrapped.closeOnBack();
-        return this;
-    }
-
-    public SolimDialog backButton() {
-        wrapped.addCloseButton();
         return this;
     }
 

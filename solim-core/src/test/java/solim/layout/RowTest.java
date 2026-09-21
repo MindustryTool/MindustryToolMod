@@ -13,7 +13,6 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.util.Align;
 import solim.core.SolimToken;
-import solim.core.Ui;
 import solim.reactive.Signal;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
@@ -316,8 +315,10 @@ class RowTest extends SolimEnv {
             }
         };
 
-        Scroll scroll = Ui.scroll().grow().children(() -> {
-            Ui.row().grow().top().left().gap(8f).children(() -> {
+        Scroll scroll = new Scroll();
+        ParentStack.attachToParent(scroll.element());
+        scroll.grow().children(() -> {
+            new Row().grow().top().left().gap(8f).children(() -> {
                 ParentStack.add(img);
                 ParentStack.add(det);
             });

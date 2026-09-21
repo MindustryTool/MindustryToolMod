@@ -14,7 +14,7 @@ public class ChatImagePreviewDialog extends SolimDialog {
 
     public ChatImagePreviewDialog(String imageUrl) {
         super("");
-        backButton();
+        addCloseButton();
         closeOnBack();
         fillParent(true);
         hidden(this::dispose);

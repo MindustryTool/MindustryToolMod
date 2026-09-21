@@ -17,7 +17,6 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.core.Ui;
 import solim.display.Text;
 import solim.input.Button;
 import solim.layout.GapContainer;
@@ -261,7 +260,7 @@ public final class QueryView<T> extends BaseComponent
 			}
 			if (sc != null) {
 				currentBindings.addAll(sc.applyToCell(cell));
-			} else if (Ui.isExpanding(el)) {
+			} else if (SolimToken.isExpandingChild(el)) {
 				cell.growX();
 			}
 		}

@@ -1,6 +1,7 @@
 // mod-specific configuration — shared java/repositories/dependencies are in root build.gradle
 
 dependencies{
+    // Mod only allowed to import solim, solim-mcp and solim-test
 	compileOnly 'org.projectlombok:lombok:1.18.36'
 	annotationProcessor 'org.projectlombok:lombok:1.18.36'
 	implementation project(':solim')

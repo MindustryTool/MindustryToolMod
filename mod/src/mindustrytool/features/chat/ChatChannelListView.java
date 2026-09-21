@@ -69,9 +69,8 @@ public class ChatChannelListView extends BaseComponent {
                     .data(channelList -> scroll().grow().children(() -> {
                         column().growX().gap(unit(1)).children(() -> {
                             if (channelList != null && !channelList.isEmpty()) {
-                                forEach(store.channels().all(), ChannelDto::getId,
-                                        channel -> new ChannelItem(channel, store))
-                                                .growX();
+                                forEach(store.channels().all()).key(ChannelDto::getId).growX()
+                                        .children(channel -> new ChannelItem(channel, store));
                             } else {
                                 column().padding(unit(2)).children(() -> {
                                     text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))

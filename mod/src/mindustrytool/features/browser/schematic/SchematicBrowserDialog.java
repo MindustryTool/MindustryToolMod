@@ -166,11 +166,16 @@ public class SchematicBrowserDialog extends SolimDialog {
                                     .data((list, fetching) -> fetching ? Loader.centered()
                                             : scroll().style(Styles.noBarPane).grow()
                                                     .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
-                                                        reactiveGrid(
-                                                                columnCount,
-                                                                visibleItems,
-                                                                SchematicData::getItemId,
-                                                                item -> new SchematicCard(
+                                                        reactiveGrid(visibleItems).columns(columnCount)
+                                                                .key(SchematicData::getItemId)
+                                                                .empty(() -> {
+                                                                    text(Core.bundle
+                                                                            .get("browser.empty"))
+                                                                                    .color(Color.gray)
+                                                                                    .padding(unit(4));
+                                                                })
+                                                                .gap(BrowserLayout.CARD_GAP)
+                                                                .children(item -> new SchematicCard(
                                                                         item,
                                                                         cardSize,
                                                                         () -> onCardClick(item),
@@ -178,14 +183,7 @@ public class SchematicBrowserDialog extends SolimDialog {
                                                                                 .copyToClipboard(item.getItemId()),
                                                                         () -> SchematicActions
                                                                                 .saveToLocal(item.getItemId()),
-                                                                        () -> showDetails(item)))
-                                                                                .empty(() -> {
-                                                                                    text(Core.bundle
-                                                                                            .get("browser.empty"))
-                                                                                                    .color(Color.gray)
-                                                                                                    .padding(unit(4));
-                                                                                })
-                                                                                .gap(BrowserLayout.CARD_GAP);
+                                                                        () -> showDetails(item)));
                                                     }))
                                     .grow();
 

@@ -24,8 +24,8 @@ class ButtonTest extends SolimEnv {
 	void buttonWidthAndHeightCustomSize() {
 		Button btn = new Button().width(200f).height(80f);
 
-		assertEquals(200f, btn.sizedButton().getPrefWidth(), 0.01f);
-		assertEquals(80f, btn.sizedButton().getPrefHeight(), 0.01f);
+		assertEquals(200f, btn.button().getPrefWidth(), 0.01f);
+		assertEquals(80f, btn.button().getPrefHeight(), 0.01f);
 
 		btn.dispose();
 	}
@@ -37,10 +37,10 @@ class ButtonTest extends SolimEnv {
 			ParentStack.add(new Element());
 		});
 
-		assertEquals(1, btn.sizedButton().getChildren().size);
+		assertEquals(1, btn.button().getChildren().size);
 
 		InputEvent event = new InputEvent();
-		btn.sizedButton().getListeners().forEach(listener -> {
+		btn.button().getListeners().forEach(listener -> {
 			if (listener instanceof ClickListener) {
 				((ClickListener) listener).clicked(event, 0f, 0f);
 			}
@@ -59,14 +59,14 @@ class ButtonTest extends SolimEnv {
 
 		Button btn = new Button().enabled(enabled).visible(visible);
 
-		assertFalse(btn.sizedButton().isDisabled());
-		assertTrue(btn.sizedButton().visible);
+		assertFalse(btn.button().isDisabled());
+		assertTrue(btn.button().visible);
 
 		enabled.set(false);
-		assertTrue(btn.sizedButton().isDisabled());
+		assertTrue(btn.button().isDisabled());
 
 		visible.set(false);
-		assertFalse(btn.sizedButton().visible);
+		assertFalse(btn.button().visible);
 
 		btn.dispose();
 	}

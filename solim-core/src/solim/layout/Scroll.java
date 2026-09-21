@@ -22,7 +22,6 @@ import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
-import solim.core.Ui;
 import solim.modifier.PendingCellConfig;
 
 /** Scroll container wrapping a Table in a ScrollPane. */
@@ -31,7 +30,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
         cell.top().left();
-        if (Ui.isExpanding(child)) {
+        if (SolimToken.isExpandingChild(child)) {
             cell.growY();
         }
         cell.row();
@@ -333,7 +332,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             } else {
                 cell.top().left();
             }
-            if (Ui.isExpanding(child)) {
+            if (SolimToken.isExpandingChild(child)) {
                 cell.growY();
             }
             cell.row();

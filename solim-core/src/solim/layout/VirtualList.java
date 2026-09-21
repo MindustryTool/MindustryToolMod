@@ -34,8 +34,8 @@ import solim.modifier.TableConfig;
  * @param <T> the item type
  * @param <K> the item key type
  */
-public final class VirtualList<T, K> extends BaseComponent
-        implements CellConfig<VirtualList<T, K>>, ElementConfig<VirtualList<T, K>>, TableConfig<VirtualList<T, K>> {
+public final class VirtualList<T> extends BaseComponent
+        implements CellConfig<VirtualList<T>>, ElementConfig<VirtualList<T>>, TableConfig<VirtualList<T>> {
 
     private final Table outer;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -43,10 +43,10 @@ public final class VirtualList<T, K> extends BaseComponent
     private final VirtualContainer content;
 
     private final Readable<? extends List<T>> collection;
-    private final Function<T, K> keyExtractor;
+    private Function<T, ?> keyExtractor = Function.identity();
     private final ItemHeightProvider<T> heightProvider;
-    private final Function<T, Component> itemFactory;
-    private final StructuralReconciler<K, Component> reconciler = new StructuralReconciler<>();
+    private @Nullable Function<T, Component> itemFactory;
+    private final StructuralReconciler<Object, Component> reconciler = new StructuralReconciler<>();
 
     private int overscan = 3;
     private float gap = 0f;
@@ -68,13 +68,9 @@ public final class VirtualList<T, K> extends BaseComponent
 
     public VirtualList(
             Readable<? extends List<T>> collection,
-            Function<T, K> keyExtractor,
-            ItemHeightProvider<T> heightProvider,
-            Function<T, Component> itemFactory) {
+            ItemHeightProvider<T> heightProvider) {
         this.collection = collection;
-        this.keyExtractor = keyExtractor;
         this.heightProvider = heightProvider;
-        this.itemFactory = itemFactory;
 
         this.outer = new Table() {
             @Override
@@ -105,28 +101,40 @@ public final class VirtualList<T, K> extends BaseComponent
         }
     }
 
-    public static <T, K> VirtualList<T, K> of(
+    public static <T> VirtualList<T> of(
             Readable<? extends List<T>> collection,
-            Function<T, K> keyExtractor,
-            ItemHeightProvider<T> heightProvider,
-            Function<T, Component> itemFactory) {
-        return new VirtualList<>(collection, keyExtractor, heightProvider, itemFactory);
+            ItemHeightProvider<T> heightProvider) {
+        return new VirtualList<>(collection, heightProvider);
     }
 
-    public static <T, K> VirtualList<T, K> of(
+    public static <T> VirtualList<T> of(
             List<T> items,
-            Function<T, K> keyExtractor,
-            ItemHeightProvider<T> heightProvider,
-            Function<T, Component> itemFactory) {
-        return new VirtualList<>(Signal.of(items), keyExtractor, heightProvider, itemFactory);
+            ItemHeightProvider<T> heightProvider) {
+        return new VirtualList<>(Signal.of(items), heightProvider);
     }
 
-    public VirtualList<T, K> overscan(int overscan) {
+    public VirtualList<T> key(@Nullable Function<T, ?> keyExtractor) {
+        this.keyExtractor = keyExtractor != null ? keyExtractor : Function.identity();
+        return this;
+    }
+
+    public void children(@Nullable Function<T, Component> itemFactory) {
+        this.itemFactory = itemFactory;
+        if (itemFactory != null && isBuilt()) {
+            onCollectionChanged();
+        }
+    }
+
+    private Object extractKey(T item) {
+        return keyExtractor.apply(item);
+    }
+
+    public VirtualList<T> overscan(int overscan) {
         this.overscan = Math.max(0, overscan);
         return this;
     }
 
-    public VirtualList<T, K> gap(float gap) {
+    public VirtualList<T> gap(float gap) {
         this.gap = Math.max(0f, gap);
         recalculateHeights(content.getWidth());
         return this;
@@ -136,7 +144,7 @@ public final class VirtualList<T, K> extends BaseComponent
         return pane;
     }
 
-    public VirtualList<T, K> pane(Consumer<ScrollPane> consumer) {
+    public VirtualList<T> pane(Consumer<ScrollPane> consumer) {
         if (pane != null) {
             consumer.accept(pane);
         }
@@ -151,7 +159,7 @@ public final class VirtualList<T, K> extends BaseComponent
         return content;
     }
 
-    public VirtualList<T, K> onReachTop(float thresholdPx, Runnable callback) {
+    public VirtualList<T> onReachTop(float thresholdPx, Runnable callback) {
         this.topThreshold = thresholdPx;
         if (callback != null) {
             this.reachTopListeners.add(callback);
@@ -160,11 +168,11 @@ public final class VirtualList<T, K> extends BaseComponent
         return this;
     }
 
-    public VirtualList<T, K> onReachTop(Runnable callback) {
+    public VirtualList<T> onReachTop(Runnable callback) {
         return onReachTop(100f, callback);
     }
 
-    public VirtualList<T, K> onReachBottom(float thresholdPx, Runnable callback) {
+    public VirtualList<T> onReachBottom(float thresholdPx, Runnable callback) {
         this.bottomThreshold = thresholdPx;
         if (callback != null) {
             this.reachBottomListeners.add(callback);
@@ -173,18 +181,18 @@ public final class VirtualList<T, K> extends BaseComponent
         return this;
     }
 
-    public VirtualList<T, K> onReachBottom(Runnable callback) {
+    public VirtualList<T> onReachBottom(Runnable callback) {
         return onReachBottom(100f, callback);
     }
 
-    public VirtualList<T, K> scrollToTop() {
+    public VirtualList<T> scrollToTop() {
         if (pane != null) {
             pane.setScrollPercentY(0f);
         }
         return this;
     }
 
-    public VirtualList<T, K> scrollToBottom() {
+    public VirtualList<T> scrollToBottom() {
         if (pane != null) {
             Core.app.post(() -> {
                 if (pane != null) {
@@ -197,7 +205,7 @@ public final class VirtualList<T, K> extends BaseComponent
         return this;
     }
 
-    public VirtualList<T, K> scrollPercentY(float percent) {
+    public VirtualList<T> scrollPercentY(float percent) {
         if (pane != null) {
             pane.setScrollPercentY(percent);
         }
@@ -218,7 +226,7 @@ public final class VirtualList<T, K> extends BaseComponent
     }
 
     @Override
-    public VirtualList<T, K> name(@Nullable String name) {
+    public VirtualList<T> name(@Nullable String name) {
         super.name(name);
         return this;
     }
@@ -277,9 +285,13 @@ public final class VirtualList<T, K> extends BaseComponent
     }
 
     public void reconcileVisible() {
+        Function<T, Component> factory = itemFactory;
+        if (factory == null) {
+            return;
+        }
         int n = currentItems.size();
         if (n == 0) {
-            reconciler.reconcile(Collections.emptyList(), keyExtractor, itemFactory);
+            reconciler.reconcile(Collections.<T>emptyList(), this::extractKey, factory);
             content.clearChildren();
             return;
         }
@@ -308,14 +320,14 @@ public final class VirtualList<T, K> extends BaseComponent
             visibleItems.add(currentItems.get(i));
         }
 
-        Map<K, Component> active = reconciler.reconcile(visibleItems, keyExtractor, itemFactory);
+        Map<Object, Component> active = reconciler.reconcile(visibleItems, this::extractKey, factory);
 
         content.clearChildren();
         float contentW = content.getWidth() > 0 ? content.getWidth() : (pane != null ? pane.getWidth() : 300f);
 
         for (int i = start; i <= end; i++) {
             T item = currentItems.get(i);
-            K key = keyExtractor.apply(item);
+            Object key = keyExtractor.apply(item);
             Component comp = active.get(key);
             if (comp != null) {
                 Element el = comp.element();
@@ -454,7 +466,7 @@ public final class VirtualList<T, K> extends BaseComponent
     }
 
     @Override
-    public VirtualList<T, K> self() {
+    public VirtualList<T> self() {
         return this;
     }
 }

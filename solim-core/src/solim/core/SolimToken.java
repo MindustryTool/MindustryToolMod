@@ -1,6 +1,8 @@
 package solim.core;
 
 import arc.scene.Element;
+import arc.scene.ui.ScrollPane;
+import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.modifier.PendingCellConfig;
 
@@ -60,5 +62,21 @@ public final class SolimToken {
     public static boolean isExpanding(@Nullable Element element) {
         SolimToken token = get(element);
         return token != null && token.expanding;
+    }
+
+    public static boolean isExpandingChild(@Nullable Element child) {
+        return child != null
+                && (isExpanding(child)
+                        || "solim-spacer-table".equals(child.name)
+                        || "spacer".equals(child.name)
+                        || child.fillParent
+                        || child instanceof ScrollPane
+                        || hasScrollPaneChild(child));
+    }
+
+    private static boolean hasScrollPaneChild(Element child) {
+        return child instanceof Table
+                && ((Table) child).getChildren().size > 0
+                && ((Table) child).getChildren().first() instanceof ScrollPane;
     }
 }

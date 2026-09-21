@@ -28,7 +28,7 @@ class TabsTest extends SolimEnv {
 
 	private void simulateClick(Button button) {
 		InputEvent event = new InputEvent();
-		button.sizedButton().getListeners().forEach(l -> {
+		button.button().getListeners().forEach(l -> {
 			if (l instanceof ClickListener) {
 				((ClickListener) l).clicked(event, 0f, 0f);
 			}
@@ -73,20 +73,20 @@ class TabsTest extends SolimEnv {
 
 		assertEquals(2, tabs.buttons().size());
 		for (Button btn : tabs.buttons()) {
-			assertTrue(btn.sizedButton().getBackground() instanceof RoundedDrawable);
-			RoundedDrawable rd = (RoundedDrawable) btn.sizedButton().getBackground();
+			assertTrue(btn.button().getBackground() instanceof RoundedDrawable);
+			RoundedDrawable rd = (RoundedDrawable) btn.button().getBackground();
 			assertEquals(10, rd.getRadius());
 			assertEquals(Color.clear, rd.getFillColor());
 			assertEquals(2f, rd.getStroke(), 0.001f);
 			assertEquals(Color.gray, rd.getBorderColor());
 
-			assertSame(rd, btn.sizedButton().getStyle().up);
-			assertNotNull(btn.sizedButton().getStyle().checked);
-			assertTrue(btn.sizedButton().getStyle().checked instanceof RoundedDrawable);
-			assertNotNull(btn.sizedButton().getStyle().over);
-			assertTrue(btn.sizedButton().getStyle().over instanceof RoundedDrawable);
-			assertNotNull(btn.sizedButton().getStyle().down);
-			assertTrue(btn.sizedButton().getStyle().down instanceof RoundedDrawable);
+			assertSame(rd, btn.button().getStyle().up);
+			assertNotNull(btn.button().getStyle().checked);
+			assertTrue(btn.button().getStyle().checked instanceof RoundedDrawable);
+			assertNotNull(btn.button().getStyle().over);
+			assertTrue(btn.button().getStyle().over instanceof RoundedDrawable);
+			assertNotNull(btn.button().getStyle().down);
+			assertTrue(btn.button().getStyle().down instanceof RoundedDrawable);
 		}
 		tabs.dispose();
 	}
@@ -99,7 +99,7 @@ class TabsTest extends SolimEnv {
 				.tabStyle(customStyle)
 				.tab("Tab A", () -> {});
 
-		assertSame(customStyle, tabs.buttons().get(0).sizedButton().getStyle());
+		assertSame(customStyle, tabs.buttons().get(0).button().getStyle());
 		tabs.dispose();
 	}
 
@@ -117,9 +117,9 @@ class TabsTest extends SolimEnv {
 		assertEquals(3, tabs.contents().size());
 
 		// Initial: Tab 0 is active
-		assertTrue(tabs.buttons().get(0).sizedButton().isChecked());
-		assertFalse(tabs.buttons().get(1).sizedButton().isChecked());
-		assertFalse(tabs.buttons().get(2).sizedButton().isChecked());
+		assertTrue(tabs.buttons().get(0).button().isChecked());
+		assertFalse(tabs.buttons().get(1).button().isChecked());
+		assertFalse(tabs.buttons().get(2).button().isChecked());
 
 		assertTrue(tabs.contents().get(0).visible);
 		assertFalse(tabs.contents().get(1).visible);
@@ -128,9 +128,9 @@ class TabsTest extends SolimEnv {
 		// Switch to Tab 1 via signal
 		activeTab.set(1);
 		SignalDispatcher.flush();
-		assertFalse(tabs.buttons().get(0).sizedButton().isChecked());
-		assertTrue(tabs.buttons().get(1).sizedButton().isChecked());
-		assertFalse(tabs.buttons().get(2).sizedButton().isChecked());
+		assertFalse(tabs.buttons().get(0).button().isChecked());
+		assertTrue(tabs.buttons().get(1).button().isChecked());
+		assertFalse(tabs.buttons().get(2).button().isChecked());
 
 		assertFalse(tabs.contents().get(0).visible);
 		assertTrue(tabs.contents().get(1).visible);
@@ -141,9 +141,9 @@ class TabsTest extends SolimEnv {
 		SignalDispatcher.flush();
 		assertEquals(2, activeTab.get().intValue());
 
-		assertFalse(tabs.buttons().get(0).sizedButton().isChecked());
-		assertFalse(tabs.buttons().get(1).sizedButton().isChecked());
-		assertTrue(tabs.buttons().get(2).sizedButton().isChecked());
+		assertFalse(tabs.buttons().get(0).button().isChecked());
+		assertFalse(tabs.buttons().get(1).button().isChecked());
+		assertTrue(tabs.buttons().get(2).button().isChecked());
 
 		assertFalse(tabs.contents().get(0).visible);
 		assertFalse(tabs.contents().get(1).visible);

@@ -21,10 +21,8 @@ import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
-import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.reactive.Signal;
 
 /** Display widget for text content. */
 public final class Text implements Component, SpacingAware, ElementConfig<Text>, CellConfig<Text> {
@@ -80,14 +78,6 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
 
     public static Text of(String text) {
         return new Text(text);
-    }
-
-    public static Text of(Signal<String> signal) {
-        return of((Readable<String>) signal);
-    }
-
-    public static Text of(Computed<String> computed) {
-        return of((Readable<String>) computed);
     }
 
     public static Text of(Readable<String> readable) {

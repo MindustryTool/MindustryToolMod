@@ -84,10 +84,10 @@ public class QuickAccessHudView extends BaseComponent {
                             return null;
                         });
 
-                        grid(feature.colsConfig.signal().map(c -> Math.min(c, items.get().size())), items,
-                                HudItem::id,
-                                item -> createItemButton(feature, item, buttonSize, iconSize))
-                                        .gap(unit(1));
+                        reactiveGrid(items).key(HudItem::id)
+                                .columns(feature.colsConfig.signal().map(c -> Math.min(c, items.get().size())))
+                                .gap(unit(1))
+                                .children(item -> createItemButton(feature, item, buttonSize, iconSize));
                     });
         });
 

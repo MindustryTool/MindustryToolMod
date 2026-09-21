@@ -169,12 +169,12 @@ class ElementModifiersTest extends SolimEnv {
         Button button = new Button().gap(8f);
         Element bta = new Element();
         Element btb = new Element();
-        button.sizedButton().add(bta);
-        button.sizedButton().add(btb);
+        button.button().add(bta);
+        button.button().add(btb);
         button.respace();
-        assertEquals(0f, CellAccess.padLeft(button.sizedButton().getCell(bta)), 0.01f);
-        assertEquals(8f, CellAccess.padLeft(button.sizedButton().getCell(btb)), 0.01f);
-        assertEquals(0f, CellAccess.padTop(button.sizedButton().getCell(btb)), 0.01f);
+        assertEquals(0f, CellAccess.padLeft(button.button().getCell(bta)), 0.01f);
+        assertEquals(8f, CellAccess.padLeft(button.button().getCell(btb)), 0.01f);
+        assertEquals(0f, CellAccess.padTop(button.button().getCell(btb)), 0.01f);
     }
 
     @Test

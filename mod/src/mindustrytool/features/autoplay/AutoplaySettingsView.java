@@ -53,11 +53,8 @@ public class AutoplaySettingsView extends BaseComponent {
                         .growX().left().color(WebStyles.Colors.GHOST_FG);
             });
 
-            reactiveGrid(Signal.of(1), feature.tasks(),
-                    AutoplayTask::getId,
-                    task -> new TaskRow(feature, task))
-                            .gap(unit(2))
-                            .growX();
+            reactiveGrid(feature.tasks()).key(AutoplayTask::getId).gap(unit(2)).growX()
+                    .children(task -> new TaskRow(feature, task));
         });
     }
 

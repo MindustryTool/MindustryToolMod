@@ -9,7 +9,6 @@ import java.util.function.Function;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.core.Ui;
 import solim.modifier.CellConfig;
 import solim.layout.GapContainer;
 import solim.modifier.ElementConfig;
@@ -107,7 +106,7 @@ public final class Dynamic<T> extends BaseComponent
                 }
                 if (sc != null) {
                     currentBindings.addAll(sc.applyToCell(cell));
-                } else if (Ui.isExpanding(el)) {
+                } else if (SolimToken.isExpandingChild(el)) {
                     cell.growX();
                 }
             }

@@ -10,7 +10,6 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import solim.core.BaseComponent;
-import solim.core.Ui;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.test.SolimEnv;
@@ -29,7 +28,7 @@ class ColumnGrowExplorationTest extends SolimEnv {
 
         @Override
         protected Element build() {
-            col = Ui.column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
+            col = new Column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
                 new Element();
             });
             return col.element();
@@ -39,8 +38,8 @@ class ColumnGrowExplorationTest extends SolimEnv {
     @Test
     void directColumnWithGrowInsideRow() {
         final Column[] colHolder = new Column[1];
-        Row row = Ui.row().children(() -> {
-            colHolder[0] = Ui.column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
+        Row row = new Row().children(() -> {
+            colHolder[0] = new Column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
                 new Element();
             });
         });
@@ -56,7 +55,7 @@ class ColumnGrowExplorationTest extends SolimEnv {
     @Test
     void baseComponentReturningColumnWithGrowInsideRow() {
         ChannelListProbe probe = new ChannelListProbe();
-        Row row = Ui.row().children(() -> {
+        Row row = new Row().children(() -> {
             ParentStack.registerPendingComponent(probe, ParentStack.current());
         });
 
@@ -71,8 +70,8 @@ class ColumnGrowExplorationTest extends SolimEnv {
     @Test
     void directColumnGrowAfterChildren() {
         final Column[] colHolder = new Column[1];
-        Row row = Ui.row().children(() -> {
-            colHolder[0] = Ui.column().name("channel-list").gap(4f).padding(8f).children(() -> {
+        Row row = new Row().children(() -> {
+            colHolder[0] = new Column().name("channel-list").gap(4f).padding(8f).children(() -> {
                 new Element();
             }).grow();
         });

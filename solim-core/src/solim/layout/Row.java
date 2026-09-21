@@ -15,7 +15,6 @@ import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ParentStack;
 import solim.reactive.Readable;
-import solim.core.Ui;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.ComponentContext;
 import solim.reactive.Effect;
@@ -25,7 +24,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
-        if (Ui.isExpanding(child)) {
+        if (SolimToken.isExpandingChild(child)) {
             cell.growX();
         }
         GapContainer gc = GapContainer.find(table);

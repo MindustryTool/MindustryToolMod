@@ -12,6 +12,7 @@ import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
+import solim.core.Units;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.runtime.ComponentContext;
@@ -19,7 +20,6 @@ import solim.runtime.ParentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.core.Ui;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
@@ -51,7 +51,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
         this.headerBar = new Row().gap(4f);
         this.headerBar.name("solim-tabs-headerBar");
         this.headerBar.top().left();
-        this.headerBar.height(Ui.unit(14));
+        this.headerBar.height(Units.unit(14));
         this.root.add(headerBar.element()).growX().row();
 
         this.contentStack = new SolimStack();
@@ -96,7 +96,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
         Button btn = new Button(tabButtonStyle);
         if (tabButtonStyle == null) {
             btn.rounded(10, Color.clear).border(2f, Color.gray);
-            ButtonStyle s = btn.sizedButton().getStyle();
+            ButtonStyle s = btn.button().getStyle();
             if (s != null) {
                 s.checked = RoundedDrawable.of(10, new Color(1f, 1f, 1f, 0.12f), 2f, Color.white);
                 s.over = RoundedDrawable.of(10, new Color(1f, 1f, 1f, 0.06f), 2f, Color.lightGray);
@@ -108,10 +108,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
         btn.grow();
 
         btn.children(() -> {
-            if (icon != null) {
-                Ui.image(icon);
-            }
-            Ui.text(title);
+            btn.icon(icon).text(title);
         });
         tabButtons.add(btn);
         headerBar.table().add(btn.element()).growX();

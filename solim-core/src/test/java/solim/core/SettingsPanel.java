@@ -1,15 +1,22 @@
 package solim.core;
 
-import static solim.core.Ui.*;
-
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.util.Log;
+import solim.display.Text;
+import solim.input.Button;
+import solim.layout.Column;
+import solim.layout.Direction;
+import solim.layout.Divider;
+import solim.layout.Row;
+import solim.layout.Spacer;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
+import solim.runtime.ParentStack;
 
 /** Example final API settings panel from requirement.md §16. */
 public final class SettingsPanel extends BaseComponent {
@@ -50,14 +57,15 @@ public final class SettingsPanel extends BaseComponent {
 			Log.info("Dirty state: @", dirty.get());
 		});
 
-		return column().padding(24)
+		return new Column().padding(24)
 				.gap(16)
 				.children(() -> {
 					text(t("solim.settings.title", "Settings"));
 
-					divider();
+					Divider divider = new Divider(Direction.X);
+					ParentStack.attachToParent(divider.element());
 
-					row().children(() -> {
+					new Row().children(() -> {
 						text(t("solim.settings.dark-mode", "Dark Mode"));
 
 						button(() -> {
@@ -70,9 +78,10 @@ public final class SettingsPanel extends BaseComponent {
 										: t("solim.settings.dark-mode.off", "Off"))));
 					});
 
-					spacer();
+					Spacer spacer = new Spacer();
+					ParentStack.attachToParent(spacer.element());
 
-					row().right().gap(8).children(() -> {
+					new Row().right().gap(8).children(() -> {
 						button(() -> {
 							dirty.set(false);
 						}).children(() -> text(t("solim.settings.discard", "Discard")));
@@ -86,6 +95,20 @@ public final class SettingsPanel extends BaseComponent {
 					});
 				})
 				.element();
+	}
+
+	private static void text(String value) {
+		ParentStack.attachToParent(Text.of(value).label());
+	}
+
+	private static void text(Readable<String> value) {
+		ParentStack.attachToParent(Text.of(value).label());
+	}
+
+	private static Button button(Runnable onClick) {
+		Button button = new Button(onClick);
+		ParentStack.attachToParent(button.element());
+		return button;
 	}
 
 	@Override

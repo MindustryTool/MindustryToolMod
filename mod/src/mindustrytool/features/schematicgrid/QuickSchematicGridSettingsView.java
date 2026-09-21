@@ -304,12 +304,9 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
         });
 
         scroll().scrollX(true).scrollY(true).center().children(() -> {
-            reactiveGrid(
-                    feature.colsConfig.signal(),
-                    slots,
-                    QuickSchematicGridHudView.SlotModel::key,
-                    this::settingsSlotComponent)
-                            .gap(gap);
+            reactiveGrid(slots).columns(feature.colsConfig.signal())
+                    .key(QuickSchematicGridHudView.SlotModel::key).gap(gap)
+                    .children(this::settingsSlotComponent);
         });
     }
 

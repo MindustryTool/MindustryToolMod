@@ -7,7 +7,6 @@ import arc.scene.ui.Button.ButtonStyle;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
-import solim.core.Ui;
 import arc.input.KeyCode;
 import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
@@ -26,12 +25,12 @@ class ButtonGestureTest extends SolimEnv {
 		boolean[] clicked = {false};
 		boolean[] longClicked = {false};
 
-		Button btn = Ui.button(() -> clicked[0] = true)
+		Button btn = new Button(() -> clicked[0] = true)
 				.onLongClick(100L, () -> longClicked[0] = true);
 
 		InputEvent event = new InputEvent();
-		event.listenerActor = btn.sizedButton();
-		event.targetActor = btn.sizedButton();
+		event.listenerActor = btn.button();
+		event.targetActor = btn.button();
 		for (EventListener l : btn.element().getListeners()) {
 			if (l instanceof ClickListener) {
 				((ClickListener) l).clicked(event, 0f, 0f);
@@ -47,7 +46,7 @@ class ButtonGestureTest extends SolimEnv {
 		boolean[] clicked = {false};
 		boolean[] longClicked = {false};
 
-		Button btn = Ui.button(() -> clicked[0] = true)
+		Button btn = new Button(() -> clicked[0] = true)
 				.onLongClick(50L, () -> longClicked[0] = true);
 
 		ClickListener cl = null;
@@ -60,10 +59,10 @@ class ButtonGestureTest extends SolimEnv {
 		assertNotNull(cl);
 
 		InputEvent event = new InputEvent();
-		event.listenerActor = btn.sizedButton();
-		event.targetActor = btn.sizedButton();
+		event.listenerActor = btn.button();
+		event.targetActor = btn.button();
 		cl.touchDown(event, 0f, 0f, 0, KeyCode.mouseLeft);
-		assertTrue(btn.sizedButton().isPressed());
+		assertTrue(btn.button().isPressed());
 
 		// Initial update tick records pressTime
 		btn.element().act(0.01f);
@@ -84,7 +83,7 @@ class ButtonGestureTest extends SolimEnv {
 
 	@Test
 	void opacityModifierStaticAndReactive() {
-		Button btn = Ui.button();
+		Button btn = new Button();
 		btn.opacity(0.4f);
 		assertEquals(0.4f, btn.element().color.a, 0.001f);
 
@@ -99,7 +98,7 @@ class ButtonGestureTest extends SolimEnv {
 
 	@Test
 	void layoutModifierOpacity() {
-		Row r = Ui.row().opacity(0.5f);
+		Row r = new Row().opacity(0.5f);
 		assertEquals(0.5f, r.element().color.a, 0.001f);
 
 		Signal<Float> op = Signal.of(0.9f);
@@ -112,7 +111,7 @@ class ButtonGestureTest extends SolimEnv {
 		Signal<Float> size = Signal.of(48f);
 		Signal<Float> margin = Signal.of(8f);
 
-		Button btn = Ui.button().size(size).margin(margin);
+		Button btn = new Button().size(size).margin(margin);
 
 		assertEquals(48f, btn.button().getWidth(), 0.01f);
 		assertEquals(48f, btn.button().getHeight(), 0.01f);
@@ -129,7 +128,7 @@ class ButtonGestureTest extends SolimEnv {
 		ButtonStyle s2 = new ButtonStyle();
 		Signal<ButtonStyle> styleSignal = Signal.of(s1);
 
-		Button btn = Ui.button().style(styleSignal);
+		Button btn = new Button().style(styleSignal);
 		assertSame(s1, btn.button().getStyle());
 
 		styleSignal.set(s2);

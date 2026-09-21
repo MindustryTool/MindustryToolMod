@@ -88,9 +88,9 @@ UI facade methods that accept reactive content SHALL declare a single `Readable<
 - **WHEN** a caller retains the component (`var list = virtualList(items, heights).key(k); list.children(factory); this.list = list;`)
 - **THEN** the field reference works for later runtime configuration and scroll queries
 
-#### Scenario: Missing item factory fails fast
-- **WHEN** `reactiveGrid(items)` is built (its element forced) without any `.children(...)` call
-- **THEN** an `IllegalStateException` naming `.children(...)` as the required configuration is thrown before any reconcile runs
+#### Scenario: Missing item factory renders empty until supplied
+- **WHEN** `reactiveGrid(items)` is built (its element forced by configuration or layout) without any `.children(...)` call
+- **THEN** it renders empty with no reconcile, and calling `.children(...)` afterwards refreshes the already-built content exactly once
 
 #### Scenario: Generics collapse
 - **WHEN** a caller declares a field `VirtualList<MessageGroup> virtualList;`

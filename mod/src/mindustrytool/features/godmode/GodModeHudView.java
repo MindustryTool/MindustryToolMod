@@ -6,12 +6,10 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
-import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.input.Button;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
 
@@ -55,11 +53,6 @@ public class GodModeHudView extends BaseComponent {
 
         hud.position(feature.xSignal, feature.ySignal);
 
-        listen(ResizeEvent.class, e -> {
-            keepInScreen();
-            Core.app.post(this::keepInScreen);
-        });
-
         effect(() -> {
             scale.get();
             Core.app.post(this::keepInScreen);
@@ -83,57 +76,47 @@ public class GodModeHudView extends BaseComponent {
     private static Component buildActiveTools(GodModeFeature feature, GodModeProvider provider,
             Readable<Float> buttonSize, Readable<Float> iconSize, @Nullable Readable<Boolean> canEdit) {
         return row().gap(unit(1)).center().children(() -> {
-            Button teamBtn = button()
+            button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.team"))
                     .onClick(() -> new GodModeTeamDialog(provider).show())
+                    .enabled(canEdit)
                     .children(() -> icon(Icon.players).size(iconSize));
-            if (canEdit != null) {
-                teamBtn.enabled(canEdit);
-            }
 
-            Button itemBtn = button()
+            button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.items"))
                     .onClick(() -> new GodModeItemsDialog(provider).show())
+                    .enabled(canEdit)
                     .children(() -> icon(Icon.box).size(iconSize));
-            if (canEdit != null) {
-                itemBtn.enabled(canEdit);
-            }
 
-            Button unitBtn = button()
+            button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.units"))
                     .onClick(() -> new GodModeUnitsDialog(provider).show())
+                    .enabled(canEdit)
                     .children(() -> icon(Icon.units).size(iconSize));
-            if (canEdit != null) {
-                unitBtn.enabled(canEdit);
-            }
 
-            Button effectBtn = button()
+            button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.effects"))
                     .onClick(() -> new GodModeEffectsDialog(provider).show())
+                    .enabled(canEdit)
                     .children(() -> icon(Icon.effect).size(iconSize));
-            if (canEdit != null) {
-                effectBtn.enabled(canEdit);
-            }
 
-            Button coreBtn = button()
+            button()
                     .style(WebStyles.ghost())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.core"))
                     .onClick(() -> new GodModeCoreDialog(provider).show())
+                    .enabled(canEdit)
                     .children(() -> icon(Icon.hammer).size(iconSize));
-            if (canEdit != null) {
-                coreBtn.enabled(canEdit);
-            }
 
-            Button fogBtn = button()
+            button()
                     .style(WebStyles.filterChip())
                     .size(buttonSize)
                     .checked(feature.fogDisabledSignal())
@@ -141,12 +124,10 @@ public class GodModeHudView extends BaseComponent {
                             ? Core.bundle.get("feature.god-mode.hud.fog-off")
                             : Core.bundle.get("feature.god-mode.hud.fog-on")))
                     .onClick(feature::toggleFog)
+                    .enabled(canEdit)
                     .children(() -> icon(Icon.eye).size(iconSize).color(
                             feature.fogDisabledSignal()
                                     .map(dis -> Boolean.TRUE.equals(dis) ? Color.gold : WebStyles.Colors.GHOST_FG)));
-            if (canEdit != null) {
-                fogBtn.enabled(canEdit);
-            }
         });
     }
 
@@ -157,15 +138,13 @@ public class GodModeHudView extends BaseComponent {
                     .color(WebStyles.Colors.DANGER)
                     .center();
 
-            Button refreshBtn = button()
+            button()
                     .style(WebStyles.outline())
                     .size(buttonSize)
                     .tooltip(Core.bundle.get("feature.god-mode.hud.refresh-provider"))
                     .onClick(feature::checkProvider)
+                    .enabled(canEdit)
                     .children(() -> icon(Icon.refresh).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
-            if (canEdit != null) {
-                refreshBtn.enabled(canEdit);
-            }
         });
     }
 

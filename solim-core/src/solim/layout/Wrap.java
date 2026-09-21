@@ -13,7 +13,6 @@ import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
-import solim.core.Ui;
 import solim.modifier.PendingCellConfig;
 
 /**
@@ -26,7 +25,7 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
 
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
-        if (Ui.isExpanding(child)) {
+        if (SolimToken.isExpandingChild(child)) {
             cell.growX();
         }
         return cell;
