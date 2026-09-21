@@ -1,5 +1,8 @@
-## ADDED Requirements
+# solim-ui-dx Specification
 
+## Purpose
+TBD - created by archiving change solim-ui-dx. Update Purpose after archive.
+## Requirements
 ### Requirement: Single public UI facade
 
 The Solim library SHALL expose exactly one public declarative facade, `solim.UI`. The legacy `solim.core.Ui` facade SHALL be deleted. The attachment heuristic previously exposed as `Ui.isExpanding(Element)` SHALL move to `SolimToken.isExpandingChild(Element)`, while `SolimToken.isExpanding(Element)` SHALL retain its existing token-flag-only semantics. Consumers SHALL NOT be able to import or call any `solim.core.Ui` factory method.
@@ -131,3 +134,4 @@ The UI facade SHALL NOT expose methods with no call sites that duplicate existin
 #### Scenario: Count badge via mapped Readable
 - **WHEN** a reactive count badge is needed
 - **THEN** it is declared as `badge(count.map(v -> v > 99 ? "99+" : String.valueOf(v)))` and updates reactively
+

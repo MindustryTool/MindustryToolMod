@@ -97,7 +97,7 @@ public class SmartUpgradeFeature extends Feature {
                 .id("smart-upgrade")
                 .icon(FileIcon.of("chevrons-up.png"))
                 .order(12)
-                .enabledByDefault(true)
+                .enabledByDefault(false)
                 .quickAccess(true)
                 .build());
 
