@@ -2,7 +2,7 @@ package solim.style;
 
 import arc.util.Nullable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
+import arc.func.Prov;
 
 /**
  * Thread-safe flyweight cache interning static button style configurations.
@@ -24,7 +24,7 @@ public final class StyleCache {
         return CACHE.get(key);
     }
 
-    public static SolimButtonStyle getOrCreate(String key, Supplier<SolimButtonStyle> factory) {
+    public static SolimButtonStyle getOrCreate(String key, Prov<SolimButtonStyle> factory) {
         return CACHE.computeIfAbsent(key, k -> factory.get());
     }
 

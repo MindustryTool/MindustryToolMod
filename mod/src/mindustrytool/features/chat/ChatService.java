@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+import arc.func.Prov;
 import mindustrytool.models.response.ChannelDto;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
@@ -29,7 +29,7 @@ public class ChatService {
     public static final float WATCHDOG_INTERVAL_SECONDS = 5f;
 
     private final ChatStore store;
-    private final Supplier<Boolean> windowOpenSupplier;
+    private final Prov<Boolean> windowOpenSupplier;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final String chatId = UUID.randomUUID().toString();
 
@@ -42,7 +42,7 @@ public class ChatService {
     private final AtomicBoolean reconnecting = new AtomicBoolean(false);
     private @Nullable String lastAutoLoadedChannelId;
 
-    public ChatService(ChatStore store, Supplier<Boolean> windowOpenSupplier) {
+    public ChatService(ChatStore store, Prov<Boolean> windowOpenSupplier) {
         this.store = store;
         this.windowOpenSupplier = windowOpenSupplier;
 

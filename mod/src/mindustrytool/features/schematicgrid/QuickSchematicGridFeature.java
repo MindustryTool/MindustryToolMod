@@ -7,7 +7,7 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustrytool.components.FileIcon;
@@ -412,14 +412,14 @@ public class QuickSchematicGridFeature extends Feature {
         return null;
     }
 
-    public boolean updateEntry(String id, Consumer<QuickSchematicEntry> mutator) {
+    public boolean updateEntry(String id, Cons<QuickSchematicEntry> mutator) {
         if (id == null || mutator == null) {
             return false;
         }
         List<QuickSchematicEntry> next = getEntries();
         for (QuickSchematicEntry entry : next) {
             if (entry != null && id.equals(entry.id)) {
-                mutator.accept(entry);
+                mutator.get(entry);
                 persist(next);
                 return true;
             }

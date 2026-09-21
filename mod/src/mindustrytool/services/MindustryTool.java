@@ -7,7 +7,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import java.util.stream.Stream;
 
 import mindustrytool.Config;
@@ -229,7 +229,7 @@ public final class MindustryTool {
         });
     }
 
-    public static CompletableFuture<Void> chatStream(String chatId, Consumer<String> lineConsumer) {
+    public static CompletableFuture<Void> chatStream(String chatId, Cons<String> lineConsumer) {
         return api.get("/chats/stream")
                 .header("Accept", "text/event-stream")
                 .header("x-chat-id", chatId)
@@ -237,21 +237,21 @@ public final class MindustryTool {
                 .sendAsync(BodyHandlers.ofLines())
                 .thenAccept(response -> {
                     try (Stream<String> lines = response.body()) {
-                        lines.forEach(lineConsumer);
+                        lines.forEach(lineConsumer::get);
                     }
                 });
     }
 
     // ─── Player Connect ────────────────────────────────────────────
 
-    public static CompletableFuture<Void> playerConnectStream(Consumer<String> lineConsumer) {
+    public static CompletableFuture<Void> playerConnectStream(Cons<String> lineConsumer) {
         return publicApi.get("/player-connect/sse")
                 .header("Accept", "text/event-stream")
                 .timeout(Duration.ofMillis(0))
                 .sendAsync(BodyHandlers.ofLines())
                 .thenAccept(response -> {
                     try (Stream<String> lines = response.body()) {
-                        lines.forEach(lineConsumer);
+                        lines.forEach(lineConsumer::get);
                     }
                 });
     }

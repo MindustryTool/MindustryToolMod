@@ -1,7 +1,7 @@
 package solim.config;
 
 import arc.util.Nullable;
-import java.util.function.Function;
+import arc.func.Func;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -11,20 +11,20 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 	private final ConfigGroup group;
 	private final String baseName;
 	private final Readable<K> discriminant;
-	private final Function<K, String> keySuffix;
+	private final Func<K, String> keySuffix;
 	private final ConfigPersister<T> persister;
 	private final Subscription discriminantSub;
 	private @Nullable K currentDiscriminant;
 
-	private final @Nullable Function<K, T> defaultFactory;
+	private final @Nullable Func<K, T> defaultFactory;
 
 	public ContextualConfigValue(
 			ConfigGroup group,
 			String baseName,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
+			Func<K, String> keySuffix,
 			@Nullable T defaultValue,
-			@Nullable Function<K, T> defaultFactory,
+			@Nullable Func<K, T> defaultFactory,
 			ConfigPersister<T> persister) {
 		super(
 				deriveInitialKey(group, baseName, discriminant, keySuffix),
@@ -49,7 +49,7 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 			ConfigGroup group,
 			String baseName,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
+			Func<K, String> keySuffix,
 			@Nullable T defaultValue,
 			ConfigPersister<T> persister) {
 		this(group, baseName, discriminant, keySuffix, defaultValue, null, persister);
@@ -59,8 +59,8 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 			ConfigGroup group,
 			String baseName,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
-			Function<K, T> defaultFactory,
+			Func<K, String> keySuffix,
+			Func<K, T> defaultFactory,
 			ConfigPersister<T> persister) {
 		this(group, baseName, discriminant, keySuffix, null, defaultFactory, persister);
 	}
@@ -69,7 +69,7 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 			ConfigGroup group,
 			String baseName,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
+			Func<K, String> keySuffix,
 			@Nullable T defaultValue,
 			ContextualPersister<T> persister) {
 		this(group, baseName, discriminant, keySuffix, defaultValue, null, (ConfigPersister<T>) persister);
@@ -77,10 +77,10 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 
 	private static <T, K> T resolveInitialDefault(
 			@Nullable T defaultValue,
-			@Nullable Function<K, T> defaultFactory,
+			@Nullable Func<K, T> defaultFactory,
 			@Nullable Readable<K> discriminant) {
 		if (defaultFactory != null && discriminant != null) {
-			T val = defaultFactory.apply(discriminant.peek());
+			T val = defaultFactory.get(discriminant.peek());
 			if (val != null) {
 				return val;
 			}
@@ -92,9 +92,9 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 			ConfigGroup group,
 			String baseName,
 			@Nullable Readable<K> discriminant,
-			Function<K, String> keySuffix) {
+			Func<K, String> keySuffix) {
 		K initialDisc = discriminant != null ? discriminant.peek() : null;
-		String suffix = keySuffix != null ? keySuffix.apply(initialDisc) : "";
+		String suffix = keySuffix != null ? keySuffix.get(initialDisc) : "";
 		return group.resolveKey(baseName + (suffix != null && !suffix.isEmpty() ? "." + suffix : ""));
 	}
 
@@ -126,7 +126,7 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 			}
 			this.currentDiscriminant = newDisc;
 			this.key = deriveKey(newDisc);
-			T contextDefault = defaultFactory != null ? defaultFactory.apply(newDisc) : defaultValue;
+			T contextDefault = defaultFactory != null ? defaultFactory.get(newDisc) : defaultValue;
 			T loaded = persister != null ? persister.load(this.key, contextDefault) : null;
 			signal.set(loaded != null ? loaded : contextDefault);
 		} finally {
@@ -135,7 +135,7 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 	}
 
 	private String deriveKey(K disc) {
-		String suffix = keySuffix != null ? keySuffix.apply(disc) : "";
+		String suffix = keySuffix != null ? keySuffix.get(disc) : "";
 		return group.resolveKey(baseName + (suffix != null && !suffix.isEmpty() ? "." + suffix : ""));
 	}
 
@@ -149,7 +149,7 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 
 	@Override
 	public @Nullable T getDefaultValue() {
-		return defaultFactory != null ? defaultFactory.apply(currentDiscriminant) : defaultValue;
+		return defaultFactory != null ? defaultFactory.get(currentDiscriminant) : defaultValue;
 	}
 
 	@Override

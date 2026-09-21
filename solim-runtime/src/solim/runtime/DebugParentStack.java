@@ -6,7 +6,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.function.Supplier;
+import arc.func.Prov;
 import solim.performance.PerfSpan;
 
 /**
@@ -76,14 +76,14 @@ public final class DebugParentStack extends ParentStack {
     }
 
     @Override
-    protected <T> T doIsolate(Supplier<T> supplier) {
-        if (supplier == null) {
+    protected <T> T doIsolate(Prov<T> Prov) {
+        if (Prov == null) {
             return null;
         }
         Deque<Long> saved = new ArrayDeque<>(pushTimes);
         pushTimes.clear();
         try {
-            return super.doIsolate(supplier);
+            return super.doIsolate(Prov);
         } finally {
             pushTimes.clear();
             pushTimes.addAll(saved);

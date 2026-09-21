@@ -2,7 +2,7 @@ package solim.config;
 
 import arc.util.Nullable;
 import java.util.Set;
-import java.util.function.Function;
+import arc.func.Func;
 import solim.reactive.Readable;
 
 public class ConfigGroup {
@@ -50,7 +50,7 @@ public class ConfigGroup {
 	public <T, K> ContextualConfigValue<T, K> valueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
+			Func<K, String> keySuffix,
 			@Nullable T defaultValue,
 			ConfigPersister<T> persister) {
 		return new ContextualConfigValue<>(this, name, discriminant, keySuffix, defaultValue, persister);
@@ -59,8 +59,8 @@ public class ConfigGroup {
 	public <T, K> ContextualConfigValue<T, K> valueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
-			Function<K, T> defaultFactory,
+			Func<K, String> keySuffix,
+			Func<K, T> defaultFactory,
 			ConfigPersister<T> persister) {
 		return new ContextualConfigValue<>(this, name, discriminant, keySuffix, defaultFactory, persister);
 	}
@@ -96,7 +96,7 @@ public class ConfigGroup {
 	public <K> ContextualConfigValue<Boolean, K> boolValueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
+			Func<K, String> keySuffix,
 			boolean defaultValue) {
 		return valueKeyed(name, discriminant, keySuffix, defaultValue, ConfigPersister.BOOLEAN);
 	}
@@ -104,15 +104,15 @@ public class ConfigGroup {
 	public <K> ContextualConfigValue<Boolean, K> boolValueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
-			Function<K, Boolean> defaultFactory) {
+			Func<K, String> keySuffix,
+			Func<K, Boolean> defaultFactory) {
 		return valueKeyed(name, discriminant, keySuffix, defaultFactory, ConfigPersister.BOOLEAN);
 	}
 
 	public <K> ContextualConfigValue<Integer, K> intValueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
+			Func<K, String> keySuffix,
 			int defaultValue) {
 		return valueKeyed(name, discriminant, keySuffix, defaultValue, ConfigPersister.INTEGER);
 	}
@@ -120,15 +120,15 @@ public class ConfigGroup {
 	public <K> ContextualConfigValue<Integer, K> intValueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
-			Function<K, Integer> defaultFactory) {
+			Func<K, String> keySuffix,
+			Func<K, Integer> defaultFactory) {
 		return valueKeyed(name, discriminant, keySuffix, defaultFactory, ConfigPersister.INTEGER);
 	}
 
 	public <K> ContextualConfigValue<Float, K> floatValueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
+			Func<K, String> keySuffix,
 			float defaultValue) {
 		return valueKeyed(name, discriminant, keySuffix, defaultValue, ConfigPersister.FLOAT);
 	}
@@ -136,15 +136,15 @@ public class ConfigGroup {
 	public <K> ContextualConfigValue<Float, K> floatValueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
-			Function<K, Float> defaultFactory) {
+			Func<K, String> keySuffix,
+			Func<K, Float> defaultFactory) {
 		return valueKeyed(name, discriminant, keySuffix, defaultFactory, ConfigPersister.FLOAT);
 	}
 
 	public <K> ContextualConfigValue<String, K> stringValueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
+			Func<K, String> keySuffix,
 			@Nullable String defaultValue) {
 		return valueKeyed(name, discriminant, keySuffix, defaultValue, ConfigPersister.STRING);
 	}
@@ -152,8 +152,8 @@ public class ConfigGroup {
 	public <K> ContextualConfigValue<String, K> stringValueKeyed(
 			String name,
 			Readable<K> discriminant,
-			Function<K, String> keySuffix,
-			Function<K, String> defaultFactory) {
+			Func<K, String> keySuffix,
+			Func<K, String> defaultFactory) {
 		return valueKeyed(name, discriminant, keySuffix, defaultFactory, ConfigPersister.STRING);
 	}
 

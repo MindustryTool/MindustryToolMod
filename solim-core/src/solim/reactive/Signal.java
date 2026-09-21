@@ -6,9 +6,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Cons;
+import arc.func.Func;
+import arc.func.Prov;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.runtime.ReactiveContext;
@@ -17,7 +17,7 @@ import solim.runtime.SolimAssert;
 /** Mutable reactive value. */
 public final class Signal<T> implements Readable<T>, ReactiveSource {
 	private T value;
-	private final List<Consumer<T>> listeners = new ArrayList<>();
+	private final List<Cons<T>> listeners = new ArrayList<>();
 	private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
 
 	private Signal(T initial) {
@@ -29,23 +29,23 @@ public final class Signal<T> implements Readable<T>, ReactiveSource {
 	}
 
 	/**
-	 * Creates a Signal initialized from the given supplier that recalculates whenever the callback
+	 * Creates a Signal initialized from the given Prov that recalculates whenever the callback
 	 * registrar invokes the registered callback (e.g. {@code element::resized}).
 	 */
-	public static <T> Signal<T> fromCallback(Consumer<Runnable> callbackRegistrar, Supplier<T> supplier) {
-		Signal<T> signal = Signal.of(supplier.get());
+	public static <T> Signal<T> fromCallback(Cons<Runnable> callbackRegistrar, Prov<T> Prov) {
+		Signal<T> signal = Signal.of(Prov.get());
 		if (callbackRegistrar != null) {
-			callbackRegistrar.accept(() -> signal.set(supplier.get()));
+			callbackRegistrar.get(() -> signal.set(Prov.get()));
 		}
 		return signal;
 	}
 
-	public static <T> Signal<T> of(Consumer<Runnable> callbackRegistrar, Supplier<T> supplier) {
-		return fromCallback(callbackRegistrar, supplier);
+	public static <T> Signal<T> of(Cons<Runnable> callbackRegistrar, Prov<T> Prov) {
+		return fromCallback(callbackRegistrar, Prov);
 	}
 
-	public static <T> Computed<T> computed(Supplier<T> supplier) {
-		return new Computed<>(supplier);
+	public static <T> Computed<T> computed(Prov<T> Prov) {
+		return new Computed<>(Prov);
 	}
 
 	@Override
@@ -64,10 +64,10 @@ public final class Signal<T> implements Readable<T>, ReactiveSource {
 		if (Objects.equals(value, newValue)) return;
 		this.value = newValue;
 		// notify listeners
-		List<Consumer<T>> copy = new ArrayList<>(listeners);
-		for (Consumer<T> c : copy) {
+		List<Cons<T>> copy = new ArrayList<>(listeners);
+		for (Cons<T> c : copy) {
 			try {
-				c.accept(value);
+				c.get(value);
 			} catch (Throwable e) {
 				Log.err("[Signal] listener error", e);
 			}
@@ -83,11 +83,11 @@ public final class Signal<T> implements Readable<T>, ReactiveSource {
 		}
 	}
 
-	public void update(Function<T, T> updater) {
-		set(updater.apply(value));
+	public void update(Func<T, T> updater) {
+		set(updater.get(value));
 	}
 
-	public Subscription subscribe(Consumer<T> listener) {
+	public Subscription subscribe(Cons<T> listener) {
 		listeners.add(listener);
 		return new Subscription() {
 			private boolean disposed = false;
@@ -107,8 +107,8 @@ public final class Signal<T> implements Readable<T>, ReactiveSource {
 		};
 	}
 
-	public <R> Computed<R> map(Function<T, R> mapper) {
-		return Signal.computed(() -> mapper.apply(get()));
+	public <R> Computed<R> map(Func<T, R> mapper) {
+		return Signal.computed(() -> mapper.get(get()));
 	}
 
 	@Override

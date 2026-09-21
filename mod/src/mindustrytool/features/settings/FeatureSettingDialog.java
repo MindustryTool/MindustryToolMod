@@ -5,7 +5,7 @@ import arc.scene.Element;
 import arc.scene.Group;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
+import arc.func.Boolf;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import mindustry.Vars;
@@ -48,8 +48,8 @@ public final class FeatureSettingDialog extends SolimDialog {
         }
     }
 
-    private void discoverSolimElements(UiNode parent, Element element, Predicate<Element> pred) {
-        if (pred.test(element)) {
+    private void discoverSolimElements(UiNode parent, Element element, Boolf<Element> pred) {
+        if (pred.get(element)) {
             parent.children.add(buildUiTree(element));
             return;
         }

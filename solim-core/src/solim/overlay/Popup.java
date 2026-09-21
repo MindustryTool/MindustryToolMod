@@ -15,7 +15,7 @@ import arc.util.Nullable;
 import arc.util.Time;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
+import arc.func.Func;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -53,7 +53,7 @@ import solim.reactive.Readable;
 public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T>> {
     // TODO: Popup show above existsing UI making them unusable
     private final Table table = new Table();
-    private @Nullable Function<T, Component> provider;
+    private @Nullable Func<T, Component> provider;
     private @Nullable Component currentContent;
     private final List<Disposable> currentBindings = new ArrayList<>();
     private boolean touchAttached = false;
@@ -156,7 +156,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
      * Sets the content provider applied to the data passed to {@link #show}.
      * Content is rebuilt on every show call.
      */
-    public Popup<T> children(@Nullable Function<T, Component> provider) {
+    public Popup<T> children(@Nullable Func<T, Component> provider) {
         this.provider = provider;
         return this;
     }
@@ -200,7 +200,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     /**
      * Computes menu placement: bottom edge at the anchor when it fits above,
      * flipped below the anchor on overflow, clamped inside the stage on both axes.
-     * Pure function of its inputs, safe to unit test headless.
+     * Pure Func of its inputs, safe to unit test headless.
      */
     public static Vec2 place(float anchorX, float anchorY, float menuWidth, float menuHeight,
             float stageWidth, float stageHeight) {
@@ -233,7 +233,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
         clearContent();
         if (provider != null) {
             Component content = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
-                Component built = provider.apply(data);
+                Component built = provider.get(data);
                 if (built != null) {
                     built.element();
                 }
