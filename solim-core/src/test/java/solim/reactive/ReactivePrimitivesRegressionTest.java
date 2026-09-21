@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.runtime.ReactiveContext;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 import solim.test.TestScheduler;
 
-public class ReactivePrimitivesRegressionTest extends SolimTestHarness {
+public class ReactivePrimitivesRegressionTest extends SolimEnv {
 
 	// ==========================================
 	// Phase 5: Signal Correctness

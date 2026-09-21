@@ -21,7 +21,7 @@ public class AuthLoginDialog extends SolimDialog {
 
 		Readable<Boolean> hasUrl = loginUrlSignal.map(url -> url != null && !url.trim().isEmpty());
 
-		content(() -> {
+		children(() -> {
 			column().grow().padding(unit(4)).center().children(() -> {
 				dynamic(hasUrl, available -> {
 					if (Boolean.TRUE.equals(available)) {

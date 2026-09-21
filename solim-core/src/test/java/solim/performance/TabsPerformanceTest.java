@@ -3,53 +3,18 @@ package solim.performance;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.Element;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Tabs;
 import solim.reactive.Signal;
-import arc.graphics.g2d.Font;
-import arc.graphics.g2d.Font.FontData;
-import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockGL20;
-import arc.scene.Scene;
 import arc.scene.ui.Button.ButtonStyle;
-import arc.scene.ui.Label.LabelStyle;
+import solim.test.SolimEnv;
 
-public class TabsPerformanceTest {
+public class TabsPerformanceTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
-        if (Core.scene == null) {
-            Core.scene = new Scene();
-            FontData fontData = new FontData() {
-                @Override
-                public boolean hasGlyph(char ch) {
-                    return true;
-                }
-            };
-            Font font = new Font(fontData, new TextureRegion(), false);
-            ButtonStyle btnStyle = new ButtonStyle();
-            Core.scene.addStyle(ButtonStyle.class, btnStyle);
-            LabelStyle lblStyle = new LabelStyle();
-            lblStyle.font = font;
-            Core.scene.addStyle(LabelStyle.class, lblStyle);
-        }
-    }
 
     private void populateLargeContent(int count) {
         Column col = new Column();
@@ -61,6 +26,12 @@ public class TabsPerformanceTest {
                 });
             }
         });
+    }
+
+    @BeforeEach
+    void setUp() {
+        newScene();
+        Core.scene.addStyle(ButtonStyle.class, new ButtonStyle());
     }
 
     @Test

@@ -110,7 +110,7 @@ public class AuthOverlay {
                                         if (!errText.isEmpty()) {
                                             text(errText);
                                         }
-                                        button(Core.bundle.get("auth.session.retry"), Icon.refresh, this::startLoginUI);
+                                        button(Core.bundle.get("auth.session.retry"), this::startLoginUI).icon(Icon.refresh);
                                     });
                         }
 

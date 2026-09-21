@@ -162,25 +162,23 @@ public class MapBrowserDialog extends SolimDialog {
                                     .data((list, fecthing) -> fecthing ? Loader.centered()
                                             : scroll().style(Styles.noBarPane).grow()
                                                     .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
-                                                        reactiveGrid(
-                                                                columnCount,
-                                                                visibleItems,
-                                                                MapData::getItemId,
-                                                                item -> new MapCard(
+                                                        reactiveGrid(visibleItems).columns(columnCount)
+                                                                .key(MapData::getItemId)
+                                                                .empty(() -> {
+                                                                    text(Core.bundle
+                                                                            .get("browser.empty"))
+                                                                                    .color(Color.gray)
+                                                                                    .padding(unit(4));
+                                                                                })
+                                                                .gap(BrowserLayout.CARD_GAP)
+                                                                .children(item -> new MapCard(
                                                                         item,
                                                                         cardSize,
                                                                         () -> showDetails(item),
                                                                         () -> MapActions
                                                                                 .downloadAndImport(item.getItemId()),
                                                                         () -> showDetails(item),
-                                                                        () -> MapActions.playMap(item.getItemId())))
-                                                                                .empty(() -> {
-                                                                                    text(Core.bundle
-                                                                                            .get("browser.empty"))
-                                                                                                    .color(Color.gray)
-                                                                                                    .padding(unit(4));
-                                                                                })
-                                                                                .gap(BrowserLayout.CARD_GAP);
+                                                                        () -> MapActions.playMap(item.getItemId())));
                                                     }))
                                     .grow();
 

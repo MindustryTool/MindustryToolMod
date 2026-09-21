@@ -1,28 +1,20 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.Element;
+import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import arc.scene.style.TextureRegionDrawable;
+import solim.test.SolimEnv;
 
-class WrapTest {
+class WrapTest extends SolimEnv {
 
-	@BeforeAll
-	static void initArc() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	@Test
 	void createsTableWithDefaultName() {

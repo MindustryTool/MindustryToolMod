@@ -1,24 +1,21 @@
 package mindustrytool.features.bridgevisualizer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
-import arc.scene.style.TextureRegionDrawable;
-import mindustry.gen.Icon;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class BridgeVisualizerFeatureTest {
+import arc.graphics.g2d.TextureRegion;
+import arc.scene.style.TextureRegionDrawable;
+import mindustry.gen.Icon;
+import mindustrytool.test.MindustryTestEnv;
+
+class BridgeVisualizerFeatureTest extends MindustryTestEnv {
 
     @BeforeEach
     void setUp() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
         if (Icon.distribution == null) {
             Icon.distribution = new TextureRegionDrawable(new TextureRegion());
         }

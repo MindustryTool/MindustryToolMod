@@ -18,8 +18,9 @@ import solim.reactive.Signal;
 import arc.Core;
 import mindustry.ui.Styles;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class RoundedGraphicsTest {
+class RoundedGraphicsTest extends SolimEnv {
 
     @BeforeEach
     void setUp() {

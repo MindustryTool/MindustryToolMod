@@ -5,19 +5,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.scene.Element;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 
-class VirtualListTest extends SolimTestHarness {
-
-    @BeforeAll
-    static void initArc() {
-        SolimTestHarness.initArcHeadless();
-    }
+class VirtualListTest extends SolimEnv {
 
     static class TestItemComponent extends BaseComponent {
         final String id;
@@ -61,12 +55,9 @@ class VirtualListTest extends SolimTestHarness {
     @Test
     void testEmptyList() {
         Signal<List<String>> items = Signal.of(Collections.<String>emptyList());
-        VirtualList<String, String> vl = new VirtualList<>(
-                items,
-                id -> id,
-                (id, w) -> 50f,
-                TestItemComponent::new
-        );
+        VirtualList<String> vl = new VirtualList<>(items, (id, w) -> 50f);
+        vl.key(id -> id);
+        vl.children(TestItemComponent::new);
         vl.element();
         SignalDispatcher.flush();
 
@@ -84,16 +75,13 @@ class VirtualListTest extends SolimTestHarness {
         Signal<List<String>> items = Signal.of(rawItems);
         Map<String, TestItemComponent> created = new HashMap<>();
 
-        VirtualList<String, String> vl = new VirtualList<>(
-                items,
-                id -> id,
-                (id, w) -> 50f,
-                id -> {
-                    TestItemComponent c = new TestItemComponent(id);
-                    created.put(id, c);
-                    return c;
-                }
-        );
+        VirtualList<String> vl = new VirtualList<>(items, (id, w) -> 50f);
+        vl.key(id -> id);
+        vl.children(id -> {
+            TestItemComponent c = new TestItemComponent(id);
+            created.put(id, c);
+            return c;
+        });
         vl.overscan(2);
         vl.element();
         if (vl.pane() != null) {
@@ -119,12 +107,9 @@ class VirtualListTest extends SolimTestHarness {
     @Test
     void testGapSpacing() {
         List<String> list = Arrays.asList("A", "B", "C");
-        VirtualList<String, String> vl = new VirtualList<>(
-                Signal.of(list),
-                id -> id,
-                (id, w) -> 50f,
-                TestItemComponent::new
-        );
+        VirtualList<String> vl = new VirtualList<>(Signal.of(list), (id, w) -> 50f);
+        vl.key(id -> id);
+        vl.children(TestItemComponent::new);
         vl.gap(10f);
         vl.element();
         SignalDispatcher.flush();
@@ -137,12 +122,9 @@ class VirtualListTest extends SolimTestHarness {
     @Test
     void testContainerWidthResizeRecalculates() {
         List<String> list = Arrays.asList("A", "B");
-        VirtualList<String, String> vl = new VirtualList<>(
-                Signal.of(list),
-                id -> id,
-                (id, w) -> w < 200f ? 100f : 40f,
-                TestItemComponent::new
-        );
+        VirtualList<String> vl = new VirtualList<>(Signal.of(list), (id, w) -> w < 200f ? 100f : 40f);
+        vl.key(id -> id);
+        vl.children(TestItemComponent::new);
         vl.element();
         SignalDispatcher.flush();
 
@@ -159,16 +141,13 @@ class VirtualListTest extends SolimTestHarness {
     void testDisposeCleansUpComponents() {
         List<String> list = Arrays.asList("A", "B");
         Map<String, TestItemComponent> created = new HashMap<>();
-        VirtualList<String, String> vl = new VirtualList<>(
-                Signal.of(list),
-                id -> id,
-                (id, w) -> 50f,
-                id -> {
-                    TestItemComponent c = new TestItemComponent(id);
-                    created.put(id, c);
-                    return c;
-                }
-        );
+        VirtualList<String> vl = new VirtualList<>(Signal.of(list), (id, w) -> 50f);
+        vl.key(id -> id);
+        vl.children(id -> {
+            TestItemComponent c = new TestItemComponent(id);
+            created.put(id, c);
+            return c;
+        });
         vl.element();
         SignalDispatcher.flush();
 
@@ -199,12 +178,9 @@ class VirtualListTest extends SolimTestHarness {
         }
 
         Signal<List<String>> listSignal = Signal.of(Collections.singletonList("item1"));
-        VirtualList<String, String> vl = new VirtualList<>(
-                listSignal,
-                id -> id,
-                (id, w) -> 50f,
-                id -> new ReactiveChild()
-        );
+        VirtualList<String> vl = new VirtualList<>(listSignal, (id, w) -> 50f);
+        vl.key(id -> id);
+        vl.children(id -> new ReactiveChild());
         vl.element();
         SignalDispatcher.flush();
 
@@ -226,13 +202,10 @@ class VirtualListTest extends SolimTestHarness {
     @Test
     void virtualListSupportsElementAndTableConfig() {
         Signal<List<String>> items = Signal.of(Collections.emptyList());
-        VirtualList<String, String> list = new VirtualList<>(
-                items,
-                s -> s,
-                (s, i) -> 50f,
-                TestItemComponent::new
-        )
-                .width(350f)
+        VirtualList<String> list = new VirtualList<>(items, (s, i) -> 50f);
+        list.key(s -> s);
+        list.children(TestItemComponent::new);
+        list.width(350f)
                 .height(500f)
                 .visible(false)
                 .padding(6f);

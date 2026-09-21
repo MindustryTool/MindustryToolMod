@@ -1,25 +1,16 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
 import solim.core.SolimToken;
+import solim.test.SolimEnv;
 
-class SpacerTest {
+class SpacerTest extends SolimEnv {
 
-	@BeforeAll
-	static void initArc() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	@Test
 	void elementIsExpanding() {
@@ -32,5 +23,12 @@ class SpacerTest {
 		Spacer s = new Spacer();
 		s.name("my-spacer");
 		assertEquals("my-spacer", s.element().name);
+	}
+
+	@Test
+	void spacerReturnsComponentForChaining() {
+		Spacer s = new Spacer();
+		assertSame(s, s.name("gap"));
+		assertEquals("gap", s.element().name);
 	}
 }

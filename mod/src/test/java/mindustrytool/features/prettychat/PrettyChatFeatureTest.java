@@ -1,26 +1,24 @@
 package mindustrytool.features.prettychat;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
-class PrettyChatFeatureTest {
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import mindustrytool.test.MindustryTestEnv;
+
+class PrettyChatFeatureTest extends MindustryTestEnv {
 
     private PrettyChatFeature feature;
 
     @BeforeEach
     void setUp() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
         feature = new PrettyChatFeature();
     }
 

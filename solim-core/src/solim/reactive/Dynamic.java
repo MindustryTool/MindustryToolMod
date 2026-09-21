@@ -5,11 +5,10 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.Objects;
-import java.util.function.Function;
+import arc.func.Func;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.core.Ui;
 import solim.modifier.CellConfig;
 import solim.layout.GapContainer;
 import solim.modifier.ElementConfig;
@@ -25,7 +24,7 @@ import solim.core.Disposable;
  * Structural reactive component for switching dynamic subtrees based on a
  * reactive value.
  *
- * <p>The factory function is invoked with the current source value (including {@code null}).
+ * <p>The factory Func is invoked with the current source value (including {@code null}).
  * If the factory returns {@code null}, no child component is mounted and the container collapses.</p>
  */
 public final class Dynamic<T> extends BaseComponent
@@ -34,13 +33,13 @@ public final class Dynamic<T> extends BaseComponent
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Readable<T> source;
-    private final Function<T, Component> factory;
+    private final Func<T, Component> factory;
     private Component currentComponent;
     @SuppressWarnings("unchecked")
     private T lastValue = (T) SENTINEL;
     private final List<Disposable> currentBindings = new ArrayList<>();
 
-    public Dynamic(Readable<T> source, Function<T, Component> factory) {
+    public Dynamic(Readable<T> source, Func<T, Component> factory) {
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.factory = Objects.requireNonNull(factory, "factory must not be null");
         SolimToken.bind(this.container, this, constraints);
@@ -48,7 +47,7 @@ public final class Dynamic<T> extends BaseComponent
         this.container.defaults().top().left();
     }
 
-    public static <T> Dynamic<T> of(Readable<T> source, Function<T, Component> factory) {
+    public static <T> Dynamic<T> of(Readable<T> source, Func<T, Component> factory) {
         return new Dynamic<>(source, factory);
     }
 
@@ -91,7 +90,7 @@ public final class Dynamic<T> extends BaseComponent
             currentBindings.clear();
             container.clearChildren();
             currentComponent = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
-                Component c = factory.apply(value);
+                Component c = factory.get(value);
                 if (c != null) {
                     c.element();
                 }
@@ -107,7 +106,7 @@ public final class Dynamic<T> extends BaseComponent
                 }
                 if (sc != null) {
                     currentBindings.addAll(sc.applyToCell(cell));
-                } else if (Ui.isExpanding(el)) {
+                } else if (SolimToken.isExpandingChild(el)) {
                     cell.growX();
                 }
             }

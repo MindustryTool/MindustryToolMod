@@ -1,32 +1,28 @@
 package solim.reactive;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static solim.core.Ui.card;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import solim.layout.Card;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import java.util.*;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
 import solim.layout.ReactiveGrid;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class StructuralReactivityTest {
+class StructuralReactivityTest extends SolimEnv {
 
-	@BeforeAll
-	static void initArc() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	static class TestComponent extends BaseComponent {
 		final String id;
@@ -84,7 +80,9 @@ class StructuralReactivityTest {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
 		Map<String, TestComponent> created = new HashMap<>();
 
-		ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> {
+		ForEach<String> fe = new ForEach<>(items);
+		fe.key(id -> id);
+		fe.children(id -> {
 			TestComponent tc = new TestComponent(id);
 			created.put(id, tc);
 			return tc;
@@ -128,7 +126,9 @@ class StructuralReactivityTest {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C", "D", "E"));
 		Map<String, Integer> factoryCallCount = new HashMap<>();
 
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(cols, items, id -> id, id -> {
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(id -> id);
+		grid.children(id -> {
 			factoryCallCount.put(id, factoryCallCount.getOrDefault(id, 0) + 1);
 			return new TestComponent(id);
 		});
@@ -154,6 +154,7 @@ class StructuralReactivityTest {
 		// Table still has 5 children reflowed
 		assertEquals(5, grid.table().getChildren().size);
 
+		SignalDispatcher.flush();
 		grid.dispose();
 		assertTrue(grid.isDisposed());
 	}
@@ -161,7 +162,9 @@ class StructuralReactivityTest {
 	@Test
 	void testForEachChildrenDoNotGrowByDefault() {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-		ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new TestComponent(id));
+		ForEach<String> fe = new ForEach<>(items);
+		fe.key(id -> id);
+		fe.children(id -> new TestComponent(id));
 		fe.element();
 		Cell<?> cell = fe.container().getCells().first();
 		assertEquals(0, CellAccess.expandX(cell), "ForEach item must not growX by default");
@@ -185,12 +188,14 @@ class StructuralReactivityTest {
 		class ConstrainedComp extends BaseComponent {
 			@Override
 			protected Element build() {
-				return card().growX().element();
+				return new Card().growX().element();
 			}
 		}
 
 		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-		ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new ConstrainedComp());
+		ForEach<String> fe = new ForEach<>(items);
+		fe.key(id -> id);
+		fe.children(id -> new ConstrainedComp());
 		fe.element();
 		Cell<?> cell = fe.container().getCells().first();
 		assertEquals(1, CellAccess.expandX(cell), "Constrained child in ForEach must growX");

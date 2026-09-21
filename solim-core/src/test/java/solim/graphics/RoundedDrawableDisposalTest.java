@@ -8,8 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class RoundedDrawableDisposalTest {
+class RoundedDrawableDisposalTest extends SolimEnv {
 
 	@BeforeEach
 	void setUp() {

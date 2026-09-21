@@ -17,8 +17,9 @@ import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
 import solim.reactive.Query;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class ArcFacadeTest {
+class ArcFacadeTest extends SolimEnv {
 
 	@AfterEach
 	void clear() {

@@ -7,8 +7,9 @@ import arc.struct.Seq;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class BrowserLayoutTest {
+class BrowserLayoutTest extends SolimEnv {
 
     @Test
     void calculateContentWidthAndGutterSymmetry() {

@@ -1,34 +1,29 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.scene.Element;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.jupiter.api.BeforeAll;
+
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
-import solim.runtime.SignalDispatcher;
-import solim.reactive.Signal;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+
+import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import solim.core.Ui;
+import solim.core.BaseComponent;
+import solim.reactive.Signal;
 import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class ReactiveGridTest {
+class ReactiveGridTest extends SolimEnv {
 
-	@BeforeAll
-	static void initArc() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	static class ItemComp extends BaseComponent {
 		final String text;
@@ -57,15 +52,12 @@ class ReactiveGridTest {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B"));
 		AtomicReference<GridItemContext> capturedCtx = new AtomicReference<>();
 
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
-				cols,
-				items,
-				s -> s,
-				(item, ctx) -> {
-					capturedCtx.set(ctx);
-					return new ItemComp(item);
-				}
-		);
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s);
+		grid.children((item, ctx) -> {
+			capturedCtx.set(ctx);
+			return new ItemComp(item);
+		});
 		grid.element();
 
 		assertNotNull(capturedCtx.get());
@@ -77,13 +69,9 @@ class ReactiveGridTest {
 	void calculatesItemWidthWhenTableWidthChanges() {
 		Signal<Integer> cols = Signal.of(4);
 		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
-				cols,
-				items,
-				s -> s,
-				(item, ctx) -> new ItemComp(item)
-		);
-		grid.gap(10f);
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s).gap(10f);
+		grid.children((item, ctx) -> new ItemComp(item));
 		grid.element();
 
 		// Set table width and trigger layout
@@ -110,16 +98,13 @@ class ReactiveGridTest {
 	}
 
 	@Test
-	void backwardCompatibleWithFunctionItemFactory() {
+	void functionItemFactoryRendersItems() {
 		Signal<Integer> cols = Signal.of(2);
 		Signal<List<String>> items = Signal.of(Arrays.asList("X", "Y"));
 
-		ReactiveGrid<String, String> grid = ReactiveGrid.of(
-				cols,
-				items,
-				s -> s,
-				ItemComp::new
-		);
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s);
+		grid.children(ItemComp::new);
 		Element el = grid.element();
 		assertNotNull(el);
 		assertEquals(2, grid.table().getChildren().size);
@@ -131,16 +116,13 @@ class ReactiveGridTest {
 		Signal<List<String>> items = Signal.of(Arrays.asList("item1"));
 		ItemComp[] created = new ItemComp[1];
 
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
-				cols,
-				items,
-				s -> s,
-				(item, ctx) -> {
-					ItemComp c = new ItemComp(item);
-					created[0] = c;
-					return c;
-				}
-		);
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s);
+		grid.children((item, ctx) -> {
+			ItemComp c = new ItemComp(item);
+			created[0] = c;
+			return c;
+		});
 		grid.element();
 		assertNotNull(created[0]);
 		assertFalse(created[0].disposed);
@@ -155,17 +137,13 @@ class ReactiveGridTest {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
 
 		List<Element> childElementsGrowX = new ArrayList<>();
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
-				cols,
-				items,
-				s -> s,
-				(item, ctx) -> {
-					Column col = Ui.column().growX();
-					childElementsGrowX.add(col.element());
-					return col;
-				}
-		);
-		grid.gap(10f);
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s).gap(10f);
+		grid.children((item, ctx) -> {
+			Column col = new Column().growX();
+			childElementsGrowX.add(col.element());
+			return col;
+		});
 		grid.element();
 		grid.table().setSize(300f, 300f);
 		grid.table().layout();
@@ -188,17 +166,13 @@ class ReactiveGridTest {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
 
 		List<Element> childElements = new ArrayList<>();
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
-				cols,
-				items,
-				s -> s,
-				(item, ctx) -> {
-					Column col = Ui.column().width(ctx.itemWidth());
-					childElements.add(col.element());
-					return col;
-				}
-		);
-		grid.gap(10f);
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s).gap(10f);
+		grid.children((item, ctx) -> {
+			Column col = new Column().width(ctx.itemWidth());
+			childElements.add(col.element());
+			return col;
+		});
 		grid.element();
 		grid.table().setSize(300f, 300f);
 		grid.table().layout();
@@ -217,17 +191,13 @@ class ReactiveGridTest {
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
 
 		List<Element> childElements = new ArrayList<>();
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
-				cols,
-				items,
-				s -> s,
-				(item, ctx) -> {
-					Column col = Ui.column().growX();
-					childElements.add(col.element());
-					return col;
-				}
-		);
-		grid.gap(10f);
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s).gap(10f);
+		grid.children((item, ctx) -> {
+			Column col = new Column().growX();
+			childElements.add(col.element());
+			return col;
+		});
 		grid.element();
 		grid.table().margin(20f); // Table has 20px outer margin (padLeft=20, padRight=20)
 		grid.table().setSize(300f, 300f);
@@ -251,28 +221,24 @@ class ReactiveGridTest {
 
 		List<Element> cardElements = new ArrayList<>();
 		List<Element> outerColElements = new ArrayList<>();
-		ReactiveGrid<String, String> gridCards = new ReactiveGrid<>(
-				cols,
-				items,
-				s -> s,
-				(item, ctx) -> {
-					Card[] holder = new Card[1];
-					Column col = Ui.column()
-							.growX()
-							.gap(8f)
-							.children(() -> {
-								holder[0] = Ui.card()
-										.growX()
-										.margin(4f, 0f, 4f, 0f)
-										.height(ctx.itemWidth())
-										.children(() -> {});
-							});
-					cardElements.add(holder[0].element());
-					outerColElements.add(col.element());
-					return col;
-				}
-		);
-		gridCards.gap(10f);
+		ReactiveGrid<String> gridCards = new ReactiveGrid<>(items);
+		gridCards.columns(cols).key(s -> s).gap(10f);
+		gridCards.children((item, ctx) -> {
+			Card[] holder = new Card[1];
+			Column col = new Column()
+					.growX()
+					.gap(8f)
+					.children(() -> {
+						holder[0] = new Card()
+								.growX()
+								.margin(4f, 0f, 4f, 0f)
+								.height(ctx.itemWidth())
+								.children(() -> {});
+					});
+			cardElements.add(holder[0].element());
+			outerColElements.add(col.element());
+			return col;
+		});
 		gridCards.element();
 		gridCards.table().setSize(300f, 300f);
 		gridCards.table().layout();
@@ -290,8 +256,10 @@ class ReactiveGridTest {
 	void reactiveGridSupportsElementAndTableConfig() {
 		Signal<Integer> cols = Signal.of(2);
 		Signal<List<String>> items = Signal.of(Collections.emptyList());
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(cols, items, s -> s, (s, ctx) -> new ItemComp(s))
-				.width(400f)
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s);
+		grid.children((s, ctx) -> new ItemComp(s));
+		grid.width(400f)
 				.height(200f)
 				.visible(false)
 				.padding(16f);
@@ -312,7 +280,7 @@ class ReactiveGridTest {
 
 		@Override
 		protected Element build() {
-			return Ui.card()
+			return new Card()
 					.name("probe-card")
 					.left()
 					.grow()
@@ -339,12 +307,9 @@ class ReactiveGridTest {
 	void baseComponentChildInReactiveGridAppliesCellConstraints() {
 		Signal<Integer> cols = Signal.of(2);
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B"));
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
-				cols,
-				items,
-				s -> s,
-				(item, ctx) -> new CardWrapperProbe(50f)
-		);
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s);
+		grid.children((item, ctx) -> new CardWrapperProbe(50f));
 		grid.element();
 
 		Element firstEl = grid.table().getChildren().get(0);
@@ -361,12 +326,9 @@ class ReactiveGridTest {
 	void baseComponentChildInReactiveGridGrowsToMatchTallSibling() {
 		Signal<Integer> cols = Signal.of(2);
 		Signal<List<String>> items = Signal.of(Arrays.asList("short", "tall"));
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(
-				cols,
-				items,
-				s -> s,
-				(item, ctx) -> "short".equals(item) ? new CardWrapperProbe(50f) : new CardWrapperProbe(350f)
-		);
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(cols).key(s -> s);
+		grid.children((item, ctx) -> "short".equals(item) ? new CardWrapperProbe(50f) : new CardWrapperProbe(350f));
 		grid.element();
 		grid.table().setWidth(600f);
 		grid.table().setHeight(grid.table().getPrefHeight());

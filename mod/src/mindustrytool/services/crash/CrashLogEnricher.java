@@ -2,14 +2,14 @@ package mindustrytool.services.crash;
 
 import arc.struct.Seq;
 import arc.util.Strings;
-import java.util.function.Supplier;
+import arc.func.Prov;
 
 /** Single Responsibility: enrich raw crash log with enabled-feature metadata. */
 public final class CrashLogEnricher {
 
-	private final Supplier<Seq<String>> enabledFeatureNames;
+	private final Prov<Seq<String>> enabledFeatureNames;
 
-	public CrashLogEnricher(Supplier<Seq<String>> enabledFeatureNames) {
+	public CrashLogEnricher(Prov<Seq<String>> enabledFeatureNames) {
 		this.enabledFeatureNames = enabledFeatureNames;
 	}
 

@@ -3,12 +3,9 @@ package solim.core;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import java.util.Arrays;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.display.SolimImage;
 import solim.display.Text;
@@ -29,18 +26,10 @@ import solim.layout.Spacer;
 import solim.layout.Wrap;
 import solim.overlay.SolimDialog;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class ComponentDefaultNameTest {
+class ComponentDefaultNameTest extends SolimEnv {
 
-	@BeforeAll
-	static void checkArcContext() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	static class CustomTestCard extends BaseComponent {
 		@Override

@@ -10,7 +10,6 @@ import java.util.List;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.core.Ui;
 import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
@@ -29,7 +28,7 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
     public static final ParentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
         cell.top().left();
-        if (Ui.isExpanding(child)) {
+        if (SolimToken.isExpandingChild(child)) {
             cell.growY();
         }
         cell.row();

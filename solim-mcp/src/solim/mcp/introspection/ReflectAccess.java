@@ -1,12 +1,13 @@
 package solim.mcp.introspection;
 
-import arc.util.Log;
-import arc.util.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import arc.util.Log;
+import arc.util.Nullable;
 
 /**
  * Cached, gracefully-degrading reflective access to Solim internals.

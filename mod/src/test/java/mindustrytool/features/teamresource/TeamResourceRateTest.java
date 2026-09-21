@@ -2,25 +2,14 @@ package mindustrytool.features.teamresource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import arc.graphics.Color;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import mindustrytool.test.MindustryTestEnv;
 
-class TeamResourceRateTest {
-
-    @BeforeEach
-    void setUp() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
-    }
+class TeamResourceRateTest extends MindustryTestEnv {
 
     @Test
     void testConfigDefaults() {

@@ -37,7 +37,7 @@ public class UpdateDialog extends SolimDialog {
 				"[#" + Color.crimson.toString() + "]" + currentVer,
 				"[#" + Color.green.toString() + "]" + latestVer);
 
-		content(() -> {
+		children(() -> {
 			column().growX().gap(unit(2)).left().width(500f).children(() -> {
 				text(newVersionText)
 						.wrap();

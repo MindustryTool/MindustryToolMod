@@ -1,32 +1,21 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
-import solim.core.Ui;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
+import solim.test.SolimEnv;
 
-class ColumnGrowExplorationTest {
+class ColumnGrowExplorationTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @AfterEach
     void tearDown() {
@@ -39,7 +28,7 @@ class ColumnGrowExplorationTest {
 
         @Override
         protected Element build() {
-            col = Ui.column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
+            col = new Column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
                 new Element();
             });
             return col.element();
@@ -49,8 +38,8 @@ class ColumnGrowExplorationTest {
     @Test
     void directColumnWithGrowInsideRow() {
         final Column[] colHolder = new Column[1];
-        Row row = Ui.row().children(() -> {
-            colHolder[0] = Ui.column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
+        Row row = new Row().children(() -> {
+            colHolder[0] = new Column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
                 new Element();
             });
         });
@@ -66,7 +55,7 @@ class ColumnGrowExplorationTest {
     @Test
     void baseComponentReturningColumnWithGrowInsideRow() {
         ChannelListProbe probe = new ChannelListProbe();
-        Row row = Ui.row().children(() -> {
+        Row row = new Row().children(() -> {
             ParentStack.registerPendingComponent(probe, ParentStack.current());
         });
 
@@ -81,8 +70,8 @@ class ColumnGrowExplorationTest {
     @Test
     void directColumnGrowAfterChildren() {
         final Column[] colHolder = new Column[1];
-        Row row = Ui.row().children(() -> {
-            colHolder[0] = Ui.column().name("channel-list").gap(4f).padding(8f).children(() -> {
+        Row row = new Row().children(() -> {
+            colHolder[0] = new Column().name("channel-list").gap(4f).padding(8f).children(() -> {
                 new Element();
             }).grow();
         });

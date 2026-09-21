@@ -1,30 +1,22 @@
 package solim.modifier;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class ElementConfigClickTest {
+class ElementConfigClickTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @Test
     void onClickRunsHandlerAndEnablesTouchable() {

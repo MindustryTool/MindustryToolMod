@@ -1,33 +1,26 @@
 package solim.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
+import arc.scene.Element;
+import arc.scene.ui.layout.Table;
 import solim.layout.Column;
 import solim.layout.Divider;
 import solim.layout.Row;
+import solim.layout.Spacer;
+import solim.layout.Direction;
 import solim.runtime.ComponentContext;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.scene.Element;
-import arc.scene.ui.layout.Table;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.runtime.ParentStack;
+import solim.test.SolimEnv;
 
-class BaseComponentAutoAttachTest {
+class BaseComponentAutoAttachTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     static class Probe extends BaseComponent {
         @Override
@@ -57,7 +50,7 @@ class BaseComponentAutoAttachTest {
         Table root = new Table();
         ParentStack.push(root);
         final Probe[] held = new Probe[1];
-        Column col = Ui.column().children(() -> {
+        Column col = new Column().children(() -> {
             held[0] = new Probe();
         });
         ParentStack.pop();
@@ -91,9 +84,10 @@ class BaseComponentAutoAttachTest {
         final Element[] divider = new Element[1];
         final Probe[] inputView = new Probe[1];
 
-        Column col = Ui.column().grow().gap(4f).children(() -> {
+        Column col = new Column().grow().gap(4f).children(() -> {
             messageList[0] = new Probe();
-            Divider div = Ui.divider();
+            Divider div = new Divider(Direction.X);
+            ParentStack.attachToParent(div.element());
             divider[0] = div.element();
             inputView[0] = new Probe();
         });
@@ -111,10 +105,14 @@ class BaseComponentAutoAttachTest {
         final Probe[] comp2 = new Probe[1];
         final Element[] el2 = new Element[1];
 
-        Column col = Ui.column().children(() -> {
-            el1[0] = Ui.spacer();
+        Column col = new Column().children(() -> {
+            Spacer spacer = new Spacer();
+            ParentStack.attachToParent(spacer.element());
+            el1[0] = spacer.element();
             comp1[0] = new Probe();
-            el2[0] = Ui.divider().element();
+            Divider dividerComp = new Divider(Direction.X);
+            ParentStack.attachToParent(dividerComp.element());
+            el2[0] = dividerComp.element();
             comp2[0] = new Probe();
         });
 
@@ -131,10 +129,10 @@ class BaseComponentAutoAttachTest {
         final Element[] rowElem = new Element[1];
         final Probe[] comp2 = new Probe[1];
 
-        Column col = Ui.column().children(() -> {
+        Column col = new Column().children(() -> {
             comp1[0] = new Probe();
-            Row innerRow = Ui.row().children(() -> {
-                Ui.spacer();
+            Row innerRow = new Row().children(() -> {
+                ParentStack.attachToParent(new Spacer().element());
             });
             rowElem[0] = innerRow.table();
             comp2[0] = new Probe();

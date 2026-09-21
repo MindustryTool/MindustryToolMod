@@ -2,8 +2,8 @@ package solim.config;
 
 import arc.util.Nullable;
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import arc.func.Cons;
+import arc.func.Prov;
 import solim.core.Disposable;
 import solim.reactive.Signal;
 import solim.reactive.Subscription;
@@ -11,7 +11,7 @@ import solim.reactive.Subscription;
 public class ConfigValue<T> implements Disposable {
 	protected String key;
 	protected final @Nullable T defaultValue;
-	protected final Consumer<T> setter;
+	protected final Cons<T> setter;
 	protected final Signal<T> signal;
 	protected final Subscription signalSub;
 	protected boolean updating = false;
@@ -20,8 +20,8 @@ public class ConfigValue<T> implements Disposable {
 	public ConfigValue(
 			String key,
 			@Nullable T defaultValue,
-			Supplier<T> getter,
-			Consumer<T> setter) {
+			Prov<T> getter,
+			Cons<T> setter) {
 		this.key = key;
 		this.defaultValue = defaultValue;
 		this.setter = setter;
@@ -55,7 +55,7 @@ public class ConfigValue<T> implements Disposable {
 
 	protected void save(@Nullable T value) {
 		if (setter != null) {
-			setter.accept(value);
+			setter.get(value);
 		}
 	}
 

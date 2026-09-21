@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import arc.func.Cons2;
+import arc.func.Boolf;
+import arc.func.Prov;
 import solim.core.Component;
 import solim.core.SpacingAware;
 import solim.performance.PerfSpan;
@@ -68,9 +68,9 @@ public class ParentStack {
 		INSTANCE.doSetCellConfigurator(configurator);
 	}
 
-	public static void setCellConfigurator(@Nullable BiConsumer<Cell<?>, Element> configurator) {
+	public static void setCellConfigurator(@Nullable Cons2<Cell<?>, Element> configurator) {
 		INSTANCE.doSetCellConfigurator(configurator != null
-				? (cell, child, comp) -> configurator.accept(cell, child)
+				? (cell, child, comp) -> configurator.get(cell, child)
 				: null);
 	}
 
@@ -90,8 +90,8 @@ public class ParentStack {
 		return INSTANCE.doCurrent();
 	}
 
-	public static @Nullable Table find(Predicate<Table> predicate) {
-		return INSTANCE.doFind(predicate);
+	public static @Nullable Table find(Boolf<Table> Boolf) {
+		return INSTANCE.doFind(Boolf);
 	}
 
 	public static void clear() {
@@ -103,10 +103,10 @@ public class ParentStack {
 	}
 
 	/**
-	 * Executes the given supplier in an isolated ParentStack context where no parent is on the stack.
+	 * Executes the given Prov in an isolated ParentStack context where no parent is on the stack.
 	 */
-	public static <T> T isolate(Supplier<T> supplier) {
-		return INSTANCE.doIsolate(supplier);
+	public static <T> T isolate(Prov<T> Prov) {
+		return INSTANCE.doIsolate(Prov);
 	}
 
 	/**
@@ -188,10 +188,10 @@ public class ParentStack {
 		return stack.isEmpty() ? null : stack.peek().table;
 	}
 
-	protected @Nullable Table doFind(Predicate<Table> predicate) {
-		if (predicate == null) return null;
+	protected @Nullable Table doFind(Boolf<Table> Boolf) {
+		if (Boolf == null) return null;
 		for (Entry entry : stack) {
-			if (predicate.test(entry.table)) {
+			if (Boolf.get(entry.table)) {
 				return entry.table;
 			}
 		}
@@ -206,14 +206,14 @@ public class ParentStack {
 		return stack.size();
 	}
 
-	protected <T> T doIsolate(Supplier<T> supplier) {
-		if (supplier == null) {
+	protected <T> T doIsolate(Prov<T> Prov) {
+		if (Prov == null) {
 			return null;
 		}
 		Deque<Entry> saved = new ArrayDeque<>(stack);
 		stack.clear();
 		try {
-			return supplier.get();
+			return Prov.get();
 		} finally {
 			stack.clear();
 			stack.addAll(saved);

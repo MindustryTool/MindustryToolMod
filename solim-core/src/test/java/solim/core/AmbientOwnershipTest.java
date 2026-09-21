@@ -12,8 +12,9 @@ import solim.input.SolimTextField;
 import solim.reactive.Signal;
 import solim.reactive.Binding;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class AmbientOwnershipTest {
+class AmbientOwnershipTest extends SolimEnv {
 
 	static class ChildComponent extends BaseComponent {
 		final AtomicBoolean disposedFlag;

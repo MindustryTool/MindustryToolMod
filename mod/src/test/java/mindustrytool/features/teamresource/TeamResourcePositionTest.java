@@ -10,10 +10,7 @@ import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.Font.Glyph;
 import arc.graphics.g2d.TextureRegion;
 import arc.input.KeyCode;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
 import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
 import arc.scene.Element;
 import arc.scene.Scene;
 import arc.scene.event.ClickListener;
@@ -41,9 +38,11 @@ import mindustry.ui.Fonts;
 import mindustry.ui.Styles;
 import mindustry.world.blocks.power.PowerGraph;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 
-class TeamResourcePositionTest {
+class TeamResourcePositionTest extends MindustryTestEnv {
 
     static class ResizableMockGraphics extends MockGraphics {
         int width = 1000;
@@ -64,14 +63,8 @@ class TeamResourcePositionTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        Core.app = new MockApplication();
         mockGraphics = new ResizableMockGraphics();
         Core.graphics = mockGraphics;
-        Core.settings = new MockSettings();
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
         Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
         Field f = unsafeClass.getDeclaredField("theUnsafe");
         f.setAccessible(true);
@@ -121,6 +114,21 @@ class TeamResourcePositionTest {
         Styles.flatBordert = textBtnStyle;
         Styles.black3 = emptyDrawable;
         Styles.black6 = emptyDrawable;
+    }
+
+    @AfterEach
+    void drainPendingEffects() {
+        // Tests here build reactive components without disposing them; flush so
+        // the env teardown sees an empty dispatcher.
+        flushEffects();
+    }
+
+    @AfterEach
+    void tearDown() {
+        // Undo Vars.ui allocation so it cannot leak into other test classes
+        // sharing this JVM.
+        Vars.ui = null;
+        flushEffects();
     }
 
     @Test

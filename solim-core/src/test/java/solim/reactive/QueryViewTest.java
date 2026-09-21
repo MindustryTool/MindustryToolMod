@@ -17,17 +17,17 @@ import solim.core.Component;
 import solim.display.Text;
 import solim.input.Button;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimTestHarness;
+import solim.test.SolimEnv;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class QueryViewTest extends SolimTestHarness {
+class QueryViewTest extends SolimEnv {
 
 	private QueryCache cache;
 
 	@BeforeEach
 	void setUp() {
-		setUpHarness();
+		setUpSolimEnv();
 		cache = new QueryCache();
 		QueryCache.setInstanceForTest(cache);
 		SignalDispatcher.resetForTests();

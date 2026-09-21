@@ -7,8 +7,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class ConfigDisposalTest {
+class ConfigDisposalTest extends SolimEnv {
 
 	static final class MapPersister implements ConfigPersister<String> {
 		final Map<String, String> stored = new HashMap<>();

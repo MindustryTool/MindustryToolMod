@@ -2,7 +2,7 @@ package solim.runtime;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import solim.core.Component;
 import solim.core.Disposable;
 
@@ -12,18 +12,18 @@ import solim.core.Disposable;
  * owned without manual own() calls.
  */
 public final class ComponentContext {
-	private static final Deque<Consumer<Disposable>> stack = new ArrayDeque<>();
+	private static final Deque<Cons<Disposable>> stack = new ArrayDeque<>();
 
 	private ComponentContext() {}
 
-	public static void push(Consumer<Disposable> registrar) {
+	public static void push(Cons<Disposable> registrar) {
 		SolimAssert.checkMainThread();
 		if (registrar != null) {
 			stack.push(registrar);
 		}
 	}
 
-	public static Consumer<Disposable> pop() {
+	public static Cons<Disposable> pop() {
 		SolimAssert.checkMainThread();
 		if (!stack.isEmpty()) {
 			return stack.pop();
@@ -31,7 +31,7 @@ public final class ComponentContext {
 		return null;
 	}
 
-	public static Consumer<Disposable> current() {
+	public static Cons<Disposable> current() {
 		return stack.peek();
 	}
 
@@ -44,7 +44,7 @@ public final class ComponentContext {
 		if (action == null) {
 			return;
 		}
-		Deque<Consumer<Disposable>> saved = new ArrayDeque<>(stack);
+		Deque<Cons<Disposable>> saved = new ArrayDeque<>(stack);
 		stack.clear();
 		try {
 			action.run();
@@ -67,9 +67,9 @@ public final class ComponentContext {
 		if (disposable == null) {
 			return null;
 		}
-		Consumer<Disposable> current = stack.peek();
+		Cons<Disposable> current = stack.peek();
 		if (current != null) {
-			current.accept(disposable);
+			current.get(disposable);
 		}
 		return disposable;
 	}
@@ -79,9 +79,9 @@ public final class ComponentContext {
 		if (child == null) {
 			return null;
 		}
-		Consumer<Disposable> current = stack.peek();
+		Cons<Disposable> current = stack.peek();
 		if (current != null) {
-			current.accept(child);
+			current.get(child);
 		}
 		return child;
 	}

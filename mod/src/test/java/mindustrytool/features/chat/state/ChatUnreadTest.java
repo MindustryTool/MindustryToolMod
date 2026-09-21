@@ -6,8 +6,9 @@ import arc.Core;
 import arc.mock.MockSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class ChatUnreadTest {
+class ChatUnreadTest extends SolimEnv {
 
     @BeforeEach
     void setUp() {

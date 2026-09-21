@@ -3,30 +3,29 @@ package mindustrytool.features.browser.schematic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
 import arc.scene.Scene;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Label;
 import arc.util.I18NBundle;
-import java.util.ArrayList;
-import java.util.List;
 import mindustry.gen.Icon;
 import mindustry.ui.Fonts;
 import mindustrytool.features.browser.map.MapCard;
 import mindustrytool.models.response.MapData;
 import mindustrytool.models.response.SchematicData;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 import solim.display.NetworkImage;
 import solim.layout.ReactiveGrid;
 import solim.performance.Perf;
@@ -39,7 +38,7 @@ import solim.reactive.Signal;
  * loading stubbed out. Asserts the structural subtree/attach spans emitted by
  * the profiling parent stack.
  */
-class SchematicBrowserPerfTest {
+class SchematicBrowserPerfTest extends MindustryTestEnv {
 
     private static final int PAGE_SIZE = 5;
     private static final Runnable NOOP = new Runnable() {
@@ -52,13 +51,6 @@ class SchematicBrowserPerfTest {
 
     @BeforeAll
     static void initArc() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
         if (Core.scene == null) {
             Core.scene = new Scene();
         }
@@ -142,12 +134,11 @@ class SchematicBrowserPerfTest {
         return out;
     }
 
-    private static ReactiveGrid<SchematicData, String> grid(List<SchematicData> items) {
-        return new ReactiveGrid<>(
-                Signal.of(4),
-                Signal.of(items),
-                SchematicData::getItemId,
-                item -> new SchematicCard(item, NOOP, NOOP, NOOP, NOOP));
+    private static ReactiveGrid<SchematicData> grid(List<SchematicData> items) {
+        ReactiveGrid<SchematicData> grid = new ReactiveGrid<>(Signal.of(items));
+        grid.columns(4).key(SchematicData::getItemId);
+        grid.children(item -> new SchematicCard(item, NOOP, NOOP, NOOP, NOOP));
+        return grid;
     }
 
     private static String spanName(PerfSpan span) {
@@ -243,7 +234,7 @@ class SchematicBrowserPerfTest {
 
     @Test
     void pageChangeBuildsRealCardsAndCapturesSpans() {
-        ReactiveGrid<SchematicData, String> pageOne = grid(page("perf-p1", PAGE_SIZE));
+        ReactiveGrid<SchematicData> pageOne = grid(page("perf-p1", PAGE_SIZE));
         pageOne.element();
         long layoutT0 = System.currentTimeMillis();
         pageOne.table().setSize(800f, 600f);
@@ -261,7 +252,7 @@ class SchematicBrowserPerfTest {
 
         Perf.reset();
 
-        ReactiveGrid<SchematicData, String> pageTwo = grid(page("perf-p2", PAGE_SIZE));
+        ReactiveGrid<SchematicData> pageTwo = grid(page("perf-p2", PAGE_SIZE));
         pageTwo.element();
         List<PerfSpan> pageTwoSpans = Perf.snapshot(256);
         System.out.printf("SchematicBrowserPerf [page-2 %d cards, disjoint keys]: cards=%d cardMs=%.3f%n",
@@ -279,7 +270,7 @@ class SchematicBrowserPerfTest {
     @Test
     void chunkRendersUnderFrameBudget() {
         Perf.reset();
-        ReactiveGrid<SchematicData, String> chunk = grid(page("perf-chunk", 8));
+        ReactiveGrid<SchematicData> chunk = grid(page("perf-chunk", 8));
         chunk.element();
         long layoutT0 = System.currentTimeMillis();
         chunk.table().setSize(800f, 600f);
@@ -299,7 +290,7 @@ class SchematicBrowserPerfTest {
     @Test
     void realisticPageRendersTwentyCards() {
         Perf.reset();
-        ReactiveGrid<SchematicData, String> fullPage = grid(page("perf-full", 20));
+        ReactiveGrid<SchematicData> fullPage = grid(page("perf-full", 20));
         fullPage.element();
         long layoutT0 = System.currentTimeMillis();
         fullPage.table().setSize(800f, 600f);
@@ -330,11 +321,9 @@ class SchematicBrowserPerfTest {
             data.setComments(1L);
             maps.add(data);
         }
-        ReactiveGrid<MapData, String> grid = new ReactiveGrid<>(
-                Signal.of(4),
-                Signal.of(maps),
-                MapData::getItemId,
-                item -> new MapCard(item, NOOP, NOOP, NOOP, NOOP));
+        ReactiveGrid<MapData> grid = new ReactiveGrid<>(Signal.of(maps));
+        grid.columns(4).key(MapData::getItemId);
+        grid.children(item -> new MapCard(item, NOOP, NOOP, NOOP, NOOP));
         grid.element();
         List<PerfSpan> spans = Perf.snapshot(256);
         System.out.printf("SchematicBrowserPerf [maps 3 cards]: cards=%d cardMs=%.3f%n",
@@ -361,7 +350,7 @@ class SchematicBrowserPerfTest {
                 onSuccess.get(new TextureRegion());
         });
 
-        ReactiveGrid<SchematicData, String> withImages = grid(page("perf-img", PAGE_SIZE));
+        ReactiveGrid<SchematicData> withImages = grid(page("perf-img", PAGE_SIZE));
         withImages.element();
         List<PerfSpan> spans = Perf.snapshot(256);
         System.out.printf("SchematicBrowserPerf [decode-cpu %d cards]: cards=%d cardMs=%.3f%n",

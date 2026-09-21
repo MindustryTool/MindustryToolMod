@@ -16,20 +16,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.core.BaseComponent;
-import solim.core.Ui;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
+import solim.layout.Card;
+import solim.test.SolimEnv;
 
-class PopupMenuTest {
+class PopupMenuTest extends SolimEnv {
 
     private static void ensureScene() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
         Core.scene = new Scene();
     }
 
@@ -159,7 +151,7 @@ class PopupMenuTest {
         Popup<String> popup = new Popup<>();
         try {
             ensureScene();
-            popup.children(data -> Ui.card().margin(10f, 15f, 20f, 25f));
+            popup.children(data -> new Card().margin(10f, 15f, 20f, 25f));
             popup.show("test", 100f, 100f);
             Table table = popup.table();
             Cell<?> cell = table.getCells().first();

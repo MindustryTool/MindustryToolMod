@@ -7,11 +7,12 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.ui.Button;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class BindingTest {
+class BindingTest extends SolimEnv {
 
 	static class TestElement {
 		String text = "";
@@ -52,7 +53,7 @@ class BindingTest {
 	void reactiveTextImmediateApply() {
 		Signal<String> s = Signal.of("Alice");
 		TestElement target = new TestElement();
-		Effect b = Binding.of((Consumer<String>) t -> target.setText(t), s);
+		Effect b = Binding.of((Cons<String>) t -> target.setText(t), s);
 		assertEquals("Alice", target.text, "Immediate apply on create");
 		s.set("Bob");
 		SignalDispatcher.flush();
@@ -68,7 +69,7 @@ class BindingTest {
 		Signal<Integer> count = Signal.of(1);
 		Computed<String> text = count.map(v -> "Count: " + v);
 		TestElement target = new TestElement();
-		Effect b = Binding.of((Consumer<String>) t -> target.setText(t), text);
+		Effect b = Binding.of((Cons<String>) t -> target.setText(t), text);
 		assertEquals("Count: 1", target.text);
 		count.set(2);
 		SignalDispatcher.flush();
@@ -92,7 +93,7 @@ class BindingTest {
 	void visibleAndEnabledBinding() {
 		Signal<Boolean> isLoggedIn = Signal.of(false);
 		TestElement target = new TestElement();
-		Effect visible = Binding.of((Consumer<Boolean>) t -> target.setVisible(t), isLoggedIn);
+		Effect visible = Binding.of((Cons<Boolean>) t -> target.setVisible(t), isLoggedIn);
 		assertFalse(target.visible);
 		isLoggedIn.set(true);
 		SignalDispatcher.flush();
@@ -100,7 +101,7 @@ class BindingTest {
 		visible.dispose();
 
 		Signal<Boolean> canSave = Signal.of(true);
-		Effect enabled = Binding.of((Consumer<Boolean>) t -> target.setEnabled(t), canSave);
+		Effect enabled = Binding.of((Cons<Boolean>) t -> target.setEnabled(t), canSave);
 		assertTrue(target.enabled);
 		canSave.set(false);
 		SignalDispatcher.flush();

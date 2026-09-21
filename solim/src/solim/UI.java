@@ -14,10 +14,7 @@ import arc.util.Scaling;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Prov;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.EventsUtil;
@@ -37,7 +34,6 @@ import solim.layout.Direction;
 import solim.layout.Divider;
 import solim.layout.Grid;
 import solim.layout.Wrap;
-import solim.layout.GridItemContext;
 import solim.layout.ReactiveGrid;
 import solim.layout.Row;
 import solim.layout.Scroll;
@@ -55,7 +51,6 @@ import solim.reactive.Effect;
 import solim.reactive.MapSignal;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.style.SolimButtonStyleBuilder;
 import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
 import solim.reactive.Signals;
@@ -88,8 +83,6 @@ public final class UI {
     public static void init() {
         SignalDispatcher.register();
     }
-
-    private static final float BASE_UNIT = 4f;
 
     // --- Layout ---
 
@@ -189,14 +182,6 @@ public final class UI {
         return collapser(expanded).children(r);
     }
 
-    public static Column container() {
-        return column();
-    }
-
-    public static Column container(@Nullable Runnable r) {
-        return column().children(r);
-    }
-
     public static Divider divider() {
         return divider(Direction.X);
     }
@@ -207,24 +192,10 @@ public final class UI {
         return d;
     }
 
-    public static Divider divider(String direction) {
-        if (direction != null && direction.equalsIgnoreCase("y")) {
-            return divider(Direction.Y);
-        }
-        return divider(Direction.X);
-    }
-
-    public static Divider divider(char direction) {
-        if (direction == 'y' || direction == 'Y') {
-            return divider(Direction.Y);
-        }
-        return divider(Direction.X);
-    }
-
-    public static Element spacer() {
+    public static Spacer spacer() {
         Spacer s = new Spacer();
         ParentStack.attachToParent(s.element());
-        return s.element();
+        return s;
     }
 
     // --- Display ---
@@ -244,10 +215,6 @@ public final class UI {
         img.drawable(drawable);
         ParentStack.attachToParent(img.element());
         return img;
-    }
-
-    public static SolimImage icon() {
-        return image();
     }
 
     public static SolimImage icon(Drawable drawable) {
@@ -282,18 +249,6 @@ public final class UI {
         return t;
     }
 
-    public static Text text(Signal<String> s) {
-        Text t = Text.of(s);
-        ParentStack.attachToParent(t.label());
-        return t;
-    }
-
-    public static Text text(Computed<String> s) {
-        Text t = Text.of(s);
-        ParentStack.attachToParent(t.label());
-        return t;
-    }
-
     public static Text text(Readable<String> s) {
         Text t = Text.of(s);
         ParentStack.attachToParent(t.label());
@@ -318,12 +273,6 @@ public final class UI {
         return b;
     }
 
-    public static Badge badgeCount(Readable<Integer> count) {
-        Badge b = Badge.ofCount(count);
-        ParentStack.attachToParent(b.element());
-        return b;
-    }
-
     // --- Input ---
 
     public static Button button() {
@@ -340,71 +289,14 @@ public final class UI {
 
     public static Button button(String text, @Nullable Runnable onClick) {
         Button b = button(onClick);
-        b.children(() -> text(text));
+        b.text(text);
         return b;
     }
 
     public static Button button(Readable<String> text, @Nullable Runnable onClick) {
         Button b = button(onClick);
-        b.children(() -> text(text));
+        b.text(text);
         return b;
-    }
-
-    public static Button button(String text, Drawable icon, @Nullable Runnable onClick) {
-        Button b = button(onClick);
-        b.children(() -> {
-            if (icon != null) {
-                icon(icon);
-            }
-            if (text != null) {
-                text(text);
-            }
-        });
-        return b;
-    }
-
-    public static Button button(Drawable icon, @Nullable Runnable onClick) {
-        Button b = button(onClick);
-        b.children(() -> {
-            if (icon != null) {
-                icon(icon);
-            }
-        });
-        return b;
-    }
-
-    public static Button button(Drawable icon) {
-        return button(icon, (Runnable) null);
-    }
-
-    public static Button button(String text, @Nullable Runnable onClick,
-            @Nullable Consumer<SolimButtonStyleBuilder> style) {
-        Button b = button(text, onClick);
-        if (style != null) {
-            b.style(style);
-        }
-        return b;
-    }
-
-    public static Button button(Readable<String> text, @Nullable Runnable onClick,
-            @Nullable Consumer<SolimButtonStyleBuilder> style) {
-        Button b = button(text, onClick);
-        if (style != null) {
-            b.style(style);
-        }
-        return b;
-    }
-
-    public static SolimButtonStyleBuilder buttonStyle() {
-        return new SolimButtonStyleBuilder();
-    }
-
-    public static SolimButtonStyleBuilder buttonStyle(@Nullable Consumer<SolimButtonStyleBuilder> config) {
-        SolimButtonStyleBuilder builder = new SolimButtonStyleBuilder();
-        if (config != null) {
-            config.accept(builder);
-        }
-        return builder;
     }
 
     public static SolimTextField textField(Signal<String> signal) {
@@ -431,7 +323,7 @@ public final class UI {
         return cb;
     }
 
-    public static Checkbox checkbox(String label, boolean initial, Consumer<Boolean> onChanged) {
+    public static Checkbox checkbox(String label, boolean initial, Cons<Boolean> onChanged) {
         Checkbox cb = Checkbox.of(label, initial, onChanged);
         ParentStack.attachToParent(cb.checkBox());
         return cb;
@@ -471,21 +363,11 @@ public final class UI {
         return h;
     }
 
-    public static Hud hud(@Nullable Cons<Hud> content) {
-        Hud h = hud();
-        h.children(() -> {
-            if (content != null) {
-                content.get(h);
-            }
-        });
-        return h;
-    }
-
     public static <T> Popup<T> popup() {
         return new Popup<>();
     }
 
-    public static <T> Popup<T> popup(Function<T, Component> provider) {
+    public static <T> Popup<T> popup(Func<T, Component> provider) {
         Popup<T> popup = new Popup<>();
         popup.children(provider);
         return popup;
@@ -501,7 +383,7 @@ public final class UI {
         return Signal.of(initial);
     }
 
-    public static <T> Computed<T> computed(Supplier<T> compute) {
+    public static <T> Computed<T> computed(Prov<T> compute) {
         return new Computed<>(compute);
     }
 
@@ -517,27 +399,27 @@ public final class UI {
         return Effect.of(effect);
     }
 
-    public static <E, T> Signal<T> createSignal(Class<E> eventType, Supplier<T> supplier) {
-        return EventsUtil.createSignal(eventType, supplier);
+    public static <E, T> Signal<T> createSignal(Class<E> eventType, Prov<T> Prov) {
+        return EventsUtil.createSignal(eventType, Prov);
     }
 
     public static <E, T> Signal<T> createSignal(Class<E> eventType, Func<E, T> mapper, T initial) {
         return EventsUtil.createSignal(eventType, mapper, initial);
     }
 
-    public static <T> Signal<T> createSignal(Function<Runnable, Disposable> callbackRegistrar, Supplier<T> supplier) {
-        return EventsUtil.createSignal(callbackRegistrar, supplier);
+    public static <T> Signal<T> createSignal(Func<Runnable, Disposable> callbackRegistrar, Prov<T> Prov) {
+        return EventsUtil.createSignal(callbackRegistrar, Prov);
     }
 
     public static Readable<Boolean> isPortrait() {
         return Signals.isPortrait();
     }
 
-    public static <T> Query<T> query(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
+    public static <T> Query<T> query(QueryKey key, Prov<CompletableFuture<T>> fetcher) {
         return Query.of(key, fetcher);
     }
 
-    public static <T> Query<T> query(QueryKey key, Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
+    public static <T> Query<T> query(QueryKey key, Readable<Boolean> enabled, Prov<CompletableFuture<T>> fetcher) {
         return Query.of(key, enabled, fetcher);
     }
 
@@ -546,7 +428,7 @@ public final class UI {
      * by cache invalidation. Use {@code Query.builder()} for keyed or
      * configured queries.
      */
-    public static <T> Query<T> query(Supplier<CompletableFuture<T>> fetcher) {
+    public static <T> Query<T> query(Prov<CompletableFuture<T>> fetcher) {
         return Query.noKey(fetcher);
     }
 
@@ -556,83 +438,58 @@ public final class UI {
         return qv;
     }
 
-    public static <T, R> Mutation<T, R> mutation(Function<T, CompletableFuture<R>> mutator) {
+    public static <T, R> Mutation<T, R> mutation(Func<T, CompletableFuture<R>> mutator) {
         return Mutation.of(mutator);
     }
 
-    public static <R> Mutation<Void, R> mutation(Supplier<CompletableFuture<R>> mutator) {
+    public static <R> Mutation<Void, R> mutation(Prov<CompletableFuture<R>> mutator) {
         return Mutation.of(mutator);
     }
 
     // --- Structural & Dynamic ---
 
-    public static <T> Dynamic<T> dynamic(Readable<T> source, Function<T, Component> factory) {
+    public static <T> Dynamic<T> dynamic(Readable<T> source, Func<T, Component> factory) {
         Dynamic<T> d = Dynamic.of(source, factory);
         ParentStack.attachToParent(d.element());
         return d;
     }
 
-    public static <T, K> ForEach<T, K> forEach(
-            Readable<? extends Iterable<T>> collection,
-            Function<T, K> keyExtractor,
-            Function<T, Component> itemFactory) {
-        ForEach<T, K> fe = ForEach.of(collection, keyExtractor, itemFactory);
+    public static Dynamic<Boolean> when(Readable<Boolean> condition, Prov<Component> Prov) {
+        return dynamic(condition, value -> Boolean.TRUE.equals(value) && Prov != null ? Prov.get() : null);
+    }
+
+    public static <T> ForEach<T> forEach(Readable<? extends Iterable<T>> collection) {
+        ForEach<T> fe = ForEach.of(collection);
         ParentStack.attachToParent(fe.element());
         return fe;
     }
 
-    public static <T, K> ReactiveGrid<T, K> grid(
-            Readable<Integer> columnCount,
-            Readable<? extends Iterable<T>> items,
-            Function<T, K> keyExtractor,
-            Function<T, Component> itemFactory) {
-        ReactiveGrid<T, K> grid = ReactiveGrid.of(columnCount, items, keyExtractor, itemFactory);
+    public static <T> ForEach<T> forEach(Iterable<T> collection) {
+        return forEach(Readable.of(collection));
+    }
+
+    public static <T> ReactiveGrid<T> reactiveGrid(Readable<? extends Iterable<T>> items) {
+        ReactiveGrid<T> grid = ReactiveGrid.of(items);
         ParentStack.attachToParent(grid.element());
         return grid;
     }
 
-    public static <T, K> ReactiveGrid<T, K> grid(
-            Readable<Integer> columnCount,
-            Readable<? extends Iterable<T>> items,
-            Function<T, K> keyExtractor,
-            BiFunction<T, GridItemContext, Component> itemFactory) {
-        ReactiveGrid<T, K> grid = ReactiveGrid.of(columnCount, items, keyExtractor, itemFactory);
-        ParentStack.attachToParent(grid.element());
-        return grid;
+    public static <T> ReactiveGrid<T> reactiveGrid(Iterable<T> items) {
+        return reactiveGrid(Readable.of(items));
     }
 
-    public static <T, K> ReactiveGrid<T, K> reactiveGrid(
-            Readable<Integer> columnCount,
-            Readable<? extends Iterable<T>> items,
-            Function<T, K> keyExtractor,
-            Function<T, Component> itemFactory) {
-        return grid(columnCount, items, keyExtractor, itemFactory);
-    }
-
-    public static <T, K> ReactiveGrid<T, K> reactiveGrid(
-            Readable<Integer> columnCount,
-            Readable<? extends Iterable<T>> items,
-            Function<T, K> keyExtractor,
-            BiFunction<T, GridItemContext, Component> itemFactory) {
-        return grid(columnCount, items, keyExtractor, itemFactory);
-    }
-
-    public static <T, K> VirtualList<T, K> virtualList(
+    public static <T> VirtualList<T> virtualList(
             Readable<? extends List<T>> collection,
-            Function<T, K> keyExtractor,
-            ItemHeightProvider<T> heightProvider,
-            Function<T, Component> itemFactory) {
-        VirtualList<T, K> vl = VirtualList.of(collection, keyExtractor, heightProvider, itemFactory);
+            ItemHeightProvider<T> heightProvider) {
+        VirtualList<T> vl = VirtualList.of(collection, heightProvider);
         ParentStack.attachToParent(vl.element());
         return vl;
     }
 
-    public static <T, K> VirtualList<T, K> virtualList(
+    public static <T> VirtualList<T> virtualList(
             List<T> items,
-            Function<T, K> keyExtractor,
-            ItemHeightProvider<T> heightProvider,
-            Function<T, Component> itemFactory) {
-        VirtualList<T, K> vl = VirtualList.of(items, keyExtractor, heightProvider, itemFactory);
+            ItemHeightProvider<T> heightProvider) {
+        VirtualList<T> vl = VirtualList.of(items, heightProvider);
         ParentStack.attachToParent(vl.element());
         return vl;
     }
@@ -650,11 +507,11 @@ public final class UI {
     // --- Units ---
 
     public static float unit(float value) {
-        return value * BASE_UNIT;
+        return Units.unit(value);
     }
 
     public static int unit(int value) {
-        return value * (int) BASE_UNIT;
+        return Units.unit(value);
     }
 
     public static Computed<Float> dvw(float percentage) {

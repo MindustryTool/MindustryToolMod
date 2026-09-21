@@ -1,32 +1,34 @@
 package solim.display;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.files.Fi;
-import arc.func.Cons;
-import arc.graphics.g2d.TextureRegion;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.scene.style.TextureRegionDrawable;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import mindustry.Vars;
+
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import arc.files.Fi;
+import arc.func.Cons;
+import arc.graphics.g2d.TextureRegion;
+import arc.scene.style.TextureRegionDrawable;
+import mindustry.Vars;
+import solim.test.SolimEnv;
 
 /**
  * Regression coverage for the asynchronous NetworkImage decode path: the most
  * recent load must win regardless of worker completion order, decode parameters
  * must stay consistent per load, and corrupt disk entries must retry the network.
  */
-class NetworkImageDecodeDeterminismTest {
+class NetworkImageDecodeDeterminismTest extends SolimEnv {
 
     private static final String URL = "https://example.com/card.png";
 
@@ -54,15 +56,6 @@ class NetworkImageDecodeDeterminismTest {
         }
     }
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @BeforeEach
     void setUp() {

@@ -1,49 +1,45 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Arrays;
+
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 
 import arc.Core;
 import arc.graphics.Color;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
+import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
+import arc.scene.event.Touchable;
 import arc.scene.ui.Label;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
-import java.util.Arrays;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import solim.display.Text;
-import solim.reactive.Signal;
-import solim.runtime.ParentStack;
-import solim.core.Ui;
-import arc.graphics.g2d.Font;
-import arc.graphics.g2d.Font.FontData;
-import arc.graphics.g2d.TextureRegion;
-import arc.scene.event.EventListener;
-import arc.scene.event.InputListener;
-import arc.scene.event.Touchable;
 import arc.struct.Seq;
-import org.junit.jupiter.api.Assumptions;
+import solim.display.Text;
+import solim.display.SolimImage;
+import solim.input.Button;
 import solim.input.Checkbox;
 import solim.input.SolimTextField;
+import solim.reactive.Signal;
+import solim.runtime.ParentStack;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class LayoutTest {
+class LayoutTest extends SolimEnv {
 
-    @BeforeAll
-    static void checkArcContext() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @Test
     void rowAlignAndGap() {
@@ -191,8 +187,8 @@ class LayoutTest {
 
     @Test
     void declarativeColumnAndRowCellLayout() {
-        Column col = Ui.column().children(() -> {
-            Ui.row().children(() -> {
+        Column col = new Column().children(() -> {
+            new Row().children(() -> {
                 Element e1 = new Element() {
                     @Override
                     public float getPrefWidth() {
@@ -206,7 +202,9 @@ class LayoutTest {
                 };
                 ParentStack.add(e1);
             });
-            Ui.scroll().grow().children(() -> {
+            Scroll scroll = new Scroll();
+            ParentStack.attachToParent(scroll.element());
+            scroll.grow().children(() -> {
                 Element e2 = new Element() {
                     @Override
                     public float getPrefWidth() {
@@ -242,7 +240,7 @@ class LayoutTest {
         Signal<Float> widthSignal = Signal.of(250f);
         Signal<Color> colorSignal = Signal.of(Color.scarlet);
 
-        Card c = Ui.card()
+        Card c = new Card()
                 .height(180f)
                 .width(widthSignal)
                 .color(colorSignal)
@@ -269,7 +267,7 @@ class LayoutTest {
     @Test
     void cardClickAndChildEventIsolation() {
         boolean[] cardClicked = { false };
-        Card c = Ui.card().onClick(() -> cardClicked[0] = true);
+        Card c = new Card().onClick(() -> cardClicked[0] = true);
 
         InputEvent stoppedEvent = new InputEvent();
         stoppedEvent.stop();
@@ -293,14 +291,14 @@ class LayoutTest {
 
     @Test
     void spacerExpandsInRowAndColumn() {
-        Row row = Ui.row(() -> {
-            Ui.spacer();
+        Row row = new Row().children(() -> {
+            ParentStack.attachToParent(new Spacer().element());
         });
         Cell<?> rowCell = row.table().getCells().first();
         assertTrue(CellAccess.expandX(rowCell) > 0, "Spacer in Row must grow horizontally");
 
-        Column col = Ui.column(() -> {
-            Ui.spacer();
+        Column col = new Column().children(() -> {
+            ParentStack.attachToParent(new Spacer().element());
         });
         Cell<?> colCell = col.table().getCells().first();
         assertTrue(CellAccess.expandY(colCell) > 0, "Spacer in Column must grow vertically");
@@ -309,8 +307,8 @@ class LayoutTest {
     @Test
     void childrenDoNotGrowByDefault() {
         // Column
-        Column col = Ui.column().children(() -> {
-            Ui.row().children(() -> {
+        Column col = new Column().children(() -> {
+            new Row().children(() -> {
             });
         });
         Cell<?> colCell = col.table().getCells().first();
@@ -318,8 +316,8 @@ class LayoutTest {
         assertEquals(0, CellAccess.expandY(colCell), "Column child must not growY by default");
 
         // Row
-        Row row = Ui.row().children(() -> {
-            Ui.row().children(() -> {
+        Row row = new Row().children(() -> {
+            new Row().children(() -> {
             });
             ParentStack.attachToParent(new Element());
         });
@@ -331,8 +329,8 @@ class LayoutTest {
         assertEquals(0, CellAccess.expandY(rowElementCell), "Row element must not growY by default");
 
         // Card
-        Card card = Ui.card().children(() -> {
-            Ui.row().children(() -> {
+        Card card = new Card().children(() -> {
+            new Row().children(() -> {
             });
         });
         Cell<?> cardCell = card.container().getCells().first();
@@ -341,8 +339,9 @@ class LayoutTest {
         card.dispose();
 
         // Scroll
-        Scroll scroll = Ui.scroll().children(() -> {
-            Ui.row().children(() -> {
+        Scroll scroll = new Scroll();
+        scroll.children(() -> {
+            new Row().children(() -> {
             });
         });
         Cell<?> scrollCell = scroll.content().getCells().first();
@@ -352,12 +351,12 @@ class LayoutTest {
 
     @Test
     void explicitGrowExpandsCells() {
-        Column col = Ui.column().children(() -> {
-            Ui.row().growX().children(() -> {
+        Column col = new Column().children(() -> {
+            new Row().growX().children(() -> {
             });
-            Ui.row().growY().children(() -> {
+            new Row().growY().children(() -> {
             });
-            Ui.row().grow().children(() -> {
+            new Row().grow().children(() -> {
             });
         });
         Cell<?> cellGrowX = col.table().getCells().get(0);
@@ -376,13 +375,15 @@ class LayoutTest {
 
     @Test
     void chainedGrowAfterAttachment() {
-        Column col = Ui.column().children(() -> {
+        Column col = new Column().children(() -> {
             // SizedImage with growX() chained
-            Ui.image().growX();
+            new SolimImage().growX();
             // Button with growX() chained
-            Ui.button().growX();
+            Button chainedButton = new Button();
+            ParentStack.attachToParent(chainedButton.element());
+            chainedButton.growX();
             // Row with growX() chained AFTER children()
-            Ui.row().children(() -> {
+            new Row().children(() -> {
             }).growX();
         });
 
@@ -409,13 +410,19 @@ class LayoutTest {
         Signal<Seq<String>> items = Signal.of(Seq.with("feat1", "feat2"));
         Scroll[] scrollRef = new Scroll[1];
 
-        Column col = Ui.column().grow().children(() -> {
-            Ui.row().growX().gap(8f).children(() -> {
-                Ui.image().size(24, 24);
-                Ui.button().height(40).width(200);
+        Column col = new Column().grow().children(() -> {
+            new Row().growX().gap(8f).children(() -> {
+                new SolimImage().size(24, 24);
+                Button actionButton = new Button();
+                ParentStack.attachToParent(actionButton.element());
+                actionButton.height(40).width(200);
             });
-            scrollRef[0] = Ui.scroll().grow().children(() -> {
-                Ui.grid(Signal.of(2), items, x -> x, x -> Ui.card().height(160).width(300).children(() -> {
+            scrollRef[0] = new Scroll();
+            ParentStack.attachToParent(scrollRef[0].element());
+            scrollRef[0].grow().children(() -> {
+                ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+                grid.columns(Signal.of(2)).key(x -> x);
+                grid.children(x -> new Card().height(160).width(300).children(() -> {
                 }));
             });
         });
@@ -479,18 +486,18 @@ class LayoutTest {
         Table root = new Table();
         root.setSize(1000, 800);
 
-        Scroll scroll = Ui.scroll()
+        Scroll scroll = new Scroll()
                 .grow()
                 .center()
                 .children(() -> {
-                    Ui.column()
+                    new Column()
                             .growX()
                             .center()
                             .maxWidth(400f)
                             .children(() -> {
                                 Element child = new Element();
                                 child.setSize(100, 50);
-                                Ui.column().add(child);
+                                new Column().add(child);
                             });
                 });
 
@@ -512,17 +519,17 @@ class LayoutTest {
         Table root = new Table();
         root.setSize(1000, 800);
 
-        Scroll scroll = Ui.scroll()
+        Scroll scroll = new Scroll()
                 .grow()
                 .children(() -> {
-                    Ui.column()
+                    new Column()
                             .growX()
                             .center()
                             .maxWidth(400f)
                             .children(() -> {
                                 Element child = new Element();
                                 child.setSize(100, 50);
-                                Ui.column().add(child);
+                                new Column().add(child);
                             });
                 });
 
@@ -543,17 +550,17 @@ class LayoutTest {
         Table root = new Table();
         root.setSize(1000, 800);
 
-        Scroll scroll = Ui.scroll()
+        Scroll scroll = new Scroll()
                 .grow()
                 .center()
                 .children(() -> {
-                    Ui.column()
+                    new Column()
                             .growX()
                             .maxWidth(400f)
                             .children(() -> {
                                 Element child = new Element();
                                 child.setSize(100, 50);
-                                Ui.column().add(child);
+                                new Column().add(child);
                             });
                 });
 
@@ -574,15 +581,15 @@ class LayoutTest {
         Table root = new Table();
         root.setSize(1000, 800);
 
-        Column parentCol = Ui.column().grow().children(() -> {
-            Ui.column()
+        Column parentCol = new Column().grow().children(() -> {
+            new Column()
                     .growX()
                     .center()
                     .maxWidth(400f)
                     .children(() -> {
                         Element child = new Element();
                         child.setSize(100, 50);
-                        Ui.column().add(child);
+                        new Column().add(child);
                     });
         });
 
@@ -601,10 +608,10 @@ class LayoutTest {
         Table root = new Table();
         root.setSize(1000, 800);
 
-        Column parentCol = Ui.column().grow().children(() -> {
+        Column parentCol = new Column().grow().children(() -> {
             // Column children default to top-left: centering a constrained card
             // requires explicit self-alignment via its cell config.
-            Card card = Ui.card()
+            Card card = new Card()
                     .growX()
                     .center()
                     .maxWidth(400f);
@@ -624,12 +631,12 @@ class LayoutTest {
 
     @Test
     void gridGapBeforeChildren() {
-        Grid g = Ui.grid(2)
+        Grid g = new Grid(2)
                 .gap(16f)
                 .children(() -> {
-                    Ui.row(() -> {
+                    new Row().children(() -> {
                     });
-                    Ui.row(() -> {
+                    new Row().children(() -> {
                     });
                 });
 
@@ -644,11 +651,11 @@ class LayoutTest {
 
     @Test
     void gridGapAfterChildren() {
-        Grid g = Ui.grid(2)
+        Grid g = new Grid(2)
                 .children(() -> {
-                    Ui.row(() -> {
+                    new Row().children(() -> {
                     });
-                    Ui.row(() -> {
+                    new Row().children(() -> {
                     });
                 })
                 .gap(20f);
@@ -662,10 +669,10 @@ class LayoutTest {
 
     @Test
     void gridGapZeroArgConstructor() {
-        Grid g = Ui.grid()
+        Grid g = new Grid()
                 .gap(12f)
                 .children(() -> {
-                    Ui.row(() -> {
+                    new Row().children(() -> {
                     });
                 });
 
@@ -676,12 +683,12 @@ class LayoutTest {
     @Test
     void gridGapReactiveSignal() {
         Signal<Float> gapSig = Signal.of(10f);
-        Grid g = Ui.grid(2)
+        Grid g = new Grid(2)
                 .gap(gapSig)
                 .children(() -> {
-                    Ui.row(() -> {
+                    new Row().children(() -> {
                     });
-                    Ui.row(() -> {
+                    new Row().children(() -> {
                     });
                 });
 
@@ -699,11 +706,10 @@ class LayoutTest {
     @Test
     void reactiveGridGapUpdatesRenderedCells() {
         Signal<Float> gapSig = Signal.of(0f);
-        ReactiveGrid<String, String> rg = Ui.grid(
-                Signal.of(2),
-                Signal.of(Arrays.asList("A", "B")),
-                s -> s,
-                s -> new Row()).gap(gapSig);
+        ReactiveGrid<String> rg = new ReactiveGrid<>(Signal.of(Arrays.asList("A", "B")));
+        rg.columns(Signal.of(2)).key(s -> s).gap(gapSig);
+        rg.children(s -> new Row());
+        rg.element();
 
         assertEquals(2, rg.table().getCells().size);
         for (Cell<?> cell : rg.table().getCells()) {
@@ -725,12 +731,16 @@ class LayoutTest {
         root.setSize(1024, 768);
 
         Signal<Seq<String>> items = Signal.of(Seq.with("feat1", "feat2"));
-        ReactiveGrid<String, String>[] gridRef = new ReactiveGrid[1];
+        ReactiveGrid<String>[] gridRef = new ReactiveGrid[1];
 
-        Column col = Ui.column().grow().children(() -> {
-            Ui.scroll().grow().children(() -> {
-                gridRef[0] = Ui.grid(Signal.of(2), items, x -> x, x -> {
-                    return Ui.card().height(160).growX().children(() -> {
+        Column col = new Column().grow().children(() -> {
+            Scroll scroll = new Scroll();
+            ParentStack.attachToParent(scroll.element());
+            scroll.grow().children(() -> {
+                gridRef[0] = new ReactiveGrid<>(items);
+                gridRef[0].columns(Signal.of(2)).key(x -> x);
+                gridRef[0].children(x -> {
+                    return new Card().height(160).growX().children(() -> {
                     });
                 });
             });
@@ -766,12 +776,16 @@ class LayoutTest {
         root.setSize(1024, 768);
 
         Signal<Seq<String>> items = Signal.of(Seq.with("feat1"));
-        ReactiveGrid<String, String>[] gridRef = new ReactiveGrid[1];
+        ReactiveGrid<String>[] gridRef = new ReactiveGrid[1];
 
-        Column col = Ui.column().grow().children(() -> {
-            Ui.scroll().grow().children(() -> {
-                gridRef[0] = Ui.grid(Signal.of(3), items, x -> x, x -> {
-                    return Ui.card().height(160).growX().children(() -> {
+        Column col = new Column().grow().children(() -> {
+            Scroll scroll = new Scroll();
+            ParentStack.attachToParent(scroll.element());
+            scroll.grow().children(() -> {
+                gridRef[0] = new ReactiveGrid<>(items);
+                gridRef[0].columns(Signal.of(3)).key(x -> x);
+                gridRef[0].children(x -> {
+                    return new Card().height(160).growX().children(() -> {
                     });
                 });
             });

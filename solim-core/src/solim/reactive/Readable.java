@@ -1,11 +1,11 @@
 package solim.reactive;
 
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Func;
+import arc.func.Prov;
 
 /** Common read-only interface for reactive sources (Signal, Computed) or static values. */
 @FunctionalInterface
-public interface Readable<T> extends Supplier<T> {
+public interface Readable<T> extends Prov<T> {
 
 	@Override
 	T get();
@@ -18,15 +18,15 @@ public interface Readable<T> extends Supplier<T> {
 		return get();
 	}
 
-	default <R> Computed<R> map(Function<T, R> mapper) {
-		return new Computed<>(() -> mapper.apply(get()));
+	default <R> Computed<R> map(Func<T, R> mapper) {
+		return new Computed<>(() -> mapper.get(get()));
 	}
 
 	static <T> Readable<T> of(T value) {
 		return () -> value;
 	}
 
-	static <T> Readable<T> from(Supplier<T> supplier) {
-		return supplier::get;
+	static <T> Readable<T> from(Prov<T> Prov) {
+		return Prov::get;
 	}
 }

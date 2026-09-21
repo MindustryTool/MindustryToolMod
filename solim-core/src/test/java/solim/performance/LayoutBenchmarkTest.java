@@ -2,28 +2,17 @@ package solim.performance;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Row;
+import solim.test.SolimEnv;
 
-public class LayoutBenchmarkTest {
+public class LayoutBenchmarkTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     private Table buildList(int count) {
         Column col = new Column();

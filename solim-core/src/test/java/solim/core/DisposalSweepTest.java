@@ -1,16 +1,33 @@
 package solim.core;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import arc.Application;
 import arc.Core;
+import arc.Events;
 import arc.Graphics;
 import arc.graphics.Color;
 import arc.graphics.GL20;
-import arc.mock.MockApplication;
-import arc.mock.MockGL20;
-import arc.mock.MockGraphics;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
+import arc.scene.Scene;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.CheckBox.CheckBoxStyle;
 import arc.scene.ui.Label.LabelStyle;
@@ -19,21 +36,7 @@ import arc.scene.ui.Slider.SliderStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
 import arc.scene.ui.layout.Table;
-import arc.graphics.g2d.Font;
-import arc.graphics.g2d.Font.FontData;
-import arc.graphics.g2d.TextureRegion;
-import arc.scene.Scene;
-import arc.Events;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import mindustry.game.EventType.ResizeEvent;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import solim.display.Badge;
 import solim.display.NetworkImage;
 import solim.display.SolimImage;
@@ -53,12 +56,13 @@ import solim.layout.Spacer;
 import solim.layout.VirtualList;
 import solim.layout.Wrap;
 import solim.overlay.Popup;
-import solim.runtime.ComponentContext;
-import solim.runtime.SignalDispatcher;
 import solim.reactive.Computed;
-import solim.reactive.Signal;
 import solim.reactive.Dynamic;
 import solim.reactive.ForEach;
+import solim.reactive.Signal;
+import solim.runtime.ComponentContext;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
 /**
  * Uniform disposal sweep over every {@link Disposable} in solim packages.
@@ -69,7 +73,7 @@ import solim.reactive.ForEach;
  * {@code solim.overlay} disposal tests, and config/graphics/feedback in their own
  * disposal tests. This sweep pins the shared contract plus mounting modes here.
  */
-class DisposalSweepTest {
+class DisposalSweepTest extends SolimEnv {
 
 	static Application prevApp;
 	static Graphics prevGraphics;
@@ -104,16 +108,6 @@ class DisposalSweepTest {
 		prevGl = Core.gl;
 		prevGl20 = Core.gl20;
 		prevScene = Core.scene;
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-		if (Core.gl == null) {
-			Core.gl = new MockGL20();
-			Core.gl20 = (MockGL20) Core.gl;
-		}
 		if (Core.scene == null) {
 			Core.scene = new Scene();
 			createdScene = true;
@@ -477,7 +471,9 @@ class DisposalSweepTest {
 		Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("a", "b")));
 		Signal<String> label = Signal.of("item");
 		List<Text> created = new ArrayList<>();
-		ForEach<String, String> forEach = new ForEach<>(items, item -> item, item -> {
+		ForEach<String> forEach = new ForEach<>(items);
+		forEach.key(item -> item);
+		forEach.children(item -> {
 			Text text = Text.of(label);
 			created.add(text);
 			return text;
@@ -510,7 +506,9 @@ class DisposalSweepTest {
 		Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("a", "b", "c", "d")));
 		Signal<String> label = Signal.of("cell");
 		List<Text> created = new ArrayList<>();
-		ReactiveGrid<String, String> grid = new ReactiveGrid<>(columns, items, item -> item, item -> {
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(columns).key(item -> item);
+		grid.children(item -> {
 			Text text = Text.of(label);
 			created.add(text);
 			return text;
@@ -573,12 +571,13 @@ class DisposalSweepTest {
 		Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("a", "b", "c")));
 		Signal<String> label = Signal.of("row");
 		List<Text> created = new ArrayList<>();
-		VirtualList<String, String> list = new VirtualList<>(items, item -> item,
-			(item, width) -> 48f, item -> {
-				Text text = Text.of(label);
-				created.add(text);
-				return text;
-			});
+		VirtualList<String> list = new VirtualList<>(items, (item, width) -> 48f);
+		list.key(item -> item);
+		list.children(item -> {
+			Text text = Text.of(label);
+			created.add(text);
+			return text;
+		});
 		list.element();
 		assertFalse(list.isDisposed());
 

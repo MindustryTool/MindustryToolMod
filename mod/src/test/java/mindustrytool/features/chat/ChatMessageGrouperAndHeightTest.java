@@ -1,20 +1,19 @@
 package mindustrytool.features.chat;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import arc.mock.MockSettings;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import mindustrytool.features.chat.models.MessageGroup;
-import mindustrytool.features.chat.models.ParsedChatMessage;
-import mindustrytool.models.response.ChatMessage;
-import mindustrytool.models.response.ChatUser;
-import mindustrytool.models.response.UserData;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.TextureRegion;
@@ -24,12 +23,15 @@ import arc.scene.ui.Label;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import mindustry.ui.Fonts;
+import mindustrytool.features.chat.models.MessageGroup;
+import mindustrytool.features.chat.models.ParsedChatMessage;
+import mindustrytool.models.response.ChatMessage;
+import mindustrytool.models.response.ChatUser;
+import mindustrytool.models.response.UserData;
+import mindustrytool.test.MindustryTestEnv;
 import solim.core.Units;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import arc.mock.MockGL20;
 
-class ChatMessageGrouperAndHeightTest {
+class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     private static Font testFont;
 
@@ -44,13 +46,6 @@ class ChatMessageGrouperAndHeightTest {
 
     @BeforeEach
     void setUp() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
-        Core.settings = new MockSettings();
-        if (Core.gl == null) {
-            Core.gl = new MockGL20();
-            Core.gl20 = (MockGL20) Core.gl;
-        }
         if (Core.scene == null) {
             Core.scene = new Scene();
         }
@@ -114,6 +109,13 @@ class ChatMessageGrouperAndHeightTest {
             ids.add(message.getId());
         }
         return ids;
+    }
+
+    @AfterEach
+    void drainPendingEffects() {
+        // Tests here build reactive components without disposing them; flush so
+        // the env teardown sees an empty dispatcher.
+        flushEffects();
     }
 
     @Test

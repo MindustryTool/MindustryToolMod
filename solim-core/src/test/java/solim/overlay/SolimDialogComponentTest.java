@@ -15,8 +15,9 @@ import solim.core.DisposableAction;
 import java.util.ArrayList;
 import java.util.List;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class SolimDialogComponentTest {
+class SolimDialogComponentTest extends SolimEnv {
 
 	@BeforeAll
 	static void checkArcContext() {

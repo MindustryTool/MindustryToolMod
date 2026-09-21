@@ -12,7 +12,6 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import solim.core.BaseComponent;
 import solim.reactive.Readable;
-import solim.reactive.Signal;
 
 public class QuickAccessSettingsView extends BaseComponent {
 
@@ -71,10 +70,8 @@ public class QuickAccessSettingsView extends BaseComponent {
 
                             Readable<List<Feature>> orderedRows = feature.orderedFeaturesSignal();
 
-                            reactiveGrid(Signal.of(1), orderedRows, f -> f.getMetadata().getId(),
-                                    f -> new FeatureOrderRow(feature, f))
-                                            .growX()
-                                            .gap(unit(2));
+                            reactiveGrid(orderedRows).key(f -> f.getMetadata().getId()).growX().gap(unit(2))
+                                    .children(f -> new FeatureOrderRow(feature, f));
 
                             divider();
 

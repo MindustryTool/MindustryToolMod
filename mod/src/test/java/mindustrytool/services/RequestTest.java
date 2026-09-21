@@ -26,8 +26,9 @@ import mindustrytool.services.auth.AuthProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class RequestTest {
+class RequestTest extends SolimEnv {
 
 	private static HttpServer server;
 	private static int serverPort;

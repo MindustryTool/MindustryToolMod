@@ -1,33 +1,30 @@
 package solim.reactive;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.scene.Element;
-import java.util.*;
-import org.junit.jupiter.api.BeforeAll;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
-import solim.runtime.SignalDispatcher;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+
+import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
+import solim.core.BaseComponent;
 import solim.core.SolimToken;
 import solim.modifier.CellConfig;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class ForEachComponentTest {
+class ForEachComponentTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     static class TestComponent extends BaseComponent {
         final String id;
@@ -52,7 +49,9 @@ class ForEachComponentTest {
     void forEachRendersItemsInOrder() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
         Map<String, TestComponent> created = new HashMap<>();
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> {
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> {
             TestComponent tc = new TestComponent(id);
             created.put(id, tc);
             return tc;
@@ -70,7 +69,9 @@ class ForEachComponentTest {
     void forEachKeyedReuse() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
         Map<String, TestComponent> created = new HashMap<>();
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> {
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> {
             TestComponent tc = new TestComponent(id);
             created.put(id, tc);
             return tc;
@@ -93,7 +94,9 @@ class ForEachComponentTest {
     void forEachDisposal() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A", "B"));
         Map<String, TestComponent> created = new HashMap<>();
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> {
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> {
             TestComponent tc = new TestComponent(id);
             created.put(id, tc);
             return tc;
@@ -107,7 +110,9 @@ class ForEachComponentTest {
     @Test
     void forEachChildrenDoNotGrowByDefault() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new TestComponent(id));
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> new TestComponent(id));
         fe.element();
         Cell<?> cell = fe.container().getCells().first();
         assertEquals(0, CellAccess.expandX(cell));
@@ -119,7 +124,9 @@ class ForEachComponentTest {
     @Test
     void forEachImplementsLayoutModifiersAndSupportsGrowX() {
         Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, id -> new TestComponent(id));
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> new TestComponent(id));
         assertTrue(fe instanceof CellConfig);
         assertNotNull(fe.cellConfig());
         assertFalse(fe.cellConfig().growX);
@@ -136,7 +143,10 @@ class ForEachComponentTest {
 
         Dynamic<Boolean> dyn = Dynamic.of(hasItems, available -> {
             if (Boolean.TRUE.equals(available)) {
-                return ForEach.of(items, id -> id, id -> new TestComponent(id)).growX();
+                ForEach<String> list = new ForEach<>(items);
+                list.key(id -> id);
+                list.children(TestComponent::new);
+                return list.growX();
             }
             return null;
         });
@@ -155,8 +165,10 @@ class ForEachComponentTest {
     @Test
     void forEachSupportsElementAndTableConfig() {
         Signal<List<String>> items = Signal.of(Arrays.asList("1", "2"));
-        ForEach<String, String> fe = new ForEach<>(items, id -> id, TestComponent::new)
-                .width(300f)
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(TestComponent::new);
+        fe.width(300f)
                 .height(200f)
                 .visible(true)
                 .padding(8f);

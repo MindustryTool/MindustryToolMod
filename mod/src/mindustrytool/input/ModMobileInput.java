@@ -138,6 +138,14 @@ public class ModMobileInput extends MobileInput {
 
     @Override
     protected void updateMovement(Unit unit) {
+        try {
+            updateMovementGuarded(unit);
+        } catch (Throwable t) {
+            MovementAimGuard.reportMovementFailure(unit, t);
+        }
+    }
+
+    private void updateMovementGuarded(Unit unit) {
         Rect rect = Tmp.r3;
 
         UnitType type = unit.type;
@@ -238,40 +246,48 @@ public class ModMobileInput extends MobileInput {
 
         unit.movePref(movement);
 
-        if (!unit.activelyBuilding() && unit.mineTile == null && !Vars.state.isEditor()) {
-            if (manualShooting) {
-                Vars.player.shooting = !boosted;
-                unit.aim(Vars.player.mouseX = Core.input.mouseWorldX(), Vars.player.mouseY = Core.input.mouseWorldY(), true);
-            } else if (target == null) {
-                Vars.player.shooting = false;
-                if (Core.settings.getBool("autotarget") && !isControlledBlockUnit()) {
-                    if (unit.type.canAttack) {
-                        target = Units.closestTarget(unit.team, unit.x, unit.y, range, u -> u.checkTarget(type.targetAir, type.targetGround),
-                                u -> type.targetGround && type.targetBuildingsMobile);
-                    }
-
-                    if (allowHealing && target == null) {
-                        target = Geometry.findClosest(unit.x, unit.y, Vars.indexer.getDamaged(Vars.player.team()));
-                        if (target != null && !unit.within(target, range)) {
-                            target = null;
-                        }
-                    }
-                }
-
-                unit.aim(Core.input.mouseWorldX(), Core.input.mouseWorldY(), true);
-            } else {
-                Vec2 intercept = Vars.player.unit().type.weapons.contains(w -> w.predictTarget) ? Predict.intercept(unit, target, type.weapons.first().bullet)
-                        : Tmp.v1.set(target);
-
-                Vars.player.mouseX = intercept.x;
-                Vars.player.mouseY = intercept.y;
-                Vars.player.shooting = !boosted;
-
-                unit.aim(Vars.player.mouseX, Vars.player.mouseY, true);
-            }
+        if (MovementAimGuard.shouldSkipWeapons(unit)) {
+            return;
         }
 
-        unit.controlWeapons(Vars.player.shooting && !boosted);
+        try {
+            if (!unit.activelyBuilding() && unit.mineTile == null && !Vars.state.isEditor()) {
+                if (manualShooting) {
+                    Vars.player.shooting = !boosted;
+                    unit.aim(Vars.player.mouseX = Core.input.mouseWorldX(), Vars.player.mouseY = Core.input.mouseWorldY(), true);
+                } else if (target == null) {
+                    Vars.player.shooting = false;
+                    if (Core.settings.getBool("autotarget") && !isControlledBlockUnit()) {
+                        if (unit.type.canAttack) {
+                            target = Units.closestTarget(unit.team, unit.x, unit.y, range, u -> u.checkTarget(type.targetAir, type.targetGround),
+                                    u -> type.targetGround && type.targetBuildingsMobile);
+                        }
+
+                        if (allowHealing && target == null) {
+                            target = Geometry.findClosest(unit.x, unit.y, Vars.indexer.getDamaged(Vars.player.team()));
+                            if (target != null && !unit.within(target, range)) {
+                                target = null;
+                            }
+                        }
+                    }
+
+                    unit.aim(Core.input.mouseWorldX(), Core.input.mouseWorldY(), true);
+                } else {
+                    Vec2 intercept = Vars.player.unit().type.weapons.contains(w -> w.predictTarget) ? Predict.intercept(unit, target, type.weapons.first().bullet)
+                            : Tmp.v1.set(target);
+
+                    Vars.player.mouseX = intercept.x;
+                    Vars.player.mouseY = intercept.y;
+                    Vars.player.shooting = !boosted;
+
+                    unit.aim(Vars.player.mouseX, Vars.player.mouseY, true);
+                }
+            }
+
+            unit.controlWeapons(Vars.player.shooting && !boosted);
+        } catch (LinkageError e) {
+            MovementAimGuard.latchBroken(unit, e);
+        }
     }
 
     private static boolean isControlledBlockUnit() {

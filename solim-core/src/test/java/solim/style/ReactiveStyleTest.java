@@ -4,34 +4,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.graphics.Color;
-import arc.scene.ui.Button.ButtonStyle;
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import arc.graphics.Color;
+import arc.scene.ui.Button.ButtonStyle;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
-import solim.runtime.SignalDispatcher;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class ReactiveStyleTest {
+class ReactiveStyleTest extends SolimEnv {
 
     private static int rgba(Color color) {
         return Color.rgba8888(color.r, color.g, color.b, color.a);
     }
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @BeforeEach
     void reset() {

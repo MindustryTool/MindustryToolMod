@@ -1,11 +1,13 @@
 // mod-specific configuration — shared java/repositories/dependencies are in root build.gradle
 
 dependencies{
+    // Mod only allowed to import solim, solim-mcp and solim-test
 	compileOnly 'org.projectlombok:lombok:1.18.36'
 	annotationProcessor 'org.projectlombok:lombok:1.18.36'
 	implementation project(':solim')
 	implementation project(':solim-mcp')
 	testImplementation "Anuken:Mindustry:${mindustryVersion}"
+	testImplementation project(':solim-test')
 }
 
 def secretsOutputDir = layout.buildDirectory.dir("generated/resources/secrets").get().asFile

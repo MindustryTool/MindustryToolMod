@@ -1,17 +1,18 @@
 package solim.modifier;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
+import org.junit.jupiter.api.Test;
+
 import arc.graphics.Color;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.layout.Card;
@@ -25,18 +26,10 @@ import solim.layout.Spacer;
 import solim.layout.Wrap;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class ElementModifiersTest {
+class ElementModifiersTest extends SolimEnv {
 
-    @BeforeAll
-    static void checkArcContext() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @Test
     void elementConfigModifiersOnRow() {
@@ -176,12 +169,12 @@ class ElementModifiersTest {
         Button button = new Button().gap(8f);
         Element bta = new Element();
         Element btb = new Element();
-        button.sizedButton().add(bta);
-        button.sizedButton().add(btb);
+        button.button().add(bta);
+        button.button().add(btb);
         button.respace();
-        assertEquals(0f, CellAccess.padLeft(button.sizedButton().getCell(bta)), 0.01f);
-        assertEquals(8f, CellAccess.padLeft(button.sizedButton().getCell(btb)), 0.01f);
-        assertEquals(0f, CellAccess.padTop(button.sizedButton().getCell(btb)), 0.01f);
+        assertEquals(0f, CellAccess.padLeft(button.button().getCell(bta)), 0.01f);
+        assertEquals(8f, CellAccess.padLeft(button.button().getCell(btb)), 0.01f);
+        assertEquals(0f, CellAccess.padTop(button.button().getCell(btb)), 0.01f);
     }
 
     @Test

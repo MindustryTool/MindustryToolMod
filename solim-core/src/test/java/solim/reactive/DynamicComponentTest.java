@@ -1,36 +1,32 @@
 package solim.reactive;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.scene.Element;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.jupiter.api.BeforeAll;
+
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
-import solim.core.Ui;
-import solim.runtime.SignalDispatcher;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+
+import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
+import solim.core.BaseComponent;
 import solim.layout.Column;
 import solim.layout.Row;
 import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class DynamicComponentTest {
+class DynamicComponentTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     static class TestComponent extends BaseComponent {
         final String id;
@@ -257,7 +253,7 @@ class DynamicComponentTest {
     void dynamicPreservesTopRightAlignmentWithoutGrowX() {
         Signal<Boolean> state = Signal.of(true);
         Dynamic<Boolean> dyn = Dynamic.of(state, s -> {
-            Row row = Ui.row();
+            Row row = new Row();
             row.cellConfig().prefWidth = Readable.of(100f);
             row.cellConfig().prefHeight = Readable.of(40f);
             return row;
@@ -265,7 +261,7 @@ class DynamicComponentTest {
 
         assertFalse(dyn.cellConfig().growX, "Dynamic must not growX by default");
 
-        Column col = Ui.column().fillParent().top().right().children(() -> {
+        Column col = new Column().fillParent().top().right().children(() -> {
             ParentStack.add(dyn);
         });
 
@@ -500,8 +496,8 @@ class DynamicComponentTest {
         Dynamic<Boolean> root = Dynamic.of(outer, showOuter -> {
             if (!Boolean.TRUE.equals(showOuter))
                 return null;
-            return Ui.column(() -> {
-                Ui.dynamic(inner, showInner -> {
+            return new Column().children(() -> {
+                Dynamic.of(inner, showInner -> {
                     if (!Boolean.TRUE.equals(showInner))
                         return null;
                     return new TestComponent("leaf");

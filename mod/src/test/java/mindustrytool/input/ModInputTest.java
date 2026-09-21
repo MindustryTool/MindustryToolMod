@@ -1,18 +1,30 @@
 package mindustrytool.input;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import arc.Core;
-import arc.Settings;
 import arc.assets.AssetManager;
 import arc.graphics.Camera;
-import arc.mock.MockApplication;
-import arc.mock.MockFiles;
-import arc.mock.MockGraphics;
-import arc.mock.MockInput;
 import arc.input.InputProcessor;
 import arc.input.KeyCode;
 import arc.math.geom.Vec2;
+import arc.mock.MockFiles;
+import arc.mock.MockInput;
 import arc.struct.Queue;
 import arc.struct.Seq;
 import arc.util.Time;
@@ -32,14 +44,9 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.joystick.JoystickFeature;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 
-class ModInputTest {
+class ModInputTest extends MindustryTestEnv {
 
     private static Control createMockControl() {
         try {
@@ -56,8 +63,6 @@ class ModInputTest {
 
     @BeforeAll
     static void initCore() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
         Core.files = new MockFiles();
         Core.assets = new AssetManager();
         Core.camera = new Camera();
@@ -69,9 +74,6 @@ class ModInputTest {
 
     @BeforeEach
     void setUp() {
-        Core.settings = new Settings();
-        Core.settings.clear();
-        FeatureManager.clear();
         Vars.control = createMockControl();
         Vars.mobile = false;
         Vars.world = new World();
@@ -82,8 +84,6 @@ class ModInputTest {
 
     @AfterEach
     void tearDown() {
-        FeatureManager.clear();
-        Core.settings.clear();
         Vars.control = null;
         Vars.player = null;
         Vars.world = null;
@@ -834,5 +834,126 @@ class ModInputTest {
             boolean result = input.tap(0f, 0f, 1, KeyCode.mouseLeft);
             assertFalse(result);
         });
+    }
+
+    @Test
+    void modMobileInput_updateMovement_survivesStaleAimAndSkipsAimAfterLatch() {
+        MovementAimGuard.clearForTesting();
+        FreeCameraFeature freeCam = new FreeCameraFeature();
+        FeatureManager.register(freeCam);
+        freeCam.setEnabled(false);
+
+        ModMobileInput input = new ModMobileInput();
+        Core.camera.position.set(500f, 500f);
+
+        UnitType type = new UnitType("test-mobile-stale-aim");
+        type.omniMovement = true;
+        type.accel = 0.5f;
+        type.hitSize = 8f;
+        final int[] aimCalls = new int[1];
+        final boolean[] movePrefCalled = new boolean[1];
+        UnitEntity unit = new UnitEntity() {
+            @Override
+            public float speed() {
+                return 2f;
+            }
+
+            @Override
+            public void movePref(Vec2 vec) {
+                movePrefCalled[0] = true;
+            }
+
+            @Override
+            public void aim(float x, float y, boolean shoot) {
+                aimCalls[0]++;
+                throw new AbstractMethodError("stale aim");
+            }
+        };
+        unit.type = type;
+        unit.plans = new Queue<>();
+
+        Player player = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+
+            @Override
+            public mindustry.gen.Unit unit() {
+                return unit;
+            }
+        };
+        player.x = 100f;
+        player.y = 100f;
+        Vars.player = player;
+
+        assertDoesNotThrow(() -> input.updateMovement(unit));
+        assertTrue(movePrefCalled[0]);
+        assertEquals(1, aimCalls[0]);
+        assertTrue(MovementAimGuard.shouldSkipWeapons(unit));
+
+        movePrefCalled[0] = false;
+        assertDoesNotThrow(() -> input.updateMovement(unit));
+        assertTrue(movePrefCalled[0]);
+        assertEquals(1, aimCalls[0]);
+        MovementAimGuard.clearForTesting();
+    }
+
+    @Test
+    void modDesktopInput_updateMovement_survivesStaleAimAndSkipsAimAfterLatch() {
+        MovementAimGuard.clearForTesting();
+        FreeCameraFeature freeCam = new FreeCameraFeature();
+        FeatureManager.register(freeCam);
+        freeCam.setEnabled(false);
+
+        ModDesktopInput input = new ModDesktopInput();
+
+        UnitType type = new UnitType("test-desktop-stale-aim");
+        type.omniMovement = true;
+        final int[] aimCalls = new int[1];
+        final boolean[] movePrefCalled = new boolean[1];
+        UnitEntity unit = new UnitEntity() {
+            @Override
+            public float speed() {
+                return 2f;
+            }
+
+            @Override
+            public void movePref(Vec2 vec) {
+                movePrefCalled[0] = true;
+            }
+
+            @Override
+            public void aim(float x, float y, boolean shoot) {
+                aimCalls[0]++;
+                throw new AbstractMethodError("stale aim");
+            }
+        };
+        unit.type = type;
+        unit.plans = new Queue<>();
+
+        Player player = new Player() {
+            @Override
+            public boolean dead() {
+                return false;
+            }
+
+            @Override
+            public mindustry.gen.Unit unit() {
+                return unit;
+            }
+        };
+        Vars.player = player;
+
+        assertDoesNotThrow(() -> input.updateMovement(unit));
+        assertTrue(movePrefCalled[0]);
+        assertEquals(1, aimCalls[0]);
+        assertTrue(MovementAimGuard.shouldSkipWeapons(unit));
+
+        movePrefCalled[0] = false;
+        assertDoesNotThrow(() -> input.updateMovement(unit));
+        assertTrue(movePrefCalled[0]);
+        assertEquals(1, aimCalls[0]);
+        MovementAimGuard.clearForTesting();
     }
 }

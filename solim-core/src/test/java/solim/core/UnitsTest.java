@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import arc.Core;
 import arc.Events;
-import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
+import solim.test.SolimEnv;
 import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 
-class UnitsTest {
+class UnitsTest extends SolimEnv {
 
 	static class ResizableMockGraphics extends MockGraphics {
 		int width = 1000;
@@ -34,9 +34,6 @@ class UnitsTest {
 
 	@BeforeAll
 	static void initCore() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
 		mockGraphics = new ResizableMockGraphics();
 		Core.graphics = mockGraphics;
 	}
@@ -96,8 +93,8 @@ class UnitsTest {
 
 	@Test
 	void testUiFacadeMethods() {
-		Computed<Float> w = Ui.dvw(25f);
-		Computed<Float> h = Ui.dvh(10f);
+		Computed<Float> w = Units.dvw(25f);
+		Computed<Float> h = Units.dvh(10f);
 
 		assertEquals(250f, w.get(), 0.001f);
 		assertEquals(50f, h.get(), 0.001f);

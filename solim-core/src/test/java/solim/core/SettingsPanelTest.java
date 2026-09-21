@@ -6,8 +6,9 @@ import arc.Core;
 import arc.scene.Element;
 import org.junit.jupiter.api.Test;
 import arc.scene.ui.layout.Table;
+import solim.test.SolimEnv;
 
-class SettingsPanelTest {
+class SettingsPanelTest extends SolimEnv {
 
 	@Test
 	void reactiveStateAndComputed() {

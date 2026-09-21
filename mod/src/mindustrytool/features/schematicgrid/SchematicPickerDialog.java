@@ -9,7 +9,7 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
@@ -37,7 +37,7 @@ public class SchematicPickerDialog extends SolimDialog {
     private final Signal<Integer> displayCount = Signal.of(INITIAL_BATCH);
     private @Nullable Scroll gridScroll;
 
-    public SchematicPickerDialog(Consumer<Schematic> onSelect) {
+    public SchematicPickerDialog(Cons<Schematic> onSelect) {
         super(Core.bundle.get("feature.quick-schematic-grid.picker.title"));
 
         name("schematicPickerDialog");
@@ -107,22 +107,19 @@ public class SchematicPickerDialog extends SolimDialog {
 
                 gridScroll = scroll().grow().onReachBottom(100f, () -> expandBatch(filtered));
                 gridScroll.children(() -> {
-                    reactiveGrid(
-                            columnCount,
-                            displayed,
-                            SchematicPickerDialog::keyOf,
-                            schematic -> new SchematicPickerCard(schematic, () -> {
-                                if (onSelect != null) {
-                                    onSelect.accept(schematic);
-                                }
-                                hide();
-                            }))
+                    reactiveGrid(displayed).columns(columnCount).key(SchematicPickerDialog::keyOf)
                             .empty(() -> {
                                 text(Core.bundle.get("feature.quick-schematic-grid.picker.empty"))
                                         .color(Color.gray)
                                         .padding(unit(4));
                             })
-                            .gap(unit(3));
+                            .gap(unit(3))
+                            .children(schematic -> new SchematicPickerCard(schematic, () -> {
+                                if (onSelect != null) {
+                                    onSelect.get(schematic);
+                                }
+                                hide();
+                            }));
 
                     dynamic(remaining, left -> {
                         Integer count = left != null ? left : 0;

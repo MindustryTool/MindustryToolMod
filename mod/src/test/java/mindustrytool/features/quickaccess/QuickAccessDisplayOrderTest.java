@@ -1,24 +1,24 @@
 package mindustrytool.features.quickaccess;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.Settings;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
-import java.util.List;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 
-class QuickAccessDisplayOrderTest {
+class QuickAccessDisplayOrderTest extends MindustryTestEnv {
 
     static class TestFeature extends Feature {
         TestFeature(String id, boolean quickAccess, boolean dev) {
@@ -33,26 +33,7 @@ class QuickAccessDisplayOrderTest {
 
     @BeforeAll
     static void initCore() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
         Icon.book = new TextureRegionDrawable();
-    }
-
-    @BeforeEach
-    void setUp() {
-        Core.settings = new Settings();
-        Core.settings.clear();
-        FeatureManager.clear();
-    }
-
-    @AfterEach
-    void tearDown() {
-        FeatureManager.clear();
-        Core.settings.clear();
     }
 
     static Seq<Feature> candidates(TestFeature... features) {

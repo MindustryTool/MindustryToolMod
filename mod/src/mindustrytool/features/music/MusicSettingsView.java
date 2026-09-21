@@ -13,7 +13,6 @@ import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.reactive.Readable;
-import solim.reactive.Signal;
 
 /**
  * Settings view for the Custom Music feature: Ambient, Dark, and Boss sections,
@@ -75,11 +74,8 @@ public class MusicSettingsView extends BaseComponent {
                 }
             });
 
-            reactiveGrid(Signal.of(1), feature.trackSignal(type),
-                    state -> state.disabledKey(),
-                    state -> new TrackRow(feature, state))
-                            .gap(unit(2))
-                            .growX();
+            reactiveGrid(feature.trackSignal(type)).key(state -> state.disabledKey()).gap(unit(2)).growX()
+                    .children(state -> new TrackRow(feature, state));
         });
     }
 

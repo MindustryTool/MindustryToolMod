@@ -15,6 +15,7 @@ import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.layout.ReactiveGrid;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -26,7 +27,7 @@ import solim.reactive.Signal;
 public class QuickSchematicGridHudView extends BaseComponent {
     //TODO: Right click to open edit UI
     //TODO: Hover over button show a shadow of schematic
-    //TODO: Icon not render properly (it display schematic preview instead)
+    //TODO: Icon not render properly af set (it display schematic preview instead of newly set icon)
     public static final class SlotModel {
         public final int page;
         public final int row;
@@ -163,12 +164,10 @@ public class QuickSchematicGridHudView extends BaseComponent {
             if (includeDragHandle) {
                 buildDragHandle(feature, buttonSize, dragIconSize, buttonOpacity);
             }
-            reactiveGrid(
-                    Signal.of(1),
-                    pagesList,
-                    pageIndex -> pageIndex + ":" + (feature.getPageIcon(pageIndex) != null ? feature.getPageIcon(pageIndex) : ""),
-                    pageIndex -> pageTabButton(feature, pageIndex, buttonSize, buttonOpacity))
-                    .gap(gap);
+            reactiveGrid(pagesList)
+                    .key(pageIndex -> pageIndex + ":" + (feature.getPageIcon(pageIndex) != null ? feature.getPageIcon(pageIndex) : ""))
+                    .gap(gap)
+                    .children(pageIndex -> pageTabButton(feature, pageIndex, buttonSize, buttonOpacity));
         });
     }
 
@@ -185,12 +184,10 @@ public class QuickSchematicGridHudView extends BaseComponent {
             if (includeDragHandle) {
                 buildDragHandle(feature, buttonSize, dragIconSize, buttonOpacity);
             }
-            reactiveGrid(
-                    tabColumns,
-                    pagesList,
-                    pageIndex -> pageIndex + ":" + (feature.getPageIcon(pageIndex) != null ? feature.getPageIcon(pageIndex) : ""),
-                    pageIndex -> pageTabButton(feature, pageIndex, buttonSize, buttonOpacity))
-                    .gap(gap);
+            reactiveGrid(pagesList).columns(tabColumns)
+                    .key(pageIndex -> pageIndex + ":" + (feature.getPageIcon(pageIndex) != null ? feature.getPageIcon(pageIndex) : ""))
+                    .gap(gap)
+                    .children(pageIndex -> pageTabButton(feature, pageIndex, buttonSize, buttonOpacity));
         });
     }
 
@@ -241,12 +238,10 @@ public class QuickSchematicGridHudView extends BaseComponent {
             return list;
         });
 
-        return reactiveGrid(
-                feature.colsConfig.signal(),
-                slots,
-                SlotModel::key,
-                slot -> slotComponent(feature, slot, onBeforeActivate, buttonOpacity))
+        ReactiveGrid<SlotModel> grid = reactiveGrid(slots).columns(feature.colsConfig.signal()).key(SlotModel::key)
                 .gap(gap);
+        grid.children(slot -> slotComponent(feature, slot, onBeforeActivate, buttonOpacity));
+        return grid;
     }
 
     static Component pageTabButton(

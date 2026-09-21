@@ -1,30 +1,24 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.Element;
 import arc.scene.event.EventListener;
 import arc.scene.event.InputListener;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import arc.scene.ui.layout.Table;
 import solim.overlay.Hud;
 import solim.runtime.ParentStack;
-import arc.scene.ui.layout.Table;
+import solim.test.SolimEnv;
 
-class ScrollTest {
+class ScrollTest extends SolimEnv {
 
-    @BeforeAll
-    static void initArc() {
-        if (Core.app == null) {
-            Core.app = new MockApplication();
-        }
-        if (Core.graphics == null) {
-            Core.graphics = new MockGraphics();
-        }
-    }
 
     @Test
     void createsWithDefaultNames() {

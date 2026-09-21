@@ -1,27 +1,28 @@
 package mindustrytool.features;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.Core;
-import arc.Settings;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import arc.input.KeyBind;
 import arc.input.KeyCode;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
 import arc.scene.style.TextureRegionDrawable;
-import java.util.concurrent.atomic.AtomicBoolean;
 import mindustry.gen.Icon;
 import mindustrytool.features.bridgevisualizer.BridgeVisualizerFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import mindustrytool.features.screenshot.ScreenshotFeature;
 import mindustrytool.features.wavepreview.WavePreviewFeature;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import mindustrytool.test.MindustryTestEnv;
 
-class FeatureKeybindTest {
+class FeatureKeybindTest extends MindustryTestEnv {
 
     static class TestFeature extends Feature {
         TestFeature(String id) {
@@ -47,22 +48,7 @@ class FeatureKeybindTest {
 
     @BeforeAll
     static void initCore() {
-        Core.app = new MockApplication();
-        Core.graphics = new MockGraphics();
         Icon.book = new TextureRegionDrawable();
-    }
-
-    @BeforeEach
-    void setUp() {
-        Core.settings = new Settings();
-        Core.settings.clear();
-        FeatureManager.clear();
-    }
-
-    @AfterEach
-    void tearDown() {
-        FeatureManager.clear();
-        Core.settings.clear();
     }
 
     @Test

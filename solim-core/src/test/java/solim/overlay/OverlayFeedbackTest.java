@@ -23,8 +23,9 @@ import arc.scene.ui.Image;
 import arc.scene.ui.Label;
 import java.util.ArrayList;
 import java.util.List;
+import solim.test.SolimEnv;
 
-class OverlayFeedbackTest {
+class OverlayFeedbackTest extends SolimEnv {
 
 	@BeforeAll
 	static void checkArcContext() {

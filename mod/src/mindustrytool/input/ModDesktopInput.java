@@ -42,6 +42,14 @@ public class ModDesktopInput extends DesktopInput {
 
     @Override
     protected void updateMovement(Unit unit) {
+        try {
+            updateMovementGuarded(unit);
+        } catch (Throwable t) {
+            MovementAimGuard.reportMovementFailure(unit, t);
+        }
+    }
+
+    private void updateMovementGuarded(Unit unit) {
         AutoplayFeature af = FeatureManager.getFeature(AutoplayFeature.class);
         boolean autoplaying = af != null && af.isEnabled();
         boolean freeCam = FreeCameraFeature.isFreeCam();
@@ -93,8 +101,14 @@ public class ModDesktopInput extends DesktopInput {
 
             unit.movePref(movement);
 
-            unit.aim(Core.input.mouseWorldX(), Core.input.mouseWorldY(), true);
-            unit.controlWeapons(true, Vars.player.shooting && !boosted);
+            if (!MovementAimGuard.shouldSkipWeapons(unit)) {
+                try {
+                    unit.aim(Core.input.mouseWorldX(), Core.input.mouseWorldY(), true);
+                    unit.controlWeapons(true, Vars.player.shooting && !boosted);
+                } catch (LinkageError e) {
+                    MovementAimGuard.latchBroken(unit, e);
+                }
+            }
 
             Vars.player.boosting = Core.input.keyDown(Binding.boost);
             Vars.player.mouseX = unit.aimX();

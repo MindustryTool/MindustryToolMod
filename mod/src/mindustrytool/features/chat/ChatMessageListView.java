@@ -69,7 +69,7 @@ public class ChatMessageListView extends BaseComponent {
 
     private final ChatStore store;
     private final @Nullable ChatService service;
-    private @Nullable VirtualList<MessageGroup, String> virtualList;
+    private @Nullable VirtualList<MessageGroup> virtualList;
 
     private @Nullable String lastChannelId = null;
     private int lastMessageCount = 0;
@@ -261,15 +261,11 @@ public class ChatMessageListView extends BaseComponent {
 
                     dynamic(hasMessages, available -> {
                         if (Boolean.TRUE.equals(available)) {
-                            virtualList = virtualList(
+                            VirtualList<MessageGroup> list = virtualList(
                                     groupedMessages,
-                                    MessageGroup::getKey,
-                                    ChatMessageHeightCalculator::calculateHeight,
-                                    item -> new MessageGroupView(item, store, service))
-                                            .grow()
-                                            .gap(unit(0.75f))
-                                            .overscan(3)
-                                            .onReachTop(50f, () -> {
+                                    ChatMessageHeightCalculator::calculateHeight);
+                            list.key(MessageGroup::getKey).grow().gap(unit(0.75f)).overscan(3)
+                                    .onReachTop(50f, () -> {
                                                 String activeId = store.channels().currentActiveId();
                                                 List<ChatMessage> msgs = store.messages().currentActive();
                                                 if (activeId != null && !activeId.isEmpty() && service != null
@@ -278,9 +274,10 @@ public class ChatMessageListView extends BaseComponent {
                                                         && !store.messages().isFullyLoaded(activeId)) {
                                                     service.fetchOlderMessages(activeId);
                                                 }
-                                            });
-
-                            return virtualList.marginBottom(unit(2)).grow();
+                                            }).marginBottom(unit(2));
+                            list.children(item -> new MessageGroupView(item, store, service));
+                            virtualList = list;
+                            return virtualList;
                         }
 
                         return dynamic(store.messages().activeLoadingInitial(), isLoading -> {

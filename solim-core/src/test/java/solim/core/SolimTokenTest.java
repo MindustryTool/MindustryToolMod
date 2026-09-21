@@ -3,10 +3,12 @@ package solim.core;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.scene.Element;
+import arc.scene.ui.ScrollPane;
 import org.junit.jupiter.api.Test;
 import solim.modifier.PendingCellConfig;
+import solim.test.SolimEnv;
 
-class SolimTokenTest {
+class SolimTokenTest extends SolimEnv {
 
     @Test
     void getOrCreateCreatesAndAssignsToken() {
@@ -91,5 +93,29 @@ class SolimTokenTest {
         SolimToken.setExpanding(el, false);
         assertFalse(SolimToken.isExpanding(el));
         assertSame(comp, SolimToken.getComponent(el));
+    }
+
+    @Test
+    void isExpandingChildMatchesLegacyHeuristics() {
+        assertFalse(SolimToken.isExpandingChild(null));
+        assertFalse(SolimToken.isExpandingChild(new Element()));
+
+        Element tokenFlag = new Element();
+        SolimToken.setExpanding(tokenFlag, true);
+        assertTrue(SolimToken.isExpandingChild(tokenFlag));
+
+        Element spacerName = new Element();
+        spacerName.name = "spacer";
+        assertTrue(SolimToken.isExpandingChild(spacerName));
+
+        Element solimSpacer = new Element();
+        solimSpacer.name = "solim-spacer-table";
+        assertTrue(SolimToken.isExpandingChild(solimSpacer));
+
+        Element fillParent = new Element();
+        fillParent.fillParent = true;
+        assertTrue(SolimToken.isExpandingChild(fillParent));
+
+        assertTrue(SolimToken.isExpandingChild(new ScrollPane(new Element(), new ScrollPane.ScrollPaneStyle())));
     }
 }

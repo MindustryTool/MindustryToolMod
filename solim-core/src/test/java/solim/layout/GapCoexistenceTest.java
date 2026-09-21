@@ -1,38 +1,26 @@
 package solim.layout;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import arc.Core;
-import arc.mock.MockApplication;
-import arc.mock.MockGraphics;
+import org.junit.jupiter.api.Test;
+
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import solim.runtime.SignalDispatcher;
-import solim.reactive.Signal;
 import solim.reactive.Dynamic;
-import solim.core.Ui;
+import solim.reactive.Signal;
 import solim.runtime.ParentStack;
+import solim.runtime.SignalDispatcher;
+import solim.test.SolimEnv;
 
-class GapCoexistenceTest {
+class GapCoexistenceTest extends SolimEnv {
 
-	@BeforeAll
-	static void initArc() {
-		if (Core.app == null) {
-			Core.app = new MockApplication();
-		}
-		if (Core.graphics == null) {
-			Core.graphics = new MockGraphics();
-		}
-	}
 
 	@Test
 	void childMarginAndContainerGapCoexistAdditivelyInRow() {
-		Row r = Ui.row().gap(12f);
-		Card card1 = Ui.card().margin(5f, 10f, 5f, 10f); // top 5, left 10, bottom 5, right 10
-		Card card2 = Ui.card().margin(6f, 15f, 6f, 20f); // top 6, left 15, bottom 6, right 20
-		Card card3 = Ui.card(); // no margin
+		Row r = new Row().gap(12f);
+		Card card1 = new Card().margin(5f, 10f, 5f, 10f); // top 5, left 10, bottom 5, right 10
+		Card card2 = new Card().margin(6f, 15f, 6f, 20f); // top 6, left 15, bottom 6, right 20
+		Card card3 = new Card(); // no margin
 
 		r.children(() -> {
 			ParentStack.add(card1);
@@ -65,10 +53,10 @@ class GapCoexistenceTest {
 
 	@Test
 	void childMarginAndContainerGapCoexistAdditivelyInColumn() {
-		Column col = Ui.column().gap(14f);
-		Card card1 = Ui.card().margin(8f, 4f, 4f, 4f);
-		Card card2 = Ui.card().margin(6f, 4f, 4f, 4f);
-		Card card3 = Ui.card();
+		Column col = new Column().gap(14f);
+		Card card1 = new Card().margin(8f, 4f, 4f, 4f);
+		Card card2 = new Card().margin(6f, 4f, 4f, 4f);
+		Card card3 = new Card();
 
 		col.children(() -> {
 			ParentStack.add(card1);
@@ -95,10 +83,10 @@ class GapCoexistenceTest {
 
 	@Test
 	void visibilityCollapsePromotesNextVisibleSiblingToZeroLeadingGap() {
-		Row row = Ui.row().gap(16f);
-		Card cardA = Ui.card();
-		Card cardB = Ui.card();
-		Card cardC = Ui.card();
+		Row row = new Row().gap(16f);
+		Card cardA = new Card();
+		Card cardB = new Card();
+		Card cardC = new Card();
 
 		row.children(() -> {
 			ParentStack.add(cardA);
@@ -141,15 +129,15 @@ class GapCoexistenceTest {
 	void dynamicComponentCollapseAndExpandRespacesSiblingsWithoutGhostGaps() {
 		Signal<Boolean> showItem = Signal.of(true);
 
-		Row row = Ui.row().gap(20f);
-		Card prefix = Ui.card();
+		Row row = new Row().gap(20f);
+		Card prefix = new Card();
 		Dynamic<Boolean> dynamicCard = Dynamic.of(showItem, visible -> {
 			if (visible) {
-				return Ui.card();
+				return new Card();
 			}
 			return null;
 		});
-		Card suffix = Ui.card();
+		Card suffix = new Card();
 
 		row.children(() -> {
 			ParentStack.add(prefix);
@@ -191,8 +179,8 @@ class GapCoexistenceTest {
 	@Test
 	void childMarginInsideRowColumnAndGridSetsParentCellPadding() {
 		// Inside Row
-		Row row = Ui.row();
-		Card rowChild = Ui.card().margin(5f, 10f, 15f, 20f);
+		Row row = new Row();
+		Card rowChild = new Card().margin(5f, 10f, 15f, 20f);
 		row.children(() -> ParentStack.add(rowChild));
 		Cell<?> rowCell = row.table().getCell(rowChild.element());
 		assertEquals(5f, CellAccess.padTop(rowCell), 0.01f);
@@ -201,8 +189,8 @@ class GapCoexistenceTest {
 		assertEquals(20f, CellAccess.padRight(rowCell), 0.01f);
 
 		// Inside Column
-		Column col = Ui.column();
-		Card colChild = Ui.card().margin(6f, 12f, 18f, 24f);
+		Column col = new Column();
+		Card colChild = new Card().margin(6f, 12f, 18f, 24f);
 		col.children(() -> ParentStack.add(colChild));
 		Cell<?> colCell = col.table().getCell(colChild.element());
 		assertEquals(6f, CellAccess.padTop(colCell), 0.01f);
@@ -211,8 +199,8 @@ class GapCoexistenceTest {
 		assertEquals(24f, CellAccess.padRight(colCell), 0.01f);
 
 		// Inside Grid
-		Grid grid = Ui.grid(2);
-		Card gridChild = Ui.card().margin(7f, 14f, 21f, 28f);
+		Grid grid = new Grid(2);
+		Card gridChild = new Card().margin(7f, 14f, 21f, 28f);
 		grid.children(() -> ParentStack.add(gridChild));
 		Cell<?> gridCell = grid.table().getCell(gridChild.element());
 		assertEquals(7f, CellAccess.padTop(gridCell), 0.01f);
@@ -223,8 +211,8 @@ class GapCoexistenceTest {
 
 	@Test
 	void marginAndPaddingCoexistOnContainer() {
-		Row parent = Ui.row();
-		Card card = Ui.card()
+		Row parent = new Row();
+		Card card = new Card()
 				.margin(8f, 12f, 16f, 20f)
 				.padding(4f, 6f, 8f, 10f);
 

@@ -8,8 +8,9 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
-class TextComponentTest {
+class TextComponentTest extends SolimEnv {
 
 	@BeforeAll
 	static void checkArcContext() {

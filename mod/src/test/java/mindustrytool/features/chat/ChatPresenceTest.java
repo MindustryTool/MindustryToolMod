@@ -4,8 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import mindustrytool.features.chat.state.ChatSession;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 
-class ChatPresenceTest {
+class ChatPresenceTest extends SolimEnv {
 
     @Test
     void testMenuStashKeepsPlayingPresence() {

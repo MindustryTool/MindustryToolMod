@@ -10,14 +10,13 @@ import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Func2;
+import arc.func.Func;
+import arc.func.Prov;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.core.Ui;
 import solim.display.Text;
 import solim.input.Button;
 import solim.layout.GapContainer;
@@ -47,7 +46,7 @@ public final class QueryView<T> extends BaseComponent
 
 	private static final Object SENTINEL = new Object();
 
-	private static Supplier<Component> defaultLoadingFactory = () -> {
+	private static Prov<Component> defaultLoadingFactory = () -> {
 		Table table = new Table();
 		table.center();
 		String text = Core.bundle != null ? Core.bundle.get("loading", "Loading...") : "Loading...";
@@ -56,7 +55,7 @@ public final class QueryView<T> extends BaseComponent
 		return () -> table;
 	};
 
-	private static BiFunction<Throwable, Runnable, Component> defaultErrorFactory = (throwable, retry) -> {
+	private static Func2<Throwable, Runnable, Component> defaultErrorFactory = (throwable, retry) -> {
 		Table table = new Table();
 		table.center();
 		String msg = throwable != null
@@ -76,10 +75,10 @@ public final class QueryView<T> extends BaseComponent
 	private final Table container = new Table();
 	private final PendingCellConfig constraints = new PendingCellConfig();
 
-	private @Nullable Function<T, Component> dataFactory;
-	private @Nullable BiFunction<T, Boolean, Component> dataWithFetchingFactory;
-	private @Nullable Supplier<Component> loadingFactory;
-	private @Nullable Function<Throwable, Component> errorFactory;
+	private @Nullable Func<T, Component> dataFactory;
+	private @Nullable Func2<T, Boolean, Component> dataWithFetchingFactory;
+	private @Nullable Prov<Component> loadingFactory;
+	private @Nullable Func<Throwable, Component> errorFactory;
 
 	private Component currentComponent;
 	private final List<Disposable> currentBindings = new ArrayList<>();
@@ -101,18 +100,18 @@ public final class QueryView<T> extends BaseComponent
 		return new QueryView<>(query);
 	}
 
-	public static void setDefaultLoadingFactory(Supplier<Component> factory) {
+	public static void setDefaultLoadingFactory(Prov<Component> factory) {
 		defaultLoadingFactory = Objects.requireNonNull(factory, "factory cannot be null");
 	}
 
-	public static void setDefaultErrorFactory(BiFunction<Throwable, Runnable, Component> factory) {
+	public static void setDefaultErrorFactory(Func2<Throwable, Runnable, Component> factory) {
 		defaultErrorFactory = Objects.requireNonNull(factory, "factory cannot be null");
 	}
 
 	private @Nullable Effect effect;
 	private boolean built = false;
 
-	public QueryView<T> data(Function<T, Component> dataFactory) {
+	public QueryView<T> data(Func<T, Component> dataFactory) {
 		this.dataFactory = dataFactory;
 		if (built && (currentViewState == ViewState.DATA || currentComponent == null)) {
 			currentViewState = ViewState.NONE;
@@ -123,7 +122,7 @@ public final class QueryView<T> extends BaseComponent
 		return this;
 	}
 
-	public QueryView<T> data(BiFunction<T, Boolean, Component> dataWithFetchingFactory) {
+	public QueryView<T> data(Func2<T, Boolean, Component> dataWithFetchingFactory) {
 		this.dataWithFetchingFactory = dataWithFetchingFactory;
 		if (built && (currentViewState == ViewState.DATA || currentComponent == null)) {
 			currentViewState = ViewState.NONE;
@@ -134,7 +133,7 @@ public final class QueryView<T> extends BaseComponent
 		return this;
 	}
 
-	public QueryView<T> loading(Supplier<Component> loadingFactory) {
+	public QueryView<T> loading(Prov<Component> loadingFactory) {
 		this.loadingFactory = loadingFactory;
 		if (built && currentViewState == ViewState.LOADING) {
 			currentViewState = ViewState.NONE;
@@ -145,7 +144,7 @@ public final class QueryView<T> extends BaseComponent
 		return this;
 	}
 
-	public QueryView<T> error(Function<Throwable, Component> errorFactory) {
+	public QueryView<T> error(Func<Throwable, Component> errorFactory) {
 		this.errorFactory = errorFactory;
 		if (built && currentViewState == ViewState.ERROR) {
 			currentViewState = ViewState.NONE;
@@ -232,13 +231,13 @@ public final class QueryView<T> extends BaseComponent
 						return loadingFactory != null ? loadingFactory.get() : defaultLoadingFactory.get();
 					case ERROR:
 						return errorFactory != null
-								? errorFactory.apply(err)
-								: defaultErrorFactory.apply(err, query::refetch);
+								? errorFactory.get(err)
+								: defaultErrorFactory.get(err, query::refetch);
 					case DATA:
 						if (dataWithFetchingFactory != null) {
-							return dataWithFetchingFactory.apply(data, isFetching);
+							return dataWithFetchingFactory.get(data, isFetching);
 						} else if (dataFactory != null) {
-							return dataFactory.apply(data);
+							return dataFactory.get(data);
 						}
 						return null;
 					case EMPTY:
@@ -247,7 +246,7 @@ public final class QueryView<T> extends BaseComponent
 				}
 			} catch (Throwable t) {
 				Log.err("[Solim] Error rendering QueryView", t);
-				return defaultErrorFactory.apply(t, query::refetch);
+				return defaultErrorFactory.get(t, query::refetch);
 			}
 		}));
 
@@ -261,7 +260,7 @@ public final class QueryView<T> extends BaseComponent
 			}
 			if (sc != null) {
 				currentBindings.addAll(sc.applyToCell(cell));
-			} else if (Ui.isExpanding(el)) {
+			} else if (SolimToken.isExpandingChild(el)) {
 				cell.growX();
 			}
 		}

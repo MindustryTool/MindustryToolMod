@@ -49,6 +49,7 @@ subprojects{
 
     tasks.withType(JavaCompile).configureEach {
         options.release = 8
+        options.encoding = 'UTF-8'
     }
 
 	ext{
@@ -57,7 +58,7 @@ subprojects{
 		// - latest: depend on the latest release of mindustry
 		// - be: depend on the very latest commit of mindustry
 		// - v<number>: depend on a specific commit
-		mindustryVersion = "v160.1"
+		mindustryVersion = "v160.5"
 		isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
 		sdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
 	}
@@ -97,10 +98,6 @@ subprojects{
 
 	test{
 		useJUnitPlatform()
-		// Fresh JVM per test class: tests share global statics (arc Core, solim
-		// Signals/Units, font caches), and Gradle reuses worker JVMs across
-		// modules, letting one module's static state poison another's tests.
-		forkEvery = 1
 	}
 }
 
