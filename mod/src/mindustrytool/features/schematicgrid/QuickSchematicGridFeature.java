@@ -417,9 +417,12 @@ public class QuickSchematicGridFeature extends Feature {
             return false;
         }
         List<QuickSchematicEntry> next = getEntries();
-        for (QuickSchematicEntry entry : next) {
+        for (int i = 0; i < next.size(); i++) {
+            QuickSchematicEntry entry = next.get(i);
             if (entry != null && id.equals(entry.id)) {
-                mutator.get(entry);
+                QuickSchematicEntry copy = entry.copy();
+                mutator.get(copy);
+                next.set(i, copy);
                 persist(next);
                 return true;
             }

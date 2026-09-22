@@ -26,8 +26,6 @@ import solim.reactive.Signal;
 public class QuickSchematicGridHudView extends BaseComponent {
     // TODO: Right click to open edit UI
     // TODO: Hover over button show a shadow of schematic
-    // TODO: Icon not render properly af set (it display schematic preview instead
-    // of newly set icon)
     public static final class SlotModel {
         public final int page;
         public final int row;
@@ -42,7 +40,17 @@ public class QuickSchematicGridHudView extends BaseComponent {
         }
 
         public String key() {
-            return page + ":" + row + ":" + col + ":" + (entry != null && entry.id != null ? entry.id : "empty");
+            String id = entry != null && entry.id != null ? entry.id : "empty";
+            String icon = entry != null ? normalize(entry.customIcon) : "";
+            String schematicName = entry != null ? normalize(entry.schematicName) : "";
+            String schematicFile = entry != null ? normalize(entry.schematicFile) : "";
+            String label = entry != null ? normalize(entry.customLabel) : "";
+            return page + "\u001F" + row + "\u001F" + col + "\u001F" + id + "\u001F" + icon + "\u001F" + schematicName + "\u001F"
+                    + schematicFile + "\u001F" + label;
+        }
+
+        private static String normalize(@Nullable String value) {
+            return value != null && !value.trim().isEmpty() ? value : "";
         }
     }
 
