@@ -124,7 +124,7 @@ public class QuickSchematicGridHudView extends BaseComponent {
 
             if (horizontal) {
                 boolean tabsOnTop = QuickSchematicGridFeature.PAGE_TOP.equals(position);
-                return column().gap(gap).top().children(() -> {
+                column().gap(gap).top().children(() -> {
                     if (tabsOnTop) {
                         buildTabsRow(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList, tabColumns,
                                 includeDragHandle);
@@ -135,10 +135,9 @@ public class QuickSchematicGridHudView extends BaseComponent {
                                 includeDragHandle);
                     }
                 });
-            }
-
-            boolean tabsOnLeft = QuickSchematicGridFeature.PAGE_LEFT.equals(position);
-            return row().gap(gap).top().children(() -> {
+            } else {
+                boolean tabsOnLeft = QuickSchematicGridFeature.PAGE_LEFT.equals(position);
+                row().gap(gap).top().children(() -> {
                 if (tabsOnLeft) {
                     buildTabsColumn(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList,
                             includeDragHandle);
@@ -148,7 +147,9 @@ public class QuickSchematicGridHudView extends BaseComponent {
                     buildTabsColumn(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList,
                             includeDragHandle);
                 }
-            });
+                });
+
+            }
         });
     }
 
@@ -198,18 +199,14 @@ public class QuickSchematicGridHudView extends BaseComponent {
             Readable<Float> buttonSize,
             Readable<Float> dragIconSize,
             Readable<Float> buttonOpacity) {
-        return dynamic(feature.hideDragHandleConfig.signal(), hide -> {
-            if (!Boolean.TRUE.equals(hide)) {
-                return button()
+        return when(feature.hideDragHandleConfig.signal())
+                .elseDo(() -> button()
                         .style(Styles.clearNonei)
                         .background(Styles.black6)
                         .size(buttonSize)
                         .opacity(buttonOpacity)
                         .children(() -> icon(Icon.move).size(dragIconSize))
-                        .draggable(feature.xSignal, feature.ySignal);
-            }
-            return null;
-        });
+                        .draggable(feature.xSignal, feature.ySignal));
     }
 
     public static void buildGrid(QuickSchematicGridFeature feature, @Nullable Runnable onBeforeActivate) {
@@ -380,3 +377,4 @@ public class QuickSchematicGridHudView extends BaseComponent {
         }
     }
 }
+

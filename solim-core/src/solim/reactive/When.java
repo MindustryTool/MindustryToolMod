@@ -4,55 +4,81 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import arc.func.Cons;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.modifier.CellConfig;
 import solim.layout.GapContainer;
+import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
-import java.util.ArrayList;
-import java.util.List;
-import solim.core.Disposable;
 
 /**
- * Structural reactive component for switching dynamic subtrees based on a
- * reactive value.
+ * Structural reactive component for boolean conditional rendering with a
+ * fluent chaining API.
  *
- * <p>The factory {@code Cons<T>} is invoked with the current source value (including {@code null}).
- * The factory creates components declaratively without returning a value. If the factory creates
- * no components, the container collapses.</p>
+ * <p>Declare branches with {@link #thenDo(Runnable)} and {@link #elseDo(Runnable)}.
+ * Both accept void runnables that create components declaratively without
+ * returning a value. When the condition is {@code true} the then-branch mounts;
+ * otherwise the else-branch mounts. A branch that creates nothing collapses,
+ * exactly like {@link Dynamic} with an empty void factory.</p>
  *
- * <p>Use {@link #of} to create a Dynamic with a void factory.</p>
+ * <p>Branch actions should be chained before the first mount for efficiency,
+ * but may also be updated after mounting: a post-mount update remounts the
+ * current condition value immediately.</p>
  */
-public final class Dynamic<T> extends BaseComponent
-         implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>>, ElementConfig<Dynamic<T>> {
-     private static final Object SENTINEL = new Object();
-     private final Table container = new Table();
-     private final PendingCellConfig constraints = new PendingCellConfig();
-     private final Readable<T> source;
-     private final Cons<T> factory;
-     private Component currentComponent;
-     @SuppressWarnings("unchecked")
-     private T lastValue = (T) SENTINEL;
-     private final List<Disposable> currentBindings = new ArrayList<>();
+public final class When extends BaseComponent
+        implements CellConfig<When>, TableConfig<When>, ElementConfig<When> {
+    private static final Object SENTINEL = new Object();
+    private final Table container = new Table();
+    private final PendingCellConfig constraints = new PendingCellConfig();
+    private final Readable<Boolean> condition;
+    private @Nullable Runnable thenAction;
+    private @Nullable Runnable elseAction;
+    private Component currentComponent;
+    private Object lastValue = SENTINEL;
+    private final List<Disposable> currentBindings = new ArrayList<>();
 
-     private Dynamic(Readable<T> source, Cons<T> factory) {
-         this.source = Objects.requireNonNull(source, "source must not be null");
-         this.factory = Objects.requireNonNull(factory, "factory must not be null");
-         SolimToken.bind(this.container, this, constraints);
-         this.container.top().left();
-         this.container.defaults().top().left();
-     }
+    private When(Readable<Boolean> condition) {
+        this.condition = Objects.requireNonNull(condition, "condition must not be null");
+        SolimToken.bind(this.container, this, constraints);
+        this.container.top().left();
+        this.container.defaults().top().left();
+    }
 
-     public static <T> Dynamic<T> of(Readable<T> source, Cons<T> factory) {
-         return new Dynamic<>(source, factory);
-     }
+    public static When of(Readable<Boolean> condition) {
+        return new When(condition);
+    }
+
+    /**
+     * Sets the branch mounted when the condition is {@code true}.
+     * Returns this for chaining.
+     */
+    public When thenDo(@Nullable Runnable action) {
+        this.thenAction = action;
+        if (isBuilt()) {
+            refresh();
+        }
+        return this;
+    }
+
+    /**
+     * Sets the branch mounted when the condition is not {@code true}
+     * (false or null). Returns this for chaining.
+     */
+    public When elseDo(@Nullable Runnable action) {
+        this.elseAction = action;
+        if (isBuilt()) {
+            refresh();
+        }
+        return this;
+    }
 
     public Table container() {
         return container;
@@ -64,7 +90,7 @@ public final class Dynamic<T> extends BaseComponent
     }
 
     @Override
-    public Dynamic<T> name(@Nullable String name) {
+    public When name(@Nullable String name) {
         super.name(name);
         return this;
     }
@@ -78,33 +104,52 @@ public final class Dynamic<T> extends BaseComponent
     protected Element build() {
         applyContainerAlign();
         Effect.of(() -> {
-            T value = source.get();
+            Boolean value = condition.get();
             if (Objects.equals(value, lastValue)) {
                 return;
             }
             lastValue = value;
-            if (currentComponent != null) {
-                currentComponent.dispose();
-                currentComponent = null;
-            }
-            for (Disposable d : currentBindings) {
-                d.dispose();
-            }
-            currentBindings.clear();
-            container.clearChildren();
-            mount(value);
-            applyContainerAlign();
-            updateParentCell();
-            container.invalidateHierarchy();
+            rebuild();
         });
         return container;
     }
 
-    private void mount(T value) {
-        // Capture and eager-build inside untracked so signals read during the void factory
-        // (including inside captured root builds) never re-trigger this Dynamic effect.
+    private void refresh() {
+        lastValue = condition.get();
+        rebuild();
+    }
+
+    private void rebuild() {
+        if (currentComponent != null) {
+            currentComponent.dispose();
+            currentComponent = null;
+        }
+        for (Disposable d : currentBindings) {
+            d.dispose();
+        }
+        currentBindings.clear();
+        container.clearChildren();
+        mount(condition.get());
+        applyContainerAlign();
+        updateParentCell();
+        container.invalidateHierarchy();
+    }
+
+    private void mount(Boolean value) {
+        // Capture and eager-build inside untracked so signals read during the
+        // branch runnables never re-trigger this When effect.
         Fragment fragment = ReactiveContext.untracked(() -> {
-            Fragment f = Fragment.capture(() -> factory.get(value));
+            Fragment f = Fragment.capture(() -> {
+                if (Boolean.TRUE.equals(value)) {
+                    if (thenAction != null) {
+                        thenAction.run();
+                    }
+                } else {
+                    if (elseAction != null) {
+                        elseAction.run();
+                    }
+                }
+            });
             for (Component root : f.roots()) {
                 root.element();
             }
@@ -186,7 +231,7 @@ public final class Dynamic<T> extends BaseComponent
     }
 
     @Override
-    public Dynamic<T> self() {
+    public When self() {
         return this;
     }
 }

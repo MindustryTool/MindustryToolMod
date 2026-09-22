@@ -32,16 +32,13 @@ public class AttachContentDialog extends SolimDialog {
 
         children(() -> {
             column().grow().padding(unit(3)).gap(unit(2)).children(() -> {
-                dynamic(uploading, isUploading -> {
-                    if (Boolean.TRUE.equals(isUploading)) {
-                        return row().growX().padding(unit(4)).center().gap(unit(2)).children(() -> {
+                when(uploading)
+                        .thenDo(() -> row().growX().padding(unit(4)).center().gap(unit(2)).children(() -> {
                             image(Icon.refresh).size(unit(6), unit(6)).color(Color.white);
                             text(Core.bundle.get("chat.uploading-image", "Uploading image..."))
-                                    .color(Color.lightGray);
-                        });
-                    }
-
-                    return column().growX().gap(unit(2)).children(() -> {
+                                            .color(Color.lightGray);
+                                }))
+                        .elseDo(() -> column().growX().gap(unit(2)).children(() -> {
                         button(this::selectImageFile)
                                 .style(Styles.defaultb)
                                 .growX()
@@ -93,8 +90,8 @@ public class AttachContentDialog extends SolimDialog {
                                                 .left();
                                     });
                                 });
-                    });
-                }).grow().center();
+                    }))
+                        .grow();
             });
         });
     }

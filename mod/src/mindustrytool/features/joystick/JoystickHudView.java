@@ -28,14 +28,13 @@ public class JoystickHudView extends BaseComponent {
     protected Element build() {
         hud = hud(() -> {
             column().children(() -> {
-                dynamic(feature.showHandleConfig.signal(), show -> Boolean.TRUE.equals(show)
-                        ? button()
+                when(feature.showHandleConfig.signal())
+                        .thenDo(() -> button()
                                 .style(WebStyles.ghost())
                                 .size(unit(11))
                                 .tooltip(Core.bundle.get("feature.joystick.settings.show-handle"))
                                 .children(() -> icon(Icon.move).size(unit(6)))
-                                .draggable(feature.posXConfig.signal(), feature.posYConfig.signal())
-                        : null);
+                                .draggable(feature.posXConfig.signal(), feature.posYConfig.signal()));
 
                 arc(new JoystickWidget(feature));
             });

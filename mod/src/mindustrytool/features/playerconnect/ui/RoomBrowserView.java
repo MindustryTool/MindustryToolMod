@@ -173,11 +173,9 @@ public class RoomBrowserView extends BaseComponent {
                     divider();
 
                     // Collapsible room list
-                    dynamic(collapsed, isCollapsed -> {
-                        if (Boolean.TRUE.equals(isCollapsed)) {
-                            return row();
-                        }
-                        return column().growX().children(() -> {
+                    when(collapsed)
+                            .thenDo(() -> row())
+                            .elseDo(() -> column().growX().children(() -> {
                             query(feature.getRoomsQuery())
                                     .grow()
                                     .loading(this::roomsLoading)
@@ -193,16 +191,16 @@ public class RoomBrowserView extends BaseComponent {
                                             : column().growX().children(() -> {
                                                 dynamic(groupedRooms, groups -> {
                                                     if (groups == null || groups.isEmpty()) {
-                                                        return column().growX().margin(unit(3)).center()
+                                                        column().growX().margin(unit(3)).center()
                                                                 .children(() -> {
                                                                     text(Core.bundle.get(
                                                                             "feature.player-connect.no-rooms",
                                                                             "No active PlayerConnect rooms found."))
-                                                                                    .color(Color.lightGray);
-                                                                });
-                                                    }
+                                                                                     .color(Color.lightGray);
+                                                                                 });
 
-                                                    return column().growX().gap(unit(3.5f)).children(() -> {
+                                                    } else {
+                                                        column().growX().gap(unit(3.5f)).children(() -> {
                                                         for (ProviderRoomGroup group : groups) {
                                                             column().growX().gap(unit(2)).left().children(() -> {
                                                                 // Provider group header
@@ -218,10 +216,11 @@ public class RoomBrowserView extends BaseComponent {
                                                             });
                                                         }
                                                     });
+
+                                                    }
                                                 }).growX();
                                             }));
-                        });
-                    }).growX();
+                        })).growX();
 
                     divider();
                 }).element();

@@ -73,16 +73,12 @@ public class QuickAccessHudView extends BaseComponent {
                     .border(1.5f, WebStyles.Colors.BORDER)
                     .center()
                     .children(() -> {
-                        dynamic(feature.hideDragHandleConfig.signal(), hide -> {
-                            if (!Boolean.TRUE.equals(hide)) {
-                                return button()
+                        when(feature.hideDragHandleConfig.signal())
+                                .elseDo(() -> button()
                                         .style(WebStyles.ghost())
                                         .size(buttonSize)
                                         .children(() -> icon(Icon.move).size(iconSize))
-                                        .draggable(feature.xSignal, feature.ySignal);
-                            }
-                            return null;
-                        });
+                                        .draggable(feature.xSignal, feature.ySignal));
 
                         reactiveGrid(items).key(HudItem::id)
                                 .columns(feature.colsConfig.signal().map(c -> Math.min(c, items.get().size())))

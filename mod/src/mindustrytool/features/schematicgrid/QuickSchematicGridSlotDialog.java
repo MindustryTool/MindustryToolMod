@@ -64,13 +64,14 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                         .children(() -> {
                             dynamic(resolved, schematic -> {
                                 if (schematic == null) {
-                                    return row().grow().center().children(() -> {
+                                    row().grow().center().children(() -> {
                                         icon(Icon.warning).size(unit(10)).color(Color.scarlet);
                                     });
+                                } else {
+                                    row().grow().children(() -> {
+                                        arc(new SchematicImage(schematic));
+                                    });
                                 }
-                                return row().grow().children(() -> {
-                                    arc(new SchematicImage(schematic));
-                                });
                             }).grow();
                         });
 
@@ -100,12 +101,13 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                 row().growX().gap(unit(2)).center().children(() -> {
                     dynamic(iconText, icon -> {
                         if (icon == null || icon.trim().isEmpty()) {
-                            return text(Core.bundle.get("feature.quick-schematic-grid.edit.icon.none"))
+                            text(Core.bundle.get("feature.quick-schematic-grid.edit.icon.none"))
                                     .growX()
                                     .left()
                                     .color(Color.gray);
+                        } else {
+                            text(icon).fontScale(1.5f).growX().left();
                         }
-                        return text(icon).fontScale(1.5f).growX().left();
                     }).growX();
 
                     spacer();

@@ -171,7 +171,7 @@ public class ChatMessageListView extends BaseComponent {
         return column().name("chat-list").grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
             dynamic(hasChannel, channelSelected -> {
                 if (!Boolean.TRUE.equals(channelSelected)) {
-                    return query(store.channels().channelsQuery())
+                    query(store.channels().channelsQuery())
                             .grow()
                             .loading(Loader::centered)
                             .error(chanErr -> column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
@@ -204,12 +204,12 @@ public class ChatMessageListView extends BaseComponent {
                                         .fontScale(0.9f)
                                         .left();
                             })).grow();
-                }
+                } else {
 
-                return column().grow().top().left().gap(unit(1)).children(() -> {
-                    dynamic(showRefreshErrorBanner, show -> {
-                        if (Boolean.TRUE.equals(show)) {
-                            return card().growX().padding(unit(1.5f)).children(() -> {
+column().grow().top().left().gap(unit(1)).children(() -> {
+                     when(showRefreshErrorBanner)
+                         .thenDo(() -> {
+                             card().growX().padding(unit(1.5f)).children(() -> {
                                 row().growX().gap(unit(1)).center().children(() -> {
                                     icon(Icon.warning).size(unit(4)).color(Color.scarlet);
                                     text(Core.bundle.get("feature.chat.ui.refresh-failed",
@@ -230,37 +230,34 @@ public class ChatMessageListView extends BaseComponent {
                                                 icon(Icon.refresh).size(unit(4));
                                                 text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
                                             });
-                                });
-                            });
-                        }
-                        return null;
-                    });
+});
+                             });
+                         }
+                    );
 
-                    dynamic(showEndOfHistory, show -> {
-                        if (Boolean.TRUE.equals(show)) {
-                            return row().top().center().growX().padding(unit(2)).children(() -> {
+when(showEndOfHistory)
+                         .thenDo(() -> {
+                             row().top().center().growX().padding(unit(2)).children(() -> {
                                 text(Core.bundle.get("feature.chat.ui.end-of-history", "Beginning of chat history"))
                                         .color(Color.gray)
                                         .fontScale(0.85f);
-                            });
-                        }
-                        return null;
-                    });
+});
+                         }
+                    );
 
-                    dynamic(store.messages().loadingOlder(), loading -> {
-                        if (Boolean.TRUE.equals(loading)) {
-                            return row().top().left().padding(unit(2)).children(() -> {
+                    when(store.messages().loadingOlder())
+                         .thenDo(() -> {
+                             row().top().left().padding(unit(2)).children(() -> {
                                 text(Core.bundle.get("feature.chat.ui.loading-older", "Loading older messages..."))
                                         .color(Color.gray)
                                         .fontScale(0.85f)
                                         .left();
-                            });
-                        }
-                        return null;
-                    });
+});
+                         }
+                    );
 
-                    dynamic(hasMessages, available -> {
-                        if (Boolean.TRUE.equals(available)) {
+                    when(hasMessages)
+                            .thenDo(() -> {
                             VirtualList<MessageGroup> list = virtualList(
                                     groupedMessages,
                                     ChatMessageHeightCalculator::calculateHeight);
@@ -277,17 +274,14 @@ public class ChatMessageListView extends BaseComponent {
                                             }).marginBottom(unit(2));
                             list.children(item -> new MessageGroupView(item, store, service));
                             virtualList = list;
-                            return virtualList;
-                        }
-
-                        return dynamic(store.messages().activeLoadingInitial(), isLoading -> {
-                            if (Boolean.TRUE.equals(isLoading)) {
-                                return Loader.centered();
-                            }
-
-                            return dynamic(store.messages().activeError(), err -> {
+                        })
+                        .elseDo(() -> {
+                            when(store.messages().activeLoadingInitial())
+                                    .thenDo(() -> Loader.centered())
+                                    .elseDo(() -> {
+                                        dynamic(store.messages().activeError(), err -> {
                                 if (err != null && !err.trim().isEmpty()) {
-                                    return column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
+                                    column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
                                         icon(Icon.warning).size(unit(6)).color(Color.scarlet);
                                         text(Core.bundle.get("feature.chat.ui.error.messages",
                                                 "Failed to load messages."))
@@ -309,18 +303,21 @@ public class ChatMessageListView extends BaseComponent {
                                                     text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
                                                 });
                                     });
-                                }
-
-                                return column().padding(unit(4)).top().left().children(() -> {
+                                } else {
+                                    column().padding(unit(4)).top().left().children(() -> {
                                     text(Core.bundle.get("feature.chat.ui.empty-messages", "No messages yet."))
                                             .color(Color.gray)
                                             .fontScale(0.9f)
                                             .left();
-                                });
+                                    });
+                                }
                             }).grow();
-                        }).grow();
-                    }).grow();
+                                    })
+                                    .grow();
+                            })
+                            .grow();
                 }).grow();
+                }
             }).grow();
         }).element();
     }
@@ -605,29 +602,27 @@ public class ChatMessageListView extends BaseComponent {
                 TextMessage txt = (TextMessage) parsed;
                 buildMessageText(txt.getText(), bodyColor);
                 final String translatedId = parsed.getId();
-                dynamic(store.translations().get(translatedId), translated -> {
-                    if (translated == null || translated.isEmpty()) {
-                        return null;
-                    }
-                    final String translatedText = translated;
-                    return column().growX().top().left().marginTop(unit(1)).children(() -> {
+dynamic(store.translations().get(translatedId), translated -> {
+                     if (translated != null && !translated.isEmpty()) {
+                         final String translatedText = translated;
+                         column().growX().top().left().marginTop(unit(1)).children(() -> {
                         text(Core.bundle.get("feature.chat.ui.translated-badge", "Translated"))
                                 .color(Pal.accent)
                                 .fontScale(0.8f)
                                 .left();
                         buildMessageText(translatedText, bodyColor);
                     });
+                }
                 });
-                dynamic(store.ui().translatingMessageId(), translatingId -> {
-                    if (translatingId == null || !translatingId.equals(translatedId)) {
-                        return null;
-                    }
-                    return row().growX().top().left().children(() -> {
+dynamic(store.ui().translatingMessageId(), translatingId -> {
+                     if (translatingId != null && translatingId.equals(translatedId)) {
+                         row().growX().top().left().children(() -> {
                         text(Core.bundle.get("feature.chat.ui.translating", "Translating..."))
                                 .color(Color.gray)
                                 .fontScale(0.8f)
                                 .left();
                     });
+                }
                 });
                 return;
             }
@@ -648,13 +643,13 @@ public class ChatMessageListView extends BaseComponent {
                     ? pc.getRooms().map(rooms -> findRoomByLink(rooms, link))
                     : Signal.of(null);
 
-            dynamic(roomSignal, room -> {
-                if (room != null) {
-                    return new RoomCard(room, false);
-                } else {
-                    return buildFallbackRoomCardContent(link);
-                }
-            })
+dynamic(roomSignal, room -> {
+                 if (room != null) {
+                     new RoomCard(room, false);
+                 } else {
+                     buildFallbackRoomCardContent(link);
+                 }
+             })
                     .height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT)
                     .growX()
                     .name("pc-card-wrapper");
@@ -683,23 +678,19 @@ public class ChatMessageListView extends BaseComponent {
                         spacer();
 
                         row().growX().gap(unit(1)).children(() -> {
-                            dynamic(FeatureManager.get(PlayerConnectFeature.class).enabled(), enabled -> {
-                                if (Boolean.TRUE.equals(enabled)) {
-                                    return button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
-                                            () -> promptDirectJoin(link))
-                                                    .style(WebStyles.secondary())
-                                                    .growX()
-                                                    .height(unit(11));
-                                }
-
-                                return button(
-                                        Core.bundle.get("feature.chat.ui.enable-player-connect",
-                                                "Enable Player Connect"),
+                        when(FeatureManager.get(PlayerConnectFeature.class).enabled())
+                                .thenDo(() -> button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
+                                        () -> promptDirectJoin(link))
+                                                .style(WebStyles.secondary())
+                                                .growX()
+                                                .height(unit(11)))
+                                .elseDo(() -> button(
+                                        Core.bundle.get("feature.chat.ui.enable-player-connect", "Enable Player Connect"),
                                         () -> FeatureManager.getFeature(PlayerConnectFeature.class).enable())
                                                 .style(WebStyles.secondary())
                                                 .growX()
-                                                .height(unit(11));
-                            }).growX();
+                                                .height(unit(11)))
+                                .growX();
                             button(() -> {
                                 Core.app.setClipboardText(link);
                                 Vars.ui.showInfoFade("@copied");
@@ -970,3 +961,4 @@ public class ChatMessageListView extends BaseComponent {
         }
     }
 }
+

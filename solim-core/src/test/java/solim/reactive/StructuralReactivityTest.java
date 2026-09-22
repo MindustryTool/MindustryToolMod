@@ -48,10 +48,9 @@ class StructuralReactivityTest extends SolimEnv {
 		Signal<Boolean> toggle = Signal.of(true);
 		Map<String, TestComponent> instances = new HashMap<>();
 
-		Dynamic<Boolean> dyn = new Dynamic<>(toggle, val -> {
+		Dynamic<Boolean> dyn = Dynamic.of(toggle, val -> {
 			TestComponent tc = new TestComponent(val ? "A" : "B");
 			instances.put(tc.id, tc);
-			return tc;
 		});
 
 		Element el = dyn.element();
@@ -175,7 +174,7 @@ class StructuralReactivityTest extends SolimEnv {
 	@Test
 	void testDynamicChildDoesNotGrowByDefault() {
 		Signal<String> source = Signal.of("A");
-		Dynamic<String> dyn = new Dynamic<>(source, val -> new TestComponent(val));
+		Dynamic<String> dyn = Dynamic.of(source, val -> new TestComponent(val));
 		dyn.element();
 		Cell<?> cell = dyn.container().getCells().first();
 		assertEquals(0, CellAccess.expandX(cell), "Dynamic item must not grow by default");
@@ -202,7 +201,7 @@ class StructuralReactivityTest extends SolimEnv {
 		fe.dispose();
 
 		Signal<String> source = Signal.of("A");
-		Dynamic<String> dyn = new Dynamic<>(source, val -> new ConstrainedComp());
+		Dynamic<String> dyn = Dynamic.of(source, val -> new ConstrainedComp());
 		dyn.element();
 		Cell<?> dynCell = dyn.container().getCells().first();
 		assertEquals(1, CellAccess.expandX(dynCell), "Constrained child in Dynamic must growX");
@@ -215,10 +214,10 @@ class StructuralReactivityTest extends SolimEnv {
 		Signal<String> internalChildSignal = Signal.of("initial");
 		int[] factoryBuildCount = new int[]{0};
 
-		Dynamic<Boolean> dyn = new Dynamic<>(switcher, val -> {
+		Dynamic<Boolean> dyn = Dynamic.of(switcher, val -> {
 			factoryBuildCount[0]++;
 			String text = internalChildSignal.get();
-			return new TestComponent(val + "-" + text);
+			new TestComponent(val + "-" + text);
 		});
 
 		dyn.element();

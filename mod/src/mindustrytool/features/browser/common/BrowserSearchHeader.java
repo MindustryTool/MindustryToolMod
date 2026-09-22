@@ -92,18 +92,17 @@ public class BrowserSearchHeader extends BaseComponent {
             });
 
             dynamic(state.selectedTags(), tags -> {
-                if (tags == null || tags.isEmpty()) {
-                    return null;
-                }
-                return row().growX().gap(unit(1)).children(() -> {
-                    wrap().children(() -> {
-                        row().gap(unit(1)).children(() -> {
-                            for (String tag : tags) {
-                                renderChip(tag);
-                            }
+                if (tags != null && !tags.isEmpty()) {
+                    row().growX().gap(unit(1)).children(() -> {
+                        wrap().children(() -> {
+                            row().gap(unit(1)).children(() -> {
+                                for (String tag : tags) {
+                                    renderChip(tag);
+                                }
+                            });
                         });
                     });
-                });
+                }
             });
         }).element();
     }
