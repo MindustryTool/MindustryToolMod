@@ -25,7 +25,7 @@ import solim.reactive.Effect;
 public class ChatService {
 
     public static final int PAGE_SIZE = 50;
-    public static final long WATCHDOG_TIMEOUT_MS = 45_000L;
+    public static final long WATCHDOG_TIMEOUT_MS = 5 * 60 * 1000L;
     public static final float WATCHDOG_INTERVAL_SECONDS = 5f;
 
     private final ChatStore store;
@@ -511,7 +511,8 @@ public class ChatService {
         this.lastEventTime = time;
     }
 
-    @Nullable Task getWatchdogTask() {
+    @Nullable
+    Task getWatchdogTask() {
         return watchdogTask;
     }
 
@@ -527,7 +528,8 @@ public class ChatService {
         this.streamRequest = req;
     }
 
-    @Nullable CompletableFuture<Void> getStreamRequestForTest() {
+    @Nullable
+    CompletableFuture<Void> getStreamRequestForTest() {
         return this.streamRequest;
     }
 }

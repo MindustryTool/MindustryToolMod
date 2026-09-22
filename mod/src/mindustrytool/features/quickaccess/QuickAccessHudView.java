@@ -130,7 +130,7 @@ public class QuickAccessHudView extends BaseComponent {
                     .onClick(() -> f.onQuickAccessClick(getBar()))
                     .onLongClick(300L, () -> f.onQuickAccessLongClick(getBar()))
                     .children(() -> icon(meta.getIcon()).size(iconSize)
-                            .color(f.enabled().map(en -> en ? Color.white : Color.darkGray)));
+                            .color(f.quickAccessHighlight().map(en -> en ? Color.white : Color.darkGray)));
         } else {
             return button()
                     .style(WebStyles.ghost())
