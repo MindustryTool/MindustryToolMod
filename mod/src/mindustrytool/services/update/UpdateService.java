@@ -115,6 +115,7 @@ public final class UpdateService {
 						return;
 					}
 					int[] latestVersion = VersionUtils.parseVersion(latestTag);
+                    // TODO: Compare minGameVersion too
 					if (!VersionUtils.isGreater(latestVersion, safeCurrent)) {
 						Log.info(Core.bundle.get("update.status.up-to-date"));
 						safeDone(finalDone);

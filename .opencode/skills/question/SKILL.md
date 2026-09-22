@@ -11,3 +11,4 @@ When this skill is loaded:
 4. Explain trade-offs and provide suggestions.
 5. Do not make the decision for the user.
 6. After the user answers, reconsider the proposal before proceeding.
+7. After reconsider, I you find anything need user decision then ask again

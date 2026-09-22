@@ -67,6 +67,7 @@ import solim.overlay.SolimDialog;
  * Smart Upgrade feature: bulk upgrades connected distribution chains
  * (conveyors, ducts), conduits, bridges, walls, and drills with a double-tap or keybind.
  */
+ // TODO: Use click instead of double-tap for better accessibility, after user clicked disable the feature
 public class SmartUpgradeFeature extends Feature {
 
     public enum BlockGroup {

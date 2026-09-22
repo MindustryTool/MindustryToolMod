@@ -6,6 +6,7 @@ import arc.func.Prov;
 import arc.graphics.g2d.Draw;
 import arc.input.KeyCode;
 import arc.math.geom.Vec2;
+import arc.scene.Element;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
@@ -19,8 +20,10 @@ import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.freecamera.FreeCameraFeature;
+import mindustrytool.features.quickaccess.QuickAccessFeature;
 import mindustrytool.features.autoplay.tasks.AttackTask;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import mindustrytool.features.autoplay.tasks.BaseAutoplayAI;
@@ -33,10 +36,13 @@ import mindustrytool.features.autoplay.tasks.SelfBuildTask;
 import mindustrytool.features.autoplay.tasks.SelfHealTask;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.config.ContextualConfigValue;
 import solim.config.OrderedSeqPersister;
+import solim.core.Units;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
+import solim.reactive.Signals;
 
 public class AutoplayFeature extends Feature {
 
@@ -50,14 +56,30 @@ public class AutoplayFeature extends Feature {
             RebuildTask.ID,
             MiningTask.ID);
 
+    public static final String DISPLAY_HUD = "hud";
+    public static final String DISPLAY_POPUP = "popup";
+
+    public final ConfigGroup config;
     public final ConfigValue<Boolean> followUnit;
     public final ConfigValue<Seq<String>> taskOrder;
     public final ConfigValue<Seq<String>> disabledTasks;
+    public final ConfigValue<String> displayModeConfig;
+    public final ConfigValue<Float> scaleConfig;
+    public final ConfigValue<Boolean> hideDragHandleConfig;
+
+    public final ConfigGroup positionGroup;
+    public final ContextualConfigValue<Float, Boolean> xConfig;
+    public final ContextualConfigValue<Float, Boolean> yConfig;
+
+    public final Signal<Float> xSignal;
+    public final Signal<Float> ySignal;
 
     private final ObjectMap<String, AutoplayTask> taskMap = new ObjectMap<>();
     private final Signal<Seq<AutoplayTask>> tasksSignal = Signal.of(new Seq<>());
     private final Signal<String> currentTaskIdSignal = Signal.of(null);
     private @Nullable AutoplayTask currentTask;
+    private @Nullable AutoplayHudView hudView;
+    private boolean quickAccessHooked = false;
 
     public AutoplayFeature() {
         super(FeatureMetadata.builder()
@@ -68,10 +90,38 @@ public class AutoplayFeature extends Feature {
                 .build());
 
         ConfigGroup config = configGroup();
+        this.config = config;
         OrderedSeqPersister seqPersister = new OrderedSeqPersister();
         followUnit = config.boolValue("follow-unit", false);
         taskOrder = config.value("task-order", new Seq<>(), seqPersister);
         disabledTasks = config.value("disabled-tasks", new Seq<>(), seqPersister);
+        displayModeConfig = config.stringValue("displayMode", DISPLAY_POPUP);
+        scaleConfig = config.floatValue("scale", 1f);
+        hideDragHandleConfig = config.boolValue("hideDragHandle", false);
+
+        positionGroup = config.group("position");
+
+        xConfig = positionGroup.floatValueKeyed(
+                "x",
+                Signals.isPortrait(),
+                p -> p ? "portrait" : "landscape",
+                p -> {
+                    float sw = Units.screenWidth();
+                    return sw > 0 ? sw / 2f : 400f;
+                });
+        yConfig = positionGroup.floatValueKeyed(
+                "y",
+                Signals.isPortrait(),
+                p -> p ? "portrait" : "landscape",
+                p -> {
+                    float sh = Units.screenHeight();
+                    return sh > 0 ? sh / 2f : 250f;
+                });
+
+        xSignal = xConfig.signal();
+        ySignal = yConfig.signal();
+
+        displayModeConfig.signal().subscribe(mode -> updateHud());
 
         taskMap.put(SelfHealTask.ID, new SelfHealTask(this));
         taskMap.put(FleeTask.ID, new FleeTask(this));
@@ -166,6 +216,11 @@ public class AutoplayFeature extends Feature {
     }
 
     @Override
+    public void onEnable() {
+        updateHud();
+    }
+
+    @Override
     public void onDisable() {
         Unit unit = Vars.player.unit();
         if (unit != null && unit.isValid()) {
@@ -173,6 +228,113 @@ public class AutoplayFeature extends Feature {
             unit.controller(Vars.player);
         }
         setCurrentTask(null);
+        AutoplayPopup.hide();
+        removeHud();
+    }
+
+    public boolean isPopupMode() {
+        return DISPLAY_POPUP.equals(displayModeConfig.get());
+    }
+
+    public boolean isPopupActive() {
+        if (!isPopupMode()) {
+            return false;
+        }
+        try {
+            QuickAccessFeature quickAccess = FeatureManager.getFeature(QuickAccessFeature.class);
+            return quickAccess != null && quickAccess.isEnabled();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    @Override
+    public void onQuickAccessClick(@Nullable Element anchor) {
+        if (isPopupMode()) {
+            togglePopup(anchor);
+            return;
+        }
+        super.onQuickAccessClick(anchor);
+    }
+
+    public void togglePopup(@Nullable Element quickAccessBar) {
+        AutoplayPopup.toggle(this, quickAccessBar);
+    }
+
+    public void openPopup(@Nullable Element quickAccessBar) {
+        AutoplayPopup.toggle(this, quickAccessBar);
+    }
+
+    public void resetPosition() {
+        float sw = Units.screenWidth();
+        float sh = Units.screenHeight();
+        float cx = sw > 0 ? sw / 2f : 400f;
+        float cy = sh > 0 ? sh / 2f : 250f;
+
+        Core.settings.put("mindustrytool.autoplay.position.x.portrait", cx);
+        Core.settings.put("mindustrytool.autoplay.position.x.landscape", cx);
+        Core.settings.put("mindustrytool.autoplay.position.y.portrait", cy);
+        Core.settings.put("mindustrytool.autoplay.position.y.landscape", cy);
+
+        xConfig.reset();
+        yConfig.reset();
+
+        if (hudView != null) {
+            Core.app.post(hudView::keepInScreen);
+        }
+    }
+
+    private void updateHud() {
+        ensureQuickAccessHook();
+        if (!isEnabled() || isPopupActive()) {
+            removeHud();
+            return;
+        }
+        ensureHud();
+    }
+
+    private void ensureQuickAccessHook() {
+        if (quickAccessHooked) {
+            return;
+        }
+        try {
+            QuickAccessFeature quickAccess = FeatureManager.getFeature(QuickAccessFeature.class);
+            if (quickAccess == null) {
+                return;
+            }
+            quickAccessHooked = true;
+            quickAccess.enabled().subscribe(value -> updateHud());
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void ensureHud() {
+        if (hudView != null) {
+            return;
+        }
+        hudView = new AutoplayHudView(this);
+        Element el = hudView.element();
+        el.name = "autoplay-hud";
+        el.visible(() -> Vars.ui != null && Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown
+                && Vars.state != null && Vars.state.isGame());
+
+        Core.app.post(() -> {
+            if (hudView != null && Vars.ui != null && Vars.ui.hudGroup != null && !isPopupActive()) {
+                Vars.ui.hudGroup.addChild(el);
+            }
+        });
+    }
+
+    private void removeHud() {
+        if (hudView == null) {
+            return;
+        }
+        AutoplayHudView view = hudView;
+        hudView = null;
+        Core.app.post(() -> {
+            view.element().remove();
+            view.dispose();
+        });
     }
 
     public @Nullable AutoplayTask getCurrentTask() {
