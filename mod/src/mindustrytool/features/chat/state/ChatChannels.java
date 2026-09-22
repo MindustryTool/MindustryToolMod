@@ -26,6 +26,7 @@ public final class ChatChannels {
     private final Signal<String> activeChannelId;
 
     private final Computed<ChannelDto> active;
+    private final Effect autoSelectEffect;
 
     public ChatChannels(Signal<String> activeChannelId) {
         this.activeChannelId = activeChannelId;
@@ -46,7 +47,7 @@ public final class ChatChannels {
             return null;
         });
 
-        Effect.of(() -> {
+        autoSelectEffect = Effect.of(() -> {
             List<ChannelDto> list = channelsQuery.data().get();
             if (list != null && !list.isEmpty()) {
                 String current = activeChannelId.peek();
@@ -136,5 +137,10 @@ public final class ChatChannels {
         if (!Objects.equals(activeChannelId.peek(), channelId)) {
             activeChannelId.set(channelId);
         }
+    }
+
+    public void dispose() {
+        autoSelectEffect.dispose();
+        channelsQuery.dispose();
     }
 }

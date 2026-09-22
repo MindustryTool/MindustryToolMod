@@ -41,12 +41,14 @@ public class ChatService {
     private @Nullable Task watchdogTask;
     private final AtomicBoolean reconnecting = new AtomicBoolean(false);
     private @Nullable String lastAutoLoadedChannelId;
+    private final Effect autoLoadEffect;
+    private final Effect unreadEffect;
 
     public ChatService(ChatStore store, Prov<Boolean> windowOpenSupplier) {
         this.store = store;
         this.windowOpenSupplier = windowOpenSupplier;
 
-        Effect.of(() -> {
+        autoLoadEffect = Effect.of(() -> {
             String channelId = store.channels().activeId().get();
             if (channelId == null || channelId.isEmpty()) {
                 return;
@@ -72,7 +74,7 @@ public class ChatService {
             loadMessages(channelId);
         });
 
-        Effect.of(() -> {
+        unreadEffect = Effect.of(() -> {
             List<ChannelDto> channels = store.channels().channelsQuery().data().get();
             if (channels != null) {
                 for (ChannelDto c : channels) {
@@ -110,6 +112,17 @@ public class ChatService {
             streamRequest = null;
         }
         Core.app.post(() -> store.session().setConnected(false));
+    }
+
+    /**
+     * Releases the reactive effects owned by this service. Terminal: the
+     * service must not be started again afterwards. Production instances live
+     * for the application lifetime; tests call this in teardown so leaked
+     * effects do not pollute the shared dispatcher across tests.
+     */
+    public void dispose() {
+        autoLoadEffect.dispose();
+        unreadEffect.dispose();
     }
 
     private static String extractError(Throwable throwable) {

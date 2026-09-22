@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
 import mindustrytool.test.MindustryTestEnv;
+import solim.reactive.QueryCache;
 import solim.reactive.Signal;
 
 class ChatServiceWatchdogTest extends MindustryTestEnv {
@@ -27,7 +28,7 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
 
     @BeforeEach
     void setUp() {
-
+        QueryCache.getInstance().clear();
         activeChannelSignal = Signal.of("ch1");
         store = new ChatStore(activeChannelSignal, Signal.of(false), Signal.of(false));
         service = new ChatService(store, () -> true);
@@ -37,6 +38,13 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
     void tearDown() {
         service.stop();
         service.setRunningForTest(false);
+        service.dispose();
+        store.dispose();
+        QueryCache.getInstance().clear();
+        // Service and store own effects outside any component scope, so they
+        // are caller-managed: dispose above unsubscribes them, flush drains
+        // anything already queued so the env teardown sees an empty dispatcher.
+        flushEffects();
     }
 
     @Test
