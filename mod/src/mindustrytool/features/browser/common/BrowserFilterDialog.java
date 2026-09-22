@@ -303,7 +303,7 @@ public class BrowserFilterDialog extends SolimDialog {
                     .growX()
                     .loading(() -> row().growX().center().padding(unit(4)).children(() -> new Loader(unit(6))))
                     .data(tags -> dynamic(visibleCategories, categories -> {
-                        return column().growX().gap(unit(4)).children(() -> {
+                        column().growX().gap(unit(4)).children(() -> {
                             if (categories == null || categories.isEmpty()) {
                                 text(Core.bundle.get("browser.empty")).color(Color.gray).left();
                                 return;
@@ -374,15 +374,14 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderBlocks() {
-            dynamic(filterText, query -> {
-                final String loweredQuery = query != null ? query.toLowerCase() : "";
-                Seq<Block> blocks = availableBlocks();
+dynamic(filterText, query -> {
+                 final String loweredQuery = query != null ? query.toLowerCase() : "";
+                 Seq<Block> blocks = availableBlocks();
 
-                if (blocks.isEmpty()) {
-                    return text(Core.bundle.get("browser.filter.blocks.empty")).color(Color.gray).left();
-                }
-
-                return wrap().left().gap(unit(1)).children(() -> {
+                 if (blocks.isEmpty()) {
+                     text(Core.bundle.get("browser.filter.blocks.empty")).color(Color.gray).left();
+                 } else {
+                     wrap().left().gap(unit(1)).children(() -> {
                     for (int i = 0; i < blocks.size; i++) {
                         Block block = blocks.get(i);
                         if (block == null || block.localizedName == null) {
@@ -412,7 +411,8 @@ public class BrowserFilterDialog extends SolimDialog {
                                     text(chipLabel).color(checked.map(c -> c ? Color.white : Color.gray));
                                 });
                     }
-                });
+                    });
+                }
             });
         }
 

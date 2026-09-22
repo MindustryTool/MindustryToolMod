@@ -56,6 +56,7 @@ import solim.runtime.SignalDispatcher;
 import solim.reactive.Signals;
 import solim.reactive.Dynamic;
 import solim.reactive.ForEach;
+import solim.reactive.When;
 import solim.reactive.Mutation;
 import solim.reactive.Query;
 import solim.reactive.QueryKey;
@@ -448,14 +449,21 @@ public final class UI {
 
     // --- Structural & Dynamic ---
 
-    public static <T> Dynamic<T> dynamic(Readable<T> source, Func<T, Component> factory) {
+    public static <T> Dynamic<T> dynamic(Readable<T> source, Cons<T> factory) {
         Dynamic<T> d = Dynamic.of(source, factory);
         ParentStack.attachToParent(d.element());
         return d;
     }
 
-    public static Dynamic<Boolean> when(Readable<Boolean> condition, Prov<Component> Prov) {
-        return dynamic(condition, value -> Boolean.TRUE.equals(value) && Prov != null ? Prov.get() : null);
+    /**
+     * Creates a boolean conditional with a fluent chaining API. Declare branches
+     * with {@code thenDo()} and {@code elseDo()} using void runnables that
+     * create components declaratively. Unlike {@link #dynamic}, the component
+     * is mounted lazily so chained branches are installed before the first
+     * build; post-mount branch updates remount immediately.
+     */
+    public static When when(Readable<Boolean> condition) {
+        return When.of(condition);
     }
 
     public static <T> ForEach<T> forEach(Readable<? extends Iterable<T>> collection) {

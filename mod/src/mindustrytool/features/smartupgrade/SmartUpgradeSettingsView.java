@@ -24,9 +24,6 @@ public class SmartUpgradeSettingsView extends BaseComponent {
         Readable<String> maxUpdatesText = feature.maxUpdatesConfig.signal()
                 .map(v -> String.valueOf(v != null ? v : 500));
 
-        Readable<String> tapIntervalText = feature.tapIntervalConfig.signal()
-                .map(v -> (v != null ? v : 300) + " ms");
-
         return column().grow().center().children(() -> {
             scroll().center().children(() -> {
                 column().growX().gap(unit(2)).children(() -> {
@@ -53,14 +50,26 @@ public class SmartUpgradeSettingsView extends BaseComponent {
                         });
                     });
 
-                    // Slider: Tap Interval
+                    // Trigger Mode: One Shot vs Persistent
                     row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.smart-upgrade.settings.tap-interval",
-                                "Tap Interval")).left();
+                        text(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode",
+                                "Trigger Mode")).left();
                         spacer();
-                        slider(feature.tapIntervalConfig.signal(), 150, 600, 25);
-                        row().width(unit(12)).children(() -> {
-                            text(tapIntervalText);
+                        row().gap(unit(2)).children(() -> {
+                            button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot",
+                                            "One Shot"),
+                                    () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_ONE_SHOT))
+                                            .style(Styles.togglet)
+                                            .checked(feature.triggerModeConfig.signal()
+                                                    .map(SmartUpgradeFeature.MODE_ONE_SHOT::equals))
+                                            .height(unit(8.5f));
+                            button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.persistent",
+                                            "Persistent"),
+                                    () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_PERSISTENT))
+                                            .style(Styles.togglet)
+                                            .checked(feature.triggerModeConfig.signal()
+                                                    .map(SmartUpgradeFeature.MODE_PERSISTENT::equals))
+                                            .height(unit(8.5f));
                         });
                     });
 

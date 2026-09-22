@@ -58,4 +58,8 @@ public final class ChatMembers {
         Throwable err = query.error().peek();
         return err != null ? (err.getMessage() != null ? err.getMessage() : err.toString()) : null;
     }
+
+    public void dispose() {
+        query.dispose();
+    }
 }

@@ -54,8 +54,13 @@ public class HostRoomDialog extends SolimDialog {
                     .gap(unit(3))
                     .center()
                     .children(() -> {
-                        dynamic(step, currentStep -> currentStep == 1 ? buildStep1() : buildStep2())
-                                .growX();
+                        dynamic(step, currentStep -> {
+                            if (currentStep == 1) {
+                                buildStep1();
+                            } else {
+                                buildStep2();
+                            }
+                        }).growX();
                     }).element();
         }
 
@@ -220,10 +225,8 @@ public class HostRoomDialog extends SolimDialog {
                         row().growX().gap(unit(2)).center().children(() -> {
                             text(provider.getName()).color(isSelected.map(s -> s ? Pal.accent : Color.white)).left();
                             spacer();
-                            dynamic(showAddress,
-                                    show -> Boolean.TRUE.equals(show)
-                                            ? text(provider.getAddress()).color(Color.lightGray)
-                                            : null);
+                            when(showAddress)
+                                    .thenDo(() -> text(provider.getAddress()).color(Color.lightGray));
                             text(pingSignal)
                                     .color(pingSignal.map(this::getPingColor))
                                     .width(unit(22))

@@ -44,17 +44,13 @@ public class TimeControlHudView extends BaseComponent {
         Readable<Float> dragIconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 
         hud = hud(() -> {
-            dynamic(feature.hideDragHandleConfig.signal(), hide -> {
-                if (!Boolean.TRUE.equals(hide)) {
-                    return button()
+            when(feature.hideDragHandleConfig.signal())
+                    .elseDo(() -> button()
                             .style(Styles.clearNonei)
                             .background(Styles.black6)
                             .size(buttonSize)
                             .children(() -> icon(Icon.move).size(dragIconSize))
-                            .draggable(feature.xSignal, feature.ySignal);
-                }
-                return null;
-            });
+                            .draggable(feature.xSignal, feature.ySignal));
 
             buildControls(feature, null);
         }).gap(unit(1));
@@ -87,8 +83,9 @@ public class TimeControlHudView extends BaseComponent {
         Readable<Float> resetIconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
         Readable<Float> fontScale = scale.map(s -> s != null ? s : 1f);
 
-        return dynamic(feature.modeConfig.signal(),
-                mode -> buildModeContent(feature, mode, buttonSize, presetWidth, resetIconSize, fontScale, canEdit));
+        return dynamic(feature.modeConfig.signal(), mode -> {
+            buildModeContent(feature, mode, buttonSize, presetWidth, resetIconSize, fontScale, canEdit);
+        });
     }
 
     private static Component buildModeContent(TimeControlFeature feature, String mode, Readable<Float> buttonSize,
@@ -201,3 +198,4 @@ public class TimeControlHudView extends BaseComponent {
         }
     }
 }
+

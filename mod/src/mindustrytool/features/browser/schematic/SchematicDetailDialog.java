@@ -75,12 +75,10 @@ public class SchematicDetailDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
-                dynamic(isPortrait(), portrait -> {
-                    if (Boolean.TRUE.equals(portrait)) {
-                        return portraitLayout();
-                    }
-                    return landscapeLayout();
-                }).grow();
+                when(isPortrait())
+                        .thenDo(this::portraitLayout)
+                        .elseDo(this::landscapeLayout)
+                        .grow();
             }).element();
         }
 

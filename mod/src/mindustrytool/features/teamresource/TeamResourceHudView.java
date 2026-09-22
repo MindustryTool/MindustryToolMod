@@ -23,15 +23,14 @@ import mindustry.ui.Styles;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Card;
-import solim.layout.ReactiveGrid;
 import solim.overlay.Hud;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 /**
- * Fully reactive and declarative Team Resource HUD overlay.
- * Uses Solim HUD, reactive bindings for scale, opacity, dimensions, position, and core stats.
+ * Fully reactive and declarative Team Resource HUD overlay. Uses Solim HUD,
+ * reactive bindings for scale, opacity, dimensions, position, and core stats.
  */
 public class TeamResourceHudView extends BaseComponent {
 
@@ -63,7 +62,8 @@ public class TeamResourceHudView extends BaseComponent {
             float minWidth = (Vars.mobile ? 180f : 220f) * scaleVal;
             float maxWidth = screenW * 0.98f;
             float widthToUse = Mathf.clamp(userWidth, minWidth, maxWidth);
-            return Boolean.TRUE.equals(expanded.get()) ? widthToUse : Math.min(widthToUse, (Vars.mobile ? 180f : 240f) * scaleVal);
+            return Boolean.TRUE.equals(expanded.get()) ? widthToUse
+                    : Math.min(widthToUse, (Vars.mobile ? 180f : 240f) * scaleVal);
         });
 
         Readable<Integer> itemCols = new Computed<>(() -> {
@@ -92,8 +92,11 @@ public class TeamResourceHudView extends BaseComponent {
                     button()
                             .style(Styles.clearNonei)
                             .size(buttonSize)
-                            .onClick(() -> feature.expandedConfig.set(!Boolean.TRUE.equals(feature.expandedConfig.get())))
-                            .tooltip(expanded.map(exp -> Core.bundle.get(Boolean.TRUE.equals(exp) ? "team-resources.collapse" : "team-resources.expand", "Toggle Expand")))
+                            .onClick(() -> feature.expandedConfig
+                                    .set(!Boolean.TRUE.equals(feature.expandedConfig.get())))
+                            .tooltip(expanded.map(exp -> Core.bundle.get(
+                                    Boolean.TRUE.equals(exp) ? "team-resources.collapse" : "team-resources.expand",
+                                    "Toggle Expand")))
                             .children(() -> text(expanded.map(exp -> Boolean.TRUE.equals(exp) ? "▼" : "▶")));
 
                     // Team selector chips
@@ -130,7 +133,10 @@ public class TeamResourceHudView extends BaseComponent {
                 });
 
                 // 2. Expanded Content Panel
-                dynamic(expanded, isExp -> Boolean.TRUE.equals(isExp) ? buildExpandedContent(scale, itemCols) : row()).growX();
+                when(expanded)
+                        .thenDo(() -> buildExpandedContent(scale, itemCols))
+                        .elseDo(() -> row())
+                        .growX();
             });
         });
 
@@ -157,7 +163,8 @@ public class TeamResourceHudView extends BaseComponent {
 
         // Frame update to poll state
         hud.element().update(() -> {
-            if (!hud.element().visible) return;
+            if (!hud.element().visible)
+                return;
             state.update();
         });
 
@@ -173,37 +180,55 @@ public class TeamResourceHudView extends BaseComponent {
             divider();
 
             // Core Items Section
-            dynamic(feature.showItemsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
-                dynamic(state.usedItemsSignal, items -> {
-                    if (items == null || items.isEmpty()) {
-                        return row().left().children(() -> text(Core.bundle.get("team-resources.no-items", "No core items")).color(Color.gray).style(Styles.outlineLabel));
-                    }
-                    ReactiveGrid<Item> itemsGrid = reactiveGrid(state.usedItemsSignal).columns(itemCols)
-                            .key(item -> item.name).growX().gap(unit(1));
-                    itemsGrid.children(item -> createItemCard(item, itemCardHeight, iconSize, scale));
-                    return itemsGrid;
-                }).growX();
-            }).growX() : row()).growX();
+            when(feature.showItemsConfig.signal())
+                    .thenDo(() -> column(() -> {
+                        dynamic(state.usedItemsSignal, items -> {
+                            if (items == null || items.isEmpty()) {
+                                row().left()
+                                        .children(() -> text(Core.bundle.get("team-resources.no-items", "No core items"))
+                                                .color(Color.gray).style(Styles.outlineLabel));
+                            } else {
+                                column().children(() -> {
+                                    reactiveGrid(state.usedItemsSignal).columns(itemCols)
+                                            .key(item -> item.name).growX().gap(unit(1))
+                                            .children(item -> createItemCard(item, itemCardHeight, iconSize, scale));
+                                });
+                            }
+                        }).growX();
+                    }).growX())
+                    .elseDo(() -> row())
+                    .growX();
 
             // Units Section
-            dynamic(feature.showUnitsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
-                dynamic(state.usedUnitsSignal, units -> {
-                    if (units == null || units.isEmpty()) {
-                        return row().left().children(() -> text(Core.bundle.get("team-resources.no-units", "No active units")).color(Color.gray).style(Styles.outlineLabel));
-                    }
-                    ReactiveGrid<UnitType> unitsGrid = reactiveGrid(state.usedUnitsSignal).columns(itemCols)
-                            .key(unit -> unit.name).growX().gap(unit(1));
-                    unitsGrid.children(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
-                    return unitsGrid;
-                }).growX();
-            }).growX() : row()).growX();
+            when(feature.showUnitsConfig.signal())
+                    .thenDo(() -> column(() -> {
+                        dynamic(state.usedUnitsSignal, units -> {
+                            if (units == null || units.isEmpty()) {
+                                row().left()
+                                        .children(() -> text(Core.bundle.get("team-resources.no-units", "No active units"))
+                                                .color(Color.gray).style(Styles.outlineLabel));
+                            } else {
+                                column().children(() -> {
+                                    reactiveGrid(state.usedUnitsSignal).columns(itemCols)
+                                            .key(unit -> unit.name).growX().gap(unit(1))
+                                            .children(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
+                                });
+                            }
+                        }).growX();
+                    }).growX())
+                    .elseDo(() -> row())
+                    .growX();
 
             // Power Section
-            dynamic(feature.showPowerConfig.signal(), show -> Boolean.TRUE.equals(show) ? createPowerSection(scale) : row()).growX();
+            when(feature.showPowerConfig.signal())
+                    .thenDo(() -> createPowerSection(scale))
+                    .elseDo(() -> row())
+                    .growX();
         });
     }
 
-    private Component createItemCard(Item item, Readable<Float> cardHeight, Readable<Float> iconSize, Readable<Float> scale) {
+    private Component createItemCard(Item item, Readable<Float> cardHeight, Readable<Float> iconSize,
+            Readable<Float> scale) {
         Card card = card(Styles.black3, () -> {
             row().growX().padding(unit(1)).gap(unit(1)).children(() -> {
                 image(new TextureRegionDrawable(item.uiIcon)).size(iconSize).scaling(Scaling.fit);
@@ -211,17 +236,20 @@ public class TeamResourceHudView extends BaseComponent {
                     text(state.tickSignal.map(t -> state.getFormattedAmount(item)))
                             .style(Styles.outlineLabel)
                             .fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f)));
-                    text(state.tickSignal.map(t -> (Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.get()) || state.isViewingStats()) ? state.getFormattedRate(item) : ""))
-                            .color(state.tickSignal.map(t -> state.getRateColor(item)))
-                            .style(Styles.outlineLabel)
-                            .fontScale(scale.map(s -> 0.60f * (s != null ? s : 1f)));
+                    text(state.tickSignal.map(
+                            t -> (Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.get()) || state.isViewingStats())
+                                    ? state.getFormattedRate(item)
+                                    : ""))
+                                            .color(state.tickSignal.map(t -> state.getRateColor(item)))
+                                            .style(Styles.outlineLabel)
+                                            .fontScale(scale.map(s -> 0.60f * (s != null ? s : 1f)));
                 });
             });
         })
-        .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
-        .growX()
-        .height(cardHeight)
-        .onClick(() -> state.setViewingStats(!state.isViewingStats()));
+                .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
+                .growX()
+                .height(cardHeight)
+                .onClick(() -> state.setViewingStats(!state.isViewingStats()));
 
         card.element().addListener(new InputListener() {
             @Override
@@ -246,7 +274,8 @@ public class TeamResourceHudView extends BaseComponent {
         return card;
     }
 
-    private Component createUnitCard(UnitType type, Readable<Float> cardHeight, Readable<Float> iconSize, Readable<Float> scale) {
+    private Component createUnitCard(UnitType type, Readable<Float> cardHeight, Readable<Float> iconSize,
+            Readable<Float> scale) {
         return card(Styles.black3, () -> {
             row().growX().padding(unit(1)).gap(unit(1)).children(() -> {
                 image(new TextureRegionDrawable(type.uiIcon)).size(iconSize).scaling(Scaling.fit);
@@ -255,54 +284,62 @@ public class TeamResourceHudView extends BaseComponent {
                         .fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f)));
             });
         })
-        .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
-        .growX()
-        .height(cardHeight);
+                .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
+                .growX()
+                .height(cardHeight);
     }
 
     private Component createPowerSection(Readable<Float> scale) {
         return column(() -> {
             divider();
 
-                row().left().growX()
-                .marginTop(scale.map(s -> 6f * (s != null ? s : 1f)))
-                .marginBottom(scale.map(s -> 3f * (s != null ? s : 1f)))
-                .children(() -> {
-                    text(state.tickSignal.map(t -> {
-                        if (state.getTeamGraphs().isEmpty()) {
-                            return Core.bundle.get("team-resources.no-power", "No power network");
-                        }
-                        return Core.bundle.get("team-resources.power-prefix", "Power: ") + state.getFormattedPowerBalance();
-                    }))
-                    .color(state.tickSignal.map(t -> state.getTeamGraphs().isEmpty() ? Color.gray : state.getPowerBalanceColor()))
-                    .style(Styles.outlineLabel)
-                    .fontScale(scale.map(s -> 0.82f * (s != null ? s : 1f)));
-                });
-
-            SplitBar satisfactionBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.SATISFACTION, () -> scale.get() != null ? scale.get() : 1f);
-            row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
-                .marginBottom(scale.map(s -> 4f * (s != null ? s : 1f)))
-                .children(() -> {
-                    arc(satisfactionBar);
-                });
-
-            dynamic(feature.showStoredPowerConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
-                row().left().growX()
-                    .marginTop(scale.map(s -> 5f * (s != null ? s : 1f)))
+            row().left().growX()
+                    .marginTop(scale.map(s -> 6f * (s != null ? s : 1f)))
                     .marginBottom(scale.map(s -> 3f * (s != null ? s : 1f)))
                     .children(() -> {
-                        text(state.tickSignal.map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ") + state.getFormattedStoredPower()))
+                        text(state.tickSignal.map(t -> {
+                            if (state.getTeamGraphs().isEmpty()) {
+                                return Core.bundle.get("team-resources.no-power", "No power network");
+                            }
+                            return Core.bundle.get("team-resources.power-prefix", "Power: ")
+                                    + state.getFormattedPowerBalance();
+                        }))
+                                .color(state.tickSignal.map(t -> state.getTeamGraphs().isEmpty() ? Color.gray
+                                        : state.getPowerBalanceColor()))
                                 .style(Styles.outlineLabel)
-                                .fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f)));
+                                .fontScale(scale.map(s -> 0.82f * (s != null ? s : 1f)));
                     });
 
-                SplitBar storedBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED, () -> scale.get() != null ? scale.get() : 1f);
-                row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
-                    .marginBottom(scale.map(s -> 2f * (s != null ? s : 1f)))
+            SplitBar satisfactionBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.SATISFACTION,
+                    () -> scale.get() != null ? scale.get() : 1f);
+            row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
+                    .marginBottom(scale.map(s -> 4f * (s != null ? s : 1f)))
                     .children(() -> {
-                        arc(storedBar);
+                        arc(satisfactionBar);
                     });
-            }).growX().gap(unit(1)) : row()).growX();
+
+            when(feature.showStoredPowerConfig.signal())
+                    .thenDo(() -> column(() -> {
+                        row().left().growX()
+                                .marginTop(scale.map(s -> 5f * (s != null ? s : 1f)))
+                                .marginBottom(scale.map(s -> 3f * (s != null ? s : 1f)))
+                                .children(() -> {
+                                    text(state.tickSignal.map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ")
+                                            + state.getFormattedStoredPower()))
+                                                    .style(Styles.outlineLabel)
+                                                    .fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f)));
+                                });
+
+                        SplitBar storedBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED,
+                                () -> scale.get() != null ? scale.get() : 1f);
+                        row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
+                                .marginBottom(scale.map(s -> 2f * (s != null ? s : 1f)))
+                                .children(() -> {
+                                    arc(storedBar);
+                                });
+                    }).growX().gap(unit(1)))
+                    .elseDo(() -> row())
+                    .growX();
         }).growX().gap(unit(1));
     }
 

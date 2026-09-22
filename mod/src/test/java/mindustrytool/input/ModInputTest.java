@@ -89,6 +89,7 @@ class ModInputTest extends MindustryTestEnv {
         Vars.world = null;
         Vars.state = null;
         Time.delta = 1f;
+        flushEffects();
     }
 
     @Test

@@ -9,11 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import arc.struct.Seq;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
@@ -26,7 +29,6 @@ import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class DynamicComponentTest extends SolimEnv {
-
 
     static class TestComponent extends BaseComponent {
         final String id;
@@ -51,10 +53,9 @@ class DynamicComponentTest extends SolimEnv {
     void dynamicCreatesWithInitialContentA() {
         Map<String, TestComponent> instances = new HashMap<>();
         Signal<Boolean> toggle = Signal.of(true);
-        Dynamic<Boolean> dyn = new Dynamic<>(toggle, val -> {
+        Dynamic<Boolean> dyn = Dynamic.of(toggle, val -> {
             TestComponent tc = new TestComponent(val ? "A" : "B");
             instances.put(tc.id, tc);
-            return tc;
         });
         dyn.element();
         assertEquals("A", instances.get("A").id);
@@ -66,7 +67,7 @@ class DynamicComponentTest extends SolimEnv {
     @Test
     void dynamicRendersContent() {
         Signal<Boolean> toggle = Signal.of(true);
-        Dynamic<Boolean> dyn = new Dynamic<>(toggle, val -> new TestComponent(val ? "A" : "B"));
+        Dynamic<Boolean> dyn = Dynamic.of(toggle, val -> new TestComponent(val ? "A" : "B"));
         dyn.element();
         assertEquals(1, dyn.container().getChildren().size);
         dyn.dispose();
@@ -76,10 +77,9 @@ class DynamicComponentTest extends SolimEnv {
     void dynamicSwitchesContent() {
         Signal<Boolean> toggle = Signal.of(true);
         Map<String, TestComponent> instances = new HashMap<>();
-        Dynamic<Boolean> dyn = new Dynamic<>(toggle, val -> {
+        Dynamic<Boolean> dyn = Dynamic.of(toggle, val -> {
             TestComponent tc = new TestComponent(val ? "A" : "B");
             instances.put(tc.id, tc);
-            return tc;
         });
         dyn.element();
         TestComponent compA = instances.get("A");
@@ -99,10 +99,9 @@ class DynamicComponentTest extends SolimEnv {
     void dynamicDisposal() {
         Signal<Boolean> toggle = Signal.of(true);
         Map<String, TestComponent> instances = new HashMap<>();
-        Dynamic<Boolean> dyn = new Dynamic<>(toggle, val -> {
+        Dynamic<Boolean> dyn = Dynamic.of(toggle, val -> {
             TestComponent tc = new TestComponent(val ? "A" : "B");
             instances.put(tc.id, tc);
-            return tc;
         });
         dyn.element();
         dyn.dispose();
@@ -112,7 +111,7 @@ class DynamicComponentTest extends SolimEnv {
     @Test
     void dynamicChildDoesNotGrowByDefault() {
         Signal<String> source = Signal.of("A");
-        Dynamic<String> dyn = new Dynamic<>(source, val -> new TestComponent(val));
+        Dynamic<String> dyn = Dynamic.of(source, val -> new TestComponent(val));
         dyn.element();
         Cell<?> cell = dyn.container().getCells().first();
         assertEquals(0, CellAccess.expandX(cell));
@@ -126,10 +125,10 @@ class DynamicComponentTest extends SolimEnv {
         Signal<String> internalChildSignal = Signal.of("initial");
         int[] factoryBuildCount = new int[] { 0 };
 
-        Dynamic<Boolean> dyn = new Dynamic<>(switcher, val -> {
+        Dynamic<Boolean> dyn = Dynamic.of(switcher, val -> {
             factoryBuildCount[0]++;
             String text = internalChildSignal.get();
-            return new TestComponent(val + "-" + text);
+            new TestComponent(val + "-" + text);
         });
         dyn.element();
         assertEquals(1, factoryBuildCount[0]);
@@ -148,7 +147,11 @@ class DynamicComponentTest extends SolimEnv {
     @Test
     void nullComponentCollapsesContainerAndParentCell() {
         Signal<String> source = Signal.of("show");
-        Dynamic<String> dyn = new Dynamic<>(source, val -> "show".equals(val) ? new TestComponent("active") : null);
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            if ("show".equals(val)) {
+                new TestComponent("active");
+            }
+        });
 
         Table parent = new Table();
         parent.defaults().padTop(8f).padBottom(8f);
@@ -173,20 +176,22 @@ class DynamicComponentTest extends SolimEnv {
     @Test
     void expandAfterCollapseResetsCellConstraints() {
         Signal<String> source = Signal.of("show");
-        Dynamic<String> dyn = new Dynamic<>(source, val -> "show".equals(val) ? new TestComponent("active") : null);
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            if ("show".equals(val)) {
+                new TestComponent("active");
+            }
+        });
 
         Table parent = new Table();
         parent.add(dyn.element());
         parent.pack();
 
-        // Collapse
         source.set(null);
         SignalDispatcher.flush();
         parent.layout();
 
         assertFalse(dyn.container().visible);
 
-        // Expand
         source.set("show");
         SignalDispatcher.flush();
         parent.layout();
@@ -200,7 +205,11 @@ class DynamicComponentTest extends SolimEnv {
     @Test
     void nullThenNonNullShowsVisibleContainerWithChild() {
         Signal<String> source = Signal.of(null);
-        Dynamic<String> dyn = new Dynamic<>(source, val -> val != null ? new TestComponent("item") : null);
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            if (val != null) {
+                new TestComponent("item");
+            }
+        });
 
         Table parent = new Table();
         parent.add(dyn.element());
@@ -221,7 +230,11 @@ class DynamicComponentTest extends SolimEnv {
     @Test
     void collapseExpandCyclePreservesContainerChild() {
         Signal<String> source = Signal.of("show");
-        Dynamic<String> dyn = new Dynamic<>(source, val -> "show".equals(val) ? new TestComponent("dynamic") : null);
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            if ("show".equals(val)) {
+                new TestComponent("dynamic");
+            }
+        });
 
         Table parent = new Table();
         parent.add(dyn.element());
@@ -232,14 +245,12 @@ class DynamicComponentTest extends SolimEnv {
         assertTrue(dyn.container().visible);
         assertEquals(1, dyn.container().getChildren().size);
 
-        // Collapse
         source.set(null);
         SignalDispatcher.flush();
         parent.layout();
         assertFalse(dyn.container().visible);
         assertEquals(0, dyn.container().getChildren().size);
 
-        // Expand
         source.set("show");
         SignalDispatcher.flush();
         parent.layout();
@@ -256,7 +267,6 @@ class DynamicComponentTest extends SolimEnv {
             Row row = new Row();
             row.cellConfig().prefWidth = Readable.of(100f);
             row.cellConfig().prefHeight = Readable.of(40f);
-            return row;
         }).top().right();
 
         assertFalse(dyn.cellConfig().growX, "Dynamic must not growX by default");
@@ -289,13 +299,13 @@ class DynamicComponentTest extends SolimEnv {
 
         Dynamic<Boolean> root = Dynamic.of(outer, show -> {
             outerBuildCount[0]++;
-            if (!Boolean.TRUE.equals(show))
-                return null;
-            return Dynamic.of(inner, val -> {
+            if (!Boolean.TRUE.equals(show)) {
+                return;
+            }
+            Dynamic.of(inner, val -> {
                 innerBuildCount[0]++;
                 TestComponent tc = new TestComponent(val);
                 instances.put(val, tc);
-                return tc;
             });
         });
 
@@ -305,7 +315,6 @@ class DynamicComponentTest extends SolimEnv {
         assertNotNull(instances.get("A"));
         assertFalse(instances.get("A").wasDisposed);
 
-        // Inner switches from A to B
         inner.set("B");
         SignalDispatcher.flush();
 
@@ -325,12 +334,12 @@ class DynamicComponentTest extends SolimEnv {
         Map<String, TestComponent> instances = new HashMap<>();
 
         Dynamic<Boolean> root = Dynamic.of(outer, show -> {
-            if (!Boolean.TRUE.equals(show))
-                return null;
-            return Dynamic.of(inner, val -> {
+            if (!Boolean.TRUE.equals(show)) {
+                return;
+            }
+            Dynamic.of(inner, val -> {
                 TestComponent tc = new TestComponent(val);
                 instances.put(val, tc);
-                return tc;
             });
         });
 
@@ -341,7 +350,6 @@ class DynamicComponentTest extends SolimEnv {
         assertTrue(root.container().visible);
         assertEquals(1, root.container().getChildren().size);
 
-        // Collapse outer
         outer.set(false);
         SignalDispatcher.flush();
 
@@ -360,25 +368,23 @@ class DynamicComponentTest extends SolimEnv {
         Map<String, TestComponent> instances = new HashMap<>();
 
         Dynamic<Boolean> root = Dynamic.of(outer, show -> {
-            if (!Boolean.TRUE.equals(show))
-                return null;
-            return Dynamic.of(inner, val -> {
+            if (!Boolean.TRUE.equals(show)) {
+                return;
+            }
+            Dynamic.of(inner, val -> {
                 innerBuildCount[0]++;
                 TestComponent tc = new TestComponent(val);
                 instances.put(val, tc);
-                return tc;
             });
         });
 
         root.element();
         assertEquals(1, innerBuildCount[0]);
 
-        // Collapse outer
         outer.set(false);
         SignalDispatcher.flush();
         assertTrue(instances.get("A").wasDisposed);
 
-        // Mutate inner signal while outer is collapsed
         inner.set("B");
         SignalDispatcher.flush();
 
@@ -396,13 +402,13 @@ class DynamicComponentTest extends SolimEnv {
         Map<String, TestComponent> instances = new HashMap<>();
 
         Dynamic<Boolean> root = Dynamic.of(outer, show -> {
-            if (!Boolean.TRUE.equals(show))
-                return null;
-            return Dynamic.of(inner, val -> {
+            if (!Boolean.TRUE.equals(show)) {
+                return;
+            }
+            Dynamic.of(inner, val -> {
                 innerBuildCount[0]++;
                 TestComponent tc = new TestComponent(val + "-" + innerBuildCount[0]);
                 instances.put(tc.id, tc);
-                return tc;
             });
         });
 
@@ -412,13 +418,11 @@ class DynamicComponentTest extends SolimEnv {
         assertNotNull(first);
         assertFalse(first.wasDisposed);
 
-        // Collapse outer
         outer.set(false);
         SignalDispatcher.flush();
         assertTrue(first.wasDisposed);
         assertFalse(root.container().visible);
 
-        // Re-expand outer
         outer.set(true);
         SignalDispatcher.flush();
         assertTrue(root.container().visible);
@@ -428,7 +432,6 @@ class DynamicComponentTest extends SolimEnv {
         assertFalse(second.wasDisposed);
         assertNotSame(first, second);
 
-        // Subsequent inner updates on re-expanded subtree work properly
         inner.set("B");
         SignalDispatcher.flush();
         assertEquals(3, innerBuildCount[0]);
@@ -448,13 +451,13 @@ class DynamicComponentTest extends SolimEnv {
         Map<String, TestComponent> instances = new HashMap<>();
 
         Dynamic<Boolean> root = Dynamic.of(outer, show -> {
-            if (!Boolean.TRUE.equals(show))
-                return null;
-            return Dynamic.of(inner, val -> {
+            if (!Boolean.TRUE.equals(show)) {
+                return;
+            }
+            Dynamic.of(inner, val -> {
                 innerBuildCount[0]++;
                 TestComponent tc = new TestComponent(val);
                 instances.put(val, tc);
-                return tc;
             });
         });
 
@@ -462,7 +465,6 @@ class DynamicComponentTest extends SolimEnv {
         assertEquals(1, innerBuildCount[0]);
         assertFalse(instances.get("A").wasDisposed);
 
-        // Simultaneous update: collapse outer AND change inner in same flush
         outer.set(false);
         inner.set("B");
         SignalDispatcher.flush();
@@ -474,7 +476,6 @@ class DynamicComponentTest extends SolimEnv {
                 "Inner factory must NOT be called for B when outer collapsed in same flush");
         assertNull(instances.get("B"));
 
-        // Simultaneous update: re-expand outer AND change inner to C in same flush
         outer.set(true);
         inner.set("C");
         SignalDispatcher.flush();
@@ -489,53 +490,28 @@ class DynamicComponentTest extends SolimEnv {
     }
 
     @Test
-    void nestedDynamicInsideLayoutContainerResizesAndCollapses() {
-        Signal<Boolean> outer = Signal.of(true);
-        Signal<Boolean> inner = Signal.of(true);
+    void dynamicMultipleRoots() {
+        Signal<String> source = Signal.of("items");
+        List<TestComponent> created = new ArrayList<>();
 
-        Dynamic<Boolean> root = Dynamic.of(outer, showOuter -> {
-            if (!Boolean.TRUE.equals(showOuter))
-                return null;
-            return new Column().children(() -> {
-                Dynamic.of(inner, showInner -> {
-                    if (!Boolean.TRUE.equals(showInner))
-                        return null;
-                    return new TestComponent("leaf");
-                });
-            });
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            created.add(new TestComponent("a"));
+            created.add(new TestComponent("b"));
         });
 
-        Table parent = new Table();
-        Cell<?> cell = parent.add(root.element());
-        parent.pack();
+        dyn.element();
+        assertEquals(2, dyn.container().getChildren().size,
+                "Void factory with multiple roots should mount all roots");
 
-        assertTrue(root.container().visible);
-        assertEquals(1, root.container().getChildren().size);
-
-        // Collapse inner dynamic inside column
-        inner.set(false);
-        SignalDispatcher.flush();
-        parent.layout();
-
-        // Outer is still visible, but inner dynamic inside column is collapsed
-        assertTrue(root.container().visible);
-
-        // Collapse outer dynamic
-        outer.set(false);
-        SignalDispatcher.flush();
-        parent.layout();
-
-        assertFalse(root.container().visible);
-        assertEquals(0f, CellAccess.minWidth(cell), 0.01f);
-        assertEquals(0f, CellAccess.minHeight(cell), 0.01f);
-
-        root.dispose();
+        dyn.dispose();
+        assertTrue(created.get(0).wasDisposed);
+        assertTrue(created.get(1).wasDisposed);
     }
 
     @Test
     void dynamicSupportsElementAndTableConfig() {
         Signal<String> text = Signal.of("initial");
-        Dynamic<String> dyn = new Dynamic<>(text, TestComponent::new)
+        Dynamic<String> dyn = Dynamic.of(text, val -> new TestComponent(val))
                 .width(250f)
                 .height(150f)
                 .visible(false)
@@ -553,12 +529,12 @@ class DynamicComponentTest extends SolimEnv {
     void dynamicFactoryInvokedWithNullWhenSourceEmitsNull() {
         Signal<String> source = Signal.of("initial");
         boolean[] calledWithNull = new boolean[] { false };
-        Dynamic<String> dyn = new Dynamic<>(source, val -> {
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
             if (val == null) {
                 calledWithNull[0] = true;
-                return null;
+                return;
             }
-            return new TestComponent(val);
+            new TestComponent(val);
         });
         dyn.element();
         assertFalse(calledWithNull[0], "Factory must not be called with null initially");
@@ -573,10 +549,9 @@ class DynamicComponentTest extends SolimEnv {
     void dynamicRendersFallbackComponentWhenSourceEmitsNull() {
         Signal<String> source = Signal.of(null);
         Map<String, TestComponent> instances = new HashMap<>();
-        Dynamic<String> dyn = new Dynamic<>(source, val -> {
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
             TestComponent comp = new TestComponent(val != null ? "active:" + val : "fallback");
             instances.put(comp.id, comp);
-            return comp;
         });
 
         Table parent = new Table();
@@ -589,7 +564,6 @@ class DynamicComponentTest extends SolimEnv {
         assertNotNull(fallbackComp, "Fallback component instance must exist");
         assertFalse(fallbackComp.wasDisposed);
 
-        // Transition from null to non-null value
         source.set("hello");
         SignalDispatcher.flush();
         parent.layout();
@@ -601,7 +575,6 @@ class DynamicComponentTest extends SolimEnv {
         assertTrue(dyn.container().visible);
         assertEquals(1, dyn.container().getChildren().size);
 
-        // Transition back to null
         source.set(null);
         SignalDispatcher.flush();
         parent.layout();
@@ -616,7 +589,11 @@ class DynamicComponentTest extends SolimEnv {
     @Test
     void dynamicCollapsesWhenFactoryReturnsNullForNullSource() {
         Signal<String> source = Signal.of("active");
-        Dynamic<String> dyn = new Dynamic<>(source, val -> val != null ? new TestComponent(val) : null);
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            if (val != null) {
+                new TestComponent(val);
+            }
+        });
 
         Table parent = new Table();
         parent.defaults().padTop(6f).padBottom(6f);
@@ -641,7 +618,103 @@ class DynamicComponentTest extends SolimEnv {
     @Test
     void dynamicThrowsWhenFactoryIsNull() {
         Signal<String> source = Signal.of("value");
-        assertThrows(NullPointerException.class, () -> new Dynamic<>(source, null));
         assertThrows(NullPointerException.class, () -> Dynamic.of(source, null));
+    }
+
+    @Test
+    void rootStaysMountedWhileUnrelatedSignalsChange() {
+        Signal<String> label = Signal.of("first");
+        Signal<String> source = Signal.of("mode");
+        List<TestComponent> created = new ArrayList<>();
+
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            created.add(new TestComponent(val));
+        });
+
+        dyn.element();
+        TestComponent root = created.get(0);
+        assertNotNull(root);
+
+        label.set("changed");
+        SignalDispatcher.flush();
+        assertFalse(root.wasDisposed, "Root must stay mounted while unrelated signals change");
+
+        dyn.dispose();
+    }
+
+    @Test
+    void perRootCellConfigAppliesToOwnCell() {
+        Signal<String> source = Signal.of("go");
+
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            new Row().growX();
+            new TestComponent("fluid");
+        });
+
+        dyn.element();
+        @SuppressWarnings("rawtypes")
+        Seq<Cell> cells = dyn.container().getCells();
+        assertEquals(2, cells.size);
+        assertEquals(1, CellAccess.expandX(cells.get(0)),
+                "First root's growX config must apply to its own cell");
+        assertEquals(0, CellAccess.expandX(cells.get(1)),
+                "Second root without config must not grow");
+
+        dyn.dispose();
+    }
+
+    @Test
+    void voidFactoryExceptionDisposesPartialRootsAndCollapses() {
+        Signal<String> source = Signal.of("start");
+        List<TestComponent> created = new ArrayList<>();
+        int[] boomPhase = new int[] { 0 };
+
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            created.add(new TestComponent("first:" + val));
+            if (boomPhase[0] == 1) {
+                throw new IllegalStateException("boom");
+            }
+        });
+
+        dyn.element();
+        assertFalse(created.get(0).wasDisposed);
+        assertEquals(1, dyn.container().getChildren().size);
+
+        boomPhase[0] = 1;
+        source.set("next");
+        SignalDispatcher.flush();
+
+        assertTrue(created.get(1).wasDisposed,
+                "Root created before the exception must be disposed");
+        assertEquals(0, dyn.container().getChildren().size,
+                "Container must be empty after failed capture");
+
+        dyn.dispose();
+    }
+
+    @Test
+    void voidFactoryCollapseWithNoRoots() {
+        Signal<String> source = Signal.of("show");
+        Dynamic<String> dyn = Dynamic.of(source, val -> {
+            if ("show".equals(val)) {
+                new TestComponent("active");
+            }
+        });
+
+        Table parent = new Table();
+        parent.add(dyn.element());
+        parent.pack();
+
+        assertTrue(dyn.container().visible);
+        assertEquals(1, dyn.container().getChildren().size);
+
+        source.set("hide");
+        SignalDispatcher.flush();
+        parent.layout();
+
+        assertFalse(dyn.container().visible);
+        assertEquals(0, dyn.container().getChildren().size);
+
+        dyn.dispose();
     }
 }

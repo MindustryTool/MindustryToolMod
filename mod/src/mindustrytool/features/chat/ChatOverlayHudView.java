@@ -43,13 +43,9 @@ public class ChatOverlayHudView extends BaseComponent {
         Readable<Boolean> isCollapsed = feature.collapsedConfig.signal();
 
         hud = hud(() -> {
-            dynamic(isCollapsed, collapsed -> {
-                if (Boolean.TRUE.equals(collapsed)) {
-                    return buildCollapsedBadge();
-                } else {
-                    return buildExpandedWindow();
-                }
-            });
+            when(isCollapsed)
+                    .thenDo(this::buildCollapsedBadge)
+                    .elseDo(this::buildExpandedWindow);
         });
 
         hud.opacity(feature.opacityConfig.signal());
@@ -219,9 +215,9 @@ public class ChatOverlayHudView extends BaseComponent {
 
                         dynamic(Units.width(), width -> {
                             if (width < 1200) {
-                                return buildMobileBody();
+                                buildMobileBody();
                             } else {
-                                return buildDesktopBody();
+                                buildDesktopBody();
                             }
                         })
                                 .width(winWidth)
@@ -234,17 +230,14 @@ public class ChatOverlayHudView extends BaseComponent {
     private Component buildDesktopBody() {
         return row().grow().children(() -> {
             // Channel List
-            dynamic(store.ui().channelsCollapsed(), collapsed -> {
-                if (Boolean.TRUE.equals(collapsed)) {
-                    return null;
-                }
-                return row().growY().children(() -> {
-                    row().width(unit(80)).growY().children(() -> {
-                        new ChatChannelListView(store, service);
-                    });
-                    divider(Direction.Y);
-                });
-            }).growY();
+            when(store.ui().channelsCollapsed())
+                    .elseDo(() -> row().growY().children(() -> {
+                        row().width(unit(80)).growY().children(() -> {
+                            new ChatChannelListView(store, service);
+                        });
+                        divider(Direction.Y);
+                    }))
+                    .growY();
 
             // Message Area & Input
             column().grow().children(() -> {
@@ -254,17 +247,14 @@ public class ChatOverlayHudView extends BaseComponent {
             });
 
             // User List
-            dynamic(store.ui().usersCollapsed(), collapsed -> {
-                if (Boolean.TRUE.equals(collapsed)) {
-                    return null;
-                }
-                return row().growY().children(() -> {
-                    divider(Direction.Y);
-                    row().width(unit(80)).growY().children(() -> {
-                        new ChatUserListView(store, service);
-                    });
-                });
-            }).growY();
+            when(store.ui().usersCollapsed())
+                    .elseDo(() -> row().growY().children(() -> {
+                        divider(Direction.Y);
+                        row().width(unit(80)).growY().children(() -> {
+                            new ChatUserListView(store, service);
+                        });
+                    }))
+                    .growY();
         });
     }
 

@@ -2,6 +2,7 @@ package mindustrytool.features.schematicgrid;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,6 +21,8 @@ import arc.struct.StringMap;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustrytool.test.MindustryTestEnv;
+import solim.reactive.Computed;
+import solim.reactive.Signal;
 
 class QuickSchematicGridTest extends MindustryTestEnv {
 
@@ -456,5 +459,112 @@ class QuickSchematicGridTest extends MindustryTestEnv {
         assertEquals(3, SchematicPickerDialog.takeFirst(all, 36).size);
         assertEquals(0, SchematicPickerDialog.takeFirst(all, 0).size);
         assertTrue(SchematicPickerDialog.takeFirst(null, 36).isEmpty());
+    }
+
+    private static QuickSchematicGridHudView.SlotModel slotOf(QuickSchematicEntry entry) {
+        return new QuickSchematicGridHudView.SlotModel(entry.page, entry.row, entry.col, entry);
+    }
+
+    private static QuickSchematicEntry slotEntry() {
+        return new QuickSchematicEntry("slot-1", 0, 1, 2, "Alpha", "alpha.msch", null, null);
+    }
+
+    @Test
+    void slotKey_changesWhenIconSetClearedOrChanged() {
+        QuickSchematicEntry entry = slotEntry();
+        String base = slotOf(entry).key();
+
+        entry.customIcon = "X";
+        String withIcon = slotOf(entry).key();
+        assertNotEquals(base, withIcon);
+
+        entry.customIcon = "Y";
+        assertNotEquals(withIcon, slotOf(entry).key());
+
+        entry.customIcon = null;
+        assertEquals(base, slotOf(entry).key());
+    }
+
+    @Test
+    void slotKey_normalizesBlankIconAndLabel() {
+        QuickSchematicEntry entry = slotEntry();
+        String base = slotOf(entry).key();
+
+        entry.customIcon = "";
+        assertEquals(base, slotOf(entry).key());
+
+        entry.customIcon = "   ";
+        assertEquals(base, slotOf(entry).key());
+
+        entry.customIcon = null;
+        entry.customLabel = "   ";
+        assertEquals(base, slotOf(entry).key());
+    }
+
+    @Test
+    void slotKey_changesWhenSchematicRefOrLabelChanges() {
+        QuickSchematicEntry entry = slotEntry();
+        String base = slotOf(entry).key();
+
+        entry.schematicName = "Beta";
+        assertNotEquals(base, slotOf(entry).key());
+
+        entry.schematicName = "Alpha";
+        entry.schematicFile = "alpha-copy.msch";
+        assertNotEquals(base, slotOf(entry).key());
+
+        entry.schematicFile = "alpha.msch";
+        entry.customLabel = "Custom";
+        assertNotEquals(base, slotOf(entry).key());
+    }
+
+    @Test
+    void slotKey_preservesSlotIdentity() {
+        QuickSchematicEntry entry = slotEntry();
+        String base = slotOf(entry).key();
+
+        assertNotEquals(base, new QuickSchematicGridHudView.SlotModel(1, 1, 2, entry).key());
+        assertNotEquals(base, new QuickSchematicGridHudView.SlotModel(0, 0, 2, entry).key());
+        assertNotEquals(base, new QuickSchematicGridHudView.SlotModel(0, 1, 2, null).key());
+
+        QuickSchematicEntry otherId = new QuickSchematicEntry("slot-2", 0, 1, 2, "Alpha", "alpha.msch", null, null);
+        assertNotEquals(base, slotOf(otherId).key());
+    }
+
+    @Test
+    void updateEntry_replacesInsteadOfMutating() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+        feature.addSchematic("Alpha", "alpha.msch");
+        String id = feature.getEntries().get(0).id;
+
+        QuickSchematicEntry before = feature.getEntry(id);
+        assertNotNull(before);
+        assertNull(before.customIcon);
+
+        assertTrue(feature.updateEntry(id, entry -> entry.customIcon = "X"));
+
+        assertNull(before.customIcon);
+
+        QuickSchematicEntry stored = feature.getEntry(id);
+        assertNotNull(stored);
+        assertEquals("X", stored.customIcon);
+    }
+
+    @Test
+    void updateEntry_notifiesEntriesObservers() {
+        QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
+        feature.addSchematic("Alpha", "alpha.msch");
+        String id = feature.getEntries().get(0).id;
+
+        Computed<List<QuickSchematicEntry>> watcher = Signal.computed(() -> feature.entries().get());
+        int[] notifications = {0};
+        watcher.subscribe(value -> notifications[0]++);
+        watcher.get();
+        int before = notifications[0];
+
+        assertTrue(feature.updateEntry(id, entry -> entry.customIcon = "X"));
+
+        assertEquals(before + 1, notifications[0]);
+        assertEquals("X", feature.getEntry(id).customIcon);
     }
 }

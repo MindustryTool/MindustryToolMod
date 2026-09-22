@@ -542,11 +542,10 @@ class DisposalSweepTest extends SolimEnv {
 		Signal<Boolean> toggle = Signal.of(true);
 		Signal<String> label = Signal.of("state");
 		List<Text> created = new ArrayList<>();
-		Dynamic<Boolean> dynamic = new Dynamic<>(toggle, active -> {
-			Text text = Text.of(label);
-			created.add(text);
-			return text;
-		});
+Dynamic<Boolean> dynamic = Dynamic.of(toggle, active -> {
+            Text text = Text.of(label);
+            created.add(text);
+        });
 		dynamic.element();
 		assertEquals(1, created.size());
 

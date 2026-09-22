@@ -133,9 +133,8 @@ class GapCoexistenceTest extends SolimEnv {
 		Card prefix = new Card();
 		Dynamic<Boolean> dynamicCard = Dynamic.of(showItem, visible -> {
 			if (visible) {
-				return new Card();
+				new Card();
 			}
-			return null;
 		});
 		Card suffix = new Card();
 

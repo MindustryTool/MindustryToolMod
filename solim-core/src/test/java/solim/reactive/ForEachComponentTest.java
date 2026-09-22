@@ -146,9 +146,8 @@ class ForEachComponentTest extends SolimEnv {
                 ForEach<String> list = new ForEach<>(items);
                 list.key(id -> id);
                 list.children(TestComponent::new);
-                return list.growX();
+                list.growX();
             }
-            return null;
         });
 
         Table root = new Table();
