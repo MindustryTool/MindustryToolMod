@@ -6,7 +6,7 @@ import arc.scene.style.Drawable;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.util.Nullable;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import solim.graphics.RoundedDrawable;
 import solim.reactive.Readable;
 
@@ -100,52 +100,52 @@ public final class SolimButtonStyleBuilder extends BaseStyleBuilder<SolimButtonS
         return this;
     }
 
-    public SolimButtonStyleBuilder up(@Nullable Consumer<ButtonStateBuilder> config) {
+    public SolimButtonStyleBuilder up(@Nullable Cons<ButtonStateBuilder> config) {
         if (config != null) {
             if (up == null) {
                 up = new ButtonStateBuilder();
             }
-            config.accept(up);
+            config.get(up);
         }
         return this;
     }
 
-    public SolimButtonStyleBuilder over(@Nullable Consumer<ButtonStateBuilder> config) {
+    public SolimButtonStyleBuilder over(@Nullable Cons<ButtonStateBuilder> config) {
         if (config != null) {
             if (over == null) {
                 over = new ButtonStateBuilder();
             }
-            config.accept(over);
+            config.get(over);
         }
         return this;
     }
 
-    public SolimButtonStyleBuilder down(@Nullable Consumer<ButtonStateBuilder> config) {
+    public SolimButtonStyleBuilder down(@Nullable Cons<ButtonStateBuilder> config) {
         if (config != null) {
             if (down == null) {
                 down = new ButtonStateBuilder();
             }
-            config.accept(down);
+            config.get(down);
         }
         return this;
     }
 
-    public SolimButtonStyleBuilder disabled(@Nullable Consumer<ButtonStateBuilder> config) {
+    public SolimButtonStyleBuilder disabled(@Nullable Cons<ButtonStateBuilder> config) {
         if (config != null) {
             if (disabled == null) {
                 disabled = new ButtonStateBuilder();
             }
-            config.accept(disabled);
+            config.get(disabled);
         }
         return this;
     }
 
-    public SolimButtonStyleBuilder checked(@Nullable Consumer<ButtonStateBuilder> config) {
+    public SolimButtonStyleBuilder checked(@Nullable Cons<ButtonStateBuilder> config) {
         if (config != null) {
             if (checked == null) {
                 checked = new ButtonStateBuilder();
             }
-            config.accept(checked);
+            config.get(checked);
         }
         return this;
     }

@@ -9,7 +9,7 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
@@ -37,7 +37,7 @@ public class SchematicPickerDialog extends SolimDialog {
     private final Signal<Integer> displayCount = Signal.of(INITIAL_BATCH);
     private @Nullable Scroll gridScroll;
 
-    public SchematicPickerDialog(Consumer<Schematic> onSelect) {
+    public SchematicPickerDialog(Cons<Schematic> onSelect) {
         super(Core.bundle.get("feature.quick-schematic-grid.picker.title"));
 
         name("schematicPickerDialog");
@@ -116,7 +116,7 @@ public class SchematicPickerDialog extends SolimDialog {
                             .gap(unit(3))
                             .children(schematic -> new SchematicPickerCard(schematic, () -> {
                                 if (onSelect != null) {
-                                    onSelect.accept(schematic);
+                                    onSelect.get(schematic);
                                 }
                                 hide();
                             }));

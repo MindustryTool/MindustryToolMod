@@ -5,7 +5,7 @@ import arc.struct.Seq;
 import arc.util.Log;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.function.Supplier;
+import arc.func.Prov;
 
 /**
  * Single Responsibility: locate the latest crash file on disk. Filters out crashes older than the
@@ -16,9 +16,9 @@ public final class CrashLocator {
 	private static final long CUTOFF_EPOCH =
 			LocalDate.of(2026, 1, 25).atStartOfDay(ZoneOffset.UTC).toEpochSecond() * 1000;
 
-	private final Supplier<Fi> crashesDirSupplier;
+	private final Prov<Fi> crashesDirSupplier;
 
-	public CrashLocator(Supplier<Fi> crashesDirSupplier) {
+	public CrashLocator(Prov<Fi> crashesDirSupplier) {
 		this.crashesDirSupplier = crashesDirSupplier;
 	}
 

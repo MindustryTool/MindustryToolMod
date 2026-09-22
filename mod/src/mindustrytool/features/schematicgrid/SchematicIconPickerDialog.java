@@ -7,7 +7,7 @@ import arc.graphics.Color;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import arc.util.Nullable;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import mindustry.Vars;
 import mindustry.ctype.Content;
 import mindustry.ctype.ContentType;
@@ -27,9 +27,9 @@ import solim.reactive.Signal;
 public class SchematicIconPickerDialog extends SolimDialog {
 
     private final Signal<String> searchQuery = Signal.of("");
-    private final Consumer<String> onSelect;
+    private final Cons<String> onSelect;
 
-    public SchematicIconPickerDialog(Consumer<String> onSelect) {
+    public SchematicIconPickerDialog(Cons<String> onSelect) {
         super(Core.bundle.get("feature.quick-schematic-grid.icon.title"));
         this.onSelect = onSelect;
 
@@ -141,7 +141,7 @@ public class SchematicIconPickerDialog extends SolimDialog {
             return;
         }
         if (onSelect != null) {
-            onSelect.accept(emoji);
+            onSelect.get(emoji);
         }
         hide();
     }

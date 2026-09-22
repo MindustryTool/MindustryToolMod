@@ -10,7 +10,7 @@ Mechanical merge of 12 specs per change `spec-domain-merge` (stage 4 framework-u
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
 
 ### Requirement: Text widget with static and reactive content
-`Text` SHALL display string content via `text(String)` and `text(Readable<String>)` (reactive). It SHALL wrap `arc.scene.ui.Label` and provide fluent chained property modifiers including `.color(Color)`, `.color(Readable<Color>)`, `.style(LabelStyle)`, `.wrap(boolean)`, `.ellipsis(boolean)`, `.fontScale(float)`, text alignment (`.left()`, `.center()`, `.right()`), and padding/margin modifiers (`.padding(float)`, `.padding(float, float, float, float)`, `.paddingTop(float)`, `.paddingBottom(float)`, `.paddingLeft(float)`, `.paddingRight(float)`, `.margin(float)`, `.margin(float, float, float, float)`, `.marginTop(float)`, `.marginBottom(float)`, `.marginLeft(float)`, `.marginRight(float)`). Reactive bindings SHALL be managed internally by the component lifecycle.
+`Text` SHALL display string content via `text(String)` and `text(Readable<String>)` (reactive). It SHALL wrap `arc.scene.ui.Label` and provide fluent chained property modifiers including `.color(Color)`, `.color(Readable<Color>)`, `.style(LabelStyle)`, `.wrap(boolean)`, `.ellipsis(boolean)`, `.fontScale(float)`, text alignment (`.left()`, `.center()`, `.right()`), and padding/margin modifiers (`.padding(float)`, `.padding(float, float, float, float)`, `.paddingTop(float)`, `.paddingBottom(float)`, `.paddingLeft(float)`, `.paddingRight(float)`, `.margin(float)`, `.margin(float, float, float, float)`, `.marginTop(float)`, `.marginBottom(float)`, `.marginLeft(float)`, `.marginRight(float)`). Separate `text(Signal<String>)` and `text(Computed<String>)` overloads SHALL NOT exist; reactive sources bind through `Readable<String>` because `Signal` and `Computed` implement it. Reactive bindings SHALL be managed internally by the component lifecycle.
 
 #### Scenario: Static Text
 - **WHEN** `text("Settings")` is called
@@ -20,20 +20,16 @@ TBD - created by archiving change create-solim-core. Update Purpose after archiv
 - **WHEN** `Computed<String> t = count.map(v -> "Count: " + v)` and `text(t)` then `count.set(5)`
 - **THEN** label text updates to "Count: 5" via binding without recreation
 
+#### Scenario: Signal binds through the Readable overload
+- **WHEN** `Signal<String> name = Signal.of("Alice")` and `text(name)` is declared
+- **THEN** it resolves to `text(Readable<String>)` and updates when `name` changes
+
 #### Scenario: Chained text styling and layout modifiers
 - **WHEN** `text("Description").wrap(true).ellipsis(true).color(Color.lightGray).fontScale(0.9f)` is declared
 - **THEN** the underlying `Label` has word-wrapping, ellipsis truncation, light gray color, and 0.9 font scale configured directly
 
-#### Scenario: Reactive text color binding
-- **WHEN** `text("Status").color(statusColorReadable)` is declared and the status color changes
-- **THEN** the label's color updates immediately via internal component binding without external `Binding` calls
-
-#### Scenario: Text padding and margin modifiers
-- **WHEN** `text("Title").padding(12f).margin(4f)` is declared inside a parent table
-- **THEN** the parent cell padding around the label reflects the combined padding and margin
-
 ### Requirement: Image and Icon widgets
-`Image` SHALL display `Drawable`/`TextureRegion` with `image(Drawable)` and `image(Signal<Drawable>)`. `Icon` SHALL display icon drawable with `icon(IconType)` and reactive overload. Both SHALL support size/style bindings, as well as fluent padding and margin modifiers on `SolimImage` and `SolimImage.SizedImage` (`.padding(float)`, `.padding(float, float, float, float)`, `.paddingTop(float)`, `.paddingBottom(float)`, `.paddingLeft(float)`, `.paddingRight(float)`, `.margin(float)`, `.margin(float, float, float, float)`, `.marginTop(float)`, `.marginBottom(float)`, `.marginLeft(float)`, `.marginRight(float)`).
+`Image` SHALL display `Drawable`/`TextureRegion` with `image(Drawable)` and `image(Readable<Drawable>)`. `Icon` SHALL display icon drawable with `icon(Drawable)` and `icon(Readable<Drawable>)`, applying the standard treatment (scalable drawable, `Scaling.fit`, `unit(6)` sizing). A no-argument `icon()` facade SHALL NOT exist; empty images use `image()`/`image(Readable)`. Both SHALL support size/style bindings, as well as fluent padding and margin modifiers on `SolimImage` (`.padding(float)`, `.padding(float, float, float, float)`, `.paddingTop(float)`, `.paddingBottom(float)`, `.paddingLeft(float)`, `.paddingRight(float)`, `.margin(float)`, `.margin(float, float, float, float)`, `.marginTop(float)`, `.marginBottom(float)`, `.marginLeft(float)`, `.marginRight(float)`).
 
 #### Scenario: Image display
 - **WHEN** `image(backgroundDrawable)` is called
@@ -43,23 +39,43 @@ TBD - created by archiving change create-solim-core. Update Purpose after archiv
 - **WHEN** `icon(darkMode.map(v -> v ? Icon.moon : Icon.sun))` and `darkMode` toggles
 - **THEN** icon drawable updates via binding
 
+#### Scenario: Icon factory applies standard sizing
+- **WHEN** `icon(Icon.add)` is declared
+- **THEN** the resulting `SolimImage` uses a scalable drawable, `Scaling.fit`, and `unit(6)` size
+
 #### Scenario: Image padding and margin modifiers
 - **WHEN** `image(icon).padding(8f).margin(2f)` is declared inside a parent table
 - **THEN** the parent cell padding around the image reflects the combined padding and margin
 
 ### Requirement: Badge and Avatar lightweight components
-`Badge` SHALL be a lightweight label/container for counts/status, `Avatar` SHALL display user image with fallback. Both may be convenience composites over `Text`/`Image` + `Container`.
+`Badge` SHALL be a lightweight label/container for counts/status. Count badges SHALL be created through `badge(int)` or `badge(Readable<String>)` (with caller-side formatting such as `"99+"`); a separate `badgeCount(...)` facade SHALL NOT exist. `Avatar` SHALL display user image with fallback.
 
 #### Scenario: Badge count
 - **WHEN** `badge(count.map(v -> v > 99 ? "99+" : String.valueOf(v)))` is used
 - **THEN** badge text updates reactively
 
+#### Scenario: Static integer badge
+- **WHEN** `badge(3)` is used
+- **THEN** a count badge showing "3" is created and hidden when the count is zero
+
+#### Scenario: badgeCount facade is absent
+- **WHEN** the public facade is inspected
+- **THEN** `badgeCount(...)` is not declared
+
 ### Requirement: Button and IconButton with click handler and reactive props
-`Button` and `IconButton` SHALL support `button(String|Signal|Computed|Readable, Runnable onClick)` and `iconButton(Drawable, Runnable onClick)` / `iconButton(Drawable, ImageButtonStyle, Runnable onClick)` plus chained modifiers `.enabled(Readable<Boolean>)`, `.visible(Readable<Boolean>)`, `.size(float)`, `.tooltip(String)`, `.tooltip(Readable<String>)`, `.onLongClick(Runnable)`, `.onLongClick(long, Runnable)`, `.style(...)`, and `.stopClickPropagation()`. When a long click triggers, regular `onClick` SHALL be suppressed. Reactive bindings SHALL be managed internally by the component.
+`Button` SHALL support the constructor/factory forms `button()`, `button(Runnable onClick)`, `button(String text, Runnable onClick)`, and `button(Readable<String> text, Runnable onClick)`. `Button` SHALL additionally provide fluent content methods `.text(String)`, `.text(Readable<String>)`, `.icon(Drawable)`, and `.icon(Readable<Drawable>)`, where `.icon(...)` applies the standard icon treatment (scalable, `Scaling.fit`, `unit(6)`). The overloads `button(Drawable)`, `button(Drawable, Runnable)`, `button(String, Drawable, Runnable)`, and both `button(text, onClick, Consumer<SolimButtonStyleBuilder>)` variants SHALL be removed. `Button` SHALL support chained modifiers `.enabled(Readable<Boolean>)` (null-tolerant), `.visible(Readable<Boolean>)`, `.size(float)`, `.tooltip(String)`, `.tooltip(Readable<String>)`, `.onLongClick(Runnable)`, `.onLongClick(long, Runnable)`, `.style(...)`, and `.stopClickPropagation()`. When a long click triggers, regular `onClick` SHALL be suppressed. Reactive bindings SHALL be managed internally by the component and disposed with it.
 
 #### Scenario: Button click handler
 - **WHEN** `button("Save", () -> save())` is clicked
 - **THEN** `save()` is invoked
+
+#### Scenario: Fluent icon button replaces Drawable overloads
+- **WHEN** an icon-only button is needed
+- **THEN** it is declared as `button(onClick).icon(icon)` rather than `button(icon, onClick)`
+
+#### Scenario: Null-tolerant enabled chaining
+- **WHEN** `button(...).enabled(canEdit)` is declared with `@Nullable Readable<Boolean> canEdit`
+- **THEN** the binding is installed when non-null and the chain continues without an intermediate variable when null
 
 #### Scenario: Button reactive text and style
 - **WHEN** `Computed<String> saveText = dirty.map(v -> v ? "● Save" : "Save")` and `button(saveText, onSave).enabled(dirty).style(Styles.PRIMARY)` then `dirty.set(true)`
@@ -144,7 +160,7 @@ Widgets SHALL be implemented in order: `Text`, `Button`, then `TextField`, `Chec
 - **THEN** `Text`/`Button` reactive binding tests pass before `Dialog` tests are required
 
 ### Requirement: Card is a single-Table layout element
-The `Card` component SHALL be a single-Table layout element consistent with `Column` and `Row`, where child composition, sizing, and background all target the same Arc `Table` instead of a Button-wrapping-Table pair.
+The `Card` component SHALL be a single-Table layout element consistent with `Column` and `Row`, where child composition, sizing, and background all target the same Arc `Table` instead of a Button-wrapping-Table pair. The `Card.of(Runnable)` static factory SHALL be removed because it discarded its argument and is superseded by `UI.card(Runnable)`.
 
 #### Scenario: Card children attach to the element table
 - **WHEN** `card(() -> { text("Hi"); })` is rendered
@@ -154,9 +170,9 @@ The `Card` component SHALL be a single-Table layout element consistent with `Col
 - **WHEN** an inner button stops event propagation inside a clickable card
 - **THEN** the inner button handler runs and the card `onClick` handler does not run.
 
-**Source: animated-loader**
-
-Reusable animated circular loader component for mod dialogs.
+#### Scenario: Card.of is absent
+- **WHEN** the `Card` API is inspected
+- **THEN** no `Card.of(...)` factory is declared
 
 ### Requirement: Animated Circle Loader Component
 The system SHALL provide a reusable `Loader` Solim component that renders `loader-circle.png` and continuously animates its rotation around its center point.
@@ -208,7 +224,7 @@ The system SHALL display the animated circular loader instead of static loading 
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
 
 ### Requirement: Implicit parent stack with lambda scopes
-The framework SHALL provide solim.ui.ParentStack (and Ui facade) with static helpers column(), row(), stack(), grid(int columns), wrap(), scroll(), container(), card(), and dialog(String title) returning fluent builder instances supporting .children(Runnable). Calling .children(Runnable) pushes the layout Element onto ParentStack, executes the lambda, pops with try/finally, attaches the layout to the outer active parent container, and returns the container instance. Every child created inside the .children(Runnable) lambda SHALL auto-attach to current parent. This includes BaseComponent subclass instances — constructing a BaseComponent inside a children() block SHALL auto-attach it to the current parent without requiring an explicit component() call. The stack() helper SHALL create a solim.layout.SolimStack overlay container attached to ParentStack. SolimStack SHALL expose Component-returning `layer(Supplier<Component>)` and `layer(Function<Element, Component>)` methods that attach directly to the underlying Stack with no intermediate Row, own each returned layer component, and dispose owned layers exactly once on stack disposal; SolimStack SHALL NOT declare a `children(...)` overload, and the `stack(Runnable)` facade SHALL be removed.
+The framework SHALL provide `ParentStack` with static helpers `column()`, `row()`, `stack()`, `grid(int columns)`, `wrap()`, `scroll()`, `card()`, `collapser()`, and `dialog(String title)` returning fluent builder instances supporting `.children(Runnable)`. A `container()` alias SHALL NOT exist; `column()` is the canonical vertical layout. Calling `.children(Runnable)` pushes the layout Element onto `ParentStack`, executes the lambda, pops with try/finally, attaches the layout to the outer active parent container, and returns the container instance. Every child created inside the `.children(Runnable)` lambda SHALL auto-attach to current parent, including `BaseComponent` subclasses. The `stack()` helper SHALL create a `solim.layout.SolimStack` overlay container attached to `ParentStack`. SolimStack SHALL expose Component-returning `layer(Supplier<Component>)` and `layer(Function<Element, Component>)` methods that attach directly to the underlying Stack with no intermediate Row, own each returned layer component, and dispose owned layers exactly once on stack disposal; SolimStack SHALL NOT declare a `children(...)` overload, and a `stack(Runnable)` facade SHALL NOT exist.
 
 #### Scenario: Push/pop with try/finally and configuration before children
 - **WHEN** column().grow().children(() -> { text("Settings"); row().growX().children(() -> { button("Cancel"); button("Save"); }); }) executes
@@ -218,24 +234,17 @@ The framework SHALL provide solim.ui.ParentStack (and Ui facade) with static hel
 - **WHEN** inside column(() -> { text("Chat"); new ChatMessageListView(store, service); row().children(() -> { textField(input); button("Send", this::send); }); })
 - **THEN** textField and button are children of inner row; text and ChatMessageListView element are children of outer column — all without explicit add or component() calls
 
+#### Scenario: container alias is absent
+- **WHEN** the public facade is inspected
+- **THEN** `container()` and `container(Runnable)` are not declared
+
 #### Scenario: Stack helper creates SolimStack overlay
 - **WHEN** stack().grow().layer(() -> icon(Icon.chat)).layer(() -> icon(Icon.warning)) is executed inside an active parent
 - **THEN** a SolimStack is instantiated, its Stack element is attached to the parent, and both layers are overlaid on top of each other
 
-#### Scenario: Stack direct-attach layers skip Row wrapper
-- **WHEN** stack().grow().layer(() -> networkImage(url).rounded(8)).layer(() -> column().grow()) is executed inside an active parent
-- **THEN** each returned component element is added directly to the Stack with no intermediate Row table, and the stack owns both layer components until disposal
-
 #### Scenario: No start/end API
-- **WHEN** solim.ui.Ui is inspected
+- **WHEN** the public facade is inspected
 - **THEN** it does NOT expose startColumn()/endColumn() or startComponent()/endComponent() — only configuration-before-children fluent methods exist
-
-### Requirement: Icon button declarative facades
-`Ui` SHALL provide static facades `iconButton(Drawable icon, Runnable onClick)` and `iconButton(Drawable icon, ImageButtonStyle style, Runnable onClick)` that construct an `IconButton`, automatically attach it to the active parent in `ParentStack`, and return the component for chained modifier calls.
-
-#### Scenario: Attaching icon button via Ui facade
-- **WHEN** `iconButton(Icon.infoCircle, onClick)` is called inside a `row(...)`
-- **THEN** an `IconButton` is created, its element attached to the row table, and the `IconButton` instance returned
 
 ### Requirement: Stack cleanup guarantee
 `ParentStack` SHALL guarantee cleanup even if child construction throws, using `try { push; runnable.run(); } finally { pop; }`.
@@ -267,11 +276,15 @@ The framework SHALL provide solim.ui.ParentStack (and Ui facade) with static hel
 - **THEN** both are added via resolver without `// require new Header().element()` comment
 
 ### Requirement: Layout facades return layout Element
-Each declarative helper SHALL return the created layout `Element` so callers can chain modifiers or store references.
+Each declarative helper SHALL return the created fluent component so callers can chain modifiers or store references. `spacer()` SHALL return the `Spacer` component rather than a raw `Element`.
 
 #### Scenario: Chained modifiers
-- **WHEN** `Element e = column(() -> { text("Hi"); }).padding(24).gap(16)`
-- **THEN** `e` is the column `Table` with padding/gap applied
+- **WHEN** `column().padding(24).gap(16)` is declared
+- **THEN** the returned `Column` has padding/gap applied and supports further chaining
+
+#### Scenario: Spacer returns its component
+- **WHEN** `spacer().name("gap")` is declared
+- **THEN** a `Spacer` is returned and its name is applied
 
 ### Requirement: UI arc escape-hatch for raw Arc elements
 `UI` SHALL expose a static `arc(Element el)` method that attaches a raw Arc `Element` to the current `ParentStack` parent and returns it. This replaces the `component(() -> rawElement)` workaround for Arc elements that do not extend `BaseComponent`. The method is intentionally named `arc` — not `element` — to signal that it is an escape hatch for direct Arc layer access, making casual misuse for things like `arc(new Label("hi"))` visually incongruent with the available Solim equivalent `text("hi")`.
@@ -513,6 +526,25 @@ The `Popup` component SHALL expose explicit `show(data, x, y)` and `hide()` cont
 - **WHEN** `hide()` is called while the menu is visible
 - **THEN** the menu element is removed from the scene and all menu listeners are detached
 
+### Requirement: Layer-behind-anchor mounting
+The `Popup` component SHALL support mounting the menu behind a caller-supplied anchor element: when the anchor has a live parent at show time, the menu element SHALL be inserted into the anchor's parent before the anchor (`Group.addChildBefore`) so the anchor draws above the menu; when no anchor is configured or the anchor is detached, the menu SHALL mount to the scene root as before.
+
+#### Scenario: Menu renders behind its anchor
+- **WHEN** `layerBehind(anchor)` is configured and `show()` is called with an anchor that has a live parent
+- **THEN** the menu element is a sibling of the anchor, positioned before it in draw order, so the anchor renders above the menu
+
+#### Scenario: Menu falls back to scene root without an anchor
+- **WHEN** `show()` is called without a configured anchor
+- **THEN** the menu element is added to the scene root (existing behavior)
+
+#### Scenario: Menu falls back to scene root with a detached anchor
+- **WHEN** `show()` is called with a configured anchor whose parent is null
+- **THEN** the menu element is added to the scene root (existing behavior)
+
+#### Scenario: Stage coordinates need no conversion
+- **WHEN** a layer-behind popup is mounted into a full-screen transform-free parent group
+- **THEN** stage-coordinate placement and clamping behave identically to scene-root mounting
+
 ### Requirement: Prefer-above anchor positioning with clamping
 The `Popup` component SHALL position the menu with its bottom edge at the anchor vertical coordinate (floating above the anchor), flipping below the anchor when there is insufficient space above, and clamping both axes so the menu stays fully within the stage bounds.
 
@@ -529,11 +561,11 @@ The `Popup` component SHALL position the menu with its bottom edge at the anchor
 - **THEN** the menu is fully visible inside the stage on both axes
 
 ### Requirement: Tap-outside dismissal
-The `Popup` component SHALL dismiss the menu when the user touches anywhere outside the menu bounds, swallowing that touch so no underlying element receives it. Touches inside the menu SHALL reach menu children normally.
+The `Popup` component SHALL dismiss the menu when the user touches anywhere outside the menu bounds, and the dismissing touch SHALL NOT be consumed, so the touched underlying element also receives it. Touches inside the menu SHALL reach menu children normally.
 
-#### Scenario: Outside tap dismisses and swallows
+#### Scenario: Outside tap dismisses and passes through
 - **WHEN** the user touches down outside the visible menu bounds
-- **THEN** the menu is dismissed and the touch is consumed (underlying elements do not activate)
+- **THEN** the menu is dismissed and the touch continues to the underlying element (the element activates in the same gesture)
 
 #### Scenario: Inside tap reaches menu
 - **WHEN** the user touches down inside the visible menu bounds
@@ -639,7 +671,7 @@ The Tabs component SHALL support lazy tab mounting where tab content is instanti
 Reusable Solim virtual list layout primitive that measures item heights and mounts only elements intersecting the visible viewport plus an overscan buffer inside a scroll container.
 
 ### Requirement: Reusable virtual list layout component
-The Solim layout system SHALL provide a declarative `VirtualList` component (accessible via `solim.UI.virtualList(...)`) that accepts an item collection, key selector, item height provider, and item component builder, and mounts only elements that intersect the visible viewport plus an overscan buffer.
+The Solim layout system SHALL provide a declarative `VirtualList` component (accessible via `solim.UI.virtualList(...)`) that accepts a fundamental data pair on the factory — the item collection (`Readable<? extends List<T>>` or `List<T>`) and the item height provider — and mounts only elements that intersect the visible viewport plus an overscan buffer. The key selector SHALL be optional fluent configuration (`.key(Function<T, ?>)`, defaulting to identity), and the item component builder SHALL be supplied through a terminal `void` `children(Function<T, Component>)`. Component generics SHALL be `<T>` only.
 
 #### Scenario: Mounting only visible items in viewport
 - **WHEN** a list of 100 items is supplied to `VirtualList` inside a scroll viewport that can physically fit 10 items
@@ -648,6 +680,10 @@ The Solim layout system SHALL provide a declarative `VirtualList` component (acc
 #### Scenario: Overscan buffer preservation
 - **WHEN** items are rendered in `VirtualList`
 - **THEN** an overscan buffer (default 3 items above and below the visible viewport) is mounted to prevent visual blanking during scrolling
+
+#### Scenario: Fluent virtual list declaration
+- **WHEN** `virtualList(groupedMessages, heightCalculator).key(MessageGroup::getKey).overscan(3).onReachTop(50f, load).children(item -> new MessageGroupView(item))` is declared
+- **THEN** the virtual list mounts visible items with the supplied factory, keeps the height provider as fundamental factory data, and `.children(...)` completes the definition
 
 ### Requirement: Prefix-sum height indexing and scroll bounds
 The `VirtualList` SHALL maintain a prefix-sum array of cumulative item heights, report the total height as its preferred height to the parent `ScrollPane`, and locate visible items in $O(\log N)$ time using binary search.

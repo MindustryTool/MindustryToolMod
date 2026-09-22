@@ -18,7 +18,7 @@ import arc.util.Nullable;
 import arc.util.Scaling;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
@@ -283,12 +283,12 @@ public final class Button
         return this;
     }
 
-    public Button style(@Nullable Consumer<SolimButtonStyleBuilder> config) {
+    public Button style(@Nullable Cons<SolimButtonStyleBuilder> config) {
         if (config == null) {
             return this;
         }
         SolimButtonStyleBuilder builder = new SolimButtonStyleBuilder();
-        config.accept(builder);
+        config.get(builder);
         if (builder.isStatic()) {
             applyResolvedStyle(builder.build());
         } else {

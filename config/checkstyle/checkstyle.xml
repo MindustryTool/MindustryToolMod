@@ -10,5 +10,11 @@
         <module name="UnusedImports">
             <property name="processJavadoc" value="true"/>
         </module>
+        <!-- java.util.function needs D8 desugaring companions (e.g. Function$-CC)
+             that are unresolvable under Mindustry's Android ModClassLoader.
+             Use arc.func.* (Func, Func2, Prov, Cons, Cons2, Boolf, Boolf2) instead. -->
+        <module name="IllegalImport">
+            <property name="illegalPkgs" value="java.util.function"/>
+        </module>
     </module>
 </module>

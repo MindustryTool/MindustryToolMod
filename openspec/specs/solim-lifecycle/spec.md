@@ -3,12 +3,12 @@
 ## Purpose
 
 Mechanical merge of 12 specs per change `spec-domain-merge` (stage 3 core, concat-then-dedupe). Sources: solim-component, basecomponent-ui-separation, lifecycle-correctness, ownership-encapsulation, scoped-context-api, solim-automatic-ownership, solim-component-auto-attach, solim-core-split, solim-dynamic, solim-runtime-encapsulation, structural-reconciler, unified-ownership-api. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work.
-
 ## Requirements
 
 **Source: solim-component**
 
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
+
 ### Requirement: Component interface
 The framework SHALL provide `solim.core.Component` with `arc.scene.Element element()`, `default void dispose()`, and `default Component name(String name)` to rename the component's underlying Arc `Element`.
 
@@ -104,6 +104,7 @@ Every concrete Solim component SHALL automatically assign a default name to its 
 **Source: basecomponent-ui-separation**
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
+
 ### Requirement: BaseComponent has no UI attachment logic
 `BaseComponent` SHALL NOT import or reference `ParentStack`, `Table`, or any Arc layout type for the purpose of UI placement. It SHALL NOT call `ParentStack.registerPendingComponent(...)` or any equivalent in its constructor.
 
@@ -129,6 +130,7 @@ All UI attachment (adding an Element to a Table/parent) SHALL happen through `Ui
 **Source: lifecycle-correctness**
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
+
 ### Requirement: Disposal order is reversed
 Resources owned by a `BaseComponent` SHALL be disposed in reverse registration order (LIFO). Each resource SHALL be attempted independently so that a failure in one does not prevent others from being disposed.
 
@@ -205,6 +207,7 @@ Application components SHALL have no callable manual ownership method. `Componen
 **Source: scoped-context-api**
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
+
 ### Requirement: withoutAutoOwnership replaces pause/resume
 `ComponentContext` SHALL provide a `withoutAutoOwnership(Runnable)` method that temporarily suspends auto-registration for the duration of the runnable using save, clear, and restore stack semantics. Nested component scopes instantiated within the runnable SHALL be able to push and manage their own local `ComponentContext` scopes. The outer stack context SHALL always be restored after the runnable completes, even if it throws.
 
@@ -234,6 +237,7 @@ TBD - created by archiving change solim-architecture-refactor. Update Purpose af
 **Source: solim-automatic-ownership**
 
 TBD - created by archiving change clean-up-solim-refactor. Update Purpose after archive.
+
 ### Requirement: Ambient Lifecycle Ownership in Component Build
 The Solim framework SHALL automatically track child components, disposables, and Solim controls instantiated or attached during a component's `build()` execution without requiring explicit `own()` or `ownChild()` invocations. Ambient ownership SHALL be the sole ownership path for application code; manual ownership calls in application modules SHALL be rejected by the compiler.
 
@@ -270,6 +274,7 @@ Solim controls and reactive property bindings declared inside a component build 
 **Source: solim-component-auto-attach**
 
 `BaseComponent` instances created inside an active `ParentStack` scope auto-attach their element to the current parent, making `component()` unnecessary for the common in-`children()` usage.
+
 ### Requirement: BaseComponent auto-attaches to active parent
 When a BaseComponent subclass is instantiated inside an active ParentStack scope (i.e., inside a children() block), it SHALL automatically schedule its element for attachment to the current parent container without requiring an explicit component() call. The deprecated component() wrapper function SHALL be removed from the public API.
 
@@ -317,13 +322,13 @@ The `:mod` Gradle subproject SHALL depend exclusively on `:solim` for Solim UI f
 
 ### Requirement: Complete Public UI Facade
 `solim.UI` in `:solim` SHALL provide all user-permitted static factory methods for Solim UI operations. This SHALL include:
-- Layouts: `column()`, `row()`, `grid()`, `card()`, `scroll()`, `stack()`, `wrap()`, `container()`, `divider()`, `spacer()`
-- Widgets: `button()`, `text()`, `textField()`, `slider()`, `checkbox()`, `image()`, `icon()`, `networkImage()`, `badge()`, `badgeCount()`
-- Overlays: `dialog()`, `hud()`
+- Layouts: `column()`, `row()`, `grid()`, `reactiveGrid()`, `card()`, `scroll()`, `stack()`, `wrap()`, `collapser()`, `divider()`, `spacer()`
+- Widgets: `button()`, `text()`, `textField()`, `slider()`, `checkbox()`, `switchToggle()`, `select()`, `image()`, `icon()`, `networkImage()`, `badge()`
+- Overlays: `dialog()`, `hud()`, `popup()`
 - Reactivity: `signal()`, `computed()`, `effect()`, `createSignal()`
-- Structural & Components: `dynamic()`, `forEach()`, `component()`
+- Structural & Components: `dynamic()`, `when()`, `forEach()`, `virtualList()`, `arc()`
 - Units & Events: `unit()`, `dvw()`, `dvh()`, `listen()`
-Internal helpers such as `isExpanding`, `element`, and `add` SHALL NOT be exposed on `solim.UI`.
+The keyed-collection factories `reactiveGrid(items)`, `forEach(items)`, and `virtualList(items, heightProvider)` SHALL accept only fundamental data, with configuration applied through fluent methods and the required item factory supplied through terminal `void` `children(...)`. The facade SHALL NOT expose `badgeCount()`, `container()`, `divider(String)`, `divider(char)`, or no-argument `icon()`. The legacy duplicate facade `solim.core.Ui` SHALL NOT exist; `solim.UI` is the sole public facade. Internal helpers such as `isExpanding` (now `SolimToken.isExpandingChild`), `element`, and `add` SHALL NOT be exposed on `solim.UI`.
 
 #### Scenario: UI methods instantiation
 - **WHEN** UI elements, signals, layouts, or widgets are created in user code
@@ -332,6 +337,18 @@ Internal helpers such as `isExpanding`, `element`, and `add` SHALL NOT be expose
 #### Scenario: Reactivity factory methods on UI
 - **WHEN** a user creates a signal or computed value via `UI.signal(value)` or `UI.computed(supplier)`
 - **THEN** the corresponding `Signal<T>` or `Computed<T>` instance from `solim-core` is instantiated and returned
+
+#### Scenario: Single facade available
+- **WHEN** a consumer inspects the Solim modules for a public UI facade
+- **THEN** only `solim.UI` provides factory methods and no `solim.core.Ui` type exists
+
+#### Scenario: Structural facade includes when
+- **WHEN** a consumer needs conditional rendering
+- **THEN** `UI.when(condition, supplier)` is available alongside `UI.dynamic(...)`
+
+#### Scenario: Removed facade methods unavailable
+- **WHEN** a consumer attempts to use `badgeCount`, `container`, string/char `divider`, or no-argument `icon`
+- **THEN** the methods do not exist and the consumer uses `badge(Readable<String>)`, `column()`, `divider(Direction)`, and `image()` instead
 
 ### Requirement: API Dependency Propagation
 The `:solim` subproject SHALL declare an `api` dependency on `:solim-core` using the `java-library` plugin (or equivalent `api` configuration) so that public return types and chained modifier methods (e.g. `Column`, `Button`, `Signal<T>`, `Readable<T>`, `Component`) are accessible to consumer modules without consumers having to declare `:solim-core` directly.
@@ -429,6 +446,7 @@ Application components extending `BaseComponent` SHALL retain automatic UI mount
 **Source: structural-reconciler**
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
+
 ### Requirement: Shared structural reconciler
 A shared reconciler utility SHALL exist (e.g., `StructuralReconciler`) that implements the keyed child lifecycle: create new keys, preserve existing keys (reuse component), remove missing keys (dispose component), and mount/unmount elements in the container.
 
@@ -469,6 +487,7 @@ The `StructuralReconciler` SHALL instantiate new components and build their init
 **Source: unified-ownership-api**
 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
+
 ### Requirement: Component extends Disposable
 The `Component` interface SHALL extend `Disposable` so that components can be passed directly to `own()` and similar ownership APIs.
 

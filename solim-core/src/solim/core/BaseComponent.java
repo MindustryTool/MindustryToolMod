@@ -11,8 +11,7 @@ import mindustry.Vars;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Prov;
 import solim.runtime.ComponentContext;
 import solim.runtime.ParentStack;
 import solim.reactive.Signal;
@@ -132,13 +131,13 @@ public abstract class BaseComponent implements Component {
     }
 
     /**
-     * Creates a reactive signal initialized from the supplier that recalculates
+     * Creates a reactive signal initialized from the Prov that recalculates
      * whenever the specified Arc event fires. Automatically unregisters when this
      * component is disposed.
      */
-    public <E, T> Signal<T> createSignal(Class<E> eventType, Supplier<T> supplier) {
-        Signal<T> signal = Signal.of(supplier.get());
-        listen(eventType, e -> signal.set(supplier.get()));
+    public <E, T> Signal<T> createSignal(Class<E> eventType, Prov<T> Prov) {
+        Signal<T> signal = Signal.of(Prov.get());
+        listen(eventType, e -> signal.set(Prov.get()));
         return signal;
     }
 
@@ -154,8 +153,8 @@ public abstract class BaseComponent implements Component {
     }
 
     /**
-     * Creates a reactive signal initialized from the supplier. The
-     * {@code registrar} function installs a callback and returns a
+     * Creates a reactive signal initialized from the Prov. The
+     * {@code registrar} Func installs a callback and returns a
      * {@link Disposable} that unregisters it. That disposable is owned by this
      * component, so the callback is automatically unregistered when the component
      * is disposed.
@@ -164,10 +163,10 @@ public abstract class BaseComponent implements Component {
      * If the underlying API cannot provide real unsubscription, the registrar
      * should return a no-op {@code Disposable} and document this limitation.
      */
-    public <T> Signal<T> createSignal(Function<Runnable, Disposable> registrar, Supplier<T> supplier) {
-        Signal<T> signal = Signal.of(supplier.get());
+    public <T> Signal<T> createSignal(Func<Runnable, Disposable> registrar, Prov<T> Prov) {
+        Signal<T> signal = Signal.of(Prov.get());
         if (registrar != null) {
-            own(registrar.apply(() -> signal.set(supplier.get())));
+            own(registrar.get(() -> signal.set(Prov.get())));
         }
         return signal;
     }

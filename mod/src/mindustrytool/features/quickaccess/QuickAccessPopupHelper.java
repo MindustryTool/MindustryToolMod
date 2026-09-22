@@ -43,6 +43,7 @@ public final class QuickAccessPopupHelper {
         float anchorX = quickAccessBar != null ? barCenterX : stageW / 2f;
         float anchorY = quickAccessBar != null ? (upperHalf ? barY - gap : barTop + gap) : stageH / 2f;
 
+        menu.layerBehind(quickAccessBar);
         menu.show(data, anchorX, anchorY);
 
         if (Core.scene != null && quickAccessBar != null && menu.table() != null) {

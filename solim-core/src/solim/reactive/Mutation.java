@@ -4,10 +4,10 @@ import arc.Core;
 import arc.util.Nullable;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Cons2;
+import arc.func.Cons;
+import arc.func.Func;
+import arc.func.Prov;
 import solim.core.Disposable;
 import solim.runtime.ComponentContext;
 
@@ -20,42 +20,42 @@ import solim.runtime.ComponentContext;
  */
 public final class Mutation<T, R> implements Disposable {
 
-	private final Function<T, CompletableFuture<R>> mutator;
+	private final Func<T, CompletableFuture<R>> mutator;
 
 	private final Signal<Boolean> pending = Signal.of(false);
 	private final Signal<Throwable> error = Signal.of(null);
 	private final Signal<R> result = Signal.of(null);
 
-	private @Nullable Function<T, ?> onMutate;
-	private @Nullable BiConsumer<R, Object> onSuccess;
-	private @Nullable BiConsumer<Throwable, Object> onError;
+	private @Nullable Func<T, ?> onMutate;
+	private @Nullable Cons2<R, Object> onSuccess;
+	private @Nullable Cons2<Throwable, Object> onError;
 
 	private int mutationGeneration = 0;
 	private boolean disposed = false;
 
-	private Mutation(Function<T, CompletableFuture<R>> mutator) {
+	private Mutation(Func<T, CompletableFuture<R>> mutator) {
 		this.mutator = Objects.requireNonNull(mutator, "mutator cannot be null");
 		ComponentContext.register(this);
 	}
 
-	public static <T, R> Mutation<T, R> of(Function<T, CompletableFuture<R>> mutator) {
+	public static <T, R> Mutation<T, R> of(Func<T, CompletableFuture<R>> mutator) {
 		return new Mutation<>(mutator);
 	}
 
-	public static <R> Mutation<Void, R> of(Supplier<CompletableFuture<R>> mutator) {
+	public static <R> Mutation<Void, R> of(Prov<CompletableFuture<R>> mutator) {
 		Objects.requireNonNull(mutator, "mutator cannot be null");
 		return new Mutation<>(ignored -> mutator.get());
 	}
 
-	public <C> Mutation<T, R> onMutate(Function<T, C> onMutate) {
+	public <C> Mutation<T, R> onMutate(Func<T, C> onMutate) {
 		this.onMutate = onMutate;
 		return this;
 	}
 
-	public Mutation<T, R> onMutate(Consumer<T> onMutate) {
+	public Mutation<T, R> onMutate(Cons<T> onMutate) {
 		if (onMutate != null) {
 			this.onMutate = input -> {
-				onMutate.accept(input);
+				onMutate.get(input);
 				return null;
 			};
 		} else {
@@ -65,14 +65,14 @@ public final class Mutation<T, R> implements Disposable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <C> Mutation<T, R> onSuccess(BiConsumer<R, C> onSuccess) {
-		this.onSuccess = (BiConsumer<R, Object>) onSuccess;
+	public <C> Mutation<T, R> onSuccess(Cons2<R, C> onSuccess) {
+		this.onSuccess = (Cons2<R, Object>) onSuccess;
 		return this;
 	}
 
-	public Mutation<T, R> onSuccess(Consumer<R> onSuccess) {
+	public Mutation<T, R> onSuccess(Cons<R> onSuccess) {
 		if (onSuccess != null) {
-			this.onSuccess = (res, ctx) -> onSuccess.accept(res);
+			this.onSuccess = (res, ctx) -> onSuccess.get(res);
 		} else {
 			this.onSuccess = null;
 		}
@@ -80,14 +80,14 @@ public final class Mutation<T, R> implements Disposable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <C> Mutation<T, R> onError(BiConsumer<Throwable, C> onError) {
-		this.onError = (BiConsumer<Throwable, Object>) onError;
+	public <C> Mutation<T, R> onError(Cons2<Throwable, C> onError) {
+		this.onError = (Cons2<Throwable, Object>) onError;
 		return this;
 	}
 
-	public Mutation<T, R> onError(Consumer<Throwable> onError) {
+	public Mutation<T, R> onError(Cons<Throwable> onError) {
 		if (onError != null) {
-			this.onError = (err, ctx) -> onError.accept(err);
+			this.onError = (err, ctx) -> onError.get(err);
 		} else {
 			this.onError = null;
 		}
@@ -104,7 +104,7 @@ public final class Mutation<T, R> implements Disposable {
 		Object context = null;
 		if (onMutate != null) {
 			try {
-				context = onMutate.apply(input);
+				context = onMutate.get(input);
 			} catch (Throwable t) {
 				handleError(gen, t, null);
 				return;
@@ -113,7 +113,7 @@ public final class Mutation<T, R> implements Disposable {
 
 		CompletableFuture<R> future;
 		try {
-			future = mutator.apply(input);
+			future = mutator.get(input);
 		} catch (Throwable t) {
 			handleError(gen, t, context);
 			return;
@@ -147,7 +147,7 @@ public final class Mutation<T, R> implements Disposable {
 
 		if (onSuccess != null) {
 			try {
-				onSuccess.accept(res, context);
+				onSuccess.get(res, context);
 			} catch (Throwable t) {
 				// Prevent callback errors from corrupting state
 			}
@@ -164,7 +164,7 @@ public final class Mutation<T, R> implements Disposable {
 
 		if (onError != null) {
 			try {
-				onError.accept(cause, context);
+				onError.get(cause, context);
 			} catch (Throwable t) {
 				// Prevent callback errors from corrupting state
 			}

@@ -5,7 +5,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.*;
-import java.util.function.Function;
+import arc.func.Func;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.SolimToken;
@@ -25,8 +25,8 @@ public final class ForEach<T> extends BaseComponent
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Readable<? extends Iterable<T>> collection;
-    private Function<T, ?> keyExtractor = Function.identity();
-    private @Nullable Function<T, Component> itemFactory;
+    private Func<T, ?> keyExtractor = v -> v;
+    private @Nullable Func<T, Component> itemFactory;
     private final StructuralReconciler<Object, Component> reconciler = new StructuralReconciler<>();
 
     public ForEach(Readable<? extends Iterable<T>> collection) {
@@ -40,12 +40,12 @@ public final class ForEach<T> extends BaseComponent
         return new ForEach<>(collection);
     }
 
-    public ForEach<T> key(@Nullable Function<T, ?> keyExtractor) {
-        this.keyExtractor = keyExtractor != null ? keyExtractor : Function.identity();
+    public ForEach<T> key(@Nullable Func<T, ?> keyExtractor) {
+        this.keyExtractor = keyExtractor != null ? keyExtractor : v -> v;
         return this;
     }
 
-    public void children(@Nullable Function<T, Component> itemFactory) {
+    public void children(@Nullable Func<T, Component> itemFactory) {
         this.itemFactory = itemFactory;
         if (itemFactory != null && isBuilt()) {
             reconcile();
@@ -53,7 +53,7 @@ public final class ForEach<T> extends BaseComponent
     }
 
     private Object extractKey(T item) {
-        return keyExtractor.apply(item);
+        return keyExtractor.get(item);
     }
 
     public Table container() {
@@ -84,7 +84,7 @@ public final class ForEach<T> extends BaseComponent
     }
 
     private void reconcile() {
-        Function<T, Component> factory = itemFactory;
+        Func<T, Component> factory = itemFactory;
         if (factory == null) {
             return;
         }

@@ -3,8 +3,7 @@ package solim.core;
 import arc.Events;
 import arc.func.Cons;
 import arc.func.Func;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Prov;
 import solim.reactive.Signal;
 
 /** Utility for lifecycle-safe Arc event listening and reactive signal creation. */
@@ -17,12 +16,12 @@ public final class EventsUtil {
 	}
 
 	/**
-	 * Creates a reactive signal initialized from the supplier that recalculates whenever the
+	 * Creates a reactive signal initialized from the Prov that recalculates whenever the
 	 * specified Arc event fires.
 	 */
-	public static <E, T> Signal<T> createSignal(Class<E> eventType, Supplier<T> supplier) {
-		Signal<T> signal = Signal.of(supplier.get());
-		Events.on(eventType, e -> signal.set(supplier.get()));
+	public static <E, T> Signal<T> createSignal(Class<E> eventType, Prov<T> Prov) {
+		Signal<T> signal = Signal.of(Prov.get());
+		Events.on(eventType, e -> signal.set(Prov.get()));
 		return signal;
 	}
 
@@ -37,13 +36,13 @@ public final class EventsUtil {
 	}
 
 	/**
-	 * Creates a reactive signal initialized from the supplier that recalculates whenever the callback
+	 * Creates a reactive signal initialized from the Prov that recalculates whenever the callback
 	 * registrar invokes the given callback.
 	 */
-	public static <T> Signal<T> createSignal(Function<Runnable, Disposable> registrar, Supplier<T> supplier) {
-		Signal<T> signal = Signal.of(supplier.get());
+	public static <T> Signal<T> createSignal(Func<Runnable, Disposable> registrar, Prov<T> Prov) {
+		Signal<T> signal = Signal.of(Prov.get());
 		if (registrar != null) {
-			registrar.apply(() -> signal.set(supplier.get()));
+			registrar.get(() -> signal.set(Prov.get()));
 		}
 		return signal;
 	}

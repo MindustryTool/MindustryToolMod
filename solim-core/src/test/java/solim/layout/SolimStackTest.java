@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
-import java.util.function.Supplier;
+import arc.func.Prov;
 
 import org.junit.jupiter.api.Test;
 
@@ -95,7 +95,7 @@ class SolimStackTest extends SolimEnv {
 	void nullLayerDoesNothing() {
 		SolimStack s = new SolimStack();
 
-		s.layer((Supplier<Component>) null);
+		s.layer((Prov<Component>) null);
 		s.layer(() -> null);
 
 		assertTrue(s.stack().getChildren().isEmpty());

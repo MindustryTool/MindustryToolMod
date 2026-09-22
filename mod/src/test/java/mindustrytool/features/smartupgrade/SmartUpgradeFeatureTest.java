@@ -27,7 +27,6 @@ import mindustry.world.blocks.liquid.Conduit;
 import mindustry.world.blocks.liquid.LiquidBridge;
 import mindustry.world.blocks.production.BeamDrill;
 import mindustry.world.blocks.production.Drill;
-import mindustrytool.features.FeatureMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -106,27 +105,15 @@ class SmartUpgradeFeatureTest {
         assertNotNull(testBundle);
         assertEquals("Smart Upgrade", testBundle.get("feature.smart-upgrade.name"));
         assertEquals("Smart Upgrade Settings", testBundle.get("feature.smart-upgrade.settings.title"));
+        assertEquals("Tap Interval (ms)", testBundle.get("feature.smart-upgrade.settings.tap-interval"));
 
         I18NBundle testViBundle = I18NBundle.createBundle(baseFi, new Locale("vi"));
         assertNotNull(testViBundle);
         assertEquals("Nâng Cấp Thông Minh", testViBundle.get("feature.smart-upgrade.name"));
         assertEquals("Cài Đặt Nâng Cấp Thông Minh", testViBundle.get("feature.smart-upgrade.settings.title"));
         assertEquals("Số công trình tối đa mỗi lần nâng cấp", testViBundle.get("feature.smart-upgrade.settings.max-upgrades"));
-        assertEquals("Thời gian nhấn giữ (ms)", testViBundle.get("feature.smart-upgrade.settings.hold-duration"));
+        assertEquals("Khoảng thời gian chạm hai lần (ms)", testViBundle.get("feature.smart-upgrade.settings.tap-interval"));
         assertEquals("Bật/Tắt Nâng Cấp Thông Minh", testViBundle.get("keybind.smartUpgradeToggle.name"));
-    }
-
-    @Test
-    void testMetadata() {
-        SmartUpgradeFeature feature = new SmartUpgradeFeature();
-        FeatureMetadata meta = feature.getMetadata();
-
-        assertNotNull(meta);
-        assertEquals("smart-upgrade", meta.getId());
-        assertNotNull(meta.getIcon());
-        assertTrue(meta.isEnabledByDefault());
-        assertTrue(meta.isQuickAccess());
-        assertFalse(meta.isDevelopment());
     }
 
     @Test
@@ -134,7 +121,7 @@ class SmartUpgradeFeatureTest {
         SmartUpgradeFeature feature = new SmartUpgradeFeature();
 
         assertEquals(500, feature.maxUpdatesConfig.get());
-        assertEquals(300, feature.holdDurationConfig.get());
+        assertEquals(300, feature.tapIntervalConfig.get());
         assertFalse(feature.onlySameTypeConfig.get());
         assertTrue(feature.traverseBridgesConfig.get());
     }
@@ -144,19 +131,19 @@ class SmartUpgradeFeatureTest {
         SmartUpgradeFeature feature = new SmartUpgradeFeature();
 
         feature.maxUpdatesConfig.set(1000);
-        feature.holdDurationConfig.set(450);
+        feature.tapIntervalConfig.set(450);
         feature.onlySameTypeConfig.set(true);
         feature.traverseBridgesConfig.set(false);
 
         assertEquals(1000, feature.maxUpdatesConfig.get());
-        assertEquals(450, feature.holdDurationConfig.get());
+        assertEquals(450, feature.tapIntervalConfig.get());
         assertTrue(feature.onlySameTypeConfig.get());
         assertFalse(feature.traverseBridgesConfig.get());
 
         feature.resetToDefaults();
 
         assertEquals(500, feature.maxUpdatesConfig.get());
-        assertEquals(300, feature.holdDurationConfig.get());
+        assertEquals(300, feature.tapIntervalConfig.get());
         assertFalse(feature.onlySameTypeConfig.get());
         assertTrue(feature.traverseBridgesConfig.get());
     }

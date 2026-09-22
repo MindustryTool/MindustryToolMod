@@ -6,7 +6,7 @@ import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Timer;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
+import arc.func.Func;
 import mindustry.Vars;
 import mindustry.core.GameState.State;
 import mindustry.game.EventType.ClientServerConnectEvent;
@@ -26,7 +26,7 @@ public class ChatPresence {
 
     private final ChatSession session;
     private final ConfigValue<Boolean> sharePresence;
-    private final Function<String, CompletableFuture<Void>> publisher;
+    private final Func<String, CompletableFuture<Void>> publisher;
 
     private @Nullable String pcRoom;
     private long generation;
@@ -39,7 +39,7 @@ public class ChatPresence {
     }
 
     ChatPresence(ChatSession session, ConfigValue<Boolean> sharePresence, Signal<Boolean> featureEnabled,
-            Function<String, CompletableFuture<Void>> publisher) {
+            Func<String, CompletableFuture<Void>> publisher) {
         this.session = session;
         this.sharePresence = sharePresence;
         this.publisher = publisher;
@@ -198,7 +198,7 @@ public class ChatPresence {
         lastSent = candidate;
         dirty = false;
         try {
-            publisher.apply(candidate).exceptionally(e -> {
+            publisher.get(candidate).exceptionally(e -> {
                 Log.err("Failed to update chat presence", e);
                 Core.app.post(() -> dirty = true);
                 return null;

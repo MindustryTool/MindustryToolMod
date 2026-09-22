@@ -11,8 +11,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import arc.func.Boolf;
+import arc.func.Prov;
 import solim.core.Disposable;
 
 /**
@@ -177,16 +177,16 @@ public final class QueryCache {
         }
     }
 
-    public void invalidate(Predicate<QueryKey> predicate) {
-        Objects.requireNonNull(predicate, "predicate cannot be null");
+    public void invalidate(Boolf<QueryKey> Boolf) {
+        Objects.requireNonNull(Boolf, "Boolf cannot be null");
         List<QueryKey> matched = new ArrayList<>();
         for (QueryKey key : entries.keySet()) {
-            if (predicate.test(key)) {
+            if (Boolf.get(key)) {
                 matched.add(key);
             }
         }
         for (QueryKey key : observers.keySet()) {
-            if (!matched.contains(key) && predicate.test(key)) {
+            if (!matched.contains(key) && Boolf.get(key)) {
                 matched.add(key);
             }
         }
@@ -199,16 +199,16 @@ public final class QueryCache {
         invalidate(key -> true);
     }
 
-    public <T> CompletableFuture<T> prefetch(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
+    public <T> CompletableFuture<T> prefetch(QueryKey key, Prov<CompletableFuture<T>> fetcher) {
         return fetchCached(key, DEFAULT_STALE_TIME_MS, fetcher);
     }
 
-    public <T> CompletableFuture<T> fetchCached(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
+    public <T> CompletableFuture<T> fetchCached(QueryKey key, Prov<CompletableFuture<T>> fetcher) {
         return fetchCached(key, DEFAULT_STALE_TIME_MS, fetcher);
     }
 
     public <T> CompletableFuture<T> fetchCached(QueryKey key, long staleTimeMs,
-            Supplier<CompletableFuture<T>> fetcher) {
+            Prov<CompletableFuture<T>> fetcher) {
         CacheEntry<T> entry = getOrCreateEntry(key);
         synchronized (entry) {
             CompletableFuture<T> inflight = entry.getInflight();
@@ -222,7 +222,7 @@ public final class QueryCache {
         }
     }
 
-    public <T> CompletableFuture<T> fetchOrJoin(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
+    public <T> CompletableFuture<T> fetchOrJoin(QueryKey key, Prov<CompletableFuture<T>> fetcher) {
         CacheEntry<T> entry = getOrCreateEntry(key);
         synchronized (entry) {
             CompletableFuture<T> inflight = entry.getInflight();
@@ -239,7 +239,7 @@ public final class QueryCache {
      * last good data is always preserved. Must be called holding the entry
      * monitor.
      */
-    private <T> CompletableFuture<T> startFetch(CacheEntry<T> entry, Supplier<CompletableFuture<T>> fetcher) {
+    private <T> CompletableFuture<T> startFetch(CacheEntry<T> entry, Prov<CompletableFuture<T>> fetcher) {
         CompletableFuture<T> future = fetcher.get();
         entry.setInflight(future);
         future.whenComplete((result, throwable) -> {

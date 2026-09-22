@@ -24,7 +24,7 @@ public class SmartUpgradeSettingsView extends BaseComponent {
         Readable<String> maxUpdatesText = feature.maxUpdatesConfig.signal()
                 .map(v -> String.valueOf(v != null ? v : 500));
 
-        Readable<String> holdDurationText = feature.holdDurationConfig.signal()
+        Readable<String> tapIntervalText = feature.tapIntervalConfig.signal()
                 .map(v -> (v != null ? v : 300) + " ms");
 
         return column().grow().center().children(() -> {
@@ -53,14 +53,14 @@ public class SmartUpgradeSettingsView extends BaseComponent {
                         });
                     });
 
-                    // Slider: Hold Duration
+                    // Slider: Tap Interval
                     row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.smart-upgrade.settings.hold-duration",
-                                "Hold Duration")).left();
+                        text(Core.bundle.get("feature.smart-upgrade.settings.tap-interval",
+                                "Tap Interval")).left();
                         spacer();
-                        slider(feature.holdDurationConfig.signal(), 100, 1000, 50);
+                        slider(feature.tapIntervalConfig.signal(), 150, 600, 25);
                         row().width(unit(12)).children(() -> {
-                            text(holdDurationText);
+                            text(tapIntervalText);
                         });
                     });
 

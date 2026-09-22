@@ -2,7 +2,7 @@ package solim.layout;
 
 import solim.modifier.CellConfig;
 
-import java.util.function.Consumer;
+import arc.func.Cons;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,8 +103,8 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return this;
     }
 
-    public Scroll outer(Consumer<Table> consumer) {
-        consumer.accept(outer);
+    public Scroll outer(Cons<Table> Cons) {
+        Cons.get(outer);
         return this;
     }
 
@@ -112,8 +112,8 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return content;
     }
 
-    public Scroll content(Consumer<Table> consumer) {
-        consumer.accept(content);
+    public Scroll content(Cons<Table> Cons) {
+        Cons.get(content);
         return this;
     }
 
@@ -121,8 +121,8 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return pane;
     }
 
-    public Scroll pane(Consumer<ScrollPane> consumer) {
-        consumer.accept(pane);
+    public Scroll pane(Cons<ScrollPane> Cons) {
+        Cons.get(pane);
         return this;
     }
 

@@ -14,9 +14,7 @@ import arc.util.Scaling;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Prov;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.EventsUtil;
@@ -325,7 +323,7 @@ public final class UI {
         return cb;
     }
 
-    public static Checkbox checkbox(String label, boolean initial, Consumer<Boolean> onChanged) {
+    public static Checkbox checkbox(String label, boolean initial, Cons<Boolean> onChanged) {
         Checkbox cb = Checkbox.of(label, initial, onChanged);
         ParentStack.attachToParent(cb.checkBox());
         return cb;
@@ -369,7 +367,7 @@ public final class UI {
         return new Popup<>();
     }
 
-    public static <T> Popup<T> popup(Function<T, Component> provider) {
+    public static <T> Popup<T> popup(Func<T, Component> provider) {
         Popup<T> popup = new Popup<>();
         popup.children(provider);
         return popup;
@@ -385,7 +383,7 @@ public final class UI {
         return Signal.of(initial);
     }
 
-    public static <T> Computed<T> computed(Supplier<T> compute) {
+    public static <T> Computed<T> computed(Prov<T> compute) {
         return new Computed<>(compute);
     }
 
@@ -401,27 +399,27 @@ public final class UI {
         return Effect.of(effect);
     }
 
-    public static <E, T> Signal<T> createSignal(Class<E> eventType, Supplier<T> supplier) {
-        return EventsUtil.createSignal(eventType, supplier);
+    public static <E, T> Signal<T> createSignal(Class<E> eventType, Prov<T> Prov) {
+        return EventsUtil.createSignal(eventType, Prov);
     }
 
     public static <E, T> Signal<T> createSignal(Class<E> eventType, Func<E, T> mapper, T initial) {
         return EventsUtil.createSignal(eventType, mapper, initial);
     }
 
-    public static <T> Signal<T> createSignal(Function<Runnable, Disposable> callbackRegistrar, Supplier<T> supplier) {
-        return EventsUtil.createSignal(callbackRegistrar, supplier);
+    public static <T> Signal<T> createSignal(Func<Runnable, Disposable> callbackRegistrar, Prov<T> Prov) {
+        return EventsUtil.createSignal(callbackRegistrar, Prov);
     }
 
     public static Readable<Boolean> isPortrait() {
         return Signals.isPortrait();
     }
 
-    public static <T> Query<T> query(QueryKey key, Supplier<CompletableFuture<T>> fetcher) {
+    public static <T> Query<T> query(QueryKey key, Prov<CompletableFuture<T>> fetcher) {
         return Query.of(key, fetcher);
     }
 
-    public static <T> Query<T> query(QueryKey key, Readable<Boolean> enabled, Supplier<CompletableFuture<T>> fetcher) {
+    public static <T> Query<T> query(QueryKey key, Readable<Boolean> enabled, Prov<CompletableFuture<T>> fetcher) {
         return Query.of(key, enabled, fetcher);
     }
 
@@ -430,7 +428,7 @@ public final class UI {
      * by cache invalidation. Use {@code Query.builder()} for keyed or
      * configured queries.
      */
-    public static <T> Query<T> query(Supplier<CompletableFuture<T>> fetcher) {
+    public static <T> Query<T> query(Prov<CompletableFuture<T>> fetcher) {
         return Query.noKey(fetcher);
     }
 
@@ -440,24 +438,24 @@ public final class UI {
         return qv;
     }
 
-    public static <T, R> Mutation<T, R> mutation(Function<T, CompletableFuture<R>> mutator) {
+    public static <T, R> Mutation<T, R> mutation(Func<T, CompletableFuture<R>> mutator) {
         return Mutation.of(mutator);
     }
 
-    public static <R> Mutation<Void, R> mutation(Supplier<CompletableFuture<R>> mutator) {
+    public static <R> Mutation<Void, R> mutation(Prov<CompletableFuture<R>> mutator) {
         return Mutation.of(mutator);
     }
 
     // --- Structural & Dynamic ---
 
-    public static <T> Dynamic<T> dynamic(Readable<T> source, Function<T, Component> factory) {
+    public static <T> Dynamic<T> dynamic(Readable<T> source, Func<T, Component> factory) {
         Dynamic<T> d = Dynamic.of(source, factory);
         ParentStack.attachToParent(d.element());
         return d;
     }
 
-    public static Dynamic<Boolean> when(Readable<Boolean> condition, Supplier<Component> supplier) {
-        return dynamic(condition, value -> Boolean.TRUE.equals(value) && supplier != null ? supplier.get() : null);
+    public static Dynamic<Boolean> when(Readable<Boolean> condition, Prov<Component> Prov) {
+        return dynamic(condition, value -> Boolean.TRUE.equals(value) && Prov != null ? Prov.get() : null);
     }
 
     public static <T> ForEach<T> forEach(Readable<? extends Iterable<T>> collection) {
