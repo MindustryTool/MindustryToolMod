@@ -28,6 +28,10 @@ import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
+import mindustry.input.DesktopInput;
+import mindustry.input.InputHandler;
+import mindustry.input.MobileInput;
+import mindustry.input.PlaceMode;
 import mindustry.ui.Styles;
 import mindustry.world.Block;
 import mindustry.world.Tile;
@@ -144,8 +148,7 @@ public class SmartUpgradeFeature extends Feature {
                 return;
             }
 
-            if (Vars.control != null && Vars.control.input != null && Vars.control.input.isBuilding) {
-                disarm();
+            if (isPlacingInput()) {
                 return;
             }
 
@@ -438,6 +441,25 @@ public class SmartUpgradeFeature extends Feature {
         float my = Core.input.mouseY();
         Element hit = Core.scene.hit(mx, my, true);
         return hit != null && (hit == currentMenu || hit.isDescendantOf(currentMenu));
+    }
+
+    private boolean isPlacingInput() {
+        if (Vars.control == null || Vars.control.input == null) {
+            return false;
+        }
+        InputHandler input = Vars.control.input;
+        if (input.isPlacing() || input.isUsingSchematic()) {
+            return true;
+        }
+        if (input instanceof MobileInput) {
+            MobileInput mobile = (MobileInput) input;
+            return mobile.lineMode || mobile.selecting || mobile.schematicMode || mobile.mode != PlaceMode.none;
+        }
+        if (input instanceof DesktopInput) {
+            DesktopInput desktop = (DesktopInput) input;
+            return desktop.mode != PlaceMode.none;
+        }
+        return false;
     }
 
     private void update() {

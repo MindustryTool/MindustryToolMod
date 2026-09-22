@@ -52,8 +52,8 @@ The system SHALL provide a `trigger-mode` setting with values `one-shot` (defaul
 The system SHALL only evaluate single-click when the feature is enabled AND armed, a game is active, the tapped tile has a building on the player's team in an upgradeable group, no UI consumes the pointer, and the player is not placing a building; the upgrade menu SHALL stack above vanilla selection and dismiss on outside tap, Escape/Back, or invalid tile.
 
 #### Scenario: Guarded taps are ignored
-- **WHEN** a tap arrives while disabled, while disarmed, in menu state, on an enemy/neutral or non-upgradeable block, with `scene.hasMouse()`, or while `input.isBuilding`
-- **THEN** no menu opens
+- **WHEN** a tap arrives while disabled, while disarmed, in menu state, on an enemy/neutral or non-upgradeable block, with `scene.hasMouse()`, or while placing (`input.isPlacing()`, schematic selection, line-drag, or non-`none` `PlaceMode`)
+- **THEN** no menu opens and armed state is preserved
 
 #### Scenario: Menu stacks over vanilla selection
 - **WHEN** an armed single tap opens the upgrade menu
