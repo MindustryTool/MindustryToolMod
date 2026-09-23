@@ -13,16 +13,16 @@ import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Effect;
 
 /** Row layout — horizontal Table wrapper. */
 public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {
 
-    public static final ParentStack.Attacher ATTACHER = (table, child) -> {
+    public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
         if (SolimToken.isExpandingChild(child)) {
             cell.growX();
@@ -46,7 +46,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         this.table.name = "solim-row-table";
         this.table.top().left();
         this.table.defaults().top().left();
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Table table() {
@@ -92,7 +92,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -183,15 +183,15 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
     }
 
     public Row children(@Nullable Runnable r) {
-        ParentStack.push(table, ATTACHER);
+        AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
                 r.run();
             }
         } finally {
-            ParentStack.pop();
+            AttachmentStack.pop();
         }
-        ParentStack.attachToParent(table);
+        AttachmentStack.attachToParent(table);
         respace();
         return this;
     }

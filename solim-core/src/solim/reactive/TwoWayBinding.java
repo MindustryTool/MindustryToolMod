@@ -20,7 +20,7 @@ import arc.func.Boolf2;
  *
  * <p>Implements {@link Disposable}. When disposed, the signal-watching Effect is disposed and
  * the widget listener is removed (if the widget supports listener removal). The binding is
- * automatically owned by the active {@link solim.runtime.ComponentContext} when created inside
+ * automatically owned by the active {@link solim.runtime.OwnershipContext} when created inside
  * a component {@code build()}.
  *
  * @param <T> the value type shared by the signal and the widget

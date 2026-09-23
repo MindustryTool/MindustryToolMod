@@ -15,8 +15,8 @@ import solim.layout.Divider;
 import solim.layout.Row;
 import solim.layout.Spacer;
 import solim.layout.Direction;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 class BaseComponentAutoAttachTest extends SolimEnv {
@@ -31,16 +31,16 @@ class BaseComponentAutoAttachTest extends SolimEnv {
 
     @AfterEach
     void clear() {
-        ParentStack.clear();
-        ComponentContext.clear();
+        AttachmentStack.clear();
+        OwnershipContext.clear();
     }
 
     @Test
     void constructsInScopeAutoAttaches() {
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
         Probe probe = new Probe();
-        ParentStack.pop();
+        AttachmentStack.pop();
         assertEquals(1, root.getChildren().size);
         assertTrue(root.getChildren().contains(probe.element(), true));
     }
@@ -48,12 +48,12 @@ class BaseComponentAutoAttachTest extends SolimEnv {
     @Test
     void nestedScopeAttachesToInnerParent() {
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
         final Probe[] held = new Probe[1];
         Column col = new Column().children(() -> {
             held[0] = new Probe();
         });
-        ParentStack.pop();
+        AttachmentStack.pop();
         assertEquals(1, root.getChildren().size);
         assertEquals(1, col.table().getChildren().size);
         assertSame(held[0].element(), col.table().getChildren().get(0));
@@ -61,19 +61,19 @@ class BaseComponentAutoAttachTest extends SolimEnv {
 
     @Test
     void constructsOutsideScopeAttachesNothing() {
-        assertNull(ParentStack.current());
+        assertNull(AttachmentStack.current());
         Probe probe = new Probe();
         assertNull(probe.element().parent);
-        assertEquals(0, ParentStack.size());
+        assertEquals(0, AttachmentStack.size());
     }
 
     @Test
     void explicitComponentCallDoesNotDuplicate() {
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
         Probe probe = new Probe();
-        ParentStack.attachToParent(ParentStack.isolate(probe::element));
-        ParentStack.pop();
+        AttachmentStack.attachToParent(AttachmentStack.isolate(probe::element));
+        AttachmentStack.pop();
         assertEquals(1, root.getChildren().size);
         assertTrue(root.getChildren().contains(probe.element(), true));
     }
@@ -87,7 +87,7 @@ class BaseComponentAutoAttachTest extends SolimEnv {
         Column col = new Column().grow().gap(4f).children(() -> {
             messageList[0] = new Probe();
             Divider div = new Divider(Direction.X);
-            ParentStack.attachToParent(div.element());
+            AttachmentStack.attachToParent(div.element());
             divider[0] = div.element();
             inputView[0] = new Probe();
         });
@@ -107,11 +107,11 @@ class BaseComponentAutoAttachTest extends SolimEnv {
 
         Column col = new Column().children(() -> {
             Spacer spacer = new Spacer();
-            ParentStack.attachToParent(spacer.element());
+            AttachmentStack.attachToParent(spacer.element());
             el1[0] = spacer.element();
             comp1[0] = new Probe();
             Divider dividerComp = new Divider(Direction.X);
-            ParentStack.attachToParent(dividerComp.element());
+            AttachmentStack.attachToParent(dividerComp.element());
             el2[0] = dividerComp.element();
             comp2[0] = new Probe();
         });
@@ -132,7 +132,7 @@ class BaseComponentAutoAttachTest extends SolimEnv {
         Column col = new Column().children(() -> {
             comp1[0] = new Probe();
             Row innerRow = new Row().children(() -> {
-                ParentStack.attachToParent(new Spacer().element());
+                AttachmentStack.attachToParent(new Spacer().element());
             });
             rowElem[0] = innerRow.table();
             comp2[0] = new Probe();

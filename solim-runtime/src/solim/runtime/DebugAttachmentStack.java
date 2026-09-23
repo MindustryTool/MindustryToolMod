@@ -15,7 +15,7 @@ import solim.performance.PerfSpan;
 import solim.performance.TraceSpan;
 
 /**
- * Profiling-enabled {@link ParentStack} variant. Records threshold-gated slow spans
+ * Profiling-enabled {@link AttachmentStack} variant. Records threshold-gated slow spans
  * and, when tracing is enabled, full hierarchical flame spans with no threshold.
  *
  * <p>Push timestamps and open flame spans are kept in parallel deques so the base
@@ -23,7 +23,7 @@ import solim.performance.TraceSpan;
  * {@link #doPop} ({@link #doIsolate}, {@link #doCapture}, {@link #doClear}) is
  * overridden to keep both deques in lockstep with the stack.
  */
-public class DebugParentStack extends ParentStack {
+public class DebugAttachmentStack extends AttachmentStack {
 
     private static final int BUFFER_SIZE = 256;
     public static final int TRACE_CAPACITY = 4096;
@@ -70,7 +70,7 @@ public class DebugParentStack extends ParentStack {
     private int nextSpanId = 0;
     private int traceMaxDepth = 0;
 
-    public DebugParentStack() {
+    public DebugAttachmentStack() {
     }
 
     @Override
@@ -378,7 +378,7 @@ public class DebugParentStack extends ParentStack {
     }
 
     private synchronized void record(String phase, float durationMs, String detail) {
-        PerfSpan span = new PerfSpan("ParentStack", phase, durationMs, System.currentTimeMillis(), detail);
+        PerfSpan span = new PerfSpan("AttachmentStack", phase, durationMs, System.currentTimeMillis(), detail);
         buffer[head] = span;
         head = (head + 1) % BUFFER_SIZE;
         if (totalRecorded < BUFFER_SIZE) {

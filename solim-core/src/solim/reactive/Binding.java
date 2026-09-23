@@ -5,24 +5,24 @@ import arc.scene.Element;
 import arc.scene.ui.Button;
 import arc.scene.ui.Label;
 import arc.func.Cons;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 /**
  * Reactive property binding utilities for Arc Scene2D elements. Automatically registered with the
- * active ComponentContext when bound during build().
+ * active OwnershipContext when bound during build().
  */
 public final class Binding {
 	private Binding() {}
 
 	public static <T> Effect of(Cons<T> target, Signal<T> source) {
 		Effect effect = Effect.of(() -> target.get(source.get()));
-		ComponentContext.register(effect);
+		OwnershipContext.register(effect);
 		return effect;
 	}
 
 	public static <T> Effect of(Cons<T> target, Computed<T> source) {
 		Effect effect = Effect.of(() -> target.get(source.get()));
-		ComponentContext.register(effect);
+		OwnershipContext.register(effect);
 		return effect;
 	}
 
@@ -32,7 +32,7 @@ public final class Binding {
 
 	public static <T> Effect bind(Readable<T> source, Cons<T> target) {
 		Effect effect = Effect.of(() -> target.get(source.get()));
-		ComponentContext.register(effect);
+		OwnershipContext.register(effect);
 		return effect;
 	}
 

@@ -61,7 +61,7 @@ Layouts SHALL support `growX()`, `growY()`, `grow()` on cells and widgets (e.g.,
 - **THEN** texts flow to next line when out of horizontal space
 
 ### Requirement: Wrap with LayoutModifiers and declarative children
-The `Wrap` component SHALL implement `CellConfig<Wrap>`, `ElementConfig<Wrap>`, and `TableConfig<Wrap>`. CellConfig provides `growX()`, `grow()`, `margin()`. ElementConfig provides `width()`, `height()`, `size()`. TableConfig provides `top()`, `gap()`, `padding()`, `rounded()`, `border()`. Wrap SHALL support `children(Runnable)` for declarative child attachment via `ParentStack`.
+The `Wrap` component SHALL implement `CellConfig<Wrap>`, `ElementConfig<Wrap>`, and `TableConfig<Wrap>`. CellConfig provides `growX()`, `grow()`, `margin()`. ElementConfig provides `width()`, `height()`, `size()`. TableConfig provides `top()`, `gap()`, `padding()`, `rounded()`, `border()`. Wrap SHALL support `children(Runnable)` for declarative child attachment via `AttachmentStack`.
 
 #### Scenario: Wrap with rounded and border
 - **WHEN** `wrap().rounded(4).border(1f, Color.gray).children(() -> { ... })` is called
@@ -631,7 +631,7 @@ The Solim structural and compound components `Dynamic`, `ForEach`, `Tabs`, `Reac
 
 When setting a new tooltip, any existing `Tooltip` listener on the element SHALL be removed to prevent duplicate listeners. Passing `null` or an empty string SHALL remove existing tooltip listeners without adding a new one.
 
-Reactive tooltips (`Readable<String>`) SHALL bind a `Label` to the tooltip container and register the update `Effect` with `ComponentContext` for ambient lifecycle disposal.
+Reactive tooltips (`Readable<String>`) SHALL bind a `Label` to the tooltip container and register the update `Effect` with `OwnershipContext` for ambient lifecycle disposal.
 
 #### Scenario: Attaching static tooltip to a component
 - **WHEN** a component implementing `ElementConfig` calls `.tooltip("My tooltip")`
@@ -686,11 +686,11 @@ The system SHALL clarify via probes whether `ElementConfig.height(float)` on lay
 - **WHEN** `SolimToken.setExpanding(element, true)` is called
 - **THEN** `SolimToken.isExpanding(element)` returns `true` and any existing `component` reference in the token remains intact
 
-### Requirement: ParentStack mounts components with direct cell configurator
-`ParentStack` SHALL pass `(Cell<?> cell, Element child, @Nullable Component component)` to the active `CellConfigurator`. When pending components are attached, the owning `Component` SHALL be passed directly without requiring backward element traversal.
+### Requirement: AttachmentStack mounts components with direct cell configurator
+`AttachmentStack` SHALL pass `(Cell<?> cell, Element child, @Nullable Component component)` to the active `CellConfigurator`. When pending components are attached, the owning `Component` SHALL be passed directly without requiring backward element traversal.
 
 #### Scenario: Applying cell constraints from component during attachment
-- **WHEN** a component with pending cell constraints is mounted via `ParentStack`
+- **WHEN** a component with pending cell constraints is mounted via `AttachmentStack`
 - **THEN** `CellConfigurator` receives the `Component` directly and applies constraints to the parent `Cell` without relying on `child.userObject`
 
 ### Requirement: GapContainer respace via SolimToken

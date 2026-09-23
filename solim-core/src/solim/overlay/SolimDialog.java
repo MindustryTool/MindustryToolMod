@@ -24,7 +24,7 @@ import solim.core.Disposable;
 import solim.core.DisposableAction;
 import solim.graphics.RoundedDrawable;
 import solim.modifier.RoundedHelper;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 
@@ -84,11 +84,11 @@ public class SolimDialog implements Component {
             BaseComponent comp = new BaseComponent() {
                 @Override
                 protected Element build() {
-                    ParentStack.push(wrapped.cont);
+                    AttachmentStack.push(wrapped.cont);
                     try {
                         contentBuilder.run();
                     } finally {
-                        ParentStack.pop();
+                        AttachmentStack.pop();
                     }
                     return wrapped.cont;
                 }

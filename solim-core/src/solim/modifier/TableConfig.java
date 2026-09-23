@@ -6,7 +6,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.graphics.RoundedDrawable;
 import solim.layout.GapContainer;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
@@ -165,7 +165,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
             if (v != null)
                 padding(v);
         });
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return self();
     }
 
@@ -185,7 +185,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
                 t.margin(tv, lv, bv, rv);
             }
         });
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return self();
     }
 
@@ -198,7 +198,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
             if (v != null)
                 paddingTop(v);
         });
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return self();
     }
 
@@ -211,7 +211,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
             if (v != null)
                 paddingBottom(v);
         });
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return self();
     }
 
@@ -224,7 +224,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
             if (v != null)
                 paddingLeft(v);
         });
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return self();
     }
 
@@ -237,7 +237,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
             if (v != null)
                 paddingRight(v);
         });
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return self();
     }
 
@@ -250,7 +250,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
             if (v != null)
                 paddingX(v);
         });
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return self();
     }
 
@@ -263,7 +263,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
             if (v != null)
                 paddingY(v);
         });
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return self();
     }
 
@@ -284,7 +284,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
             if (v != null)
                 gap(v);
         });
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return self();
     }
 
@@ -331,7 +331,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
                 if (c != null)
                     rd.fillColor(c);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return self();
     }
@@ -359,7 +359,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
                 Color c = color.get();
                 rd.border(stroke, c != null ? c : Color.white);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         } else {
             rd.border(stroke, Color.white);
         }
@@ -391,7 +391,7 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
                 Drawable d = bg.get();
                 background(d);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return self();
     }

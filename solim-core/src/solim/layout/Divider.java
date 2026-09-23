@@ -13,7 +13,7 @@ import solim.display.SolimImage;
 import solim.modifier.ElementConfig;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 /**
  * Divider line supporting horizontal (X) and vertical (Y) directions. Uses an
@@ -52,7 +52,7 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
             minHeight(1.5f);
             marginRight(1);
         }
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Direction direction() {

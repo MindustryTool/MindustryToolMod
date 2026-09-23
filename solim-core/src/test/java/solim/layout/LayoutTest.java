@@ -34,7 +34,7 @@ import solim.input.Button;
 import solim.input.Checkbox;
 import solim.input.SolimTextField;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -44,7 +44,7 @@ class LayoutTest extends SolimEnv {
     @Test
     void rowAlignAndGap() {
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
         Row r = new Row();
         r.gap(8f);
         r.align(Align.CENTER);
@@ -57,7 +57,7 @@ class LayoutTest extends SolimEnv {
         assertEquals(2, r.table().getChildren().size);
         assertSame(a, r.table().getChildren().get(0));
         assertSame(b, r.table().getChildren().get(1));
-        ParentStack.pop();
+        AttachmentStack.pop();
     }
 
     @Test
@@ -75,7 +75,7 @@ class LayoutTest extends SolimEnv {
     @Test
     void spacerConsumesSpace() {
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
         Table row = new Table();
         Element back = new Element();
         back.name = "back";
@@ -85,7 +85,7 @@ class LayoutTest extends SolimEnv {
         row.add(new Spacer().element());
         row.add(save);
         assertEquals(3, row.getChildren().size);
-        ParentStack.pop();
+        AttachmentStack.pop();
     }
 
     @Test
@@ -200,10 +200,10 @@ class LayoutTest extends SolimEnv {
                         return 40f;
                     }
                 };
-                ParentStack.add(e1);
+                AttachmentStack.add(e1);
             });
             Scroll scroll = new Scroll();
-            ParentStack.attachToParent(scroll.element());
+            AttachmentStack.attachToParent(scroll.element());
             scroll.grow().children(() -> {
                 Element e2 = new Element() {
                     @Override
@@ -216,7 +216,7 @@ class LayoutTest extends SolimEnv {
                         return 200f;
                     }
                 };
-                ParentStack.add(e2);
+                AttachmentStack.add(e2);
             });
         });
 
@@ -246,8 +246,8 @@ class LayoutTest extends SolimEnv {
                 .color(colorSignal)
                 .margin(12f)
                 .children(() -> {
-                    ParentStack.add(new Element());
-                    ParentStack.add(new Element());
+                    AttachmentStack.add(new Element());
+                    AttachmentStack.add(new Element());
                 });
 
         assertEquals(2, c.container().getChildren().size, "Card container must have 2 children");
@@ -292,13 +292,13 @@ class LayoutTest extends SolimEnv {
     @Test
     void spacerExpandsInRowAndColumn() {
         Row row = new Row().children(() -> {
-            ParentStack.attachToParent(new Spacer().element());
+            AttachmentStack.attachToParent(new Spacer().element());
         });
         Cell<?> rowCell = row.table().getCells().first();
         assertTrue(CellAccess.expandX(rowCell) > 0, "Spacer in Row must grow horizontally");
 
         Column col = new Column().children(() -> {
-            ParentStack.attachToParent(new Spacer().element());
+            AttachmentStack.attachToParent(new Spacer().element());
         });
         Cell<?> colCell = col.table().getCells().first();
         assertTrue(CellAccess.expandY(colCell) > 0, "Spacer in Column must grow vertically");
@@ -319,7 +319,7 @@ class LayoutTest extends SolimEnv {
         Row row = new Row().children(() -> {
             new Row().children(() -> {
             });
-            ParentStack.attachToParent(new Element());
+            AttachmentStack.attachToParent(new Element());
         });
         Cell<?> rowChildCell = row.table().getCells().get(0);
         Cell<?> rowElementCell = row.table().getCells().get(1);
@@ -380,7 +380,7 @@ class LayoutTest extends SolimEnv {
             new SolimImage().growX();
             // Button with growX() chained
             Button chainedButton = new Button();
-            ParentStack.attachToParent(chainedButton.element());
+            AttachmentStack.attachToParent(chainedButton.element());
             chainedButton.growX();
             // Row with growX() chained AFTER children()
             new Row().children(() -> {
@@ -414,11 +414,11 @@ class LayoutTest extends SolimEnv {
             new Row().growX().gap(8f).children(() -> {
                 new SolimImage().size(24, 24);
                 Button actionButton = new Button();
-                ParentStack.attachToParent(actionButton.element());
+                AttachmentStack.attachToParent(actionButton.element());
                 actionButton.height(40).width(200);
             });
             scrollRef[0] = new Scroll();
-            ParentStack.attachToParent(scrollRef[0].element());
+            AttachmentStack.attachToParent(scrollRef[0].element());
             scrollRef[0].grow().children(() -> {
                 ReactiveGrid<String> grid = new ReactiveGrid<>(items);
                 grid.columns(Signal.of(2)).key(x -> x);
@@ -735,7 +735,7 @@ class LayoutTest extends SolimEnv {
 
         Column col = new Column().grow().children(() -> {
             Scroll scroll = new Scroll();
-            ParentStack.attachToParent(scroll.element());
+            AttachmentStack.attachToParent(scroll.element());
             scroll.grow().children(() -> {
                 gridRef[0] = new ReactiveGrid<>(items);
                 gridRef[0].columns(Signal.of(2)).key(x -> x);
@@ -780,7 +780,7 @@ class LayoutTest extends SolimEnv {
 
         Column col = new Column().grow().children(() -> {
             Scroll scroll = new Scroll();
-            ParentStack.attachToParent(scroll.element());
+            AttachmentStack.attachToParent(scroll.element());
             scroll.grow().children(() -> {
                 gridRef[0] = new ReactiveGrid<>(items);
                 gridRef[0].columns(Signal.of(3)).key(x -> x);
@@ -828,7 +828,7 @@ class LayoutTest extends SolimEnv {
         Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent test");
         Table root = new Table();
         root.setSize(1024f, 576f);
-        ParentStack.push(root);
+        AttachmentStack.push(root);
 
         Column mainCol = new Column();
         mainCol.grow().padding(16f).gap(16f);
@@ -860,14 +860,14 @@ class LayoutTest extends SolimEnv {
                                         return 36f;
                                     }
                                 };
-                                ParentStack.add(item);
+                                AttachmentStack.add(item);
                             }
                         });
                     });
                 });
             });
         });
-        ParentStack.pop();
+        AttachmentStack.pop();
 
         root.layout();
         root.act(0.016f);

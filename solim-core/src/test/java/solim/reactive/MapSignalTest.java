@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
@@ -271,20 +271,20 @@ class MapSignalTest extends SolimEnv {
     }
 
     @Test
-    void doesNotRegisterWithComponentContext() {
+    void doesNotRegisterWithOwnershipContext() {
         List<Object> registered = new ArrayList<>();
-        ComponentContext.push(registered::add);
+        OwnershipContext.push(registered::add);
         try {
-            int before = ComponentContext.size();
+            int before = OwnershipContext.size();
             MapSignal<String, Integer> map = MapSignal.of();
             map.readable("k");
             map.readable("k").peek();
-            assertTrue(registered.isEmpty(), "MapSignal must not auto-register with ComponentContext");
-            assertEquals(before, ComponentContext.size());
+            assertTrue(registered.isEmpty(), "MapSignal must not auto-register with OwnershipContext");
+            assertEquals(before, OwnershipContext.size());
         } finally {
-            ComponentContext.pop();
+            OwnershipContext.pop();
         }
-        assertEquals(0, ComponentContext.size());
+        assertEquals(0, OwnershipContext.size());
     }
 
     @Test
@@ -293,12 +293,12 @@ class MapSignalTest extends SolimEnv {
         map.put("user1", "Alice");
 
         List<Object> registered = new ArrayList<>();
-        ComponentContext.push(registered::add);
+        OwnershipContext.push(registered::add);
         Effect transientEffect;
         try {
             transientEffect = Effect.of(() -> map.readable("user1").get());
         } finally {
-            ComponentContext.pop();
+            OwnershipContext.pop();
         }
         transientEffect.dispose();
         assertEquals(0, map.keyObserverCount("user1"), "Disposed transient effect must detach");

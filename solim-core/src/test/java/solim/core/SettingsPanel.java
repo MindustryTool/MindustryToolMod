@@ -16,7 +16,7 @@ import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 
 /** Example final API settings panel from requirement.md §16. */
 public final class SettingsPanel extends BaseComponent {
@@ -63,7 +63,7 @@ public final class SettingsPanel extends BaseComponent {
 					text(t("solim.settings.title", "Settings"));
 
 					Divider divider = new Divider(Direction.X);
-					ParentStack.attachToParent(divider.element());
+					AttachmentStack.attachToParent(divider.element());
 
 					new Row().children(() -> {
 						text(t("solim.settings.dark-mode", "Dark Mode"));
@@ -79,7 +79,7 @@ public final class SettingsPanel extends BaseComponent {
 					});
 
 					Spacer spacer = new Spacer();
-					ParentStack.attachToParent(spacer.element());
+					AttachmentStack.attachToParent(spacer.element());
 
 					new Row().right().gap(8).children(() -> {
 						button(() -> {
@@ -98,16 +98,16 @@ public final class SettingsPanel extends BaseComponent {
 	}
 
 	private static void text(String value) {
-		ParentStack.attachToParent(Text.of(value).label());
+		AttachmentStack.attachToParent(Text.of(value).label());
 	}
 
 	private static void text(Readable<String> value) {
-		ParentStack.attachToParent(Text.of(value).label());
+		AttachmentStack.attachToParent(Text.of(value).label());
 	}
 
 	private static Button button(Runnable onClick) {
 		Button button = new Button(onClick);
-		ParentStack.attachToParent(button.element());
+		AttachmentStack.attachToParent(button.element());
 		return button;
 	}
 

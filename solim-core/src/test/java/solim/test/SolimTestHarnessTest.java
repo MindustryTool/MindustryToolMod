@@ -10,8 +10,8 @@ import arc.scene.Element;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
@@ -19,8 +19,8 @@ class SolimTestHarnessTest extends SolimEnv {
 
 	@Test
 	void harnessEnsuresCleanAmbientContexts() {
-		assertEquals(0, ParentStack.size());
-		assertEquals(0, ComponentContext.size());
+		assertEquals(0, AttachmentStack.size());
+		assertEquals(0, OwnershipContext.size());
 		assertEquals(0, ReactiveContext.size());
 		assertEquals(0, SignalDispatcher.size());
 		assertFalse(SignalDispatcher.isFlushing());

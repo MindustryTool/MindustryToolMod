@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
 import solim.test.SolimEnv;
@@ -26,10 +26,10 @@ class DisplayTest extends SolimEnv {
 	@Test
 	void staticText() {
 		Table root = new Table();
-		ParentStack.push(root);
-		ParentStack.add(new Text("Hello").label());
+		AttachmentStack.push(root);
+		AttachmentStack.add(new Text("Hello").label());
 		assertEquals(1, root.getChildren().size);
-		ParentStack.pop();
+		AttachmentStack.pop();
 	}
 
 	@Test
@@ -111,10 +111,10 @@ class DisplayTest extends SolimEnv {
 	@Test
 	void textPaddingAndMarginInTable() {
 		Table root = new Table();
-		ParentStack.push(root);
+		AttachmentStack.push(root);
 
 		Text t = Text.of("Hello");
-		ParentStack.attachToParent(t.label());
+		AttachmentStack.attachToParent(t.label());
 		t.padding(8f).margin(4f);
 		assertEquals(12f, CellAccess.padTop(root.getCell(t.label())), 0.01f);
 		assertEquals(12f, CellAccess.padLeft(root.getCell(t.label())), 0.01f);
@@ -132,16 +132,16 @@ class DisplayTest extends SolimEnv {
 		t.marginTop(2f);
 		assertEquals(12f, CellAccess.padTop(root.getCell(t.label())), 0.01f);
 
-		ParentStack.pop();
+		AttachmentStack.pop();
 	}
 
 	@Test
 	void sizedImagePaddingAndMarginInTable() {
 		Table root = new Table();
-		ParentStack.push(root);
+		AttachmentStack.push(root);
 
 		SolimImage img = new SolimImage((Drawable) null);
-		ParentStack.attachToParent(img.element());
+		AttachmentStack.attachToParent(img.element());
 		img.padding(6f).margin(2f);
 		assertEquals(8f, CellAccess.padTop(root.getCell(img.element())), 0.01f);
 		assertEquals(8f, CellAccess.padLeft(root.getCell(img.element())), 0.01f);
@@ -159,7 +159,7 @@ class DisplayTest extends SolimEnv {
 		img.marginBottom(5f);
 		assertEquals(15f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);
 
-		ParentStack.pop();
+		AttachmentStack.pop();
 	}
 
 	@Test

@@ -11,7 +11,7 @@ import solim.core.Disposable;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.core.SchedulableEffect;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
@@ -78,12 +78,12 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 	}
 
 	/**
-	 * Internal factory: registers the effect with the active ComponentContext (if any) BEFORE
+	 * Internal factory: registers the effect with the active OwnershipContext (if any) BEFORE
 	 * running it so that ownership is established even if the initial run throws.
 	 */
 	private static Effect create(Runnable runnable, Prov<Runnable> Prov, Cons<Cleanup> cleanupConsumer) {
 		Effect effect = new Effect(runnable, Prov, cleanupConsumer);
-		ComponentContext.register(effect);
+		OwnershipContext.register(effect);
 		effect.runEffect();
 		return effect;
 	}

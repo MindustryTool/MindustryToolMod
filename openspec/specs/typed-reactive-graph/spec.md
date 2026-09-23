@@ -18,7 +18,7 @@ The system SHALL provide a shared reactive-source contract in `solim-api` implem
 - **THEN** it detaches from every dependency through the contract and leaves no observers behind
 
 ### Requirement: Unified reactive tracking
-Reactive reads through the contract SHALL share one tracking path: reactive reads register the current observer via `ReactiveContext`, non-reactive `peek()` reads never register, build-time reads warn, and store-held sources never register with `ComponentContext`.
+Reactive reads through the contract SHALL share one tracking path: reactive reads register the current observer via `ReactiveContext`, non-reactive `peek()` reads never register, build-time reads warn, and store-held sources never register with `OwnershipContext`.
 
 #### Scenario: Reactive read tracks once
 - **WHEN** `Signal.get()`, `MapSignal.get()`, `MapSignal.size()`, `MapSignal.isEmpty()`, or `readable(key).get()` is called inside a `Computed` or `Effect`

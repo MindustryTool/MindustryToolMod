@@ -22,7 +22,7 @@ import arc.util.Scaling;
 import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -33,7 +33,7 @@ class NetworkImageComponentTest extends SolimEnv {
     void setup() {
         SignalDispatcher.resetForTests();
         NetworkImage.clearCache();
-        ParentStack.clear();
+        AttachmentStack.clear();
     }
 
     @Test
@@ -291,15 +291,15 @@ class NetworkImageComponentTest extends SolimEnv {
     @Test
     void parentStackMountingIntegration() {
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
 
         NetworkImage img = new NetworkImage()
                 .size(42f, 38f)
                 .margin(8f)
                 .growX();
 
-        ParentStack.add(img);
-        ParentStack.pop();
+        AttachmentStack.add(img);
+        AttachmentStack.pop();
 
         assertEquals(1, root.getChildren().size);
         assertSame(img.element(), root.getChildren().first());

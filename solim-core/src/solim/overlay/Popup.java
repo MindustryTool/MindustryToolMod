@@ -25,8 +25,8 @@ import solim.layout.Spacer;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.RoundedHelper;
 import solim.modifier.TableConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -129,7 +129,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                 if (c != null)
                     rd.fillColor(c);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -147,7 +147,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                 Color c = color.get();
                 rd.border(stroke, c != null ? c : Color.white);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         } else {
             rd.border(stroke, Color.white);
         }
@@ -245,7 +245,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     private void render(T data, float stageX, float stageY) {
         clearContent();
         if (provider != null) {
-            Component content = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
+            Component content = ReactiveContext.untracked(() -> AttachmentStack.isolate(() -> {
                 Component built = provider.get(data);
                 if (built != null) {
                     built.element();
@@ -263,7 +263,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                     List<Disposable> effects = config.applyToCell(cell);
                     currentBindings.addAll(effects);
                     for (Disposable effect : effects) {
-                        ComponentContext.register(effect);
+                        OwnershipContext.register(effect);
                     }
                 }
             }

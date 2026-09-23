@@ -228,26 +228,39 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
     @Test
     void chatFeatureClick_togglesCollapsedState() {
         ChatFeature chat = new ChatFeature();
-        chat.setEnabled(true);
-        chat.collapsedConfig.set(false);
+        try {
+            chat.setEnabled(true);
+            chat.collapsedConfig.set(false);
 
-        chat.onQuickAccessClick();
-        assertTrue(chat.collapsedConfig.get(), "First click collapses chat");
+            chat.onQuickAccessClick();
+            assertTrue(chat.collapsedConfig.get(), "First click collapses chat");
 
-        chat.onQuickAccessClick(null);
-        assertFalse(chat.collapsedConfig.get(), "Second click expands chat");
+            chat.onQuickAccessClick(null);
+            assertFalse(chat.collapsedConfig.get(), "Second click expands chat");
+        } finally {
+            // ChatFeature spawns a ChatStore + ChatService owning ambient
+            // effects: dispose so later tests see an empty dispatcher.
+            chat.getService().dispose();
+            chat.getStore().dispose();
+            flushEffects();
+        }
     }
 
     @Test
     void chatFeatureClick_enablesAndExpandsWhenDisabled() {
         ChatFeature chat = new ChatFeature();
-        chat.setEnabled(false);
-        chat.collapsedConfig.set(true);
+        try {
+            chat.setEnabled(false);
+            chat.collapsedConfig.set(true);
 
-        chat.onQuickAccessClick();
-        assertTrue(chat.isEnabled(), "Clicking disabled chat enables it");
-        assertFalse(chat.collapsedConfig.get(), "Clicking disabled chat uncollapses it");
-        flushEffects();
+            chat.onQuickAccessClick();
+            assertTrue(chat.isEnabled(), "Clicking disabled chat enables it");
+            assertFalse(chat.collapsedConfig.get(), "Clicking disabled chat uncollapses it");
+        } finally {
+            chat.getService().dispose();
+            chat.getStore().dispose();
+            flushEffects();
+        }
     }
 
     @Test

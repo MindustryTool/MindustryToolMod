@@ -31,7 +31,7 @@ public final class Fragment implements Component {
 	 * state is restored, and the exception propagates.
 	 */
 	public static Fragment capture(Runnable block) {
-		List<Component> captured = ParentStack.capture(block, ParentStack.takeCaptureList());
+		List<Component> captured = AttachmentStack.capture(block, AttachmentStack.takeCaptureList());
 		return new Fragment(captured);
 	}
 
@@ -71,7 +71,7 @@ public final class Fragment implements Component {
 				Log.err("Error disposing fragment root", t);
 			}
 		}
-		ParentStack.releaseCaptureList(roots);
+		AttachmentStack.releaseCaptureList(roots);
 	}
 
 	@Override

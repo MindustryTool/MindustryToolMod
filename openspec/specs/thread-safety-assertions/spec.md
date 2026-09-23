@@ -10,7 +10,7 @@ Enforces single-threaded Arc Scene2D invariants across Solim runtime mutations a
 The Solim runtime SHALL provide thread verification checks (`SolimAssert.checkMainThread()`) guarding state mutations and lifecycle stack operations. If an operation is invoked on a thread other than the designated main thread, an `IllegalStateException` SHALL be thrown immediately.
 
 #### Scenario: Mutation on background thread throws
-- **WHEN** `Signal.set()` or `ComponentContext.push()` is invoked from an off-main background thread while a main thread is registered
+- **WHEN** `Signal.set()` or `OwnershipContext.push()` is invoked from an off-main background thread while a main thread is registered
 - **THEN** an `IllegalStateException` is thrown detailing the offending thread name
 
 #### Scenario: Execution on main thread succeeds

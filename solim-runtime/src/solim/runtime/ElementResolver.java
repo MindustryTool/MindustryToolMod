@@ -13,8 +13,8 @@ public final class ElementResolver {
 		}
 		if (child instanceof Component) {
 			Component c = (Component) child;
-			ComponentContext.registerChild(c);
-			return ParentStack.isolate(c::element);
+			OwnershipContext.registerChild(c);
+			return AttachmentStack.isolate(c::element);
 		}
 		throw new IllegalArgumentException("Cannot resolve child to Element: " + child);
 	}

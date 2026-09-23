@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 class PerfTest extends SolimEnv {
@@ -16,7 +16,7 @@ class PerfTest extends SolimEnv {
     void tearDown() {
         Perf.setEnabled(false);
         Perf.setThreshold(50f);
-        ParentStack.clear();
+        AttachmentStack.clear();
     }
 
     @Test
@@ -34,8 +34,8 @@ class PerfTest extends SolimEnv {
         assertTrue(Perf.isEnabled());
 
         Table table = new Table();
-        ParentStack.push(table);
-        ParentStack.pop();
+        AttachmentStack.push(table);
+        AttachmentStack.pop();
 
         assertTrue(Perf.totalRecorded() >= 1);
         assertFalse(Perf.snapshot(10).isEmpty());
@@ -52,8 +52,8 @@ class PerfTest extends SolimEnv {
         Perf.setThreshold(0f);
 
         Table table = new Table();
-        ParentStack.push(table);
-        ParentStack.pop();
+        AttachmentStack.push(table);
+        AttachmentStack.pop();
         assertTrue(Perf.totalRecorded() >= 1);
 
         Perf.reset();

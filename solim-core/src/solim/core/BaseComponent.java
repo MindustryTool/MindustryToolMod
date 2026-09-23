@@ -12,8 +12,8 @@ import mindustry.Vars;
 import java.util.ArrayList;
 import java.util.List;
 import arc.func.Prov;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Signal;
 
 /**
@@ -39,10 +39,10 @@ public abstract class BaseComponent implements Component {
     private boolean disposed = false;
 
     public BaseComponent() {
-        ComponentContext.registerChild(this);
-        Table parent = ParentStack.current();
+        OwnershipContext.registerChild(this);
+        Table parent = AttachmentStack.current();
         if (parent != null) {
-            ParentStack.registerPendingComponent(this, parent);
+            AttachmentStack.registerPendingComponent(this, parent);
         }
     }
 
@@ -85,9 +85,9 @@ public abstract class BaseComponent implements Component {
         if (cached != null) {
             return cached;
         }
-        boolean tracing = ParentStack.isTracing();
+        boolean tracing = AttachmentStack.isTracing();
         long startNs = tracing ? System.nanoTime() : 0L;
-        ComponentContext.push(this::own);
+        OwnershipContext.push(this::own);
         try {
             cached = build();
             if (cached == null) {
@@ -101,7 +101,7 @@ public abstract class BaseComponent implements Component {
                 String leafName = explicit != null ? explicit
                         : cached.name != null ? cached.name
                         : getClass().getSimpleName() + "-" + cached.getClass().getSimpleName();
-                ParentStack.traceLeaf(leafName, "build", startNs, endNs);
+                AttachmentStack.traceLeaf(leafName, "build", startNs, endNs);
             }
             return cached;
         } catch (Throwable throwable) {
@@ -113,7 +113,7 @@ public abstract class BaseComponent implements Component {
             dispose();
             throw throwable;
         } finally {
-            ComponentContext.pop();
+            OwnershipContext.pop();
         }
     }
 

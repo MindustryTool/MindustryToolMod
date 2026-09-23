@@ -60,7 +60,7 @@ import solim.reactive.Computed;
 import solim.reactive.Dynamic;
 import solim.reactive.ForEach;
 import solim.reactive.Signal;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -248,7 +248,7 @@ class DisposalSweepTest extends SolimEnv {
 		Probe<Text> probe = new Probe<>();
 		Nest nest = new Nest(() -> probe.setValue(Text.of(name)));
 		nest.element();
-		assertEquals(0, ComponentContext.size());
+		assertEquals(0, OwnershipContext.size());
 		assertEquals("a", probe.value.label().getText().toString());
 
 		nest.dispose();
@@ -656,7 +656,7 @@ Dynamic<Boolean> dynamic = Dynamic.of(toggle, active -> {
 		}
 		SignalDispatcher.flush();
 		assertDoesNotThrow(() -> name.set("b"));
-		assertEquals(0, ComponentContext.size());
+		assertEquals(0, OwnershipContext.size());
 	}
 }
 

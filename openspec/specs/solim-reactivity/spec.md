@@ -142,7 +142,7 @@ A shared dependency-tracking mechanism SHALL allow the currently executing `Comp
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
 
 ### Requirement: Effects auto-register inside component scope
-When `Effect.of(...)` is called while a component's `build()` is executing (i.e., `ComponentContext` has an active component), the Effect SHALL be registered with that component's ownership list before its initial execution.
+When `Effect.of(...)` is called while a component's `build()` is executing (i.e., `OwnershipContext` has an active component), the Effect SHALL be registered with that component's ownership list before its initial execution.
 
 #### Scenario: Effect created during build() is auto-owned
 - **WHEN** `Effect.of(() -> ...)` is called inside `build()`
@@ -508,11 +508,11 @@ Shared reactive net-state signals in `Signals.java` so game features gate on one
 - **WHEN** reconciliation completes without errors
 - **THEN** removed components are disposed after updating the active component map
 
-### Requirement: Unified ParentStack entry encapsulation
-`ParentStack` SHALL bundle per-parent state, including its `Table`, `Attacher`, and `pendingComponents`, into a single `Entry` object. `ParentStack.isolate()` SHALL save and restore the complete stack context so that pending attachments and attachers do not leak across isolation boundaries.
+### Requirement: Unified AttachmentStack entry encapsulation
+`AttachmentStack` SHALL bundle per-parent state, including its `Table`, `Attacher`, and `pendingComponents`, into a single `Entry` object. `AttachmentStack.isolate()` SHALL save and restore the complete stack context so that pending attachments and attachers do not leak across isolation boundaries.
 
 #### Scenario: Isolation preserves complete parent state
-- **WHEN** code executes inside `ParentStack.isolate(...)`
+- **WHEN** code executes inside `AttachmentStack.isolate(...)`
 - **THEN** no outer pending components or attachers are accessible or mutated, and the outer state is restored upon exit
 
 ### Requirement: Unified reactive error logging
@@ -538,7 +538,7 @@ The system SHALL wire `Computed` and `Effect` dependencies through the shared re
 Adds `Query` and `Mutation` as first-class async reactive primitives alongside Signal/Computed/Effect, with `UI.query()`/`UI.mutation()` facades.
 
 ### Requirement: Query reactive primitive
-`Query<T>` SHALL be a reactive primitive in `solim-core/src/solim/reactive/` alongside `Signal`, `Computed`, and `Effect`. It SHALL implement `Disposable` and `Readable<T>` (where `get()` returns the current data value). It SHALL integrate with `ComponentContext.register()` for automatic lifecycle ownership, the same as `Computed` and `Effect`.
+`Query<T>` SHALL be a reactive primitive in `solim-core/src/solim/reactive/` alongside `Signal`, `Computed`, and `Effect`. It SHALL implement `Disposable` and `Readable<T>` (where `get()` returns the current data value). It SHALL integrate with `OwnershipContext.register()` for automatic lifecycle ownership, the same as `Computed` and `Effect`.
 
 #### Scenario: Query listed as reactive primitive
 - **WHEN** the Solim reactive module is inspected
@@ -549,7 +549,7 @@ Adds `Query` and `Mutation` as first-class async reactive primitives alongside S
 - **THEN** it SHALL return the current data value (equivalent to `query.data().get()`) and participate in reactive dependency tracking
 
 ### Requirement: Mutation reactive primitive
-`Mutation<T, R>` SHALL be a reactive primitive in `solim-core/src/solim/reactive/` alongside `Signal`, `Computed`, `Effect`, and `Query`. It SHALL implement `Disposable` and integrate with `ComponentContext.register()` for automatic lifecycle ownership.
+`Mutation<T, R>` SHALL be a reactive primitive in `solim-core/src/solim/reactive/` alongside `Signal`, `Computed`, `Effect`, and `Query`. It SHALL implement `Disposable` and integrate with `OwnershipContext.register()` for automatic lifecycle ownership.
 
 #### Scenario: Mutation listed as reactive primitive
 - **WHEN** the Solim reactive module is inspected

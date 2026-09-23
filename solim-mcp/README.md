@@ -115,7 +115,7 @@ Arguments: `{"query": "optional substring match on name/field/location"}` (empty
 ```
 
 Discoverable sources: reactive fields on elements, `Element.userObject` graphs, and whatever is
-currently on the ambient `ComponentContext`/`ReactiveContext`/`ParentStack` stacks (in-flight
+currently on the ambient `OwnershipContext`/`ReactiveContext`/`AttachmentStack` stacks (in-flight
 builds).
 
 #### `get_bindings`

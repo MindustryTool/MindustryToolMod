@@ -18,7 +18,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import solim.core.BaseComponent;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -297,7 +297,7 @@ class ReactiveGridTest extends SolimEnv {
 								return contentHeight;
 							}
 						};
-						ParentStack.add(content);
+						AttachmentStack.add(content);
 					})
 					.element();
 		}

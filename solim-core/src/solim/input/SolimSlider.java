@@ -8,7 +8,7 @@ import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Signal;
 import java.util.Objects;
 
@@ -42,7 +42,7 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 			},
 			(a, b) -> a != null && b != null && Math.abs(a - b) <= 0.0001f
 		);
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
 	public SolimSlider(Signal<Integer> signal, int min, int max, int step) {
@@ -59,7 +59,7 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 			},
 			Objects::equals
 		);
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
 	public static SolimSlider of(Signal<Float> signal, float min, float max, float step) {

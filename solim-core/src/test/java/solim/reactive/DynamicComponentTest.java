@@ -24,7 +24,7 @@ import arc.scene.ui.layout.Table;
 import solim.core.BaseComponent;
 import solim.layout.Column;
 import solim.layout.Row;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -272,7 +272,7 @@ class DynamicComponentTest extends SolimEnv {
         assertFalse(dyn.cellConfig().growX, "Dynamic must not growX by default");
 
         Column col = new Column().fillParent().top().right().children(() -> {
-            ParentStack.add(dyn);
+            AttachmentStack.add(dyn);
         });
 
         Table table = col.table();

@@ -20,7 +20,7 @@ import solim.core.SpacingAware;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
@@ -73,7 +73,7 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
                         : new Label(text != null ? text : "", getDefaultStyle()));
         this.label.name = "solim-text-label";
         SolimToken.bind(this.label, this, constraints);
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public static Text of(String text) {
@@ -95,7 +95,7 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
         if (text != null) {
             Effect e = Effect.of(() -> label.setText(text.get() != null ? text.get() : ""));
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -114,7 +114,7 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -342,7 +342,7 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }

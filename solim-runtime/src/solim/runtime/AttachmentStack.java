@@ -26,7 +26,7 @@ import solim.performance.TraceSpan;
  * entry points delegate to a singleton instance, allowing a profiling-enabled subclass to be
  * installed without the base class carrying any monitoring logic.
  */
-public class ParentStack {
+public class AttachmentStack {
 
 	@FunctionalInterface
 	public interface Attacher {
@@ -49,7 +49,7 @@ public class ParentStack {
 		void configure(Cell<?> cell, Element child, @Nullable Component component);
 	}
 
-	private static volatile ParentStack INSTANCE = new ParentStack();
+	private static volatile AttachmentStack INSTANCE = new AttachmentStack();
 	private static final ThreadLocal<Deque<List<Component>>> CAPTURED_LIST_POOL =
 			ThreadLocal.withInitial(ArrayDeque::new);
 
@@ -69,16 +69,16 @@ public class ParentStack {
 	protected final Deque<Entry> stack = new ArrayDeque<>();
 	private @Nullable CellConfigurator cellConfigurator = null;
 
-	protected ParentStack() {}
+	protected AttachmentStack() {}
 
 	/** Returns the active singleton instance. */
-	public static ParentStack instance() {
+	public static AttachmentStack instance() {
 		return INSTANCE;
 	}
 
 	/** Installs the active singleton instance, falling back to a fresh base instance for {@code null}. */
-	public static void install(@Nullable ParentStack instance) {
-		INSTANCE = instance != null ? instance : new ParentStack();
+	public static void install(@Nullable AttachmentStack instance) {
+		INSTANCE = instance != null ? instance : new AttachmentStack();
 	}
 
 	public static void setCellConfigurator(@Nullable CellConfigurator configurator) {
@@ -120,14 +120,14 @@ public class ParentStack {
 	}
 
 	/**
-	 * Executes the given Prov in an isolated ParentStack context where no parent is on the stack.
+	 * Executes the given Prov in an isolated AttachmentStack context where no parent is on the stack.
 	 */
 	public static <T> T isolate(Prov<T> Prov) {
 		return INSTANCE.doIsolate(Prov);
 	}
 
 	/**
-	 * Executes the given runnable in an isolated ParentStack context where no parent is on the stack.
+	 * Executes the given runnable in an isolated AttachmentStack context where no parent is on the stack.
 	 */
 	public static void isolate(Runnable runnable) {
 		INSTANCE.doIsolate(runnable);
@@ -321,10 +321,10 @@ public class ParentStack {
 		Deque<Entry> saved = stack.isEmpty() ? null : new ArrayDeque<>(stack);
 		stack.clear();
 		captured.clear();
-		// Capture through ComponentContext: components register there in creation order
+		// Capture through OwnershipContext: components register there in creation order
 		// (BaseComponent via registerChild, plain components like Row/Column via register),
 		// while plain disposables (bindings) belong to their owning component and are ignored.
-		ComponentContext.pushCapture(captured);
+		OwnershipContext.pushCapture(captured);
 		// Runnable.run() cannot throw checked exceptions, so RuntimeException/Error is exhaustive.
 		RuntimeException runtimeFailure = null;
 		Error errorFailure = null;
@@ -339,7 +339,7 @@ public class ParentStack {
 			if (saved != null) {
 				stack.addAll(saved);
 			}
-			ComponentContext.pop();
+			OwnershipContext.pop();
 		}
 		if (runtimeFailure != null || errorFailure != null) {
 			for (Component c : captured) {

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import arc.scene.Element;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -37,8 +37,8 @@ class SolimCollapserTest extends SolimEnv {
         Element child2 = new Element();
 
         collapser.children(() -> {
-            ParentStack.add(child1);
-            ParentStack.add(child2);
+            AttachmentStack.add(child1);
+            AttachmentStack.add(child2);
         });
 
         assertEquals(2, collapser.content().getChildren().size);
