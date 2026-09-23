@@ -6,6 +6,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
+import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.translation.TranslationFeature;
 import mindustrytool.features.translation.TranslationProvider;
@@ -163,6 +164,19 @@ public class TranslationSettingsView extends BaseComponent {
 						});
 					});
 
+					dynamic(feature.lastError, err -> {
+						if (err != null && !err.trim().isEmpty()) {
+							return row().growX().gap(unit(1)).children(() -> {
+								icon(Icon.warning).size(unit(4)).color(Color.scarlet);
+								text(Core.bundle.format("feature.translation.last-error", err))
+										.color(Color.scarlet)
+										.wrap()
+										.growX();
+							});
+						}
+						return row();
+					});
+
 					divider();
 
 					// Reset button
@@ -236,6 +250,7 @@ public class TranslationSettingsView extends BaseComponent {
 
 		feature.testTranslate("ping")
 				.thenAccept(result -> {
+					feature.lastError.set(null);
 					Core.app.post(() -> {
 						isTestingSignal.set(false);
 						testStatusSignal.set("[#84f491]OK");
@@ -244,6 +259,7 @@ public class TranslationSettingsView extends BaseComponent {
 				.exceptionally(err -> {
 					Throwable cause = err.getCause() != null ? err.getCause() : err;
 					String msg = cause.getMessage() != null ? cause.getMessage() : "";
+					feature.lastError.set(msg);
 					String shortMsg = msg.contains("401") || msg.contains("API key") ? " (API Key)"
 							: msg.contains("timeout") ? " (Timeout)"
 							: "";

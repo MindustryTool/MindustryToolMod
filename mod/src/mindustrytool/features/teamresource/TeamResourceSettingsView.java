@@ -61,6 +61,8 @@ public class TeamResourceSettingsView extends BaseComponent {
                     checkbox(Core.bundle.get("team-resources.show-stored-power", "Show Stored Power"), feature.showStoredPowerConfig.signal()).growX();
                     checkbox(Core.bundle.get("team-resources.hide-background", "Hide Background"), feature.hideBackgroundConfig.signal()).growX();
                     checkbox(Core.bundle.get("team-resources.always-show-flow-rate", "Always Show Flow Rate"), feature.alwaysShowFlowRateConfig.signal()).growX();
+                    checkbox(Core.bundle.get("team-resources.hide-zero-units", "Hide Inactive Units (0 count)"), feature.hideZeroUnitsConfig.signal()).growX();
+                    checkbox(Core.bundle.get("team-resources.hide-zero-items", "Hide Empty Items (0 count)"), feature.hideZeroItemsConfig.signal()).growX();
 
                     divider();
 

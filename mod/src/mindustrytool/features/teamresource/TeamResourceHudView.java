@@ -22,7 +22,7 @@ import mindustry.type.UnitType;
 import mindustry.ui.Styles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Card;
+import solim.layout.Row;
 import solim.layout.ReactiveGrid;
 import solim.overlay.Hud;
 import solim.reactive.Computed;
@@ -47,8 +47,8 @@ public class TeamResourceHudView extends BaseComponent {
     @Override
     protected Element build() {
         Readable<Float> scale = feature.scaleConfig.signal();
-        Readable<Float> buttonSize = scale.map(s -> 28f * (s != null ? s : 1f));
-        Readable<Float> iconSize = scale.map(s -> 18f * (s != null ? s : 1f));
+        Readable<Float> buttonSize = scale.map(s -> 24f * (s != null ? s : 1f));
+        Readable<Float> iconSize = scale.map(s -> 16f * (s != null ? s : 1f));
         Readable<Boolean> expanded = feature.expandedConfig.signal();
 
         Signal<Float> screenWidth = createSignal(ResizeEvent.class, TeamResourceFeature::getSceneWidth);
@@ -60,25 +60,25 @@ public class TeamResourceHudView extends BaseComponent {
             float scaleVal = s != null ? s : 1f;
             Float cfgW = feature.overlayWidthConfig.signal().get();
             float userWidth = screenW * (cfgW != null ? cfgW : 0.28f);
-            float minWidth = (Vars.mobile ? 180f : 220f) * scaleVal;
-            float maxWidth = screenW * 0.98f;
+            float minWidth = (Vars.mobile ? 160f : 200f) * scaleVal;
+            float maxWidth = screenW * 0.95f;
             float widthToUse = Mathf.clamp(userWidth, minWidth, maxWidth);
-            return Boolean.TRUE.equals(expanded.get()) ? widthToUse : Math.min(widthToUse, (Vars.mobile ? 180f : 240f) * scaleVal);
+            return Boolean.TRUE.equals(expanded.get()) ? widthToUse : Math.min(widthToUse, (Vars.mobile ? 160f : 200f) * scaleVal);
         });
 
         Readable<Integer> itemCols = new Computed<>(() -> {
             Float w = hudWidth.get();
             Float s = scale.get();
             float scaleVal = s != null ? s : 1f;
-            float minCardW = 72f * scaleVal;
-            return Math.max(2, (int) ((w != null ? w : 220f) / (minCardW > 0f ? minCardW : 72f)));
+            float minCardW = (Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.get()) ? 58f : 50f) * scaleVal;
+            return Math.max(3, (int) ((w != null ? w : 200f) / (minCardW > 0f ? minCardW : 50f)));
         });
 
         Readable<Drawable> bgDrawable = feature.hideBackgroundConfig.signal()
-                .map(hide -> Boolean.TRUE.equals(hide) ? null : Styles.black6);
+                .map(hide -> Boolean.TRUE.equals(hide) ? null : Styles.black5);
 
         hud = hud(() -> {
-            column().width(hudWidth).maxWidth(hudWidth).left().gap(unit(1)).padding(unit(2)).children(() -> {
+            column().maxWidth(hudWidth).left().gap(unit(1)).padding(unit(1.5f)).children(() -> {
                 // 1. Header Row
                 row().growX().gap(unit(1)).children(() -> {
                     // Drag handle
@@ -165,9 +165,9 @@ public class TeamResourceHudView extends BaseComponent {
     }
 
     private Component buildExpandedContent(Readable<Float> scale, Readable<Integer> itemCols) {
-        Readable<Float> itemCardHeight = scale.map(s -> 34f * (s != null ? s : 1f));
-        Readable<Float> unitCardHeight = scale.map(s -> 28f * (s != null ? s : 1f));
-        Readable<Float> iconSize = scale.map(s -> 18f * (s != null ? s : 1f));
+        Readable<Float> itemCardHeight = scale.map(s -> (Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.get()) ? 28f : 20f) * (s != null ? s : 1f));
+        Readable<Float> unitCardHeight = scale.map(s -> 18f * (s != null ? s : 1f));
+        Readable<Float> iconSize = scale.map(s -> 16f * (s != null ? s : 1f));
 
         return column().growX().gap(unit(1)).children(() -> {
             divider();
@@ -179,7 +179,7 @@ public class TeamResourceHudView extends BaseComponent {
                         return row().left().children(() -> text(Core.bundle.get("team-resources.no-items", "No core items")).color(Color.gray).style(Styles.outlineLabel));
                     }
                     ReactiveGrid<Item> itemsGrid = reactiveGrid(state.usedItemsSignal).columns(itemCols)
-                            .key(item -> item.name).growX().gap(unit(1));
+                            .key(item -> item.name).gap(unit(0.5f));
                     itemsGrid.children(item -> createItemCard(item, itemCardHeight, iconSize, scale));
                     return itemsGrid;
                 }).growX();
@@ -192,7 +192,7 @@ public class TeamResourceHudView extends BaseComponent {
                         return row().left().children(() -> text(Core.bundle.get("team-resources.no-units", "No active units")).color(Color.gray).style(Styles.outlineLabel));
                     }
                     ReactiveGrid<UnitType> unitsGrid = reactiveGrid(state.usedUnitsSignal).columns(itemCols)
-                            .key(unit -> unit.name).growX().gap(unit(1));
+                            .key(unit -> unit.name).gap(unit(0.5f));
                     unitsGrid.children(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
                     return unitsGrid;
                 }).growX();
@@ -204,26 +204,27 @@ public class TeamResourceHudView extends BaseComponent {
     }
 
     private Component createItemCard(Item item, Readable<Float> cardHeight, Readable<Float> iconSize, Readable<Float> scale) {
-        Card card = card(Styles.black3, () -> {
-            row().growX().padding(unit(1)).gap(unit(1)).children(() -> {
-                image(new TextureRegionDrawable(item.uiIcon)).size(iconSize).scaling(Scaling.fit);
-                column().left().children(() -> {
-                    text(state.tickSignal.map(t -> state.getFormattedAmount(item)))
-                            .style(Styles.outlineLabel)
-                            .fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f)));
-                    text(state.tickSignal.map(t -> (Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.get()) || state.isViewingStats()) ? state.getFormattedRate(item) : ""))
-                            .color(state.tickSignal.map(t -> state.getRateColor(item)))
-                            .style(Styles.outlineLabel)
-                            .fontScale(scale.map(s -> 0.60f * (s != null ? s : 1f)));
+        Row itemRow = row().left().padding(unit(0.5f)).gap(unit(0.5f)).children(() -> {
+            image(new TextureRegionDrawable(item.uiIcon)).size(iconSize).scaling(Scaling.fit);
+            column().left().children(() -> {
+                text(state.tickSignal.map(t -> state.getFormattedAmount(item)))
+                        .style(Styles.outlineLabel)
+                        .fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f)));
+                dynamic(state.tickSignal.map(t -> Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.get()) || state.isViewingStats()), showRate -> {
+                    if (Boolean.TRUE.equals(showRate)) {
+                        return text(state.tickSignal.map(t -> state.getFormattedRate(item)))
+                                .color(state.tickSignal.map(t -> state.getRateColor(item)))
+                                .style(Styles.outlineLabel)
+                                .fontScale(scale.map(s -> 0.58f * (s != null ? s : 1f)));
+                    }
+                    return row();
                 });
             });
         })
-        .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
-        .growX()
         .height(cardHeight)
         .onClick(() -> state.setViewingStats(!state.isViewingStats()));
 
-        card.element().addListener(new InputListener() {
+        itemRow.element().addListener(new InputListener() {
             @Override
             public void enter(InputEvent event, float x, float y, int pointer, @Nullable Element fromActor) {
                 if (pointer == -1) {
@@ -243,20 +244,16 @@ public class TeamResourceHudView extends BaseComponent {
             }
         });
 
-        return card;
+        return itemRow;
     }
 
     private Component createUnitCard(UnitType type, Readable<Float> cardHeight, Readable<Float> iconSize, Readable<Float> scale) {
-        return card(Styles.black3, () -> {
-            row().growX().padding(unit(1)).gap(unit(1)).children(() -> {
-                image(new TextureRegionDrawable(type.uiIcon)).size(iconSize).scaling(Scaling.fit);
-                text(state.tickSignal.map(t -> state.getUnitCountText(type)))
-                        .style(Styles.outlineLabel)
-                        .fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f)));
-            });
+        return row().left().padding(unit(0.5f)).gap(unit(0.5f)).children(() -> {
+            image(new TextureRegionDrawable(type.uiIcon)).size(iconSize).scaling(Scaling.fit);
+            text(state.tickSignal.map(t -> state.getUnitCountText(type)))
+                    .style(Styles.outlineLabel)
+                    .fontScale(scale.map(s -> 0.70f * (s != null ? s : 1f)));
         })
-        .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
-        .growX()
         .height(cardHeight);
     }
 
