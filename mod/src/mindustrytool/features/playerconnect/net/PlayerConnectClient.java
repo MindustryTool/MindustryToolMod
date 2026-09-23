@@ -9,9 +9,10 @@ import arc.net.NetListener;
 import arc.net.TcpConnection;
 import arc.net.UdpConnection;
 import arc.util.Log;
+import arc.util.Reflect;
 import arc.util.Threads;
 import arc.util.Time;
-import mindustrytool.utils.ReflectUtil;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import mindustry.Vars;
@@ -67,18 +68,18 @@ public class PlayerConnectClient {
         Vars.net.reset();
         Vars.netClient.beginConnecting();
 
-        NetProvider provider = ReflectUtil.getOrNull(Vars.net, "provider");
+        NetProvider provider = Reflect.get(Vars.net, "provider");
         if (provider instanceof ProxyProvider) {
             provider = ((ProxyProvider) provider).getDelegate();
-            ReflectUtil.setSafe(Vars.net, "provider", provider);
+            Reflect.set(Vars.net, "provider", provider);
         }
 
         if (Vars.steam) {
-            provider = ReflectUtil.getOrNull(provider, "provider");
+            provider = Reflect.get(provider, "provider");
         }
 
-        Client client = ReflectUtil.getOrNull(provider, "client");
-        TcpConnection tcp = ReflectUtil.getOrNull(Connection.class, client, "tcp");
+        Client client = Reflect.get(provider, "client");
+        TcpConnection tcp = Reflect.get(Connection.class, client, "tcp");
         if (tcp == null) {
             throw new IllegalStateException("TCP connection is null.");
         }
@@ -86,7 +87,7 @@ public class PlayerConnectClient {
         setField(client, "serialization", new NetworkProxy.Serializer());
         setField(tcp, "serialization", new NetworkProxy.Serializer());
 
-        NetListener[] listeners = ReflectUtil.getOrNull(Connection.class, client, "listeners");
+        NetListener[] listeners = Reflect.get(Connection.class, client, "listeners");
         NetListener wrap = new NetListener() {
             @Override
             public void connected(Connection connection) {
@@ -135,11 +136,11 @@ public class PlayerConnectClient {
             }
         };
 
-        ReflectUtil.setSafe(Connection.class, client, "listeners", new NetListener[] { wrap });
+        Reflect.set(Connection.class, client, "listeners", new NetListener[] { wrap });
 
         try {
             Vars.net.connect(link.host, link.port, () -> {
-                UdpConnection udp = ReflectUtil.getOrNull(Connection.class, client, "udp");
+                UdpConnection udp = Reflect.get(Connection.class, client, "udp");
                 if (udp == null) {
                     throw new IllegalStateException("UDP connection is null.");
                 }
@@ -221,8 +222,24 @@ public class PlayerConnectClient {
     }
 
     private static void setField(Object object, String name, Object value) {
-        if (!ReflectUtil.setSafe(object, name, value)) {
-            throw new RuntimeException("Failed to set field " + name + " on " + object);
+        try {
+            Field field = getField(object.getClass(), name);
+            field.setAccessible(true);
+            field.set(object, value);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set field " + name + " on " + object, e);
+        }
+    }
+
+    private static Field getField(Class<?> type, String name) throws NoSuchFieldException {
+        try {
+            return type.getDeclaredField(name);
+        } catch (NoSuchFieldException e) {
+            Class<?> superclass = type.getSuperclass();
+            if (superclass == null) {
+                throw e;
+            }
+            return getField(superclass, name);
         }
     }
 }

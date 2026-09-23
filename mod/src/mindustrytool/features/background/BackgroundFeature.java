@@ -9,7 +9,7 @@ import arc.graphics.g2d.TextureRegion;
 import solim.overlay.SolimDialog;
 import arc.util.Log;
 import arc.util.Nullable;
-import mindustrytool.utils.ReflectUtil;
+import arc.util.Reflect;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.graphics.MenuRenderer;
@@ -97,7 +97,7 @@ public class BackgroundFeature extends Feature {
 
         try {
             if (originalRenderer == null) {
-                originalRenderer = ReflectUtil.getOrNull(Vars.ui.menufrag, "renderer");
+                originalRenderer = Reflect.get(Vars.ui.menufrag, "renderer");
             }
 
             if (customRenderer != null) {
@@ -106,7 +106,7 @@ public class BackgroundFeature extends Feature {
 
             Texture texture = new Texture(file);
             customRenderer = new CustomMenuRenderer(texture, originalRenderer, opacityConfig);
-            ReflectUtil.setSafe(Vars.ui.menufrag, "renderer", customRenderer);
+            Reflect.set(Vars.ui.menufrag, "renderer", customRenderer);
         } catch (Exception e) {
             Core.app.post(() -> {
                 Vars.ui.showException(Core.bundle.get("feature.background.error.apply"), e);
@@ -117,7 +117,7 @@ public class BackgroundFeature extends Feature {
     public void restoreOriginalRenderer() {
         if (originalRenderer != null) {
             try {
-                ReflectUtil.setSafe(Vars.ui.menufrag, "renderer", originalRenderer);
+                Reflect.set(Vars.ui.menufrag, "renderer", originalRenderer);
                 if (customRenderer != null) {
                     customRenderer.dispose();
                     customRenderer = null;

@@ -10,7 +10,7 @@ import arc.scene.ui.TextField;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Nullable;
-import mindustrytool.utils.ReflectUtil;
+import arc.util.Reflect;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientChatEvent;
 import mindustry.game.EventType.ClientLoadEvent;
@@ -36,7 +36,6 @@ public class PrettyChatFeature extends Feature {
     private final Seq<Prettier> prettiers;
     private @Nullable PrettyChatSettingsDialog settingsDialog;
     private @Nullable String lastTransformed;
-    private @Nullable Object lastHookedChatfrag;
     private boolean chatHookAttached;
 
     public PrettyChatFeature() {
@@ -80,19 +79,11 @@ public class PrettyChatFeature extends Feature {
     }
 
     private void attachChatHook() {
-        if (Vars.ui == null || Vars.ui.chatfrag == null) {
+        if (Vars.ui == null || Vars.ui.chatfrag == null || chatHookAttached) {
             return;
         }
-        if (chatHookAttached && Vars.ui.chatfrag == lastHookedChatfrag) {
-            return;
-        }
-        if (Vars.ui.chatfrag == lastHookedChatfrag) {
-            // Already attempted on this fragment instance and failed; do not spam logs
-            return;
-        }
-        lastHookedChatfrag = Vars.ui.chatfrag;
         try {
-            TextField chatfield = ReflectUtil.getOrNull(Vars.ui.chatfrag, "chatfield");
+            TextField chatfield = Reflect.get(Vars.ui.chatfrag, "chatfield");
             if (chatfield != null) {
                 chatfield.setOnlyFontChars(false);
                 chatfield.setMaxLength(Vars.maxTextLength);
@@ -106,8 +97,6 @@ public class PrettyChatFeature extends Feature {
                     }
                 });
                 chatHookAttached = true;
-            } else {
-                Log.warn("PrettyChat: Could not find chatfield on @", Vars.ui.chatfrag.getClass().getName());
             }
         } catch (Exception e) {
             Log.err("Error attaching PrettyChat field hook: @", e.getMessage());
@@ -135,7 +124,7 @@ public class PrettyChatFeature extends Feature {
             return;
         }
         try {
-            TextField chatfield = ReflectUtil.getOrNull(Vars.ui.chatfrag, "chatfield");
+            TextField chatfield = Reflect.get(Vars.ui.chatfrag, "chatfield");
             if (chatfield == null) {
                 return;
             }

@@ -3,7 +3,7 @@ package mindustrytool.services;
 import arc.Core;
 import arc.struct.Seq;
 import arc.util.Log;
-import mindustrytool.utils.ReflectUtil;
+import arc.util.Reflect;
 import java.time.Duration;
 import java.util.List;
 import mindustry.Vars;
@@ -75,8 +75,8 @@ public class ServerService {
 			if (Vars.ui.join != null) {
 				Core.app.post(() -> {
 					try {
-						ReflectUtil.invokeOrNull(Vars.ui.join, "setupRemote", new Object[]{});
-						ReflectUtil.invokeOrNull(Vars.ui.join, "refreshRemote", new Object[]{});
+						Reflect.invoke(Vars.ui.join, "setupRemote");
+						Reflect.invoke(Vars.ui.join, "refreshRemote");
 					} catch (Exception e) {
 						Log.err("Failed to refresh join dialog", e);
 					}
