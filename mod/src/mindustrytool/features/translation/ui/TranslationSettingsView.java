@@ -166,7 +166,7 @@ public class TranslationSettingsView extends BaseComponent {
 
 					dynamic(feature.lastError, err -> {
 						if (err != null && !err.trim().isEmpty()) {
-							return row().growX().gap(unit(1)).children(() -> {
+							row().growX().gap(unit(1)).children(() -> {
 								icon(Icon.warning).size(unit(4)).color(Color.scarlet);
 								text(Core.bundle.format("feature.translation.last-error", err))
 										.color(Color.scarlet)
@@ -174,7 +174,6 @@ public class TranslationSettingsView extends BaseComponent {
 										.growX();
 							});
 						}
-						return row();
 					});
 
 					divider();

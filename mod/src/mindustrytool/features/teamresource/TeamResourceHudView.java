@@ -77,63 +77,69 @@ public class TeamResourceHudView extends BaseComponent {
         Readable<Drawable> bgDrawable = feature.hideBackgroundConfig.signal()
                 .map(hide -> Boolean.TRUE.equals(hide) ? null : Styles.black5);
 
-        hud = hud(() -> {
+        hud = hud();
+        hud.children(() -> {
             column().maxWidth(hudWidth).left().gap(unit(1)).padding(unit(1.5f)).children(() -> {
                 // 1. Header Row
-                row().growX().gap(unit(1)).children(() -> {
-                    // Drag handle
-                    button()
-                            .style(Styles.clearNonei)
-                            .size(buttonSize)
-                            .children(() -> icon(Icon.move).scaling(Scaling.fit))
-                            .draggable(feature.xSignal, feature.ySignal);
+                when(feature.hideHeaderConfig.signal())
+                        .elseDo(() -> row().growX().gap(unit(1)).children(() -> {
+                            // Drag handle
+                            when(feature.hideDragHandleConfig.signal())
+                                    .elseDo(() -> button()
+                                            .style(Styles.clearNonei)
+                                            .size(buttonSize)
+                                            .children(() -> icon(Icon.move).scaling(Scaling.fit))
+                                            .draggable(hud, feature.xSignal, feature.ySignal));
 
-                    // Expand / Collapse toggle button
-                    button()
-                            .style(Styles.clearNonei)
-                            .size(buttonSize)
-                            .onClick(() -> feature.expandedConfig
-                                    .set(!Boolean.TRUE.equals(feature.expandedConfig.get())))
-                            .tooltip(expanded.map(exp -> Core.bundle.get(
-                                    Boolean.TRUE.equals(exp) ? "team-resources.collapse" : "team-resources.expand",
-                                    "Toggle Expand")))
-                            .children(() -> text(expanded.map(exp -> Boolean.TRUE.equals(exp) ? "▼" : "▶")));
+                            // Expand / Collapse toggle button
+                            button()
+                                    .style(Styles.clearNonei)
+                                    .size(buttonSize)
+                                    .onClick(() -> feature.expandedConfig
+                                            .set(!Boolean.TRUE.equals(feature.expandedConfig.get())))
+                                    .tooltip(expanded.map(exp -> Core.bundle.get(
+                                            Boolean.TRUE.equals(exp) ? "team-resources.collapse" : "team-resources.expand",
+                                            "Toggle Expand")))
+                                    .children(() -> text(expanded.map(exp -> Boolean.TRUE.equals(exp) ? "▼" : "▶")));
 
-                    // Team selector chips
-                    dynamic(state.validTeamsSignal, teams -> row().gap(unit(1)).children(() -> {
-                        if (teams != null) {
-                            int limit = Math.min(teams.size, 5);
-                            for (int i = 0; i < limit; i++) {
-                                Team team = teams.get(i);
-                                button()
-                                        .style(Styles.clearTogglei)
-                                        .size(buttonSize)
-                                        .onClick(() -> state.setSelectedTeam(team))
-                                        .checked(state.selectedTeamSignal.map(sel -> sel == team))
-                                        .tooltip(team.localized())
-                                        .children(() -> image(Tex.whiteui).size(iconSize).color(team.color));
-                            }
-                            if (teams.size > 5) {
-                                button("...", () -> new TeamResourceAllTeamsDialog(state).show())
-                                        .style(Styles.flatBordert)
-                                        .size(buttonSize);
-                            }
-                        }
-                    }));
+                            // Team selector chips
+                            dynamic(state.validTeamsSignal, teams -> row().gap(unit(1)).children(() -> {
+                                if (teams != null) {
+                                    int limit = Math.min(teams.size, 5);
+                                    for (int i = 0; i < limit; i++) {
+                                        Team team = teams.get(i);
+                                        button()
+                                                .style(Styles.clearTogglei)
+                                                .size(buttonSize)
+                                                .onClick(() -> state.setSelectedTeam(team))
+                                                .checked(state.selectedTeamSignal.map(sel -> sel == team))
+                                                .tooltip(team.localized())
+                                                .children(() -> image(Tex.whiteui).size(iconSize).color(team.color));
+                                    }
+                                    if (teams.size > 5) {
+                                        button("...", () -> new TeamResourceAllTeamsDialog(state).show())
+                                                .style(Styles.flatBordert)
+                                                .size(buttonSize);
+                                    }
+                                }
+                            }));
 
-                    spacer();
+                            spacer();
 
-                    // Settings button
-                    button()
-                            .style(Styles.clearNonei)
-                            .size(buttonSize)
-                            .tooltip(Core.bundle.get("team-resources.settings.title", "Settings"))
-                            .onClick(() -> feature.getSettingDialog().get().show())
-                            .children(() -> icon(Icon.settings).scaling(Scaling.fit));
-                });
+                            // Settings button
+                            button()
+                                    .style(Styles.clearNonei)
+                                    .size(buttonSize)
+                                    .tooltip(Core.bundle.get("team-resources.settings.title", "Settings"))
+                                    .onClick(() -> feature.getSettingDialog().get().show())
+                                    .children(() -> icon(Icon.settings).scaling(Scaling.fit));
+                        }));
 
                 // 2. Expanded Content Panel
-                when(expanded)
+                Readable<Boolean> showContent = new Computed<>(() ->
+                        Boolean.TRUE.equals(feature.hideHeaderConfig.signal().get()) || Boolean.TRUE.equals(expanded.get()));
+
+                when(showContent)
                         .thenDo(() -> buildExpandedContent(scale, itemCols))
                         .elseDo(() -> row())
                         .growX();
@@ -149,6 +155,17 @@ public class TeamResourceHudView extends BaseComponent {
         listen(ResizeEvent.class, e -> {
             keepInScreen();
             Core.app.post(this::keepInScreen);
+        });
+
+        effect(() -> {
+            feature.hideHeaderConfig.signal().get();
+            Core.app.post(() -> {
+                if (hud != null) {
+                    hud.root().invalidateHierarchy();
+                    hud.pack();
+                    hud.keepInScreen();
+                }
+            });
         });
 
         // Initial layout stabilization
@@ -177,7 +194,8 @@ public class TeamResourceHudView extends BaseComponent {
         Readable<Float> iconSize = scale.map(s -> 16f * (s != null ? s : 1f));
 
         return column().growX().gap(unit(1)).children(() -> {
-            divider();
+            when(feature.hideHeaderConfig.signal())
+                    .elseDo(() -> divider());
 
             // Core Items Section
             when(feature.showItemsConfig.signal())

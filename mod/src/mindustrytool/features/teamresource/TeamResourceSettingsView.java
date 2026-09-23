@@ -63,6 +63,8 @@ public class TeamResourceSettingsView extends BaseComponent {
                     checkbox(Core.bundle.get("team-resources.always-show-flow-rate", "Always Show Flow Rate"), feature.alwaysShowFlowRateConfig.signal()).growX();
                     checkbox(Core.bundle.get("team-resources.hide-zero-units", "Hide Inactive Units (0 count)"), feature.hideZeroUnitsConfig.signal()).growX();
                     checkbox(Core.bundle.get("team-resources.hide-zero-items", "Hide Empty Items (0 count)"), feature.hideZeroItemsConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle", "Hide Drag Handle"), feature.hideDragHandleConfig.signal()).growX();
+                    checkbox(Core.bundle.get("team-resources.hide-header", "Hide Title Bar"), feature.hideHeaderConfig.signal()).growX();
 
                     divider();
 

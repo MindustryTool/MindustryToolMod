@@ -35,6 +35,9 @@ public class VisualizerSettingsView extends BaseComponent {
         Readable<String> bOpacityText = feature.bridgeOpacityConfig.signal()
                 .map(v -> Math.round((v != null ? v : 1f) * 100) + "%");
 
+        Readable<String> bFlowRateScaleText = feature.bridgeFlowRateScaleConfig.signal()
+                .map(v -> Math.round((v != null ? v : 1f) * 100) + "%");
+
         Readable<String> tScaleText = feature.turretBadgeScaleConfig.signal()
                 .map(v -> Math.round((v != null ? v : 1f) * 100) + "%");
 
@@ -56,6 +59,12 @@ public class VisualizerSettingsView extends BaseComponent {
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-liquid-bridges", "Show Liquid Bridges"),
                             feature.showLiquidBridgesConfig.signal()).growX();
 
+                    checkbox(Core.bundle.get("feature.visualizer.settings.show-bridge-flow-rate", "Show Bridge Flow Rate"),
+                            feature.showBridgeFlowRateConfig.signal()).growX();
+
+                    checkbox(Core.bundle.get("feature.visualizer.settings.hide-idle-bridge-flow", "Hide When Idle"),
+                            feature.hideIdleBridgeFlowConfig.signal()).growX();
+
                     row().growX().gap(unit(2)).children(() -> {
                         text(Core.bundle.get("feature.visualizer.settings.bridge-item-scale", "Bridge Item Scale")).left();
                         spacer();
@@ -71,6 +80,15 @@ public class VisualizerSettingsView extends BaseComponent {
                         slider(feature.bridgeOpacityConfig.signal(), 0.2f, 1.0f, 0.05f);
                         row().width(unit(12)).children(() -> {
                             text(bOpacityText);
+                        });
+                    });
+
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("feature.visualizer.settings.bridge-flow-rate-scale", "Bridge Flow Rate Scale")).left();
+                        spacer();
+                        slider(feature.bridgeFlowRateScaleConfig.signal(), 0.5f, 2.0f, 0.05f);
+                        row().width(unit(12)).children(() -> {
+                            text(bFlowRateScaleText);
                         });
                     });
 

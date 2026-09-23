@@ -21,7 +21,6 @@ import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustry.world.blocks.distribution.MassDriver;
 import mindustry.world.blocks.units.RepairTower;
 import mindustry.world.blocks.units.RepairTurret;
-import mindustrytool.features.FeatureMetadata;
 import mindustrytool.test.MindustryTestEnv;
 
 class RangeDisplayFeatureTest extends MindustryTestEnv {

@@ -10,6 +10,7 @@ import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
+import arc.graphics.g2d.GlyphLayout;
 import arc.graphics.g2d.Lines;
 import arc.graphics.g2d.TextureRegion;
 import arc.input.KeyCode;
@@ -17,12 +18,14 @@ import arc.math.Mathf;
 import arc.math.geom.Rect;
 import arc.struct.ObjectMap;
 import arc.struct.ObjectMap.Entry;
+import arc.util.Align;
 import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Time;
 import mindustry.Vars;
 import mindustry.ctype.UnlockableContent;
 import mindustry.game.EventType.ClientLoadEvent;
+import mindustry.ui.Fonts;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Building;
 import mindustry.gen.Healthc;
@@ -77,6 +80,9 @@ public class VisualizerFeature extends Feature {
     public final ConfigValue<Boolean> showLiquidBridgesConfig;
     public final ConfigValue<Float> bridgeItemScaleConfig;
     public final ConfigValue<Float> bridgeOpacityConfig;
+    public final ConfigValue<Boolean> showBridgeFlowRateConfig;
+    public final ConfigValue<Boolean> hideIdleBridgeFlowConfig;
+    public final ConfigValue<Float> bridgeFlowRateScaleConfig;
 
     // Turret Configurations
     public final ConfigValue<Boolean> showAmmoBadgeConfig;
@@ -89,6 +95,7 @@ public class VisualizerFeature extends Feature {
 
     private final Rect viewBounds = new Rect();
     private final Color colorScratch = new Color();
+    private final GlyphLayout glyphLayout = new GlyphLayout();
     private @Nullable VisualizerSettingsDialog settingsDialog;
 
     // Per-turret enabled bitset indexed by block.id for zero-allocation O(1) checks during 60 FPS draw
@@ -108,6 +115,9 @@ public class VisualizerFeature extends Feature {
     private boolean cachedShowLiquidBridges = true;
     private float cachedBridgeItemScale = 1.0f;
     private float cachedBridgeOpacity = 1.0f;
+    private boolean cachedShowBridgeFlowRate = true;
+    private boolean cachedHideIdleBridgeFlow = false;
+    private float cachedBridgeFlowRateScale = 1.0f;
 
     private boolean cachedShowAmmoBadge = true;
     private boolean cachedShowTargetLine = true;
@@ -157,6 +167,9 @@ public class VisualizerFeature extends Feature {
         showLiquidBridgesConfig = config.boolValue("show-liquid-bridges", true);
         bridgeItemScaleConfig = config.floatValue("bridge-item-scale", 1.0f);
         bridgeOpacityConfig = config.floatValue("bridge-opacity", 1.0f);
+        showBridgeFlowRateConfig = config.boolValue("show-bridge-flow-rate", true);
+        hideIdleBridgeFlowConfig = config.boolValue("hide-idle-bridge-flow", false);
+        bridgeFlowRateScaleConfig = config.floatValue("bridge-flow-rate-scale", 1.0f);
 
         // Turrets
         showAmmoBadgeConfig = config.boolValue("show-ammo-badge", true);
@@ -173,6 +186,9 @@ public class VisualizerFeature extends Feature {
         showLiquidBridgesConfig.signal().subscribe(v -> cachedShowLiquidBridges = v != null ? v : true);
         bridgeItemScaleConfig.signal().subscribe(v -> cachedBridgeItemScale = v != null ? v : 1.0f);
         bridgeOpacityConfig.signal().subscribe(v -> cachedBridgeOpacity = v != null ? v : 1.0f);
+        showBridgeFlowRateConfig.signal().subscribe(v -> cachedShowBridgeFlowRate = v != null ? v : true);
+        hideIdleBridgeFlowConfig.signal().subscribe(v -> cachedHideIdleBridgeFlow = v != null ? v : false);
+        bridgeFlowRateScaleConfig.signal().subscribe(v -> cachedBridgeFlowRateScale = v != null ? v : 1.0f);
 
         showAmmoBadgeConfig.signal().subscribe(v -> cachedShowAmmoBadge = v != null ? v : true);
         showTargetLineConfig.signal().subscribe(v -> cachedShowTargetLine = v != null ? v : true);
@@ -281,6 +297,15 @@ public class VisualizerFeature extends Feature {
         Float bOpacity = bridgeOpacityConfig.get();
         cachedBridgeOpacity = bOpacity != null ? bOpacity : 1.0f;
 
+        Boolean showFlow = showBridgeFlowRateConfig.get();
+        cachedShowBridgeFlowRate = showFlow != null ? showFlow : true;
+
+        Boolean hideIdle = hideIdleBridgeFlowConfig.get();
+        cachedHideIdleBridgeFlow = hideIdle != null ? hideIdle : false;
+
+        Float fScale = bridgeFlowRateScaleConfig.get();
+        cachedBridgeFlowRateScale = fScale != null ? fScale : 1.0f;
+
         Boolean showAmmo = showAmmoBadgeConfig.get();
         cachedShowAmmoBadge = showAmmo != null ? showAmmo : true;
 
@@ -309,6 +334,9 @@ public class VisualizerFeature extends Feature {
         showLiquidBridgesConfig.reset();
         bridgeItemScaleConfig.reset();
         bridgeOpacityConfig.reset();
+        showBridgeFlowRateConfig.reset();
+        hideIdleBridgeFlowConfig.reset();
+        bridgeFlowRateScaleConfig.reset();
 
         showAmmoBadgeConfig.reset();
         showTargetLineConfig.reset();
@@ -400,6 +428,10 @@ public class VisualizerFeature extends Feature {
             } else if (build instanceof DuctBridgeBuild && cachedShowDuctBridges) {
                 drawDuctBridge((DuctBridgeBuild) build);
             }
+        }
+
+        if (cachedShowBridgeFlowRate) {
+            drawBridgeFlow(build);
         }
     }
 
@@ -669,6 +701,223 @@ public class VisualizerFeature extends Feature {
 
         Draw.color(1f, 1f, 1f, cachedBridgeOpacity);
         Draw.rect(icon, lx, ly, width, height);
+    }
+
+    // ─── Bridge Flow Rate Rendering ────────────────────────────────
+
+    private void drawBridgeFlow(Building build) {
+        if (Vars.renderer != null && Vars.renderer.getScale() < 0.6f) {
+            return;
+        }
+
+        if (build instanceof BufferedItemBridgeBuild) {
+            drawBufferedItemBridgeFlow((BufferedItemBridgeBuild) build);
+        } else if (build instanceof LiquidBridgeBuild) {
+            drawLiquidBridgeFlow((LiquidBridgeBuild) build);
+        } else if (build instanceof ItemBridgeBuild) {
+            drawItemBridgeFlow((ItemBridgeBuild) build);
+        } else if (build instanceof DirectionBridgeBuild) {
+            DirectionBridgeBuild dirBuild = (DirectionBridgeBuild) build;
+            if (build.block instanceof DirectionLiquidBridge) {
+                drawDirectionLiquidBridgeFlow(dirBuild);
+            } else if (build instanceof DuctBridgeBuild) {
+                drawDuctBridgeFlow((DuctBridgeBuild) build);
+            }
+        }
+    }
+
+    private void drawBufferedItemBridgeFlow(BufferedItemBridgeBuild build) {
+        if (build.link == -1) {
+            return;
+        }
+        Building linked = Vars.world.build(build.link);
+        if (linked == null) {
+            return;
+        }
+
+        float mx = (build.x + linked.x) / 2f;
+        float my = (build.y + linked.y) / 2f;
+
+        Item item = null;
+        float rate = 0f;
+
+        if (bufferField != null && itemBufferArrayField != null && itemBufferIndexField != null) {
+            try {
+                ItemBuffer itemBuffer = (ItemBuffer) bufferField.get(build);
+                if (itemBuffer != null) {
+                    long[] rawBuffer = (long[]) itemBufferArrayField.get(itemBuffer);
+                    int count = itemBufferIndexField.getInt(itemBuffer);
+                    if (rawBuffer != null && count > 0) {
+                        short itemId = TimeItem.item(rawBuffer[count - 1]);
+                        item = Vars.content.item(itemId);
+                        float speed = ((BufferedItemBridge) build.block).speed;
+                        float safeSpeed = speed > 0.001f ? speed : 1f;
+                        rate = (count * 60f) / safeSpeed * build.timeScale() * build.efficiency;
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+
+        if (item == null && build.items != null && !build.items.empty()) {
+            item = build.items.first();
+        }
+
+        if (rate < 0.05f && cachedHideIdleBridgeFlow) {
+            return;
+        }
+
+        drawBridgeFlowBadge(mx, my, item, rate);
+    }
+
+    private void drawItemBridgeFlow(ItemBridgeBuild build) {
+        if (build.link == -1) {
+            return;
+        }
+        Building linked = Vars.world.build(build.link);
+        if (linked == null) {
+            return;
+        }
+
+        float mx = (build.x + linked.x) / 2f;
+        float my = (build.y + linked.y) / 2f;
+
+        Item item = build.items != null && !build.items.empty() ? build.items.first() : null;
+        float rate = 0f;
+
+        if (item != null && build.warmup > 0.01f && (build.wasMoved || build.moved)) {
+            float transportTime = ((ItemBridge) build.block).transportTime;
+            float safeTime = transportTime > 0.001f ? transportTime : 1f;
+            float activity = build.timeSpeed > 0.05f ? build.timeSpeed : (build.moved ? 1.0f : 0f);
+            rate = (60f / safeTime) * build.timeScale() * build.efficiency * activity;
+        }
+
+        if (rate < 0.05f && cachedHideIdleBridgeFlow) {
+            return;
+        }
+
+        drawBridgeFlowBadge(mx, my, item, rate);
+    }
+
+    private void drawDuctBridgeFlow(DuctBridgeBuild build) {
+        Building linked = build.findLink();
+        if (linked == null) {
+            return;
+        }
+
+        float mx = (build.x + linked.x) / 2f;
+        float my = (build.y + linked.y) / 2f;
+
+        Item item = build.items != null && !build.items.empty() ? build.items.first() : null;
+        float rate = 0f;
+
+        if (item != null && build.progress > 0.01f && build.efficiency > 0.01f) {
+            float speed = ((DuctBridge) build.block).speed;
+            float safeSpeed = speed > 0.001f ? speed : 1f;
+            rate = (60f / safeSpeed) * build.timeScale() * build.efficiency;
+        }
+
+        if (rate < 0.05f && cachedHideIdleBridgeFlow) {
+            return;
+        }
+
+        drawBridgeFlowBadge(mx, my, item, rate);
+    }
+
+    private void drawLiquidBridgeFlow(LiquidBridgeBuild build) {
+        if (build.link == -1) {
+            return;
+        }
+        Building linked = Vars.world.build(build.link);
+        if (linked == null) {
+            return;
+        }
+        boolean isFlowing = build.warmup >= 0.05f && (build.wasMoved || build.moved);
+        drawLiquidBridgeFlowInternal(build, linked, isFlowing);
+    }
+
+    private void drawDirectionLiquidBridgeFlow(DirectionBridgeBuild build) {
+        Building linked = build.findLink();
+        if (linked == null) {
+            return;
+        }
+        boolean isFlowing = build.efficiency > 0.05f && build.liquids != null && build.liquids.currentAmount() > 0.01f;
+        drawLiquidBridgeFlowInternal(build, linked, isFlowing);
+    }
+
+    private void drawLiquidBridgeFlowInternal(Building build, Building linked, boolean isFlowing) {
+        float mx = (build.x + linked.x) / 2f;
+        float my = (build.y + linked.y) / 2f;
+
+        Liquid current = build.liquids != null ? build.liquids.current() : null;
+        if (current == null && linked.liquids != null) {
+            current = linked.liquids.current();
+        }
+
+        float rate = 0f;
+        if (isFlowing && current != null && build.liquids != null && linked.liquids != null && linked.block != null && linked.block.hasLiquids) {
+            float sourceFrac = (build.liquids.get(current) / build.block.liquidCapacity) * build.block.liquidPressure;
+            float destFrac = linked.liquids.get(current) / linked.block.liquidCapacity;
+            float diff = Mathf.clamp(sourceFrac - destFrac);
+            float flow = Math.min(diff * build.block.liquidCapacity, build.liquids.get(current));
+            flow = Math.min(flow, linked.block.liquidCapacity - linked.liquids.get(current));
+            rate = flow * 60f * build.timeScale();
+            if (rate < 0.05f) {
+                rate = 0.5f;
+            }
+        }
+
+        if (rate < 0.05f && cachedHideIdleBridgeFlow) {
+            return;
+        }
+
+        drawBridgeFlowBadge(mx, my, current, rate);
+    }
+
+    private void drawBridgeFlowBadge(float mx, float my, @Nullable UnlockableContent content, float rate) {
+        String text;
+        if (rate <= 0.001f) {
+            text = "0/s";
+        } else if (rate >= 10f) {
+            text = String.format("%.0f/s", rate);
+        } else {
+            text = String.format("%.1f/s", rate);
+        }
+
+        float s = cachedBridgeFlowRateScale;
+        float fontScale = 0.22f * s;
+        float iconSize = 5.5f * s;
+        TextureRegion icon = content != null ? (content.uiIcon != null ? content.uiIcon : content.fullIcon) : null;
+
+        glyphLayout.setText(Fonts.outline, text);
+        float textWidth = glyphLayout.width * fontScale;
+        float textHeight = glyphLayout.height * fontScale;
+
+        float padX = 2.5f * s;
+        float padY = 1.8f * s;
+        float badgeWidth = (icon != null ? iconSize + 1.5f * s : 0f) + textWidth + padX * 2f;
+        float badgeHeight = Math.max(iconSize, textHeight) + padY * 2f;
+
+        // Background pill
+        Draw.color(0f, 0f, 0f, 0.7f * cachedBridgeOpacity);
+        Fill.rect(mx, my, badgeWidth, badgeHeight);
+
+        // Icon
+        if (icon != null) {
+            float iconX = mx - badgeWidth / 2f + padX + iconSize / 2f;
+            Draw.color(Color.white, cachedBridgeOpacity);
+            Draw.rect(icon, iconX, my, iconSize, iconSize);
+        }
+
+        // Text
+        Color textColor = rate <= 0.001f ? Color.lightGray : (rate >= 10f ? Pal.heal : Pal.accent);
+        colorScratch.set(textColor);
+        colorScratch.a = cachedBridgeOpacity;
+
+        float textX = icon != null ? mx - badgeWidth / 2f + padX + iconSize + 1.5f * s : mx - textWidth / 2f;
+        float textY = my + textHeight / 2f;
+        Fonts.outline.draw(text, textX, textY, colorScratch, fontScale, false, Align.left);
+        Draw.reset();
     }
 
     // ─── Turret Rendering ──────────────────────────────────────────

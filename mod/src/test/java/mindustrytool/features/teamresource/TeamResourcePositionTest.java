@@ -1,7 +1,9 @@
 package mindustrytool.features.teamresource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -12,6 +14,7 @@ import arc.graphics.g2d.TextureRegion;
 import arc.input.KeyCode;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
+import arc.scene.Group;
 import arc.scene.Scene;
 import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
@@ -19,12 +22,12 @@ import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.Button;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.ImageButton.ImageButtonStyle;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.scene.ui.layout.Scl;
-import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.WidgetGroup;
 import arc.struct.Seq;
 import java.lang.reflect.Field;
@@ -131,6 +134,21 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         flushEffects();
     }
 
+    private static Button findFirstButton(Element element) {
+        if (element instanceof Button) {
+            return (Button) element;
+        }
+        if (element instanceof Group) {
+            for (Element child : ((Group) element).getChildren()) {
+                Button b = findFirstButton(child);
+                if (b != null) {
+                    return b;
+                }
+            }
+        }
+        return null;
+    }
+
     @Test
     void testDefaultPositionIsCentered() {
         TeamResourceFeature feature = new TeamResourceFeature();
@@ -172,10 +190,8 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         feature.onEnable();
         Element root = feature.getHudView().element();
 
-        Table container = (Table) ((Table) root).getChildren().first();
-        Table column = (Table) container.getChildren().first();
-        Table headerRow = (Table) column.getChildren().first();
-        Element moveButton = headerRow.getChildren().first();
+        Button moveButton = findFirstButton(root);
+        assertNotNull(moveButton, "Move button must exist in HUD");
 
         InputListener dragListener = null;
         for (EventListener l : moveButton.getListeners()) {
@@ -360,5 +376,29 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
         assertEquals(initialX, feature.x(), 1.0f, "Feature X must remain stable with power stats");
         assertEquals(initialX, root.x, 1.0f, "Root X must remain stable with power stats");
+    }
+
+    @Test
+    void testHideHeaderAndDragHandleConfigs() {
+        TeamResourceFeature feature = new TeamResourceFeature();
+
+        assertFalse(feature.hideDragHandleConfig.get(), "hideDragHandleConfig defaults to false");
+        assertFalse(feature.hideHeaderConfig.get(), "hideHeaderConfig defaults to false");
+
+        feature.hideDragHandleConfig.set(true);
+        feature.hideHeaderConfig.set(true);
+        assertTrue(feature.hideDragHandleConfig.get());
+        assertTrue(feature.hideHeaderConfig.get());
+
+        feature.onEnable();
+        Element root = feature.getHudView().element();
+        assertNotNull(root, "HUD root must build cleanly when hideHeader is enabled");
+        root.validate();
+
+        feature.resetToDefaults();
+        assertFalse(feature.hideDragHandleConfig.get(), "resetToDefaults resets hideDragHandleConfig");
+        assertFalse(feature.hideHeaderConfig.get(), "resetToDefaults resets hideHeaderConfig");
+
+        flushEffects();
     }
 }

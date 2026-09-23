@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import arc.func.Prov;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
+import mindustry.core.ContentLoader;
 import mindustry.gen.Icon;
+import mindustry.Vars;
 import mindustry.world.blocks.defense.BuildTurret;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustrytool.features.FeatureKeybind;
@@ -22,6 +24,9 @@ class VisualizerFeatureTest extends MindustryTestEnv {
 
     @BeforeEach
     void setUp() {
+        if (Vars.content == null) {
+            Vars.content = new ContentLoader();
+        }
         if (Icon.distribution == null) {
             Icon.distribution = new TextureRegionDrawable(new TextureRegion());
         }
@@ -40,6 +45,9 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         assertTrue(feature.showLiquidBridgesConfig.get());
         assertEquals(1.0f, feature.bridgeItemScaleConfig.get(), 0.001f);
         assertEquals(1.0f, feature.bridgeOpacityConfig.get(), 0.001f);
+        assertTrue(feature.showBridgeFlowRateConfig.get());
+        assertFalse(feature.hideIdleBridgeFlowConfig.get());
+        assertEquals(1.0f, feature.bridgeFlowRateScaleConfig.get(), 0.001f);
 
         // Turrets
         assertTrue(feature.showAmmoBadgeConfig.get());
@@ -61,6 +69,9 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         feature.showLiquidBridgesConfig.set(false);
         feature.bridgeItemScaleConfig.set(1.5f);
         feature.bridgeOpacityConfig.set(0.7f);
+        feature.showBridgeFlowRateConfig.set(false);
+        feature.hideIdleBridgeFlowConfig.set(true);
+        feature.bridgeFlowRateScaleConfig.set(1.4f);
 
         // Mutate turret configs
         feature.showAmmoBadgeConfig.set(false);
@@ -77,6 +88,9 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         assertFalse(feature.showLiquidBridgesConfig.get());
         assertEquals(1.5f, feature.bridgeItemScaleConfig.get(), 0.001f);
         assertEquals(0.7f, feature.bridgeOpacityConfig.get(), 0.001f);
+        assertFalse(feature.showBridgeFlowRateConfig.get());
+        assertTrue(feature.hideIdleBridgeFlowConfig.get());
+        assertEquals(1.4f, feature.bridgeFlowRateScaleConfig.get(), 0.001f);
 
         assertFalse(feature.showAmmoBadgeConfig.get());
         assertFalse(feature.showTargetLineConfig.get());
@@ -95,6 +109,9 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         assertTrue(feature.showLiquidBridgesConfig.get());
         assertEquals(1.0f, feature.bridgeItemScaleConfig.get(), 0.001f);
         assertEquals(1.0f, feature.bridgeOpacityConfig.get(), 0.001f);
+        assertTrue(feature.showBridgeFlowRateConfig.get());
+        assertFalse(feature.hideIdleBridgeFlowConfig.get());
+        assertEquals(1.0f, feature.bridgeFlowRateScaleConfig.get(), 0.001f);
 
         assertTrue(feature.showAmmoBadgeConfig.get());
         assertTrue(feature.showTargetLineConfig.get());

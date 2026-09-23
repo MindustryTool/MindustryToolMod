@@ -57,6 +57,8 @@ class TranslationFeatureTest extends MindustryTestEnv {
         CompletableFuture<String> f4 = feature.translate("Hello", "French");
         assertEquals(4, mock.callCount.get());
         assertEquals("[French]: Hello", f4.join());
+
+        flushEffects();
     }
 
     @Test
