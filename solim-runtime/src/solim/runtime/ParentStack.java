@@ -16,6 +16,7 @@ import arc.func.Prov;
 import solim.core.Component;
 import solim.core.SpacingAware;
 import solim.performance.PerfSpan;
+import solim.performance.TraceSpan;
 
 /**
  * Implicit parent stack for declarative UI construction with guaranteed cleanup. Supports
@@ -201,6 +202,42 @@ public class ParentStack {
 
 	public static int maxDepthObserved() {
 		return INSTANCE.doMaxDepthObserved();
+	}
+
+	public static boolean isTracing() {
+		return INSTANCE.doIsTracing();
+	}
+
+	public static void traceLeaf(@Nullable String name, @Nullable String phase, long startNs, long endNs) {
+		INSTANCE.doTraceLeaf(name, phase, startNs, endNs);
+	}
+
+	public static List<TraceSpan> traceSnapshot(int max) {
+		return INSTANCE.doTraceSnapshot(max);
+	}
+
+	public static int traceDroppedCount() {
+		return INSTANCE.doTraceDroppedCount();
+	}
+
+	public static long traceId() {
+		return INSTANCE.doTraceId();
+	}
+
+	public static int traceCapacity() {
+		return INSTANCE.doTraceCapacity();
+	}
+
+	public static int traceTotal() {
+		return INSTANCE.doTraceTotal();
+	}
+
+	public static void traceReset() {
+		INSTANCE.doTraceReset();
+	}
+
+	public static void setTracingEnabled(boolean enabled) {
+		INSTANCE.doSetTracingEnabled(enabled);
 	}
 
 	protected void doSetCellConfigurator(@Nullable CellConfigurator configurator) {
@@ -408,5 +445,38 @@ public class ParentStack {
 
 	protected int doMaxDepthObserved() {
 		return 0;
+	}
+
+	protected boolean doIsTracing() {
+		return false;
+	}
+
+	protected void doTraceLeaf(@Nullable String name, @Nullable String phase, long startNs, long endNs) {
+	}
+
+	protected List<TraceSpan> doTraceSnapshot(int max) {
+		return Collections.emptyList();
+	}
+
+	protected int doTraceDroppedCount() {
+		return 0;
+	}
+
+	protected long doTraceId() {
+		return -1L;
+	}
+
+	protected int doTraceCapacity() {
+		return 0;
+	}
+
+	protected int doTraceTotal() {
+		return 0;
+	}
+
+	protected void doTraceReset() {
+	}
+
+	protected void doSetTracingEnabled(boolean enabled) {
 	}
 }

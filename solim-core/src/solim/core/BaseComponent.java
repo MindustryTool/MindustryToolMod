@@ -85,6 +85,8 @@ public abstract class BaseComponent implements Component {
         if (cached != null) {
             return cached;
         }
+        boolean tracing = ParentStack.isTracing();
+        long startNs = tracing ? System.nanoTime() : 0L;
         ComponentContext.push(this::own);
         try {
             cached = build();
@@ -93,6 +95,14 @@ public abstract class BaseComponent implements Component {
                         "build() returned null for " + getClass().getSimpleName());
             }
             applyName(cached);
+            if (tracing) {
+                long endNs = System.nanoTime();
+                String explicit = componentName;
+                String leafName = explicit != null ? explicit
+                        : cached.name != null ? cached.name
+                        : getClass().getSimpleName() + "-" + cached.getClass().getSimpleName();
+                ParentStack.traceLeaf(leafName, "build", startNs, endNs);
+            }
             return cached;
         } catch (Throwable throwable) {
             if (Vars.ui != null) {

@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import mindustry.Vars;
 import mindustrytool.Config;
 import mindustrytool.events.LoginUriEvent;
 import mindustrytool.models.response.UserSession;
@@ -19,7 +20,6 @@ import mindustrytool.services.MindustryTool;
 import mindustrytool.services.Request;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import java.net.SocketTimeoutException;
 
 /**
  * Merged auth provider for the rewritten codebase. Implements AuthProvider and owns a Request
@@ -35,9 +35,18 @@ public class MindustryAuthProvider implements AuthProvider {
 	public static final String KEY_LOGIN_ID = "mindustrytool.auth.login-id";
 	public static final String KEY_LOGIN_EXPIRY = "mindustrytool.auth.login-expiry";
 
+	/** Marker for user-cancelled login so UI can stay silent instead of showing an error. */
+	public static final class LoginCancelled extends RuntimeException {
+		public LoginCancelled() {
+			super();
+		}
+	}
+
 	private final Request api;
 	private CompletableFuture<Void> refreshFuture;
 	private CompletableFuture<Void> loginFuture;
+	private volatile boolean loginCancelled = false;
+	private volatile @Nullable String activeLoginId;
 
 	/**
 	 * Single reactive source of truth for session identity (null when no session is loaded).
@@ -252,10 +261,12 @@ public class MindustryAuthProvider implements AuthProvider {
 			return loginFuture;
 		}
 
+		loginCancelled = false;
 		loginFuture = new CompletableFuture<>();
 
 		MindustryTool.getLoginUri().whenComplete((uri, err) -> {
 			if (err != null) {
+				activeLoginId = null;
 				loginFuture.completeExceptionally(new RuntimeException("Failed to get login URI", err));
 				return;
 			}
@@ -267,10 +278,15 @@ public class MindustryAuthProvider implements AuthProvider {
 				Core.settings.put(
 						KEY_LOGIN_EXPIRY,
 						Instant.now().plus(Duration.ofMinutes(5)).toEpochMilli());
+				Core.settings.forceSave();
+				activeLoginId = loginId;
 
 				Core.app.post(() -> Events.fire(new LoginUriEvent(loginUrl, loginId)));
 
-				pollLoginToken(loginId).whenComplete((v, e) -> {
+				pollWithRetry(loginId, true).whenComplete((v, e) -> {
+					if (loginId.equals(activeLoginId)) {
+						activeLoginId = null;
+					}
 					if (e != null) {
 						loginFuture.completeExceptionally(e);
 					} else {
@@ -280,8 +296,10 @@ public class MindustryAuthProvider implements AuthProvider {
 
 				if (!Core.app.openURI(loginUrl)) {
 					Core.app.setClipboardText(loginUrl);
+					Core.app.post(() -> Vars.ui.showInfoFade(Core.bundle.get("auth.login.browser-fallback")));
 				}
 			} catch (Exception e) {
+				activeLoginId = null;
 				loginFuture.completeExceptionally(new RuntimeException("Failed to start login flow", e));
 			}
 		});
@@ -289,35 +307,72 @@ public class MindustryAuthProvider implements AuthProvider {
 		return loginFuture;
 	}
 
-	public void cancelLogin() {
+	public synchronized void cancelLogin() {
 		if (loginFuture != null && !loginFuture.isDone()) {
-			loginFuture.completeExceptionally(new RuntimeException(Core.bundle.get("auth.login.failed")));
+			loginCancelled = true;
+			activeLoginId = null;
+			clearPendingLoginKeys();
+			loginFuture.completeExceptionally(new LoginCancelled());
 		}
 	}
 
 	public CompletableFuture<Void> pollLoginToken(String loginId) {
+		return pollWithRetry(loginId, false);
+	}
+
+	private CompletableFuture<Void> pollWithRetry(String loginId, boolean cancellable) {
 		CompletableFuture<Void> future = new CompletableFuture<>();
+		long expiryMillis = pendingLoginExpiry();
+		pollAttempt(loginId, expiryMillis, future, cancellable);
+		return future;
+	}
+
+	private void pollAttempt(String loginId, long expiryMillis, CompletableFuture<Void> future, boolean cancellable) {
+		if (future.isDone()) {
+			return;
+		}
+		if (cancellable && loginCancelled) {
+			future.completeExceptionally(new LoginCancelled());
+			return;
+		}
+		String stored = Core.settings.getString(KEY_LOGIN_ID, null);
+		if (stored == null || !stored.equals(loginId)) {
+			future.completeExceptionally(new RuntimeException(Core.bundle.get("auth.login.failed")));
+			return;
+		}
+		if (Instant.now().toEpochMilli() >= expiryMillis) {
+			clearPendingLoginKeys();
+			future.completeExceptionally(new RuntimeException(Core.bundle.get("auth.login.timeout")));
+			return;
+		}
 
 		MindustryTool.pollLoginToken(loginId).whenComplete((token, err) -> {
+			if (future.isDone()) {
+				return;
+			}
 			if (err != null) {
-				String msg = err.getMessage() != null ? err.getMessage().toLowerCase() : "";
-				boolean isTimeout = err instanceof SocketTimeoutException
-						|| (err.getCause() instanceof SocketTimeoutException)
-						|| msg.contains("timed out")
-						|| msg.contains("timeout");
-				if (isTimeout) {
-					future.completeExceptionally(err);
+				if (isTerminalLoginError(err)) {
+					clearPendingLoginKeys();
+					future.completeExceptionally(new RuntimeException("Failed to get login token", err));
 					return;
 				}
-				Core.settings.remove(KEY_LOGIN_ID);
-				future.completeExceptionally(new RuntimeException("Failed to get login token", err));
+				if (Instant.now().toEpochMilli() >= expiryMillis) {
+					clearPendingLoginKeys();
+					future.completeExceptionally(new RuntimeException(Core.bundle.get("auth.login.timeout"), err));
+					return;
+				}
+				schedulePollRetry(loginId, expiryMillis, future, cancellable);
 				return;
 			}
 			try {
-				Core.settings.remove(KEY_LOGIN_ID);
-
-				if (token != null && token.getAccessToken() != null && token.getRefreshToken() != null) {
+				boolean hasTokens = token != null && token.getAccessToken() != null && token.getRefreshToken() != null;
+				if (hasTokens) {
+					if (cancellable && loginCancelled) {
+						future.completeExceptionally(new LoginCancelled());
+						return;
+					}
 					saveTokens(token.getAccessToken(), token.getRefreshToken());
+					clearPendingLoginKeys();
 
 					fetchSession().whenComplete((v, e) -> {
 						if (e != null) {
@@ -326,15 +381,40 @@ public class MindustryAuthProvider implements AuthProvider {
 							future.complete(null);
 						}
 					});
+				} else if (Instant.now().toEpochMilli() >= expiryMillis) {
+					clearPendingLoginKeys();
+					future.completeExceptionally(new RuntimeException(Core.bundle.get("auth.login.timeout")));
 				} else {
-					future.completeExceptionally(new RuntimeException("Invalid response: missing tokens"));
+					schedulePollRetry(loginId, expiryMillis, future, cancellable);
 				}
 			} catch (Exception e) {
 				future.completeExceptionally(e);
 			}
 		});
+	}
 
-		return future;
+	private long pendingLoginExpiry() {
+		long expiryMillis = Core.settings.getLong(KEY_LOGIN_EXPIRY, 0);
+		return expiryMillis > 0 ? expiryMillis
+				: Instant.now().plus(Duration.ofMinutes(5)).toEpochMilli();
+	}
+
+	private void clearPendingLoginKeys() {
+		Core.settings.remove(KEY_LOGIN_ID);
+		Core.settings.remove(KEY_LOGIN_EXPIRY);
+	}
+
+	private void schedulePollRetry(String loginId, long expiryMillis, CompletableFuture<Void> future, boolean cancellable) {
+		Timer.schedule(() -> pollAttempt(loginId, expiryMillis, future, cancellable), 2);
+	}
+
+	private boolean isTerminalLoginError(Throwable err) {
+		Throwable cause = err instanceof CompletionException && err.getCause() != null ? err.getCause() : err;
+		if (cause instanceof HttpException) {
+			int code = ((HttpException) cause).statusCode();
+			return code >= 400 && code < 500 && code != 408;
+		}
+		return false;
 	}
 
 	// ─── Logout ──────────────────────────────
@@ -380,14 +460,13 @@ public class MindustryAuthProvider implements AuthProvider {
 				60 * 5,
 				60 * 5);
 
-		String loginId = Core.settings.getString(KEY_LOGIN_ID);
+		String loginId = Core.settings.getString(KEY_LOGIN_ID, null);
 
-		if (loginId != null) {
+		if (loginId != null && !loginId.isEmpty()) {
 			Instant expiry = Instant.ofEpochMilli(Core.settings.getLong(KEY_LOGIN_EXPIRY, 0));
 
 			if (expiry.isBefore(Instant.now())) {
-				Core.settings.remove(KEY_LOGIN_ID);
-				Core.settings.remove(KEY_LOGIN_EXPIRY);
+				clearPendingLoginKeys();
 			} else {
 				pollLoginToken(loginId).exceptionally(e -> {
 					Log.err("Background login polling failed", e);
