@@ -8,14 +8,14 @@ import java.util.List;
 import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 
 /**
  * Base class for leaf/primitive UI components wrapping an Arc {@link Element}.
  *
- * <p>Automatically binds the element to {@link SolimToken}, registers with {@link ComponentContext},
- * registers pending attachment to {@link ParentStack}, and provides default implementations
+ * <p>Automatically binds the element to {@link SolimToken}, registers with {@link OwnershipContext},
+ * registers pending attachment to {@link AttachmentStack}, and provides default implementations
  * for {@link CellConfig} and {@link ElementConfig}.</p>
  *
  * @param <E> The underlying Arc Element type
@@ -43,10 +43,10 @@ public abstract class LeafComponent<E extends Element, SELF extends LeafComponen
         this.element = element;
         SolimToken.bind(element, this, constraints);
         applyDefaultName(element);
-        ComponentContext.registerChild(this);
-        Table parent = ParentStack.current();
+        OwnershipContext.registerChild(this);
+        Table parent = AttachmentStack.current();
         if (parent != null) {
-            ParentStack.registerPendingComponent(this, parent);
+            AttachmentStack.registerPendingComponent(this, parent);
         }
     }
 

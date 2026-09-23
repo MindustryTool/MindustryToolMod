@@ -20,7 +20,7 @@ import solim.runtime.SolimAssert;
  * Implements {@link Readable} for whole-map reactivity and provides
  * key projections via {@link #readable(Object)} that only invalidate
  * when their specific key changes. Never registers with
- * {@link ComponentContext}, so store-held instances survive UI unmounts.
+ * {@link OwnershipContext}, so store-held instances survive UI unmounts.
  */
 public final class MapSignal<K, V> implements Readable<Map<K, V>>, ReactiveSource {
     private final Map<K, V> data = new HashMap<>();
@@ -77,7 +77,7 @@ public final class MapSignal<K, V> implements Readable<Map<K, V>>, ReactiveSourc
 
     /**
      * Returns a lightweight key projection that only invalidates when
-     * {@code key} changes. Never registers with {@link ComponentContext}.
+     * {@code key} changes. Never registers with {@link OwnershipContext}.
      */
     public Readable<V> readable(@Nullable K key) {
         return key == null ? Readable.of(null) : getOrCreateReadable(key);
@@ -221,7 +221,7 @@ public final class MapSignal<K, V> implements Readable<Map<K, V>>, ReactiveSourc
 
     /**
      * Lightweight per-key projection. Tracks only its own key and never
-     * registers with {@link ComponentContext}.
+     * registers with {@link OwnershipContext}.
      */
     public static final class KeyReadable<K, V> implements Readable<V>, ReactiveSource {
         private final MapSignal<K, V> parent;

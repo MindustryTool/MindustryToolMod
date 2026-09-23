@@ -23,18 +23,14 @@ public class AuthLoginDialog extends SolimDialog {
 
 		children(() -> {
 			column().grow().padding(unit(4)).center().children(() -> {
-				dynamic(hasUrl, available -> {
-					if (Boolean.TRUE.equals(available)) {
-						return UI.button(() -> {
+				when(hasUrl)
+						.thenDo(() -> UI.button(() -> {
 							Core.app.setClipboardText(loginUrlSignal.peek());
 							Vars.ui.showInfoFade(Core.bundle.get("auth.login.copied"));
 						}).children(() -> {
 							text(loginUrlSignal).fontScale(0.7f).wrap();
-						});
-					} else {
-						return new Loader(unit(8));
-					}
-				});
+						}))
+						.elseDo(() -> new Loader(unit(8)));
 			});
 		});
 

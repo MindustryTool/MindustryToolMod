@@ -26,8 +26,6 @@ import solim.reactive.Signal;
 public class QuickSchematicGridHudView extends BaseComponent {
     // TODO: Right click to open edit UI
     // TODO: Hover over button show a shadow of schematic
-    // TODO: Icon not render properly af set (it display schematic preview instead
-    // of newly set icon)
     public static final class SlotModel {
         public final int page;
         public final int row;
@@ -42,7 +40,17 @@ public class QuickSchematicGridHudView extends BaseComponent {
         }
 
         public String key() {
-            return page + ":" + row + ":" + col + ":" + (entry != null && entry.id != null ? entry.id : "empty");
+            String id = entry != null && entry.id != null ? entry.id : "empty";
+            String icon = entry != null ? normalize(entry.customIcon) : "";
+            String schematicName = entry != null ? normalize(entry.schematicName) : "";
+            String schematicFile = entry != null ? normalize(entry.schematicFile) : "";
+            String label = entry != null ? normalize(entry.customLabel) : "";
+            return page + "\u001F" + row + "\u001F" + col + "\u001F" + id + "\u001F" + icon + "\u001F" + schematicName + "\u001F"
+                    + schematicFile + "\u001F" + label;
+        }
+
+        private static String normalize(@Nullable String value) {
+            return value != null && !value.trim().isEmpty() ? value : "";
         }
     }
 
@@ -124,7 +132,7 @@ public class QuickSchematicGridHudView extends BaseComponent {
 
             if (horizontal) {
                 boolean tabsOnTop = QuickSchematicGridFeature.PAGE_TOP.equals(position);
-                return column().gap(gap).top().children(() -> {
+                column().gap(gap).top().children(() -> {
                     if (tabsOnTop) {
                         buildTabsRow(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList, tabColumns,
                                 includeDragHandle);
@@ -135,10 +143,9 @@ public class QuickSchematicGridHudView extends BaseComponent {
                                 includeDragHandle);
                     }
                 });
-            }
-
-            boolean tabsOnLeft = QuickSchematicGridFeature.PAGE_LEFT.equals(position);
-            return row().gap(gap).top().children(() -> {
+            } else {
+                boolean tabsOnLeft = QuickSchematicGridFeature.PAGE_LEFT.equals(position);
+                row().gap(gap).top().children(() -> {
                 if (tabsOnLeft) {
                     buildTabsColumn(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList,
                             includeDragHandle);
@@ -148,7 +155,9 @@ public class QuickSchematicGridHudView extends BaseComponent {
                     buildTabsColumn(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList,
                             includeDragHandle);
                 }
-            });
+                });
+
+            }
         });
     }
 
@@ -198,18 +207,14 @@ public class QuickSchematicGridHudView extends BaseComponent {
             Readable<Float> buttonSize,
             Readable<Float> dragIconSize,
             Readable<Float> buttonOpacity) {
-        return dynamic(feature.hideDragHandleConfig.signal(), hide -> {
-            if (!Boolean.TRUE.equals(hide)) {
-                return button()
+        return when(feature.hideDragHandleConfig.signal())
+                .elseDo(() -> button()
                         .style(Styles.clearNonei)
                         .background(Styles.black6)
                         .size(buttonSize)
                         .opacity(buttonOpacity)
                         .children(() -> icon(Icon.move).size(dragIconSize))
-                        .draggable(feature.xSignal, feature.ySignal);
-            }
-            return null;
-        });
+                        .draggable(feature.xSignal, feature.ySignal));
     }
 
     public static void buildGrid(QuickSchematicGridFeature feature, @Nullable Runnable onBeforeActivate) {
@@ -380,3 +385,4 @@ public class QuickSchematicGridHudView extends BaseComponent {
         }
     }
 }
+

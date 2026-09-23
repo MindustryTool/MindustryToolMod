@@ -83,32 +83,40 @@ public class SchematicIconPickerDialog extends SolimDialog {
                                 .left()
                                 .color(Color.white);
 
-                        dynamic(filteredGlyphs, items -> items == null || items.isEmpty()
-                                ? row().growX().padding(unit(2)).center().children(() -> {
+                        dynamic(filteredGlyphs, items -> {
+                            if (items == null || items.isEmpty()) {
+                                row().growX().padding(unit(2)).center().children(() -> {
                                     text(Core.bundle.get("feature.quick-schematic-grid.icon.empty"))
                                             .color(Color.gray);
-                                })
-                                : wrap().left().gap(unit(1.5f)).children(() -> {
+                                });
+                            } else {
+                                wrap().left().gap(unit(1.5f)).children(() -> {
                                     for (Entry entry : items) {
                                         glyphChip(entry);
                                     }
-                                }));
+                                });
+                            }
+                        });
 
                         text(Core.bundle.get("feature.quick-schematic-grid.icon.content"))
                                 .growX()
                                 .left()
                                 .color(Color.white);
 
-                        dynamic(filteredContents, items -> items == null || items.isEmpty()
-                                ? row().growX().padding(unit(2)).center().children(() -> {
+                        dynamic(filteredContents, items -> {
+                            if (items == null || items.isEmpty()) {
+                                row().growX().padding(unit(2)).center().children(() -> {
                                     text(Core.bundle.get("feature.quick-schematic-grid.icon.empty"))
                                             .color(Color.gray);
-                                })
-                                : wrap().left().gap(unit(1.5f)).children(() -> {
+                                });
+                            } else {
+                                wrap().left().gap(unit(1.5f)).children(() -> {
                                     for (UnlockableContent content : items) {
                                         contentChip(content);
                                     }
-                                }));
+                                });
+                            }
+                        });
                     });
                 });
             });

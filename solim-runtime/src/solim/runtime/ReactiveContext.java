@@ -39,7 +39,7 @@ public final class ReactiveContext {
 	 * during {@code build()} without an active reactive context, then tracks the source.
 	 */
 	public static void trackWithWarning(ReactiveSource source, String warning) {
-		if (current() == null && ComponentContext.current() != null) {
+		if (current() == null && OwnershipContext.current() != null) {
 			Log.debug(warning);
 		}
 		track(source);

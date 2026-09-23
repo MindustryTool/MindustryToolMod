@@ -14,8 +14,8 @@ import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
@@ -191,7 +191,7 @@ public final class ReactiveGrid<T> extends BaseComponent
 
     public ReactiveGrid<T> gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
-            ComponentContext.register(Effect.of(() -> {
+            OwnershipContext.register(Effect.of(() -> {
                 Float g = gapSignal.get();
                 if (g != null) {
                     gap(g);
@@ -257,16 +257,16 @@ public final class ReactiveGrid<T> extends BaseComponent
         if (reconciler.isEmpty()) {
             if (emptyRunnable != null) {
                 Table emptyTable = new Table();
-                ParentStack.push(emptyTable);
+                AttachmentStack.push(emptyTable);
                 try {
                     emptyRunnable.run();
                 } finally {
-                    ParentStack.pop();
+                    AttachmentStack.pop();
                 }
                 table.add(emptyTable).center().colspan(cols).growX();
             } else if (emptyViewSupplier != null) {
                 if (currentEmptyComponent == null) {
-                    currentEmptyComponent = ParentStack.isolate(() -> {
+                    currentEmptyComponent = AttachmentStack.isolate(() -> {
                         Component c = emptyViewSupplier.get();
                         if (c != null) {
                             c.element();

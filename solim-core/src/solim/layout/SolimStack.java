@@ -10,8 +10,8 @@ import solim.modifier.ElementConfig;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     public SolimStack() {
         SolimToken.bind(this.stack, this, constraints);
         this.stack.name = "solim-stack-stack";
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Stack stack() {
@@ -67,7 +67,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
         if (disposed || Prov == null) {
             return this;
         }
-        @Nullable Component component = ReactiveContext.untracked(() -> ParentStack.isolate(Prov));
+        @Nullable Component component = ReactiveContext.untracked(() -> AttachmentStack.isolate(Prov));
         attachLayer(component);
         return this;
     }
@@ -77,7 +77,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
             return this;
         }
         @Nullable Component component = ReactiveContext
-                .untracked(() -> ParentStack.isolate(() -> factory.get(stack)));
+                .untracked(() -> AttachmentStack.isolate(() -> factory.get(stack)));
         attachLayer(component);
         return this;
     }

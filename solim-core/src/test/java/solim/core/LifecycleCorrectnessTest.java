@@ -1,6 +1,6 @@
 package solim.core;
 
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -108,7 +108,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 		assertThrows(RuntimeException.class, comp::element);
 		assertTrue(resourceDisposed.get(), "Partially registered resources must be disposed when build() throws");
 		assertTrue(comp.isDisposed());
-		assertEquals(0, ComponentContext.size(), "ComponentContext must be popped after build failure");
+		assertEquals(0, OwnershipContext.size(), "OwnershipContext must be popped after build failure");
 	}
 
 	@Test
@@ -125,7 +125,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 		assertThrows(IllegalStateException.class, comp::element);
 		assertTrue(resourceDisposed.get(), "Resources must be disposed if build() returns null");
 		assertTrue(comp.isDisposed());
-		assertEquals(0, ComponentContext.size());
+		assertEquals(0, OwnershipContext.size());
 	}
 
 	@Test
@@ -184,7 +184,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 		BaseComponent comp = new BaseComponent() {
 			@Override
 			protected Element build() {
-				ComponentContext.withoutAutoOwnership(() -> {
+				OwnershipContext.withoutAutoOwnership(() -> {
 					new BaseComponent() {
 						@Override
 						protected Element build() {
@@ -209,7 +209,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 	@Test
 	void withoutAutoOwnershipRestoresOnException() {
 		assertThrows(RuntimeException.class, () -> {
-			ComponentContext.withoutAutoOwnership(() -> {
+			OwnershipContext.withoutAutoOwnership(() -> {
 				throw new RuntimeException("boom");
 			});
 		});
@@ -268,7 +268,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 		AtomicBoolean effectDisposed = new AtomicBoolean(false);
 		final BaseComponent[] innerComp = new BaseComponent[1];
 
-		ComponentContext.withoutAutoOwnership(() -> {
+		OwnershipContext.withoutAutoOwnership(() -> {
 			BaseComponent comp = new BaseComponent() {
 				@Override
 				protected Element build() {

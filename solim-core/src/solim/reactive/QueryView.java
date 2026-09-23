@@ -24,7 +24,7 @@ import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 
 /**
@@ -224,7 +224,7 @@ public final class QueryView<T> extends BaseComponent
 
 		cleanupCurrent();
 
-		currentComponent = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
+		currentComponent = ReactiveContext.untracked(() -> AttachmentStack.isolate(() -> {
 			try {
 				switch (targetState) {
 					case LOADING:

@@ -32,48 +32,47 @@ public class ChatUserListView extends BaseComponent {
         Readable<Boolean> hasChannel = store.channels().activeId().map(id -> id != null && !id.isEmpty());
 
         return column().name("user-list").grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
-            dynamic(hasChannel, channelSelected -> {
-                if (!Boolean.TRUE.equals(channelSelected)) {
-                    return dynamic(store.channels().loading(), chanLoading -> {
+            when(hasChannel)
+                    .elseDo(() -> {
+                    dynamic(store.channels().loading(), chanLoading -> {
                         if (Boolean.TRUE.equals(chanLoading)) {
-                            return Loader.centered();
+                            Loader.centered();
+                        } else {
+                            dynamic(store.channels().error(), chanErr -> {
+                                if (chanErr != null && !chanErr.trim().isEmpty()) {
+                                    column().grow().center().gap(unit(2)).padding(unit(2)).children(() -> {
+                                        icon(Icon.warning).size(unit(6)).color(Color.scarlet);
+                                        text(Core.bundle.get("feature.chat.ui.channels-failed", "Channels failed to load."))
+                                                .color(Color.scarlet)
+                                                .fontScale(0.95f)
+                                                .wrap()
+                                                .center();
+                                        text(chanErr).color(Color.gray).fontScale(0.8f).wrap().center();
+                                        button(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"), () -> {
+                                            if (service != null) {
+                                                service.refreshChannels();
+                                            }
+                                        })
+                                                .style(WebStyles.secondary())
+                                                .height(unit(9))
+                                                .children(() -> {
+                                                    icon(Icon.refresh).size(unit(4));
+                                                    text(Core.bundle.get("feature.chat.ui.retry-channels",
+                                                            "Retry Channels"));
+                                                });
+                                    });
+                                } else {
+                                    column().padding(unit(2)).children(() -> {
+                                        text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
+                                                .color(Color.gray)
+                                                .fontScale(0.9f);
+                                    });
+                                }
+                            }).grow();
                         }
-
-                        return dynamic(store.channels().error(), chanErr -> {
-                            if (chanErr != null && !chanErr.trim().isEmpty()) {
-                                return column().grow().center().gap(unit(2)).padding(unit(2)).children(() -> {
-                                    icon(Icon.warning).size(unit(6)).color(Color.scarlet);
-                                    text(Core.bundle.get("feature.chat.ui.channels-failed", "Channels failed to load."))
-                                            .color(Color.scarlet)
-                                            .fontScale(0.95f)
-                                            .wrap()
-                                            .center();
-                                    text(chanErr).color(Color.gray).fontScale(0.8f).wrap().center();
-                                    button(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"), () -> {
-                                        if (service != null) {
-                                            service.refreshChannels();
-                                        }
-                                    })
-                                            .style(WebStyles.secondary())
-                                            .height(unit(9))
-                                            .children(() -> {
-                                                icon(Icon.refresh).size(unit(4));
-                                                text(Core.bundle.get("feature.chat.ui.retry-channels",
-                                                        "Retry Channels"));
-                                            });
-                                });
-                            }
-
-                            return column().padding(unit(2)).children(() -> {
-                                text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
-                                        .color(Color.gray)
-                                        .fontScale(0.9f);
-                            });
-                        }).grow();
                     }).grow();
-                }
-
-                return query(store.members().query())
+                 })
+                .thenDo(() -> query(store.members().query())
                         .grow()
                         .loading(Loader::centered)
                         .error(err -> column().grow().center().gap(unit(2)).padding(unit(2)).children(() -> {
@@ -117,8 +116,8 @@ public class ChatUserListView extends BaseComponent {
                                                         .fontScale(0.9f)
                                                         .left();
                                     });
-                        }).grow();
-            }).grow();
+                        }))
+                    .grow();
         }).element();
     }
 
@@ -168,3 +167,4 @@ public class ChatUserListView extends BaseComponent {
         }
     }
 }
+

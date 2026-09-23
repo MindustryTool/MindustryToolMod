@@ -15,7 +15,7 @@ Async reactive primitive `Query<T>` — the async counterpart to `Computed` — 
 - `.staleTime(Duration)`, `.gcTime(Duration)`, `.retry(int)`, `.retryDelay(Duration)`, `.refetchInterval(Duration)` — options
 - `.build()` — constructs the Query
 
-`Query<T>` SHALL additionally be created via `Query.noKey(Supplier<CompletableFuture<T>>)` for stateless queries; such queries use an anonymous key and cannot be targeted by cache invalidation. All queries SHALL automatically register with the active `ComponentContext` for lifecycle ownership. `Query.ofDynamic(...)`, the post-construction chain configuration methods, and the `Query.of(Readable<Boolean>, Supplier)` overload SHALL NOT exist.
+`Query<T>` SHALL additionally be created via `Query.noKey(Supplier<CompletableFuture<T>>)` for stateless queries; such queries use an anonymous key and cannot be targeted by cache invalidation. All queries SHALL automatically register with the active `OwnershipContext` for lifecycle ownership. `Query.ofDynamic(...)`, the post-construction chain configuration methods, and the `Query.of(Readable<Boolean>, Supplier)` overload SHALL NOT exist.
 
 #### Scenario: Query created in component build
 - **WHEN** `Query.of(key, fetcher)` is called inside a component's `build()` method
@@ -166,7 +166,7 @@ All signal mutations resulting from async fetch completion SHALL be executed on 
 
 #### Scenario: Auto-dispose on component dispose
 - **WHEN** the parent Solim component is disposed
-- **THEN** the Query SHALL be automatically disposed via `ComponentContext` ownership
+- **THEN** the Query SHALL be automatically disposed via `OwnershipContext` ownership
 
 ### Requirement: Mount-Aware Freshness Check
 `Query<T>` SHALL expose `isStale()`, `isError()`, and `ensureFresh()` methods to support mount-time refetching. `ensureFresh()` SHALL trigger `refetch()` if the query is not disposed, not currently fetching, and satisfies any of:

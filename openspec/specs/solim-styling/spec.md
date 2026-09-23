@@ -160,7 +160,7 @@ The system SHALL provide a Badge component (solim.display.Badge, Ui.badge) for c
 
 Clickable, styled card container component with declarative child composition, fluent chained reactive property bindings, and click event bubbling control.
 ### Requirement: Declarative Card Container Component
-The framework SHALL provide a `Card` component wrapping a single Arc `Table` as its clickable container element, such that `element()`, `table()`, and `container()` return the same instance. It SHALL support declarative child composition via `ParentStack`, custom click handling installed lazily only when `.onClick(Runnable)` is set, and event bubbling control.
+The framework SHALL provide a `Card` component wrapping a single Arc `Table` as its clickable container element, such that `element()`, `table()`, and `container()` return the same instance. It SHALL support declarative child composition via `AttachmentStack`, custom click handling installed lazily only when `.onClick(Runnable)` is set, and event bubbling control.
 
 #### Scenario: Building card with children
 - **WHEN** `card(() -> { text("Title"); text("Subtitle"); })` is executed

@@ -233,10 +233,11 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
 
                         dynamic(activeIcon, icon -> {
                             if (icon == null || icon.trim().isEmpty()) {
-                                return text(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.none"))
+                                text(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.none"))
                                         .color(Color.gray);
+                            } else {
+                                text(icon).fontScale(1.3f);
                             }
-                            return text(icon).fontScale(1.3f);
                         });
 
                         spacer();
@@ -248,12 +249,11 @@ public class QuickSchematicGridSettingsView extends BaseComponent {
 
                         dynamic(activeIcon, icon -> {
                             if (icon != null && !icon.trim().isEmpty()) {
-                                return button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.clear"),
+                                button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.clear"),
                                         this::clearPageIcon)
                                                 .style(WebStyles.ghost())
                                                 .height(unit(8.5f));
                             }
-                            return null;
                         });
                     });
 

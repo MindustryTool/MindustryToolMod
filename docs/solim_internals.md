@@ -28,7 +28,7 @@ Unlike web frameworks or backend component trees, Solim operates inside a **sing
                    ▼                                       ▼
 ┌──────────────────────────────────────┐ ┌────────────────────────────────────┐
 │      :solim-core (Public APIs)       │ │  :solim-runtime (Internal Engine)  │
-│  BaseComponent, Signal, Computed,    │ │  ParentStack, ComponentContext,    │
+│  BaseComponent, Signal, Computed,    │ │  AttachmentStack, OwnershipContext,    │
 │  Effect, Binding, Column, Row,       │ │  ReactiveContext, SignalDispatcher,│
 │  ReactiveGrid, Button, Text, etc.    │ │  StructuralReconciler              │
 └──────────────────┬───────────────────┘ └─────────────────┬──────────────────┘
@@ -114,10 +114,10 @@ The engine relies on thread-local-free ambient stacks because Mindustry runs its
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          Ambient Runtime Stacks                             │
 ├────────────────────────────────┬────────────────────────────────────────────┤
-│         ParentStack            │ Manages active layout container for        │
-│    Deque<ParentStack.Entry>    │ declarative child attachment.              │
+│         AttachmentStack            │ Manages active layout container for        │
+│    Deque<AttachmentStack.Entry>    │ declarative child attachment.              │
 ├────────────────────────────────┼────────────────────────────────────────────┤
-│       ComponentContext         │ Tracks the active BaseComponent.build()    │
+│       OwnershipContext         │ Tracks the active BaseComponent.build()    │
 │  Deque<Consumer<Disposable>>   │ scope to automatically own child resources.│
 ├────────────────────────────────┼────────────────────────────────────────────┤
 │       ReactiveContext          │ Tracks active ReactiveObserver (Computed   │
@@ -127,7 +127,7 @@ The engine relies on thread-local-free ambient stacks because Mindustry runs its
 
 ---
 
-### 3.1 `ParentStack`
+### 3.1 `AttachmentStack`
 Manages implicit parent-child hierarchy construction for declarative blocks like `column(() -> { ... })`.
 
 #### Fields
@@ -139,8 +139,8 @@ Manages implicit parent-child hierarchy construction for declarative blocks like
 | `cellConfigurator` | `BiConsumer<Cell<?>, Element>` | Global hook executed whenever an element is attached to a cell. | Automatically applies `PendingCellConfig` constraints and triggers `GapContainer.respace()`. |
 
 #### Inner Classes
-- `ParentStack.Attacher`: Functional interface `Cell<?> attach(Table parent, Element child)` defining container-specific placement logic.
-- `ParentStack.Entry`: Stores the `Table` and its `Attacher` pair.
+- `AttachmentStack.Attacher`: Functional interface `Cell<?> attach(Table parent, Element child)` defining container-specific placement logic.
+- `AttachmentStack.Entry`: Stores the `Table` and its `Attacher` pair.
 
 #### Key Mechanics & Lifecycle
 1. **`push(Table parent, Attacher attacher)`**: Pushes container onto `stack`.
@@ -150,7 +150,7 @@ Manages implicit parent-child hierarchy construction for declarative blocks like
 
 ---
 
-### 3.2 `ComponentContext`
+### 3.2 `OwnershipContext`
 Enables automatic, ambient resource ownership without manual `.own()` boilerplate.
 
 #### Fields
@@ -162,16 +162,16 @@ Enables automatic, ambient resource ownership without manual `.own()` boilerplat
 #### Key Mechanics
 ```java
 // Inside BaseComponent.element():
-ComponentContext.push(this::own);
+OwnershipContext.push(this::own);
 try {
     cached = build();
 } finally {
-    ComponentContext.pop();
+    OwnershipContext.pop();
 }
 ```
 Whenever an `Effect`, `Binding`, or child `Component` is created:
 ```java
-ComponentContext.register(disposable);
+OwnershipContext.register(disposable);
 ```
 If a parent is currently building, its registrar captures the disposable. When that parent is later disposed, all captured disposables are freed automatically.
 
@@ -239,7 +239,7 @@ Keyed identity reconciliation engine for dynamic lists (`ForEach`, `ReactiveGrid
 #### Reconciliation Algorithm (`reconcile`)
 1. Iterates through new items and extracts each item's key `K`.
 2. **Key exists in `activeComponents`**: Reuses existing component instance directly. No rebuild.
-3. **Key is new**: Executes `factory.apply(item)` in an isolated context (`ParentStack.isolate()` + `withoutAutoOwnership()`), eagerly forces `.element()`, and registers it in `nextComponents`.
+3. **Key is new**: Executes `factory.apply(item)` in an isolated context (`AttachmentStack.isolate()` + `withoutAutoOwnership()`), eagerly forces `.element()`, and registers it in `nextComponents`.
 4. **Key was removed**: Any key in `activeComponents` that is absent from `nextComponents` is immediately disposed via `comp.dispose()`.
 5. Swaps `activeComponents` with `nextComponents`.
 
@@ -338,7 +338,7 @@ Executes side effects in response to dependency changes, with automatic cleanup 
 | `disposed` | `boolean` | Cleanup status. | Halts all future executions. |
 
 #### Lifecycle
-1. **Initial Run**: Executes immediately upon creation within `BaseComponent.build()`. Automatically owned by `ComponentContext`.
+1. **Initial Run**: Executes immediately upon creation within `BaseComponent.build()`. Automatically owned by `OwnershipContext`.
 2. **Invalidation**: When any dependency changes, `invalidate()` is called:
    - Sets `pending = true`.
    - Calls `SignalDispatcher.enqueue(this)`.
@@ -427,15 +427,15 @@ Buffers parent-cell settings before the element is attached to an Arc `Table`.
 | `padTop/Left/Bottom/Right` | `Readable<Float>` | Outer margins. | Applied as `cell.pad()` on parent table. |
 | `align` | `Integer` | Cell content alignment. | Configures `cell.align()`. |
 
-#### Automatic Hook via `ParentStack`
+#### Automatic Hook via `AttachmentStack`
 When `PendingCellConfig` class loads:
 ```java
-ParentStack.setCellConfigurator((cell, child) -> {
+AttachmentStack.setCellConfigurator((cell, child) -> {
     PendingCellConfig config = find(child);
     if (config != null) {
         List<Disposable> effects = config.applyToCell(cell);
         for (Disposable effect : effects) {
-            ComponentContext.register(effect);
+            OwnershipContext.register(effect);
         }
     }
     Table t = cell.getTable();
@@ -444,7 +444,7 @@ ParentStack.setCellConfigurator((cell, child) -> {
     }
 });
 ```
-Every time a child is added, its cell configuration is applied immediately, and reactive bindings (e.g. reactive width/margins) are automatically registered into `ComponentContext`.
+Every time a child is added, its cell configuration is applied immediately, and reactive bindings (e.g. reactive width/margins) are automatically registered into `OwnershipContext`.
 
 ---
 
@@ -541,7 +541,7 @@ Every custom Solim component should extend `BaseComponent`.
 
 ### Lifecycle Rules
 1. **Lazy Execution**: `build()` is **not** called in the constructor. It is triggered only when `element()` is called.
-2. **Ambient Scope**: Inside `element()`, `ComponentContext.push(this::own)` activates. Any `Effect`, `Binding`, or child component instantiated during `build()` is automatically added to `disposables`.
+2. **Ambient Scope**: Inside `element()`, `OwnershipContext.push(this::own)` activates. Any `Effect`, `Binding`, or child component instantiated during `build()` is automatically added to `disposables`.
 3. **LIFO Disposal**: Disposes resources in reverse order so downstream resources are torn down before upstream dependencies.
 4. **Auto-Naming**: If `name(...)` is not explicitly set, Solim generates a default name: `"solim-" + componentName + "-" + elementName`.
 
@@ -678,13 +678,13 @@ public class MiniMapHud extends Hud {
 2. **Never manually instantiate or update Scene2D widgets imperatively**:
    - Do not call `new Table()` or `new Label()` when Solim abstractions exist (`row()`, `column()`, `text()`).
 3. **Never call `BaseComponent.own()` from mod code**:
-   - Ambient ownership handles this automatically via `ComponentContext`.
+   - Ambient ownership handles this automatically via `OwnershipContext`.
 4. **Never use static `grid()` for dynamic items**:
    - Always use `reactiveGrid(...)` with a stable key extractor.
 
 ### ✅ Code Review Invariants
 - [ ] Every user-visible text string uses a `bundle.properties` translation key.
 - [ ] No Java 9+ standard library APIs are used (must remain Java 8 runtime compatible).
-- [ ] Subscribed effects and event listeners are properly registered with `ComponentContext` or `BaseComponent.listen()`.
+- [ ] Subscribed effects and event listeners are properly registered with `OwnershipContext` or `BaseComponent.listen()`.
 - [ ] All HTTP calls use `mindustrytool.services.Request`.
 - [ ] Dialogs call `maxWidth(500f)` and center content.

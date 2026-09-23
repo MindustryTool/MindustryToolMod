@@ -32,6 +32,8 @@ public class AutoplaySettingsView extends BaseComponent {
                 column().growX().gap(unit(3)).padding(unit(2)).children(() -> {
                     globalSection();
                     divider();
+                    displaySection();
+                    divider();
                     tasksSection();
                 });
             });
@@ -41,6 +43,59 @@ public class AutoplaySettingsView extends BaseComponent {
     private Component globalSection() {
         return column().growX().gap(unit(2)).children(() -> {
             checkbox(Core.bundle.get("feature.autoplay.settings.follow-unit"), feature.followUnit.signal());
+        });
+    }
+
+    private Component displaySection() {
+        return column().growX().gap(unit(2)).children(() -> {
+            row().growX().gap(unit(2)).center().children(() -> {
+                text(Core.bundle.get("feature.autoplay.settings.display-mode")).left()
+                        .color(WebStyles.Colors.GHOST_FG);
+
+                spacer();
+                row().gap(unit(1.5f)).children(() -> {
+                    button(() -> feature.displayModeConfig.set(AutoplayFeature.DISPLAY_HUD))
+                            .style(WebStyles.filterChip())
+                            .checked(feature.displayModeConfig.signal()
+                                    .map(AutoplayFeature.DISPLAY_HUD::equals))
+                            .padding(unit(1.5f))
+                            .children(() -> text(
+                                    Core.bundle.get("feature.autoplay.settings.display-mode.hud")));
+
+                    button(() -> feature.displayModeConfig.set(AutoplayFeature.DISPLAY_POPUP))
+                            .style(WebStyles.filterChip())
+                            .checked(feature.displayModeConfig.signal()
+                                    .map(AutoplayFeature.DISPLAY_POPUP::equals))
+                            .padding(unit(1.5f))
+                            .children(() -> text(
+                                    Core.bundle.get("feature.autoplay.settings.display-mode.popup")));
+                });
+            });
+
+            text(Core.bundle.get("feature.autoplay.hud.reorder-hint")).growX().left().wrap(true)
+                    .color(WebStyles.Colors.GHOST_FG);
+
+            row().growX().gap(unit(2)).center().children(() -> {
+                text(Core.bundle.get("feature.autoplay.settings.scale")).left()
+                        .color(WebStyles.Colors.GHOST_FG);
+
+                spacer();
+                slider(feature.scaleConfig.signal(), 0.5f, 1.5f, 0.1f);
+
+                row().width(unit(14)).children(() -> {
+                    text(feature.scaleConfig.signal()
+                            .map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
+                });
+            });
+
+            checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
+                    feature.hideDragHandleConfig.signal()).growX();
+
+            button(feature::resetPosition)
+                    .style(WebStyles.secondary())
+                    .growX()
+                    .padding(unit(2))
+                    .children(() -> text(Core.bundle.get("feature.autoplay.settings.reset-position")));
         });
     }
 

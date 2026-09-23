@@ -23,7 +23,7 @@ The test suite SHALL verify the complete component lifecycle contract: lazy buil
 
 #### Scenario: Partial build cleanup on exception
 - **WHEN** `build()` registers several owned resources and subsequently throws an exception
-- **THEN** all resources registered up to that point are automatically disposed and `ComponentContext` is popped cleanly
+- **THEN** all resources registered up to that point are automatically disposed and `OwnershipContext` is popped cleanly
 
 ---
 
@@ -109,15 +109,15 @@ The test suite SHALL verify the execution semantics of `SignalDispatcher`: FIFO 
 ---
 
 ### Requirement: Ambient Context Restoration and Isolation Suite
-The test suite SHALL verify that `ReactiveContext`, `ComponentContext`, and `ParentStack` maintain strict balance, stack integrity, and isolation across nested operations, `withoutAutoOwnership` scopes, and unexpected runtime exceptions.
+The test suite SHALL verify that `ReactiveContext`, `OwnershipContext`, and `AttachmentStack` maintain strict balance, stack integrity, and isolation across nested operations, `withoutAutoOwnership` scopes, and unexpected runtime exceptions.
 
 #### Scenario: Untracked execution does not register dependencies
 - **WHEN** a signal is read inside `ReactiveContext.untracked(...)` within an effect
 - **THEN** the signal is not added as a dependency of the effect
 
-#### Scenario: Exception inside ParentStack children block unwinds stack
+#### Scenario: Exception inside AttachmentStack children block unwinds stack
 - **WHEN** an exception is thrown inside a container's `children()` block
-- **THEN** `ParentStack` pops the active parent entry and returns to the prior parent level
+- **THEN** `AttachmentStack` pops the active parent entry and returns to the prior parent level
 
 #### Scenario: Sibling isolation in cell configuration
 - **WHEN** parent cell configuration is applied to child A

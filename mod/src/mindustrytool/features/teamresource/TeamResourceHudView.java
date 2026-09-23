@@ -133,7 +133,9 @@ public class TeamResourceHudView extends BaseComponent {
                 });
 
                 // 2. Expanded Content Panel
-                dynamic(expanded, isExp -> Boolean.TRUE.equals(isExp) ? buildExpandedContent(scale, itemCols) : row())
+                when(expanded)
+                        .thenDo(() -> buildExpandedContent(scale, itemCols))
+                        .elseDo(() -> row())
                         .growX();
             });
         });
@@ -178,42 +180,50 @@ public class TeamResourceHudView extends BaseComponent {
             divider();
 
             // Core Items Section
-            dynamic(feature.showItemsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
-                dynamic(state.usedItemsSignal, items -> {
-                    if (items == null || items.isEmpty()) {
-                        return row().left()
-                                .children(() -> text(Core.bundle.get("team-resources.no-items", "No core items"))
-                                        .color(Color.gray).style(Styles.outlineLabel));
-                    }
-
-                    return column().children(() -> {
-                        reactiveGrid(state.usedItemsSignal).columns(itemCols)
-                                .key(item -> item.name).growX().gap(unit(1))
-                                .children(item -> createItemCard(item, itemCardHeight, iconSize, scale));
-                    });
-                }).growX();
-            }).growX() : row()).growX();
+            when(feature.showItemsConfig.signal())
+                    .thenDo(() -> column(() -> {
+                        dynamic(state.usedItemsSignal, items -> {
+                            if (items == null || items.isEmpty()) {
+                                row().left()
+                                        .children(() -> text(Core.bundle.get("team-resources.no-items", "No core items"))
+                                                .color(Color.gray).style(Styles.outlineLabel));
+                            } else {
+                                column().children(() -> {
+                                    reactiveGrid(state.usedItemsSignal).columns(itemCols)
+                                            .key(item -> item.name).growX().gap(unit(1))
+                                            .children(item -> createItemCard(item, itemCardHeight, iconSize, scale));
+                                });
+                            }
+                        }).growX();
+                    }).growX())
+                    .elseDo(() -> row())
+                    .growX();
 
             // Units Section
-            dynamic(feature.showUnitsConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
-                dynamic(state.usedUnitsSignal, units -> {
-                    if (units == null || units.isEmpty()) {
-                        return row().left()
-                                .children(() -> text(Core.bundle.get("team-resources.no-units", "No active units"))
-                                        .color(Color.gray).style(Styles.outlineLabel));
-                    }
-
-                    return column().children(() -> {
-                        reactiveGrid(state.usedUnitsSignal).columns(itemCols)
-                                .key(unit -> unit.name).growX().gap(unit(1))
-                                .children(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
-                    });
-                }).growX();
-            }).growX() : row()).growX();
+            when(feature.showUnitsConfig.signal())
+                    .thenDo(() -> column(() -> {
+                        dynamic(state.usedUnitsSignal, units -> {
+                            if (units == null || units.isEmpty()) {
+                                row().left()
+                                        .children(() -> text(Core.bundle.get("team-resources.no-units", "No active units"))
+                                                .color(Color.gray).style(Styles.outlineLabel));
+                            } else {
+                                column().children(() -> {
+                                    reactiveGrid(state.usedUnitsSignal).columns(itemCols)
+                                            .key(unit -> unit.name).growX().gap(unit(1))
+                                            .children(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
+                                });
+                            }
+                        }).growX();
+                    }).growX())
+                    .elseDo(() -> row())
+                    .growX();
 
             // Power Section
-            dynamic(feature.showPowerConfig.signal(),
-                    show -> Boolean.TRUE.equals(show) ? createPowerSection(scale) : row()).growX();
+            when(feature.showPowerConfig.signal())
+                    .thenDo(() -> createPowerSection(scale))
+                    .elseDo(() -> row())
+                    .growX();
         });
     }
 
@@ -308,25 +318,28 @@ public class TeamResourceHudView extends BaseComponent {
                         arc(satisfactionBar);
                     });
 
-            dynamic(feature.showStoredPowerConfig.signal(), show -> Boolean.TRUE.equals(show) ? column(() -> {
-                row().left().growX()
-                        .marginTop(scale.map(s -> 5f * (s != null ? s : 1f)))
-                        .marginBottom(scale.map(s -> 3f * (s != null ? s : 1f)))
-                        .children(() -> {
-                            text(state.tickSignal.map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ")
-                                    + state.getFormattedStoredPower()))
-                                            .style(Styles.outlineLabel)
-                                            .fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f)));
-                        });
+            when(feature.showStoredPowerConfig.signal())
+                    .thenDo(() -> column(() -> {
+                        row().left().growX()
+                                .marginTop(scale.map(s -> 5f * (s != null ? s : 1f)))
+                                .marginBottom(scale.map(s -> 3f * (s != null ? s : 1f)))
+                                .children(() -> {
+                                    text(state.tickSignal.map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ")
+                                            + state.getFormattedStoredPower()))
+                                                    .style(Styles.outlineLabel)
+                                                    .fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f)));
+                                });
 
-                SplitBar storedBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED,
-                        () -> scale.get() != null ? scale.get() : 1f);
-                row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
-                        .marginBottom(scale.map(s -> 2f * (s != null ? s : 1f)))
-                        .children(() -> {
-                            arc(storedBar);
-                        });
-            }).growX().gap(unit(1)) : row()).growX();
+                        SplitBar storedBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED,
+                                () -> scale.get() != null ? scale.get() : 1f);
+                        row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
+                                .marginBottom(scale.map(s -> 2f * (s != null ? s : 1f)))
+                                .children(() -> {
+                                    arc(storedBar);
+                                });
+                    }).growX().gap(unit(1)))
+                    .elseDo(() -> row())
+                    .growX();
         }).growX().gap(unit(1));
     }
 

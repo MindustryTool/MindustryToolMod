@@ -65,6 +65,10 @@ public class QuickSchematicEntry {
         return customIcon != null && !customIcon.trim().isEmpty();
     }
 
+    public QuickSchematicEntry copy() {
+        return new QuickSchematicEntry(id, page, row, col, schematicName, schematicFile, customIcon, customLabel);
+    }
+
     public String displayName() {
         if (customLabel != null && !customLabel.trim().isEmpty()) {
             return customLabel;

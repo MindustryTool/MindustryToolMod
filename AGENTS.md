@@ -449,7 +449,7 @@ public Readable<Boolean> enabled() {
 - `:solim-api` contains core public contracts (`Component`, `Disposable`, `SpacingAware`, `SchedulableEffect`, `ReactiveObserver`).
 - `:solim` is the public API library and facade for mod development (`solim.UI`).
 - `:solim-core` contains public UI components, layouts, and reactive types (`BaseComponent`, `Signal`, `Computed`, `Effect`, `Ui`, etc.).
-- `:solim-runtime` contains the private engine runtime (`ParentStack`, `ComponentContext`, `ReactiveContext`, `SignalDispatcher`, `StructuralReconciler`). It is an internal `implementation` dependency physically excluded from `:mod`'s compile classpath.
+- `:solim-runtime` contains the private engine runtime (`AttachmentStack`, `OwnershipContext`, `ReactiveContext`, `SignalDispatcher`, `StructuralReconciler`). It is an internal `implementation` dependency physically excluded from `:mod`'s compile classpath.
 
 Mod code must use the public `solim.UI.*` declarative facades. Attempting to reference `:solim-runtime` classes or calling `own()` will result in compile-time errors.
 

@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <ul>
  *   <li>the Arc element tree (public Scene2D API),
  *   <li>reactive instances discovered by reflectively scanning each element plus the ambient static
- *       contexts ({@code ComponentContext}, {@code ParentStack}, {@code ReactiveContext}),
+ *       contexts ({@code OwnershipContext}, {@code AttachmentStack}, {@code ReactiveContext}),
  *   <li>layout metrics for each element.
  * </ul>
  *
@@ -157,7 +157,7 @@ public final class UiSnapshot {
 
 	/** Scans ambient static context stacks for in-flight components, computeds, and effects. */
 	private static void scanAmbientContexts(List<ReactiveRef> refs) {
-		scanDeque("solim.runtime.ComponentContext", "stack", refs);
+		scanDeque("solim.runtime.OwnershipContext", "stack", refs);
 		scanDeque("solim.runtime.ReactiveContext", "stack", refs);
 		scanPendingComponents(refs);
 	}
@@ -180,7 +180,7 @@ public final class UiSnapshot {
 
 	private static void scanPendingComponents(List<ReactiveRef> refs) {
 		try {
-			Class<?> type = Class.forName("solim.runtime.ParentStack");
+			Class<?> type = Class.forName("solim.runtime.AttachmentStack");
 			Object value = ReflectAccess.read(ReflectAccess.field(type, "pendingComponents"), null);
 			if (value instanceof Map) {
 				for (Object component : ((Map<?, ?>) value).values()) {
@@ -192,7 +192,7 @@ public final class UiSnapshot {
 				}
 			}
 		} catch (ClassNotFoundException | RuntimeException e) {
-			Log.warn("[solim-mcp] ambient context {0} unavailable; skipped", "solim.runtime.ParentStack");
+			Log.warn("[solim-mcp] ambient context {0} unavailable; skipped", "solim.runtime.AttachmentStack");
 		}
 	}
 

@@ -7,14 +7,14 @@ Reusable test infrastructure for Solim framework tests, providing ambient contex
 ## Requirements
 
 ### Requirement: Ambient Context Guard at Teardown
-The test infrastructure SHALL provide a base test fixture (`SolimTestHarness`) that executes after each test to verify that Solim runtime ambient contexts are completely balanced and empty, preventing context leakage between test runs. Specifically, it MUST assert that `ParentStack.current()` has no dangling elements, `ComponentContext.current()` is null, `ReactiveContext.current()` is null, and `SignalDispatcher` has no pending dirty effects or uncompleted flush flags.
+The test infrastructure SHALL provide a base test fixture (`SolimTestHarness`) that executes after each test to verify that Solim runtime ambient contexts are completely balanced and empty, preventing context leakage between test runs. Specifically, it MUST assert that `AttachmentStack.current()` has no dangling elements, `OwnershipContext.current()` is null, `ReactiveContext.current()` is null, and `SignalDispatcher` has no pending dirty effects or uncompleted flush flags.
 
 #### Scenario: Clean state passes teardown assertion
 - **WHEN** a test completes normally having pushed and popped contexts symmetrically
 - **THEN** teardown validation succeeds without raising an exception
 
-#### Scenario: Corrupted ParentStack fails teardown
-- **WHEN** a test leaks an unpopped parent onto `ParentStack`
+#### Scenario: Corrupted AttachmentStack fails teardown
+- **WHEN** a test leaks an unpopped parent onto `AttachmentStack`
 - **THEN** teardown validation catches the non-empty stack, resets ambient state to clean, and throws `AssertionError`
 
 #### Scenario: Corrupted ReactiveContext fails teardown

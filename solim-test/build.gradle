@@ -4,7 +4,7 @@
 // provided by the root compileOnly Mindustry dependency. Test-only: never shipped.
 
 dependencies {
-	// SolimEnv needs the solim ambient types (ParentStack, ComponentContext,
+	// SolimEnv needs the solim ambient types (AttachmentStack, OwnershipContext,
 	// ReactiveContext, SignalDispatcher). Runtime-only: depending on solim-core
 	// here would create a build-path cycle, since solim-core's tests consume
 	// this module. Core-specific resets live in a solim-core test env instead.

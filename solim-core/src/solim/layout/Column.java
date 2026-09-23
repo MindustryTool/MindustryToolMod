@@ -14,17 +14,17 @@ import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 /** Column layout — vertical Table wrapper. */
 public final class Column
         implements Component, CellConfig<Column>, ElementConfig<Column>, TableConfig<Column>, GapContainer {
 
-    public static final ParentStack.Attacher ATTACHER = (table, child) -> {
+    public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
         if (SolimToken.isExpandingChild(child)) {
             cell.growY();
@@ -49,7 +49,7 @@ public final class Column
         this.table.name = "solim-column-table";
         this.table.top().left();
         this.table.defaults().top().left();
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Table table() {
@@ -95,7 +95,7 @@ public final class Column
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -188,29 +188,29 @@ public final class Column
     }
 
     public Column children(@Nullable Runnable r) {
-        ParentStack.push(table, ATTACHER);
+        AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
                 r.run();
             }
         } finally {
-            ParentStack.pop();
+            AttachmentStack.pop();
         }
-        ParentStack.attachToParent(table);
+        AttachmentStack.attachToParent(table);
         respace();
         return this;
     }
   
     public Column children(@Nullable Cons<Element> r) {
-        ParentStack.push(table, ATTACHER);
+        AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
                 r.get(element());
             }
         } finally {
-            ParentStack.pop();
+            AttachmentStack.pop();
         }
-        ParentStack.attachToParent(table);
+        AttachmentStack.attachToParent(table);
         respace();
         return this;
     }

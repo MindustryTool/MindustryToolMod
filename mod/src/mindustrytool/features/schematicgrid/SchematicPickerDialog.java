@@ -123,14 +123,13 @@ public class SchematicPickerDialog extends SolimDialog {
 
                     dynamic(remaining, left -> {
                         Integer count = left != null ? left : 0;
-                        if (count <= 0) {
-                            return null;
+                        if (count > 0) {
+                            String label = Core.bundle.format("feature.quick-schematic-grid.picker.load-more", count);
+                            button(label, () -> expandBatch(filtered))
+                                    .style(WebStyles.secondary())
+                                    .growX()
+                                    .height(unit(9f));
                         }
-                        String label = Core.bundle.format("feature.quick-schematic-grid.picker.load-more", count);
-                        return button(label, () -> expandBatch(filtered))
-                                .style(WebStyles.secondary())
-                                .growX()
-                                .height(unit(9f));
                     });
                 });
             });
@@ -297,9 +296,8 @@ public class SchematicPickerDialog extends SolimDialog {
                     .growX()
                     .gap(unit(1.5f))
                     .children(() -> {
-                        dynamic(previewReady, ready -> {
-                            if (Boolean.TRUE.equals(ready)) {
-                                return card(WebStyles.previewCardBackground())
+                        when(previewReady)
+                                .thenDo(() -> card(WebStyles.previewCardBackground())
                                         .growX()
                                         .height(unit(42f))
                                         .onClick(onClick)
@@ -307,9 +305,8 @@ public class SchematicPickerDialog extends SolimDialog {
                                         .children(() -> {
                                             new BoundedSchematicImage(
                                                     schematic, Readable.of(unit(42f)), unit(42f));
-                                        });
-                            }
-                            return card(WebStyles.previewCardBackground())
+                                        }))
+                                .elseDo(() -> card(WebStyles.previewCardBackground())
                                     .growX()
                                     .height(unit(42f))
                                     .onClick(onClick)
@@ -323,8 +320,7 @@ public class SchematicPickerDialog extends SolimDialog {
                                                     .fontScale(0.8f)
                                                     .center();
                                         });
-                                    });
-                        });
+                                    }));
 
                         text(title)
                                 .growX()

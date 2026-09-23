@@ -62,7 +62,7 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 		List<C> newlyCreated = new ArrayList<>();
 
 		try {
-			ComponentContext.withoutAutoOwnership(() -> {
+			OwnershipContext.withoutAutoOwnership(() -> {
 				for (int i = 0; i < itemList.size(); i++) {
 					T item = itemList.get(i);
 					K key = keyList.get(i);
@@ -70,7 +70,7 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 					C comp = activeComponents.get(key);
 					if (comp == null) {
 						comp = ReactiveContext.untracked(() ->
-							ParentStack.isolate(() -> {
+							AttachmentStack.isolate(() -> {
 								C c = factory.get(item);
 								if (c != null) {
 									c.element();

@@ -7,7 +7,7 @@ Async action primitive `Mutation<T,R>` for write operations (send, upload, delet
 ## Requirements
 
 ### Requirement: Mutation Creation
-`Mutation<T, R>` SHALL be created via `Mutation.of(Function<T, CompletableFuture<R>> mutator)` where `T` is the input type and `R` is the result type. It SHALL automatically register with the active `ComponentContext` for lifecycle ownership.
+`Mutation<T, R>` SHALL be created via `Mutation.of(Function<T, CompletableFuture<R>> mutator)` where `T` is the input type and `R` is the result type. It SHALL automatically register with the active `OwnershipContext` for lifecycle ownership.
 
 #### Scenario: Mutation created in component build
 - **WHEN** `Mutation.of(mutator)` is called inside a component's `build()` method

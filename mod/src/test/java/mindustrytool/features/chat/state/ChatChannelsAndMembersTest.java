@@ -36,7 +36,7 @@ class ChatChannelsAndMembersTest extends SolimEnv {
         assertEquals("General", channels.active().get().getName());
 
         flushEffects();
-        channels.channelsQuery().dispose();
+        channels.dispose();
     }
 
     @Test
@@ -58,7 +58,7 @@ class ChatChannelsAndMembersTest extends SolimEnv {
         assertNull(members.currentActiveError());
 
         flushEffects();
-        members.query().dispose();
+        members.dispose();
     }
 
     @Test
@@ -69,6 +69,6 @@ class ChatChannelsAndMembersTest extends SolimEnv {
         assertNotNull(channels.channelsQuery());
         assertEquals(QueryKey.of("chat", "channels"), channels.channelsQuery().getKey());
 
-        channels.channelsQuery().dispose();
+        channels.dispose();
     }
 }

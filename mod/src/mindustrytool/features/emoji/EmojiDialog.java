@@ -56,11 +56,13 @@ public class EmojiDialog extends SolimDialog {
                         });
 
                 scroll().grow().children(() -> {
-                    dynamic(filteredEntries, entries -> entries == null || entries.isEmpty()
-                            ? row().growX().padding(unit(4)).center().children(() -> {
+                    dynamic(filteredEntries, entries -> {
+                        if (entries == null || entries.isEmpty()) {
+                            row().growX().padding(unit(4)).center().children(() -> {
                                 text(Core.bundle.get("feature.emoji.empty")).color(Color.gray);
-                            })
-                            : wrap().left().gap(unit(1.5f)).children(() -> {
+                            });
+                        } else {
+                            wrap().left().gap(unit(1.5f)).children(() -> {
                                 for (Entry entry : entries) {
                                     button()
                                             .style(WebStyles.filterChip())
@@ -74,8 +76,9 @@ public class EmojiDialog extends SolimDialog {
                                                 });
                                             });
                                 }
-                            }))
-                                    .grow();
+                            });
+                        }
+                    }).grow();
                 });
             });
         });

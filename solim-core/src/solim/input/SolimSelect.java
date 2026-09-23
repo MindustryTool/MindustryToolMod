@@ -10,7 +10,7 @@ import solim.reactive.TwoWayBinding;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 /**
  * Select widget bound to Signal&lt;T&gt;. Uses TextButton as placeholder (Arc
@@ -58,7 +58,7 @@ public final class SolimSelect<T> implements Component, ElementConfig<SolimSelec
                     });
                     return DisposableAction.empty();
                 });
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public static <T> SolimSelect<T> of(Signal<T> signal, List<T> options) {

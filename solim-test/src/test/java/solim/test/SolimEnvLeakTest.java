@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.Test;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 
 /**
  * Verifies the strict teardown contract: leaked solim ambient state must fail
@@ -15,19 +15,19 @@ import solim.runtime.ParentStack;
 class SolimEnvLeakTest {
 
 	@Test
-	void leakedParentStackFailsTeardown() {
+	void leakedAttachmentStackFailsTeardown() {
 		Harness env = new Harness();
 		env.setUpSolimEnv();
 
-		ParentStack.push(new Table());
+		AttachmentStack.push(new Table());
 
 		try {
 			AssertionError error = assertThrows(AssertionError.class, env::verifyAndTearDownSolimEnv);
-			assertTrue(error.getMessage().contains("ParentStack"),
+			assertTrue(error.getMessage().contains("AttachmentStack"),
 					"teardown failure should name the leaked ambient state, got: " + error.getMessage());
 		} finally {
 			// verifyAndTearDownSolimEnv cleans up before asserting; nothing leaks here
-			ParentStack.clear();
+			AttachmentStack.clear();
 		}
 	}
 

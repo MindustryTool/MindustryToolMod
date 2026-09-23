@@ -11,7 +11,7 @@ import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Signal;
 
 /** Checkbox widget bound to Signal&lt;Boolean&gt;. */
@@ -48,7 +48,7 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 				return DisposableAction.empty();
 			}
 		);
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
 	public Checkbox(String label, boolean initial, Cons<Boolean> onChanged) {
@@ -67,7 +67,7 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 				onChanged.get(checkBox.isChecked());
 			}
 		});
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
 	public static Checkbox of(String label, Signal<Boolean> signal) {

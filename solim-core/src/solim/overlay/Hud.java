@@ -23,8 +23,8 @@ import solim.layout.Row;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -94,7 +94,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
         };
         Events.on(ResizeEvent.class, resizeListener);
 
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     @Override
@@ -163,7 +163,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
             }
             cur = cur.parent;
         }
-        Table t = ParentStack.find(table -> table != null && SolimToken.getComponent(table) instanceof Hud);
+        Table t = AttachmentStack.find(table -> table != null && SolimToken.getComponent(table) instanceof Hud);
         if (t != null) {
             Component comp = SolimToken.getComponent(t);
             if (comp instanceof Hud) {
@@ -182,19 +182,19 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
         if (bg != null) {
             Effect e = Effect.of(() -> container.background(bg.get()));
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
 
     public Hud children(@Nullable Runnable r) {
-        ParentStack.push(container, Row.ATTACHER);
+        AttachmentStack.push(container, Row.ATTACHER);
         try {
             if (r != null) {
                 r.run();
             }
         } finally {
-            ParentStack.pop();
+            AttachmentStack.pop();
         }
         root.pack();
         return this;
@@ -242,7 +242,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                 opacity(v);
         });
         bindings.add(e);
-        ComponentContext.register(e);
+        OwnershipContext.register(e);
         return this;
     }
 
@@ -261,7 +261,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }

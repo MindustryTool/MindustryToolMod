@@ -10,6 +10,7 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 import solim.config.ConfigGroup;
 import solim.overlay.SolimDialog;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public abstract class Feature {
@@ -152,6 +153,10 @@ public abstract class Feature {
 		if (dlg != null) {
 			dlg.get().show();
 		}
+	}
+
+	public Readable<Boolean> quickAccessHighlight() {
+		return enabled();
 	}
 
 	public String getName() {

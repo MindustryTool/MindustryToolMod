@@ -146,7 +146,7 @@ TBD - created by archiving change create-solim-core. Update Purpose after archiv
 - **THEN** alert is removed from parent
 
 ### Requirement: Widgets built on binding, layout, style foundations
-All widgets SHALL reuse `Binding`/`Effect` for reactivity, `ParentStack` for declarative construction, and `Style` for styling; SHALL NOT reimplement reactive or layout logic per-widget.
+All widgets SHALL reuse `Binding`/`Effect` for reactivity, `AttachmentStack` for declarative construction, and `Style` for styling; SHALL NOT reimplement reactive or layout logic per-widget.
 
 #### Scenario: Widget thin wrapper
 - **WHEN** `Button.java`/`Text.java` are inspected
@@ -205,7 +205,7 @@ The system SHALL display the animated circular loader instead of static loading 
 `UI.arc(Element el)` provides a named escape hatch for attaching raw Arc `Element` instances with no Solim equivalent, replacing the `component(() -> someElement)` workaround. The deliberate name discourages casual misuse.
 
 ### Requirement: UI.arc escape-hatch for raw Arc elements
-`UI` SHALL expose a static `arc(Element el)` method that attaches a raw Arc `Element` to the current `ParentStack` parent and returns it. This replaces the `component(() -> rawElement)` workaround for Arc elements that do not extend `BaseComponent`. The method is intentionally named `arc` — not `element` — to signal that it is an escape hatch for direct Arc layer access, making casual misuse for things like `arc(new Label("hi"))` visually incongruent with the available Solim equivalent `text("hi")`.
+`UI` SHALL expose a static `arc(Element el)` method that attaches a raw Arc `Element` to the current `AttachmentStack` parent and returns it. This replaces the `component(() -> rawElement)` workaround for Arc elements that do not extend `BaseComponent`. The method is intentionally named `arc` — not `element` — to signal that it is an escape hatch for direct Arc layer access, making casual misuse for things like `arc(new Label("hi"))` visually incongruent with the available Solim equivalent `text("hi")`.
 
 #### Scenario: Raw Arc element attaches via arc()
 - **WHEN** `arc(new SchematicImage(schematic).setScaling(Scaling.fit))` is called inside a `children()` block
@@ -216,7 +216,7 @@ The system SHALL display the animated circular loader instead of static loading 
 - **THEN** the return value is the same `SchematicImage` instance passed in
 
 #### Scenario: arc() outside a children scope is a no-op attachment
-- **WHEN** `arc(someEl)` is called with no active `ParentStack` parent
+- **WHEN** `arc(someEl)` is called with no active `AttachmentStack` parent
 - **THEN** no exception is thrown and the element is not attached to any table (consistent with `attachToParent` no-op behavior)
 
 **Source: solim-declarative-ui**
@@ -224,11 +224,11 @@ The system SHALL display the animated circular loader instead of static loading 
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
 
 ### Requirement: Implicit parent stack with lambda scopes
-The framework SHALL provide `ParentStack` with static helpers `column()`, `row()`, `stack()`, `grid(int columns)`, `wrap()`, `scroll()`, `card()`, `collapser()`, and `dialog(String title)` returning fluent builder instances supporting `.children(Runnable)`. A `container()` alias SHALL NOT exist; `column()` is the canonical vertical layout. Calling `.children(Runnable)` pushes the layout Element onto `ParentStack`, executes the lambda, pops with try/finally, attaches the layout to the outer active parent container, and returns the container instance. Every child created inside the `.children(Runnable)` lambda SHALL auto-attach to current parent, including `BaseComponent` subclasses. The `stack()` helper SHALL create a `solim.layout.SolimStack` overlay container attached to `ParentStack`. SolimStack SHALL expose Component-returning `layer(Supplier<Component>)` and `layer(Function<Element, Component>)` methods that attach directly to the underlying Stack with no intermediate Row, own each returned layer component, and dispose owned layers exactly once on stack disposal; SolimStack SHALL NOT declare a `children(...)` overload, and a `stack(Runnable)` facade SHALL NOT exist.
+The framework SHALL provide `AttachmentStack` with static helpers `column()`, `row()`, `stack()`, `grid(int columns)`, `wrap()`, `scroll()`, `card()`, `collapser()`, and `dialog(String title)` returning fluent builder instances supporting `.children(Runnable)`. A `container()` alias SHALL NOT exist; `column()` is the canonical vertical layout. Calling `.children(Runnable)` pushes the layout Element onto `AttachmentStack`, executes the lambda, pops with try/finally, attaches the layout to the outer active parent container, and returns the container instance. Every child created inside the `.children(Runnable)` lambda SHALL auto-attach to current parent, including `BaseComponent` subclasses. The `stack()` helper SHALL create a `solim.layout.SolimStack` overlay container attached to `AttachmentStack`. SolimStack SHALL expose Component-returning `layer(Supplier<Component>)` and `layer(Function<Element, Component>)` methods that attach directly to the underlying Stack with no intermediate Row, own each returned layer component, and dispose owned layers exactly once on stack disposal; SolimStack SHALL NOT declare a `children(...)` overload, and a `stack(Runnable)` facade SHALL NOT exist.
 
 #### Scenario: Push/pop with try/finally and configuration before children
 - **WHEN** column().grow().children(() -> { text("Settings"); row().growX().children(() -> { button("Cancel"); button("Save"); }); }) executes
-- **THEN** internally: configuration .grow() is applied to column first, then column table is pushed to ParentStack, text is added to column, row table is pushed with .growX(), buttons are added to row, row is popped and attached to column, column is popped; if lambda throws, finally still pops
+- **THEN** internally: configuration .grow() is applied to column first, then column table is pushed to AttachmentStack, text is added to column, row table is pushed with .growX(), buttons are added to row, row is popped and attached to column, column is popped; if lambda throws, finally still pops
 
 #### Scenario: Auto-attach children including BaseComponent subclasses
 - **WHEN** inside column(() -> { text("Chat"); new ChatMessageListView(store, service); row().children(() -> { textField(input); button("Send", this::send); }); })
@@ -247,14 +247,14 @@ The framework SHALL provide `ParentStack` with static helpers `column()`, `row()
 - **THEN** it does NOT expose startColumn()/endColumn() or startComponent()/endComponent() — only configuration-before-children fluent methods exist
 
 ### Requirement: Stack cleanup guarantee
-`ParentStack` SHALL guarantee cleanup even if child construction throws, using `try { push; runnable.run(); } finally { pop; }`.
+`AttachmentStack` SHALL guarantee cleanup even if child construction throws, using `try { push; runnable.run(); } finally { pop; }`.
 
 #### Scenario: Exception cleanup
 - **WHEN** `column(() -> { text("A"); throw new RuntimeException("fail"); })`
-- **THEN** `ParentStack` size returns to previous value after catch, and subsequent `column(...)` works correctly
+- **THEN** `AttachmentStack` size returns to previous value after catch, and subsequent `column(...)` works correctly
 
 ### Requirement: Current parent tracking and child add
-`ParentStack` SHALL expose `current()` (or `peek()`) returning current parent `Element`/`Table` and `add(Element|Component)` that resolves and attaches to current parent. If no parent is active, `add` SHALL either throw `IllegalStateException` or attach to a supplied root.
+`AttachmentStack` SHALL expose `current()` (or `peek()`) returning current parent `Element`/`Table` and `add(Element|Component)` that resolves and attaches to current parent. If no parent is active, `add` SHALL either throw `IllegalStateException` or attach to a supplied root.
 
 #### Scenario: Add outside parent throws or roots
 - **WHEN** `text("Hello")` is called with no active parent
@@ -287,7 +287,7 @@ Each declarative helper SHALL return the created fluent component so callers can
 - **THEN** a `Spacer` is returned and its name is applied
 
 ### Requirement: UI arc escape-hatch for raw Arc elements
-`UI` SHALL expose a static `arc(Element el)` method that attaches a raw Arc `Element` to the current `ParentStack` parent and returns it. This replaces the `component(() -> rawElement)` workaround for Arc elements that do not extend `BaseComponent`. The method is intentionally named `arc` — not `element` — to signal that it is an escape hatch for direct Arc layer access, making casual misuse for things like `arc(new Label("hi"))` visually incongruent with the available Solim equivalent `text("hi")`.
+`UI` SHALL expose a static `arc(Element el)` method that attaches a raw Arc `Element` to the current `AttachmentStack` parent and returns it. This replaces the `component(() -> rawElement)` workaround for Arc elements that do not extend `BaseComponent`. The method is intentionally named `arc` — not `element` — to signal that it is an escape hatch for direct Arc layer access, making casual misuse for things like `arc(new Label("hi"))` visually incongruent with the available Solim equivalent `text("hi")`.
 
 #### Scenario: Raw Arc element attaches via arc()
 - **WHEN** `arc(new SchematicImage(schematic).setScaling(Scaling.fit))` is called inside a `children()` block
@@ -298,18 +298,18 @@ Each declarative helper SHALL return the created fluent component so callers can
 - **THEN** the return value is the same `SchematicImage` instance passed in
 
 #### Scenario: arc() outside a children scope is a no-op attachment
-- **WHEN** `arc(someEl)` is called with no active `ParentStack` parent
+- **WHEN** `arc(someEl)` is called with no active `AttachmentStack` parent
 - **THEN** no exception is thrown and the element is not attached to any table (consistent with `attachToParent` no-op behavior)
 
 ### Requirement: Single-threaded stack without ThreadLocal
-`ParentStack` SHALL be implemented as a simple `Deque<Element>` / `ArrayDeque` static stack for single-threaded game thread; `ThreadLocal` SHALL NOT be used unless proven necessary.
+`AttachmentStack` SHALL be implemented as a simple `Deque<Element>` / `ArrayDeque` static stack for single-threaded game thread; `ThreadLocal` SHALL NOT be used unless proven necessary.
 
 #### Scenario: Stack is plain static
-- **WHEN** `ParentStack.java` is inspected
+- **WHEN** `AttachmentStack.java` is inspected
 - **THEN** it contains `private static final Deque<...> stack = new ArrayDeque<>()` and no `ThreadLocal` import
 
 ### Requirement: Select input facade
-`UI` SHALL provide a static facade `select(Signal<T> signal, List<T> options)` that constructs a `SolimSelect`, automatically attaches its element to the active parent in `ParentStack`, and returns the component for chained modifier calls. No `switch()` facade SHALL exist (`switch` is a Java keyword); `switchToggle(Signal<Boolean>)` remains the switch facade.
+`UI` SHALL provide a static facade `select(Signal<T> signal, List<T> options)` that constructs a `SolimSelect`, automatically attaches its element to the active parent in `AttachmentStack`, and returns the component for chained modifier calls. No `switch()` facade SHALL exist (`switch` is a Java keyword); `switchToggle(Signal<Boolean>)` remains the switch facade.
 
 #### Scenario: Attaching select via UI facade
 - **WHEN** `select(signal, options)` is called inside a `children()` block
@@ -320,7 +320,7 @@ Each declarative helper SHALL return the created fluent component so callers can
 Declarative dialog component providing reactive signals, layout helpers, and automatic lifecycle management and disposal of attached content components and resources.
 
 ### Requirement: Automatic Content Component Lifecycle Management
-The `SolimDialog` component SHALL manage content attachment declaratively via `children(Runnable)` using `ParentStack` and SHALL defer executing the content builder until the dialog is shown or unwrapped via `dialog()`. It SHALL automatically register any resources and components created within the content builder with its internal disposable registry. The legacy `content(Component)` method SHALL NOT be supported.
+The `SolimDialog` component SHALL manage content attachment declaratively via `children(Runnable)` using `AttachmentStack` and SHALL defer executing the content builder until the dialog is shown or unwrapped via `dialog()`. It SHALL automatically register any resources and components created within the content builder with its internal disposable registry. The legacy `content(Component)` method SHALL NOT be supported.
 
 #### Scenario: Content builder is not executed on instantiation
 - **WHEN** a `SolimDialog` is instantiated and configured with `children(Runnable contentBuilder)`
@@ -330,7 +330,7 @@ The `SolimDialog` component SHALL manage content attachment declaratively via `c
 #### Scenario: Content builder executed lazily when shown
 - **WHEN** `show()` is invoked on a `SolimDialog` configured with `children(Runnable contentBuilder)`
 - **THEN** `contentBuilder` is executed
-- **AND** its child elements are attached to the dialog's content container via `ParentStack`
+- **AND** its child elements are attached to the dialog's content container via `AttachmentStack`
 
 #### Scenario: Content builder executed when unwrapped
 - **WHEN** `dialog()` is invoked on a `SolimDialog` configured with `children(Runnable contentBuilder)`
@@ -711,7 +711,7 @@ The `VirtualList` SHALL detect changes to container width and trigger re-measure
 - **THEN** variable-height items are re-measured against the new width, the prefix-sum array is updated, and the visible window is re-computed
 
 ### Requirement: NetworkImage Layout Methods and Parent Cell Constraints
-NetworkImage SHALL implement CellConfig<NetworkImage> and ElementConfig<NetworkImage> for declarative layout geometry and parent cell constraints. Sizing methods (size(float, float), size(float), width(float), height(float), and reactive variants) SHALL set both element dimensions and preferred cell dimensions. Parent cell constraint modifiers (minWidth, maxWidth, minHeight, maxHeight, growX, growY, grow) SHALL be buffered in PendingCellConfig and automatically bound to the parent Cell when attached via ParentStack or applied immediately if already attached. NetworkImage SHALL NOT provide inner padding() or gap() methods and SHALL NOT implement SpacingAware.
+NetworkImage SHALL implement CellConfig<NetworkImage> and ElementConfig<NetworkImage> for declarative layout geometry and parent cell constraints. Sizing methods (size(float, float), size(float), width(float), height(float), and reactive variants) SHALL set both element dimensions and preferred cell dimensions. Parent cell constraint modifiers (minWidth, maxWidth, minHeight, maxHeight, growX, growY, grow) SHALL be buffered in PendingCellConfig and automatically bound to the parent Cell when attached via AttachmentStack or applied immediately if already attached. NetworkImage SHALL NOT provide inner padding() or gap() methods and SHALL NOT implement SpacingAware.
 
 #### Scenario: Element dimension configuration
 - **WHEN** networkImage(url).size(64f, 48f) is configured
@@ -748,14 +748,14 @@ NetworkImage SHALL delegate all outer spacing to CellConfig margins. Calling mar
 - **THEN** the parent cell's padding values reflect 4f top, 8f left, 12f bottom, and 16f right.
 
 ### Requirement: LeafComponent base class for primitive widgets
-Solim SHALL provide an abstract base class `LeafComponent<E extends Element, SELF extends LeafComponent<E, SELF>>` in `solim.core` implementing `Component`, `CellConfig<SELF>`, and `ElementConfig<SELF>`. The constructor SHALL automatically bind the underlying Arc `Element` to a `SolimToken`, register the component with `ComponentContext`, and register pending component attachment with `ParentStack.current()`.
+Solim SHALL provide an abstract base class `LeafComponent<E extends Element, SELF extends LeafComponent<E, SELF>>` in `solim.core` implementing `Component`, `CellConfig<SELF>`, and `ElementConfig<SELF>`. The constructor SHALL automatically bind the underlying Arc `Element` to a `SolimToken`, register the component with `OwnershipContext`, and register pending component attachment with `AttachmentStack.current()`.
 
 #### Scenario: Automatic token registration on construction
 - **WHEN** a subclass of `LeafComponent` is instantiated with an Arc `Element`
 - **THEN** `SolimToken.getComponent(element)` returns the component instance and `SolimToken.get(element).cellConfig` returns its `PendingCellConfig`
 
 #### Scenario: Automatic parent stack registration
-- **WHEN** a subclass of `LeafComponent` is instantiated while a parent table is on `ParentStack`
+- **WHEN** a subclass of `LeafComponent` is instantiated while a parent table is on `AttachmentStack`
 - **THEN** the component is registered as pending on the parent table without manual component author code
 
 #### Scenario: Inherited cell and element modifiers
