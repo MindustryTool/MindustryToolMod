@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
@@ -35,8 +35,8 @@ public class SolimEnv extends ArcTestEnv {
 
 	@AfterEach
 	public void verifyAndTearDownSolimEnv() {
-		int parentStackSize = ParentStack.size();
-		int componentContextSize = ComponentContext.size();
+		int parentStackSize = AttachmentStack.size();
+		int componentContextSize = OwnershipContext.size();
 		int reactiveContextSize = ReactiveContext.size();
 		int pendingEffects = SignalDispatcher.size();
 		boolean isFlushing = SignalDispatcher.isFlushing();
@@ -45,11 +45,11 @@ public class SolimEnv extends ArcTestEnv {
 		resetAmbientState();
 		resetModuleState();
 
-		assertEquals(0, parentStackSize, "ParentStack must be empty at teardown");
-		assertNull(ParentStack.current(), "ParentStack.current() must be null at teardown");
+		assertEquals(0, parentStackSize, "AttachmentStack must be empty at teardown");
+		assertNull(AttachmentStack.current(), "AttachmentStack.current() must be null at teardown");
 
-		assertEquals(0, componentContextSize, "ComponentContext must be empty at teardown");
-		assertNull(ComponentContext.current(), "ComponentContext.current() must be null at teardown");
+		assertEquals(0, componentContextSize, "OwnershipContext must be empty at teardown");
+		assertNull(OwnershipContext.current(), "OwnershipContext.current() must be null at teardown");
 
 		assertEquals(0, reactiveContextSize, "ReactiveContext must be empty at teardown");
 		assertNull(ReactiveContext.current(), "ReactiveContext.current() must be null at teardown");
@@ -76,8 +76,8 @@ public class SolimEnv extends ArcTestEnv {
 	}
 
 	public static void resetAmbientState() {
-		ParentStack.clear();
-		ComponentContext.clear();
+		AttachmentStack.clear();
+		OwnershipContext.clear();
 		ReactiveContext.clear();
 		SignalDispatcher.resetForTests();
 	}

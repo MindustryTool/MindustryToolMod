@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+import arc.func.Prov;
 import mindustrytool.models.response.ChannelDto;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
@@ -25,11 +25,11 @@ import solim.reactive.Effect;
 public class ChatService {
 
     public static final int PAGE_SIZE = 50;
-    public static final long WATCHDOG_TIMEOUT_MS = 45_000L;
+    public static final long WATCHDOG_TIMEOUT_MS = 5 * 60 * 1000L;
     public static final float WATCHDOG_INTERVAL_SECONDS = 5f;
 
     private final ChatStore store;
-    private final Supplier<Boolean> windowOpenSupplier;
+    private final Prov<Boolean> windowOpenSupplier;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final String chatId = UUID.randomUUID().toString();
 
@@ -41,12 +41,14 @@ public class ChatService {
     private @Nullable Task watchdogTask;
     private final AtomicBoolean reconnecting = new AtomicBoolean(false);
     private @Nullable String lastAutoLoadedChannelId;
+    private final Effect autoLoadEffect;
+    private final Effect unreadEffect;
 
-    public ChatService(ChatStore store, Supplier<Boolean> windowOpenSupplier) {
+    public ChatService(ChatStore store, Prov<Boolean> windowOpenSupplier) {
         this.store = store;
         this.windowOpenSupplier = windowOpenSupplier;
 
-        Effect.of(() -> {
+        autoLoadEffect = Effect.of(() -> {
             String channelId = store.channels().activeId().get();
             if (channelId == null || channelId.isEmpty()) {
                 return;
@@ -72,7 +74,7 @@ public class ChatService {
             loadMessages(channelId);
         });
 
-        Effect.of(() -> {
+        unreadEffect = Effect.of(() -> {
             List<ChannelDto> channels = store.channels().channelsQuery().data().get();
             if (channels != null) {
                 for (ChannelDto c : channels) {
@@ -110,6 +112,17 @@ public class ChatService {
             streamRequest = null;
         }
         Core.app.post(() -> store.session().setConnected(false));
+    }
+
+    /**
+     * Releases the reactive effects owned by this service. Terminal: the
+     * service must not be started again afterwards. Production instances live
+     * for the application lifetime; tests call this in teardown so leaked
+     * effects do not pollute the shared dispatcher across tests.
+     */
+    public void dispose() {
+        autoLoadEffect.dispose();
+        unreadEffect.dispose();
     }
 
     private static String extractError(Throwable throwable) {
@@ -511,7 +524,8 @@ public class ChatService {
         this.lastEventTime = time;
     }
 
-    @Nullable Task getWatchdogTask() {
+    @Nullable
+    Task getWatchdogTask() {
         return watchdogTask;
     }
 
@@ -527,7 +541,8 @@ public class ChatService {
         this.streamRequest = req;
     }
 
-    @Nullable CompletableFuture<Void> getStreamRequestForTest() {
+    @Nullable
+    CompletableFuture<Void> getStreamRequestForTest() {
         return this.streamRequest;
     }
 }

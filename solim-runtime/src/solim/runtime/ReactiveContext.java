@@ -6,7 +6,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
-import java.util.function.Supplier;
+import arc.func.Prov;
 
 /** Stack-based dependency tracking for single-threaded UI. No ThreadLocal by design. */
 public final class ReactiveContext {
@@ -39,7 +39,7 @@ public final class ReactiveContext {
 	 * during {@code build()} without an active reactive context, then tracks the source.
 	 */
 	public static void trackWithWarning(ReactiveSource source, String warning) {
-		if (current() == null && ComponentContext.current() != null) {
+		if (current() == null && OwnershipContext.current() != null) {
 			Log.debug(warning);
 		}
 		track(source);
@@ -55,15 +55,15 @@ public final class ReactiveContext {
 		return stack.size();
 	}
 
-	/** Temporarily suspends active dependency tracking while executing the supplier. */
-	public static <T> T untracked(Supplier<T> supplier) {
+	/** Temporarily suspends active dependency tracking while executing the Prov. */
+	public static <T> T untracked(Prov<T> Prov) {
 		if (stack.isEmpty()) {
-			return supplier.get();
+			return Prov.get();
 		}
 		Deque<ReactiveObserver> saved = new ArrayDeque<>(stack);
 		stack.clear();
 		try {
-			return supplier.get();
+			return Prov.get();
 		} finally {
 			stack.clear();
 			stack.addAll(saved);

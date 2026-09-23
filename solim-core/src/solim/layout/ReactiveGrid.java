@@ -7,15 +7,15 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Func2;
+import arc.func.Func;
+import arc.func.Prov;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
@@ -55,13 +55,13 @@ public final class ReactiveGrid<T> extends BaseComponent
     private final PendingCellConfig constraints = new PendingCellConfig();
     private Readable<Integer> columnCount = Readable.of(1);
     private final Readable<? extends Iterable<T>> items;
-    private Function<T, ?> keyExtractor = Function.identity();
-    private @Nullable BiFunction<T, GridItemContext, Component> itemFactory;
+    private Func<T, ?> keyExtractor = v -> v;
+    private @Nullable Func2<T, GridItemContext, Component> itemFactory;
     private final StructuralReconciler<Object, Component> reconciler = new StructuralReconciler<>();
     private final List<Disposable> itemBindings = new ArrayList<>();
 
     private Runnable emptyRunnable;
-    private Supplier<Component> emptyViewSupplier;
+    private Prov<Component> emptyViewSupplier;
     private Component currentEmptyComponent;
     private float gap = 0f;
 
@@ -116,16 +116,16 @@ public final class ReactiveGrid<T> extends BaseComponent
         return this;
     }
 
-    public ReactiveGrid<T> key(@Nullable Function<T, ?> keyExtractor) {
-        this.keyExtractor = keyExtractor != null ? keyExtractor : Function.identity();
+    public ReactiveGrid<T> key(@Nullable Func<T, ?> keyExtractor) {
+        this.keyExtractor = keyExtractor != null ? keyExtractor : v -> v;
         return this;
     }
 
-    public void children(@Nullable Function<T, Component> itemFactory) {
-        children(itemFactory != null ? (item, ctx) -> itemFactory.apply(item) : null);
+    public void children(@Nullable Func<T, Component> itemFactory) {
+        children(itemFactory != null ? (item, ctx) -> itemFactory.get(item) : null);
     }
 
-    public void children(@Nullable BiFunction<T, GridItemContext, Component> itemFactory) {
+    public void children(@Nullable Func2<T, GridItemContext, Component> itemFactory) {
         this.itemFactory = itemFactory;
         refreshIfBuilt();
     }
@@ -139,7 +139,7 @@ public final class ReactiveGrid<T> extends BaseComponent
     }
 
     private Object extractKey(T item) {
-        return keyExtractor.apply(item);
+        return keyExtractor.get(item);
     }
 
     public GridItemContext context() {
@@ -161,8 +161,8 @@ public final class ReactiveGrid<T> extends BaseComponent
         return this;
     }
 
-    public ReactiveGrid<T> emptyView(Supplier<Component> supplier) {
-        this.emptyViewSupplier = supplier;
+    public ReactiveGrid<T> emptyView(Prov<Component> Prov) {
+        this.emptyViewSupplier = Prov;
         return this;
     }
 
@@ -191,7 +191,7 @@ public final class ReactiveGrid<T> extends BaseComponent
 
     public ReactiveGrid<T> gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
-            ComponentContext.register(Effect.of(() -> {
+            OwnershipContext.register(Effect.of(() -> {
                 Float g = gapSignal.get();
                 if (g != null) {
                     gap(g);
@@ -237,11 +237,11 @@ public final class ReactiveGrid<T> extends BaseComponent
     }
 
     private void updateItemsAndReflow(Iterable<T> itemList, int cols) {
-        BiFunction<T, GridItemContext, Component> factory = itemFactory;
+        Func2<T, GridItemContext, Component> factory = itemFactory;
         if (factory == null) {
             return;
         }
-        reconciler.reconcile(itemList, this::extractKey, item -> factory.apply(item, context));
+        reconciler.reconcile(itemList, this::extractKey, item -> factory.get(item, context));
         reflow(cols);
     }
 
@@ -257,16 +257,16 @@ public final class ReactiveGrid<T> extends BaseComponent
         if (reconciler.isEmpty()) {
             if (emptyRunnable != null) {
                 Table emptyTable = new Table();
-                ParentStack.push(emptyTable);
+                AttachmentStack.push(emptyTable);
                 try {
                     emptyRunnable.run();
                 } finally {
-                    ParentStack.pop();
+                    AttachmentStack.pop();
                 }
                 table.add(emptyTable).center().colspan(cols).growX();
             } else if (emptyViewSupplier != null) {
                 if (currentEmptyComponent == null) {
-                    currentEmptyComponent = ParentStack.isolate(() -> {
+                    currentEmptyComponent = AttachmentStack.isolate(() -> {
                         Component c = emptyViewSupplier.get();
                         if (c != null) {
                             c.element();

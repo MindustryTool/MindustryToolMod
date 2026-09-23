@@ -17,17 +17,16 @@ import mindustry.ui.dialogs.BaseDialog;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
+import arc.func.Prov;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.DisposableAction;
 import solim.graphics.RoundedDrawable;
 import solim.modifier.RoundedHelper;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
-import java.util.function.Function;
 
 /**
  * Declarative dialog component for Solim. Wraps a Mindustry BaseDialog while
@@ -85,11 +84,11 @@ public class SolimDialog implements Component {
             BaseComponent comp = new BaseComponent() {
                 @Override
                 protected Element build() {
-                    ParentStack.push(wrapped.cont);
+                    AttachmentStack.push(wrapped.cont);
                     try {
                         contentBuilder.run();
                     } finally {
-                        ParentStack.pop();
+                        AttachmentStack.pop();
                     }
                     return wrapped.cont;
                 }
@@ -156,27 +155,27 @@ public class SolimDialog implements Component {
     }
 
     /**
-     * Creates a reactive signal initialized from the supplier that recalculates
+     * Creates a reactive signal initialized from the Prov that recalculates
      * whenever the callback registrar invokes the given callback. The returned
      * disposable is owned by this dialog.
      */
-    public <T> Signal<T> createSignal(Function<Runnable, Disposable> registrar, Supplier<T> supplier) {
-        Signal<T> signal = Signal.of(supplier.get());
+    public <T> Signal<T> createSignal(Func<Runnable, Disposable> registrar, Prov<T> Prov) {
+        Signal<T> signal = Signal.of(Prov.get());
         if (registrar != null) {
-            Disposable d = registrar.apply(() -> signal.set(supplier.get()));
+            Disposable d = registrar.get(() -> signal.set(Prov.get()));
             registerDisposable(d);
         }
         return signal;
     }
 
     /**
-     * Creates a reactive signal initialized from the supplier that recalculates
+     * Creates a reactive signal initialized from the Prov that recalculates
      * whenever the specified Arc event fires. The event listener is automatically
      * cleaned up when this dialog is disposed.
      */
-    public <E, T> Signal<T> createSignal(Class<E> eventType, Supplier<T> supplier) {
-        Signal<T> signal = Signal.of(supplier.get());
-        listen(eventType, e -> signal.set(supplier.get()));
+    public <E, T> Signal<T> createSignal(Class<E> eventType, Prov<T> Prov) {
+        Signal<T> signal = Signal.of(Prov.get());
+        listen(eventType, e -> signal.set(Prov.get()));
         return signal;
     }
 

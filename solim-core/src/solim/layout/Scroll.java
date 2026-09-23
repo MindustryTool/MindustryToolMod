@@ -2,7 +2,7 @@ package solim.layout;
 
 import solim.modifier.CellConfig;
 
-import java.util.function.Consumer;
+import arc.func.Cons;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,14 +20,14 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
 /** Scroll container wrapping a Table in a ScrollPane. */
 public final class Scroll implements Component, CellConfig<Scroll>, ElementConfig<Scroll>, TableConfig<Scroll> {
 
-    public static final ParentStack.Attacher ATTACHER = (table, child) -> {
+    public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
         cell.top().left();
         if (SolimToken.isExpandingChild(child)) {
@@ -91,7 +91,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             this.pane = null;
             outer.add(content).grow();
         }
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Table outer() {
@@ -103,8 +103,8 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return this;
     }
 
-    public Scroll outer(Consumer<Table> consumer) {
-        consumer.accept(outer);
+    public Scroll outer(Cons<Table> Cons) {
+        Cons.get(outer);
         return this;
     }
 
@@ -112,8 +112,8 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return content;
     }
 
-    public Scroll content(Consumer<Table> consumer) {
-        consumer.accept(content);
+    public Scroll content(Cons<Table> Cons) {
+        Cons.get(content);
         return this;
     }
 
@@ -121,8 +121,8 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return pane;
     }
 
-    public Scroll pane(Consumer<ScrollPane> consumer) {
-        consumer.accept(pane);
+    public Scroll pane(Cons<ScrollPane> Cons) {
+        Cons.get(pane);
         return this;
     }
 
@@ -325,7 +325,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     }
 
     public Scroll children(@Nullable Runnable r) {
-        ParentStack.Attacher attacher = (table, child) -> {
+        AttachmentStack.Attacher attacher = (table, child) -> {
             Cell<?> cell = table.add(child);
             if (centered) {
                 cell.center().top();
@@ -338,15 +338,15 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             cell.row();
             return cell;
         };
-        ParentStack.push(content, attacher);
+        AttachmentStack.push(content, attacher);
         try {
             if (r != null) {
                 r.run();
             }
         } finally {
-            ParentStack.pop();
+            AttachmentStack.pop();
         }
-        ParentStack.attachToParent(outer);
+        AttachmentStack.attachToParent(outer);
         return this;
     }
 

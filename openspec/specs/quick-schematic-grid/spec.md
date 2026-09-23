@@ -122,7 +122,7 @@ The system SHALL render HUD and Popup displays framelessly without an outer back
 - **THEN** a standalone move button is positioned at the top of the page tab column
 
 ### Requirement: Visual Representation and Preview
-The system SHALL display a visual thumbnail preview for each configured schematic by default and support custom overrides.
+The system SHALL display a visual thumbnail preview for each configured schematic by default and support custom overrides. Slot buttons in HUD, Popup, and Settings SHALL refresh immediately when entry visual fields change.
 
 #### Scenario: Default thumbnail preview
 - **WHEN** a schematic entry has no custom icon configured
@@ -131,6 +131,18 @@ The system SHALL display a visual thumbnail preview for each configured schemati
 #### Scenario: Missing or deleted schematic handling
 - **WHEN** a linked schematic can no longer be located in the player's local library
 - **THEN** the system displays a warning placeholder icon and disables activation
+
+#### Scenario: Setting a custom icon refreshes the slot
+- **WHEN** user picks a custom icon for an entry that previously showed a schematic preview
+- **THEN** the slot button in HUD, Popup, and Settings renders the new icon glyph instead of the preview without requiring relayout or dialog reopen
+
+#### Scenario: Clearing a custom icon restores the preview
+- **WHEN** user clears the custom icon from an entry
+- **THEN** the slot button reverts to the schematic preview (or warning placeholder when missing)
+
+#### Scenario: Changing schematic reference or label refreshes the slot
+- **WHEN** user repicks the schematic or edits the custom label for an entry
+- **THEN** the slot button preview and tooltip update to the new schematic and name
 
 ### Requirement: Page Icon Configuration in Settings
 The system SHALL allow players to view, pick, and clear the icon assigned to the active page in the Settings dialog.

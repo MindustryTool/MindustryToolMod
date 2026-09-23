@@ -7,7 +7,7 @@ import arc.graphics.Color;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import arc.util.Nullable;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import mindustry.Vars;
 import mindustry.ctype.Content;
 import mindustry.ctype.ContentType;
@@ -27,9 +27,9 @@ import solim.reactive.Signal;
 public class SchematicIconPickerDialog extends SolimDialog {
 
     private final Signal<String> searchQuery = Signal.of("");
-    private final Consumer<String> onSelect;
+    private final Cons<String> onSelect;
 
-    public SchematicIconPickerDialog(Consumer<String> onSelect) {
+    public SchematicIconPickerDialog(Cons<String> onSelect) {
         super(Core.bundle.get("feature.quick-schematic-grid.icon.title"));
         this.onSelect = onSelect;
 
@@ -83,32 +83,40 @@ public class SchematicIconPickerDialog extends SolimDialog {
                                 .left()
                                 .color(Color.white);
 
-                        dynamic(filteredGlyphs, items -> items == null || items.isEmpty()
-                                ? row().growX().padding(unit(2)).center().children(() -> {
+                        dynamic(filteredGlyphs, items -> {
+                            if (items == null || items.isEmpty()) {
+                                row().growX().padding(unit(2)).center().children(() -> {
                                     text(Core.bundle.get("feature.quick-schematic-grid.icon.empty"))
                                             .color(Color.gray);
-                                })
-                                : wrap().left().gap(unit(1.5f)).children(() -> {
+                                });
+                            } else {
+                                wrap().left().gap(unit(1.5f)).children(() -> {
                                     for (Entry entry : items) {
                                         glyphChip(entry);
                                     }
-                                }));
+                                });
+                            }
+                        });
 
                         text(Core.bundle.get("feature.quick-schematic-grid.icon.content"))
                                 .growX()
                                 .left()
                                 .color(Color.white);
 
-                        dynamic(filteredContents, items -> items == null || items.isEmpty()
-                                ? row().growX().padding(unit(2)).center().children(() -> {
+                        dynamic(filteredContents, items -> {
+                            if (items == null || items.isEmpty()) {
+                                row().growX().padding(unit(2)).center().children(() -> {
                                     text(Core.bundle.get("feature.quick-schematic-grid.icon.empty"))
                                             .color(Color.gray);
-                                })
-                                : wrap().left().gap(unit(1.5f)).children(() -> {
+                                });
+                            } else {
+                                wrap().left().gap(unit(1.5f)).children(() -> {
                                     for (UnlockableContent content : items) {
                                         contentChip(content);
                                     }
-                                }));
+                                });
+                            }
+                        });
                     });
                 });
             });
@@ -141,7 +149,7 @@ public class SchematicIconPickerDialog extends SolimDialog {
             return;
         }
         if (onSelect != null) {
-            onSelect.accept(emoji);
+            onSelect.get(emoji);
         }
         hide();
     }

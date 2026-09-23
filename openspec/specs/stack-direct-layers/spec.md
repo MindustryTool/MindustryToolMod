@@ -4,7 +4,7 @@
 TBD - created by archiving change browser-card-parity-fix. Update Purpose after archive.
 ## Requirements
 ### Requirement: Direct-attach stack layers without Row wrapper
-`SolimStack` SHALL provide Component-returning layer methods named `layer`: `layer(Supplier<Component>)` for single-root layers and `layer(Function<Element, Component>)` as the returning parent-capture form. Each method SHALL build the returned component in an isolated `ParentStack` context, attach its element via `Stack.add`, track it as an owned layer, and return the `SolimStack` for chaining. `SolimStack` SHALL NOT expose `layer(Runnable)`, `children(Runnable)`, `children(Cons<Element>)`, or `childrenComponent(...)`; `children` SHALL remain the ambient multi-child builder only on non-stack containers, so the framework-wide `children(Runnable)` convention is preserved everywhere except `SolimStack`.
+`SolimStack` SHALL provide Component-returning layer methods named `layer`: `layer(Supplier<Component>)` for single-root layers and `layer(Function<Element, Component>)` as the returning parent-capture form. Each method SHALL build the returned component in an isolated `AttachmentStack` context, attach its element via `Stack.add`, track it as an owned layer, and return the `SolimStack` for chaining. `SolimStack` SHALL NOT expose `layer(Runnable)`, `children(Runnable)`, `children(Cons<Element>)`, or `childrenComponent(...)`; `children` SHALL remain the ambient multi-child builder only on non-stack containers, so the framework-wide `children(Runnable)` convention is preserved everywhere except `SolimStack`.
 
 #### Scenario: Single-root layer attaches directly
 - **WHEN** `stack().grow().layer(() -> networkImage(url).rounded(8))` executes inside an active parent
@@ -31,5 +31,5 @@ TBD - created by archiving change browser-card-parity-fix. Update Purpose after 
 
 #### Scenario: Exception-safe layer build
 - **WHEN** a layer supplier throws during isolated build
-- **THEN** no partial child remains attached to the `Stack` and the exception propagates with `ParentStack` restored to its prior size
+- **THEN** no partial child remains attached to the `Stack` and the exception propagates with `AttachmentStack` restored to its prior size
 

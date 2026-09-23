@@ -2,7 +2,7 @@ package solim.feedback;
 
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Table;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import solim.core.Disposable;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
@@ -20,7 +20,7 @@ public final class Badge implements Disposable {
 
 	public Badge(Computed<String> text) {
 		table.add(label);
-		this.binding = Effect.of((Consumer<Effect.Cleanup>) cleanup -> {
+		this.binding = Effect.of((Cons<Effect.Cleanup>) cleanup -> {
 			label.setText(text.get());
 		});
 	}

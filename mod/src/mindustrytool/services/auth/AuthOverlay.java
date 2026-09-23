@@ -83,70 +83,68 @@ public class AuthOverlay {
                 .children(() -> {
                     dynamic(state, s -> {
                         if (s.isLoading) {
-                            return row()
+                            row()
                                     .top()
                                     .right()
-                            .margin(8f)
-                            .background(Styles.black6)
-                            .padding(unit(2))
-                            .children(() -> {
-                                text(Core.bundle.get("auth.session.loading"));
+                                    .margin(8f)
+                                    .background(Styles.black6)
+                                    .padding(unit(2))
+                                    .children(() -> {
+                                        text(Core.bundle.get("auth.session.loading"));
                                     });
-                        }
-
-                        if (s.error != null) {
-                            return row()
+                        } else if (s.error != null) {
+                            row()
                                     .top()
                                     .right()
-                            .margin(8f)
-                            .background(Styles.black6)
-                            .gap(unit(2))
-                            .padding(unit(2))
-                            .children(() -> {
-                                text(Core.bundle.get("auth.session.error"));
+                                    .margin(8f)
+                                    .background(Styles.black6)
+                                    .gap(unit(2))
+                                    .padding(unit(2))
+                                    .children(() -> {
+                                        text(Core.bundle.get("auth.session.error"));
                                         String errText = s.error.getLocalizedMessage() != null
                                                 ? s.error.getLocalizedMessage()
                                                 : "";
                                         if (!errText.isEmpty()) {
                                             text(errText);
                                         }
-                                        button(Core.bundle.get("auth.session.retry"), this::startLoginUI).icon(Icon.refresh);
+                                        button(Core.bundle.get("auth.session.retry"), this::startLoginUI)
+                                                .icon(Icon.refresh);
                                     });
-                        }
-
-                        if (s.user == null) {
-                            return row()
+                        } else if (s.user == null) {
+                            row()
                                     .top()
                                     .right()
-                            .margin(8f)
-                            .background(Styles.black6)
-                            .padding(unit(2))
-                            .children(() -> {
-                                button(Core.bundle.get("auth.login"), this::startLoginUI);
+                                    .margin(8f)
+                                    .background(Styles.black6)
+                                    .padding(unit(2))
+                                    .children(() -> {
+                                        button(Core.bundle.get("auth.login"), this::startLoginUI);
+                                    });
+                        } else {
+                            UserSession user = s.user;
+
+                            card()
+                                    .top()
+                                    .right()
+                                    .children(() -> {
+                                        row().padding(unit(2)).background(Styles.black6).gap(unit(2)).center()
+                                                .children(() -> {
+                                                    if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
+                                                        networkImage(user.getImageUrl()).size(64f);
+                                                    }
+                                                    if (!Vars.mobile && user.getName() != null) {
+                                                        text(user.getName());
+                                                    }
+                                                });
+                                    })
+                                    .onClick(() -> {
+                                        Vars.ui.showConfirm(
+                                                Core.bundle.get("auth.logout.confirm-title"),
+                                                Core.bundle.format("auth.logout.confirm-message", user.getName()),
+                                                MindustryAuthProvider.getInstance()::logout);
                                     });
                         }
-
-                        UserSession user = s.user;
-
-                        return card()
-                                .top()
-                                .right()
-                                .children(() -> {
-                                    row().padding(unit(2)).background(Styles.black6).gap(unit(2)).center().children(() -> {
-                                        if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
-                                            networkImage(user.getImageUrl()).size(64f);
-                                        }
-                                        if (!Vars.mobile && user.getName() != null) {
-                                            text(user.getName());
-                                        }
-                                    });
-                                })
-                                .onClick(() -> {
-                                    Vars.ui.showConfirm(
-                                            Core.bundle.get("auth.logout.confirm-title"),
-                                            Core.bundle.format("auth.logout.confirm-message", user.getName()),
-                                            MindustryAuthProvider.getInstance()::logout);
-                                });
                     }).top().right();
                 });
     }
@@ -170,10 +168,24 @@ public class AuthOverlay {
                     Vars.ui.showInfo(Core.bundle.get("auth.login.success"));
                 }))
                 .exceptionally(e -> {
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    if (cause instanceof MindustryAuthProvider.LoginCancelled) {
+                        Core.app.post(() -> {
+                            if (loginDialog != null)
+                                loginDialog.hide();
+                        });
+                        return null;
+                    }
+                    String detail = cause.getMessage() != null && !cause.getMessage().trim().isEmpty()
+                            ? cause.getMessage()
+                            : Core.bundle.get("auth.login.failed");
                     Core.app.post(() -> {
                         if (loginDialog != null)
                             loginDialog.hide();
-                        Vars.ui.showException(Core.bundle.get("auth.login.failed"), e);
+                        Vars.ui.showConfirm(
+                                Core.bundle.get("auth.login.failed"),
+                                detail,
+                                this::startLoginUI);
                     });
                     return null;
                 });

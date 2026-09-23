@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 class ButtonComponentTest extends SolimEnv {
@@ -151,7 +151,7 @@ class ButtonComponentTest extends SolimEnv {
 	@Test
 	void childrenAddsToButton() {
 		Button btn = new Button().children(() -> {
-			ParentStack.add(new Element());
+			AttachmentStack.add(new Element());
 		});
 		assertEquals(1, btn.button().getChildren().size);
 		btn.dispose();

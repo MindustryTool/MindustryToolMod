@@ -20,7 +20,7 @@ import solim.input.Button;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Row;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 import solim.test.SolimEnv;
 import solim.test.TestScheduler;
@@ -86,10 +86,10 @@ public class IntegrationAndLeakRegressionTest extends SolimEnv {
 		protected Element build() {
 			Row row = new Row().gap(8f);
 			Table table = row.table();
-			ParentStack.push(table);
+			AttachmentStack.push(table);
 			Text.of(labelText);
 			new Button(onDelete);
-			ParentStack.pop();
+			AttachmentStack.pop();
 			return table;
 		}
 	}
@@ -108,32 +108,32 @@ public class IntegrationAndLeakRegressionTest extends SolimEnv {
 			protected Element build() {
 				Column col = new Column().gap(16f);
 				Table appTable = col.table();
-				ParentStack.push(appTable);
+				AttachmentStack.push(appTable);
 
 				// Header
 				Row header = new Row().gap(8f);
 				Table headerTable = header.table();
-				ParentStack.push(headerTable);
+				AttachmentStack.push(headerTable);
 				Text.of("App Header");
 				Badge.ofCount(count);
-				ParentStack.pop();
+				AttachmentStack.pop();
 
 				// Content Card
 				Card card = new Card().padding(12f);
 				Table cardContainer = card.container();
-				ParentStack.push(cardContainer);
+				AttachmentStack.push(cardContainer);
 
 				Table listTable = new Table();
-				ParentStack.push(listTable);
+				AttachmentStack.push(listTable);
 				reconciler.reconcile(
 						itemKeys.get(),
 						k -> k,
 						k -> new ItemRow(k, "Item " + k, () -> deleted.add(k))
 				);
-				ParentStack.pop();
+				AttachmentStack.pop();
 
-				ParentStack.pop(); // Card
-				ParentStack.pop(); // App
+				AttachmentStack.pop(); // Card
+				AttachmentStack.pop(); // App
 
 				return appTable;
 			}

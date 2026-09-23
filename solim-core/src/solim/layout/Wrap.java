@@ -11,8 +11,8 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
 /**
@@ -23,7 +23,7 @@ import solim.modifier.PendingCellConfig;
 public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wrap>, TableConfig<Wrap>,
         GapContainer {
 
-    public static final ParentStack.Attacher ATTACHER = (table, child) -> {
+    public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
         if (SolimToken.isExpandingChild(child)) {
             cell.growX();
@@ -41,7 +41,7 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
         SolimToken.bind(this.table, this, constraints);
         this.table.top().left();
         this.table.defaults().top().left();
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Table table() {
@@ -137,15 +137,15 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
     }
 
     public Wrap children(@Nullable Runnable r) {
-        ParentStack.push(table, ATTACHER);
+        AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
                 r.run();
             }
         } finally {
-            ParentStack.pop();
+            AttachmentStack.pop();
         }
-        ParentStack.attachToParent(table);
+        AttachmentStack.attachToParent(table);
         respace();
         return this;
     }

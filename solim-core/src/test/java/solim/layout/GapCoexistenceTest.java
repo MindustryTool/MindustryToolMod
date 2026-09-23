@@ -8,7 +8,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import solim.reactive.Dynamic;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -23,9 +23,9 @@ class GapCoexistenceTest extends SolimEnv {
 		Card card3 = new Card(); // no margin
 
 		r.children(() -> {
-			ParentStack.add(card1);
-			ParentStack.add(card2);
-			ParentStack.add(card3);
+			AttachmentStack.add(card1);
+			AttachmentStack.add(card2);
+			AttachmentStack.add(card3);
 		});
 
 		Cell<?> cell1 = r.table().getCell(card1.element());
@@ -59,9 +59,9 @@ class GapCoexistenceTest extends SolimEnv {
 		Card card3 = new Card();
 
 		col.children(() -> {
-			ParentStack.add(card1);
-			ParentStack.add(card2);
-			ParentStack.add(card3);
+			AttachmentStack.add(card1);
+			AttachmentStack.add(card2);
+			AttachmentStack.add(card3);
 		});
 
 		Cell<?> cell1 = col.table().getCell(card1.element());
@@ -89,9 +89,9 @@ class GapCoexistenceTest extends SolimEnv {
 		Card cardC = new Card();
 
 		row.children(() -> {
-			ParentStack.add(cardA);
-			ParentStack.add(cardB);
-			ParentStack.add(cardC);
+			AttachmentStack.add(cardA);
+			AttachmentStack.add(cardB);
+			AttachmentStack.add(cardC);
 		});
 
 		Cell<?> cellA = row.table().getCell(cardA.element());
@@ -133,16 +133,15 @@ class GapCoexistenceTest extends SolimEnv {
 		Card prefix = new Card();
 		Dynamic<Boolean> dynamicCard = Dynamic.of(showItem, visible -> {
 			if (visible) {
-				return new Card();
+				new Card();
 			}
-			return null;
 		});
 		Card suffix = new Card();
 
 		row.children(() -> {
-			ParentStack.add(prefix);
-			ParentStack.add(dynamicCard);
-			ParentStack.add(suffix);
+			AttachmentStack.add(prefix);
+			AttachmentStack.add(dynamicCard);
+			AttachmentStack.add(suffix);
 		});
 
 		Cell<?> prefixCell = row.table().getCell(prefix.element());
@@ -181,7 +180,7 @@ class GapCoexistenceTest extends SolimEnv {
 		// Inside Row
 		Row row = new Row();
 		Card rowChild = new Card().margin(5f, 10f, 15f, 20f);
-		row.children(() -> ParentStack.add(rowChild));
+		row.children(() -> AttachmentStack.add(rowChild));
 		Cell<?> rowCell = row.table().getCell(rowChild.element());
 		assertEquals(5f, CellAccess.padTop(rowCell), 0.01f);
 		assertEquals(10f, CellAccess.padLeft(rowCell), 0.01f);
@@ -191,7 +190,7 @@ class GapCoexistenceTest extends SolimEnv {
 		// Inside Column
 		Column col = new Column();
 		Card colChild = new Card().margin(6f, 12f, 18f, 24f);
-		col.children(() -> ParentStack.add(colChild));
+		col.children(() -> AttachmentStack.add(colChild));
 		Cell<?> colCell = col.table().getCell(colChild.element());
 		assertEquals(6f, CellAccess.padTop(colCell), 0.01f);
 		assertEquals(12f, CellAccess.padLeft(colCell), 0.01f);
@@ -201,7 +200,7 @@ class GapCoexistenceTest extends SolimEnv {
 		// Inside Grid
 		Grid grid = new Grid(2);
 		Card gridChild = new Card().margin(7f, 14f, 21f, 28f);
-		grid.children(() -> ParentStack.add(gridChild));
+		grid.children(() -> AttachmentStack.add(gridChild));
 		Cell<?> gridCell = grid.table().getCell(gridChild.element());
 		assertEquals(7f, CellAccess.padTop(gridCell), 0.01f);
 		assertEquals(14f, CellAccess.padLeft(gridCell), 0.01f);
@@ -216,7 +215,7 @@ class GapCoexistenceTest extends SolimEnv {
 				.margin(8f, 12f, 16f, 20f)
 				.padding(4f, 6f, 8f, 10f);
 
-		parent.children(() -> ParentStack.add(card));
+		parent.children(() -> AttachmentStack.add(card));
 
 		// Outer margin affects parent cell padding
 		Cell<?> cell = parent.table().getCell(card.element());

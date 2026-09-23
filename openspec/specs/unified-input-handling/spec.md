@@ -77,4 +77,27 @@ Neither `FreeCameraFeature` nor `JoystickFeature` SHALL track original input han
 - **WHEN** a tap gesture is performed on a valid tile and no exception occurs
 - **THEN** `ModMobileInput.tap` returns the result of vanilla `MobileInput.tap()`
 
+### Requirement: Fault-Tolerant Movement Updates
+The system SHALL isolate errors thrown during `ModMobileInput.updateMovement` and `ModDesktopInput.updateMovement` from crashing the game thread, SHALL preserve movement applied before the failure point, and SHALL log the failure with unit identity under throttle control.
+
+#### Scenario: Stale unit aim incompatibility does not crash
+- **WHEN** `unit.aim(float, float, boolean)` throws `AbstractMethodError` for a third-party unit compiled against an older Mindustry
+- **THEN** the game thread survives, movement applied before the throw is preserved, and aiming/weapon control for that frame is skipped
+
+#### Scenario: Repeated stale-unit failures log once per type
+- **WHEN** the same unit class throws `LinkageError` on consecutive frames
+- **THEN** only the first occurrence is logged and later frames skip the aim/weapon section without throwing
+
+#### Scenario: Transient movement errors are throttled and retried
+- **WHEN** a non-`LinkageError` is thrown during movement updates
+- **THEN** the error is logged at most once per 5 seconds per unit class and the next frame retries normally
+
+#### Scenario: Desktop has the same protection as mobile
+- **WHEN** `ModDesktopInput.updateMovement` throws during aiming or movement for any unit
+- **THEN** the game thread survives with the same degrade-and-log behavior as mobile
+
+#### Scenario: Normal movement behavior unchanged
+- **WHEN** no error occurs during movement updates
+- **THEN** joystick, free-camera, autoplay, and vanilla fallback behavior is identical to before the guard
+
 

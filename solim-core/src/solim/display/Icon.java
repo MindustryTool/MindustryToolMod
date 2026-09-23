@@ -2,7 +2,7 @@ package solim.display;
 
 import arc.scene.style.Drawable;
 import arc.scene.ui.Image;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 
@@ -23,7 +23,7 @@ public final class Icon {
 
 	public static Icon of(Signal<Drawable> s) {
 		Icon icon = new Icon();
-		Effect e = Effect.of((Consumer<Effect.Cleanup>) cleanup -> {
+		Effect e = Effect.of((Cons<Effect.Cleanup>) cleanup -> {
 			icon.image.setDrawable(s.get());
 		});
 		icon.binding = e;

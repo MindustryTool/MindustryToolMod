@@ -2,7 +2,7 @@ package solim.feedback;
 
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Table;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import solim.core.Disposable;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
@@ -19,7 +19,7 @@ public final class ProgressBar implements Disposable {
 		this.signal = signal;
 		bar.top().left();
 		updateBar();
-		this.effect = Effect.of((Consumer<Effect.Cleanup>) cleanup -> {
+		this.effect = Effect.of((Cons<Effect.Cleanup>) cleanup -> {
 			updateBar();
 		});
 	}

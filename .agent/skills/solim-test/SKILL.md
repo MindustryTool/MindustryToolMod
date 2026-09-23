@@ -657,11 +657,11 @@ Example:
 
 ```java
 grid.children(() -> {
-    ParentStack.add(first);
+    AttachmentStack.add(first);
 });
 
 grid.children(() -> {
-    ParentStack.add(second);
+    AttachmentStack.add(second);
 });
 ```
 

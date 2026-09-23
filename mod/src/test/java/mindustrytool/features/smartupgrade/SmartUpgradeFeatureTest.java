@@ -27,7 +27,6 @@ import mindustry.world.blocks.liquid.Conduit;
 import mindustry.world.blocks.liquid.LiquidBridge;
 import mindustry.world.blocks.production.BeamDrill;
 import mindustry.world.blocks.production.Drill;
-import mindustrytool.features.FeatureMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -106,27 +105,23 @@ class SmartUpgradeFeatureTest {
         assertNotNull(testBundle);
         assertEquals("Smart Upgrade", testBundle.get("feature.smart-upgrade.name"));
         assertEquals("Smart Upgrade Settings", testBundle.get("feature.smart-upgrade.settings.title"));
+        assertEquals("Trigger Mode", testBundle.get("feature.smart-upgrade.settings.trigger-mode"));
+        assertEquals("One Shot", testBundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot"));
+        assertEquals("Persistent", testBundle.get("feature.smart-upgrade.settings.trigger-mode.persistent"));
+        assertEquals("Smart Upgrade armed: tap a block to open the upgrade menu.",
+                testBundle.get("feature.smart-upgrade.armed"));
 
         I18NBundle testViBundle = I18NBundle.createBundle(baseFi, new Locale("vi"));
         assertNotNull(testViBundle);
         assertEquals("Nâng Cấp Thông Minh", testViBundle.get("feature.smart-upgrade.name"));
         assertEquals("Cài Đặt Nâng Cấp Thông Minh", testViBundle.get("feature.smart-upgrade.settings.title"));
         assertEquals("Số công trình tối đa mỗi lần nâng cấp", testViBundle.get("feature.smart-upgrade.settings.max-upgrades"));
-        assertEquals("Thời gian nhấn giữ (ms)", testViBundle.get("feature.smart-upgrade.settings.hold-duration"));
+        assertEquals("Chế Độ Kích Hoạt", testViBundle.get("feature.smart-upgrade.settings.trigger-mode"));
+        assertEquals("Một lần", testViBundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot"));
+        assertEquals("Duy trì", testViBundle.get("feature.smart-upgrade.settings.trigger-mode.persistent"));
+        assertEquals("Đã sẵn sàng Nâng Cấp Thông Minh: chạm vào một công trình để mở bảng nâng cấp.",
+                testViBundle.get("feature.smart-upgrade.armed"));
         assertEquals("Bật/Tắt Nâng Cấp Thông Minh", testViBundle.get("keybind.smartUpgradeToggle.name"));
-    }
-
-    @Test
-    void testMetadata() {
-        SmartUpgradeFeature feature = new SmartUpgradeFeature();
-        FeatureMetadata meta = feature.getMetadata();
-
-        assertNotNull(meta);
-        assertEquals("smart-upgrade", meta.getId());
-        assertNotNull(meta.getIcon());
-        assertTrue(meta.isEnabledByDefault());
-        assertTrue(meta.isQuickAccess());
-        assertFalse(meta.isDevelopment());
     }
 
     @Test
@@ -134,7 +129,9 @@ class SmartUpgradeFeatureTest {
         SmartUpgradeFeature feature = new SmartUpgradeFeature();
 
         assertEquals(500, feature.maxUpdatesConfig.get());
-        assertEquals(300, feature.holdDurationConfig.get());
+        assertEquals(SmartUpgradeFeature.MODE_ONE_SHOT, feature.triggerModeConfig.get());
+        assertTrue(feature.isOneShot());
+        assertFalse(feature.isArmed());
         assertFalse(feature.onlySameTypeConfig.get());
         assertTrue(feature.traverseBridgesConfig.get());
     }
@@ -144,21 +141,46 @@ class SmartUpgradeFeatureTest {
         SmartUpgradeFeature feature = new SmartUpgradeFeature();
 
         feature.maxUpdatesConfig.set(1000);
-        feature.holdDurationConfig.set(450);
+        feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_PERSISTENT);
         feature.onlySameTypeConfig.set(true);
         feature.traverseBridgesConfig.set(false);
 
         assertEquals(1000, feature.maxUpdatesConfig.get());
-        assertEquals(450, feature.holdDurationConfig.get());
+        assertEquals(SmartUpgradeFeature.MODE_PERSISTENT, feature.triggerModeConfig.get());
+        assertFalse(feature.isOneShot());
         assertTrue(feature.onlySameTypeConfig.get());
         assertFalse(feature.traverseBridgesConfig.get());
 
         feature.resetToDefaults();
 
         assertEquals(500, feature.maxUpdatesConfig.get());
-        assertEquals(300, feature.holdDurationConfig.get());
+        assertEquals(SmartUpgradeFeature.MODE_ONE_SHOT, feature.triggerModeConfig.get());
+        assertTrue(feature.isOneShot());
         assertFalse(feature.onlySameTypeConfig.get());
         assertTrue(feature.traverseBridgesConfig.get());
+    }
+
+    @Test
+    void testQuickAccessArmsAndAutoEnables() {
+        SmartUpgradeFeature feature = new SmartUpgradeFeature();
+
+        assertFalse(feature.isEnabled());
+        assertFalse(feature.isArmed());
+
+        feature.onQuickAccessClick();
+
+        assertTrue(feature.isEnabled());
+        assertTrue(feature.isArmed());
+        assertEquals(Boolean.TRUE, feature.quickAccessHighlight().peek());
+
+        feature.onQuickAccessClick();
+
+        assertTrue(feature.isEnabled());
+        assertFalse(feature.isArmed());
+        assertEquals(Boolean.FALSE, feature.quickAccessHighlight().peek());
+
+        feature.disarm();
+        assertFalse(feature.isArmed());
     }
 
     @Test

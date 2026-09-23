@@ -21,6 +21,7 @@ import mindustrytool.features.browser.common.BrowserState;
 import mindustrytool.models.response.SchematicData;
 import mindustrytool.services.MindustryTool;
 import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
@@ -150,46 +151,45 @@ public class SchematicBrowserDialog extends SolimDialog {
                     .children(() -> {
                         column().width(contentWidth).growY().gap(unit(2)).children(() -> {
                             new BrowserSearchHeader(state, () -> filterDialog.show());
-
-                            query(state.query())
-                                    .grow()
-                                    .loading(Loader::centered)
-                                    .error(err -> row().grow().gap(unit(1)).children(() -> {
-                                        Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
-                                        String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
-                                                : (cause != null ? cause.toString() : "");
-                                        text(msg).color(Color.scarlet).wrap(true).growX();
-                                        button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                                .style(WebStyles.outlineText())
-                                                .height(unit(10));
-                                    }))
-                                    .data((list, fetching) -> fetching ? Loader.centered()
-                                            : scroll().style(Styles.noBarPane).grow()
-                                                    .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
-                                                        reactiveGrid(visibleItems).columns(columnCount)
-                                                                .key(SchematicData::getItemId)
-                                                                .empty(() -> {
-                                                                    text(Core.bundle
-                                                                            .get("browser.empty"))
-                                                                                    .color(Color.gray)
-                                                                                    .padding(unit(4));
-                                                                })
-                                                                .gap(BrowserLayout.CARD_GAP)
-                                                                .children(item -> new SchematicCard(
-                                                                        item,
-                                                                        cardSize,
-                                                                        () -> onCardClick(item),
-                                                                        () -> SchematicActions
-                                                                                .copyToClipboard(item.getItemId()),
-                                                                        () -> SchematicActions
-                                                                                .saveToLocal(item.getItemId()),
-                                                                        () -> showDetails(item)));
-                                                    }))
-                                    .grow();
-
+                            body();
                             new BrowserFooter(state, Config.UPLOAD_SCHEMATIC_URL, onClose);
                         });
                     }).element();
+        }
+
+        private void body() {
+            query(state.query())
+                    .grow()
+                    .loading(Loader::centered)
+                    .error(err -> row().grow().gap(unit(1)).children(() -> {
+                        Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
+                        String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
+                                : (cause != null ? cause.toString() : "");
+
+                        text(msg).color(Color.scarlet).wrap(true).growX();
+                        button(Core.bundle.get("browser.retry"), () -> state.refresh())
+                                .style(WebStyles.outlineText())
+                                .height(unit(10));
+                    }))
+                    .data((list, fetching) -> fetching ? Loader.centered() : items())
+                    .grow();
+        }
+
+        private Component items() {
+            return scroll().style(Styles.noBarPane).grow().paddingLeft(BrowserLayout.SCROLLBAR_GUTTER)
+                    .children(() -> {
+                        reactiveGrid(visibleItems)
+                                .columns(columnCount)
+                                .key(SchematicData::getItemId)
+                                .empty(() -> text(Core.bundle.get("browser.empty")).color(Color.gray)
+                                        .padding(unit(4)))
+                                .gap(BrowserLayout.CARD_GAP)
+                                .children(item -> new SchematicCard(item, cardSize,
+                                        () -> onCardClick(item),
+                                        () -> SchematicActions.copyToClipboard(item.getItemId()),
+                                        () -> SchematicActions.saveToLocal(item.getItemId()),
+                                        () -> showDetails(item)));
+                    });
         }
 
         private void onCardClick(SchematicData item) {
@@ -197,10 +197,12 @@ public class SchematicBrowserDialog extends SolimDialog {
                 showDetails(item);
                 return;
             }
+
             if (!SchematicActions.canPlaceInGame()) {
                 Vars.ui.showInfo(Core.bundle.get("schematic.disabled"));
                 return;
             }
+
             SchematicActions.placeInGame(item.getItemId());
         }
 

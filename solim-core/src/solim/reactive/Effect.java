@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import arc.func.Cons;
+import arc.func.Prov;
 import solim.core.Disposable;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.core.SchedulableEffect;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
@@ -23,8 +23,8 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 	}
 
 	private final Runnable runnable;
-	private final Supplier<Runnable> supplierWithCleanup;
-	private final Consumer<Cleanup> cleanupConsumer;
+	private final Prov<Runnable> supplierWithCleanup;
+	private final Cons<Cleanup> cleanupConsumer;
 
 	private final Set<ReactiveSource> dependencies = new LinkedHashSet<>();
 	private Set<ReactiveSource> collecting = null;
@@ -34,9 +34,9 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 	private boolean running = false;
 	private boolean pending = false;
 
-	private Effect(Runnable runnable, Supplier<Runnable> supplier, Consumer<Cleanup> cleanupConsumer) {
+	private Effect(Runnable runnable, Prov<Runnable> Prov, Cons<Cleanup> cleanupConsumer) {
 		this.runnable = runnable;
-		this.supplierWithCleanup = supplier;
+		this.supplierWithCleanup = Prov;
 		this.cleanupConsumer = cleanupConsumer;
 	}
 
@@ -49,27 +49,27 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 	}
 
 	/**
-	 * Creates an effect from a supplier that returns a cleanup runnable. If called inside an active
+	 * Creates an effect from a Prov that returns a cleanup runnable. If called inside an active
 	 * component build scope, the effect is automatically owned by that component.
 	 */
-	public static Effect of(Supplier<Runnable> supplier) {
-		return create(null, supplier, null);
+	public static Effect of(Prov<Runnable> Prov) {
+		return create(null, Prov, null);
 	}
 
-	/** Alias for {@link #of(Supplier)}. */
-	public static Effect ofSupplier(Supplier<Runnable> supplier) {
-		return of(supplier);
+	/** Alias for {@link #of(Prov)}. */
+	public static Effect ofSupplier(Prov<Runnable> Prov) {
+		return of(Prov);
 	}
 
 	/**
-	 * Creates an effect with a cleanup consumer. If called inside an active component build scope,
+	 * Creates an effect with a cleanup Cons. If called inside an active component build scope,
 	 * the effect is automatically owned by that component.
 	 *
 	 * <p>For API {@code Effect.of(() -> { Subscription s=...; return s::dispose; })} use ofSupplier.
-	 * This overload handles cleanup consumer: {@code Effect.of(cleanup -> { ... cleanup.add(...); })}.
+	 * This overload handles cleanup Cons: {@code Effect.of(cleanup -> { ... cleanup.add(...); })}.
 	 */
-	public static Effect of(Consumer<Cleanup> consumer) {
-		return create(null, null, consumer);
+	public static Effect of(Cons<Cleanup> Cons) {
+		return create(null, null, Cons);
 	}
 
 	/** Convenience alias matching requirement example: effect(() -> {...}) */
@@ -78,12 +78,12 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 	}
 
 	/**
-	 * Internal factory: registers the effect with the active ComponentContext (if any) BEFORE
+	 * Internal factory: registers the effect with the active OwnershipContext (if any) BEFORE
 	 * running it so that ownership is established even if the initial run throws.
 	 */
-	private static Effect create(Runnable runnable, Supplier<Runnable> supplier, Consumer<Cleanup> cleanupConsumer) {
-		Effect effect = new Effect(runnable, supplier, cleanupConsumer);
-		ComponentContext.register(effect);
+	private static Effect create(Runnable runnable, Prov<Runnable> Prov, Cons<Cleanup> cleanupConsumer) {
+		Effect effect = new Effect(runnable, Prov, cleanupConsumer);
+		OwnershipContext.register(effect);
 		effect.runEffect();
 		return effect;
 	}
@@ -108,7 +108,7 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 				returned = supplierWithCleanup.get();
 			} else if (cleanupConsumer != null) {
 				CleanupImpl ci = new CleanupImpl();
-				cleanupConsumer.accept(ci);
+				cleanupConsumer.get(ci);
 			}
 		} catch (Throwable e) {
 			Log.err("[Effect] error", e);

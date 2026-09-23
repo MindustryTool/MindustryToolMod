@@ -6,12 +6,18 @@ import arc.Core;
 import arc.Graphics;
 import arc.Application;
 import arc.graphics.Color;
+import arc.input.KeyCode;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.scene.Scene;
+import arc.scene.event.EventListener;
+import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
+import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
+import arc.struct.Seq;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
@@ -170,6 +176,126 @@ class PopupMenuTest extends SolimEnv {
         }
     }
 
+    @Test
+    void layerBehindMountsBeforeAnchorInAnchorsParent() {
+        Scene savedScene = Core.scene;
+        Popup<String> menu = new Popup<>();
+        try {
+            Scene scene = new Scene();
+            Core.scene = scene;
+            menu.children(data -> emptyContent());
+            Table anchor = new Table();
+            scene.root.addChild(anchor);
+            menu.layerBehind(anchor);
+
+            menu.show("data", 10f, 20f);
+
+            assertSame(scene.root, menu.table().parent, "Menu must mount into the anchor's parent");
+            int anchorIndex = scene.root.getChildren().indexOf(anchor, true);
+            int tableIndex = scene.root.getChildren().indexOf(menu.table(), true);
+            assertTrue(anchorIndex >= 0 && tableIndex >= 0, "Both elements must be children of the anchor's parent");
+            assertTrue(tableIndex < anchorIndex, "Menu must be inserted before the anchor so the anchor draws above it");
+        } finally {
+            try {
+                menu.dispose();
+            } catch (Throwable ignored) {
+            }
+            Core.scene = savedScene;
+        }
+    }
+
+    @Test
+    void layerBehindFallsBackToSceneRootForDetachedAnchor() {
+        Scene savedScene = Core.scene;
+        Popup<String> menu = new Popup<>();
+        try {
+            ensureScene();
+            menu.children(data -> emptyContent());
+            menu.layerBehind(new Table());
+
+            menu.show("data", 10f, 20f);
+
+            assertSame(Core.scene.root, menu.table().parent, "Detached anchor must fall back to scene root mounting");
+        } finally {
+            try {
+                menu.dispose();
+            } catch (Throwable ignored) {
+            }
+            Core.scene = savedScene;
+        }
+    }
+
+    @Test
+    void outsideTapDismissesWithoutConsuming() {
+        Scene savedScene = Core.scene;
+        Popup<String> menu = new Popup<>();
+        try {
+            ensureScene();
+            menu.children(data -> emptyContent());
+            menu.show("data", 10f, 10f);
+            assertTrue(menu.isShowing());
+
+            Seq<EventListener> captureListeners = Core.scene.root.getCaptureListeners().copy();
+            boolean hid = false;
+            boolean consumed = true;
+            for (EventListener listener : captureListeners) {
+                if (!(listener instanceof InputListener) || !menu.isShowing()) {
+                    continue;
+                }
+                InputEvent event = new InputEvent();
+                event.stageX = 9999f;
+                event.stageY = 9999f;
+                consumed = ((InputListener) listener).touchDown(event, 0f, 0f, 0, KeyCode.mouseLeft);
+                if (!menu.isShowing()) {
+                    hid = true;
+                    break;
+                }
+            }
+
+            assertTrue(hid, "An outside tap must dismiss the popup");
+            assertFalse(consumed, "The dismissing tap must not be consumed so underlying elements receive it");
+        } finally {
+            try {
+                menu.dispose();
+            } catch (Throwable ignored) {
+            }
+            Core.scene = savedScene;
+        }
+    }
+
+    @Test
+    void insideTapKeepsMenuOpenWithoutConsuming() {
+        Scene savedScene = Core.scene;
+        Popup<String> menu = new Popup<>();
+        try {
+            ensureScene();
+            menu.children(data -> fixedContent(100f, 80f));
+            menu.show("data", 10f, 10f);
+            assertTrue(menu.isShowing());
+
+            Seq<EventListener> captureListeners = Core.scene.root.getCaptureListeners().copy();
+            boolean anyConsumed = false;
+            for (EventListener listener : captureListeners) {
+                if (!(listener instanceof InputListener)) {
+                    continue;
+                }
+                InputEvent event = new InputEvent();
+                event.stageX = 10f;
+                event.stageY = 10f;
+                anyConsumed |= ((InputListener) listener).touchDown(event, 0f, 0f, 0, KeyCode.mouseLeft);
+            }
+
+            assertFalse(anyConsumed, "An inside tap must not be consumed by the dismissal catcher");
+            assertTrue(menu.isShowing(), "An inside tap must keep the menu open");
+        } finally {
+            try {
+                menu.dispose();
+            } catch (Throwable ignored) {
+            }
+            Core.scene = savedScene;
+        }
+    }
+
     private static BaseComponent emptyContent() {
         return trackedContent(new AtomicBoolean(false));
     }
@@ -185,6 +311,19 @@ class PopupMenuTest extends SolimEnv {
             public void dispose() {
                 super.dispose();
                 disposed.set(true);
+            }
+        };
+    }
+
+    private static BaseComponent fixedContent(float width, float height) {
+        return new BaseComponent() {
+            @Override
+            protected Element build() {
+                Table content = new Table();
+                Table leaf = new Table();
+                leaf.touchable = Touchable.enabled;
+                content.add(leaf).size(width, height);
+                return content;
             }
         };
     }

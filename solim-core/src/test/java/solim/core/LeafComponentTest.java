@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 class LeafComponentTest extends SolimEnv {
@@ -20,8 +20,8 @@ class LeafComponentTest extends SolimEnv {
 
     @AfterEach
     void tearDown() {
-        ParentStack.clear();
-        ComponentContext.clear();
+        AttachmentStack.clear();
+        OwnershipContext.clear();
     }
 
     static class TestLeaf extends LeafComponent<Element, TestLeaf> {
@@ -56,27 +56,27 @@ class LeafComponentTest extends SolimEnv {
     }
 
     @Test
-    void autoRegistersPendingAttachmentWithParentStack() {
+    void autoRegistersPendingAttachmentWithAttachmentStack() {
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
 
         TestLeaf leaf = new TestLeaf();
         assertEquals(0, root.getChildren().size, "Should not attach immediately before pop");
 
-        ParentStack.pop();
+        AttachmentStack.pop();
         assertEquals(1, root.getChildren().size, "Should attach upon parent pop");
         assertSame(leaf.element(), root.getChildren().first());
     }
 
     @Test
-    void appliesCellConstraintsDirectlyOnParentStackAttach() {
+    void appliesCellConstraintsDirectlyOnAttachmentStackAttach() {
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
 
         TestLeaf leaf = new TestLeaf();
         leaf.minWidth(80f).growX();
 
-        ParentStack.pop();
+        AttachmentStack.pop();
 
         Cell<?> cell = root.getCell(leaf.element());
         assertNotNull(cell);
@@ -86,14 +86,14 @@ class LeafComponentTest extends SolimEnv {
     }
 
     @Test
-    void registersChildWithActiveComponentContext() {
+    void registersChildWithActiveOwnershipContext() {
         List<Disposable> registered = new ArrayList<>();
-        ComponentContext.push(registered::add);
+        OwnershipContext.push(registered::add);
 
         TestLeaf leaf = new TestLeaf();
-        ComponentContext.pop();
+        OwnershipContext.pop();
 
-        assertTrue(registered.contains(leaf), "LeafComponent must register with active ComponentContext");
+        assertTrue(registered.contains(leaf), "LeafComponent must register with active OwnershipContext");
     }
 
     @Test

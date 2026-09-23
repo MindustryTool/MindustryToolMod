@@ -7,13 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
-import java.util.function.Supplier;
+import arc.func.Prov;
 
 import org.junit.jupiter.api.Test;
 
 import arc.scene.Element;
 import solim.core.Component;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 class SolimStackTest extends SolimEnv {
@@ -95,7 +95,7 @@ class SolimStackTest extends SolimEnv {
 	void nullLayerDoesNothing() {
 		SolimStack s = new SolimStack();
 
-		s.layer((Supplier<Component>) null);
+		s.layer((Prov<Component>) null);
 		s.layer(() -> null);
 
 		assertTrue(s.stack().getChildren().isEmpty());
@@ -114,15 +114,15 @@ class SolimStackTest extends SolimEnv {
 	}
 
 	@Test
-	void layerRestoresParentStackAfterFailure() {
+	void layerRestoresAttachmentStackAfterFailure() {
 		SolimStack s = new SolimStack();
-		int before = ParentStack.size();
+		int before = AttachmentStack.size();
 
 		assertThrows(RuntimeException.class, () -> s.layer(() -> {
 			throw new RuntimeException("layer failure");
 		}));
 
-		assertEquals(before, ParentStack.size());
+		assertEquals(before, AttachmentStack.size());
 		assertTrue(s.stack().getChildren().isEmpty());
 	}
 

@@ -10,13 +10,13 @@ import solim.modifier.ElementConfig;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Func;
+import arc.func.Prov;
 
 /** Stack container: overlays children on top of each other. */
 public final class SolimStack implements Component, CellConfig<SolimStack>, ElementConfig<SolimStack> {
@@ -28,7 +28,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     public SolimStack() {
         SolimToken.bind(this.stack, this, constraints);
         this.stack.name = "solim-stack-stack";
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Stack stack() {
@@ -63,21 +63,21 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
         return this;
     }
 
-    public SolimStack layer(@Nullable Supplier<Component> supplier) {
-        if (disposed || supplier == null) {
+    public SolimStack layer(@Nullable Prov<Component> Prov) {
+        if (disposed || Prov == null) {
             return this;
         }
-        @Nullable Component component = ReactiveContext.untracked(() -> ParentStack.isolate(supplier));
+        @Nullable Component component = ReactiveContext.untracked(() -> AttachmentStack.isolate(Prov));
         attachLayer(component);
         return this;
     }
 
-    public SolimStack layer(@Nullable Function<Element, Component> factory) {
+    public SolimStack layer(@Nullable Func<Element, Component> factory) {
         if (disposed || factory == null) {
             return this;
         }
         @Nullable Component component = ReactiveContext
-                .untracked(() -> ParentStack.isolate(() -> factory.apply(stack)));
+                .untracked(() -> AttachmentStack.isolate(() -> factory.get(stack)));
         attachLayer(component);
         return this;
     }

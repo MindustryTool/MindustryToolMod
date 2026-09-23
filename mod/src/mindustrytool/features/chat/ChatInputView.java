@@ -54,29 +54,25 @@ public class ChatInputView extends BaseComponent {
 
         return column().growX().gap(unit(1)).padding(unit(2)).children(() -> {
             // Login banner when not logged in
-            dynamic(isNotLoggedIn, notLoggedIn -> {
-                if (Boolean.TRUE.equals(notLoggedIn)) {
-                    return row().growX().padding(unit(1)).children(() -> {
+            when(isNotLoggedIn)
+                    .thenDo(() -> row().growX().padding(unit(1)).children(() -> {
                         button(Core.bundle.get("auth.login", "Login"), () -> AuthOverlay.getInstance().startLoginUI())
                                 .style(Styles.defaultt)
                                 .growX()
                                 .height(unit(8));
-                    });
-                }
-
-                // Composer area when logged in
-                return column().growX().gap(unit(1)).children(() -> {
+                    }))
+                .elseDo(() -> {
+                    // Composer area when logged in
+                    column().growX().gap(unit(1)).children(() -> {
                     dynamic(store.ui().replyTarget(), target -> {
-                        if (target == null) {
-                            return null;
-                        }
-                        String authorId = target.getCreatedBy();
+                        if (target != null) {
+                            String authorId = target.getCreatedBy();
                         UserData cachedUser = authorId != null ? store.users().getDirect(authorId) : null;
                         String targetName = (cachedUser != null && cachedUser.getName() != null)
                                 ? cachedUser.getName()
                                 : (authorId != null ? authorId : "message");
 
-                        return row().growX().padding(unit(1)).height(unit(12)).gap(unit(1)).children(() -> {
+                        row().growX().padding(unit(1)).height(unit(12)).gap(unit(1)).children(() -> {
                             icon(Icon.leftSmall).size(unit(4), unit(4)).color(Pal.accent);
                             text(Core.bundle.format("feature.chat.ui.replying", targetName)).color(Color.lightGray)
                                     .fontScale(0.85f).left();
@@ -86,6 +82,7 @@ public class ChatInputView extends BaseComponent {
                                     .size(unit(6), unit(6))
                                     .children(() -> icon(Icon.cancel).size(unit(4), unit(4)));
                         });
+                        }
                     }).growX();
 
                     row().growX().gap(unit(1)).children(() -> {
@@ -123,8 +120,8 @@ public class ChatInputView extends BaseComponent {
                                     });
                         });
                     });
-                });
-            }).grow();
+                    });
+                }).grow();
         }).element();
     }
 

@@ -87,4 +87,9 @@ public final class ChatStore {
             unread.clear(channelId);
         }
     }
+
+    public void dispose() {
+        channels.dispose();
+        members.dispose();
+    }
 }

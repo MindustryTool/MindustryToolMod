@@ -9,7 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
+import arc.func.Func;
 import solim.core.Component;
 import solim.core.Disposable;
 
@@ -40,8 +40,8 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 	 */
 	public <T> Map<K, C> reconcile(
 			Iterable<T> items,
-			Function<T, K> keyExtractor,
-			Function<T, C> factory) {
+			Func<T, K> keyExtractor,
+			Func<T, C> factory) {
 		final Iterable<T> effectiveItems = items != null ? items : Collections.<T>emptyList();
 
 		// Phase 1: Extract and validate keys (detect duplicates)
@@ -49,7 +49,7 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 		List<K> keyList = new ArrayList<>();
 		Set<K> seenKeys = new HashSet<>();
 		for (T item : effectiveItems) {
-			K key = keyExtractor.apply(item);
+			K key = keyExtractor.get(item);
 			if (!seenKeys.add(key)) {
 				throw new IllegalArgumentException("Duplicate key '" + key + "' in reconciler");
 			}
@@ -62,7 +62,7 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 		List<C> newlyCreated = new ArrayList<>();
 
 		try {
-			ComponentContext.withoutAutoOwnership(() -> {
+			OwnershipContext.withoutAutoOwnership(() -> {
 				for (int i = 0; i < itemList.size(); i++) {
 					T item = itemList.get(i);
 					K key = keyList.get(i);
@@ -70,8 +70,8 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 					C comp = activeComponents.get(key);
 					if (comp == null) {
 						comp = ReactiveContext.untracked(() ->
-							ParentStack.isolate(() -> {
-								C c = factory.apply(item);
+							AttachmentStack.isolate(() -> {
+								C c = factory.get(item);
 								if (c != null) {
 									c.element();
 								}

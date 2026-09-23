@@ -1,6 +1,6 @@
 package solim.core;
 
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,7 +38,7 @@ class AmbientOwnershipTest extends SolimEnv {
 		final AtomicBoolean disposedFlag = new AtomicBoolean(false);
 
 		CustomDisposable() {
-			ComponentContext.register(this);
+			OwnershipContext.register(this);
 		}
 
 		@Override
@@ -102,7 +102,7 @@ class AmbientOwnershipTest extends SolimEnv {
 
 	@Test
 	void cleanStackUnwindingOnBuildFailure() {
-		assertEquals(0, ComponentContext.size());
+		assertEquals(0, OwnershipContext.size());
 		BaseComponent failingComponent = new BaseComponent() {
 			@Override
 			protected Element build() {
@@ -111,6 +111,6 @@ class AmbientOwnershipTest extends SolimEnv {
 		};
 
 		assertThrows(IllegalStateException.class, failingComponent::element);
-		assertEquals(0, ComponentContext.size(), "ComponentContext stack must be unwound even if build() throws");
+		assertEquals(0, OwnershipContext.size(), "OwnershipContext stack must be unwound even if build() throws");
 	}
 }

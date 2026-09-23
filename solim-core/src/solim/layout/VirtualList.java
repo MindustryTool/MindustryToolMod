@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import arc.func.Cons;
+import arc.func.Func;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.core.SolimToken;
@@ -43,9 +43,9 @@ public final class VirtualList<T> extends BaseComponent
     private final VirtualContainer content;
 
     private final Readable<? extends List<T>> collection;
-    private Function<T, ?> keyExtractor = Function.identity();
+    private Func<T, ?> keyExtractor = v -> v;
     private final ItemHeightProvider<T> heightProvider;
-    private @Nullable Function<T, Component> itemFactory;
+    private @Nullable Func<T, Component> itemFactory;
     private final StructuralReconciler<Object, Component> reconciler = new StructuralReconciler<>();
 
     private int overscan = 3;
@@ -113,12 +113,12 @@ public final class VirtualList<T> extends BaseComponent
         return new VirtualList<>(Signal.of(items), heightProvider);
     }
 
-    public VirtualList<T> key(@Nullable Function<T, ?> keyExtractor) {
-        this.keyExtractor = keyExtractor != null ? keyExtractor : Function.identity();
+    public VirtualList<T> key(@Nullable Func<T, ?> keyExtractor) {
+        this.keyExtractor = keyExtractor != null ? keyExtractor : v -> v;
         return this;
     }
 
-    public void children(@Nullable Function<T, Component> itemFactory) {
+    public void children(@Nullable Func<T, Component> itemFactory) {
         this.itemFactory = itemFactory;
         if (itemFactory != null && isBuilt()) {
             onCollectionChanged();
@@ -126,7 +126,7 @@ public final class VirtualList<T> extends BaseComponent
     }
 
     private Object extractKey(T item) {
-        return keyExtractor.apply(item);
+        return keyExtractor.get(item);
     }
 
     public VirtualList<T> overscan(int overscan) {
@@ -144,9 +144,9 @@ public final class VirtualList<T> extends BaseComponent
         return pane;
     }
 
-    public VirtualList<T> pane(Consumer<ScrollPane> consumer) {
+    public VirtualList<T> pane(Cons<ScrollPane> Cons) {
         if (pane != null) {
-            consumer.accept(pane);
+            Cons.get(pane);
         }
         return this;
     }
@@ -285,7 +285,7 @@ public final class VirtualList<T> extends BaseComponent
     }
 
     public void reconcileVisible() {
-        Function<T, Component> factory = itemFactory;
+        Func<T, Component> factory = itemFactory;
         if (factory == null) {
             return;
         }
@@ -327,7 +327,7 @@ public final class VirtualList<T> extends BaseComponent
 
         for (int i = start; i <= end; i++) {
             T item = currentItems.get(i);
-            Object key = keyExtractor.apply(item);
+            Object key = keyExtractor.get(item);
             Component comp = active.get(key);
             if (comp != null) {
                 Element el = comp.element();

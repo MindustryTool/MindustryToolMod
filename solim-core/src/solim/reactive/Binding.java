@@ -4,35 +4,35 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.ui.Button;
 import arc.scene.ui.Label;
-import java.util.function.Consumer;
-import solim.runtime.ComponentContext;
+import arc.func.Cons;
+import solim.runtime.OwnershipContext;
 
 /**
  * Reactive property binding utilities for Arc Scene2D elements. Automatically registered with the
- * active ComponentContext when bound during build().
+ * active OwnershipContext when bound during build().
  */
 public final class Binding {
 	private Binding() {}
 
-	public static <T> Effect of(Consumer<T> target, Signal<T> source) {
-		Effect effect = Effect.of(() -> target.accept(source.get()));
-		ComponentContext.register(effect);
+	public static <T> Effect of(Cons<T> target, Signal<T> source) {
+		Effect effect = Effect.of(() -> target.get(source.get()));
+		OwnershipContext.register(effect);
 		return effect;
 	}
 
-	public static <T> Effect of(Consumer<T> target, Computed<T> source) {
-		Effect effect = Effect.of(() -> target.accept(source.get()));
-		ComponentContext.register(effect);
+	public static <T> Effect of(Cons<T> target, Computed<T> source) {
+		Effect effect = Effect.of(() -> target.get(source.get()));
+		OwnershipContext.register(effect);
 		return effect;
 	}
 
-	public static <T> Effect bind(Signal<T> source, Consumer<T> target) {
+	public static <T> Effect bind(Signal<T> source, Cons<T> target) {
 		return of(target, source);
 	}
 
-	public static <T> Effect bind(Readable<T> source, Consumer<T> target) {
-		Effect effect = Effect.of(() -> target.accept(source.get()));
-		ComponentContext.register(effect);
+	public static <T> Effect bind(Readable<T> source, Cons<T> target) {
+		Effect effect = Effect.of(() -> target.get(source.get()));
+		OwnershipContext.register(effect);
 		return effect;
 	}
 

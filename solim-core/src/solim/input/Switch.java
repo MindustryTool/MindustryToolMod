@@ -9,7 +9,7 @@ import solim.reactive.Signal;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 /**
  * Switch widget bound to Signal&lt;Boolean&gt;. Uses TextButton as a visual toggle; state held in
@@ -49,7 +49,7 @@ public final class Switch implements Component, ElementConfig<Switch>, CellConfi
 				return DisposableAction.empty();
 			}
 		);
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
 	public static Switch of(Signal<Boolean> signal) {

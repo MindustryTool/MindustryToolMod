@@ -1,10 +1,10 @@
 package solim.reactive;
 
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import arc.func.Cons;
+import arc.func.Prov;
 import solim.core.Disposable;
-import java.util.function.BiPredicate;
+import arc.func.Boolf2;
 
 /**
  * Shared two-way binding utility for Solim input components.
@@ -20,7 +20,7 @@ import java.util.function.BiPredicate;
  *
  * <p>Implements {@link Disposable}. When disposed, the signal-watching Effect is disposed and
  * the widget listener is removed (if the widget supports listener removal). The binding is
- * automatically owned by the active {@link solim.runtime.ComponentContext} when created inside
+ * automatically owned by the active {@link solim.runtime.OwnershipContext} when created inside
  * a component {@code build()}.
  *
  * @param <T> the value type shared by the signal and the widget
@@ -47,10 +47,10 @@ public final class TwoWayBinding<T> implements Disposable {
      */
     public TwoWayBinding(
             Signal<T> signal,
-            Supplier<T> widgetGetter,
-            Consumer<T> widgetSetter,
+            Prov<T> widgetGetter,
+            Cons<T> widgetSetter,
             ListenerInstaller listenerInstaller,
-            BiPredicate<T, T> equalityChecker) {
+            Boolf2<T, T> equalityChecker) {
 
         // Widget → Signal: install the change listener
         this.listenerDisposable = listenerInstaller.install(() -> {
@@ -59,7 +59,7 @@ public final class TwoWayBinding<T> implements Disposable {
             }
             T widgetValue = widgetGetter.get();
             T signalValue = signal.peek();
-            if (!equalityChecker.test(widgetValue, signalValue)) {
+            if (!equalityChecker.get(widgetValue, signalValue)) {
                 signal.set(widgetValue);
             }
         });
@@ -68,10 +68,10 @@ public final class TwoWayBinding<T> implements Disposable {
         this.effect = Effect.of(() -> {
             T signalValue = signal.get();
             T widgetValue = widgetGetter.get();
-            if (!equalityChecker.test(signalValue, widgetValue)) {
+            if (!equalityChecker.get(signalValue, widgetValue)) {
                 updating = true;
                 try {
-                    widgetSetter.accept(signalValue);
+                    widgetSetter.get(signalValue);
                 } finally {
                     updating = false;
                 }
@@ -84,8 +84,8 @@ public final class TwoWayBinding<T> implements Disposable {
      */
     public TwoWayBinding(
             Signal<T> signal,
-            Supplier<T> widgetGetter,
-            Consumer<T> widgetSetter,
+            Prov<T> widgetGetter,
+            Cons<T> widgetSetter,
             ListenerInstaller listenerInstaller) {
         this(signal, widgetGetter, widgetSetter, listenerInstaller, Objects::equals);
     }

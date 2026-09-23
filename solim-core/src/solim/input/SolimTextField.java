@@ -8,14 +8,14 @@ import solim.graphics.RoundedDrawable;
 import arc.scene.Element;
 import arc.scene.ui.TextField;
 import arc.util.Nullable;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import arc.func.Cons;
+import arc.func.Boolf;
 import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -25,7 +25,7 @@ import solim.reactive.Binding;
 /**
  * TextField widget with two-way binding to a Signal&lt;String&gt;. Equality
  * guard prevents feedback loop. Automatically registers with the active
- * ComponentContext if created during a component build.
+ * OwnershipContext if created during a component build.
  */
 public final class SolimTextField implements Component, ElementConfig<SolimTextField>, CellConfig<SolimTextField> {
 
@@ -34,7 +34,7 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
     private @Nullable TwoWayBinding<String> binding;
     private Effect disabledEffect;
     private boolean disposed = false;
-    private Predicate<String> validator;
+    private Boolf<String> validator;
     private final Signal<Boolean> valid = Signal.of(true);
 
     public SolimTextField() {
@@ -59,29 +59,29 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
                 val -> {
                     field.setText(val != null ? val : "");
                     if (validator != null) {
-                        valid.set(validator.test(val));
+                        valid.set(validator.get(val));
                     }
                 },
                 onChange -> {
                     field.changed(() -> {
                         onChange.run();
                         if (validator != null) {
-                            valid.set(validator.test(field.getText()));
+                            valid.set(validator.get(field.getText()));
                         }
                     });
                     return DisposableAction.empty();
                 });
 
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public static SolimTextField of(Signal<String> signal) {
         return new SolimTextField(signal);
     }
 
-    public SolimTextField validator(Predicate<String> validator) {
+    public SolimTextField validator(Boolf<String> validator) {
         this.validator = validator;
-        this.valid.set(validator == null || validator.test(field.getText()));
+        this.valid.set(validator == null || validator.get(field.getText()));
         return this;
     }
 
@@ -93,10 +93,10 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
         return Boolean.TRUE.equals(valid.get());
     }
 
-    public SolimTextField onEnter(Consumer<String> onSubmit) {
+    public SolimTextField onEnter(Cons<String> onSubmit) {
         field.keyDown(key -> {
             if (key == KeyCode.enter && !field.isDisabled()) {
-                onSubmit.accept(field.getText());
+                onSubmit.get(field.getText());
             }
         });
         return this;

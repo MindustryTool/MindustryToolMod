@@ -21,7 +21,7 @@ import solim.reactive.Computed;
 import solim.reactive.Readable;
 
 public class ChatChannelListView extends BaseComponent {
-
+    // TODO: Able to turn on/off notifications for each channel
     private final ChatStore store;
     private final @Nullable ChatService service;
 

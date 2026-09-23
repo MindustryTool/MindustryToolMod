@@ -15,7 +15,7 @@ import arc.util.Nullable;
 import arc.util.Time;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
+import arc.func.Func;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -25,8 +25,8 @@ import solim.layout.Spacer;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.RoundedHelper;
 import solim.modifier.TableConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -48,13 +48,15 @@ import solim.reactive.Readable;
  *
  * <p>
  * All mutating methods return this instance for chaining. Show and hide are
- * explicit and safe to call headless (no-ops without a scene).
+ * explicit and safe to call headless (no-ops without a scene). Outside taps
+ * dismiss the menu without consuming the touch, so underlying UI stays
+ * usable.
  */
 public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T>> {
-    // TODO: Popup show above existsing UI making them unusable
     private final Table table = new Table();
-    private @Nullable Function<T, Component> provider;
+    private @Nullable Func<T, Component> provider;
     private @Nullable Component currentContent;
+    private @Nullable Element layerAnchor;
     private final List<Disposable> currentBindings = new ArrayList<>();
     private boolean touchAttached = false;
     private boolean keyAttached = false;
@@ -82,7 +84,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                 }
             }
             hide();
-            return true;
+            return false;
         }
     };
 
@@ -127,7 +129,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                 if (c != null)
                     rd.fillColor(c);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -145,7 +147,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                 Color c = color.get();
                 rd.border(stroke, c != null ? c : Color.white);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         } else {
             rd.border(stroke, Color.white);
         }
@@ -153,10 +155,21 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     }
 
     /**
+     * Sets an anchor element the menu mounts behind: on show, the menu is
+     * inserted into the anchor's parent before the anchor so the anchor draws
+     * above the menu. Falls back to the scene root when the anchor is null or
+     * detached. Returns this for chaining.
+     */
+    public Popup<T> layerBehind(@Nullable Element anchor) {
+        this.layerAnchor = anchor;
+        return this;
+    }
+
+    /**
      * Sets the content provider applied to the data passed to {@link #show}.
      * Content is rebuilt on every show call.
      */
-    public Popup<T> children(@Nullable Function<T, Component> provider) {
+    public Popup<T> children(@Nullable Func<T, Component> provider) {
         this.provider = provider;
         return this;
     }
@@ -200,7 +213,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     /**
      * Computes menu placement: bottom edge at the anchor when it fits above,
      * flipped below the anchor on overflow, clamped inside the stage on both axes.
-     * Pure function of its inputs, safe to unit test headless.
+     * Pure Func of its inputs, safe to unit test headless.
      */
     public static Vec2 place(float anchorX, float anchorY, float menuWidth, float menuHeight,
             float stageWidth, float stageHeight) {
@@ -232,8 +245,8 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     private void render(T data, float stageX, float stageY) {
         clearContent();
         if (provider != null) {
-            Component content = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
-                Component built = provider.apply(data);
+            Component content = ReactiveContext.untracked(() -> AttachmentStack.isolate(() -> {
+                Component built = provider.get(data);
                 if (built != null) {
                     built.element();
                 }
@@ -250,7 +263,7 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
                     List<Disposable> effects = config.applyToCell(cell);
                     currentBindings.addAll(effects);
                     for (Disposable effect : effects) {
-                        ComponentContext.register(effect);
+                        OwnershipContext.register(effect);
                     }
                 }
             }
@@ -260,10 +273,23 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
         Vec2 pos = place(stageX, stageY, table.getWidth(), table.getHeight(),
                 Core.scene.getWidth(), Core.scene.getHeight());
         table.setPosition(pos.x, pos.y);
-        if (table.parent == null) {
+        mount();
+        attachListeners();
+    }
+
+    /**
+     * Attaches the menu table to the scene: behind the configured anchor when
+     * it has a live parent, otherwise at the scene root.
+     */
+    private void mount() {
+        if (table.parent != null) {
+            return;
+        }
+        if (layerAnchor != null && layerAnchor.parent != null) {
+            layerAnchor.parent.addChildBefore(layerAnchor, table);
+        } else {
             Core.scene.add(table);
         }
-        attachListeners();
     }
 
     private void clearContent() {

@@ -36,16 +36,12 @@ public class GodModeHudView extends BaseComponent {
                     .border(1.5f, WebStyles.Colors.BORDER)
                     .center()
                     .children(() -> {
-                        dynamic(feature.hideDragHandleConfig.signal(), hide -> {
-                            if (!Boolean.TRUE.equals(hide)) {
-                                return button()
+                        when(feature.hideDragHandleConfig.signal())
+                                .elseDo(() -> button()
                                         .style(WebStyles.ghost())
                                         .size(buttonSize)
                                         .children(() -> icon(Icon.move).size(iconSize))
-                                        .draggable(feature.xSignal, feature.ySignal);
-                            }
-                            return null;
-                        });
+                                        .draggable(feature.xSignal, feature.ySignal));
 
                         buildControls(feature, null);
                     });
@@ -68,9 +64,13 @@ public class GodModeHudView extends BaseComponent {
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 
-        return dynamic(feature.providerSignal(), provider -> provider != null
-                ? buildActiveTools(feature, provider, buttonSize, iconSize, canEdit)
-                : buildUnavailableContent(feature, buttonSize, iconSize, canEdit));
+        return dynamic(feature.providerSignal(), provider -> {
+            if (provider != null) {
+                buildActiveTools(feature, provider, buttonSize, iconSize, canEdit);
+            } else {
+                buildUnavailableContent(feature, buttonSize, iconSize, canEdit);
+            }
+        });
     }
 
     private static Component buildActiveTools(GodModeFeature feature, GodModeProvider provider,
@@ -154,3 +154,4 @@ public class GodModeHudView extends BaseComponent {
         }
     }
 }
+

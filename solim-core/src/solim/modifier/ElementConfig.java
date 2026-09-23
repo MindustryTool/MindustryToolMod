@@ -10,7 +10,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.overlay.Hud;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -80,7 +80,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (w != null)
                     width(w);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return self();
     }
@@ -119,7 +119,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (h != null)
                     height(h);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return self();
     }
@@ -171,7 +171,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (v != null)
                     x(v);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return self();
     }
@@ -195,7 +195,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (v != null)
                     y(v);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return self();
     }
@@ -238,7 +238,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 Boolean v = visible.get();
                 visible(Boolean.TRUE.equals(v));
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return self();
     }
@@ -265,7 +265,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (v != null)
                     opacity(v);
             });
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return self();
     }
@@ -361,7 +361,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return tooltip(t -> {
             Label label = new Label("");
             Effect e = Effect.of(() -> label.setText(tip.get() != null ? tip.get() : ""));
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
             t.add(label);
         });
     }

@@ -14,7 +14,7 @@ import arc.scene.event.EventListener;
 import arc.scene.event.InputListener;
 import arc.scene.ui.layout.Table;
 import solim.overlay.Hud;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 class ScrollTest extends SolimEnv {
@@ -61,8 +61,8 @@ class ScrollTest extends SolimEnv {
         Element second = new Element();
 
         s.children(() -> {
-            ParentStack.add(first);
-            ParentStack.add(second);
+            AttachmentStack.add(first);
+            AttachmentStack.add(second);
         });
 
         assertEquals(2, s.content().getChildren().size);

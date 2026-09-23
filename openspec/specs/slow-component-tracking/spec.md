@@ -31,9 +31,9 @@ The system SHALL provide headless coverage that reproduces a schematic browser p
 - **WHEN** a headless test builds a `reactiveGrid` of real `SchematicCard` items with a fake image loader and swaps to a fully disjoint page-2 key set
 - **THEN** the test SHALL assert structural subtree spans named after the card containers, including duration and depth detail.
 
-### Requirement: ParentStack-owned structural profiling
+### Requirement: AttachmentStack-owned structural profiling
 
-The Solim runtime SHALL own all slow-span profiling within `ParentStack`, recording structural spans for container subtree completion, pending-component attach batches, and the maximum observed stack depth, with no profiling state or branches in the always-on base class.
+The Solim runtime SHALL own all slow-span profiling within `AttachmentStack`, recording structural spans for container subtree completion, pending-component attach batches, and the maximum observed stack depth, with no profiling state or branches in the always-on base class.
 
 #### Scenario: Subtree span on slow pop
 
@@ -57,22 +57,22 @@ The Solim runtime SHALL own all slow-span profiling within `ParentStack`, record
 
 ### Requirement: Debug stack variant isolation
 
-The runtime SHALL provide a base `ParentStack` containing zero profiling logic and a `DebugParentStack` subclass owning all profiling state; static methods SHALL delegate to a singleton instance that is a base instance by default and a debug instance only while profiling is enabled.
+The runtime SHALL provide a base `AttachmentStack` containing zero profiling logic and a `DebugAttachmentStack` subclass owning all profiling state; static methods SHALL delegate to a singleton instance that is a base instance by default and a debug instance only while profiling is enabled.
 
 #### Scenario: Default instance is the base variant
 
 - **WHEN** profiling has never been enabled
-- **THEN** the active singleton SHALL be the base `ParentStack` and the debug variant SHALL not be instantiated.
+- **THEN** the active singleton SHALL be the base `AttachmentStack` and the debug variant SHALL not be instantiated.
 
 #### Scenario: Enabling installs the debug variant
 
 - **WHEN** profiling is enabled
-- **THEN** a fresh `DebugParentStack` SHALL become the active singleton.
+- **THEN** a fresh `DebugAttachmentStack` SHALL become the active singleton.
 
 #### Scenario: Disabling reverts and clears
 
 - **WHEN** profiling is disabled
-- **THEN** the active singleton SHALL revert to a base `ParentStack` and all recorded spans SHALL be cleared.
+- **THEN** the active singleton SHALL revert to a base `AttachmentStack` and all recorded spans SHALL be cleared.
 
 #### Scenario: Timing state stays consistent across isolation
 
@@ -81,7 +81,7 @@ The runtime SHALL provide a base `ParentStack` containing zero profiling logic a
 
 ### Requirement: Public profiling facade
 
-The system SHALL expose profiling enablement and span queries through a public facade in `solim-core` that delegates to `ParentStack` without exposing `solim-runtime` on consumer classpaths.
+The system SHALL expose profiling enablement and span queries through a public facade in `solim-core` that delegates to `AttachmentStack` without exposing `solim-runtime` on consumer classpaths.
 
 #### Scenario: Mod code can enable and query
 

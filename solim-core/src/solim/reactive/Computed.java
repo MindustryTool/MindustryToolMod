@@ -6,18 +6,18 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import arc.func.Cons;
+import arc.func.Func;
+import arc.func.Prov;
 import solim.core.Disposable;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.runtime.ReactiveContext;
 
 /** Lazy computed value with dynamic dependency tracking. */
 public final class Computed<T> implements Disposable, ReactiveObserver, Readable<T>, ReactiveSource {
-	private final Supplier<T> supplier;
+	private final Prov<T> Prov;
 	private T cachedValue;
 	private boolean hasValue = false;
 	private boolean dirty = true;
@@ -27,11 +27,11 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 	private final Set<ReactiveSource> dependencies = new LinkedHashSet<>();
 	private Set<ReactiveSource> collecting = null;
 	private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
-	private final List<Consumer<T>> listeners = new ArrayList<>();
+	private final List<Cons<T>> listeners = new ArrayList<>();
 
-	public Computed(Supplier<T> supplier) {
-		this.supplier = supplier;
-		ComponentContext.register(this);
+	public Computed(Prov<T> Prov) {
+		this.Prov = Prov;
+		OwnershipContext.register(this);
 	}
 
 	@Override
@@ -66,7 +66,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		T newValue = null;
 		Throwable error = null;
 		try {
-			newValue = supplier.get();
+			newValue = Prov.get();
 		} catch (Throwable e) {
 			error = e;
 		} finally {
@@ -78,7 +78,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 			updateDependencies(newDeps);
 			dirty = false;
 			if (error instanceof IllegalStateException) throw (IllegalStateException) error;
-			Log.err("[Computed] supplier error", error);
+			Log.err("[Computed] Prov error", error);
 			return;
 		}
 		boolean changed = !hasValue || !Objects.equals(cachedValue, newValue);
@@ -88,10 +88,10 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		updateDependencies(newDeps);
 		if (changed) {
 			// notify listeners
-			List<Consumer<T>> copy = new ArrayList<>(listeners);
-			for (Consumer<T> l : copy) {
+			List<Cons<T>> copy = new ArrayList<>(listeners);
+			for (Cons<T> l : copy) {
 				try {
-					l.accept(cachedValue);
+					l.get(cachedValue);
 				} catch (Throwable e) {
 					Log.err("[Computed] listener error", e);
 				}
@@ -148,7 +148,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		}
 	}
 
-	public Subscription subscribe(Consumer<T> listener) {
+	public Subscription subscribe(Cons<T> listener) {
 		listeners.add(listener);
 		return new Subscription() {
 			private boolean disposedFlag = false;
@@ -168,8 +168,8 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		};
 	}
 
-	public <R> Computed<R> map(Function<T, R> mapper) {
-		return Signal.computed(() -> mapper.apply(get()));
+	public <R> Computed<R> map(Func<T, R> mapper) {
+		return Signal.computed(() -> mapper.get(get()));
 	}
 
 	@Override

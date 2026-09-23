@@ -9,7 +9,7 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
@@ -37,7 +37,7 @@ public class SchematicPickerDialog extends SolimDialog {
     private final Signal<Integer> displayCount = Signal.of(INITIAL_BATCH);
     private @Nullable Scroll gridScroll;
 
-    public SchematicPickerDialog(Consumer<Schematic> onSelect) {
+    public SchematicPickerDialog(Cons<Schematic> onSelect) {
         super(Core.bundle.get("feature.quick-schematic-grid.picker.title"));
 
         name("schematicPickerDialog");
@@ -116,21 +116,20 @@ public class SchematicPickerDialog extends SolimDialog {
                             .gap(unit(3))
                             .children(schematic -> new SchematicPickerCard(schematic, () -> {
                                 if (onSelect != null) {
-                                    onSelect.accept(schematic);
+                                    onSelect.get(schematic);
                                 }
                                 hide();
                             }));
 
                     dynamic(remaining, left -> {
                         Integer count = left != null ? left : 0;
-                        if (count <= 0) {
-                            return null;
+                        if (count > 0) {
+                            String label = Core.bundle.format("feature.quick-schematic-grid.picker.load-more", count);
+                            button(label, () -> expandBatch(filtered))
+                                    .style(WebStyles.secondary())
+                                    .growX()
+                                    .height(unit(9f));
                         }
-                        String label = Core.bundle.format("feature.quick-schematic-grid.picker.load-more", count);
-                        return button(label, () -> expandBatch(filtered))
-                                .style(WebStyles.secondary())
-                                .growX()
-                                .height(unit(9f));
                     });
                 });
             });
@@ -297,9 +296,8 @@ public class SchematicPickerDialog extends SolimDialog {
                     .growX()
                     .gap(unit(1.5f))
                     .children(() -> {
-                        dynamic(previewReady, ready -> {
-                            if (Boolean.TRUE.equals(ready)) {
-                                return card(WebStyles.previewCardBackground())
+                        when(previewReady)
+                                .thenDo(() -> card(WebStyles.previewCardBackground())
                                         .growX()
                                         .height(unit(42f))
                                         .onClick(onClick)
@@ -307,9 +305,8 @@ public class SchematicPickerDialog extends SolimDialog {
                                         .children(() -> {
                                             new BoundedSchematicImage(
                                                     schematic, Readable.of(unit(42f)), unit(42f));
-                                        });
-                            }
-                            return card(WebStyles.previewCardBackground())
+                                        }))
+                                .elseDo(() -> card(WebStyles.previewCardBackground())
                                     .growX()
                                     .height(unit(42f))
                                     .onClick(onClick)
@@ -323,8 +320,7 @@ public class SchematicPickerDialog extends SolimDialog {
                                                     .fontScale(0.8f)
                                                     .center();
                                         });
-                                    });
-                        });
+                                    }));
 
                         text(title)
                                 .growX()

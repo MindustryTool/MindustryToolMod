@@ -140,10 +140,16 @@ The settings view MUST provide intuitive controls for configuring task prioritie
 - Each task card MUST display an explicit toggle switch/checkbox for enabling or disabling the task.
 - Clicking the outer card body MUST NOT toggle the task state.
 - Sliders, filter chips, and configuration controls within expanded task settings MUST be freely interactive without risk of toggling the task.
+- The feature MUST expose a persisted display-mode option (`hud` / `popup`, default `popup`) with UI scale and reset-position actions.
+- Task priority order MUST be shared between the settings list (top-to-bottom) and the HUD/popup strip (5-column grid, left-to-right then top-to-bottom); help and description text MUST document both renderings of the same order.
 
 #### Scenario: Adjusting task settings slider
 - **WHEN** the user drags a threshold slider inside an expanded task card
 - **THEN** the slider value updates without toggling the task's enabled/disabled state
+
+#### Scenario: Display mode persists
+- **WHEN** the user selects popup mode and the game restarts
+- **THEN** the option still reads popup
 
 ### Requirement: Base AI Null Safety and Boundary Protection
 - The `BaseAutoplayAI` controller SHALL strictly guard against unassigned units (`unit == null`) and null target positions (`target == null` or `pos == null`) in all movement and steering delegations.
@@ -178,4 +184,42 @@ The settings view MUST provide intuitive controls for configuring task prioritie
 #### Scenario: Defensive indexer error handling
 - **WHEN** Mindustry's internal `BlockIndexer` throws a `NullPointerException` or runtime exception during ore lookup
 - **THEN** the exception is caught silently and `null` is returned without crashing the game
+
+### Requirement: Shared task strip quick surface
+The system SHALL provide a shared horizontal task strip used by both the standalone HUD and the QuickAccess popup. The strip SHALL contain a master autoplay on/off cell at the far left followed by 8 task icon toggles in priority order laid out in a grid with 5 columns per row, SHALL highlight the currently active task via icon color, SHALL keep default touch targets, and SHALL remain editable even while autoplay is disabled. The strip SHALL be toggle-only; reprioritizing tasks SHALL remain available only through the settings dialog reorder controls.
+
+#### Scenario: Toggle task from strip
+- **WHEN** the player taps a task icon in the HUD or popup strip
+- **THEN** that task's enabled state flips via `disabledTasks` and the strip icon color reflects the new state without rebuilding
+
+#### Scenario: Strip toggle binding stays reactive
+- **WHEN** a task's enabled state changes from any surface
+- **THEN** the strip icon reflects the change because the binding tracks the `disabledTasks` signal rather than a peeked snapshot
+
+#### Scenario: Active task highlighted
+- **WHEN** autoplay switches its current task
+- **THEN** the corresponding strip icon shows the active highlight while others do not
+
+#### Scenario: Master switch toggles autoplay
+- **WHEN** the player taps the master cell in the HUD or popup strip
+- **THEN** autoplay enables or disables without affecting per-task toggle states
+
+### Requirement: QuickAccess tap semantics and fallback
+The system SHALL override `onQuickAccessClick` so HUD mode taps toggle autoplay enabled while popup mode taps open the popup when closed and hide it when already showing without changing enabled state. Long-press SHALL open the settings entry. The standalone HUD SHALL be fully suppressed while popup mode is active with QuickAccess on, and SHALL silently render per remaining HUD rules when popup mode is set but QuickAccess is off.
+
+#### Scenario: HUD tap toggles
+- **WHEN** the player taps the autoplay QuickAccess button in HUD mode
+- **THEN** autoplay toggles between enabled and disabled
+
+#### Scenario: Popup tap opens without toggling
+- **WHEN** the player taps the autoplay QuickAccess button in popup mode with QuickAccess on while the popup is not showing
+- **THEN** the popup opens anchored above or below the QuickAccess bar and autoplay enabled state is unchanged
+
+#### Scenario: Popup tap again hides
+- **WHEN** the player taps the autoplay QuickAccess button in popup mode while the popup is already showing
+- **THEN** the popup closes and autoplay enabled state is unchanged
+
+#### Scenario: Silent HUD fallback
+- **WHEN** display mode is popup and QuickAccess is off
+- **THEN** the standalone HUD renders per remaining HUD rules with no notice shown
 

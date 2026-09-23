@@ -5,13 +5,13 @@ import arc.Core;
 import arc.scene.ui.CheckBox;
 import arc.scene.ui.CheckBox.CheckBoxStyle;
 import arc.util.Nullable;
-import java.util.function.Consumer;
+import arc.func.Cons;
 import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Signal;
 
 /** Checkbox widget bound to Signal&lt;Boolean&gt;. */
@@ -48,14 +48,14 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 				return DisposableAction.empty();
 			}
 		);
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
-	public Checkbox(String label, boolean initial, Consumer<Boolean> onChanged) {
+	public Checkbox(String label, boolean initial, Cons<Boolean> onChanged) {
 		this(label, initial, Core.scene == null ? new CheckBoxStyle() : null, onChanged);
 	}
 
-	public Checkbox(String label, boolean initial, @Nullable CheckBoxStyle style, Consumer<Boolean> onChanged) {
+	public Checkbox(String label, boolean initial, @Nullable CheckBoxStyle style, Cons<Boolean> onChanged) {
 		this.checkBox = style != null
 				? new CheckBox(label != null ? label : "", style)
 				: new CheckBox(label != null ? label : "");
@@ -64,17 +64,17 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 		checkBox.setChecked(initial);
 		checkBox.changed(() -> {
 			if (onChanged != null) {
-				onChanged.accept(checkBox.isChecked());
+				onChanged.get(checkBox.isChecked());
 			}
 		});
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
 	public static Checkbox of(String label, Signal<Boolean> signal) {
 		return new Checkbox(label, signal);
 	}
 
-	public static Checkbox of(String label, boolean initial, Consumer<Boolean> onChanged) {
+	public static Checkbox of(String label, boolean initial, Cons<Boolean> onChanged) {
 		return new Checkbox(label, initial, onChanged);
 	}
 
