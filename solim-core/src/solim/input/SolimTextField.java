@@ -15,7 +15,7 @@ import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -25,7 +25,7 @@ import solim.reactive.Binding;
 /**
  * TextField widget with two-way binding to a Signal&lt;String&gt;. Equality
  * guard prevents feedback loop. Automatically registers with the active
- * ComponentContext if created during a component build.
+ * OwnershipContext if created during a component build.
  */
 public final class SolimTextField implements Component, ElementConfig<SolimTextField>, CellConfig<SolimTextField> {
 
@@ -72,7 +72,7 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
                     return DisposableAction.empty();
                 });
 
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public static SolimTextField of(Signal<String> signal) {

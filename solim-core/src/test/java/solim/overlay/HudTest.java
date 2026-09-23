@@ -20,7 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
 import solim.input.Button;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 
 class HudTest extends SolimEnv {
@@ -189,7 +189,7 @@ class HudTest extends SolimEnv {
 		Hud hud = new Hud();
 		hud.children(() -> {
 			Button button = new Button();
-			ParentStack.attachToParent(button.element());
+			AttachmentStack.attachToParent(button.element());
 			button.draggable(xSig, ySig);
 		});
 
@@ -233,7 +233,7 @@ class HudTest extends SolimEnv {
 		Hud hud1 = new Hud();
 		hud1.children(() -> {
 			Button button1 = new Button();
-			ParentStack.attachToParent(button1.element());
+			AttachmentStack.attachToParent(button1.element());
 			button1.draggable(x1, y1);
 		});
 		hud1.element().setSize(50f, 50f);
@@ -242,7 +242,7 @@ class HudTest extends SolimEnv {
 		Hud hud2 = new Hud();
 		hud2.children(() -> {
 			Button button2 = new Button();
-			ParentStack.attachToParent(button2.element());
+			AttachmentStack.attachToParent(button2.element());
 			button2.draggable(x2, y2);
 		});
 		hud2.element().setSize(50f, 50f);
@@ -311,7 +311,7 @@ class HudTest extends SolimEnv {
 		Hud hud = new Hud();
 		hud.children(() -> {
 			Button button = new Button();
-			ParentStack.attachToParent(button.element());
+			AttachmentStack.attachToParent(button.element());
 			button.draggable(hud, x, y);
 		});
 		hud.element().setSize(50f, 50f);

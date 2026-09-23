@@ -27,7 +27,7 @@ import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimCoreEnv;
@@ -49,7 +49,7 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
 
     // ------------------------------------------------------------------
     // LegacyDynamic: verbatim port of the pre-migration Dynamic
-    // (Func<T, Component> factory, ParentStack.isolate, single cell).
+    // (Func<T, Component> factory, AttachmentStack.isolate, single cell).
     // ------------------------------------------------------------------
 
     static final class LegacyDynamic<T> extends BaseComponent
@@ -110,7 +110,7 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
                 }
                 currentBindings.clear();
                 container.clearChildren();
-                currentComponent = ReactiveContext.untracked(() -> ParentStack.isolate(() -> {
+                currentComponent = ReactiveContext.untracked(() -> AttachmentStack.isolate(() -> {
                     Component c = factory.get(value);
                     if (c != null) {
                         c.element();

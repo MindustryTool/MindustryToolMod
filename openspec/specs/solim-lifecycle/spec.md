@@ -106,22 +106,22 @@ Every concrete Solim component SHALL automatically assign a default name to its 
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
 
 ### Requirement: BaseComponent has no UI attachment logic
-`BaseComponent` SHALL NOT import or reference `ParentStack`, `Table`, or any Arc layout type for the purpose of UI placement. It SHALL NOT call `ParentStack.registerPendingComponent(...)` or any equivalent in its constructor.
+`BaseComponent` SHALL NOT import or reference `AttachmentStack`, `Table`, or any Arc layout type for the purpose of UI placement. It SHALL NOT call `AttachmentStack.registerPendingComponent(...)` or any equivalent in its constructor.
 
 #### Scenario: BaseComponent constructor has no UI side effects
 - **WHEN** `new MyComponent()` is called outside any `children()` block
-- **THEN** no UI element is attached to any parent and no `ParentStack` state is mutated
+- **THEN** no UI element is attached to any parent and no `AttachmentStack` state is mutated
 
 #### Scenario: element() builds without mounting
 - **WHEN** `component.element()` is called directly
 - **THEN** the Arc Element is built and returned but NOT attached to any scene parent
 
 ### Requirement: UI attachment is driven by the composition layer
-All UI attachment (adding an Element to a Table/parent) SHALL happen through `Ui.*` factory methods or the explicit `ParentStack` API in the composition layer. Application components SHALL obtain their Element via `element()` or `element.add(component.element())`.
+All UI attachment (adding an Element to a Table/parent) SHALL happen through `Ui.*` factory methods or the explicit `AttachmentStack` API in the composition layer. Application components SHALL obtain their Element via `element()` or `element.add(component.element())`.
 
 #### Scenario: Ui.* factory attaches element to parent
 - **WHEN** a Solim factory like `column()` is called inside a `children()` block
-- **THEN** the resulting Element is attached to the current parent via `ParentStack`
+- **THEN** the resulting Element is attached to the current parent via `AttachmentStack`
 
 #### Scenario: Component created manually requires explicit attachment
 - **WHEN** `new MyComponent()` is called and then `table.add(component.element())`
@@ -167,9 +167,9 @@ If `build()` throws, all resources registered with the component up to that poin
 - **WHEN** `build()` throws a `RuntimeException` after registering some resources
 - **THEN** `dispose()` is called, those resources are released, and the exception propagates to the caller
 
-#### Scenario: ComponentContext is always popped on build failure
+#### Scenario: OwnershipContext is always popped on build failure
 - **WHEN** `build()` throws
-- **THEN** `ComponentContext.pop()` is still called (the context stack is not corrupted)
+- **THEN** `OwnershipContext.pop()` is still called (the context stack is not corrupted)
 
 ### Requirement: build() returning null is detected
 If `build()` returns `null`, the component SHALL throw `IllegalStateException` with a descriptive message.
@@ -189,16 +189,16 @@ The framework SHALL confine the raw ownership primitive `BaseComponent.own()` to
 - **WHEN** application code outside `solim.core` calls `own(disposable)`
 - **THEN** compilation fails with an access error (`own() has package access in BaseComponent`)
 
-#### Scenario: Framework internals register via ComponentContext
+#### Scenario: Framework internals register via OwnershipContext
 - **WHEN** framework code outside `solim.core` (e.g. layouts, structural components) needs to own a resource
-- **THEN** it calls `ComponentContext.register(disposable)` or `ComponentContext.registerChild(child)`, which delegates to the owning component
+- **THEN** it calls `OwnershipContext.register(disposable)` or `OwnershipContext.registerChild(child)`, which delegates to the owning component
 
 #### Scenario: Mod lifecycle needs are covered without own()
 - **WHEN** mod code needs event unregistration or reactive effects tied to component disposal
 - **THEN** it uses instance `listen()`, `createSignal()`, or `effect()` declared inside `build()`, which are auto-owned without any manual call
 
 ### Requirement: No manual ownership API on the mod path
-Application components SHALL have no callable manual ownership method. `ComponentContext.register()/registerChild()` is the canonical internal path; `listen()`/`createSignal()`/`effect()` are the canonical mod-facing lifecycle-safe paths.
+Application components SHALL have no callable manual ownership method. `OwnershipContext.register()/registerChild()` is the canonical internal path; `listen()`/`createSignal()`/`effect()` are the canonical mod-facing lifecycle-safe paths.
 
 #### Scenario: Guard test rejects manual ownership references
 - **WHEN** the ownership guard test scans `:mod` sources
@@ -209,29 +209,29 @@ Application components SHALL have no callable manual ownership method. `Componen
 TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
 
 ### Requirement: withoutAutoOwnership replaces pause/resume
-`ComponentContext` SHALL provide a `withoutAutoOwnership(Runnable)` method that temporarily suspends auto-registration for the duration of the runnable using save, clear, and restore stack semantics. Nested component scopes instantiated within the runnable SHALL be able to push and manage their own local `ComponentContext` scopes. The outer stack context SHALL always be restored after the runnable completes, even if it throws.
+`OwnershipContext` SHALL provide a `withoutAutoOwnership(Runnable)` method that temporarily suspends auto-registration for the duration of the runnable using save, clear, and restore stack semantics. Nested component scopes instantiated within the runnable SHALL be able to push and manage their own local `OwnershipContext` scopes. The outer stack context SHALL always be restored after the runnable completes, even if it throws.
 
 #### Scenario: Auto-ownership is suspended inside withoutAutoOwnership
-- **WHEN** `ComponentContext.withoutAutoOwnership(() -> Effect.of(...))` is called
+- **WHEN** `OwnershipContext.withoutAutoOwnership(() -> Effect.of(...))` is called
 - **THEN** the Effect is NOT registered with the active component's ownership list
 
 #### Scenario: Nested component build in withoutAutoOwnership manages own ownership
-- **WHEN** a component is constructed and built inside `ComponentContext.withoutAutoOwnership(...)`
+- **WHEN** a component is constructed and built inside `OwnershipContext.withoutAutoOwnership(...)`
 - **THEN** resources created during its `build()` are owned by that component itself without attaching to the outer suspended scope
 
 #### Scenario: Auto-ownership is restored after the runnable throws
 - **WHEN** the runnable passed to `withoutAutoOwnership` throws an exception
-- **THEN** the original `ComponentContext` stack is restored for subsequent calls
+- **THEN** the original `OwnershipContext` stack is restored for subsequent calls
 
 #### Scenario: Auto-ownership is restored after normal completion
 - **WHEN** the runnable passed to `withoutAutoOwnership` completes normally
 - **THEN** subsequent `Effect.of(...)` calls inside the same component scope are again auto-registered
 
 ### Requirement: Raw pause/resume is not part of the public API
-`ComponentContext.pause()` and `ComponentContext.resume()` SHALL be package-private or removed. External callers SHALL use `withoutAutoOwnership(Runnable)` instead.
+`OwnershipContext.pause()` and `OwnershipContext.resume()` SHALL be package-private or removed. External callers SHALL use `withoutAutoOwnership(Runnable)` instead.
 
 #### Scenario: pause() is not accessible to application code
-- **WHEN** application code attempts to call `ComponentContext.pause()`
+- **WHEN** application code attempts to call `OwnershipContext.pause()`
 - **THEN** a compile-time access error is raised
 
 **Source: solim-automatic-ownership**
@@ -253,12 +253,12 @@ The Solim framework SHALL automatically track child components, disposables, and
 - **WHEN** application code outside `solim.core` calls `own(...)` or `ownChild(...)`
 - **THEN** compilation fails, and the author migrates to `effect()`, instance `listen()`, or plain declarative bindings inside `build()`
 
-### Requirement: ComponentContext is the canonical internal registration path
-Framework code outside `solim.core` that must own a resource SHALL use `ComponentContext.register(disposable)` or `ComponentContext.registerChild(child)` instead of calling `own()` directly. These methods SHALL be null-safe, pause-aware, and delegate to the ambient owning component.
+### Requirement: OwnershipContext is the canonical internal registration path
+Framework code outside `solim.core` that must own a resource SHALL use `OwnershipContext.register(disposable)` or `OwnershipContext.registerChild(child)` instead of calling `own()` directly. These methods SHALL be null-safe, pause-aware, and delegate to the ambient owning component.
 
 #### Scenario: Layout registers an effect internally
 - **WHEN** a layout creates an `Effect` outside `solim.core` that must live with the owning component
-- **THEN** it passes the effect to `ComponentContext.register(...)` and the effect is disposed with the component
+- **THEN** it passes the effect to `OwnershipContext.register(...)` and the effect is disposed with the component
 
 ### Requirement: Automatic Control and Binding Registration
 Solim controls and reactive property bindings declared inside a component build SHALL automatically register their subscriptions and event listeners with the enclosing component.
@@ -273,10 +273,10 @@ Solim controls and reactive property bindings declared inside a component build 
 
 **Source: solim-component-auto-attach**
 
-`BaseComponent` instances created inside an active `ParentStack` scope auto-attach their element to the current parent, making `component()` unnecessary for the common in-`children()` usage.
+`BaseComponent` instances created inside an active `AttachmentStack` scope auto-attach their element to the current parent, making `component()` unnecessary for the common in-`children()` usage.
 
 ### Requirement: BaseComponent auto-attaches to active parent
-When a BaseComponent subclass is instantiated inside an active ParentStack scope (i.e., inside a children() block), it SHALL automatically schedule its element for attachment to the current parent container without requiring an explicit component() call. The deprecated component() wrapper function SHALL be removed from the public API.
+When a BaseComponent subclass is instantiated inside an active AttachmentStack scope (i.e., inside a children() block), it SHALL automatically schedule its element for attachment to the current parent container without requiring an explicit component() call. The deprecated component() wrapper function SHALL be removed from the public API.
 
 #### Scenario: BaseComponent auto-attaches in children block
 - **WHEN** column(() -> { new ChatMessageListView(store, service); }) is called
@@ -289,7 +289,7 @@ ow(() -> { text("Label"); new MyCard(data); }) is called inside a column(() -> {
 ow, not the outer column
 
 #### Scenario: No auto-attach outside children scope
-- **WHEN** a BaseComponent is instantiated outside any ParentStack scope (e.g., stored as a field before uild() runs)
+- **WHEN** a BaseComponent is instantiated outside any AttachmentStack scope (e.g., stored as a field before uild() runs)
 - **THEN** no element attachment occurs; the element is only attached when instantiated inside a parent's children() block or attached via parent resolver
 
 **Source: solim-core-split**
@@ -414,14 +414,14 @@ The system SHALL support nesting `Dynamic` components within other `Dynamic` com
 Physically isolate the Solim engine runtime from application modules at compile time while preserving automatic UI mounting.
 
 ### Requirement: Physical compile-time isolation of Solim runtime
-The framework SHALL place all internal engine classes (`ParentStack`, `ComponentContext`, `ReactiveContext`, `SignalDispatcher`, `StructuralReconciler`, `ElementResolver`, `Binding`, `Ui`) inside the `:solim-runtime` subproject under package `solim.runtime.*`. The `:solim-runtime` subproject SHALL NOT be on `:mod`'s compile classpath.
+The framework SHALL place all internal engine classes (`AttachmentStack`, `OwnershipContext`, `ReactiveContext`, `SignalDispatcher`, `StructuralReconciler`, `ElementResolver`, `Binding`, `Ui`) inside the `:solim-runtime` subproject under package `solim.runtime.*`. The `:solim-runtime` subproject SHALL NOT be on `:mod`'s compile classpath.
 
-#### Scenario: Mod referencing ParentStack fails compilation
-- **WHEN** application code in `:mod` imports or references `solim.runtime.ParentStack` or any class from `solim.runtime.*`
+#### Scenario: Mod referencing AttachmentStack fails compilation
+- **WHEN** application code in `:mod` imports or references `solim.runtime.AttachmentStack` or any class from `solim.runtime.*`
 - **THEN** compilation fails with a missing symbol or package error (`package solim.runtime does not exist`)
 
-#### Scenario: Mod referencing ComponentContext fails compilation
-- **WHEN** application code in `:mod` imports or references `solim.runtime.ComponentContext`
+#### Scenario: Mod referencing OwnershipContext fails compilation
+- **WHEN** application code in `:mod` imports or references `solim.runtime.OwnershipContext`
 - **THEN** compilation fails with a missing symbol or package error
 
 ### Requirement: Strict Directed Acyclic Graph across Solim subprojects

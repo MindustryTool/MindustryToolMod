@@ -17,7 +17,7 @@ import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Scl;
 import arc.util.Align;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -55,8 +55,8 @@ class CardTest extends SolimEnv {
         Element second = new Element();
 
         c.children(() -> {
-            ParentStack.add(first);
-            ParentStack.add(second);
+            AttachmentStack.add(first);
+            AttachmentStack.add(second);
         });
 
         assertEquals(2, c.container().getChildren().size);
@@ -226,8 +226,8 @@ class CardTest extends SolimEnv {
         Element second = new Element();
 
         c.children(() -> {
-            ParentStack.add(first);
-            ParentStack.add(second);
+            AttachmentStack.add(first);
+            AttachmentStack.add(second);
         });
 
         Cell<?> c1 = c.container().getCell(first);
@@ -244,7 +244,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().minHeight(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -261,7 +261,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().minHeight(minSig);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -281,7 +281,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().minHeight(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -297,7 +297,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().minHeight(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 300f));
+                AttachmentStack.add(fixedSize(20f, 300f));
             });
         });
 
@@ -313,7 +313,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().minHeight(-50f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -329,7 +329,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().maxHeight(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -346,7 +346,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().maxHeight(maxSig);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -366,7 +366,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().maxHeight(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 300f));
+                AttachmentStack.add(fixedSize(20f, 300f));
             });
         });
 
@@ -383,7 +383,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().maxHeight(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -399,7 +399,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().minWidth(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -416,7 +416,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().minWidth(minSig);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -436,7 +436,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().minWidth(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -452,7 +452,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().minWidth(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(300f, 20f));
+                AttachmentStack.add(fixedSize(300f, 20f));
             });
         });
 
@@ -468,7 +468,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().maxWidth(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -485,7 +485,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().maxWidth(maxSig);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -505,7 +505,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().maxWidth(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(300f, 20f));
+                AttachmentStack.add(fixedSize(300f, 20f));
             });
         });
 
@@ -522,7 +522,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().maxWidth(120f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -538,7 +538,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().height(70f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -558,7 +558,7 @@ class CardTest extends SolimEnv {
         Card before = new Card().height(70f);
         beforeParent.children(() -> {
             before.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -566,7 +566,7 @@ class CardTest extends SolimEnv {
         Card after = new Card();
         afterParent.children(() -> {
             after.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
         after.height(70f);
@@ -588,7 +588,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().height(70f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 
@@ -604,7 +604,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().height(70f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 300f));
+                AttachmentStack.add(fixedSize(20f, 300f));
             });
         });
 
@@ -621,7 +621,7 @@ class CardTest extends SolimEnv {
         Card card = new Card().height(70f);
         parent.children(() -> {
             card.children(() -> {
-                ParentStack.add(fixedSize(20f, 20f));
+                AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
 

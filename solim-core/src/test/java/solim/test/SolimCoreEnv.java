@@ -8,7 +8,7 @@ import solim.modifier.PendingCellConfig;
  * Extends {@link SolimEnv} with the solim-core specific reset the runtime
  * layer cannot perform: reinstalling the default cell configurator
  * ({@link PendingCellConfig#install()}) after a test replaced it via
- * {@code ParentStack.setCellConfigurator(...)}.
+ * {@code AttachmentStack.setCellConfigurator(...)}.
  *
  * Lives in solim-core (not solim-test) because it references solim-core
  * types — a test-support type must be owned by the lowest module whose

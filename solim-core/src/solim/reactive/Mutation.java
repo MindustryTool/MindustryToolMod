@@ -9,7 +9,7 @@ import arc.func.Cons;
 import arc.func.Func;
 import arc.func.Prov;
 import solim.core.Disposable;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 /**
  * Asynchronous reactive action primitive for write operations, with pending/error/result
@@ -35,7 +35,7 @@ public final class Mutation<T, R> implements Disposable {
 
 	private Mutation(Func<T, CompletableFuture<R>> mutator) {
 		this.mutator = Objects.requireNonNull(mutator, "mutator cannot be null");
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
 	public static <T, R> Mutation<T, R> of(Func<T, CompletableFuture<R>> mutator) {

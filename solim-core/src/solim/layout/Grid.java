@@ -14,8 +14,8 @@ import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
@@ -38,7 +38,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         this.table.top().left();
         this.table.defaults().top().left();
         respace();
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Grid(int columns) {
@@ -76,7 +76,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -96,7 +96,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -123,7 +123,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
 
     public Grid children(@Nullable Runnable r) {
         int[] count = new int[] { 0 };
-        ParentStack.push(table, (tbl, child) -> {
+        AttachmentStack.push(table, (tbl, child) -> {
             Cell<?> cell = tbl.add(child);
             cell.top().left();
             if (SolimToken.isExpandingChild(child)) {
@@ -141,9 +141,9 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
                 r.run();
             }
         } finally {
-            ParentStack.pop();
+            AttachmentStack.pop();
         }
-        ParentStack.attachToParent(table);
+        AttachmentStack.attachToParent(table);
         respace();
         return this;
     }

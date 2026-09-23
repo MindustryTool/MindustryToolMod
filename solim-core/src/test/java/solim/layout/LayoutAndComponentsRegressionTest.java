@@ -16,7 +16,7 @@ import solim.display.Text;
 import solim.input.Button;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 import solim.test.TestScheduler;
 
@@ -54,9 +54,9 @@ public class LayoutAndComponentsRegressionTest extends SolimEnv {
 		Table container = card.container();
 
 		Element content = new Element();
-		ParentStack.push(container);
-		ParentStack.add(content);
-		ParentStack.pop();
+		AttachmentStack.push(container);
+		AttachmentStack.add(content);
+		AttachmentStack.pop();
 
 		assertEquals(16f, container.getMarginLeft(), 0.01f);
 		assertEquals(16f, container.getMarginRight(), 0.01f);

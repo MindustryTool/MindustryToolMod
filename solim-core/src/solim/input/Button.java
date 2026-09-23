@@ -31,8 +31,8 @@ import solim.layout.GapContainer;
 import solim.layout.Row;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.style.SolimButtonStyle;
@@ -86,17 +86,17 @@ public final class Button
         SolimToken.bind(this.button, this, constraints);
         this.button.name = "solim-button-sizedButton";
         this.button.center();
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Button children(@Nullable Runnable r) {
-        ParentStack.push(button, Row.ATTACHER);
+        AttachmentStack.push(button, Row.ATTACHER);
         try {
             if (r != null) {
                 r.run();
             }
         } finally {
-            ParentStack.pop();
+            AttachmentStack.pop();
         }
         respace();
         return this;
@@ -107,7 +107,7 @@ public final class Button
             if (s != null) {
                 Text text = Text.of(s);
                 bindings.add(text);
-                ParentStack.attachToParent(text.label());
+                AttachmentStack.attachToParent(text.label());
             }
         });
         return this;
@@ -118,7 +118,7 @@ public final class Button
             if (s != null) {
                 Text text = Text.of(s);
                 bindings.add(text);
-                ParentStack.attachToParent(text.label());
+                AttachmentStack.attachToParent(text.label());
             }
         });
         return this;
@@ -130,7 +130,7 @@ public final class Button
                 SolimImage img = new SolimImage(Drawables.scalable(drawable));
                 img.scaling(Scaling.fit).size(Units.unit(6));
                 bindings.add(img);
-                ParentStack.attachToParent(img.element());
+                AttachmentStack.attachToParent(img.element());
             }
         });
         return this;
@@ -143,7 +143,7 @@ public final class Button
                 img.drawable(drawable.map(Drawables::scalable));
                 img.scaling(Scaling.fit).size(Units.unit(6));
                 bindings.add(img);
-                ParentStack.attachToParent(img.element());
+                AttachmentStack.attachToParent(img.element());
             }
         });
         return this;
@@ -239,7 +239,7 @@ public final class Button
         if (signal != null) {
             Effect e = Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get())));
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -248,7 +248,7 @@ public final class Button
         if (signal != null) {
             Effect e = Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get())));
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -257,7 +257,7 @@ public final class Button
         if (signal != null) {
             Effect e = Effect.of(() -> button.visible = Boolean.TRUE.equals(signal.get()));
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -278,7 +278,7 @@ public final class Button
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -295,7 +295,7 @@ public final class Button
             applyResolvedStyle(builder.build());
             Effect e = Effect.of(() -> applyResolvedStyle(builder.build()));
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -373,7 +373,7 @@ public final class Button
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -411,7 +411,7 @@ public final class Button
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }

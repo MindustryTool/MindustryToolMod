@@ -10,7 +10,7 @@ import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimCoreEnv;
 import solim.test.TestScheduler;
 
@@ -57,10 +57,10 @@ public class ModifiersAndGapRegressionTest extends SolimCoreEnv {
 	@Test
 	void pendingCellConfigurationAppliedOnAttachmentWithSiblingIsolation() {
 		Table parent = new Table();
-		ParentStack.push(parent);
+		AttachmentStack.push(parent);
 
 		// Child 1 with custom pad
-		ParentStack.setCellConfigurator((cell, child, comp) -> {
+		AttachmentStack.setCellConfigurator((cell, child, comp) -> {
 			if (child.name != null && child.name.equals("c1")) {
 				cell.pad(15f);
 			}
@@ -68,14 +68,14 @@ public class ModifiersAndGapRegressionTest extends SolimCoreEnv {
 
 		Element c1 = new Element();
 		c1.name = "c1";
-		ParentStack.add(c1);
+		AttachmentStack.add(c1);
 
 		// Child 2 without pad
 		Element c2 = new Element();
 		c2.name = "c2";
-		ParentStack.add(c2);
+		AttachmentStack.add(c2);
 
-		ParentStack.pop();
+		AttachmentStack.pop();
 
 		assertEquals(15f, CellAccess.padTop(parent.getCell(c1)), 0.01f);
 		assertEquals(0f, CellAccess.padTop(parent.getCell(c2)), 0.01f,

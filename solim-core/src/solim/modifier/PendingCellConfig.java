@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.layout.GapContainer;
@@ -20,11 +20,11 @@ import arc.util.Align;
  *
  * <p>
  * Holds pending values that will be applied to a parent Cell when the element
- * is attached to a parent Table via {@link ParentStack}.
+ * is attached to a parent Table via {@link AttachmentStack}.
  */
 public final class PendingCellConfig {
 
-    public static final ParentStack.CellConfigurator DEFAULT_CONFIGURATOR = (cell, child, comp) -> {
+    public static final AttachmentStack.CellConfigurator DEFAULT_CONFIGURATOR = (cell, child, comp) -> {
         PendingCellConfig config = comp != null ? find(comp) : null;
         if (config == null) {
             config = find(child);
@@ -32,7 +32,7 @@ public final class PendingCellConfig {
         if (config != null) {
             List<Disposable> effects = config.applyToCell(cell);
             for (Disposable effect : effects) {
-                ComponentContext.register(effect);
+                OwnershipContext.register(effect);
             }
         }
         GapContainer.respace(cell.getTable());
@@ -43,7 +43,7 @@ public final class PendingCellConfig {
     }
 
     public static void install() {
-        ParentStack.setCellConfigurator(DEFAULT_CONFIGURATOR);
+        AttachmentStack.setCellConfigurator(DEFAULT_CONFIGURATOR);
     }
 
     /** Preferred width. Null means "no constraint — use natural size". */

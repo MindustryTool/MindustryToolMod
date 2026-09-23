@@ -11,7 +11,7 @@ import solim.core.BaseComponent;
 import solim.layout.Column;
 import solim.reactive.Signal;
 import solim.reactive.When;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -46,7 +46,7 @@ class WhenTest extends SolimEnv {
 
     @AfterEach
     void clear() {
-        ParentStack.clear();
+        AttachmentStack.clear();
     }
 
     @Test

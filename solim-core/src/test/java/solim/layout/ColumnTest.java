@@ -13,7 +13,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.util.Align;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -126,7 +126,7 @@ class ColumnTest extends SolimEnv {
         Element child = new Element();
 
         col.children(() -> {
-            ParentStack.add(child);
+            AttachmentStack.add(child);
         });
 
         assertEquals(1, col.table().getChildren().size);
@@ -184,8 +184,8 @@ class ColumnTest extends SolimEnv {
             }
         };
         col.children(() -> {
-            ParentStack.add(e1);
-            ParentStack.add(e2);
+            AttachmentStack.add(e1);
+            AttachmentStack.add(e2);
         });
         col.table().setSize(200f, 300f);
         col.table().layout();
@@ -228,8 +228,8 @@ class ColumnTest extends SolimEnv {
             }
         };
         col.children(() -> {
-            ParentStack.add(e1);
-            ParentStack.add(e2);
+            AttachmentStack.add(e1);
+            AttachmentStack.add(e2);
         });
         col.table().setSize(200f, 300f);
         col.table().layout();
@@ -253,7 +253,7 @@ class ColumnTest extends SolimEnv {
                 return 30f;
             }
         };
-        col.children(() -> ParentStack.add(e1));
+        col.children(() -> AttachmentStack.add(e1));
 
         col.right();
         col.table().setSize(200f, 300f);
@@ -290,8 +290,8 @@ class ColumnTest extends SolimEnv {
             }
         };
         col.children(() -> {
-            ParentStack.add(e1);
-            ParentStack.add(e2);
+            AttachmentStack.add(e1);
+            AttachmentStack.add(e2);
         });
         col.table().setSize(200f, 300f);
         col.table().layout();
@@ -311,7 +311,7 @@ class ColumnTest extends SolimEnv {
         col.center();
         Element e1 = new Element();
         col.children(() -> {
-            ParentStack.add(e1);
+            AttachmentStack.add(e1);
         });
 
         Cell<?> c1 = col.table().getCell(e1);

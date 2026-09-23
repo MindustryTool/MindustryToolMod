@@ -164,7 +164,7 @@ public class SchedulerAndContextsRegressionTest extends SolimCoreEnv {
 	}
 
 	// ==========================================
-	// Phase 10: ParentStack
+	// Phase 10: AttachmentStack
 	// ==========================================
 
 	@Test
@@ -174,23 +174,23 @@ public class SchedulerAndContextsRegressionTest extends SolimCoreEnv {
 		Table parentB = new Table();
 		parentB.name = "parentB";
 
-		ParentStack.push(parentA);
+		AttachmentStack.push(parentA);
 
 		Element childA1 = new Element();
 		childA1.name = "childA1";
-		ParentStack.add(childA1);
+		AttachmentStack.add(childA1);
 
-		ParentStack.push(parentB);
+		AttachmentStack.push(parentB);
 		Element childB1 = new Element();
 		childB1.name = "childB1";
-		ParentStack.add(childB1);
-		ParentStack.pop();
+		AttachmentStack.add(childB1);
+		AttachmentStack.pop();
 
 		Element childA2 = new Element();
 		childA2.name = "childA2";
-		ParentStack.add(childA2);
+		AttachmentStack.add(childA2);
 
-		ParentStack.pop();
+		AttachmentStack.pop();
 
 		assertTrue(parentA.getChildren().contains(childA1, true));
 		assertTrue(parentA.getChildren().contains(childA2, true));
@@ -200,28 +200,28 @@ public class SchedulerAndContextsRegressionTest extends SolimCoreEnv {
 		assertFalse(parentB.getChildren().contains(childA1, true));
 		assertFalse(parentB.getChildren().contains(childA2, true));
 
-		assertEquals(0, ParentStack.size());
+		assertEquals(0, AttachmentStack.size());
 	}
 
 	@Test
 	void cellConfiguratorSiblingIsolation() {
 		Table root = new Table();
-		ParentStack.push(root);
+		AttachmentStack.push(root);
 
 		Element el1 = new Element();
 		Element el2 = new Element();
 
 		List<Element> configured = new ArrayList<>();
-		ParentStack.setCellConfigurator((cell, child, comp) -> {
+		AttachmentStack.setCellConfigurator((cell, child, comp) -> {
 			configured.add(child);
 			if (child == el1) {
 				cell.pad(10f);
 			}
 		});
 
-		ParentStack.add(el1);
-		ParentStack.add(el2);
-		ParentStack.pop();
+		AttachmentStack.add(el1);
+		AttachmentStack.add(el2);
+		AttachmentStack.pop();
 
 		assertEquals(Arrays.asList(el1, el2), configured);
 		assertEquals(10f, CellAccess.padTop(root.getCell(el1)), 0.01f);
@@ -231,18 +231,18 @@ public class SchedulerAndContextsRegressionTest extends SolimCoreEnv {
 	@Test
 	void isolateRestoresStackOnException() {
 		Table outer = new Table();
-		ParentStack.push(outer);
+		AttachmentStack.push(outer);
 
 		assertThrows(RuntimeException.class, () -> {
-			ParentStack.isolate(() -> {
+			AttachmentStack.isolate(() -> {
 				throw new RuntimeException("Error inside isolate");
 			});
 		});
 
-		assertSame(outer, ParentStack.current(), "Outer parent must be restored after exception in isolate");
-		assertEquals(1, ParentStack.size());
+		assertSame(outer, AttachmentStack.current(), "Outer parent must be restored after exception in isolate");
+		assertEquals(1, AttachmentStack.size());
 
-		ParentStack.pop();
-		assertEquals(0, ParentStack.size());
+		AttachmentStack.pop();
+		assertEquals(0, AttachmentStack.size());
 	}
 }

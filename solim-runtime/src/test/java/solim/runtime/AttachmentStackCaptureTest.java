@@ -14,9 +14,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import solim.core.Component;
 
-class ParentStackCaptureTest {
+class AttachmentStackCaptureTest {
 
-	/** Mimics BaseComponent's ambient registration: ComponentContext + ParentStack pending. */
+	/** Mimics BaseComponent's ambient registration: OwnershipContext + AttachmentStack pending. */
 	static final class RecordingComponent implements Component {
 		final String id;
 		final Element element = new Element();
@@ -24,8 +24,8 @@ class ParentStackCaptureTest {
 
 		RecordingComponent(String id) {
 			this.id = id;
-			ComponentContext.registerChild(this);
-			ParentStack.registerPendingComponent(this, ParentStack.current());
+			OwnershipContext.registerChild(this);
+			AttachmentStack.registerPendingComponent(this, AttachmentStack.current());
 		}
 
 		@Override
@@ -44,13 +44,13 @@ class ParentStackCaptureTest {
 		}
 	}
 
-	/** Mimics plain components (Row/Column): registers only via ComponentContext.register. */
+	/** Mimics plain components (Row/Column): registers only via OwnershipContext.register. */
 	static final class ContextOnlyComponent implements Component {
 		final Element element = new Element();
 		boolean wasDisposed = false;
 
 		ContextOnlyComponent() {
-			ComponentContext.register(this);
+			OwnershipContext.register(this);
 		}
 
 		@Override
@@ -71,12 +71,12 @@ class ParentStackCaptureTest {
 
 	@AfterEach
 	void clear() {
-		ParentStack.clear();
+		AttachmentStack.clear();
 	}
 
 	@Test
 	void captureReturnsComponentsInCreationOrder() {
-		List<Component> captured = ParentStack.capture(() -> {
+		List<Component> captured = AttachmentStack.capture(() -> {
 			new RecordingComponent("A");
 			new RecordingComponent("B");
 			new RecordingComponent("C");
@@ -93,12 +93,12 @@ class ParentStackCaptureTest {
 	@Test
 	void captureDoesNotAttachToAnyParent() {
 		Table outer = new Table();
-		ParentStack.push(outer);
-		List<Component> captured = ParentStack.capture(() -> new RecordingComponent("A"));
+		AttachmentStack.push(outer);
+		List<Component> captured = AttachmentStack.capture(() -> new RecordingComponent("A"));
 		assertEquals(1, captured.size());
 		assertEquals(0, outer.getChildren().size, "Captured component must not attach to the outer parent");
-		assertSame(outer, ParentStack.current(), "Outer stack entry must be restored after capture");
-		ParentStack.pop();
+		assertSame(outer, AttachmentStack.current(), "Outer stack entry must be restored after capture");
+		AttachmentStack.pop();
 		for (Component c : captured) {
 			c.dispose();
 		}
@@ -106,20 +106,20 @@ class ParentStackCaptureTest {
 
 	@Test
 	void captureOfEmptyBlockReturnsEmptyList() {
-		List<Component> captured = ParentStack.capture(() -> {
+		List<Component> captured = AttachmentStack.capture(() -> {
 		});
 		assertTrue(captured.isEmpty());
 	}
 
 	@Test
 	void captureCatchesContextOnlyComponents() {
-		List<Component> captured = ParentStack.capture(() -> {
+		List<Component> captured = AttachmentStack.capture(() -> {
 			new ContextOnlyComponent();
 			new RecordingComponent("A");
 			new ContextOnlyComponent();
 		});
 		assertEquals(3, captured.size(),
-				"Components registering only via ComponentContext (Row/Column style) must be captured");
+				"Components registering only via OwnershipContext (Row/Column style) must be captured");
 		assertInstanceOf(ContextOnlyComponent.class, captured.get(0));
 		assertInstanceOf(RecordingComponent.class, captured.get(1));
 		assertInstanceOf(ContextOnlyComponent.class, captured.get(2));
@@ -140,8 +140,8 @@ class ParentStackCaptureTest {
 				return false;
 			}
 		}
-		List<Component> captured = ParentStack.capture(() -> {
-			ComponentContext.register(new PlainDisposable());
+		List<Component> captured = AttachmentStack.capture(() -> {
+			OwnershipContext.register(new PlainDisposable());
 			new RecordingComponent("A");
 		});
 		assertEquals(1, captured.size(), "Plain disposables must not be captured as roots");
@@ -150,25 +150,25 @@ class ParentStackCaptureTest {
 
 	@Test
 	void captureNullRunnableReturnsEmptyList() {
-		assertTrue(ParentStack.capture(null).isEmpty());
+		assertTrue(AttachmentStack.capture(null).isEmpty());
 	}
 
 	@Test
 	void captureRestoresAmbientStateAfterExceptionAndDisposesPartialRoots() {
 		Table outer = new Table();
-		ParentStack.push(outer);
+		AttachmentStack.push(outer);
 		List<RecordingComponent> partiallyCreated = new ArrayList<>();
 
-		IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> ParentStack.capture(() -> {
+		IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> AttachmentStack.capture(() -> {
 			partiallyCreated.add(new RecordingComponent("before"));
 			throw new IllegalArgumentException("boom");
 		}));
 
 		assertEquals("boom", thrown.getMessage());
-		assertEquals(1, ParentStack.size(), "Stack must be restored to pre-capture depth after failure");
-		assertSame(outer, ParentStack.current(), "Outer entry must survive capture failure");
+		assertEquals(1, AttachmentStack.size(), "Stack must be restored to pre-capture depth after failure");
+		assertSame(outer, AttachmentStack.current(), "Outer entry must survive capture failure");
 		assertEquals(0, outer.getChildren().size, "Partial root must not attach to outer parent");
 		assertTrue(partiallyCreated.get(0).wasDisposed, "Partially created root must be disposed on failure");
-		ParentStack.pop();
+		AttachmentStack.pop();
 	}
 }

@@ -22,7 +22,7 @@ import solim.core.Component;
 import solim.reactive.ForEach;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -213,7 +213,7 @@ class FluentCollectionsTest extends SolimEnv {
             public void run() {
                 Element el = new Element();
                 el.name = "empty-marker";
-                ParentStack.add(el);
+                AttachmentStack.add(el);
             }
         });
         grid.children(ItemComp::new);

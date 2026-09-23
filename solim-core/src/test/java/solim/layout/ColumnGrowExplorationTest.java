@@ -10,8 +10,8 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import solim.core.BaseComponent;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 class ColumnGrowExplorationTest extends SolimEnv {
@@ -19,8 +19,8 @@ class ColumnGrowExplorationTest extends SolimEnv {
 
     @AfterEach
     void tearDown() {
-        ParentStack.clear();
-        ComponentContext.clear();
+        AttachmentStack.clear();
+        OwnershipContext.clear();
     }
 
     static class ChannelListProbe extends BaseComponent {
@@ -56,7 +56,7 @@ class ColumnGrowExplorationTest extends SolimEnv {
     void baseComponentReturningColumnWithGrowInsideRow() {
         ChannelListProbe probe = new ChannelListProbe();
         Row row = new Row().children(() -> {
-            ParentStack.registerPendingComponent(probe, ParentStack.current());
+            AttachmentStack.registerPendingComponent(probe, AttachmentStack.current());
         });
 
         Cell<?> cell = row.table().getCell(probe.element());

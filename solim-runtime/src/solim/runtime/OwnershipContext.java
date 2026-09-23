@@ -12,12 +12,12 @@ import solim.core.Disposable;
  * disposables, and reactive bindings instantiated during build() to be automatically registered and
  * owned without manual own() calls.
  */
-public final class ComponentContext {
+public final class OwnershipContext {
 	private static final Deque<Cons<Disposable>> stack = new ArrayDeque<>();
 	private static final ThreadLocal<Deque<CaptureRegistrar>> REGISTRAR_POOL =
 			ThreadLocal.withInitial(ArrayDeque::new);
 
-	private ComponentContext() {}
+	private OwnershipContext() {}
 
 	private static final class CaptureRegistrar implements Cons<Disposable> {
 		private List<Component> captured;

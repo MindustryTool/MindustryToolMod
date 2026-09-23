@@ -15,8 +15,8 @@ import solim.core.SolimToken;
 import solim.core.Units;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -57,7 +57,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
         this.contentStack = new SolimStack();
         this.root.add(contentStack.element()).grow();
 
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public static Tabs of(Signal<Integer> activeTab) {
@@ -124,13 +124,13 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
         Runnable mountContent = () -> {
             if (!built[0]) {
                 built[0] = true;
-                ParentStack.push(contentContainer, Column.ATTACHER);
+                AttachmentStack.push(contentContainer, Column.ATTACHER);
                 try {
                     if (contentBuilder != null) {
                         contentBuilder.run();
                     }
                 } finally {
-                    ParentStack.pop();
+                    AttachmentStack.pop();
                 }
             }
         };
@@ -145,7 +145,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
             contentContainer.setLayoutEnabled(isActive);
         });
         bindings.add(eff);
-        ComponentContext.register(eff);
+        OwnershipContext.register(eff);
 
         return this;
     }

@@ -23,8 +23,8 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.display.Text;
 import solim.layout.Row;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 import solim.test.SolimEnv;
 import solim.test.TestObserver;
@@ -103,7 +103,7 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 		TestRowComponent(String key) {
 			this.element = new Element();
 			this.element.name = "Row " + key;
-			ComponentContext.register(this);
+			OwnershipContext.register(this);
 		}
 
 		@Override
@@ -127,7 +127,7 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 		Random random = new Random(1337);
 		StructuralReconciler<String, TestRowComponent> reconciler = new StructuralReconciler<>();
 		Table container = new Table();
-		ParentStack.push(container);
+		AttachmentStack.push(container);
 
 		List<String> shadowKeys = new ArrayList<>();
 		Map<String, TestRowComponent> createdComponents = new HashMap<>();
@@ -223,7 +223,7 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 			}
 		}
 
-		ParentStack.pop();
+		AttachmentStack.pop();
 		reconciler.dispose();
 		TestScheduler.flush();
 
@@ -276,7 +276,7 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 	void regressionReconcilerRollbackOnFactoryFailureLeavesExistingStateUntouched() {
 		StructuralReconciler<String, TestRowComponent> reconciler = new StructuralReconciler<>();
 		Table container = new Table();
-		ParentStack.push(container);
+		AttachmentStack.push(container);
 
 		List<String> initialKeys = new ArrayList<>();
 		initialKeys.add("item1");
@@ -317,7 +317,7 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 		assertFalse(c1.isDisposed());
 		assertFalse(c2.isDisposed());
 
-		ParentStack.pop();
+		AttachmentStack.pop();
 		reconciler.dispose();
 		TestScheduler.flush();
 	}

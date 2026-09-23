@@ -59,7 +59,7 @@ The env SHALL restore all environment-owned globals (`Core.*` fields, `Core.scen
 - **THEN** teardown restores each field to its pre-test value
 
 #### Scenario: Leaked ambient state fails the test
-- **WHEN** teardown runs while `ParentStack`, `ComponentContext`, `ReactiveContext`, or `SignalDispatcher` hold entries
+- **WHEN** teardown runs while `AttachmentStack`, `OwnershipContext`, `ReactiveContext`, or `SignalDispatcher` hold entries
 - **THEN** the test fails with an assertion identifying which ambient state leaked
 
 #### Scenario: Cleanup happens before asserts evaluate

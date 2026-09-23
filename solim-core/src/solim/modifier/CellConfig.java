@@ -2,7 +2,7 @@ package solim.modifier;
 
 import solim.reactive.Readable;
 import solim.reactive.Effect;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import arc.scene.Element;
 import solim.core.Component;
 import solim.core.SolimToken;
@@ -62,7 +62,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applySizeToParentCell(el);
             if (el != null && v != null) {
                 Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
-                ComponentContext.register(e);
+                OwnershipContext.register(e);
             }
         }
         return self();
@@ -85,7 +85,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applySizeToParentCell(el);
             if (el != null && v != null) {
                 Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
-                ComponentContext.register(e);
+                OwnershipContext.register(e);
             }
         }
         return self();
@@ -110,7 +110,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applySizeToParentCell(el);
             if (el != null && v != null) {
                 Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
-                ComponentContext.register(e);
+                OwnershipContext.register(e);
             }
         }
         return self();
@@ -133,7 +133,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applySizeToParentCell(el);
             if (el != null && v != null) {
                 Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
-                ComponentContext.register(e);
+                OwnershipContext.register(e);
             }
         }
         return self();

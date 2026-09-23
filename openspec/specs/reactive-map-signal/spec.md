@@ -54,7 +54,7 @@ The `MapSignal<K, V>` primitive SHALL support batch insertion via `putAll(Map<K,
 - **THEN** all existing keys are invalidated and whole-map observers are notified
 
 ### Requirement: Lifecycle Independence
-`MapSignal<K, V>` instances and their key readables (`readable(K key)`) SHALL NOT automatically register with ambient `ComponentContext` lifecycles during instantiation or retrieval. Transient UI component mount and unmount lifecycles SHALL NOT dispose or disconnect store-held `MapSignal` or key readables.
+`MapSignal<K, V>` instances and their key readables (`readable(K key)`) SHALL NOT automatically register with ambient `OwnershipContext` lifecycles during instantiation or retrieval. Transient UI component mount and unmount lifecycles SHALL NOT dispose or disconnect store-held `MapSignal` or key readables.
 
 #### Scenario: Component unmount does not dispose MapSignal
 - **WHEN** a UI component that reads `mapSignal.readable(key)` is unmounted and disposed

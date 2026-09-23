@@ -51,7 +51,7 @@ import solim.reactive.Effect;
 import solim.reactive.MapSignal;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.reactive.Signals;
 import solim.reactive.Dynamic;
@@ -121,7 +121,7 @@ public final class UI {
 
     public static SolimStack stack() {
         SolimStack s = new SolimStack();
-        ParentStack.attachToParent(s.element());
+        AttachmentStack.attachToParent(s.element());
         return s;
     }
 
@@ -143,7 +143,7 @@ public final class UI {
 
     public static Grid grid(Readable<Integer> columns) {
         Grid g = new Grid().columns(columns);
-        ParentStack.attachToParent(g.element());
+        AttachmentStack.attachToParent(g.element());
         return g;
     }
 
@@ -189,13 +189,13 @@ public final class UI {
 
     public static Divider divider(Direction direction) {
         Divider d = new Divider(direction);
-        ParentStack.attachToParent(d.element());
+        AttachmentStack.attachToParent(d.element());
         return d;
     }
 
     public static Spacer spacer() {
         Spacer s = new Spacer();
-        ParentStack.attachToParent(s.element());
+        AttachmentStack.attachToParent(s.element());
         return s;
     }
 
@@ -207,14 +207,14 @@ public final class UI {
 
     public static SolimImage image(Drawable drawable) {
         SolimImage img = new SolimImage(drawable);
-        ParentStack.attachToParent(img.element());
+        AttachmentStack.attachToParent(img.element());
         return img;
     }
 
     public static SolimImage image(Readable<Drawable> drawable) {
         SolimImage img = new SolimImage();
         img.drawable(drawable);
-        ParentStack.attachToParent(img.element());
+        AttachmentStack.attachToParent(img.element());
         return img;
     }
 
@@ -228,49 +228,49 @@ public final class UI {
 
     public static NetworkImage networkImage() {
         NetworkImage img = new NetworkImage();
-        ParentStack.attachToParent(img.element());
+        AttachmentStack.attachToParent(img.element());
         return img;
     }
 
     public static NetworkImage networkImage(@Nullable String url) {
         NetworkImage img = new NetworkImage(url);
-        ParentStack.attachToParent(img.element());
+        AttachmentStack.attachToParent(img.element());
         return img;
     }
 
     public static NetworkImage networkImage(@Nullable Readable<String> url) {
         NetworkImage img = new NetworkImage(url);
-        ParentStack.attachToParent(img.element());
+        AttachmentStack.attachToParent(img.element());
         return img;
     }
 
     public static Text text(String s) {
         Text t = Text.of(s);
-        ParentStack.attachToParent(t.label());
+        AttachmentStack.attachToParent(t.label());
         return t;
     }
 
     public static Text text(Readable<String> s) {
         Text t = Text.of(s);
-        ParentStack.attachToParent(t.label());
+        AttachmentStack.attachToParent(t.label());
         return t;
     }
 
     public static Badge badge(String text) {
         Badge b = new Badge(text);
-        ParentStack.attachToParent(b.element());
+        AttachmentStack.attachToParent(b.element());
         return b;
     }
 
     public static Badge badge(Readable<String> text) {
         Badge b = new Badge(text);
-        ParentStack.attachToParent(b.element());
+        AttachmentStack.attachToParent(b.element());
         return b;
     }
 
     public static Badge badge(int count) {
         Badge b = Badge.ofCount(count);
-        ParentStack.attachToParent(b.element());
+        AttachmentStack.attachToParent(b.element());
         return b;
     }
 
@@ -278,13 +278,13 @@ public final class UI {
 
     public static Button button() {
         Button b = new Button();
-        ParentStack.attachToParent(b.element());
+        AttachmentStack.attachToParent(b.element());
         return b;
     }
 
     public static Button button(@Nullable Runnable onClick) {
         Button b = new Button(onClick);
-        ParentStack.attachToParent(b.element());
+        AttachmentStack.attachToParent(b.element());
         return b;
     }
 
@@ -302,43 +302,43 @@ public final class UI {
 
     public static SolimTextField textField(Signal<String> signal) {
         SolimTextField tf = SolimTextField.of(signal);
-        ParentStack.attachToParent(tf.field());
+        AttachmentStack.attachToParent(tf.field());
         return tf;
     }
 
     public static SolimSlider slider(Signal<Float> signal, float min, float max, float step) {
         SolimSlider s = SolimSlider.of(signal, min, max, step);
-        ParentStack.attachToParent(s.slider());
+        AttachmentStack.attachToParent(s.slider());
         return s;
     }
 
     public static SolimSlider slider(Signal<Integer> signal, int min, int max, int step) {
         SolimSlider s = SolimSlider.of(signal, min, max, step);
-        ParentStack.attachToParent(s.slider());
+        AttachmentStack.attachToParent(s.slider());
         return s;
     }
 
     public static Checkbox checkbox(String label, Signal<Boolean> signal) {
         Checkbox cb = Checkbox.of(label, signal);
-        ParentStack.attachToParent(cb.checkBox());
+        AttachmentStack.attachToParent(cb.checkBox());
         return cb;
     }
 
     public static Checkbox checkbox(String label, boolean initial, Cons<Boolean> onChanged) {
         Checkbox cb = Checkbox.of(label, initial, onChanged);
-        ParentStack.attachToParent(cb.checkBox());
+        AttachmentStack.attachToParent(cb.checkBox());
         return cb;
     }
 
     public static Switch switchToggle(Signal<Boolean> signal) {
         Switch sw = Switch.of(signal);
-        ParentStack.attachToParent(sw.element());
+        AttachmentStack.attachToParent(sw.element());
         return sw;
     }
 
     public static <T> SolimSelect<T> select(Signal<T> signal, List<T> options) {
         SolimSelect<T> s = SolimSelect.of(signal, options);
-        ParentStack.attachToParent(s.selectBox());
+        AttachmentStack.attachToParent(s.selectBox());
         return s;
     }
 
@@ -354,7 +354,7 @@ public final class UI {
 
     public static Hud hud() {
         Hud h = new Hud();
-        ParentStack.attachToParent(h.element());
+        AttachmentStack.attachToParent(h.element());
         return h;
     }
 
@@ -435,7 +435,7 @@ public final class UI {
 
     public static <T> QueryView<T> query(Query<T> query) {
         QueryView<T> qv = QueryView.of(query);
-        ParentStack.attachToParent(qv.element());
+        AttachmentStack.attachToParent(qv.element());
         return qv;
     }
 
@@ -451,7 +451,7 @@ public final class UI {
 
     public static <T> Dynamic<T> dynamic(Readable<T> source, Cons<T> factory) {
         Dynamic<T> d = Dynamic.of(source, factory);
-        ParentStack.attachToParent(d.element());
+        AttachmentStack.attachToParent(d.element());
         return d;
     }
 
@@ -468,7 +468,7 @@ public final class UI {
 
     public static <T> ForEach<T> forEach(Readable<? extends Iterable<T>> collection) {
         ForEach<T> fe = ForEach.of(collection);
-        ParentStack.attachToParent(fe.element());
+        AttachmentStack.attachToParent(fe.element());
         return fe;
     }
 
@@ -478,7 +478,7 @@ public final class UI {
 
     public static <T> ReactiveGrid<T> reactiveGrid(Readable<? extends Iterable<T>> items) {
         ReactiveGrid<T> grid = ReactiveGrid.of(items);
-        ParentStack.attachToParent(grid.element());
+        AttachmentStack.attachToParent(grid.element());
         return grid;
     }
 
@@ -490,7 +490,7 @@ public final class UI {
             Readable<? extends List<T>> collection,
             ItemHeightProvider<T> heightProvider) {
         VirtualList<T> vl = VirtualList.of(collection, heightProvider);
-        ParentStack.attachToParent(vl.element());
+        AttachmentStack.attachToParent(vl.element());
         return vl;
     }
 
@@ -498,7 +498,7 @@ public final class UI {
             List<T> items,
             ItemHeightProvider<T> heightProvider) {
         VirtualList<T> vl = VirtualList.of(items, heightProvider);
-        ParentStack.attachToParent(vl.element());
+        AttachmentStack.attachToParent(vl.element());
         return vl;
     }
 
@@ -508,7 +508,7 @@ public final class UI {
      * one exists.
      */
     public static <T extends Element> T arc(@Nullable T el) {
-        ParentStack.attachToParent(el);
+        AttachmentStack.attachToParent(el);
         return el;
     }
 
@@ -546,7 +546,7 @@ public final class UI {
 
     public static Tabs tabs(Signal<Integer> activeTab) {
         Tabs t = new Tabs(activeTab);
-        ParentStack.attachToParent(t.element());
+        AttachmentStack.attachToParent(t.element());
         return t;
     }
 

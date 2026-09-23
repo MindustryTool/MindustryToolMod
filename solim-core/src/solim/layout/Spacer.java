@@ -4,7 +4,7 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 /** Spacer that consumes remaining space in a row/column. */
 public final class Spacer implements Component {
@@ -16,7 +16,7 @@ public final class Spacer implements Component {
 		SolimToken.bind(table, this);
 		SolimToken.setExpanding(table, true);
 		table.add().growX().growY();
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
 	@Override

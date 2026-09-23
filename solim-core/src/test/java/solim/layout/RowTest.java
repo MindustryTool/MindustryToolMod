@@ -14,7 +14,7 @@ import arc.scene.ui.layout.CellAccess;
 import arc.util.Align;
 import solim.core.SolimToken;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -138,7 +138,7 @@ class RowTest extends SolimEnv {
         Element child = new Element();
 
         row.children(() -> {
-            ParentStack.add(child);
+            AttachmentStack.add(child);
         });
 
         assertEquals(1, row.table().getChildren().size);
@@ -200,8 +200,8 @@ class RowTest extends SolimEnv {
             }
         };
         row.children(() -> {
-            ParentStack.add(e1);
-            ParentStack.add(e2);
+            AttachmentStack.add(e1);
+            AttachmentStack.add(e2);
         });
         row.table().setSize(300f, 200f);
         row.table().layout();
@@ -249,8 +249,8 @@ class RowTest extends SolimEnv {
             }
         };
         row.children(() -> {
-            ParentStack.add(e1);
-            ParentStack.add(e2);
+            AttachmentStack.add(e1);
+            AttachmentStack.add(e2);
         });
         row.table().setSize(300f, 200f);
         row.table().layout();
@@ -278,7 +278,7 @@ class RowTest extends SolimEnv {
                 return 50f;
             }
         };
-        row.children(() -> ParentStack.add(e1));
+        row.children(() -> AttachmentStack.add(e1));
 
         // Call top() after children are added
         row.top();
@@ -316,11 +316,11 @@ class RowTest extends SolimEnv {
         };
 
         Scroll scroll = new Scroll();
-        ParentStack.attachToParent(scroll.element());
+        AttachmentStack.attachToParent(scroll.element());
         scroll.grow().children(() -> {
             new Row().grow().top().left().gap(8f).children(() -> {
-                ParentStack.add(img);
-                ParentStack.add(det);
+                AttachmentStack.add(img);
+                AttachmentStack.add(det);
             });
         });
 
@@ -370,8 +370,8 @@ class RowTest extends SolimEnv {
             }
         };
         row.children(() -> {
-            ParentStack.add(e1);
-            ParentStack.add(e2);
+            AttachmentStack.add(e1);
+            AttachmentStack.add(e2);
         });
         row.table().setSize(300f, 200f);
         row.table().layout();
@@ -393,7 +393,7 @@ class RowTest extends SolimEnv {
         row.center();
         Element e1 = new Element();
         row.children(() -> {
-            ParentStack.add(e1);
+            AttachmentStack.add(e1);
         });
 
         Cell<?> c1 = row.table().getCell(e1);

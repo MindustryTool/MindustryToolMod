@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import arc.scene.Element;
 import solim.core.Component;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 class SolimStackTest extends SolimEnv {
@@ -114,15 +114,15 @@ class SolimStackTest extends SolimEnv {
 	}
 
 	@Test
-	void layerRestoresParentStackAfterFailure() {
+	void layerRestoresAttachmentStackAfterFailure() {
 		SolimStack s = new SolimStack();
-		int before = ParentStack.size();
+		int before = AttachmentStack.size();
 
 		assertThrows(RuntimeException.class, () -> s.layer(() -> {
 			throw new RuntimeException("layer failure");
 		}));
 
-		assertEquals(before, ParentStack.size());
+		assertEquals(before, AttachmentStack.size());
 		assertTrue(s.stack().getChildren().isEmpty());
 	}
 

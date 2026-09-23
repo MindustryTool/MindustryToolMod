@@ -168,10 +168,24 @@ public class AuthOverlay {
                     Vars.ui.showInfo(Core.bundle.get("auth.login.success"));
                 }))
                 .exceptionally(e -> {
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    if (cause instanceof MindustryAuthProvider.LoginCancelled) {
+                        Core.app.post(() -> {
+                            if (loginDialog != null)
+                                loginDialog.hide();
+                        });
+                        return null;
+                    }
+                    String detail = cause.getMessage() != null && !cause.getMessage().trim().isEmpty()
+                            ? cause.getMessage()
+                            : Core.bundle.get("auth.login.failed");
                     Core.app.post(() -> {
                         if (loginDialog != null)
                             loginDialog.hide();
-                        Vars.ui.showException(Core.bundle.get("auth.login.failed"), e);
+                        Vars.ui.showConfirm(
+                                Core.bundle.get("auth.login.failed"),
+                                detail,
+                                this::startLoginUI);
                     });
                     return null;
                 });

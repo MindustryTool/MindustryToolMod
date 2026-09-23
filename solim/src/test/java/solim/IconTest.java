@@ -14,7 +14,7 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Image;
 import solim.display.SolimImage;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 class IconTest extends SolimEnv {
@@ -27,7 +27,7 @@ class IconTest extends SolimEnv {
 
 	@AfterEach
 	void clear() {
-		ParentStack.clear();
+		AttachmentStack.clear();
 	}
 
 	@Test

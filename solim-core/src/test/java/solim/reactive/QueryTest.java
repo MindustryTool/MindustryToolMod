@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.core.Disposable;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.runtime.SignalDispatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -205,15 +205,15 @@ class QueryTest extends SolimEnv {
     }
 
     @Test
-    void queryRegistersWithAmbientComponentContext() {
+    void queryRegistersWithAmbientOwnershipContext() {
         QueryKey key = QueryKey.of("ambient-owned");
         List<Disposable> owned = new ArrayList<>();
-        ComponentContext.push(owned::add);
+        OwnershipContext.push(owned::add);
         Query<String> query;
         try {
             query = Query.of(key, () -> CompletableFuture.completedFuture("x"));
         } finally {
-            ComponentContext.pop();
+            OwnershipContext.pop();
         }
 
         assertTrue(owned.contains(query), "Query created in component scope must register for disposal");
@@ -228,7 +228,7 @@ class QueryTest extends SolimEnv {
 
     @Test
     void queryCreatedOutsideScopeRequiresExplicitDispose() {
-        assertEquals(0, ComponentContext.size());
+        assertEquals(0, OwnershipContext.size());
         QueryKey key = QueryKey.of("outside-scope");
         Query<String> query = Query.of(key, () -> CompletableFuture.completedFuture("x"));
 

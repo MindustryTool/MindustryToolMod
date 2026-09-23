@@ -16,8 +16,8 @@ import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.runtime.ComponentContext;
-import solim.runtime.ParentStack;
+import solim.runtime.OwnershipContext;
+import solim.runtime.AttachmentStack;
 
 /**
  * Animated collapsible container wrapping an Arc {@link Collapser} around a content {@link Table}.
@@ -25,7 +25,7 @@ import solim.runtime.ParentStack;
  */
 public final class SolimCollapser implements Component, CellConfig<SolimCollapser>, ElementConfig<SolimCollapser>, TableConfig<SolimCollapser>, GapContainer {
 
-    public static final ParentStack.Attacher ATTACHER = (table, child) -> {
+    public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
         cell.top().left();
         if (SolimToken.isExpandingChild(child)) {
@@ -61,7 +61,7 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
         this.collapser = new Collapser(content, collapsed);
         this.collapser.name = "solim-collapser";
         this.collapser.setDuration(0.2f);
-        ComponentContext.register(this);
+        OwnershipContext.register(this);
     }
 
     public Collapser collapser() {
@@ -118,7 +118,7 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -138,21 +138,21 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
 
     public SolimCollapser children(@Nullable Runnable r) {
-        ParentStack.push(content, ATTACHER);
+        AttachmentStack.push(content, ATTACHER);
         try {
             if (r != null) {
                 r.run();
             }
         } finally {
-            ParentStack.pop();
+            AttachmentStack.pop();
         }
-        ParentStack.attachToParent(collapser);
+        AttachmentStack.attachToParent(collapser);
         respace();
         return this;
     }

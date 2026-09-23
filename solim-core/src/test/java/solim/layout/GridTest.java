@@ -6,7 +6,7 @@ import arc.scene.Element;
 import arc.scene.ui.layout.CellAccess;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Signal;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -107,8 +107,8 @@ class GridTest extends SolimEnv {
         Element second = new Element();
 
         g.children(() -> {
-            ParentStack.add(first);
-            ParentStack.add(second);
+            AttachmentStack.add(first);
+            AttachmentStack.add(second);
         });
 
         assertEquals(2, g.table().getChildren().size);

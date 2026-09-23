@@ -8,7 +8,7 @@ import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
@@ -93,7 +93,7 @@ public class RoundedDrawable implements Drawable, Disposable {
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -118,7 +118,7 @@ public class RoundedDrawable implements Drawable, Disposable {
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -151,7 +151,7 @@ public class RoundedDrawable implements Drawable, Disposable {
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }
@@ -166,7 +166,7 @@ public class RoundedDrawable implements Drawable, Disposable {
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         if (colorSignal != null) {
             Effect e = Effect.of(() -> {
@@ -176,7 +176,7 @@ public class RoundedDrawable implements Drawable, Disposable {
                 }
             });
             bindings.add(e);
-            ComponentContext.register(e);
+            OwnershipContext.register(e);
         }
         return this;
     }

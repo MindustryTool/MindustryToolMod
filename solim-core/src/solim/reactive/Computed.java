@@ -12,7 +12,7 @@ import arc.func.Prov;
 import solim.core.Disposable;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.runtime.ReactiveContext;
 
 /** Lazy computed value with dynamic dependency tracking. */
@@ -31,7 +31,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 
 	public Computed(Prov<T> Prov) {
 		this.Prov = Prov;
-		ComponentContext.register(this);
+		OwnershipContext.register(this);
 	}
 
 	@Override

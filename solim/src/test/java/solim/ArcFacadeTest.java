@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import solim.display.Text;
 import solim.input.SolimSelect;
-import solim.runtime.ParentStack;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.reactive.Query;
 import solim.reactive.Signal;
@@ -23,16 +23,16 @@ class ArcFacadeTest extends SolimEnv {
 
 	@AfterEach
 	void clear() {
-		ParentStack.clear();
+		AttachmentStack.clear();
 	}
 
 	@Test
 	void arcAttachesRawElement() {
 		Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent test");
 		Table root = new Table();
-		ParentStack.push(root);
+		AttachmentStack.push(root);
 		Label label = UI.arc(new Label("hi"));
-		ParentStack.pop();
+		AttachmentStack.pop();
 		assertEquals("hi", label.getText().toString());
 		assertTrue(root.getChildren().contains(label, true));
 	}
@@ -40,9 +40,9 @@ class ArcFacadeTest extends SolimEnv {
 	@Test
 	void arcAttachesPlainElementHeadless() {
 		Table root = new Table();
-		ParentStack.push(root);
+		AttachmentStack.push(root);
 		Element el = UI.arc(new Element());
-		ParentStack.pop();
+		AttachmentStack.pop();
 		assertTrue(root.getChildren().contains(el, true));
 	}
 
@@ -68,9 +68,9 @@ class ArcFacadeTest extends SolimEnv {
     void selectAttachesAndShowsCurrentValue() {
         Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent test");
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
         SolimSelect<String> s = UI.select(Signal.of("b"), Arrays.asList("a", "b"));
-        ParentStack.pop();
+        AttachmentStack.pop();
         assertTrue(root.getChildren().contains(s.selectBox(), true));
         assertEquals("b", s.selectBox().getText().toString());
         s.dispose();
@@ -88,9 +88,9 @@ class ArcFacadeTest extends SolimEnv {
     void queryAttachedViaUIQueryRendersData() {
         Query<String> query = Query.noKey(() -> CompletableFuture.completedFuture("ui-query-data"));
         Table root = new Table();
-        ParentStack.push(root);
+        AttachmentStack.push(root);
         UI.query(query).data(d -> new Text(d));
-        ParentStack.pop();
+        AttachmentStack.pop();
 
         SignalDispatcher.flush();
 

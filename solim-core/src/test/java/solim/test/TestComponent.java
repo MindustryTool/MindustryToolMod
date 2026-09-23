@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.BaseComponent;
 import solim.core.Disposable;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 
 /**
  * Standard test double for BaseComponent verifying build count, single materialization,
@@ -52,7 +52,7 @@ public class TestComponent extends BaseComponent {
 	protected Element build() {
 		buildCount++;
 		for (Disposable d : initialDisposables) {
-			ComponentContext.register(d);
+			OwnershipContext.register(d);
 		}
 		if (throwOnBuild) {
 			throw new RuntimeException("Simulated build failure for " + id);

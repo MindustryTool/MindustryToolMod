@@ -29,19 +29,26 @@ import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.ChatUser;
 import mindustrytool.models.response.UserData;
 import mindustrytool.test.MindustryTestEnv;
+import solim.core.Disposable;
 import solim.core.Units;
+import solim.reactive.Signal;
 
 class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     private static Font testFont;
 
-    private static ChatFeature feature;
-    
-    private static ChatFeature feature() {
-        if (feature == null) {
-            feature = new ChatFeature();
-        }
-        return feature;
+    private final List<ChatStore> ownedStores = new ArrayList<>();
+    private final List<Disposable> ownedViews = new ArrayList<>();
+
+    private ChatStore newTrackedStore() {
+        // Use the package-private test constructor: a full ChatFeature would
+        // also spawn a ChatService (2 effects), ChatPresence (global event
+        // listeners + heartbeat timer) and a ChatStore, all leaking past
+        // teardown and invalidating the shared dispatcher from background
+        // network completions in later tests.
+        ChatStore store = new ChatStore(Signal.of(""), Signal.of(false), Signal.of(false));
+        ownedStores.add(store);
+        return store;
     }
 
     @BeforeEach
@@ -113,8 +120,24 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @AfterEach
     void drainPendingEffects() {
-        // Tests here build reactive components without disposing them; flush so
-        // the env teardown sees an empty dispatcher.
+        // Stores own effects outside any component scope and views own their
+        // bindings, so they are caller-managed: dispose unsubscribes them,
+        // flush drains anything already queued so the env teardown sees an
+        // empty dispatcher and later tests are not polluted.
+        for (Disposable view : ownedViews) {
+            try {
+                view.dispose();
+            } catch (Exception ignored) {
+            }
+        }
+        ownedViews.clear();
+        for (ChatStore store : ownedStores) {
+            try {
+                store.dispose();
+            } catch (Exception ignored) {
+            }
+        }
+        ownedStores.clear();
         flushEffects();
     }
 
@@ -242,11 +265,12 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
     }
 
     private float measureRealGroupHeight(MessageGroup group, float containerWidth) {
-        return measureRealGroupHeight(group, containerWidth, new ChatStore(feature()));
+        return measureRealGroupHeight(group, containerWidth, newTrackedStore());
     }
 
     private float measureRealGroupHeight(MessageGroup group, float containerWidth, ChatStore store) {
         ChatMessageListView.MessageGroupView view = new ChatMessageListView.MessageGroupView(group, store, null);
+        ownedViews.add(view);
         Element element = view.element();
 
         Table root = new Table();
@@ -362,7 +386,7 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @Test
     void testRealComponentHeightReplySnippetTruncated() {
-        ChatStore store = new ChatStore(feature());
+        ChatStore store = newTrackedStore();
         store.selectChannel("ch1");
         ChatMessage target = raw("target-long", "charlie",
                 "This is a very long message that definitely exceeds forty characters in total length for reply testing.");
@@ -379,7 +403,7 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @Test
     void testRealComponentHeightReplySnippetShort() {
-        ChatStore store = new ChatStore(feature());
+        ChatStore store = newTrackedStore();
         store.selectChannel("ch1");
         ChatMessage target = raw("target-short", "charlie", "Short message");
         store.messages().replace("ch1", Collections.singletonList(target));
@@ -395,7 +419,7 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @Test
     void testRealComponentHeightReplyTargetContentNull() {
-        ChatStore store = new ChatStore(feature());
+        ChatStore store = newTrackedStore();
         store.selectChannel("ch1");
         ChatMessage target = raw("target-null", "charlie", null);
         store.messages().replace("ch1", Collections.singletonList(target));
@@ -411,7 +435,7 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @Test
     void testRealComponentHeightReplyTargetNotFound() {
-        ChatStore store = new ChatStore(feature());
+        ChatStore store = newTrackedStore();
         store.selectChannel("ch1");
 
         ChatMessage replyMsg = raw("reply-target-not-found", "bob", "Responding to non-existent");
@@ -425,7 +449,7 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @Test
     void testRealComponentHeightWithUserDataAndRoles() {
-        ChatStore store = new ChatStore(feature());
+        ChatStore store = newTrackedStore();
         UserData user = new UserData();
         user.setId("alice");
         user.setName("Alice In Wonderland");
@@ -447,7 +471,7 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @Test
     void testRealComponentHeightWithInvalidRoleColorFallback() {
-        ChatStore store = new ChatStore(feature());
+        ChatStore store = newTrackedStore();
         UserData user = new UserData();
         user.setId("alice");
         user.setName("Alice");

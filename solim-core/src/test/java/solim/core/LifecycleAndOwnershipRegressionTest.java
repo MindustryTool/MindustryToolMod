@@ -16,7 +16,7 @@ import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
-import solim.runtime.ComponentContext;
+import solim.runtime.OwnershipContext;
 import solim.runtime.StructuralReconciler;
 import solim.test.SolimEnv;
 import solim.test.TestComponent;
@@ -174,7 +174,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 
 		assertEquals(Arrays.asList("second", "first"), cleanupLog,
 				"Partially registered resources must be cleaned up in LIFO order upon build exception");
-		assertEquals(0, ComponentContext.size(), "ComponentContext must be empty after partial build failure");
+		assertEquals(0, OwnershipContext.size(), "OwnershipContext must be empty after partial build failure");
 	}
 
 	@Test
