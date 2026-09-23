@@ -140,11 +140,20 @@ public class TeamResourceState {
 
         coreItems = (selectedTeam != null && Vars.state != null && selectedTeam.core() != null) ? selectedTeam.core().items : null;
         if (coreItems != null && Vars.content != null) {
+            boolean hideZeroItems = feature != null && Boolean.TRUE.equals(feature.hideZeroItemsConfig.get());
             boolean itemsChanged = false;
             for (Item item : Vars.content.items()) {
-                if (coreItems.get(item) > 0 && usedItems.add(item)) {
-                    itemsChanged = true;
-                    changed = true;
+                int count = coreItems.get(item);
+                if (count > 0) {
+                    if (usedItems.add(item)) {
+                        itemsChanged = true;
+                        changed = true;
+                    }
+                } else if (hideZeroItems) {
+                    if (usedItems.remove(item)) {
+                        itemsChanged = true;
+                        changed = true;
+                    }
                 }
             }
             if (itemsChanged) {
@@ -159,12 +168,21 @@ public class TeamResourceState {
         }
 
         if (selectedTeam != null && Vars.content != null && Vars.state != null) {
+            boolean hideZeroUnits = feature != null && Boolean.TRUE.equals(feature.hideZeroUnitsConfig.get());
             boolean unitsChanged = false;
             for (UnitType unit : Vars.content.units()) {
                 try {
-                    if (selectedTeam.data() != null && selectedTeam.data().countType(unit) > 0 && usedUnits.add(unit)) {
-                        unitsChanged = true;
-                        changed = true;
+                    int count = selectedTeam.data() != null ? selectedTeam.data().countType(unit) : 0;
+                    if (count > 0) {
+                        if (usedUnits.add(unit)) {
+                            unitsChanged = true;
+                            changed = true;
+                        }
+                    } else if (hideZeroUnits) {
+                        if (usedUnits.remove(unit)) {
+                            unitsChanged = true;
+                            changed = true;
+                        }
                     }
                 } catch (Throwable ignored) {
                 }
