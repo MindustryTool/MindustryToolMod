@@ -16,6 +16,7 @@ import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Player;
 import mindustry.gen.Unit;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.config.ConfigValue;
@@ -46,7 +47,7 @@ public class FollowAssistTask implements AutoplayTask {
 
     @Override
     public TextureRegionDrawable getIcon() {
-        return Icon.players;
+        return FileIcon.of("users.png", Icon.players);
     }
 
     @Override

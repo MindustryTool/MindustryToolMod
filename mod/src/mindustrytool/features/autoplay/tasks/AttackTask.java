@@ -10,6 +10,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Teamc;
 import mindustry.gen.Unit;
 import mindustry.type.Weapon;
+import mindustrytool.components.FileIcon;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -32,7 +33,7 @@ public class AttackTask implements AutoplayTask {
 
     @Override
     public TextureRegionDrawable getIcon() {
-        return Icon.warning;
+        return FileIcon.of("swords.png", Icon.warning);
     }
 
     @Override
