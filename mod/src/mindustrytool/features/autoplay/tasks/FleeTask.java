@@ -14,6 +14,7 @@ import mindustry.gen.Healthc;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustry.world.blocks.defense.turrets.Turret;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.config.ConfigValue;
@@ -44,7 +45,7 @@ public class FleeTask implements AutoplayTask {
 
     @Override
     public TextureRegionDrawable getIcon() {
-        return Icon.move;
+        return FileIcon.of("shield-alert.png", Icon.move);
     }
 
     @Override

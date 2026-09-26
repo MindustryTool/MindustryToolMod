@@ -35,6 +35,8 @@ public class QuickAccessFeature extends Feature {
     public final ConfigValue<Set<String>> hiddenFeaturesConfig;
     public final ConfigValue<Set<String>> shownFeaturesConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
+    public final ConfigValue<Boolean> collapsibleConfig;
+    public final ConfigValue<Boolean> collapsedConfig;
     public final ConfigValue<Seq<String>> displayOrderConfig;
 
     public final ContextualConfigValue<Float, Boolean> xConfig;
@@ -63,6 +65,8 @@ public class QuickAccessFeature extends Feature {
         hiddenFeaturesConfig = config.setValue("hidden", String.class, Collections.emptySet());
         shownFeaturesConfig = config.setValue("shown", String.class, Collections.emptySet());
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
+        collapsibleConfig = config.boolValue("collapsible", false);
+        collapsedConfig = config.boolValue("collapsed", false);
         displayOrderConfig = config.value("display-order", Seq.with(), new OrderedSeqPersister());
 
         xConfig = config.floatValueKeyed(
@@ -131,6 +135,30 @@ public class QuickAccessFeature extends Feature {
         if (hudView != null) {
             Core.app.post(hudView::keepInScreen);
         }
+    }
+
+    public boolean isCollapsible() {
+        return Boolean.TRUE.equals(collapsibleConfig.get());
+    }
+
+    public void setCollapsible(boolean collapsible) {
+        collapsibleConfig.set(collapsible);
+    }
+
+    public boolean isCollapsed() {
+        return Boolean.TRUE.equals(collapsedConfig.get());
+    }
+
+    public void setCollapsed(boolean collapsed) {
+        collapsedConfig.set(collapsed);
+    }
+
+    public void toggleCollapsed() {
+        if (!Boolean.TRUE.equals(collapsibleConfig.get())) {
+            collapsedConfig.set(false);
+            return;
+        }
+        collapsedConfig.set(!Boolean.TRUE.equals(collapsedConfig.get()));
     }
 
     public boolean isFeatureVisible(String id) {

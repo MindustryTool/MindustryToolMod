@@ -18,6 +18,7 @@ import mindustry.gen.Player;
 import mindustry.gen.Unit;
 import mindustry.type.ItemStack;
 import mindustry.world.Build;
+import mindustrytool.components.FileIcon;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -63,7 +64,7 @@ public class RebuildTask implements AutoplayTask {
 
     @Override
     public TextureRegionDrawable getIcon() {
-        return Icon.hammer;
+        return FileIcon.of("refresh-cw.png", Icon.hammer);
     }
 
     @Override

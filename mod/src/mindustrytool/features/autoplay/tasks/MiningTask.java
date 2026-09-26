@@ -19,6 +19,7 @@ import mindustry.type.Item;
 import mindustry.ui.Fonts;
 import mindustry.world.Tile;
 import mindustry.world.blocks.environment.Floor;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.config.ConfigValue;
@@ -51,7 +52,7 @@ public class MiningTask implements AutoplayTask {
 
     @Override
     public TextureRegionDrawable getIcon() {
-        return Icon.filter;
+        return FileIcon.of("pickaxe.png", Icon.filter);
     }
 
     @Override

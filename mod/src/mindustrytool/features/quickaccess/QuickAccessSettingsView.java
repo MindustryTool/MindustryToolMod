@@ -63,6 +63,9 @@ public class QuickAccessSettingsView extends BaseComponent {
                             checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
                                     feature.hideDragHandleConfig.signal()).growX();
 
+                            checkbox(Core.bundle.get("feature.quick-access.settings.collapsible"),
+                                    feature.collapsibleConfig.signal()).growX();
+
                             divider();
 
                             text(Core.bundle.get("feature.quick-access.settings.visible-features")).left().growX()

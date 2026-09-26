@@ -13,6 +13,7 @@ import mindustry.gen.Teamc;
 import mindustry.gen.Unit;
 import mindustry.type.weapons.RepairBeamWeapon;
 import mindustry.world.blocks.ConstructBlock.ConstructBuild;
+import mindustrytool.components.FileIcon;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -35,7 +36,7 @@ public class RepairTask implements AutoplayTask {
 
     @Override
     public TextureRegionDrawable getIcon() {
-        return Icon.hammer;
+        return FileIcon.of("wrench.png", Icon.hammer);
     }
 
     @Override
