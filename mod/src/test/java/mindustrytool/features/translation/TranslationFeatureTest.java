@@ -57,6 +57,8 @@ class TranslationFeatureTest extends MindustryTestEnv {
         CompletableFuture<String> f4 = feature.translate("Hello", "French");
         assertEquals(4, mock.callCount.get());
         assertEquals("[French]: Hello", f4.join());
+
+        flushEffects();
     }
 
     @Test
@@ -79,10 +81,57 @@ class TranslationFeatureTest extends MindustryTestEnv {
         assertEquals("[German]: Concurrent", f2.join());
     }
 
+    @Test
+    void testOutgoingTranslationErrorSetsLastError() {
+        TranslationFeature feature = new TranslationFeature();
+        MockTranslationProvider mock = new MockTranslationProvider("mock-err");
+        mock.errorToThrow = new RuntimeException("API key invalid");
+        feature.getProviders().add(mock);
+        feature.providerConfig.set("mock-err");
+
+        java.util.concurrent.atomic.AtomicReference<String> delivered = new java.util.concurrent.atomic.AtomicReference<>();
+        feature.handleOutgoingMessage("Hello world", delivered::set);
+
+        assertEquals("Hello world", delivered.get(), "Original message must never be dropped on failure");
+        assertEquals("API key invalid", feature.lastError.get(), "lastError signal must be set on failure");
+    }
+
+    @Test
+    void testUnconfiguredProviderSetsLastError() {
+        TranslationFeature feature = new TranslationFeature();
+        MockTranslationProvider mock = new MockTranslationProvider("mock-unconfigured");
+        mock.configured = false;
+        feature.getProviders().add(mock);
+        feature.providerConfig.set("mock-unconfigured");
+
+        java.util.concurrent.atomic.AtomicReference<String> delivered = new java.util.concurrent.atomic.AtomicReference<>();
+        feature.handleOutgoingMessage("Test unconfigured", delivered::set);
+
+        assertEquals("Test unconfigured", delivered.get());
+        assertTrue(feature.lastError.get() != null && !feature.lastError.get().isEmpty());
+    }
+
+    @Test
+    void testIncomingTranslationErrorSetsLastError() {
+        TranslationFeature feature = new TranslationFeature();
+        feature.setEnabled(true);
+        MockTranslationProvider mock = new MockTranslationProvider("mock-incoming-err");
+        mock.errorToThrow = new RuntimeException("Rate limit 429");
+        feature.getProviders().add(mock);
+        feature.providerConfig.set("mock-incoming-err");
+
+        java.util.concurrent.atomic.AtomicReference<String> delivered = new java.util.concurrent.atomic.AtomicReference<>();
+        feature.handleIncomingMessage("Chat test", delivered::set);
+
+        assertEquals("Rate limit 429", feature.lastError.get());
+    }
+
     static class MockTranslationProvider implements TranslationProvider {
         private final String id;
         final AtomicInteger callCount = new AtomicInteger(0);
         CompletableFuture<String> nextFuture = null;
+        Throwable errorToThrow = null;
+        boolean configured = true;
 
         MockTranslationProvider(String id) {
             this.id = id;
@@ -100,12 +149,17 @@ class TranslationFeatureTest extends MindustryTestEnv {
 
         @Override
         public boolean isConfigured() {
-            return true;
+            return configured;
         }
 
         @Override
         public CompletableFuture<String> translate(String text, String targetLanguage) {
             callCount.incrementAndGet();
+            if (errorToThrow != null) {
+                CompletableFuture<String> failed = new CompletableFuture<>();
+                failed.completeExceptionally(errorToThrow);
+                return failed;
+            }
             if (nextFuture != null) {
                 return nextFuture;
             }

@@ -19,6 +19,7 @@ import mindustry.ui.dialogs.LanguageDialog;
 import mindustry.core.NetClient;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Call;
+import mindustry.gen.Icon;
 import mindustry.gen.SendMessageCallPacket;
 import mindustry.gen.SendMessageCallPacket2;
 import mindustry.input.Binding;
@@ -75,6 +76,23 @@ public class TranslationFeature extends Feature {
 
     // Diagnostic state
     public final Signal<String> lastError = Signal.of(null);
+    private long lastIncomingErrorToastTime = 0L;
+    private static final long INCOMING_ERROR_TOAST_COOLDOWN_MS = 20_000L;
+
+    public void notifyIncomingErrorThrottled(String errorMsg) {
+        long now = System.currentTimeMillis();
+        if (now - lastIncomingErrorToastTime >= INCOMING_ERROR_TOAST_COOLDOWN_MS) {
+            lastIncomingErrorToastTime = now;
+            String toastMsg = Core.bundle != null
+                    ? Core.bundle.format("feature.translation.error.incoming-failed", errorMsg)
+                    : "Chat translation failed: " + errorMsg;
+            Core.app.post(() -> {
+                if (Vars.ui != null && Vars.ui.hudfrag != null) {
+                    Vars.ui.hudfrag.showToast(Icon.warning, "[scarlet]" + toastMsg);
+                }
+            });
+        }
+    }
 
     private final Seq<TranslationProvider> providers = new Seq<>();
     private @Nullable TranslationSettingsDialog settingsDialog;
@@ -174,12 +192,14 @@ public class TranslationFeature extends Feature {
             return Locale.ENGLISH;
         }
         String clean = lang.trim();
-        for (Locale loc : Vars.locales) {
-            if (clean.equalsIgnoreCase(loc.toString())
-                    || clean.equalsIgnoreCase(loc.getLanguage())
-                    || clean.equalsIgnoreCase(LanguageDialog.getDisplayName(loc))
-                    || clean.equalsIgnoreCase(loc.getDisplayLanguage(Locale.ENGLISH))) {
-                return loc;
+        if (Vars.locales != null) {
+            for (Locale loc : Vars.locales) {
+                if (clean.equalsIgnoreCase(loc.toString())
+                        || clean.equalsIgnoreCase(loc.getLanguage())
+                        || clean.equalsIgnoreCase(LanguageDialog.getDisplayName(loc))
+                        || clean.equalsIgnoreCase(loc.getDisplayLanguage(Locale.ENGLISH))) {
+                    return loc;
+                }
             }
         }
         return Locale.ENGLISH;
@@ -302,6 +322,22 @@ public class TranslationFeature extends Feature {
             return;
         }
 
+        TranslationProvider provider = getActiveProvider();
+        if (!provider.isConfigured()) {
+            String providerName = provider.getName();
+            String warnMsg = Core.bundle != null
+                    ? Core.bundle.format("feature.translation.error.not-configured", providerName)
+                    : "Translation provider \"" + providerName + "\" is not configured. Please enter an API key in settings.";
+            lastError.set(warnMsg);
+            Core.app.post(() -> {
+                if (Vars.ui != null && Vars.ui.hudfrag != null) {
+                    Vars.ui.hudfrag.showToast(Icon.warning, "[scarlet]" + warnMsg);
+                }
+            });
+            onDeliver.get(rawMessage);
+            return;
+        }
+
         String targetLang = getOutgoingTargetLanguage();
         translate(parts.content, targetLang)
                 .thenAccept(translated -> {
@@ -311,8 +347,17 @@ public class TranslationFeature extends Feature {
                 })
                 .exceptionally(err -> {
                     Throwable cause = err.getCause() != null ? err.getCause() : err;
-                    lastError.set(cause.getMessage());
-                    Log.warn("Outgoing translation failed: @", cause.getMessage());
+                    String errorMsg = cause.getMessage() != null ? cause.getMessage() : "Unknown error";
+                    lastError.set(errorMsg);
+                    Log.warn("Outgoing translation failed: @", errorMsg);
+                    String toastMsg = Core.bundle != null
+                            ? Core.bundle.format("feature.translation.error.outgoing-failed", errorMsg)
+                            : "Translation failed: " + errorMsg;
+                    Core.app.post(() -> {
+                        if (Vars.ui != null && Vars.ui.hudfrag != null) {
+                            Vars.ui.hudfrag.showToast(Icon.warning, "[scarlet]" + toastMsg);
+                        }
+                    });
                     // Never drop outgoing message on error
                     onDeliver.get(rawMessage);
                     return null;
@@ -379,6 +424,17 @@ public class TranslationFeature extends Feature {
             return;
         }
 
+        TranslationProvider provider = getActiveProvider();
+        if (!provider.isConfigured()) {
+            String errorMsg = Core.bundle != null
+                    ? Core.bundle.format("feature.translation.error.not-configured", provider.getName())
+                    : "Translation provider \"" + provider.getName() + "\" is not configured. Please enter an API key in settings.";
+            lastError.set(errorMsg);
+            notifyIncomingErrorThrottled(errorMsg);
+            onDeliver.get(message);
+            return;
+        }
+
         String targetLang = getTargetLanguage();
         translate(cleanText, targetLang)
                 .thenAccept(translated -> {
@@ -399,8 +455,10 @@ public class TranslationFeature extends Feature {
                 })
                 .exceptionally(err -> {
                     Throwable cause = err.getCause() != null ? err.getCause() : err;
-                    lastError.set(cause.getMessage());
-                    Log.warn("Translation failed: @", cause.getMessage());
+                    String errorMsg = cause.getMessage() != null ? cause.getMessage() : "Unknown error";
+                    lastError.set(errorMsg);
+                    Log.warn("Translation failed: @", errorMsg);
+                    notifyIncomingErrorThrottled(errorMsg);
                     Core.app.post(() -> {
                         // Never drop messages on error
                         onDeliver.get(message);

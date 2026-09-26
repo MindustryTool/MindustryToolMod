@@ -15,7 +15,7 @@ import arc.input.KeyBind;
 import arc.input.KeyCode;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.gen.Icon;
-import mindustrytool.features.bridgevisualizer.BridgeVisualizerFeature;
+import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import mindustrytool.features.screenshot.ScreenshotFeature;
@@ -230,11 +230,11 @@ class FeatureKeybindTest extends MindustryTestEnv {
     }
 
     @Test
-    void bridgeVisualizerFeature_registersToggleAndSettingsKeybinds() {
-        BridgeVisualizerFeature feature = new BridgeVisualizerFeature();
+    void visualizerFeature_registersToggleAndSettingsKeybinds() {
+        VisualizerFeature feature = new VisualizerFeature();
         assertEquals(2, feature.getKeybinds().size);
 
-        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("bridgeVisualizer"));
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("visualizer"));
         assertNotNull(toggleBind);
         assertFalse(toggleBind.isRequireEnabled());
 
@@ -242,7 +242,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         toggleBind.getAction().run();
         assertEquals(!initial, feature.isEnabled());
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("bridgeVisualizerSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("visualizerSettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }
