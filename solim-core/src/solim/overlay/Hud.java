@@ -90,7 +90,11 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
 
         this.resizeListener = e -> {
             keepInScreen();
-            Core.app.post(this::keepInScreen);
+            Core.app.post(() -> {
+                if (!isDisposed()) {
+                    keepInScreen();
+                }
+            });
         };
         Events.on(ResizeEvent.class, resizeListener);
 

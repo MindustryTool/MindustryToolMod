@@ -417,6 +417,10 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 					return;
 				}
 				Core.app.post(() -> {
+					if (isDisposed()) {
+						pixmap.dispose();
+						return;
+					}
 					try {
 						applyResult(url, radius, targetW, gen, toTexture(pixmap));
 					} catch (Throwable t) {
@@ -436,7 +440,7 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 			return;
 		}
 		Core.app.post(() -> {
-			if (!isCurrent(gen, url)) {
+			if (isDisposed() || !isCurrent(gen, url)) {
 				return;
 			}
 			loader.load(url, radius, targetW, targetH,
