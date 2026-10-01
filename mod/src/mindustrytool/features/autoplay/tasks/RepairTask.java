@@ -11,6 +11,7 @@ import mindustry.gen.Healthc;
 import mindustry.gen.Icon;
 import mindustry.gen.Teamc;
 import mindustry.gen.Unit;
+import mindustry.type.Weapon;
 import mindustry.type.weapons.RepairBeamWeapon;
 import mindustry.world.blocks.ConstructBlock.ConstructBuild;
 import mindustrytool.components.FileIcon;
@@ -80,6 +81,11 @@ public class RepairTask implements AutoplayTask {
             }
         }
 
+        if (damagedBuilding == null && Vars.indexer != null) {
+            damagedBuilding = Units.findAllyTile(unit.team, unit.x, unit.y, 800f,
+                    b -> b != null && b.damaged() && !(b instanceof ConstructBuild));
+        }
+
         Unit damagedAlly = (hasHealWeapon || hasRepairField)
                 ? Units.closest(unit.team, unit.x, unit.y, 400f, u -> u != unit && u.damaged() && !u.dead())
                 : null;
@@ -88,6 +94,8 @@ public class RepairTask implements AutoplayTask {
 
         if (target == null) {
             ai.setTarget(null);
+            unit.isShooting(false);
+            unit.controlWeapons(false, false);
             status.set(Core.bundle.get("feature.autoplay.status.no-damaged-buildings"));
             return false;
         }
@@ -107,11 +115,23 @@ public class RepairTask implements AutoplayTask {
         public void updateMovement() {
             if (target == null || !target.isAdded() || (target instanceof Healthc && ((Healthc) target).dead())) {
                 target = null;
+                unit.isShooting(false);
+                unit.controlWeapons(false, false);
                 return;
             }
 
-            boolean hasHealWeapon = unit.type != null && unit.type.weapons != null
-                    && unit.type.weapons.contains(w -> (w.bullet != null && w.bullet.heals()) || w instanceof RepairBeamWeapon);
+            boolean hasHealWeapon = false;
+            float maxWeaponRange = unit.range() > 0 ? unit.range() : (unit.type != null ? unit.type.range : 0f);
+            if (unit.type != null && unit.type.weapons != null) {
+                for (int i = 0; i < unit.type.weapons.size; i++) {
+                    Weapon w = unit.type.weapons.get(i);
+                    if (w != null && ((w.bullet != null && w.bullet.heals()) || w instanceof RepairBeamWeapon)) {
+                        hasHealWeapon = true;
+                        maxWeaponRange = Math.max(maxWeaponRange, w.range());
+                    }
+                }
+            }
+
             RepairFieldAbility repairField = null;
             if (unit.type != null && unit.type.abilities != null) {
                 for (int i = 0; i < unit.type.abilities.size; i++) {
@@ -126,31 +146,41 @@ public class RepairTask implements AutoplayTask {
                 Building b = (Building) target;
                 if (b.health() >= b.maxHealth()) {
                     target = null;
+                    unit.isShooting(false);
+                    unit.controlWeapons(false, false);
                     return;
                 }
-                float healRange = hasHealWeapon ? unit.type.range * 0.7f : (repairField != null ? Math.min(repairField.range * 0.8f, 50f) : 30f);
-                moveTo(target, Math.max(healRange, 20f));
+                float healRange = hasHealWeapon ? Math.max(maxWeaponRange * 0.7f, 20f) : (repairField != null ? Math.min(repairField.range * 0.8f, 50f) : 30f);
+                moveTo(target, healRange, 30f);
                 if (hasHealWeapon) {
+                    boolean inRange = unit.within(target, Math.max(maxWeaponRange, 20f));
                     unit.lookAt(target);
                     unit.aim(target);
-                    unit.controlWeapons(unit.within(target, unit.type.range));
+                    unit.controlWeapons(inRange, inRange);
+                    unit.isShooting(inRange);
                 } else {
                     unit.controlWeapons(false, false);
+                    unit.isShooting(false);
                 }
             } else if (target instanceof Unit) {
                 Unit u = (Unit) target;
                 if (u.health() >= u.maxHealth()) {
                     target = null;
+                    unit.isShooting(false);
+                    unit.controlWeapons(false, false);
                     return;
                 }
-                float healRange = hasHealWeapon ? unit.type.range * 0.7f : (repairField != null ? Math.min(repairField.range * 0.8f, 50f) : 30f);
-                moveTo(target, Math.max(healRange, 20f));
+                float healRange = hasHealWeapon ? Math.max(maxWeaponRange * 0.7f, 20f) : (repairField != null ? Math.min(repairField.range * 0.8f, 50f) : 30f);
+                moveTo(target, healRange, 30f);
                 if (hasHealWeapon) {
+                    boolean inRange = unit.within(target, Math.max(maxWeaponRange, 20f));
                     unit.lookAt(target);
                     unit.aim(target);
-                    unit.controlWeapons(unit.within(target, unit.type.range));
+                    unit.controlWeapons(inRange, inRange);
+                    unit.isShooting(inRange);
                 } else {
                     unit.controlWeapons(false, false);
+                    unit.isShooting(false);
                 }
             }
         }

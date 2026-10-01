@@ -1,4 +1,10 @@
-## ADDED Requirements
+# Ambient Naming
+
+## Purpose
+
+Defines canonical naming and responsibilities for Solim's visual attachment stack (`AttachmentStack`) and lifecycle ownership scope (`OwnershipContext`), replacing legacy `ParentStack` and `ComponentContext`.
+
+## Requirements
 
 ### Requirement: AttachmentStack is the canonical visual-attachment stack
 

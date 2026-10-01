@@ -1,4 +1,10 @@
-## ADDED Requirements
+# Flame Graph Export
+
+## Purpose
+
+Provides headless export of captured UI traces to self-contained HTML flame graphs embedding both Chrome Trace Events and Speedscope profiles.
+
+## Requirements
 
 ### Requirement: Self-contained HTML flame export
 The system SHALL provide a headless exporter that writes a single self-contained HTML file rendering the flame graph from a trace snapshot, with no game runtime or network dependency at view time.

@@ -58,10 +58,9 @@ public class QuickAccessHudView extends BaseComponent {
         Readable<Float> buttonSize = scale.map(s -> unit(11f) * s);
         Readable<Float> iconSize = scale.map(s -> unit(7f) * s);
 
-        Readable<Boolean> isCollapsed = Signal.computed(() ->
-                Boolean.TRUE.equals(feature.collapsibleConfig.signal().get())
-                && Boolean.TRUE.equals(feature.collapsedConfig.signal().get())
-        );
+        Readable<Boolean> isCollapsed = Signal
+                .computed(() -> Boolean.TRUE.equals(feature.collapsibleConfig.signal().get())
+                        && Boolean.TRUE.equals(feature.collapsedConfig.signal().get()));
 
         Readable<List<HudItem>> items = Signal.computed(() -> {
             Seq<String> stored = feature.displayOrderConfig.signal().get();
@@ -114,20 +113,24 @@ public class QuickAccessHudView extends BaseComponent {
                 .border(1.5f, WebStyles.Colors.BORDER)
                 .center()
                 .children(() -> {
-                    when(feature.hideDragHandleConfig.signal())
-                            .elseDo(() -> button()
-                                    .style(WebStyles.ghost())
-                                    .size(buttonSize)
-                                    .children(() -> icon(Icon.move).size(iconSize))
-                                    .draggable(feature.xSignal, feature.ySignal));
+                    column()
+                            .gap(unit(1))
+                            .children(() -> {
+                                when(feature.hideDragHandleConfig.signal())
+                                        .elseDo(() -> button()
+                                                .style(WebStyles.ghost())
+                                                .size(buttonSize)
+                                                .children(() -> icon(Icon.move).size(iconSize))
+                                                .draggable(feature.xSignal, feature.ySignal));
 
-                    when(feature.collapsibleConfig.signal())
-                            .thenDo(() -> button()
-                                    .style(WebStyles.ghost())
-                                    .size(buttonSize)
-                                    .tooltip(Core.bundle.get("feature.quick-access.ui.collapse"))
-                                    .onClick(() -> feature.collapsedConfig.set(true))
-                                    .children(() -> icon(FileIcon.of("chevron-left.png")).size(iconSize)));
+                                when(feature.collapsibleConfig.signal())
+                                        .thenDo(() -> button()
+                                                .style(WebStyles.ghost())
+                                                .size(buttonSize)
+                                                .tooltip(Core.bundle.get("feature.quick-access.ui.collapse"))
+                                                .onClick(() -> feature.collapsedConfig.set(true))
+                                                .children(() -> icon(FileIcon.of("chevron-left.png")).size(iconSize)));
+                            });
 
                     reactiveGrid(items).key(HudItem::id)
                             .columns(feature.colsConfig.signal().map(c -> Math.min(c, items.get().size())))

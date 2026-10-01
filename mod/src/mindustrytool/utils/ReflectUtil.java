@@ -91,7 +91,7 @@ public final class ReflectUtil {
      * Safely reads the value of a field on an object, traversing superclasses.
      * Returns {@code null} on failure without throwing an exception.
      */
-    public static <T> @Nullable T getOrNull(@Nullable Object object, @Nullable String name) {
+    public static <T> T getOrNull(@Nullable Object object, @Nullable String name) {
         if (object == null || name == null) {
             return null;
         }
@@ -102,7 +102,7 @@ public final class ReflectUtil {
      * Safely reads the value of a field starting from a specific class type.
      * Returns {@code null} on failure without throwing an exception.
      */
-    public static <T> @Nullable T getOrNull(@Nullable Class<?> type, @Nullable Object object, @Nullable String name) {
+    public static <T> T getOrNull(@Nullable Class<?> type, @Nullable Object object, @Nullable String name) {
         Field field = findField(type, name);
         if (field == null) {
             return null;
@@ -187,7 +187,7 @@ public final class ReflectUtil {
      * Safely invokes a method on an object, traversing superclasses.
      * Returns {@code null} on failure without throwing an exception.
      */
-    public static <T> @Nullable T invokeOrNull(@Nullable Object object, @Nullable String name, @Nullable Object[] args, Class<?>... parameterTypes) {
+    public static <T> T invokeOrNull(@Nullable Object object, @Nullable String name, @Nullable Object[] args, Class<?>... parameterTypes) {
         if (object == null || name == null) {
             return null;
         }
@@ -198,7 +198,7 @@ public final class ReflectUtil {
      * Safely invokes a method on an object starting from a specific class type.
      * Returns {@code null} on failure without throwing an exception.
      */
-    public static <T> @Nullable T invokeOrNull(@Nullable Class<?> type, @Nullable Object object, @Nullable String name, @Nullable Object[] args, Class<?>... parameterTypes) {
+    public static <T> T invokeOrNull(@Nullable Class<?> type, @Nullable Object object, @Nullable String name, @Nullable Object[] args, Class<?>... parameterTypes) {
         Method method = findMethod(type, name, parameterTypes);
         if (method == null) {
             return null;

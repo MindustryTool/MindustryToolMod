@@ -1,4 +1,10 @@
-## ADDED Requirements
+# Solim Flame Trace
+
+## Purpose
+
+Captures hierarchical execution spans across Solim container subtrees and leaf components with zero tracing overhead when disabled.
+
+## Requirements
 
 ### Requirement: Hierarchical TraceSpan model
 The system SHALL provide an immutable `TraceSpan` value in `solim-api` carrying `traceId`, `spanId`, `parentId` (-1 for roots), `name`, `phase`, `startNs`, `endNs`, `depth`, and `childCount`, with duration derived as `endNs - startNs` in nanoseconds.
@@ -12,11 +18,11 @@ The system SHALL provide an immutable `TraceSpan` value in `solim-api` carrying 
 - **THEN** its fields and slow-span behavior SHALL remain unchanged and flame data SHALL use `TraceSpan`.
 
 ### Requirement: Trace stack variant isolation
-The runtime SHALL provide a profiling-enabled trace stack variant owning all flame-capture state (open-span stack, ring buffer, trace generation), with the base `ParentStack` containing zero tracing branches. Static entry points SHALL delegate to the singleton, which is a base instance by default and a trace instance only while tracing is enabled.
+The runtime SHALL provide a profiling-enabled trace stack variant owning all flame-capture state (open-span stack, ring buffer, trace generation), with the base `AttachmentStack` containing zero tracing branches. Static entry points SHALL delegate to the singleton, which is a base instance by default and a trace instance only while tracing is enabled.
 
 #### Scenario: Default instance carries no trace state
 - **WHEN** tracing has never been enabled
-- **THEN** the active singleton SHALL be the base `ParentStack` and no trace buffer SHALL be allocated.
+- **THEN** the active singleton SHALL be the base `AttachmentStack` and no trace buffer SHALL be allocated.
 
 #### Scenario: Enabling installs the trace variant
 - **WHEN** tracing is enabled via the public facade
@@ -24,7 +30,7 @@ The runtime SHALL provide a profiling-enabled trace stack variant owning all fla
 
 #### Scenario: Disabling reverts and clears
 - **WHEN** tracing is disabled
-- **THEN** the active singleton SHALL revert to a base `ParentStack` and all recorded trace spans SHALL be discarded.
+- **THEN** the active singleton SHALL revert to a base `AttachmentStack` and all recorded trace spans SHALL be discarded.
 
 #### Scenario: Isolation keeps parent chains consistent
 - **WHEN** `isolate(...)`, `capture(...)`, or `clear()` mutates the stack while the trace variant is active

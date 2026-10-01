@@ -49,12 +49,23 @@ The Attack task MUST evaluate offensive capabilities and engage hostile targets 
 ### Requirement: Task 4 - Repair
 The Repair task MUST detect healing capabilities and repair damaged structures and allied units without stalling on in-progress constructions.
 - Units lacking healing weapons and repair field abilities MUST yield immediately.
-- The task MUST search for damaged friendly buildings across the map, filtering out `ConstructBuild` instances without prematurely aborting the search for other damaged buildings.
-- The task MUST heal damaged allied units when within heal range.
+- The task MUST search for damaged friendly buildings across the map via `Vars.indexer.getDamaged(unit.team)` and fall back to searching local allied tiles via `Units.findAllyTile` when indexer has no entries, filtering out `ConstructBuild` instances.
+- The task MUST prioritize the closest damaged completed building, falling back to the closest damaged allied unit when no damaged buildings are detected.
+- The task MUST calculate accurate healing range using `unit.range() > 0 ? unit.range() : unit.type.range` and individual healing weapon ranges, accounting for building hitboxes.
+- WHEN a target is in weapon range THEN the task MUST aim at the target, control weapons, and actively set `unit.isShooting(true)`.
+- WHEN the target is fully repaired, destroyed, or out of range THEN the task MUST reset `unit.isShooting(false)` and `unit.controlWeapons(false, false)`.
 
 #### Scenario: Damaged buildings exist alongside construction sites
 - **WHEN** incomplete construction sites and damaged completed buildings exist on the map
 - **THEN** RepairTask bypasses the construction sites and navigates to repair the damaged completed buildings
+
+#### Scenario: Damaged building repair shooting activation
+- **WHEN** the player unit approaches a damaged friendly building within healing weapon range
+- **THEN** RepairTask aims at the building, enables weapon control, and sets `unit.isShooting(true)` to heal the building
+
+#### Scenario: Local building fallback when indexer is unpopulated
+- **WHEN** indexer damaged tiles are empty (such as in multiplayer or pre-damaged loaded maps) but damaged friendly buildings exist nearby
+- **THEN** RepairTask locates the damaged building via local ally tile search and repairs it
 
 ### Requirement: Task 5 - Follow & Assist
 The Follow & Assist task MUST follow designated teammates in multiplayer and mirror their actions without polluting the unit build queue.
@@ -81,13 +92,16 @@ Self-Build and Rebuild tasks MUST construct structures efficiently while remaini
 - **THEN** SelfBuildTask executes the player's queued plans in order of nearest distance
 
 ### Requirement: Task 8 - Mining
-The Mining task MUST mine the lowest-stock selected resources safely and deposit them into the core.
+The Mining task MUST mine the lowest-stock selected resources safely and deposit them into the core without attempting to mine conflicting resources while carrying cargo.
 - The task MUST search for candidate ore tiles relative to the friendly Core.
 - The task MUST query floor ores (`findClosestOre`) only when the unit can mine floors (`unit.type.mineFloor`) and floor ore is present in the indexer (`Vars.indexer.hasOre(item)`).
 - The task MUST query wall ores (`findClosestWallOre`) only when the unit can mine wall ores (`unit.type.mineWalls`) and wall ore is present in the indexer (`Vars.indexer.hasWallOre(item)`).
 - The task MUST verify that candidate ore tiles are valid to mine before selecting them, accepting uncovered floor ores (`tile.drop() == item && tile.block() == Blocks.air`) and valid wall ores (`tile.wallDrop() == item || (tile.block() != null && tile.block().itemDrop == item)`).
 - The task MUST throttle candidate ore evaluation using a tick timer to prevent searching all content items across the indexer every frame.
 - WHEN the unit is transporting collected ore to the core (`mining == false`) THEN `unit.mineTile` MUST NOT be set or re-assigned until deposit completes.
+- WHEN the unit is already carrying a resource (`unit.stack.amount > 0`) AND that resource is still valid to mine and accept in the core THEN the task MUST continue mining that resource until capacity is reached before switching to another resource.
+- WHEN the unit is carrying a resource (`unit.stack.amount > 0`) that cannot be mined or is full in the core THEN the task MUST immediately switch to deposit mode (`mining = false`, `unit.mineTile = null`) to empty its inventory before selecting another resource.
+- The task MUST NEVER assign `unit.mineTile` to an ore type that differs from the item currently carried in `unit.stack.item` when `unit.stack.amount > 0`.
 - The task MUST use a hysteresis / delta threshold based on core inventory quantities (`Math.max(unit.type.itemCapacity * 2, 60)`) to determine when to switch target resources, ensuring smooth rotation without 1-item ping-pong or infinite lockup when items beam directly into the core.
 - The task MUST immediately switch target resources if the friendly core cannot accept any more of the current target resource (`core.acceptStack <= 0`), the resource is deselected by the player, or no valid ore tile remains accessible.
 
@@ -114,6 +128,14 @@ The Mining task MUST mine the lowest-stock selected resources safely and deposit
 #### Scenario: Throttled candidate evaluation
 - **WHEN** Autoplay updates the Mining task across successive game ticks
 - **THEN** comprehensive candidate ore searches across all items are evaluated periodically on an interval rather than on every tick
+
+#### Scenario: Inventory continuity while holding resource
+- **WHEN** a unit has partially mined Coal (`unit.stack.amount > 0`) and another selected resource becomes lower in the core
+- **THEN** MiningTask finishes filling its inventory with Coal up to capacity before returning to core and switching to the other resource
+
+#### Scenario: Immediate deposit when carried resource is unmineable
+- **WHEN** a unit is carrying an item that cannot be mined further or is full in the core
+- **THEN** MiningTask transitions to `mining = false`, clears `unit.mineTile`, and deposits the cargo at the core before selecting a new resource
 
 ### Requirement: Camera & Visuals
 The Autoplay feature MUST render visual status indicators overhead and connect to valid target coordinates, and MUST respect `FreeCameraFeature` when updating camera position.
