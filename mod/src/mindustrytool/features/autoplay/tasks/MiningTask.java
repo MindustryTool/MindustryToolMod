@@ -19,6 +19,7 @@ import mindustry.type.Item;
 import mindustry.ui.Fonts;
 import mindustry.world.Tile;
 import mindustry.world.blocks.environment.Floor;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.config.ConfigValue;
@@ -51,7 +52,7 @@ public class MiningTask implements AutoplayTask {
 
     @Override
     public TextureRegionDrawable getIcon() {
-        return Icon.filter;
+        return FileIcon.of("pickaxe.png", Icon.filter);
     }
 
     @Override
@@ -183,7 +184,41 @@ public class MiningTask implements AutoplayTask {
         Tile bestTile = null;
         boolean allFull = false;
 
-        if (currentTargetValid && !scanTimer.get(0, 30f)) {
+        // If unit is carrying items, enforce inventory continuity:
+        // A Mindustry unit can only carry one item type. It must finish mining the carried item
+        // or deposit it at the core before mining any other resource.
+        if (unit.stack.amount > 0 && unit.stack.item != null) {
+            Item held = unit.stack.item;
+            boolean canContinueMining = isSelected(held)
+                    && unit.canMine(held)
+                    && core.acceptStack(held, 1, unit) > 0;
+
+            Tile heldOre = canContinueMining
+                    ? ((ai.targetItem == held && ai.ore != null && isValidOreTile(ai.ore, held))
+                        ? ai.ore
+                        : findOreTile(unit, core, held))
+                    : null;
+
+            if (canContinueMining && heldOre != null) {
+                bestItem = held;
+                bestTile = heldOre;
+            } else {
+                // Cannot continue mining held item (core full, unmineable, or no ore).
+                // Must deposit immediately to empty inventory.
+                ai.mining = false;
+                unit.mineTile = null;
+                ai.targetItem = held;
+                ai.ore = null;
+
+                String uni = Fonts.getUnicodeStr(held.name);
+                if ((uni == null || uni.isEmpty()) && Iconc.codes.containsKey(held.name)) {
+                    uni = Character.toString((char) Iconc.codes.get(held.name));
+                }
+                status.set(Core.bundle.format("feature.autoplay.status.mining",
+                        uni != null && !uni.isEmpty() ? uni : held.localizedName));
+                return true;
+            }
+        } else if (currentTargetValid && !scanTimer.get(0, 30f)) {
             bestItem = ai.targetItem;
             bestTile = ai.ore;
         } else {
@@ -239,7 +274,8 @@ public class MiningTask implements AutoplayTask {
         }
 
         if (ai.mining) {
-            unit.mineTile = bestTile;
+            boolean canMineOre = unit.stack.amount == 0 || unit.stack.item == bestItem;
+            unit.mineTile = canMineOre ? bestTile : null;
         } else {
             unit.mineTile = null;
         }
@@ -317,25 +353,38 @@ public class MiningTask implements AutoplayTask {
             }
 
             if (mining) {
-                if (targetItem != null && core.acceptStack(targetItem, 1, unit) <= 0) {
-                    unit.clearItem();
+                if (unit.stack.amount > 0 && targetItem != null && !unit.acceptsItem(targetItem)) {
+                    mining = false;
                     unit.mineTile = null;
+                    return;
+                }
+
+                if (targetItem != null && core.acceptStack(targetItem, 1, unit) <= 0) {
+                    if (unit.stack.amount > 0) {
+                        mining = false;
+                        unit.mineTile = null;
+                    } else {
+                        unit.clearItem();
+                        unit.mineTile = null;
+                    }
                     return;
                 }
 
                 if (unit.stack.amount >= unit.type.itemCapacity) {
                     mining = false;
-                } else if (timer.get(timerTarget4, 60f) && targetItem != null && !unit.acceptsItem(targetItem)) {
-                    mining = false;
+                    unit.mineTile = null;
                 } else {
                     if (timer.get(timerTarget3, 60f) && targetItem != null) {
                         ore = findOreTile(unit, core, targetItem);
                     }
 
                     if (ore != null) {
+                        boolean canMineOre = targetItem != null && (unit.stack.amount == 0 || unit.stack.item == targetItem);
                         moveTo(ore, unit.type.mineRange / 2f, 20f);
-                        if (unit.within(ore, unit.type.mineRange) && unit.validMine(ore)) {
+                        if (canMineOre && unit.within(ore, unit.type.mineRange) && unit.validMine(ore)) {
                             unit.mineTile = ore;
+                        } else if (!canMineOre) {
+                            unit.mineTile = null;
                         }
                     }
                 }

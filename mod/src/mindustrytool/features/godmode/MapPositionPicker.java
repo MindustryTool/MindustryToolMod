@@ -52,9 +52,23 @@ public final class MapPositionPicker {
     }
 
     private static void removeListener(Cons<TapEvent> listener) {
+        Runnable task = new RemoveListenerTask(listener);
         if (Core.app != null) {
-            Core.app.post(() -> Events.remove(TapEvent.class, listener));
+            Core.app.post(task);
         } else {
+            task.run();
+        }
+    }
+
+    static final class RemoveListenerTask implements Runnable {
+        final Cons<TapEvent> listener;
+
+        RemoveListenerTask(Cons<TapEvent> listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public void run() {
             Events.remove(TapEvent.class, listener);
         }
     }

@@ -24,6 +24,8 @@ class TeamResourceRateTest extends MindustryTestEnv {
         assertFalse(feature.showStoredPowerConfig.get());
         assertFalse(feature.hideBackgroundConfig.get());
         assertTrue(feature.alwaysShowFlowRateConfig.get());
+        assertTrue(feature.hideZeroUnitsConfig.get());
+        assertFalse(feature.hideZeroItemsConfig.get());
         assertTrue(feature.expandedConfig.get());
     }
 
@@ -62,13 +64,7 @@ class TeamResourceRateTest extends MindustryTestEnv {
         feature.alwaysShowFlowRateConfig.set(false);
         feature.expandedConfig.set(false);
 
-        feature.opacityConfig.reset();
-        feature.scaleConfig.reset();
-        feature.overlayWidthConfig.reset();
-        feature.overlayHeightConfig.reset();
-        feature.showUnitsConfig.reset();
-        feature.alwaysShowFlowRateConfig.reset();
-        feature.expandedConfig.reset();
+        feature.resetToDefaults();
 
         assertEquals(1f, feature.opacityConfig.get(), 0.001f);
         assertEquals(1f, feature.scaleConfig.get(), 0.001f);
@@ -80,6 +76,8 @@ class TeamResourceRateTest extends MindustryTestEnv {
         assertFalse(feature.showStoredPowerConfig.get());
         assertFalse(feature.hideBackgroundConfig.get());
         assertTrue(feature.alwaysShowFlowRateConfig.get());
+        assertTrue(feature.hideZeroUnitsConfig.get());
+        assertFalse(feature.hideZeroItemsConfig.get());
         assertTrue(feature.expandedConfig.get());
     }
 

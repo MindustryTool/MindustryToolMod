@@ -15,9 +15,12 @@ import mindustry.world.blocks.defense.ForceProjector;
 import mindustry.world.blocks.defense.MendProjector;
 import mindustry.world.blocks.defense.OverdriveProjector;
 import mindustry.world.blocks.defense.RegenProjector;
+import mindustry.world.blocks.defense.ShockwaveTower;
 import mindustry.world.blocks.defense.Wall;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustry.world.blocks.distribution.MassDriver;
+import mindustry.world.blocks.units.RepairTower;
+import mindustry.world.blocks.units.RepairTurret;
 import mindustrytool.test.MindustryTestEnv;
 
 class RangeDisplayFeatureTest extends MindustryTestEnv {
@@ -34,8 +37,16 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         RangeDisplayFeature feature = new RangeDisplayFeature();
 
         assertEquals(1.0f, feature.opacityConfig.get(), 0.001f);
+        assertEquals(1.0f, feature.strokeWidthConfig.get(), 0.001f);
+        assertFalse(feature.hoverOnlyConfig.get());
+        assertTrue(feature.filterTargetAirConfig.get());
+        assertTrue(feature.filterTargetGroundConfig.get());
+        assertFalse(feature.onlyWithAmmoConfig.get());
+        assertFalse(feature.proximityFilterConfig.get());
+        assertEquals(30.0f, feature.proximityRadiusConfig.get(), 0.001f);
         assertTrue(feature.drawTurretRangeAllyConfig.get());
         assertTrue(feature.drawTurretRangeEnemyConfig.get());
+        assertTrue(feature.drawUnitRangePlayerConfig.get());
         assertTrue(feature.drawUnitRangeAllyConfig.get());
         assertTrue(feature.drawUnitRangeEnemyConfig.get());
         assertTrue(feature.drawBlockRangeAllyConfig.get());
@@ -49,8 +60,16 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         RangeDisplayFeature feature = new RangeDisplayFeature();
 
         feature.opacityConfig.set(0.35f);
+        feature.strokeWidthConfig.set(2.5f);
+        feature.hoverOnlyConfig.set(true);
+        feature.filterTargetAirConfig.set(false);
+        feature.filterTargetGroundConfig.set(false);
+        feature.onlyWithAmmoConfig.set(true);
+        feature.proximityFilterConfig.set(true);
+        feature.proximityRadiusConfig.set(45.0f);
         feature.drawTurretRangeAllyConfig.set(false);
         feature.drawTurretRangeEnemyConfig.set(false);
+        feature.drawUnitRangePlayerConfig.set(false);
         feature.drawUnitRangeAllyConfig.set(false);
         feature.drawUnitRangeEnemyConfig.set(false);
         feature.drawBlockRangeAllyConfig.set(false);
@@ -59,8 +78,16 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         feature.dashedConfig.set(false);
 
         assertEquals(0.35f, feature.opacityConfig.get(), 0.001f);
+        assertEquals(2.5f, feature.strokeWidthConfig.get(), 0.001f);
+        assertTrue(feature.hoverOnlyConfig.get());
+        assertFalse(feature.filterTargetAirConfig.get());
+        assertFalse(feature.filterTargetGroundConfig.get());
+        assertTrue(feature.onlyWithAmmoConfig.get());
+        assertTrue(feature.proximityFilterConfig.get());
+        assertEquals(45.0f, feature.proximityRadiusConfig.get(), 0.001f);
         assertFalse(feature.drawTurretRangeAllyConfig.get());
         assertFalse(feature.drawTurretRangeEnemyConfig.get());
+        assertFalse(feature.drawUnitRangePlayerConfig.get());
         assertFalse(feature.drawUnitRangeAllyConfig.get());
         assertFalse(feature.drawUnitRangeEnemyConfig.get());
         assertFalse(feature.drawBlockRangeAllyConfig.get());
@@ -71,8 +98,16 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         feature.resetToDefaults();
 
         assertEquals(1.0f, feature.opacityConfig.get(), 0.001f);
+        assertEquals(1.0f, feature.strokeWidthConfig.get(), 0.001f);
+        assertFalse(feature.hoverOnlyConfig.get());
+        assertTrue(feature.filterTargetAirConfig.get());
+        assertTrue(feature.filterTargetGroundConfig.get());
+        assertFalse(feature.onlyWithAmmoConfig.get());
+        assertFalse(feature.proximityFilterConfig.get());
+        assertEquals(30.0f, feature.proximityRadiusConfig.get(), 0.001f);
         assertTrue(feature.drawTurretRangeAllyConfig.get());
         assertTrue(feature.drawTurretRangeEnemyConfig.get());
+        assertTrue(feature.drawUnitRangePlayerConfig.get());
         assertTrue(feature.drawUnitRangeAllyConfig.get());
         assertTrue(feature.drawUnitRangeEnemyConfig.get());
         assertTrue(feature.drawBlockRangeAllyConfig.get());
@@ -104,27 +139,39 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         MassDriver massDriver = new MassDriver("test-driver");
         ForceProjector force = new ForceProjector("test-force");
         RegenProjector regen = new RegenProjector("test-regen");
+        RepairTower repairTower = new RepairTower("test-repair-tower");
+        RepairTurret repairTurret = new RepairTurret("test-repair-turret");
+        ShockwaveTower shockwave = new ShockwaveTower("test-shockwave");
         Wall wall = new Wall("test-wall");
 
         // Turret classification: combat turrets only (not build turrets)
         assertTrue(feature.isTurretBlock(turret));
         assertFalse(feature.isTurretBlock(buildTurret));
         assertFalse(feature.isTurretBlock(mend));
+        assertFalse(feature.isTurretBlock(repairTower));
+        assertFalse(feature.isTurretBlock(repairTurret));
+        assertFalse(feature.isTurretBlock(shockwave));
         assertFalse(feature.isTurretBlock(wall));
 
-        // Support block classification: build towers, projectors, drivers
+        // Support block classification: build towers, projectors, drivers, repair towers, shockwave
         assertTrue(feature.isSupportBlock(buildTurret));
         assertTrue(feature.isSupportBlock(mend));
         assertTrue(feature.isSupportBlock(overdrive));
         assertTrue(feature.isSupportBlock(massDriver));
         assertTrue(feature.isSupportBlock(force));
         assertTrue(feature.isSupportBlock(regen));
+        assertTrue(feature.isSupportBlock(repairTower));
+        assertTrue(feature.isSupportBlock(repairTurret));
+        assertTrue(feature.isSupportBlock(shockwave));
         assertFalse(feature.isSupportBlock(turret));
         assertFalse(feature.isSupportBlock(wall));
 
         // Range block classification: turrets and support blocks
         assertTrue(feature.isRangeBlock(turret));
         assertTrue(feature.isRangeBlock(mend));
+        assertTrue(feature.isRangeBlock(repairTower));
+        assertTrue(feature.isRangeBlock(repairTurret));
+        assertTrue(feature.isRangeBlock(shockwave));
         assertFalse(feature.isRangeBlock(wall));
     }
 

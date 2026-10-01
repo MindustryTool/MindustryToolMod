@@ -32,6 +32,12 @@ class RequestTest extends SolimEnv {
 
 	private static HttpServer server;
 	private static int serverPort;
+	private static final AtomicInteger retryTransientCalls = new AtomicInteger();
+	private static final AtomicInteger retry503Calls = new AtomicInteger();
+	private static final AtomicInteger retry404Calls = new AtomicInteger();
+	private static final AtomicInteger post500Calls = new AtomicInteger();
+	private static final AtomicInteger postRetryCalls = new AtomicInteger();
+	private static final AtomicInteger noRetryCalls = new AtomicInteger();
 
 	@BeforeAll
 	static void startServer() throws IOException {
@@ -119,6 +125,96 @@ class RequestTest extends SolimEnv {
 				byte[] response = (query != null ? query : "").getBytes(StandardCharsets.UTF_8);
 				exchange.getResponseHeaders().set("Content-Type", "text/plain");
 				exchange.sendResponseHeaders(200, response.length);
+				try (OutputStream os = exchange.getResponseBody()) {
+					os.write(response);
+				}
+			}
+		});
+		server.createContext("/test-retry-transient", new HttpHandler() {
+			@Override
+			public void handle(HttpExchange exchange) throws IOException {
+				int count = retryTransientCalls.incrementAndGet();
+				if (count == 1) {
+					byte[] response = "Internal Server Error".getBytes(StandardCharsets.UTF_8);
+					exchange.getResponseHeaders().set("Content-Type", "text/plain");
+					exchange.sendResponseHeaders(500, response.length);
+					try (OutputStream os = exchange.getResponseBody()) {
+						os.write(response);
+					}
+				} else {
+					byte[] response = "recovered".getBytes(StandardCharsets.UTF_8);
+					exchange.getResponseHeaders().set("Content-Type", "text/plain");
+					exchange.sendResponseHeaders(200, response.length);
+					try (OutputStream os = exchange.getResponseBody()) {
+						os.write(response);
+					}
+				}
+			}
+		});
+		server.createContext("/test-retry-503", new HttpHandler() {
+			@Override
+			public void handle(HttpExchange exchange) throws IOException {
+				retry503Calls.incrementAndGet();
+				byte[] response = "Service Unavailable".getBytes(StandardCharsets.UTF_8);
+				exchange.getResponseHeaders().set("Content-Type", "text/plain");
+				exchange.sendResponseHeaders(503, response.length);
+				try (OutputStream os = exchange.getResponseBody()) {
+					os.write(response);
+				}
+			}
+		});
+		server.createContext("/test-retry-404", new HttpHandler() {
+			@Override
+			public void handle(HttpExchange exchange) throws IOException {
+				retry404Calls.incrementAndGet();
+				byte[] response = "Not Found".getBytes(StandardCharsets.UTF_8);
+				exchange.getResponseHeaders().set("Content-Type", "text/plain");
+				exchange.sendResponseHeaders(404, response.length);
+				try (OutputStream os = exchange.getResponseBody()) {
+					os.write(response);
+				}
+			}
+		});
+		server.createContext("/test-post-500", new HttpHandler() {
+			@Override
+			public void handle(HttpExchange exchange) throws IOException {
+				post500Calls.incrementAndGet();
+				byte[] response = "Post Error".getBytes(StandardCharsets.UTF_8);
+				exchange.getResponseHeaders().set("Content-Type", "text/plain");
+				exchange.sendResponseHeaders(500, response.length);
+				try (OutputStream os = exchange.getResponseBody()) {
+					os.write(response);
+				}
+			}
+		});
+		server.createContext("/test-post-retry", new HttpHandler() {
+			@Override
+			public void handle(HttpExchange exchange) throws IOException {
+				int count = postRetryCalls.incrementAndGet();
+				if (count == 1) {
+					byte[] response = "Post Fail".getBytes(StandardCharsets.UTF_8);
+					exchange.getResponseHeaders().set("Content-Type", "text/plain");
+					exchange.sendResponseHeaders(500, response.length);
+					try (OutputStream os = exchange.getResponseBody()) {
+						os.write(response);
+					}
+				} else {
+					byte[] response = "post recovered".getBytes(StandardCharsets.UTF_8);
+					exchange.getResponseHeaders().set("Content-Type", "text/plain");
+					exchange.sendResponseHeaders(200, response.length);
+					try (OutputStream os = exchange.getResponseBody()) {
+						os.write(response);
+					}
+				}
+			}
+		});
+		server.createContext("/test-no-retry-500", new HttpHandler() {
+			@Override
+			public void handle(HttpExchange exchange) throws IOException {
+				noRetryCalls.incrementAndGet();
+				byte[] response = "No Retry Error".getBytes(StandardCharsets.UTF_8);
+				exchange.getResponseHeaders().set("Content-Type", "text/plain");
+				exchange.sendResponseHeaders(500, response.length);
 				try (OutputStream os = exchange.getResponseBody()) {
 					os.write(response);
 				}
@@ -459,5 +555,154 @@ class RequestTest extends SolimEnv {
 		assertTrue(bodyString.contains("Content-Type: image/png"));
 		assertTrue(bodyString.contains("dummy png data"));
 		assertTrue(bodyString.endsWith("--" + boundary + "--\r\n"));
+	}
+	@Test
+	void testRetrySuccessAfterTransient500() throws Exception {
+		retryTransientCalls.set(0);
+		Request client = Request.builder()
+				.baseUrl("http://127.0.0.1:" + serverPort)
+				.retryStrategy(new DefaultRetryStrategy(3, Duration.ofMillis(20), 2.0, false))
+				.build();
+
+		Request.Response<String> res = client.get("/test-retry-transient").sendAsync().get();
+		assertEquals(200, res.statusCode());
+		assertEquals("recovered", res.body());
+		assertEquals(2, retryTransientCalls.get());
+	}
+
+	@Test
+	void testRetryExhaustionOnPersistent503() {
+		retry503Calls.set(0);
+		Request client = Request.builder()
+				.baseUrl("http://127.0.0.1:" + serverPort)
+				.retryStrategy(new DefaultRetryStrategy(3, Duration.ofMillis(10), 2.0, false))
+				.build();
+
+		ExecutionException ex =
+				assertThrows(ExecutionException.class, () -> client.get("/test-retry-503").sendAsync().get());
+		assertTrue(ex.getCause() instanceof HttpException);
+		HttpException httpEx = (HttpException) ex.getCause();
+		assertEquals(503, httpEx.statusCode());
+		assertEquals(4, retry503Calls.get());
+	}
+
+	@Test
+	void testNoRetryOn404ClientError() {
+		retry404Calls.set(0);
+		Request client = Request.builder()
+				.baseUrl("http://127.0.0.1:" + serverPort)
+				.retryStrategy(new DefaultRetryStrategy(3, Duration.ofMillis(10), 2.0, false))
+				.build();
+
+		ExecutionException ex =
+				assertThrows(ExecutionException.class, () -> client.get("/test-retry-404").sendAsync().get());
+		assertTrue(ex.getCause() instanceof HttpException);
+		HttpException httpEx = (HttpException) ex.getCause();
+		assertEquals(404, httpEx.statusCode());
+		assertEquals(1, retry404Calls.get());
+	}
+
+	@Test
+	void testNoRetryOnNetworkException() {
+		Request client = Request.builder()
+				.baseUrl("http://127.0.0.1:1")
+				.timeout(Duration.ofMillis(500))
+				.retryStrategy(new DefaultRetryStrategy(3, Duration.ofMillis(10), 2.0, false))
+				.build();
+
+		ExecutionException ex =
+				assertThrows(ExecutionException.class, () -> client.get("/unreachable").sendAsync().get());
+		assertTrue(ex.getCause() instanceof IOException);
+	}
+
+	@Test
+	void testPostDoesNotRetryByDefault() {
+		post500Calls.set(0);
+		Request client = Request.builder()
+				.baseUrl("http://127.0.0.1:" + serverPort)
+				.retryStrategy(new DefaultRetryStrategy(3, Duration.ofMillis(10), 2.0, false))
+				.build();
+
+		ExecutionException ex =
+				assertThrows(ExecutionException.class, () -> client.post("/test-post-500").sendAsync().get());
+		assertTrue(ex.getCause() instanceof HttpException);
+		HttpException httpEx = (HttpException) ex.getCause();
+		assertEquals(500, httpEx.statusCode());
+		assertEquals(1, post500Calls.get());
+	}
+
+	@Test
+	void testPostWithRetryEnabled() throws Exception {
+		postRetryCalls.set(0);
+		Request client = Request.builder()
+				.baseUrl("http://127.0.0.1:" + serverPort)
+				.retryStrategy(new DefaultRetryStrategy(3, Duration.ofMillis(20), 2.0, false))
+				.build();
+
+		Request.Response<String> res = client.post("/test-post-retry")
+				.retry(true)
+				.sendAsync()
+				.get();
+		assertEquals(200, res.statusCode());
+		assertEquals("post recovered", res.body());
+		assertEquals(2, postRetryCalls.get());
+	}
+
+	@Test
+	void testNoRetryOverride() {
+		noRetryCalls.set(0);
+		Request client = Request.builder()
+				.baseUrl("http://127.0.0.1:" + serverPort)
+				.retryStrategy(new DefaultRetryStrategy(3, Duration.ofMillis(10), 2.0, false))
+				.build();
+
+		ExecutionException ex =
+				assertThrows(ExecutionException.class, () -> client.get("/test-no-retry-500").noRetry().sendAsync().get());
+		assertTrue(ex.getCause() instanceof HttpException);
+		assertEquals(1, noRetryCalls.get());
+	}
+
+	@Test
+	void testCustomRetryStrategy() throws Exception {
+		AtomicInteger customCalls = new AtomicInteger();
+		Request client = Request.builder()
+				.baseUrl("http://127.0.0.1:" + serverPort)
+				.build();
+
+		RetryStrategy custom = (attempt, method, failure) -> {
+			customCalls.incrementAndGet();
+			return attempt <= 2 ? Duration.ofMillis(5) : null;
+		};
+
+		ExecutionException ex = assertThrows(
+				ExecutionException.class,
+				() -> client.get("/test-no-retry-500").retryStrategy(custom).sendAsync().get());
+		assertTrue(ex.getCause() instanceof HttpException);
+		assertEquals(3, customCalls.get());
+	}
+
+	@Test
+	void testDefaultRetryStrategyCalculations() {
+		DefaultRetryStrategy strategy = new DefaultRetryStrategy(3, Duration.ofMillis(200), 2.0, false);
+		HttpException serverErr = new HttpException("http://test", 500, null, null, null);
+		HttpException clientErr = new HttpException("http://test", 400, null, null, null);
+
+		assertEquals(Duration.ofMillis(200), strategy.nextRetryDelay(1, "GET", serverErr));
+		assertEquals(Duration.ofMillis(400), strategy.nextRetryDelay(2, "GET", serverErr));
+		assertEquals(Duration.ofMillis(800), strategy.nextRetryDelay(3, "GET", serverErr));
+		assertNull(strategy.nextRetryDelay(4, "GET", serverErr));
+		assertNull(strategy.nextRetryDelay(0, "GET", serverErr));
+
+		assertNull(strategy.nextRetryDelay(1, "GET", clientErr));
+		assertNull(strategy.nextRetryDelay(1, "GET", new IOException("connection error")));
+
+		assertEquals(Duration.ofMillis(200), strategy.nextRetryDelay(1, "PUT", serverErr));
+		assertEquals(Duration.ofMillis(200), strategy.nextRetryDelay(1, "DELETE", serverErr));
+		assertEquals(Duration.ofMillis(200), strategy.nextRetryDelay(1, "HEAD", serverErr));
+		assertNull(strategy.nextRetryDelay(1, "POST", serverErr));
+
+		DefaultRetryStrategy postStrategy = strategy.withRetryPost(true);
+		assertTrue(postStrategy.retryPost());
+		assertEquals(Duration.ofMillis(200), postStrategy.nextRetryDelay(1, "POST", serverErr));
 	}
 }

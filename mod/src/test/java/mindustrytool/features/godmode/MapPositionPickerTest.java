@@ -36,7 +36,13 @@ class MapPositionPickerTest extends SolimEnv {
         Core.app = new MockApplication() {
             @Override
             public void post(Runnable runnable) {
-                postedTasks.add(runnable);
+                if (runnable instanceof MapPositionPicker.RemoveListenerTask) {
+                    synchronized (postedTasks) {
+                        postedTasks.add(runnable);
+                    }
+                } else {
+                    runnable.run();
+                }
             }
         };
         // Hermetic: without a live HUD the picker skips the toast path and the
@@ -55,8 +61,10 @@ class MapPositionPickerTest extends SolimEnv {
     }
 
     private void drainPostedTasks() {
-        while (!postedTasks.isEmpty()) {
-            postedTasks.pop().run();
+        synchronized (postedTasks) {
+            while (!postedTasks.isEmpty()) {
+                postedTasks.pop().run();
+            }
         }
     }
 

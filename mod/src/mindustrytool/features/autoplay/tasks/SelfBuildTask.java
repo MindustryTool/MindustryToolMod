@@ -15,6 +15,7 @@ import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustry.type.ItemStack;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.reactive.Readable;
@@ -39,7 +40,7 @@ public class SelfBuildTask implements AutoplayTask {
 
     @Override
     public TextureRegionDrawable getIcon() {
-        return Icon.hammer;
+        return FileIcon.of("hammer.png", Icon.hammer);
     }
 
     @Override

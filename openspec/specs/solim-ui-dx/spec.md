@@ -65,11 +65,19 @@ UI facade methods that accept reactive content SHALL declare a single `Readable<
 
 ### Requirement: Keyed collections use fluent configuration with terminal children
 
-`ReactiveGrid`, `ForEach`, and `VirtualList` SHALL follow the pattern **fundamental data on the factory → fluent configuration → terminal `.children(...)`**. The factory SHALL accept only fundamental data (`reactiveGrid(items)`, `forEach(items)`, `virtualList(items, heightProvider)`); static collections SHALL be accepted directly and wrapped internally. `ReactiveGrid` column count SHALL default to 1 with `.columns(int | Readable<Integer>)` overriding. The required item factory SHALL be supplied through a terminal `children(Function<T, Component>)` (and `children(BiFunction<T, GridItemContext, Component>)` on `ReactiveGrid`) that returns `void`, so configuration cannot continue after it. Component generics SHALL collapse from `<T, K>` to `<T>`; the key type SHALL remain internal. Omitting `.key(...)` SHALL default to identity keys with the reconciler's duplicate-key detection as the only guard. Optional configuration methods (`.key(...)`, `.columns(...)`, `.gap(...)`, `.empty(...)`, `.emptyView(...)`, `.overscan(...)`, `.onReachTop(...)`, `.onReachBottom(...)`, cell/table modifiers) SHALL live on the component, return the component, and be order-independent. Post-construction runtime configuration (e.g. `grid.columns(5)` on a retained reference) SHALL remain functional; terminality SHALL be construction-time API guidance only. No builder or config intermediate objects SHALL be introduced, and the fluent form SHALL add no allocations, subscriptions, effects, or reconciliation passes beyond field assignment.
+`ReactiveGrid`, `ForEach`, and `VirtualList` SHALL follow the pattern **fundamental data on the factory → fluent configuration → terminal `.children(...)`**. The factory SHALL accept only fundamental data (`reactiveGrid(items)`, `forEach(items)`, `virtualList(items, heightProvider)`); static collections SHALL be accepted directly and wrapped internally. `ReactiveGrid` column count SHALL default to 1 with `.columns(int | Readable<Integer>)` overriding. The required item factory SHALL be supplied through a terminal `children(Function<T, Component>)` (and `children(BiFunction<T, GridItemContext, Component>)` on `ReactiveGrid`) that returns `void`, so configuration cannot continue after it. Component generics SHALL collapse from `<T, K>` to `<T>`; the key type SHALL remain internal. Omitting `.key(...)` SHALL default to identity keys with the reconciler's duplicate-key detection as the only guard. Optional configuration methods (`.key(...)`, `.columns(...)`, `.gap(...)`, `.empty(...)`, `.emptyView(...)`, `.overscan(...)`, `.onReachTop(...)`, `.onReachBottom(...)`, cell/table modifiers) SHALL live on the component, return the component, and be order-independent. Post-construction runtime configuration (e.g. `grid.columns(5)` on a retained reference) and reactive column count signals passed to `.columns(Readable<Integer>)` SHALL reactively reflow the grid and update `itemWidth` and `GridItemContext.columnCount()`. `ForEach` SHALL reactively track its collection and reconcile items when the collection changes even when `.children(...)` is declared after initial element creation.
 
 #### Scenario: Grid with defaults and fluent configuration
 - **WHEN** `reactiveGrid(feature.trackSignal(type)).key(track -> track.id).children(track -> new MusicTrackCard(feature, track))` is declared
 - **THEN** a single-column reactive grid renders without any `Signal.of(1)` boilerplate and the item factory is the terminal call
+
+#### Scenario: Reactive column count signal reflows grid
+- **WHEN** `reactiveGrid(items).columns(columnCountSignal).children(factory)` is declared using the fluent facade
+- **THEN** the grid subscribes to `columnCountSignal` and reflows into the updated number of columns whenever `columnCountSignal` changes value
+
+#### Scenario: Runtime column configuration reflows grid
+- **WHEN** `grid.columns(newColumns)` is called on a retained `ReactiveGrid` reference after initial build
+- **THEN** the grid updates its column count and reflows its children accordingly
 
 #### Scenario: Terminal children ends the chain at compile time
 - **WHEN** `reactiveGrid(items).children(item -> render(item)).gap(8)` is attempted
@@ -81,11 +89,15 @@ UI facade methods that accept reactive content SHALL declare a single `Readable<
 
 #### Scenario: Context-aware item factory
 - **WHEN** `reactiveGrid(items).columns(cols).children((item, ctx) -> card(item).width(ctx.itemWidth()))` is declared
-- **THEN** the item factory receives the `GridItemContext` and item width updates reactively
+- **THEN** the item factory receives the `GridItemContext` and item width updates reactively when `cols` changes
 
 #### Scenario: Identity key default
 - **WHEN** `forEach(items).children(factory)` is declared without `.key(...)`
 - **THEN** items reconcile by identity (`equals`/`hashCode`) and duplicate keys throw `IllegalArgumentException` from the reconciler
+
+#### Scenario: ForEach updates on reactive collection changes
+- **WHEN** `forEach(itemsSignal).children(factory)` is declared using `solim.UI.forEach` and `itemsSignal` updates
+- **THEN** `ForEach` reconciles and mounts the updated items
 
 #### Scenario: Reference captured before children
 - **WHEN** a caller retains the component (`var list = virtualList(items, heights).key(k); list.children(factory); this.list = list;`)

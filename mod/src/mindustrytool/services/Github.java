@@ -45,6 +45,16 @@ public final class Github {
 				() -> rawApi.get(Config.MOD_HJSON_URL).sendAsync().thenApply(r -> r.body()));
 	}
 
+	/**
+	 * Fetches mod.hjson for a specific release tag from GitHub raw content.
+	 * Cached by tag in QueryCache.
+	 */
+	public static CompletableFuture<String> getModHjson(String tag) {
+		String url = "https://raw.githubusercontent.com/" + Config.ORG_NAME + "/" + Config.REPO_NAME + "/" + tag + "/mod.hjson";
+		return QueryCache.getInstance().fetchCached(QueryKey.of("github", "mod.hjson", tag),
+				() -> rawApi.get(url).sendAsync().thenApply(r -> r.body()));
+	}
+
 	// ─── Releases ──────────────────────────────────────────────────
 
 	/**

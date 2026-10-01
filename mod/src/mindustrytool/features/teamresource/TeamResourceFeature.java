@@ -41,7 +41,11 @@ public class TeamResourceFeature extends Feature {
     public final ConfigValue<Boolean> showStoredPowerConfig;
     public final ConfigValue<Boolean> hideBackgroundConfig;
     public final ConfigValue<Boolean> alwaysShowFlowRateConfig;
+    public final ConfigValue<Boolean> hideZeroUnitsConfig;
+    public final ConfigValue<Boolean> hideZeroItemsConfig;
     public final ConfigValue<Boolean> expandedConfig;
+    public final ConfigValue<Boolean> hideDragHandleConfig;
+    public final ConfigValue<Boolean> hideHeaderConfig;
 
     public final ContextualConfigValue<Float, Boolean> xConfig;
     public final ContextualConfigValue<Float, Boolean> yConfig;
@@ -75,7 +79,11 @@ public class TeamResourceFeature extends Feature {
         showStoredPowerConfig = config.boolValue("show-stored-power", false);
         hideBackgroundConfig = config.boolValue("hide-background", false);
         alwaysShowFlowRateConfig = config.boolValue("always-show-flow-rate", true);
+        hideZeroUnitsConfig = config.boolValue("hide-zero-units", true);
+        hideZeroItemsConfig = config.boolValue("hide-zero-items", false);
         expandedConfig = config.boolValue("expanded", true);
+        hideDragHandleConfig = config.boolValue("hide-drag-handle", false);
+        hideHeaderConfig = config.boolValue("hide-header", false);
 
         xConfig = config.floatValueKeyed(
                 "x",
@@ -188,7 +196,11 @@ public class TeamResourceFeature extends Feature {
         showStoredPowerConfig.reset();
         hideBackgroundConfig.reset();
         alwaysShowFlowRateConfig.reset();
+        hideZeroUnitsConfig.reset();
+        hideZeroItemsConfig.reset();
         expandedConfig.reset();
+        hideDragHandleConfig.reset();
+        hideHeaderConfig.reset();
     }
 
     public void resetPosition() {

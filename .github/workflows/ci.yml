@@ -4,15 +4,48 @@ on:
   push:
     branches:
       - '**'
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
 
 jobs:
-  build-test-release:
+  quality-check:
+    name: Quality & Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run verification checks (Checkstyle, Tests, Bundle Check)
+        run: ./gradlew check --parallel
+
+  build-package:
+    name: Build & Package
+    needs: quality-check
     runs-on: ubuntu-latest
 
     steps:
@@ -30,15 +63,14 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run verification checks (all subprojects)
-        run: ./gradlew check
-
-      - name: Build Mod JAR
-        run: ./gradlew deploy
+      - name: Build Universal Mod JAR
+        run: ./gradlew deploy --parallel
 
       - name: Upload PR Artifact
         if: github.event_name == 'pull_request'
@@ -47,9 +79,34 @@ jobs:
           name: MindustryToolMod-PR-${{ github.event.pull_request.number }}
           path: build/libs/MindustryToolMod.jar
           if-no-files-found: error
+          retention-days: 7
+
+      - name: Stash Built JAR for Release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v'))
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-jar
+          path: build/libs/MindustryToolMod.jar
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: build-package
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Built JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: release-jar
+          path: build/libs
 
       - name: Determine Version and Release Tag
-        if: github.event_name == 'push'
         id: version
         run: |
           VERSION=$(grep -E '^[[:space:]]*version:' mod.hjson | sed -E 's/^[[:space:]]*version:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/')
@@ -58,19 +115,18 @@ jobs:
             exit 1
           fi
           echo "Extracted version: $VERSION"
-          if [[ "${{ github.ref_name }}" != "main" ]]; then
-            TAG="${VERSION}-beta"
-            PRERELEASE="true"
-          else
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
             TAG="${VERSION}"
             PRERELEASE="false"
+          else
+            TAG="${VERSION}-beta"
+            PRERELEASE="true"
           fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub Release
-        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}

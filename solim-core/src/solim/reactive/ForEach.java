@@ -26,7 +26,7 @@ public final class ForEach<T> extends BaseComponent
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Readable<? extends Iterable<T>> collection;
     private Func<T, ?> keyExtractor = v -> v;
-    private @Nullable Func<T, Component> itemFactory;
+    private final Signal<Func<T, Component>> itemFactorySignal = Signal.of(null);
     private final StructuralReconciler<Object, Component> reconciler = new StructuralReconciler<>();
 
     public ForEach(Readable<? extends Iterable<T>> collection) {
@@ -46,10 +46,7 @@ public final class ForEach<T> extends BaseComponent
     }
 
     public void children(@Nullable Func<T, Component> itemFactory) {
-        this.itemFactory = itemFactory;
-        if (itemFactory != null && isBuilt()) {
-            reconcile();
-        }
+        this.itemFactorySignal.set(itemFactory);
     }
 
     private Object extractKey(T item) {
@@ -84,11 +81,12 @@ public final class ForEach<T> extends BaseComponent
     }
 
     private void reconcile() {
-        Func<T, Component> factory = itemFactory;
+        Func<T, Component> factory = itemFactorySignal.get();
+        Iterable<T> items = collection.get();
         if (factory == null) {
             return;
         }
-        Map<Object, Component> active = reconciler.reconcile(collection.get(), this::extractKey, factory);
+        Map<Object, Component> active = reconciler.reconcile(items, this::extractKey, factory);
 
         container.clearChildren();
         for (Component comp : active.values()) {

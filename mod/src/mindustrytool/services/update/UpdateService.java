@@ -62,6 +62,12 @@ public final class UpdateService {
 				String latestVerStr = VersionUtils.format(latestVersion);
 
 				if (VersionUtils.isGreater(latestVersion, currentVersion)) {
+					String minGameVersion = json.getString("minGameVersion", null);
+					if (!VersionUtils.isGameVersionAtLeast(minGameVersion)) {
+						Log.info("Update available (" + latestVerStr + ") but requires game version " + minGameVersion);
+						safeDone(finalDone);
+						return;
+					}
 					Log.info(Core.bundle.format("update.status.require-update", currentVerStr, latestVerStr));
 					fetchReleasesAndShowDialog(currentVerStr, latestVerStr, finalDone);
 				} else {
@@ -115,24 +121,44 @@ public final class UpdateService {
 						return;
 					}
 					int[] latestVersion = VersionUtils.parseVersion(latestTag);
-                    // TODO: Compare minGameVersion too
 					if (!VersionUtils.isGreater(latestVersion, safeCurrent)) {
 						Log.info(Core.bundle.get("update.status.up-to-date"));
 						safeDone(finalDone);
 						return;
 					}
-					Log.info(Core.bundle.format("update.status.require-update", safeCurrentStr, latestTag));
-					String changelog = ChangelogFormatter.format(body, true);
-					if (changelog == null || changelog.trim().isEmpty()) {
-						changelog = Core.bundle.get("update.error.parse-releases");
-					}
-					String finalChangelog = changelog;
-					try {
-						Core.app.post(() -> new UpdateDialog(safeCurrentStr, latestTag, finalChangelog, latestTag, finalDone).show());
-					} catch (Exception e) {
-						Log.err("Failed to show beta update dialog", e);
-						safeDone(finalDone);
-					}
+
+					Github.getModHjson(latestTag).whenComplete((metaBody, metaErr) -> {
+						try {
+							if (metaErr != null || metaBody == null || metaBody.trim().isEmpty()) {
+								Log.err("Failed to fetch mod metadata for beta tag " + latestTag, metaErr);
+								safeDone(finalDone);
+								return;
+							}
+							Jval metaJson = Jval.read(metaBody);
+							String minGameVersion = metaJson.getString("minGameVersion", null);
+							if (!VersionUtils.isGameVersionAtLeast(minGameVersion)) {
+								Log.info("Beta update available (" + latestTag + ") but requires game version " + minGameVersion);
+								safeDone(finalDone);
+								return;
+							}
+
+							Log.info(Core.bundle.format("update.status.require-update", safeCurrentStr, latestTag));
+							String changelog = ChangelogFormatter.format(body, true);
+							if (changelog == null || changelog.trim().isEmpty()) {
+								changelog = Core.bundle.get("update.error.parse-releases");
+							}
+							String finalChangelog = changelog;
+							try {
+								Core.app.post(() -> new UpdateDialog(safeCurrentStr, latestTag, finalChangelog, latestTag, finalDone).show());
+							} catch (Exception e) {
+								Log.err("Failed to show beta update dialog", e);
+								safeDone(finalDone);
+							}
+						} catch (Exception e) {
+							Log.err("Beta update check failed", e);
+							safeDone(finalDone);
+						}
+					});
 				} catch (Exception e) {
 					Log.err("Beta update check failed", e);
 					safeDone(finalDone);

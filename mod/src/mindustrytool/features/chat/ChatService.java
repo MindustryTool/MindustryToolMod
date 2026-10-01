@@ -12,9 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import arc.func.Prov;
+import arc.struct.Seq;
 import mindustrytool.models.response.ChannelDto;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
@@ -43,6 +45,7 @@ public class ChatService {
     private @Nullable String lastAutoLoadedChannelId;
     private final Effect autoLoadEffect;
     private final Effect unreadEffect;
+    private final Seq<CompletableFuture<?>> activeRequests = new Seq<>();
 
     public ChatService(ChatStore store, Prov<Boolean> windowOpenSupplier) {
         this.store = store;
@@ -111,6 +114,15 @@ public class ChatService {
             }
             streamRequest = null;
         }
+        synchronized (this) {
+            for (CompletableFuture<?> req : activeRequests) {
+                try {
+                    req.cancel(true);
+                } catch (Exception ignored) {
+                }
+            }
+            activeRequests.clear();
+        }
         Core.app.post(() -> store.session().setConnected(false));
     }
 
@@ -129,6 +141,21 @@ public class ChatService {
         Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
         String msg = cause.getMessage();
         return (msg != null && !msg.trim().isEmpty()) ? msg.trim() : cause.getClass().getSimpleName();
+    }
+
+    private static boolean isCancelled(Throwable throwable) {
+        return throwable instanceof CancellationException
+                || (throwable.getCause() instanceof CancellationException);
+    }
+
+    private synchronized <T> CompletableFuture<T> trackRequest(CompletableFuture<T> future) {
+        activeRequests.add(future);
+        future.whenComplete((res, err) -> {
+            synchronized (ChatService.this) {
+                activeRequests.remove(future, true);
+            }
+        });
+        return future;
     }
 
     public void refreshChannels() {
@@ -158,7 +185,7 @@ public class ChatService {
             store.messages().setLoadingInitial(channelId, true);
         }
 
-        MindustryTool.getChatMessages(channelId, null).thenAccept(messages -> {
+        trackRequest(MindustryTool.getChatMessages(channelId, null)).thenAccept(messages -> {
             Core.app.post(() -> {
                 store.messages().setLoadingInitial(channelId, false);
                 if (messages != null) {
@@ -180,6 +207,9 @@ public class ChatService {
                 fetchMissingUsers(messages);
             });
         }).exceptionally(e -> {
+            if (isCancelled(e)) {
+                return null;
+            }
             Core.app.post(() -> {
                 store.messages().setLoadingInitial(channelId, false);
                 if (!hasExisting) {
@@ -196,7 +226,7 @@ public class ChatService {
         if (activeId != null && !activeId.isEmpty()) {
             syncActiveChannelSilently(activeId);
         }
-        MindustryTool.getChatChannels().thenAccept(channels -> {
+        trackRequest(MindustryTool.getChatChannels()).thenAccept(channels -> {
             Core.app.post(() -> {
                 store.channels().replace(channels);
                 if (channels != null) {
@@ -208,6 +238,9 @@ public class ChatService {
                 }
             });
         }).exceptionally(e -> {
+            if (isCancelled(e)) {
+                return null;
+            }
             Log.err("Failed to catch up chat channels metadata", e);
             return null;
         });
@@ -242,7 +275,7 @@ public class ChatService {
         store.messages().setLoadingInitial(channelId, true);
         store.messages().setError(channelId, null);
 
-        MindustryTool.getChatMessages(channelId, null).thenAccept(messages -> {
+        trackRequest(MindustryTool.getChatMessages(channelId, null)).thenAccept(messages -> {
             Core.app.post(() -> {
                 store.messages().setLoadingInitial(channelId, false);
                 if (messages != null) {
@@ -264,6 +297,9 @@ public class ChatService {
                 fetchMissingUsers(messages);
             });
         }).exceptionally(e -> {
+            if (isCancelled(e)) {
+                return null;
+            }
             Core.app.post(() -> {
                 store.messages().setLoadingInitial(channelId, false);
                 store.messages().setError(channelId, extractError(e));
@@ -292,7 +328,7 @@ public class ChatService {
         String oldestId = currentMsgs.get(0).getId();
         store.messages().setLoadingOlder(true);
 
-        MindustryTool.getChatMessages(channelId, oldestId).thenAccept(older -> {
+        trackRequest(MindustryTool.getChatMessages(channelId, oldestId)).thenAccept(older -> {
             Core.app.post(() -> {
                 store.messages().setLoadingOlder(false);
                 if (older == null || older.isEmpty()) {
@@ -307,6 +343,9 @@ public class ChatService {
                 }
             });
         }).exceptionally(e -> {
+            if (isCancelled(e)) {
+                return null;
+            }
             Core.app.post(() -> store.messages().setLoadingOlder(false));
             Log.err("Failed to fetch older chat messages for " + channelId, e);
             return null;

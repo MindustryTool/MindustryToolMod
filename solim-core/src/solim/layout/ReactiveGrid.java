@@ -53,10 +53,15 @@ public final class ReactiveGrid<T> extends BaseComponent
     };
 
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private Readable<Integer> columnCount = Readable.of(1);
+    private final Signal<Readable<Integer>> columnSource = Signal.of(Readable.of(1));
+    private final Computed<Integer> resolvedColumnCount = new Computed<>(() -> {
+        Readable<Integer> src = columnSource.get();
+        Integer val = src != null ? src.get() : null;
+        return Math.max(1, val != null ? val : 1);
+    });
     private final Readable<? extends Iterable<T>> items;
     private Func<T, ?> keyExtractor = v -> v;
-    private @Nullable Func2<T, GridItemContext, Component> itemFactory;
+    private final Signal<Func2<T, GridItemContext, Component>> itemFactorySignal = Signal.of(null);
     private final StructuralReconciler<Object, Component> reconciler = new StructuralReconciler<>();
     private final List<Disposable> itemBindings = new ArrayList<>();
 
@@ -75,7 +80,7 @@ public final class ReactiveGrid<T> extends BaseComponent
 
         this.itemWidth = new Computed<>(() -> {
             float tw = tableWidth.get();
-            int cols = Math.max(1, columnCount.get() != null ? columnCount.get() : 1);
+            int cols = resolvedColumnCount.get();
             float g = gapSignal.get();
             float horizontalMargin = table.getMarginLeft() + table.getMarginRight();
             float availableWidth = Math.max(0f, tw - horizontalMargin);
@@ -96,11 +101,11 @@ public final class ReactiveGrid<T> extends BaseComponent
 
             @Override
             public Readable<Integer> columnCount() {
-                return columnCount;
+                return resolvedColumnCount;
             }
         };
 
-        growX();
+        constraints.growX = true;
     }
 
     public static <T> ReactiveGrid<T> of(Readable<? extends Iterable<T>> items) {
@@ -112,7 +117,14 @@ public final class ReactiveGrid<T> extends BaseComponent
     }
 
     public ReactiveGrid<T> columns(@Nullable Readable<Integer> columns) {
-        this.columnCount = columns != null ? columns : Readable.of(1);
+        this.columnSource.set(columns != null ? columns : Readable.of(1));
+        if (isBuilt()) {
+            Func2<T, GridItemContext, Component> factory = itemFactorySignal.peek();
+            if (factory != null) {
+                Integer cols = resolvedColumnCount.peek();
+                updateItemsAndReflow(items.peek(), Math.max(1, cols != null ? cols : 1), factory);
+            }
+        }
         return this;
     }
 
@@ -126,16 +138,11 @@ public final class ReactiveGrid<T> extends BaseComponent
     }
 
     public void children(@Nullable Func2<T, GridItemContext, Component> itemFactory) {
-        this.itemFactory = itemFactory;
-        refreshIfBuilt();
-    }
-
-    private void refreshIfBuilt() {
-        if (itemFactory == null || !isBuilt()) {
-            return;
+        this.itemFactorySignal.set(itemFactory);
+        if (itemFactory != null && isBuilt()) {
+            Integer cols = resolvedColumnCount.peek();
+            updateItemsAndReflow(items.peek(), Math.max(1, cols != null ? cols : 1), itemFactory);
         }
-        Integer cols = columnCount.peek();
-        updateItemsAndReflow(items.peek(), Math.max(1, cols != null ? cols : 1));
     }
 
     private Object extractKey(T item) {
@@ -185,7 +192,7 @@ public final class ReactiveGrid<T> extends BaseComponent
 
     @Override
     public void respace() {
-        int cols = Math.max(1, columnCount.get() != null ? columnCount.get() : 1);
+        int cols = resolvedColumnCount.get();
         GapContainer.applyGridSpacing(table, cols, gap);
     }
 
@@ -223,24 +230,24 @@ public final class ReactiveGrid<T> extends BaseComponent
 
         Effect.of(() -> {
             Iterable<T> itemList = items.get();
-            int cols = Math.max(1, columnCount.get() != null ? columnCount.get() : 1);
+            int cols = resolvedColumnCount.get();
+            Func2<T, GridItemContext, Component> factory = itemFactorySignal.get();
+            if (factory == null) {
+                return;
+            }
             if (table.getScene() != null && Core.app != null) {
                 Core.app.post(() -> {
-                    updateItemsAndReflow(itemList, cols);
+                    updateItemsAndReflow(itemList, cols, factory);
                 });
             } else {
-                updateItemsAndReflow(itemList, cols);
+                updateItemsAndReflow(itemList, cols, factory);
             }
         });
 
         return table;
     }
 
-    private void updateItemsAndReflow(Iterable<T> itemList, int cols) {
-        Func2<T, GridItemContext, Component> factory = itemFactory;
-        if (factory == null) {
-            return;
-        }
+    private void updateItemsAndReflow(Iterable<T> itemList, int cols, Func2<T, GridItemContext, Component> factory) {
         reconciler.reconcile(itemList, this::extractKey, item -> factory.get(item, context));
         reflow(cols);
     }
@@ -323,6 +330,7 @@ public final class ReactiveGrid<T> extends BaseComponent
 
         reconciler.dispose();
         itemWidth.dispose();
+        resolvedColumnCount.dispose();
 
         if (currentEmptyComponent != null) {
             currentEmptyComponent.dispose();

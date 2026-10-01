@@ -45,6 +45,7 @@ public abstract class MindustryTestEnv extends SolimEnv {
 
 	@AfterEach
 	public void tearDownMindustryTestEnv() {
+		flushEffects();
 		restoreIcons();
 		Fonts.def = fontsDefSnapshot;
 		fontsDefSnapshot = null;

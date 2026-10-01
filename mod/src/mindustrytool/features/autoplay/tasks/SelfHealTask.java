@@ -11,6 +11,7 @@ import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustry.world.meta.BlockFlag;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.config.ConfigValue;
@@ -42,7 +43,7 @@ public class SelfHealTask implements AutoplayTask {
 
     @Override
     public TextureRegionDrawable getIcon() {
-        return Icon.refresh;
+        return FileIcon.of("heart.png", Icon.refresh);
     }
 
     @Override

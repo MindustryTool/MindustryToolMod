@@ -37,7 +37,7 @@ import mindustrytool.features.translation.TranslationFeature;
 import mindustrytool.features.wavepreview.WavePreviewFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.browser.map.MapBrowserFeature;
-import mindustrytool.features.bridgevisualizer.BridgeVisualizerFeature;
+import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import mindustrytool.input.ModInputManager;
 import mindustrytool.services.Github;
@@ -77,7 +77,7 @@ public class Main extends Mod {
                 new TranslationFeature(),
                 new SchematicBrowserFeature(),
                 new MapBrowserFeature(),
-                new BridgeVisualizerFeature(),
+                new VisualizerFeature(),
                 new PlayerConnectFeature(),
                 new HealthBarFeature(),
                 new CameraZoomFeature(),
