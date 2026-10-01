@@ -9,6 +9,7 @@ import arc.struct.Seq;
 import java.util.Set;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
+import mindustrytool.Config;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -138,12 +139,17 @@ public final class FeatureSettingsView extends BaseComponent {
                                 .placeholder(Core.bundle.get("feature.search.placeholder"));
                     });
 
-            row().growX().top().left().gap(unit(2)).children(() -> {
-                spacer();
+            wrap().growX().top().left().gap(unit(2)).children(() -> {
                 button(FeatureManager::reenable).style(WebStyles.secondary()).height(unit(10))
                         .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {
                             icon(Icon.refresh);
                             text(Core.bundle.get("feature.button.re-enable"));
+                        });
+
+                button(() -> Core.app.openURI(Config.PROJECT_SUGGESTION_URL)).style(WebStyles.secondary()).height(unit(10))
+                        .tooltip(Core.bundle.get("feature.button.create-suggestion.tooltip")).gap(unit(2)).children(() -> {
+                            icon(Icon.link);
+                            text(Core.bundle.get("feature.button.create-suggestion"));
                         });
 
                 button(() -> new GeneralSettingsDialog().show()).style(WebStyles.primary()).height(unit(10))

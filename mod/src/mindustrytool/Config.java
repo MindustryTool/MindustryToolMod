@@ -32,4 +32,5 @@ public class Config {
 
 	public static final String PROJECT_URL = "https://yourchoice.smme.workers.dev";
 	public static final String PROJECT_ID = "cmm8tccmc0001vlucyj8bn6s1";
+	public static final String PROJECT_SUGGESTION_URL = PROJECT_URL + "/projects/" + PROJECT_ID;
 }
