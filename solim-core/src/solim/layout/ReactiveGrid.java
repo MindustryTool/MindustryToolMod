@@ -192,7 +192,11 @@ public final class ReactiveGrid<T> extends BaseComponent
 
     @Override
     public void respace() {
-        int cols = resolvedColumnCount.get();
+        int cols = resolvedColumnCount.peek() != null ? resolvedColumnCount.peek() : 1;
+        respace(cols);
+    }
+
+    private void respace(int cols) {
         GapContainer.applyGridSpacing(table, cols, gap);
     }
 
@@ -237,7 +241,9 @@ public final class ReactiveGrid<T> extends BaseComponent
             }
             if (table.getScene() != null && Core.app != null) {
                 Core.app.post(() -> {
-                    updateItemsAndReflow(itemList, cols, factory);
+                    if (!isDisposed()) {
+                        updateItemsAndReflow(itemList, cols, factory);
+                    }
                 });
             } else {
                 updateItemsAndReflow(itemList, cols, factory);
@@ -317,7 +323,7 @@ public final class ReactiveGrid<T> extends BaseComponent
             col++;
         }
         table.row();
-        respace();
+        respace(cols);
         table.invalidateHierarchy();
     }
 

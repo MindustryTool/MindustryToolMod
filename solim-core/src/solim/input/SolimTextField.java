@@ -211,7 +211,7 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
 
     public SolimTextField focus() {
         Core.app.post(() -> {
-            if (!field.isDisabled()) {
+            if (!isDisposed() && !field.isDisabled()) {
                 Core.scene.setKeyboardFocus(field);
                 field.requestKeyboard();
             }

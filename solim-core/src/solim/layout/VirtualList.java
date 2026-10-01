@@ -195,7 +195,7 @@ public final class VirtualList<T> extends BaseComponent
     public VirtualList<T> scrollToBottom() {
         if (pane != null) {
             Core.app.post(() -> {
-                if (pane != null) {
+                if (!isDisposed() && pane != null) {
                     pane.layout();
                     pane.setScrollPercentY(1f);
                     pane.updateVisualScroll();
