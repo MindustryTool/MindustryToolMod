@@ -515,4 +515,100 @@ class FluentCollectionsTest extends SolimEnv {
         fe.dispose();
         assertEquals(1, disposals.get());
     }
+
+    @Test
+    void reactiveGridReflowsWhenBuiltBeforeColumnsAndSignalChanges() {
+        Signal<Integer> cols = Signal.of(2);
+        Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("A", "B", "C", "D")));
+
+        ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+        // Eagerly build element as UI.reactiveGrid does
+        grid.element();
+
+        // Chain columns and children after build
+        grid.columns(cols);
+        grid.children(ItemComp::new);
+
+        assertEquals(4, grid.table().getChildren().size);
+
+        // Update columnCount signal
+        cols.set(4);
+        SignalDispatcher.flush();
+
+        assertEquals(4, grid.table().getChildren().size);
+        assertEquals(4, grid.context().columnCount().get().intValue());
+
+        grid.dispose();
+    }
+
+    @Test
+    void reactiveGridReflowsWhenColumnsConfiguredAtRuntimeOnRetainedReference() {
+        Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("1", "2", "3", "4", "5")));
+
+        ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+        grid.columns(2);
+        grid.children(ItemComp::new);
+        grid.element();
+
+        assertEquals(5, grid.table().getChildren().size);
+        assertEquals(2, grid.context().columnCount().get().intValue());
+
+        // Reconfigure at runtime
+        grid.columns(5);
+        SignalDispatcher.flush();
+
+        assertEquals(5, grid.table().getChildren().size);
+        assertEquals(5, grid.context().columnCount().get().intValue());
+
+        grid.dispose();
+    }
+
+    @Test
+    void reactiveGridContextItemWidthAndColumnCountTrackSignalChanges() {
+        Signal<Integer> cols = Signal.of(2);
+        Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("A", "B")));
+        AtomicReference<GridItemContext> capturedCtx = new AtomicReference<>();
+
+        ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+        grid.element();
+        grid.columns(cols);
+        grid.children((item, ctx) -> {
+            capturedCtx.set(ctx);
+            return new ItemComp(item);
+        });
+
+        assertNotNull(capturedCtx.get());
+        assertEquals(2, capturedCtx.get().columnCount().get().intValue());
+
+        cols.set(3);
+        SignalDispatcher.flush();
+
+        assertEquals(3, capturedCtx.get().columnCount().get().intValue());
+
+        grid.dispose();
+    }
+
+    @Test
+    void forEachUpdatesWhenBuiltBeforeChildrenAndCollectionChanges() {
+        Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("A", "B")));
+
+        ForEach<String> fe = new ForEach<>(items);
+        // Eagerly build element as UI.forEach does
+        fe.element();
+
+        // Attach children factory afterwards
+        fe.children(ItemComp::new);
+        SignalDispatcher.flush();
+
+        assertEquals(2, fe.container().getChildren().size);
+
+        // Update collection
+        items.set(new ArrayList<>(Arrays.asList("A", "B", "C")));
+        SignalDispatcher.flush();
+
+        assertEquals(3, fe.container().getChildren().size);
+
+        fe.dispose();
+    }
 }
+
