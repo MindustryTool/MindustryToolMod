@@ -113,3 +113,12 @@ tasks.register('jarAndroid'){
 tasks.register('deploy'){
 	dependsOn ':mod:deploy'
 }
+
+apply from: "gradle/check-bundles.gradle"
+
+tasks.register('check'){
+	group = 'verification'
+	description = 'Runs all subproject checks and localization bundle verification.'
+	dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'check' } }
+	dependsOn 'checkBundles'
+}

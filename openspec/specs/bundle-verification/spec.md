@@ -1,4 +1,9 @@
-## ADDED Requirements
+# bundle-verification Specification
+
+## Purpose
+Automated verification task for localization bundles comparing locale bundles against base English bundle, enforcing key completeness, obsolete key rejection, duplicate key prevention, placeholder syntax integrity, and untranslated string monitoring.
+
+## Requirements
 
 ### Requirement: Automated Bundle Key Completeness
 The verification task SHALL ensure that every locale bundle (`assets/bundles/bundle_<locale>.properties`) contains all keys present in the base bundle (`assets/bundles/bundle.properties`). Any missing key in any locale bundle SHALL cause the verification task to fail.
@@ -37,8 +42,17 @@ The verification task SHALL verify that placeholders (`{0}`, `{1}`, etc.) in tra
 - **THEN** the verification task reports the placeholder mismatch and fails the build.
 
 ### Requirement: Untranslated Key Monitoring
-The verification task SHALL monitor and report keys whose value in a locale bundle is identical to the base English bundle value, ignoring format specifiers, numbers, and allowed brand names.
+The verification task SHALL reject and fail the build on any keys whose value in any locale bundle is identical to the base English bundle value, unless the key is explicitly permitted by `assets/bundles/untranslated-allowlist.txt` or is a pure format token. Furthermore, the verification task SHALL enforce an anti-laziness guard that rejects any entry in `untranslated-allowlist.txt` whose English value contains natural language English grammatical words (such as `the`, `is`, `are`, `you`, `your`, `to`, `for`, `with`, `that`, `this`, `when`, `from`, `not`, `will`, `can`, `please`, `failed`, `success`, `error`, etc.).
 
-#### Scenario: Untranslated string flagged as warning
-- **WHEN** a locale string has an identical non-empty value to English that is not in the allowlist
-- **THEN** the verification task logs a warning with the untranslated key count and details without failing the build.
+#### Scenario: Untranslated string fails build
+- **WHEN** a locale string has an identical non-empty value to English and is not in `untranslated-allowlist.txt`
+- **THEN** the verification task logs an error with the untranslated key name and fails the build.
+
+#### Scenario: Legitimate special term passes
+- **WHEN** a key is present in `untranslated-allowlist.txt` (such as `web-feature.wiki.name`) and does not contain English grammatical stop-words
+- **THEN** the verification task allows the identical value and verification passes.
+
+#### Scenario: Anti-laziness guard rejects invalid allowlist entry
+- **WHEN** an entry in `untranslated-allowlist.txt` corresponds to a base English text containing common English stop-words (e.g. "Select the preferred mode")
+- **THEN** the verification task rejects the allowlist entry and fails the build with an anti-laziness error.
+

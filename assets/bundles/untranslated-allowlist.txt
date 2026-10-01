@@ -1,0 +1,32 @@
+# ─── Untranslated Key Allowlist ─────────────────────────────────────────
+# Keys listed here are permitted to have identical values to English base.
+# NOTE: Anti-laziness guard will reject any key whose English text contains
+# common grammatical English words (sentences or phrases). Do NOT add regular
+# UI text or descriptions here.
+#
+# Format: <key> [optional comment]
+
+# Brand & Project Names
+section.MindustryTool.name
+web-feature.wiki.name
+web-feature.content-patches.name
+pretty-chat.prettier.uwu.name
+feature.translation.provider.gemini
+feature.translation.provider.deepl
+feature.translation.provider.devx
+
+# Technical Credentials & Formats
+feature.translation.gemini.api-key
+feature.translation.gemini.api-key.hint
+feature.translation.deepl.api-key
+feature.translation.devx.api-key
+feature.translation.devx.api-key.hint
+feature.player-connect.provider-address-hint
+
+# Technical Acronyms & Commands
+feature.time-control.settings.display-mode.hud
+feature.god-mode.settings.display-mode.hud
+feature.autoplay.settings.display-mode.hud
+feature.quick-schematic-grid.settings.display-mode.hud
+feature.god-mode.settings.provider.js
+
