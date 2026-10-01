@@ -44,3 +44,15 @@ Translation calls SHALL NOT retain long-term `QueryCache` entries. `TranslationF
 #### Scenario: Empty text short-circuits
 - **WHEN** `translate` is called with null or blank text
 - **THEN** it SHALL return the input (or empty string) without a network request
+
+### Requirement: Release Tag Mod Metadata Caching
+`Github` SHALL provide a query-cached method `getModHjson(tag)` to fetch `mod.hjson` for a specific release tag from the GitHub raw content endpoint using `QueryCache`.
+
+#### Scenario: Tag metadata cached upon first fetch
+- **WHEN** `Github.getModHjson(tag)` is called for a given release tag
+- **THEN** it SHALL fetch from `https://raw.githubusercontent.com/{ORG_NAME}/{REPO_NAME}/{tag}/mod.hjson` and cache the response under `QueryKey.of("github", "mod.hjson", tag)`
+
+#### Scenario: Subsequent call returns cached tag metadata
+- **WHEN** `Github.getModHjson(tag)` is called again for the same tag while fresh in `QueryCache`
+- **THEN** it SHALL return the cached response without issuing a new network request
+

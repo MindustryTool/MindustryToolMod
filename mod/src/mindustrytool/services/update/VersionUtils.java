@@ -1,7 +1,10 @@
 package mindustrytool.services.update;
 
+import arc.util.Nullable;
+import arc.util.Strings;
 import java.util.ArrayList;
 import java.util.List;
+import mindustry.core.Version;
 
 /**
  * Pure version utilities extracted from {@code old.mindustrytool.services.UpdateService}.
@@ -134,5 +137,43 @@ public final class VersionUtils {
 			}
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Checks whether the specified game build and revision meet or exceed {@code minGameVersion},
+	 * replicating {@link Version#isAtLeast(int, int, String)} semantics.
+	 *
+	 * <p>Rules:
+	 * <ul>
+	 *   <li>If {@code gameBuild <= 0} (custom / developer builds) → returns {@code true}.</li>
+	 *   <li>If {@code minGameVersion} is {@code null} or empty → returns {@code true}.</li>
+	 *   <li>If {@code minGameVersion} contains {@code .} (e.g. {@code 146.1}), requires
+	 *       {@code gameBuild > targetBuild || (gameBuild == targetBuild && gameRevision >= targetRev)}.</li>
+	 *   <li>Otherwise, requires {@code gameBuild >= targetBuild}.</li>
+	 * </ul>
+	 */
+	public static boolean isGameVersionAtLeast(int gameBuild, int gameRevision, @Nullable String minGameVersion) {
+		if (gameBuild <= 0 || minGameVersion == null) {
+			return true;
+		}
+		String trimmed = minGameVersion.trim();
+		if (trimmed.isEmpty()) {
+			return true;
+		}
+		int dot = trimmed.indexOf('.');
+		if (dot != -1) {
+			int targetBuild = Strings.parseInt(trimmed.substring(0, dot), 0);
+			int targetRev = Strings.parseInt(trimmed.substring(dot + 1), 0);
+			return gameBuild > targetBuild || (gameBuild == targetBuild && gameRevision >= targetRev);
+		}
+		return gameBuild >= Strings.parseInt(trimmed, 0);
+	}
+
+	/**
+	 * Runtime convenience check delegating to {@link #isGameVersionAtLeast(int, int, String)}
+	 * using {@link Version#build} and {@link Version#revision}.
+	 */
+	public static boolean isGameVersionAtLeast(@Nullable String minGameVersion) {
+		return isGameVersionAtLeast(Version.build, Version.revision, minGameVersion);
 	}
 }

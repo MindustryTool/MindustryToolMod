@@ -119,4 +119,36 @@ class VersionUtilsTest extends SolimEnv {
 		int[] parsed = VersionUtils.parseVersion("1.2.3-beta");
 		assertEquals("1.2.3", VersionUtils.format(parsed));
 	}
+
+	@Test
+	void isGameVersionAtLeast_customBuild_alwaysTrue() {
+		assertTrue(VersionUtils.isGameVersionAtLeast(0, 0, "160"));
+		assertTrue(VersionUtils.isGameVersionAtLeast(-1, 0, "160"));
+		assertTrue(VersionUtils.isGameVersionAtLeast(-1, 0, "146.1"));
+	}
+
+	@Test
+	void isGameVersionAtLeast_nullOrBlank_alwaysTrue() {
+		assertTrue(VersionUtils.isGameVersionAtLeast(146, 0, null));
+		assertTrue(VersionUtils.isGameVersionAtLeast(146, 0, ""));
+		assertTrue(VersionUtils.isGameVersionAtLeast(146, 0, "   "));
+	}
+
+	@Test
+	void isGameVersionAtLeast_plainInteger() {
+		assertTrue(VersionUtils.isGameVersionAtLeast(146, 0, "146"));
+		assertTrue(VersionUtils.isGameVersionAtLeast(160, 0, "146"));
+		assertTrue(VersionUtils.isGameVersionAtLeast(160, 0, " 160 "));
+		assertFalse(VersionUtils.isGameVersionAtLeast(145, 0, "146"));
+		assertFalse(VersionUtils.isGameVersionAtLeast(146, 0, "160"));
+	}
+
+	@Test
+	void isGameVersionAtLeast_withRevisionDot() {
+		assertTrue(VersionUtils.isGameVersionAtLeast(146, 1, "146.1"));
+		assertTrue(VersionUtils.isGameVersionAtLeast(146, 2, "146.1"));
+		assertTrue(VersionUtils.isGameVersionAtLeast(147, 0, "146.1"));
+		assertFalse(VersionUtils.isGameVersionAtLeast(146, 0, "146.1"));
+		assertFalse(VersionUtils.isGameVersionAtLeast(145, 5, "146.1"));
+	}
 }
