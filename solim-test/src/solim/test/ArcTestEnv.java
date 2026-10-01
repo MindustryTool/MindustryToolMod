@@ -11,6 +11,7 @@ import arc.mock.MockGraphics;
 import arc.scene.Scene;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
+import arc.util.Timer;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;
@@ -97,6 +98,8 @@ public class ArcTestEnv {
 		prevScene = Core.scene;
 		prevSettings = Core.settings;
 
+		Timer.instance().clear();
+
 		// Headless by default: components key fallbacks on Core.scene == null.
 		// Tests needing a live scene call newScene() in their own setup.
 		Core.scene = null;
@@ -107,6 +110,7 @@ public class ArcTestEnv {
 
 	@AfterEach
 	public void tearDownArcTestEnv() {
+		Timer.instance().clear();
 		// Idempotent-safe: app/graphics/gl must never be nulled, so a repeated
 		// teardown (manual + JUnit) cannot clear the initialized statics.
 		if (testApp != null) {
