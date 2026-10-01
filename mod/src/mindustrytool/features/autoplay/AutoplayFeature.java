@@ -29,6 +29,7 @@ import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import mindustrytool.features.autoplay.tasks.BaseAutoplayAI;
 import mindustrytool.features.autoplay.tasks.FleeTask;
 import mindustrytool.features.autoplay.tasks.FollowAssistTask;
+import mindustrytool.features.autoplay.tasks.HealUnitsTask;
 import mindustrytool.features.autoplay.tasks.MiningTask;
 import mindustrytool.features.autoplay.tasks.RebuildTask;
 import mindustrytool.features.autoplay.tasks.RepairTask;
@@ -51,6 +52,7 @@ public class AutoplayFeature extends Feature {
             FleeTask.ID,
             AttackTask.ID,
             RepairTask.ID,
+            HealUnitsTask.ID,
             FollowAssistTask.ID,
             SelfBuildTask.ID,
             RebuildTask.ID,
@@ -127,6 +129,7 @@ public class AutoplayFeature extends Feature {
         taskMap.put(FleeTask.ID, new FleeTask(this));
         taskMap.put(AttackTask.ID, new AttackTask());
         taskMap.put(RepairTask.ID, new RepairTask());
+        taskMap.put(HealUnitsTask.ID, new HealUnitsTask());
         taskMap.put(FollowAssistTask.ID, new FollowAssistTask(this));
         taskMap.put(SelfBuildTask.ID, new SelfBuildTask());
         taskMap.put(RebuildTask.ID, new RebuildTask());

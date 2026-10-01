@@ -1,4 +1,9 @@
-## ADDED Requirements
+# heal-units-task Specification
+
+## Purpose
+Provides autonomous detection, approach, and healing of damaged friendly mobile units.
+
+## Requirements
 
 ### Requirement: Heal Allied Units Task
 The Heal Units task MUST evaluate healing capabilities and navigate to heal damaged mobile allied units.
