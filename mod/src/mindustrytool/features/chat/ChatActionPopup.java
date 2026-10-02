@@ -113,7 +113,7 @@ public final class ChatActionPopup {
 
         TranslationFeature tf = FeatureManager.getFeature(TranslationFeature.class);
         CompletableFuture<String> future;
-        if (tf != null && tf.isEnabled() && tf.getActiveProvider().isConfigured()) {
+        if (tf != null && tf.getActiveProvider().isConfigured()) {
             future = tf.translate(message.getContent(), tf.getTargetLanguage());
         } else {
             future = MindustryTool.translate(message.getContent(), targetLocale);
