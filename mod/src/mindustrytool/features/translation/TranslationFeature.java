@@ -447,9 +447,9 @@ public class TranslationFeature extends Feature {
                         } else {
                             String formatted;
                             if (Boolean.TRUE.equals(showOriginalConfig.get())) {
-                                formatted = message + " [gold](" + translated + ")[white]";
+                                formatted = message + " [#00ff00](" + translated + ")[white]";
                             } else {
-                                formatted = "[gold][" + translated + "][white]";
+                                formatted = "[#00ff00][" + translated + "][white]";
                             }
                             onDeliver.get(formatted);
                         }
