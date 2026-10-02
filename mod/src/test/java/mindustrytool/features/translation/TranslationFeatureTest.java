@@ -7,8 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
-
-import mindustrytool.features.translation.providers.GeminiTranslationProvider;
+import mindustrytool.features.translation.providers.GoogleWebTranslationProvider;
 import mindustrytool.test.MindustryTestEnv;
 
 class TranslationFeatureTest extends MindustryTestEnv {
@@ -28,7 +27,7 @@ class TranslationFeatureTest extends MindustryTestEnv {
 
         feature.resetToDefaults();
 
-        assertEquals(GeminiTranslationProvider.ID, feature.providerConfig.get());
+        assertEquals(GoogleWebTranslationProvider.ID, feature.providerConfig.get());
         assertTrue(feature.showOriginalConfig.get());
         assertEquals("English", feature.outgoingTargetLangConfig.get());
         assertEquals(10, feature.geminiTimeoutConfig.get());

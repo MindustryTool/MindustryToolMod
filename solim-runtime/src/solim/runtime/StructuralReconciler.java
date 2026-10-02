@@ -35,8 +35,7 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 
 	/**
 	 * Reconciles the given items against currently active components with transactional rollback.
-	 *
-	 * @throws IllegalArgumentException if duplicate keys are detected in the item collection.
+	 * Duplicate keys are ignored with a warning (first wins).
 	 */
 	public <T> Map<K, C> reconcile(
 			Iterable<T> items,
@@ -44,14 +43,15 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 			Func<T, C> factory) {
 		final Iterable<T> effectiveItems = items != null ? items : Collections.<T>emptyList();
 
-		// Phase 1: Extract and validate keys (detect duplicates)
+		// Phase 1: Extract and validate keys (detect duplicates, first wins)
 		List<T> itemList = new ArrayList<>();
 		List<K> keyList = new ArrayList<>();
 		Set<K> seenKeys = new HashSet<>();
 		for (T item : effectiveItems) {
 			K key = keyExtractor.get(item);
 			if (!seenKeys.add(key)) {
-				throw new IllegalArgumentException("Duplicate key '" + key + "' in reconciler");
+				Log.warn("Duplicate key '@' in reconciler. Ignoring duplicate item.", key);
+				continue;
 			}
 			itemList.add(item);
 			keyList.add(key);

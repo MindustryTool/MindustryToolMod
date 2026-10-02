@@ -31,6 +31,7 @@ import solim.config.ConfigValue;
 import mindustrytool.features.translation.providers.DeepLTranslationProvider;
 import mindustrytool.features.translation.providers.DevXTranslationProvider;
 import mindustrytool.features.translation.providers.GeminiTranslationProvider;
+import mindustrytool.features.translation.providers.GoogleWebTranslationProvider;
 import mindustrytool.features.translation.ui.OutgoingLanguageDialog;
 import mindustrytool.features.translation.ui.TranslationSettingsDialog;
 import mindustrytool.features.FeatureManager;
@@ -128,7 +129,7 @@ public class TranslationFeature extends Feature {
 
         config = configGroup();
 
-        providerConfig = config.stringValue("provider", GeminiTranslationProvider.ID);
+        providerConfig = config.stringValue("provider", GoogleWebTranslationProvider.ID);
         showOriginalConfig = config.boolValue("show-original", true);
 
         // Outgoing translation configs
@@ -158,6 +159,7 @@ public class TranslationFeature extends Feature {
         devxTimeoutConfig = config.intValue("devx.timeout", 10);
         devxMaxHistoryConfig = config.intValue("devx.max-history", 5);
 
+        providers.add(new GoogleWebTranslationProvider());
         providers.add(new GeminiTranslationProvider(this));
         providers.add(new DevXTranslationProvider(this));
         providers.add(new DeepLTranslationProvider(this));
