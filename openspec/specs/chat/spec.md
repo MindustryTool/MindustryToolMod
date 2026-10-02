@@ -493,19 +493,23 @@ The test suite SHALL include an automated test that creates the real MessageGrou
 - **THEN** the measured layout height in the element tree matches ChatMessageHeightCalculator.calculateHeight exactly, accounting for multiple message cards and inter-message gaps
 
 ### Requirement: Individual message actions preserved in group view
-The system SHALL preserve click handling on individual message elements within a `MessageGroup` to display a shared floating action popup menu (providing Copy, Reply, and Translate actions) anchored near the clicked message, without dimming the screen with a modal dialog. Selecting Translate SHALL trigger translation and update the message text in-place within the message bubble.
+The system SHALL preserve click handling on individual message elements within a `MessageGroup` to display a shared floating action popup menu (providing Copy, Reply, and Translate actions) anchored near the clicked message, without dimming the screen with a modal dialog. Selecting Translate SHALL trigger on-demand translation, display a subtle translating indicator while pending, and update the message text in-place within the message bubble upon completion, accompanied by an interactive toggle chip to switch between translated and original text.
 
 #### Scenario: Clicking a specific message opens shared floating action popup
 - **WHEN** the user clicks on any message row inside a message group
 - **THEN** a shared floating action popup menu opens anchored near that specific message containing Copy, Reply, and Translate actions
 
-#### Scenario: Touching outside dismisses action popup
+#### Scenario: Clicking outside dismisses action popup
 - **WHEN** the user clicks anywhere outside the open floating action popup
-- **THEN** the action popup is dismissed
+- **THEN** the popup menu is dismissed
 
 #### Scenario: Translating message in-place
 - **WHEN** the user selects the Translate action from the popup
-- **THEN** translation is requested and the translated text is displayed in-place within the message item upon completion
+- **THEN** translation is requested, a progress indicator appears below the message, and the translated text replaces the original text in-place upon completion
+
+#### Scenario: Toggling between translated and original text
+- **WHEN** a message has been translated and the user clicks the translation toggle chip
+- **THEN** the displayed message text toggles between the translated text and the original text, and the chip label updates accordingly
 
 ### Requirement: Interactive URL Link Detection and Confirmation Dialog
 The chat message view SHALL detect valid HTTP/HTTPS URLs in text messages, highlight them using the design system primary color (`WebStyles.Colors.PRIMARY`), and prompt a confirmation dialog with translated text upon clicking before navigating externally via `Core.app.openURI(url)`.
@@ -864,4 +868,11 @@ The system SHALL render chat channels and message loading and error states using
 #### Scenario: Rendering channels directly from query data
 - **WHEN** `ChatChannelListView` mounts and `channelsQuery` resolves with channels
 - **THEN** it SHALL render `ChannelItem` components for all items in the query result without requiring a manual refresh
+
+### Requirement: Vertical Message Column Hierarchy
+The system SHALL layout message content, reply previews, translated text, translation indicators, and toggle chips within a vertical column hierarchy (`column().growX().top().left()`), preventing horizontal cell spillover or unanchored text drift across the screen.
+
+#### Scenario: Translated message renders vertically below header
+- **WHEN** a message row is built with or without replies and with active translation
+- **THEN** the message text, toggle chip, and status indicators stack strictly vertically within the message card bounds
 

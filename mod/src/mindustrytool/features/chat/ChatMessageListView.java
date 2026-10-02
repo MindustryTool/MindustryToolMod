@@ -454,17 +454,17 @@ when(showEndOfHistory)
                                 divider(Direction.Y).color(Pal.accent).width(unit(1)).marginRight(unit(1));
                             }
 
-                            if (raw.getReplyTo() != null && !raw.getReplyTo().isEmpty()) {
-                                column().growX().top().left().children(() -> {
+                            column().growX().top().left().children(() -> {
+                                if (raw.getReplyTo() != null && !raw.getReplyTo().isEmpty()) {
                                     buildReplyPreview(raw.getReplyTo());
                                     column().growX().top().left().marginTop(ChatMessageHeightCalculator.REPLY_GAP)
                                             .children(() -> {
                                                 buildMessageBody(parsed, isPending, isFailed);
                                             });
-                                });
-                            } else {
-                                buildMessageBody(parsed, isPending, isFailed);
-                            }
+                                } else {
+                                    buildMessageBody(parsed, isPending, isFailed);
+                                }
+                            });
                         });
             });
         }
@@ -600,30 +600,40 @@ when(showEndOfHistory)
 
             if (parsed instanceof TextMessage) {
                 TextMessage txt = (TextMessage) parsed;
-                buildMessageText(txt.getText(), bodyColor);
                 final String translatedId = parsed.getId();
-dynamic(store.translations().get(translatedId), translated -> {
-                     if (translated != null && !translated.isEmpty()) {
-                         final String translatedText = translated;
-                         column().growX().top().left().marginTop(unit(1)).children(() -> {
-                        text(Core.bundle.get("feature.chat.ui.translated-badge", "Translated"))
-                                .color(Pal.accent)
-                                .fontScale(0.8f)
-                                .left();
-                        buildMessageText(translatedText, bodyColor);
-                    });
-                }
+
+                Readable<TranslationViewState> viewState = new Computed<>(() -> {
+                    String tr = store.translations().get(translatedId).get();
+                    boolean orig = Boolean.TRUE.equals(store.translations().isShowingOriginal(translatedId).get());
+                    String currentTranslating = store.ui().translatingMessageId().get();
+                    boolean isTranslating = currentTranslating != null && currentTranslating.equals(translatedId);
+                    return new TranslationViewState(tr, orig, isTranslating);
                 });
-dynamic(store.ui().translatingMessageId(), translatingId -> {
-                     if (translatingId != null && translatingId.equals(translatedId)) {
-                         row().growX().top().left().children(() -> {
-                        text(Core.bundle.get("feature.chat.ui.translating", "Translating..."))
-                                .color(Color.gray)
-                                .fontScale(0.8f)
-                                .left();
-                    });
-                }
-                });
+
+                dynamic(viewState, state -> {
+                    if (state != null && state.translated != null && !state.translated.trim().isEmpty()) {
+                        String textToDisplay = state.showOriginal ? txt.getText() : state.translated;
+                        column().growX().top().left().children(() -> {
+                            buildMessageText(textToDisplay, bodyColor);
+                            buildTranslationToggleChip(translatedId, state.showOriginal);
+                        });
+                    } else {
+                        column().growX().top().left().children(() -> {
+                            buildMessageText(txt.getText(), bodyColor);
+                            if (state != null && state.translating) {
+                                row().growX().top().left().marginTop(unit(1)).gap(unit(1)).children(() -> {
+                                    icon(FileIcon.of("translate.png", Icon.refresh))
+                                            .size(unit(3.5f), unit(3.5f))
+                                            .color(Color.lightGray);
+                                    text(Core.bundle.get("feature.chat.ui.translating", "Translating..."))
+                                            .color(Color.lightGray)
+                                            .fontScale(0.8f)
+                                            .left();
+                                });
+                            }
+                        });
+                    }
+                }).growX();
                 return;
             }
 
@@ -635,6 +645,58 @@ dynamic(store.ui().translatingMessageId(), translatingId -> {
                     .left()
                     .wrap()
                     .growX();
+        }
+
+        private void buildTranslationToggleChip(String messageId, boolean showingOriginal) {
+            button(() -> {
+                store.translations().toggleOriginal(messageId);
+                ChatMessageHeightCalculator.clearCache();
+            })
+                    .style(WebStyles.ghost())
+                    .padding(unit(0.5f), unit(1.5f), unit(0.5f), unit(1.5f))
+                    .height(unit(6))
+                    .marginTop(unit(1))
+                    .left()
+                    .children(() -> {
+                        row().gap(unit(1)).center().children(() -> {
+                            icon(FileIcon.of("translate.png", Icon.refresh))
+                                    .size(unit(3.5f), unit(3.5f))
+                                    .color(Pal.accent);
+                            text(showingOriginal
+                                    ? Core.bundle.get("feature.chat.ui.show-translated", "Show translation")
+                                    : Core.bundle.get("feature.chat.ui.show-original", "Translated • Show original"))
+                                            .color(Pal.accent)
+                                            .fontScale(0.8f)
+                                            .left();
+                        });
+                    });
+        }
+
+        private static final class TranslationViewState {
+            final @Nullable String translated;
+            final boolean showOriginal;
+            final boolean translating;
+
+            TranslationViewState(@Nullable String translated, boolean showOriginal, boolean translating) {
+                this.translated = translated;
+                this.showOriginal = showOriginal;
+                this.translating = translating;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (!(o instanceof TranslationViewState)) return false;
+                TranslationViewState that = (TranslationViewState) o;
+                return showOriginal == that.showOriginal &&
+                        translating == that.translating &&
+                        Objects.equals(translated, that.translated);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(translated, showOriginal, translating);
+            }
         }
 
         private void buildRoomInviteCard(String link) {

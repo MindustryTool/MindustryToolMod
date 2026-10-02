@@ -10,6 +10,7 @@ import arc.util.pooling.Pools;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import mindustry.ui.Fonts;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.features.chat.models.MessageGroup;
 import mindustrytool.features.chat.models.ParsedChatMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.CommandMessage;
@@ -34,6 +35,7 @@ public final class ChatMessageHeightCalculator {
     public static final float HEADER_HEIGHT = 24f; // unit(6) ellipsis button and title row
     public static final float REPLY_PREVIEW_HEIGHT = 24f;
     public static final float REPLY_GAP = 2f; // unit(0.5f): gap between reply preview and message body
+    public static final float TOGGLE_CHIP_HEIGHT = 24f; // unit(5) toggle chip + unit(1) margin
     public static final float SCHEMATIC_CARD_HEIGHT = 212f;
     public static final float IMAGE_CARD_HEIGHT = 140f;
     public static final float INVITE_CARD_HEIGHT = 200f; // unit(50)
@@ -101,7 +103,21 @@ public final class ChatMessageHeightCalculator {
         // Body height by type
         if (msg instanceof TextMessage) {
             TextMessage txt = (TextMessage) msg;
-            height += measureTextHeight(txt.getText(), availableTextWidth, FONT_SCALE);
+            String textToMeasure = txt.getText();
+            float extraHeight = 0f;
+
+            ChatFeature chatFeature = FeatureManager.getFeature(ChatFeature.class);
+            if (chatFeature != null) {
+                ChatStore store = chatFeature.getStore();
+                String translated = store.translations().getDirect(msg.getId());
+                if (translated != null && !translated.trim().isEmpty()) {
+                    boolean showOriginal = store.translations().isShowingOriginalDirect(msg.getId());
+                    textToMeasure = showOriginal ? txt.getText() : translated;
+                    extraHeight = Scl.scl(TOGGLE_CHIP_HEIGHT);
+                }
+            }
+
+            height += measureTextHeight(textToMeasure, availableTextWidth, FONT_SCALE) + extraHeight;
         } else if (msg instanceof SchematicMessage) {
             SchematicMessage schem = (SchematicMessage) msg;
             height += Scl.scl(SCHEMATIC_CARD_HEIGHT);

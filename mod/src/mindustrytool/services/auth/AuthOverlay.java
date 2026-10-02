@@ -134,7 +134,7 @@ public class AuthOverlay {
                                                         networkImage(user.getImageUrl()).size(64f);
                                                     }
                                                     if (!Vars.mobile && user.getName() != null) {
-                                                        text(user.getName());
+                                                        text(user.getName()).marginLeft(unit(2));
                                                     }
                                                 });
                                     })

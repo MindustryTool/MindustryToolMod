@@ -58,6 +58,17 @@ public final class ChatActionPopup {
                     .growX()
                     .height(unit(10));
 
+            if (message != null && store.translations().getDirect(message.getId()) != null) {
+                button(Core.bundle.get("feature.chat.ui.copy-translation", "Copy Translation"), () -> {
+                    String tr = store.translations().getDirect(message.getId());
+                    if (tr != null) {
+                        Core.app.setClipboardText(tr);
+                        Vars.ui.showInfoFade(Core.bundle.get("feature.chat.ui.copied", "Copied to clipboard!"));
+                    }
+                    dismiss();
+                }).style(WebStyles.secondaryText()).growX().height(unit(10));
+            }
+
             button(Core.bundle.get("feature.chat.ui.reply", "Reply"), () -> {
                 store.ui().setReplyTarget(message.getRaw());
                 dismiss();
