@@ -30,6 +30,7 @@ import mindustry.game.EventType.HostEvent;
 import mindustry.game.EventType.PlayerIpBanEvent;
 import mindustry.game.EventType.PlayerJoin;
 import mindustry.game.EventType.PlayerLeave;
+import mindustry.game.EventType.ResetEvent;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.game.Team;
 import mindustry.gen.Call;
@@ -83,7 +84,7 @@ public class PlayerConnectFeature extends Feature {
             .fetch(() -> MindustryTool.getPlayerConnectRooms(""))
             .staleTime(Duration.ofSeconds(15))
             .build();
-            
+
     private final Signal<List<PlayerConnectProvider>> providers = Signal.of(Collections.emptyList());
     private final Signal<JoinRequest> currentRequest = Signal.of(null);
 
@@ -133,6 +134,12 @@ public class PlayerConnectFeature extends Feature {
         Events.run(WorldLoadEndEvent.class, this::updateRoomStats);
         Events.run(PlayerJoin.class, this::updateRoomStats);
         Events.run(PlayerLeave.class, this::updateRoomStats);
+
+        Events.run(ResetEvent.class, () -> {
+            if (isHosting()) {
+                closeRoom();
+            }
+        });
 
         Events.on(PlayerJoin.class, this::onPlayerJoin);
         Events.on(PlayerLeave.class, event -> {
@@ -333,6 +340,10 @@ public class PlayerConnectFeature extends Feature {
         if (wasActive) {
             Events.fire(new PcRoomClosed());
         }
+
+        Core.app.post(() -> {
+            Vars.ui.showInfoFade("Room closed");
+        });
     }
 
     public void updateRoomStats() {
