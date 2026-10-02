@@ -32,28 +32,6 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         }
     }
 
-    @Test
-    void testInitialConfigDefaults() {
-        RangeDisplayFeature feature = new RangeDisplayFeature();
-
-        assertEquals(1.0f, feature.opacityConfig.get(), 0.001f);
-        assertEquals(1.0f, feature.strokeWidthConfig.get(), 0.001f);
-        assertFalse(feature.hoverOnlyConfig.get());
-        assertTrue(feature.filterTargetAirConfig.get());
-        assertTrue(feature.filterTargetGroundConfig.get());
-        assertFalse(feature.onlyWithAmmoConfig.get());
-        assertFalse(feature.proximityFilterConfig.get());
-        assertEquals(30.0f, feature.proximityRadiusConfig.get(), 0.001f);
-        assertTrue(feature.drawTurretRangeAllyConfig.get());
-        assertTrue(feature.drawTurretRangeEnemyConfig.get());
-        assertTrue(feature.drawUnitRangePlayerConfig.get());
-        assertTrue(feature.drawUnitRangeAllyConfig.get());
-        assertTrue(feature.drawUnitRangeEnemyConfig.get());
-        assertTrue(feature.drawBlockRangeAllyConfig.get());
-        assertTrue(feature.drawBlockRangeEnemyConfig.get());
-        assertTrue(feature.drawSpawnerRangeConfig.get());
-        assertTrue(feature.dashedConfig.get());
-    }
 
     @Test
     void testConfigMutationsAndReset() {

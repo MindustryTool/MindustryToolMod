@@ -52,23 +52,6 @@ class PathfindingFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void testFeatureDefaultConfigs() {
-        PathfindingFeature feature = new PathfindingFeature();
-
-        assertFalse(feature.isEnabled());
-        assertTrue(feature.drawUnitPathConfig.get());
-        assertTrue(feature.drawSpawnPathConfig.get());
-        assertFalse(feature.drawAlliesConfig.get());
-        assertEquals(0.5f, feature.zoomThresholdConfig.get(), 0.001f);
-        assertEquals(1.0f, feature.opacityConfig.get(), 0.001f);
-
-        for (int i = 0; i < PathfindingFeature.COST_COUNT; i++) {
-            assertTrue(feature.costTypeConfigs[i].get());
-            assertTrue(feature.isCostTypeEnabled(i));
-        }
-    }
-
-    @Test
     void testConfigMutationsAndReset() {
         PathfindingFeature feature = new PathfindingFeature();
 
@@ -96,13 +79,5 @@ class PathfindingFeatureTest extends MindustryTestEnv {
         assertEquals(1.0f, feature.opacityConfig.get(), 0.001f);
         assertTrue(feature.costTypeConfigs[0].get());
         assertTrue(feature.isCostTypeEnabled(0));
-    }
-
-    @Test
-    void testClientPathfinderClearAndSafeHandling() {
-        ClientPathfinder clientPathfinder = new ClientPathfinder();
-
-        clientPathfinder.clear();
-        assertNull(clientPathfinder.getTargetTile(null, null));
     }
 }

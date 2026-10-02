@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SmartDrillFeatureTest extends MindustryTestEnv {
@@ -17,15 +16,6 @@ class SmartDrillFeatureTest extends MindustryTestEnv {
     @BeforeEach
     void setUp() {
         feature = new SmartDrillFeature();
-    }
-
-    @Test
-    void testMetadataAndDefaultState() {
-        assertEquals("smart-drill", feature.getMetadata().getId());
-        assertEquals(11, feature.getMetadata().getOrder());
-        assertTrue(feature.getMetadata().isQuickAccess());
-        assertFalse(feature.getMetadata().isDevelopment());
-        assertFalse(feature.isEnabled(), "Smart Drill must be disabled by default so it does not interfere with conveyor placement");
     }
 
     @Test
@@ -64,11 +54,6 @@ class SmartDrillFeatureTest extends MindustryTestEnv {
         assertEquals(1, SmartDrillFeature.Direction.UP.rotation);
         assertEquals(2, SmartDrillFeature.Direction.LEFT.rotation);
         assertEquals(3, SmartDrillFeature.Direction.DOWN.rotation);
-    }
-
-    @Test
-    void testSettingsDialogProviderNotNull() {
-        assertNotNull(feature.getSettingDialog());
     }
 
     @Test

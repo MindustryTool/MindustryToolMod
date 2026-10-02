@@ -494,11 +494,11 @@ Shared reactive net-state signals in `Signals.java` so game features gate on one
 - **THEN** `isModified()` returns `true`.
 
 ### Requirement: Transactional reconciliation and duplicate-key detection
-`StructuralReconciler` SHALL validate keys prior to component instantiation, rejecting duplicate keys with an `IllegalArgumentException`. If child component creation fails or throws during reconciliation, all components newly instantiated during that failed reconciliation attempt SHALL be disposed immediately, and previously active components SHALL remain untouched. Components removed during a successful reconciliation SHALL be disposed only after the new state is committed.
+`StructuralReconciler` SHALL validate keys prior to component instantiation, logging a warning and ignoring duplicate items ("first wins" strategy) instead of throwing an `IllegalArgumentException`. If child component creation fails or throws during reconciliation, all components newly instantiated during that failed reconciliation attempt SHALL be disposed immediately, and previously active components SHALL remain untouched. Components removed during a successful reconciliation SHALL be disposed only after the new state is committed.
 
-#### Scenario: Duplicate key triggers IllegalArgumentException
+#### Scenario: Duplicate key logs warning and drops duplicate item
 - **WHEN** reconciliation is invoked with an item collection containing duplicate extracted keys
-- **THEN** an `IllegalArgumentException` is thrown before any component is created or modified
+- **THEN** a warning is logged, the first occurrence of the key is retained, duplicate items are ignored without throwing an exception, and active components are updated accordingly
 
 #### Scenario: Component factory failure rolls back newly created components
 - **WHEN** the component factory throws an exception on the N-th item during reconciliation

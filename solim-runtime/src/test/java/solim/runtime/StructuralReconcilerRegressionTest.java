@@ -111,38 +111,41 @@ public class StructuralReconcilerRegressionTest {
 	}
 
 	@Test
-	void duplicateKeysDetectedBeforeMutation() {
+	void duplicateKeysGracefullyIgnoredFirstWins() {
 		StructuralReconciler<String, ReconcilerTestComponent> reconciler = new StructuralReconciler<>();
 
-		// 1. Initial list with duplicates
+		// 1. Initial list with duplicates [x, y, x]
 		List<String> built = new ArrayList<>();
-		IllegalArgumentException ex1 = assertThrows(IllegalArgumentException.class, () -> {
-			reconciler.reconcile(
-					Arrays.asList("x", "y", "x"),
-					k -> k,
-					k -> {
-						built.add(k);
-						return new ReconcilerTestComponent(k);
-					}
-			);
-		});
-		assertTrue(ex1.getMessage().contains("Duplicate key"));
-		assertTrue(built.isEmpty(), "No components must be constructed on duplicate keys");
-		assertTrue(reconciler.isEmpty());
-
-		// 2. Populate valid state [A, B]
-		reconciler.reconcile(Arrays.asList("A", "B"), k -> k, ReconcilerTestComponent::new);
+		Map<String, ReconcilerTestComponent> res1 = reconciler.reconcile(
+				Arrays.asList("x", "y", "x"),
+				k -> k,
+				k -> {
+					built.add(k);
+					return new ReconcilerTestComponent(k);
+				}
+		);
+		assertEquals(Arrays.asList("x", "y"), built, "Only first occurrence of each key must be constructed");
+		assertEquals(2, res1.size());
 		assertEquals(2, reconciler.activeComponents().size());
 
-		// 3. Update with duplicate keys [A, C, C]
-		assertThrows(IllegalArgumentException.class, () -> {
-			reconciler.reconcile(Arrays.asList("A", "C", "C"), k -> k, ReconcilerTestComponent::new);
-		});
-
-		// Existing state must remain untouched
+		// 2. Populate state [A, B]
+		reconciler.reconcile(Arrays.asList("A", "B"), k -> k, ReconcilerTestComponent::new);
 		assertEquals(2, reconciler.activeComponents().size());
 		assertTrue(reconciler.activeComponents().containsKey("A"));
 		assertTrue(reconciler.activeComponents().containsKey("B"));
+
+		// 3. Update with duplicate keys [A, C, C]
+		Map<String, ReconcilerTestComponent> res3 = reconciler.reconcile(
+				Arrays.asList("A", "C", "C"),
+				k -> k,
+				ReconcilerTestComponent::new
+		);
+
+		// Must retain A and create C once; B must be removed
+		assertEquals(2, res3.size());
+		assertTrue(res3.containsKey("A"));
+		assertTrue(res3.containsKey("C"));
+		assertFalse(res3.containsKey("B"));
 
 		reconciler.dispose();
 	}

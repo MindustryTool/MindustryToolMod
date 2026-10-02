@@ -5,7 +5,7 @@ import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Reflect;
-import mindustry.Vars;
+import mindustry.net.Net;
 import mindustry.net.Packet;
 
 public class PacketReplacer {
@@ -16,7 +16,7 @@ public class PacketReplacer {
 	}
 
 	public static void replace() {
-		Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Vars.net, "packetProvs");
+		Seq<Prov<? extends Packet>> packetProvs = Reflect.get(Net.class, "packetProvs");
 
 		packetProvs.replace(packet -> {
 			Class<?> clazz = packet.get().getClass();
@@ -25,7 +25,7 @@ public class PacketReplacer {
 						"Replace packet @ to @",
 						clazz.getSimpleName(),
 						packetReplacements.get(clazz).get().getClass().getSimpleName());
-				return packetReplacements.remove(clazz);
+				return packetReplacements.get(clazz);
 			}
 
 			return packet;

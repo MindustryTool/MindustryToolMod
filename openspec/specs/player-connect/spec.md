@@ -79,3 +79,17 @@ The system SHALL inject a Solim room browser section into Mindustry's `JoinDialo
 - **WHEN** components observe `feature.getRooms()`
 - **THEN** they SHALL receive updates directly reflecting `roomsQuery.data()`
 
+
+### Requirement: Save room password
+The system MUST save passwords using per-room string keys.
+
+#### Scenario: Save password
+- **WHEN** user joins a room with a password
+- **THEN** system saves the password securely using `player-connect.pwd-<roomId>` key in settings
+
+### Requirement: Retrieve room password
+The system MUST retrieve passwords using per-room string keys.
+
+#### Scenario: Retrieve password
+- **WHEN** user opens a room prompt that requires a password
+- **THEN** system populates the password field with the saved password if available

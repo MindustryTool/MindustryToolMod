@@ -91,23 +91,23 @@ class StructuralReconcilerDisposalTest {
 	}
 
 	@Test
-	void duplicateKeysThrowIllegalArgumentExceptionBeforeBuilding() {
+	void duplicateKeysIgnoredWithFirstWinsStrategy() {
 		StructuralReconciler<String, TestComponent> reconciler = new StructuralReconciler<>();
 		List<String> built = new ArrayList<>();
 
-		assertThrows(IllegalArgumentException.class, () ->
-			reconciler.reconcile(
-				Arrays.asList("A", "B", "A"),
-				item -> item,
-				item -> {
-					built.add(item);
-					return new TestComponent(item);
-				}
-			)
+		Map<String, TestComponent> result = reconciler.reconcile(
+			Arrays.asList("A", "B", "A"),
+			item -> item,
+			item -> {
+				built.add(item);
+				return new TestComponent(item);
+			}
 		);
 
-		assertTrue(built.isEmpty(), "No components should be constructed if duplicate keys exist");
-		assertTrue(reconciler.isEmpty());
+		assertEquals(Arrays.asList("A", "B"), built, "Only first occurrence of each key should be constructed");
+		assertEquals(2, result.size());
+		assertTrue(result.containsKey("A"));
+		assertTrue(result.containsKey("B"));
 	}
 
 	@Test

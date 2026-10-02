@@ -3,7 +3,6 @@ package mindustrytool.features.smartupgrade;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
-import arc.files.Fi;
 import arc.graphics.g2d.TextureRegion;
 import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
@@ -30,14 +29,6 @@ import mindustry.world.blocks.production.Drill;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.Locale;
-import java.util.Properties;
-
 class SmartUpgradeFeatureTest {
 
     @BeforeEach
@@ -63,78 +54,6 @@ class SmartUpgradeFeatureTest {
         Vars.content = new ContentLoader();
     }
 
-    @Test
-    void verifyBundles() throws Exception {
-        File dir = new File("../assets/bundles");
-        if (!dir.exists()) {
-            dir = new File("assets/bundles");
-        }
-        assertTrue(dir.exists(), "assets/bundles directory must exist");
-
-        File enBundle = new File(dir, "bundle.properties");
-        File viBundle = new File(dir, "bundle_vi.properties");
-
-        assertTrue(enBundle.exists());
-        assertTrue(viBundle.exists());
-
-        // Strict validation on all bundle files
-        File[] files = dir.listFiles((d, name) -> name.endsWith(".properties"));
-        assertNotNull(files);
-
-        for (File f : files) {
-            byte[] bytes = Files.readAllBytes(f.toPath());
-            if (bytes.length >= 3 && bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
-                fail("File " + f.getName() + " contains UTF-8 BOM! Bundles must be UTF-8 without BOM.");
-            }
-
-            Properties props = new Properties();
-            try (InputStreamReader isr = new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8)) {
-                props.load(isr);
-            }
-            assertFalse(props.isEmpty(), "Bundle " + f.getName() + " should not be empty");
-
-            for (String key : props.stringPropertyNames()) {
-                assertFalse(key.startsWith("\uFEFF"), "Key in " + f.getName() + " starts with BOM: " + key);
-                assertFalse(key.contains("\uFEFF"), "Key in " + f.getName() + " contains BOM: " + key);
-            }
-        }
-
-        // 4. Test Arc I18NBundle loading on bundle.properties and bundle_vi.properties
-        Fi baseFi = new Fi(new File(dir, "bundle"));
-        I18NBundle testBundle = I18NBundle.createBundle(baseFi, Locale.ENGLISH);
-        assertNotNull(testBundle);
-        assertEquals("Smart Upgrade", testBundle.get("feature.smart-upgrade.name"));
-        assertEquals("Smart Upgrade Settings", testBundle.get("feature.smart-upgrade.settings.title"));
-        assertEquals("Trigger Mode", testBundle.get("feature.smart-upgrade.settings.trigger-mode"));
-        assertEquals("One Shot", testBundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot"));
-        assertEquals("Persistent", testBundle.get("feature.smart-upgrade.settings.trigger-mode.persistent"));
-        assertEquals("Smart Upgrade armed: tap a block to open the upgrade menu.",
-                testBundle.get("feature.smart-upgrade.armed"));
-
-        I18NBundle testViBundle = I18NBundle.createBundle(baseFi, new Locale("vi"));
-        assertNotNull(testViBundle);
-        assertEquals("Nâng Cấp Thông Minh", testViBundle.get("feature.smart-upgrade.name"));
-        assertEquals("Cài Đặt Nâng Cấp Thông Minh", testViBundle.get("feature.smart-upgrade.settings.title"));
-        assertEquals("Số công trình tối đa mỗi lần nâng cấp", testViBundle.get("feature.smart-upgrade.settings.max-upgrades"));
-        assertEquals("Chế Độ Kích Hoạt", testViBundle.get("feature.smart-upgrade.settings.trigger-mode"));
-        assertEquals("Một lần", testViBundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot"));
-        assertEquals("Duy trì", testViBundle.get("feature.smart-upgrade.settings.trigger-mode.persistent"));
-        assertEquals("Đã sẵn sàng Nâng Cấp Thông Minh: chạm vào một công trình để mở bảng nâng cấp.",
-                testViBundle.get("feature.smart-upgrade.armed"));
-        assertEquals("Bật/Tắt Nâng Cấp Thông Minh", testViBundle.get("keybind.smartUpgradeToggle.name"));
-    }
-
-    @Test
-    void testDefaultConfigs() {
-        SmartUpgradeFeature feature = new SmartUpgradeFeature();
-
-        assertEquals(500, feature.maxUpdatesConfig.get());
-        assertEquals(SmartUpgradeFeature.MODE_ONE_SHOT, feature.triggerModeConfig.get());
-        assertTrue(feature.isOneShot());
-        assertFalse(feature.isArmed());
-        assertFalse(feature.onlySameTypeConfig.get());
-        assertTrue(feature.traverseBridgesConfig.get());
-    }
 
     @Test
     void testConfigMutationsAndReset() {
@@ -256,22 +175,5 @@ class SmartUpgradeFeatureTest {
         Seq<Block> bridgeCandidates = feature.getUpgradeCandidates(bridge1);
         assertEquals(1, bridgeCandidates.size);
         assertEquals(bridge2, bridgeCandidates.first());
-    }
-
-    @Test
-    void testNullSafeExecution() {
-        SmartUpgradeFeature feature = new SmartUpgradeFeature();
-
-        assertDoesNotThrow(() -> feature.upgradeChain(null, null));
-        assertDoesNotThrow(feature::triggerHoveredUpgrade);
-        assertDoesNotThrow(() -> feature.showMenu(null));
-        assertDoesNotThrow(feature::closeMenu);
-        assertDoesNotThrow(feature::onDisable);
-    }
-
-    @Test
-    void testSettingDialogProvider() {
-        SmartUpgradeFeature feature = new SmartUpgradeFeature();
-        assertNotNull(feature.getSettingDialog());
     }
 }

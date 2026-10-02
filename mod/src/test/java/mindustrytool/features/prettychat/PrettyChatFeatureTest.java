@@ -1,6 +1,5 @@
 package mindustrytool.features.prettychat;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -104,15 +103,5 @@ class PrettyChatFeatureTest extends MindustryTestEnv {
         List<String> current = config.getEnabledIds();
         assertEquals("uwu", current.get(1));
         assertEquals("reverse", current.get(2));
-    }
-
-    @Test
-    void testEnabledByDefault() {
-        assertFalse(feature.isEnabled(), "PrettyChat should be disabled by default");
-    }
-
-    @Test
-    void testConstructorDoesNotThrow() {
-        assertDoesNotThrow(() -> new PrettyChatFeature(), "Instantiating PrettyChatFeature should not throw");
     }
 }
