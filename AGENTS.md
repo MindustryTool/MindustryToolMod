@@ -947,6 +947,10 @@ Tests should survive internal refactors: if the implementation is completely rew
 
 ### ❌ Do NOT Write Tests Simply To:
 
+* **Verify localization/bundle files** (e.g. `verifyBundles`, checking bundle keys exist, BOM checks, loading bundles in test). Gradle task `:checkBundles` already handles bundle verification; do not write Java tests for this.
+* **Verify feature metadata** (e.g. asserting `feature.getMetadata().getId()`, `getOrder()`, `getName()`, `getDescription()`, `getIcon()`, `isQuickAccess()`, `isDevelopment()`). These are static configuration descriptors with no behavioral logic.
+* **Verify default config values** (e.g. asserting `assertEquals(500, feature.maxUpdatesConfig.get())`). Do not assert default values of fields against hardcoded constants. (Testing that `resetToDefaults()` actually resets mutated values back to defaults is acceptable as a state transition test).
+* **Verify trivial getters or null-safety via assertDoesNotThrow/assertNotNull alone** (e.g. `assertNotNull(feature.getSettingDialog())`, `assertDoesNotThrow(() -> feature.onDisable())` without asserting any observable state change).
 * Verify a constant contains a specific value
 * Verify a collection has the expected hardcoded entries
 * Verify getters return non-null values
