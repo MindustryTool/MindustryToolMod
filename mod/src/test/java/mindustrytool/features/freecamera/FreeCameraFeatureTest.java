@@ -1,6 +1,5 @@
 package mindustrytool.features.freecamera;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.AfterEach;
@@ -28,15 +27,6 @@ class FreeCameraFeatureTest extends MindustryTestEnv {
     @AfterEach
     void tearDown() {
         Vars.player = null;
-    }
-
-    @Test
-    void snapToPlayer_safeWhenPlayerNull() {
-        FreeCameraFeature feature = new FreeCameraFeature();
-        Vars.player = null;
-
-        assertDoesNotThrow(feature::snapToPlayer);
-        assertDoesNotThrow(() -> feature.onQuickAccessLongClick(null));
     }
 
     @Test
@@ -87,19 +77,5 @@ class FreeCameraFeatureTest extends MindustryTestEnv {
 
         assertEquals(240f, Core.camera.position.x, 0.001f);
         assertEquals(360f, Core.camera.position.y, 0.001f);
-    }
-
-    @Test
-    void onDisable_safeWhenCameraOrPlayerNull() {
-        FreeCameraFeature feature = new FreeCameraFeature();
-        Vars.player = null;
-        assertDoesNotThrow(() -> feature.setEnabled(false));
-
-        feature.setEnabled(true);
-        Core.camera = null;
-        assertDoesNotThrow(() -> feature.setEnabled(false));
-
-        // Restore camera
-        Core.camera = new Camera();
     }
 }

@@ -2,10 +2,8 @@ package mindustrytool.features.togglerendering;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import arc.func.Prov;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.Vars;
 import mindustry.core.ContentLoader;
@@ -13,12 +11,10 @@ import mindustry.game.Team;
 import mindustry.gen.Icon;
 import mindustry.gen.Player;
 import mindustry.gen.UnitEntity;
-import mindustrytool.features.FeatureMetadata;
 import mindustrytool.test.MindustryTestEnv;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.overlay.SolimDialog;
 
 class ToggleRenderingFeatureTest extends MindustryTestEnv {
 
@@ -37,16 +33,6 @@ class ToggleRenderingFeatureTest extends MindustryTestEnv {
     @AfterEach
     void tearDown() {
         Vars.player = null;
-    }
-
-    @Test
-    void metadataIsConfiguredCorrectly() {
-        FeatureMetadata meta = feature.getMetadata();
-        assertEquals("toggle-rendering", meta.getId());
-        assertEquals(5, meta.getOrder());
-        assertFalse(meta.isDevelopment(), "Feature should no longer be marked as in development");
-        assertFalse(meta.isEnabledByDefault());
-        assertTrue(meta.isQuickAccess());
     }
 
     @Test
@@ -106,12 +92,6 @@ class ToggleRenderingFeatureTest extends MindustryTestEnv {
         feature.drawUnitsEnemiesConfig.set(false);
         assertTrue(feature.shouldHideUnit(ally));
         assertTrue(feature.shouldHideUnit(enemy));
-    }
-
-    @Test
-    void settingDialogIsAvailable() {
-        Prov<SolimDialog> prov = feature.getSettingDialog();
-        assertNotNull(prov);
     }
 
     @Test

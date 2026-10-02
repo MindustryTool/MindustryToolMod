@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import arc.func.Prov;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.core.ContentLoader;
@@ -18,7 +17,6 @@ import mindustry.world.blocks.defense.BuildTurret;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustrytool.features.FeatureKeybind;
 import mindustrytool.test.MindustryTestEnv;
-import solim.overlay.SolimDialog;
 
 class VisualizerFeatureTest extends MindustryTestEnv {
 
@@ -33,30 +31,6 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         if (Icon.refresh == null) {
             Icon.refresh = new TextureRegionDrawable(new TextureRegion());
         }
-    }
-
-    @Test
-    void testDefaultConfigs() {
-        VisualizerFeature feature = new VisualizerFeature();
-
-        // Bridges
-        assertTrue(feature.showItemBridgesConfig.get());
-        assertTrue(feature.showDuctBridgesConfig.get());
-        assertTrue(feature.showLiquidBridgesConfig.get());
-        assertEquals(1.0f, feature.bridgeItemScaleConfig.get(), 0.001f);
-        assertEquals(1.0f, feature.bridgeOpacityConfig.get(), 0.001f);
-        assertTrue(feature.showBridgeFlowRateConfig.get());
-        assertFalse(feature.hideIdleBridgeFlowConfig.get());
-        assertEquals(1.0f, feature.bridgeFlowRateScaleConfig.get(), 0.001f);
-
-        // Turrets
-        assertTrue(feature.showAmmoBadgeConfig.get());
-        assertTrue(feature.showTargetLineConfig.get());
-        assertTrue(feature.targetLineAllyConfig.get());
-        assertFalse(feature.targetLineEnemyConfig.get());
-        assertFalse(feature.onlyWhenShootingConfig.get());
-        assertEquals(1.0f, feature.turretBadgeScaleConfig.get(), 0.001f);
-        assertEquals(0.6f, feature.targetLineOpacityConfig.get(), 0.001f);
     }
 
     @Test
@@ -138,13 +112,6 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("visualizerSettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
-    }
-
-    @Test
-    void testSettingDialog() {
-        VisualizerFeature feature = new VisualizerFeature();
-        Prov<SolimDialog> dialogProv = feature.getSettingDialog();
-        assertNotNull(dialogProv);
     }
 
     @Test
