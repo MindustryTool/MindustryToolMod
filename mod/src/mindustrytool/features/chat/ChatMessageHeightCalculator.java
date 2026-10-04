@@ -37,8 +37,8 @@ public final class ChatMessageHeightCalculator {
     public static final float REPLY_GAP = 2f; // unit(0.5f): gap between reply preview and message body
     public static final float TOGGLE_CHIP_HEIGHT = 24f; // unit(5) toggle chip + unit(1) margin
     public static final float SCHEMATIC_CARD_HEIGHT = 212f;
-    public static final float IMAGE_CARD_HEIGHT = 140f;
-    public static final float INVITE_CARD_HEIGHT = 200f; // unit(50)
+    public static final float IMAGE_CARD_HEIGHT = 120f; // unit(30)
+    public static final float INVITE_CARD_HEIGHT = 162f; // unit(40.5f)
     public static final float TOOL_LINK_CARD_HEIGHT = 70f;
     public static final float COMMAND_CARD_HEIGHT = 70f;
     public static final float HORIZONTAL_PADDINGS = 70f; // 4px outer left + 48px avatar + 6px gap + 4px inner left + 4px inner right + 4px outer right
@@ -128,7 +128,11 @@ public final class ChatMessageHeightCalculator {
                 height += measureTextHeight(schem.getSuffixText(), availableTextWidth, FONT_SCALE);
             }
         } else if (msg instanceof ImageMessage) {
+            ImageMessage img = (ImageMessage) msg;
             height += Scl.scl(IMAGE_CARD_HEIGHT);
+            if (img.getImageUrl() != null && !img.getImageUrl().isEmpty()) {
+                height += measureTextHeight(img.getImageUrl(), availableTextWidth, 0.85f) + Scl.scl(UNIT_1);
+            }
         } else if (msg instanceof RoomInviteMessage) {
             height += Scl.scl(INVITE_CARD_HEIGHT);
         } else if (msg instanceof MindustryToolLinkMessage) {

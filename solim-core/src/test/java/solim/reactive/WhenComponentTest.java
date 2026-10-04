@@ -2,6 +2,9 @@ package solim.reactive;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -12,8 +15,10 @@ import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import solim.core.BaseComponent;
+import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Row;
+import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimCoreEnv;
 
@@ -558,5 +563,42 @@ class WhenComponentTest extends SolimCoreEnv {
         assertTrue(when.container().visible);
         assertEquals(1, when.container().getChildren().size);
         when.dispose();
+    }
+
+    @Test
+    void whenInsideColumnAttachesChildToWhenContainerNotParentColumn() {
+        Signal<Boolean> cond = Signal.of(true);
+        Card[] cardHolder = new Card[1];
+        When[] whenHolder = new When[1];
+
+        Column column = new Column();
+        column.children(() -> {
+            When w = When.of(cond)
+                    .thenDo(() -> {
+                        Card card = new Card();
+                        card.name("pc-card");
+                        card.children(() -> {
+                            // child content
+                        });
+                        cardHolder[0] = card;
+                    });
+            w.name("pc-card-wrapper");
+            AttachmentStack.attachToParent(w.element());
+            whenHolder[0] = w;
+        });
+
+        Element colEl = column.element();
+        Element whenEl = whenHolder[0].element();
+        Element cardEl = cardHolder[0].element();
+
+        assertNotNull(cardEl);
+        assertEquals("pc-card", cardEl.name);
+        assertEquals("pc-card-wrapper", whenEl.name);
+        assertSame(whenEl, cardEl.parent, "Card must be attached to When container");
+        assertNotSame(colEl, cardEl.parent, "Card must NOT be attached to outer column");
+        assertTrue(whenHolder[0].container().getChildren().contains(cardEl, true));
+        assertFalse(((Table) colEl).getChildren().contains(cardEl, true));
+
+        column.dispose();
     }
 }

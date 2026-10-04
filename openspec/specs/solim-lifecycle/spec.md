@@ -525,3 +525,14 @@ The `Component` interface SHALL extend `Disposable` so that components can be pa
 - **WHEN** a deprecated ownership method is called
 - **THEN** a compiler deprecation warning is emitted but the call still functions identically to `own(...)`
 
+### Requirement: Dynamic and When parent stack isolation during root element build
+`Dynamic` and `When` SHALL isolate the `AttachmentStack` during the evaluation of captured root component elements (`root.element()`). Any component instantiated and built inside a void factory passed to `Dynamic` or `When` SHALL NOT attach its element to an ambient parent container on the stack, and SHALL attach exclusively to the `Dynamic` or `When` container.
+
+#### Scenario: Child component inside Dynamic enclosed by Column attaches to Dynamic container
+- **WHEN** a component with children (such as `Card` or `Row`) is created within `dynamic(...)` enclosed inside an outer `column(...)`
+- **THEN** the child component's element parent is the `Dynamic` container table, NOT the outer column table
+
+#### Scenario: Child component inside When enclosed by Column attaches to When container
+- **WHEN** a component with children (such as `Card` or `Row`) is created within `when(...).thenDo(...)` or `elseDo(...)` enclosed inside an outer `column(...)`
+- **THEN** the child component's element parent is the `When` container table, NOT the outer column table
+

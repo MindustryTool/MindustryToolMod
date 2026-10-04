@@ -13,7 +13,6 @@ import mindustry.core.Version;
 import mindustry.gen.Icon;
 import mindustry.gen.Iconc;
 import mindustry.ui.Styles;
-import mindustrytool.features.chat.ChatMessageHeightCalculator;
 import mindustrytool.features.playerconnect.net.NetworkProxy;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
@@ -78,7 +77,6 @@ public class RoomCard extends BaseComponent {
                 .padding(unit(2))
                 .left()
                 .grow()
-                .minHeight(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT)
                 .children(() -> {
                     // Header row: Title + Copy link button
                     row().growX().height(unit(6)).gap(unit(2)).children(() -> {
@@ -101,26 +99,44 @@ public class RoomCard extends BaseComponent {
                         }
                     });
 
-                    // Map and mode
-                    if (!mapMode.isEmpty()) {
-                        text(mapMode).growX().ellipsis().left();
-                    }
-
-                    if (!Version.combined().equals(room.getData().getVersion())) {
-                        text(room.getData().getVersion()).growX().ellipsis();
-                    }
-
                     if (!displayPlayerList) {
+                        // Fixed Row 2: Map and mode
+                        row().growX().height(unit(4.5f)).children(() -> {
+                            text(!mapMode.isEmpty() ? mapMode : Core.bundle.get("none", "None"))
+                                    .growX().ellipsis().left();
+                        });
+
+                        // Fixed Row 3: Mindustry Version (always allocated for invariant height)
+                        row().growX().height(unit(4.5f)).children(() -> {
+                            String verStr = room.getData() != null && room.getData().getVersion() != null
+                                    ? room.getData().getVersion()
+                                    : Version.combined();
+                            text(verStr).color(Color.lightGray).fontScale(0.9f).growX().ellipsis().left();
+                        });
+
+                        // Fixed Row 4: Compatibility and players
                         String compatBadge = !protocolMatch
                                 ? "[scarlet]" + Core.bundle.get("feature.chat.ui.incompatible-protocol", "Incompatible")
                                 : (!missingMods.isEmpty() || !unneededMods.isEmpty()
                                         ? "[orange]" + Core.bundle.get("feature.chat.ui.mods-required", "Mods Required")
                                         : "");
-                        row().growX().height(unit(4)).children(() -> {
+                        row().growX().height(unit(4.5f)).children(() -> {
                             text(playerInfo).color(Color.lightGray).ellipsis().growX().left();
-                            text(compatBadge).fontScale(0.85f).right();
+                            if (!compatBadge.isEmpty()) {
+                                text(compatBadge).fontScale(0.85f).right();
+                            }
                         });
                     } else {
+                        // Map and mode
+                        if (!mapMode.isEmpty()) {
+                            text(mapMode).growX().ellipsis().left();
+                        }
+
+                        if (room.getData() != null && room.getData().getVersion() != null
+                                && !Version.combined().equals(room.getData().getVersion())) {
+                            text(room.getData().getVersion()).growX().ellipsis();
+                        }
+
                         // Players
                         text(playerInfo).color(Color.lightGray).left();
 
@@ -143,20 +159,20 @@ public class RoomCard extends BaseComponent {
                         if (!protocolMatch) {
                             text("[scarlet]Protocol mismatch: expected v" + NetworkProxy.PROTOCOL_VERSION).left();
                         }
+
+                        spacer();
                     }
 
-                    spacer();
-
-                    // Join action button
+                    // Row 5: Action buttons row
                     if (!protocolMatch) {
                         button(Core.bundle.get("feature.player-connect.incompatible", "Incompatible"), () -> {
                         })
                                 .style(WebStyles.outline())
                                 .growX()
-                                .height(unit(7))
+                                .height(unit(11))
                                 .enabled(Signal.of(false));
                     } else {
-                        row().gap(unit(1)).growX().children(() -> {
+                        row().gap(unit(1)).growX().height(unit(11)).children(() -> {
                             button(Core.bundle.get("join", "Join"),
                                     () -> promptJoin(secured, missingMods, unneededMods))
                                             .style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary())
