@@ -32,10 +32,14 @@ public class HostRoomDialog extends SolimDialog {
     }
 
     private static class HostRoomView extends BaseComponent {
+        private static enum Step {
+            CONFIG, PROVIDER
+        }
+
         private final PlayerConnectFeature feature;
         private final HostRoomDialog dialog;
 
-        private final Signal<Integer> step = Signal.of(1);
+        private final Signal<Step> step = Signal.of(Step.CONFIG);
         private final Signal<PlayerConnectProvider> selectedProvider = Signal.of(null);
         private final ObjectMap<String, Signal<String>> pings = new ObjectMap<>();
 
@@ -45,7 +49,7 @@ public class HostRoomDialog extends SolimDialog {
 
             dialog.shown(() -> {
                 Core.app.post(() -> {
-                    step.set(1);
+                    step.set(Step.CONFIG);
                 });
             });
         }
@@ -60,16 +64,16 @@ public class HostRoomDialog extends SolimDialog {
                     .center()
                     .children(() -> {
                         dynamic(step, currentStep -> {
-                            if (currentStep == 1) {
-                                buildStep1();
+                            if (currentStep == Step.CONFIG) {
+                                buildConfig();
                             } else {
-                                buildStep2();
+                                buildProvider();
                             }
                         }).growX();
                     }).element();
         }
 
-        private Component buildStep1() {
+        private Component buildConfig() {
             return column()
                     .growX()
                     .gap(unit(3.5f))
@@ -150,7 +154,7 @@ public class HostRoomDialog extends SolimDialog {
                                     .minWidth(unit(28));
 
                             button(Core.bundle.get("next", "Next"), () -> {
-                                step.set(2);
+                                step.set(Step.PROVIDER);
                                 pingAllProviders();
                             })
                                     .style(WebStyles.primary())
@@ -162,7 +166,7 @@ public class HostRoomDialog extends SolimDialog {
                     });
         }
 
-        private Component buildStep2() {
+        private Component buildProvider() {
             return column()
                     .growX()
                     .gap(unit(3))
@@ -203,7 +207,7 @@ public class HostRoomDialog extends SolimDialog {
                         divider();
 
                         row().gap(unit(4)).center().children(() -> {
-                            button(Core.bundle.get("back", "Back"), () -> step.set(1))
+                            button(Core.bundle.get("back", "Back"), () -> step.set(Step.CONFIG))
                                     .style(WebStyles.outline())
                                     .height(unit(11))
                                     .paddingX(unit(6))
