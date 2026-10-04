@@ -42,6 +42,12 @@ public class HostRoomDialog extends SolimDialog {
         public HostRoomView(PlayerConnectFeature feature, HostRoomDialog dialog) {
             this.feature = feature;
             this.dialog = dialog;
+
+            dialog.shown(() -> {
+                Core.app.post(() -> {
+                    step.set(1);
+                });
+            });
         }
 
         @Override
