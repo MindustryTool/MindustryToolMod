@@ -30,14 +30,18 @@ import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.Dialog.DialogStyle;
 import arc.scene.ui.Image;
 import arc.scene.ui.Label.LabelStyle;
+import arc.scene.ui.ScrollPane.ScrollPaneStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
 import arc.util.Nullable;
 import mindustry.gen.Icon;
+import mindustry.gen.Tex;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.chat.ChatFeature;
+import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
+import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.test.MindustryTestEnv;
 import solim.core.Component;
 import solim.core.SolimToken;
@@ -171,10 +175,15 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
         TextFieldStyle textFieldStyle = new TextFieldStyle();
         textFieldStyle.font = font;
         Core.scene.addStyle(TextFieldStyle.class, textFieldStyle);
+        Core.scene.addStyle(ScrollPaneStyle.class, new ScrollPaneStyle());
 
-        Icon.book = new TextureRegionDrawable();
-        Icon.move = new TextureRegionDrawable();
-        Icon.settings = new TextureRegionDrawable();
+        Icon.book = new TextureRegionDrawable(new TextureRegion());
+        Icon.move = new TextureRegionDrawable(new TextureRegion());
+        Icon.settings = new TextureRegionDrawable(new TextureRegion());
+        Icon.paste = new TextureRegionDrawable(new TextureRegion());
+        Icon.map = new TextureRegionDrawable(new TextureRegion());
+        Icon.left = new TextureRegionDrawable(new TextureRegion());
+        Tex.whiteui = new TextureRegionDrawable(new TextureRegion());
     }
 
     @Test
@@ -261,6 +270,32 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
             chat.getStore().dispose();
             flushEffects();
         }
+    }
+
+    @Test
+    void schematicBrowserFeatureClick_showsDialogWithoutTogglingEnabled() {
+        SchematicBrowserFeature feature = new SchematicBrowserFeature();
+        feature.setEnabled(false);
+
+        feature.onQuickAccessClick();
+        assertFalse(feature.isEnabled(), "Clicking QuickAccess on schematic browser must not toggle enabled");
+        assertNotNull(feature.getMainDialog());
+        assertNotNull(feature.getMainDialog().get(), "Dialog must be created and available");
+
+        assertTrue(feature.quickAccessHighlight().peek(), "Schematic browser quick access icon must always be highlighted");
+    }
+
+    @Test
+    void mapBrowserFeatureClick_showsDialogWithoutTogglingEnabled() {
+        MapBrowserFeature feature = new MapBrowserFeature();
+        feature.setEnabled(false);
+
+        feature.onQuickAccessClick();
+        assertFalse(feature.isEnabled(), "Clicking QuickAccess on map browser must not toggle enabled");
+        assertNotNull(feature.getMainDialog());
+        assertNotNull(feature.getMainDialog().get(), "Dialog must be created and available");
+
+        assertTrue(feature.quickAccessHighlight().peek(), "Map browser quick access icon must always be highlighted");
     }
 
     @Test

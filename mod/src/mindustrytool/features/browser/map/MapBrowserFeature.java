@@ -12,6 +12,8 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 
 import solim.overlay.SolimDialog;
+import solim.reactive.Readable;
+import arc.scene.Element;
 
 /**
  * Feature for browsing, searching, and downloading maps from the online
@@ -64,6 +66,21 @@ public class MapBrowserFeature extends Feature {
             dialog = new MapBrowserDialog();
         }
         dialog.show();
+    }
+
+    @Override
+    public void onQuickAccessClick(@Nullable Element anchor) {
+        showDialog();
+    }
+
+    @Override
+    public void onQuickAccessClick() {
+        showDialog();
+    }
+
+    @Override
+    public Readable<Boolean> quickAccessHighlight() {
+        return Readable.of(true);
     }
 
     private void injectBrowseButton() {
