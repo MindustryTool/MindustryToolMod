@@ -16,6 +16,7 @@ import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
+import solim.runtime.AttachmentStack;
 import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
 
@@ -150,9 +151,11 @@ public final class When extends BaseComponent
                     }
                 }
             });
-            for (Component root : f.roots()) {
-                root.element();
-            }
+            AttachmentStack.isolate(() -> {
+                for (Component root : f.roots()) {
+                    root.element();
+                }
+            });
             return f;
         });
         if (fragment.isEmpty()) {

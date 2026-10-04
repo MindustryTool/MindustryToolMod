@@ -206,63 +206,62 @@ public class ChatMessageListView extends BaseComponent {
                             })).grow();
                 } else {
 
-column().grow().top().left().gap(unit(1)).children(() -> {
-                     when(showRefreshErrorBanner)
-                         .thenDo(() -> {
-                             card().growX().padding(unit(1.5f)).children(() -> {
-                                row().growX().gap(unit(1)).center().children(() -> {
-                                    icon(Icon.warning).size(unit(4)).color(Color.scarlet);
-                                    text(Core.bundle.get("feature.chat.ui.refresh-failed",
-                                            "Failed to refresh messages."))
+                    column().grow().top().left().gap(unit(1)).children(() -> {
+                        when(showRefreshErrorBanner)
+                                .thenDo(() -> {
+                                    card().growX().padding(unit(1.5f)).children(() -> {
+                                        row().growX().gap(unit(1)).center().children(() -> {
+                                            icon(Icon.warning).size(unit(4)).color(Color.scarlet);
+                                            text(Core.bundle.get("feature.chat.ui.refresh-failed",
+                                                    "Failed to refresh messages."))
                                                     .color(Color.scarlet)
                                                     .fontScale(0.85f)
                                                     .growX()
                                                     .left();
-                                    button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
-                                        String activeId = store.channels().currentActiveId();
-                                        if (activeId != null && service != null) {
-                                            service.loadMessages(activeId);
-                                        }
-                                    })
-                                            .style(WebStyles.secondary())
-                                            .height(unit(8))
-                                            .children(() -> {
-                                                icon(Icon.refresh).size(unit(4));
-                                                text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
-                                            });
-});
-                             });
-                         }
-                    );
+                                            button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
+                                                String activeId = store.channels().currentActiveId();
+                                                if (activeId != null && service != null) {
+                                                    service.loadMessages(activeId);
+                                                }
+                                            })
+                                                    .style(WebStyles.secondary())
+                                                    .height(unit(8))
+                                                    .children(() -> {
+                                                        icon(Icon.refresh).size(unit(4));
+                                                        text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
+                                                    });
+                                        });
+                                    });
+                                });
 
-when(showEndOfHistory)
-                         .thenDo(() -> {
-                             row().top().center().growX().padding(unit(2)).children(() -> {
-                                text(Core.bundle.get("feature.chat.ui.end-of-history", "Beginning of chat history"))
-                                        .color(Color.gray)
-                                        .fontScale(0.85f);
-});
-                         }
-                    );
+                        when(showEndOfHistory)
+                                .thenDo(() -> {
+                                    row().top().center().growX().padding(unit(2)).children(() -> {
+                                        text(Core.bundle.get("feature.chat.ui.end-of-history",
+                                                "Beginning of chat history"))
+                                                .color(Color.gray)
+                                                .fontScale(0.85f);
+                                    });
+                                });
 
-                    when(store.messages().loadingOlder())
-                         .thenDo(() -> {
-                             row().top().left().padding(unit(2)).children(() -> {
-                                text(Core.bundle.get("feature.chat.ui.loading-older", "Loading older messages..."))
-                                        .color(Color.gray)
-                                        .fontScale(0.85f)
-                                        .left();
-});
-                         }
-                    );
+                        when(store.messages().loadingOlder())
+                                .thenDo(() -> {
+                                    row().top().left().padding(unit(2)).children(() -> {
+                                        text(Core.bundle.get("feature.chat.ui.loading-older",
+                                                "Loading older messages..."))
+                                                .color(Color.gray)
+                                                .fontScale(0.85f)
+                                                .left();
+                                    });
+                                });
 
-                    when(hasMessages)
-                            .thenDo(() -> {
-                            VirtualList<MessageGroup> list = virtualList(
-                                    groupedMessages,
-                                    ChatMessageHeightCalculator::calculateHeight);
-                            list.key(MessageGroup::getKey).grow().gap(unit(0.75f)).overscan(3)
-                                    .onReachTop(50f, () -> {
+                        when(hasMessages)
+                                .thenDo(() -> {
+                                    VirtualList<MessageGroup> list = virtualList(
+                                            groupedMessages,
+                                            ChatMessageHeightCalculator::calculateHeight);
+                                    list.key(MessageGroup::getKey).grow().gap(unit(0.75f)).overscan(3)
+                                            .onReachTop(50f, () -> {
                                                 String activeId = store.channels().currentActiveId();
                                                 List<ChatMessage> msgs = store.messages().currentActive();
                                                 if (activeId != null && !activeId.isEmpty() && service != null
@@ -272,51 +271,61 @@ when(showEndOfHistory)
                                                     service.fetchOlderMessages(activeId);
                                                 }
                                             }).marginBottom(unit(2));
-                            list.children(item -> new MessageGroupView(item, store, service));
-                            virtualList = list;
-                        })
-                        .elseDo(() -> {
-                            when(store.messages().activeLoadingInitial())
-                                    .thenDo(() -> Loader.centered())
-                                    .elseDo(() -> {
-                                        dynamic(store.messages().activeError(), err -> {
-                                if (err != null && !err.trim().isEmpty()) {
-                                    column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
-                                        icon(Icon.warning).size(unit(6)).color(Color.scarlet);
-                                        text(Core.bundle.get("feature.chat.ui.error.messages",
-                                                "Failed to load messages."))
-                                                        .color(Color.scarlet)
-                                                        .fontScale(1.0f)
-                                                        .wrap()
-                                                        .center();
-                                        text(err).color(Color.gray).fontScale(0.85f).wrap().center();
-                                        button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
-                                            String activeId = store.channels().currentActiveId();
-                                            if (activeId != null && service != null) {
-                                                service.loadMessages(activeId);
-                                            }
-                                        })
-                                                .style(WebStyles.secondary())
-                                                .height(unit(10))
-                                                .children(() -> {
-                                                    icon(Icon.refresh).size(unit(4));
-                                                    text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
-                                                });
-                                    });
-                                } else {
-                                    column().padding(unit(4)).top().left().children(() -> {
-                                    text(Core.bundle.get("feature.chat.ui.empty-messages", "No messages yet."))
-                                            .color(Color.gray)
-                                            .fontScale(0.9f)
-                                            .left();
-                                    });
-                                }
-                            }).grow();
-                                    })
-                                    .grow();
-                            })
-                            .grow();
-                }).grow();
+                                    list.children(item -> new MessageGroupView(item, store, service));
+                                    virtualList = list;
+                                })
+                                .elseDo(() -> {
+                                    when(store.messages().activeLoadingInitial())
+                                            .thenDo(() -> Loader.centered())
+                                            .elseDo(() -> {
+                                                dynamic(store.messages().activeError(), err -> {
+                                                    if (err != null && !err.trim().isEmpty()) {
+                                                        column().grow().center().gap(unit(2)).padding(unit(4))
+                                                                .children(() -> {
+                                                                    icon(Icon.warning).size(unit(6))
+                                                                            .color(Color.scarlet);
+                                                                    text(Core.bundle.get(
+                                                                            "feature.chat.ui.error.messages",
+                                                                            "Failed to load messages."))
+                                                                            .color(Color.scarlet)
+                                                                            .fontScale(1.0f)
+                                                                            .wrap()
+                                                                            .center();
+                                                                    text(err).color(Color.gray).fontScale(0.85f).wrap()
+                                                                            .center();
+                                                                    button(Core.bundle.get("feature.chat.ui.retry",
+                                                                            "Retry"), () -> {
+                                                                                String activeId = store.channels()
+                                                                                        .currentActiveId();
+                                                                                if (activeId != null
+                                                                                        && service != null) {
+                                                                                    service.loadMessages(activeId);
+                                                                                }
+                                                                            })
+                                                                            .style(WebStyles.secondary())
+                                                                            .height(unit(10))
+                                                                            .children(() -> {
+                                                                                icon(Icon.refresh).size(unit(4));
+                                                                                text(Core.bundle.get(
+                                                                                        "feature.chat.ui.retry",
+                                                                                        "Retry"));
+                                                                            });
+                                                                });
+                                                    } else {
+                                                        column().padding(unit(4)).top().left().children(() -> {
+                                                            text(Core.bundle.get("feature.chat.ui.empty-messages",
+                                                                    "No messages yet."))
+                                                                    .color(Color.gray)
+                                                                    .fontScale(0.9f)
+                                                                    .left();
+                                                        });
+                                                    }
+                                                }).grow();
+                                            })
+                                            .grow();
+                                })
+                                .grow();
+                    }).grow();
                 }
             }).grow();
         }).element();
@@ -454,17 +463,17 @@ when(showEndOfHistory)
                                 divider(Direction.Y).color(Pal.accent).width(unit(1)).marginRight(unit(1));
                             }
 
-                            if (raw.getReplyTo() != null && !raw.getReplyTo().isEmpty()) {
-                                column().growX().top().left().children(() -> {
+                            column().growX().top().left().children(() -> {
+                                if (raw.getReplyTo() != null && !raw.getReplyTo().isEmpty()) {
                                     buildReplyPreview(raw.getReplyTo());
                                     column().growX().top().left().marginTop(ChatMessageHeightCalculator.REPLY_GAP)
                                             .children(() -> {
                                                 buildMessageBody(parsed, isPending, isFailed);
                                             });
-                                });
-                            } else {
-                                buildMessageBody(parsed, isPending, isFailed);
-                            }
+                                } else {
+                                    buildMessageBody(parsed, isPending, isFailed);
+                                }
+                            });
                         });
             });
         }
@@ -554,8 +563,8 @@ when(showEndOfHistory)
                 final String type = toolLink.getType();
                 final String itemId = toolLink.getItemId();
 
-                card().growX().top().left().children(() -> {
-                    column().growX().top().left().padding(unit(1.5f)).gap(unit(1)).children(() -> {
+                card().growX().top().left().height(ChatMessageHeightCalculator.TOOL_LINK_CARD_HEIGHT).children(() -> {
+                    column().grow().top().left().padding(unit(1.5f)).gap(unit(1)).children(() -> {
                         row().growX().top().left().gap(unit(1)).children(() -> {
                             icon("maps".equals(type) ? Icon.map : Icon.paste).size(unit(5), unit(5)).color(Pal.accent);
                             text(("maps".equals(type) ? "Map: " : "Schematic: ") + itemId)
@@ -600,30 +609,40 @@ when(showEndOfHistory)
 
             if (parsed instanceof TextMessage) {
                 TextMessage txt = (TextMessage) parsed;
-                buildMessageText(txt.getText(), bodyColor);
                 final String translatedId = parsed.getId();
-dynamic(store.translations().get(translatedId), translated -> {
-                     if (translated != null && !translated.isEmpty()) {
-                         final String translatedText = translated;
-                         column().growX().top().left().marginTop(unit(1)).children(() -> {
-                        text(Core.bundle.get("feature.chat.ui.translated-badge", "Translated"))
-                                .color(Pal.accent)
-                                .fontScale(0.8f)
-                                .left();
-                        buildMessageText(translatedText, bodyColor);
-                    });
-                }
+
+                Readable<TranslationViewState> viewState = new Computed<>(() -> {
+                    String tr = store.translations().get(translatedId).get();
+                    boolean orig = Boolean.TRUE.equals(store.translations().isShowingOriginal(translatedId).get());
+                    String currentTranslating = store.ui().translatingMessageId().get();
+                    boolean isTranslating = currentTranslating != null && currentTranslating.equals(translatedId);
+                    return new TranslationViewState(tr, orig, isTranslating);
                 });
-dynamic(store.ui().translatingMessageId(), translatingId -> {
-                     if (translatingId != null && translatingId.equals(translatedId)) {
-                         row().growX().top().left().children(() -> {
-                        text(Core.bundle.get("feature.chat.ui.translating", "Translating..."))
-                                .color(Color.gray)
-                                .fontScale(0.8f)
-                                .left();
-                    });
-                }
-                });
+
+                dynamic(viewState, state -> {
+                    if (state != null && state.translated != null && !state.translated.trim().isEmpty()) {
+                        String textToDisplay = state.showOriginal ? txt.getText() : state.translated;
+                        column().growX().top().left().children(() -> {
+                            buildMessageText(textToDisplay, bodyColor);
+                            buildTranslationToggleChip(translatedId, state.showOriginal);
+                        });
+                    } else {
+                        column().growX().top().left().children(() -> {
+                            buildMessageText(txt.getText(), bodyColor);
+                            if (state != null && state.translating) {
+                                row().growX().top().left().marginTop(unit(1)).gap(unit(1)).children(() -> {
+                                    icon(FileIcon.of("translate.png", Icon.refresh))
+                                            .size(unit(3.5f), unit(3.5f))
+                                            .color(Color.lightGray);
+                                    text(Core.bundle.get("feature.chat.ui.translating", "Translating..."))
+                                            .color(Color.lightGray)
+                                            .fontScale(0.8f)
+                                            .left();
+                                });
+                            }
+                        });
+                    }
+                }).growX();
                 return;
             }
 
@@ -637,60 +656,146 @@ dynamic(store.ui().translatingMessageId(), translatingId -> {
                     .growX();
         }
 
+        private void buildTranslationToggleChip(String messageId, boolean showingOriginal) {
+            button(() -> {
+                store.translations().toggleOriginal(messageId);
+                ChatMessageHeightCalculator.clearCache();
+            })
+                    .style(WebStyles.ghost())
+                    .padding(unit(0.5f), unit(1.5f), unit(0.5f), unit(1.5f))
+                    .height(unit(6))
+                    .marginTop(unit(1))
+                    .left()
+                    .children(() -> {
+                        row().gap(unit(1)).center().children(() -> {
+                            icon(FileIcon.of("translate.png", Icon.refresh))
+                                    .size(unit(3.5f), unit(3.5f))
+                                    .color(Pal.accent);
+                            text(showingOriginal
+                                    ? Core.bundle.get("feature.chat.ui.show-translated", "Show translation")
+                                    : Core.bundle.get("feature.chat.ui.show-original", "Translated • Show original"))
+                                    .color(Pal.accent)
+                                    .fontScale(0.8f)
+                                    .left();
+                        });
+                    });
+        }
+
+        private static final class TranslationViewState {
+            final @Nullable String translated;
+            final boolean showOriginal;
+            final boolean translating;
+
+            TranslationViewState(@Nullable String translated, boolean showOriginal, boolean translating) {
+                this.translated = translated;
+                this.showOriginal = showOriginal;
+                this.translating = translating;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o)
+                    return true;
+                if (!(o instanceof TranslationViewState))
+                    return false;
+                TranslationViewState that = (TranslationViewState) o;
+                return showOriginal == that.showOriginal &&
+                        translating == that.translating &&
+                        Objects.equals(translated, that.translated);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(translated, showOriginal, translating);
+            }
+        }
+
         private void buildRoomInviteCard(String link) {
             PlayerConnectFeature pc = FeatureManager.getFeature(PlayerConnectFeature.class);
             Readable<PlayerConnectRoom> roomSignal = (pc != null && pc.isEnabled())
                     ? pc.getRooms().map(rooms -> findRoomByLink(rooms, link))
                     : Signal.of(null);
 
-dynamic(roomSignal, room -> {
-                 if (room != null) {
-                     new RoomCard(room, false);
-                 } else {
-                     buildFallbackRoomCardContent(link);
-                 }
-             })
+            dynamic(roomSignal, room -> {
+                if (room != null) {
+                    new RoomCard(room, false);
+                } else {
+                    buildFallbackRoomCardContent(link);
+                }
+            })
                     .height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT)
                     .growX()
                     .name("pc-card-wrapper");
         }
 
         private Component buildFallbackRoomCardContent(String link) {
-            return column()
+            return card()
+                    .name("pc-card-fallback")
+                    .background(Styles.black8)
+                    .border(1.5f, Color.darkGray)
+                    .gap(unit(1.5f))
+                    .padding(unit(2))
+                    .left()
                     .grow()
-                    .gap(unit(1))
                     .children(() -> {
-                        text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
-                                .color(Pal.accent)
-                                .fontScale(0.95f)
-                                .ellipsis()
-                                .growX()
-                                .left();
+                        // Fixed Row 1: Header row (Title + spacer)
+                        row().growX().height(unit(6)).gap(unit(2)).children(() -> {
+                            text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
+                                    .style(Styles.outlineLabel)
+                                    .fontScale(0.95f)
+                                    .ellipsis()
+                                    .growX()
+                                    .left();
+                            spacer();
+                        });
 
-                        text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
-                                .color(Color.scarlet)
-                                .fontScale(0.85f)
-                                .left();
+                        // Fixed Row 2: Status
+                        row().growX().height(unit(4.5f)).children(() -> {
+                            text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
+                                    .color(Color.scarlet)
+                                    .fontScale(0.9f)
+                                    .growX()
+                                    .ellipsis()
+                                    .left();
+                        });
 
-                        text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, ""))
-                                .color(Color.lightGray).fontScale(0.85f).ellipsis().growX().left();
+                        // Fixed Row 3: Link address
+                        row().growX().height(unit(4.5f)).children(() -> {
+                            text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, ""))
+                                    .color(Color.lightGray)
+                                    .fontScale(0.9f)
+                                    .growX()
+                                    .ellipsis()
+                                    .left();
+                        });
 
-                        spacer();
+                        // Fixed Row 4: Protocol note or empty slot
+                        row().growX().height(unit(4.5f)).children(() -> {
+                            text(Core.bundle.get("feature.player-connect.title", "Player Connect"))
+                                    .color(Color.gray)
+                                    .fontScale(0.85f)
+                                    .growX()
+                                    .ellipsis()
+                                    .left();
+                        });
 
-                        row().growX().gap(unit(1)).children(() -> {
-                        when(FeatureManager.get(PlayerConnectFeature.class).enabled())
-                                .thenDo(() -> button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
-                                        () -> promptDirectJoin(link))
-                                                .style(WebStyles.secondary())
-                                                .growX()
-                                                .height(unit(11)))
-                                .elseDo(() -> button(
-                                        Core.bundle.get("feature.chat.ui.enable-player-connect", "Enable Player Connect"),
-                                        () -> FeatureManager.getFeature(PlayerConnectFeature.class).enable())
-                                                .style(WebStyles.secondary())
-                                                .growX()
-                                                .height(unit(11)))
-                                .growX();
+                        // Fixed Row 5: Action buttons row
+                        row().gap(unit(1)).growX().height(unit(11)).children(() -> {
+                            when(FeatureManager.get(PlayerConnectFeature.class).enabled())
+                                    .thenDo(() -> button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
+                                            () -> promptDirectJoin(link))
+                                            .style(WebStyles.secondary())
+                                            .growX()
+                                            .height(unit(11)))
+                                    .elseDo(() -> button(
+                                            Core.bundle.get("feature.chat.ui.enable-player-connect",
+                                                    "Enable Player Connect"),
+                                            () -> FeatureManager.getFeature(PlayerConnectFeature.class).enable())
+                                            .style(WebStyles.secondary())
+                                            .growX()
+                                            .height(unit(11)))
+                                    .growX();
+
                             button(() -> {
                                 Core.app.setClipboardText(link);
                                 Vars.ui.showInfoFade("@copied");
@@ -738,10 +843,10 @@ dynamic(roomSignal, room -> {
         }
 
         private void buildSchematicCard(Schematic schematic) {
-            card().top().left().children(() -> {
-                column().top().left().gap(unit(1)).children(() -> {
+            card().top().left().height(ChatMessageHeightCalculator.SCHEMATIC_CARD_HEIGHT).children(() -> {
+                column().grow().top().left().gap(unit(1)).children(() -> {
                     // Header: just the name
-                    row().growX().top().left().gap(unit(1)).children(() -> {
+                    row().growX().height(unit(6)).top().left().gap(unit(1)).children(() -> {
                         text(schematic.name())
                                 .color(Pal.accent)
                                 .fontScale(0.95f)
@@ -761,11 +866,15 @@ dynamic(roomSignal, room -> {
                             .height(unit(35))
                             .width(width)
                             .children(() -> {
-                                arc(new SchematicImage(schematic).setScaling(Scaling.fit));
+                                if (Vars.schematics != null) {
+                                    arc(new SchematicImage(schematic).setScaling(Scaling.fit));
+                                } else {
+                                    icon(Icon.paste).size(unit(10));
+                                }
                             });
 
                     // Action buttons row below preview
-                    row().growX().top().left().gap(unit(1)).children(() -> {
+                    row().growX().height(unit(7)).top().left().gap(unit(1)).children(() -> {
                         button(() -> Vars.ui.schematics.showInfo(schematic))
                                 .style(Styles.clearNonei)
                                 .size(unit(6), unit(6))
@@ -961,4 +1070,3 @@ dynamic(roomSignal, room -> {
         }
     }
 }
-

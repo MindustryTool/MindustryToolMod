@@ -22,6 +22,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import solim.core.BaseComponent;
+import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Row;
 import solim.runtime.AttachmentStack;
@@ -716,5 +717,42 @@ class DynamicComponentTest extends SolimEnv {
         assertEquals(0, dyn.container().getChildren().size);
 
         dyn.dispose();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void dynamicInsideColumnAttachesChildToDynamicContainerNotParentColumn() {
+        Signal<String> source = Signal.of("item");
+        Card[] cardHolder = new Card[1];
+        Dynamic<String>[] dynHolder = new Dynamic[1];
+
+        Column column = new Column();
+        column.children(() -> {
+            Dynamic<String> d = Dynamic.of(source, val -> {
+                Card card = new Card();
+                card.name("pc-card");
+                card.children(() -> {
+                    // child content
+                });
+                cardHolder[0] = card;
+            });
+            d.name("pc-card-wrapper");
+            AttachmentStack.attachToParent(d.element());
+            dynHolder[0] = d;
+        });
+
+        Element colEl = column.element();
+        Element dynEl = dynHolder[0].element();
+        Element cardEl = cardHolder[0].element();
+
+        assertNotNull(cardEl);
+        assertEquals("pc-card", cardEl.name);
+        assertEquals("pc-card-wrapper", dynEl.name);
+        assertSame(dynEl, cardEl.parent, "Card must be attached to Dynamic container");
+        assertNotSame(colEl, cardEl.parent, "Card must NOT be attached to outer column");
+        assertTrue(dynHolder[0].container().getChildren().contains(cardEl, true));
+        assertFalse(((Table) colEl).getChildren().contains(cardEl, true));
+
+        column.dispose();
     }
 }

@@ -15,15 +15,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ReflectUtilTest {
 
     static class GrandParent {
-        private String grandParentField = "grandparent";
+        public String grandParentField = "grandparent";
 
-        private String secretMessage() {
+        public String secretMessage() {
             return "from grandparent";
         }
     }
 
     static class Parent extends GrandParent {
-        private String parentField = "parent";
+        public String parentField = "parent";
         protected int protectedCount = 42;
 
         public String greet(String name) {
@@ -32,7 +32,7 @@ class ReflectUtilTest {
     }
 
     static class Child extends Parent {
-        private String childField = "child";
+        public String childField = "child";
     }
 
     @BeforeEach

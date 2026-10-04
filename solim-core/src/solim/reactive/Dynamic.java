@@ -14,6 +14,7 @@ import solim.layout.GapContainer;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
+import solim.runtime.AttachmentStack;
 import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
 import java.util.ArrayList;
@@ -105,9 +106,11 @@ public final class Dynamic<T> extends BaseComponent
         // (including inside captured root builds) never re-trigger this Dynamic effect.
         Fragment fragment = ReactiveContext.untracked(() -> {
             Fragment f = Fragment.capture(() -> factory.get(value));
-            for (Component root : f.roots()) {
-                root.element();
-            }
+            AttachmentStack.isolate(() -> {
+                for (Component root : f.roots()) {
+                    root.element();
+                }
+            });
             return f;
         });
         if (fragment.isEmpty()) {

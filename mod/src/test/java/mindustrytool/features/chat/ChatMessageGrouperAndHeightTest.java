@@ -646,9 +646,12 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
                 raw("img-msg", "user", "payload"), "https://example.com/test.png");
         MessageGroup groupImg = new MessageGroup("user", "2026-09-12T10:00:00Z", Collections.singletonList(img));
         float hImg = ChatMessageHeightCalculator.calculateHeight(groupImg, 400f);
+        float textWidth = Math.max(20f, 400f - ChatMessageHeightCalculator.HORIZONTAL_PADDINGS);
         float expectedImg = Math.max(ChatMessageHeightCalculator.AVATAR_SIZE,
                 ChatMessageHeightCalculator.HEADER_HEIGHT + ChatMessageHeightCalculator.HEADER_GAP
-                        + ChatMessageHeightCalculator.IMAGE_CARD_HEIGHT)
+                        + ChatMessageHeightCalculator.IMAGE_CARD_HEIGHT
+                        + ChatMessageHeightCalculator.measureTextHeight(img.getImageUrl(), textWidth, 0.85f)
+                        + ChatMessageHeightCalculator.UNIT_1)
                 + ChatMessageHeightCalculator.UNIT_1 * 2f;
         assertEquals(expectedImg, hImg, 0.001f);
 
@@ -758,6 +761,109 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
             Scl.setProduct(1.0f);
             ChatMessageHeightCalculator.clearCache();
         }
+    }
+
+    @Test
+    void testRealComponentHeightRoomInviteLiveAndFallback() {
+        // Fallback room card (room == null in player connect)
+        ParsedChatMessage.RoomInviteMessage inviteFallback = new ParsedChatMessage.RoomInviteMessage(
+                raw("invite-fallback", "user", "payload"), "player-connect://127.0.0.1:6567");
+        MessageGroup groupFallback = new MessageGroup("user", "2026-09-12T10:00:00Z",
+                Collections.singletonList(inviteFallback));
+
+        float calcFallback = ChatMessageHeightCalculator.calculateHeight(groupFallback, 400f);
+        float realFallback = measureRealGroupHeight(groupFallback, 400f);
+        assertEquals(calcFallback, realFallback, 0.001f);
+    }
+
+    @Test
+    void testRealComponentHeightCommandMessages() {
+        ParsedChatMessage.CommandMessage schemCmd = new ParsedChatMessage.CommandMessage(
+                raw("cmd-schem", "user", ":schematic:"), ParsedChatMessage.CommandKind.SCHEMATIC);
+        MessageGroup groupSchem = new MessageGroup("user", "2026-09-12T10:00:00Z",
+                Collections.singletonList(schemCmd));
+        float calcSchem = ChatMessageHeightCalculator.calculateHeight(groupSchem, 400f);
+        float realSchem = measureRealGroupHeight(groupSchem, 400f);
+        assertEquals(calcSchem, realSchem, 0.001f);
+
+        ParsedChatMessage.CommandMessage mapCmd = new ParsedChatMessage.CommandMessage(
+                raw("cmd-map", "user", ":map:"), ParsedChatMessage.CommandKind.MAP);
+        MessageGroup groupMap = new MessageGroup("user", "2026-09-12T10:00:00Z",
+                Collections.singletonList(mapCmd));
+        float calcMap = ChatMessageHeightCalculator.calculateHeight(groupMap, 400f);
+        float realMap = measureRealGroupHeight(groupMap, 400f);
+        assertEquals(calcMap, realMap, 0.001f);
+    }
+
+    @Test
+    void testRealComponentHeightMindustryToolLinkMessages() {
+        ParsedChatMessage.MindustryToolLinkMessage schemLink = new ParsedChatMessage.MindustryToolLinkMessage(
+                raw("link-schem", "user", "payload"), "https://mindustrytool.com/schematics/42", "schematics", "42");
+        MessageGroup groupSchem = new MessageGroup("user", "2026-09-12T10:00:00Z",
+                Collections.singletonList(schemLink));
+        float calcSchem = ChatMessageHeightCalculator.calculateHeight(groupSchem, 400f);
+        float realSchem = measureRealGroupHeight(groupSchem, 400f);
+        assertEquals(calcSchem, realSchem, 0.001f);
+
+        ParsedChatMessage.MindustryToolLinkMessage mapLink = new ParsedChatMessage.MindustryToolLinkMessage(
+                raw("link-map", "user", "payload"), "https://mindustrytool.com/maps/99", "maps", "99");
+        MessageGroup groupMap = new MessageGroup("user", "2026-09-12T10:00:00Z",
+                Collections.singletonList(mapLink));
+        float calcMap = ChatMessageHeightCalculator.calculateHeight(groupMap, 400f);
+        float realMap = measureRealGroupHeight(groupMap, 400f);
+        assertEquals(calcMap, realMap, 0.001f);
+    }
+
+    @Test
+    void testRealComponentHeightRoomInviteLiveWithData() {
+        mindustrytool.models.response.PlayerConnectRoom room = new mindustrytool.models.response.PlayerConnectRoom();
+        room.setLink("player-connect://127.0.0.1:6567");
+        mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData data =
+                new mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData();
+        data.setName("Test Room");
+        data.setMapName("Ground Zero");
+        data.setGamemode("Survival");
+        data.setVersion(mindustry.core.Version.combined());
+        data.setProtocolVersion(mindustrytool.features.playerconnect.net.NetworkProxy.PROTOCOL_VERSION);
+        room.setData(data);
+
+        // Render RoomCard directly in chat mode (displayPlayerList = false)
+        mindustrytool.features.playerconnect.ui.RoomCard card =
+                new mindustrytool.features.playerconnect.ui.RoomCard(room, false);
+        ownedViews.add(card);
+        Element element = card.element();
+
+        Table root = new Table();
+        root.setSize(400f, 2000f);
+        root.top().left();
+        root.add(element).width(330f).top().left();
+        root.validate();
+
+        assertEquals(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT, element.getPrefHeight(), 0.001f);
+    }
+
+    @Test
+    void testRealComponentHeightSchematicMessage() {
+        mindustry.game.Schematic schematic = new mindustry.game.Schematic(
+                new arc.struct.Seq<>(), new arc.struct.StringMap(), 10, 10);
+        ParsedChatMessage.SchematicMessage schem = new ParsedChatMessage.SchematicMessage(
+                raw("schem-1", "user", "payload"), schematic, null, null);
+        MessageGroup groupSchem = new MessageGroup("user", "2026-09-12T10:00:00Z",
+                Collections.singletonList(schem));
+        float calcSchem = ChatMessageHeightCalculator.calculateHeight(groupSchem, 400f);
+        float realSchem = measureRealGroupHeight(groupSchem, 400f);
+        assertEquals(calcSchem, realSchem, 0.001f);
+    }
+
+    @Test
+    void testRealComponentHeightImageMessage() {
+        ParsedChatMessage.ImageMessage img = new ParsedChatMessage.ImageMessage(
+                raw("img-1", "user", "payload"), "https://example.com/screenshot.png");
+        MessageGroup groupImg = new MessageGroup("user", "2026-09-12T10:00:00Z",
+                Collections.singletonList(img));
+        float calcImg = ChatMessageHeightCalculator.calculateHeight(groupImg, 400f);
+        float realImg = measureRealGroupHeight(groupImg, 400f);
+        assertEquals(calcImg, realImg, 0.001f);
     }
 }
 

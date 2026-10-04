@@ -234,7 +234,7 @@ The chat system SHALL parse incoming and loaded raw `ChatMessage` instances into
 - **THEN** `Schematics.readBase64()` is executed during the parsing pass and the resulting `Schematic` object is retained in the model, preventing redundant decompression during UI passes
 
 ### Requirement: Pre-rendering grouping and height caching
-The chat system SHALL group consecutive messages from the same author before rendering and calculate layout heights using static dimensions for fixed components (`INVITE_CARD_HEIGHT = 108f`, `SCHEMATIC_CARD_HEIGHT = 212f`, `IMAGE_CARD_HEIGHT = 140f`, `TOOL_LINK_CARD_HEIGHT = 70f`) and `GlyphLayout` for wrapped text, caching heights keyed by container width.
+The chat system SHALL group consecutive messages from the same author before rendering and calculate layout heights using static dimensions for fixed components (`INVITE_CARD_HEIGHT = 162f`, `SCHEMATIC_CARD_HEIGHT = 212f`, `IMAGE_CARD_HEIGHT = 120f`, `TOOL_LINK_CARD_HEIGHT = 70f`, `COMMAND_CARD_HEIGHT = 70f`) and `GlyphLayout` for wrapped text, caching heights keyed by container width.
 
 #### Scenario: Grouping consecutive author messages
 - **WHEN** multiple consecutive messages in the active channel share the same author ID
@@ -246,14 +246,14 @@ The chat system SHALL group consecutive messages from the same author before ren
 
 #### Scenario: Uniform invite card height calculation
 - **WHEN** `ChatMessageHeightCalculator.calculateHeight()` processes a `RoomInviteMessage`
-- **THEN** it calculates `INVITE_CARD_HEIGHT` at 108px scaled height regardless of whether live room metadata has arrived
+- **THEN** it calculates `INVITE_CARD_HEIGHT` at 162px scaled height regardless of whether live room metadata has arrived
 
 ### Requirement: PlayerConnect room invite card rendering and direct join
-The chat system SHALL render typed `RoomInviteMessage` entries as a dedicated interactive card with a fixed 108px layout height, resolving room metadata reactively from `PlayerConnectFeature.getRooms()`. When room data is available, the card SHALL display the room title, security status, map name, gamemode, player count, and compatibility status, with a "Join" action and "Copy Link" action. When room data is unavailable or unlisted, the card SHALL display the link string and offline status with a "Try Connect" action and "Copy Link" action.
+The chat system SHALL render typed `RoomInviteMessage` entries as a dedicated interactive card with a fixed 162px layout height, resolving room metadata reactively from `PlayerConnectFeature.getRooms()`. When room data is available, the card SHALL display the room title, security status, map name, gamemode, version, player count, and compatibility status, with a "Join" action and "Copy Link" action. When room data is unavailable or unlisted, the card SHALL display the link string and offline status with a "Try Connect" action and "Copy Link" action, structured with identical fixed rows and a 162px layout height.
 
 #### Scenario: Rendering live room data from PlayerConnectFeature
 - **WHEN** a `RoomInviteMessage` is displayed and its link matches an active room in `PlayerConnectFeature.getRooms()`
-- **THEN** the card renders the room name, lock icon if secured, map name, gamemode, player count, and a primary "Join" button within a 108px card height
+- **THEN** the card renders the room name, lock icon if secured, map name, gamemode, version, player count, and a primary "Join" button within a fixed 162px card height
 
 #### Scenario: Joining a password-protected room from chat
 - **WHEN** the user clicks "Join" on a secured room invite card
@@ -493,19 +493,23 @@ The test suite SHALL include an automated test that creates the real MessageGrou
 - **THEN** the measured layout height in the element tree matches ChatMessageHeightCalculator.calculateHeight exactly, accounting for multiple message cards and inter-message gaps
 
 ### Requirement: Individual message actions preserved in group view
-The system SHALL preserve click handling on individual message elements within a `MessageGroup` to display a shared floating action popup menu (providing Copy, Reply, and Translate actions) anchored near the clicked message, without dimming the screen with a modal dialog. Selecting Translate SHALL trigger translation and update the message text in-place within the message bubble.
+The system SHALL preserve click handling on individual message elements within a `MessageGroup` to display a shared floating action popup menu (providing Copy, Reply, and Translate actions) anchored near the clicked message, without dimming the screen with a modal dialog. Selecting Translate SHALL trigger on-demand translation, display a subtle translating indicator while pending, and update the message text in-place within the message bubble upon completion, accompanied by an interactive toggle chip to switch between translated and original text.
 
 #### Scenario: Clicking a specific message opens shared floating action popup
 - **WHEN** the user clicks on any message row inside a message group
 - **THEN** a shared floating action popup menu opens anchored near that specific message containing Copy, Reply, and Translate actions
 
-#### Scenario: Touching outside dismisses action popup
+#### Scenario: Clicking outside dismisses action popup
 - **WHEN** the user clicks anywhere outside the open floating action popup
-- **THEN** the action popup is dismissed
+- **THEN** the popup menu is dismissed
 
 #### Scenario: Translating message in-place
 - **WHEN** the user selects the Translate action from the popup
-- **THEN** translation is requested and the translated text is displayed in-place within the message item upon completion
+- **THEN** translation is requested, a progress indicator appears below the message, and the translated text replaces the original text in-place upon completion
+
+#### Scenario: Toggling between translated and original text
+- **WHEN** a message has been translated and the user clicks the translation toggle chip
+- **THEN** the displayed message text toggles between the translated text and the original text, and the chip label updates accordingly
 
 ### Requirement: Interactive URL Link Detection and Confirmation Dialog
 The chat message view SHALL detect valid HTTP/HTTPS URLs in text messages, highlight them using the design system primary color (`WebStyles.Colors.PRIMARY`), and prompt a confirmation dialog with translated text upon clicking before navigating externally via `Core.app.openURI(url)`.
@@ -864,4 +868,11 @@ The system SHALL render chat channels and message loading and error states using
 #### Scenario: Rendering channels directly from query data
 - **WHEN** `ChatChannelListView` mounts and `channelsQuery` resolves with channels
 - **THEN** it SHALL render `ChannelItem` components for all items in the query result without requiring a manual refresh
+
+### Requirement: Vertical Message Column Hierarchy
+The system SHALL layout message content, reply previews, translated text, translation indicators, and toggle chips within a vertical column hierarchy (`column().growX().top().left()`), preventing horizontal cell spillover or unanchored text drift across the screen.
+
+#### Scenario: Translated message renders vertically below header
+- **WHEN** a message row is built with or without replies and with active translation
+- **THEN** the message text, toggle chip, and status indicators stack strictly vertically within the message card bounds
 
