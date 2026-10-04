@@ -25,7 +25,6 @@ public class HostRoomDialog extends SolimDialog {
         super(Core.bundle.get("feature.player-connect.host-room", "Host Room"));
 
         name("hostRoomDialog");
-        addCloseButton();
         closeOnBack();
         cont().center();
 
@@ -129,22 +128,31 @@ public class HostRoomDialog extends SolimDialog {
                                         feature.autoAcceptConfig
                                                 .set(!Boolean.TRUE.equals(feature.autoAcceptConfig.get()));
                                     })
-                                            .style(WebStyles.outline())
-                                            .height(unit(10))
-                                            .paddingX(unit(4))
-                                            .paddingY(unit(2))
-                                            .minWidth(unit(24));
+                                    .style(WebStyles.outline())
+                                    .height(unit(10))
+                                    .paddingX(unit(4))
+                                    .paddingY(unit(2))
+                                    .minWidth(unit(24));
                         });
 
-                        button(Core.bundle.get("next", "Next"), () -> {
-                            step.set(2);
-                            pingAllProviders();
-                        })
-                                .style(WebStyles.primary())
-                                .height(unit(11))
-                                .paddingX(unit(8))
-                                .paddingY(unit(2.5f))
-                                .minWidth(unit(36));
+                        row().gap(unit(2)).children(() -> {
+                            button(Core.bundle.get("cancel", "Cancel"), dialog::hide)
+                                    .style(WebStyles.outline())
+                                    .height(unit(11))
+                                    .paddingX(unit(6))
+                                    .paddingY(unit(2.5f))
+                                    .minWidth(unit(28));
+
+                            button(Core.bundle.get("next", "Next"), () -> {
+                                step.set(2);
+                                pingAllProviders();
+                            })
+                                    .style(WebStyles.primary())
+                                    .height(unit(11))
+                                    .paddingX(unit(8))
+                                    .paddingY(unit(2.5f))
+                                    .minWidth(unit(36));
+                        });
                     });
         }
 
@@ -198,12 +206,12 @@ public class HostRoomDialog extends SolimDialog {
 
                             button(Core.bundle.get("feature.player-connect.start-hosting", "Start Hosting"),
                                     this::startHosting)
-                                            .style(WebStyles.primary())
-                                            .height(unit(11))
-                                            .paddingX(unit(8))
-                                            .paddingY(unit(2.5f))
-                                            .minWidth(unit(36))
-                                            .enabled(selectedProvider.map(p -> p != null));
+                                    .style(WebStyles.primary())
+                                    .height(unit(11))
+                                    .paddingX(unit(8))
+                                    .paddingY(unit(2.5f))
+                                    .minWidth(unit(36))
+                                    .enabled(selectedProvider.map(p -> p != null));
                         });
                     });
         }
