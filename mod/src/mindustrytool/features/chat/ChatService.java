@@ -15,6 +15,7 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import arc.func.Boolf;
 import arc.func.Prov;
 import arc.struct.Seq;
 import mindustrytool.models.response.ChannelDto;
@@ -31,7 +32,7 @@ public class ChatService {
     public static final float WATCHDOG_INTERVAL_SECONDS = 5f;
 
     private final ChatStore store;
-    private final Prov<Boolean> windowOpenSupplier;
+    private final Boolf<String> feedVisiblePredicate;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final String chatId = UUID.randomUUID().toString();
 
@@ -48,8 +49,12 @@ public class ChatService {
     private final Seq<CompletableFuture<?>> activeRequests = new Seq<>();
 
     public ChatService(ChatStore store, Prov<Boolean> windowOpenSupplier) {
+        this(store, channelId -> windowOpenSupplier.get() && Objects.equals(store.channels().currentActiveId(), channelId));
+    }
+
+    public ChatService(ChatStore store, Boolf<String> feedVisiblePredicate) {
         this.store = store;
-        this.windowOpenSupplier = windowOpenSupplier;
+        this.feedVisiblePredicate = feedVisiblePredicate;
 
         autoLoadEffect = Effect.of(() -> {
             String channelId = store.channels().activeId().get();
@@ -197,9 +202,7 @@ public class ChatService {
                     ChatMessage newest = messages.get(messages.size() - 1);
                     if (newest.getId() != null) {
                         store.unread().setLatestMessage(channelId, newest.getId());
-                        boolean open = windowOpenSupplier.get();
-                        boolean isActive = Objects.equals(store.channels().currentActiveId(), channelId);
-                        if (open && isActive) {
+                        if (feedVisiblePredicate.get(channelId)) {
                             store.unread().markAsRead(channelId, newest.getId());
                         }
                     }
@@ -287,9 +290,7 @@ public class ChatService {
                     ChatMessage newest = messages.get(messages.size() - 1);
                     if (newest.getId() != null) {
                         store.unread().setLatestMessage(channelId, newest.getId());
-                        boolean open = windowOpenSupplier.get();
-                        boolean isActive = Objects.equals(store.channels().currentActiveId(), channelId);
-                        if (open && isActive) {
+                        if (feedVisiblePredicate.get(channelId)) {
                             store.unread().markAsRead(channelId, newest.getId());
                         }
                     }
@@ -461,18 +462,17 @@ public class ChatService {
                 if (list != null) {
                     Core.app.post(() -> {
                         store.session().setConnected(true);
-                        boolean open = windowOpenSupplier.get();
                         for (ChatMessage msg : list) {
                             boolean added = store.messages().append(msg);
                             if (added) {
-                                boolean isActive = Objects.equals(store.channels().currentActiveId(),
-                                        msg.getChannelId());
+                                boolean isVisible = feedVisiblePredicate.get(msg.getChannelId());
+                                int countBefore = store.unread().get(msg.getChannelId());
                                 if (msg.getId() != null) {
                                     store.unread().setLatestMessage(msg.getChannelId(), msg.getId());
                                 }
-                                if (open && isActive) {
+                                if (isVisible) {
                                     store.unread().markAsRead(msg.getChannelId(), msg.getId());
-                                } else {
+                                } else if (store.unread().get(msg.getChannelId()) == countBefore) {
                                     store.unread().increment(msg.getChannelId());
                                 }
                             }
@@ -487,12 +487,12 @@ public class ChatService {
                         store.session().setConnected(true);
                         boolean added = store.messages().append(msg);
                         if (added) {
-                            boolean open = windowOpenSupplier.get();
-                            boolean isActive = Objects.equals(store.channels().currentActiveId(), msg.getChannelId());
+                            boolean isVisible = feedVisiblePredicate.get(msg.getChannelId());
+                            int countBefore = store.unread().get(msg.getChannelId());
                             store.unread().setLatestMessage(msg.getChannelId(), msg.getId());
-                            if (open && isActive) {
+                            if (isVisible) {
                                 store.unread().markAsRead(msg.getChannelId(), msg.getId());
-                            } else {
+                            } else if (store.unread().get(msg.getChannelId()) == countBefore) {
                                 store.unread().increment(msg.getChannelId());
                             }
                         }

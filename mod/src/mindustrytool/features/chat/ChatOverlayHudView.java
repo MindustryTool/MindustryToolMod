@@ -7,6 +7,8 @@ import arc.func.Prov;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
+import arc.util.Nullable;
+import java.util.Objects;
 import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
@@ -276,6 +278,20 @@ public class ChatOverlayHudView extends BaseComponent {
                 });
     }
 
+    public boolean isFeedVisible(@Nullable String channelId) {
+        if (Boolean.TRUE.equals(feature.collapsedConfig.get())) {
+            return false;
+        }
+        if (!Objects.equals(store.channels().currentActiveId(), channelId)) {
+            return false;
+        }
+        // If mobile/narrow layout, message feed is only visible on tab 1 (Messages)
+        if (Units.width().peek() < 1200) {
+            return mobileTab.peek() == 1;
+        }
+        return true;
+    }
+
     public void keepInScreen() {
         if (hud != null) {
             hud.root().invalidateHierarchy();
@@ -284,3 +300,4 @@ public class ChatOverlayHudView extends BaseComponent {
         }
     }
 }
+

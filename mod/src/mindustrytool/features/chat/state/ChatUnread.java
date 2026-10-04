@@ -15,7 +15,6 @@ public final class ChatUnread {
     private final Signal<Map<String, Integer>> unreads = Signal.of(new HashMap<>());
     private final Signal<Map<String, String>> latestMessageIds = Signal.of(new HashMap<>());
     private final Signal<Map<String, String>> readMessageIds = Signal.of(new HashMap<>());
-    private final Map<String, Readable<Integer>> channelComputeds = new HashMap<>();
     private final Computed<Integer> total;
 
     public ChatUnread() {
@@ -55,12 +54,7 @@ public final class ChatUnread {
         if (channelId == null) {
             return Readable.of(0);
         }
-        Readable<Integer> existing = channelComputeds.get(channelId);
-        if (existing == null) {
-            existing = unreads.map(map -> map.getOrDefault(channelId, 0));
-            channelComputeds.put(channelId, existing);
-        }
-        return existing;
+        return unreads.map(map -> map.getOrDefault(channelId, 0));
     }
 
     public int get(@Nullable String channelId) {

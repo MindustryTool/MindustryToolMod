@@ -4,8 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
 import arc.mock.MockSettings;
+import arc.scene.Element;
+import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.core.BaseComponent;
+import solim.reactive.Readable;
 import solim.test.SolimEnv;
 
 class ChatUnreadTest extends SolimEnv {
@@ -150,4 +154,41 @@ class ChatUnreadTest extends SolimEnv {
         assertEquals(0, unread.get("ch2"));
         assertEquals(0, unread.get("ch3"));
     }
+
+    @Test
+    void testForChannelRetainsReactivityAfterComponentRebuild() {
+        ChatUnread unread = new ChatUnread();
+
+        // Simulate component 1 building and obtaining a reactive binding
+        BaseComponent comp1 = new BaseComponent() {
+            @Override
+            protected Element build() {
+                Readable<Integer> binding = unread.forChannel("ch1");
+                assertEquals(0, binding.get());
+                return new Table();
+            }
+        };
+        comp1.element();
+        // Component 1 unmounts/disposes
+        comp1.dispose();
+
+        // Simulate component 2 building for the same channel
+        BaseComponent comp2 = new BaseComponent() {
+            @Override
+            protected Element build() {
+                Readable<Integer> binding = unread.forChannel("ch1");
+                assertEquals(0, binding.get());
+
+                // An incoming message arrives
+                unread.increment("ch1");
+
+                // Reactive binding must reflect the incremented count
+                assertEquals(1, binding.get());
+                return new Table();
+            }
+        };
+        comp2.element();
+        comp2.dispose();
+    }
 }
+
