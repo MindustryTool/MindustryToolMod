@@ -224,4 +224,41 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
         assertNotNull(found);
         assertEquals("CachedUser", found.getName());
     }
+
+    @Test
+    void testIncomingMessageWhenFeedNotVisibleIncrementsUnread() {
+        // Feed is not visible for ch1 (e.g., viewing channel list or collapsed)
+        ChatService unreadTrackingService = new ChatService(store, channelId -> false);
+        try {
+            String json = "{\"id\":\"01944800-0000-7000-8000-000000000001\",\"channelId\":\"ch1\",\"content\":\"hello\",\"createdBy\":\"u1\"}";
+            unreadTrackingService.handleStreamLine("data: " + json);
+            unreadTrackingService.handleStreamLine("");
+
+            // Unread should increment so indicator dot can display
+            assertEquals(1, store.unread().get("ch1"));
+            assertEquals(1, store.unread().forChannel("ch1").get());
+        } finally {
+            unreadTrackingService.stop();
+            unreadTrackingService.dispose();
+        }
+    }
+
+    @Test
+    void testIncomingMessageWhenFeedIsVisibleMarksAsRead() {
+        // Feed is visible for ch1
+        ChatService readService = new ChatService(store, channelId -> "ch1".equals(channelId));
+        try {
+            String json = "{\"id\":\"01944800-0000-7000-8000-000000000002\",\"channelId\":\"ch1\",\"content\":\"hello2\",\"createdBy\":\"u1\"}";
+            readService.handleStreamLine("data: " + json);
+            readService.handleStreamLine("");
+
+            // Unread should be 0 since message feed was visible
+            assertEquals(0, store.unread().get("ch1"));
+            assertEquals(0, store.unread().forChannel("ch1").get());
+        } finally {
+            readService.stop();
+            readService.dispose();
+        }
+    }
 }
+

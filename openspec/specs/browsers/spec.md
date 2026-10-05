@@ -391,3 +391,19 @@ Item detail dialogs (`MapDetailDialog` and `SchematicDetailDialog`) SHALL resolv
 - **WHEN** `MapBrowserDialog` builds its content view
 - **THEN** it SHALL use `query(state.query())` to declaratively render loading, error, and map card grid states
 
+### Requirement: Browser Quick Access HUD Click and Highlight
+`SchematicBrowserFeature` and `MapBrowserFeature` SHALL open their respective browser dialogs on Quick Access HUD single-click (`onQuickAccessClick`), without modifying feature enabled state. Both browser features SHALL provide an active highlight state (`quickAccessHighlight() == true`) for their Quick Access icons regardless of feature enabled state.
+
+#### Scenario: Single-click on Schematic Browser Quick Access button
+- **WHEN** user clicks the Schematic Browser button on the Quick Access HUD
+- **THEN** `SchematicBrowserDialog` is shown, and the feature's enabled state is not toggled
+
+#### Scenario: Single-click on Map Browser Quick Access button
+- **WHEN** user clicks the Map Browser button on the Quick Access HUD
+- **THEN** `MapBrowserDialog` is shown, and the feature's enabled state is not toggled
+
+#### Scenario: Browser Quick Access highlight state
+- **WHEN** `quickAccessHighlight()` is read on `SchematicBrowserFeature` or `MapBrowserFeature`
+- **THEN** it returns true regardless of whether the feature is enabled or disabled
+
+

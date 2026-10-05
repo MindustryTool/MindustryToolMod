@@ -98,7 +98,7 @@ public class ChatFeature extends Feature {
         store = new ChatStore(this);
 
 
-        service = new ChatService(store, () -> !Boolean.TRUE.equals(collapsedConfig.get()));
+        service = new ChatService(store, channelId -> hudView != null && hudView.isFeedVisible(channelId));
         presence = new ChatPresence(store.session(), ModSettings.sharePresence, enabled());
 
         bindAction("chatOverlay", KeyCode.unset, this::toggleCollapsed, false);

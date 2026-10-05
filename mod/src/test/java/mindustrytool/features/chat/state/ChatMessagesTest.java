@@ -2,10 +2,14 @@ package mindustrytool.features.chat.state;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import arc.scene.Element;
+import arc.scene.ui.layout.Table;
 import java.util.Arrays;
 import java.util.List;
 import mindustrytool.models.response.ChatMessage;
 import org.junit.jupiter.api.Test;
+import solim.core.BaseComponent;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.test.SolimEnv;
 
@@ -169,4 +173,42 @@ class ChatMessagesTest extends SolimEnv {
         assertNull(messages.currentActiveError());
         assertEquals(1, messages.active().get().size());
     }
+
+    @Test
+    void testForChannelRetainsReactivityAfterComponentRebuild() {
+        Signal<String> activeId = Signal.of("ch1");
+        ChatMessages chatMessages = new ChatMessages(activeId);
+
+        // Component 1 binds to forChannel("ch1") and is then disposed
+        BaseComponent comp1 = new BaseComponent() {
+            @Override
+            protected Element build() {
+                Readable<List<ChatMessage>> binding = chatMessages.forChannel("ch1");
+                assertTrue(binding.get().isEmpty());
+                return new Table();
+            }
+        };
+        comp1.element();
+        comp1.dispose();
+
+        // Component 2 mounts later and binds to forChannel("ch1")
+        BaseComponent comp2 = new BaseComponent() {
+            @Override
+            protected Element build() {
+                Readable<List<ChatMessage>> binding = chatMessages.forChannel("ch1");
+                assertTrue(binding.get().isEmpty());
+
+                // New message arrives
+                chatMessages.append(msg("m1", "ch1", "Hello"));
+
+                // Component 2's binding must reactively update
+                assertEquals(1, binding.get().size());
+                assertEquals("m1", binding.get().get(0).getId());
+                return new Table();
+            }
+        };
+        comp2.element();
+        comp2.dispose();
+    }
 }
+

@@ -143,20 +143,22 @@ public class RoomBrowserView extends BaseComponent {
                         button(feature.getRoomsQuery()::refetch)
                                 .style(WebStyles.outline())
                                 .size(unit(11))
-                                .children(() -> icon(Icon.refresh).origin(Align.center).size(unit(7))
+                                .children(() -> icon(Icon.refresh).size(unit(6))
                                         .update((element) -> {
+                                            element.setOrigin(Align.center);
+
                                             if (feature.isFetching().peek()) {
-                                                element.rotation -= 5 * Time.delta;
+                                                element.rotation -= 6f * Time.delta;
+                                                if (element.rotation <= -360f) {
+                                                    element.rotation += 360f;
+                                                }
                                                 return;
                                             }
 
-                                            if (element.rotation != 0) {
-                                                float last = element.rotation;
-                                                element.rotation %= 360;
-                                                element.rotation -= 5 * Time.delta;
-
-                                                if (last < element.rotation) {
-                                                    element.rotation = 0;
+                                            if (element.rotation < 0f) {
+                                                element.rotation -= 6f * Time.delta;
+                                                if (element.rotation <= -360f) {
+                                                    element.rotation = 0f;
                                                 }
                                             }
                                         }));
