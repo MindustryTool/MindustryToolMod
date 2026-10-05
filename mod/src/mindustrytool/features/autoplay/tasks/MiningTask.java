@@ -189,6 +189,13 @@ public class MiningTask implements AutoplayTask {
         // or deposit it at the core before mining any other resource.
         if (unit.stack.amount > 0 && unit.stack.item != null) {
             Item held = unit.stack.item;
+
+            // If the unit is within core deposit range and the core accepts the held stack,
+            // deposit immediately to avoid infinite continuity lock when mining near the core.
+            if (unit.within(core, unit.type.range) && core.acceptStack(held, unit.stack.amount, unit) > 0) {
+                Call.transferInventory(Vars.player, core);
+            }
+
             boolean canContinueMining = isSelected(held)
                     && unit.canMine(held)
                     && core.acceptStack(held, 1, unit) > 0;
@@ -347,6 +354,10 @@ public class MiningTask implements AutoplayTask {
                 return;
             }
 
+
+            if (unit.stack.amount > 0 && unit.within(core, unit.type.range) && core.acceptStack(unit.stack.item, unit.stack.amount, unit) > 0) {
+                Call.transferInventory(Vars.player, core);
+            }
 
             if (!unit.validMine(unit.mineTile)) {
                 unit.mineTile = null;

@@ -101,6 +101,7 @@ The Mining task MUST mine the lowest-stock selected resources safely and deposit
 - The task MUST verify that candidate ore tiles are valid to mine before selecting them, accepting uncovered floor ores (`tile.drop() == item && tile.block() == Blocks.air`) and valid wall ores (`tile.wallDrop() == item || (tile.block() != null && tile.block().itemDrop == item)`).
 - The task MUST throttle candidate ore evaluation using a tick timer to prevent searching all content items across the indexer every frame.
 - WHEN the unit is transporting collected ore to the core (`mining == false`) THEN `unit.mineTile` MUST NOT be set or re-assigned until deposit completes.
+- WHEN the unit is within core transfer range (`unit.within(core, unit.type.range)`) and is carrying cargo (`unit.stack.amount > 0`) that the core accepts THEN the task MUST deposit its carried items into the core immediately via `Call.transferInventory`.
 - WHEN the unit is already carrying a resource (`unit.stack.amount > 0`) AND that resource is still valid to mine and accept in the core THEN the task MUST continue mining that resource until capacity is reached before switching to another resource.
 - WHEN the unit is carrying a resource (`unit.stack.amount > 0`) that cannot be mined or is full in the core THEN the task MUST immediately switch to deposit mode (`mining = false`, `unit.mineTile = null`) to empty its inventory before selecting another resource.
 - The task MUST NEVER assign `unit.mineTile` to an ore type that differs from the item currently carried in `unit.stack.item` when `unit.stack.amount > 0`.
@@ -119,6 +120,10 @@ The Mining task MUST mine the lowest-stock selected resources safely and deposit
 - **WHEN** the player unit is mining an ore tile within core transfer range (`Vars.mineTransferRange`) where items beam directly into the core
 - **THEN** MiningTask continues mining the current target item until an alternative selected resource in the core is lower by at least the hysteresis threshold, at which point it switches target items
 
+#### Scenario: Carrying items while near core deposits immediately
+- **WHEN** the unit holds cargo (`unit.stack.amount > 0`) while within interaction range of the core
+- **THEN** carried items are transferred to the core so the unit can evaluate and switch to lower-stock resources without getting stuck
+
 #### Scenario: Immediate switch when core is full of current resource
 - **WHEN** the core reaches maximum capacity for the current target resource (`core.acceptStack <= 0`)
 - **THEN** MiningTask immediately switches to the next lowest-stock valid candidate without waiting for the threshold
@@ -132,7 +137,7 @@ The Mining task MUST mine the lowest-stock selected resources safely and deposit
 - **THEN** comprehensive candidate ore searches across all items are evaluated periodically on an interval rather than on every tick
 
 #### Scenario: Inventory continuity while holding resource
-- **WHEN** a unit has partially mined Coal (`unit.stack.amount > 0`) and another selected resource becomes lower in the core
+- **WHEN** a unit has partially mined Coal (`unit.stack.amount > 0`) far from the core and another selected resource becomes lower in the core
 - **THEN** MiningTask finishes filling its inventory with Coal up to capacity before returning to core and switching to the other resource
 
 #### Scenario: Immediate deposit when carried resource is unmineable

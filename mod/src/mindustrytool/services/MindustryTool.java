@@ -273,11 +273,12 @@ public final class MindustryTool {
     // ─── Auth ──────────────────────────────────────────────────────
 
     public static CompletableFuture<UserSession> getSession() {
-        return api.get("/auth/session").sendAsync().thenApply(r -> {
+        return api.get("/auth/session").timeout(Duration.ofMinutes(1)).sendAsync().thenApply(r -> {
             String body = r.body();
             if (body == null || body.isEmpty() || body.equals("null")) {
                 return null;
             }
+
             return JsonUtils.fromJson(UserSession.class, body);
         });
     }
