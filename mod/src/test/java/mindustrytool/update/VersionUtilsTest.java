@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import mindustrytool.services.update.VersionUtils;
 import org.junit.jupiter.api.Test;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
-class VersionUtilsTest extends SolimEnv {
+class VersionUtilsTest extends ArcTestEnv {
 
 	@Test
 	void parseVersion_null_returnsEmpty() {

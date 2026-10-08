@@ -83,6 +83,7 @@ public final class ChatStore {
     public void selectChannel(@Nullable String channelId) {
         channels.select(channelId);
         ui.clearActiveSelection();
+        ui.mobileTab().set(1);
         if (channelId != null) {
             unread.clear(channelId);
         }

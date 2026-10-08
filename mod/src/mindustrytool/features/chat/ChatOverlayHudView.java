@@ -22,7 +22,6 @@ import solim.layout.Direction;
 import solim.overlay.Hud;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
-import solim.reactive.Signal;
 import solim.core.Units;
 
 public class ChatOverlayHudView extends BaseComponent {
@@ -30,7 +29,6 @@ public class ChatOverlayHudView extends BaseComponent {
     private final ChatFeature feature;
     private final ChatStore store;
     private final ChatService service;
-    private final Signal<Integer> mobileTab = Signal.of(1); // 0: Channels, 1: Messages, 2: Members
 
     private Hud hud;
 
@@ -261,7 +259,7 @@ public class ChatOverlayHudView extends BaseComponent {
     }
 
     private Component buildMobileBody() {
-        return tabs(mobileTab)
+        return tabs(store.ui().mobileTab())
                 .grow()
                 .tab(Core.bundle.get("feature.chat.ui.channels", "Channels"), () -> {
                     new ChatChannelListView(store, service);
@@ -287,7 +285,7 @@ public class ChatOverlayHudView extends BaseComponent {
         }
         // If mobile/narrow layout, message feed is only visible on tab 1 (Messages)
         if (Units.width().peek() < 1200) {
-            return mobileTab.peek() == 1;
+            return store.ui().mobileTab().peek() == 1;
         }
         return true;
     }

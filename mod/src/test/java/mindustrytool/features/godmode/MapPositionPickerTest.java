@@ -19,9 +19,9 @@ import mindustry.Vars;
 import mindustry.game.EventType.TapEvent;
 import mindustry.core.UI;
 import mindustry.world.Tile;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
-class MapPositionPickerTest extends SolimEnv {
+class MapPositionPickerTest extends ArcTestEnv {
 
     private Application originalApp;
     private UI originalUi;

@@ -6,9 +6,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import mindustrytool.services.update.ChangelogFormatter;
 import org.junit.jupiter.api.Test;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
-class ChangelogFormatterPrereleaseTest extends SolimEnv {
+class ChangelogFormatterPrereleaseTest extends ArcTestEnv {
 
     private static String releasesJson() {
         return "["

@@ -152,3 +152,14 @@ A test-support type that references module X's types SHALL be owned by module X 
 
 ---
 
+### Requirement: Base-class selection rule
+The test environment SHALL document that `SolimEnv` is reserved for tests exercising solim reactive state, and pure-logic tests SHALL use `ArcTestEnv`.
+
+#### Scenario: Pure-logic test placement
+- **WHEN** a test uses no `Signal`/`Computed`/`Effect` and no `flushEffects`/`createSignal`/`listen`
+- **THEN** it extends `ArcTestEnv` and is exempt from the `SignalDispatcher` empty-queue teardown assertion
+
+#### Scenario: Reactive test placement
+- **WHEN** a test invalidates or observes solim reactive state
+- **THEN** it extends `SolimEnv` and teardown fails the test on leaked ambient state
+

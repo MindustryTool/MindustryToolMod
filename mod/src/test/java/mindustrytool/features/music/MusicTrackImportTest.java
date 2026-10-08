@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
-class MusicTrackImportTest extends SolimEnv {
+class MusicTrackImportTest extends ArcTestEnv {
 
     @Test
     void isReadableReturnsFalseForNull() {

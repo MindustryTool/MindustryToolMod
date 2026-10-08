@@ -7,9 +7,9 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.zone.ZoneRulesException;
 import org.junit.jupiter.api.Test;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
-class TimeZonesTest extends SolimEnv {
+class TimeZonesTest extends ArcTestEnv {
 
     @Test
     void systemDefaultOrUtc_returnsNonNullZone() {

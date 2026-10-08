@@ -73,7 +73,6 @@ public class ChatInputView extends BaseComponent {
                                 : (authorId != null ? authorId : "message");
 
                         row().growX().padding(unit(1)).height(unit(12)).gap(unit(1)).children(() -> {
-                            icon(Icon.leftSmall).size(unit(4), unit(4)).color(Pal.accent);
                             text(Core.bundle.format("feature.chat.ui.replying", targetName)).color(Color.lightGray)
                                     .fontScale(0.85f).left();
                             spacer();

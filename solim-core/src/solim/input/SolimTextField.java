@@ -1,4 +1,5 @@
 package solim.input;
+
 import solim.reactive.TwoWayBinding;
 
 import arc.Core;
@@ -53,11 +54,13 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
         this.field = style != null ? new TextField("", style) : new TextField("");
         this.field.name = "solim-textfield-textField";
         field.setText(signal.peek() != null ? signal.peek() : "");
+
         this.binding = new TwoWayBinding<>(
                 signal,
                 field::getText,
                 val -> {
                     field.setText(val != null ? val : "");
+
                     if (validator != null) {
                         valid.set(validator.get(val));
                     }
@@ -69,6 +72,7 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
                             valid.set(validator.get(field.getText()));
                         }
                     });
+
                     return DisposableAction.empty();
                 });
 
@@ -212,7 +216,6 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
     public SolimTextField focus() {
         Core.app.post(() -> {
             if (!isDisposed() && !field.isDisabled()) {
-                Core.scene.setKeyboardFocus(field);
                 field.requestKeyboard();
             }
         });
