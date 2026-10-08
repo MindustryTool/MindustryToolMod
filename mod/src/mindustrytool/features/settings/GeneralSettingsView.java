@@ -39,7 +39,7 @@ public class GeneralSettingsView extends BaseComponent {
 
                     divider();
 
-                    row().growX().gap(unit(2)).children(() -> {
+                    column().growX().gap(unit(2)).children(() -> {
                         button(this::copyLastLog)
                                 .style(WebStyles.outline())
                                 .growX()

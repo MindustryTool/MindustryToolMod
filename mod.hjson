@@ -53,7 +53,7 @@ description:
 
 version: v5.2.5-v8
 
-minGameVersion: 160
+minGameVersion: 160.7
 
 java: true
 
