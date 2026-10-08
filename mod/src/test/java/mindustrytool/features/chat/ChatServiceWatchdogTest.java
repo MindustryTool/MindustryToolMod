@@ -170,6 +170,12 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
 
         service.syncActiveChannelSilently("ch1");
 
+        // Cancel the incidental real-network request immediately: the assertions
+        // above only cover synchronous flag updates, and a late Request-Worker
+        // completion would otherwise clear flags or touch solim state during a
+        // later test's teardown window (flaky SolimEnv failures).
+        service.stop();
+
         assertFalse(store.messages().isActiveLoadingInitial(),
                 "Silent sync should not trigger full loading screen when messages are cached");
     }
@@ -182,6 +188,10 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
         assertFalse(store.messages().isActiveLoadingInitial());
 
         service.syncActiveChannelSilently("ch1");
+
+        // Same prompt cancellation as above: keep the late async completion
+        // from racing these synchronous assertions or later tests.
+        service.stop();
 
         assertTrue(store.messages().isActiveLoadingInitial(),
                 "Silent sync should set loadingInitial = true when cache is completely empty");
@@ -198,6 +208,10 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
         service.setLastEventTime(expiredTime);
 
         service.checkConnectionAndReconnect();
+
+        // Promptly cancel the reconnect's incidental real-network requests
+        // (stream + catch-up sync) for the same reason as above.
+        service.stop();
 
         assertTrue(mockReq.isCancelled(), "Stalled stream should be cancelled by reconnect check");
         assertFalse(store.session().connected().get());

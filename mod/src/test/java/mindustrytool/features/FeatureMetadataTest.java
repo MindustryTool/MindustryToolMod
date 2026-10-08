@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import arc.scene.style.TextureRegionDrawable;
 import org.junit.jupiter.api.Test;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
-class FeatureMetadataTest extends SolimEnv {
+class FeatureMetadataTest extends ArcTestEnv {
 
     @Test
     void defaults_quickAccessByDefaultIsFalse() {

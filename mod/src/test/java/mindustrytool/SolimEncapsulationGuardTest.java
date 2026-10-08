@@ -9,9 +9,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
-class SolimEncapsulationGuardTest extends SolimEnv {
+class SolimEncapsulationGuardTest extends ArcTestEnv {
 
 	@Test
 	void noModSourceReferencesSolimRuntimeOrManualOwn() throws IOException {

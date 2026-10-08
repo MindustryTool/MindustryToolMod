@@ -7,9 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
-class ScreenshotNamingTest extends SolimEnv {
+class ScreenshotNamingTest extends ArcTestEnv {
 
     @Test
     void resolveFilenameProducesFixedTimestampedPng() {

@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import mindustrytool.services.update.ChangelogFormatter;
 import org.junit.jupiter.api.Test;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
 /** Pure tests for {@link ChangelogFormatter#findLatestTag(String)}. No network. */
-class ChangelogFormatterLatestTagTest extends SolimEnv {
+class ChangelogFormatterLatestTagTest extends ArcTestEnv {
 
     @Test
     void findLatestTag_nullAndBlank_returnsNull() {

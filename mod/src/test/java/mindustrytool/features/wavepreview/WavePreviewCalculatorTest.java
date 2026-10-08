@@ -11,9 +11,9 @@ import mindustry.type.StatusEffect;
 import mindustry.type.UnitType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.test.SolimEnv;
+import solim.test.ArcTestEnv;
 
-class WavePreviewCalculatorTest extends SolimEnv {
+class WavePreviewCalculatorTest extends ArcTestEnv {
 
     private static UnitType groundDagger;
     private static UnitType airFlare;
