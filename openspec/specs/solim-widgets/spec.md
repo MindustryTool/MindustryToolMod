@@ -762,3 +762,19 @@ Solim SHALL provide an abstract base class `LeafComponent<E extends Element, SEL
 - **WHEN** `.width(100f)`, `.growX()`, or `.pad(8f)` is called on a `LeafComponent`
 - **THEN** the modifiers are recorded in its `PendingCellConfig` and applied to the parent cell upon attachment
 
+### Requirement: Widget event handler fail-fast error propagation
+Input widgets and event bindings (`Button`, `ElementClickBinding`) SHALL NOT swallow unhandled exceptions thrown by user click or interaction handlers with `catch (Exception e)`, and SHALL allow exceptions to propagate directly into the scene input dispatch pipeline.
+
+#### Scenario: Button onClick failure propagates to input system
+- **WHEN** a user triggers a button whose `onClick` handler throws an unhandled exception
+- **THEN** `Button` does NOT swallow the exception in `catch (Exception e)` and the exception propagates out of the input listener
+
+#### Scenario: Button onLongClick failure propagates to input system
+- **WHEN** a user triggers a button whose `onLongClick` handler throws an unhandled exception
+- **THEN** `Button` does NOT swallow the exception in `catch (Exception e)` and the exception propagates out of the input listener
+
+#### Scenario: ElementClickBinding failure propagates
+- **WHEN** an element click handler bound via `ElementClickBinding` throws an unhandled exception
+- **THEN** `ElementClickBinding` does NOT swallow the exception in `catch (Exception e)` and the exception propagates
+
+

@@ -1,6 +1,5 @@
 package solim.reactive;
 
-import arc.util.Log;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -76,10 +75,13 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		}
 		if (error != null) {
 			updateDependencies(newDeps);
-			dirty = false;
-			if (error instanceof IllegalStateException) throw (IllegalStateException) error;
-			Log.err("[Computed] Prov error", error);
-			return;
+			if (error instanceof RuntimeException) {
+				throw (RuntimeException) error;
+			}
+			if (error instanceof Error) {
+				throw (Error) error;
+			}
+			throw new RuntimeException(error);
 		}
 		boolean changed = !hasValue || !Objects.equals(cachedValue, newValue);
 		cachedValue = newValue;
@@ -90,11 +92,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 			// notify listeners
 			List<Cons<T>> copy = new ArrayList<>(listeners);
 			for (Cons<T> l : copy) {
-				try {
-					l.get(cachedValue);
-				} catch (Throwable e) {
-					Log.err("[Computed] listener error", e);
-				}
+				l.get(cachedValue);
 			}
 			// downstream already marked dirty via earlier invalidate, no need to re-propagate if value
 			// changed
@@ -136,11 +134,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		// propagate to downstream
 		Set<ReactiveObserver> copy = new LinkedHashSet<>(observers);
 		for (ReactiveObserver o : copy) {
-			try {
-				o.invalidate();
-			} catch (Throwable e) {
-				Log.err("[Computed] downstream invalidate error", e);
-			}
+			o.invalidate();
 		}
 		// eager recompute if has listeners
 		if (!listeners.isEmpty() && !computing) {

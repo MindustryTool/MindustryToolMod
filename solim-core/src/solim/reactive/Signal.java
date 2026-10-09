@@ -1,6 +1,5 @@
 package solim.reactive;
 
-import arc.util.Log;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -66,20 +65,12 @@ public final class Signal<T> implements Readable<T>, ReactiveSource {
 		// notify listeners
 		List<Cons<T>> copy = new ArrayList<>(listeners);
 		for (Cons<T> c : copy) {
-			try {
-				c.get(value);
-			} catch (Throwable e) {
-				Log.err("[Signal] listener error", e);
-			}
+			c.get(value);
 		}
 		// notify observers (Computeds/Effects)
 		Set<ReactiveObserver> obsCopy = new LinkedHashSet<>(observers);
 		for (ReactiveObserver o : obsCopy) {
-			try {
-				o.invalidate();
-			} catch (Throwable e) {
-				Log.err("[Signal] observer invalidate error", e);
-			}
+			o.invalidate();
 		}
 	}
 

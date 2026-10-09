@@ -1,6 +1,5 @@
 package solim.reactive;
 
-import arc.util.Log;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -198,11 +197,7 @@ public final class MapSignal<K, V> implements Readable<Map<K, V>>, ReactiveSourc
     private void invalidateMapObservers() {
         Set<ReactiveObserver> copy = new LinkedHashSet<>(mapObservers);
         for (ReactiveObserver observer : copy) {
-            try {
-                observer.invalidate();
-            } catch (Throwable e) {
-                Log.err("[MapSignal] observer invalidate error", e);
-            }
+            observer.invalidate();
         }
     }
 
@@ -262,11 +257,7 @@ public final class MapSignal<K, V> implements Readable<Map<K, V>>, ReactiveSourc
         void invalidateObservers() {
             Set<ReactiveObserver> copy = new LinkedHashSet<>(observers);
             for (ReactiveObserver observer : copy) {
-                try {
-                    observer.invalidate();
-                } catch (Throwable e) {
-                    Log.err("[MapSignal] key observer invalidate error", e);
-                }
+                observer.invalidate();
             }
         }
 

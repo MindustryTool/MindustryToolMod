@@ -4,7 +4,6 @@ import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
-import arc.util.Log;
 import arc.util.Nullable;
 
 /**
@@ -41,11 +40,7 @@ class ElementClickBinding extends ClickListener {
             event.stop();
         }
         if (handler != null) {
-            try {
-                handler.run();
-            } catch (Exception e) {
-                Log.err("Error executing element onClick", e);
-            }
+            handler.run();
         }
     }
 }
