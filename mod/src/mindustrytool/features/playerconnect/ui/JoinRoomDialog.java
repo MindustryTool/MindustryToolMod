@@ -9,6 +9,7 @@ import mindustry.Vars;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
+import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import solim.core.BaseComponent;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
@@ -17,26 +18,26 @@ import solim.reactive.Signal;
 public class JoinRoomDialog extends SolimDialog {
 
     private static final String LAST_LINK_KEY = "mindustrytool.player-connect.last-link";
+    private final PlayerConnectFeature feature;
 
-    public JoinRoomDialog() {
+    public JoinRoomDialog(PlayerConnectFeature feature) {
         super(Core.bundle.get("feature.player-connect.join-link-title", "Join via Link"));
+
+        this.feature = feature;
 
         name("joinRoomDialog");
         addCloseButton();
         closeOnBack();
         cont().center();
 
-        children(() -> new JoinRoomView(this));
+        children(() -> new JoinRoomView());
     }
 
-    private static class JoinRoomView extends BaseComponent {
-        private final JoinRoomDialog dialog;
+    private class JoinRoomView extends BaseComponent {
         private final Signal<String> linkSignal;
         private final Signal<String> passwordSignal = Signal.of("");
 
-        public JoinRoomView(JoinRoomDialog dialog) {
-            this.dialog = dialog;
-
+        public JoinRoomView() {
             String clipboard = Core.app.getClipboardText();
             String initial = (clipboard != null && PlayerConnectLink.isValid(clipboard))
                     ? clipboard
@@ -55,7 +56,17 @@ public class JoinRoomDialog extends SolimDialog {
             Computed<Boolean> isValid = linkSignal.map(PlayerConnectLink::isValid);
             Computed<String> statusMessage = isValid.map(valid -> valid
                     ? Core.bundle.get("feature.player-connect.link-valid", "Valid link format")
-                    : Core.bundle.get("feature.player-connect.link-invalid", "Invalid link (expected player-connect://host:port/roomId)"));
+                    : Core.bundle.get("feature.player-connect.link-invalid",
+                            "Invalid link (expected player-connect://host:port/roomId)"));
+
+            Computed<Boolean> hasPassword = feature.getRoomsQuery()
+                    .data()
+                    .map(rooms -> rooms == null ? false
+                            : rooms.stream()
+                                    .filter(room -> room.getLink().equals(linkSignal.get()))
+                                    .findFirst()
+                                    .map(room -> room.getData().isSecured())
+                                    .orElse(true));
 
             return column()
                     .growX()
@@ -68,7 +79,8 @@ public class JoinRoomDialog extends SolimDialog {
                         // Link input
                         column().growX().gap(unit(1.5f)).left().children(() -> {
                             text(Core.bundle.get("feature.player-connect.join-link", "Link:")).left();
-                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2)).rounded(unit(2))
+                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
+                                    .rounded(unit(2))
                                     .children(() -> {
                                         textField(linkSignal)
                                                 .grow()
@@ -77,15 +89,19 @@ public class JoinRoomDialog extends SolimDialog {
                         });
 
                         // Password input
-                        column().growX().gap(unit(1.5f)).left().children(() -> {
-                            text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
-                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2)).rounded(unit(2))
-                                    .children(() -> {
-                                        textField(passwordSignal)
-                                                .grow()
-                                                .style(WebStyles.clearInput());
+                        when(hasPassword)
+                                .thenDo(() -> {
+                                    column().growX().gap(unit(1.5f)).left().children(() -> {
+                                        text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
+                                        row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
+                                                .rounded(unit(2))
+                                                .children(() -> {
+                                                    textField(passwordSignal)
+                                                            .grow()
+                                                            .style(WebStyles.clearInput());
+                                                });
                                     });
-                        });
+                                });
 
                         // Validation text
                         text(statusMessage)
@@ -110,7 +126,7 @@ public class JoinRoomDialog extends SolimDialog {
 
             try {
                 PlayerConnectLink link = PlayerConnectLink.fromString(linkSignal.get());
-                dialog.hide();
+                hide();
                 PlayerConnectClient.join(link, passwordSignal.get(), () -> {
                 });
             } catch (Exception e) {

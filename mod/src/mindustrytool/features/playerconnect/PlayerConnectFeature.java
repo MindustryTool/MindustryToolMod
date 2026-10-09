@@ -135,7 +135,7 @@ public class PlayerConnectFeature extends Feature {
 
     public JoinRoomDialog getJoinRoomDialog() {
         if (joinRoomDialog == null) {
-            joinRoomDialog = new JoinRoomDialog();
+            joinRoomDialog = new JoinRoomDialog(this);
         }
 
         return joinRoomDialog;
@@ -146,15 +146,15 @@ public class PlayerConnectFeature extends Feature {
             Call.serverPacketReliable("has-player-connect", "true");
         });
 
-        Vars.netClient.addPacketHandler("connect-player-connect", (roomId) -> {
+        Vars.netClient.addPacketHandler("connect-player-connect", (roomLink) -> {
             Optional<PlayerConnectRoom> roomOptional = roomsQuery.data()
                     .peek()
                     .stream()
-                    .filter(r -> r.getLink().equals(roomId))
+                    .filter(r -> r.getLink().equals(roomLink))
                     .findFirst();
 
             if (roomOptional.isPresent()) {
-                Core.app.setClipboardText(roomId);
+                Core.app.setClipboardText(roomLink);
                 getJoinRoomDialog().show();
             } else {
                 Vars.ui.showInfoFade("[scarlet]No room found");
