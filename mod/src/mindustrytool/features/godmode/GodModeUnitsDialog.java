@@ -7,6 +7,7 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.game.Team;
+import mindustry.gen.BlockUnitc;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.type.UnitType;
@@ -19,7 +20,7 @@ import solim.reactive.Signal;
 public class GodModeUnitsDialog extends SolimDialog {
 
     private final Signal<String> searchQuery = Signal.of("");
-    private final Signal<UnitType> selectedUnit = Signal.of(Vars.content.units().size > 0 ? Vars.content.units().first() : null);
+    private final Signal<UnitType> selectedUnit;
     private final Signal<Team> selectedTeam = Signal.of(Vars.player != null ? Vars.player.team() : Team.sharded);
     private final Signal<Integer> count = Signal.of(1);
     private final Signal<String> countString = Signal.of("1");
@@ -33,6 +34,9 @@ public class GodModeUnitsDialog extends SolimDialog {
         addCloseButton();
         closeOnBack();
 
+        Seq<UnitType> allUnits = Vars.content.units().select(GodModeUnitsDialog::isSpawnable);
+        this.selectedUnit = Signal.of(allUnits.size > 0 ? allUnits.first() : null);
+
         countString.subscribe(s -> {
             if (s != null) {
                 try {
@@ -43,7 +47,6 @@ public class GodModeUnitsDialog extends SolimDialog {
             }
         });
 
-        Seq<UnitType> allUnits = Vars.content.units();
         Readable<Seq<UnitType>> filteredUnits = searchQuery.map(q -> {
             if (q == null || q.trim().isEmpty()) {
                 return allUnits;
@@ -52,10 +55,9 @@ public class GodModeUnitsDialog extends SolimDialog {
             return allUnits.select(unit -> unit.localizedName.toLowerCase().contains(lower));
         });
 
-        Computed<String> posLabel = Signal.computed(() ->
-                Core.bundle.format("feature.god-mode.units.position",
-                        Math.round(posX.get() != null ? posX.get() : 0f),
-                        Math.round(posY.get() != null ? posY.get() : 0f)));
+        Computed<String> posLabel = Signal.computed(() -> Core.bundle.format("feature.god-mode.units.position",
+                Math.round(posX.get() != null ? posX.get() : 0f),
+                Math.round(posY.get() != null ? posY.get() : 0f)));
 
         children(() -> {
             column().gap(unit(2.5f)).padding(unit(3)).children(() -> {
@@ -129,10 +131,14 @@ public class GodModeUnitsDialog extends SolimDialog {
                     });
 
                     wrap().gap(unit(1.5f)).center().children(() -> {
-                        button(() -> addCount(1)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7)).children(() -> text("+1"));
-                        button(() -> addCount(5)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7)).children(() -> text("+5"));
-                        button(() -> addCount(10)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("+10"));
-                        button(() -> addCount(50)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("+50"));
+                        button(() -> addCount(1)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7))
+                                .children(() -> text("+1"));
+                        button(() -> addCount(5)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7))
+                                .children(() -> text("+5"));
+                        button(() -> addCount(10)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7))
+                                .children(() -> text("+10"));
+                        button(() -> addCount(50)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7))
+                                .children(() -> text("+50"));
                     });
                 });
 
@@ -190,5 +196,13 @@ public class GodModeUnitsDialog extends SolimDialog {
         int next = Math.max(1, current + delta);
         count.set(next);
         countString.set(String.valueOf(next));
+    }
+
+    private static boolean isSpawnable(UnitType unit) {
+        if (unit == null || unit.internal || unit.isHidden()) {
+            return false;
+        }
+
+        return unit.constructor != null && !(unit.constructor.get() instanceof BlockUnitc);
     }
 }

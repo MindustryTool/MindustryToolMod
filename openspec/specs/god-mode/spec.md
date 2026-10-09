@@ -33,11 +33,15 @@ The system SHALL allow injecting items into any team's active core.
 - **THEN** the specified quantity of that item is added to the chosen team's core.
 
 ### Requirement: Unit Spawner and Mass Destroyer
-The system SHALL allow spawning units of any type at chosen world coordinates, and killing all alive units of a given type and team.
+The system SHALL allow spawning units of any valid, spawnable type at chosen world coordinates, and killing all alive units of a given type and team. Internal, hidden, and block-bound unit entities SHALL NOT be selectable for spawning in the units dialog.
 
 #### Scenario: Spawn units at map coordinates
 - **WHEN** the player chooses a unit type, count, target team, selects a map coordinate, and clicks Spawn
 - **THEN** the specified number of units are spawned at that map location.
+
+#### Scenario: Filter unspawnable and internal units
+- **WHEN** the player opens the God Mode Units Dialog
+- **THEN** units that are internal, hidden, or construct `BlockUnitc` instances are excluded from the selectable unit list and initial selection.
 
 #### Scenario: Kill all units of type
 - **WHEN** the player chooses a unit type and team and clicks "Kill All"

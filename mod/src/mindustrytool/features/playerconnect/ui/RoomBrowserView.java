@@ -129,7 +129,7 @@ public class RoomBrowserView extends BaseComponent {
                                         collapsed.map(c -> Boolean.TRUE.equals(c)
                                                 ? FileIcon.of("chevron-right.png", Icon.rightOpen)
                                                 : FileIcon.of("chevron-down.png", Icon.downOpen)))
-                                                        .width(unit(6)));
+                                        .width(unit(6)));
 
                         // Search field
                         row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2)).rounded(unit(2))
@@ -165,7 +165,7 @@ public class RoomBrowserView extends BaseComponent {
 
                         // Join via Link button
                         button(Core.bundle.get("feature.player-connect.join-link-title", "Join via Link"), () -> {
-                            new JoinRoomDialog().show();
+                            feature.getJoinRoomDialog().show();
                         })
                                 .style(WebStyles.outline())
                                 .height(unit(11))
@@ -178,51 +178,59 @@ public class RoomBrowserView extends BaseComponent {
                     when(collapsed)
                             .thenDo(() -> row())
                             .elseDo(() -> column().growX().children(() -> {
-                            query(feature.getRoomsQuery())
-                                    .grow()
-                                    .loading(this::roomsLoading)
-                                    .error(err -> column().growX().margin(unit(3)).center().children(() -> {
-                                        text(err != null ? err.getMessage() : Core.bundle.get("error", "Error"))
-                                                .color(Color.scarlet);
-                                        button(Core.bundle.get("retry", "Retry"), feature.getRoomsQuery()::refetch)
-                                                .style(WebStyles.outline())
-                                                .height(unit(10));
-                                    }))
-                                    .data((allRooms, fetching) -> Boolean.TRUE.equals(fetching)
-                                            ? roomsLoading()
-                                            : column().growX().children(() -> {
-                                                dynamic(groupedRooms, groups -> {
-                                                    if (groups == null || groups.isEmpty()) {
-                                                        column().growX().margin(unit(3)).center()
-                                                                .children(() -> {
-                                                                    text(Core.bundle.get(
-                                                                            "feature.player-connect.no-rooms",
-                                                                            "No active PlayerConnect rooms found."))
-                                                                                     .color(Color.lightGray);
-                                                                                 });
+                                query(feature.getRoomsQuery())
+                                        .grow()
+                                        .loading(this::roomsLoading)
+                                        .error(err -> column().growX().margin(unit(3)).center().children(() -> {
+                                            text(err != null ? err.getMessage() : Core.bundle.get("error", "Error"))
+                                                    .color(Color.scarlet);
+                                            button(Core.bundle.get("retry", "Retry"), feature.getRoomsQuery()::refetch)
+                                                    .style(WebStyles.outline())
+                                                    .height(unit(10));
+                                        }))
+                                        .data((allRooms, fetching) -> Boolean.TRUE.equals(fetching)
+                                                ? roomsLoading()
+                                                : column().growX().children(() -> {
+                                                    dynamic(groupedRooms, groups -> {
+                                                        if (groups == null || groups.isEmpty()) {
+                                                            column().growX().margin(unit(3)).center()
+                                                                    .children(() -> {
+                                                                        text(Core.bundle.get(
+                                                                                "feature.player-connect.no-rooms",
+                                                                                "No active PlayerConnect rooms found."))
+                                                                                .color(Color.lightGray);
+                                                                    });
 
-                                                    } else {
-                                                        column().growX().gap(unit(3.5f)).children(() -> {
-                                                        for (ProviderRoomGroup group : groups) {
-                                                            column().growX().gap(unit(2)).left().children(() -> {
-                                                                // Provider group header
-                                                                row().growX().gap(unit(2)).children(() -> {
-                                                                    text(group.providerName).left();
-                                                                    text("(" + group.rooms.size() + ")");
-                                                                });
+                                                        } else {
+                                                            column().growX().gap(unit(3.5f)).children(() -> {
+                                                                for (ProviderRoomGroup group : groups) {
+                                                                    column().growX().gap(unit(2)).left()
+                                                                            .children(() -> {
+                                                                                // Provider group header
+                                                                                row().growX().gap(unit(2))
+                                                                                        .children(() -> {
+                                                                                            text(group.providerName)
+                                                                                                    .left();
+                                                                                            text("(" + group.rooms
+                                                                                                    .size() + ")");
+                                                                                        });
 
-                                                                // Grid of rooms for this provider
-                                                                reactiveGrid(group.rooms).columns(columnCount)
-                                                                        .key(PlayerConnectRoom::getLink).gap(unit(2))
-                                                                        .children((PlayerConnectRoom r) -> new RoomCard(r));
+                                                                                // Grid of rooms for this provider
+                                                                                reactiveGrid(group.rooms)
+                                                                                        .columns(columnCount)
+                                                                                        .key(PlayerConnectRoom::getLink)
+                                                                                        .gap(unit(2))
+                                                                                        .children((
+                                                                                                PlayerConnectRoom r) -> new RoomCard(
+                                                                                                        r));
+                                                                            });
+                                                                }
                                                             });
-                                                        }
-                                                    });
 
-                                                    }
-                                                }).growX();
-                                            }));
-                        })).growX();
+                                                        }
+                                                    }).growX();
+                                                }));
+                            })).growX();
 
                     divider();
                 }).element();

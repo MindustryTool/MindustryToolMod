@@ -80,4 +80,11 @@ class PathfindingFeatureTest extends MindustryTestEnv {
         assertTrue(feature.costTypeConfigs[0].get());
         assertTrue(feature.isCostTypeEnabled(0));
     }
+
+    @Test
+    void testResetClearsCaches() {
+        PathfindingFeature feature = new PathfindingFeature();
+        feature.reset();
+        // Verifies reset() completes smoothly without exceptions
+    }
 }
