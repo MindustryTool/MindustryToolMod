@@ -130,6 +130,8 @@ jobs:
 
       - name: Generate Release Notes
         id: notes
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           git fetch --tags --force
           PREV_TAG=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || git describe --tags --abbrev=0 2>/dev/null || echo "")

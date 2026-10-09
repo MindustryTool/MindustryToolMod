@@ -16,9 +16,11 @@ import solim.reactive.Computed;
 import solim.reactive.Signal;
 
 public class JoinRoomDialog extends SolimDialog {
-
     private static final String LAST_LINK_KEY = "mindustrytool.player-connect.last-link";
+
     private final PlayerConnectFeature feature;
+    private final Signal<String> passwordSignal;
+    private final Signal<String> linkSignal;
 
     public JoinRoomDialog(PlayerConnectFeature feature) {
         super(Core.bundle.get("feature.player-connect.join-link-title", "Join via Link"));
@@ -30,28 +32,33 @@ public class JoinRoomDialog extends SolimDialog {
         closeOnBack();
         cont().center();
 
+        String clipboard = Core.app.getClipboardText();
+        passwordSignal = Signal.of("");
+        linkSignal = Signal.of((clipboard != null && PlayerConnectLink.isValid(clipboard))
+                ? clipboard
+                : Core.settings.getString(LAST_LINK_KEY, "player-connect://"));
+
+        linkSignal.subscribe(val -> {
+            if (val != null) {
+                Core.settings.put(LAST_LINK_KEY, val);
+            }
+        });
+
+        shown(this::update);
+
         children(() -> new JoinRoomView());
     }
 
-    private class JoinRoomView extends BaseComponent {
-
-        public JoinRoomView() {
+    private void update() {
+        String clipboard = Core.app.getClipboardText();
+        if (clipboard != null && PlayerConnectLink.isValid(clipboard)) {
+            linkSignal.set(clipboard);
         }
+    }
 
+    private class JoinRoomView extends BaseComponent {
         @Override
         protected Element build() {
-            String clipboard = Core.app.getClipboardText();
-
-            Signal<String> passwordSignal = Signal.of("");
-            Signal<String> linkSignal = Signal.of((clipboard != null && PlayerConnectLink.isValid(clipboard))
-                    ? clipboard
-                    : Core.settings.getString(LAST_LINK_KEY, "player-connect://"));
-
-            linkSignal.subscribe(val -> {
-                if (val != null) {
-                    Core.settings.put(LAST_LINK_KEY, val);
-                }
-            });
 
             Computed<Boolean> isValid = linkSignal.map(PlayerConnectLink::isValid);
             Computed<String> statusMessage = isValid.map(valid -> valid

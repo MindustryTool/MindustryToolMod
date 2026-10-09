@@ -43,7 +43,7 @@ public class HealUnitsTask implements AutoplayTask {
         if (unit == null || unit.type == null) {
             return false;
         }
-        if (unit.type.canHeal || hasUnitHealWeapon(unit)) {
+        if (hasUnitHealWeapon(unit)) {
             return true;
         }
         if (unit.type.abilities != null) {
@@ -62,8 +62,13 @@ public class HealUnitsTask implements AutoplayTask {
         }
         for (int i = 0; i < unit.type.weapons.size; i++) {
             Weapon w = unit.type.weapons.get(i);
-            if (w != null && ((w.bullet != null && w.bullet.heals())
-                    || (w instanceof RepairBeamWeapon && ((RepairBeamWeapon) w).targetUnits))) {
+            if (w == null) {
+                continue;
+            }
+            boolean canHeal = w instanceof RepairBeamWeapon
+                    ? ((RepairBeamWeapon) w).targetUnits
+                    : (w.bullet != null && w.bullet.heals());
+            if (canHeal) {
                 return true;
             }
         }

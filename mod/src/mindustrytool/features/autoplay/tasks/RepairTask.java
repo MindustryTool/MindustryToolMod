@@ -59,7 +59,7 @@ public class RepairTask implements AutoplayTask {
         if (unit == null || unit.type == null) {
             return false;
         }
-        return unit.type.canHeal || hasHealWeapon(unit);
+        return hasHealWeapon(unit);
     }
 
     public static boolean hasHealWeapon(Unit unit) {
@@ -68,8 +68,13 @@ public class RepairTask implements AutoplayTask {
         }
         for (int i = 0; i < unit.type.weapons.size; i++) {
             Weapon w = unit.type.weapons.get(i);
-            if (w != null && ((w.bullet != null && w.bullet.heals())
-                    || (w instanceof RepairBeamWeapon && ((RepairBeamWeapon) w).targetBuildings))) {
+            if (w == null) {
+                continue;
+            }
+            boolean canRepair = w instanceof RepairBeamWeapon
+                    ? ((RepairBeamWeapon) w).targetBuildings
+                    : (w.bullet != null && w.bullet.heals());
+            if (canRepair) {
                 return true;
             }
         }
@@ -84,14 +89,19 @@ public class RepairTask implements AutoplayTask {
         if (unit.type.weapons != null) {
             for (int i = 0; i < unit.type.weapons.size; i++) {
                 Weapon w = unit.type.weapons.get(i);
-                if (w != null && ((w.bullet != null && w.bullet.heals())
-                        || (w instanceof RepairBeamWeapon && ((RepairBeamWeapon) w).targetBuildings))) {
+                if (w == null) {
+                    continue;
+                }
+                boolean canRepair = w instanceof RepairBeamWeapon
+                        ? ((RepairBeamWeapon) w).targetBuildings
+                        : (w.bullet != null && w.bullet.heals());
+                if (canRepair) {
                     maxRange = Math.max(maxRange, w.range());
                 }
             }
         }
         if (maxRange <= 0f) {
-            maxRange = unit.type.canHeal && unit.type.range > 0f ? unit.type.range : 80f;
+            maxRange = unit.type.range > 0f ? unit.type.range : 80f;
         }
         return maxRange;
     }
