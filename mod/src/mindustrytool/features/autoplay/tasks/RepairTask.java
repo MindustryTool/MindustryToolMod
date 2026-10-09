@@ -16,6 +16,9 @@ import mindustrytool.components.FileIcon;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
+import arc.util.Nullable;
+import mindustry.game.Team;
+
 public class RepairTask implements AutoplayTask {
 
     public static final String ID = "repair";
@@ -41,6 +44,16 @@ public class RepairTask implements AutoplayTask {
     @Override
     public Readable<String> status() {
         return status;
+    }
+
+    public static boolean isRepairable(@Nullable Building b, @Nullable Team team) {
+        return b != null
+                && b.isValid()
+                && !b.dead()
+                && (team == null || b.team == team)
+                && !(b instanceof ConstructBuild)
+                && b.damaged()
+                && b.health() < b.maxHealth() - 0.01f;
     }
 
     public static boolean canHeal(Unit unit) {
@@ -76,6 +89,33 @@ public class RepairTask implements AutoplayTask {
         return false;
     }
 
+    public static float getHealRange(Unit unit) {
+        if (unit == null || unit.type == null) {
+            return 80f;
+        }
+        float maxRange = 0f;
+        if (unit.type.weapons != null) {
+            for (int i = 0; i < unit.type.weapons.size; i++) {
+                Weapon w = unit.type.weapons.get(i);
+                if (w != null && ((w.bullet != null && w.bullet.heals()) || w instanceof RepairBeamWeapon)) {
+                    maxRange = Math.max(maxRange, w.range());
+                }
+            }
+        }
+        if (unit.type.abilities != null) {
+            for (int i = 0; i < unit.type.abilities.size; i++) {
+                if (unit.type.abilities.get(i) instanceof RepairFieldAbility) {
+                    RepairFieldAbility field = (RepairFieldAbility) unit.type.abilities.get(i);
+                    maxRange = Math.max(maxRange, field.range);
+                }
+            }
+        }
+        if (maxRange <= 0f) {
+            maxRange = unit.type.range > 0f ? unit.type.range : 80f;
+        }
+        return maxRange;
+    }
+
     @Override
     public boolean update(Unit unit) {
         if (!canHeal(unit)) {
@@ -84,7 +124,7 @@ public class RepairTask implements AutoplayTask {
         }
 
         Building damagedBuilding = Units.findDamagedTile(unit.team, unit.x, unit.y);
-        if (damagedBuilding instanceof ConstructBuild || (damagedBuilding != null && !damagedBuilding.damaged())) {
+        if (!isRepairable(damagedBuilding, unit.team)) {
             damagedBuilding = null;
             if (Vars.indexer != null) {
                 Seq<Building> damagedList = Vars.indexer.getDamaged(unit.team);
@@ -92,7 +132,7 @@ public class RepairTask implements AutoplayTask {
                     float minDst = Float.MAX_VALUE;
                     for (int i = 0; i < damagedList.size; i++) {
                         Building b = damagedList.get(i);
-                        if (b != null && b.damaged() && !(b instanceof ConstructBuild)) {
+                        if (isRepairable(b, unit.team)) {
                             float dst = unit.dst2(b);
                             if (dst < minDst) {
                                 minDst = dst;
@@ -106,7 +146,7 @@ public class RepairTask implements AutoplayTask {
 
         if (damagedBuilding == null && Vars.indexer != null) {
             damagedBuilding = Units.findAllyTile(unit.team, unit.x, unit.y, 800f,
-                    b -> b != null && b.damaged() && !(b instanceof ConstructBuild));
+                    b -> isRepairable(b, unit.team));
         }
 
         if (damagedBuilding == null) {
@@ -138,14 +178,14 @@ public class RepairTask implements AutoplayTask {
             }
 
             Building b = (Building) target;
-            if (!b.isValid() || b.health() >= b.maxHealth() || b.team != unit.team) {
+            if (!isRepairable(b, unit.team)) {
                 target = null;
                 unit.isShooting(false);
                 unit.controlWeapons(false, false);
                 return;
             }
 
-            float range = unit.type != null ? unit.type.range : 80f;
+            float range = getHealRange(unit);
             float approachRange = range * 0.65f;
 
             if (!target.within(unit, approachRange)) {

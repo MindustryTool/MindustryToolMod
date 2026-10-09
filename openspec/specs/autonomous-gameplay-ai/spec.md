@@ -47,14 +47,15 @@ The Attack task MUST evaluate offensive capabilities and engage hostile targets 
 - **THEN** AttackTask commands the unit to rush directly into the target without kiting
 
 ### Requirement: Task 4 - Repair
-The Repair task MUST detect healing capabilities and repair damaged friendly structures/blocks across the map without stalling on in-progress constructions and without oscillating.
+The Repair task MUST detect healing capabilities and repair damaged friendly structures/blocks across the map without stalling on in-progress constructions, recently healed blocks, or stale cache entries, and without oscillating.
 - Units lacking healing weapons (`unit.type.canHeal`), repair beam weapons, and repair field abilities MUST yield immediately.
-- The task MUST search for damaged friendly buildings across the map via `Units.findDamagedTile(unit.team, unit.x, unit.y)` and fall back to searching local allied tiles via `Units.findAllyTile` when indexer has no entries, filtering out `ConstructBuild` instances.
+- The task MUST search for genuinely damaged friendly completed buildings (`b.isValid() && b.health() < b.maxHealth() - 0.01f && b.damaged() && !(b instanceof ConstructBuild)`).
+- When `Units.findDamagedTile` returns null or a building failing the repairable criteria, the task MUST fall back to `Vars.indexer.getDamaged(unit.team)` and `Units.findAllyTile`.
 - The task MUST focus exclusively on damaged completed buildings, leaving mobile unit healing to dedicated unit healing tasks.
-- WHEN a target building is farther than 65% of engagement range (`0.65f * unit.type.range`) THEN the task MUST navigate toward the building via `moveTo(target, unit.type.range * 0.65f)`.
-- WHEN a target building is within 65% of engagement range THEN the task MUST cease calling `moveTo` to prevent deceleration oscillation.
+- WHEN a target building is farther than 65% of engagement range (`0.65f * healRange`) THEN the task MUST navigate toward the building via `moveTo(target, healRange * 0.65f)`.
+- WHEN a target building is within 65% of engagement range THEN the task MUST cease calling `moveTo` to prevent deceleration oscillation, while setting `targetPos` to maintain visual connected lines.
 - The task MUST continuously rotate the unit to face the target building via `unit.lookAt(target)` every frame while a target is assigned, enabling fixed-mount weapons with narrow firing cones to aim accurately.
-- WHEN a target building is within weapon engagement range (`target.within(unit, unit.type.range)`) THEN the task MUST aim at the target and enable weapon control via `unit.controlWeapons(true)`.
+- WHEN a target building is within weapon engagement range (`target.within(unit, healRange)`) THEN the task MUST aim at the target and enable weapon control via `unit.controlWeapons(true)`.
 - WHEN the target is fully repaired, destroyed, or out of range THEN the task MUST reset weapon firing via `unit.controlWeapons(false)`.
 
 #### Scenario: Damaged buildings exist alongside construction sites
@@ -65,9 +66,9 @@ The Repair task MUST detect healing capabilities and repair damaged friendly str
 - **WHEN** a unit with fixed healing weapons (such as Poly) targets a damaged friendly building
 - **THEN** RepairTask approaches to 65% of weapon range, continuously rotates to face the building within its shoot cone, and fires healing weapons without counter-thrust jitter
 
-#### Scenario: Local building fallback when indexer is unpopulated
-- **WHEN** indexer damaged tiles are empty (such as in multiplayer or pre-damaged loaded maps) but damaged friendly buildings exist nearby
-- **THEN** RepairTask locates the damaged building via local ally tile search and repairs it
+#### Scenario: Local building fallback when indexer is unpopulated or stale
+- **WHEN** `Units.findDamagedTile` returns null or a block that is already healed to full health
+- **THEN** RepairTask bypasses the healed block and locates the next damaged building via indexer or local ally tile search and moves to repair it
 
 ### Requirement: Task 5 - Follow & Assist
 The Follow & Assist task MUST follow designated teammates in multiplayer and mirror their actions without polluting the unit build queue.
