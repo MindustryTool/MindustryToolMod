@@ -147,11 +147,12 @@ public class PlayerConnectFeature extends Feature {
         });
 
         Vars.netClient.addPacketHandler("connect-player-connect", (roomLink) -> {
-            Optional<PlayerConnectRoom> roomOptional = roomsQuery.data()
-                    .peek()
-                    .stream()
-                    .filter(r -> r.getLink().equals(roomLink))
-                    .findFirst();
+            Optional<PlayerConnectRoom> roomOptional = Optional.ofNullable(roomsQuery.data())
+                    .flatMap(query -> query
+                            .peek()
+                            .stream()
+                            .filter(r -> r.getLink().equals(roomLink))
+                            .findFirst());
 
             if (roomOptional.isPresent()) {
                 Core.app.setClipboardText(roomLink);
