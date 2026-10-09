@@ -877,7 +877,7 @@ class LayoutTest extends SolimEnv {
         System.out.println("MainCol width: " + mainCol.table().getWidth());
         System.out.println("Scroll outer width: " + mainCol.table().getChildren().get(1).getWidth());
         Table outer = (Table) mainCol.table().getChildren().get(1);
-        arc.scene.ui.ScrollPane pane = (arc.scene.ui.ScrollPane) outer.getChildren().get(0);
+        ScrollPane pane = (ScrollPane) outer.getChildren().get(0);
         System.out.println("ScrollPane width: " + pane.getWidth());
         Table content = (Table) pane.getWidget();
         System.out.println("Scroll content width: " + content.getWidth());

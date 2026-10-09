@@ -22,11 +22,19 @@ import arc.scene.Scene;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
+import arc.struct.Seq;
+import arc.struct.StringMap;
+import mindustry.core.Version;
+import mindustry.game.Schematic;
 import mindustry.ui.Fonts;
 import mindustrytool.features.chat.models.MessageGroup;
 import mindustrytool.features.chat.models.ParsedChatMessage;
+import mindustrytool.features.playerconnect.net.NetworkProxy;
+import mindustrytool.features.playerconnect.ui.RoomCard;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.ChatUser;
+import mindustrytool.models.response.PlayerConnectRoom;
+import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData;
 import mindustrytool.models.response.UserData;
 import mindustrytool.test.MindustryTestEnv;
 import solim.core.Disposable;
@@ -816,20 +824,20 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @Test
     void testRealComponentHeightRoomInviteLiveWithData() {
-        mindustrytool.models.response.PlayerConnectRoom room = new mindustrytool.models.response.PlayerConnectRoom();
+        PlayerConnectRoom room = new PlayerConnectRoom();
         room.setLink("player-connect://127.0.0.1:6567");
-        mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData data =
-                new mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData();
+        PlayerConnectRoomData data =
+                new PlayerConnectRoomData();
         data.setName("Test Room");
         data.setMapName("Ground Zero");
         data.setGamemode("Survival");
-        data.setVersion(mindustry.core.Version.combined());
-        data.setProtocolVersion(mindustrytool.features.playerconnect.net.NetworkProxy.PROTOCOL_VERSION);
+        data.setVersion(Version.combined());
+        data.setProtocolVersion(NetworkProxy.PROTOCOL_VERSION);
         room.setData(data);
 
         // Render RoomCard directly in chat mode (displayPlayerList = false)
-        mindustrytool.features.playerconnect.ui.RoomCard card =
-                new mindustrytool.features.playerconnect.ui.RoomCard(room, false);
+        RoomCard card =
+                new RoomCard(room, false);
         ownedViews.add(card);
         Element element = card.element();
 
@@ -844,8 +852,8 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @Test
     void testRealComponentHeightSchematicMessage() {
-        mindustry.game.Schematic schematic = new mindustry.game.Schematic(
-                new arc.struct.Seq<>(), new arc.struct.StringMap(), 10, 10);
+        Schematic schematic = new Schematic(
+                new Seq<>(), new StringMap(), 10, 10);
         ParsedChatMessage.SchematicMessage schem = new ParsedChatMessage.SchematicMessage(
                 raw("schem-1", "user", "payload"), schematic, null, null);
         MessageGroup groupSchem = new MessageGroup("user", "2026-09-12T10:00:00Z",

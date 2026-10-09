@@ -164,8 +164,9 @@ tasks.register("checkNoFullyQualifiedNames") {
             }
             return out.toString()
         }
-        val fqn = Regex("(?<!\\w)(java|javax|jakarta|org|com|net|io|mindustry|arc|common|plugin|server|gateway)(\\.[a-z0-9_]+)+\\.([A-Z][\\w$]*)")
+        val fqn = Regex("(?<!\\w)(java|javax|jakarta|org|com|net|io|mindustry|mindustrytool|arc|common|plugin|server|gateway)(\\.[a-z0-9_]+)+\\.([A-Z][\\w$]*)")
         val importDecl = Regex("(?m)^\\s*import\\s+(?:static\\s+)?([\\w.]+);")
+        val typeDecl = Regex("(?m)^\\s*(?:public\\s+|protected\\s+|private\\s+|static\\s+|final\\s+|abstract\\s+)*(?:class|interface|enum|record|@interface)\\s+([A-Za-z0-9_]+)")
         val failures = mutableListOf<String>()
         val javaFiles = projectDir.walkTopDown()
             .filter { it.isFile && it.extension == "java" }
@@ -180,6 +181,7 @@ tasks.register("checkNoFullyQualifiedNames") {
             val original = file.readText()
             val imports = importDecl.findAll(original).map { it.groupValues[1] }.toSet()
             val code = stripStringsAndComments(original)
+            val declaredTypes = typeDecl.findAll(code).map { it.groupValues[1] }.toSet()
             val lines = code.lines()
             for (lineIndex in lines.indices) {
                 val line = lines[lineIndex]
@@ -190,8 +192,9 @@ tasks.register("checkNoFullyQualifiedNames") {
                     val simple = m.groupValues[3]
                     val pkg = full.substringBeforeLast('.')
                     val importedSameSimple = imports.any { it.substringAfterLast('.') == simple }
+                    val hasConflict = importedSameSimple || declaredTypes.contains(simple)
                     val importedSameFqn = imports.contains(full)
-                    if (importedSameSimple && !importedSameFqn) continue
+                    if (hasConflict && !importedSameFqn) continue
                     if (pkg == "java.lang") {
                         failures.add("$rel:${lineIndex + 1}: $full (use simple name, java.lang needs no import)")
                     } else {

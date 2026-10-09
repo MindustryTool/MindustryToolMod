@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 import mindustrytool.features.translation.providers.GoogleWebTranslationProvider;
@@ -88,7 +89,7 @@ class TranslationFeatureTest extends MindustryTestEnv {
         feature.getProviders().add(mock);
         feature.providerConfig.set("mock-err");
 
-        java.util.concurrent.atomic.AtomicReference<String> delivered = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicReference<String> delivered = new AtomicReference<>();
         feature.handleOutgoingMessage("Hello world", delivered::set);
 
         assertEquals("Hello world", delivered.get(), "Original message must never be dropped on failure");
@@ -103,7 +104,7 @@ class TranslationFeatureTest extends MindustryTestEnv {
         feature.getProviders().add(mock);
         feature.providerConfig.set("mock-unconfigured");
 
-        java.util.concurrent.atomic.AtomicReference<String> delivered = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicReference<String> delivered = new AtomicReference<>();
         feature.handleOutgoingMessage("Test unconfigured", delivered::set);
 
         assertEquals("Test unconfigured", delivered.get());
@@ -119,7 +120,7 @@ class TranslationFeatureTest extends MindustryTestEnv {
         feature.getProviders().add(mock);
         feature.providerConfig.set("mock-incoming-err");
 
-        java.util.concurrent.atomic.AtomicReference<String> delivered = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicReference<String> delivered = new AtomicReference<>();
         feature.handleIncomingMessage("Chat test", delivered::set);
 
         assertEquals("Rate limit 429", feature.lastError.get());

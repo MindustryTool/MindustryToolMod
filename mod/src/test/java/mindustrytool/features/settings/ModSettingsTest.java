@@ -30,14 +30,14 @@ class ModSettingsTest extends SolimEnv {
         Core.settings.clear();
         ModSettings.betaParticipate.set(false);
         ModSettings.featureOrder.set(new Seq<>());
-        ModSettings.favoriteFeatures.set(java.util.Collections.emptySet());
+        ModSettings.favoriteFeatures.set(Collections.emptySet());
     }
 
     @AfterEach
     void resetSettings() {
         ModSettings.betaParticipate.set(false);
         ModSettings.featureOrder.set(new Seq<>());
-        ModSettings.favoriteFeatures.set(java.util.Collections.emptySet());
+        ModSettings.favoriteFeatures.set(Collections.emptySet());
         Core.settings.clear();
     }
 

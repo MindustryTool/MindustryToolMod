@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
+import arc.Application;
+import arc.Core;
+import arc.mock.MockApplication;
 import solim.test.SolimEnv;
 
 class ReactivityFailFastTest extends SolimEnv {
@@ -64,9 +67,9 @@ class ReactivityFailFastTest extends SolimEnv {
 
 	@Test
 	void mutationPropagatesOnSuccessException() {
-		arc.Application originalApp = arc.Core.app;
+		Application originalApp = Core.app;
 		AtomicReference<Throwable> postedError = new AtomicReference<>();
-		arc.Core.app = new arc.mock.MockApplication() {
+		Core.app = new MockApplication() {
 			@Override
 			public void post(Runnable r) {
 				try {
@@ -91,15 +94,15 @@ class ReactivityFailFastTest extends SolimEnv {
 			assertEquals(IllegalStateException.class, postedError.get().getClass());
 			assertEquals("Success callback failed for test_result", postedError.get().getMessage());
 		} finally {
-			arc.Core.app = originalApp;
+			Core.app = originalApp;
 		}
 	}
 
 	@Test
 	void mutationPropagatesOnErrorException() {
-		arc.Application originalApp = arc.Core.app;
+		Application originalApp = Core.app;
 		AtomicReference<Throwable> postedError = new AtomicReference<>();
-		arc.Core.app = new arc.mock.MockApplication() {
+		Core.app = new MockApplication() {
 			@Override
 			public void post(Runnable r) {
 				try {
@@ -124,7 +127,7 @@ class ReactivityFailFastTest extends SolimEnv {
 			assertEquals(IllegalStateException.class, postedError.get().getClass());
 			assertEquals("Error callback failed", postedError.get().getMessage());
 		} finally {
-			arc.Core.app = originalApp;
+			Core.app = originalApp;
 		}
 	}
 }
