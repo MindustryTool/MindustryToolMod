@@ -30,7 +30,7 @@ In host mode (not a net client) the system SHALL trace wave units via `Vars.path
 - **THEN** the path follows the control-path trajectory from the unit to its target position.
 
 ### Requirement: Client-mode local path computation
-In client mode the system SHALL trace paths through a separate `ClientPathfinder` utility that copies server pathfinding logic: wave units via a locally computed BFS flowfield from the enemy core, commanded units via a locally computed A* path from the unit to its `targetPos`, reproducing game cost and passability logic without mutating client game state.
+In client mode the system SHALL trace paths through a separate `ClientPathfinder` utility that copies server pathfinding logic: wave units via a locally computed BFS flowfield from the enemy core, commanded units via a locally computed A* path from the unit to its `targetPos`, reproducing game cost and passability logic without mutating client game state. If the underlying pathfinder data structure or map dimensions are transitioning, inconsistent, or an out-of-bounds condition occurs, the system SHALL safely invalidate the flowfield, abort the computation without crashing, and retry cleanly when state stabilizes.
 
 #### Scenario: Client wave unit uses local BFS flowfield
 - **WHEN** a wave unit is traced on a client
@@ -43,6 +43,10 @@ In client mode the system SHALL trace paths through a separate `ClientPathfinder
 #### Scenario: Client computation causes no desync
 - **WHEN** client pathfinding runs
 - **THEN** game pathfinder state is not mutated and no desync or side effect occurs.
+
+#### Scenario: World transition and out-of-bounds resilience
+- **WHEN** a map load, resize, or transition causes `Vars.pathfinder` buffer dimensions to lag behind `Vars.world`
+- **THEN** `ClientPathfinder` catches or prevents the out-of-bounds access, invalidates the flowfield, aborts execution gracefully without crashing, and leaves the game loop uninterrupted.
 
 ### Requirement: Unit path filtering
 The system SHALL display paths for enemy units, display paths for ally units only when the ally toggle is on, and SHALL NOT display a path for any unit possessed by a human player (local or remote), on any team.

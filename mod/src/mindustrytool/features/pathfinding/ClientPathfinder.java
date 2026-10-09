@@ -156,41 +156,46 @@ public class ClientPathfinder {
 
         PathCost pathCost = getPathCost(field.costType);
 
-        while (frontier.size > 0) {
-            int pos = frontier.removeLast();
-            int x = pos % width;
-            int y = pos / width;
-            int currentWeight = field.weights[pos];
+        try {
+            while (frontier.size > 0) {
+                int pos = frontier.removeLast();
+                int x = pos % width;
+                int y = pos / width;
+                int currentWeight = field.weights[pos];
 
-            for (Point2 p : Geometry.d4) {
-                int nx = x + p.x;
-                int ny = y + p.y;
-                if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
-                    continue;
-                }
+                for (Point2 p : Geometry.d4) {
+                    int nx = x + p.x;
+                    int ny = y + p.y;
+                    if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
+                        continue;
+                    }
 
-                int npos = nx + ny * width;
-                if (field.searches[npos] == field.search) {
-                    continue;
-                }
+                    int npos = nx + ny * width;
+                    if (npos < 0 || npos >= totalTiles || field.searches[npos] == field.search) {
+                        continue;
+                    }
 
-                int tileData = Vars.pathfinder.get(nx, ny);
-                int cost = pathCost.getCost(field.team.id, tileData);
-                if (cost == -1) {
-                    continue;
-                }
-                if (field.costType == Pathfinder.costNaval && cost >= 6000) {
-                    continue;
-                }
+                    int tileData = Vars.pathfinder.get(nx, ny);
+                    int cost = pathCost.getCost(field.team.id, tileData);
+                    if (cost == -1) {
+                        continue;
+                    }
+                    if (field.costType == Pathfinder.costNaval && cost >= 6000) {
+                        continue;
+                    }
 
-                field.weights[npos] = currentWeight + cost;
-                field.searches[npos] = (short) field.search;
-                frontier.addFirst(npos);
+                    field.weights[npos] = currentWeight + cost;
+                    field.searches[npos] = (short) field.search;
+                    frontier.addFirst(npos);
+                }
             }
-        }
 
-        field.valid = true;
-        field.lastUpdateTime = Time.time;
+            field.valid = true;
+            field.lastUpdateTime = Time.time;
+        } catch (Throwable t) {
+            frontier.clear();
+            field.valid = false;
+        }
     }
 
     private void addCoreTarget(ClientFlowfield field, Tile centerTile, int width) {
@@ -295,70 +300,81 @@ public class ClientPathfinder {
         int iterations = 0;
         boolean reached = false;
 
-        while (!open.isEmpty() && iterations++ < MAX_ASTAR_ITERATIONS) {
-            AStarNode current = open.poll();
-            if (current == null) {
-                break;
-            }
-
-            if (current.pos == endPos) {
-                reached = true;
-                bestPos = endPos;
-                break;
-            }
-
-            if (closed.contains(current.pos)) {
-                continue;
-            }
-            closed.add(current.pos);
-
-            int cx = current.pos % width;
-            int cy = current.pos / width;
-            float currentDist = Mathf.dst(cx, cy, end.x, end.y);
-            if (currentDist < bestDist) {
-                bestDist = currentDist;
-                bestPos = current.pos;
-            }
-
-            for (Point2 p : Geometry.d8) {
-                int nx = cx + p.x;
-                int ny = cy + p.y;
-                if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
-                    continue;
+        try {
+            while (!open.isEmpty() && iterations++ < MAX_ASTAR_ITERATIONS) {
+                AStarNode current = open.poll();
+                if (current == null) {
+                    break;
                 }
 
-                int npos = nx + ny * width;
-                if (closed.contains(npos)) {
-                    continue;
+                if (current.pos == endPos) {
+                    reached = true;
+                    bestPos = endPos;
+                    break;
                 }
 
-                int tileData = Vars.pathfinder.get(nx, ny);
-                int cost = pathCost.getCost(unit.team.id, tileData);
-                if (cost == -1) {
+                if (closed.contains(current.pos)) {
                     continue;
                 }
-                if (costType == Pathfinder.costNaval && cost >= 6000) {
-                    continue;
+                closed.add(current.pos);
+
+                int cx = current.pos % width;
+                int cy = current.pos / width;
+                float currentDist = Mathf.dst(cx, cy, end.x, end.y);
+                if (currentDist < bestDist) {
+                    bestDist = currentDist;
+                    bestPos = current.pos;
                 }
 
-                if (p.x != 0 && p.y != 0) {
-                    int p1Data = Vars.pathfinder.get(cx + p.x, cy);
-                    int p2Data = Vars.pathfinder.get(cx, cy + p.y);
-                    if (pathCost.getCost(unit.team.id, p1Data) == -1 || pathCost.getCost(unit.team.id, p2Data) == -1) {
+                for (Point2 p : Geometry.d8) {
+                    int nx = cx + p.x;
+                    int ny = cy + p.y;
+                    if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
                         continue;
                     }
-                }
 
-                float stepDist = (p.x != 0 && p.y != 0) ? 1.414f : 1.0f;
-                float tentativeG = current.gScore + stepDist * (1f + cost * 0.05f);
+                    int npos = nx + ny * width;
+                    if (closed.contains(npos)) {
+                        continue;
+                    }
 
-                if (tentativeG < gScores.get(npos, Float.MAX_VALUE)) {
-                    cameFrom.put(npos, current.pos);
-                    gScores.put(npos, tentativeG);
-                    float h = Mathf.dst(nx, ny, end.x, end.y);
-                    open.add(new AStarNode(npos, tentativeG, tentativeG + h));
+                    int tileData = Vars.pathfinder.get(nx, ny);
+                    int cost = pathCost.getCost(unit.team.id, tileData);
+                    if (cost == -1) {
+                        continue;
+                    }
+                    if (costType == Pathfinder.costNaval && cost >= 6000) {
+                        continue;
+                    }
+
+                    if (p.x != 0 && p.y != 0) {
+                        int p1Data = Vars.pathfinder.get(cx + p.x, cy);
+                        int p2Data = Vars.pathfinder.get(cx, cy + p.y);
+                        if (pathCost.getCost(unit.team.id, p1Data) == -1 || pathCost.getCost(unit.team.id, p2Data) == -1) {
+                            continue;
+                        }
+                    }
+
+                    float stepDist = (p.x != 0 && p.y != 0) ? 1.414f : 1.0f;
+                    float tentativeG = current.gScore + stepDist * (1f + cost * 0.05f);
+
+                    if (tentativeG < gScores.get(npos, Float.MAX_VALUE)) {
+                        cameFrom.put(npos, current.pos);
+                        gScores.put(npos, tentativeG);
+                        float h = Mathf.dst(nx, ny, end.x, end.y);
+                        open.add(new AStarNode(npos, tentativeG, tentativeG + h));
+                    }
                 }
             }
+        } catch (Throwable t) {
+            // Pathfinder buffers out of sync during world transition; fallback to direct straight-line
+            ensureCapacity(cacheEntry, 4);
+            cacheEntry.data[0] = unit.x;
+            cacheEntry.data[1] = unit.y;
+            cacheEntry.data[2] = targetPos.x;
+            cacheEntry.data[3] = targetPos.y;
+            cacheEntry.size = 4;
+            return;
         }
 
         pathNodes.clear();

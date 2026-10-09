@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
@@ -51,6 +52,7 @@ import mindustrytool.features.playerconnect.net.Packets.RoomCloseReason;
 import mindustrytool.features.playerconnect.ui.HostRoomDialog;
 import mindustrytool.features.playerconnect.ui.JoinApprovalHudView;
 import mindustrytool.features.playerconnect.ui.JoinDialogInjector;
+import mindustrytool.features.playerconnect.ui.JoinRoomDialog;
 import mindustrytool.features.playerconnect.ui.ManageRoomDialog;
 import mindustrytool.models.response.PlayerConnectProvider;
 import mindustrytool.models.response.PlayerConnectRoom;
@@ -103,6 +105,7 @@ public class PlayerConnectFeature extends Feature {
     private @Nullable ManageRoomDialog manageDialog;
     private @Nullable JoinApprovalHudView approvalHud;
     private @Nullable JoinDialogInjector joinInjector;
+    private @Nullable JoinRoomDialog joinRoomDialog;
 
     public PlayerConnectFeature() {
         super(FeatureMetadata.builder()
@@ -119,6 +122,7 @@ public class PlayerConnectFeature extends Feature {
         autoAcceptConfig = config.boolValue("autoAccept", true);
 
         registerEventListeners();
+        registerCustomPacket();
     }
 
     public Readable<List<PlayerConnectRoom>> getRooms() {
@@ -127,6 +131,36 @@ public class PlayerConnectFeature extends Feature {
 
     public Query<List<PlayerConnectRoom>> getRoomsQuery() {
         return roomsQuery;
+    }
+
+    public JoinRoomDialog getJoinRoomDialog() {
+        if (joinRoomDialog == null) {
+            joinRoomDialog = new JoinRoomDialog();
+        }
+
+        return joinRoomDialog;
+    }
+
+    private void registerCustomPacket() {
+        Vars.netClient.addPacketHandler("has-player-connect", (_ignore) -> {
+            Call.serverPacketReliable("has-player-connect", "true");
+        });
+
+        Vars.netClient.addPacketHandler("connect-player-connect", (roomId) -> {
+            Optional<PlayerConnectRoom> roomOptional = roomsQuery.data()
+                    .peek()
+                    .stream()
+                    .filter(r -> r.getLink().equals(roomId))
+                    .findFirst();
+
+            if (roomOptional.isPresent()) {
+                Core.app.setClipboardText(roomId);
+                getJoinRoomDialog().show();
+            } else {
+                Vars.ui.showInfoFade("[scarlet]No room found");
+            }
+
+        });
     }
 
     private void registerEventListeners() {

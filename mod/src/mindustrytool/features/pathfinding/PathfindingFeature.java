@@ -201,7 +201,7 @@ public class PathfindingFeature extends Feature {
     }
 
     private void update() {
-        if (!isEnabled() || Vars.state == null || !Vars.state.isGame()) {
+        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null || Vars.world.isGenerating() || Vars.pathfinder == null) {
             return;
         }
 
@@ -221,7 +221,7 @@ public class PathfindingFeature extends Feature {
     }
 
     private void draw() {
-        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.ui == null || Core.camera == null) {
+        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null || Vars.world.isGenerating() || Vars.ui == null || Core.camera == null) {
             return;
         }
 
