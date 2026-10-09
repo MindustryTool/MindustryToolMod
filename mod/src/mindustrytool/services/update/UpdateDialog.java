@@ -28,7 +28,9 @@ public class UpdateDialog extends SolimDialog {
 	 */
 	public UpdateDialog(String currentVer, String latestVer, String changelog, @Nullable String releaseTag, Runnable done) {
 		super(Core.bundle.get("update.dialog.title"));
-		this.releaseTag = releaseTag;
+		
+        this.releaseTag = releaseTag;
+
 		name("updateAvailableDialog");
 		closeOnBack();
 
@@ -38,7 +40,7 @@ public class UpdateDialog extends SolimDialog {
 				"[#" + Color.green.toString() + "]" + latestVer);
 
 		children(() -> {
-			column().growX().gap(unit(2)).left().width(500f).children(() -> {
+			column().growX().gap(unit(2)).left().maxWidth(800f).children(() -> {
 				text(newVersionText)
 						.wrap();
 
@@ -48,7 +50,7 @@ public class UpdateDialog extends SolimDialog {
 
 				divider();
 
-				scroll().size(500f, 400f).scrollX(false).children(() -> {
+				scroll().maxHeight(800f).maxWidth(800f).growX().scrollX(false).children(() -> {
 					column().growX().left().children(() -> {
 						text(changelog != null ? changelog : "")
 								.wrap()

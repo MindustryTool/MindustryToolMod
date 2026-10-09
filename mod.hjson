@@ -6,6 +6,14 @@ author: "[#FFC2D1[]]S[#FFADC2[]]h[#FF97B3[]]a[#FF81A3[]]r[#FF6C94[]]l[#F45885[]]
 
 main: "mindustrytool.Main"
 
+version: v5.2.9-v8
+
+minGameVersion: 160.7
+
+java: true
+
+hidden: true
+
 description:
   '''
 [#FFB7C5[]] [#FFF000[]]Mindustry Tool  [white[]]- The Ultimate In-Game Utility & Community Suite[[]]
@@ -54,11 +62,3 @@ description:
   [#88C6ED[]]  Website: [white[]]mindustry-tool.com[[]]
   [#394BA0[]]  Discord: [white[]]discord.gg/nQDrEHVkrt[[]]
   '''
-
-version: v5.2.9-v8
-
-minGameVersion: 160.7
-
-java: true
-
-hidden: true
