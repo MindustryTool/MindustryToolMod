@@ -90,6 +90,7 @@ public class JoinRoomDialog extends SolimDialog {
 
                         // Password input
                         when(hasPassword)
+                                .growX()
                                 .thenDo(() -> {
                                     column().growX().gap(unit(1.5f)).left().children(() -> {
                                         text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
