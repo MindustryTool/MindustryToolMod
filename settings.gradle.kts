@@ -1,0 +1,9 @@
+rootProject.name = "MindustryToolMod"
+
+include("mod")
+include("solim")
+include("solim-api")
+include("solim-runtime")
+include("solim-core")
+include("solim-mcp")
+include("solim-test")

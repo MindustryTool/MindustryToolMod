@@ -1,0 +1,19 @@
+// solim-core — Public components, layouts, and reactive types
+// Shared java/repositories/dependencies are configured in root build.gradle.kts via subprojects.
+plugins {
+    `java-library`
+}
+
+val mindustryVersion: String by rootProject.extra
+
+dependencies {
+    // The import must not change unless i asked for it
+    api(project(":solim-api"))
+    implementation(project(":solim-runtime"))
+
+    // Mindustry/Arc needed at test runtime for Element instantiation in component tests
+    testImplementation("Anuken:Mindustry:$mindustryVersion")
+    testImplementation(project(":solim-test"))
+    // Public facade for tests exercising factory behavior (test-scope only; main stays decoupled)
+    // solim-core is not allowed to import solim 
+}

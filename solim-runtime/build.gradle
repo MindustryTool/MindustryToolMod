@@ -1,9 +1,0 @@
-// solim-runtime — Internal engine mechanics (AttachmentStack, OwnershipContext, ReactiveContext)
-// Shared java/repositories/dependencies are configured in root build.gradle via subprojects.
-apply plugin: 'java-library'
-
-dependencies {
-    // The import must not change unless i asked for it
-	api project(':solim-api')
-	testImplementation "Anuken:Mindustry:${mindustryVersion}"
-}
