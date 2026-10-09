@@ -48,10 +48,11 @@ The Attack task MUST evaluate offensive capabilities and engage hostile targets 
 
 ### Requirement: Task 4 - Repair
 The Repair task MUST detect healing capabilities and repair damaged friendly structures/blocks across the map without stalling on in-progress constructions, recently healed blocks, or stale cache entries, and without oscillating.
-- Units lacking healing weapons (`unit.type.canHeal`), repair beam weapons, and repair field abilities MUST yield immediately.
+- Units lacking building-healing capabilities (healing weapons where bullets heal, building-targeting repair beams, or `unit.type.canHeal`) MUST yield immediately. Unit-only abilities such as `RepairFieldAbility` MUST NOT qualify as building-healing capabilities.
 - The task MUST search for genuinely damaged friendly completed buildings (`b.isValid() && b.health() < b.maxHealth() - 0.01f && b.damaged() && !(b instanceof ConstructBuild)`).
 - When `Units.findDamagedTile` returns null or a building failing the repairable criteria, the task MUST fall back to `Vars.indexer.getDamaged(unit.team)` and `Units.findAllyTile`.
 - The task MUST focus exclusively on damaged completed buildings, leaving mobile unit healing to dedicated unit healing tasks.
+- The task MUST calculate engagement range (`healRange`) strictly from building-healing capabilities (the maximum range among weapons with healing projectiles or repair beams where `targetBuildings == true`, falling back to `unit.type.range` if `unit.type.canHeal` is true). Unit-only abilities such as `RepairFieldAbility` MUST NOT be included in `healRange`.
 - WHEN a target building is farther than 65% of engagement range (`0.65f * healRange`) THEN the task MUST navigate toward the building via `moveTo(target, healRange * 0.65f)`.
 - WHEN a target building is within 65% of engagement range THEN the task MUST cease calling `moveTo` to prevent deceleration oscillation, while setting `targetPos` to maintain visual connected lines.
 - The task MUST continuously rotate the unit to face the target building via `unit.lookAt(target)` every frame while a target is assigned, enabling fixed-mount weapons with narrow firing cones to aim accurately.
@@ -69,6 +70,10 @@ The Repair task MUST detect healing capabilities and repair damaged friendly str
 #### Scenario: Local building fallback when indexer is unpopulated or stale
 - **WHEN** `Units.findDamagedTile` returns null or a block that is already healed to full health
 - **THEN** RepairTask bypasses the healed block and locates the next damaged building via indexer or local ally tile search and moves to repair it
+
+#### Scenario: Unit with both healing weapon and unit-only repair field
+- **WHEN** a unit has a building-healing weapon and a longer-ranged unit-only repair field ability (such as RepairFieldAbility)
+- **THEN** RepairTask calculates healRange strictly using the building-healing weapon range, navigating to within 65% of the weapon range so the weapon can fire and repair the damaged building
 
 ### Requirement: Task 5 - Follow & Assist
 The Follow & Assist task MUST follow designated teammates in multiplayer and mirror their actions without polluting the unit build queue.

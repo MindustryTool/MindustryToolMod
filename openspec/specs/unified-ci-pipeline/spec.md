@@ -2,9 +2,7 @@
 
 ## Purpose
 Unified CI/CD pipeline across all subprojects, packaging the desktop mod JAR, delivering pull request artifacts, and publishing GitHub Releases with beta branch tagging.
-
 ## Requirements
-
 ### Requirement: Staged CI Pipeline Architecture
 The CI workflow SHALL execute in staged jobs (`quality-check`, `build-package`, and `publish-release`) with workflow-level concurrency cancellation enabled (`cancel-in-progress: true`).
 
@@ -38,16 +36,17 @@ The CI workflow SHALL upload the compiled mod JAR as a downloadable GitHub Actio
 - **THEN** the workflow uploads `build/libs/MindustryToolMod.jar` as an artifact using `actions/upload-artifact@v4`.
 
 ### Requirement: Automated GitHub Releases with Beta Branch Tagging
-The CI workflow SHALL publish GitHub Releases only on pushes to `main` (as official releases) and pushes to `dev` or version tags matching `v*` (as beta pre-releases), and SHALL NOT publish releases on feature branches.
+The CI workflow SHALL publish GitHub Releases only on pushes to `main` (as official releases) and pushes to `dev` or version tags matching `v*` (as beta pre-releases), SHALL NOT publish releases on feature branches, and SHALL include clean commit-based release notes formatted as bulleted lists extracted from git log rather than default pull request comparison notes.
 
-#### Scenario: Push to main creates official release
+#### Scenario: Push to main creates official release with commit changelog
 - **WHEN** code is pushed to `main` and passes all checks
-- **THEN** the workflow parses `mod.hjson` to extract the release version, creates a GitHub Release with that exact tag, marks `prerelease: false`, and attaches `build/libs/MindustryToolMod.jar`.
+- **THEN** the workflow parses `mod.hjson` to extract the release version, creates a GitHub Release with that exact tag, marks `prerelease: false`, populates the release body with conventional commit summaries since the previous release tag (excluding merge commits), and attaches `build/libs/MindustryToolMod.jar`.
 
-#### Scenario: Push to dev or tag creates beta prerelease
+#### Scenario: Push to dev or tag creates beta prerelease with commit changelog
 - **WHEN** code is pushed to `dev` or a tag matching `v*` and passes all checks
-- **THEN** the workflow appends `-beta` to the version tag (or uses the tag name), creates or updates the GitHub Release with `prerelease: true`, and attaches `build/libs/MindustryToolMod.jar`.
+- **THEN** the workflow appends `-beta` to the version tag (or uses the tag name), creates or updates the GitHub Release with `prerelease: true`, populates the release body with conventional commit summaries since the previous release tag (excluding merge commits), and attaches `build/libs/MindustryToolMod.jar`.
 
 #### Scenario: Push to feature branch does not publish release
 - **WHEN** code is pushed to any feature or working branch other than `main` or `dev`
 - **THEN** the workflow executes verification and packaging without creating or publishing any GitHub Release.
+

@@ -99,6 +99,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download Built JAR
         uses: actions/download-artifact@v4
@@ -126,13 +128,36 @@ jobs:
           echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
+      - name: Generate Release Notes
+        id: notes
+        run: |
+          git fetch --tags --force
+          PREV_TAG=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "Previous tag resolved: $PREV_TAG"
+
+          if [ -n "$PREV_TAG" ]; then
+            COMMITS=$(git log "${PREV_TAG}..HEAD" --no-merges --pretty=format:"- %s")
+          else
+            COMMITS=$(git log -n 15 --no-merges --pretty=format:"- %s")
+          fi
+
+          if [ -z "$COMMITS" ]; then
+            COMMITS="- Maintenance and bug fixes."
+          fi
+
+          # Output multiline string to GITHUB_OUTPUT
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "changelog<<$EOF" >> "$GITHUB_OUTPUT"
+          echo "$COMMITS" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
           prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
-          generate_release_notes: true
+          body: ${{ steps.notes.outputs.changelog }}
           files: build/libs/MindustryToolMod.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

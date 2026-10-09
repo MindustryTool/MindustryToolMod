@@ -3,8 +3,11 @@ package mindustrytool.features.autoplay.tasks;
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
 import mindustry.entities.Units;
+import mindustry.entities.abilities.RepairFieldAbility;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
+import mindustry.type.Weapon;
+import mindustry.type.weapons.RepairBeamWeapon;
 import mindustrytool.components.FileIcon;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -36,9 +39,40 @@ public class HealUnitsTask implements AutoplayTask {
         return status;
     }
 
+    public static boolean canHealUnits(Unit unit) {
+        if (unit == null || unit.type == null) {
+            return false;
+        }
+        if (unit.type.canHeal || hasUnitHealWeapon(unit)) {
+            return true;
+        }
+        if (unit.type.abilities != null) {
+            for (int i = 0; i < unit.type.abilities.size; i++) {
+                if (unit.type.abilities.get(i) instanceof RepairFieldAbility) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasUnitHealWeapon(Unit unit) {
+        if (unit == null || unit.type == null || unit.type.weapons == null) {
+            return false;
+        }
+        for (int i = 0; i < unit.type.weapons.size; i++) {
+            Weapon w = unit.type.weapons.get(i);
+            if (w != null && ((w.bullet != null && w.bullet.heals())
+                    || (w instanceof RepairBeamWeapon && ((RepairBeamWeapon) w).targetUnits))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public boolean update(Unit unit) {
-        if (!RepairTask.canHeal(unit)) {
+        if (!canHealUnits(unit)) {
             status.set(Core.bundle.get("feature.autoplay.status.cannot-heal"));
             return false;
         }
@@ -96,7 +130,7 @@ public class HealUnitsTask implements AutoplayTask {
             unit.lookAt(target);
 
             boolean inRange = target.within(unit, range);
-            if (inRange && RepairTask.hasHealWeapon(unit)) {
+            if (inRange && hasUnitHealWeapon(unit)) {
                 unit.aim(target);
                 unit.controlWeapons(true, true);
                 unit.isShooting(true);

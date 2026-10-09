@@ -5,7 +5,6 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.entities.Units;
-import mindustry.entities.abilities.RepairFieldAbility;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
@@ -60,20 +59,7 @@ public class RepairTask implements AutoplayTask {
         if (unit == null || unit.type == null) {
             return false;
         }
-        if (unit.type.canHeal) {
-            return true;
-        }
-        if (hasHealWeapon(unit)) {
-            return true;
-        }
-        if (unit.type.abilities != null) {
-            for (int i = 0; i < unit.type.abilities.size; i++) {
-                if (unit.type.abilities.get(i) instanceof RepairFieldAbility) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return unit.type.canHeal || hasHealWeapon(unit);
     }
 
     public static boolean hasHealWeapon(Unit unit) {
@@ -82,7 +68,8 @@ public class RepairTask implements AutoplayTask {
         }
         for (int i = 0; i < unit.type.weapons.size; i++) {
             Weapon w = unit.type.weapons.get(i);
-            if (w != null && ((w.bullet != null && w.bullet.heals()) || w instanceof RepairBeamWeapon)) {
+            if (w != null && ((w.bullet != null && w.bullet.heals())
+                    || (w instanceof RepairBeamWeapon && ((RepairBeamWeapon) w).targetBuildings))) {
                 return true;
             }
         }
@@ -97,21 +84,14 @@ public class RepairTask implements AutoplayTask {
         if (unit.type.weapons != null) {
             for (int i = 0; i < unit.type.weapons.size; i++) {
                 Weapon w = unit.type.weapons.get(i);
-                if (w != null && ((w.bullet != null && w.bullet.heals()) || w instanceof RepairBeamWeapon)) {
+                if (w != null && ((w.bullet != null && w.bullet.heals())
+                        || (w instanceof RepairBeamWeapon && ((RepairBeamWeapon) w).targetBuildings))) {
                     maxRange = Math.max(maxRange, w.range());
                 }
             }
         }
-        if (unit.type.abilities != null) {
-            for (int i = 0; i < unit.type.abilities.size; i++) {
-                if (unit.type.abilities.get(i) instanceof RepairFieldAbility) {
-                    RepairFieldAbility field = (RepairFieldAbility) unit.type.abilities.get(i);
-                    maxRange = Math.max(maxRange, field.range);
-                }
-            }
-        }
         if (maxRange <= 0f) {
-            maxRange = unit.type.range > 0f ? unit.type.range : 80f;
+            maxRange = unit.type.canHeal && unit.type.range > 0f ? unit.type.range : 80f;
         }
         return maxRange;
     }
