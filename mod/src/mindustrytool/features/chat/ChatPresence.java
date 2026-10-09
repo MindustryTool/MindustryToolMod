@@ -115,12 +115,13 @@ public class ChatPresence {
         String mapName = Vars.state.map != null && Vars.state.map.name() != null
                 ? Vars.state.map.name()
                 : "unknown";
+
         if (Vars.state.isCampaign()) {
             applyValue(ChatSession.CAMPAIGN_PREFIX + mapName);
         } else if (Vars.state.isEditor()) {
             applyValue(ChatSession.EDITOR_STATE + mapName);
         } else {
-            applyValue(ChatSession.CUSTOM_GAME_STATE);
+            applyValue(ChatSession.CUSTOM_GAME_STATE + mapName);
         }
     }
 

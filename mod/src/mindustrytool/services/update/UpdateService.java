@@ -152,13 +152,9 @@ public final class UpdateService {
                             }
 
                             Log.info(Core.bundle.format("update.status.require-update", safeCurrentStr, latestTag));
-                            String changelog = ChangelogFormatter.format(body, true);
-                            if (changelog == null || changelog.trim().isEmpty()) {
-                                changelog = Core.bundle.get("update.error.parse-releases");
-                            }
-                            String finalChangelog = changelog;
+                            ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body, latestTag, true);
                             try {
-                                Core.app.post(() -> new UpdateDialog(safeCurrentStr, latestTag, finalChangelog,
+                                Core.app.post(() -> new UpdateDialog(safeCurrentStr, latestTag, partitioned, null,
                                         latestTag, finalDone).show());
                             } catch (Exception e) {
                                 Log.err("Failed to show beta update dialog", e);
@@ -192,21 +188,17 @@ public final class UpdateService {
                     msg = Core.bundle.get("update.error.fetch-releases");
                 }
                 String finalMsg = msg;
-                Core.app.post(() -> new UpdateDialog(currentVer, latestVer, finalMsg, done).show());
+                Core.app.post(() -> new UpdateDialog(currentVer, latestVer, null, finalMsg, null, done).show());
                 return;
             }
             try {
                 boolean includePrereleases = Boolean.TRUE.equals(ModSettings.betaParticipate.get());
-                String changelog = ChangelogFormatter.format(body, includePrereleases);
-                if (changelog == null || changelog.trim().isEmpty()) {
-                    changelog = Core.bundle.get("update.error.parse-releases");
-                }
-                String finalChangelog = changelog;
-                Core.app.post(() -> new UpdateDialog(currentVer, latestVer, finalChangelog, done).show());
+                ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body, latestVer, includePrereleases);
+                Core.app.post(() -> new UpdateDialog(currentVer, latestVer, partitioned, null, null, done).show());
             } catch (Exception e) {
                 Log.err("Failed to parse releases", e);
                 String msg = Core.bundle.get("update.error.parse-releases");
-                Core.app.post(() -> new UpdateDialog(currentVer, latestVer, msg, done).show());
+                Core.app.post(() -> new UpdateDialog(currentVer, latestVer, null, msg, null, done).show());
             }
         });
     }
