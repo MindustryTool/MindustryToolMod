@@ -45,11 +45,11 @@ public abstract class MindustryTestEnv extends SolimEnv {
 
 	@AfterEach
 	public void tearDownMindustryTestEnv() {
+		FeatureManager.clear();
 		flushEffects();
 		restoreIcons();
 		Fonts.def = fontsDefSnapshot;
 		fontsDefSnapshot = null;
-		FeatureManager.clear();
 	}
 
 	private static void snapshotIcons() {
