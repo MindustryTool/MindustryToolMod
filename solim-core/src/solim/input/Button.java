@@ -13,7 +13,6 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import java.util.ArrayList;
@@ -194,11 +193,7 @@ public final class Button
                     return;
                 }
                 if (Button.this.onClick != null) {
-                    try {
-                        Button.this.onClick.run();
-                    } catch (Exception e) {
-                        Log.err("Error executing button onClick", e);
-                    }
+                    Button.this.onClick.run();
                 }
             }
         });
@@ -216,11 +211,7 @@ public final class Button
                 } else if (!longPressed && Time.timeSinceMillis(pressTime) >= longClickDuration) {
                     longPressed = true;
                     if (Button.this.onLongClick != null) {
-                        try {
-                            Button.this.onLongClick.run();
-                        } catch (Exception e) {
-                            Log.err("Error executing button onLongClick", e);
-                        }
+                        Button.this.onLongClick.run();
                     }
                 }
             } else {

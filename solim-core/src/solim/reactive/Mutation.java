@@ -146,11 +146,7 @@ public final class Mutation<T, R> implements Disposable {
 		error.set(null);
 
 		if (onSuccess != null) {
-			try {
-				onSuccess.get(res, context);
-			} catch (Throwable t) {
-				// Prevent callback errors from corrupting state
-			}
+			onSuccess.get(res, context);
 		}
 	}
 
@@ -163,11 +159,7 @@ public final class Mutation<T, R> implements Disposable {
 		error.set(cause);
 
 		if (onError != null) {
-			try {
-				onError.get(cause, context);
-			} catch (Throwable t) {
-				// Prevent callback errors from corrupting state
-			}
+			onError.get(cause, context);
 		}
 	}
 

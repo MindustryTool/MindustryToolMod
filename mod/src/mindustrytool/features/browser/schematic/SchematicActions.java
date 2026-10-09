@@ -8,6 +8,7 @@ import mindustry.game.Schematic;
 import mindustry.game.Schematics;
 import mindustrytool.models.response.TagData;
 import mindustrytool.services.MindustryTool;
+import solim.overlay.SolimDialog;
 
 /**
  * Utility actions for schematic operations: clipboard copy, local library
@@ -70,11 +71,12 @@ public final class SchematicActions {
      * Downloads the schematic and attaches it to the player's placement cursor
      * for direct in-game placement.
      */
-    public static CompletableFuture<Void> placeInGame(String itemId) {
+    public static CompletableFuture<Void> placeInGame(String itemId, SolimDialog dialog) {
         return MindustryTool.downloadSchematic(itemId).thenAccept(bytes -> {
             Core.app.post(() -> {
                 try {
                     Vars.control.input.useSchematic(parse(bytes));
+                    dialog.hide();
                 } catch (Exception e) {
                     Vars.ui.showErrorMessage(
                             Core.bundle.format("browser.schematic.place-error", e.getMessage()));

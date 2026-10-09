@@ -1,0 +1,37 @@
+// solim-test — shared test environment layer for all modules.
+// Core configuration (java plugin, repositories, release 8, sourceSets, JUnit
+// dependencies) is inherited from the root subprojects block. Arc classes are
+// provided by the root compileOnly Mindustry dependency. Test-only: never shipped.
+
+val mindustryVersion: String by rootProject.extra
+
+dependencies {
+    // SolimEnv needs the solim ambient types (AttachmentStack, OwnershipContext,
+    // ReactiveContext, SignalDispatcher). Runtime-only: depending on solim-core
+    // here would create a build-path cycle, since solim-core's tests consume
+    // this module. Core-specific resets live in a solim-core test env instead.
+    implementation(project(":solim-runtime"))
+
+    // The env classes are JUnit extension points (annotations live in main sources).
+    compileOnly("org.junit.jupiter:junit-jupiter:5.10.2")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("Anuken:Mindustry:$mindustryVersion")
+}
+
+// The root subprojects block excludes "**/test/**" from main sources; that
+// pattern would also exclude our "solim.test" package, so narrow it here to
+// only exclude the actual test directory.
+sourceSets {
+    named("main") {
+        java {
+            setSrcDirs(listOf("src"))
+            setExcludes(listOf("test/**"))
+        }
+    }
+    named("test") {
+        java {
+            setSrcDirs(listOf("src/test/java"))
+        }
+    }
+}

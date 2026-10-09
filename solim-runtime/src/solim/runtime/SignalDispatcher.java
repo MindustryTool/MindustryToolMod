@@ -84,11 +84,7 @@ public final class SignalDispatcher {
 						continue;
 					}
 
-					try {
-						effect.runPending();
-					} catch (Throwable t) {
-						Log.err("[Solim] Error executing reactive effect", t);
-					}
+					effect.runPending();
 				}
 			}
 		} finally {

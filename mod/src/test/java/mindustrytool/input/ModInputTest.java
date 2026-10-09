@@ -35,6 +35,7 @@ import mindustry.core.GameState;
 import mindustry.core.World;
 import mindustry.game.Rules;
 import mindustry.gen.Player;
+import mindustry.gen.Unit;
 import mindustry.gen.UnitEntity;
 import mindustry.input.DesktopInput;
 import mindustry.input.MobileInput;
@@ -182,7 +183,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };
@@ -230,7 +231,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };
@@ -321,7 +322,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };
@@ -365,7 +366,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };
@@ -409,7 +410,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };
@@ -455,7 +456,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };
@@ -510,7 +511,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };
@@ -564,7 +565,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };
@@ -613,7 +614,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return playerUnit;
             }
         };
@@ -662,7 +663,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return playerUnit;
             }
         };
@@ -711,7 +712,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return playerUnit;
             }
         };
@@ -774,7 +775,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return playerUnit;
             }
         };
@@ -880,7 +881,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };
@@ -940,7 +941,7 @@ class ModInputTest extends MindustryTestEnv {
             }
 
             @Override
-            public mindustry.gen.Unit unit() {
+            public Unit unit() {
                 return unit;
             }
         };

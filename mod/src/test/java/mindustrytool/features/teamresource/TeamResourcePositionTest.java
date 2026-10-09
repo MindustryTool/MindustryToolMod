@@ -120,18 +120,11 @@ class TeamResourcePositionTest extends MindustryTestEnv {
     }
 
     @AfterEach
-    void drainPendingEffects() {
-        // Tests here build reactive components without disposing them; flush so
-        // the env teardown sees an empty dispatcher.
-        flushEffects();
-    }
-
-    @AfterEach
     void tearDown() {
-        // Undo Vars.ui allocation so it cannot leak into other test classes
-        // sharing this JVM.
-        Vars.ui = null;
+        // Drain pending reactive effects and undo Vars.ui allocation so it cannot
+        // leak into other test classes sharing this JVM.
         flushEffects();
+        Vars.ui = null;
     }
 
     private static Button findFirstButton(Element element) {
@@ -372,10 +365,14 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         state.getTeamGraphs().add(graph);
         state.tickSignal.set(state.tickSignal.get() + 1);
 
+        flushEffects();
         root.validate();
 
         assertEquals(initialX, feature.x(), 1.0f, "Feature X must remain stable with power stats");
         assertEquals(initialX, root.x, 1.0f, "Root X must remain stable with power stats");
+
+        feature.onDisable();
+        flushEffects();
     }
 
     @Test

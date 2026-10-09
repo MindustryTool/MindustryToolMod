@@ -44,7 +44,7 @@ public class SchematicBrowserDialog extends SolimDialog {
 
         closeOnBack();
         fillParent(true);
-        children(() -> new BrowserContent(state, filterDialog, this::hide));
+        children(() -> new BrowserContent(this, state, filterDialog, this::hide));
         cont().background(Styles.black);
         shown(() -> state.start());
         hidden(() -> state.stop());
@@ -70,6 +70,7 @@ public class SchematicBrowserDialog extends SolimDialog {
     }
 
     private static class BrowserContent extends BaseComponent {
+        private final SchematicBrowserDialog dialog;
         private final BrowserState<SchematicData> state;
         private final BrowserFilterDialog filterDialog;
         private final Runnable onClose;
@@ -79,14 +80,17 @@ public class SchematicBrowserDialog extends SolimDialog {
             Float width = viewportWidth.get();
             return BrowserLayout.calculateColumns(width != null ? width : 800f);
         });
+
         private final Computed<Float> cardsWidth = new Computed<>(() -> {
             Float width = viewportWidth.get();
             return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
         });
+
         private final Computed<Float> contentWidth = new Computed<>(() -> {
             Float width = viewportWidth.get();
             return BrowserLayout.calculateContentWidth(width != null ? width : 800f);
         });
+
         private final Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
         private final Computed<Integer> calculatedPageSize = new Computed<>(() -> {
             Float width = viewportWidth.get();
@@ -98,7 +102,9 @@ public class SchematicBrowserDialog extends SolimDialog {
         private final Signal<Integer> visibleCount;
         private final Computed<Seq<SchematicData>> visibleItems;
 
-        BrowserContent(BrowserState<SchematicData> state, BrowserFilterDialog filterDialog, Runnable onClose) {
+        BrowserContent(SchematicBrowserDialog dialog, BrowserState<SchematicData> state,
+                BrowserFilterDialog filterDialog, Runnable onClose) {
+            this.dialog = dialog;
             this.state = state;
             this.filterDialog = filterDialog;
             this.onClose = onClose;
@@ -203,7 +209,7 @@ public class SchematicBrowserDialog extends SolimDialog {
                 return;
             }
 
-            SchematicActions.placeInGame(item.getItemId());
+            SchematicActions.placeInGame(item.getItemId(), dialog);
         }
 
         private void showDetails(SchematicData item) {

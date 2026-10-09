@@ -566,4 +566,24 @@ The `solim.UI` facade SHALL expose static methods for creating `Query` and `Muta
 - **WHEN** `UI.mutation(mutator)` is called in a declarative Solim component
 - **THEN** it SHALL create and return a `Mutation<T, R>` instance, equivalent to `Mutation.of(mutator)`
 
+### Requirement: Reactive pipeline fail-fast error propagation
+The reactive framework (`SignalDispatcher`, `Computed`, `Signal`, `MapSignal`, and `Mutation`) SHALL NOT swallow or silently log unhandled exceptions thrown during reactive effect execution, computed value calculation, subscriber notifications, or mutation completion callbacks, and SHALL re-throw them so they terminate the executing thread.
+
+#### Scenario: Reactive effect execution error terminates flush
+- **WHEN** a scheduled effect throws a `RuntimeException` during `SignalDispatcher.flush()`
+- **THEN** `SignalDispatcher` does NOT swallow the exception in `catch (Throwable t)` and the exception escapes `flush()`
+
+#### Scenario: Computed supplier error propagates immediately
+- **WHEN** a `Computed` evaluation throws an unhandled exception inside its supplier (`Prov.get()`)
+- **THEN** the exception is thrown immediately to the caller and is not suppressed with `dirty = false` and stale cached values
+
+#### Scenario: Signal subscriber exception propagates
+- **WHEN** a subscriber listener registered on a `Signal` throws a `RuntimeException` when updated
+- **THEN** the exception is not caught and swallowed by `Signal.set()`, escaping to the caller
+
+#### Scenario: Mutation callbacks propagate unhandled errors
+- **WHEN** an `onSuccess` or `onError` callback in `Mutation` throws an unhandled exception
+- **THEN** the exception is not swallowed in an empty `catch (Throwable t)` block and propagates to the main thread
+
+
 

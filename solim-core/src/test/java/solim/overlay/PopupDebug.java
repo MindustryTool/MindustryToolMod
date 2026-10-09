@@ -1,19 +1,22 @@
 package solim.overlay;
 
 import arc.Core;
+import arc.mock.MockApplication;
+import arc.mock.MockGraphics;
 import arc.scene.Scene;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import solim.core.BaseComponent;
 
 public class PopupDebug {
     public static void main(String[] args) throws Exception {
-        Core.app = new arc.mock.MockApplication();
-        Core.graphics = new arc.mock.MockGraphics();
+        Core.app = new MockApplication();
+        Core.graphics = new MockGraphics();
         Scene scene = new Scene();
         Core.scene = scene;
         Popup<String> menu = new Popup<>();
-        menu.children(data -> new solim.core.BaseComponent() {
+        menu.children(data -> new BaseComponent() {
             @Override
             protected Element build() {
                 Table content = new Table();

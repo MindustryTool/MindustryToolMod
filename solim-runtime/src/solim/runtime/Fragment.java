@@ -1,5 +1,6 @@
 package solim.runtime;
 
+import arc.scene.Element;
 import arc.util.Log;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +52,7 @@ public final class Fragment implements Component {
 	}
 
 	@Override
-	public arc.scene.Element element() {
+	public Element element() {
 		throw new UnsupportedOperationException(
 				"Fragment is a multi-root ownership unit; mount roots individually via roots()");
 	}

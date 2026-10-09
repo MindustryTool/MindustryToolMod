@@ -192,7 +192,8 @@ public class ReactivePrimitivesRegressionTest extends SolimEnv {
 			throw new RuntimeException("Simulated computed failure");
 		});
 
-		assertNull(faulty.get(), "When computed supplier throws, it safely catches, logs, and returns null");
+		RuntimeException thrown = assertThrows(RuntimeException.class, faulty::get);
+		assertEquals("Simulated computed failure", thrown.getMessage());
 
 		// Context must not be left dirty
 		assertEquals(0, ReactiveContext.size(), "ReactiveContext stack must be clean after exception");

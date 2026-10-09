@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.scene.Element;
+import arc.scene.event.ClickListener;
+import arc.scene.event.EventListener;
+import arc.scene.event.InputEvent;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Table;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -158,10 +161,10 @@ public class LayoutAndComponentsRegressionTest extends SolimEnv {
 		assertFalse(arcBtn.isDisabled());
 
 		// Trigger click via ClickListener
-		for (arc.scene.event.EventListener listener : arcBtn.getListeners()) {
-			if (listener instanceof arc.scene.event.ClickListener) {
-				arc.scene.event.InputEvent event = new arc.scene.event.InputEvent();
-				((arc.scene.event.ClickListener) listener).clicked(event, 0f, 0f);
+		for (EventListener listener : arcBtn.getListeners()) {
+			if (listener instanceof ClickListener) {
+				InputEvent event = new InputEvent();
+				((ClickListener) listener).clicked(event, 0f, 0f);
 			}
 		}
 		assertEquals(1, clicks.get());
