@@ -55,10 +55,9 @@ public class GodModeUnitsDialog extends SolimDialog {
             return allUnits.select(unit -> unit.localizedName.toLowerCase().contains(lower));
         });
 
-        Computed<String> posLabel = Signal.computed(() ->
-                Core.bundle.format("feature.god-mode.units.position",
-                        Math.round(posX.get() != null ? posX.get() : 0f),
-                        Math.round(posY.get() != null ? posY.get() : 0f)));
+        Computed<String> posLabel = Signal.computed(() -> Core.bundle.format("feature.god-mode.units.position",
+                Math.round(posX.get() != null ? posX.get() : 0f),
+                Math.round(posY.get() != null ? posY.get() : 0f)));
 
         children(() -> {
             column().gap(unit(2.5f)).padding(unit(3)).children(() -> {
@@ -132,10 +131,14 @@ public class GodModeUnitsDialog extends SolimDialog {
                     });
 
                     wrap().gap(unit(1.5f)).center().children(() -> {
-                        button(() -> addCount(1)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7)).children(() -> text("+1"));
-                        button(() -> addCount(5)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7)).children(() -> text("+5"));
-                        button(() -> addCount(10)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("+10"));
-                        button(() -> addCount(50)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("+50"));
+                        button(() -> addCount(1)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7))
+                                .children(() -> text("+1"));
+                        button(() -> addCount(5)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7))
+                                .children(() -> text("+5"));
+                        button(() -> addCount(10)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7))
+                                .children(() -> text("+10"));
+                        button(() -> addCount(50)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7))
+                                .children(() -> text("+50"));
                     });
                 });
 
@@ -199,6 +202,7 @@ public class GodModeUnitsDialog extends SolimDialog {
         if (unit == null || unit.internal || unit.isHidden()) {
             return false;
         }
-        return unit.constructor == null || !(unit.constructor.get() instanceof BlockUnitc);
+
+        return unit.constructor != null && !(unit.constructor.get() instanceof BlockUnitc);
     }
 }
