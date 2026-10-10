@@ -52,9 +52,9 @@ public class WebStyles {
 
         public static final Color DISABLED_BG = new Color(0.145f, 0.145f, 0.165f, 0.45f);
         public static final Color DISABLED_BORDER = new Color(0.300f, 0.300f, 0.320f, 0.40f);
-        public static final Color DISABLED_FG = new Color(0.400f, 0.400f, 0.420f, 1.0f);
+        public static final Color DISABLED_FG = new Color(0.600f, 0.600f, 0.620f, 1.0f);
 
-        public static final Color SECTION_BG = new Color(0.075f, 0.075f, 0.085f, 0.9f);
+        public static final Color SECTION_BG = new Color(0.075f, 0.075f, 0.085f, 0.95f);
         public static final Color SECTION_BORDER = new Color(0.180f, 0.180f, 0.200f, 1.0f);
 
         public static final Color CHIP_BG = new Color(0.115f, 0.115f, 0.130f, 1.0f);
