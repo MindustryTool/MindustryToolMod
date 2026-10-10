@@ -6,7 +6,7 @@
 
 ## 2. In-World Floating Overlay Component
 
-- [x] 2.1 Create `QuickRotateOverlayView` using Solim declarative components (`row()`, `button()`, `WebStyles.ghost()`)
+- [x] 2.1 Create `QuickRotateOverlayView` building a raw Arc `Table` floating menu (SmartDrill/SmartUpgrade pattern) with Lucide icon buttons
 - [x] 2.2 Add Step-Rotate buttons for counter-clockwise (`↺`) and clockwise (`↻`) actions with tooltips
 - [x] 2.3 Implement world-to-screen coordinate projection and dynamic camera anchoring for the overlay
 

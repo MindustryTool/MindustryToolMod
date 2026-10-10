@@ -6,6 +6,8 @@ import arc.func.Prov;
 import arc.math.Mathf;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
+import arc.scene.event.Touchable;
+import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -25,7 +27,6 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
-import solim.reactive.Signal;
 
 /**
  * Quick rotate feature: shows an in-world floating overlay next to the
@@ -37,12 +38,9 @@ public class QuickRotateFeature extends Feature {
     public final ConfigValue<Boolean> autoDismissConfig;
     public final ConfigValue<Boolean> offsetAboveConfig;
 
-    private final Signal<Building> target = Signal.of(null);
-    private final Signal<Float> xSignal = Signal.of(0f);
-    private final Signal<Float> ySignal = Signal.of(0f);
-
+    private @Nullable Building currentTarget;
+    private @Nullable Table currentMenu;
     private @Nullable QuickRotateSettingsDialog settingsDialog;
-    private @Nullable QuickRotateOverlayView overlayView;
 
     public QuickRotateFeature() {
         super(FeatureMetadata.builder()
@@ -60,7 +58,7 @@ public class QuickRotateFeature extends Feature {
         Events.run(Trigger.update, this::update);
         Events.on(StateChangeEvent.class, e -> {
             if (e.to == State.menu) {
-                hideOverlay();
+                closeMenu();
             }
         });
     }
@@ -72,7 +70,7 @@ public class QuickRotateFeature extends Feature {
 
     @Override
     public void onDisable() {
-        hideOverlay();
+        closeMenu();
     }
 
     @Override
@@ -85,20 +83,8 @@ public class QuickRotateFeature extends Feature {
         };
     }
 
-    public Signal<Building> target() {
-        return target;
-    }
-
     public @Nullable Building currentTarget() {
-        return target.peek();
-    }
-
-    public Signal<Float> xSignal() {
-        return xSignal;
-    }
-
-    public Signal<Float> ySignal() {
-        return ySignal;
+        return currentTarget;
     }
 
     public boolean isEligible(@Nullable Building building) {
@@ -123,7 +109,7 @@ public class QuickRotateFeature extends Feature {
         }
         if (e == null || e.tile == null) {
             if (isAutoDismiss()) {
-                hideOverlay();
+                closeMenu();
             }
             return;
         }
@@ -134,99 +120,118 @@ public class QuickRotateFeature extends Feature {
         if (isEligible(building)) {
             showOverlay(building);
         } else if (isAutoDismiss()) {
-            hideOverlay();
+            closeMenu();
         }
     }
 
     private void update() {
         if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.player == null) {
-            hideOverlay();
+            closeMenu();
             return;
         }
-        Building current = target.peek();
-        if (current == null) {
+        if (currentTarget == null) {
             return;
         }
-        if (!current.isValid() || current.tile == null || current.tile.build != current
-                || !isEligible(current)) {
-            hideOverlay();
-            return;
+        if (!currentTarget.isValid() || currentTarget.tile == null
+                || currentTarget.tile.build != currentTarget || !isEligible(currentTarget)) {
+            closeMenu();
         }
-        updateOverlayPosition(current);
     }
 
     public void showOverlay(Building building) {
         if (!isEligible(building)) {
             return;
         }
-        target.set(building);
-        updateOverlayPosition(building);
-        if (overlayView != null) {
+        if (building == currentTarget && currentMenu != null) {
+            updateOverlayPosition(building);
             return;
         }
-        overlayView = new QuickRotateOverlayView(this);
-        Element element = overlayView.element();
-        element.name = "quick-rotate-overlay";
-        Core.app.post(() -> {
-            if (overlayView != null && Vars.ui != null && Vars.ui.hudGroup != null) {
-                Vars.ui.hudGroup.addChild(element);
-            }
-        });
+        closeMenu();
+        currentTarget = building;
+
+        currentMenu = new QuickRotateOverlayView(this).build();
+        currentMenu.visible(() -> Vars.ui != null && Vars.ui.hudfrag != null
+                && Vars.ui.hudfrag.shown && Vars.state != null && Vars.state.isGame());
+        currentMenu.touchable = Touchable.enabled;
+        attachMenuToHud();
+        updateOverlayPosition(building);
     }
 
-    public void hideOverlay() {
-        target.set(null);
-        if (overlayView != null) {
-            QuickRotateOverlayView view = overlayView;
-            overlayView = null;
+    public void closeMenu() {
+        if (currentMenu != null) {
+            currentMenu.remove();
+            currentMenu = null;
+        }
+        currentTarget = null;
+    }
+
+    private void attachMenuToHud() {
+        if (currentMenu == null) {
+            return;
+        }
+
+        currentMenu.update(() -> {
+            if (currentTarget == null || Vars.player == null || Core.camera == null) {
+                closeMenu();
+                return;
+            }
+            updateOverlayPosition(currentTarget);
+        });
+
+        if (Vars.ui != null && Vars.ui.hudGroup != null) {
+            Table menu = currentMenu;
             Core.app.post(() -> {
-                view.element().remove();
-                view.dispose();
+                if (currentMenu == menu && Vars.ui.hudGroup != null) {
+                    Vars.ui.hudGroup.addChild(menu);
+                    menu.pack();
+                    if (currentTarget != null) {
+                        updateOverlayPosition(currentTarget);
+                    }
+                }
             });
         }
     }
 
     private void updateOverlayPosition(Building building) {
-        if (Core.camera == null || Core.graphics == null) {
+        if (Core.camera == null || Core.graphics == null || currentMenu == null) {
             return;
         }
-        Vec2 pos = Core.camera.project(building.x, building.y);
+        // Offset in world space before projecting so camera zoom scales it correctly.
+        Boolean offsetAbove = offsetAboveConfig.get();
+        float anchorY = !Boolean.FALSE.equals(offsetAbove)
+                ? building.y + building.block.size * Vars.tilesize * 1.5f
+                : building.y;
+        Vec2 pos = Core.camera.project(building.x, anchorY);
         float x = pos.x;
         float y = pos.y;
-        Boolean offsetAbove = offsetAboveConfig.get();
-        if (!Boolean.FALSE.equals(offsetAbove)) {
-            y += building.block.size * Vars.tilesize * 1.5f;
-        }
-        Element element = overlayView != null ? overlayView.element() : null;
-        float w = element != null && element.getWidth() > 0f ? element.getWidth() : 96f;
-        float h = element != null && element.getHeight() > 0f ? element.getHeight() : 48f;
+        float w = currentMenu.getWidth() > 0f ? currentMenu.getWidth() : 96f;
+        float h = currentMenu.getHeight() > 0f ? currentMenu.getHeight() : 48f;
         x = Mathf.clamp(x, w / 2f + 8f, Core.graphics.getWidth() - w / 2f - 8f);
         y = Mathf.clamp(y, h / 2f + 8f, Core.graphics.getHeight() - h / 2f - 8f);
-        xSignal.set(x);
-        ySignal.set(y);
-        if (element != null) {
-            element.setPosition(x, y, Align.center);
-        }
+        currentMenu.setPosition(x, y, Align.center);
     }
 
     public void rotateClockwise() {
-        rotate(true);
-    }
-
-    public void rotateCounterClockwise() {
+        // Verified against InputHandler.rotateBlock: direction=false decrements
+        // rotation, which is visually clockwise on screen.
         rotate(false);
     }
 
+    public void rotateCounterClockwise() {
+        // Verified against InputHandler.rotateBlock: direction=true increments
+        // rotation, which is visually counter-clockwise on screen.
+        rotate(true);
+    }
+
     public void rotate(boolean clockwise) {
-        Building building = target.peek();
-        if (building == null || Vars.player == null) {
+        if (currentTarget == null || Vars.player == null) {
             return;
         }
-        if (!isEligible(building)) {
-            hideOverlay();
+        if (!isEligible(currentTarget)) {
+            closeMenu();
             return;
         }
-        Call.rotateBlock(Vars.player, building, clockwise);
+        Call.rotateBlock(Vars.player, currentTarget, clockwise);
     }
 
     private boolean isAutoDismiss() {
@@ -234,12 +239,11 @@ public class QuickRotateFeature extends Feature {
     }
 
     private boolean isMenuTouched() {
-        if (overlayView == null || Core.scene == null || Core.input == null) {
+        if (currentMenu == null || Core.scene == null || Core.input == null) {
             return false;
         }
-        Element root = overlayView.element();
         Element hit = Core.scene.hit(Core.input.mouseX(), Core.input.mouseY(), true);
-        return hit != null && (hit == root || hit.isDescendantOf(root));
+        return hit != null && (hit == currentMenu || hit.isDescendantOf(currentMenu));
     }
 
     private boolean isPlacingInput() {

@@ -162,7 +162,7 @@ public class PatchDetailDialog extends SolimDialog {
                                 .wrap(false)
                                 .right();
 
-                        column(() -> {}).width(unit(4));
+                        column().width(unit(4));
 
                         text(highlightedCode)
                                 .style(Styles.monoLabel)

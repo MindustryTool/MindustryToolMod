@@ -16,11 +16,11 @@ The quick-rotate overlay SHALL provide interactive buttons to rotate the buildin
 
 #### Scenario: Clicking rotate clockwise
 - **WHEN** the player clicks the clockwise rotate button (`↻`)
-- **THEN** the system SHALL issue `Call.rotateBlock(player, building, true)` to advance the building's rotation clockwise
+- **THEN** the system SHALL issue `Call.rotateBlock(player, building, false)` to advance the building's rotation clockwise
 
 #### Scenario: Clicking rotate counter-clockwise
 - **WHEN** the player clicks the counter-clockwise rotate button (`↺`)
-- **THEN** the system SHALL issue `Call.rotateBlock(player, building, false)` to rotate the building counter-clockwise
+- **THEN** the system SHALL issue `Call.rotateBlock(player, building, true)` to rotate the building counter-clockwise
 
 ### Requirement: Overlay lifecycle and screen tracking
 The system SHALL update the screen coordinates of the overlay as the camera moves or zooms, and automatically hide it when the target building is destroyed, out of bounds, or deselected.

@@ -35,6 +35,7 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
     private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 4f;
     private boolean disposed = false;
+    private boolean attached = false;
 
     public Wrap() {
         this.table.name = "solim-wrap-table";
@@ -42,6 +43,10 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
         this.table.top().left();
         this.table.defaults().top().left();
         OwnershipContext.register(this);
+        Table parent = AttachmentStack.current();
+        if (parent != null) {
+            AttachmentStack.registerPendingComponent(this, parent);
+        }
     }
 
     public Table table() {
@@ -145,9 +150,16 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
         } finally {
             AttachmentStack.pop();
         }
-        AttachmentStack.attachToParent(table);
+        attachSelf();
         respace();
         return this;
+    }
+
+    private void attachSelf() {
+        if (!attached) {
+            attached = true;
+            AttachmentStack.attachToParent(table);
+        }
     }
 
     public Wrap add(Element child) {

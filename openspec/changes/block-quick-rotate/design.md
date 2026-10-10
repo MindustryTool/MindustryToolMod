@@ -21,15 +21,16 @@ The mod uses the Solim UI framework (`:solim`, `:solim-core`) with reactive sign
 
 ## Decisions
 
-### 1. Overlay Implementation via Solim
-- **Decision**: Render the overlay using a Solim component attached to the HUD or scene, updating its screen position from the target building's world coordinates (`Core.camera.project(...)`).
-- **Rationale**: Keeps UI declarative and consistent with the project's Solim architecture guidelines. Avoids raw imperative scene hacks while utilizing Solim's reactive binding capabilities.
+### 1. Overlay Implementation via Raw Arc Table
+- **Decision**: Render the overlay as a raw Arc `Table` added to `Vars.ui.hudGroup`, repositioned every frame from the target building's world coordinates (`Core.camera.project(...)`), following the proven SmartDrill/SmartUpgrade floating-menu pattern. Rotate buttons are Arc `ImageButton`s using Lucide drawables (`assets/icons/rotate-ccw.png`, `assets/icons/rotate-cw.png` via `FileIcon.of(...)`).
+- **Rationale**: Solim's `Hud` is designed for fixed-position HUD panels, not world-anchored elements that must track camera projection each frame; the raw-table pattern already handles this correctly (per-frame `update()` repositioning, screen clamping, menu touch hit-testing). Direct Arc usage is justified here per project guidelines (no reasonable Solim equivalent for camera-tracked floating menus) and stays consistent with existing floating menus. Settings UI remains Solim declarative.
 - **Alternatives considered**:
+  - *Solim `Hud` component*: Rejected after trial — wrong lifecycle/positioning model for camera-tracked overlays.
   - *Drawing directly via Events.run(Trigger.draw)*: Only good for rendering textures, difficult to handle interactive button clicks, hover states, and tooltips.
   - *Injecting into vanilla block config menus*: Many blocks (like plain conveyors) do not have full config menus or require extra steps to open.
 
 ### 2. Networking and Mutation via `Call.rotateBlock`
-- **Decision**: Invoke `Call.rotateBlock(Vars.player, building, direction)` where `direction` is boolean (`false` for CCW / -1, `true` for CW / +1).
+- **Decision**: Invoke `Call.rotateBlock(Vars.player, building, direction)` where `direction` is boolean (`true` for CCW / +1 rotation step, `false` for CW / -1 step). Verified against `InputHandler.rotateBlock` bytecode (`rotation = mod(rotation + sign(direction), 4)`); rotation steps increment counter-clockwise on screen, so `true` is visually counter-clockwise.
 - **Rationale**: `Call.rotateBlock` is the canonical Mindustry client-to-server RPC for block rotation. In singleplayer, it executes locally; in multiplayer, it validates permissions and broadcasts to all clients.
 - **Alternatives considered**:
   - Direct assignment `building.rotation = ...`: Causes multiplayer desynchronization.

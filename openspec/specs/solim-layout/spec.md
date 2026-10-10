@@ -714,3 +714,19 @@ The system SHALL clarify via probes whether `ElementConfig.height(float)` on lay
 - **WHEN** multiple items in the same row of a `ReactiveGrid` have unequal content heights and one item specifies `grow()` or `growY()`
 - **THEN** the cell with `growY()` expands to match the full height of the row
 
+### Requirement: Layout containers auto-attach to ambient parent
+Layout containers (`Column`, `Row`, `Card`, `Grid`, `Wrap`) instantiated within an active `AttachmentStack` parent context SHALL automatically attach to the parent container even if `.children(...)` is not invoked.
+
+#### Scenario: Empty column used as spacer inside row
+- **WHEN** `row().children(() -> { text("A"); column().width(16f); text("B"); })` is executed
+- **THEN** the parent row contains 3 children in sequential order: "A", the column table, and "B"
+
+#### Scenario: Empty row used inside column
+- **WHEN** `column().children(() -> { text("Top"); row().height(8f); text("Bottom"); })` is executed
+- **THEN** the parent column contains 3 children in sequential order: "Top", the row table, and "Bottom"
+
+#### Scenario: Container with children does not attach twice
+- **WHEN** `column().children(() -> { row().children(() -> { text("Inside"); }); })` is executed
+- **THEN** the child row is attached exactly once to the parent column
+
+

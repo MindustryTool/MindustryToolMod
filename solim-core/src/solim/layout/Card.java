@@ -45,6 +45,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
     private final List<Disposable> bindings = new ArrayList<>();
     private boolean disposed = false;
     private float gap = 0f;
+    private boolean attached = false;
 
     public Card() {
         SolimToken.bind(this.table, this, constraints);
@@ -52,6 +53,10 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         this.table.top().left();
         this.table.defaults().top().left();
         OwnershipContext.register(this);
+        Table parent = AttachmentStack.current();
+        if (parent != null) {
+            AttachmentStack.registerPendingComponent(this, parent);
+        }
     }
 
     public Card(@Nullable Drawable background) {
@@ -110,9 +115,16 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         } finally {
             AttachmentStack.pop();
         }
-        AttachmentStack.attachToParent(table);
+        attachSelf();
         respace();
         return this;
+    }
+
+    private void attachSelf() {
+        if (!attached) {
+            attached = true;
+            AttachmentStack.attachToParent(table);
+        }
     }
 
     public Card gap(float g) {

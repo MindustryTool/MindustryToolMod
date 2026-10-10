@@ -24,7 +24,7 @@ In Mindustry, rotatable blocks (such as unit factories, reconstructors, conveyor
 
 ## Impact
 
-- **UI / HUD**: Adds an in-world overlay element using Solim components projected onto screen coordinates.
+- **UI / HUD**: Adds an in-world overlay element (raw Arc table with Lucide icon buttons, following the SmartDrill/SmartUpgrade floating-menu pattern) projected onto screen coordinates.
 - **Networking**: Dispatches `Call.rotateBlock(player, building, direction)` which interacts with Mindustry's standard server synchronization.
 - **Localization**: Adds new translation keys to `assets/bundles/bundle.properties`.
 - **Feature Management**: Registers `QuickRotateFeature` in `FeatureManager`.

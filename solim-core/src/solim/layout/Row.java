@@ -39,6 +39,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
     private float gap = 0f;
     private final List<Disposable> bindings = new ArrayList<>();
     private boolean disposed = false;
+    private boolean attached = false;
 
     public Row() {
         this.table = new Table();
@@ -47,6 +48,10 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         this.table.top().left();
         this.table.defaults().top().left();
         OwnershipContext.register(this);
+        Table parent = AttachmentStack.current();
+        if (parent != null) {
+            AttachmentStack.registerPendingComponent(this, parent);
+        }
     }
 
     public Table table() {
@@ -191,9 +196,16 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         } finally {
             AttachmentStack.pop();
         }
-        AttachmentStack.attachToParent(table);
+        attachSelf();
         respace();
         return this;
+    }
+
+    private void attachSelf() {
+        if (!attached) {
+            attached = true;
+            AttachmentStack.attachToParent(table);
+        }
     }
 
     public Cell<?> add(Element e) {

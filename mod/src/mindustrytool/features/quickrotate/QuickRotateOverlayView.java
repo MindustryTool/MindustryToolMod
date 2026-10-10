@@ -1,62 +1,44 @@
 package mindustrytool.features.quickrotate;
 
-import static solim.UI.*;
-
 import arc.Core;
-import arc.scene.Element;
-import arc.util.Nullable;
-import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
-import solim.overlay.Hud;
+import arc.scene.event.Touchable;
+import arc.scene.style.Drawable;
+import arc.scene.ui.layout.Table;
+import mindustry.gen.Icon;
+import mindustry.ui.Styles;
+import mindustrytool.components.FileIcon;
 
 /**
  * In-world floating overlay with step-rotate controls anchored to the
- * selected rotatable building.
+ * selected rotatable building. Uses a raw Arc table like other floating
+ * world menus so it can track the building's projected screen position.
  */
-public class QuickRotateOverlayView extends BaseComponent {
+public class QuickRotateOverlayView {
 
     private final QuickRotateFeature feature;
-    private @Nullable Hud hud;
 
     public QuickRotateOverlayView(QuickRotateFeature feature) {
         this.feature = feature;
     }
 
-    @Override
-    protected Element build() {
-        hud = hud(() -> {
-            row()
-                    .padding(unit(1))
-                    .gap(unit(1))
-                    .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                    .border(1.5f, WebStyles.Colors.BORDER)
-                    .center()
-                    .children(() -> {
-                        button()
-                                .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .tooltip(Core.bundle.get("feature.quick-rotate.rotate-ccw.tooltip"))
-                                .onClick(feature::rotateCounterClockwise)
-                                .children(() -> text(CCW));
+    public Table build() {
+        Drawable ccw = FileIcon.of("rotate-ccw.png", Icon.left);
+        Drawable cw = FileIcon.of("rotate-cw.png", Icon.right);
 
-                        button()
-                                .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .tooltip(Core.bundle.get("feature.quick-rotate.rotate-cw.tooltip"))
-                                .onClick(feature::rotateClockwise)
-                                .children(() -> text(CW));
-                    });
-        });
+        Table menu = new Table(Styles.black8);
+        menu.touchable = Touchable.enabled;
+        menu.margin(4f);
 
-        hud.position(feature.xSignal(), feature.ySignal());
+        menu.button(ccw, Styles.clearNonei, 32f, feature::rotateCounterClockwise)
+                .size(44f)
+                .pad(2)
+                .tooltip(Core.bundle.get("feature.quick-rotate.rotate-ccw.tooltip"));
 
-        return hud.element();
+        menu.button(cw, Styles.clearNonei, 32f, feature::rotateClockwise)
+                .size(44f)
+                .pad(2)
+                .tooltip(Core.bundle.get("feature.quick-rotate.rotate-cw.tooltip"));
+
+        return menu;
     }
-
-    public @Nullable Hud getHud() {
-        return hud;
-    }
-
-    private static final String CCW = "\u21BA";
-    private static final String CW = "\u21BB";
 }

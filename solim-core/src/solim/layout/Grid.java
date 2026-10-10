@@ -30,6 +30,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
     private int currentCell = 0;
     private final List<Disposable> bindings = new ArrayList<>();
     private boolean disposed = false;
+    private boolean attached = false;
 
     public Grid() {
         this.table = new Table();
@@ -39,6 +40,10 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         this.table.defaults().top().left();
         respace();
         OwnershipContext.register(this);
+        Table parent = AttachmentStack.current();
+        if (parent != null) {
+            AttachmentStack.registerPendingComponent(this, parent);
+        }
     }
 
     public Grid(int columns) {
@@ -143,9 +148,16 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         } finally {
             AttachmentStack.pop();
         }
-        AttachmentStack.attachToParent(table);
+        attachSelf();
         respace();
         return this;
+    }
+
+    private void attachSelf() {
+        if (!attached) {
+            attached = true;
+            AttachmentStack.attachToParent(table);
+        }
     }
 
     private void reflow() {
