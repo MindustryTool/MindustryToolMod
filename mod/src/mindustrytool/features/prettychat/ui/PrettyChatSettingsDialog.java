@@ -17,6 +17,7 @@ public class PrettyChatSettingsDialog extends SolimDialog {
         name("prettyChatSettingsDialog");
         addCloseButton();
         closeOnBack();
+        maxWidth(500f);
 
         children(() -> {
             new PrettyChatSettingsView(feature);

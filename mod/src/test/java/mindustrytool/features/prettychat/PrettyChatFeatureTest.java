@@ -104,4 +104,77 @@ class PrettyChatFeatureTest extends MindustryTestEnv {
         assertEquals("uwu", current.get(1));
         assertEquals("reverse", current.get(2));
     }
+
+    @Test
+    void testGradientPrettier() {
+        Prettier gradient = feature.getPrettier("gradient");
+        assertTrue(gradient != null, "Gradient prettier must be registered");
+        assertTrue(gradient.isEditable());
+
+        String result = gradient.transform("Hello");
+        assertTrue(result.contains("[#"), "Gradient should contain hex tags");
+        assertTrue(result.endsWith("[]"), "Gradient should close color tags");
+        assertTrue(result.length() <= 150, "Gradient must not exceed max text length");
+
+        // Test with preset
+        gradient.setScript("cyberpunk");
+        String cpResult = gradient.transform("Cyberpunk City");
+        assertTrue(cpResult.contains("[#"), "Should contain hex tags for cyberpunk preset");
+        assertTrue(cpResult.endsWith("[]"));
+
+        // Reset
+        gradient.resetScript();
+        assertEquals(BuiltinPrettiers.GradientPrettier.DEFAULT_PALETTE, gradient.getScript());
+    }
+
+    @Test
+    void testMonoPrettier() {
+        Prettier mono = feature.getPrettier("mono");
+        assertTrue(mono != null, "Mono prettier must be registered");
+
+        String result = mono.transform("Hello 123!");
+        assertEquals('\uFF28', result.charAt(0));
+        assertEquals(' ', result.charAt(5));
+        assertEquals(10, result.length());
+    }
+
+    @Test
+    void testStrikethroughPrettier() {
+        Prettier strike = feature.getPrettier("strikethrough");
+        assertTrue(strike != null, "Strikethrough prettier must be registered");
+
+        String result = strike.transform("Hi");
+        assertEquals("H\u0336i\u0336", result);
+
+        String budgetCut = strike.transform("Hello World", 6);
+        assertTrue(budgetCut.length() <= 6);
+    }
+
+    @Test
+    void testUnderlinePrettier() {
+        Prettier underline = feature.getPrettier("underline");
+        assertTrue(underline != null, "Underline prettier must be registered");
+
+        String result = underline.transform("Hi");
+        assertEquals("H\u0332i\u0332", result);
+
+        String budgetCut = underline.transform("Hello World", 6);
+        assertTrue(budgetCut.length() <= 6);
+    }
+
+    @Test
+    void testFancyBracketsPrettier() {
+        Prettier brackets = feature.getPrettier("fancybrackets");
+        assertTrue(brackets != null, "Fancy brackets prettier must be registered");
+        assertTrue(brackets.isEditable());
+
+        String result = brackets.transform("Attack!");
+        assertEquals("\u3010 Attack! \u3011", result);
+
+        brackets.setScript("\u2726 <message> \u2726");
+        assertEquals("\u2726 Attack! \u2726", brackets.transform("Attack!"));
+
+        brackets.resetScript();
+        assertEquals(BuiltinPrettiers.FancyBracketsPrettier.DEFAULT_TEMPLATE, brackets.getScript());
+    }
 }

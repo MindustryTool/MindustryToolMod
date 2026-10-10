@@ -3,8 +3,13 @@ package mindustrytool.features.translation.ui;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.Events;
+import arc.func.Cons;
+import arc.input.KeyCode;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
+import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
 import arc.scene.style.Drawable;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
@@ -13,6 +18,7 @@ import arc.util.Align;
 import arc.util.Nullable;
 import arc.util.Tmp;
 import java.util.Locale;
+import mindustry.game.EventType.ResizeEvent;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
@@ -37,8 +43,11 @@ public class LanguageDropdown extends BaseComponent {
 	private @Nullable Table popup;
 	private @Nullable Button triggerButton;
 
+	private final Cons<ResizeEvent> resizeListener = e -> close();
+
 	public LanguageDropdown(TranslationFeature feature) {
 		this.feature = feature;
+		Events.on(ResizeEvent.class, resizeListener);
 	}
 
 	@Override
@@ -93,6 +102,16 @@ public class LanguageDropdown extends BaseComponent {
 		backdrop = new Element();
 		backdrop.setFillParent(true);
 		backdrop.clicked(this::close);
+		backdrop.addListener(new InputListener() {
+			@Override
+			public boolean keyDown(InputEvent event, KeyCode keycode) {
+				if (keycode == KeyCode.escape || keycode == KeyCode.back) {
+					close();
+					return true;
+				}
+				return false;
+			}
+		});
 
 		popup = new Table(Tex.paneSolid);
 		popup.setSize(menuW, menuH);
@@ -184,5 +203,9 @@ public class LanguageDropdown extends BaseComponent {
 	@Override
 	protected void onDispose() {
 		close();
+		try {
+			Events.remove(ResizeEvent.class, resizeListener);
+		} catch (Throwable ignored) {
+		}
 	}
 }

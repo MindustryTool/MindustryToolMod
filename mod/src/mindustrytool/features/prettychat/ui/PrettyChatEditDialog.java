@@ -29,12 +29,25 @@ public class PrettyChatEditDialog extends SolimDialog {
 
         TextArea area = new TextArea(prettier.getScript() != null ? prettier.getScript() : "");
 
+        String hint;
+        if ("gradient".equals(prettier.id())) {
+            hint = Core.bundle != null && Core.bundle.has("feature.pretty-chat.settings.gradient-hint")
+                    ? Core.bundle.get("feature.pretty-chat.settings.gradient-hint")
+                    : "Enter two comma-separated hex colors (e.g. #ff5e36,#9b51e0) or preset: cyberpunk, ocean, fire, neon.";
+        } else if ("fancybrackets".equals(prettier.id())) {
+            hint = Core.bundle != null && Core.bundle.has("feature.pretty-chat.settings.brackets-hint")
+                    ? Core.bundle.get("feature.pretty-chat.settings.brackets-hint")
+                    : "Enter decorative template containing <message>, e.g. \u3010 <message> \u3011 or \u2726 <message> \u2726.";
+        } else {
+            hint = Core.bundle != null
+                    ? Core.bundle.get("feature.pretty-chat.settings.script-hint",
+                            "Use <message> as a placeholder for the chat text. JavaScript expressions are supported on Desktop.")
+                    : "Use <message> as a placeholder for the chat text. JavaScript expressions are supported on Desktop.";
+        }
+
         children(() -> {
             column().grow().maxWidth(dvw(90f).map(w -> Math.min(w, 750f))).padding(unit(3)).gap(unit(2)).children(() -> {
-                text(Core.bundle != null
-                        ? Core.bundle.get("feature.pretty-chat.settings.script-hint",
-                                "Use <message> as a placeholder for the chat text. JavaScript expressions are supported on Desktop.")
-                        : "Use <message> as a placeholder for the chat text. JavaScript expressions are supported on Desktop.")
+                text(hint)
                         .color(Color.lightGray)
                         .wrap()
                         .growX();

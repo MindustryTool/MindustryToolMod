@@ -17,6 +17,8 @@ import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
 import mindustry.ui.dialogs.LanguageDialog;
 import mindustry.core.NetClient;
+import arc.input.KeyCode;
+import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Call;
 import mindustry.gen.Icon;
@@ -26,6 +28,7 @@ import mindustry.input.Binding;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.translation.ui.ChatTranslationPill;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import mindustrytool.features.translation.providers.DeepLTranslationProvider;
@@ -49,6 +52,8 @@ public class TranslationFeature extends Feature {
     // Provider selection
     public final ConfigValue<String> providerConfig;
     public final ConfigValue<Boolean> showOriginalConfig;
+    public final ConfigValue<String> translationColorConfig;
+    public final ConfigValue<Boolean> showPillConfig;
 
     // Gemini configs
     public final ConfigValue<String> geminiApiKeyConfig;
@@ -131,6 +136,8 @@ public class TranslationFeature extends Feature {
 
         providerConfig = config.stringValue("provider", GoogleWebTranslationProvider.ID);
         showOriginalConfig = config.boolValue("show-original", true);
+        translationColorConfig = config.stringValue("color", "#00ff00");
+        showPillConfig = config.boolValue("show-pill", true);
 
         // Outgoing translation configs
         outgoingEnabledConfig = config.boolValue("outgoing.enabled", true);
@@ -170,6 +177,12 @@ public class TranslationFeature extends Feature {
 
         // Register outgoing chat hook
         Events.run(Trigger.update, this::updateChatHook);
+
+        Events.on(ClientLoadEvent.class, e -> {
+            if (isEnabled()) {
+                initPill();
+            }
+        });
     }
 
     public Seq<TranslationProvider> getProviders() {
@@ -237,29 +250,15 @@ public class TranslationFeature extends Feature {
         if (text.isEmpty()) {
             return false;
         }
-        // Escape prefix: //message bypasses translation
-        if (text.startsWith("//")) {
-            return false;
-        }
-        // Fast command prefixes: /tr <text> or /dich <text>
-        if (text.startsWith("/tr ") || text.startsWith("/dich ")) {
-            return true;
-        }
-        // If outgoing translation is disabled or target language is none, do not
-        // translate
         if (!Boolean.TRUE.equals(outgoingEnabledConfig.get())
                 || "none".equalsIgnoreCase(outgoingTargetLangConfig.get())) {
+            // Even when outgoing translation is globally off, explicit /tr or /dich commands should still work
+            if (text.startsWith("/tr ") || text.startsWith("/dich ")) {
+                return ChatFilter.shouldTranslateOutgoing(text);
+            }
             return false;
         }
-        // Allow /t (team chat) and /a (admin chat) to be translated
-        if (text.startsWith("/t ") || text.startsWith("/a ")) {
-            return true;
-        }
-        // Other commands starting with / are game commands (e.g. /vote, /help)
-        if (text.startsWith("/")) {
-            return false;
-        }
-        return true;
+        return ChatFilter.shouldTranslateOutgoing(raw);
     }
 
     public static class OutgoingParts {
@@ -384,6 +383,12 @@ public class TranslationFeature extends Feature {
             }
             String text = raw.trim();
 
+            // Urgent send: Shift + Enter bypasses translation completely
+            boolean isShiftHeld = Core.input != null && (Core.input.keyDown(KeyCode.shiftLeft) || Core.input.keyDown(KeyCode.shiftRight));
+            if (isShiftHeld) {
+                return;
+            }
+
             // Escape prefix: //message sends "message" directly without translation or prettifying
             if (text.startsWith("//")) {
                 return;
@@ -421,7 +426,7 @@ public class TranslationFeature extends Feature {
         }
 
         String cleanText = Strings.stripColors(message).trim();
-        if (cleanText.isEmpty()) {
+        if (cleanText.isEmpty() || !ChatFilter.shouldTranslateIncoming(message)) {
             onDeliver.get(message);
             return;
         }
@@ -445,12 +450,10 @@ public class TranslationFeature extends Feature {
                                 || translated.equalsIgnoreCase(cleanText)) {
                             onDeliver.get(message);
                         } else {
-                            String formatted;
-                            if (Boolean.TRUE.equals(showOriginalConfig.get())) {
-                                formatted = message + " [#00ff00](" + translated + ")[white]";
-                            } else {
-                                formatted = "[#00ff00][" + translated + "][white]";
-                            }
+                            String colorTag = "[" + getTranslationColor() + "]";
+                            String formatted = Boolean.TRUE.equals(showOriginalConfig.get())
+                                    ? message + " " + colorTag + "(" + translated + ")[white]"
+                                    : colorTag + "[" + translated + "][white]";
                             onDeliver.get(formatted);
                         }
                     });
@@ -469,6 +472,15 @@ public class TranslationFeature extends Feature {
                 });
     }
 
+    public String getTranslationColor() {
+        String color = translationColorConfig.get();
+        if (color == null || color.trim().isEmpty()) {
+            return "#00ff00";
+        }
+        String c = color.trim();
+        return c.startsWith("#") ? c : "#" + c;
+    }
+
     public CompletableFuture<String> testTranslate(String text) {
         return translate(text, getTargetLanguage());
     }
@@ -484,12 +496,21 @@ public class TranslationFeature extends Feature {
         // Network-only by contract: translation keys are unbounded per sentence,
         // so no long-term QueryCache retention. Callers guard duplicate taps.
         String cleanText = text.trim();
+
+        // Check offline tactical dictionary first (0ms latency, zero-network)
+        String dictMatch = MindustryTranslationDictionary.findTranslation(cleanText, targetLanguage);
+        if (dictMatch != null) {
+            return CompletableFuture.completedFuture(dictMatch);
+        }
+
         return provider.translate(cleanText, targetLanguage);
     }
 
     public void resetToDefaults() {
         providerConfig.reset();
         showOriginalConfig.reset();
+        translationColorConfig.reset();
+        showPillConfig.reset();
         outgoingEnabledConfig.reset();
         outgoingTargetLangConfig.reset();
         outgoingFormatConfig.reset();
@@ -520,5 +541,40 @@ public class TranslationFeature extends Feature {
             languageDialog = new OutgoingLanguageDialog(this);
         }
         languageDialog.show();
+    }
+
+    private @Nullable ChatTranslationPill chatPill;
+
+    public void initPill() {
+        if (chatPill != null) {
+            chatPill.element().remove();
+            chatPill.dispose();
+            chatPill = null;
+        }
+        if (Core.scene != null && Vars.ui != null && Vars.ui.chatfrag != null) {
+            chatPill = new ChatTranslationPill(this);
+            chatPill.element();
+        }
+    }
+
+    public void disposePill() {
+        if (chatPill != null) {
+            ChatTranslationPill pill = chatPill;
+            chatPill = null;
+            pill.element().remove();
+            pill.dispose();
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        super.onEnable();
+        initPill();
+    }
+
+    @Override
+    public void onDisable() {
+        super.onDisable();
+        disposePill();
     }
 }

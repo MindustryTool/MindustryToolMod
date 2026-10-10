@@ -207,11 +207,7 @@ public class PrettyChatFeature extends Feature {
         for (String id : enabledIds) {
             Prettier p = getPrettier(id);
             if (p != null) {
-                if (p instanceof BuiltinPrettiers.RainbowPrettier) {
-                    result = ((BuiltinPrettiers.RainbowPrettier) p).transform(result, targetMax);
-                } else {
-                    result = p.transform(result);
-                }
+                result = p.transform(result, targetMax);
             }
         }
         if (result.length() > targetMax) {
