@@ -1,6 +1,9 @@
 package mindustrytool.features.prettychat.ui;
 
+import static solim.UI.dvw;
+
 import arc.Core;
+import mindustry.Vars;
 import mindustrytool.features.prettychat.PrettyChatFeature;
 import solim.overlay.SolimDialog;
 
@@ -17,6 +20,10 @@ public class PrettyChatSettingsDialog extends SolimDialog {
         name("prettyChatSettingsDialog");
         addCloseButton();
         closeOnBack();
+
+        if (Vars.mobile) {
+            maxWidth(500f);
+        }
 
         children(() -> {
             new PrettyChatSettingsView(feature);

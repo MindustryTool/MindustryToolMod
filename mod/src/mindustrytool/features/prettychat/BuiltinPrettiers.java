@@ -1,8 +1,10 @@
 package mindustrytool.features.prettychat;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.struct.Seq;
 import arc.util.Log;
+import arc.util.Nullable;
 import mindustry.Vars;
 
 import java.util.Locale;
@@ -19,6 +21,7 @@ public final class BuiltinPrettiers {
     public static Seq<Prettier> createDefaultPrettiers() {
         Seq<Prettier> list = new Seq<>();
         list.add(new RainbowPrettier());
+        list.add(new GradientPrettier());
         list.add(new UwuPrettier());
         list.add(new MockingPrettier());
         list.add(new CapsPrettier());
@@ -26,6 +29,10 @@ public final class BuiltinPrettiers {
         list.add(new ReversePrettier());
         list.add(new SmallCapsPrettier());
         list.add(new BubblePrettier());
+        list.add(new MonoPrettier());
+        list.add(new StrikethroughPrettier());
+        list.add(new UnderlinePrettier());
+        list.add(new FancyBracketsPrettier());
         list.add(new CustomPrettier());
         return list;
     }
@@ -62,10 +69,16 @@ public final class BuiltinPrettiers {
         }
 
         @Override
+        public String category() {
+            return "color";
+        }
+
+        @Override
         public String transform(String input) {
             return transform(input, Vars.maxTextLength);
         }
 
+        @Override
         public String transform(String input, int maxLength) {
             if (input == null || input.isEmpty()) {
                 return "";
@@ -141,6 +154,181 @@ public final class BuiltinPrettiers {
         }
     }
 
+    /** Smooth color gradient text transformer with customizable palettes. */
+    public static class GradientPrettier implements Prettier {
+        public static final String DEFAULT_PALETTE = "#ff5e36,#9b51e0";
+        private static final String SETTING_KEY = "mindustrytool.pretty-chat.script.gradient";
+
+        @Override
+        public String id() {
+            return "gradient";
+        }
+
+        @Override
+        public String nameKey() {
+            return "pretty-chat.prettier.gradient.name";
+        }
+
+        @Override
+        public String defaultName() {
+            return "Gradient";
+        }
+
+        @Override
+        public String descriptionKey() {
+            return "pretty-chat.prettier.gradient.desc";
+        }
+
+        @Override
+        public String defaultDescription() {
+            return "Smooth color gradient between two colors.";
+        }
+
+        @Override
+        public String category() {
+            return "color";
+        }
+
+        @Override
+        public boolean isEditable() {
+            return true;
+        }
+
+        @Override
+        public String getScript() {
+            return Core.settings != null
+                    ? Core.settings.getString(SETTING_KEY, DEFAULT_PALETTE)
+                    : DEFAULT_PALETTE;
+        }
+
+        @Override
+        public void setScript(String script) {
+            if (Core.settings != null) {
+                if (DEFAULT_PALETTE.equals(script)) {
+                    Core.settings.remove(SETTING_KEY);
+                } else {
+                    Core.settings.put(SETTING_KEY, script);
+                }
+            }
+        }
+
+        @Override
+        public void resetScript() {
+            if (Core.settings != null) {
+                Core.settings.remove(SETTING_KEY);
+            }
+        }
+
+        @Override
+        public String getDefaultScript() {
+            return DEFAULT_PALETTE;
+        }
+
+        @Override
+        public String transform(String input) {
+            return transform(input, Vars.maxTextLength);
+        }
+
+        @Override
+        public String transform(String input, int maxLength) {
+            if (input == null || input.isEmpty()) {
+                return "";
+            }
+            if (maxLength <= 0) {
+                return input;
+            }
+
+            Color startColor = Color.valueOf("ff5e36");
+            Color endColor = Color.valueOf("9b51e0");
+
+            String script = getScript();
+            if (script != null && !script.trim().isEmpty()) {
+                String[] parts = script.split(",");
+                if (parts.length >= 2) {
+                    startColor = parseColor(parts[0], startColor);
+                    endColor = parseColor(parts[1], endColor);
+                } else if (parts.length == 1) {
+                    String preset = parts[0].trim().toLowerCase(Locale.ROOT);
+                    if ("cyberpunk".equals(preset)) {
+                        startColor = Color.valueOf("00f0ff");
+                        endColor = Color.valueOf("ff007f");
+                    } else if ("ocean".equals(preset)) {
+                        startColor = Color.valueOf("0072ff");
+                        endColor = Color.valueOf("00f2fe");
+                    } else if ("fire".equals(preset)) {
+                        startColor = Color.valueOf("ffe259");
+                        endColor = Color.valueOf("ffa751");
+                    } else if ("neon".equals(preset)) {
+                        startColor = Color.valueOf("a8ff78");
+                        endColor = Color.valueOf("78ffd6");
+                    } else {
+                        startColor = parseColor(parts[0], startColor);
+                    }
+                }
+            }
+
+            int closingTagLen = 2; // "[]"
+            int availableForTags = maxLength - input.length() - closingTagLen;
+            if (availableForTags < 9) { // At least 1 hex tag "[#123456]"
+                return input;
+            }
+
+            int maxTags = availableForTags / 9;
+            int n = input.length();
+
+            if (maxTags >= n) {
+                StringBuilder sb = new StringBuilder(n * 10 + closingTagLen);
+                for (int i = 0; i < n; i++) {
+                    float t = n > 1 ? (float) i / (n - 1) : 0f;
+                    Color cur = new Color(startColor).lerp(endColor, t);
+                    sb.append(formatHexTag(cur)).append(input.charAt(i));
+                }
+                sb.append("[]");
+                return sb.toString();
+            }
+
+            StringBuilder sb = new StringBuilder(maxTags * 9 + n + closingTagLen);
+            int k = maxTags;
+            for (int cluster = 0; cluster < k; cluster++) {
+                int startIdx = cluster * n / k;
+                int endIdx = (cluster + 1) * n / k;
+                float t = k > 1 ? (float) cluster / (k - 1) : 0f;
+                Color cur = new Color(startColor).lerp(endColor, t);
+                sb.append(formatHexTag(cur));
+                sb.append(input, startIdx, endIdx);
+            }
+            sb.append("[]");
+            return sb.toString();
+        }
+
+        private static Color parseColor(String hex, Color fallback) {
+            if (hex == null || hex.trim().isEmpty()) {
+                return fallback;
+            }
+            try {
+                String clean = hex.trim();
+                if (clean.startsWith("#")) {
+                    clean = clean.substring(1);
+                }
+                if ("sunset".equalsIgnoreCase(clean)) return Color.valueOf("ff5e36");
+                if ("cyberpunk".equalsIgnoreCase(clean)) return Color.valueOf("00f0ff");
+                if ("ocean".equalsIgnoreCase(clean)) return Color.valueOf("0072ff");
+                if ("fire".equalsIgnoreCase(clean)) return Color.valueOf("ffe259");
+                if ("neon".equalsIgnoreCase(clean)) return Color.valueOf("a8ff78");
+                return Color.valueOf(clean);
+            } catch (Exception e) {
+                return fallback;
+            }
+        }
+
+        private static String formatHexTag(Color c) {
+            int r = Math.min(255, Math.max(0, (int) (c.r * 255f)));
+            int g = Math.min(255, Math.max(0, (int) (c.g * 255f)));
+            int b = Math.min(255, Math.max(0, (int) (c.b * 255f)));
+            return String.format(Locale.ROOT, "[#%02x%02x%02x]", r, g, b);
+        }
+    }
+
     /** UwUifier replaces r/l with w and adds cute particles. */
     public static class UwuPrettier implements Prettier {
         @Override
@@ -166,6 +354,11 @@ public final class BuiltinPrettiers {
         @Override
         public String defaultDescription() {
             return "Turns r and l into w and adds uwu.";
+        }
+
+        @Override
+        public String category() {
+            return "fun";
         }
 
         @Override
@@ -214,6 +407,11 @@ public final class BuiltinPrettiers {
         @Override
         public String defaultDescription() {
             return "AlTeRnAtInG cAsE mOcKiNg StYlE.";
+        }
+
+        @Override
+        public String category() {
+            return "case";
         }
 
         @Override
@@ -266,6 +464,11 @@ public final class BuiltinPrettiers {
         }
 
         @Override
+        public String category() {
+            return "case";
+        }
+
+        @Override
         public String transform(String input) {
             return input != null ? input.toUpperCase(Locale.ROOT) : "";
         }
@@ -296,6 +499,11 @@ public final class BuiltinPrettiers {
         @Override
         public String defaultDescription() {
             return "Converts all letters to lowercase.";
+        }
+
+        @Override
+        public String category() {
+            return "case";
         }
 
         @Override
@@ -332,6 +540,11 @@ public final class BuiltinPrettiers {
         }
 
         @Override
+        public String category() {
+            return "effect";
+        }
+
+        @Override
         public String transform(String input) {
             return input != null ? new StringBuilder(input).reverse().toString() : "";
         }
@@ -365,6 +578,11 @@ public final class BuiltinPrettiers {
         @Override
         public String defaultDescription() {
             return "Converts letters to ᴛɪɴʏ ᴜɴɪᴄᴏᴅᴇ ᴄᴀᴘɪᴛᴀʟs.";
+        }
+
+        @Override
+        public String category() {
+            return "font";
         }
 
         @Override
@@ -417,6 +635,11 @@ public final class BuiltinPrettiers {
         }
 
         @Override
+        public String category() {
+            return "font";
+        }
+
+        @Override
         public String transform(String input) {
             if (input == null || input.isEmpty()) {
                 return "";
@@ -439,6 +662,274 @@ public final class BuiltinPrettiers {
                 }
                 return sb.toString();
             });
+        }
+    }
+
+    /** Fullwidth monospace text transformer. */
+    public static class MonoPrettier implements Prettier {
+        @Override
+        public String id() {
+            return "mono";
+        }
+
+        @Override
+        public String nameKey() {
+            return "pretty-chat.prettier.mono.name";
+        }
+
+        @Override
+        public String defaultName() {
+            return "Monospace";
+        }
+
+        @Override
+        public String descriptionKey() {
+            return "pretty-chat.prettier.mono.desc";
+        }
+
+        @Override
+        public String defaultDescription() {
+            return "Converts characters to \uFF46\uFF55\uFF4C\uFF4C\uFF57\uFF49\uFF44\uFF54\uFF48 monospace symbols.";
+        }
+
+        @Override
+        public String category() {
+            return "font";
+        }
+
+        @Override
+        public String transform(String input) {
+            if (input == null || input.isEmpty()) {
+                return "";
+            }
+            return mapTextOutsideTags(input, text -> {
+                StringBuilder sb = new StringBuilder(text.length());
+                for (int i = 0; i < text.length(); i++) {
+                    char c = text.charAt(i);
+                    if (c >= '!' && c <= '~') {
+                        sb.append((char) (c - 0x21 + 0xFF01));
+                    } else {
+                        sb.append(c);
+                    }
+                }
+                return sb.toString();
+            });
+        }
+    }
+
+    /** Strikethrough text transformer using Unicode combining stroke. */
+    public static class StrikethroughPrettier implements Prettier {
+        @Override
+        public String id() {
+            return "strikethrough";
+        }
+
+        @Override
+        public String nameKey() {
+            return "pretty-chat.prettier.strikethrough.name";
+        }
+
+        @Override
+        public String defaultName() {
+            return "Strikethrough";
+        }
+
+        @Override
+        public String descriptionKey() {
+            return "pretty-chat.prettier.strikethrough.desc";
+        }
+
+        @Override
+        public String defaultDescription() {
+            return "Adds s\u0336t\u0336r\u0336i\u0336k\u0336e\u0336 line across text.";
+        }
+
+        @Override
+        public String category() {
+            return "effect";
+        }
+
+        @Override
+        public String transform(String input) {
+            return transform(input, Vars.maxTextLength);
+        }
+
+        @Override
+        public String transform(String input, int maxLength) {
+            if (input == null || input.isEmpty() || maxLength <= 0) {
+                return "";
+            }
+            if (input.length() > maxLength) {
+                input = input.substring(0, maxLength);
+            }
+            return mapTextOutsideTags(input, text -> {
+                StringBuilder sb = new StringBuilder(Math.min(text.length() * 2, maxLength));
+                for (int i = 0; i < text.length(); i++) {
+                    if (sb.length() >= maxLength) {
+                        break;
+                    }
+                    char c = text.charAt(i);
+                    sb.append(c);
+                    if (c != ' ' && c != '\t' && c != '\n' && sb.length() + 1 <= maxLength) {
+                        sb.append('\u0336');
+                    }
+                }
+                return sb.toString();
+            });
+        }
+    }
+
+    /** Underline text transformer using Unicode combining low line. */
+    public static class UnderlinePrettier implements Prettier {
+        @Override
+        public String id() {
+            return "underline";
+        }
+
+        @Override
+        public String nameKey() {
+            return "pretty-chat.prettier.underline.name";
+        }
+
+        @Override
+        public String defaultName() {
+            return "Underline";
+        }
+
+        @Override
+        public String descriptionKey() {
+            return "pretty-chat.prettier.underline.desc";
+        }
+
+        @Override
+        public String defaultDescription() {
+            return "Adds u\u0332n\u0332d\u0332e\u0332r\u0332l\u0332i\u0332n\u0332e\u0332 below characters.";
+        }
+
+        @Override
+        public String category() {
+            return "effect";
+        }
+
+        @Override
+        public String transform(String input) {
+            return transform(input, Vars.maxTextLength);
+        }
+
+        @Override
+        public String transform(String input, int maxLength) {
+            if (input == null || input.isEmpty() || maxLength <= 0) {
+                return "";
+            }
+            if (input.length() > maxLength) {
+                input = input.substring(0, maxLength);
+            }
+            return mapTextOutsideTags(input, text -> {
+                StringBuilder sb = new StringBuilder(Math.min(text.length() * 2, maxLength));
+                for (int i = 0; i < text.length(); i++) {
+                    if (sb.length() >= maxLength) {
+                        break;
+                    }
+                    char c = text.charAt(i);
+                    sb.append(c);
+                    if (c != ' ' && c != '\t' && c != '\n' && sb.length() + 1 <= maxLength) {
+                        sb.append('\u0332');
+                    }
+                }
+                return sb.toString();
+            });
+        }
+    }
+
+    /** Decorative brackets text transformer. */
+    public static class FancyBracketsPrettier implements Prettier {
+        public static final String DEFAULT_TEMPLATE = "\u3010 <message> \u3011";
+        private static final String SETTING_KEY = "mindustrytool.pretty-chat.script.fancybrackets";
+
+        @Override
+        public String id() {
+            return "fancybrackets";
+        }
+
+        @Override
+        public String nameKey() {
+            return "pretty-chat.prettier.fancybrackets.name";
+        }
+
+        @Override
+        public String defaultName() {
+            return "Fancy Brackets";
+        }
+
+        @Override
+        public String descriptionKey() {
+            return "pretty-chat.prettier.fancybrackets.desc";
+        }
+
+        @Override
+        public String defaultDescription() {
+            return "Wraps message with decorative brackets \u3010 ... \u3011.";
+        }
+
+        @Override
+        public String category() {
+            return "effect";
+        }
+
+        @Override
+        public boolean isEditable() {
+            return true;
+        }
+
+        @Override
+        public String getScript() {
+            return Core.settings != null
+                    ? Core.settings.getString(SETTING_KEY, DEFAULT_TEMPLATE)
+                    : DEFAULT_TEMPLATE;
+        }
+
+        @Override
+        public void setScript(String script) {
+            if (Core.settings != null) {
+                if (DEFAULT_TEMPLATE.equals(script)) {
+                    Core.settings.remove(SETTING_KEY);
+                } else {
+                    Core.settings.put(SETTING_KEY, script);
+                }
+            }
+        }
+
+        @Override
+        public void resetScript() {
+            if (Core.settings != null) {
+                Core.settings.remove(SETTING_KEY);
+            }
+        }
+
+        @Override
+        public String getDefaultScript() {
+            return DEFAULT_TEMPLATE;
+        }
+
+        @Override
+        public String transform(String input) {
+            return transform(input, Vars.maxTextLength);
+        }
+
+        @Override
+        public String transform(String input, int maxLength) {
+            if (input == null || input.isEmpty()) {
+                return "";
+            }
+            String template = getScript();
+            if (template == null || !template.contains("<message>")) {
+                template = DEFAULT_TEMPLATE;
+            }
+            String result = template.replace("<message>", input);
+            if (result.length() > maxLength) {
+                return input;
+            }
+            return result;
         }
     }
 
@@ -470,6 +961,11 @@ public final class BuiltinPrettiers {
         @Override
         public String defaultDescription() {
             return "User-customized template or JavaScript formatter.";
+        }
+
+        @Override
+        public String category() {
+            return "custom";
         }
 
         @Override

@@ -106,6 +106,7 @@ tasks.register('jarAndroid'){
 }
 
 jar{
+	outputs.upToDateWhen { false }
 	dependsOn(':solim-api:jar', ':solim-runtime:jar', ':solim-core:jar', ':solim:jar', ':solim-mcp:jar')
 	dependsOn(configurations.runtimeClasspath)
 	duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
@@ -142,6 +143,7 @@ jar{
 }
 
 tasks.register('deploy', Jar){
+	outputs.upToDateWhen { false }
 	duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 	def projectName = rootProject.name
 	dependsOn jarAndroid

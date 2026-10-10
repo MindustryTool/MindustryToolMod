@@ -37,6 +37,11 @@ public interface Prettier {
                 : defaultDescription();
     }
 
+    /** Category for filtering in UI (e.g., "color", "font", "effect", "case", "fun", "custom"). */
+    default String category() {
+        return "effect";
+    }
+
     /**
      * Transforms the given message string.
      *
@@ -44,6 +49,17 @@ public interface Prettier {
      * @return transformed text
      */
     String transform(String input);
+
+    /**
+     * Transforms the given message string with a target length limit.
+     *
+     * @param input raw message text
+     * @param maxLength target max length limit
+     * @return transformed text
+     */
+    default String transform(String input, int maxLength) {
+        return transform(input);
+    }
 
     /** Whether this prettier allows custom user editing (e.g. script / template). */
     default boolean isEditable() {

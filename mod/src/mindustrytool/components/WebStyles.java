@@ -179,6 +179,15 @@ public class WebStyles {
             .checked(c -> c.background(Colors.CHIP_CHECKED_BG).border(1.5f, Colors.CHIP_CHECKED_BORDER))
             .build();
 
+    private static final SolimButtonStyle TAB_STYLE = new SolimButtonStyleBuilder()
+            .rounded(unit(2))
+            .padding(unit(1))
+            .up(u -> u.background(Color.clear))
+            .over(o -> o.background(Colors.GHOST_HOVER))
+            .down(d -> d.background(Colors.GHOST_DOWN))
+            .checked(c -> c.background(Colors.PRIMARY))
+            .build();
+
     private static final SolimButtonStyle CLEAR_FILTERS_STYLE = new SolimButtonStyleBuilder()
             .rounded(unit(2))
             .border(1.0f, Colors.CLEAR_BORDER)
@@ -267,6 +276,10 @@ public class WebStyles {
 
     public static SolimButtonStyle filterChip() {
         return FILTER_CHIP_STYLE;
+    }
+
+    public static SolimButtonStyle tab() {
+        return TAB_STYLE;
     }
 
     public static SolimButtonStyle filterChipText() {
