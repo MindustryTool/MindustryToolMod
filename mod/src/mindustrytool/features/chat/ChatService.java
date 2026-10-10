@@ -19,7 +19,9 @@ import arc.func.Boolf;
 import arc.func.Prov;
 import arc.struct.Seq;
 import mindustrytool.models.response.ChannelDto;
+import mindustrytool.models.response.ChatDeleteEvent;
 import mindustrytool.models.response.ChatMessage;
+import mindustrytool.models.response.ChatStreamEvent;
 import mindustrytool.models.response.UserData;
 import mindustrytool.services.MindustryTool;
 import mindustrytool.utils.JsonUtils;
@@ -481,23 +483,40 @@ public class ChatService {
                     });
                 }
             } else if (data.startsWith("{")) {
-                ChatMessage msg = JsonUtils.fromJson(ChatMessage.class, data);
-                if (msg != null && msg.getId() != null) {
-                    Core.app.post(() -> {
-                        store.session().setConnected(true);
-                        boolean added = store.messages().append(msg);
-                        if (added) {
-                            boolean isVisible = feedVisiblePredicate.get(msg.getChannelId());
-                            int countBefore = store.unread().get(msg.getChannelId());
-                            store.unread().setLatestMessage(msg.getChannelId(), msg.getId());
-                            if (isVisible) {
-                                store.unread().markAsRead(msg.getChannelId(), msg.getId());
-                            } else if (store.unread().get(msg.getChannelId()) == countBefore) {
-                                store.unread().increment(msg.getChannelId());
+                ChatStreamEvent streamEvent = JsonUtils.fromJson(ChatStreamEvent.class, data);
+                if (streamEvent instanceof ChatStreamEvent.Message) {
+                    ChatMessage msg = ((ChatStreamEvent.Message) streamEvent).getData();
+                    if (msg != null && msg.getId() != null) {
+                        Core.app.post(() -> {
+                            store.session().setConnected(true);
+                            boolean added = store.messages().append(msg);
+                            if (added) {
+                                boolean isVisible = feedVisiblePredicate.get(msg.getChannelId());
+                                int countBefore = store.unread().get(msg.getChannelId());
+                                store.unread().setLatestMessage(msg.getChannelId(), msg.getId());
+                                if (isVisible) {
+                                    store.unread().markAsRead(msg.getChannelId(), msg.getId());
+                                } else if (store.unread().get(msg.getChannelId()) == countBefore) {
+                                    store.unread().increment(msg.getChannelId());
+                                }
                             }
-                        }
-                        fetchMissingUsers(Collections.singletonList(msg));
-                    });
+                            fetchMissingUsers(Collections.singletonList(msg));
+                        });
+                    }
+                } else if (streamEvent instanceof ChatStreamEvent.Delete) {
+                    ChatDeleteEvent del = ((ChatStreamEvent.Delete) streamEvent).getData();
+                    if (del != null && del.getId() != null) {
+                        Core.app.post(() -> {
+                            store.session().setConnected(true);
+                            store.messages().remove(del.getChannelId(), del.getId());
+                            if (store.ui().currentReplyTarget() != null && Objects.equals(store.ui().currentReplyTarget().getId(), del.getId())) {
+                                store.ui().setReplyTarget(null);
+                            }
+                            if (del.getChannelId() != null && del.getLastMessageId() != null) {
+                                store.unread().setLatestMessage(del.getChannelId(), del.getLastMessageId());
+                            }
+                        });
+                    }
                 }
             }
         } catch (Exception e) {
