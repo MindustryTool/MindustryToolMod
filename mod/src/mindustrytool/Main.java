@@ -39,6 +39,7 @@ import mindustrytool.features.wavepreview.WavePreviewFeature;
 import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.features.browser.patch.PatchBrowserFeature;
+import mindustrytool.features.quickrotate.QuickRotateFeature;
 import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import mindustrytool.input.ModInputManager;
@@ -102,7 +103,8 @@ public class Main extends Mod {
                 new QuickSchematicGridFeature(),
                 new ScreenshotFeature(),
                 new EmojiFeature(),
-                new ReactorAlertFeature());
+                new ReactorAlertFeature(),
+                new QuickRotateFeature());
 
         Events.on(ClientLoadEvent.class, event -> {
             registerMindustryToolButton();

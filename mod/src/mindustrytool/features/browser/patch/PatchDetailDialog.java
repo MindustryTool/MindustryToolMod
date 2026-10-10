@@ -9,6 +9,7 @@ import arc.util.Nullable;
 import java.time.Duration;
 import java.util.Collections;
 import mindustry.gen.Icon;
+import mindustry.ui.Fonts;
 import mindustry.ui.Styles;
 import mindustrytool.Config;
 import mindustrytool.components.WebStyles;
@@ -81,13 +82,13 @@ public class PatchDetailDialog extends SolimDialog {
         }
 
         private Component landscapeLayout() {
-            return scroll().grow().children(() -> row().grow().top().gap(unit(4)).children(() -> {
-                column().growX().top().gap(unit(3)).children(() -> {
+            return row().grow().top().gap(unit(4)).children(() -> {
+                scroll().growY().growX().children(() -> column().growX().top().gap(unit(3)).children(() -> {
                     details();
                     actionButtons();
-                });
+                }));
                 column().grow().top().children(this::codeSection);
-            }));
+            });
         }
 
         private void details() {
@@ -142,6 +143,10 @@ public class PatchDetailDialog extends SolimDialog {
         }
 
         private void codeSection() {
+            if (Fonts.monospace != null && Fonts.monospace.getData() != null) {
+                Fonts.monospace.getData().markupEnabled = true;
+            }
+
             String rawData = detail.getData() != null ? detail.getData() : "";
             String formattedData = HjsonHighlighter.format(rawData);
             String highlightedCode = HjsonHighlighter.highlight(formattedData);
@@ -149,13 +154,15 @@ public class PatchDetailDialog extends SolimDialog {
 
             card(WebStyles.previewCardBackground()).grow().padding(unit(3)).gap(unit(2)).children(() -> {
                 text(Core.bundle.get("browser.patch.data-section")).color(Color.white).growX().left();
-                scroll().grow().maxHeight(unit(60)).scrollX(true).scrollY(true).children(() -> {
-                    row().top().left().gap(unit(2)).children(() -> {
+                scroll().grow().scrollX(true).scrollY(true).children(() -> {
+                    row().top().left().children(() -> {
                         text(lineNumbers)
                                 .style(Styles.monoLabel)
                                 .color(Color.gray)
                                 .wrap(false)
                                 .right();
+
+                        column(() -> {}).width(unit(4));
 
                         text(highlightedCode)
                                 .style(Styles.monoLabel)
