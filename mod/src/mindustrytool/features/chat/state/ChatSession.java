@@ -14,7 +14,7 @@ public final class ChatSession {
     public static final String PLAYER_CONNECT_PREFIX = "player-connect: ";
     public static final String CAMPAIGN_PREFIX = "campaign: ";
     public static final String EDITOR_STATE = "editing: ";
-    public static final String CUSTOM_GAME_STATE = "custom-game";
+    public static final String CUSTOM_GAME_STATE = "custom-game: ";
 
     private final Computed<Boolean> loggedIn = new Computed<>(() ->
             MindustryAuthProvider.getInstance().session().get() != null);

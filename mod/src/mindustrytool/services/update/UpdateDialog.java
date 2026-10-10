@@ -19,7 +19,7 @@ public class UpdateDialog extends SolimDialog {
 	private final @Nullable String releaseTag;
 
 	public UpdateDialog(String currentVer, String latestVer, String changelog, Runnable done) {
-		this(currentVer, latestVer, changelog, null, done);
+		this(currentVer, latestVer, null, changelog, null, done);
 	}
 
 	/**
@@ -27,8 +27,20 @@ public class UpdateDialog extends SolimDialog {
 	 * null uses the default-branch import.
 	 */
 	public UpdateDialog(String currentVer, String latestVer, String changelog, @Nullable String releaseTag, Runnable done) {
+		this(currentVer, latestVer, null, changelog, releaseTag, done);
+	}
+
+	public UpdateDialog(
+			String currentVer,
+			String latestVer,
+			@Nullable ChangelogFormatter.PartitionedReleases partitioned,
+			@Nullable String fallbackChangelog,
+			@Nullable String releaseTag,
+			Runnable done) {
 		super(Core.bundle.get("update.dialog.title"));
-		this.releaseTag = releaseTag;
+		
+        this.releaseTag = releaseTag;
+
 		name("updateAvailableDialog");
 		closeOnBack();
 
@@ -38,7 +50,7 @@ public class UpdateDialog extends SolimDialog {
 				"[#" + Color.green.toString() + "]" + latestVer);
 
 		children(() -> {
-			column().growX().gap(unit(2)).left().width(500f).children(() -> {
+			column().growX().gap(unit(2)).left().maxWidth(800f).children(() -> {
 				text(newVersionText)
 						.wrap();
 
@@ -48,11 +60,31 @@ public class UpdateDialog extends SolimDialog {
 
 				divider();
 
-				scroll().size(500f, 400f).scrollX(false).children(() -> {
-					column().growX().left().children(() -> {
-						text(changelog != null ? changelog : "")
-								.wrap()
-								.left();
+				scroll().maxHeight(800f).maxWidth(800f).growX().scrollX(false).children(() -> {
+					column().growX().gap(unit(2)).left().children(() -> {
+						if (partitioned != null && partitioned.targetRelease != null) {
+							card().growX().padding(unit(2)).children(() -> {
+								text(ChangelogFormatter.formatTargetRelease(partitioned.targetRelease))
+										.wrap()
+										.left();
+							});
+
+							if (!partitioned.otherReleases.isEmpty()) {
+								divider();
+								text("[accent]" + Core.bundle.get("update.changelog.other-releases") + "[white]")
+										.left();
+								text(ChangelogFormatter.formatReleases(partitioned.otherReleases))
+										.wrap()
+										.left();
+							}
+						} else {
+							String textToShow = fallbackChangelog != null
+									? fallbackChangelog
+									: (partitioned != null ? ChangelogFormatter.formatReleases(partitioned.otherReleases) : "");
+							text(textToShow != null ? textToShow : "")
+									.wrap()
+									.left();
+						}
 					});
 				});
 			});
