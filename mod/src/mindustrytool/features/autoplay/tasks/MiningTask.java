@@ -8,6 +8,7 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import arc.util.Interval;
 import arc.util.Nullable;
+import arc.util.Time;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.gen.Building;
@@ -190,12 +191,7 @@ public class MiningTask implements AutoplayTask {
         if (unit.stack.amount > 0 && unit.stack.item != null) {
             Item held = unit.stack.item;
 
-            // If the unit is within core deposit range and the core accepts the held stack,
-            // deposit immediately to avoid infinite continuity lock when mining near the core.
-            if (unit.within(core, unit.type.range) && core.acceptStack(held, unit.stack.amount, unit) > 0) {
-                Call.transferInventory(Vars.player, core);
-            }
-
+            // Inventory transfers are coordinated exclusively by MinerAI to prevent packet spam.
             boolean canContinueMining = isSelected(held)
                     && unit.canMine(held)
                     && core.acceptStack(held, 1, unit) > 0;
@@ -340,9 +336,36 @@ public class MiningTask implements AutoplayTask {
     }
 
     public static class MinerAI extends BaseAutoplayAI {
+        public static final float TRANSFER_COOLDOWN = 25f;
+        public static final float TRANSFER_TIMEOUT = 60f;
+
         public boolean mining = true;
         public @Nullable Item targetItem;
         public @Nullable Tile ore;
+
+        private float transferCooldownTimer = 0f;
+        private float transferPendingTimer = 0f;
+        private boolean transferPending = false;
+
+        public void tryTransferInventory(Building core) {
+            if (unit == null || core == null || unit.stack.amount <= 0 || unit.stack.item == null) {
+                return;
+            }
+            if (core.acceptStack(unit.stack.item, unit.stack.amount, unit) <= 0) {
+                return;
+            }
+            if (transferPending || transferCooldownTimer > 0f) {
+                return;
+            }
+            if (!unit.within(core, unit.type.range)) {
+                return;
+            }
+
+            Call.transferInventory(Vars.player, core);
+            transferPending = true;
+            transferPendingTimer = TRANSFER_TIMEOUT;
+            transferCooldownTimer = TRANSFER_COOLDOWN;
+        }
 
         @Override
         public void updateMovement() {
@@ -354,9 +377,20 @@ public class MiningTask implements AutoplayTask {
                 return;
             }
 
+            if (transferCooldownTimer > 0f) {
+                transferCooldownTimer -= Time.delta;
+            }
 
-            if (unit.stack.amount > 0 && unit.within(core, unit.type.range) && core.acceptStack(unit.stack.item, unit.stack.amount, unit) > 0) {
-                Call.transferInventory(Vars.player, core);
+            if (transferPending) {
+                if (unit.stack.amount == 0) {
+                    transferPending = false;
+                    transferPendingTimer = 0f;
+                } else {
+                    transferPendingTimer -= Time.delta;
+                    if (transferPendingTimer <= 0f) {
+                        transferPending = false;
+                    }
+                }
             }
 
             if (!unit.validMine(unit.mineTile)) {
@@ -408,8 +442,10 @@ public class MiningTask implements AutoplayTask {
                 }
 
                 if (unit.within(core, unit.type.range)) {
-                    Call.transferInventory(Vars.player, core);
-                    mining = true;
+                    tryTransferInventory(core);
+                    if (unit.stack.amount == 0) {
+                        mining = true;
+                    }
                 }
 
                 circle(core, unit.type.range / 1.8f);

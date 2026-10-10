@@ -107,7 +107,9 @@ The Mining task MUST mine the lowest-stock selected resources safely and deposit
 - The task MUST verify that candidate ore tiles are valid to mine before selecting them, accepting uncovered floor ores (`tile.drop() == item && tile.block() == Blocks.air`) and valid wall ores (`tile.wallDrop() == item || (tile.block() != null && tile.block().itemDrop == item)`).
 - The task MUST throttle candidate ore evaluation using a tick timer to prevent searching all content items across the indexer every frame.
 - WHEN the unit is transporting collected ore to the core (`mining == false`) THEN `unit.mineTile` MUST NOT be set or re-assigned until deposit completes.
-- WHEN the unit is within core transfer range (`unit.within(core, unit.type.range)`) and is carrying cargo (`unit.stack.amount > 0`) that the core accepts THEN the task MUST deposit its carried items into the core immediately via `Call.transferInventory`.
+- All inventory transfer RPC calls (`Call.transferInventory`) MUST be coordinated exclusively through `MinerAI`, and MUST NOT be called independently in `MiningTask.update`.
+- Inventory transfers MUST be rate-limited with a minimum cooldown timer (at least 20 ticks) and MUST guard against duplicate RPC packets while an in-flight transfer is pending until cargo is acknowledged as empty (`unit.stack.amount == 0`) or a fallback timeout expires.
+- WHEN the unit is mining near the core, it MUST continue mining until reaching full item capacity (`unit.stack.amount >= unit.type.itemCapacity`) before triggering an inventory transfer, unless the current carried item cannot be accepted or mined.
 - WHEN the unit is already carrying a resource (`unit.stack.amount > 0`) AND that resource is still valid to mine and accept in the core THEN the task MUST continue mining that resource until capacity is reached before switching to another resource.
 - WHEN the unit is carrying a resource (`unit.stack.amount > 0`) that cannot be mined or is full in the core THEN the task MUST immediately switch to deposit mode (`mining = false`, `unit.mineTile = null`) to empty its inventory before selecting another resource.
 - The task MUST NEVER assign `unit.mineTile` to an ore type that differs from the item currently carried in `unit.stack.item` when `unit.stack.amount > 0`.
@@ -126,9 +128,13 @@ The Mining task MUST mine the lowest-stock selected resources safely and deposit
 - **WHEN** the player unit is mining an ore tile within core transfer range (`Vars.mineTransferRange`) where items beam directly into the core
 - **THEN** MiningTask continues mining the current target item until an alternative selected resource in the core is lower by at least the hysteresis threshold, at which point it switches target items
 
-#### Scenario: Carrying items while near core deposits immediately
-- **WHEN** the unit holds cargo (`unit.stack.amount > 0`) while within interaction range of the core
-- **THEN** carried items are transferred to the core so the unit can evaluate and switch to lower-stock resources without getting stuck
+#### Scenario: Transferring items to core rate-limited
+- **WHEN** the unit reaches full capacity or must deposit carried cargo within interaction range of the core
+- **THEN** `Call.transferInventory` is invoked by `MinerAI` subject to the transfer cooldown and in-flight guard, preventing duplicate packet dispatch while inventory emptying is pending
+
+#### Scenario: Carrying items while near core fills to capacity before depositing
+- **WHEN** the unit holds cargo (`unit.stack.amount > 0`) while mining within interaction range of the core and can still mine the resource
+- **THEN** the unit continues mining until full capacity is reached rather than issuing micro-transfers on every single mined item
 
 #### Scenario: Immediate switch when core is full of current resource
 - **WHEN** the core reaches maximum capacity for the current target resource (`core.acceptStack <= 0`)
