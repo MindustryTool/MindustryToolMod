@@ -6,7 +6,7 @@ author: "[#FFC2D1[]]S[#FFADC2[]]h[#FF97B3[]]a[#FF81A3[]]r[#FF6C94[]]l[#F45885[]]
 
 main: "mindustrytool.Main"
 
-version: v5.3.0-v8
+version: v5.3.1-v8
 
 minGameVersion: 160.7
 

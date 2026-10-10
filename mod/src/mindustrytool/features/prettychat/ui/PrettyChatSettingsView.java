@@ -115,6 +115,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                 icon(Icon.chat).size(unit(5)).color(Pal.accent);
                 text(previewLabel)
                         .color(Pal.accent)
+                        .wrap()
                         .growX()
                         .left();
                 badge(liveBadge).color(WebStyles.Colors.PRIMARY);
@@ -138,7 +139,7 @@ public class PrettyChatSettingsView extends BaseComponent {
             // Simulated Chat Box
             column().growX().padding(unit(2)).rounded(6, WebStyles.Colors.SECONDARY).gap(unit(1)).left().children(() -> {
                 row().growX().center().children(() -> {
-                    text(simSender).left();
+                    text(simSender).left().wrap();
                     spacer();
                     text(resultComputed.map(r -> r.length() + "/150"))
                             .color(resultComputed.map(r -> r.length() > 150 ? Color.scarlet
@@ -182,6 +183,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                 icon(Icon.tree).size(unit(5)).color(Pal.accent);
                 text(pipelineTitle)
                         .color(Pal.accent)
+                        .wrap()
                         .growX()
                         .left();
                 badge(feature.config().enabledIdsSignal.map(l -> Core.bundle != null
@@ -248,6 +250,7 @@ public class PrettyChatSettingsView extends BaseComponent {
 
                     text(p.name())
                             .color(Color.white)
+                            .wrap()
                             .growX()
                             .left();
 
@@ -298,6 +301,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                 icon(Icon.settings).size(unit(5)).color(Pal.accent);
                 text(availableTitle)
                         .color(Pal.accent)
+                        .wrap()
                         .growX()
                         .left();
                 badge(selectedCategory.map(this::getCategoryName))
@@ -338,7 +342,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                 .children(() -> {
             // Left Information Column: Name, Category tag, Description, Live preview
             column().growX().gap(unit(1)).left().children(() -> {
-                row().growX().gap(unit(1.5f)).left().children(() -> {
+                wrap().growX().gap(unit(1.5f)).left().children(() -> {
                     text(enabledIndex.map(idx -> idx != null && idx >= 0 ? "#" + (idx + 1) : ""))
                             .visible(isEnabled)
                             .color(Pal.accent)
@@ -346,10 +350,12 @@ public class PrettyChatSettingsView extends BaseComponent {
 
                     text(p.name())
                             .color(isEnabled.map(e -> Boolean.TRUE.equals(e) ? Pal.accent : Color.white))
+                            .wrap()
                             .left();
 
                     text("[" + getCategoryName(p.category()) + "]")
                             .color(WebStyles.Colors.GHOST_FG)
+                            .wrap()
                             .left();
                 });
 

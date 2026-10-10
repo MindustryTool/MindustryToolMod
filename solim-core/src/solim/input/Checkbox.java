@@ -92,6 +92,20 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 		return this;
 	}
 
+	public Checkbox wrap() {
+		return wrap(true);
+	}
+
+	public Checkbox wrap(boolean wrap) {
+		if (checkBox.getLabel() != null) {
+			checkBox.getLabel().setWrap(wrap);
+		}
+		if (checkBox.getLabelCell() != null && wrap) {
+			checkBox.getLabelCell().growX().minWidth(0f);
+		}
+		return this;
+	}
+
 	@Override
 	public void dispose() {
 		if (disposed) {

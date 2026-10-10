@@ -56,4 +56,17 @@ class CheckboxComponentTest extends SolimEnv {
 		assertSame(cb.checkBox(), cb.element());
 		cb.dispose();
 	}
+
+	@Test
+	void wrapModifierUpdatesLabelWrapping() {
+		Checkbox cb = new Checkbox("Long checkbox label", Signal.of(false));
+		assertTrue(cb.checkBox().getLabel().getPrefWidth() > 0f);
+
+		cb.wrap();
+		assertEquals(0f, cb.checkBox().getLabel().getPrefWidth());
+
+		cb.wrap(false);
+		assertTrue(cb.checkBox().getLabel().getPrefWidth() > 0f);
+		cb.dispose();
+	}
 }

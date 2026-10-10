@@ -141,6 +141,7 @@ public class TranslationSettingsView extends BaseComponent {
 				icon(Icon.chat).size(unit(5)).color(Pal.accent);
 				text(Core.bundle.get("feature.translation.incoming.preview-title", "Live Message Preview"))
 						.color(Pal.accent)
+						.wrap()
 						.growX()
 						.left();
 				badge(Core.bundle.get("feature.pretty-chat.settings.live-badge", "LIVE")).color(WebStyles.Colors.PRIMARY);
@@ -155,7 +156,10 @@ public class TranslationSettingsView extends BaseComponent {
 
 			// Incoming Simulation Box
 			column().growX().padding(unit(2)).rounded(6, WebStyles.Colors.SECONDARY).gap(unit(1)).left().children(() -> {
-				text("[#ffa100]Alex: [white]Bonjour! Pouvons-nous construire du thorium?").left();
+				text("[#ffa100]Alex: [white]Bonjour! Pouvons-nous construire du thorium?")
+						.left()
+						.wrap()
+						.growX();
 
 				String sampleTranslation = Core.bundle.get("feature.translation.preview.incoming-sample",
 						"Hello! Can we build thorium?");
@@ -167,15 +171,23 @@ public class TranslationSettingsView extends BaseComponent {
 							? colorTag + "(" + sampleTranslation + ")[white]"
 							: colorTag + "[" + sampleTranslation + "][white]";
 				});
-				text(incomingTranslatedText).left().wrap();
+				text(incomingTranslatedText)
+						.left()
+						.wrap()
+						.growX();
 			});
 
 			// Outgoing Simulation Box
 			column().growX().padding(unit(2)).rounded(6, WebStyles.Colors.SECONDARY).gap(unit(1)).left().children(() -> {
 				row().growX().gap(unit(1)).left().children(() -> {
-					text(Core.bundle.get("feature.translation.outgoing.title", "Outgoing Chat")).color(Color.lightGray).left();
-					spacer();
-					text(feature.outgoingTargetLangConfig.signal().map(lang -> "→ " + (lang != null ? lang : "English"))).color(Pal.accent).right();
+					text(Core.bundle.get("feature.translation.outgoing.title", "Outgoing Chat"))
+							.color(Color.lightGray)
+							.left()
+							.wrap()
+							.growX();
+					text(feature.outgoingTargetLangConfig.signal().map(lang -> "→ " + (lang != null ? lang : "English")))
+							.color(Pal.accent)
+							.right();
 				});
 
 				String disabledPreview = Core.bundle.get("feature.translation.preview.outgoing-disabled",
@@ -195,7 +207,10 @@ public class TranslationSettingsView extends BaseComponent {
 					return isBoth ? bothPreview : onlyPreview;
 				});
 
-				text(outgoingPreviewText).left().wrap();
+				text(outgoingPreviewText)
+						.left()
+						.wrap()
+						.growX();
 			});
 		});
 	}
@@ -207,6 +222,7 @@ public class TranslationSettingsView extends BaseComponent {
 				icon(Icon.spray).size(unit(5)).color(Pal.accent);
 				text(Core.bundle.get("feature.translation.appearance.title", "Appearance & Styling"))
 						.color(Pal.accent)
+						.wrap()
 						.growX()
 						.left();
 			});
@@ -215,6 +231,8 @@ public class TranslationSettingsView extends BaseComponent {
 			column().growX().gap(unit(1.5f)).left().children(() -> {
 				text(Core.bundle.get("feature.translation.appearance.color", "Translation Color"))
 						.left()
+						.wrap()
+						.growX()
 						.color(Color.white);
 
 				wrap().growX().gap(unit(1.5f)).children(() -> {
@@ -257,13 +275,13 @@ public class TranslationSettingsView extends BaseComponent {
 			checkbox(
 					Core.bundle.get("feature.translation.pref.show-original",
 							"Show original message alongside translation"),
-					feature.showOriginalConfig.signal()).growX();
+					feature.showOriginalConfig.signal()).wrap().growX();
 
 			// Checkbox: Show In-Game Chat HUD Pill
 			checkbox(
 					Core.bundle.get("feature.translation.appearance.show-pill",
 							"Show quick translation pill above chat field"),
-					feature.showPillConfig.signal()).growX();
+					feature.showPillConfig.signal()).wrap().growX();
 		});
 	}
 
@@ -274,6 +292,7 @@ public class TranslationSettingsView extends BaseComponent {
 				icon(Icon.upload).size(unit(5)).color(Pal.accent);
 				text(Core.bundle.get("feature.translation.outgoing.title", "Outgoing Chat"))
 						.color(Pal.accent)
+						.wrap()
 						.growX()
 						.left();
 			});
@@ -282,14 +301,15 @@ public class TranslationSettingsView extends BaseComponent {
 			checkbox(
 					Core.bundle.get("feature.translation.outgoing.enable",
 							"Translate outgoing chat messages automatically"),
-					feature.outgoingEnabledConfig.signal()).growX();
+					feature.outgoingEnabledConfig.signal()).wrap().growX();
 
 			// Target Language row
 			row().growX().gap(unit(2)).center().children(() -> {
 				text(Core.bundle.get("feature.translation.outgoing.target-lang", "Outgoing Target Language"))
 						.left()
+						.wrap()
+						.growX()
 						.color(Color.white);
-				spacer();
 				languageDropdown = new LanguageDropdown(feature);
 			});
 
@@ -297,9 +317,11 @@ public class TranslationSettingsView extends BaseComponent {
 			column().growX().gap(unit(1.5f)).left().children(() -> {
 				text(Core.bundle.get("feature.translation.outgoing.format", "Outgoing Format"))
 						.left()
+						.wrap()
+						.growX()
 						.color(Color.white);
 
-				row().gap(unit(1.5f)).children(() -> {
+				wrap().growX().gap(unit(1.5f)).children(() -> {
 					button(() -> bothSignal.set(true))
 							.style(WebStyles.filterChip())
 							.checked(bothSignal)
@@ -322,6 +344,7 @@ public class TranslationSettingsView extends BaseComponent {
 				text(Core.bundle.get("feature.translation.outgoing.hint",
 						"Tip: Press Shift + Enter to send without translating, or type // at the start of your message."))
 						.color(WebStyles.Colors.GHOST_FG)
+						.left()
 						.wrap()
 						.growX();
 			});
@@ -335,6 +358,7 @@ public class TranslationSettingsView extends BaseComponent {
 				icon(Icon.settings).size(unit(5)).color(Pal.accent);
 				text(Core.bundle.get("feature.translation.settings.providers", "Translation Provider"))
 						.color(Pal.accent)
+						.wrap()
 						.growX()
 						.left();
 			});
@@ -368,12 +392,17 @@ public class TranslationSettingsView extends BaseComponent {
 
 			// Connection Test row
 			row().growX().gap(unit(2)).center().children(() -> {
-				column().gap(unit(0.5f)).left().children(() -> {
-					text(Core.bundle.get("feature.translation.test.title", "Connection Test")).left().color(Color.white);
-					text(testStatusSignal).left();
+				column().growX().gap(unit(0.5f)).left().children(() -> {
+					text(Core.bundle.get("feature.translation.test.title", "Connection Test"))
+							.left()
+							.wrap()
+							.growX()
+							.color(Color.white);
+					text(testStatusSignal)
+							.left()
+							.wrap()
+							.growX();
 				});
-
-				spacer();
 
 				button(this::onTestConnection)
 						.style(WebStyles.outline())
@@ -395,6 +424,7 @@ public class TranslationSettingsView extends BaseComponent {
 						icon(Icon.warning).size(unit(4)).color(Color.scarlet);
 						text(Core.bundle.format("feature.translation.last-error", err))
 								.color(Color.scarlet)
+								.left()
 								.wrap()
 								.growX();
 					});
@@ -425,6 +455,7 @@ public class TranslationSettingsView extends BaseComponent {
 					text(Core.bundle.get("feature.translation.gemini.api-key", "Gemini API Key"))
 							.left()
 							.color(Color.lightGray)
+							.wrap()
 							.growX();
 					button(Core.bundle.get("feature.translation.gemini.get-key", "Get Key"),
 							() -> Core.app.openURI("https://aistudio.google.com/app/apikey"))
@@ -442,6 +473,7 @@ public class TranslationSettingsView extends BaseComponent {
 					text(Core.bundle.get("feature.translation.deepl.api-key", "DeepL API Key"))
 							.left()
 							.color(Color.lightGray)
+							.wrap()
 							.growX();
 					button(Core.bundle.get("feature.translation.deepl.portal", "Portal"),
 							() -> Core.app.openURI("https://www.deepl.com/pro-api"))
@@ -459,6 +491,7 @@ public class TranslationSettingsView extends BaseComponent {
 					text(Core.bundle.get("feature.translation.devx.api-key", "Nvidia API Key"))
 							.left()
 							.color(Color.lightGray)
+							.wrap()
 							.growX();
 					button(Core.bundle.get("feature.translation.devx.get-key", "Get Key"),
 							() -> Core.app.openURI("https://build.nvidia.com/"))
@@ -476,6 +509,7 @@ public class TranslationSettingsView extends BaseComponent {
 				text(Core.bundle.get("feature.translation.google.desc",
 						"Unlimited free web translation. No API key or setup required."))
 						.color(WebStyles.Colors.GHOST_FG)
+						.left()
 						.wrap()
 						.growX();
 			});
