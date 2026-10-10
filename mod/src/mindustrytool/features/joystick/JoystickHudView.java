@@ -49,7 +49,7 @@ public class JoystickHudView extends BaseComponent {
         });
 
         effect(() -> {
-            feature.sizeConfig.get();
+            feature.sizeConfig.signal().get();
             Core.app.post(this::keepInScreen);
         });
 

@@ -1,7 +1,6 @@
 package mindustrytool.features.progressdisplay;
 
 import arc.Core;
-import mindustry.gen.Icon;
 import solim.overlay.SolimDialog;
 
 /**
@@ -10,14 +9,14 @@ import solim.overlay.SolimDialog;
 public class ProgressDisplaySettingsDialog extends SolimDialog {
 
     public ProgressDisplaySettingsDialog(ProgressDisplayFeature feature) {
-        super(Core.bundle.get("feature.progress-display.settings.title"));
+        super(Core.bundle != null
+                ? Core.bundle.get("feature.progress-display.settings.title", "Progress Display Settings")
+                : "Progress Display Settings");
 
         name("progressDisplaySettingDialog");
         addCloseButton();
         closeOnBack();
-
-        actionButton(Core.bundle.get("feature.progress-display.settings.reset"),
-                Icon.refresh, 250f, 64f, feature::resetToDefaults);
+        maxWidth(500f);
 
         children(() -> new ProgressDisplaySettingsView(feature));
     }

@@ -5,7 +5,6 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
-import arc.scene.style.Drawable;
 import arc.util.Nullable;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;

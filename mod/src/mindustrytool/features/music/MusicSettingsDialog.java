@@ -14,7 +14,7 @@ public class MusicSettingsDialog extends SolimDialog {
         name("musicSettingDialog");
         addCloseButton();
         closeOnBack();
-        maxWidth(800f);
+        maxWidth(500f);
 
         children(() -> new MusicSettingsView(feature));
     }

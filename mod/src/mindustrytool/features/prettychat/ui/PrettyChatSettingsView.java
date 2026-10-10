@@ -25,7 +25,6 @@ import solim.reactive.Signal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 /**
  * Modern declarative Solim Desktop Dashboard view for Pretty Chat.

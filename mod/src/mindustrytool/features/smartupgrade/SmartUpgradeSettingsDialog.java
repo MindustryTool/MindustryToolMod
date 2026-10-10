@@ -1,7 +1,6 @@
 package mindustrytool.features.smartupgrade;
 
 import arc.Core;
-import mindustry.gen.Icon;
 import solim.overlay.SolimDialog;
 
 /**
@@ -10,14 +9,14 @@ import solim.overlay.SolimDialog;
 public class SmartUpgradeSettingsDialog extends SolimDialog {
 
     public SmartUpgradeSettingsDialog(SmartUpgradeFeature feature) {
-        super(Core.bundle.get("feature.smart-upgrade.settings.title", "Smart Upgrade Settings"));
+        super(Core.bundle != null
+                ? Core.bundle.get("feature.smart-upgrade.settings.title", "Smart Upgrade Settings")
+                : "Smart Upgrade Settings");
 
         name("smartUpgradeSettingDialog");
         addCloseButton();
         closeOnBack();
-
-        actionButton(Core.bundle.get("feature.smart-upgrade.settings.reset", "Reset to Defaults"),
-                Icon.refresh, 250f, 64f, feature::resetToDefaults);
+        maxWidth(500f);
 
         children(() -> new SmartUpgradeSettingsView(feature));
     }

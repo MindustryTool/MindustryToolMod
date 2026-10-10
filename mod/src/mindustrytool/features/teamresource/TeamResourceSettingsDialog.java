@@ -1,7 +1,6 @@
 package mindustrytool.features.teamresource;
 
 import arc.Core;
-import mindustry.gen.Icon;
 import solim.overlay.SolimDialog;
 
 /**
@@ -15,8 +14,7 @@ public class TeamResourceSettingsDialog extends SolimDialog {
         name("teamResourceSettingDialog");
         addCloseButton();
         closeOnBack();
-
-        actionButton(Core.bundle.get("team-resources.reset-to-defaults", "Reset to Defaults"), Icon.refresh, 250f, 64f, feature::resetToDefaults);
+        maxWidth(500f);
 
         children(() -> new TeamResourceSettingsView(feature));
     }

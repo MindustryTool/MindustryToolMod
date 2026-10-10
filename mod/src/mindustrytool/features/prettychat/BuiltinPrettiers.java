@@ -4,7 +4,6 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.struct.Seq;
 import arc.util.Log;
-import arc.util.Nullable;
 import mindustry.Vars;
 
 import java.util.Locale;

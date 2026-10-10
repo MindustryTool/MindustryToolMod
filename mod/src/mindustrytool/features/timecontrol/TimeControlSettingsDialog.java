@@ -11,6 +11,7 @@ public class TimeControlSettingsDialog extends SolimDialog {
         name("timeControlSettingDialog");
         addCloseButton();
         closeOnBack();
+        maxWidth(500f);
 
         children(() -> new TimeControlSettingsView(feature));
     }

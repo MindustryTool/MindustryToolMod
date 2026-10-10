@@ -12,6 +12,7 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.camerazoom.CameraZoomFeature;
+import mindustrytool.features.callout.CalloutFeature;
 import mindustrytool.features.chat.ChatFeature;
 import mindustrytool.features.emoji.EmojiFeature;
 import mindustrytool.features.freecamera.FreeCameraFeature;
@@ -73,6 +74,7 @@ public class Main extends Mod {
                 new BackgroundFeature(),
                 new QuickAccessFeature(),
                 new ChatFeature(),
+                new CalloutFeature(),
                 new TeamResourceFeature(),
                 new TranslationFeature(),
                 new SchematicBrowserFeature(),

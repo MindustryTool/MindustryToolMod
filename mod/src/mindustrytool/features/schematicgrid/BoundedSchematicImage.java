@@ -53,7 +53,7 @@ final class BoundedSchematicImage extends BaseComponent {
                 size.get();
             }
             if (image != null) {
-                image.invalidateHierarchy();
+                image.invalidate();
             }
         });
         return image;

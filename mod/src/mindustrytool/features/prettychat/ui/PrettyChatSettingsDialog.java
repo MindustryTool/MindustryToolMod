@@ -1,7 +1,5 @@
 package mindustrytool.features.prettychat.ui;
 
-import static solim.UI.dvw;
-
 import arc.Core;
 import mindustry.Vars;
 import mindustrytool.features.prettychat.PrettyChatFeature;

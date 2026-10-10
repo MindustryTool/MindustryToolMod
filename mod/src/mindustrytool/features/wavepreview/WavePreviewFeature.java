@@ -78,6 +78,13 @@ public class WavePreviewFeature extends Feature {
         return state;
     }
 
+    public void resetToDefaults() {
+        opacityConfig.reset();
+        scaleConfig.reset();
+        depthConfig.reset();
+        recompute();
+    }
+
     @Override
     public void onEnable() {
         Core.app.post(this::injectPanel);

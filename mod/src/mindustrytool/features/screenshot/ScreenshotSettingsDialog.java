@@ -1,7 +1,6 @@
 package mindustrytool.features.screenshot;
 
 import arc.Core;
-import mindustry.gen.Icon;
 import solim.overlay.SolimDialog;
 
 /**
@@ -10,15 +9,14 @@ import solim.overlay.SolimDialog;
 public class ScreenshotSettingsDialog extends SolimDialog {
 
     public ScreenshotSettingsDialog(ScreenshotFeature feature) {
-        super(Core.bundle.get("feature.screenshot.settings.title"));
+        super(Core.bundle != null
+                ? Core.bundle.get("feature.screenshot.settings.title", "Screenshot Settings")
+                : "Screenshot Settings");
 
         name("screenshotSettingDialog");
         addCloseButton();
         closeOnBack();
         maxWidth(500f);
-
-        actionButton(Core.bundle.get("feature.screenshot.settings.reset"),
-                Icon.refresh, 250f, 64f, feature::resetToDefaults);
 
         children(() -> new ScreenshotSettingsView(feature));
     }

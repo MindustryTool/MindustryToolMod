@@ -3,13 +3,17 @@ package mindustrytool.features.smartupgrade;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.scene.Element;
-import mindustry.ui.Styles;
+import mindustry.gen.Icon;
+import mindustry.graphics.Pal;
+import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
-import solim.reactive.Readable;
+import solim.core.Component;
+import solim.layout.Card;
 
 /**
- * Settings view for configuring Smart Upgrade feature options.
+ * Modern declarative Solim settings view for Smart Upgrade.
  */
 public class SmartUpgradeSettingsView extends BaseComponent {
 
@@ -21,66 +25,198 @@ public class SmartUpgradeSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<String> maxUpdatesText = feature.maxUpdatesConfig.signal()
-                .map(v -> String.valueOf(v != null ? v : 500));
-
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    // Checkbox: Only Replace Exact Type
-                    checkbox(Core.bundle.get("feature.smart-upgrade.settings.only-same-type",
-                            "Only Replace Exact Block Type"),
-                            feature.onlySameTypeConfig.signal()).growX();
-
-                    // Checkbox: Traverse Bridges and Junctions
-                    checkbox(Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges",
-                            "Traverse Bridges & Junctions"),
-                            feature.traverseBridgesConfig.signal()).growX();
-
-                    divider();
-
-                    // Slider: Max Upgrades
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.smart-upgrade.settings.max-upgrades",
-                                "Max Upgraded Blocks")).left();
-                        spacer();
-                        slider(feature.maxUpdatesConfig.signal(), 50, 2000, 50);
-                        row().width(unit(12)).children(() -> {
-                            text(maxUpdatesText);
-                        });
-                    });
-
-                    // Trigger Mode: One Shot vs Persistent
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode",
-                                "Trigger Mode")).left();
-                        spacer();
-                        row().gap(unit(2)).children(() -> {
-                            button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot",
-                                            "One Shot"),
-                                    () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_ONE_SHOT))
-                                            .style(Styles.togglet)
-                                            .checked(feature.triggerModeConfig.signal()
-                                                    .map(SmartUpgradeFeature.MODE_ONE_SHOT::equals))
-                                            .height(unit(8.5f));
-                            button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.persistent",
-                                            "Persistent"),
-                                    () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_PERSISTENT))
-                                            .style(Styles.togglet)
-                                            .checked(feature.triggerModeConfig.signal()
-                                                    .map(SmartUpgradeFeature.MODE_PERSISTENT::equals))
-                                            .height(unit(8.5f));
-                        });
-                    });
-
-                    divider();
-
-                    // Reset Defaults Button
-                    button(Core.bundle.get("feature.smart-upgrade.settings.reset", "Reset to Defaults"),
-                            feature::resetToDefaults)
-                            .style(Styles.defaultb).growX();
+        return column().grow().center().maxWidth(500f).children(() -> {
+            scroll().grow().scrollX(false).children(() -> {
+                column().growX().gap(unit(2.5f)).padding(unit(2)).center().children(() -> {
+                    headerCard();
+                    rulesCard();
+                    modeAndLimitsCard();
+                    resetButton();
                 });
             });
         }).element();
+    }
+
+    private Card sectionCard() {
+        return card()
+                .growX()
+                .padding(unit(2.5f))
+                .rounded(8, WebStyles.Colors.SECTION_BG)
+                .border(1.5f, WebStyles.Colors.SECTION_BORDER)
+                .gap(unit(2));
+    }
+
+    private Component headerCard() {
+        return sectionCard().children(() -> {
+            row().growX().gap(unit(2)).center().children(() -> {
+                icon(Icon.up).size(unit(5)).color(Pal.accent);
+                text(Core.bundle != null
+                        ? Core.bundle.get("feature.smart-upgrade.name", "Smart Upgrade")
+                        : "Smart Upgrade")
+                        .color(Pal.accent)
+                        .growX()
+                        .left();
+                badge("BUILDING").color(WebStyles.Colors.PRIMARY);
+            });
+
+            text(Core.bundle != null
+                    ? Core.bundle.get("feature.smart-upgrade.description",
+                            "Upgrade conveyors, conduits, bridges, drills, and walls in bulk with smart tools.")
+                    : "Upgrade conveyors, conduits, bridges, drills, and walls in bulk with smart tools.")
+                    .color(WebStyles.Colors.GHOST_FG)
+                    .left()
+                    .wrap()
+                    .growX();
+        });
+    }
+
+    private Component rulesCard() {
+        return sectionCard().children(() -> {
+            row().growX().gap(unit(2)).center().children(() -> {
+                icon(Icon.wrench).size(unit(5)).color(Pal.accent);
+                text(Core.bundle != null
+                        ? Core.bundle.get("feature.smart-upgrade.settings.rules", "Upgrade Rules")
+                        : "Upgrade Rules")
+                        .color(Pal.accent)
+                        .growX()
+                        .left();
+            });
+
+            // Only Replace Exact Block Type
+            row().growX().gap(unit(2)).center().children(() -> {
+                column().growX().gap(unit(0.5f)).left().children(() -> {
+                    text(Core.bundle != null
+                            ? Core.bundle.get("feature.smart-upgrade.settings.only-same-type", "Only Replace Exact Block Type")
+                            : "Only Replace Exact Block Type")
+                            .color(Color.white)
+                            .left();
+                    text(Core.bundle != null
+                            ? Core.bundle.get("feature.smart-upgrade.settings.only-same-type.desc",
+                                    "Only upgrade blocks that match the exact selected block type.")
+                            : "Only upgrade blocks that match the exact selected block type.")
+                            .color(WebStyles.Colors.GHOST_FG)
+                            .left()
+                            .wrap()
+                            .growX();
+                });
+                spacer();
+                checkbox("", feature.onlySameTypeConfig.signal());
+            });
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            // Traverse Bridges & Junctions
+            row().growX().gap(unit(2)).center().children(() -> {
+                column().growX().gap(unit(0.5f)).left().children(() -> {
+                    text(Core.bundle != null
+                            ? Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges", "Traverse Bridges & Junctions")
+                            : "Traverse Bridges & Junctions")
+                            .color(Color.white)
+                            .left();
+                    text(Core.bundle != null
+                            ? Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges.desc",
+                                    "Follow connections across bridges and junctions to upgrade lines.")
+                            : "Follow connections across bridges and junctions to upgrade lines.")
+                            .color(WebStyles.Colors.GHOST_FG)
+                            .left()
+                            .wrap()
+                            .growX();
+                });
+                spacer();
+                checkbox("", feature.traverseBridgesConfig.signal());
+            });
+        });
+    }
+
+    private Component modeAndLimitsCard() {
+        return sectionCard().children(() -> {
+            row().growX().gap(unit(2)).center().children(() -> {
+                icon(Icon.settings).size(unit(5)).color(Pal.accent);
+                text(Core.bundle != null
+                        ? Core.bundle.get("feature.smart-upgrade.settings.limits", "Mode & Limits")
+                        : "Mode & Limits")
+                        .color(Pal.accent)
+                        .growX()
+                        .left();
+            });
+
+            // Trigger Mode selection
+            column().growX().gap(unit(1)).left().children(() -> {
+                column().growX().gap(unit(0.5f)).left().children(() -> {
+                    text(Core.bundle != null
+                            ? Core.bundle.get("feature.smart-upgrade.settings.trigger-mode", "Trigger Mode")
+                            : "Trigger Mode")
+                            .color(Color.white)
+                            .left();
+                    text(Core.bundle != null
+                            ? Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.desc",
+                                    "Choose whether arming disarms after one upgrade or stays persistent.")
+                            : "Choose whether arming disarms after one upgrade or stays persistent.")
+                            .color(WebStyles.Colors.GHOST_FG)
+                            .left()
+                            .wrap()
+                            .growX();
+                });
+
+                row().gap(unit(1.5f)).children(() -> {
+                    button(Core.bundle != null
+                            ? Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot", "One Shot")
+                            : "One Shot",
+                            () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_ONE_SHOT))
+                            .style(WebStyles.filterChipText())
+                            .checked(feature.triggerModeConfig.signal()
+                                    .map(SmartUpgradeFeature.MODE_ONE_SHOT::equals))
+                            .height(unit(8))
+                            .paddingX(unit(2.5f));
+
+                    button(Core.bundle != null
+                            ? Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.persistent", "Persistent")
+                            : "Persistent",
+                            () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_PERSISTENT))
+                            .style(WebStyles.filterChipText())
+                            .checked(feature.triggerModeConfig.signal()
+                                    .map(SmartUpgradeFeature.MODE_PERSISTENT::equals))
+                            .height(unit(8))
+                            .paddingX(unit(2.5f));
+                });
+            });
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            // Max Upgraded Blocks
+            column().growX().gap(unit(1)).left().children(() -> {
+                row().growX().center().children(() -> {
+                    text(Core.bundle != null
+                            ? Core.bundle.get("feature.smart-upgrade.settings.max-upgrades", "Max Upgraded Blocks")
+                            : "Max Upgraded Blocks")
+                            .color(Color.white)
+                            .left();
+                    spacer();
+                    badge(feature.maxUpdatesConfig.signal().map(v -> String.valueOf(v != null ? v : 500)))
+                            .color(WebStyles.Colors.SECONDARY);
+                });
+
+                text(Core.bundle != null
+                        ? Core.bundle.get("feature.smart-upgrade.settings.max-upgrades.desc",
+                                "Maximum number of connected blocks upgraded in a single action.")
+                        : "Maximum number of connected blocks upgraded in a single action.")
+                        .color(WebStyles.Colors.GHOST_FG)
+                        .left()
+                        .wrap()
+                        .growX();
+
+                slider(feature.maxUpdatesConfig.signal(), 50, 2000, 50).growX();
+            });
+        });
+    }
+
+    private Component resetButton() {
+        return button(Core.bundle != null
+                ? Core.bundle.get("feature.smart-upgrade.settings.reset", "Reset to Defaults")
+                : "Reset to Defaults",
+                feature::resetToDefaults)
+                .style(WebStyles.outlineText())
+                .height(unit(9))
+                .growX();
     }
 }

@@ -496,13 +496,6 @@ public class TranslationFeature extends Feature {
         // Network-only by contract: translation keys are unbounded per sentence,
         // so no long-term QueryCache retention. Callers guard duplicate taps.
         String cleanText = text.trim();
-
-        // Check offline tactical dictionary first (0ms latency, zero-network)
-        String dictMatch = MindustryTranslationDictionary.findTranslation(cleanText, targetLanguage);
-        if (dictMatch != null) {
-            return CompletableFuture.completedFuture(dictMatch);
-        }
-
         return provider.translate(cleanText, targetLanguage);
     }
 

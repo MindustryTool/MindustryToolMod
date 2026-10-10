@@ -3,9 +3,8 @@ package mindustrytool.features.teamresource;
 import static solim.UI.*;
 
 import arc.Core;
-import mindustry.game.Team;
 import mindustry.gen.Tex;
-import mindustry.ui.Styles;
+import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
 
 /**
@@ -20,14 +19,17 @@ public class TeamResourceAllTeamsDialog extends SolimDialog {
         name("teamResourceAllTeamsDialog");
         addCloseButton();
         closeOnBack();
+        maxWidth(500f);
 
         children(() -> {
-            scroll().size(360f, 280f).children(() -> {
-                dynamic(state.validTeamsSignal, teams -> grid(3).gap(unit(1)).children(() -> {
-                    if (teams != null) {
-                        for (Team team : teams) {
-                            button()
-                                    .style(Styles.clearTogglei)
+            column().grow().center().padding(unit(2)).children(() -> {
+                scroll().size(380f, 280f).children(() -> {
+                    reactiveGrid(state.validTeamsSignal)
+                            .columns(3)
+                            .key(t -> String.valueOf(t.id))
+                            .gap(unit(1.5f))
+                            .children(team -> button()
+                                    .style(WebStyles.filterChip())
                                     .checked(state.selectedTeamSignal.map(sel -> sel == team))
                                     .onClick(() -> {
                                         state.setSelectedTeam(team);
@@ -35,14 +37,12 @@ public class TeamResourceAllTeamsDialog extends SolimDialog {
                                     })
                                     .growX()
                                     .children(() -> {
-                                        row().left().gap(unit(1)).padding(unit(1)).children(() -> {
+                                        row().left().gap(unit(1.5f)).padding(unit(1)).children(() -> {
                                             image(Tex.whiteui).size(unit(4)).color(team.color);
                                             text(team.localized()).color(team.color);
                                         });
-                                    });
-                        }
-                    }
-                }));
+                                    }));
+                });
             });
         });
     }

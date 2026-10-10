@@ -131,6 +131,7 @@ jar{
 	exclude "META-INF/*.SF"
 	exclude "META-INF/*.DSA"
 	exclude "META-INF/*.RSA"
+	exclude "**/*.bak"
 
 	doLast{
 		def rootLibsDir = new File(rootProject.projectDir, "build/libs")

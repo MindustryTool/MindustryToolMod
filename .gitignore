@@ -192,3 +192,6 @@ solim-api/build/
 solim-mcp/build/
 solim-core/build/
 solim-runtime/build/
+PROJECT.md
+TEST_INFRA.md
+TEST_READY.md
