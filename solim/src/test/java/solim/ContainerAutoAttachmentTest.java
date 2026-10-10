@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import arc.scene.Element;
 import solim.display.Text;
 import solim.layout.Card;
 import solim.layout.Column;

@@ -304,8 +304,12 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
                 Perf.totalRecorded());
         printBreakdown("full-page", spans, "SchematicCard-");
 
-        assertTrue(countCardSubtrees(spans, "SchematicCard-") >= 20);
         assertEquals(20, fullPage.table().getChildren().size);
+        // Slow-span buffer is bounded (256 entries, newest-first); a 20-card
+        // page with threshold 0 saturates it, so only the most recent card
+        // subtrees are retained. Rendering is proven by the child count above;
+        // here just require that card spans were recorded.
+        assertTrue(countCardSubtrees(spans, "SchematicCard-") >= 1);
         fullPage.dispose();
     }
 
