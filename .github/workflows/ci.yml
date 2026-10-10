@@ -172,6 +172,17 @@ jobs:
             echo "Previous tag $PREV_TAG not found locally, ignoring."
             PREV_TAG=""
           fi
+          if [ -n "$PREV_TAG" ]; then
+            PREV_VER="${PREV_TAG%-beta}"
+            TAG_VER=$(git show "${PREV_TAG}:mod.hjson" 2>/dev/null | grep -E '^[[:space:]]*version:' | sed -E 's/^[[:space:]]*version:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/' || true)
+            if [ -n "$TAG_VER" ] && [ "$TAG_VER" != "$PREV_VER" ]; then
+              echo "Tag $PREV_TAG points to version $TAG_VER instead of $PREV_VER; resolving from mod.hjson history."
+              PREV_COMMIT=$(git log --format=%H -S "$PREV_VER" HEAD -- mod.hjson | tail -n 1 || true)
+              if [ -n "$PREV_COMMIT" ]; then
+                PREV_TAG="$PREV_COMMIT"
+              fi
+            fi
+          fi
           echo "Previous tag resolved: $PREV_TAG"
 
           if [ -n "$PREV_TAG" ]; then
@@ -190,10 +201,19 @@ jobs:
           echo "$COMMITS" >> "$GITHUB_OUTPUT"
           echo "$EOF" >> "$GITHUB_OUTPUT"
 
+      - name: Sync Release Tag Reference
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG" --force
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: ${{ steps.version.outputs.tag }}
           prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
           body: ${{ steps.notes.outputs.changelog }}
