@@ -32,6 +32,7 @@ import mindustry.world.blocks.units.UnitFactory.UnitPlan;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.settings.ModSettings;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
@@ -154,7 +155,7 @@ public class ProgressDisplayFeature extends Feature {
 
         float threshold = zoomThreshold != null ? zoomThreshold : 0.5f;
         frameOpacity = opacity != null ? opacity : 1f;
-        frameScale = scale != null ? scale : 1f;
+        frameScale = ModSettings.effectiveScale(scale != null ? scale : 1f);
 
         if (frameOpacity <= 0.01f) {
             return;

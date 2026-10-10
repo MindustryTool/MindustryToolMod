@@ -10,6 +10,7 @@ import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
+import mindustrytool.features.settings.ModSettings;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.input.Button;
@@ -63,6 +64,7 @@ public class AutoplayHudView extends BaseComponent {
 
         effect(() -> {
             feature.scaleConfig.signal().get();
+            ModSettings.universalScale.signal().get();
             Core.app.post(this::keepInScreen);
         });
 
@@ -72,15 +74,15 @@ public class AutoplayHudView extends BaseComponent {
     }
 
     private Readable<Float> buttonSize() {
-        return feature.scaleConfig.signal().map(s -> unit(11) * (s != null ? s : 1f));
+        return ModSettings.effectiveScale(feature.scaleConfig.signal()).map(s -> unit(11) * (s != null ? s : 1f));
     }
 
     private Readable<Float> iconSize() {
-        return feature.scaleConfig.signal().map(s -> unit(7) * (s != null ? s : 1f));
+        return ModSettings.effectiveScale(feature.scaleConfig.signal()).map(s -> unit(7) * (s != null ? s : 1f));
     }
 
     public static Component buildControls(AutoplayFeature feature, @Nullable Readable<Boolean> canEdit) {
-        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 

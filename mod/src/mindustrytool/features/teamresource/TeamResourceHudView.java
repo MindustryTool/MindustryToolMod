@@ -20,6 +20,7 @@ import mindustry.gen.Tex;
 import mindustry.type.Item;
 import mindustry.type.UnitType;
 import mindustry.ui.Styles;
+import mindustrytool.features.settings.ModSettings;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.layout.Card;
@@ -45,7 +46,7 @@ public class TeamResourceHudView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> 24f * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> 16f * (s != null ? s : 1f));
         Readable<Boolean> expanded = feature.expandedConfig.signal();
@@ -329,7 +330,7 @@ public class TeamResourceHudView extends BaseComponent {
                     });
 
             SplitBar satisfactionBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.SATISFACTION,
-                    () -> scale.get() != null ? scale.get() : 1f);
+                    () -> scale.peek() != null ? scale.peek() : 1f);
             row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
                     .marginBottom(scale.map(s -> 4f * (s != null ? s : 1f)))
                     .children(() -> {
@@ -349,7 +350,7 @@ public class TeamResourceHudView extends BaseComponent {
                                 });
 
                         SplitBar storedBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED,
-                                () -> scale.get() != null ? scale.get() : 1f);
+                                () -> scale.peek() != null ? scale.peek() : 1f);
                         row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
                                 .marginBottom(scale.map(s -> 2f * (s != null ? s : 1f)))
                                 .children(() -> {

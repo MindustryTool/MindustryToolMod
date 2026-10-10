@@ -8,6 +8,7 @@ import arc.scene.Element;
 import arc.util.Nullable;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
+import mindustrytool.features.settings.ModSettings;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.Hud;
@@ -24,7 +25,7 @@ public class GodModeHudView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 
@@ -60,7 +61,7 @@ public class GodModeHudView extends BaseComponent {
     }
 
     public static Component buildControls(GodModeFeature feature, @Nullable Readable<Boolean> canEdit) {
-        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 

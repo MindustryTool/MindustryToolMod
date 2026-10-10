@@ -1,5 +1,8 @@
-## ADDED Requirements
+# content-patch-browser Specification
 
+## Purpose
+TBD - created by archiving change content-patch-browser. Update Purpose after archive.
+## Requirements
 ### Requirement: Browse content patches
 The system SHALL provide a browser dialog displaying content patches fetched from the Mindustry Tool API with pagination, search, sort options, and tag filtering.
 
@@ -38,3 +41,4 @@ The system SHALL allow saving the content patch as a `.hjson` file in the Mindus
 #### Scenario: Save patch to file
 - **WHEN** user clicks the save to file button
 - **THEN** the system writes the patch text to `data/patches/<sanitized-name>.hjson` and notifies the user with a confirmation toast
+

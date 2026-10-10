@@ -37,6 +37,19 @@ public class GeneralSettingsView extends BaseComponent {
                             .growX()
                             .tooltip(Core.bundle.get("setting.share-presence.description"));
 
+                    row().growX().gap(unit(2)).children(() -> {
+                        text(Core.bundle.get("setting.universal-scale")).left();
+
+                        spacer();
+                        slider(ModSettings.universalScale.signal(), 0.5f, 1.5f, 0.05f)
+                                .tooltip(Core.bundle.get("setting.universal-scale.tooltip"));
+
+                        row().width(unit(14)).children(() -> {
+                            text(ModSettings.universalScale.signal()
+                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
+                        });
+                    });
+
                     divider();
 
                     column().growX().gap(unit(2)).children(() -> {

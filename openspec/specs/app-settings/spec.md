@@ -134,7 +134,7 @@ Count-sensitive tests SHALL reflect the enlarged registry of 11 real features pl
 - **THEN** expectations account for 24 registered features (or explicitly filter out development features where the test targets enabled-capable features only)
 
 ### Requirement: Mod-Wide Settings Config Group
-The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares global `ConfigValue` entries as public static fields, including `betaParticipate: ConfigValue<Boolean>` (default `false`) and `sharePresence: ConfigValue<Boolean>` (default `true`). The legacy `freeCamera` config SHALL be removed in favor of `FreeCameraFeature`.
+The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` namespaced under `mindustrytool.settings` and declares global `ConfigValue` entries as public static fields, including `featureOrder` (ordered list of feature IDs), `favoriteFeatures` (set of favorite feature IDs), `betaParticipate: ConfigValue<Boolean>` (default `false`), `sharePresence: ConfigValue<Boolean>` (default `true`), and `universalScale` (float scaling factor defaulting to `0.8f` on mobile and `1.0f` on desktop). The legacy `freeCamera` config SHALL be removed in favor of `FreeCameraFeature`.
 
 #### Scenario: Beta flag is false by default
 - **WHEN** `ModSettings.betaParticipate` is read without any prior user interaction
@@ -149,19 +149,38 @@ The mod SHALL expose a dedicated `ModSettings` class that holds a `ConfigGroup` 
 - **THEN** `ModSettings.sharePresence.get()` returns `true`
 
 #### Scenario: Global settings persist across sessions
-- **WHEN** the user changes `sharePresence` or `betaParticipate` and the game restarts
+- **WHEN** the user changes `sharePresence`, `betaParticipate`, or `universalScale` and the game restarts
 - **THEN** the modified values persist on subsequent loads
 
-### Requirement: General Settings Dialog Rendering
-The `GeneralSettingsDialog` SHALL extend `SolimDialog` and host a `GeneralSettingsView` component with a centered and width-constrained layout (`maxWidth(500f)`). The view SHALL render a scrollable vertical list of setting rows for mod-wide preferences without horizontal overflow or hardcoded fixed width, including beta updates and share game status. Each row SHALL display a label (from `Core.bundle`), optional description or tooltip, and a `checkBox` bound directly to the corresponding `ConfigValue.signal()`. The dialog SHALL have a "Settings" title (bundle key `dialog.general-settings.title`) and a close button.
+#### Scenario: Universal scale defaults by platform
+- **WHEN** `ModSettings` is initialized without a saved `universal-scale` setting
+- **THEN** `universalScale` defaults to `0.8f` if `Vars.mobile` is true, and `1.0f` otherwise
 
-#### Scenario: Dialog opens with correct initial toggle state
+### Requirement: General Settings Dialog Rendering
+The `GeneralSettingsDialog` SHALL extend `SolimDialog` and host a `GeneralSettingsView` component with a centered and width-constrained layout (`maxWidth(500f)`). The view SHALL render a scrollable vertical list of setting rows for mod-wide preferences without horizontal overflow or hardcoded fixed width, including beta updates, share game status, and a universal scale slider. Each row SHALL display a label (from `Core.bundle`), optional description or tooltip, and a `checkBox` bound directly to the corresponding `ConfigValue.signal()`. The universal scale row SHALL display a slider bound to `ModSettings.universalScale.signal()` with a range from `0.5f` to `1.5f` (step `0.05f`) and a percentage text display. The dialog SHALL have a "Settings" title (bundle key `dialog.general-settings.title`) and a close button.
+
+#### Scenario: Dialog opens with correct initial toggle and slider state
 - **WHEN** `GeneralSettingsDialog` is shown
-- **THEN** each checkbox reflects the current value of its corresponding `ModSettings` config
+- **THEN** each checkbox and the universal scale slider reflect the current values of their corresponding `ModSettings` configs
 
 #### Scenario: Toggling checkbox persists immediately
 - **WHEN** the user clicks any setting checkbox in `GeneralSettingsDialog`
 - **THEN** the corresponding `ModSettings` config reflects the new value without an additional confirm action and persists to `Core.settings`
+
+#### Scenario: Adjusting universal scale slider persists immediately
+- **WHEN** the user adjusts the universal scale slider in `GeneralSettingsDialog`
+- **THEN** `ModSettings.universalScale` reflects the new value immediately and persists to `Core.settings`
+
+### Requirement: Effective Scale Calculation
+`ModSettings` SHALL provide reactive and non-reactive utility methods to compute effective scale by multiplying `universalScale` with local feature scale values. When either scale changes, `ModSettings.effectiveScale(Readable<Float>)` SHALL reactively emit the combined product.
+
+#### Scenario: Reactive effective scale updates dynamically
+- **WHEN** `universalScale` changes while a feature has a local scale of `1.2f`
+- **THEN** the `effectiveScale` signal emits the updated product of the new `universalScale` and `1.2f`
+
+#### Scenario: Fallback when local scale is null
+- **WHEN** a feature's local scale is null
+- **THEN** `effectiveScale` treats the feature scale as `1.0f` and emits `universalScale * 1.0f`
 
 ### Requirement: Beta Participation Drives Update Channel
 When `ModSettings.betaParticipate.get()` is `false`, `UpdateService` SHALL consult it when processing the GitHub releases response as before: prereleases (entries where `"prerelease": true` in the JSON) SHALL be excluded from the changelog, and the stable `mod.hjson` version gate is checked. For the stable channel, `UpdateService` SHALL also verify `minGameVersion` from `mod.hjson` against the current game build using `VersionUtils.isGameVersionAtLeast(minGameVersion)`; if the game build does not meet `minGameVersion`, the update dialog SHALL NOT be shown and the check SHALL resolve silently. When the flag is `true`, `UpdateService` SHALL skip the default `mod.hjson` fetch and determine the latest version solely from the GitHub releases list as the maximum tag over all entries (stable and prerelease) compared with `VersionUtils` semantics. When a candidate tag is newer, `UpdateService` SHALL fetch `mod.hjson` for that tag via `Github.getModHjson(tag)` and verify `minGameVersion`; if the current game build does not satisfy `minGameVersion`, or if the fetch/parse fails, the check SHALL resolve to silent (log and finish with no dialog). If the candidate tag is compatible, the update dialog SHALL be shown with the latest version displayed as the raw release tag (e.g. `v5.0.3-v8-beta`), a prerelease-inclusive changelog, and an Update action that installs that exact tag via the `githubImportMod(repo, isJava, release, forceEnable)` overload. Release fetch failure, an empty release list, and same-number ties after suffix stripping (e.g. `v5.0.3-v8` vs `v5.0.3-v8-beta`) SHALL resolve to silent (log and finish with no dialog).

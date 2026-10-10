@@ -21,6 +21,8 @@ import mindustrytool.models.response.AuthTokenResponse;
 import mindustrytool.models.response.ChannelDto;
 import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.ChatUser;
+import mindustrytool.models.response.ContentPatchData;
+import mindustrytool.models.response.ContentPatchDetailData;
 import mindustrytool.models.response.LoginUriResponse;
 import mindustrytool.models.response.MapData;
 import mindustrytool.models.response.MapDetailData;
@@ -130,6 +132,39 @@ public final class MindustryTool {
                 .query("verification", verification)
                 .sendAsync()
                 .thenApply(r -> JsonUtils.fromJsonArray(SchematicData.class, r.body()));
+    }
+
+    // ─── Content Patches ──────────────────────────────────────────
+
+    public static CompletableFuture<String> downloadContentPatch(String itemId) {
+        return publicApi
+                .get("/content-patches/" + itemId + "/data")
+                .timeout(LONG_TIMEOUT)
+                .sendAsync()
+                .thenApply(r -> r.body());
+    }
+
+    public static CompletableFuture<ContentPatchDetailData> findContentPatch(String itemId) {
+        return publicApi
+                .get("/content-patches/" + itemId)
+                .sendAsync()
+                .thenApply(r -> JsonUtils.fromJson(ContentPatchDetailData.class, r.body()));
+    }
+
+    public static CompletableFuture<List<ContentPatchData>> searchContentPatches(
+            int page, int size, String sort, String name, List<String> tags,
+            @Nullable String author, @Nullable String verification) {
+        return publicApi
+                .get("/content-patches")
+                .query("page", page)
+                .query("size", Math.min(size, 100))
+                .query("sort", sort)
+                .query("name", name)
+                .query("tags", tags)
+                .query("author", author)
+                .query("verification", verification)
+                .sendAsync()
+                .thenApply(r -> JsonUtils.fromJsonArray(ContentPatchData.class, r.body()));
     }
 
     // ─── Tags ──────────────────────────────────────────────────────

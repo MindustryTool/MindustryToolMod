@@ -22,6 +22,7 @@ import mindustry.ui.Fonts;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.settings.ModSettings;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 
@@ -126,7 +127,7 @@ public class HealthBarFeature extends Feature {
 
         frameZoomThreshold = zoomThreshold != null ? zoomThreshold : 0.5f;
         frameOpacity = opacity != null ? opacity : 1f;
-        frameScale = scale != null ? scale : 1f;
+        frameScale = ModSettings.effectiveScale(scale != null ? scale : 1f);
         frameWidth = width != null ? width : 1f;
         frameShowFriendlyUnits = showFriendlyUnits != null ? showFriendlyUnits : true;
         frameShowEnemyUnits = showEnemyUnits != null ? showEnemyUnits : true;

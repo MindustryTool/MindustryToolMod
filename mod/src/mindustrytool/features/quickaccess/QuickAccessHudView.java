@@ -23,6 +23,7 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import mindustrytool.components.WebStyles;
+import mindustrytool.features.settings.ModSettings;
 
 /**
  * Fully reactive and declarative QuickAccess HUD overlay. Uses reactive
@@ -54,7 +55,7 @@ public class QuickAccessHudView extends BaseComponent {
     @Override
     protected Element build() {
         feature.healDisplayOrder();
-        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> unit(11f) * s);
         Readable<Float> iconSize = scale.map(s -> unit(7f) * s);
 

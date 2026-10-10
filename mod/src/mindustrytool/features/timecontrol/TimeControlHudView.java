@@ -13,6 +13,7 @@ import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
+import mindustrytool.features.settings.ModSettings;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.input.Button;
@@ -39,7 +40,7 @@ public class TimeControlHudView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> dragIconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
 
@@ -77,7 +78,7 @@ public class TimeControlHudView extends BaseComponent {
     }
 
     public static Component buildControls(TimeControlFeature feature, @Nullable Readable<Boolean> canEdit) {
-        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> presetWidth = scale.map(s -> unit(15) * (s != null ? s : 1f));
         Readable<Float> resetIconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));

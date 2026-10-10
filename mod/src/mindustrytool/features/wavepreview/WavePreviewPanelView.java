@@ -11,6 +11,7 @@ import mindustry.Vars;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
+import mindustrytool.features.settings.ModSettings;
 import solim.core.BaseComponent;
 import solim.reactive.Readable;
 
@@ -28,7 +29,7 @@ public class WavePreviewPanelView extends BaseComponent {
     @Override
     protected Element build() {
         Readable<Float> opacity = feature.opacityConfig.signal();
-        Readable<Float> scale = feature.scaleConfig.signal();
+        Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
 
         return column().left().top()
                 .border(1.5f, Color.darkGray)
