@@ -66,7 +66,7 @@ public class MapRulesDialog extends SolimDialog {
         Signal<Boolean> overwrite = Signal.of(false);
         SolimDialog modal = new SolimDialog(t("feature.map-rules.save_prompt"));
         modal.name("mapRulesSaveModal");
-        modal.maxWidth(400f);
+        modal.maxWidth(500f);
         modal.addCloseButton();
         modal.closeOnBack();
         modal.children(() -> {
@@ -118,7 +118,7 @@ public class MapRulesDialog extends SolimDialog {
     private void showOverwriteModal(String name, SolimDialog parent) {
         SolimDialog confirm = new SolimDialog(name);
         confirm.name("mapRulesOverwriteModal");
-        confirm.maxWidth(400f);
+        confirm.maxWidth(500f);
         confirm.addCloseButton();
         confirm.closeOnBack();
         confirm.children(() -> {

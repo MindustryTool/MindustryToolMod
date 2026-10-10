@@ -20,12 +20,17 @@ import static solim.UI.unit;
 import static solim.UI.wrap;
 
 import arc.Core;
+import arc.func.Cons;
+import arc.func.Func;
 import arc.graphics.Color;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
 import arc.scene.style.TextureRegionDrawable;
+import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Nullable;
 import mindustry.Vars;
+import mindustry.ctype.UnlockableContent;
 import mindustry.game.EventType.ResetEvent;
 import mindustry.game.EventType.WorldLoadEndEvent;
 import mindustry.game.Rules;
@@ -42,13 +47,13 @@ import solim.reactive.Signal;
  */
 public class MapRulesView extends BaseComponent {
 
-    private static final String CAT_ALL = "all";
-    private static final String CAT_MODIFIED = "modified";
-    private static final String CAT_MULTIPLIERS = "multipliers";
-    private static final String CAT_WAVES = "waves";
-    private static final String CAT_BANS = "bans";
-    private static final String CAT_ENVIRONMENT = "environment";
-    private static final String CAT_MECHANICS = "mechanics";
+    private static final String CAT_ALL = RuleDescriptor.CAT_ALL;
+    private static final String CAT_MODIFIED = RuleDescriptor.CAT_MODIFIED;
+    private static final String CAT_MULTIPLIERS = RuleDescriptor.CAT_MULTIPLIERS;
+    private static final String CAT_WAVES = RuleDescriptor.CAT_WAVES;
+    private static final String CAT_BANS = RuleDescriptor.CAT_BANS;
+    private static final String CAT_ENVIRONMENT = RuleDescriptor.CAT_ENVIRONMENT;
+    private static final String CAT_MECHANICS = RuleDescriptor.CAT_MECHANICS;
 
     private final MapRulesFeature feature;
     private final Signal<String> search = Signal.of("");
@@ -283,19 +288,23 @@ public class MapRulesView extends BaseComponent {
         saveSection();
 
         if (showCategory(cat, CAT_MULTIPLIERS)) {
-            anyShown |= multipliersSection(rules, onlyModified, q, filtering) || anyShown;
+            anyShown |= scalarSection("feature.map-rules.section.multipliers", CAT_MULTIPLIERS,
+                    rules, onlyModified, q) || anyShown;
         }
         if (showCategory(cat, CAT_WAVES)) {
-            anyShown |= wavesSection(rules, onlyModified, q, filtering) || anyShown;
+            anyShown |= scalarSection("feature.map-rules.section.waves", CAT_WAVES,
+                    rules, onlyModified, q) || anyShown;
         }
         if (showCategory(cat, CAT_BANS)) {
             anyShown |= bansSection(rules, onlyModified, q, filtering) || anyShown;
         }
         if (showCategory(cat, CAT_ENVIRONMENT)) {
-            anyShown |= environmentSection(rules, onlyModified, q, filtering) || anyShown;
+            anyShown |= scalarSection("feature.map-rules.section.environment", CAT_ENVIRONMENT,
+                    rules, onlyModified, q) || anyShown;
         }
         if (showCategory(cat, CAT_MECHANICS)) {
-            anyShown |= mechanicsSection(rules, onlyModified, q, filtering) || anyShown;
+            anyShown |= scalarSection("feature.map-rules.section.mechanics", CAT_MECHANICS,
+                    rules, onlyModified, q) || anyShown;
         }
         if (!anyShown) {
             row().growX().padding(unit(4)).center().children(() -> {
@@ -342,139 +351,44 @@ public class MapRulesView extends BaseComponent {
         return name.contains(q) || desc.contains(q) || nameKey.toLowerCase().contains(q);
     }
 
-    private boolean multipliersSection(Rules rules, boolean onlyModified, String q, boolean filtering) {
-        RuleDiff diff = feature.diff;
-        boolean showBuildSpeed = shouldShow("feature.map-rules.rule.build-speed",
-                "feature.map-rules.rule.build-speed.desc", diff.buildSpeed(rules), onlyModified, q);
-        boolean showBuildCost = shouldShow("feature.map-rules.rule.build-cost",
-                "feature.map-rules.rule.build-cost.desc", diff.buildCost(rules), onlyModified, q);
-        boolean showBlockHealth = shouldShow("feature.map-rules.rule.block-health",
-                "feature.map-rules.rule.block-health.desc", diff.blockHealth(rules), onlyModified, q);
-        boolean showBlockDamage = shouldShow("feature.map-rules.rule.block-damage",
-                "feature.map-rules.rule.block-damage.desc", diff.blockDamage(rules), onlyModified, q);
-        boolean showUnitDamage = shouldShow("feature.map-rules.rule.unit-damage",
-                "feature.map-rules.rule.unit-damage.desc", diff.unitDamage(rules), onlyModified, q);
-        boolean showUnitHealth = shouldShow("feature.map-rules.rule.unit-health",
-                "feature.map-rules.rule.unit-health.desc", diff.unitHealth(rules), onlyModified, q);
-        boolean showUnitBuildSpeed = shouldShow("feature.map-rules.rule.unit-build-speed",
-                "feature.map-rules.rule.unit-build-speed.desc", diff.unitBuildSpeed(rules), onlyModified, q);
-        boolean showUnitCost = shouldShow("feature.map-rules.rule.unit-cost",
-                "feature.map-rules.rule.unit-cost.desc", diff.unitCost(rules), onlyModified, q);
-        boolean showSolar = shouldShow("feature.map-rules.rule.solar",
-                "feature.map-rules.rule.solar.desc", diff.solar(rules), onlyModified, q);
-        boolean showMineSpeed = shouldShow("feature.map-rules.rule.unit-mine-speed",
-                "feature.map-rules.rule.unit-mine-speed.desc", diff.unitMineSpeed(rules), onlyModified, q);
-        boolean showCrashDamage = shouldShow("feature.map-rules.rule.unit-crash-damage",
-                "feature.map-rules.rule.unit-crash-damage.desc", diff.unitCrashDamage(rules), onlyModified, q);
-        boolean showRefund = shouldShow("feature.map-rules.rule.deconstruct-refund",
-                "feature.map-rules.rule.deconstruct-refund.desc", diff.deconstructRefund(rules), onlyModified, q);
-        boolean showDepositCooldown = shouldShow("feature.map-rules.rule.item-deposit-cooldown",
-                "feature.map-rules.rule.item-deposit-cooldown.desc", diff.itemDepositCooldown(rules), onlyModified, q);
-        boolean any = showBuildSpeed || showBuildCost || showBlockHealth || showBlockDamage || showUnitDamage
-                || showUnitHealth || showUnitBuildSpeed || showUnitCost || showSolar
-                || showMineSpeed || showCrashDamage || showRefund || showDepositCooldown;
-        if (!any) {
+    private boolean scalarSection(String headerKey, String category, Rules rules, boolean onlyModified, String q) {
+        Seq<RuleDescriptor> visible = RuleDescriptors.forCategory(category)
+                .select(def -> def.isScalar() && shouldShow(def, rules, onlyModified, q));
+        if (visible.isEmpty()) {
             return false;
         }
         column().growX().gap(unit(2)).children(() -> {
-            text(t("feature.map-rules.section.multipliers")).left().color(Color.white);
-            if (showBuildSpeed) {
-                sliderRow("feature.map-rules.rule.build-speed", "feature.map-rules.rule.build-speed.desc",
-                        rules.buildSpeedMultiplier, 0.1f, 5f, 0.1f, "buildSpeedMultiplier",
-                        diff.buildSpeed(rules));
-            }
-            if (showBuildCost) {
-                sliderRow("feature.map-rules.rule.build-cost", "feature.map-rules.rule.build-cost.desc",
-                        rules.buildCostMultiplier, 0.1f, 5f, 0.1f, "buildCostMultiplier",
-                        diff.buildCost(rules));
-            }
-            if (showBlockHealth) {
-                sliderRow("feature.map-rules.rule.block-health", "feature.map-rules.rule.block-health.desc",
-                        rules.blockHealthMultiplier, 0.1f, 10f, 0.1f, "blockHealthMultiplier",
-                        diff.blockHealth(rules));
-            }
-            if (showBlockDamage) {
-                sliderRow("feature.map-rules.rule.block-damage", "feature.map-rules.rule.block-damage.desc",
-                        rules.blockDamageMultiplier, 0.1f, 10f, 0.1f, "blockDamageMultiplier",
-                        diff.blockDamage(rules));
-            }
-            if (showUnitDamage) {
-                sliderRow("feature.map-rules.rule.unit-damage", "feature.map-rules.rule.unit-damage.desc",
-                        rules.unitDamageMultiplier, 0.1f, 10f, 0.1f, "unitDamageMultiplier",
-                        diff.unitDamage(rules));
-            }
-            if (showUnitHealth) {
-                sliderRow("feature.map-rules.rule.unit-health", "feature.map-rules.rule.unit-health.desc",
-                        rules.unitHealthMultiplier, 0.1f, 10f, 0.1f, "unitHealthMultiplier",
-                        diff.unitHealth(rules));
-            }
-            if (showUnitBuildSpeed) {
-                sliderRow("feature.map-rules.rule.unit-build-speed", "feature.map-rules.rule.unit-build-speed.desc",
-                        rules.unitBuildSpeedMultiplier, 0.1f, 5f, 0.1f, "unitBuildSpeedMultiplier",
-                        diff.unitBuildSpeed(rules));
-            }
-            if (showUnitCost) {
-                sliderRow("feature.map-rules.rule.unit-cost", "feature.map-rules.rule.unit-cost.desc",
-                        rules.unitCostMultiplier, 0.1f, 5f, 0.1f, "unitCostMultiplier",
-                        diff.unitCost(rules));
-            }
-            if (showSolar) {
-                sliderRow("feature.map-rules.rule.solar", "feature.map-rules.rule.solar.desc",
-                        rules.solarMultiplier, 0.1f, 5f, 0.1f, "solarMultiplier",
-                        diff.solar(rules));
-            }
-            if (showMineSpeed) {
-                sliderRow("feature.map-rules.rule.unit-mine-speed", "feature.map-rules.rule.unit-mine-speed.desc",
-                        rules.unitMineSpeedMultiplier, 0.1f, 5f, 0.1f, "unitMineSpeedMultiplier",
-                        diff.unitMineSpeed(rules));
-            }
-            if (showCrashDamage) {
-                sliderRow("feature.map-rules.rule.unit-crash-damage", "feature.map-rules.rule.unit-crash-damage.desc",
-                        rules.unitCrashDamageMultiplier, 0f, 10f, 0.1f, "unitCrashDamageMultiplier",
-                        diff.unitCrashDamage(rules));
-            }
-            if (showRefund) {
-                sliderRow("feature.map-rules.rule.deconstruct-refund", "feature.map-rules.rule.deconstruct-refund.desc",
-                        rules.deconstructRefundMultiplier, 0f, 2f, 0.05f, "deconstructRefundMultiplier",
-                        diff.deconstructRefund(rules));
-            }
-            if (showDepositCooldown) {
-                sliderRow("feature.map-rules.rule.item-deposit-cooldown",
-                        "feature.map-rules.rule.item-deposit-cooldown.desc",
-                        rules.itemDepositCooldown, 0f, 5f, 0.1f, "itemDepositCooldown",
-                        diff.itemDepositCooldown(rules));
+            text(t(headerKey)).left().color(Color.white);
+            for (RuleDescriptor def : visible) {
+                switch (def.kind) {
+                    case FLOAT:
+                        sliderRow(def, rules);
+                        break;
+                    case INT:
+                        intRow(def, rules);
+                        break;
+                    case BOOL:
+                        boolRow(def, rules);
+                        break;
+                    default:
+                        break;
+                }
             }
         });
         return true;
     }
 
-    private void sliderRow(String nameKey, String descKey, float current, float min, float max, float step,
-            String field, boolean modified) {
-        String label = t(nameKey) + (modified ? " *" : "");
-        boolean editable = editableGameplay();
+    private boolean shouldShow(RuleDescriptor def, Rules rules, boolean onlyModified, String q) {
+        if (onlyModified && !feature.diff.isModified(def, rules)) {
+            return false;
+        }
+        return matches(def.nameKey(), def.descKey(), q);
+    }
+
+    private void ruleCard(String descKey, Runnable content) {
         card().growX().padding(unit(3)).children(() -> {
             column().growX().gap(unit(2)).children(() -> {
-                if (editable) {
-                    Signal<Float> value = Signal.of(current);
-                    effect(() -> {
-                        Float v = value.get();
-                        if (v != null && Math.abs(v - currentValueOf(field)) > 0.0001f) {
-                            feature.mutator.setFloat(field, v);
-                        }
-                    });
-                    row().growX().children(() -> {
-                        text(label).left();
-                        spacer();
-                        text(value.map(v -> v != null ? String.format("%.2f", v) : "")).color(Color.lightGray);
-                    });
-                    slider(value, min, max, step).growX().minWidth(unit(50));
-                } else {
-                    row().growX().children(() -> {
-                        text(label).left();
-                        spacer();
-                        text(String.format("%.2f", current)).color(Color.lightGray);
-                    });
-                }
+                content.run();
                 if (showDescriptions()) {
                     text(t(descKey)).color(Color.lightGray).left().wrap();
                 }
@@ -482,202 +396,78 @@ public class MapRulesView extends BaseComponent {
         });
     }
 
-    private float currentValueOf(String field) {
-        Rules rules = rules();
-        if (rules == null) {
-            return 0f;
-        }
-        if ("buildSpeedMultiplier".equals(field)) {
-            return rules.buildSpeedMultiplier;
-        }
-        if ("buildCostMultiplier".equals(field)) {
-            return rules.buildCostMultiplier;
-        }
-        if ("blockHealthMultiplier".equals(field)) {
-            return rules.blockHealthMultiplier;
-        }
-        if ("blockDamageMultiplier".equals(field)) {
-            return rules.blockDamageMultiplier;
-        }
-        if ("unitDamageMultiplier".equals(field)) {
-            return rules.unitDamageMultiplier;
-        }
-        if ("unitHealthMultiplier".equals(field)) {
-            return rules.unitHealthMultiplier;
-        }
-        if ("unitBuildSpeedMultiplier".equals(field)) {
-            return rules.unitBuildSpeedMultiplier;
-        }
-        if ("unitCostMultiplier".equals(field)) {
-            return rules.unitCostMultiplier;
-        }
-        if ("solarMultiplier".equals(field)) {
-            return rules.solarMultiplier;
-        }
-        if ("unitMineSpeedMultiplier".equals(field)) {
-            return rules.unitMineSpeedMultiplier;
-        }
-        if ("unitCrashDamageMultiplier".equals(field)) {
-            return rules.unitCrashDamageMultiplier;
-        }
-        if ("deconstructRefundMultiplier".equals(field)) {
-            return rules.deconstructRefundMultiplier;
-        }
-        if ("itemDepositCooldown".equals(field)) {
-            return rules.itemDepositCooldown;
-        }
-        if ("dropZoneRadius".equals(field)) {
-            return rules.dropZoneRadius;
-        }
-        if ("waveSpacing".equals(field)) {
-            return rules.waveSpacing;
-        }
-        return 0f;
-    }
-
-    private boolean wavesSection(Rules rules, boolean onlyModified, String q, boolean filtering) {
-        RuleDiff diff = feature.diff;
-        boolean showSpacing = shouldShow("feature.map-rules.rule.wave-spacing",
-                "feature.map-rules.rule.wave-spacing.desc", diff.waveSpacing(rules), onlyModified, q);
-        boolean showWinWave = shouldShow("feature.map-rules.rule.win-wave",
-                "feature.map-rules.rule.win-wave.desc", diff.winWave(rules), onlyModified, q);
-        boolean showUnitCap = shouldShow("feature.map-rules.rule.unit-cap",
-                "feature.map-rules.rule.unit-cap.desc", diff.unitCap(rules), onlyModified, q);
-        boolean showWaves = shouldShow("feature.map-rules.rule.waves",
-                "feature.map-rules.rule.waves.desc", diff.waves(rules), onlyModified, q);
-        boolean showWaveTimer = shouldShow("feature.map-rules.rule.wave-timer",
-                "feature.map-rules.rule.wave-timer.desc", diff.waveTimer(rules), onlyModified, q);
-        boolean showWaveSending = shouldShow("feature.map-rules.rule.wave-sending",
-                "feature.map-rules.rule.wave-sending.desc", diff.waveSending(rules), onlyModified, q);
-        boolean showWaitEnemies = shouldShow("feature.map-rules.rule.wait-enemies",
-                "feature.map-rules.rule.wait-enemies.desc", diff.waitEnemies(rules), onlyModified, q);
-        boolean showSpawnAtCores = shouldShow("feature.map-rules.rule.spawn-at-cores",
-                "feature.map-rules.rule.spawn-at-cores.desc", diff.wavesSpawnAtCores(rules), onlyModified, q);
-        boolean showHideSpawns = shouldShow("feature.map-rules.rule.hide-spawns",
-                "feature.map-rules.rule.hide-spawns.desc", diff.hideSpawns(rules), onlyModified, q);
-        boolean showRandomAI = shouldShow("feature.map-rules.rule.random-wave-ai",
-                "feature.map-rules.rule.random-wave-ai.desc", diff.randomWaveAI(rules), onlyModified, q);
-        boolean showAirSpawns = shouldShow("feature.map-rules.rule.air-use-spawns",
-                "feature.map-rules.rule.air-use-spawns.desc", diff.airUseSpawns(rules), onlyModified, q);
-        boolean showDropZone = shouldShow("feature.map-rules.rule.drop-zone-radius",
-                "feature.map-rules.rule.drop-zone-radius.desc", diff.dropZoneRadius(rules), onlyModified, q);
-        if (!showSpacing && !showWinWave && !showUnitCap && !showWaves && !showWaveTimer && !showWaveSending
-                && !showWaitEnemies && !showSpawnAtCores && !showHideSpawns && !showRandomAI && !showAirSpawns
-                && !showDropZone) {
-            return false;
-        }
-        column().growX().gap(unit(2)).children(() -> {
-            text(t("feature.map-rules.section.waves")).left().color(Color.white);
-            if (showWaves) {
-                boolRow("feature.map-rules.rule.waves", "feature.map-rules.rule.waves.desc",
-                        rules.waves, "waves", diff.waves(rules));
-            }
-            if (showWaveTimer) {
-                boolRow("feature.map-rules.rule.wave-timer", "feature.map-rules.rule.wave-timer.desc",
-                        rules.waveTimer, "waveTimer", diff.waveTimer(rules));
-            }
-            if (showWaveSending) {
-                boolRow("feature.map-rules.rule.wave-sending", "feature.map-rules.rule.wave-sending.desc",
-                        rules.waveSending, "waveSending", diff.waveSending(rules));
-            }
-            if (showWaitEnemies) {
-                boolRow("feature.map-rules.rule.wait-enemies", "feature.map-rules.rule.wait-enemies.desc",
-                        rules.waitEnemies, "waitEnemies", diff.waitEnemies(rules));
-            }
-            if (showSpawnAtCores) {
-                boolRow("feature.map-rules.rule.spawn-at-cores", "feature.map-rules.rule.spawn-at-cores.desc",
-                        rules.wavesSpawnAtCores, "wavesSpawnAtCores", diff.wavesSpawnAtCores(rules));
-            }
-            if (showHideSpawns) {
-                boolRow("feature.map-rules.rule.hide-spawns", "feature.map-rules.rule.hide-spawns.desc",
-                        rules.hideSpawns, "hideSpawns", diff.hideSpawns(rules));
-            }
-            if (showRandomAI) {
-                boolRow("feature.map-rules.rule.random-wave-ai", "feature.map-rules.rule.random-wave-ai.desc",
-                        rules.randomWaveAI, "randomWaveAI", diff.randomWaveAI(rules));
-            }
-            if (showAirSpawns) {
-                boolRow("feature.map-rules.rule.air-use-spawns", "feature.map-rules.rule.air-use-spawns.desc",
-                        rules.airUseSpawns, "airUseSpawns", diff.airUseSpawns(rules));
-            }
-            if (showSpacing) {
-                sliderRow("feature.map-rules.rule.wave-spacing", "feature.map-rules.rule.wave-spacing.desc",
-                        rules.waveSpacing, 1f, 180f, 1f, "waveSpacing", diff.waveSpacing(rules));
-            }
-            if (showDropZone) {
-                sliderRow("feature.map-rules.rule.drop-zone-radius", "feature.map-rules.rule.drop-zone-radius.desc",
-                        rules.dropZoneRadius, 0f, 100f, 1f, "dropZoneRadius", diff.dropZoneRadius(rules));
-            }
-            if (showWinWave) {
-                intRow("feature.map-rules.rule.win-wave", "feature.map-rules.rule.win-wave.desc",
-                        rules.winWave, 0, 500, 1, "winWave", diff.winWave(rules));
-            }
-            if (showUnitCap) {
-                intRow("feature.map-rules.rule.unit-cap", "feature.map-rules.rule.unit-cap.desc",
-                        rules.unitCap, 0, 500, 1, "unitCap", diff.unitCap(rules));
-            }
-        });
-        return true;
-    }
-
-    private boolean shouldShow(String nameKey, String descKey, boolean modified, boolean onlyModified, String q) {
-        if (onlyModified && !modified) {
-            return false;
-        }
-        return matches(nameKey, descKey, q);
-    }
-
-    private void intRow(String nameKey, String descKey, int current, int min, int max, int step,
-            String field, boolean modified) {
-        String label = t(nameKey) + (modified ? " *" : "");
+    private void sliderRow(RuleDescriptor def, Rules rules) {
+        boolean modified = feature.diff.isModified(def, rules);
+        float current = def.floatGetter.get(rules);
+        String label = t(def.nameKey()) + (modified ? " *" : "");
         boolean editable = editableGameplay();
-        card().growX().padding(unit(3)).children(() -> {
-            column().growX().gap(unit(2)).children(() -> {
-                if (editable) {
-                    Signal<Integer> value = Signal.of(current);
-                    effect(() -> {
-                        Integer v = value.get();
-                        if (v != null && v != currentIntOf(field)) {
-                            feature.mutator.setInt(field, v);
-                        }
-                    });
-                    row().growX().children(() -> {
-                        text(label).left();
-                        spacer();
-                        text(value.map(v -> v != null ? String.valueOf(v) : "")).color(Color.lightGray);
-                    });
-                    slider(value, min, max, step).growX().minWidth(unit(50));
-                } else {
-                    row().growX().children(() -> {
-                        text(label).left();
-                        spacer();
-                        text(String.valueOf(current)).color(Color.lightGray);
-                    });
-                }
-                if (showDescriptions()) {
-                    text(t(descKey)).color(Color.lightGray).left().wrap();
-                }
-            });
+        ruleCard(def.descKey(), () -> {
+            if (editable) {
+                Signal<Float> value = Signal.of(current);
+                effect(() -> {
+                    Float v = value.get();
+                    Rules live = rules();
+                    float base = live != null ? def.floatGetter.get(live) : current;
+                    if (v != null && Math.abs(v - base) > 0.0001f) {
+                        feature.mutator.setFloat(def, v);
+                    }
+                });
+                row().growX().children(() -> {
+                    text(label).left();
+                    spacer();
+                    text(value.map(v -> v != null ? String.format("%.2f", v) : "")).color(Color.lightGray);
+                });
+                slider(value, def.min, def.max, def.step).growX().minWidth(unit(50));
+            } else {
+                row().growX().children(() -> {
+                    text(label).left();
+                    spacer();
+                    text(String.format("%.2f", current)).color(Color.lightGray);
+                });
+            }
         });
     }
 
-    private int currentIntOf(String field) {
-        Rules rules = rules();
-        if (rules == null) {
-            return 0;
-        }
-        if ("winWave".equals(field)) {
-            return rules.winWave;
-        }
-        if ("unitCap".equals(field)) {
-            return rules.unitCap;
-        }
-        return 0;
+    private void intRow(RuleDescriptor def, Rules rules) {
+        boolean modified = feature.diff.isModified(def, rules);
+        int current = def.intGetter.get(rules);
+        String label = t(def.nameKey()) + (modified ? " *" : "");
+        boolean editable = editableGameplay();
+        ruleCard(def.descKey(), () -> {
+            if (editable) {
+                Signal<Integer> value = Signal.of(current);
+                effect(() -> {
+                    Integer v = value.get();
+                    Rules live = rules();
+                    int base = live != null ? def.intGetter.get(live) : current;
+                    if (v != null && v != base) {
+                        feature.mutator.setInt(def, v);
+                    }
+                });
+                row().growX().children(() -> {
+                    text(label).left();
+                    spacer();
+                    text(value.map(v -> v != null ? String.valueOf(v) : "")).color(Color.lightGray);
+                });
+                slider(value, (int) def.min, (int) def.max, (int) def.step).growX().minWidth(unit(50));
+            } else {
+                row().growX().children(() -> {
+                    text(label).left();
+                    spacer();
+                    text(String.valueOf(current)).color(Color.lightGray);
+                });
+            }
+        });
     }
 
     private boolean bansSection(Rules rules, boolean onlyModified, String q, boolean filtering) {
-        RuleDiff diff = feature.diff;
-        boolean modified = diff.bannedBlocks(rules) || diff.bannedUnits(rules);
+        boolean modified = false;
+        for (RuleDescriptor def : RuleDescriptors.forCategory(RuleDescriptor.CAT_BANS)) {
+            if (feature.diff.isModified(def, rules)) {
+                modified = true;
+                break;
+            }
+        }
         if (onlyModified && !modified) {
             return false;
         }
@@ -692,9 +482,12 @@ public class MapRulesView extends BaseComponent {
         column().growX().gap(unit(2)).children(() -> {
             text(t("feature.map-rules.section.bans")).left().color(Color.white);
             text(t("feature.map-rules.bans.blocks")).left().color(Color.lightGray);
-            bannedBlocksGrid(rules, q);
+            banGrid("feature.map-rules.bans.none-blocks", Vars.content.blocks(), rules.bannedBlocks,
+                    block -> toggleBan(block, r -> r.bannedBlocks, "bannedBlocks", "block"),
+                    block -> block.uiIcon, q);
             text(t("feature.map-rules.bans.units")).left().color(Color.lightGray);
-            bannedUnitsGrid(rules, q);
+            banGrid("feature.map-rules.bans.none-units", Vars.content.units(), rules.bannedUnits,
+                    type -> toggleBan(type, r -> r.bannedUnits, "bannedUnits", "unit"), null, q);
         });
         return true;
     }
@@ -721,421 +514,133 @@ public class MapRulesView extends BaseComponent {
         return false;
     }
 
-    private void bannedBlocksGrid(Rules rules, String q) {
-        Seq<Block> toShow = new Seq<>();
+    private <T extends UnlockableContent> void banGrid(String noneKey, Seq<T> all, ObjectSet<T> banned,
+            Cons<T> onToggle, @Nullable Func<T, TextureRegion> iconOf, String q) {
+        Seq<T> toShow = new Seq<>();
         try {
             if (q != null && !q.isEmpty()) {
-                for (Block block : Vars.content.blocks()) {
-                    if (block == null) {
+                for (T item : all) {
+                    if (item == null) {
                         continue;
                     }
                     if (toShow.size >= 60) {
                         break;
                     }
-                    String name = block.localizedName != null ? block.localizedName.toLowerCase() : "";
-                    if (name.contains(q) || block.name.contains(q)) {
-                        toShow.add(block);
+                    String name = item.localizedName != null ? item.localizedName.toLowerCase() : "";
+                    if (name.contains(q) || item.name.contains(q)) {
+                        toShow.add(item);
                     }
                 }
-            } else if (rules.bannedBlocks != null) {
-                toShow.addAll(rules.bannedBlocks.toSeq());
+            } else if (banned != null) {
+                toShow.addAll(banned.toSeq());
             }
         } catch (Exception ignored) {
         }
         if (toShow.isEmpty()) {
-            text(t("feature.map-rules.bans.none-blocks")).color(Color.gray).left();
+            text(t(noneKey)).color(Color.gray).left();
             return;
         }
         wrap().left().gap(unit(1)).children(() -> {
-            for (Block block : toShow) {
-                bannedBlockChip(rules, block);
+            for (T item : toShow) {
+                banChip(item, banned != null && banned.contains(item), onToggle, iconOf);
             }
         });
     }
 
-    private void bannedBlockChip(Rules rules, Block block) {
-        if (block == null) {
+    private <T extends UnlockableContent> void banChip(T item, boolean banned, Cons<T> onToggle,
+            @Nullable Func<T, TextureRegion> iconOf) {
+        if (item == null) {
             return;
         }
-        boolean banned = rules.bannedBlocks != null && rules.bannedBlocks.contains(block);
-        String label = block.localizedName != null ? block.localizedName : block.name;
-        Readable<Boolean> checked = Readable.of(banned);
-        button(label, () -> toggleBlockBan(block))
+        String label = item.localizedName != null ? item.localizedName : item.name;
+        button(label, () -> onToggle.get(item))
                 .style(WebStyles.filterChipText())
-                .checked(checked)
+                .checked(Readable.of(banned))
                 .height(unit(9))
                 .enabled(Readable.of(editableGameplay()))
                 .children(() -> {
                     try {
-                        if (block.uiIcon != null) {
-                            icon(new TextureRegionDrawable(block.uiIcon)).size(unit(5));
+                        TextureRegion region = iconOf != null ? iconOf.get(item) : null;
+                        if (region != null) {
+                            icon(new TextureRegionDrawable(region)).size(unit(5));
                         }
                     } catch (Exception ignored) {
                     }
                 });
     }
 
-    private void toggleBlockBan(Block block) {
-        if (!editableGameplay() || block == null) {
+    private <T extends UnlockableContent> void toggleBan(T content, Func<Rules, ObjectSet<T>> setOf,
+            String jsCollection, String jsLookup) {
+        if (!editableGameplay() || content == null) {
             return;
         }
         Rules rules = rules();
-        if (rules == null || rules.bannedBlocks == null) {
+        if (rules == null) {
+            return;
+        }
+        ObjectSet<T> set = setOf.get(rules);
+        if (set == null) {
             return;
         }
         RuleEditMode m = mode.peek() != null ? mode.peek() : RuleEditMode.resolve();
         if (m == RuleEditMode.CLIENT_ADMIN) {
-            final boolean adding = rules.bannedBlocks == null || !rules.bannedBlocks.contains(block);
+            final boolean adding = !set.contains(content);
             feature.mutator.mutateVisual(r -> {
+                ObjectSet<T> live = setOf.get(r);
+                if (live == null) {
+                    return;
+                }
                 if (adding) {
-                    r.bannedBlocks.add(block);
+                    live.add(content);
                 } else {
-                    r.bannedBlocks.remove(block);
+                    live.remove(content);
                 }
             });
-            feature.mutator.mutateRemote("Vars.state.rules.bannedBlocks." + (adding ? "add" : "remove")
-                    + "(Vars.content.block(\"" + block.name + "\")); Call.setRules(Vars.state.rules);");
+            feature.mutator.mutateRemote("Vars.state.rules." + jsCollection + "." + (adding ? "add" : "remove")
+                    + "(Vars.content." + jsLookup + "(\"" + content.name + "\")); Call.setRules(Vars.state.rules);");
             feature.mutator.scheduleResync();
             refresh();
             return;
         }
         feature.mutator.mutate(r -> {
-            if (r.bannedBlocks.contains(block)) {
-                r.bannedBlocks.remove(block);
+            ObjectSet<T> live = setOf.get(r);
+            if (live == null) {
+                return;
+            }
+            if (live.contains(content)) {
+                live.remove(content);
             } else {
-                r.bannedBlocks.add(block);
+                live.add(content);
             }
         });
         refresh();
     }
 
-    private void bannedUnitsGrid(Rules rules, String q) {
-        Seq<UnitType> toShow = new Seq<>();
-        try {
-            if (q != null && !q.isEmpty()) {
-                for (UnitType type : Vars.content.units()) {
-                    if (type == null) {
-                        continue;
-                    }
-                    if (toShow.size >= 60) {
-                        break;
-                    }
-                    String name = type.localizedName != null ? type.localizedName.toLowerCase() : "";
-                    if (name.contains(q) || type.name.contains(q)) {
-                        toShow.add(type);
-                    }
-                }
-            } else if (rules.bannedUnits != null) {
-                toShow.addAll(rules.bannedUnits.toSeq());
-            }
-        } catch (Exception ignored) {
-        }
-        if (toShow.isEmpty()) {
-            text(t("feature.map-rules.bans.none-units")).color(Color.gray).left();
-            return;
-        }
-        wrap().left().gap(unit(1)).children(() -> {
-            for (UnitType type : toShow) {
-                bannedUnitChip(rules, type);
-            }
-        });
-    }
 
-    private void bannedUnitChip(Rules rules, UnitType type) {
-        if (type == null) {
-            return;
-        }
-        boolean banned = rules.bannedUnits != null && rules.bannedUnits.contains(type);
-        String label = type.localizedName != null ? type.localizedName : type.name;
-        button(label, () -> toggleUnitBan(type))
-                .style(WebStyles.filterChipText())
-                .checked(Readable.of(banned))
-                .height(unit(9))
-                .enabled(Readable.of(editableGameplay()));
-    }
-
-    private void toggleUnitBan(UnitType type) {
-        if (!editableGameplay() || type == null) {
-            return;
-        }
-        Rules rules = rules();
-        if (rules == null || rules.bannedUnits == null) {
-            return;
-        }
-        RuleEditMode m = mode.peek() != null ? mode.peek() : RuleEditMode.resolve();
-        if (m == RuleEditMode.CLIENT_ADMIN) {
-            final boolean adding = rules.bannedUnits == null || !rules.bannedUnits.contains(type);
-            feature.mutator.mutateVisual(r -> {
-                if (adding) {
-                    r.bannedUnits.add(type);
+    private void boolRow(RuleDescriptor def, Rules rules) {
+        boolean modified = feature.diff.isModified(def, rules);
+        boolean current = def.boolGetter.get(rules);
+        String label = t(def.nameKey()) + (modified ? " *" : "");
+        boolean editable = "fog".equals(def.fieldName) || "lighting".equals(def.fieldName)
+                ? visualEditable(def.fieldName) : editableGameplay();
+        ruleCard(def.descKey(), () -> {
+            if (editable) {
+                boolean isVisualOnly = !editableGameplay() && visualEditable(def.fieldName);
+                if (isVisualOnly) {
+                    checkbox(label, current, value -> feature.mutator.setVisualBool(def, value)).growX();
                 } else {
-                    r.bannedUnits.remove(type);
+                    checkbox(label, current, value -> {
+                        feature.mutator.setBool(def, value);
+                        refresh();
+                    }).growX();
                 }
-            });
-            feature.mutator.mutateRemote("Vars.state.rules.bannedUnits." + (adding ? "add" : "remove")
-                    + "(Vars.content.unit(\"" + type.name + "\")); Call.setRules(Vars.state.rules);");
-            feature.mutator.scheduleResync();
-            refresh();
-            return;
-        }
-        feature.mutator.mutate(r -> {
-            if (r.bannedUnits.contains(type)) {
-                r.bannedUnits.remove(type);
             } else {
-                r.bannedUnits.add(type);
+                row().growX().children(() -> {
+                    text(label).left();
+                    spacer();
+                    text(current ? "[green]ON" : "[scarlet]OFF").color(Color.lightGray);
+                });
             }
-        });
-        refresh();
-    }
-
-    private boolean environmentSection(Rules rules, boolean onlyModified, String q, boolean filtering) {
-        RuleDiff diff = feature.diff;
-        boolean showFog = shouldShow("feature.map-rules.rule.fog",
-                "feature.map-rules.rule.fog.desc", diff.fog(rules), onlyModified, q);
-        boolean showLighting = shouldShow("feature.map-rules.rule.lighting",
-                "feature.map-rules.rule.lighting.desc", diff.lighting(rules), onlyModified, q);
-        boolean showBorder = shouldShow("feature.map-rules.rule.border-darkness",
-                "feature.map-rules.rule.border-darkness.desc", diff.borderDarkness(rules), onlyModified, q);
-        boolean showStaticFog = shouldShow("feature.map-rules.rule.static-fog",
-                "feature.map-rules.rule.static-fog.desc", diff.staticFog(rules), onlyModified, q);
-        boolean showUnitLight = shouldShow("feature.map-rules.rule.unit-light",
-                "feature.map-rules.rule.unit-light.desc", diff.unitLight(rules), onlyModified, q);
-        if (!showFog && !showLighting && !showBorder && !showStaticFog && !showUnitLight) {
-            return false;
-        }
-        column().growX().gap(unit(2)).children(() -> {
-            text(t("feature.map-rules.section.environment")).left().color(Color.white);
-            if (showFog) {
-                boolRow("feature.map-rules.rule.fog", "feature.map-rules.rule.fog.desc",
-                        rules.fog, "fog", diff.fog(rules));
-            }
-            if (showLighting) {
-                boolRow("feature.map-rules.rule.lighting", "feature.map-rules.rule.lighting.desc",
-                        rules.lighting, "lighting", diff.lighting(rules));
-            }
-            if (showBorder) {
-                boolRow("feature.map-rules.rule.border-darkness", "feature.map-rules.rule.border-darkness.desc",
-                        rules.borderDarkness, "borderDarkness", diff.borderDarkness(rules));
-            }
-            if (showStaticFog) {
-                boolRow("feature.map-rules.rule.static-fog", "feature.map-rules.rule.static-fog.desc",
-                        rules.staticFog, "staticFog", diff.staticFog(rules));
-            }
-            if (showUnitLight) {
-                boolRow("feature.map-rules.rule.unit-light", "feature.map-rules.rule.unit-light.desc",
-                        rules.unitLight, "unitLight", diff.unitLight(rules));
-            }
-        });
-        return true;
-    }
-
-    private boolean mechanicsSection(Rules rules, boolean onlyModified, String q, boolean filtering) {
-        RuleDiff diff = feature.diff;
-        boolean showReactor = shouldShow("feature.map-rules.rule.reactor-explosions",
-                "feature.map-rules.rule.reactor-explosions.desc", diff.reactorExplosions(rules), onlyModified, q);
-        boolean showFire = shouldShow("feature.map-rules.rule.fire",
-                "feature.map-rules.rule.fire.desc", diff.fire(rules), onlyModified, q);
-        boolean showPossession = shouldShow("feature.map-rules.rule.possession",
-                "feature.map-rules.rule.possession.desc", diff.possession(rules), onlyModified, q);
-        boolean showSchematics = shouldShow("feature.map-rules.rule.schematics",
-                "feature.map-rules.rule.schematics.desc", diff.schematics(rules), onlyModified, q);
-        boolean showInfinite = shouldShow("feature.map-rules.rule.infinite-resources",
-                "feature.map-rules.rule.infinite-resources.desc", diff.infiniteResources(rules), onlyModified, q);
-        boolean showPvp = shouldShow("feature.map-rules.rule.pvp",
-                "feature.map-rules.rule.pvp.desc", diff.pvp(rules), onlyModified, q);
-        boolean showPvpPause = shouldShow("feature.map-rules.rule.pvp-auto-pause",
-                "feature.map-rules.rule.pvp-auto-pause.desc", diff.pvpAutoPause(rules), onlyModified, q);
-        boolean showAttack = shouldShow("feature.map-rules.rule.attack-mode",
-                "feature.map-rules.rule.attack-mode.desc", diff.attackMode(rules), onlyModified, q);
-        boolean showCapture = shouldShow("feature.map-rules.rule.core-capture",
-                "feature.map-rules.rule.core-capture.desc", diff.coreCapture(rules), onlyModified, q);
-        boolean showIncinerates = shouldShow("feature.map-rules.rule.core-incinerates",
-                "feature.map-rules.rule.core-incinerates.desc", diff.coreIncinerates(rules), onlyModified, q);
-        boolean showGameOver = shouldShow("feature.map-rules.rule.can-game-over",
-                "feature.map-rules.rule.can-game-over.desc", diff.canGameOver(rules), onlyModified, q);
-        boolean showNoPause = shouldShow("feature.map-rules.rule.pause-disabled",
-                "feature.map-rules.rule.pause-disabled.desc", diff.pauseDisabled(rules), onlyModified, q);
-        boolean showExplosions = shouldShow("feature.map-rules.rule.damage-explosions",
-                "feature.map-rules.rule.damage-explosions.desc", diff.damageExplosions(rules), onlyModified, q);
-        boolean showDerelict = shouldShow("feature.map-rules.rule.derelict-repair",
-                "feature.map-rules.rule.derelict-repair.desc", diff.derelictRepair(rules), onlyModified, q);
-        boolean showRange = shouldShow("feature.map-rules.rule.place-range-check",
-                "feature.map-rules.rule.place-range-check.desc", diff.placeRangeCheck(rules), onlyModified, q);
-        boolean showProtection = shouldShow("feature.map-rules.rule.core-protection",
-                "feature.map-rules.rule.core-protection.desc", diff.coreProtection(rules), onlyModified, q);
-        boolean showCleanup = shouldShow("feature.map-rules.rule.cleanup-dead-teams",
-                "feature.map-rules.rule.cleanup-dead-teams.desc", diff.cleanupDeadTeams(rules), onlyModified, q);
-        boolean showDeposit = shouldShow("feature.map-rules.rule.only-deposit-core",
-                "feature.map-rules.rule.only-deposit-core.desc", diff.onlyDepositCore(rules), onlyModified, q);
-        boolean showUnloaders = shouldShow("feature.map-rules.rule.allow-core-unloaders",
-                "feature.map-rules.rule.allow-core-unloaders.desc", diff.allowCoreUnloaders(rules), onlyModified, q);
-        boolean showDestroyClear = shouldShow("feature.map-rules.rule.core-destroy-clear",
-                "feature.map-rules.rule.core-destroy-clear.desc", diff.coreDestroyClear(rules), onlyModified, q);
-        boolean showHideBanned = shouldShow("feature.map-rules.rule.hide-banned-blocks",
-                "feature.map-rules.rule.hide-banned-blocks.desc", diff.hideBannedBlocks(rules), onlyModified, q);
-        boolean showEnvDecon = shouldShow("feature.map-rules.rule.allow-env-deconstruct",
-                "feature.map-rules.rule.allow-env-deconstruct.desc", diff.allowEnvDeconstruct(rules), onlyModified, q);
-        boolean showInstant = shouldShow("feature.map-rules.rule.instant-build",
-                "feature.map-rules.rule.instant-build.desc", diff.instantBuild(rules), onlyModified, q);
-        boolean showGhost = shouldShow("feature.map-rules.rule.ghost-blocks",
-                "feature.map-rules.rule.ghost-blocks.desc", diff.ghostBlocks(rules), onlyModified, q);
-        boolean showLogicUnits = shouldShow("feature.map-rules.rule.logic-unit-control",
-                "feature.map-rules.rule.logic-unit-control.desc", diff.logicUnitControl(rules), onlyModified, q);
-        boolean showPayload = shouldShow("feature.map-rules.rule.unit-payload-update",
-                "feature.map-rules.rule.unit-payload-update.desc", diff.unitPayloadUpdate(rules), onlyModified, q);
-        boolean showPings = shouldShow("feature.map-rules.rule.show-team-pings",
-                "feature.map-rules.rule.show-team-pings.desc", diff.showTeamPings(rules), onlyModified, q);
-        if (!showReactor && !showFire && !showPossession && !showSchematics && !showInfinite
-                && !showPvp && !showPvpPause && !showAttack && !showCapture && !showIncinerates
-                && !showGameOver && !showNoPause && !showExplosions && !showDerelict && !showRange
-                && !showProtection && !showCleanup && !showDeposit && !showUnloaders && !showDestroyClear
-                && !showHideBanned && !showEnvDecon && !showInstant && !showGhost && !showLogicUnits
-                && !showPayload && !showPings) {
-            return false;
-        }
-        column().growX().gap(unit(2)).children(() -> {
-            text(t("feature.map-rules.section.mechanics")).left().color(Color.white);
-            if (showReactor) {
-                boolRow("feature.map-rules.rule.reactor-explosions", "feature.map-rules.rule.reactor-explosions.desc",
-                        rules.reactorExplosions, "reactorExplosions", diff.reactorExplosions(rules));
-            }
-            if (showFire) {
-                boolRow("feature.map-rules.rule.fire", "feature.map-rules.rule.fire.desc",
-                        rules.fire, "fire", diff.fire(rules));
-            }
-            if (showPossession) {
-                boolRow("feature.map-rules.rule.possession", "feature.map-rules.rule.possession.desc",
-                        rules.possessionAllowed, "possessionAllowed", diff.possession(rules));
-            }
-            if (showSchematics) {
-                boolRow("feature.map-rules.rule.schematics", "feature.map-rules.rule.schematics.desc",
-                        rules.schematicsAllowed, "schematicsAllowed", diff.schematics(rules));
-            }
-            if (showInfinite) {
-                boolRow("feature.map-rules.rule.infinite-resources", "feature.map-rules.rule.infinite-resources.desc",
-                        rules.infiniteResources, "infiniteResources", diff.infiniteResources(rules));
-            }
-            if (showPvp) {
-                boolRow("feature.map-rules.rule.pvp", "feature.map-rules.rule.pvp.desc",
-                        rules.pvp, "pvp", diff.pvp(rules));
-            }
-            if (showPvpPause) {
-                boolRow("feature.map-rules.rule.pvp-auto-pause", "feature.map-rules.rule.pvp-auto-pause.desc",
-                        rules.pvpAutoPause, "pvpAutoPause", diff.pvpAutoPause(rules));
-            }
-            if (showAttack) {
-                boolRow("feature.map-rules.rule.attack-mode", "feature.map-rules.rule.attack-mode.desc",
-                        rules.attackMode, "attackMode", diff.attackMode(rules));
-            }
-            if (showCapture) {
-                boolRow("feature.map-rules.rule.core-capture", "feature.map-rules.rule.core-capture.desc",
-                        rules.coreCapture, "coreCapture", diff.coreCapture(rules));
-            }
-            if (showIncinerates) {
-                boolRow("feature.map-rules.rule.core-incinerates", "feature.map-rules.rule.core-incinerates.desc",
-                        rules.coreIncinerates, "coreIncinerates", diff.coreIncinerates(rules));
-            }
-            if (showGameOver) {
-                boolRow("feature.map-rules.rule.can-game-over", "feature.map-rules.rule.can-game-over.desc",
-                        rules.canGameOver, "canGameOver", diff.canGameOver(rules));
-            }
-            if (showNoPause) {
-                boolRow("feature.map-rules.rule.pause-disabled", "feature.map-rules.rule.pause-disabled.desc",
-                        rules.pauseDisabled, "pauseDisabled", diff.pauseDisabled(rules));
-            }
-            if (showExplosions) {
-                boolRow("feature.map-rules.rule.damage-explosions", "feature.map-rules.rule.damage-explosions.desc",
-                        rules.damageExplosions, "damageExplosions", diff.damageExplosions(rules));
-            }
-            if (showDerelict) {
-                boolRow("feature.map-rules.rule.derelict-repair", "feature.map-rules.rule.derelict-repair.desc",
-                        rules.derelictRepair, "derelictRepair", diff.derelictRepair(rules));
-            }
-            if (showRange) {
-                boolRow("feature.map-rules.rule.place-range-check", "feature.map-rules.rule.place-range-check.desc",
-                        rules.placeRangeCheck, "placeRangeCheck", diff.placeRangeCheck(rules));
-            }
-            if (showProtection) {
-                boolRow("feature.map-rules.rule.core-protection", "feature.map-rules.rule.core-protection.desc",
-                        rules.polygonCoreProtection, "polygonCoreProtection", diff.coreProtection(rules));
-            }
-            if (showCleanup) {
-                boolRow("feature.map-rules.rule.cleanup-dead-teams", "feature.map-rules.rule.cleanup-dead-teams.desc",
-                        rules.cleanupDeadTeams, "cleanupDeadTeams", diff.cleanupDeadTeams(rules));
-            }
-            if (showDeposit) {
-                boolRow("feature.map-rules.rule.only-deposit-core", "feature.map-rules.rule.only-deposit-core.desc",
-                        rules.onlyDepositCore, "onlyDepositCore", diff.onlyDepositCore(rules));
-            }
-            if (showUnloaders) {
-                boolRow("feature.map-rules.rule.allow-core-unloaders",
-                        "feature.map-rules.rule.allow-core-unloaders.desc",
-                        rules.allowCoreUnloaders, "allowCoreUnloaders", diff.allowCoreUnloaders(rules));
-            }
-            if (showDestroyClear) {
-                boolRow("feature.map-rules.rule.core-destroy-clear", "feature.map-rules.rule.core-destroy-clear.desc",
-                        rules.coreDestroyClear, "coreDestroyClear", diff.coreDestroyClear(rules));
-            }
-            if (showHideBanned) {
-                boolRow("feature.map-rules.rule.hide-banned-blocks", "feature.map-rules.rule.hide-banned-blocks.desc",
-                        rules.hideBannedBlocks, "hideBannedBlocks", diff.hideBannedBlocks(rules));
-            }
-            if (showEnvDecon) {
-                boolRow("feature.map-rules.rule.allow-env-deconstruct",
-                        "feature.map-rules.rule.allow-env-deconstruct.desc",
-                        rules.allowEnvironmentDeconstruct, "allowEnvironmentDeconstruct",
-                        diff.allowEnvDeconstruct(rules));
-            }
-            if (showInstant) {
-                boolRow("feature.map-rules.rule.instant-build", "feature.map-rules.rule.instant-build.desc",
-                        rules.instantBuild, "instantBuild", diff.instantBuild(rules));
-            }
-            if (showGhost) {
-                boolRow("feature.map-rules.rule.ghost-blocks", "feature.map-rules.rule.ghost-blocks.desc",
-                        rules.ghostBlocks, "ghostBlocks", diff.ghostBlocks(rules));
-            }
-            if (showLogicUnits) {
-                boolRow("feature.map-rules.rule.logic-unit-control", "feature.map-rules.rule.logic-unit-control.desc",
-                        rules.logicUnitControl, "logicUnitControl", diff.logicUnitControl(rules));
-            }
-            if (showPayload) {
-                boolRow("feature.map-rules.rule.unit-payload-update", "feature.map-rules.rule.unit-payload-update.desc",
-                        rules.unitPayloadUpdate, "unitPayloadUpdate", diff.unitPayloadUpdate(rules));
-            }
-            if (showPings) {
-                boolRow("feature.map-rules.rule.show-team-pings", "feature.map-rules.rule.show-team-pings.desc",
-                        rules.showOtherTeamPings, "showOtherTeamPings", diff.showTeamPings(rules));
-            }
-        });
-        return true;
-    }
-
-    private void boolRow(String nameKey, String descKey, boolean current, String field, boolean modified) {
-        String label = t(nameKey) + (modified ? " *" : "");
-        boolean editable = "fog".equals(field) || "lighting".equals(field) ? visualEditable(field) : editableGameplay();
-        card().growX().padding(unit(3)).children(() -> {
-            column().growX().gap(unit(2)).children(() -> {
-                if (editable) {
-                    boolean isVisualOnly = !editableGameplay() && visualEditable(field);
-                    if (isVisualOnly) {
-                        checkbox(label, current, value -> feature.mutator.setVisualBool(field, value)).growX();
-                    } else {
-                        checkbox(label, current, value -> {
-                            feature.mutator.setBool(field, value);
-                            refresh();
-                        }).growX();
-                    }
-                } else {
-                    row().growX().children(() -> {
-                        text(label).left();
-                        spacer();
-                        text(current ? "[green]ON" : "[scarlet]OFF").color(Color.lightGray);
-                    });
-                }
-                if (showDescriptions()) {
-                    text(t(descKey)).color(Color.lightGray).left().wrap();
-                }
-            });
         });
     }
 }

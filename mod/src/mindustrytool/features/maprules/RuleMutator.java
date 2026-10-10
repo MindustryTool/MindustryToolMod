@@ -101,40 +101,46 @@ public class RuleMutator {
         }
     }
 
-    public void setFloat(String field, float value) {
+    public void setFloat(RuleDescriptor def, float value) {
+        if (def == null || def.floatSetter == null) {
+            return;
+        }
         RuleEditMode mode = RuleEditMode.resolve();
         if (mode == RuleEditMode.CLIENT_READONLY) {
             return;
         }
         if (mode == RuleEditMode.CLIENT_ADMIN) {
             final float next = value;
-            debounce("js:" + field, () -> {
-                mutateVisual(rules -> setFloatField(rules, field, next));
-                mutateRemote("Vars.state.rules." + field + " = " + next + "; Call.setRules(Vars.state.rules);");
+            debounce("js:" + def.id, () -> {
+                mutateVisual(rules -> def.floatSetter.get(rules, next));
+                mutateRemote("Vars.state.rules." + def.fieldName + " = " + next + "; Call.setRules(Vars.state.rules);");
                 scheduleResync();
             });
             return;
         }
         final float next = value;
-        debounce(field, () -> mutate(rules -> setFloatField(rules, field, next)));
+        debounce(def.id, () -> mutate(rules -> def.floatSetter.get(rules, next)));
     }
 
-    public void setInt(String field, int value) {
+    public void setInt(RuleDescriptor def, int value) {
+        if (def == null || def.intSetter == null) {
+            return;
+        }
         RuleEditMode mode = RuleEditMode.resolve();
         if (mode == RuleEditMode.CLIENT_READONLY) {
             return;
         }
         if (mode == RuleEditMode.CLIENT_ADMIN) {
             final int next = value;
-            debounce("js:" + field, () -> {
-                mutateVisual(rules -> setIntField(rules, field, next));
-                mutateRemote("Vars.state.rules." + field + " = " + next + "; Call.setRules(Vars.state.rules);");
+            debounce("js:" + def.id, () -> {
+                mutateVisual(rules -> def.intSetter.get(rules, next));
+                mutateRemote("Vars.state.rules." + def.fieldName + " = " + next + "; Call.setRules(Vars.state.rules);");
                 scheduleResync();
             });
             return;
         }
         final int next = value;
-        debounce(field, () -> mutate(rules -> setIntField(rules, field, next)));
+        debounce(def.id, () -> mutate(rules -> def.intSetter.get(rules, next)));
     }
 
     private void debounce(String key, Runnable action) {
@@ -170,146 +176,27 @@ public class RuleMutator {
         }
     }
 
-    public void setBool(String field, boolean value) {
+    public void setBool(RuleDescriptor def, boolean value) {
+        if (def == null || def.boolSetter == null) {
+            return;
+        }
         RuleEditMode mode = RuleEditMode.resolve();
         if (mode == RuleEditMode.CLIENT_ADMIN) {
-            mutateVisual(rules -> setBoolField(rules, field, value));
-            mutateRemote("Vars.state.rules." + field + " = " + value + "; Call.setRules(Vars.state.rules);");
+            mutateVisual(rules -> def.boolSetter.get(rules, value));
+            mutateRemote("Vars.state.rules." + def.fieldName + " = " + value + "; Call.setRules(Vars.state.rules);");
             scheduleResync();
             return;
         }
         final boolean next = value;
-        mutate(rules -> setBoolField(rules, field, next));
+        mutate(rules -> def.boolSetter.get(rules, next));
     }
 
-    public void setVisualBool(String field, boolean value) {
+    public void setVisualBool(RuleDescriptor def, boolean value) {
+        if (def == null || def.boolSetter == null) {
+            return;
+        }
         final boolean next = value;
-        mutateVisual(rules -> setBoolField(rules, field, next));
+        mutateVisual(rules -> def.boolSetter.get(rules, next));
     }
 
-    private void setFloatField(Rules rules, String field, float value) {
-        if ("buildSpeedMultiplier".equals(field)) {
-            rules.buildSpeedMultiplier = value;
-        } else if ("buildCostMultiplier".equals(field)) {
-            rules.buildCostMultiplier = value;
-        } else if ("blockHealthMultiplier".equals(field)) {
-            rules.blockHealthMultiplier = value;
-        } else if ("blockDamageMultiplier".equals(field)) {
-            rules.blockDamageMultiplier = value;
-        } else if ("unitDamageMultiplier".equals(field)) {
-            rules.unitDamageMultiplier = value;
-        } else if ("unitHealthMultiplier".equals(field)) {
-            rules.unitHealthMultiplier = value;
-        } else if ("unitBuildSpeedMultiplier".equals(field)) {
-            rules.unitBuildSpeedMultiplier = value;
-        } else if ("unitCostMultiplier".equals(field)) {
-            rules.unitCostMultiplier = value;
-        } else if ("solarMultiplier".equals(field)) {
-            rules.solarMultiplier = value;
-        } else if ("unitMineSpeedMultiplier".equals(field)) {
-            rules.unitMineSpeedMultiplier = value;
-        } else if ("unitCrashDamageMultiplier".equals(field)) {
-            rules.unitCrashDamageMultiplier = value;
-        } else if ("deconstructRefundMultiplier".equals(field)) {
-            rules.deconstructRefundMultiplier = value;
-        } else if ("itemDepositCooldown".equals(field)) {
-            rules.itemDepositCooldown = value;
-        } else if ("dropZoneRadius".equals(field)) {
-            rules.dropZoneRadius = value;
-        } else if ("waveSpacing".equals(field)) {
-            rules.waveSpacing = value;
-        }
-    }
-
-    private void setIntField(Rules rules, String field, int value) {
-        if ("winWave".equals(field)) {
-            rules.winWave = value;
-        } else if ("unitCap".equals(field)) {
-            rules.unitCap = value;
-        }
-    }
-
-    private void setBoolField(Rules rules, String field, boolean value) {
-        if ("fog".equals(field)) {
-            rules.fog = value;
-        } else if ("lighting".equals(field)) {
-            rules.lighting = value;
-        } else if ("borderDarkness".equals(field)) {
-            rules.borderDarkness = value;
-        } else if ("reactorExplosions".equals(field)) {
-            rules.reactorExplosions = value;
-        } else if ("fire".equals(field)) {
-            rules.fire = value;
-        } else if ("possessionAllowed".equals(field)) {
-            rules.possessionAllowed = value;
-        } else if ("schematicsAllowed".equals(field)) {
-            rules.schematicsAllowed = value;
-        } else if ("infiniteResources".equals(field)) {
-            rules.infiniteResources = value;
-        } else if ("waves".equals(field)) {
-            rules.waves = value;
-        } else if ("waveTimer".equals(field)) {
-            rules.waveTimer = value;
-        } else if ("waveSending".equals(field)) {
-            rules.waveSending = value;
-        } else if ("waitEnemies".equals(field)) {
-            rules.waitEnemies = value;
-        } else if ("wavesSpawnAtCores".equals(field)) {
-            rules.wavesSpawnAtCores = value;
-        } else if ("hideSpawns".equals(field)) {
-            rules.hideSpawns = value;
-        } else if ("randomWaveAI".equals(field)) {
-            rules.randomWaveAI = value;
-        } else if ("airUseSpawns".equals(field)) {
-            rules.airUseSpawns = value;
-        } else if ("staticFog".equals(field)) {
-            rules.staticFog = value;
-        } else if ("unitLight".equals(field)) {
-            rules.unitLight = value;
-        } else if ("pvp".equals(field)) {
-            rules.pvp = value;
-        } else if ("pvpAutoPause".equals(field)) {
-            rules.pvpAutoPause = value;
-        } else if ("attackMode".equals(field)) {
-            rules.attackMode = value;
-        } else if ("coreCapture".equals(field)) {
-            rules.coreCapture = value;
-        } else if ("coreIncinerates".equals(field)) {
-            rules.coreIncinerates = value;
-        } else if ("canGameOver".equals(field)) {
-            rules.canGameOver = value;
-        } else if ("pauseDisabled".equals(field)) {
-            rules.pauseDisabled = value;
-        } else if ("damageExplosions".equals(field)) {
-            rules.damageExplosions = value;
-        } else if ("derelictRepair".equals(field)) {
-            rules.derelictRepair = value;
-        } else if ("placeRangeCheck".equals(field)) {
-            rules.placeRangeCheck = value;
-        } else if ("polygonCoreProtection".equals(field)) {
-            rules.polygonCoreProtection = value;
-        } else if ("cleanupDeadTeams".equals(field)) {
-            rules.cleanupDeadTeams = value;
-        } else if ("onlyDepositCore".equals(field)) {
-            rules.onlyDepositCore = value;
-        } else if ("allowCoreUnloaders".equals(field)) {
-            rules.allowCoreUnloaders = value;
-        } else if ("coreDestroyClear".equals(field)) {
-            rules.coreDestroyClear = value;
-        } else if ("hideBannedBlocks".equals(field)) {
-            rules.hideBannedBlocks = value;
-        } else if ("allowEnvironmentDeconstruct".equals(field)) {
-            rules.allowEnvironmentDeconstruct = value;
-        } else if ("instantBuild".equals(field)) {
-            rules.instantBuild = value;
-        } else if ("ghostBlocks".equals(field)) {
-            rules.ghostBlocks = value;
-        } else if ("logicUnitControl".equals(field)) {
-            rules.logicUnitControl = value;
-        } else if ("unitPayloadUpdate".equals(field)) {
-            rules.unitPayloadUpdate = value;
-        } else if ("showOtherTeamPings".equals(field)) {
-            rules.showOtherTeamPings = value;
-        }
-    }
 }

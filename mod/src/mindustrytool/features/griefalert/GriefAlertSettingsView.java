@@ -1,4 +1,4 @@
-package mindustrytool.features.reactoralert;
+package mindustrytool.features.griefalert;
 
 import static solim.UI.*;
 
@@ -13,10 +13,10 @@ import mindustry.world.blocks.power.PowerGenerator;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 
-public class ReactorAlertSettingsView extends BaseComponent {
-    private final ReactorAlertFeature feature;
+public class GriefAlertSettingsView extends BaseComponent {
+    private final GriefAlertFeature feature;
 
-    public ReactorAlertSettingsView(ReactorAlertFeature feature) {
+    public GriefAlertSettingsView(GriefAlertFeature feature) {
         this.feature = feature;
     }
 
@@ -26,7 +26,7 @@ public class ReactorAlertSettingsView extends BaseComponent {
             scroll().center().children(() -> {
                 column().growX().gap(unit(2)).padding(unit(3)).children(() -> {
                     row().growX().gap(unit(2)).center().children(() -> {
-                        text(Core.bundle.get("feature.reactor-alert.settings.radius")).left();
+                        text(Core.bundle.get("feature.grief-alert.settings.radius")).left();
                         spacer();
                         slider(feature.radiusConfig.signal(), 1f, 30f, 1f);
                         row().width(unit(14)).children(() -> {
@@ -38,20 +38,20 @@ public class ReactorAlertSettingsView extends BaseComponent {
                     divider();
 
                     row().growX().gap(unit(2)).center().children(() -> {
-                        text(Core.bundle.get("feature.reactor-alert.settings.monitored-blocks")).left();
+                        text(Core.bundle.get("feature.grief-alert.settings.monitored-blocks")).left();
                         spacer();
                         row().gap(unit(1)).children(() -> {
                             button(() -> feature.setAllBlocksEnabled(true))
                                     .style(WebStyles.outline())
                                     .height(unit(7))
                                     .padding(unit(1), unit(2.5f), unit(1), unit(2.5f))
-                                    .children(() -> text(Core.bundle.get("feature.reactor-alert.settings.all")));
+                                    .children(() -> text(Core.bundle.get("feature.grief-alert.settings.all")));
 
                             button(() -> feature.setAllBlocksEnabled(false))
                                     .style(WebStyles.ghost())
                                     .height(unit(7))
                                     .padding(unit(1), unit(2.5f), unit(1), unit(2.5f))
-                                    .children(() -> text(Core.bundle.get("feature.reactor-alert.settings.none")));
+                                    .children(() -> text(Core.bundle.get("feature.grief-alert.settings.none")));
                         });
                     });
 
@@ -68,7 +68,7 @@ public class ReactorAlertSettingsView extends BaseComponent {
         Drawable drawable = region != null ? new TextureRegionDrawable(region) : Tex.clear;
         String label = block instanceof PowerGenerator
                 ? block.localizedName + " ("
-                        + Core.bundle.format("feature.reactor-alert.settings.tiles",
+                        + Core.bundle.format("feature.grief-alert.settings.tiles",
                                 ((PowerGenerator) block).explosionRadius)
                         + ")"
                 : block.localizedName;

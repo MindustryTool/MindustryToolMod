@@ -1,4 +1,4 @@
-package mindustrytool.features.reactoralert;
+package mindustrytool.features.griefalert;
 
 import arc.Core;
 import arc.Events;
@@ -25,22 +25,22 @@ import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 import solim.reactive.Signal;
 
-public class ReactorAlertFeature extends Feature {
+public class GriefAlertFeature extends Feature {
     private static final float DEFAULT_RADIUS = 10f;
     private static final long COOLDOWN_MILLIS = 3000L;
 
     public final ConfigGroup config;
     public final ConfigValue<Float> radiusConfig;
 
-    private @Nullable ReactorAlertSettingsDialog settingsDialog;
+    private @Nullable GriefAlertSettingsDialog settingsDialog;
     private long lastAlertMillis = 0L;
 
     private @Nullable BitSet blockEnabled;
     private final ObjectMap<String, Signal<Boolean>> blockSignals = new ObjectMap<>();
 
-    public ReactorAlertFeature() {
+    public GriefAlertFeature() {
         super(FeatureMetadata.builder()
-                .id("reactor-alert")
+                .id("grief-alert")
                 .icon(FileIcon.of("triangle-alert.png"))
                 .order(23)
                 .enabledByDefault(true)
@@ -54,7 +54,7 @@ public class ReactorAlertFeature extends Feature {
     }
 
     public static String blockSettingKey(Block block) {
-        return "mindustrytool.features.reactor-alert.block." + block.name;
+        return "mindustrytool.features.grief-alert.block." + block.name;
     }
 
     public Seq<Block> explosiveBlocks() {
@@ -139,7 +139,7 @@ public class ReactorAlertFeature extends Feature {
         if (event.tile == null || !(event.tile.build instanceof ConstructBuild)) {
             return;
         }
-        
+
         ConstructBuild construct = (ConstructBuild) event.tile.build;
         Block block = construct.current;
         if (block == null || !isExplosiveReactor(block) || !isBlockEnabled(block)) {
@@ -164,17 +164,21 @@ public class ReactorAlertFeature extends Feature {
         float worldX = event.tile.worldx();
         float worldY = event.tile.worldy();
         float nearest = Float.MAX_VALUE;
-        
+        CoreBuild nearestCore = null;
+
         for (int i = 0; i < cores.size; i++) {
             CoreBuild core = cores.get(i);
             if (core == null) {
                 continue;
             }
             float distance = Mathf.dst(worldX, worldY, core.x, core.y) / Vars.tilesize;
-            nearest = nearest < distance ? nearest : distance;
+            if (distance < nearest) {
+                nearest = distance;
+                nearestCore = core;
+            }
         }
 
-        if (nearest == Float.MAX_VALUE) {
+        if (nearestCore == null) {
             return;
         }
 
@@ -190,10 +194,15 @@ public class ReactorAlertFeature extends Feature {
         }
 
         lastAlertMillis = now;
-        String message = Core.bundle.format("feature.reactor-alert.alert", builderName + "[white]",
-                String.format("%.1f", nearest), block.localizedName);
+        String message = Core.bundle.format("feature.grief-alert.alert",
+                builderName + "[white]",
+                block.localizedName,
+                String.valueOf(event.tile.x),
+                String.valueOf(event.tile.y),
+                String.valueOf(nearestCore.tileX()),
+                String.valueOf(nearestCore.tileY()));
         String colored = "[scarlet]" + message + "[]";
-        
+
         if (Vars.net.active() && Vars.ui != null && Vars.ui.chatfrag != null) {
             Vars.ui.chatfrag.addMessage(colored);
         } else if (Vars.ui != null && Vars.ui.hudfrag != null) {
@@ -210,7 +219,7 @@ public class ReactorAlertFeature extends Feature {
     public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
-                settingsDialog = new ReactorAlertSettingsDialog(this);
+                settingsDialog = new GriefAlertSettingsDialog(this);
             }
             return settingsDialog;
         };

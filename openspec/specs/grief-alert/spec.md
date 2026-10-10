@@ -1,23 +1,16 @@
-# reactor-alert Specification
+# grief-alert Specification
 
 ## Purpose
-Warns when another player begins constructing an explosive reactor within a configurable distance of a core.
-
+TBD - created by archiving change grief-alert. Update Purpose after archive.
 ## Requirements
-
 ### Requirement: Feature availability
 
-The system SHALL provide a `reactor-alert` feature that is enabled by default and exposed in the Quick Access HUD, and SHALL register it with the mod's feature manager.
+The system SHALL provide a `grief-alert` feature that is enabled by default, and SHALL register it with the mod's feature manager.
 
 #### Scenario: Feature is enabled by default
 
 - **WHEN** the mod is loaded for the first time
-- **THEN** the Reactor Alert feature is enabled without user action
-
-#### Scenario: Feature appears in Quick Access
-
-- **WHEN** the feature list is rendered
-- **THEN** Reactor Alert is available through the Quick Access HUD
+- **THEN** the Grief Alert feature is enabled without user action
 
 ### Requirement: Explosive reactor detection
 
@@ -93,7 +86,7 @@ The system SHALL measure the center-to-center Euclidean distance in tiles betwee
 #### Scenario: Core within radius
 
 - **WHEN** the nearest core of the builder's team is within the configured radius
-- **THEN** the alert is shown and reports the distance in tiles
+- **THEN** the alert is shown and identifies the target block's tile coordinates and the nearest core's tile coordinates
 
 #### Scenario: Core outside radius
 
@@ -140,35 +133,35 @@ The system SHALL suppress alerts raised within 3 seconds of a previous alert.
 
 ### Requirement: Alert presentation
 
-The system SHALL present the alert as a red-colored message in the chat fragment containing the builder, the distance in tiles, and the constructed reactor's localized name.
+The system SHALL present the alert as a red-colored message in the chat fragment (or HUD toast when offline) containing the builder, the constructed block's localized name, the target block's tile coordinates `(targetX, targetY)`, and the nearest core's tile coordinates `(coreX, coreY)`.
 
 #### Scenario: Message contents
 
 - **WHEN** an alert is emitted
-- **THEN** the chat message contains the builder (player or team), the distance, and the reactor name
+- **THEN** the alert message contains the builder (player or team), the constructed block's localized name, the target tile coordinates, and the nearest core tile coordinates
 
 #### Scenario: Red color applied
 
 - **WHEN** the alert message is rendered
 - **THEN** the message is colored red using inline markup
 
-#### Scenario: Chat fragment unavailable
+#### Scenario: UI unavailable
 
-- **WHEN** the chat fragment is not available
+- **WHEN** the chat fragment and HUD fragment are not available
 - **THEN** the system does not throw and simply skips presentation
 
 ### Requirement: Internationalization
 
-The system SHALL resolve all user-visible Reactor Alert strings from the translation bundle.
+The system SHALL resolve all user-visible Grief Alert strings from the translation bundle under `feature.grief-alert.*`.
 
 #### Scenario: Strings resolve from bundle
 
 - **WHEN** the feature name, description, settings label, or alert message is displayed
-- **THEN** it resolves from a translation key rather than hardcoded text
+- **THEN** it resolves from a `feature.grief-alert.*` translation key rather than hardcoded text
 
 #### Scenario: New keys carry comments and placeholders
 
-- **WHEN** a new Reactor Alert translation key is introduced
+- **WHEN** a new Grief Alert translation key is introduced
 - **THEN** a descriptive translator comment is added above it and its placeholders are documented
 
 ### Requirement: Feature icon asset
@@ -187,7 +180,7 @@ The system SHALL use the `triangle-alert` icon for the feature.
 
 ### Requirement: Per-block monitoring toggles
 
-The system SHALL persist an individual monitoring toggle per explosive block, keyed by block name and defaulting to enabled, and SHALL expose the toggles in the feature's settings dialog as labeled rows showing the block icon, localized name, explosion radius, and checkbox.
+The system SHALL persist an individual monitoring toggle per explosive block under `mindustrytool.features.grief-alert.block.<blockName>`, defaulting to enabled, and SHALL expose the toggles in the feature's settings dialog as labeled rows showing the block icon, localized name, explosion radius, and checkbox.
 
 #### Scenario: Toggle persisted per block
 
@@ -235,4 +228,5 @@ The system SHALL provide All and None actions that enable or mute every listed e
 #### Scenario: Mute all blocks
 
 - **WHEN** the player activates the None action
-- **THEN** no listed block is monitored and no reactor alerts are shown
+- **THEN** no listed block is monitored and no grief alerts are shown
+
