@@ -4,9 +4,10 @@ import arc.Core;
 import arc.scene.event.Touchable;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
+import arc.util.Scaling;
 import mindustry.gen.Icon;
-import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
+import mindustrytool.components.WebStyles;
 
 /**
  * In-world floating overlay with step-rotate controls anchored to the
@@ -25,16 +26,17 @@ public class QuickRotateOverlayView {
         Drawable ccw = FileIcon.of("rotate-ccw.png", Icon.left);
         Drawable cw = FileIcon.of("rotate-cw.png", Icon.right);
 
-        Table menu = new Table(Styles.black8);
-        menu.touchable = Touchable.enabled;
-        menu.margin(4f);
+        Table menu = new Table();
+        menu.touchable = Touchable.childrenOnly;
 
-        menu.button(ccw, Styles.clearNonei, 32f, feature::rotateCounterClockwise)
+        menu.button(b -> b.image(ccw).scaling(Scaling.fit).size(32f),
+                WebStyles.secondary().style(), feature::rotateCounterClockwise)
                 .size(44f)
                 .pad(2)
                 .tooltip(Core.bundle.get("feature.quick-rotate.rotate-ccw.tooltip"));
 
-        menu.button(cw, Styles.clearNonei, 32f, feature::rotateClockwise)
+        menu.button(b -> b.image(cw).scaling(Scaling.fit).size(32f),
+                WebStyles.secondary().style(), feature::rotateClockwise)
                 .size(44f)
                 .pad(2)
                 .tooltip(Core.bundle.get("feature.quick-rotate.rotate-cw.tooltip"));

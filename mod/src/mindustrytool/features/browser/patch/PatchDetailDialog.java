@@ -93,7 +93,6 @@ public class PatchDetailDialog extends SolimDialog {
 
         private void details() {
             column().growX().gap(unit(2)).children(() -> {
-                // Author and Type row
                 card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
                     row().growX().gap(unit(1)).children(() -> {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.1f);
@@ -120,7 +119,6 @@ public class PatchDetailDialog extends SolimDialog {
                     });
                 });
 
-                // Stats badge
                 card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
                     new BrowserStatsBadge(
                             BrowserImages.count(detail.getLikes()),
@@ -128,12 +126,10 @@ public class PatchDetailDialog extends SolimDialog {
                             BrowserImages.count(detail.getDownloads()));
                 });
 
-                // Tags
                 if (detail.getTags() != null && !detail.getTags().isEmpty()) {
                     BrowserLayout.renderTags(detail.getTags());
                 }
 
-                // Description
                 if (detail.getDescription() != null && !detail.getDescription().trim().isEmpty()) {
                     card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
                         text(detail.getDescription().trim()).color(Color.lightGray).wrap(true).left().growX();

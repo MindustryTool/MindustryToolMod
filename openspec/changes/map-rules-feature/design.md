@@ -15,6 +15,7 @@ This design introduces a new `MapRulesFeature` under `mindustrytool.features.rul
   - Multiplayer Client (Admin): Remote mutation via `/js` console chat invocation.
 - Diff active rules against default rules (`new Rules()`) to enable a `[★ Modified Only]` filter chip.
 - Provide real-time search filtering across rule names, descriptions, and banned content.
+- Provide a 1-tap "Save Map" action to export and save the active playing world and its customized rules directly into the player's custom maps library.
 - Integrate access exclusively via the QuickAccess HUD bar (`quickAccess(true)`).
 
 **Non-Goals:**
@@ -52,8 +53,15 @@ This design introduces a new `MapRulesFeature` under `mindustrytool.features.rul
 - **Choice**: Expose the feature through the QuickAccess HUD bar via `FeatureMetadata.quickAccess(true)`.
 - **Rationale**: Gives rapid 1-tap access at any moment during gameplay without hacking into or conflicting with `Vars.ui.paused` or mobile pause layouts.
 
+### Decision 5: Map Saving Workflow via `Vars.maps.saveMap`
+- **Choice**: Add a Save button (`Icon.save`) in the dialog header. When clicked, open a Solim naming modal pre-filled with the current map's name (or a formatted copy name). On confirm, populate `tags` with `name`, `author`, `description`, and active `rules`, then invoke `Vars.maps.saveMap(tags, false)` to register the map in the custom maps directory.
+- **Rationale**: Vanilla Mindustry only allows saving a map from the Map Editor. Players configuring custom game rules during gameplay or playing custom server maps have no convenient way to snapshot and save the map for offline play or reuse.
+- **Alternatives Considered**:
+  - *Immediate save without naming*: Risky because it can overwrite existing custom maps silently. Prompting with collision detection ensures safe saves.
+
 ## Risks / Trade-offs
 
 - **[Risk] Admin `/js` disabled on server** → Mitigation: If a client admin attempts to change rules on a server where `/js` is disabled, the chat command will fail harmlessly or display server rejection; UI notes `/js` requirement.
 - **[Risk] Heavy UI allocation for 70+ rule items** → Mitigation: Solim layout uses category chips and collapsible/filtered views so only relevant sections render in the active scroll hierarchy.
 - **[Risk] Client-side visual desync if fog/lighting toggled** → Mitigation: Visual overrides affect client rendering explicitly (e.g. `state.rules.fog = false` locally); state reset restores server-sent rules on world reload.
+- **[Risk] Name collisions when saving playing map** → Mitigation: Check `Vars.maps.byName(name)` before writing and prompt for overwrite confirmation if a map with the specified name already exists.

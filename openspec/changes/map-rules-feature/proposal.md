@@ -19,6 +19,7 @@ A dedicated Map Rules feature in MindustryTool provides full visibility into act
   - **Multiplayer Client (Non-Admin)**: Informative read-only view of server rules to avoid desync, with local client-side overrides for visual rendering rules (fog, lighting).
   - **Multiplayer Client (Admin)**: Remote editing capability via `/js` console chat execution.
 - **Rule Diff Engine**: Real-time comparison against default rules (`new Rules()`) to provide a `[★ Modified Only]` filter chip, allowing players to instantly pinpoint unique server or map customizations.
+- **Save Current Playing Map**: A dedicated save button in the `MapRulesDialog` header allowing players to save the active game map along with its active/customized rules directly into Mindustry's custom maps library (`Vars.maps.saveMap(...)`). Includes custom naming prompt, overwrite safeguard, and thumbnail generation.
 - **Search & Filtering**: Search bar to query rules by name, description, or banned item identifiers.
 - **Internationalization**: Complete bundle coverage in `assets/bundles/bundle.properties` with translator comments.
 
@@ -26,6 +27,7 @@ A dedicated Map Rules feature in MindustryTool provides full visibility into act
 
 ### New Capabilities
 - `map-rules`: In-game inspection and contextual editing of active map rules, with role-based permission tiers, rule diffing against defaults, and QuickAccess HUD integration.
+- `map-save`: Export and save the currently active playing map and its customized rules directly to the local custom maps library.
 
 ### Modified Capabilities
 <!-- None -->

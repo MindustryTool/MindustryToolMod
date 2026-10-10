@@ -1,4 +1,12 @@
-## ADDED Requirements
+# block-quick-rotate Specification
+
+## Purpose
+
+In-world floating rotation overlay for player-team rotatable buildings with multiplayer-safe step-rotation controls and automatic selection lifecycle. Created by archiving change block-quick-rotate.
+
+## Requirements
+
+**Source: block-quick-rotate**
 
 ### Requirement: In-world quick-rotate overlay display
 The system SHALL display an in-world floating rotation overlay when a player selects or taps an eligible rotatable block belonging to their team.

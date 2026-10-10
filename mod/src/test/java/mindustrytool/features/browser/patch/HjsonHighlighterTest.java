@@ -28,21 +28,16 @@ class HjsonHighlighterTest {
         String hjson = "name: \"my-patch\"\ncount: 10\nenabled: true\n# comment";
         String highlighted = HjsonHighlighter.highlight(hjson);
 
-        // Check key highlighting
         assertTrue(highlighted.contains("[accent]name[]"));
         assertTrue(highlighted.contains("[accent]count[]"));
         assertTrue(highlighted.contains("[accent]enabled[]"));
 
-        // Check string highlighting
         assertTrue(highlighted.contains("[green]\"my-patch\"[]"));
 
-        // Check number highlighting
         assertTrue(highlighted.contains("[stat]10[]"));
 
-        // Check boolean highlighting
         assertTrue(highlighted.contains("[coral]true[]"));
 
-        // Check comment highlighting
         assertTrue(highlighted.contains("[gray]# comment[]"));
     }
 
@@ -50,7 +45,6 @@ class HjsonHighlighterTest {
     void testEscapesSquareBrackets() {
         String text = "tags: [\"foo\", \"bar\"]";
         String highlighted = HjsonHighlighter.highlight(text);
-        // The open bracket '[' must be escaped to '[[' and closing bracket ']' inside lightgray tags
         assertTrue(highlighted.contains("[lightgray][[[]"));
         assertTrue(highlighted.contains("[lightgray]][]"));
     }

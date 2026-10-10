@@ -6,7 +6,6 @@ import arc.func.Prov;
 import arc.math.Mathf;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
-import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import arc.util.Nullable;
@@ -33,6 +32,9 @@ import solim.overlay.SolimDialog;
  * selected rotatable building with step-rotate controls.
  */
 public class QuickRotateFeature extends Feature {
+
+    private static final float OVERLAY_GAP = 8f;
+    private static final float MIN_ZOOM_SCALE = 0.5f;
 
     public final ConfigGroup config;
     public final ConfigValue<Boolean> autoDismissConfig;
@@ -107,6 +109,9 @@ public class QuickRotateFeature extends Feature {
         if (isPlacingInput()) {
             return;
         }
+        if (isZoomedOut()) {
+            return;
+        }
         if (e == null || e.tile == null) {
             if (isAutoDismiss()) {
                 closeMenu();
@@ -126,6 +131,10 @@ public class QuickRotateFeature extends Feature {
 
     private void update() {
         if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.player == null) {
+            closeMenu();
+            return;
+        }
+        if (isZoomedOut()) {
             closeMenu();
             return;
         }
@@ -152,7 +161,7 @@ public class QuickRotateFeature extends Feature {
         currentMenu = new QuickRotateOverlayView(this).build();
         currentMenu.visible(() -> Vars.ui != null && Vars.ui.hudfrag != null
                 && Vars.ui.hudfrag.shown && Vars.state != null && Vars.state.isGame());
-        currentMenu.touchable = Touchable.enabled;
+        currentMenu.pack();
         attachMenuToHud();
         updateOverlayPosition(building);
     }
@@ -196,14 +205,14 @@ public class QuickRotateFeature extends Feature {
         if (Core.camera == null || Core.graphics == null || currentMenu == null) {
             return;
         }
-        // Offset in world space before projecting so camera zoom scales it correctly.
+        // Anchor the building's top edge in world space so camera zoom scales
+        // it, then nudge up by half the menu height plus a screen-space gap.
         Boolean offsetAbove = offsetAboveConfig.get();
-        float anchorY = !Boolean.FALSE.equals(offsetAbove)
-                ? building.y + building.block.size * Vars.tilesize * 1.5f
-                : building.y;
+        boolean above = !Boolean.FALSE.equals(offsetAbove);
+        float anchorY = above ? building.y + building.block.size * Vars.tilesize / 2f : building.y;
         Vec2 pos = Core.camera.project(building.x, anchorY);
         float x = pos.x;
-        float y = pos.y;
+        float y = above ? pos.y + currentMenu.getHeight() / 2f + OVERLAY_GAP : pos.y;
         float w = currentMenu.getWidth() > 0f ? currentMenu.getWidth() : 96f;
         float h = currentMenu.getHeight() > 0f ? currentMenu.getHeight() : 48f;
         x = Mathf.clamp(x, w / 2f + 8f, Core.graphics.getWidth() - w / 2f - 8f);
@@ -212,14 +221,10 @@ public class QuickRotateFeature extends Feature {
     }
 
     public void rotateClockwise() {
-        // Verified against InputHandler.rotateBlock: direction=false decrements
-        // rotation, which is visually clockwise on screen.
         rotate(false);
     }
 
     public void rotateCounterClockwise() {
-        // Verified against InputHandler.rotateBlock: direction=true increments
-        // rotation, which is visually counter-clockwise on screen.
         rotate(true);
     }
 
@@ -236,6 +241,10 @@ public class QuickRotateFeature extends Feature {
 
     private boolean isAutoDismiss() {
         return !Boolean.FALSE.equals(autoDismissConfig.get());
+    }
+
+    private boolean isZoomedOut() {
+        return Vars.renderer != null && Vars.renderer.getScale() < MIN_ZOOM_SCALE;
     }
 
     private boolean isMenuTouched() {

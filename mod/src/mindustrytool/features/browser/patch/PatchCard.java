@@ -119,7 +119,6 @@ public class PatchCard extends BaseComponent {
                             .onClick(onClick)
                             .padding(unit(3))
                             .children(() -> column().grow().gap(unit(2)).children(() -> {
-                                // Header: Type Badge + Title
                                 row().growX().gap(unit(1.5f)).children(() -> {
                                     card(WebStyles.previewCardBackground())
                                             .padding(unit(0.5f), unit(1.5f), unit(0.5f), unit(1.5f))
@@ -135,7 +134,6 @@ public class PatchCard extends BaseComponent {
                                             .growX();
                                 });
 
-                                // Body: Description
                                 row().grow().top().left().children(() -> text(description)
                                         .style(Styles.defaultLabel)
                                         .fontScale(0.85f)
@@ -145,7 +143,6 @@ public class PatchCard extends BaseComponent {
                                         .growX());
                             }));
 
-                    // Action buttons row
                     row().width(size).gap(unit(1.5f)).children(() -> {
                         statButton(
                                 likesText,

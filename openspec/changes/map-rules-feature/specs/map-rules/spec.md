@@ -66,3 +66,20 @@ The system SHALL provide an action to restore active game rules back to the orig
 #### Scenario: Resetting modified rules
 - **WHEN** the player clicks "Reset to Defaults" and confirms
 - **THEN** active rules revert to the original map rules snapshot and changes are applied/synchronized.
+
+---
+
+### Requirement: Save Current Playing Map
+The system SHALL provide an action in `MapRulesDialog` to save the active world, structures, and customized rules into the player's custom maps library via `Vars.maps.saveMap(...)`.
+
+#### Scenario: Saving map with custom name
+- **WHEN** the player clicks the "Save Map" button in `MapRulesDialog`
+- **THEN** a naming dialog appears pre-populated with the current map's title or a default custom map name.
+
+#### Scenario: Confirming save to custom maps
+- **WHEN** the player enters a valid name and confirms the save
+- **THEN** a custom map package containing current tiles, world state, and active rules is written to the custom maps directory, registered in `Vars.maps`, and a success toast notification is displayed.
+
+#### Scenario: Handling existing map name collision
+- **WHEN** the player attempts to save with a name matching an existing custom map
+- **THEN** the system prompts the player for overwrite confirmation before replacing the existing map file.
