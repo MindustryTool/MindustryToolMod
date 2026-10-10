@@ -125,6 +125,21 @@ class TranslationFeatureTest extends MindustryTestEnv {
         assertEquals("Rate limit 429", feature.lastError.get());
     }
 
+    @Test
+    void testDictionaryFastPathBypassesProvider() {
+        TranslationFeature feature = new TranslationFeature();
+        MockTranslationProvider mock = new MockTranslationProvider("mock-provider");
+        feature.getProviders().add(mock);
+        feature.providerConfig.set("mock-provider");
+
+        CompletableFuture<String> future = feature.translate("need silicon", "Vietnamese");
+        assertTrue(future.isDone(), "Offline dictionary translation should resolve immediately");
+        assertEquals("Cần silicon", future.join());
+        assertEquals(0, mock.callCount.get(), "Provider should not be called when matched in dictionary");
+
+        flushEffects();
+    }
+
     static class MockTranslationProvider implements TranslationProvider {
         private final String id;
         final AtomicInteger callCount = new AtomicInteger(0);

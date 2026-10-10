@@ -15,6 +15,7 @@ public class TranslationSettingsDialog extends SolimDialog {
 		name("translationSettingsDialog");
 		addCloseButton();
 		closeOnBack();
+		maxWidth(900f);
 
 		children(() -> {
 			view = new TranslationSettingsView(feature);

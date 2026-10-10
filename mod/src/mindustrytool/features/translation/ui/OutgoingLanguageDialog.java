@@ -23,6 +23,7 @@ public class OutgoingLanguageDialog extends SolimDialog {
 		name("outgoingLanguageDialog");
 		addCloseButton();
 		closeOnBack();
+		maxWidth(500f);
 
 		children(() -> {
 			scroll().center().children(() -> {
