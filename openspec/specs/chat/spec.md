@@ -876,3 +876,21 @@ The system SHALL layout message content, reply previews, translated text, transl
 - **WHEN** a message row is built with or without replies and with active translation
 - **THEN** the message text, toggle chip, and status indicators stack strictly vertically within the message card bounds
 
+### Requirement: Real-time SSE chat stream envelope and deletion handling
+The system SHALL deserialize SSE events from `/chats/stream` using the `type` discriminator (`"message"` or `"delete"`), appending messages on `"message"` and removing messages on `"delete"`.
+
+#### Scenario: SSE message event appends message to feed
+- **WHEN** `ChatService` receives an SSE JSON object `{ "type": "message", "data": ChatMessage }`
+- **THEN** the message is appended to `store.messages()` for `channelId` on the main thread and unread indicators are updated.
+
+#### Scenario: SSE deletion event removes message from feed
+- **WHEN** `ChatService` receives an SSE JSON object `{ "type": "delete", "data": { "id", "channelId", "lastMessageId" } }`
+- **THEN** the message with that `id` is removed from `store.messages()` for `channelId` on the main thread, and `store.messages().append()` is NOT called.
+
+#### Scenario: Active reply target cleared on deletion
+- **WHEN** a `"delete"` event arrives for a message that matches `store.ui().currentReplyTarget()`
+- **THEN** `store.ui().setReplyTarget(null)` is called to clear the active reply bar.
+
+#### Scenario: Unread latest message pointer updated on deletion
+- **WHEN** a `"delete"` event includes a non-null `lastMessageId` for `channelId`
+- **THEN** `store.unread().setLatestMessage(channelId, lastMessageId)` is updated accordingly.
