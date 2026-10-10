@@ -142,17 +142,26 @@ public class PatchDetailDialog extends SolimDialog {
         }
 
         private void codeSection() {
-            String patchData = detail.getData() != null ? detail.getData() : "";
+            String rawData = detail.getData() != null ? detail.getData() : "";
+            String formattedData = HjsonHighlighter.format(rawData);
+            String highlightedCode = HjsonHighlighter.highlight(formattedData);
+            String lineNumbers = HjsonHighlighter.buildLineNumbers(formattedData);
 
             card(WebStyles.previewCardBackground()).grow().padding(unit(3)).gap(unit(2)).children(() -> {
                 text(Core.bundle.get("browser.patch.data-section")).color(Color.white).growX().left();
-                scroll().grow().maxHeight(unit(60)).children(() -> {
-                    text(patchData)
-                            .style(Styles.monoLabel)
-                            .color(Color.lightGray)
-                            .wrap(true)
-                            .left()
-                            .growX();
+                scroll().grow().maxHeight(unit(60)).scrollX(true).scrollY(true).children(() -> {
+                    row().top().left().gap(unit(2)).children(() -> {
+                        text(lineNumbers)
+                                .style(Styles.monoLabel)
+                                .color(Color.gray)
+                                .wrap(false)
+                                .right();
+
+                        text(highlightedCode)
+                                .style(Styles.monoLabel)
+                                .wrap(false)
+                                .left();
+                    });
                 });
             });
         }

@@ -3,10 +3,12 @@ package mindustrytool.features.browser.patch;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.func.Prov;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.util.Nullable;
+import java.util.concurrent.CompletableFuture;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
@@ -16,7 +18,9 @@ import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.ContentPatchData;
 import solim.core.BaseComponent;
+import solim.input.Button;
 import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 /**
  * Text and metadata focused card layout for content patches.
@@ -32,6 +36,7 @@ public class PatchCard extends BaseComponent {
     private final Runnable onCopy;
     private final Runnable onSave;
     private final Runnable onDetails;
+    private final Signal<Boolean> busy = Signal.of(false);
 
     public PatchCard(
             ContentPatchData patch,
@@ -39,21 +44,45 @@ public class PatchCard extends BaseComponent {
             Runnable onCopy,
             Runnable onSave,
             Runnable onDetails) {
-        this(patch, null, onClick, onCopy, onSave, onDetails);
+        this(patch, null, onClick, () -> {
+            onCopy.run();
+            return CompletableFuture.completedFuture(null);
+        }, () -> {
+            onSave.run();
+            return CompletableFuture.completedFuture(null);
+        }, onDetails);
     }
 
     public PatchCard(
             ContentPatchData patch,
             @Nullable Readable<Float> cardHeight,
             Runnable onClick,
-            Runnable onCopy,
-            Runnable onSave,
+            Prov<CompletableFuture<?>> onCopy,
+            Prov<CompletableFuture<?>> onSave,
             Runnable onDetails) {
         this.patch = patch;
         this.cardHeight = cardHeight;
         this.onClick = onClick;
-        this.onCopy = onCopy;
-        this.onSave = onSave;
+        this.onCopy = () -> {
+            if (Boolean.TRUE.equals(busy.peek())) return;
+            busy.set(true);
+            CompletableFuture<?> future = onCopy.get();
+            if (future != null) {
+                future.whenComplete((res, err) -> Core.app.post(() -> busy.set(false)));
+            } else {
+                busy.set(false);
+            }
+        };
+        this.onSave = () -> {
+            if (Boolean.TRUE.equals(busy.peek())) return;
+            busy.set(true);
+            CompletableFuture<?> future = onSave.get();
+            if (future != null) {
+                future.whenComplete((res, err) -> Core.app.post(() -> busy.set(false)));
+            } else {
+                busy.set(false);
+            }
+        };
         this.onDetails = onDetails;
     }
 
@@ -135,20 +164,22 @@ public class PatchCard extends BaseComponent {
                                 Icon.downloadSmall,
                                 patch.getDownloads() != null && patch.getDownloads() > 0 ? Color.sky : Color.white,
                                 onSave,
-                                Core.bundle.get("browser.patch.save"));
+                                Core.bundle.get("browser.patch.save"))
+                                .enabled(busy.map(b -> !b));
 
                         button(onCopy)
                                 .style(WebStyles.cardActionText())
                                 .growX()
                                 .height(unit(9))
+                                .enabled(busy.map(b -> !b))
                                 .tooltip(Core.bundle.get("browser.patch.copy"))
                                 .children(() -> icon(Icon.copy).size(unit(4.5f)).color(Color.white));
                     });
                 }).element();
     }
 
-    private void statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
-        button(action)
+    private Button statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
+        return button(action)
                 .style(WebStyles.cardActionText())
                 .growX()
                 .height(unit(9))

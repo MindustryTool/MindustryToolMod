@@ -15,15 +15,13 @@ public final class PatchActions {
     }
 
     /**
-     * Fetches the content patch detail (which includes the HJSON data) and copies
-     * the raw text to the clipboard.
+     * Downloads raw patch text and copies it to the clipboard.
      */
     public static CompletableFuture<Void> copyToClipboard(String itemId) {
-        return MindustryTool.findContentPatch(itemId).thenAccept(detail -> {
+        return MindustryTool.downloadContentPatch(itemId).thenAccept(data -> {
             Core.app.post(() -> {
                 try {
-                    String data = detail != null && detail.getData() != null ? detail.getData() : "";
-                    Core.app.setClipboardText(data);
+                    Core.app.setClipboardText(data != null ? data : "");
                     Vars.ui.showInfoFade(Core.bundle.get("browser.patch.copied"));
                 } catch (Exception e) {
                     Vars.ui.showException(e);
@@ -44,21 +42,14 @@ public final class PatchActions {
      * Downloads the patch and saves it as a .hjson file in the patches folder.
      */
     public static CompletableFuture<Void> saveToFile(String itemId, String patchName) {
-        return MindustryTool.findContentPatch(itemId).thenAccept(detail -> {
-            Core.app.post(() -> {
-                try {
-                    String data = detail != null && detail.getData() != null ? detail.getData() : "";
-                    saveTextToFile(data, patchName);
-                } catch (Exception e) {
-                    Vars.ui.showErrorMessage(
-                            Core.bundle.format("browser.patch.save-error", e.getMessage()));
-                }
-            });
+        return MindustryTool.downloadContentPatch(itemId).thenAccept(data -> {
+            saveTextToFile(data, patchName);
         }).exceptionally(PatchActions::notifyDownloadError);
     }
 
     /**
      * Saves raw HJSON string directly to the local game patches directory.
+     * File write runs on the caller's worker thread; toasts are dispatched to the main thread.
      */
     public static void saveTextToFile(String data, String patchName) {
         try {
@@ -73,10 +64,11 @@ public final class PatchActions {
 
             Fi file = patchesDir.child(safeName + ".hjson");
             file.writeString(data != null ? data : "");
-            Vars.ui.showInfoFade(Core.bundle.format("browser.patch.saved", "patches/" + file.name()));
+            Core.app.post(() -> Vars.ui.showInfoFade(
+                    Core.bundle.format("browser.patch.saved", "patches/" + file.name())));
         } catch (Exception e) {
-            Vars.ui.showErrorMessage(
-                    Core.bundle.format("browser.patch.save-error", e.getMessage()));
+            Core.app.post(() -> Vars.ui.showErrorMessage(
+                    Core.bundle.format("browser.patch.save-error", e.getMessage())));
         }
     }
 

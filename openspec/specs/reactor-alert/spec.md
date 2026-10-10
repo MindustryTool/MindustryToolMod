@@ -1,4 +1,9 @@
-## ADDED Requirements
+# reactor-alert Specification
+
+## Purpose
+Warns when another player begins constructing an explosive reactor within a configurable distance of a core.
+
+## Requirements
 
 ### Requirement: Feature availability
 

@@ -25,6 +25,7 @@ import mindustrytool.features.prettychat.PrettyChatFeature;
 import mindustrytool.features.progressdisplay.ProgressDisplayFeature;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
+import mindustrytool.features.reactoralert.ReactorAlertFeature;
 import mindustrytool.features.savesync.SaveSyncFeature;
 import mindustrytool.features.screenshot.ScreenshotFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
@@ -100,7 +101,8 @@ public class Main extends Mod {
                 new JoystickFeature(),
                 new QuickSchematicGridFeature(),
                 new ScreenshotFeature(),
-                new EmojiFeature());
+                new EmojiFeature(),
+                new ReactorAlertFeature());
 
         Events.on(ClientLoadEvent.class, event -> {
             registerMindustryToolButton();
