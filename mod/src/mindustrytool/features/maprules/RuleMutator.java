@@ -43,21 +43,6 @@ public class RuleMutator {
         }
     }
 
-    public void sync() {
-        Rules rules = currentRules();
-        if (rules == null) {
-            return;
-        }
-        RuleEditMode mode = RuleEditMode.resolve();
-        if (mode == RuleEditMode.HOST) {
-            try {
-                Call.setRules(rules);
-            } catch (Exception e) {
-                Log.err("MapRules: failed to broadcast rules", e);
-            }
-        }
-    }
-
     public @Nullable Rules currentRules() {
         return Vars.state != null ? Vars.state.rules : null;
     }
@@ -183,17 +168,6 @@ public class RuleMutator {
                 run.run();
             }
         }
-    }
-
-    public void cancelPending() {
-        for (String key : pendingTasks.keys()) {
-            Timer.Task task = pendingTasks.get(key);
-            if (task != null) {
-                task.cancel();
-            }
-        }
-        pendingTasks.clear();
-        pendingActions.clear();
     }
 
     public void setBool(String field, boolean value) {

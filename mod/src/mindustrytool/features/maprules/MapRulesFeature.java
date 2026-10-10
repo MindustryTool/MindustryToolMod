@@ -72,11 +72,6 @@ public class MapRulesFeature extends Feature {
         try {
             Rules rules = Vars.state != null ? Vars.state.rules : null;
             snapshot = rules != null ? rules.copy() : null;
-            if (snapshot == null) {
-                return;
-            }
-            Rules defaults = new Rules();
-            snapshot.retainContentFields(defaults);
         } catch (Exception ignored) {
             snapshot = null;
         }
