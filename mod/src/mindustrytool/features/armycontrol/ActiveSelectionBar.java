@@ -47,7 +47,7 @@ public class ActiveSelectionBar extends BaseComponent {
 
                         wrap()
                                 .growX()
-                                .gap(unit(2))
+                                .gap(unit(1.5f))
                                 .left()
                                 .children(() -> {
                                     for (UnitType type : types) {

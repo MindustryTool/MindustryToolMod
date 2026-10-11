@@ -70,7 +70,7 @@ public final class ArmyControlPopup {
 
         return column()
                 .width(unit(65))
-                .padding(unit(3))
+                .padding(unit(2.5f))
                 .gap(unit(2))
                 .rounded(unit(2), WebStyles.Colors.SECTION_BG)
                 .border(1f, WebStyles.Colors.SECTION_BORDER)

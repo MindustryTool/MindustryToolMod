@@ -11,6 +11,7 @@ import mindustry.Vars;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.reactive.Readable;
@@ -41,28 +42,28 @@ public class ArmyControlToolbar extends BaseComponent {
                             .size(buttonSize)
                             .tooltip(Core.bundle.get("feature.army-control.action.select-map", "Select Map"))
                             .onClick(feature::selectAllMap)
-                            .children(() -> icon(Icon.map).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
+                            .children(() -> icon(FileIcon.of("map.png", Icon.map)).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
 
                     button()
                             .style(WebStyles.ghost())
                             .size(buttonSize)
                             .tooltip(Core.bundle.get("feature.army-control.action.select-screen", "Select Screen"))
                             .onClick(feature::selectScreen)
-                            .children(() -> icon(Icon.zoom).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
+                            .children(() -> icon(FileIcon.of("scan.png", Icon.zoom)).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
 
                     button()
                             .style(WebStyles.ghost())
                             .size(buttonSize)
                             .tooltip(Core.bundle.get("feature.army-control.action.deselect-all", "Deselect All"))
                             .onClick(feature::deselectAll)
-                            .children(() -> icon(Icon.exit).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
+                            .children(() -> icon(FileIcon.of("x.png", Icon.exit)).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
 
                     button()
                             .style(WebStyles.ghost())
                             .size(buttonSize)
                             .tooltip(Core.bundle.get("feature.army-control.action.add-group", "Add Group"))
                             .onClick(() -> createGroupFromContext(feature))
-                            .children(() -> icon(Icon.add).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
+                            .children(() -> icon(FileIcon.of("plus.png", Icon.add)).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
                 }).element();
     }
 
