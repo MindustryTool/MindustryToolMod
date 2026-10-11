@@ -30,7 +30,7 @@ import solim.reactive.Effect;
 public class ChatService {
 
     public static final int PAGE_SIZE = 50;
-    public static final long WATCHDOG_TIMEOUT_MS = 5 * 60 * 1000L;
+    public static final long WATCHDOG_TIMEOUT_MS = 30 * 60 * 1000L;
     public static final float WATCHDOG_INTERVAL_SECONDS = 5f;
 
     private final ChatStore store;

@@ -27,9 +27,9 @@ import solim.layout.Column;
 import solim.layout.Row;
 import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.SolimCoreEnv;
 
-class DynamicComponentTest extends SolimEnv {
+class DynamicComponentTest extends SolimCoreEnv {
 
     static class TestComponent extends BaseComponent {
         final String id;

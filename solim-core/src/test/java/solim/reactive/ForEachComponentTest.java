@@ -21,9 +21,9 @@ import solim.core.BaseComponent;
 import solim.core.SolimToken;
 import solim.modifier.CellConfig;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.SolimCoreEnv;
 
-class ForEachComponentTest extends SolimEnv {
+class ForEachComponentTest extends SolimCoreEnv {
 
 
     static class TestComponent extends BaseComponent {
