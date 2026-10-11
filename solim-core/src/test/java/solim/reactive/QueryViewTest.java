@@ -657,4 +657,41 @@ class QueryViewTest extends SolimEnv {
 				"fetching=true must not rebuild when using simple dataFactory");
 		assertEquals("page1", getText(view));
 	}
+
+	@Test
+	void queryViewCenterPropagatesAlignmentToParentCellAndChildren() {
+		CompletableFuture<String> future = new CompletableFuture<>();
+		Query<String> query = Query.noKey(() -> future);
+
+		QueryView<String>[] viewHolder = new QueryView[1];
+		solim.layout.Column col = new solim.layout.Column().children(() -> {
+			QueryView<String> view = QueryView.of(query);
+			view.center();
+			view.data(data -> label(data));
+			solim.runtime.AttachmentStack.attachToParent(view.element());
+			viewHolder[0] = view;
+		});
+
+		QueryView<String> view = viewHolder[0];
+		Table colTable = col.table();
+		arc.scene.ui.layout.Cell<?> viewCell = colTable.getCell(view.element());
+		colTable.setSize(200f, 200f);
+		colTable.validate();
+		colTable.layout();
+
+		assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(viewCell));
+		assertEquals(arc.util.Align.center, view.container().getAlign());
+
+		// Complete data
+		future.complete("result");
+		SignalDispatcher.flush();
+		colTable.layout();
+
+		assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(viewCell));
+		assertEquals(arc.util.Align.center, view.container().getAlign());
+		assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(view.container().getCells().first()));
+
+		view.dispose();
+		col.dispose();
+	}
 }

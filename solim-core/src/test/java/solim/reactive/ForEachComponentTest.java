@@ -179,4 +179,42 @@ class ForEachComponentTest extends SolimEnv {
         assertEquals(8f, fe.table().getMarginTop());
         fe.dispose();
     }
+
+    @Test
+    void forEachCenterPropagatesAlignmentToParentCellAndChildren() {
+        Signal<List<String>> items = Signal.of(Arrays.asList("1", "2"));
+        ForEach<String>[] feHolder = new ForEach[1];
+
+        solim.layout.Column col = new solim.layout.Column().children(() -> {
+            ForEach<String> fe = new ForEach<>(items);
+            fe.key(id -> id);
+            fe.children(TestComponent::new);
+            fe.center();
+            solim.runtime.AttachmentStack.attachToParent(fe.element());
+            feHolder[0] = fe;
+        });
+
+        ForEach<String> fe = feHolder[0];
+        Table colTable = col.table();
+        Cell<?> feCell = colTable.getCell(fe.element());
+        colTable.setSize(200f, 200f);
+        colTable.validate();
+        colTable.layout();
+
+        assertEquals(arc.util.Align.center, CellAccess.align(feCell));
+        assertEquals(arc.util.Align.center, fe.container().getAlign());
+        assertEquals(arc.util.Align.center, CellAccess.align(fe.container().getCells().first()));
+
+        // Update items
+        items.set(Arrays.asList("1", "2", "3"));
+        SignalDispatcher.flush();
+        colTable.layout();
+
+        assertEquals(arc.util.Align.center, CellAccess.align(feCell));
+        assertEquals(arc.util.Align.center, fe.container().getAlign());
+        assertEquals(arc.util.Align.center, CellAccess.align(fe.container().getCells().first()));
+
+        fe.dispose();
+        col.dispose();
+    }
 }

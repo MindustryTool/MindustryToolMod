@@ -755,4 +755,39 @@ class DynamicComponentTest extends SolimEnv {
 
         column.dispose();
     }
+
+    @Test
+    void dynamicCenterPropagatesAlignmentToParentCellAndChildren() {
+        Signal<String> source = Signal.of("hello");
+        Dynamic<String>[] dynHolder = new Dynamic[1];
+
+        Column col = new Column().children(() -> {
+            Dynamic<String> dyn = Dynamic.of(source, val -> new TestComponent(val)).center();
+            AttachmentStack.attachToParent(dyn.element());
+            dynHolder[0] = dyn;
+        });
+
+        Dynamic<String> dyn = dynHolder[0];
+        Table colTable = col.table();
+        Cell<?> dynCell = colTable.getCell(dyn.element());
+        colTable.setSize(200f, 200f);
+        colTable.validate();
+        colTable.layout();
+
+        assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(dynCell));
+        assertEquals(arc.util.Align.center, dyn.container().getAlign());
+        assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(dyn.container().getCells().first()));
+
+        // Update source value to trigger remount
+        source.set("world");
+        SignalDispatcher.flush();
+        colTable.layout();
+
+        assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(dynCell));
+        assertEquals(arc.util.Align.center, dyn.container().getAlign());
+        assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(dyn.container().getCells().first()));
+
+        dyn.dispose();
+        col.dispose();
+    }
 }
