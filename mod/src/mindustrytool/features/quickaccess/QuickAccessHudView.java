@@ -114,29 +114,24 @@ public class QuickAccessHudView extends BaseComponent {
                 .border(1.5f, WebStyles.Colors.BORDER)
                 .center()
                 .children(() -> {
-                    column()
+                    when(feature.hideDragHandleConfig.signal())
                             .growY()
+                            .center()
                             .gap(unit(1))
-                            .children(() -> {
-                                when(feature.hideDragHandleConfig.signal())
-                                        .growY()
-                                        .center()
-                                        .thenDo(() -> button()
-                                                .style(WebStyles.ghost())
-                                                .size(buttonSize)
-                                                .tooltip(Core.bundle.get("feature.quick-access.ui.collapse"))
-                                                .onClick(() -> feature.collapsedConfig.set(true))
-                                                .children(() -> icon(FileIcon.of("chevron-left.png")).size(iconSize)))
-                                        .elseDo(() -> {
-                                            button()
-                                                    .style(WebStyles.ghost())
-                                                    .size(buttonSize)
-                                                    .children(() -> icon(Icon.move).size(iconSize))
-                                                    .draggable(feature.xSignal, feature.ySignal);
+                            .thenDo(() -> button()
+                                    .style(WebStyles.ghost())
+                                    .size(buttonSize)
+                                    .tooltip(Core.bundle.get("feature.quick-access.ui.collapse"))
+                                    .onClick(() -> feature.collapsedConfig.set(true))
+                                    .children(() -> icon(FileIcon.of("chevron-left.png")).size(iconSize)))
+                            .elseDo(() -> {
+                                button()
+                                        .style(WebStyles.ghost())
+                                        .size(buttonSize)
+                                        .children(() -> icon(Icon.move).size(iconSize))
+                                        .draggable(feature.xSignal, feature.ySignal);
 
-                                            divider(Direction.Y)
-                                                    .marginRight(2);
-                                        });
+                                divider(Direction.Y);
                             });
 
                     Readable<Integer> columns = Signal.computed(() -> {

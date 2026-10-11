@@ -601,4 +601,43 @@ class WhenComponentTest extends SolimCoreEnv {
 
         column.dispose();
     }
+
+    @Test
+    void whenCenterPropagatesAlignmentToParentCellAndChildren() {
+        Signal<Boolean> cond = Signal.of(true);
+        When[] whenHolder = new When[1];
+
+        Column col = new Column().children(() -> {
+            When when = When.of(cond)
+                    .center()
+                    .thenDo(() -> new Probe())
+                    .elseDo(() -> new Probe());
+            AttachmentStack.attachToParent(when.element());
+            whenHolder[0] = when;
+        });
+
+        When when = whenHolder[0];
+        Table colTable = col.table();
+        Cell<?> whenCell = colTable.getCell(when.element());
+        colTable.setSize(200f, 200f);
+        colTable.validate();
+        colTable.layout();
+
+        assertEquals(arc.util.Align.center, CellAccess.align(whenCell));
+        assertEquals(arc.util.Align.center, when.container().getAlign());
+        assertEquals(arc.util.Align.center, CellAccess.align(when.container().getCells().first()));
+
+        // Switch branch to false
+        cond.set(false);
+        SignalDispatcher.flush();
+        colTable.layout();
+
+        assertEquals(arc.util.Align.center, CellAccess.align(whenCell));
+        assertEquals(arc.util.Align.center, when.container().getAlign());
+        assertEquals(arc.util.Align.center, CellAccess.align(when.container().getCells().first()));
+
+        when.dispose();
+        col.dispose();
+    }
 }
+

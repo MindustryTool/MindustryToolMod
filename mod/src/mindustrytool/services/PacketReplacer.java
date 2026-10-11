@@ -25,7 +25,8 @@ public class PacketReplacer {
 						"Replace packet @ to @",
 						clazz.getSimpleName(),
 						packetReplacements.get(clazz).get().getClass().getSimpleName());
-				return packetReplacements.get(clazz);
+
+				return packetReplacements.remove(clazz);
 			}
 
 			return packet;

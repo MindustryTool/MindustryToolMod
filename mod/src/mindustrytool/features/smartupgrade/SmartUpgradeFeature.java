@@ -350,16 +350,12 @@ public class SmartUpgradeFeature extends Feature {
         if (tile == null || tile.build == null) {
             return;
         }
+        if (getGroup(tile.block()) == BlockGroup.NONE) {
+            return;
+        }
         closeMenu();
 
         Seq<Block> candidates = getUpgradeCandidates(tile.block());
-        if (candidates.isEmpty()) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null) {
-                Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-upgrade.no-candidates",
-                        "No upgrade candidates available."));
-            }
-            return;
-        }
 
         selectedTile = tile;
         currentMenu = new Table(Styles.black8);
@@ -395,6 +391,29 @@ public class SmartUpgradeFeature extends Feature {
                 currentMenu.row();
             }
         }
+
+        if (col > 0 && col % 5 == 0) {
+            currentMenu.row();
+        }
+
+        String deleteTooltip = Core.bundle.get("feature.smart-upgrade.delete", "Delete");
+        currentMenu.button(b -> {
+            if (Icon.trash != null) {
+                b.image(Icon.trash).size(32f).color(Pal.remove);
+            }
+        }, Styles.clearNonei, () -> {
+            if (Vars.control != null && Vars.control.input != null) {
+                Vars.control.input.isBuilding = false;
+            }
+            Core.app.post(() -> {
+                int count = deleteChain(tile);
+                if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null) {
+                    Vars.ui.hudfrag.showToast(Icon.trash, Core.bundle.format("feature.smart-upgrade.deleted",
+                            count));
+                }
+            });
+            closeMenu();
+        }).size(44f).pad(2).tooltip(deleteTooltip);
 
         currentMenu.update(() -> {
             if (selectedTile == null || selectedTile.build == null
@@ -550,6 +569,74 @@ public class SmartUpgradeFeature extends Feature {
             }
 
             expandNeighbors(queue, visited, current.build, group, team);
+        }
+
+        return updates;
+    }
+
+    public boolean shouldDeleteBlock(Block startBlock, BlockGroup group, @Nullable Block currentBlock) {
+        if (startBlock == null || group == null || group == BlockGroup.NONE || currentBlock == null) {
+            return false;
+        }
+        if (cachedOnlySameType) {
+            return currentBlock == startBlock;
+        }
+        if (getGroup(currentBlock) == group) {
+            return true;
+        }
+        return cachedTraverseBridges
+                && ((group == BlockGroup.CONVEYOR && isConveyorTraversable(currentBlock))
+                        || (group == BlockGroup.CONDUIT && isConduitTraversable(currentBlock)));
+    }
+
+    public int deleteChain(Tile startTile) {
+        if (startTile == null || startTile.build == null) {
+            return 0;
+        }
+        if (Vars.player == null || Vars.player.unit() == null) {
+            if (Vars.ui != null && Vars.ui.hudfrag != null) {
+                Vars.ui.hudfrag.showToast(Icon.warning, Core.bundle.get("feature.smart-upgrade.no-builder",
+                        "No builder unit available."));
+            }
+            return 0;
+        }
+
+        Team team = Vars.player.team();
+        Block startBlock = startTile.block();
+        BlockGroup group = getGroup(startBlock);
+        if (group == BlockGroup.NONE) {
+            return 0;
+        }
+
+        ObjectSet<Tile> visited = new ObjectSet<>();
+        Seq<Tile> queue = new Seq<>();
+        ObjectSet<Building> deleted = new ObjectSet<>();
+
+        queue.add(startTile);
+        visited.add(startTile);
+
+        int maxUpdates = cachedMaxUpdates;
+        int updates = 0;
+
+        while (!queue.isEmpty() && updates < maxUpdates) {
+            Tile current = queue.pop();
+            if (current == null || current.build == null || current.team() != team) {
+                continue;
+            }
+
+            Building build = current.build;
+            if (shouldDeleteBlock(startBlock, group, current.block()) && !deleted.contains(build)) {
+                deleted.add(build);
+                int bx = build.tileX();
+                int by = build.tileY();
+                if (Vars.player.unit().plans != null) {
+                    Vars.player.unit().plans.remove(p -> p != null && p.x == bx && p.y == by);
+                }
+                Vars.player.unit().addBuild(new BuildPlan(bx, by));
+                updates++;
+            }
+
+            expandNeighbors(queue, visited, build, group, team);
         }
 
         return updates;

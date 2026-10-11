@@ -76,6 +76,90 @@ public final class Dynamic<T> extends BaseComponent
     }
 
     @Override
+    public Dynamic<T> align(int align) {
+        TableConfig.super.align(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
+        container.defaults().align(align);
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.align(align);
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Dynamic<T> center() {
+        TableConfig.super.center();
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().center();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.center();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Dynamic<T> top() {
+        TableConfig.super.top();
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().top();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.top();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Dynamic<T> bottom() {
+        TableConfig.super.bottom();
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().bottom();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.bottom();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Dynamic<T> left() {
+        TableConfig.super.left();
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().left();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.left();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Dynamic<T> right() {
+        TableConfig.super.right();
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().right();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.right();
+            }
+        }
+        return this;
+    }
+
+    @Override
     protected Element build() {
         applyContainerAlign();
         Effect.of(() -> {

@@ -176,6 +176,90 @@ public final class QueryView<T> extends BaseComponent
 	}
 
 	@Override
+	public QueryView<T> align(int align) {
+		TableConfig.super.align(align);
+		constraints.align = align;
+		constraints.applyAlignToParentCell(element());
+		container.defaults().align(align);
+		for (Cell<?> c : container.getCells()) {
+			if (c != null) {
+				c.align(align);
+			}
+		}
+		return this;
+	}
+
+	@Override
+	public QueryView<T> center() {
+		TableConfig.super.center();
+		constraints.alignCenter();
+		constraints.applyAlignToParentCell(element());
+		container.defaults().center();
+		for (Cell<?> c : container.getCells()) {
+			if (c != null) {
+				c.center();
+			}
+		}
+		return this;
+	}
+
+	@Override
+	public QueryView<T> top() {
+		TableConfig.super.top();
+		constraints.alignTop();
+		constraints.applyAlignToParentCell(element());
+		container.defaults().top();
+		for (Cell<?> c : container.getCells()) {
+			if (c != null) {
+				c.top();
+			}
+		}
+		return this;
+	}
+
+	@Override
+	public QueryView<T> bottom() {
+		TableConfig.super.bottom();
+		constraints.alignBottom();
+		constraints.applyAlignToParentCell(element());
+		container.defaults().bottom();
+		for (Cell<?> c : container.getCells()) {
+			if (c != null) {
+				c.bottom();
+			}
+		}
+		return this;
+	}
+
+	@Override
+	public QueryView<T> left() {
+		TableConfig.super.left();
+		constraints.alignLeft();
+		constraints.applyAlignToParentCell(element());
+		container.defaults().left();
+		for (Cell<?> c : container.getCells()) {
+			if (c != null) {
+				c.left();
+			}
+		}
+		return this;
+	}
+
+	@Override
+	public QueryView<T> right() {
+		TableConfig.super.right();
+		constraints.alignRight();
+		constraints.applyAlignToParentCell(element());
+		container.defaults().right();
+		for (Cell<?> c : container.getCells()) {
+			if (c != null) {
+				c.right();
+			}
+		}
+		return this;
+	}
+
+	@Override
 	protected Element build() {
 		built = true;
 		applyContainerAlign();
