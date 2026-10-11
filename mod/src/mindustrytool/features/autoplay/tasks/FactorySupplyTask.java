@@ -6,7 +6,6 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
-import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Time;
 import mindustry.Vars;
@@ -49,9 +48,8 @@ public class FactorySupplyTask implements AutoplayTask {
     private static final float PENDING_TIMEOUT = 150f;
     private static final float MIN_ACTION_SPACING = 24f;
     private static final int MAX_TOUR_STOPS = 4;
-    // TEMP build tag: bump on every behavior change so logs prove which build is
-    // running.
-    private static final String BUILD_TAG = "factory-supply/s7-collect-topup-v4";
+    private static final float ENGAGE_RANGE_FACTOR = 0.7f;
+    private static final float STICKY_JOB_TIMEOUT = 300f;
 
     private final ConfigValue<Seq<String>> disabledBlocks;
     private final ConfigValue<Boolean> conservative;
@@ -61,21 +59,10 @@ public class FactorySupplyTask implements AutoplayTask {
     private int factoryCursor = 0;
     private int itemCursor = 0;
 
-    // TEMP measurement logs (remove after diagnosing slow take/drop).
-    private float lastDecisionLogTick = -1000f;
-    private @Nullable String lastLoggedJob;
-    private int lastCoreCount = 0;
-    private int lastContainerCount = 0;
-    private int lastFactoryCount = 0;
-    private int skippedConservativeInput = 0;
-    private int skippedNotFull = 0;
-
     public FactorySupplyTask(AutoplayFeature feature) {
         this.disabledBlocks = feature.configGroup().value("factory-supply.disabled-blocks", new Seq<>(),
                 new OrderedSeqPersister());
         this.conservative = feature.configGroup().boolValue("factory-supply.conservative", true);
-        // TEMP build tag: proves which code the running game actually loaded.
-        Log.info("[FactorySupply] build " + BUILD_TAG + " loaded");
     }
 
     @Override
@@ -553,13 +540,7 @@ public class FactorySupplyTask implements AutoplayTask {
             return true;
         }
         try {
-            // TEMP measurement: count factories skipped because they already hold enough
-            // input.
-            boolean need = factory.items == null || factory.items.get(input) < requiredAmount(factory.block, input);
-            if (!need) {
-                skippedConservativeInput++;
-            }
-            return need;
+            return factory.items == null || factory.items.get(input) < requiredAmount(factory.block, input);
         } catch (Throwable ignored) {
             return true;
         }
@@ -569,12 +550,7 @@ public class FactorySupplyTask implements AutoplayTask {
         if (!isConservative()) {
             return true;
         }
-        // TEMP measurement: count outputs skipped because they are not full yet.
-        boolean full = isOutputFull(factory, output);
-        if (!full) {
-            skippedNotFull++;
-        }
-        return full;
+        return isOutputFull(factory, output);
     }
 
     private static int storedOf(@Nullable Building factory, @Nullable Item item) {
@@ -621,36 +597,12 @@ public class FactorySupplyTask implements AutoplayTask {
 
     @Override
     public boolean update(Unit unit) {
-        // TEMP measurement: wall-clock the whole decision (scan + scheduling).
-        long t0 = Time.millis();
-        skippedConservativeInput = 0;
-        skippedNotFull = 0;
         // Batching tours end when the unit is empty or switches item type.
         if (unit == null || unit.stack.amount == 0 || unit.stack.item == null) {
             ai.resetTour();
         } else if (ai.tourItem() == null || ai.tourItem() != unit.stack.item) {
             ai.resetTour();
         }
-        boolean result = false;
-        try {
-            result = updateInner(unit);
-        } finally {
-            long dt = Time.millis() - t0;
-            String job = ai.debugJob();
-            boolean changed = lastLoggedJob == null || !lastLoggedJob.equals(job);
-            if (changed || Time.time - lastDecisionLogTick >= 120f || dt >= 5) {
-                lastDecisionLogTick = Time.time;
-                lastLoggedJob = job;
-                Log.info("[FactorySupply] decide dt=" + dt + "ms active=" + result
-                        + " cores=" + lastCoreCount + " containers=" + lastContainerCount
-                        + " factories=" + lastFactoryCount + " job=" + job
-                        + " skipLow=" + skippedConservativeInput + " skipNotFull=" + skippedNotFull);
-            }
-        }
-        return result;
-    }
-
-    private boolean updateInner(Unit unit) {
         if (unit == null || !unit.isValid() || unit.type == null || unit.type.itemCapacity <= 0) {
             status.set(Core.bundle.get("feature.autoplay.status.cannot-carry"));
             return false;
@@ -658,14 +610,11 @@ public class FactorySupplyTask implements AutoplayTask {
         Seq<Building> cores = new Seq<>();
         Seq<Building> containers = new Seq<>();
         collectStorages(unit, cores, containers);
-        lastCoreCount = cores.size;
-        lastContainerCount = containers.size;
         if (cores.isEmpty() && containers.isEmpty()) {
             status.set(Core.bundle.get("feature.autoplay.status.no-storage"));
             return false;
         }
         Seq<Building> factories = findFactories(unit, cores, containers);
-        lastFactoryCount = factories.size;
         if (factories.isEmpty()) {
             status.set(Core.bundle.get("feature.autoplay.status.no-factories"));
             return false;
@@ -740,40 +689,9 @@ public class FactorySupplyTask implements AutoplayTask {
 
     private boolean updateEmpty(Unit unit, Seq<Building> cores, Seq<Building> containers,
             Seq<Building> factories) {
-        // Stick to an unfinished take: re-assert the same SUPPLY without advancing
-        // cursors
-        // so the planned take actually fires instead of being overwritten every tick.
-        if (ai.job() == FactorySupplyAI.Job.SUPPLY && ai.targetFactory() != null && ai.targetItem() != null
-                && Time.time - ai.jobStartTick() < 300f
-                && isFactoryStillValid(ai.targetFactory(), factories)
-                && needsInput(ai.targetFactory(), ai.targetItem(), unit)) {
-            Building stickySource = findWithdrawStorage(ai.targetFactory(), ai.targetItem(), unit, cores, containers);
-            if (stickySource != null) {
-                int stickyTake = planSupplyTake(unit, stickySource, factories,
-                        factories.indexOf(ai.targetFactory(), true), ai.targetFactory(), ai.targetItem());
-                if (stickyTake > 0) {
-                    ai.setJob(FactorySupplyAI.Job.SUPPLY, ai.targetFactory(), stickySource, ai.targetItem(),
-                            stickyTake);
-                    status.set(Core.bundle.format("feature.autoplay.status.supplying", ai.targetItem().localizedName));
-                    return true;
-                }
-            }
-        }
-        // Same for an unfinished collect: don't let the next decision steal the target
-        // mid-approach.
-        if (ai.job() == FactorySupplyAI.Job.COLLECT && ai.targetFactory() != null && ai.targetItem() != null
-                && Time.time - ai.jobStartTick() < 300f
-                && isFactoryStillValid(ai.targetFactory(), factories)
-                && outputProducts(ai.targetFactory()).contains(ai.targetItem())
-                && storedOf(ai.targetFactory(), ai.targetItem()) > 0) {
-            Building stickyDest = findDepositStorage(ai.targetFactory(), ai.targetItem(),
-                    Math.min(storedOf(ai.targetFactory(), ai.targetItem()), unit.type.itemCapacity),
-                    unit, cores, containers);
-            if (stickyDest != null) {
-                ai.setJob(FactorySupplyAI.Job.COLLECT, ai.targetFactory(), stickyDest, ai.targetItem(), 0);
-                status.set(Core.bundle.format("feature.autoplay.status.collecting", ai.targetItem().localizedName));
-                return true;
-            }
+        if (reassertSupplyJob(unit, cores, containers, factories)
+                || reassertCollectJob(unit, cores, containers, factories)) {
+            return true;
         }
         Building lastFactory = ai.lastFactory;
         if (isFactoryStillValid(lastFactory, factories)) {
@@ -857,6 +775,52 @@ public class FactorySupplyTask implements AutoplayTask {
         return factories.contains(factory);
     }
 
+    private boolean reassertSupplyJob(Unit unit, Seq<Building> cores, Seq<Building> containers,
+            Seq<Building> factories) {
+        // Stick to an unfinished take: re-assert the same SUPPLY without advancing cursors
+        // so the planned take actually fires instead of being overwritten every tick.
+        if (ai.job() != FactorySupplyAI.Job.SUPPLY || ai.targetFactory() == null || ai.targetItem() == null
+                || Time.time - ai.jobStartTick() >= STICKY_JOB_TIMEOUT
+                || !isFactoryStillValid(ai.targetFactory(), factories)
+                || !needsInput(ai.targetFactory(), ai.targetItem(), unit)) {
+            return false;
+        }
+        Building source = findWithdrawStorage(ai.targetFactory(), ai.targetItem(), unit, cores, containers);
+        if (source == null) {
+            return false;
+        }
+        int take = planSupplyTake(unit, source, factories, factories.indexOf(ai.targetFactory(), true),
+                ai.targetFactory(), ai.targetItem());
+        if (take <= 0) {
+            return false;
+        }
+        ai.setJob(FactorySupplyAI.Job.SUPPLY, ai.targetFactory(), source, ai.targetItem(), take);
+        status.set(Core.bundle.format("feature.autoplay.status.supplying", ai.targetItem().localizedName));
+        return true;
+    }
+
+    private boolean reassertCollectJob(Unit unit, Seq<Building> cores, Seq<Building> containers,
+            Seq<Building> factories) {
+        // Same for an unfinished collect: don't let the next decision steal the target
+        // mid-approach.
+        if (ai.job() != FactorySupplyAI.Job.COLLECT || ai.targetFactory() == null || ai.targetItem() == null
+                || Time.time - ai.jobStartTick() >= STICKY_JOB_TIMEOUT
+                || !isFactoryStillValid(ai.targetFactory(), factories)
+                || !outputProducts(ai.targetFactory()).contains(ai.targetItem())
+                || storedOf(ai.targetFactory(), ai.targetItem()) <= 0) {
+            return false;
+        }
+        Building dest = findDepositStorage(ai.targetFactory(), ai.targetItem(),
+                Math.min(storedOf(ai.targetFactory(), ai.targetItem()), unit.type.itemCapacity),
+                unit, cores, containers);
+        if (dest == null) {
+            return false;
+        }
+        ai.setJob(FactorySupplyAI.Job.COLLECT, ai.targetFactory(), dest, ai.targetItem(), 0);
+        status.set(Core.bundle.format("feature.autoplay.status.collecting", ai.targetItem().localizedName));
+        return true;
+    }
+
     @Override
     public boolean hasSettings() {
         return true;
@@ -932,18 +896,12 @@ public class FactorySupplyTask implements AutoplayTask {
         private int prevAmount = 0;
         private @Nullable Item pendingItem;
 
-        // TEMP measurement logs (remove after diagnosing slow take/drop).
+        // Tracks the current job identity so jobStartTick only resets when the job changes.
         private @Nullable String currentKey;
         private float jobStartTick = 0f;
-        private float actionSentTick = 0f;
-        private @Nullable String lastMoveLogKey;
 
         private static String posOf(@Nullable Building building) {
             return building == null ? "-" : building.tileX() + "," + building.tileY();
-        }
-
-        String debugJob() {
-            return currentKey != null ? currentKey : job + " (no job set yet)";
         }
 
         public void setJob(Job job, @Nullable Building factory, @Nullable Building storage, @Nullable Item item,
@@ -966,7 +924,6 @@ public class FactorySupplyTask implements AutoplayTask {
                     tourFactory = factory;
                 }
             }
-            // TEMP measurement: track when the current job started.
             String key = job + " f=" + posOf(factory) + " s=" + posOf(storage)
                     + " i=" + (item != null ? item.name : "-");
             if (currentKey == null || !currentKey.equals(key)) {
@@ -1033,8 +990,6 @@ public class FactorySupplyTask implements AutoplayTask {
             actionPending = true;
             pendingTimer = PENDING_TIMEOUT;
             cooldownTimer = actionCooldown();
-            // TEMP measurement: timestamp the Call for ack/timeout elapsed reporting.
-            actionSentTick = Time.time;
         }
 
         private void updatePending(Unit unit) {
@@ -1046,21 +1001,12 @@ public class FactorySupplyTask implements AutoplayTask {
             }
             boolean acknowledged = unit.stack.amount != prevAmount || unit.stack.item != pendingItem;
             if (acknowledged) {
-                // TEMP measurement: how long the server took to confirm the Call.
-                float elapsed = Time.time - actionSentTick;
-                String kind = unit.stack.amount < prevAmount ? "deposit-acked" : "withdraw-acked";
-                Log.info("[FactorySupply] " + kind + " after " + (int) elapsed + "t stack="
-                        + unit.stack.amount + "x" + (unit.stack.item != null ? unit.stack.item.name : "-")
-                        + " job=" + debugJob());
                 actionPending = false;
                 pendingTimer = 0f;
                 return;
             }
             pendingTimer -= Time.delta;
             if (pendingTimer <= 0f) {
-                // TEMP measurement: ack never arrived — suspected server rejection.
-                Log.info("[FactorySupply] pending TIMEOUT after " + (int) (Time.time - actionSentTick)
-                        + "t (suspected server reject) job=" + debugJob());
                 actionPending = false;
             }
         }
@@ -1085,9 +1031,6 @@ public class FactorySupplyTask implements AutoplayTask {
             snapshot(unit);
             Call.requestItem(Vars.player, from, item, amount);
             markActed(unit);
-            // TEMP measurement: a take just fired.
-            Log.info("[FactorySupply] requestItem " + item.name + " x" + amount + " from "
-                    + from.block.name + "@" + posOf(from) + " jobAge=" + (int) (Time.time - jobStartTick) + "t");
             return true;
         }
 
@@ -1111,9 +1054,6 @@ public class FactorySupplyTask implements AutoplayTask {
             snapshot(unit);
             Call.transferInventory(Vars.player, to);
             markActed(unit);
-            // TEMP measurement: a drop just fired.
-            Log.info("[FactorySupply] transferInventory " + unit.stack.item.name + " x" + unit.stack.amount + " to "
-                    + to.block.name + "@" + posOf(to) + " jobAge=" + (int) (Time.time - jobStartTick) + "t");
             return true;
         }
 
@@ -1127,9 +1067,6 @@ public class FactorySupplyTask implements AutoplayTask {
             snapshot(unit);
             Call.dropItem(0f);
             markActed(unit);
-            // TEMP measurement: excess stack dropped.
-            Log.info("[FactorySupply] dropItem x" + unit.stack.amount + " jobAge="
-                    + (int) (Time.time - jobStartTick) + "t");
             return true;
         }
 
@@ -1144,16 +1081,6 @@ public class FactorySupplyTask implements AutoplayTask {
             Building storage = targetStorage;
             Item item = targetItem;
 
-            // TEMP measurement: log each new job with travel distances.
-            if (currentKey != null && !currentKey.equals(lastMoveLogKey)) {
-                lastMoveLogKey = currentKey;
-                Log.info("[FactorySupply] start " + currentKey + " stack=" + unit.stack.amount + "x"
-                        + (unit.stack.item != null ? unit.stack.item.name : "-")
-                        + " dFactory=" + (factory != null ? (int) unit.dst(factory) : -1)
-                        + " dStorage=" + (storage != null ? (int) unit.dst(storage) : -1)
-                        + " tour=" + tourStops);
-            }
-
             if (unit.stack.amount > 0 && unit.stack.item != null) {
                 Item held = unit.stack.item;
                 if (factory != null && factory.isValid() && !factory.dead()) {
@@ -1163,7 +1090,7 @@ public class FactorySupplyTask implements AutoplayTask {
                     } catch (Throwable ignored) {
                     }
                     if (factoryWants) {
-                        moveTo(factory, Vars.itemTransferRange * 0.7f);
+                        moveTo(factory, Vars.itemTransferRange * ENGAGE_RANGE_FACTOR);
                         tryTransfer(unit, factory);
                         return;
                     }
@@ -1179,7 +1106,7 @@ public class FactorySupplyTask implements AutoplayTask {
                     } catch (Throwable ignored) {
                     }
                     if (Math.min(stored, room) > 0) {
-                        moveTo(factory, Vars.itemTransferRange * 0.7f);
+                        moveTo(factory, Vars.itemTransferRange * ENGAGE_RANGE_FACTOR);
                         tryRequest(unit, factory, item, Math.min(stored, room));
                         return;
                     }
@@ -1189,7 +1116,7 @@ public class FactorySupplyTask implements AutoplayTask {
                     deposit = findAnyDepositForHeld(unit, held);
                 }
                 if (deposit != null) {
-                    moveTo(deposit, Vars.itemTransferRange * 0.7f);
+                    moveTo(deposit, Vars.itemTransferRange * ENGAGE_RANGE_FACTOR);
                     tryTransfer(unit, deposit);
                     return;
                 }
@@ -1202,11 +1129,10 @@ public class FactorySupplyTask implements AutoplayTask {
             }
 
             switch (job) {
-                case SUPPLY:
-                    if (factory == null || storage == null || !factory.isValid() || !storage.isValid()) {
+                case SUPPLY:                    if (factory == null || storage == null || !factory.isValid() || !storage.isValid()) {
                         return;
                     }
-                    moveTo(storage, Vars.itemTransferRange * 0.7f);
+                    moveTo(storage, Vars.itemTransferRange * ENGAGE_RANGE_FACTOR);
                     int available = 0;
                     try {
                         available = storage.items != null ? storage.items.get(item) : 0;
@@ -1222,7 +1148,7 @@ public class FactorySupplyTask implements AutoplayTask {
                     if (factory == null || !factory.isValid()) {
                         return;
                     }
-                    moveTo(factory, Vars.itemTransferRange * 0.7f);
+                    moveTo(factory, Vars.itemTransferRange * ENGAGE_RANGE_FACTOR);
                     int stored = 0;
                     try {
                         stored = factory.items != null ? factory.items.get(item) : 0;
@@ -1236,6 +1162,7 @@ public class FactorySupplyTask implements AutoplayTask {
                 case DELIVER_TO_FACTORY:
                 case DELIVER_TO_STORAGE:
                 case DROP_HELD:
+                    // Handled in the carrying branch above; the switch only runs with an empty stack.
                     break;
             }
         }

@@ -11,7 +11,6 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Align;
-import arc.util.Log;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
@@ -392,12 +391,6 @@ public class AutoplayFeature extends Feature {
     }
 
     private void setCurrentTask(@Nullable AutoplayTask task) {
-        // TEMP measurement: track task switches to spot factory-supply/mining dithering.
-        String from = currentTask != null ? currentTask.getId() : "-";
-        String to = task != null ? task.getId() : "-";
-        if (!from.equals(to)) {
-            Log.info("[Autoplay] task " + from + " -> " + to);
-        }
         currentTask = task;
         currentTaskIdSignal.set(task != null ? task.getId() : null);
     }
@@ -485,8 +478,10 @@ public class AutoplayFeature extends Feature {
         if (currentTask instanceof FactorySupplyTask) {
             float cooldown = ((FactorySupplyTask) currentTask).cooldownSeconds();
             if (cooldown > 0.05f && Fonts.outline != null) {
+                // Locale-independent tenths: String.format would render "0,4s" in some locales.
+                String label = ((int) Math.round(cooldown * 10f)) / 10f + "s";
                 Draw.z(Layer.overlayUI);
-                Fonts.outline.draw(String.format("%.1fs", cooldown),
+                Fonts.outline.draw(label,
                         unit.x, unit.y + unit.hitSize * 2f + 10f, Pal.accent, 0.25f, false, Align.center);
                 Draw.reset();
             }
