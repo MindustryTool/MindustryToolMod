@@ -14,6 +14,7 @@ import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.camerazoom.CameraZoomFeature;
 import mindustrytool.features.callout.CalloutFeature;
 import mindustrytool.features.chat.ChatFeature;
+import mindustrytool.features.displaygroup.DisplayGroupFeature;
 import mindustrytool.features.emoji.EmojiFeature;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.godmode.GodModeFeature;
@@ -87,6 +88,7 @@ public class Main extends Mod {
                 new VisualizerFeature(),
                 new PlayerConnectFeature(),
                 new HealthBarFeature(),
+                new DisplayGroupFeature(),
                 new CameraZoomFeature(),
                 new FreeCameraFeature(),
                 new PathfindingFeature(),

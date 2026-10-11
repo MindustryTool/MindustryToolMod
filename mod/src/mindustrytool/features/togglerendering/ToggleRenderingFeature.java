@@ -46,7 +46,7 @@ public class ToggleRenderingFeature extends Feature {
                 .icon(Icon.eye)
                 .order(5)
                 .enabledByDefault(false)
-                .quickAccess(true)
+                .quickAccess(false)
                 .build());
 
         config = configGroup();

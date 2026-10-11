@@ -92,7 +92,7 @@ public class HealthBarFeature extends Feature {
                 .icon(FileIcon.of("healthbar.png"))
                 .order(4)
                 .enabledByDefault(false)
-                .quickAccess(true)
+                .quickAccess(false)
                 .build());
 
         config = configGroup();

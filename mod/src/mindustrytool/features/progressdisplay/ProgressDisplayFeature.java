@@ -72,7 +72,7 @@ public class ProgressDisplayFeature extends Feature {
                 .id("progress-display")
                 .icon(FileIcon.of("hourglass.png"))
                 .order(10)
-                .quickAccess(true)
+                .quickAccess(false)
                 .enabledByDefault(true)
                 .build());
 

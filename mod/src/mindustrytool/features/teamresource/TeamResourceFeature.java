@@ -63,7 +63,7 @@ public class TeamResourceFeature extends Feature {
                 .icon(getFeatureIcon())
                 .order(0)
                 .enabledByDefault(true)
-                .quickAccess(true)
+                .quickAccess(false)
                 .build());
 
         config = configGroup();

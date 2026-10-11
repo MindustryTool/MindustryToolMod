@@ -43,7 +43,7 @@ public class WavePreviewFeature extends Feature {
                 .id("wave-preview")
                 .icon(FileIcon.of("swords.png"))
                 .order(1)
-                .quickAccess(true)
+                .quickAccess(false)
                 .enabledByDefault(true)
                 .build());
 

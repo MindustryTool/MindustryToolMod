@@ -1,5 +1,8 @@
-## ADDED Requirements
+# display-group Specification
 
+## Purpose
+TBD - created by archiving change display-group-popup. Update Purpose after archive.
+## Requirements
 ### Requirement: DisplayGroupFeature QuickAccess integration
 The system SHALL register `DisplayGroupFeature` with `id="display-group"`, icon `Icon.eye`, `enabledByDefault=true`, and `quickAccessByDefault=true`. In `DisplayGroupFeature`, tapping its QuickAccess button SHALL toggle the visibility of `DisplayGroupPopup`, and long-pressing (>= 300ms) SHALL open `DisplayGroupSettingsDialog`.
 
@@ -43,3 +46,4 @@ Each display feature button rendered inside `DisplayGroupPopup` SHALL display th
 #### Scenario: Hiding a display item in settings dialog
 - **WHEN** user unchecks a display item in `DisplayGroupSettingsDialog`
 - **THEN** that item is added to `hiddenFeaturesConfig` and removed from `DisplayGroupPopup`
+

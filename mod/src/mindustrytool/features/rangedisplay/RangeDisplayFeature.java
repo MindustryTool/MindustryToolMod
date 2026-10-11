@@ -157,7 +157,7 @@ public class RangeDisplayFeature extends Feature {
                 .id("range-display")
                 .icon(FileIcon.of("range-display.png"))
                 .order(5)
-                .quickAccess(true)
+                .quickAccess(false)
                 .enabledByDefault(true)
                 .development(false)
                 .build());

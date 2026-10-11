@@ -185,7 +185,7 @@ public class VisualizerFeature extends Feature {
                 .icon(FileIcon.of("network.png"))
                 .order(5)
                 .enabledByDefault(false)
-                .quickAccess(true)
+                .quickAccess(false)
                 .build());
 
         config = configGroup();

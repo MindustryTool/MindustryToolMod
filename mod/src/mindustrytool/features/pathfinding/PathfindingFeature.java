@@ -100,7 +100,7 @@ public class PathfindingFeature extends Feature {
                 .icon(FileIcon.of("pathfinding.png"))
                 .order(12)
                 .enabledByDefault(false)
-                .quickAccess(true)
+                .quickAccess(false)
                 .build());
 
         config = configGroup();
