@@ -1,4 +1,12 @@
-## ADDED Requirements
+# army-control-group Specification
+
+## Purpose
+
+Fast RTS army control for large unit armies, especially on mobile/touchscreen where precision box-selecting is cumbersome. Provides one-click map/screen selection, named unit control groups with recall, and quick unit-type deselection via interactive chips, integrated with vanilla RTS Command Mode without moving the camera. Created by archiving change army-control-group.
+
+## Requirements
+
+**Source: army-control-group**
 
 ### Requirement: Global and Screen Army Selection
 The system SHALL provide buttons to select all friendly units across the map or visible on the screen, and automatically activate RTS Command Mode.
