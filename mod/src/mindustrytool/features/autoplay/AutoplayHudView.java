@@ -10,8 +10,6 @@ import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
-import mindustrytool.features.autoplay.tasks.TransportTask;
-import mindustrytool.features.autoplay.tasks.TransportTask.SelectionMode;
 import mindustrytool.features.settings.ModSettings;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -89,74 +87,19 @@ public class AutoplayHudView extends BaseComponent {
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> unit(6) * (s != null ? s : 1f));
 
-        Readable<Boolean> transportEnabled = feature.disabledTasks.signal()
-                .map(disabled -> disabled == null || !disabled.contains(TransportTask.ID));
-
-        return column()
-                .gap(unit(1))
-                .center()
-                .children(() -> {
-                    row()
-                            .gap(unit(1))
-                            .center()
-                            .children(() -> {
-                                masterButton(feature, buttonSize, iconSize, canEdit);
-
-                                divider(Direction.Y);
-
-                                reactiveGrid(feature.tasks())
-                                        .key(AutoplayTask::getId)
-                                        .columns(STRIP_COLUMNS)
-                                        .gap(unit(1))
-                                        .children(task -> taskButton(feature, task, buttonSize, iconSize, canEdit));
-                            });
-
-                    when(transportEnabled).thenDo(() -> transportControls(feature, buttonSize, iconSize, canEdit));
-                });
-    }
-
-    private static Component transportControls(AutoplayFeature feature, Readable<Float> buttonSize,
-            Readable<Float> iconSize, @Nullable Readable<Boolean> canEdit) {
-        AutoplayTask t = feature.getTask(TransportTask.ID);
-        if (!(t instanceof TransportTask)) {
-            return row();
-        }
-        TransportTask transportTask = (TransportTask) t;
-
-        Readable<Boolean> targetArmed = transportTask.selectionMode()
-                .map(m -> m == SelectionMode.TARGET);
-        Readable<Boolean> destArmed = transportTask.selectionMode()
-                .map(m -> m == SelectionMode.DESTINATION);
-
-        Readable<Color> targetColor = targetArmed.map(a -> Boolean.TRUE.equals(a) ? Color.gold : Color.white);
-        Readable<Color> destColor = destArmed.map(a -> Boolean.TRUE.equals(a) ? Color.cyan : Color.white);
-
         return row()
                 .gap(unit(1))
                 .center()
                 .children(() -> {
-                    button()
-                            .style(WebStyles.ghost())
-                            .size(buttonSize)
-                            .checked(targetArmed)
-                            .tooltip(Core.bundle.get("feature.autoplay.settings.transport.select-targets"))
-                            .onClick(() -> transportTask.toggleSelectionMode(SelectionMode.TARGET))
-                            .children(() -> icon(Icon.upload).size(iconSize).color(targetColor));
+                    masterButton(feature, buttonSize, iconSize, canEdit);
 
-                    button()
-                            .style(WebStyles.ghost())
-                            .size(buttonSize)
-                            .checked(destArmed)
-                            .tooltip(Core.bundle.get("feature.autoplay.settings.transport.select-dests"))
-                            .onClick(() -> transportTask.toggleSelectionMode(SelectionMode.DESTINATION))
-                            .children(() -> icon(Icon.download).size(iconSize).color(destColor));
+                    divider(Direction.Y);
 
-                    button()
-                            .style(WebStyles.ghost())
-                            .size(buttonSize)
-                            .tooltip(Core.bundle.get("feature.autoplay.settings.transport.clear-all"))
-                            .onClick(transportTask::clearAll)
-                            .children(() -> icon(Icon.trash).size(iconSize).color(Color.scarlet));
+                    reactiveGrid(feature.tasks())
+                            .key(AutoplayTask::getId)
+                            .columns(STRIP_COLUMNS)
+                            .gap(unit(1))
+                            .children(task -> taskButton(feature, task, buttonSize, iconSize, canEdit));
                 });
     }
 
