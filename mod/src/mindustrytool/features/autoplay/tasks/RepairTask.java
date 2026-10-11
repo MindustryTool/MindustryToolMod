@@ -158,6 +158,8 @@ public class RepairTask implements AutoplayTask {
     }
 
     public static class RepairAI extends BaseAutoplayAI {
+        private static final float MIN_STANDOFF = 12f;
+
         @Override
         public void updateMovement() {
             if (target == null || !(target instanceof Building)) {
@@ -184,7 +186,12 @@ public class RepairTask implements AutoplayTask {
             float range = getHealRange(unit);
             float approachRange = range * 0.65f;
 
-            if (!target.within(unit, approachRange)) {
+            boolean tooClose = unit.dst(target.getX(), target.getY()) < MIN_STANDOFF;
+            if (tooClose) {
+                moveTo(target, approachRange, 20f, true, null);
+                targetPos.set(target.getX(), target.getY());
+                hasTargetPos = true;
+            } else if (!target.within(unit, approachRange)) {
                 moveTo(target, approachRange);
             } else {
                 targetPos.set(target.getX(), target.getY());

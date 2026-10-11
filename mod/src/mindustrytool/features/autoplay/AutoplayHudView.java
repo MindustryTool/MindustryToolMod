@@ -14,6 +14,7 @@ import mindustrytool.features.settings.ModSettings;
 import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.input.Button;
+import solim.layout.Direction;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -92,6 +93,8 @@ public class AutoplayHudView extends BaseComponent {
                 .children(() -> {
                     masterButton(feature, buttonSize, iconSize, canEdit);
 
+                    divider(Direction.Y);
+
                     reactiveGrid(feature.tasks())
                             .key(AutoplayTask::getId)
                             .columns(STRIP_COLUMNS)
@@ -102,6 +105,7 @@ public class AutoplayHudView extends BaseComponent {
 
     private static Component masterButton(AutoplayFeature feature, Readable<Float> buttonSize,
             Readable<Float> iconSize, @Nullable Readable<Boolean> canEdit) {
+
         Readable<Color> color = feature.enabled()
                 .map(en -> Boolean.TRUE.equals(en) ? Color.white : Color.darkGray);
 
@@ -112,6 +116,7 @@ public class AutoplayHudView extends BaseComponent {
                 .checked(feature.enabled())
                 .onClick(() -> feature.setEnabled(!feature.isEnabled()))
                 .children(() -> icon(Icon.play).size(iconSize).color(color));
+                
         return canEdit != null ? btn.enabled(canEdit) : btn;
     }
 

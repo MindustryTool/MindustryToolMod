@@ -54,9 +54,9 @@ The Repair task MUST detect healing capabilities and repair damaged friendly str
 - The task MUST focus exclusively on damaged completed buildings, leaving mobile unit healing to dedicated unit healing tasks.
 - The task MUST calculate engagement range (`healRange`) strictly from building-healing capabilities (the maximum range among weapons with healing projectiles or repair beams where `targetBuildings == true`, falling back to `unit.type.range` if `unit.type.canHeal` is true). Unit-only abilities such as `RepairFieldAbility` MUST NOT be included in `healRange`.
 - WHEN a target building is farther than 65% of engagement range (`0.65f * healRange`) THEN the task MUST navigate toward the building via `moveTo(target, healRange * 0.65f)`.
-- WHEN a target building is within 65% of engagement range THEN the task MUST cease calling `moveTo` to prevent deceleration oscillation, while setting `targetPos` to maintain visual connected lines.
+- WHEN a target building is within 65% of engagement range THEN the task MUST cease calling `moveTo` to prevent deceleration oscillation, while setting `targetPos` to maintain visual connected lines, EXCEPT when the unit is closer than the minimum standoff gap (near-zero distance over the building center) — in that case the task MUST navigate outward to the hold ring via `moveTo(target, healRange * 0.65f)` so the aim direction stays defined.
 - The task MUST continuously rotate the unit to face the target building via `unit.lookAt(target)` every frame while a target is assigned, enabling fixed-mount weapons with narrow firing cones to aim accurately.
-- WHEN a target building is within weapon engagement range (`target.within(unit, healRange)`) THEN the task MUST aim at the target and enable weapon control via `unit.controlWeapons(true)`.
+- WHEN a target building is within weapon engagement range (`target.within(unit, healRange)`) THEN the task MUST aim at the target and enable weapon control via `unit.controlWeapons(true)`, including while backing off from the too-close zone.
 - WHEN the target is fully repaired, destroyed, or out of range THEN the task MUST reset weapon firing via `unit.controlWeapons(false)`.
 
 #### Scenario: Damaged buildings exist alongside construction sites
@@ -74,6 +74,10 @@ The Repair task MUST detect healing capabilities and repair damaged friendly str
 #### Scenario: Unit with both healing weapon and unit-only repair field
 - **WHEN** a unit has a building-healing weapon and a longer-ranged unit-only repair field ability (such as RepairFieldAbility)
 - **THEN** RepairTask calculates healRange strictly using the building-healing weapon range, navigating to within 65% of the weapon range so the weapon can fire and repair the damaged building
+
+#### Scenario: Unit parked on top of damaged building backs off and heals
+- **WHEN** the healer unit is within the minimum standoff gap of the target building center (near-zero distance)
+- **THEN** RepairTask navigates outward to the 65%-of-range hold ring while keeping the repair beam enabled whenever the target is within weapon engagement range, and resumes the normal hold once at ring distance
 
 ### Requirement: Task 5 - Follow & Assist
 The Follow & Assist task MUST follow designated teammates in multiplayer and mirror their actions without polluting the unit build queue.
