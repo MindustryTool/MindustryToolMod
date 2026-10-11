@@ -1,6 +1,7 @@
 package mindustrytool;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.management.ManagementFactory;
@@ -23,6 +24,7 @@ import mindustry.core.GameState;
 import mindustry.core.GameState.State;
 import mindustry.core.UI;
 import mindustry.game.Rules;
+import mindustry.graphics.Pal;
 import mindustry.ui.fragments.HudFragment;
 import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.visualizer.VisualizerFeature.BridgeFlowState;
@@ -236,5 +238,42 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
 
         assertEquals(0.5f, lastHpPercent, 0.001f);
         assertEquals(0L, allocated, "Health bar metric and color calculations must allocate 0 bytes");
+    }
+
+    @Test
+    void testBlockStatsEfficiencyZeroAllocation() {
+        // Pre-cached percentage strings as used in BlockStatsDisplayFeature
+        String[] percentStrings = new String[301];
+        for (int i = 0; i <= 300; i++) {
+            percentStrings[i] = i + "%";
+        }
+
+        float[] testEfficiencies = { 0f, 0.45f, 0.85f, 1.0f, 1.5f, 2.25f, 3.5f };
+
+        // Warm up loop
+        for (int i = 0; i < 100; i++) {
+            float eff = testEfficiencies[i % testEfficiencies.length];
+            int effInt = Mathf.clamp(Math.round(eff * 100f), 0, 300);
+            String effText = percentStrings[effInt];
+            Color effColor = effInt >= 95 ? Color.green : (effInt > 50 ? Color.orange : Color.scarlet);
+            assertNotNull(effText);
+            assertNotNull(effColor);
+        }
+
+        // Measure steady state allocation across 60 frames
+        long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
+        for (int frame = 0; frame < 60; frame++) {
+            for (float eff : testEfficiencies) {
+                int effInt = Mathf.clamp(Math.round(eff * 100f), 0, 300);
+                String effText = percentStrings[effInt];
+                Color effColor = effInt >= 95 ? Color.green : (effInt > 50 ? Color.orange : Color.scarlet);
+                assertNotNull(effText);
+                assertNotNull(effColor);
+            }
+        }
+        long endAlloc = threadBean.getThreadAllocatedBytes(threadId);
+        long allocated = endAlloc - startAlloc;
+
+        assertEquals(0L, allocated, "Block stats efficiency lookup and color selection must allocate 0 bytes");
     }
 }

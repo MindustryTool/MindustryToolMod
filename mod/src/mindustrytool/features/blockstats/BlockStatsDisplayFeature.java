@@ -1,4 +1,4 @@
-package mindustrytool.features.progressdisplay;
+package mindustrytool.features.blockstats;
 
 import java.util.BitSet;
 
@@ -9,6 +9,7 @@ import arc.func.Cons;
 import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
+import arc.math.Mathf;
 import arc.struct.Seq;
 import arc.util.Align;
 import arc.util.Nullable;
@@ -17,6 +18,7 @@ import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Building;
 import mindustry.graphics.Layer;
+import mindustry.graphics.Pal;
 import mindustry.ui.Fonts;
 import mindustry.world.Block;
 import mindustry.world.blocks.production.GenericCrafter;
@@ -38,15 +40,23 @@ import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
 /**
- * Overlays a countdown of the remaining production time above active unit
- * factories, reconstructors, unit assemblers, and crafters. Per-block opt-outs
- * are stored in {@link Core#settings} and mirrored into a {@link BitSet} for
- * allocation-free lookups in the draw loop. Scalar configuration is peeked once
- * per frame into scratch fields.
+ * Overlays countdown remaining production time and average efficiency percentage
+ * above active unit factories, reconstructors, unit assemblers, and crafters.
+ * Per-block opt-outs are stored in {@link Core#settings} and mirrored into a
+ * {@link BitSet} for allocation-free lookups in the draw loop. Scalar configuration
+ * is peeked once per frame into scratch fields.
  */
-public class ProgressDisplayFeature extends Feature {
+public class BlockStatsDisplayFeature extends Feature {
 
-    public static final String BLOCK_SETTING_PREFIX = "mindustrytool.features.progress-display.block.";
+    public static final String BLOCK_SETTING_PREFIX = "mindustrytool.features.blockstats-display.block.";
+
+    private static final String[] PERCENT_STRINGS = new String[301];
+
+    static {
+        for (int i = 0; i <= 300; i++) {
+            PERCENT_STRINGS[i] = i + "%";
+        }
+    }
 
     public final ConfigGroup config;
     public final ConfigValue<Float> zoomThresholdConfig;
@@ -61,15 +71,15 @@ public class ProgressDisplayFeature extends Feature {
     private final Cons<Building> buildingDrawer = this::drawBuilding;
 
     private @Nullable BitSet blockEnabled;
-    private @Nullable ProgressDisplaySettingsDialog settingsDialog;
+    private @Nullable BlockStatsDisplaySettingsDialog settingsDialog;
 
     // Per-frame scratch written once in draw(), read by the per-building loop.
     private float frameOpacity;
     private float frameScale;
 
-    public ProgressDisplayFeature() {
+    public BlockStatsDisplayFeature() {
         super(FeatureMetadata.builder()
-                .id("progress-display")
+                .id("blockstats-display")
                 .icon(FileIcon.of("hourglass.png"))
                 .order(10)
                 .quickAccess(false)
@@ -94,7 +104,7 @@ public class ProgressDisplayFeature extends Feature {
     public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
-                settingsDialog = new ProgressDisplaySettingsDialog(this);
+                settingsDialog = new BlockStatsDisplaySettingsDialog(this);
             }
             return settingsDialog;
         };
@@ -231,13 +241,27 @@ public class ProgressDisplayFeature extends Feature {
         }
 
         float remainingSeconds = Math.max((1f - fraction) * totalTime / 60f / timeScale, 0f);
-        drawText(build.x, build.y, remainingSeconds);
+
+        int eff = Mathf.clamp(Math.round(build.efficiency * 100f), 0, 300);
+        String effText = PERCENT_STRINGS[eff];
+
+        Color effColor = eff >= 95 ? Color.green : (eff > 50 ? Color.orange : Color.scarlet);
+
+        drawStats(build.x, build.y, remainingSeconds, effText, effColor);
     }
 
-    private void drawText(float x, float y, float remainingSeconds) {
-        String text = String.format("%.1fs", remainingSeconds);
-        Fonts.outline.draw(text, x, y, Tmp.c1.set(Color.white).a(frameOpacity),
-                0.25f * frameScale, false, Align.center);
+    private void drawStats(float x, float y, float remainingSeconds, String effText, Color effColor) {
+        float fontScale = 0.25f * frameScale;
+        float yOffset = 3.5f * frameScale;
+
+        String timeText = String.format("%.1fs", remainingSeconds);
+
+        Fonts.outline.draw(timeText, x, y + yOffset, Tmp.c1.set(Color.white).a(frameOpacity),
+                fontScale, false, Align.center);
+
+        Fonts.outline.draw(effText, x, y - yOffset, Tmp.c2.set(effColor).a(frameOpacity),
+                fontScale, false, Align.center);
+
         Draw.reset();
     }
 }

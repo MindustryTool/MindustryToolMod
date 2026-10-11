@@ -25,7 +25,7 @@ import mindustrytool.features.music.MusicFeature;
 import mindustrytool.features.pathfinding.PathfindingFeature;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.prettychat.PrettyChatFeature;
-import mindustrytool.features.progressdisplay.ProgressDisplayFeature;
+import mindustrytool.features.blockstats.BlockStatsDisplayFeature;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import mindustrytool.features.griefalert.GriefAlertFeature;
@@ -102,7 +102,7 @@ public class Main extends Mod {
                 new SmartDrillFeature(),
                 new SmartUpgradeFeature(),
                 new MusicFeature(),
-                new ProgressDisplayFeature(),
+                new BlockStatsDisplayFeature(),
                 new ToggleRenderingFeature(),
                 new TimeControlFeature(),
                 new JoystickFeature(),

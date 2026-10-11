@@ -1,4 +1,4 @@
-package mindustrytool.features.progressdisplay;
+package mindustrytool.features.blockstats;
 
 import static solim.UI.*;
 
@@ -27,14 +27,14 @@ import solim.core.Component;
 import solim.reactive.Signal;
 
 /**
- * Modern declarative Solim settings view for Progress Display options: grouped
+ * Modern declarative Solim settings view for Block Stats Display options: grouped
  * per-block chip cards plus global zoom, opacity, and scale sliders.
  */
-public class ProgressDisplaySettingsView extends BaseComponent {
+public class BlockStatsDisplaySettingsView extends BaseComponent {
 
-    private final ProgressDisplayFeature feature;
+    private final BlockStatsDisplayFeature feature;
 
-    public ProgressDisplaySettingsView(ProgressDisplayFeature feature) {
+    public BlockStatsDisplaySettingsView(BlockStatsDisplayFeature feature) {
         this.feature = feature;
     }
 
@@ -45,22 +45,22 @@ public class ProgressDisplaySettingsView extends BaseComponent {
             globalSettingsCard();
 
             blockCategoryCard(
-                    Core.bundle.get("feature.progress-display.settings.section.unit-factories"),
+                    Core.bundle.get("feature.blockstats-display.settings.section.unit-factories"),
                     Icon.units,
                     UnitFactory.class);
 
             blockCategoryCard(
-                    Core.bundle.get("feature.progress-display.settings.section.reconstructors"),
+                    Core.bundle.get("feature.blockstats-display.settings.section.reconstructors"),
                     Icon.up,
                     Reconstructor.class);
 
             blockCategoryCard(
-                    Core.bundle.get("feature.progress-display.settings.section.unit-assemblers"),
+                    Core.bundle.get("feature.blockstats-display.settings.section.unit-assemblers"),
                     Icon.wrench,
                     UnitAssembler.class);
 
             blockCategoryCard(
-                    Core.bundle.get("feature.progress-display.settings.section.crafters"),
+                    Core.bundle.get("feature.blockstats-display.settings.section.crafters"),
                     Icon.crafting,
                     GenericCrafter.class);
 
@@ -73,10 +73,10 @@ public class ProgressDisplaySettingsView extends BaseComponent {
     }
 
     private Component globalSettingsCard() {
-        return SettingCard.section(Icon.settings, Core.bundle.get("feature.progress-display.settings.section.global"), () -> {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.blockstats-display.settings.section.global"), () -> {
             // Zoom Threshold
             SettingSlider.of(
-                    Core.bundle.get("feature.progress-display.settings.zoom-threshold"),
+                    Core.bundle.get("feature.blockstats-display.settings.zoom-threshold"),
                     feature.zoomThresholdConfig.signal(),
                     0f,
                     2f,
@@ -84,14 +84,14 @@ public class ProgressDisplaySettingsView extends BaseComponent {
                     feature.zoomThresholdConfig.signal().map(v -> {
                         float val = v != null ? v : 0.5f;
                         return val <= 0.01f
-                                ? Core.bundle.get("feature.progress-display.settings.off")
+                                ? Core.bundle.get("feature.blockstats-display.settings.off")
                                 : String.format(Locale.US, "%.1fx", val);
                     })
             );
 
             // Opacity
             SettingSlider.of(
-                    Core.bundle.get("feature.progress-display.settings.opacity"),
+                    Core.bundle.get("feature.blockstats-display.settings.opacity"),
                     feature.opacityConfig.signal(),
                     0f,
                     1f,
@@ -102,7 +102,7 @@ public class ProgressDisplaySettingsView extends BaseComponent {
 
             // Scale
             SettingSlider.of(
-                    Core.bundle.get("feature.progress-display.settings.scale"),
+                    Core.bundle.get("feature.blockstats-display.settings.scale"),
                     feature.scaleConfig.signal(),
                     0.5f,
                     1.5f,
@@ -151,18 +151,18 @@ public class ProgressDisplaySettingsView extends BaseComponent {
                     .gap(unit(2))
                     .children(() -> {
                         icon(Icon.refresh).size(unit(6));
-                        text(Core.bundle.get("feature.progress-display.settings.reset"));
+                        text(Core.bundle.get("feature.blockstats-display.settings.reset"));
                     });
         });
     }
 
     private static final class BlockChip extends BaseComponent {
 
-        private final ProgressDisplayFeature feature;
+        private final BlockStatsDisplayFeature feature;
         private final Block block;
         private final Signal<Boolean> enabled;
 
-        BlockChip(ProgressDisplayFeature feature, Block block) {
+        BlockChip(BlockStatsDisplayFeature feature, Block block) {
             this.feature = feature;
             this.block = block;
             this.enabled = Signal.of(feature.isBlockEnabled(block));
@@ -189,7 +189,7 @@ public class ProgressDisplaySettingsView extends BaseComponent {
                                 .size(unit(6))
                                 .color(enabled.map(en ->
                                         Boolean.TRUE.equals(en) ? Color.white : new Color(1f, 1f, 1f, 0.35f)
-                                ));
+                                       ));
                     }).element();
         }
     }
