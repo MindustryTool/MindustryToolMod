@@ -9,4 +9,4 @@
 
 - [x] 2.1 Add unit tests for `When` alignment propagation (parent cell alignment and child elements alignment across branch switches)
 - [x] 2.2 Add unit tests for `Dynamic`, `ForEach`, and `QueryView` alignment propagation
-- [ ] 2.3 Run full test suite to verify no regressions
+- [x] 2.3 Run full test suite to verify no regressions
