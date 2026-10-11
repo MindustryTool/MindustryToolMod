@@ -1,7 +1,9 @@
 package solim.layout;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import arc.func.Prov;
 import arc.scene.Element;
@@ -94,7 +96,7 @@ public final class LayoutTestFixtures {
                     fe.children(item -> () -> new Element());
                     return fe;
                 }),
-                new ComponentAdapter("QueryView", () -> QueryView.of(solim.reactive.Query.noKey(() -> java.util.concurrent.CompletableFuture.completedFuture("data"))).data(data -> () -> new Element()))
+                new ComponentAdapter("QueryView", () -> QueryView.of(solim.reactive.Query.noKey(() -> CompletableFuture.completedFuture("data"))).data(data -> () -> new Element()))
         );
     }
 
@@ -110,7 +112,7 @@ public final class LayoutTestFixtures {
 
     /** Returns all components that support direct top/bottom/left/right/center chaining. */
     public static List<ComponentAdapter> allAlignableComponents() {
-        List<ComponentAdapter> all = new java.util.ArrayList<>();
+        List<ComponentAdapter> all = new ArrayList<>();
         all.addAll(containers());
         all.addAll(reactiveContainers());
         all.addAll(controlsAndPrimitives());

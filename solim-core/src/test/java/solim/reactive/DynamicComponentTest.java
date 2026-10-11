@@ -21,6 +21,7 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import solim.core.BaseComponent;
 import solim.layout.Card;
 import solim.layout.Column;
@@ -775,18 +776,18 @@ class DynamicComponentTest extends SolimCoreEnv {
         colTable.validate();
         colTable.layout();
 
-        assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(dynCell));
-        assertEquals(arc.util.Align.center, dyn.container().getAlign());
-        assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(dyn.container().getCells().first()));
+        assertEquals(Align.center, CellAccess.align(dynCell));
+        assertEquals(Align.center, dyn.container().getAlign());
+        assertEquals(Align.center, CellAccess.align(dyn.container().getCells().first()));
 
         // Update source value to trigger remount
         source.set("world");
         SignalDispatcher.flush();
         colTable.layout();
 
-        assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(dynCell));
-        assertEquals(arc.util.Align.center, dyn.container().getAlign());
-        assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(dyn.container().getCells().first()));
+        assertEquals(Align.center, CellAccess.align(dynCell));
+        assertEquals(Align.center, dyn.container().getAlign());
+        assertEquals(Align.center, CellAccess.align(dyn.container().getCells().first()));
 
         dyn.dispose();
         col.dispose();

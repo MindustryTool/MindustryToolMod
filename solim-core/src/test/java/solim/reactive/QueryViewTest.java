@@ -2,7 +2,10 @@ package solim.reactive;
 
 import arc.scene.Element;
 import arc.scene.ui.Label;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -675,22 +678,22 @@ class QueryViewTest extends SolimEnv {
 
 		QueryView<String> view = viewHolder[0];
 		Table colTable = col.table();
-		arc.scene.ui.layout.Cell<?> viewCell = colTable.getCell(view.element());
+		Cell<?> viewCell = colTable.getCell(view.element());
 		colTable.setSize(200f, 200f);
 		colTable.validate();
 		colTable.layout();
 
-		assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(viewCell));
-		assertEquals(arc.util.Align.center, view.container().getAlign());
+		assertEquals(Align.center, CellAccess.align(viewCell));
+		assertEquals(Align.center, view.container().getAlign());
 
 		// Complete data
 		future.complete("result");
 		SignalDispatcher.flush();
 		colTable.layout();
 
-		assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(viewCell));
-		assertEquals(arc.util.Align.center, view.container().getAlign());
-		assertEquals(arc.util.Align.center, arc.scene.ui.layout.CellAccess.align(view.container().getCells().first()));
+		assertEquals(Align.center, CellAccess.align(viewCell));
+		assertEquals(Align.center, view.container().getAlign());
+		assertEquals(Align.center, CellAccess.align(view.container().getCells().first()));
 
 		view.dispose();
 		col.dispose();

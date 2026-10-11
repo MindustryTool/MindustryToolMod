@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import arc.scene.Element;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
-import solim.display.SolimImage;
 import solim.input.Button;
 import solim.test.ArcTestEnv;
 import solim.test.SolimEnv;

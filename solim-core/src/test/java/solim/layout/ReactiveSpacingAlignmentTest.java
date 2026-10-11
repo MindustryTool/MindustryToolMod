@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import arc.scene.ui.layout.Table;
 import solim.input.Button;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;

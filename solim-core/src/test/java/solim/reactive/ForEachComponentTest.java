@@ -17,6 +17,7 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import solim.core.BaseComponent;
 import solim.core.SolimToken;
 import solim.modifier.CellConfig;
@@ -202,18 +203,18 @@ class ForEachComponentTest extends SolimCoreEnv {
         colTable.validate();
         colTable.layout();
 
-        assertEquals(arc.util.Align.center, CellAccess.align(feCell));
-        assertEquals(arc.util.Align.center, fe.container().getAlign());
-        assertEquals(arc.util.Align.center, CellAccess.align(fe.container().getCells().first()));
+        assertEquals(Align.center, CellAccess.align(feCell));
+        assertEquals(Align.center, fe.container().getAlign());
+        assertEquals(Align.center, CellAccess.align(fe.container().getCells().first()));
 
         // Update items
         items.set(Arrays.asList("1", "2", "3"));
         SignalDispatcher.flush();
         colTable.layout();
 
-        assertEquals(arc.util.Align.center, CellAccess.align(feCell));
-        assertEquals(arc.util.Align.center, fe.container().getAlign());
-        assertEquals(arc.util.Align.center, CellAccess.align(fe.container().getCells().first()));
+        assertEquals(Align.center, CellAccess.align(feCell));
+        assertEquals(Align.center, fe.container().getAlign());
+        assertEquals(Align.center, CellAccess.align(fe.container().getCells().first()));
 
         fe.dispose();
         col.dispose();

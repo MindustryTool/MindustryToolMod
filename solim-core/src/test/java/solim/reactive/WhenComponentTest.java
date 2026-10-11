@@ -13,6 +13,7 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.struct.Seq;
 import solim.core.BaseComponent;
 import solim.layout.Card;
@@ -623,18 +624,18 @@ class WhenComponentTest extends SolimCoreEnv {
         colTable.validate();
         colTable.layout();
 
-        assertEquals(arc.util.Align.center, CellAccess.align(whenCell));
-        assertEquals(arc.util.Align.center, when.container().getAlign());
-        assertEquals(arc.util.Align.center, CellAccess.align(when.container().getCells().first()));
+        assertEquals(Align.center, CellAccess.align(whenCell));
+        assertEquals(Align.center, when.container().getAlign());
+        assertEquals(Align.center, CellAccess.align(when.container().getCells().first()));
 
         // Switch branch to false
         cond.set(false);
         SignalDispatcher.flush();
         colTable.layout();
 
-        assertEquals(arc.util.Align.center, CellAccess.align(whenCell));
-        assertEquals(arc.util.Align.center, when.container().getAlign());
-        assertEquals(arc.util.Align.center, CellAccess.align(when.container().getCells().first()));
+        assertEquals(Align.center, CellAccess.align(whenCell));
+        assertEquals(Align.center, when.container().getAlign());
+        assertEquals(Align.center, CellAccess.align(when.container().getCells().first()));
 
         when.dispose();
         col.dispose();
