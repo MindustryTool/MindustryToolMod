@@ -25,6 +25,7 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.config.ConfigValue;
 import solim.config.OrderedSeqPersister;
+import solim.input.Button;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -305,6 +306,34 @@ public class MiningTask implements AutoplayTask {
         return true;
     }
 
+    public static boolean hasOreOnMap(Item item) {
+        if (!Vars.state.isGame() || Vars.indexer == null) {
+            return true;
+        }
+        return Vars.indexer.hasOre(item) || Vars.indexer.hasWallOre(item);
+    }
+
+    public static @Nullable String getUnitMiningDisabledReason(@Nullable Unit unit, Item item) {
+        if (!Vars.state.isGame() || Vars.indexer == null || unit == null) {
+            return null;
+        }
+        if (!unit.canMine()) {
+            return Core.bundle.get("feature.autoplay.settings.mining.unit-cannot-mine");
+        }
+        if (unit.type.mineTier < item.hardness) {
+            return Core.bundle.format("feature.autoplay.settings.mining.tier-too-low", item.hardness, unit.type.mineTier);
+        }
+        boolean hasFloor = Vars.indexer.hasOre(item);
+        boolean hasWall = Vars.indexer.hasWallOre(item);
+        if (hasWall && !hasFloor && !unit.type.mineWalls) {
+            return Core.bundle.get("feature.autoplay.settings.mining.no-wall-mining");
+        }
+        if (hasFloor && !hasWall && !unit.type.mineFloor) {
+            return Core.bundle.get("feature.autoplay.settings.mining.no-floor-mining");
+        }
+        return null;
+    }
+
     @Override
     public void buildSettings(AutoplayFeature feature) {
         column().growX().gap(unit(1)).children(() -> {
@@ -312,24 +341,44 @@ public class MiningTask implements AutoplayTask {
                     .color(WebStyles.Colors.GHOST_FG);
 
             wrap().growX().gap(unit(1)).children(() -> {
+                Unit unit = Vars.player != null ? Vars.player.unit() : null;
+
                 for (Item item : Vars.content.items()) {
                     if (!item.unlockedNow()) {
                         continue;
                     }
 
+                    if (!hasOreOnMap(item)) {
+                        continue;
+                    }
+
+                    String disabledReason = getUnitMiningDisabledReason(unit, item);
+                    boolean canMine = disabledReason == null;
+
                     Readable<Boolean> checked = selectedItems.signal()
                             .map(seq -> seq == null || seq.isEmpty() || seq.contains(item.name));
 
-                    button(() -> toggleItem(item, !Boolean.TRUE.equals(checked.peek())))
+                    Button chipButton = button(() -> {
+                        if (canMine) {
+                            toggleItem(item, !Boolean.TRUE.equals(checked.peek()));
+                        }
+                    })
                             .style(WebStyles.filterChipText())
                             .checked(checked)
+                            .enabled(Readable.of(canMine))
                             .paddingX(unit(2))
                             .height(unit(8))
                             .children(() -> {
                                 icon(new TextureRegionDrawable(item.uiIcon)).size(unit(4));
                                 text(item.localizedName)
-                                        .color(checked.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray));
+                                        .color(checked.map(c -> Boolean.TRUE.equals(c)
+                                                ? (canMine ? Color.white : Color.lightGray)
+                                                : Color.gray));
                             });
+
+                    if (!canMine) {
+                        chipButton.tooltip(disabledReason);
+                    }
                 }
             });
         });

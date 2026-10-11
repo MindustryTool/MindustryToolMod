@@ -1,4 +1,6 @@
-## ADDED Requirements
+# mining-task-ore-filter Specification
+
+## Requirements
 
 ### Requirement: Active Map Ore Visibility
 The Mining Task settings UI SHALL only display item selection chips for items that exist as natural ore deposits (floor ores or wall ores) on the active map when a game is in progress.
