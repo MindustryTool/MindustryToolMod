@@ -158,4 +158,31 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
         }
     }
 
+    @Test
+    void taskVisibility_togglesAndUpdatesVisibleTasksReactively() {
+        AutoplayFeature feature = new AutoplayFeature();
+        try {
+            String firstId = AutoplayFeature.DEFAULT_ORDER.get(0);
+            assertTrue(feature.isTaskVisible(firstId));
+            int initialVisibleCount = feature.visibleTasks().peek().size;
+            assertEquals(feature.tasks().peek().size, initialVisibleCount);
+
+            feature.setTaskVisible(firstId, false);
+            flushEffects();
+            assertFalse(feature.isTaskVisible(firstId));
+            assertEquals(initialVisibleCount - 1, feature.visibleTasks().peek().size);
+            assertFalse(feature.visibleTasks().peek().contains(t -> t.getId().equals(firstId)));
+            // All tasks list remains unchanged
+            assertEquals(initialVisibleCount, feature.tasks().peek().size);
+
+            feature.setTaskVisible(firstId, true);
+            flushEffects();
+            assertTrue(feature.isTaskVisible(firstId));
+            assertEquals(initialVisibleCount, feature.visibleTasks().peek().size);
+            assertTrue(feature.visibleTasks().peek().contains(t -> t.getId().equals(firstId)));
+        } finally {
+            feature.disable();
+            flushEffects();
+        }
+    }
 }

@@ -86,6 +86,10 @@ public class AutoplayHudView extends BaseComponent {
         Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> unit(6) * (s != null ? s : 1f));
+        Readable<Integer> columns = feature.visibleTasks().map(list -> {
+            int size = list != null ? list.size : 0;
+            return size > 0 ? Math.min(size, STRIP_COLUMNS) : 1;
+        });
 
         return row()
                 .gap(unit(1))
@@ -93,11 +97,12 @@ public class AutoplayHudView extends BaseComponent {
                 .children(() -> {
                     masterButton(feature, buttonSize, iconSize, canEdit);
 
-                    divider(Direction.Y);
+                    when(feature.visibleTasks().map(list -> list != null && list.size > 0))
+                            .thenDo(() -> divider(Direction.Y));
 
-                    reactiveGrid(feature.tasks())
+                    reactiveGrid(feature.visibleTasks())
                             .key(AutoplayTask::getId)
-                            .columns(STRIP_COLUMNS)
+                            .columns(columns)
                             .gap(unit(1))
                             .children(task -> taskButton(feature, task, buttonSize, iconSize, canEdit));
                 });

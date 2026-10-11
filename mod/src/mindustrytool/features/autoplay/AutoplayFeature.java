@@ -69,6 +69,7 @@ public class AutoplayFeature extends Feature {
     public final ConfigValue<Boolean> followUnit;
     public final ConfigValue<Seq<String>> taskOrder;
     public final ConfigValue<Seq<String>> disabledTasks;
+    public final ConfigValue<Seq<String>> hiddenTasks;
     public final ConfigValue<String> displayModeConfig;
     public final ConfigValue<Float> scaleConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
@@ -82,6 +83,7 @@ public class AutoplayFeature extends Feature {
 
     private final ObjectMap<String, AutoplayTask> taskMap = new ObjectMap<>();
     private final Signal<Seq<AutoplayTask>> tasksSignal = Signal.of(new Seq<>());
+    private final Signal<Seq<AutoplayTask>> visibleTasksSignal = Signal.of(new Seq<>());
     private final Signal<String> currentTaskIdSignal = Signal.of(null);
     private @Nullable AutoplayTask currentTask;
     private @Nullable AutoplayHudView hudView;
@@ -101,6 +103,7 @@ public class AutoplayFeature extends Feature {
         followUnit = config.boolValue("follow-unit", false);
         taskOrder = config.value("task-order", new Seq<>(), seqPersister);
         disabledTasks = config.value("disabled-tasks", new Seq<>(), seqPersister);
+        hiddenTasks = config.value("hidden-tasks", new Seq<>(), seqPersister);
         displayModeConfig = config.stringValue("displayMode", DISPLAY_POPUP);
         scaleConfig = config.floatValue("scale", 1f);
         hideDragHandleConfig = config.boolValue("hideDragHandle", false);
@@ -150,6 +153,31 @@ public class AutoplayFeature extends Feature {
 
     public Readable<Seq<AutoplayTask>> tasks() {
         return tasksSignal;
+    }
+
+    public Readable<Seq<AutoplayTask>> visibleTasks() {
+        return visibleTasksSignal;
+    }
+
+    public boolean isTaskVisible(String taskId) {
+        Seq<String> hidden = hiddenTasks.get();
+        return hidden == null || !hidden.contains(taskId);
+    }
+
+    public void setTaskVisible(String taskId, boolean visible) {
+        Seq<String> hidden = new Seq<>();
+        Seq<String> stored = hiddenTasks.get();
+        if (stored != null) {
+            hidden.addAll(stored);
+        }
+
+        if (visible) {
+            hidden.remove(taskId);
+        } else if (!hidden.contains(taskId)) {
+            hidden.add(taskId);
+        }
+        hiddenTasks.set(hidden);
+        syncOrderedTasks();
     }
 
     public boolean isTaskEnabled(String taskId) {
@@ -214,13 +242,19 @@ public class AutoplayFeature extends Feature {
     private void syncOrderedTasks() {
         Seq<String> order = getEffectiveOrder();
         Seq<AutoplayTask> orderedList = new Seq<>();
+        Seq<AutoplayTask> visibleList = new Seq<>();
+        Seq<String> hidden = hiddenTasks.get();
         for (String id : order) {
             AutoplayTask task = taskMap.get(id);
             if (task != null) {
                 orderedList.add(task);
+                if (hidden == null || !hidden.contains(id)) {
+                    visibleList.add(task);
+                }
             }
         }
         tasksSignal.set(orderedList);
+        visibleTasksSignal.set(visibleList);
     }
 
     @Override

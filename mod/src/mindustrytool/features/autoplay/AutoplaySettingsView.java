@@ -196,6 +196,21 @@ public class AutoplaySettingsView extends BaseComponent {
                                 });
 
                                 row().gap(unit(1)).center().children(() -> {
+                                    Readable<Boolean> isVisible = feature.hiddenTasks.signal()
+                                            .map(hidden -> hidden == null || !hidden.contains(task.getId()));
+
+                                    Readable<Drawable> eyeIcon = isVisible.map(vis -> Boolean.TRUE.equals(vis)
+                                            ? FileIcon.of("eye.png", Icon.eye)
+                                            : FileIcon.of("eye-off.png", Icon.eyeOff));
+
+                                    Readable<Color> eyeColor = isVisible.map(vis -> Boolean.TRUE.equals(vis)
+                                            ? Color.white
+                                            : Color.darkGray);
+
+                                    Readable<String> eyeTooltip = isVisible.map(vis -> Boolean.TRUE.equals(vis)
+                                            ? Core.bundle.get("feature.autoplay.tooltip.hide-task")
+                                            : Core.bundle.get("feature.autoplay.tooltip.show-task"));
+                          
                                     if (task.hasSettings()) {
                                         button()
                                                 .style(WebStyles.ghost())
@@ -204,6 +219,14 @@ public class AutoplaySettingsView extends BaseComponent {
                                                 .onClick(() -> expanded.set(!Boolean.TRUE.equals(expanded.peek())))
                                                 .children(() -> icon(expandIcon).size(unit(7)));
                                     }
+
+                                    button()
+                                            .style(WebStyles.ghost())
+                                            .size(unit(11))
+                                            .tooltip(eyeTooltip)
+                                            .onClick(() -> feature.setTaskVisible(task.getId(), !feature.isTaskVisible(task.getId())))
+                                            .children(() -> icon(eyeIcon).size(unit(6)).color(eyeColor));
+
 
                                     checkbox("", taskEnabled)
                                             .size(unit(8))
