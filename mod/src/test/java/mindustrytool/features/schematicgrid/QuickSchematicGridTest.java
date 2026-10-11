@@ -20,6 +20,7 @@ import arc.struct.Seq;
 import arc.struct.StringMap;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
+import mindustrytool.components.WebStyles;
 import mindustrytool.test.MindustryTestEnv;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
@@ -566,5 +567,14 @@ class QuickSchematicGridTest extends MindustryTestEnv {
 
         assertEquals(before + 1, notifications[0]);
         assertEquals("X", feature.getEntry(id).customIcon);
+    }
+
+    @Test
+    void colors_dark90AlphaColorProperties() {
+        assertEquals(0.080f, WebStyles.Colors.DARK_90.r, 0.001f);
+        assertEquals(0.080f, WebStyles.Colors.DARK_90.g, 0.001f);
+        assertEquals(0.090f, WebStyles.Colors.DARK_90.b, 0.001f);
+        assertEquals(0.90f, WebStyles.Colors.DARK_90.a, 0.001f);
+        assertEquals(WebStyles.Colors.DARK_90, WebStyles.Colors.CHIP_HOVER_BG);
     }
 }

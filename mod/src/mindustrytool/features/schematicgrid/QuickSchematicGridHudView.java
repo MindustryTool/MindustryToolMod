@@ -296,7 +296,7 @@ public class QuickSchematicGridHudView extends BaseComponent {
     static Component emptySlot(QuickSchematicGridFeature feature, Readable<Float> buttonOpacity) {
         Readable<Float> buttonSize = feature.buttonSizeConfig.signal();
         return button()
-                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
+                .rounded(unit(2), WebStyles.Colors.DARK_90)
                 .border(1f, WebStyles.Colors.BORDER)
                 .size(buttonSize)
                 .opacity(buttonOpacity);

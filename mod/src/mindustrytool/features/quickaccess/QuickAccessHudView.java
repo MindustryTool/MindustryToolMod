@@ -18,6 +18,7 @@ import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.layout.Direction;
 import solim.overlay.Hud;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
@@ -114,22 +115,28 @@ public class QuickAccessHudView extends BaseComponent {
                 .center()
                 .children(() -> {
                     column()
+                            .growY()
                             .gap(unit(1))
                             .children(() -> {
                                 when(feature.hideDragHandleConfig.signal())
-                                        .elseDo(() -> button()
-                                                .style(WebStyles.ghost())
-                                                .size(buttonSize)
-                                                .children(() -> icon(Icon.move).size(iconSize))
-                                                .draggable(feature.xSignal, feature.ySignal));
-
-                                when(feature.collapsibleConfig.signal())
+                                        .growY()
+                                        .center()
                                         .thenDo(() -> button()
                                                 .style(WebStyles.ghost())
                                                 .size(buttonSize)
                                                 .tooltip(Core.bundle.get("feature.quick-access.ui.collapse"))
                                                 .onClick(() -> feature.collapsedConfig.set(true))
-                                                .children(() -> icon(FileIcon.of("chevron-left.png")).size(iconSize)));
+                                                .children(() -> icon(FileIcon.of("chevron-left.png")).size(iconSize)))
+                                        .elseDo(() -> {
+                                            button()
+                                                    .style(WebStyles.ghost())
+                                                    .size(buttonSize)
+                                                    .children(() -> icon(Icon.move).size(iconSize))
+                                                    .draggable(feature.xSignal, feature.ySignal);
+
+                                            divider(Direction.Y)
+                                                    .marginRight(2);
+                                        });
                             });
 
                     Readable<Integer> columns = Signal.computed(() -> {

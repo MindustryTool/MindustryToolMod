@@ -2,7 +2,6 @@ package mindustrytool.components;
 
 import static solim.UI.*;
 
-import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.util.Nullable;
 import mindustry.graphics.Pal;

@@ -1,8 +1,6 @@
 package solim.display;
 
-import arc.Core;
 import arc.graphics.Color;
-import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Disposable;

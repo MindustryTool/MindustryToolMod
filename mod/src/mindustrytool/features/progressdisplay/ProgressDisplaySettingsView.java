@@ -13,7 +13,6 @@ import java.util.Locale;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
-import mindustry.graphics.Pal;
 import mindustry.world.Block;
 import mindustry.world.blocks.production.GenericCrafter;
 import mindustry.world.blocks.units.Reconstructor;

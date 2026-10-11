@@ -57,9 +57,11 @@ public class WebStyles {
         public static final Color SECTION_BG = new Color(0.075f, 0.075f, 0.085f, 0.95f);
         public static final Color SECTION_BORDER = new Color(0.180f, 0.180f, 0.200f, 1.0f);
 
+        public static final Color DARK_90 = new Color(0.080f, 0.080f, 0.090f, 0.90f);
+
         public static final Color CHIP_BG = new Color(0.115f, 0.115f, 0.130f, 1.0f);
         public static final Color CHIP_BORDER = new Color(0.190f, 0.190f, 0.210f, 1.0f);
-        public static final Color CHIP_HOVER_BG = new Color(0.170f, 0.170f, 0.190f, 1.0f);
+        public static final Color CHIP_HOVER_BG = DARK_90;
         public static final Color CHIP_DOWN_BG = new Color(0.220f, 0.220f, 0.245f, 1.0f);
         public static final Color CHIP_FG = new Color(0.630f, 0.630f, 0.660f, 1.0f);
         public static final Color CHIP_CHECKED_BG = new Color(0.260f, 0.220f, 0.420f, 1.0f);

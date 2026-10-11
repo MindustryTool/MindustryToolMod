@@ -221,9 +221,6 @@ class HudViewReactivityTest extends MindustryTestEnv {
     void testAbsenceOfCascadingLayoutInvalidationStorms() {
         AtomicInteger layoutInvalidations = new AtomicInteger(0);
 
-        // Simulated layout invalidation hook
-        Cons<String> invalidator = reason -> layoutInvalidations.incrementAndGet();
-
         Signal<Float> scale = Signal.of(1.0f);
         Signal<Float> opacity = Signal.of(1.0f);
 

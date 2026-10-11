@@ -1,4 +1,10 @@
-## ADDED Requirements
+# settings-ui-modernization Specification
+
+## Purpose
+
+Standardize and modernize all settings dialog views across MindustryTool mod with a unified viewport scaffold, compact spacing system, card-based section layout, above-track background-less sliders, and declarative helper components.
+
+## Requirements
 
 ### Requirement: Setting Dialog Viewport Alignment and Constrained Width
 All feature setting dialogs SHALL align to the top on the Y-axis and center on the X-axis, with content width constrained to at most 500 units.

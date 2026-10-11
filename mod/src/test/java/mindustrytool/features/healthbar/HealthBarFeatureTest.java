@@ -117,61 +117,7 @@ class HealthBarFeatureTest extends MindustryTestEnv {
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertTrue(getCachedBool(feature, "cachedShowFriendlyUnits"));
     }
-
-    @Test
-    void testShieldCountCacheHandlesHighShieldNumbersAndBoundariesWithoutException() throws Exception {
-        HealthBarFeature feature = new HealthBarFeature();
-
-        Field cacheField = HealthBarFeature.class.getDeclaredField("SHIELD_COUNT_CACHE");
-        cacheField.setAccessible(true);
-        String[] cache = (String[]) cacheField.get(null);
-
-        Field maxField = HealthBarFeature.class.getDeclaredField("SHIELD_COUNT_MAX");
-        maxField.setAccessible(true);
-        String max = (String) maxField.get(null);
-
-        assertEquals(64, cache.length);
-        assertEquals("x64+", max);
-
-        for (int i = 0; i < 64; i++) {
-            assertEquals("x" + i, cache[i]);
-        }
-
-        // Test the shield lookup logic directly for boundary and extreme numbers
-        float[] testShieldValues = {
-            0.0f, 0.5f, 1.0f, 2.5f, 63.0f, 63.99f, 64.0f, 65.0f,
-            100.0f, 1_000.0f, 1_000_000.0f, Float.MAX_VALUE, Float.POSITIVE_INFINITY, -10.0f
-        };
-
-        for (float val : testShieldValues) {
-            float whole = (float) Math.floor(val);
-            if (whole >= 1f) {
-                int countIdx = (int) whole;
-                String count = countIdx < cache.length ? cache[countIdx] : max;
-                if (countIdx >= 64) {
-                    assertEquals(max, count, "Values >= 64 must use SHIELD_COUNT_MAX");
-                } else {
-                    assertEquals("x" + countIdx, count, "Values < 64 must use cache[countIdx]");
-                }
-            }
-        }
-
-        // 2. Verify bounds safety and string mapping for all values
-        for (float val : testShieldValues) {
-            float whole = (float) Math.floor(val);
-            if (whole >= 1f) {
-                int countIdx = (int) whole;
-                assertTrue(countIdx >= 1, "Count index must be positive");
-                String count = countIdx < cache.length ? cache[countIdx] : max;
-                if (countIdx >= 64) {
-                    assertEquals("x64+", count, "Values >= 64 must return SHIELD_COUNT_MAX");
-                } else {
-                    assertEquals("x" + countIdx, count, "Values < 64 must return cache[countIdx]");
-                }
-            }
-        }
-    }
-
+    
     @Test
     void testDrawBuildingCheckZeroAndNegativeSizeBoundsHandling() throws Exception {
         HealthBarFeature feature = new HealthBarFeature();

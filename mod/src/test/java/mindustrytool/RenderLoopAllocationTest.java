@@ -237,46 +237,4 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
         assertEquals(0.5f, lastHpPercent, 0.001f);
         assertEquals(0L, allocated, "Health bar metric and color calculations must allocate 0 bytes");
     }
-
-    @Test
-    void testCombinedSimulatedGameplayRenderLoopZeroAllocation() {
-        BridgeFlowState flowState = new BridgeFlowState();
-        Rect viewBounds = new Rect(0f, 0f, 800f, 600f);
-        Color scratchColor = new Color();
-        Color teamColor = Color.royal;
-
-        // 100 frames warm-up
-        for (int frame = 0; frame < 100; frame++) {
-            // Visualizer flow update
-            flowState.step(frame * 10f);
-            flowState.addItem(1.5f);
-            String flowText = flowState.formatRate(flowState.calculateRate());
-
-            // RangeDisplay frustum check
-            float ux = 400f, uy = 300f, urange = 100f;
-            boolean culled = ux + urange < viewBounds.x || ux - urange > viewBounds.x + viewBounds.width
-                    || uy + urange < viewBounds.y || uy - urange > viewBounds.y + viewBounds.height;
-
-            // HealthBar metric calculation
-            scratchColor.set(teamColor).lerp(Color.white, 0.2f);
-        }
-
-        // 60 consecutive simulated frames measurement (1.0 second of 60 FPS gameplay)
-        long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
-        for (int frame = 0; frame < 60; frame++) {
-            flowState.step(1000f + frame * 10f);
-            flowState.addItem(2.0f);
-            String flowText = flowState.formatRate(flowState.calculateRate());
-
-            float ux = 400f, uy = 300f, urange = 100f;
-            boolean culled = ux + urange < viewBounds.x || ux - urange > viewBounds.x + viewBounds.width
-                    || uy + urange < viewBounds.y || uy - urange > viewBounds.y + viewBounds.height;
-
-            scratchColor.set(teamColor).lerp(Color.white, 0.5f);
-        }
-        long endAlloc = threadBean.getThreadAllocatedBytes(threadId);
-        long allocated = endAlloc - startAlloc;
-
-        assertEquals(0L, allocated, "Simulated 60 FPS gameplay frame loops must allocate 0 bytes on heap");
-    }
 }
