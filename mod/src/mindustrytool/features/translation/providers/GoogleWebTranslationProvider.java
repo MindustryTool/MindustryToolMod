@@ -69,9 +69,7 @@ public class GoogleWebTranslationProvider implements TranslationProvider {
 
 	@Override
 	public String getName() {
-		return Core.bundle != null
-				? Core.bundle.get("feature.translation.provider.googleweb", "Google (Free)")
-				: "Google (Free)";
+		return Core.bundle.get("feature.translation.provider.googleweb");
 	}
 
 	@Override
@@ -186,28 +184,20 @@ public class GoogleWebTranslationProvider implements TranslationProvider {
 
 	public static RuntimeException mapGoogleError(int statusCode) {
 		if (statusCode == 403) {
-			return new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.google-forbidden", "Google Translate access denied or blocked.")
-					: "Google Translate access denied or blocked.");
+			return new RuntimeException(Core.bundle.get("feature.translation.error.google-forbidden"));
 		}
 		if (statusCode == 429) {
-			return new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.rate-limit", "Rate limit exceeded. Please wait a moment.")
-					: "Rate limit exceeded. Please wait a moment.");
+			return new RuntimeException(Core.bundle.get("feature.translation.error.rate-limit"));
 		}
 		if (statusCode >= 500) {
-			return new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.server-error", "Translation service encountered a server error.")
-					: "Translation service encountered a server error.");
+			return new RuntimeException(Core.bundle.get("feature.translation.error.server-error"));
 		}
-		return new RuntimeException((Core.bundle != null
-				? Core.bundle.get("feature.translation.error.network", "Network error or request timed out.")
-				: "Network error or request timed out.") + " (HTTP " + statusCode + ")");
+		return new RuntimeException((Core.bundle.get("feature.translation.error.network")) + " (HTTP " + statusCode + ")");
 	}
 
 	public static String resolveGoogleLang(@Nullable String lang) {
 		if (lang == null || lang.trim().isEmpty()) {
-			return Core.bundle != null ? Core.bundle.getLocale().getLanguage().toLowerCase(Locale.ROOT) : "en";
+			return Core.bundle.getLocale().getLanguage().toLowerCase(Locale.ROOT);
 		}
 		String clean = lang.trim();
 		if (clean.length() == 2) {
@@ -235,7 +225,7 @@ public class GoogleWebTranslationProvider implements TranslationProvider {
 			case "korean": return "ko";
 			case "vietnamese": return "vi";
 			default:
-				return Core.bundle != null ? Core.bundle.getLocale().getLanguage().toLowerCase(Locale.ROOT) : "en";
+				return Core.bundle.getLocale().getLanguage().toLowerCase(Locale.ROOT);
 		}
 	}
 }

@@ -39,9 +39,7 @@ public class PrettyChatSettingsView extends BaseComponent {
 
     public PrettyChatSettingsView(PrettyChatFeature feature) {
         this.feature = feature;
-        String initialSample = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.preview-sample", "Hello World! This is a test message.")
-                : "Hello World! This is a test message.";
+        String initialSample = Core.bundle.get("feature.pretty-chat.settings.preview-sample");
         this.previewSignal = Signal.of(initialSample);
         this.selectedCategory = Signal.of("all");
         this.resultComputed = new Computed<>(() -> {
@@ -88,26 +86,12 @@ public class PrettyChatSettingsView extends BaseComponent {
     }
 
     private Component livePreviewCard() {
-        String previewLabel = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.preview-label", "Live Message Preview")
-                : "Live Message Preview";
-        String liveBadge = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.live-badge", "LIVE")
-                : "LIVE";
-        String previewDesc = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.preview-desc",
-                        "Type a message below to preview your active transformer pipeline.")
-                : "Type a message below to preview your active transformer pipeline.";
-        String previewPlaceholder = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.preview-placeholder", "Type a message to preview...")
-                : "Type a message to preview...";
-        String simSender = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.sim-sender", "[accent][You]:[]")
-                : "[accent][You]:[]";
-        String escapeHint = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.escape-hint",
-                        "Tip: In game chat, type // before your message to send raw text without styling.")
-                : "Tip: In game chat, type // before your message to send raw text without styling.";
+        String previewLabel = Core.bundle.get("feature.pretty-chat.settings.preview-label");
+        String liveBadge = Core.bundle.get("feature.pretty-chat.settings.live-badge");
+        String previewDesc = Core.bundle.get("feature.pretty-chat.settings.preview-desc");
+        String previewPlaceholder = Core.bundle.get("feature.pretty-chat.settings.preview-placeholder");
+        String simSender = Core.bundle.get("feature.pretty-chat.settings.sim-sender");
+        String escapeHint = Core.bundle.get("feature.pretty-chat.settings.escape-hint");
 
         return sectionCard().children(() -> {
             // Header
@@ -163,19 +147,10 @@ public class PrettyChatSettingsView extends BaseComponent {
     }
 
     private Component pipelineCard() {
-        String pipelineTitle = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.pipeline-title", "Active Pipeline")
-                : "Active Pipeline";
-        String pipelineDesc = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.pipeline-desc",
-                        "Enabled transformers run sequentially in the order shown below.")
-                : "Enabled transformers run sequentially in the order shown below.";
-        String clearText = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.clear-pipeline", "Clear All")
-                : "Clear All";
-        String resetText = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.reset-default", "Reset to Default")
-                : "Reset to Default";
+        String pipelineTitle = Core.bundle.get("feature.pretty-chat.settings.pipeline-title");
+        String pipelineDesc = Core.bundle.get("feature.pretty-chat.settings.pipeline-desc");
+        String clearText = Core.bundle.get("feature.pretty-chat.settings.clear-pipeline");
+        String resetText = Core.bundle.get("feature.pretty-chat.settings.reset-default");
 
         return sectionCard().children(() -> {
             // Header
@@ -186,9 +161,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                         .wrap()
                         .growX()
                         .left();
-                badge(feature.config().enabledIdsSignal.map(l -> Core.bundle != null
-                        ? Core.bundle.format("feature.pretty-chat.settings.pipeline-steps", l.size())
-                        : l.size() + " steps"))
+                badge(feature.config().enabledIdsSignal.map(l -> Core.bundle.format("feature.pretty-chat.settings.pipeline-steps", l.size())))
                         .color(WebStyles.Colors.SECONDARY);
             });
 
@@ -220,10 +193,7 @@ public class PrettyChatSettingsView extends BaseComponent {
 
     private void buildActivePipelineList(List<String> enabledIds) {
         if (enabledIds.isEmpty()) {
-            String emptyMessage = Core.bundle != null
-                    ? Core.bundle.get("feature.pretty-chat.settings.no-transformers",
-                            "No active transformers. Enable any transformer from the list.")
-                    : "No active transformers. Enable any transformer from the list.";
+            String emptyMessage = Core.bundle.get("feature.pretty-chat.settings.no-transformers");
 
             column().growX().padding(unit(2)).rounded(6, WebStyles.Colors.SECONDARY).children(() -> {
                 text(emptyMessage)
@@ -258,9 +228,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                         button(() -> feature.config().move(id, -1))
                                 .style(WebStyles.ghost())
                                 .size(unit(11))
-                                .tooltip(Core.bundle != null
-                                        ? Core.bundle.get("feature.pretty-chat.settings.move-up", "Move Up")
-                                        : "Move Up")
+                                .tooltip(Core.bundle.get("feature.pretty-chat.settings.move-up"))
                                 .children(() -> icon(Icon.up).size(unit(6)));
                     } else {
                         row().size(unit(11));
@@ -270,9 +238,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                         button(() -> feature.config().move(id, 1))
                                 .style(WebStyles.ghost())
                                 .size(unit(11))
-                                .tooltip(Core.bundle != null
-                                        ? Core.bundle.get("feature.pretty-chat.settings.move-down", "Move Down")
-                                        : "Move Down")
+                                .tooltip(Core.bundle.get("feature.pretty-chat.settings.move-down"))
                                 .children(() -> icon(Icon.down).size(unit(6)));
                     } else {
                         row().size(unit(11));
@@ -281,9 +247,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                     button(() -> feature.config().toggle(id))
                             .style(WebStyles.ghost())
                             .size(unit(11))
-                            .tooltip(Core.bundle != null
-                                    ? Core.bundle.get("feature.pretty-chat.settings.remove", "Remove")
-                                    : "Remove")
+                            .tooltip(Core.bundle.get("feature.pretty-chat.settings.remove"))
                             .children(() -> icon(Icon.cancel).size(unit(6)).color(WebStyles.Colors.DANGER));
                 });
             }
@@ -291,9 +255,7 @@ public class PrettyChatSettingsView extends BaseComponent {
     }
 
     private Component availableTransformersPanel() {
-        String availableTitle = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.available-transformers", "Available Transformers")
-                : "Available Transformers";
+        String availableTitle = Core.bundle.get("feature.pretty-chat.settings.available-transformers");
 
         return sectionCard().children(() -> {
             // Header
@@ -387,9 +349,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                     })
                             .style(WebStyles.ghost())
                             .size(unit(11))
-                            .tooltip(Core.bundle != null
-                                    ? Core.bundle.get("feature.pretty-chat.settings.edit-script", "Edit Script")
-                                    : "Edit Script")
+                            .tooltip(Core.bundle.get("feature.pretty-chat.settings.edit-script"))
                             .children(() -> icon(Icon.edit).size(unit(6)));
                 }
 
@@ -398,8 +358,8 @@ public class PrettyChatSettingsView extends BaseComponent {
                         .checked(isEnabled)
                         .size(unit(11))
                         .tooltip(isEnabled.map(e -> Boolean.TRUE.equals(e)
-                                ? (Core.bundle != null ? Core.bundle.get("feature.pretty-chat.settings.remove", "Remove") : "Remove")
-                                : (Core.bundle != null ? Core.bundle.get("feature.pretty-chat.settings.enable", "Enable") : "Enable")))
+                                ? (Core.bundle.get("feature.pretty-chat.settings.remove"))
+                                : (Core.bundle.get("feature.pretty-chat.settings.enable"))))
                         .children(() -> icon(isEnabled.map(e -> Boolean.TRUE.equals(e) ? (Drawable) Icon.ok : (Drawable) Icon.add)).size(unit(6)));
             });
         });
@@ -407,7 +367,7 @@ public class PrettyChatSettingsView extends BaseComponent {
 
     private String getCategoryName(String cat) {
         String key = "pretty-chat.category." + cat.toLowerCase(Locale.ROOT);
-        return Core.bundle != null && Core.bundle.has(key)
+        return Core.bundle.has(key)
                 ? Core.bundle.get(key)
                 : cat.substring(0, 1).toUpperCase(Locale.ROOT) + cat.substring(1);
     }

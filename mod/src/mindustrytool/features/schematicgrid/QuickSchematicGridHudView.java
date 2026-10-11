@@ -11,7 +11,6 @@ import java.util.List;
 import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
-import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -209,8 +208,7 @@ public class QuickSchematicGridHudView extends BaseComponent {
             Readable<Float> buttonOpacity) {
         return when(feature.hideDragHandleConfig.signal())
                 .elseDo(() -> button()
-                        .style(Styles.clearNonei)
-                        .background(Styles.black6)
+                        .style(WebStyles.ghost())
                         .size(buttonSize)
                         .opacity(buttonOpacity)
                         .children(() -> icon(Icon.move).size(dragIconSize))
@@ -297,8 +295,8 @@ public class QuickSchematicGridHudView extends BaseComponent {
     static Component emptySlot(QuickSchematicGridFeature feature, Readable<Float> buttonOpacity) {
         Readable<Float> buttonSize = feature.buttonSizeConfig.signal();
         return button()
-                .style(Styles.clearNonei)
-                .background(Styles.black3)
+                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
+                .border(1f, WebStyles.Colors.BORDER)
                 .size(buttonSize)
                 .opacity(buttonOpacity);
     }
@@ -334,7 +332,7 @@ public class QuickSchematicGridHudView extends BaseComponent {
                     .size(buttonSize)
                     .opacity(buttonOpacity)
                     .tooltip(Core.bundle.format("feature.quick-schematic-grid.tooltip.missing",
-                            missingLabel != null ? missingLabel : ""))
+                             missingLabel != null ? missingLabel : ""))
                     .children(() -> icon(Icon.warning).size(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f))
                             .color(Color.scarlet));
         }
@@ -361,8 +359,9 @@ public class QuickSchematicGridHudView extends BaseComponent {
         }
 
         return button(activate)
+                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
+                .border(1f, WebStyles.Colors.BORDER)
                 .size(buttonSize)
-                .background(Styles.black9)
                 .opacity(buttonOpacity)
                 .tooltip(tooltip)
                 .children(() -> new BoundedSchematicImage(schematic, buttonSize, 48f));

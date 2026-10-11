@@ -30,3 +30,8 @@ feature.autoplay.settings.display-mode.hud
 feature.quick-schematic-grid.settings.display-mode.hud
 feature.god-mode.settings.provider.js
 
+feature.pathfinding.badge.navigation
+feature.background.badge.graphics
+feature.chat.badge.communication
+feature.joystick.badge.controls
+feature.god-mode.badge.sandbox

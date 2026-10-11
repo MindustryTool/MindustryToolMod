@@ -4,80 +4,168 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.files.Fi;
+import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Log;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustry.graphics.Pal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.services.crash.CrashTimestampParser;
 import solim.core.BaseComponent;
+import solim.core.Component;
+import solim.layout.Card;
 
 /**
- * Settings view for mod-wide preferences and diagnostics.
- * Includes toggles for beta updates, game presence, and free camera,
+ * Modern declarative Solim settings view for mod-wide preferences and diagnostics.
+ * Includes toggles for beta updates and game presence sharing,
  * as well as one-tap buttons to copy recent logs and crash reports.
  */
 public class GeneralSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().growY().scrollX(false).children(() -> {
-                column().growX().gap(unit(2)).padding(unit(2)).children(() -> {
-                    checkbox(
-                            Core.bundle.get("setting.beta.participate"),
-                            ModSettings.betaParticipate.signal())
-                            .growX()
-                            .tooltip(Core.bundle.get("setting.beta.participate.tooltip"));
-
-                    checkbox(
-                            Core.bundle.get("setting.share-presence"),
-                            ModSettings.sharePresence.signal())
-                            .growX()
-                            .tooltip(Core.bundle.get("setting.share-presence.description"));
-
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("setting.universal-scale")).left();
-
-                        spacer();
-                        slider(ModSettings.universalScale.signal(), 0.5f, 1.5f, 0.05f)
-                                .tooltip(Core.bundle.get("setting.universal-scale.tooltip"));
-
-                        row().width(unit(14)).children(() -> {
-                            text(ModSettings.universalScale.signal()
-                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
-                        });
-                    });
-
-                    divider();
-
-                    column().growX().gap(unit(2)).children(() -> {
-                        button(this::copyLastLog)
-                                .style(WebStyles.outline())
-                                .growX()
-                                .height(unit(10))
-                                .tooltip(Core.bundle.get("setting.button.copy-log.tooltip"))
-                                .gap(unit(2))
-                                .children(() -> {
-                                    icon(Icon.copy);
-                                    text(Core.bundle.get("setting.button.copy-log"));
-                                });
-
-                        button(this::copyLastCrash)
-                                .style(WebStyles.outline())
-                                .growX()
-                                .height(unit(10))
-                                .tooltip(Core.bundle.get("setting.button.copy-crash.tooltip"))
-                                .gap(unit(2))
-                                .children(() -> {
-                                    icon(Icon.warning);
-                                    text(Core.bundle.get("setting.button.copy-crash"));
-                                });
-                    });
+        return column().grow().center().maxWidth(500f).children(() -> {
+            scroll().grow().scrollX(false).children(() -> {
+                column().growX().gap(unit(2.5f)).padding(unit(2)).center().children(() -> {
+                    headerCard();
+                    preferencesCard();
+                    diagnosticsCard();
                 });
             });
         }).element();
+    }
+
+    private Card sectionCard() {
+        return card()
+                .growX()
+                .padding(unit(2.5f))
+                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
+                .border(1f, WebStyles.Colors.SECTION_BORDER)
+                .gap(unit(2));
+    }
+
+    private Component headerCard() {
+        return sectionCard().children(() -> {
+            row().growX().gap(unit(2)).center().children(() -> {
+                icon(Icon.settings).size(unit(5)).color(Pal.accent);
+                text(Core.bundle.get("dialog.general-settings.title"))
+                        .color(Pal.accent)
+                        .growX()
+                        .left();
+                badge("PREFERENCES").color(WebStyles.Colors.PRIMARY);
+            });
+
+            text(Core.bundle.get("dialog.general-settings.description"))
+                    .color(WebStyles.Colors.GHOST_FG)
+                    .left()
+                    .wrap()
+                    .growX();
+        });
+    }
+
+    private Component preferencesCard() {
+        return sectionCard().children(() -> {
+            row().growX().gap(unit(2)).center().children(() -> {
+                icon(Icon.settings).size(unit(5)).color(Pal.accent);
+                text(Core.bundle.get("setting.section.preferences"))
+                        .color(Pal.accent)
+                        .growX()
+                        .left();
+            });
+
+            // Beta updates toggle
+            row().growX().gap(unit(2)).center().children(() -> {
+                column().growX().gap(unit(0.5f)).left().children(() -> {
+                    text(Core.bundle.get("setting.beta.participate"))
+                            .color(Color.white)
+                            .left();
+                    text(Core.bundle.get("setting.beta.participate.tooltip"))
+                            .color(WebStyles.Colors.GHOST_FG)
+                            .left()
+                            .wrap()
+                            .growX();
+                });
+                spacer();
+                checkbox("", ModSettings.betaParticipate.signal());
+            });
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            // Game presence toggle
+            row().growX().gap(unit(2)).center().children(() -> {
+                column().growX().gap(unit(0.5f)).left().children(() -> {
+                    text(Core.bundle.get("setting.share-presence"))
+                            .color(Color.white)
+                            .left();
+                    text(Core.bundle.get("setting.share-presence.description"))
+                            .color(WebStyles.Colors.GHOST_FG)
+                            .left()
+                            .wrap()
+                            .growX();
+                });
+                spacer();
+                checkbox("", ModSettings.sharePresence.signal());
+            });
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            // Universal scale slider
+            row().growX().gap(unit(2)).center().children(() -> {
+                column().growX().gap(unit(0.5f)).left().children(() -> {
+                    text(Core.bundle.get("setting.universal-scale"))
+                            .color(Color.white)
+                            .left();
+                    text(Core.bundle.get("setting.universal-scale.tooltip"))
+                            .color(WebStyles.Colors.GHOST_FG)
+                            .left()
+                            .wrap()
+                            .growX();
+                });
+                spacer();
+                slider(ModSettings.universalScale.signal(), 0.5f, 1.5f, 0.05f)
+                        .tooltip(Core.bundle.get("setting.universal-scale.tooltip"));
+                row().width(unit(14)).children(() -> {
+                    text(ModSettings.universalScale.signal()
+                            .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
+                });
+            });
+        });
+    }
+
+    private Component diagnosticsCard() {
+        return sectionCard().children(() -> {
+            row().growX().gap(unit(2)).center().children(() -> {
+                icon(Icon.infoCircle).size(unit(5)).color(Pal.accent);
+                text(Core.bundle.get("setting.section.diagnostics"))
+                        .color(Pal.accent)
+                        .growX()
+                        .left();
+            });
+
+            button(this::copyLastLog)
+                    .style(WebStyles.outline())
+                    .growX()
+                    .height(unit(11))
+                    .gap(unit(2))
+                    .tooltip(Core.bundle.get("setting.button.copy-log.tooltip"))
+                    .children(() -> {
+                        icon(Icon.copy).size(unit(6));
+                        text(Core.bundle.get("setting.button.copy-log"));
+                    });
+
+            button(this::copyLastCrash)
+                    .style(WebStyles.outline())
+                    .growX()
+                    .height(unit(11))
+                    .gap(unit(2))
+                    .tooltip(Core.bundle.get("setting.button.copy-crash.tooltip"))
+                    .children(() -> {
+                        icon(Icon.warning).size(unit(6));
+                        text(Core.bundle.get("setting.button.copy-crash"));
+                    });
+        });
     }
 
     private void copyLastLog() {
@@ -112,7 +200,7 @@ public class GeneralSettingsView extends BaseComponent {
 
             String content = latest.readString();
             Core.app.setClipboardText(content);
-            Vars.ui.showInfoFade(Core.bundle.format("setting.crash.copied", latest.name()));
+            Vars.ui.showInfoFade(Core.bundle.format("setting.crash.copied", latest.name()) + latest.name() + ") copied to clipboard.");
         } catch (Exception e) {
             Log.err("Failed to read latest crash report", e);
             Vars.ui.showException(e);

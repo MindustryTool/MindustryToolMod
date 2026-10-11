@@ -54,10 +54,9 @@ public class QuickAccessHudView extends BaseComponent {
 
     @Override
     protected Element build() {
-        feature.healDisplayOrder();
         Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> unit(11f) * s);
-        Readable<Float> iconSize = scale.map(s -> unit(7f) * s);
+        Readable<Float> iconSize = scale.map(s -> unit(6f) * s);
 
         Readable<Boolean> isCollapsed = Signal
                 .computed(() -> Boolean.TRUE.equals(feature.collapsibleConfig.signal().get())
@@ -133,8 +132,16 @@ public class QuickAccessHudView extends BaseComponent {
                                                 .children(() -> icon(FileIcon.of("chevron-left.png")).size(iconSize)));
                             });
 
+                    Readable<Integer> columns = Signal.computed(() -> {
+                        Integer cols = feature.colsConfig.signal().get();
+                        int maxCols = cols != null ? cols : 4;
+                        List<HudItem> currentItems = items.get();
+                        int count = currentItems != null ? currentItems.size() : 0;
+                        return Math.max(1, Math.min(maxCols, count));
+                    });
+
                     reactiveGrid(items).key(HudItem::id)
-                            .columns(feature.colsConfig.signal().map(c -> Math.min(c, items.get().size())))
+                            .columns(columns)
                             .gap(unit(1))
                             .children(item -> createItemButton(feature, item, buttonSize, iconSize));
                 });

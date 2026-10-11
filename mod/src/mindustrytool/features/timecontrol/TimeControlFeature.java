@@ -410,7 +410,7 @@ public class TimeControlFeature extends Feature {
     }
 
     private boolean canApply() {
-        return Boolean.FALSE.equals(Signals.netClient().peek()) && !Vars.net.client();
+        return Boolean.FALSE.equals(Signals.netClient().peek()) && (Vars.net == null || !Vars.net.client());
     }
 
     private void applyProvider(float multiplier) {

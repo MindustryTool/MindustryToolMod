@@ -120,29 +120,21 @@ public class DeepLTranslationProvider implements TranslationProvider {
 			case "korean": return "KO";
 			case "vietnamese": return "VI";
 			default:
-				return Core.bundle != null ? Core.bundle.getLocale().getLanguage().toUpperCase(Locale.ROOT) : "EN";
+				return Core.bundle.getLocale().getLanguage().toUpperCase(Locale.ROOT);
 		}
 	}
 
 	public static RuntimeException mapDeepLError(int statusCode) {
 		if (statusCode == 401 || statusCode == 403) {
-			return new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.invalid-key", "Invalid API key")
-					: "Invalid API key");
+			return new RuntimeException(Core.bundle.get("feature.translation.error.invalid-key"));
 		}
 		if (statusCode == 429 || statusCode == 456) {
-			return new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.rate-limit", "Rate limit exceeded")
-					: "Rate limit exceeded");
+			return new RuntimeException(Core.bundle.get("feature.translation.error.rate-limit"));
 		}
 		if (statusCode >= 500) {
-			return new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.server-error", "Server error")
-					: "Server error");
+			return new RuntimeException(Core.bundle.get("feature.translation.error.server-error"));
 		}
-		return new RuntimeException((Core.bundle != null
-				? Core.bundle.get("feature.translation.error.network", "Network error")
-				: "Network error") + " (HTTP " + statusCode + ")");
+		return new RuntimeException((Core.bundle.get("feature.translation.error.network")) + " (HTTP " + statusCode + ")");
 	}
 
 	public static String parseDeepLResponse(int statusCode, String jsonResponse, String fallback) {

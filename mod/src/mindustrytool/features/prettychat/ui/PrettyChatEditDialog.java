@@ -19,9 +19,7 @@ import solim.overlay.SolimDialog;
 public class PrettyChatEditDialog extends SolimDialog {
 
     public PrettyChatEditDialog(Prettier prettier, Runnable onSave) {
-        super(Core.bundle != null
-                ? Core.bundle.format("feature.pretty-chat.settings.edit-script-title", prettier.name())
-                : "Edit Script - " + prettier.name());
+        super(Core.bundle.format("feature.pretty-chat.settings.edit-script-title", prettier.name()) + prettier.name());
 
         name("prettyChatEditDialog");
         addCloseButton();
@@ -31,18 +29,15 @@ public class PrettyChatEditDialog extends SolimDialog {
 
         String hint;
         if ("gradient".equals(prettier.id())) {
-            hint = Core.bundle != null && Core.bundle.has("feature.pretty-chat.settings.gradient-hint")
+            hint = Core.bundle.has("feature.pretty-chat.settings.gradient-hint")
                     ? Core.bundle.get("feature.pretty-chat.settings.gradient-hint")
                     : "Enter two comma-separated hex colors (e.g. #ff5e36,#9b51e0) or preset: cyberpunk, ocean, fire, neon.";
         } else if ("fancybrackets".equals(prettier.id())) {
-            hint = Core.bundle != null && Core.bundle.has("feature.pretty-chat.settings.brackets-hint")
+            hint = Core.bundle.has("feature.pretty-chat.settings.brackets-hint")
                     ? Core.bundle.get("feature.pretty-chat.settings.brackets-hint")
                     : "Enter decorative template containing <message>, e.g. \u3010 <message> \u3011 or \u2726 <message> \u2726.";
         } else {
-            hint = Core.bundle != null
-                    ? Core.bundle.get("feature.pretty-chat.settings.script-hint",
-                            "Use <message> as a placeholder for the chat text. JavaScript expressions are supported on Desktop.")
-                    : "Use <message> as a placeholder for the chat text. JavaScript expressions are supported on Desktop.";
+            hint = Core.bundle.get("feature.pretty-chat.settings.script-hint");
         }
 
         children(() -> {
@@ -65,9 +60,7 @@ public class PrettyChatEditDialog extends SolimDialog {
         });
 
         actionButton(
-                Core.bundle != null
-                        ? Core.bundle.get("feature.pretty-chat.settings.reset-default", "Reset to Default")
-                        : "Reset to Default",
+                Core.bundle.get("feature.pretty-chat.settings.reset-default"),
                 Icon.refresh,
                 200f,
                 54f,
@@ -77,9 +70,7 @@ public class PrettyChatEditDialog extends SolimDialog {
                 });
 
         actionButton(
-                Core.bundle != null
-                        ? Core.bundle.get("feature.pretty-chat.settings.save", "Save")
-                        : "Save",
+                Core.bundle.get("feature.pretty-chat.settings.save"),
                 Icon.save,
                 160f,
                 54f,

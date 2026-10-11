@@ -113,7 +113,7 @@ public class FreeCameraFeature extends Feature {
         if (Vars.ui == null || Vars.ui.hudfrag == null || !Vars.ui.hudfrag.shown) {
             return;
         }
-        if (Core.camera == null || Fonts.outline == null || Core.bundle == null) {
+        if (Core.camera == null || Fonts.outline == null) {
             return;
         }
 

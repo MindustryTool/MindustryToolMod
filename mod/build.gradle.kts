@@ -154,6 +154,7 @@ tasks.named<Jar>("jar") {
     exclude("META-INF/*.SF")
     exclude("META-INF/*.DSA")
     exclude("META-INF/*.RSA")
+    exclude("**/*.bak")
 
     doLast {
         val rootLibsDir = File(rootProject.projectDir, "build/libs")

@@ -25,14 +25,14 @@ public interface Prettier {
 
     /** Returns the localized display name. */
     default String name() {
-        return Core.bundle != null && Core.bundle.has(nameKey())
+        return Core.bundle.has(nameKey())
                 ? Core.bundle.get(nameKey())
                 : defaultName();
     }
 
     /** Returns the localized description. */
     default String description() {
-        return Core.bundle != null && Core.bundle.has(descriptionKey())
+        return Core.bundle.has(descriptionKey())
                 ? Core.bundle.get(descriptionKey())
                 : defaultDescription();
     }

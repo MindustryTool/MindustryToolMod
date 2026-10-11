@@ -106,29 +106,19 @@ public class GeminiTranslationProvider implements TranslationProvider {
 
 	public static String parseGeminiResponse(int statusCode, String jsonResponse, String fallback) {
 		if (statusCode == 401 || statusCode == 403) {
-			throw new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.invalid-key", "Invalid API key")
-					: "Invalid API key");
+			throw new RuntimeException(Core.bundle.get("feature.translation.error.invalid-key"));
 		}
 		if (statusCode == 404) {
-			throw new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.model-not-found", "Model not found")
-					: "Model not found");
+			throw new RuntimeException(Core.bundle.get("feature.translation.error.model-not-found"));
 		}
 		if (statusCode == 429) {
-			throw new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.rate-limit", "Rate limit exceeded")
-					: "Rate limit exceeded");
+			throw new RuntimeException(Core.bundle.get("feature.translation.error.rate-limit"));
 		}
 		if (statusCode >= 500) {
-			throw new RuntimeException(Core.bundle != null
-					? Core.bundle.get("feature.translation.error.server-error", "Server error")
-					: "Server error");
+			throw new RuntimeException(Core.bundle.get("feature.translation.error.server-error"));
 		}
 		if (statusCode != 200) {
-			throw new RuntimeException((Core.bundle != null
-					? Core.bundle.get("feature.translation.error.network", "Network error")
-					: "Network error") + " (HTTP " + statusCode + ")");
+			throw new RuntimeException((Core.bundle.get("feature.translation.error.network")) + " (HTTP " + statusCode + ")");
 		}
 
 		if (jsonResponse == null || jsonResponse.trim().isEmpty()) {

@@ -92,11 +92,11 @@ public class MapRulesView extends BaseComponent {
     }
 
     private String t(String key) {
-        return Core.bundle != null && Core.bundle.has(key) ? Core.bundle.get(key) : key;
+        return Core.bundle.has(key) ? Core.bundle.get(key) : key;
     }
 
     private String f(String key, Object arg) {
-        if (Core.bundle != null && Core.bundle.has(key)) {
+        if (Core.bundle.has(key)) {
             return Core.bundle.format(key, arg);
         }
         return key + ": " + arg;

@@ -25,13 +25,9 @@ public class MapRulesSettingsView extends BaseComponent {
         return column().grow().center().children(() -> {
             scroll().center().children(() -> {
                 column().growX().gap(unit(2)).children(() -> {
-                    checkbox(Core.bundle != null
-                                    ? Core.bundle.get("feature.map-rules.settings.show-permission")
-                                    : "Show Permission Badge",
+                    checkbox(Core.bundle.get("feature.map-rules.settings.show-permission"),
                             feature.showPermissionConfig.signal()).growX();
-                    checkbox(Core.bundle != null
-                                    ? Core.bundle.get("feature.map-rules.settings.show-descriptions")
-                                    : "Show Rule Descriptions",
+                    checkbox(Core.bundle.get("feature.map-rules.settings.show-descriptions"),
                             feature.showDescriptionsConfig.signal()).growX();
                 });
             });

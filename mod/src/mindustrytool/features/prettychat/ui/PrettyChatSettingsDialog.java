@@ -10,9 +10,7 @@ import solim.overlay.SolimDialog;
 public class PrettyChatSettingsDialog extends SolimDialog {
 
     public PrettyChatSettingsDialog(PrettyChatFeature feature) {
-        super(Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.title", "Pretty Chat Settings")
-                : "Pretty Chat Settings");
+        super(Core.bundle.get("feature.pretty-chat.settings.title"));
 
         name("prettyChatSettingsDialog");
         addCloseButton();

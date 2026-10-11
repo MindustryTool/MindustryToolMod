@@ -78,13 +78,13 @@ public class AutoplayHudView extends BaseComponent {
     }
 
     private Readable<Float> iconSize() {
-        return ModSettings.effectiveScale(feature.scaleConfig.signal()).map(s -> unit(7) * (s != null ? s : 1f));
+        return ModSettings.effectiveScale(feature.scaleConfig.signal()).map(s -> unit(6) * (s != null ? s : 1f));
     }
 
     public static Component buildControls(AutoplayFeature feature, @Nullable Readable<Boolean> canEdit) {
         Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
         Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
-        Readable<Float> iconSize = scale.map(s -> unit(7) * (s != null ? s : 1f));
+        Readable<Float> iconSize = scale.map(s -> unit(6) * (s != null ? s : 1f));
 
         return row()
                 .gap(unit(1))

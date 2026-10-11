@@ -1,7 +1,6 @@
 package mindustrytool.features.healthbar;
 
 import arc.Core;
-import mindustry.gen.Icon;
 import solim.overlay.SolimDialog;
 
 /**
@@ -15,9 +14,7 @@ public class HealthBarSettingsDialog extends SolimDialog {
         name("healthBarSettingDialog");
         addCloseButton();
         closeOnBack();
-
-        actionButton(Core.bundle.get("feature.health-bar.settings.reset"),
-                Icon.refresh, 250f, 64f, feature::resetToDefaults);
+        maxWidth(500f);
 
         children(() -> new HealthBarSettingsView(feature));
     }

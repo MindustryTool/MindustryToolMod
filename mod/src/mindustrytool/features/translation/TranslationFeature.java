@@ -89,9 +89,7 @@ public class TranslationFeature extends Feature {
         long now = System.currentTimeMillis();
         if (now - lastIncomingErrorToastTime >= INCOMING_ERROR_TOAST_COOLDOWN_MS) {
             lastIncomingErrorToastTime = now;
-            String toastMsg = Core.bundle != null
-                    ? Core.bundle.format("feature.translation.error.incoming-failed", errorMsg)
-                    : "Chat translation failed: " + errorMsg;
+            String toastMsg = Core.bundle.format("feature.translation.error.incoming-failed", errorMsg) + errorMsg;
             Core.app.post(() -> {
                 if (Vars.ui != null && Vars.ui.hudfrag != null) {
                     Vars.ui.hudfrag.showToast(Icon.warning, "[scarlet]" + toastMsg);
@@ -196,7 +194,7 @@ public class TranslationFeature extends Feature {
     }
 
     public String getTargetLanguage() {
-        Locale locale = Core.bundle != null ? Core.bundle.getLocale() : Locale.getDefault();
+        Locale locale = Core.bundle.getLocale();
         String display = locale.getDisplayLanguage(Locale.ENGLISH);
         return (display != null && !display.trim().isEmpty()) ? display : "English";
     }
@@ -326,9 +324,7 @@ public class TranslationFeature extends Feature {
         TranslationProvider provider = getActiveProvider();
         if (!provider.isConfigured()) {
             String providerName = provider.getName();
-            String warnMsg = Core.bundle != null
-                    ? Core.bundle.format("feature.translation.error.not-configured", providerName)
-                    : "Translation provider \"" + providerName + "\" is not configured. Please enter an API key in settings.";
+            String warnMsg = Core.bundle.format("feature.translation.error.not-configured", providerName) + providerName + "\" is not configured. Please enter an API key in settings.";
             lastError.set(warnMsg);
             Core.app.post(() -> {
                 if (Vars.ui != null && Vars.ui.hudfrag != null) {
@@ -351,9 +347,7 @@ public class TranslationFeature extends Feature {
                     String errorMsg = cause.getMessage() != null ? cause.getMessage() : "Unknown error";
                     lastError.set(errorMsg);
                     Log.warn("Outgoing translation failed: @", errorMsg);
-                    String toastMsg = Core.bundle != null
-                            ? Core.bundle.format("feature.translation.error.outgoing-failed", errorMsg)
-                            : "Translation failed: " + errorMsg;
+                    String toastMsg = Core.bundle.format("feature.translation.error.outgoing-failed", errorMsg) + errorMsg;
                     Core.app.post(() -> {
                         if (Vars.ui != null && Vars.ui.hudfrag != null) {
                             Vars.ui.hudfrag.showToast(Icon.warning, "[scarlet]" + toastMsg);
@@ -433,9 +427,7 @@ public class TranslationFeature extends Feature {
 
         TranslationProvider provider = getActiveProvider();
         if (!provider.isConfigured()) {
-            String errorMsg = Core.bundle != null
-                    ? Core.bundle.format("feature.translation.error.not-configured", provider.getName())
-                    : "Translation provider \"" + provider.getName() + "\" is not configured. Please enter an API key in settings.";
+            String errorMsg = Core.bundle.format("feature.translation.error.not-configured", provider.getName()) + provider.getName() + "\" is not configured. Please enter an API key in settings.";
             lastError.set(errorMsg);
             notifyIncomingErrorThrottled(errorMsg);
             onDeliver.get(message);
@@ -496,13 +488,6 @@ public class TranslationFeature extends Feature {
         // Network-only by contract: translation keys are unbounded per sentence,
         // so no long-term QueryCache retention. Callers guard duplicate taps.
         String cleanText = text.trim();
-
-        // Check offline tactical dictionary first (0ms latency, zero-network)
-        String dictMatch = MindustryTranslationDictionary.findTranslation(cleanText, targetLanguage);
-        if (dictMatch != null) {
-            return CompletableFuture.completedFuture(dictMatch);
-        }
-
         return provider.translate(cleanText, targetLanguage);
     }
 

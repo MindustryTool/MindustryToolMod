@@ -10,9 +10,7 @@ import solim.overlay.SolimDialog;
 public class SmartDrillSettingsDialog extends SolimDialog {
 
     public SmartDrillSettingsDialog(SmartDrillFeature feature) {
-        super(Core.bundle != null
-                ? Core.bundle.get("feature.smart-drill.settings.title", "Smart Drill Settings")
-                : "Smart Drill Settings");
+        super(Core.bundle.get("feature.smart-drill.settings.title"));
 
         name("smartDrillSettingsDialog");
         addCloseButton();

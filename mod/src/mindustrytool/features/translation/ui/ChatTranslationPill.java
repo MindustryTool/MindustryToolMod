@@ -66,18 +66,14 @@ public class ChatTranslationPill extends BaseComponent {
                 button(() -> feature.outgoingEnabledConfig.set(!Boolean.TRUE.equals(feature.outgoingEnabledConfig.get())))
                         .style(WebStyles.ghost())
                         .size(unit(9), unit(8))
-                        .tooltip(Core.bundle != null
-                                ? Core.bundle.get("feature.translation.outgoing.enable", "Translate outgoing chat messages automatically")
-                                : "Translate outgoing chat messages automatically")
+                        .tooltip(Core.bundle.get("feature.translation.outgoing.enable"))
                         .children(() -> icon(FileIcon.of("translate.png")).size(unit(5)).color(statusColor));
 
                 // Language selection chip button
                 button(targetLangCode, feature::showLanguageDialog)
                         .style(WebStyles.secondaryText())
                         .height(unit(8))
-                        .tooltip(Core.bundle != null
-                                ? Core.bundle.get("feature.translation.outgoing.select-lang", "Select Language")
-                                : "Select Language");
+                        .tooltip(Core.bundle.get("feature.translation.outgoing.select-lang"));
             }));
         }));
 

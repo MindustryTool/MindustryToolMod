@@ -11,6 +11,7 @@ public class QuickAccessSettingsDialog extends SolimDialog {
         name("quickAccessSettingDialog");
         addCloseButton();
         closeOnBack();
+        maxWidth(500f);
 
         children(() -> new QuickAccessSettingsView(feature));
     }

@@ -6,7 +6,6 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import java.util.List;
-import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
@@ -23,7 +22,6 @@ public class QuickAccessSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        feature.healDisplayOrder();
         return column().grow().center().children(() -> {
             scroll().growX().center()
                     .maxWidth(dvw(90f).map(w -> Math.min(w, 750f)))
@@ -80,7 +78,7 @@ public class QuickAccessSettingsView extends BaseComponent {
 
                             button(Core.bundle.get("feature.quick-access.settings.reset-position"),
                                     feature::resetPosition)
-                                            .style(Styles.defaultb).growX();
+                                            .style(WebStyles.outlineText()).growX();
                         });
                     });
         }).element();
@@ -111,14 +109,14 @@ public class QuickAccessSettingsView extends BaseComponent {
                         .size(unit(11))
                         .tooltip(Core.bundle.get("feature.quick-access.settings.move-up"))
                         .disabled(() -> !canMoveUp.peek())
-                        .children(() -> icon(FileIcon.of("chevron-up.png")));
+                        .children(() -> icon(FileIcon.of("chevron-up.png")).size(unit(6)));
 
                 button(() -> feature.moveDown(id))
                         .style(WebStyles.ghost())
                         .size(unit(11))
                         .tooltip(Core.bundle.get("feature.quick-access.settings.move-down"))
                         .disabled(() -> !canMoveDown.peek())
-                        .children(() -> icon(FileIcon.of("chevron-down.png")));
+                        .children(() -> icon(FileIcon.of("chevron-down.png")).size(unit(6)));
             }).element();
         }
     }

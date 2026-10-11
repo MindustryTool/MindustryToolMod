@@ -127,7 +127,7 @@ public class SmartDrillFeature extends Feature {
 
     @Override
     public void onEnable() {
-        if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+        if (Vars.ui != null && Vars.ui.hudfrag != null) {
             Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.active-hint",
                     "Smart Drill active: Tap an ore patch to plan drills."));
         }
@@ -224,7 +224,7 @@ public class SmartDrillFeature extends Feature {
                 .select(b -> isBeam ? isValidBeamDrill(b, drop) : isValidDrill(b, drop));
 
         if (drills.isEmpty()) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+            if (Vars.ui != null && Vars.ui.hudfrag != null) {
                 Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.no-drills",
                         "No suitable unlocked drills for this ore."));
             }
@@ -293,7 +293,7 @@ public class SmartDrillFeature extends Feature {
             count = placeFloorDrill(tile, direction, (Drill) drill, drop);
         }
 
-        if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+        if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null) {
             Vars.ui.hudfrag.showToast(Core.bundle.format("feature.smart-drill.placed",
                     count, drill.localizedName));
         }
@@ -332,7 +332,7 @@ public class SmartDrillFeature extends Feature {
 
     private int placeFloorDrill(Tile tile, Direction direction, Drill drill, Item drop) {
         if (drill.size != 2) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+            if (Vars.ui != null && Vars.ui.hudfrag != null) {
                 Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.unsupported-size",
                         "Auto-placement for this drill size is not supported yet."));
             }

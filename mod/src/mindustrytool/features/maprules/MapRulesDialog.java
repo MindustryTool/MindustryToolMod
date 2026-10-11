@@ -28,7 +28,7 @@ public class MapRulesDialog extends SolimDialog {
     private final MapRulesView view;
 
     public MapRulesDialog(MapRulesFeature feature) {
-        super(Core.bundle != null ? Core.bundle.get("feature.map-rules.title") : "Map Rules");
+        super(Core.bundle.get("feature.map-rules.title"));
         this.feature = feature;
         this.view = new MapRulesView(feature);
         this.view.setSaveHandler(this::showSaveModal);
@@ -47,7 +47,7 @@ public class MapRulesDialog extends SolimDialog {
     }
 
     private String t(String key) {
-        return Core.bundle != null && Core.bundle.has(key) ? Core.bundle.get(key) : key;
+        return Core.bundle.has(key) ? Core.bundle.get(key) : key;
     }
 
     private @Nullable String savedFilePath(Map saved) {

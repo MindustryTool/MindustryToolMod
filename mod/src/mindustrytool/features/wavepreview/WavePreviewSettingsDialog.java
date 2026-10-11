@@ -14,6 +14,7 @@ public class WavePreviewSettingsDialog extends SolimDialog {
         name("wavePreviewSettingDialog");
         addCloseButton();
         closeOnBack();
+        maxWidth(500f);
 
         children(() -> new WavePreviewSettingsView(feature));
     }

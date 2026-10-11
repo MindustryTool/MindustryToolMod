@@ -32,9 +32,7 @@ public class DevXTranslationProvider implements TranslationProvider {
 
     @Override
     public String getName() {
-        return Core.bundle != null
-                ? Core.bundle.get("feature.translation.provider.devx", "DevX")
-                : "DevX";
+        return Core.bundle.get("feature.translation.provider.devx");
     }
 
     @Override
@@ -140,9 +138,7 @@ public class DevXTranslationProvider implements TranslationProvider {
         if (apiKey.isEmpty()) {
             CompletableFuture<String> failed = new CompletableFuture<>();
             failed.completeExceptionally(
-                    new IllegalStateException(Core.bundle != null
-                            ? Core.bundle.get("feature.translation.error.no-api-key", "API key is missing")
-                            : "API key is missing"));
+                    new IllegalStateException(Core.bundle.get("feature.translation.error.no-api-key")));
             return failed;
         }
 
@@ -188,9 +184,7 @@ public class DevXTranslationProvider implements TranslationProvider {
                 .exceptionally(throwable -> {
                     String msg = throwable.getMessage() != null ? throwable.getMessage() : throwable.toString();
                     if (msg.contains("timed out") || msg.contains("Timeout")) {
-                        msg = Core.bundle != null
-                                ? Core.bundle.get("feature.translation.error.timeout", "Request timed out")
-                                : "Request timed out";
+                        msg = Core.bundle.get("feature.translation.error.timeout");
                     }
                     throw new RuntimeException(msg, throwable);
                 });
@@ -202,29 +196,19 @@ public class DevXTranslationProvider implements TranslationProvider {
 
     private static String parseTranslation(String jsonResponse, String fallback, int statusCode) {
         if (statusCode == 401 || statusCode == 403) {
-            throw new RuntimeException(Core.bundle != null
-                    ? Core.bundle.get("feature.translation.error.invalid-api-key", "Invalid API key")
-                    : "Invalid API key");
+            throw new RuntimeException(Core.bundle.get("feature.translation.error.invalid-api-key"));
         }
         if (statusCode == 404) {
-            throw new RuntimeException(Core.bundle != null
-                    ? Core.bundle.get("feature.translation.error.model-not-found", "Model not found")
-                    : "Model not found");
+            throw new RuntimeException(Core.bundle.get("feature.translation.error.model-not-found"));
         }
         if (statusCode == 429) {
-            throw new RuntimeException(Core.bundle != null
-                    ? Core.bundle.get("feature.translation.error.rate-limit", "Rate limit exceeded")
-                    : "Rate limit exceeded");
+            throw new RuntimeException(Core.bundle.get("feature.translation.error.rate-limit"));
         }
         if (statusCode >= 500) {
-            throw new RuntimeException(Core.bundle != null
-                    ? Core.bundle.get("feature.translation.error.server-error", "Server error")
-                    : "Server error");
+            throw new RuntimeException(Core.bundle.get("feature.translation.error.server-error"));
         }
         if (statusCode != 200) {
-            throw new RuntimeException((Core.bundle != null
-                    ? Core.bundle.get("feature.translation.error.network", "Network error")
-                    : "Network error") + " (HTTP " + statusCode + ")");
+            throw new RuntimeException((Core.bundle.get("feature.translation.error.network")) + " (HTTP " + statusCode + ")");
         }
 
         if (jsonResponse == null || jsonResponse.trim().isEmpty()) {

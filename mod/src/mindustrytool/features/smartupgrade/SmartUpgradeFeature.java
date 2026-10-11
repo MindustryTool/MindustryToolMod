@@ -229,7 +229,7 @@ public class SmartUpgradeFeature extends Feature {
     }
 
     private void showArmedToast() {
-        if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+        if (Vars.ui != null && Vars.ui.hudfrag != null) {
             Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-upgrade.armed",
                     "Smart Upgrade armed: tap a block to open the upgrade menu."));
         }
@@ -354,7 +354,7 @@ public class SmartUpgradeFeature extends Feature {
 
         Seq<Block> candidates = getUpgradeCandidates(tile.block());
         if (candidates.isEmpty()) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+            if (Vars.ui != null && Vars.ui.hudfrag != null) {
                 Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-upgrade.no-candidates",
                         "No upgrade candidates available."));
             }
@@ -382,7 +382,7 @@ public class SmartUpgradeFeature extends Feature {
                 }
                 Core.app.post(() -> {
                     int count = upgradeChain(tile, targetBlock);
-                    if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+                    if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null) {
                         Vars.ui.hudfrag.showToast(Icon.up, Core.bundle.format("feature.smart-upgrade.upgraded",
                                 count, targetBlock.localizedName));
                     }
@@ -501,7 +501,7 @@ public class SmartUpgradeFeature extends Feature {
             return 0;
         }
         if (Vars.player == null || Vars.player.unit() == null) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+            if (Vars.ui != null && Vars.ui.hudfrag != null) {
                 Vars.ui.hudfrag.showToast(Icon.warning, Core.bundle.get("feature.smart-upgrade.no-builder",
                         "No builder unit available."));
             }
