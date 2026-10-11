@@ -7,6 +7,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Disposable;
 import solim.core.LeafComponent;
+import solim.graphics.RoundedDrawable;
 import solim.modifier.TableConfig;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -31,14 +32,9 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
         this.element.name = "solim-badge-table";
         this.element.center();
 
-        Drawable bg = (Core.atlas != null && Core.atlas.has("whiteui"))
-                ? Core.atlas.drawable("whiteui")
-                : null;
-        if (bg != null) {
-            element.setBackground(bg);
-            element.setColor(new Color(0.85f, 0.25f, 0.25f, 0.9f));
-        }
-        element.margin(2f, 6f, 2f, 6f);
+        rounded(8, new Color(1f, 1f, 1f, 0.12f));
+        border(1f, new Color(1f, 1f, 1f, 0.25f));
+        element.margin(2f, 8f, 2f, 8f);
 
         this.label = Text.of(text);
         element.add(label.label()).center();
@@ -98,6 +94,14 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
 
     public Badge color(Color color) {
         element.setColor(color);
+        if (element.getBackground() instanceof RoundedDrawable) {
+            RoundedDrawable rd = (RoundedDrawable) element.getBackground();
+            if (color != null) {
+                rd.fillColor(new Color(color.r, color.g, color.b, 0.16f));
+                rd.border(1f, new Color(color.r, color.g, color.b, 0.55f));
+                label.color(color);
+            }
+        }
         return this;
     }
 
