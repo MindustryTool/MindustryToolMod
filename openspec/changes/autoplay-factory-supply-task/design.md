@@ -68,11 +68,11 @@ Additionally, a factory's `Building.items` (`ItemModule`) stores both input ingr
          - Advance `factoryCursor = i` and execute the transfer cycle.
 
 ### Decision 4: Server-Safe Rate Limiting & In-Flight Guard
-- **Rationale**: Preventing server kicks requires respecting both `player.itemDepositRate` (1 deposit per `Rules.itemDepositCooldown` = 30 ticks) and `Administration` interaction limits (max 25 withdraw+deposit actions per 6s = 1 action per ~15 ticks).
+- **Rationale**: Preventing server kicks requires respecting `player.itemDepositRate` (2 deposits per `2 * Rules.itemDepositCooldown`), the `Administration` interaction budget (default 25 withdraw+deposit actions per 6s before warn-reject, 60 before a 30s kick), and the ArcNet double-error disconnect (2 packet errors within 2s closes the connection). Verified against the `v160.7` server sources (`InputHandler.transferInventory/requestItem`, `Administration.allowAction`, `ArcNetProvider.received`).
 - **Implementation**:
   - All RPC calls (`Call.requestItem`, `Call.transferInventory`, `Call.dropItem`) are executed exclusively inside `FactorySupplyAI.updateMovement()`.
-  - Enforce `ACTION_COOLDOWN = Math.max(30f, Vars.state.rules.itemDepositCooldown * 60f + 4f)` ticks between any two RPC calls.
-  - Track `actionPending` (`boolean`), `expectedEmpty` / `expectedItem`, and `pendingTimeout = 60f` ticks:
+  - Enforce `ACTION_COOLDOWN = Math.max(24f, Vars.state.rules.itemDepositCooldown * 40f + 2f)` ticks between any two RPC calls. At the default `0.5s` cooldown this is 24 ticks (400ms): sustained 15 actions/6s keeps 40% of the default 25-action interact budget free for manual input and other tasks, while deposits land every 48 ticks (800ms) against the required `> 30` ticks (1.6x margin).
+  - Track `actionPending` (`boolean`), `expectedEmpty` / `expectedItem`, and `pendingTimeout = 150f` ticks (2.5s, deliberately over the 2s double-error window so a retry after a suspected server rejection can never be the second error within 2s):
     - After `Call.requestItem`, wait until `unit.stack.amount > prevAmount` (or timeout) AND `cooldownTimer <= 0` before issuing `Call.transferInventory`.
     - After `Call.transferInventory`, wait until `unit.stack.amount == 0` (or `amount < prevAmount`, or timeout) AND `cooldownTimer <= 0` before issuing the next `Call.requestItem`.
 
@@ -83,6 +83,14 @@ Additionally, a factory's `Building.items` (`ItemModule`) stores both input ingr
   - `selectAll()`: sets `disabledBlocks` to an empty `Seq<>()`.
   - `clearAll()`: populates `disabledBlocks` with the names of all eligible production blocks.
   - UI in `buildSettings`: A row with **Select All** and **Clear All** `WebStyles.secondary()` buttons, followed by a `wrap()` container of `WebStyles.filterChipText()` buttons showing each eligible block's `uiIcon` and `localizedName`.
+
+### Decision 6: Conservative Supply Mode (Enabled by Default)
+- **Rationale**: Continuous topping-up causes many small RPC round-trips and risks server interaction limits; servicing only low inputs and full outputs minimizes trips while keeping factories running.
+- **Implementation**:
+  - Config key: `factory-supply.conservative` (`ConfigValue<Boolean>`, default `true`) with a checkbox at the top of `buildSettings`.
+  - When enabled, an input is supplied only when `factory.items.get(input) < requiredAmount(block, input)`, where `requiredAmount` is the minimum matching `ConsumeItems` amount or `UnitFactory`/`UnitAssembler` plan requirement (falling back to `block.itemCapacity`), so factories that already hold a production cycle's worth of input are skipped.
+  - When enabled, an output is collected only when `factory.items.get(output) >= block.itemCapacity` (output buffer full).
+  - When disabled, the previous behavior applies (any `acceptStack > 0` need, any stored output `> 0`).
 
 ## Risks / Trade-offs
 

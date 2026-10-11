@@ -13,7 +13,7 @@ In Mindustry (especially in wireless/logic-less schematics, compact factory clus
   4. `PowerGenerator` (fuel-consuming generators and reactors)
   5. `Drill`, `BeamDrill`, `WallCrafter`
 - Cycle through eligible factories in round-robin order; for each factory, supply its needed input items from the prioritized Core/Container in round-robin order and immediately withdraw produced output items from the factory to deposit back into the prioritized Core/Container.
-- Enforce server-safe rate limiting and in-flight pending state tracking across all `Call.requestItem`, `Call.transferInventory`, and `Call.dropItem` RPC calls (`>= max(30 ticks, Rules.itemDepositCooldown * 60f)`) so the client never exceeds `itemDepositRate` (2 deposits/s) or `Administration` block interaction limits (25 actions/6s limit, 60 actions/6s kick).
+- Enforce server-safe rate limiting and in-flight pending state tracking across all `Call.requestItem`, `Call.transferInventory`, and `Call.dropItem` RPC calls (`>= max(24 ticks, Rules.itemDepositCooldown * 40f + 2f)`, verified against the `v160.7` deposit/interact/double-error server limits) so the client never exceeds `itemDepositRate` (2 deposits per `2 * cooldown`), `Administration` block interaction limits (25 actions/6s warn, 60 actions/6s kick), or the 2-packet-errors-in-2s disconnect.
 - Provide task configuration settings displaying all eligible production blocks as filter chips with **Select All** and **Clear All** actions.
 
 ## Capabilities

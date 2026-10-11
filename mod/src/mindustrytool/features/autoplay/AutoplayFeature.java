@@ -10,6 +10,8 @@ import arc.scene.Element;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
+import arc.util.Align;
+import arc.util.Log;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
@@ -18,6 +20,7 @@ import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
+import mindustry.ui.Fonts;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -29,12 +32,15 @@ import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import mindustrytool.features.autoplay.tasks.BaseAutoplayAI;
 import mindustrytool.features.autoplay.tasks.FleeTask;
 import mindustrytool.features.autoplay.tasks.FollowAssistTask;
+import mindustrytool.features.autoplay.tasks.FactorySupplyTask;
 import mindustrytool.features.autoplay.tasks.HealUnitsTask;
 import mindustrytool.features.autoplay.tasks.MiningTask;
 import mindustrytool.features.autoplay.tasks.RebuildTask;
 import mindustrytool.features.autoplay.tasks.RepairTask;
 import mindustrytool.features.autoplay.tasks.SelfBuildTask;
 import mindustrytool.features.autoplay.tasks.SelfHealTask;
+import mindustrytool.features.autoplay.tasks.TransportFloatingOverlay;
+import mindustrytool.features.autoplay.tasks.TransportTask;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
@@ -56,6 +62,8 @@ public class AutoplayFeature extends Feature {
             FollowAssistTask.ID,
             SelfBuildTask.ID,
             RebuildTask.ID,
+            FactorySupplyTask.ID,
+            TransportTask.ID,
             MiningTask.ID);
 
     public static final String DISPLAY_HUD = "hud";
@@ -81,6 +89,7 @@ public class AutoplayFeature extends Feature {
     private final Signal<String> currentTaskIdSignal = Signal.of(null);
     private @Nullable AutoplayTask currentTask;
     private @Nullable AutoplayHudView hudView;
+    private @Nullable TransportFloatingOverlay transportOverlay;
     private boolean quickAccessHooked = false;
 
     public AutoplayFeature() {
@@ -133,6 +142,8 @@ public class AutoplayFeature extends Feature {
         taskMap.put(FollowAssistTask.ID, new FollowAssistTask(this));
         taskMap.put(SelfBuildTask.ID, new SelfBuildTask());
         taskMap.put(RebuildTask.ID, new RebuildTask());
+        taskMap.put(FactorySupplyTask.ID, new FactorySupplyTask(this));
+        taskMap.put(TransportTask.ID, new TransportTask(this));
         taskMap.put(MiningTask.ID, new MiningTask(this));
 
         syncOrderedTasks();
@@ -166,6 +177,9 @@ public class AutoplayFeature extends Feature {
         }
         disabledTasks.set(disabled);
         syncOrderedTasks();
+        if (TransportTask.ID.equals(taskId)) {
+            updateTransportOverlay();
+        }
     }
 
     public void moveTaskUp(String taskId) {
@@ -221,6 +235,7 @@ public class AutoplayFeature extends Feature {
     @Override
     public void onEnable() {
         updateHud();
+        updateTransportOverlay();
     }
 
     @Override
@@ -233,6 +248,7 @@ public class AutoplayFeature extends Feature {
         setCurrentTask(null);
         AutoplayPopup.hide();
         removeHud();
+        removeTransportOverlay();
     }
 
     public boolean isPopupMode() {
@@ -339,6 +355,33 @@ public class AutoplayFeature extends Feature {
             view.dispose();
         });
     }
+    public void updateTransportOverlay() {
+        if (!isEnabled() || !isTaskEnabled(TransportTask.ID)) {
+            removeTransportOverlay();
+            return;
+        }
+        if (transportOverlay != null) {
+            return;
+        }
+        AutoplayTask task = taskMap.get(TransportTask.ID);
+        if (task instanceof TransportTask) {
+            transportOverlay = new TransportFloatingOverlay((TransportTask) task);
+            transportOverlay.attach();
+        }
+    }
+
+    public void removeTransportOverlay() {
+        if (transportOverlay == null) {
+            return;
+        }
+        TransportFloatingOverlay overlay = transportOverlay;
+        transportOverlay = null;
+        overlay.detach();
+    }
+
+    public @Nullable AutoplayTask getTask(String id) {
+        return taskMap.get(id);
+    }
 
     public @Nullable AutoplayTask getCurrentTask() {
         return currentTask;
@@ -349,6 +392,12 @@ public class AutoplayFeature extends Feature {
     }
 
     private void setCurrentTask(@Nullable AutoplayTask task) {
+        // TEMP measurement: track task switches to spot factory-supply/mining dithering.
+        String from = currentTask != null ? currentTask.getId() : "-";
+        String to = task != null ? task.getId() : "-";
+        if (!from.equals(to)) {
+            Log.info("[Autoplay] task " + from + " -> " + to);
+        }
         currentTask = task;
         currentTaskIdSignal.set(task != null ? task.getId() : null);
     }
@@ -431,6 +480,16 @@ public class AutoplayFeature extends Feature {
             Draw.z(Layer.overlayUI);
             Draw.rect(icon.getRegion(), unit.x, unit.y + unit.hitSize * 2f, 10f, 10f);
             Draw.reset();
+        }
+
+        if (currentTask instanceof FactorySupplyTask) {
+            float cooldown = ((FactorySupplyTask) currentTask).cooldownSeconds();
+            if (cooldown > 0.05f && Fonts.outline != null) {
+                Draw.z(Layer.overlayUI);
+                Fonts.outline.draw(String.format("%.1fs", cooldown),
+                        unit.x, unit.y + unit.hitSize * 2f + 10f, Pal.accent, 0.25f, false, Align.center);
+                Draw.reset();
+            }
         }
 
         Vec2 targetPos = currentTask.getTargetPos();
