@@ -4,7 +4,6 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.gen.Building;
-import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 /**

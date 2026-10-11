@@ -9,6 +9,7 @@ import mindustry.mod.Mod;
 import mindustry.mod.Mods.LoadedMod;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.FeatureManager;
+import mindustrytool.features.armycontrol.ArmyControlFeature;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.background.BackgroundFeature;
 import mindustrytool.features.camerazoom.CameraZoomFeature;
@@ -110,7 +111,8 @@ public class Main extends Mod {
                 new EmojiFeature(),
                 new GriefAlertFeature(),
                 new QuickRotateFeature(),
-                new MapRulesFeature());
+                new MapRulesFeature(),
+                new ArmyControlFeature());
 
         Events.on(ClientLoadEvent.class, event -> {
             registerMindustryToolButton();

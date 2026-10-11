@@ -18,7 +18,8 @@ import mindustry.gen.Unit;
 import mindustry.type.Item;
 import mindustry.type.ItemStack;
 import mindustry.world.Block;
-import mindustry.world.blocks.power.PowerGenerator;import mindustry.world.blocks.production.BeamDrill;
+import mindustry.world.blocks.power.PowerGenerator;
+import mindustry.world.blocks.production.BeamDrill;
 import mindustry.world.blocks.production.Drill;
 import mindustry.world.blocks.production.GenericCrafter;
 import mindustry.world.blocks.production.Separator;
@@ -47,6 +48,10 @@ public class FactorySupplyTask implements AutoplayTask {
     private static final float PAIR_MARGIN = 20f;
     private static final float PENDING_TIMEOUT = 150f;
     private static final float MIN_ACTION_SPACING = 24f;
+    private static final int MAX_TOUR_STOPS = 4;
+    // TEMP build tag: bump on every behavior change so logs prove which build is
+    // running.
+    private static final String BUILD_TAG = "factory-supply/s7-collect-topup-v4";
 
     private final ConfigValue<Seq<String>> disabledBlocks;
     private final ConfigValue<Boolean> conservative;
@@ -69,6 +74,8 @@ public class FactorySupplyTask implements AutoplayTask {
         this.disabledBlocks = feature.configGroup().value("factory-supply.disabled-blocks", new Seq<>(),
                 new OrderedSeqPersister());
         this.conservative = feature.configGroup().boolValue("factory-supply.conservative", true);
+        // TEMP build tag: proves which code the running game actually loaded.
+        Log.info("[FactorySupply] build " + BUILD_TAG + " loaded");
     }
 
     @Override
@@ -445,7 +452,8 @@ public class FactorySupplyTask implements AutoplayTask {
                 if (!container.allowDeposit()) {
                     continue;
                 }
-                if (unit.within(container, Vars.itemTransferRange * 2f) && container.acceptStack(item, amount, unit) > 0) {
+                if (unit.within(container, Vars.itemTransferRange * 2f)
+                        && container.acceptStack(item, amount, unit) > 0) {
                     return container;
                 }
             } catch (Throwable ignored) {
@@ -545,7 +553,8 @@ public class FactorySupplyTask implements AutoplayTask {
             return true;
         }
         try {
-            // TEMP measurement: count factories skipped because they already hold enough input.
+            // TEMP measurement: count factories skipped because they already hold enough
+            // input.
             boolean need = factory.items == null || factory.items.get(input) < requiredAmount(factory.block, input);
             if (!need) {
                 skippedConservativeInput++;
@@ -568,12 +577,60 @@ public class FactorySupplyTask implements AutoplayTask {
         return full;
     }
 
+    private static int storedOf(@Nullable Building factory, @Nullable Item item) {
+        if (factory == null || item == null || factory.items == null) {
+            return 0;
+        }
+        try {
+            return Math.max(0, factory.items.get(item));
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private static int spaceOf(@Nullable Building factory, @Nullable Item item) {
+        if (factory == null || item == null || factory.block == null) {
+            return 0;
+        }
+        return Math.max(0, factory.block.itemCapacity - storedOf(factory, item));
+    }
+
+    private int planSupplyTake(Unit unit, Building source, Seq<Building> factories, int primaryIndex,
+            Building primary, Item input) {
+        // Size by buffer free space, not one craft cycle: the take must fill what the
+        // tour factories can actually hold, otherwise tours splinter into micro-takes.
+        int total = spaceOf(primary, input);
+        if (total < 1) {
+            return 0;
+        }
+        int stops = 1;
+        for (int e = 1; e < factories.size && stops < MAX_TOUR_STOPS; e++) {
+            Building extra = factories.get((primaryIndex + e) % factories.size);
+            if (!needsInput(extra, input, unit)) {
+                continue;
+            }
+            int extraSpace = spaceOf(extra, input);
+            if (extraSpace < 1) {
+                continue;
+            }
+            total += extraSpace;
+            stops++;
+        }
+        return Math.min(total, Math.min(unit.type.itemCapacity, storedOf(source, input)));
+    }
+
     @Override
     public boolean update(Unit unit) {
         // TEMP measurement: wall-clock the whole decision (scan + scheduling).
         long t0 = Time.millis();
         skippedConservativeInput = 0;
         skippedNotFull = 0;
+        // Batching tours end when the unit is empty or switches item type.
+        if (unit == null || unit.stack.amount == 0 || unit.stack.item == null) {
+            ai.resetTour();
+        } else if (ai.tourItem() == null || ai.tourItem() != unit.stack.item) {
+            ai.resetTour();
+        }
         boolean result = false;
         try {
             result = updateInner(unit);
@@ -630,7 +687,7 @@ public class FactorySupplyTask implements AutoplayTask {
 
         Building preferredFactory = ai.targetFactory;
         if (isFactoryStillValid(preferredFactory, factories) && needsInput(preferredFactory, held, unit)) {
-            ai.setJob(FactorySupplyAI.Job.DELIVER_TO_FACTORY, preferredFactory, null, held);
+            ai.setJob(FactorySupplyAI.Job.DELIVER_TO_FACTORY, preferredFactory, null, held, 0);
             status.set(Core.bundle.format("feature.autoplay.status.supplying", held.localizedName));
             return true;
         }
@@ -638,28 +695,86 @@ public class FactorySupplyTask implements AutoplayTask {
         for (int offset = 0; offset < factories.size; offset++) {
             int index = (factoryCursor + offset) % factories.size;
             Building factory = factories.get(index);
-            if (needsInput(factory, held, unit)) {
+            if (needsInput(factory, held, unit) && ai.tourStops() < MAX_TOUR_STOPS && spaceOf(factory, held) >= 1) {
                 factoryCursor = index;
-                ai.setJob(FactorySupplyAI.Job.DELIVER_TO_FACTORY, factory, null, held);
+                ai.setJob(FactorySupplyAI.Job.DELIVER_TO_FACTORY, factory, null, held, 0);
                 status.set(Core.bundle.format("feature.autoplay.status.supplying", held.localizedName));
+                return true;
+            }
+        }
+
+        // Batch outputs: top up the same held item from another factory before hauling
+        // home.
+        if (ai.tourStops() < MAX_TOUR_STOPS && amount < unit.type.itemCapacity) {
+            int room = unit.type.itemCapacity - amount;
+            for (int offset = 0; offset < factories.size; offset++) {
+                int index = (factoryCursor + offset) % factories.size;
+                Building factory = factories.get(index);
+                int take = Math.min(storedOf(factory, held), room);
+                if (take <= 0 || !outputProducts(factory).contains(held)) {
+                    continue;
+                }
+                // Only require the current load to still be landable; demanding room for the
+                // projected total vetoes every top-up exactly when storage is tight.
+                if (findDepositStorageForHeld(held, amount, unit, cores, containers) == null) {
+                    continue;
+                }
+                factoryCursor = index;
+                ai.setJob(FactorySupplyAI.Job.COLLECT, factory, null, held, 0);
+                status.set(Core.bundle.format("feature.autoplay.status.collecting", held.localizedName));
                 return true;
             }
         }
 
         Building storage = findDepositStorageForHeld(held, amount, unit, cores, containers);
         if (storage != null) {
-            ai.setJob(FactorySupplyAI.Job.DELIVER_TO_STORAGE, null, storage, held);
+            ai.setJob(FactorySupplyAI.Job.DELIVER_TO_STORAGE, null, storage, held, 0);
             status.set(Core.bundle.format("feature.autoplay.status.collecting", held.localizedName));
             return true;
         }
 
-        ai.setJob(FactorySupplyAI.Job.DROP_HELD, null, null, held);
+        ai.setJob(FactorySupplyAI.Job.DROP_HELD, null, null, held, 0);
         status.set(Core.bundle.get("feature.autoplay.status.dropping"));
         return true;
     }
 
     private boolean updateEmpty(Unit unit, Seq<Building> cores, Seq<Building> containers,
             Seq<Building> factories) {
+        // Stick to an unfinished take: re-assert the same SUPPLY without advancing
+        // cursors
+        // so the planned take actually fires instead of being overwritten every tick.
+        if (ai.job() == FactorySupplyAI.Job.SUPPLY && ai.targetFactory() != null && ai.targetItem() != null
+                && Time.time - ai.jobStartTick() < 300f
+                && isFactoryStillValid(ai.targetFactory(), factories)
+                && needsInput(ai.targetFactory(), ai.targetItem(), unit)) {
+            Building stickySource = findWithdrawStorage(ai.targetFactory(), ai.targetItem(), unit, cores, containers);
+            if (stickySource != null) {
+                int stickyTake = planSupplyTake(unit, stickySource, factories,
+                        factories.indexOf(ai.targetFactory(), true), ai.targetFactory(), ai.targetItem());
+                if (stickyTake > 0) {
+                    ai.setJob(FactorySupplyAI.Job.SUPPLY, ai.targetFactory(), stickySource, ai.targetItem(),
+                            stickyTake);
+                    status.set(Core.bundle.format("feature.autoplay.status.supplying", ai.targetItem().localizedName));
+                    return true;
+                }
+            }
+        }
+        // Same for an unfinished collect: don't let the next decision steal the target
+        // mid-approach.
+        if (ai.job() == FactorySupplyAI.Job.COLLECT && ai.targetFactory() != null && ai.targetItem() != null
+                && Time.time - ai.jobStartTick() < 300f
+                && isFactoryStillValid(ai.targetFactory(), factories)
+                && outputProducts(ai.targetFactory()).contains(ai.targetItem())
+                && storedOf(ai.targetFactory(), ai.targetItem()) > 0) {
+            Building stickyDest = findDepositStorage(ai.targetFactory(), ai.targetItem(),
+                    Math.min(storedOf(ai.targetFactory(), ai.targetItem()), unit.type.itemCapacity),
+                    unit, cores, containers);
+            if (stickyDest != null) {
+                ai.setJob(FactorySupplyAI.Job.COLLECT, ai.targetFactory(), stickyDest, ai.targetItem(), 0);
+                status.set(Core.bundle.format("feature.autoplay.status.collecting", ai.targetItem().localizedName));
+                return true;
+            }
+        }
         Building lastFactory = ai.lastFactory;
         if (isFactoryStillValid(lastFactory, factories)) {
             Seq<Item> outputs = outputProducts(lastFactory);
@@ -674,7 +789,7 @@ public class FactorySupplyTask implements AutoplayTask {
                             Math.min(lastFactory.items.get(output), unit.type.itemCapacity), unit, cores, containers);
                     if (storage != null) {
                         itemCursor = (itemCursor + offset + 1) % outputs.size;
-                        ai.setJob(FactorySupplyAI.Job.COLLECT, lastFactory, storage, output);
+                        ai.setJob(FactorySupplyAI.Job.COLLECT, lastFactory, storage, output, 0);
                         status.set(Core.bundle.format("feature.autoplay.status.collecting", output.localizedName));
                         return true;
                     }
@@ -695,13 +810,20 @@ public class FactorySupplyTask implements AutoplayTask {
                         continue;
                     }
                     Building source = findWithdrawStorage(factory, input, unit, cores, containers);
-                    if (source != null) {
-                        factoryCursor = index;
-                        itemCursor = (itemCursor + inputOffset + 1) % inputs.size;
-                        ai.setJob(FactorySupplyAI.Job.SUPPLY, factory, source, input);
-                        status.set(Core.bundle.format("feature.autoplay.status.supplying", input.localizedName));
-                        return true;
+                    if (source == null) {
+                        continue;
                     }
+                    // Tour sizing: one take across this and further same-item needs (any
+                    // positive need accumulates so small per-craft requirements still batch).
+                    int take = planSupplyTake(unit, source, factories, index, factory, input);
+                    if (take <= 0) {
+                        continue;
+                    }
+                    factoryCursor = index;
+                    itemCursor = (itemCursor + inputOffset + 1) % inputs.size;
+                    ai.setJob(FactorySupplyAI.Job.SUPPLY, factory, source, input, take);
+                    status.set(Core.bundle.format("feature.autoplay.status.supplying", input.localizedName));
+                    return true;
                 }
             }
 
@@ -716,7 +838,7 @@ public class FactorySupplyTask implements AutoplayTask {
                             Math.min(factory.items.get(output), unit.type.itemCapacity), unit, cores, containers);
                     if (storage != null) {
                         factoryCursor = index;
-                        ai.setJob(FactorySupplyAI.Job.COLLECT, factory, storage, output);
+                        ai.setJob(FactorySupplyAI.Job.COLLECT, factory, storage, output, 0);
                         status.set(Core.bundle.format("feature.autoplay.status.collecting", output.localizedName));
                         return true;
                     }
@@ -796,8 +918,13 @@ public class FactorySupplyTask implements AutoplayTask {
         private @Nullable Building targetFactory;
         private @Nullable Building targetStorage;
         private @Nullable Item targetItem;
+        private int targetAmount;
         private Job job = Job.SUPPLY;
         private @Nullable Building lastFactory;
+
+        private int tourStops = 0;
+        private @Nullable Item tourItem;
+        private @Nullable Building tourFactory;
 
         private float cooldownTimer = 0f;
         private float pendingTimer = 0f;
@@ -819,13 +946,25 @@ public class FactorySupplyTask implements AutoplayTask {
             return currentKey != null ? currentKey : job + " (no job set yet)";
         }
 
-        public void setJob(Job job, @Nullable Building factory, @Nullable Building storage, @Nullable Item item) {
+        public void setJob(Job job, @Nullable Building factory, @Nullable Building storage, @Nullable Item item,
+                int amount) {
             this.job = job;
             this.targetFactory = factory;
             this.targetStorage = storage;
             this.targetItem = item;
+            this.targetAmount = amount;
             if (factory != null) {
                 this.lastFactory = factory;
+            }
+            if ((job == Job.COLLECT || job == Job.DELIVER_TO_FACTORY) && factory != null) {
+                if (tourItem == null || tourItem != item) {
+                    tourItem = item;
+                    tourStops = 1;
+                    tourFactory = factory;
+                } else if (tourFactory != factory) {
+                    tourStops++;
+                    tourFactory = factory;
+                }
             }
             // TEMP measurement: track when the current job started.
             String key = job + " f=" + posOf(factory) + " s=" + posOf(storage)
@@ -853,6 +992,36 @@ public class FactorySupplyTask implements AutoplayTask {
 
         public float cooldownSeconds() {
             return Math.max(0f, cooldownTimer) / 60f;
+        }
+
+        public int tourStops() {
+            return tourStops;
+        }
+
+        public Job job() {
+            return job;
+        }
+
+        public @Nullable Building targetFactory() {
+            return targetFactory;
+        }
+
+        public @Nullable Item targetItem() {
+            return targetItem;
+        }
+
+        public float jobStartTick() {
+            return jobStartTick;
+        }
+
+        public @Nullable Item tourItem() {
+            return tourItem;
+        }
+
+        public void resetTour() {
+            tourStops = 0;
+            tourItem = null;
+            tourFactory = null;
         }
 
         private void snapshot(Unit unit) {
@@ -981,7 +1150,8 @@ public class FactorySupplyTask implements AutoplayTask {
                 Log.info("[FactorySupply] start " + currentKey + " stack=" + unit.stack.amount + "x"
                         + (unit.stack.item != null ? unit.stack.item.name : "-")
                         + " dFactory=" + (factory != null ? (int) unit.dst(factory) : -1)
-                        + " dStorage=" + (storage != null ? (int) unit.dst(storage) : -1));
+                        + " dStorage=" + (storage != null ? (int) unit.dst(storage) : -1)
+                        + " tour=" + tourStops);
             }
 
             if (unit.stack.amount > 0 && unit.stack.item != null) {
@@ -995,6 +1165,22 @@ public class FactorySupplyTask implements AutoplayTask {
                     if (factoryWants) {
                         moveTo(factory, Vars.itemTransferRange * 0.7f);
                         tryTransfer(unit, factory);
+                        return;
+                    }
+                }
+                // Collect top-up: a COLLECT job stays a fetch even while loaded, so batch
+                // tours accumulate instead of degrading into a trip home on every stop.
+                if (job == Job.COLLECT && factory != null && factory.isValid() && !factory.dead()
+                        && item != null && unit.stack.item == item) {
+                    int room = unit.type.itemCapacity - unit.stack.amount;
+                    int stored = 0;
+                    try {
+                        stored = factory.items != null ? factory.items.get(item) : 0;
+                    } catch (Throwable ignored) {
+                    }
+                    if (Math.min(stored, room) > 0) {
+                        moveTo(factory, Vars.itemTransferRange * 0.7f);
+                        tryRequest(unit, factory, item, Math.min(stored, room));
                         return;
                     }
                 }
@@ -1026,8 +1212,11 @@ public class FactorySupplyTask implements AutoplayTask {
                         available = storage.items != null ? storage.items.get(item) : 0;
                     } catch (Throwable ignored) {
                     }
-                    int request = Math.min(available, unit.type.itemCapacity);
-                    tryRequest(unit, storage, item, request);
+                    int planned = targetAmount > 0 ? targetAmount : unit.type.itemCapacity;
+                    int request = Math.min(available, Math.min(unit.type.itemCapacity, planned));
+                    if (request > 0) {
+                        tryRequest(unit, storage, item, request);
+                    }
                     break;
                 case COLLECT:
                     if (factory == null || !factory.isValid()) {
@@ -1039,8 +1228,10 @@ public class FactorySupplyTask implements AutoplayTask {
                         stored = factory.items != null ? factory.items.get(item) : 0;
                     } catch (Throwable ignored) {
                     }
-                    int take = Math.min(stored, unit.type.itemCapacity);
-                    tryRequest(unit, factory, item, take);
+                    int take = Math.min(stored, unit.type.itemCapacity - unit.stack.amount);
+                    if (take > 0) {
+                        tryRequest(unit, factory, item, take);
+                    }
                     break;
                 case DELIVER_TO_FACTORY:
                 case DELIVER_TO_STORAGE:

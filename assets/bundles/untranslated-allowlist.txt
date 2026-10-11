@@ -28,6 +28,7 @@ feature.time-control.settings.display-mode.hud
 feature.god-mode.settings.display-mode.hud
 feature.autoplay.settings.display-mode.hud
 feature.quick-schematic-grid.settings.display-mode.hud
+feature.army-control.settings.display-mode.hud
 feature.god-mode.settings.provider.js
 
 feature.pathfinding.badge.navigation
