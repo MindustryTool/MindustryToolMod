@@ -10,6 +10,8 @@ import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
 import arc.scene.Group;
 import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.Button;
+import arc.scene.ui.Image;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Table;
 import arc.struct.IntSeq;
@@ -28,6 +30,7 @@ import mindustry.ui.Fonts;
 import mindustrytool.test.MindustryTestEnv;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Readable;
 
 class ArmyControlCompactContentTest extends MindustryTestEnv {
 
@@ -79,21 +82,23 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         Vars.control.input.selectedUnits.addAll(validUnit(typeA), validUnit(typeA));
         feature.refreshActiveSelection();
 
-        ArmyControlCompactContent withSelection = new ArmyControlCompactContent(feature, null);
+        ArmyControlCompactContent withSelection = new ArmyControlCompactContent(feature, Readable.of(1f));
         assertNotNull(withSelection.element());
         flushEffects();
         assertEquals(1, countDividers(withSelection.element()));
         layoutTree(withSelection.element(), 260f);
         assertDividersFillWidth(withSelection.element(), 260f);
         assertEquals(false, containsGhostHint(withSelection.element()));
+        assertChipHeightsMatchRemoveButton(withSelection.element(), 1);
         withSelection.dispose();
 
         feature.deselectAll();
-        ArmyControlCompactContent empty = new ArmyControlCompactContent(feature, null);
+        ArmyControlCompactContent empty = new ArmyControlCompactContent(feature, Readable.of(1f));
         assertNotNull(empty.element());
         flushEffects();
         assertEquals(0, countDividers(empty.element()));
         assertEquals(true, containsGhostHint(empty.element()));
+        assertEquals(4, countButtons(empty.element()));
         empty.dispose();
 
         Vars.control.input.selectedUnits.addAll(validUnit(typeA));
@@ -102,17 +107,18 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         ids.add(1);
         ids.add(2);
         feature.createGroup("Group 1", ids);
-        ArmyControlCompactContent withGroups = new ArmyControlCompactContent(feature, null);
+        ArmyControlCompactContent withGroups = new ArmyControlCompactContent(feature, Readable.of(1f));
         assertNotNull(withGroups.element());
         flushEffects();
         assertEquals(2, countDividers(withGroups.element()));
         layoutTree(withGroups.element(), 260f);
         assertDividersFillWidth(withGroups.element(), 260f);
         assertEquals(false, containsGhostHint(withGroups.element()));
+        assertChipHeightsMatchRemoveButton(withGroups.element(), 1);
         withGroups.dispose();
 
         feature.deselectAll();
-        ArmyControlCompactContent groupsOnly = new ArmyControlCompactContent(feature, null);
+        ArmyControlCompactContent groupsOnly = new ArmyControlCompactContent(feature, Readable.of(1f));
         assertNotNull(groupsOnly.element());
         flushEffects();
         assertEquals(1, countDividers(groupsOnly.element()));
@@ -143,12 +149,61 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         return dividers;
     }
 
+    private static int countButtons(Element root) {
+        Seq<Element> buttons = new Seq<>();
+        collectButtons(root, buttons);
+        return buttons.size;
+    }
+
+    private static void collectButtons(Element element, Seq<Element> out) {
+        if (element instanceof Button) {
+            out.add(element);
+        }
+        if (element instanceof Group) {
+            for (Element child : ((Group) element).getChildren()) {
+                collectButtons(child, out);
+            }
+        }
+    }
+
     /**
-     * Guards the invisible-divider regression: after laying the content out at
-     * popup width, every divider must actually fill the width. Without a growX
-     * cell the When container sizes to the divider's ~zero preferred width and
-     * the line never shows.
+     * Chips (icon + count) must match the remove button height (unit 9).
+     * Identifies chips as buttons containing both an Image and a Label:
+     * toolbar and remove buttons carry icons only, and recall rows render
+     * label-only headless with no living units to summarize.
      */
+    private static void assertChipHeightsMatchRemoveButton(Element root, int expectedChips) {
+        Seq<Element> buttons = new Seq<>();
+        collectButtons(root, buttons);
+        int chips = 0;
+        for (int i = 0; i < buttons.size; i++) {
+            Element button = buttons.get(i);
+            if (containsType(button, Image.class) && containsType(button, Label.class)) {
+                chips++;
+                float height = button.getHeight();
+                if (!(Math.abs(height - 36f) < 1f)) {
+                    throw new AssertionError("Chip height " + height + " does not match remove button height 36");
+                }
+            }
+        }
+        assertEquals(expectedChips, chips);
+    }
+
+    private static boolean containsType(Element root, Class<?> type) {
+        if (type.isInstance(root)) {
+            return true;
+        }
+        if (root instanceof Group) {
+            for (Element child : ((Group) root).getChildren()) {
+                if (containsType(child, type)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
     private static void assertDividersFillWidth(Element root, float contentWidth) {
         Seq<Element> dividers = new Seq<>();
         collectByName(root, dividers, "solim-divider");

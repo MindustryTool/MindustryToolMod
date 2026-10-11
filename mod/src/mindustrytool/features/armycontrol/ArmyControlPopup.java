@@ -10,12 +10,9 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.quickaccess.QuickAccessPopupHelper;
 import solim.core.Component;
 import solim.overlay.Popup;
+import solim.reactive.Readable;
 
-/**
- * QuickAccess popup for ArmyControl. Provides instant army selection buttons,
- * control group creation & recall, and active unit type deselection chips.
- * Stays open until user clicks outside or clicks close.
- */
+
 public final class ArmyControlPopup {
 
     private static @Nullable Popup<ArmyControlFeature> menu;
@@ -54,10 +51,7 @@ public final class ArmyControlPopup {
         }
     }
 
-    /**
-     * Derives the pinned edge from the placement half: hanging below the bar
-     * pins TOP so growth extends downward, sitting above pins BOTTOM.
-     */
+
     static Popup.Edge pinnedEdgeFor(@Nullable Element quickAccessBar) {
         float stageH = Core.scene != null ? Core.scene.getHeight() : 0f;
         float barY = 0f;
@@ -76,12 +70,12 @@ public final class ArmyControlPopup {
 
         return column()
                 .width(unit(65))
-                .padding(unit(2.5f))
+                .padding(unit(3))
                 .gap(unit(2))
                 .rounded(unit(2), WebStyles.Colors.SECTION_BG)
                 .border(1f, WebStyles.Colors.SECTION_BORDER)
                 .children(() -> {
-                    new ArmyControlCompactContent(feature, ArmyControlPopup::hide);
+                    new ArmyControlCompactContent(feature, Readable.of(1f));
                 });
     }
 }

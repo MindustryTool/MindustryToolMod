@@ -7,78 +7,66 @@ import arc.math.geom.Rect;
 import arc.scene.Element;
 import arc.struct.IntSeq;
 import arc.struct.Seq;
-import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.gen.Groups;
 import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
+import solim.reactive.Readable;
 
-/**
- * Icon-only action toolbar for ArmyControl. Single row with fixed order:
- * select-map, select-screen, deselect-all, add-group, close.
- * Existing bundle strings are reused as tooltips; no new user-visible text.
- */
+
 public class ArmyControlToolbar extends BaseComponent {
 
     private final ArmyControlFeature feature;
-    private final @Nullable Runnable onClose;
+    private final Readable<Float> scale;
 
-    public ArmyControlToolbar(ArmyControlFeature feature, @Nullable Runnable onClose) {
+    public ArmyControlToolbar(ArmyControlFeature feature, Readable<Float> scale) {
         this.feature = feature;
-        this.onClose = onClose;
+        this.scale = scale;
     }
 
     @Override
     protected Element build() {
+        Readable<Float> buttonSize = scale.map(s -> unit(11) * (s != null ? s : 1f));
+        Readable<Float> iconSize = scale.map(s -> unit(6) * (s != null ? s : 1f));
+
         return row()
                 .growX()
-                .gap(unit(1))
-                .center()
+                .gap(unit(2))
+                .left()
                 .children(() -> {
                     button()
                             .style(WebStyles.ghost())
-                            .size(unit(11))
+                            .size(buttonSize)
                             .tooltip(Core.bundle.get("feature.army-control.action.select-map", "Select Map"))
                             .onClick(feature::selectAllMap)
-                            .children(() -> icon(Icon.map).size(unit(6)).color(WebStyles.Colors.GHOST_FG));
+                            .children(() -> icon(Icon.map).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
 
                     button()
                             .style(WebStyles.ghost())
-                            .size(unit(11))
+                            .size(buttonSize)
                             .tooltip(Core.bundle.get("feature.army-control.action.select-screen", "Select Screen"))
                             .onClick(feature::selectScreen)
-                            .children(() -> icon(Icon.zoom).size(unit(6)).color(WebStyles.Colors.GHOST_FG));
+                            .children(() -> icon(Icon.zoom).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
 
                     button()
                             .style(WebStyles.ghost())
-                            .size(unit(11))
+                            .size(buttonSize)
                             .tooltip(Core.bundle.get("feature.army-control.action.deselect-all", "Deselect All"))
                             .onClick(feature::deselectAll)
-                            .children(() -> icon(Icon.exit).size(unit(6)).color(WebStyles.Colors.GHOST_FG));
+                            .children(() -> icon(Icon.exit).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
 
                     button()
                             .style(WebStyles.ghost())
-                            .size(unit(11))
+                            .size(buttonSize)
                             .tooltip(Core.bundle.get("feature.army-control.action.add-group", "Add Group"))
                             .onClick(() -> createGroupFromContext(feature))
-                            .children(() -> icon(Icon.add).size(unit(6)).color(WebStyles.Colors.GHOST_FG));
-
-                    if (onClose != null) {
-                        button()
-                                .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .onClick(onClose)
-                                .children(() -> icon(Icon.cancel).size(unit(6)).color(WebStyles.Colors.GHOST_FG));
-                    }
+                            .children(() -> icon(Icon.add).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
                 }).element();
     }
 
-    /**
-     * Captures the current selection by default, else screen-visible units,
-     * else all map units, into a new control group.
-     */
+
     private static void createGroupFromContext(ArmyControlFeature feature) {
         Seq<ControlGroup> groups = feature.controlGroupsSignal().peek();
         int nextNum = (groups != null ? groups.size : 0) + 1;

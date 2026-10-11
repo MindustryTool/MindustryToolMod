@@ -2,10 +2,8 @@ package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
 
-import arc.Core;
 import arc.scene.Element;
 import arc.util.Nullable;
-import mindustry.Vars;
 import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
@@ -41,14 +39,13 @@ public class ArmyControlHudView extends BaseComponent {
                             .children(() -> icon(Icon.move).size(dragIconSize))
                             .draggable(feature.xSignal, feature.ySignal));
 
-            // Content container
-            column().width(unit(65)).gap(unit(1.5f)).children(() -> {
-                new ArmyControlCompactContent(feature, null);
+            column().width(scale.map(s -> unit(65) * (s != null ? s : 1f))).gap(unit(2)).children(() -> {
+                new ArmyControlCompactContent(feature, scale);
             });
-        }).gap(unit(1));
+        }).gap(unit(1.5f));
 
         hud.position(feature.xSignal, feature.ySignal)
-                .padding(unit(2))
+                .padding(unit(2.5f))
                 .rounded(unit(2), WebStyles.Colors.SECTION_BG)
                 .border(1.5f, WebStyles.Colors.BORDER);
 

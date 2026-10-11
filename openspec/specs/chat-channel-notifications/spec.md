@@ -1,6 +1,6 @@
 # chat-channel-notifications Specification
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Per-channel notification mute state
 The system SHALL maintain a reactive state indicating whether notifications are enabled or muted for each chat channel, persisted across game sessions in settings.

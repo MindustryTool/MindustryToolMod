@@ -190,5 +190,26 @@ class ChatUnreadTest extends SolimEnv {
         comp2.element();
         comp2.dispose();
     }
+
+    @Test
+    void testMutedChannelExcludedFromTotal() {
+        ChatNotifications notifications = new ChatNotifications();
+        ChatUnread unread = new ChatUnread(notifications.mutedChannelIds());
+
+        unread.increment("ch1");
+        unread.increment("ch2");
+
+        assertEquals(2, unread.total().get());
+
+        notifications.setMuted("ch1", true);
+        assertEquals(1, unread.total().get());
+        assertEquals(1, unread.get("ch1"));
+
+        notifications.setMuted("ch2", true);
+        assertEquals(0, unread.total().get());
+
+        notifications.setMuted("ch1", false);
+        assertEquals(1, unread.total().get());
+    }
 }
 

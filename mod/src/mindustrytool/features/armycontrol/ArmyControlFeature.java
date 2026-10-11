@@ -106,9 +106,12 @@ public class ArmyControlFeature extends Feature {
 
         Events.on(WorldLoadEvent.class, e -> onWorldReset());
         Events.on(ResetEvent.class, e -> onWorldReset());
-        // The game loop mutates selectedUnits behind our back (per-frame commandable
-        // validation, vanilla box-selects, unit deaths). Poll lightly so the chips
-        // never show a stale selection.
+
+        displayModeConfig.signal().subscribe(mode -> {
+            ArmyControlPopup.hide();
+            updateHud();
+        });
+
         Events.run(Trigger.update, () -> {
             if (++pollTicks < SELECTION_POLL_INTERVAL) {
                 return;

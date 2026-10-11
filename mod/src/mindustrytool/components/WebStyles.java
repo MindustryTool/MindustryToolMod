@@ -154,13 +154,6 @@ public class WebStyles {
     private static final SolimButtonStyle CARD_ACTION_TEXT_STYLE = textOf(
             CARD_ACTION_STYLE, Colors.SECONDARY_FG, Colors.PRIMARY_FG, Color.lightGray, Colors.DISABLED_FG);
 
-    /**
-     * One-shot card action style. Renders identically to {@link #CARD_ACTION_STYLE} in
-     * every state it can be drawn in, but keeps its border per-state and declares no
-     * {@code checked} state, so the resolved {@code checked} drawable is {@code null}
-     * and Arc's per-click checked auto-toggle cannot latch the button into a selected
-     * appearance. Use for browser card actions that are not selections.
-     */
     private static final SolimButtonStyle ACTION_CARD_STYLE = new SolimButtonStyleBuilder()
             .rounded(unit(2))
             .padding(unit(1.5f))
@@ -198,15 +191,6 @@ public class WebStyles {
             .checked(c -> c.background(Colors.CHIP_CHECKED_BG).border(1.5f, Colors.CHIP_CHECKED_BORDER))
             .build();
 
-    /**
-     * One-shot action chip. Visually identical to {@link #FILTER_CHIP_STYLE} for the
-     * up/over/down states, but declares no {@code checked} state and keeps its border
-     * per-state instead of at the root, so the resolved {@code checked} drawable is
-     * {@code null}. Arc's {@code Button} toggles its internal checked flag on every
-     * click; with a null checked drawable that toggle is visually inert, so an action
-     * chip can never latch into a selected appearance. Hover and press feedback are
-     * preserved.
-     */
     private static final SolimButtonStyle ACTION_CHIP_STYLE = new SolimButtonStyleBuilder()
             .rounded(unit(2))
             .padding(unit(1))
@@ -269,14 +253,6 @@ public class WebStyles {
         return CARD_ACTION_TEXT_STYLE;
     }
 
-    /**
-     * One-shot card action text button — a {@link #cardActionText()} lookalike with no
-     * selected state.
-     *
-     * <p>Use for browser card buttons that perform an action rather than represent a
-     * selection, so Arc's per-click checked auto-toggle cannot latch them into the
-     * card-action selected appearance.
-     */
     public static SolimButtonStyle actionCardText() {
         return ACTION_CARD_TEXT_STYLE;
     }
@@ -325,16 +301,7 @@ public class WebStyles {
         return FILTER_CHIP_STYLE;
     }
 
-    /**
-     * One-shot action chip — a filter chip with no selected state.
-     *
-     * <p>Use for buttons that fire an action (send a callout, copy an emoji, deselect a
-     * unit type) rather than toggling a selection. Unlike {@link #filterChip()}, this
-     * style resolves to a {@code null} checked drawable, so Arc's per-click checked
-     * auto-toggle cannot latch the button into a selected appearance.
-     *
-     * <p>Do not pair this style with {@code .checked(...)}; it has no visual to bind to.
-     */
+
     public static SolimButtonStyle actionChip() {
         return ACTION_CHIP_STYLE;
     }

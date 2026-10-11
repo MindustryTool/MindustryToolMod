@@ -34,7 +34,6 @@ public class TransportTask implements AutoplayTask {
         DESTINATION
     }
 
-    private final AutoplayFeature feature;
     private final ConfigValue<String> savedStateConfig;
     private final Signal<String> status = Signal.of(Core.bundle.get("feature.autoplay.status.idle"));
     private final Signal<SelectionMode> selectionModeSignal = Signal.of(SelectionMode.NONE);
@@ -43,7 +42,6 @@ public class TransportTask implements AutoplayTask {
     private final TransportAI ai = new TransportAI();
 
     public TransportTask(AutoplayFeature feature) {
-        this.feature = feature;
         this.savedStateConfig = feature.configGroup().stringValue("transport.saved-state", "");
 
         Events.on(TapEvent.class, this::handleTap);

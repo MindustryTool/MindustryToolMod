@@ -33,7 +33,7 @@ public class ControlGroupList extends BaseComponent {
 
         return column()
                 .growX()
-                .gap(unit(1))
+                .gap(unit(1.5f))
                 .children(() -> {
                     dynamic(groupsSignal, groups -> {
                         if (groups == null || groups.size == 0) {
@@ -42,7 +42,7 @@ public class ControlGroupList extends BaseComponent {
 
                         column()
                                 .growX()
-                                .gap(unit(1))
+                                .gap(unit(1.5f))
                                 .children(() -> {
                                     for (ControlGroup group : groups) {
                                         buildGroupRow(group);
@@ -62,7 +62,7 @@ public class ControlGroupList extends BaseComponent {
 
         row()
                 .growX()
-                .gap(unit(1))
+                .gap(unit(2))
                 .center()
                 .children(() -> {
                     // Recall button

@@ -8,10 +8,12 @@ import arc.scene.Element;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import java.util.Objects;
+import arc.scene.style.Drawable;
 import arc.util.Nullable;
 import mindustry.gen.Icon;
 import mindustry.ui.Fonts;
 import mindustry.ui.Styles;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.Loader;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ChannelDto;
@@ -21,7 +23,6 @@ import solim.reactive.Computed;
 import solim.reactive.Readable;
 
 public class ChatChannelListView extends BaseComponent {
-    // TODO: Able to turn on/off notifications for each channel
     private final ChatStore store;
     private final @Nullable ChatService service;
 
@@ -119,6 +120,22 @@ public class ChatChannelListView extends BaseComponent {
             Readable<Boolean> hasUnread = store.unread().forChannel(channel.getId())
                     .map(count -> count != null && count > 0);
 
+            Readable<Boolean> isMuted = store.notifications().isMuted(channel.getId());
+
+            Computed<Boolean> showUnreadDot = new Computed<>(
+                    () -> Boolean.TRUE.equals(hasUnread.get()) && !Boolean.TRUE.equals(isMuted.get()));
+
+            Computed<Boolean> showUnselectedMuted = new Computed<>(
+                    () -> !Boolean.TRUE.equals(isSelected.get()) && Boolean.TRUE.equals(isMuted.get()));
+
+            Readable<Drawable> bellIcon = isMuted.map(m -> Boolean.TRUE.equals(m)
+                    ? FileIcon.of("bell-off.png")
+                    : FileIcon.of("bell.png"));
+
+            Readable<String> bellTooltip = isMuted.map(m -> Boolean.TRUE.equals(m)
+                    ? Core.bundle.get("feature.chat.channel.notifications.unmute", "Unmute notifications")
+                    : Core.bundle.get("feature.chat.channel.notifications.mute", "Mute notifications"));
+
             Computed<ButtonStyle> style = isSelected.map(s -> s ? selectedStyle : defaultStyle);
 
             return row()
@@ -137,10 +154,24 @@ public class ChatChannelListView extends BaseComponent {
 
                                     spacer();
 
+                                    button(() -> store.notifications().toggleMuted(channel.getId()))
+                                            .stopClickPropagation(true)
+                                            .style(WebStyles.ghost())
+                                            .size(unit(8))
+                                            .tooltip(bellTooltip)
+                                            .visible(isSelected)
+                                            .children(() -> icon(bellIcon).size(unit(4)).color(Color.white));
+
+                                    image(FileIcon.of("bell-off.png"))
+                                            .size(unit(4))
+                                            .color(Color.lightGray)
+                                            .tooltip(Core.bundle.get("feature.chat.channel.notifications.muted", "Muted"))
+                                            .visible(showUnselectedMuted);
+
                                     image(circle())
                                             .size(unit(3))
                                             .color(Color.white)
-                                            .visible(hasUnread);
+                                            .visible(showUnreadDot);
                                 });
                     })
                     .element();

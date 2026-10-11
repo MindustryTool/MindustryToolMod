@@ -5,6 +5,7 @@ import mindustrytool.features.chat.state.ChatChannels;
 import mindustrytool.features.chat.state.ChatMembers;
 import mindustrytool.features.chat.state.ChatMessageDelivery;
 import mindustrytool.features.chat.state.ChatMessages;
+import mindustrytool.features.chat.state.ChatNotifications;
 import mindustrytool.features.chat.state.ChatSession;
 import mindustrytool.features.chat.state.ChatTranslations;
 import mindustrytool.features.chat.state.ChatUiState;
@@ -16,7 +17,8 @@ public final class ChatStore {
 
     private final ChatSession session = new ChatSession();
     private final ChatUsers users = new ChatUsers();
-    private final ChatUnread unread = new ChatUnread();
+    private final ChatNotifications notifications;
+    private final ChatUnread unread;
     private final ChatTranslations translations = new ChatTranslations();
     private final ChatMessageDelivery delivery = new ChatMessageDelivery();
     private final ChatUiState ui;
@@ -26,18 +28,20 @@ public final class ChatStore {
     private final ChatChannels channels;
 
     public ChatStore(ChatFeature feature) {
-        Signal<String> activeChannelSignal = feature.activeChannelConfig.signal();
-        this.channels = new ChatChannels(activeChannelSignal);
-        this.messages = new ChatMessages(channels.activeId());
-        this.members = new ChatMembers(channels.activeId());
-        // Panel collapse signals are backed directly by ConfigValue — single source of truth
-        this.ui = new ChatUiState(
+        this(feature.activeChannelConfig.signal(),
                 feature.channelsCollapsedConfig.signal(),
-                feature.usersCollapsedConfig.signal());
+                feature.usersCollapsedConfig.signal(),
+                new ChatNotifications());
     }
 
     /** Package-private constructor for unit tests. */
     ChatStore(Signal<String> activeChannelSignal, Signal<Boolean> channelsCollapsed, Signal<Boolean> usersCollapsed) {
+        this(activeChannelSignal, channelsCollapsed, usersCollapsed, new ChatNotifications());
+    }
+
+    ChatStore(Signal<String> activeChannelSignal, Signal<Boolean> channelsCollapsed, Signal<Boolean> usersCollapsed, ChatNotifications notifications) {
+        this.notifications = notifications;
+        this.unread = new ChatUnread(notifications.mutedChannelIds());
         this.channels = new ChatChannels(activeChannelSignal);
         this.messages = new ChatMessages(channels.activeId());
         this.members = new ChatMembers(channels.activeId());
@@ -62,6 +66,10 @@ public final class ChatStore {
 
     public ChatUsers users() {
         return users;
+    }
+
+    public ChatNotifications notifications() {
+        return notifications;
     }
 
     public ChatUnread unread() {

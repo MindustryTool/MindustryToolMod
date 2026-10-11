@@ -2,8 +2,10 @@ package mindustrytool.features.chat.state;
 
 import arc.Core;
 import arc.util.Nullable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -18,11 +20,18 @@ public final class ChatUnread {
     private final Computed<Integer> total;
 
     public ChatUnread() {
+        this(null);
+    }
+
+    public ChatUnread(@Nullable Signal<Set<String>> mutedChannelsSignal) {
         this.total = new Computed<>(() -> {
             Map<String, Integer> map = unreads.get();
+            Set<String> muted = mutedChannelsSignal != null ? mutedChannelsSignal.get() : Collections.emptySet();
             int sum = 0;
-            for (int count : map.values()) {
-                sum += count;
+            for (Map.Entry<String, Integer> entry : map.entrySet()) {
+                if (muted == null || !muted.contains(entry.getKey())) {
+                    sum += entry.getValue();
+                }
             }
             return sum;
         });

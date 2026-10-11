@@ -47,7 +47,7 @@ public class ActiveSelectionBar extends BaseComponent {
 
                         wrap()
                                 .growX()
-                                .gap(unit(1.5f))
+                                .gap(unit(2))
                                 .left()
                                 .children(() -> {
                                     for (UnitType type : types) {
@@ -56,6 +56,7 @@ public class ActiveSelectionBar extends BaseComponent {
                                         button()
                                                 .style(WebStyles.actionChip())
                                                 .padding(unit(1))
+                                                .height(unit(9))
                                                 .tooltip(type.localizedName + ": " + hint)
                                                 .onClick(() -> feature.deselectUnitType(type))
                                                 .children(() -> row().gap(unit(1)).center().children(() -> {

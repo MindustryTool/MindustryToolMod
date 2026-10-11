@@ -67,17 +67,18 @@ The system SHALL display compact icon-plus-count chips representing each unit ty
 - **THEN** the Active Selection section renders nothing (no section label and no `No units selected` placeholder)
 
 ### Requirement: UI Display Mode and Persistence
-The system SHALL provide Army Control as a compact QuickAccess popup or persistent HUD sharing one icon-toolbar layout with no title or section labels, keep the bar-facing popup edge fixed as content height changes, and keep the menu open during unit micro until explicitly dismissed.
+The system SHALL provide Army Control as a compact QuickAccess popup or persistent HUD sharing one 4-icon toolbar layout with no title, section labels, or close button, keep the bar-facing popup edge fixed as content height changes, reconcile visible shells on every display-mode change, and keep the menu open during unit micro until explicitly dismissed.
 
 #### Scenario: Compact toolbar actions
 - **WHEN** the Army Control UI is shown in either popup or HUD mode
-- **THEN** a single toolbar row provides icon-only actions for select-map, select-screen, deselect-all, add-group, and close, each with a tooltip
+- **THEN** a single toolbar row provides icon-only actions for select-map, select-screen, deselect-all, and add-group, each with a tooltip
 - **AND** no `Army Control` title header is shown
+- **AND** no close button is shown.
 
 #### Scenario: Popup remains open on action
 - **WHEN** the user activates select-map, select-screen, recalls a group, or taps a unit chip to exclude
 - **THEN** the popup remains open so the user can continue managing army selections and issuing orders
-- **AND** the popup only closes when the user activates the toolbar close icon or clicks outside
+- **AND** the popup only closes when the user clicks outside or uses the system back button.
 
 #### Scenario: Popup keeps its bar-facing edge on content change
 - **WHEN** selection chips or control groups appear, collapse, or reflow while the popup is shown
@@ -87,6 +88,18 @@ The system SHALL provide Army Control as a compact QuickAccess popup or persiste
 #### Scenario: Doubly-empty state shows a ghost hint line
 - **WHEN** no units are selected and no control groups are saved
 - **THEN** the popup shows a single ghost hint line instead of dead gap space.
+
+#### Scenario: Switching to popup mode removes the HUD
+- **WHEN** the user changes the display mode setting from HUD to popup
+- **THEN** a mounted HUD is removed and no HUD is rebuilt until the mode changes back.
+
+#### Scenario: Switching to HUD mode hides the popup and builds the HUD
+- **WHEN** the user changes the display mode setting from popup to HUD
+- **THEN** an open popup is hidden and the persistent draggable HUD is built.
+
+#### Scenario: Popup mode without QuickAccess falls back to HUD
+- **WHEN** the display mode is popup but the QuickAccess feature is disabled
+- **THEN** the persistent HUD is shown instead, since the popup has no anchor.
 
 #### Scenario: Configurable display mode
 - **WHEN** the user changes the display mode setting to HUD in feature settings
