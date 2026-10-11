@@ -108,7 +108,12 @@ public class FleeTask implements AutoplayTask {
             if (unit == null) {
                 return;
             }
-            if (threat instanceof Entityc && !((Entityc) threat).isAdded()) {
+            if (threat instanceof Building) {
+                Building turret = (Building) threat;
+                if (!turret.isValid() || turret.dead()) {
+                    threat = null;
+                }
+            } else if (threat instanceof Entityc && !((Entityc) threat).isAdded()) {
                 threat = null;
             } else if (threat instanceof Healthc && ((Healthc) threat).dead()) {
                 threat = null;

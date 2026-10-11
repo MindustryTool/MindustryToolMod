@@ -107,7 +107,7 @@ public class HealUnitsTask implements AutoplayTask {
     public static class HealUnitsAI extends BaseAutoplayAI {
         @Override
         public void updateMovement() {
-            if (target == null || !target.isAdded() || !(target instanceof Unit)) {
+            if (target == null || !(target instanceof Unit) || !target.isAdded()) {
                 target = null;
                 unit.isShooting(false);
                 unit.controlWeapons(false, false);

@@ -6,7 +6,9 @@ import arc.math.geom.Vec2;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.ObjectSet;
 import arc.struct.Queue;
+import arc.util.Log;
 import arc.util.Nullable;
+import arc.util.Time;
 import java.util.Iterator;
 import mindustry.Vars;
 import mindustry.entities.units.BuildPlan;
@@ -51,6 +53,7 @@ public class RebuildTask implements AutoplayTask {
 
     private final Signal<String> status = Signal.of(Core.bundle.get("feature.autoplay.status.idle"));
     private final RebuildAI ai = new RebuildAI();
+    private float lastLogTime = -1000f;
 
     @Override
     public String getId() {
@@ -74,26 +77,44 @@ public class RebuildTask implements AutoplayTask {
 
     @Override
     public boolean update(Unit unit) {
+        boolean shouldLog = Time.time - lastLogTime > 60f;
+        if (shouldLog) {
+            lastLogTime = Time.time;
+        }
         if (!unit.canBuild()) {
             status.set(Core.bundle.get("feature.autoplay.status.cannot-build"));
+            if (shouldLog) {
+                Log.info("[RebuildTask] cannot-build unit=@", unit.type == null ? "no-type" : unit.type.name);
+            }
             return false;
         }
 
         cleanStalePlans(unit);
 
-        if (unit.buildPlan() != null && isRebuildPlan(unit.buildPlan())) {
+        BuildPlan current = unit.buildPlan();
+        if (current != null && isRebuildPlan(current)) {
             status.set(Core.bundle.get("feature.autoplay.status.rebuilding"));
+            if (shouldLog) {
+                Log.info("[RebuildTask] already rebuilding @(@,@) breaking=@", current.block.name, current.x,
+                        current.y, current.breaking);
+            }
             return true;
         }
 
         if (unit.team.data() == null) {
             status.set(Core.bundle.get("feature.autoplay.status.no-build-plans"));
+            if (shouldLog) {
+                Log.info("[RebuildTask] team data null");
+            }
             return false;
         }
 
         Queue<BlockPlan> plans = unit.team.data().plans;
         if (plans == null || plans.isEmpty()) {
             status.set(Core.bundle.get("feature.autoplay.status.no-build-plans"));
+            if (shouldLog) {
+                Log.info("[RebuildTask] no team plans null=@", plans == null);
+            }
             return false;
         }
 
@@ -102,6 +123,7 @@ public class RebuildTask implements AutoplayTask {
         BlockPlan bestPlan = null;
         int bestIndex = -1;
         float minDst = Float.MAX_VALUE;
+        int affordable = 0;
 
         for (int i = 0; i < plans.size; i++) {
             BlockPlan plan = plans.get(i);
@@ -110,6 +132,7 @@ public class RebuildTask implements AutoplayTask {
             }
 
             if (canAffordPlan(core, plan)) {
+                affordable++;
                 float dst = unit.dst2(plan.x * Vars.tilesize, plan.y * Vars.tilesize);
                 if (dst < minDst) {
                     minDst = dst;
@@ -117,6 +140,13 @@ public class RebuildTask implements AutoplayTask {
                     bestIndex = i;
                 }
             }
+        }
+
+        if (shouldLog) {
+            Log.info("[RebuildTask] plans=@ affordable=@ best=@ core=@ unit=(@,@)", plans.size, affordable,
+                    bestPlan == null ? "null"
+                            : bestPlan.block.name + "@(" + bestPlan.x + "," + bestPlan.y + ")",
+                    core == null ? "null" : core.block.name + " items=" + core.items.total(), unit.x, unit.y);
         }
 
         if (bestPlan == null) {
@@ -154,31 +184,60 @@ public class RebuildTask implements AutoplayTask {
     }
 
     public static class RebuildAI extends BaseAutoplayAI {
+        private float lastLogTime = -1000f;
+
         @Override
         public void updateMovement() {
+            boolean shouldLog = Time.time - lastLogTime > 60f;
+            if (shouldLog) {
+                lastLogTime = Time.time;
+            }
             if (unit == null || unit.team.data() == null) {
+                if (shouldLog) {
+                    Log.info("[RebuildAI] no unit or team data");
+                }
                 return;
             }
             Queue<BlockPlan> plans = unit.team.data().plans;
             if (plans == null) {
+                if (shouldLog) {
+                    Log.info("[RebuildAI] plans null");
+                }
                 return;
             }
             if (unit.buildPlan() == null && !plans.isEmpty()) {
                 BlockPlan block = plans.first();
 
                 if (Vars.world.tile(block.x, block.y) != null && Vars.world.tile(block.x, block.y).block() == block.block) {
+                    if (shouldLog) {
+                        Log.info("[RebuildAI] already built, dropping @@(@,@) queue=@", block.block.name, block.x,
+                                block.y, plans.size);
+                    }
                     plans.removeFirst();
                 } else if (Build.validPlace(block.block, unit.team(), block.x, block.y, block.rotation)) {
                     BuildPlan bp = new BuildPlan(block.x, block.y, block.rotation, block.block, block.config);
                     registerRebuildPlan(bp);
                     unit.addBuild(bp);
                     plans.addLast(plans.removeFirst());
+                    if (shouldLog) {
+                        Log.info("[RebuildAI] queued build @@(@,@) queue=@", block.block.name, block.x, block.y,
+                                plans.size);
+                    }
                 } else {
                     plans.addLast(plans.removeFirst());
+                    if (shouldLog) {
+                        Log.info("[RebuildAI] invalid place @@(@,@) rot=@, rotating queue", block.block.name,
+                                block.x, block.y, block.rotation);
+                    }
                 }
             }
 
             BuildPlan req = unit.buildPlan();
+            if (shouldLog) {
+                Log.info("[RebuildAI] req=@ unitPlans=@ teamPlans=@ pos=(@,@)", req == null ? "null"
+                        : req.block.name + "@(" + req.x + "," + req.y + ") breaking=" + req.breaking,
+                        unit.plans == null ? -1 : unit.plans.size, plans.size, unit.x, unit.y);
+            }
             if (req != null) {
                 if (!req.breaking && timer.get(timerTarget2, 40f)) {
                     for (Player player : Groups.player) {
