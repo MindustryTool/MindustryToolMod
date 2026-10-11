@@ -224,7 +224,6 @@ class SmartUpgradeFeatureTest {
         smallDrill.size = 1;
         Drill largeDrill = new Drill("del-size-drill-large");
         largeDrill.size = 2;
-        Conveyor conveyor = new Conveyor("del-size-conveyor");
 
         assertTrue(feature.shouldDeleteBlock(smallWall, SmartUpgradeFeature.BlockGroup.WALL, largeWall));
         assertTrue(feature.shouldDeleteBlock(largeWall, SmartUpgradeFeature.BlockGroup.WALL, smallWall));

@@ -37,15 +37,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         }
     }
 
-    private static void invokeAlign(Component comp, int align) {
-        try {
-            Method m = comp.getClass().getMethod("align", int.class);
-            m.invoke(comp, align);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed invoking align(int) on " + comp.getClass().getSimpleName(), e);
-        }
-    }
-
     @ParameterizedTest(name = "{0} - individual alignment directions")
     @MethodSource("alignableComponents")
     void testIndividualAlignmentDirections(ComponentAdapter adapter) {

@@ -658,7 +658,8 @@ class QueryViewTest extends SolimEnv {
 		assertEquals("page1", getText(view));
 	}
 
-	@Test
+	@SuppressWarnings("unchecked")
+    @Test
 	void queryViewCenterPropagatesAlignmentToParentCellAndChildren() {
 		CompletableFuture<String> future = new CompletableFuture<>();
 		Query<String> query = Query.noKey(() -> future);

@@ -183,6 +183,7 @@ class ForEachComponentTest extends SolimCoreEnv {
     @Test
     void forEachCenterPropagatesAlignmentToParentCellAndChildren() {
         Signal<List<String>> items = Signal.of(Arrays.asList("1", "2"));
+        @SuppressWarnings("unchecked")
         ForEach<String>[] feHolder = new ForEach[1];
 
         solim.layout.Column col = new solim.layout.Column().children(() -> {

@@ -756,6 +756,7 @@ class DynamicComponentTest extends SolimCoreEnv {
         column.dispose();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void dynamicCenterPropagatesAlignmentToParentCellAndChildren() {
         Signal<String> source = Signal.of("hello");

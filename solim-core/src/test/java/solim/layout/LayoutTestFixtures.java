@@ -8,7 +8,6 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
-import arc.util.Align;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.display.NetworkImage;
