@@ -133,22 +133,23 @@ The system SHALL suppress alerts raised within 3 seconds of a previous alert.
 
 ### Requirement: Alert presentation
 
-The system SHALL present the alert as a red-colored message in the chat fragment (or HUD toast when offline) containing the builder, the constructed block's localized name, the target block's tile coordinates `(targetX, targetY)`, and the nearest core's tile coordinates `(coreX, coreY)`.
+The system SHALL present grief alerts as an interactive, clickable Solim HUD banner at the top-center of the screen rather than sending text messages to chat or standard toasts, and SHALL allow the player to jump the camera to the offending placement by clicking the banner.
 
-#### Scenario: Message contents
+#### Scenario: Interactive banner presentation
+- **WHEN** an explosive reactor placement begins near a core
+- **THEN** an interactive HUD banner appears at the top-center of the screen displaying the builder name, block name, and coordinates without posting to chat or showing a standard toast
 
-- **WHEN** an alert is emitted
-- **THEN** the alert message contains the builder (player or team), the constructed block's localized name, the target tile coordinates, and the nearest core tile coordinates
+#### Scenario: Camera jump on banner click
+- **WHEN** the player clicks the grief alert banner
+- **THEN** the camera centers immediately onto the world coordinates of the target block, camera panning is retained so it does not snap back, and the alert banner is dismissed
 
-#### Scenario: Red color applied
+#### Scenario: Manual dismissal
+- **WHEN** the player clicks the dismiss [X] button on the alert banner
+- **THEN** the banner is dismissed without altering the camera position
 
-- **WHEN** the alert message is rendered
-- **THEN** the message is colored red using inline markup
-
-#### Scenario: UI unavailable
-
-- **WHEN** the chat fragment and HUD fragment are not available
-- **THEN** the system does not throw and simply skips presentation
+#### Scenario: Auto-dismiss timeout
+- **WHEN** an alert banner is displayed and not clicked or closed for the configured duration
+- **THEN** the alert banner automatically closes
 
 ### Requirement: Internationalization
 
@@ -229,4 +230,13 @@ The system SHALL provide All and None actions that enable or mute every listed e
 
 - **WHEN** the player activates the None action
 - **THEN** no listed block is monitored and no grief alerts are shown
+
+### Requirement: Offending placement visual highlight
+
+The system SHALL render a temporary visual pulsing ring marker at the offending tile's world position for 3 seconds when the camera jumps to the target block.
+
+#### Scenario: Highlight rendered on camera jump
+
+- **WHEN** the camera jumps to the target placement from the alert banner
+- **THEN** a pulsing highlight ring is rendered at the target tile's world coordinates for 3 seconds
 

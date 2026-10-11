@@ -29,7 +29,7 @@ public class GriefAlertSettingsView extends BaseComponent {
     protected Element build() {
         return SettingScaffold.build(() -> {
             headerCard();
-            radiusCard();
+            generalCard();
             monitoredBlocksCard();
         });
     }
@@ -38,15 +38,24 @@ public class GriefAlertSettingsView extends BaseComponent {
         return SettingCard.header(feature, "SECURITY");
     }
 
-    private Component radiusCard() {
-        return SettingCard.section(Icon.settings, Core.bundle.get("feature.grief-alert.settings.radius"), () -> {
+    private Component generalCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.grief-alert.settings.section.general"), () -> {
             SettingSlider.of(
                     Core.bundle.get("feature.grief-alert.settings.radius"),
                     feature.radiusConfig.signal(),
                     1f,
                     30f,
                     1f,
-                    feature.radiusConfig.signal().map(v -> String.format("%.0f tiles", v != null ? v : 10f))
+                    feature.radiusConfig.signal().map(v -> String.format("%.0f tiles", v != null ? v : GriefAlertFeature.DEFAULT_RADIUS))
+            );
+
+            SettingSlider.of(
+                    Core.bundle.get("feature.grief-alert.settings.duration"),
+                    feature.durationConfig.signal(),
+                    5f,
+                    30f,
+                    1f,
+                    feature.durationConfig.signal().map(v -> Core.bundle.format("feature.grief-alert.settings.seconds", Math.round(v != null ? v : GriefAlertFeature.DEFAULT_DURATION)))
             );
         });
     }
