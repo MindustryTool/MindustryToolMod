@@ -8,6 +8,8 @@ import arc.scene.Element;
 import arc.util.Nullable;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.translation.TranslationFeature;
 import mindustrytool.features.translation.TranslationProvider;
@@ -112,26 +114,17 @@ public class TranslationSettingsView extends BaseComponent {
 
 	@Override
 	protected Element build() {
-		return column().grow().center().children(() -> {
-			scroll().grow().scrollX(false).children(() -> {
-				column().growX().gap(unit(2.5f)).padding(unit(2)).top().children(() -> {
-					livePreviewCard();
-					appearanceCard();
-					outgoingCard();
-					providerCard();
-					resetActions();
-				});
-			});
-		}).element();
+		return SettingScaffold.build(() -> {
+			livePreviewCard();
+			appearanceCard();
+			outgoingCard();
+			providerCard();
+			resetActions();
+		});
 	}
 
 	private Card sectionCard() {
-		return card()
-				.growX()
-				.padding(unit(2.5f))
-				.rounded(8, WebStyles.Colors.SECTION_BG)
-				.border(1.5f, WebStyles.Colors.SECTION_BORDER)
-				.gap(unit(2));
+		return SettingCard.card();
 	}
 
 	private Component livePreviewCard() {

@@ -10,12 +10,13 @@ import arc.struct.Seq;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.prettychat.Prettier;
 import mindustrytool.features.prettychat.PrettyChatFeature;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Card;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -65,24 +66,11 @@ public class PrettyChatSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(2f)).padding(unit(2)).children(() -> {
-                    livePreviewCard();
-                    pipelineCard();
-                    availableTransformersPanel();
-                });
-            });
-        }).element();
-    }
-
-    private Card sectionCard() {
-        return card()
-                .growX()
-                .padding(unit(2.5f))
-                .rounded(8, WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.SECTION_BORDER)
-                .gap(unit(2));
+        return SettingScaffold.build(() -> {
+            livePreviewCard();
+            pipelineCard();
+            availableTransformersPanel();
+        });
     }
 
     private Component livePreviewCard() {
@@ -93,10 +81,11 @@ public class PrettyChatSettingsView extends BaseComponent {
         String simSender = Core.bundle.get("feature.pretty-chat.settings.sim-sender");
         String escapeHint = Core.bundle.get("feature.pretty-chat.settings.escape-hint");
 
-        return sectionCard().children(() -> {
+        return SettingCard.card().children(() -> {
             // Header
             row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.chat).size(unit(5)).color(Pal.accent);
+                icon(feature.getMetadata() != null ? feature.getMetadata().getIcon() : Icon.chat)
+                        .size(unit(5)).color(Pal.accent);
                 text(previewLabel)
                         .color(Pal.accent)
                         .wrap()
@@ -152,7 +141,7 @@ public class PrettyChatSettingsView extends BaseComponent {
         String clearText = Core.bundle.get("feature.pretty-chat.settings.clear-pipeline");
         String resetText = Core.bundle.get("feature.pretty-chat.settings.reset-default");
 
-        return sectionCard().children(() -> {
+        return SettingCard.card().children(() -> {
             // Header
             row().growX().gap(unit(2)).center().children(() -> {
                 icon(Icon.tree).size(unit(5)).color(Pal.accent);
@@ -162,7 +151,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                         .growX()
                         .left();
                 badge(feature.config().enabledIdsSignal.map(l -> Core.bundle.format("feature.pretty-chat.settings.pipeline-steps", l.size())))
-                        .color(WebStyles.Colors.SECONDARY);
+                        .color(WebStyles.Colors.PRIMARY);
             });
 
             text(pipelineDesc)
@@ -178,6 +167,7 @@ public class PrettyChatSettingsView extends BaseComponent {
             row().growX().gap(unit(2)).children(() -> {
                 button(clearText, () -> feature.config().setEnabledIds(new ArrayList<>()))
                         .style(WebStyles.outlineText())
+                        .height(unit(11))
                         .growX();
 
                 button(resetText, () -> {
@@ -186,6 +176,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                     feature.config().setEnabledIds(def);
                 })
                         .style(WebStyles.outlineText())
+                        .height(unit(11))
                         .growX();
             });
         });
@@ -257,7 +248,7 @@ public class PrettyChatSettingsView extends BaseComponent {
     private Component availableTransformersPanel() {
         String availableTitle = Core.bundle.get("feature.pretty-chat.settings.available-transformers");
 
-        return sectionCard().children(() -> {
+        return SettingCard.card().children(() -> {
             // Header
             row().growX().gap(unit(2)).center().children(() -> {
                 icon(Icon.settings).size(unit(5)).color(Pal.accent);
@@ -280,7 +271,7 @@ public class PrettyChatSettingsView extends BaseComponent {
                 }
             });
 
-            divider();
+            divider().color(WebStyles.Colors.SECTION_BORDER);
 
             reactiveGrid(filteredPrettiers)
                     .columns(1)
@@ -368,7 +359,7 @@ public class PrettyChatSettingsView extends BaseComponent {
     private String getCategoryName(String cat) {
         String key = "pretty-chat.category." + cat.toLowerCase(Locale.ROOT);
         return Core.bundle.has(key)
-                ? Core.bundle.get(key)
-                : cat.substring(0, 1).toUpperCase(Locale.ROOT) + cat.substring(1);
+            ? Core.bundle.get(key)
+            : cat.substring(0, 1).toUpperCase(Locale.ROOT) + cat.substring(1);
     }
 }

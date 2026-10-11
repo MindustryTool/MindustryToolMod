@@ -140,21 +140,21 @@ public final class FeatureSettingsView extends BaseComponent {
                     });
 
             wrap().growX().top().left().gap(unit(2)).children(() -> {
-                button(FeatureManager::reenable).style(WebStyles.secondary()).height(unit(10))
+                button(FeatureManager::reenable).style(WebStyles.secondary()).height(unit(11))
                         .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {
-                            icon(Icon.refresh);
+                            icon(Icon.refresh).size(unit(6));
                             text(Core.bundle.get("feature.button.re-enable"));
                         });
 
-                button(() -> Core.app.openURI(Config.PROJECT_SUGGESTION_URL)).style(WebStyles.secondary()).height(unit(10))
+                button(() -> Core.app.openURI(Config.PROJECT_SUGGESTION_URL)).style(WebStyles.secondary()).height(unit(11))
                         .tooltip(Core.bundle.get("feature.button.create-suggestion.tooltip")).gap(unit(2)).children(() -> {
-                            icon(Icon.link);
+                            icon(Icon.link).size(unit(6));
                             text(Core.bundle.get("feature.button.create-suggestion"));
                         });
 
-                button(() -> new GeneralSettingsDialog().show()).style(WebStyles.primary()).height(unit(10))
+                button(() -> new GeneralSettingsDialog().show()).style(WebStyles.primary()).height(unit(11))
                         .tooltip(Core.bundle.get("feature.button.settings")).gap(unit(2)).children(() -> {
-                            icon(Icon.settings);
+                            icon(Icon.settings).size(unit(6));
                             text(Core.bundle.get("feature.button.settings"));
                         });
             });

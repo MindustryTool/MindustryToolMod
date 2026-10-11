@@ -11,11 +11,13 @@ import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.services.crash.CrashTimestampParser;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Card;
 
 /**
  * Modern declarative Solim settings view for mod-wide preferences and diagnostics.
@@ -26,28 +28,15 @@ public class GeneralSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().maxWidth(500f).children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(2)).center().children(() -> {
-                    headerCard();
-                    preferencesCard();
-                    diagnosticsCard();
-                });
-            });
-        }).element();
-    }
-
-    private Card sectionCard() {
-        return card()
-                .growX()
-                .padding(unit(2.5f))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1f, WebStyles.Colors.SECTION_BORDER)
-                .gap(unit(2));
+        return SettingScaffold.build(() -> {
+            headerCard();
+            preferencesCard();
+            diagnosticsCard();
+        });
     }
 
     private Component headerCard() {
-        return sectionCard().children(() -> {
+        return SettingCard.card().children(() -> {
             row().growX().gap(unit(2)).center().children(() -> {
                 icon(Icon.settings).size(unit(5)).color(Pal.accent);
                 text(Core.bundle.get("dialog.general-settings.title"))
@@ -66,18 +55,10 @@ public class GeneralSettingsView extends BaseComponent {
     }
 
     private Component preferencesCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.settings).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("setting.section.preferences"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
-
+        return SettingCard.section(Icon.settings, Core.bundle.get("setting.section.preferences"), () -> {
             // Beta updates toggle
             row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(0.5f)).left().children(() -> {
+                column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("setting.beta.participate"))
                             .color(Color.white)
                             .left();
@@ -95,7 +76,7 @@ public class GeneralSettingsView extends BaseComponent {
 
             // Game presence toggle
             row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(0.5f)).left().children(() -> {
+                column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("setting.share-presence"))
                             .color(Color.white)
                             .left();
@@ -112,38 +93,17 @@ public class GeneralSettingsView extends BaseComponent {
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
             // Universal scale slider
-            row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(0.5f)).left().children(() -> {
-                    text(Core.bundle.get("setting.universal-scale"))
-                            .color(Color.white)
-                            .left();
-                    text(Core.bundle.get("setting.universal-scale.tooltip"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
-                });
-                spacer();
-                slider(ModSettings.universalScale.signal(), 0.5f, 1.5f, 0.05f)
-                        .tooltip(Core.bundle.get("setting.universal-scale.tooltip"));
-                row().width(unit(14)).children(() -> {
-                    text(ModSettings.universalScale.signal()
-                            .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
-                });
-            });
+            SettingSlider.of(
+                    Core.bundle.get("setting.universal-scale"),
+                    ModSettings.universalScale.signal(),
+                    0.5f, 1.5f, 0.05f,
+                    ModSettings.universalScale.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
+            );
         });
     }
 
     private Component diagnosticsCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.infoCircle).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("setting.section.diagnostics"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
-
+        return SettingCard.section(Icon.infoCircle, Core.bundle.get("setting.section.diagnostics"), () -> {
             button(this::copyLastLog)
                     .style(WebStyles.outline())
                     .growX()

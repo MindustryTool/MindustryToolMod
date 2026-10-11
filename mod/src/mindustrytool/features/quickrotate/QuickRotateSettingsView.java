@@ -4,10 +4,15 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
+import solim.core.Component;
 
 /**
- * Declarative Solim settings view for quick rotate options.
+ * Modern declarative Solim settings view for quick rotate options.
  */
 public class QuickRotateSettingsView extends BaseComponent {
 
@@ -19,16 +24,40 @@ public class QuickRotateSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    checkbox(Core.bundle.get("feature.quick-rotate.settings.auto-dismiss"),
-                            feature.autoDismissConfig.signal()).growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            optionsCard();
+            actionsCard();
+        });
+    }
 
-                    checkbox(Core.bundle.get("feature.quick-rotate.settings.offset-above"),
-                            feature.offsetAboveConfig.signal()).growX();
-                });
-            });
-        }).element();
+    private Component headerCard() {
+        return SettingCard.header(feature, "CONTROLS");
+    }
+
+    private Component optionsCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.quick-rotate.settings.title"), () -> {
+            checkbox(Core.bundle.get("feature.quick-rotate.settings.auto-dismiss"),
+                    feature.autoDismissConfig.signal()).growX();
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            checkbox(Core.bundle.get("feature.quick-rotate.settings.offset-above"),
+                    feature.offsetAboveConfig.signal()).growX();
+        });
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::resetToDefaults)
+                    .style(WebStyles.outline())
+                    .growX()
+                    .height(unit(11))
+                    .gap(unit(2))
+                    .children(() -> {
+                        icon(Icon.refresh).size(unit(6));
+                        text(Core.bundle.get("feature.quick-rotate.settings.reset"));
+                    });
+        });
     }
 }

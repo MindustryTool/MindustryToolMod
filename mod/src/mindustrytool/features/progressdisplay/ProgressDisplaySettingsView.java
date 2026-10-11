@@ -19,10 +19,12 @@ import mindustry.world.blocks.production.GenericCrafter;
 import mindustry.world.blocks.units.Reconstructor;
 import mindustry.world.blocks.units.UnitAssembler;
 import mindustry.world.blocks.units.UnitFactory;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Card;
 import solim.reactive.Signal;
 
 /**
@@ -30,8 +32,6 @@ import solim.reactive.Signal;
  * per-block chip cards plus global zoom, opacity, and scale sliders.
  */
 public class ProgressDisplaySettingsView extends BaseComponent {
-
-    private static final float MAX_CONTENT_WIDTH = 500f;
 
     private final ProgressDisplayFeature feature;
 
@@ -41,124 +41,76 @@ public class ProgressDisplaySettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().maxWidth(MAX_CONTENT_WIDTH).children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(2)).center().children(() -> {
-                    headerCard();
-                    globalSettingsCard();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            globalSettingsCard();
 
-                    blockCategoryCard(
-                            Core.bundle.get("feature.progress-display.settings.section.unit-factories"),
-                            Icon.units,
-                            UnitFactory.class);
+            blockCategoryCard(
+                    Core.bundle.get("feature.progress-display.settings.section.unit-factories"),
+                    Icon.units,
+                    UnitFactory.class);
 
-                    blockCategoryCard(
-                            Core.bundle.get("feature.progress-display.settings.section.reconstructors"),
-                            Icon.up,
-                            Reconstructor.class);
+            blockCategoryCard(
+                    Core.bundle.get("feature.progress-display.settings.section.reconstructors"),
+                    Icon.up,
+                    Reconstructor.class);
 
-                    blockCategoryCard(
-                            Core.bundle.get("feature.progress-display.settings.section.unit-assemblers"),
-                            Icon.wrench,
-                            UnitAssembler.class);
+            blockCategoryCard(
+                    Core.bundle.get("feature.progress-display.settings.section.unit-assemblers"),
+                    Icon.wrench,
+                    UnitAssembler.class);
 
-                    blockCategoryCard(
-                            Core.bundle.get("feature.progress-display.settings.section.crafters"),
-                            Icon.crafting,
-                            GenericCrafter.class);
+            blockCategoryCard(
+                    Core.bundle.get("feature.progress-display.settings.section.crafters"),
+                    Icon.crafting,
+                    GenericCrafter.class);
 
-                    actionsCard();
-                });
-            });
-        }).element();
-    }
-
-    private Card sectionCard() {
-        return card()
-                .growX()
-                .padding(unit(2.5f))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1f, WebStyles.Colors.SECTION_BORDER)
-                .gap(unit(2));
-    }
-
-    private Component headerCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.crafting).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.progress-display.name"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge("LOGISTICS").color(WebStyles.Colors.PRIMARY);
-            });
-
-            text(Core.bundle.get("feature.progress-display.description"))
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+            actionsCard();
         });
     }
 
-    private Component globalSettingsCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.settings).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.progress-display.settings.section.global"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
+    private Component headerCard() {
+        return SettingCard.header(feature, "LOGISTICS");
+    }
 
+    private Component globalSettingsCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.progress-display.settings.section.global"), () -> {
             // Zoom Threshold
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.progress-display.settings.zoom-threshold"))
-                        .color(Color.white)
-                        .left();
-                spacer();
-                slider(feature.zoomThresholdConfig.signal(), 0f, 2f, 0.1f);
-                row().width(unit(14)).right().children(() -> {
-                    badge(feature.zoomThresholdConfig.signal().map(v -> {
+            SettingSlider.of(
+                    Core.bundle.get("feature.progress-display.settings.zoom-threshold"),
+                    feature.zoomThresholdConfig.signal(),
+                    0f,
+                    2f,
+                    0.1f,
+                    feature.zoomThresholdConfig.signal().map(v -> {
                         float val = v != null ? v : 0.5f;
                         return val <= 0.01f
-                                ? (Core.bundle.get("feature.progress-display.settings.off"))
+                                ? Core.bundle.get("feature.progress-display.settings.off")
                                 : String.format(Locale.US, "%.1fx", val);
-                    })).color(WebStyles.Colors.SECONDARY);
-                });
-            });
-
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    })
+            );
 
             // Opacity
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.progress-display.settings.opacity"))
-                        .color(Color.white)
-                        .left();
-                spacer();
-                slider(feature.opacityConfig.signal(), 0f, 1f, 0.05f);
-                row().width(unit(14)).right().children(() -> {
-                    badge(feature.opacityConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)))
-                            .color(WebStyles.Colors.SECONDARY);
-                });
-            });
-
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            SettingSlider.of(
+                    Core.bundle.get("feature.progress-display.settings.opacity"),
+                    feature.opacityConfig.signal(),
+                    0f,
+                    1f,
+                    0.05f,
+                    feature.opacityConfig.signal().map(v ->
+                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
+            );
 
             // Scale
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.progress-display.settings.scale"))
-                        .color(Color.white)
-                        .left();
-                spacer();
-                slider(feature.scaleConfig.signal(), 0.5f, 1.5f, 0.1f);
-                row().width(unit(14)).right().children(() -> {
-                    badge(feature.scaleConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)))
-                            .color(WebStyles.Colors.SECONDARY);
-                });
-            });
+            SettingSlider.of(
+                    Core.bundle.get("feature.progress-display.settings.scale"),
+                    feature.scaleConfig.signal(),
+                    0.5f,
+                    1.5f,
+                    0.1f,
+                    feature.scaleConfig.signal().map(v ->
+                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
+            );
         });
     }
 
@@ -179,12 +131,7 @@ public class ProgressDisplaySettingsView extends BaseComponent {
             return;
         }
 
-        sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(iconDrawable).size(unit(5)).color(Pal.accent);
-                text(title).color(Pal.accent).growX().left();
-            });
-
+        SettingCard.section(iconDrawable, title, () -> {
             wrap().growX().gap(unit(1.5f)).children(() -> {
                 for (int i = 0; i < blocks.size; i++) {
                     Block block = blocks.get(i);
@@ -197,7 +144,7 @@ public class ProgressDisplaySettingsView extends BaseComponent {
     }
 
     private Component actionsCard() {
-        return sectionCard().children(() -> {
+        return SettingCard.card().children(() -> {
             button(feature::resetToDefaults)
                     .style(WebStyles.outline())
                     .growX()

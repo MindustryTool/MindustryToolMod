@@ -5,11 +5,12 @@ import static solim.UI.*;
 import arc.Core;
 import arc.scene.Element;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
-import solim.layout.Card;
-import solim.reactive.Readable;
+import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for unit pathfinding visualization.
@@ -26,151 +27,98 @@ public class PathfindingSettingsView extends BaseComponent {
         this.feature = feature;
     }
 
-    private Card sectionCard() {
-        return card()
-                .padding(unit(2))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1f, WebStyles.Colors.SECTION_BORDER)
-                .growX()
-                .gap(unit(2));
-    }
-
     @Override
     protected Element build() {
-        Readable<String> zoomText = feature.zoomThresholdConfig.signal().map(v -> {
-            float zoom = v != null ? v : 0.5f;
-            return zoom <= 0.01f
-                    ? Core.bundle.get("feature.pathfinding.settings.off", "Off")
-                    : String.format("%.1fx", zoom);
+        return SettingScaffold.build(() -> {
+            headerCard();
+            layersCard();
+            visualStylingCard();
+            costTypesCard();
+            actionsCard();
         });
+    }
 
-        Readable<String> opacityText = feature.opacityConfig.signal().map(v -> {
-            float op = v != null ? v : 1.0f;
-            return Math.round(op * 100) + "%";
+    private Component headerCard() {
+        return SettingCard.header(feature, Core.bundle.get("feature.pathfinding.badge.navigation", "NAVIGATION"));
+    }
+
+    private Component layersCard() {
+        return SettingCard.section(Icon.layers, Core.bundle.get("feature.pathfinding.settings.layers", "Display Layers"), () -> {
+            checkbox(Core.bundle.get("feature.pathfinding.settings.draw-unit-path", "Draw Unit Paths"),
+                    feature.drawUnitPathConfig.signal()).growX();
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            checkbox(Core.bundle.get("feature.pathfinding.settings.draw-spawn-path", "Draw Spawn Point Paths"),
+                    feature.drawSpawnPathConfig.signal()).growX();
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            checkbox(Core.bundle.get("feature.pathfinding.settings.draw-allies", "Draw Ally Unit Paths"),
+                    feature.drawAlliesConfig.signal()).growX();
         });
+    }
 
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).padding(unit(2)).children(() -> {
-                    // Header Card
-                    sectionCard().children(() -> {
-                        row().growX().gap(unit(2)).center().children(() -> {
-                            icon(Icon.map).size(unit(6)).color(Pal.accent);
-                            column().growX().gap(unit(0.5f)).left().children(() -> {
-                                row().growX().gap(unit(1.5f)).center().children(() -> {
-                                    text(Core.bundle.get("feature.pathfinding.settings.title", "Pathfinding Settings"))
-                                            .color(Pal.accent)
-                                            .left();
-                                    badge(Core.bundle.get("feature.pathfinding.badge.navigation", "NAVIGATION"))
-                                            .color(WebStyles.Colors.PRIMARY)
-                                            .textColor(WebStyles.Colors.PRIMARY_FG);
-                                });
-                                text(Core.bundle.get("feature.pathfinding.description", "Visualize unit pathfinding flow fields on the map."))
-                                        .color(WebStyles.Colors.GHOST_FG)
-                                        .wrap()
-                                        .left()
-                                        .fontScale(0.9f);
-                            });
-                        });
-                    });
+    private Component visualStylingCard() {
+        return SettingCard.section(Icon.spray, Core.bundle.get("feature.pathfinding.settings.visual-styling", "Visual Styling"), () -> {
+            // Min Zoom Slider
+            SettingSlider.of(
+                    Core.bundle.get("feature.pathfinding.settings.min-zoom", "Min Zoom"),
+                    feature.zoomThresholdConfig.signal(),
+                    0.0f,
+                    5.0f,
+                    0.1f,
+                    feature.zoomThresholdConfig.signal().map(v -> {
+                        float zoom = v != null ? v : 0.5f;
+                        return zoom <= 0.01f
+                                ? Core.bundle.get("feature.pathfinding.settings.off", "Off")
+                                : String.format("%.1fx", zoom);
+                    })
+            );
 
-                    // Display Layers Card
-                    sectionCard().children(() -> {
-                        row().growX().gap(unit(1.5f)).center().children(() -> {
-                            icon(Icon.layers).size(unit(5)).color(Pal.accent);
-                            text(Core.bundle.get("feature.pathfinding.settings.layers", "Display Layers"))
-                                    .color(Pal.accent)
-                                    .growX()
-                                    .left();
-                        });
+            // Opacity Slider
+            SettingSlider.of(
+                    Core.bundle.get("feature.pathfinding.settings.opacity", "Opacity"),
+                    feature.opacityConfig.signal(),
+                    0.05f,
+                    1.0f,
+                    0.05f,
+                    feature.opacityConfig.signal().map(v -> {
+                        float op = v != null ? v : 1.0f;
+                        return Math.round(op * 100) + "%";
+                    })
+            );
+        });
+    }
 
-                        column().growX().gap(unit(1.5f)).children(() -> {
-                            checkbox(Core.bundle.get("feature.pathfinding.settings.draw-unit-path", "Draw Unit Paths"),
-                                    feature.drawUnitPathConfig.signal()).growX();
-
-                            checkbox(Core.bundle.get("feature.pathfinding.settings.draw-spawn-path", "Draw Spawn Point Paths"),
-                                    feature.drawSpawnPathConfig.signal()).growX();
-
-                            checkbox(Core.bundle.get("feature.pathfinding.settings.draw-allies", "Draw Ally Unit Paths"),
-                                    feature.drawAlliesConfig.signal()).growX();
-                        });
-                    });
-
-                    // Visual Styling Card
-                    sectionCard().children(() -> {
-                        row().growX().gap(unit(1.5f)).center().children(() -> {
-                            icon(Icon.spray).size(unit(5)).color(Pal.accent);
-                            text(Core.bundle.get("feature.pathfinding.settings.visual-styling", "Visual Styling"))
-                                    .color(Pal.accent)
-                                    .growX()
-                                    .left();
-                        });
-
-                        column().growX().gap(unit(2)).children(() -> {
-                            row().growX().gap(unit(2)).center().children(() -> {
-                                text(Core.bundle.get("feature.pathfinding.settings.min-zoom", "Min Zoom"))
-                                        .color(WebStyles.Colors.GHOST_FG)
-                                        .left();
-                                spacer();
-                                slider(feature.zoomThresholdConfig.signal(), 0.0f, 5.0f, 0.1f);
-                                badge(zoomText)
-                                        .color(WebStyles.Colors.SECONDARY)
-                                        .textColor(WebStyles.Colors.SECONDARY_FG)
-                                        .minWidth(unit(14));
-                            });
-
-                            row().growX().gap(unit(2)).center().children(() -> {
-                                text(Core.bundle.get("feature.pathfinding.settings.opacity", "Opacity"))
-                                        .color(WebStyles.Colors.GHOST_FG)
-                                        .left();
-                                spacer();
-                                slider(feature.opacityConfig.signal(), 0.05f, 1.0f, 0.05f);
-                                badge(opacityText)
-                                        .color(WebStyles.Colors.SECONDARY)
-                                        .textColor(WebStyles.Colors.SECONDARY_FG)
-                                        .minWidth(unit(14));
-                            });
-                        });
-                    });
-
-                    // Movement Cost Types Card
-                    sectionCard().children(() -> {
-                        row().growX().gap(unit(1.5f)).center().children(() -> {
-                            icon(Icon.terrain).size(unit(5)).color(Pal.accent);
-                            text(Core.bundle.get("feature.pathfinding.settings.cost-types", "Movement Cost Types"))
-                                    .color(Pal.accent)
-                                    .growX()
-                                    .left();
-                        });
-
-                        wrap().gap(unit(1.5f)).children(() -> {
-                            for (int i = 0; i < feature.costTypeConfigs.length; i++) {
-                                final int index = i;
-                                String bundleKey = "feature.pathfinding.settings.cost." + COST_KEY_SUFFIXES[index];
-                                button(() -> feature.costTypeConfigs[index].set(!Boolean.TRUE.equals(feature.costTypeConfigs[index].signal().peek())))
-                                        .style(WebStyles.filterChip())
-                                        .checked(feature.costTypeConfigs[index].signal().map(v -> Boolean.TRUE.equals(v)))
-                                        .padding(unit(1.5f))
-                                        .children(() -> text(Core.bundle.get(bundleKey, COST_KEY_SUFFIXES[index])));
-                            }
-                        });
-                    });
-
-                    // Actions Card
-                    sectionCard().children(() -> {
-                        button(feature::resetToDefaults)
-                                .style(WebStyles.outline())
-                                .growX()
-                                .padding(unit(2))
-                                .children(() -> {
-                                    row().gap(unit(1.5f)).center().children(() -> {
-                                        icon(Icon.refresh).size(unit(4));
-                                        text(Core.bundle.get("feature.pathfinding.settings.reset", "Reset to Defaults"));
-                                    });
-                                });
-                    });
-                });
+    private Component costTypesCard() {
+        return SettingCard.section(Icon.terrain, Core.bundle.get("feature.pathfinding.settings.cost-types", "Movement Cost Types"), () -> {
+            wrap().gap(unit(1.5f)).children(() -> {
+                for (int i = 0; i < feature.costTypeConfigs.length; i++) {
+                    final int index = i;
+                    String bundleKey = "feature.pathfinding.settings.cost." + COST_KEY_SUFFIXES[index];
+                    button(Core.bundle.get(bundleKey, COST_KEY_SUFFIXES[index]),
+                            () -> feature.costTypeConfigs[index].set(!Boolean.TRUE.equals(feature.costTypeConfigs[index].signal().peek())))
+                            .style(WebStyles.filterChipText())
+                            .checked(feature.costTypeConfigs[index].signal().map(v -> Boolean.TRUE.equals(v)))
+                            .height(unit(8))
+                            .paddingX(unit(2f));
+                }
             });
-        }).element();
+        });
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::resetToDefaults)
+                    .style(WebStyles.outline())
+                    .growX()
+                    .height(unit(11))
+                    .gap(unit(2))
+                    .children(() -> {
+                        icon(Icon.refresh).size(unit(6));
+                        text(Core.bundle.get("feature.pathfinding.settings.reset", "Reset to Defaults"));
+                    });
+        });
     }
 }

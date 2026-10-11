@@ -5,10 +5,12 @@ import static solim.UI.*;
 import arc.Core;
 import arc.scene.Element;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
-import solim.layout.Card;
+import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for Team Resource Tracker.
@@ -23,96 +25,55 @@ public class TeamResourceSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(2)).children(() -> {
-                    headerCard();
-                    layoutCard();
-                    metricsCard();
-                    appearanceCard();
-                    actionsCard();
-                });
-            });
-        }).element();
-    }
-
-    private Card sectionCard() {
-        return card()
-                .growX()
-                .padding(unit(2.5f))
-                .rounded(8, WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.SECTION_BORDER)
-                .gap(unit(2));
-    }
-
-    private Card headerCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.layers).size(unit(6)).color(Pal.accent);
-                text(Core.bundle.get("feature.team-resources.name", "Team Resources"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge("HUD OVERLAY").color(WebStyles.Colors.PRIMARY);
-            });
-
-            text(Core.bundle.get("feature.team-resources.description"))
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            layoutCard();
+            metricsCard();
+            appearanceCard();
+            actionsCard();
         });
     }
 
-    private Card layoutCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.settings).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("team-resources.settings.section.layout", "Overlay Layout"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
+    private Component headerCard() {
+        return SettingCard.header(feature, "HUD OVERLAY");
+    }
 
+    private Component layoutCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("team-resources.settings.section.layout", "Overlay Layout"), () -> {
             // Opacity Slider
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("team-resources.opacity", "Opacity")).left();
-                spacer();
-                slider(feature.opacityConfig.signal(), 0.1f, 1.0f, 0.05f).width(unit(24));
-                badge(feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"))
-                        .color(WebStyles.Colors.SECONDARY);
-            });
+            SettingSlider.of(
+                    Core.bundle.get("team-resources.opacity", "Opacity"),
+                    feature.opacityConfig.signal(),
+                    0.1f,
+                    1.0f,
+                    0.05f,
+                    feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
+            );
 
             // Scale Slider
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("team-resources.size", "Scale")).left();
-                spacer();
-                slider(feature.scaleConfig.signal(), 0.3f, 2.0f, 0.05f).width(unit(24));
-                badge(feature.scaleConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"))
-                        .color(WebStyles.Colors.SECONDARY);
-            });
+            SettingSlider.of(
+                    Core.bundle.get("team-resources.size", "Scale"),
+                    feature.scaleConfig.signal(),
+                    0.3f,
+                    2.0f,
+                    0.05f,
+                    feature.scaleConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
+            );
 
             // Overlay Width Slider
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("team-resources.width", "Overlay Width")).left();
-                spacer();
-                slider(feature.overlayWidthConfig.signal(), 0.15f, 1.0f, 0.05f).width(unit(24));
-                badge(feature.overlayWidthConfig.signal().map(v -> Math.round((v != null ? v : 0.28f) * 100) + "%"))
-                        .color(WebStyles.Colors.SECONDARY);
-            });
+            SettingSlider.of(
+                    Core.bundle.get("team-resources.width", "Overlay Width"),
+                    feature.overlayWidthConfig.signal(),
+                    0.15f,
+                    1.0f,
+                    0.05f,
+                    feature.overlayWidthConfig.signal().map(v -> Math.round((v != null ? v : 0.28f) * 100) + "%")
+            );
         });
     }
 
-    private Card metricsCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.tree).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("team-resources.settings.section.metrics", "Tracked Metrics"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
-
+    private Component metricsCard() {
+        return SettingCard.section(Icon.tree, Core.bundle.get("team-resources.settings.section.metrics", "Tracked Metrics"), () -> {
             checkbox(Core.bundle.get("team-resources.show-items", "Show Core Items"),
                     feature.showItemsConfig.signal()).growX();
 
@@ -130,16 +91,8 @@ public class TeamResourceSettingsView extends BaseComponent {
         });
     }
 
-    private Card appearanceCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.eye).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("team-resources.settings.section.appearance", "Appearance & Behavior"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
-
+    private Component appearanceCard() {
+        return SettingCard.section(Icon.eye, Core.bundle.get("team-resources.settings.section.appearance", "Appearance & Behavior"), () -> {
             checkbox(Core.bundle.get("team-resources.hide-background", "Hide Background"),
                     feature.hideBackgroundConfig.signal()).growX();
 
@@ -157,15 +110,17 @@ public class TeamResourceSettingsView extends BaseComponent {
         });
     }
 
-    private Card actionsCard() {
-        return sectionCard().children(() -> {
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
             row().growX().gap(unit(2)).center().children(() -> {
                 button(Core.bundle.get("feature.quick-access.settings.reset-position", "Reset Position"), feature::resetPosition)
                         .style(WebStyles.outlineText())
+                        .height(unit(11))
                         .growX();
 
                 button(Core.bundle.get("team-resources.reset-to-defaults", "Reset to Defaults"), feature::resetToDefaults)
                         .style(WebStyles.outlineText())
+                        .height(unit(11))
                         .growX();
             });
         });

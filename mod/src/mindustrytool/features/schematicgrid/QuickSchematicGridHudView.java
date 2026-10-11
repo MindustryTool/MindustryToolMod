@@ -22,6 +22,7 @@ import solim.reactive.Signal;
  * Floating frameless draggable HUD rendering the configured schematic grid with
  * a dedicated page tab column, subtle empty slot tiles, and screen clamping.
  */
+ //TODO Fix background
 public class QuickSchematicGridHudView extends BaseComponent {
     // TODO: Right click to open edit UI
     // TODO: Hover over button show a shadow of schematic

@@ -7,11 +7,12 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import java.util.Locale;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Card;
 import solim.reactive.Signal;
 
 /**
@@ -27,56 +28,20 @@ public class HealthBarSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().maxWidth(500f).children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(2)).center().children(() -> {
-                    headerCard();
-                    targetLayersCard();
-                    visualStylingCard();
-                    actionsCard();
-                });
-            });
-        }).element();
-    }
-
-    private Card sectionCard() {
-        return card()
-                .growX()
-                .padding(unit(2.5f))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1f, WebStyles.Colors.SECTION_BORDER)
-                .gap(unit(2));
-    }
-
-    private Component headerCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.defense).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.health-bar.name"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge("TACTICAL").color(WebStyles.Colors.PRIMARY);
-            });
-
-            text(Core.bundle.get("feature.health-bar.description"))
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            targetLayersCard();
+            visualStylingCard();
+            actionsCard();
         });
     }
 
-    private Component targetLayersCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.units).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.health-bar.settings.section.targets"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
+    private Component headerCard() {
+        return SettingCard.header(feature, "TACTICAL");
+    }
 
+    private Component targetLayersCard() {
+        return SettingCard.section(Icon.units, Core.bundle.get("feature.health-bar.settings.section.targets"), () -> {
             checkboxRow(Core.bundle.get("feature.health-bar.settings.show-friendly-units"),
                     feature.showFriendlyUnitsConfig.signal());
 
@@ -106,84 +71,59 @@ public class HealthBarSettingsView extends BaseComponent {
     }
 
     private Component visualStylingCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.image).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.health-bar.settings.section.visual"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
-
-            // Min Zoom
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.health-bar.settings.min-zoom"))
-                        .color(Color.white)
-                        .left();
-                spacer();
-                slider(feature.zoomThresholdConfig.signal(), 0f, 2f, 0.1f);
-                row().width(unit(14)).right().children(() -> {
-                    badge(feature.zoomThresholdConfig.signal().map(v -> {
+        return SettingCard.section(Icon.image, Core.bundle.get("feature.health-bar.settings.section.visual"), () -> {
+            // Min Zoom Slider
+            SettingSlider.of(
+                    Core.bundle.get("feature.health-bar.settings.min-zoom"),
+                    feature.zoomThresholdConfig.signal(),
+                    0f,
+                    2f,
+                    0.1f,
+                    feature.zoomThresholdConfig.signal().map(v -> {
                         float val = v != null ? v : 0.5f;
                         return val <= 0.01f
-                                ? (Core.bundle.get("feature.health-bar.settings.off"))
+                                ? Core.bundle.get("feature.health-bar.settings.off")
                                 : String.format(Locale.US, "%.1fx", val);
-                    })).color(WebStyles.Colors.SECONDARY);
-                });
-            });
+                    })
+            );
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            // Opacity Slider
+            SettingSlider.of(
+                    Core.bundle.get("feature.health-bar.settings.opacity"),
+                    feature.opacityConfig.signal(),
+                    0f,
+                    1f,
+                    0.05f,
+                    feature.opacityConfig.signal().map(v ->
+                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
+            );
 
-            // Opacity
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.health-bar.settings.opacity"))
-                        .color(Color.white)
-                        .left();
-                spacer();
-                slider(feature.opacityConfig.signal(), 0f, 1f, 0.05f);
-                row().width(unit(14)).right().children(() -> {
-                    badge(feature.opacityConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)))
-                            .color(WebStyles.Colors.SECONDARY);
-                });
-            });
+            // Scale Slider
+            SettingSlider.of(
+                    Core.bundle.get("feature.health-bar.settings.scale"),
+                    feature.scaleConfig.signal(),
+                    0.5f,
+                    1.5f,
+                    0.1f,
+                    feature.scaleConfig.signal().map(v ->
+                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
+            );
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
-
-            // Scale
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.health-bar.settings.scale"))
-                        .color(Color.white)
-                        .left();
-                spacer();
-                slider(feature.scaleConfig.signal(), 0.5f, 1.5f, 0.1f);
-                row().width(unit(14)).right().children(() -> {
-                    badge(feature.scaleConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)))
-                            .color(WebStyles.Colors.SECONDARY);
-                });
-            });
-
-            divider().color(WebStyles.Colors.SECTION_BORDER);
-
-            // Width
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.health-bar.settings.width"))
-                        .color(Color.white)
-                        .left();
-                spacer();
-                slider(feature.widthConfig.signal(), 0.5f, 2f, 0.1f);
-                row().width(unit(14)).right().children(() -> {
-                    badge(feature.widthConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)))
-                            .color(WebStyles.Colors.SECONDARY);
-                });
-            });
+            // Width Slider
+            SettingSlider.of(
+                    Core.bundle.get("feature.health-bar.settings.width"),
+                    feature.widthConfig.signal(),
+                    0.5f,
+                    2f,
+                    0.1f,
+                    feature.widthConfig.signal().map(v ->
+                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
+            );
         });
     }
 
     private Component actionsCard() {
-        return sectionCard().children(() -> {
+        return SettingCard.card().children(() -> {
             button(feature::resetToDefaults)
                     .style(WebStyles.outline())
                     .growX()

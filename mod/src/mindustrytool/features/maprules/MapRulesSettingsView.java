@@ -1,13 +1,15 @@
 package mindustrytool.features.maprules;
 
-import static solim.UI.checkbox;
-import static solim.UI.column;
-import static solim.UI.scroll;
-import static solim.UI.unit;
+import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
+import solim.core.Component;
 
 /**
  * Settings view for Map Rules feature.
@@ -22,15 +24,25 @@ public class MapRulesSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    checkbox(Core.bundle.get("feature.map-rules.settings.show-permission"),
-                            feature.showPermissionConfig.signal()).growX();
-                    checkbox(Core.bundle.get("feature.map-rules.settings.show-descriptions"),
-                            feature.showDescriptionsConfig.signal()).growX();
-                });
-            });
-        }).element();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            optionsCard();
+        });
+    }
+
+    private Component headerCard() {
+        return SettingCard.header(feature, "GAMEPLAY");
+    }
+
+    private Component optionsCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.map-rules.settings.title"), () -> {
+            checkbox(Core.bundle.get("feature.map-rules.settings.show-permission"),
+                    feature.showPermissionConfig.signal()).growX();
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            checkbox(Core.bundle.get("feature.map-rules.settings.show-descriptions"),
+                    feature.showDescriptionsConfig.signal()).growX();
+        });
     }
 }

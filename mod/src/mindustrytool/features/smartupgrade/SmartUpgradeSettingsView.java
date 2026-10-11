@@ -6,11 +6,12 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Card;
 
 /**
  * Modern declarative Solim settings view for Smart Upgrade.
@@ -25,59 +26,23 @@ public class SmartUpgradeSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().maxWidth(500f).children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(2)).center().children(() -> {
-                    headerCard();
-                    rulesCard();
-                    modeAndLimitsCard();
-                    resetButton();
-                });
-            });
-        }).element();
-    }
-
-    private Card sectionCard() {
-        return card()
-                .growX()
-                .padding(unit(2.5f))
-                .rounded(8, WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.SECTION_BORDER)
-                .gap(unit(2));
-    }
-
-    private Component headerCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.up).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.smart-upgrade.name"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge("BUILDING").color(WebStyles.Colors.PRIMARY);
-            });
-
-            text(Core.bundle.get("feature.smart-upgrade.description"))
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            rulesCard();
+            modeAndLimitsCard();
+            resetButtonCard();
         });
     }
 
-    private Component rulesCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.wrench).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.smart-upgrade.settings.rules"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
+    private Component headerCard() {
+        return SettingCard.header(feature, "BUILDING");
+    }
 
+    private Component rulesCard() {
+        return SettingCard.section(Icon.wrench, Core.bundle.get("feature.smart-upgrade.settings.rules"), () -> {
             // Only Replace Exact Block Type
             row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(0.5f)).left().children(() -> {
+                column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.smart-upgrade.settings.only-same-type"))
                             .color(Color.white)
                             .left();
@@ -95,7 +60,7 @@ public class SmartUpgradeSettingsView extends BaseComponent {
 
             // Traverse Bridges & Junctions
             row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(0.5f)).left().children(() -> {
+                column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges"))
                             .color(Color.white)
                             .left();
@@ -112,18 +77,10 @@ public class SmartUpgradeSettingsView extends BaseComponent {
     }
 
     private Component modeAndLimitsCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.settings).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.smart-upgrade.settings.limits"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
-
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.smart-upgrade.settings.limits"), () -> {
             // Trigger Mode selection
-            column().growX().gap(unit(1)).left().children(() -> {
-                column().growX().gap(unit(0.5f)).left().children(() -> {
+            column().growX().gap(unit(1.5f)).left().children(() -> {
+                column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode"))
                             .color(Color.white)
                             .left();
@@ -155,33 +112,26 @@ public class SmartUpgradeSettingsView extends BaseComponent {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Max Upgraded Blocks
-            column().growX().gap(unit(1)).left().children(() -> {
-                row().growX().center().children(() -> {
-                    text(Core.bundle.get("feature.smart-upgrade.settings.max-upgrades"))
-                            .color(Color.white)
-                            .left();
-                    spacer();
-                    badge(feature.maxUpdatesConfig.signal().map(v -> String.valueOf(v != null ? v : 500)))
-                            .color(WebStyles.Colors.SECONDARY);
-                });
-
-                text(Core.bundle.get("feature.smart-upgrade.settings.max-upgrades.desc"))
-                        .color(WebStyles.Colors.GHOST_FG)
-                        .left()
-                        .wrap()
-                        .growX();
-
-                slider(feature.maxUpdatesConfig.signal(), 50, 2000, 50).growX();
-            });
+            // Max Upgraded Blocks slider with above-track label and clean readout
+            SettingSlider.of(
+                    Core.bundle.get("feature.smart-upgrade.settings.max-upgrades"),
+                    Core.bundle.get("feature.smart-upgrade.settings.max-upgrades.desc"),
+                    feature.maxUpdatesConfig.signal(),
+                    50,
+                    2000,
+                    50,
+                    feature.maxUpdatesConfig.signal().map(v -> String.valueOf(v != null ? v : 500))
+            );
         });
     }
 
-    private Component resetButton() {
-        return button(Core.bundle.get("feature.smart-upgrade.settings.reset"),
-                feature::resetToDefaults)
-                .style(WebStyles.outlineText())
-                .height(unit(9))
-                .growX();
+    private Component resetButtonCard() {
+        return SettingCard.card().children(() -> {
+            button(Core.bundle.get("feature.smart-upgrade.settings.reset"),
+                    feature::resetToDefaults)
+                    .style(WebStyles.outlineText())
+                    .height(unit(11))
+                    .growX();
+        });
     }
 }

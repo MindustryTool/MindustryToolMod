@@ -8,12 +8,12 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.Vars;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
 import mindustrytool.components.FileIcon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Card;
 
 /**
  * Modern declarative Solim settings view for screenshot capture options.
@@ -28,55 +28,19 @@ public class ScreenshotSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().maxWidth(500f).children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(2)).center().children(() -> {
-                    headerCard();
-                    optionsCard();
-                    actionsCard();
-                });
-            });
-        }).element();
-    }
-
-    private Card sectionCard() {
-        return card()
-                .growX()
-                .padding(unit(2.5f))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1f, WebStyles.Colors.SECTION_BORDER)
-                .gap(unit(2));
-    }
-
-    private Component headerCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(FileIcon.of("camera.png", Icon.image)).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.screenshot.name"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge("MEDIA").color(WebStyles.Colors.PRIMARY);
-            });
-
-            text(Core.bundle.get("feature.screenshot.description"))
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            optionsCard();
+            actionsCard();
         });
     }
 
-    private Component optionsCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.settings).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.screenshot.settings.section.options"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
+    private Component headerCard() {
+        return SettingCard.header(feature, "MEDIA");
+    }
 
+    private Component optionsCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.screenshot.settings.section.options"), () -> {
             row().growX().gap(unit(2)).center().children(() -> {
                 text(Core.bundle.get("feature.screenshot.settings.include-ui"))
                         .color(Color.white)
@@ -89,7 +53,7 @@ public class ScreenshotSettingsView extends BaseComponent {
     }
 
     private Component actionsCard() {
-        return sectionCard().children(() -> {
+        return SettingCard.card().children(() -> {
             button(feature::capture)
                     .style(WebStyles.primary())
                     .growX()

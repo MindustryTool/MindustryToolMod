@@ -17,10 +17,13 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.world.Block;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import solim.core.BaseComponent;
-import solim.layout.Card;
+import solim.core.Component;
 import solim.reactive.Signal;
 
 /**
@@ -38,78 +41,44 @@ public class RangeDisplaySettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(2)).children(() -> {
-                    headerCard();
-                    visualStylingCard();
-                    proximityAndFiltersCard();
-                    rangeTypesCard();
-                    turretsFilterCard();
-                    supportBlocksFilterCard();
-                    actionsCard();
-                });
-            });
-        }).element();
-    }
-
-    private Card sectionCard() {
-        return card()
-                .growX()
-                .padding(unit(2.5f))
-                .rounded(8, WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.SECTION_BORDER)
-                .gap(unit(2));
-    }
-
-    private Card headerCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.warning).size(unit(6)).color(Pal.accent);
-                text(Core.bundle.get("feature.range-display.name", "Range Display"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge("RANGE").color(WebStyles.Colors.PRIMARY);
-            });
-
-            text(Core.bundle.get("feature.range-display.description"))
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            visualStylingCard();
+            proximityAndFiltersCard();
+            rangeTypesCard();
+            turretsFilterCard();
+            supportBlocksFilterCard();
+            actionsCard();
         });
     }
 
-    private Card visualStylingCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.image).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.range-display.settings.section.visual", "Visual Styling"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
+    private Component headerCard() {
+        return SettingCard.header(feature, "RANGE");
+    }
 
+    private Component visualStylingCard() {
+        return SettingCard.section(Icon.image, Core.bundle.get("feature.range-display.settings.section.visual", "Visual Styling"), () -> {
             // Opacity Slider
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.range-display.settings.opacity")).left();
-                spacer();
-                slider(feature.opacityConfig.signal(), 0.1f, 1.0f, 0.05f).width(unit(24));
-                badge(feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"))
-                        .color(WebStyles.Colors.SECONDARY);
-            });
+            SettingSlider.of(
+                    Core.bundle.get("feature.range-display.settings.opacity"),
+                    feature.opacityConfig.signal(),
+                    0.1f,
+                    1.0f,
+                    0.05f,
+                    feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
+            );
 
             // Stroke Width Slider
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.range-display.settings.stroke-width")).left();
-                spacer();
-                slider(feature.strokeWidthConfig.signal(), 1.0f, 3.0f, 0.5f).width(unit(24));
-                badge(feature.strokeWidthConfig.signal().map(v -> String.format(Locale.US, "%.1fx", v != null ? v : 1f)))
-                        .color(WebStyles.Colors.SECONDARY);
-            });
+            SettingSlider.of(
+                    Core.bundle.get("feature.range-display.settings.stroke-width"),
+                    feature.strokeWidthConfig.signal(),
+                    1.0f,
+                    3.0f,
+                    0.5f,
+                    feature.strokeWidthConfig.signal().map(v -> String.format(Locale.US, "%.1fx", v != null ? v : 1f))
+            );
 
-            divider();
+            divider().color(WebStyles.Colors.SECTION_BORDER);
 
             checkbox(Core.bundle.get("feature.range-display.settings.hover-only"),
                     feature.hoverOnlyConfig.signal()).growX();
@@ -119,29 +88,22 @@ public class RangeDisplaySettingsView extends BaseComponent {
         });
     }
 
-    private Card proximityAndFiltersCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.filter).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.range-display.settings.section.filters", "Filters"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
-
+    private Component proximityAndFiltersCard() {
+        return SettingCard.section(Icon.filter, Core.bundle.get("feature.range-display.settings.section.filters", "Filters"), () -> {
             checkbox(Core.bundle.get("feature.range-display.settings.proximity-filter"),
                     feature.proximityFilterConfig.signal()).growX();
 
             // Proximity Radius Slider
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.range-display.settings.proximity-radius")).left();
-                spacer();
-                slider(feature.proximityRadiusConfig.signal(), 10f, 60f, 5f).width(unit(24));
-                badge(feature.proximityRadiusConfig.signal().map(v -> Math.round(v != null ? v : 30f) + " tiles"))
-                        .color(WebStyles.Colors.SECONDARY);
-            });
+            SettingSlider.of(
+                    Core.bundle.get("feature.range-display.settings.proximity-radius"),
+                    feature.proximityRadiusConfig.signal(),
+                    10f,
+                    60f,
+                    5f,
+                    feature.proximityRadiusConfig.signal().map(v -> Math.round(v != null ? v : 30f) + " tiles")
+            );
 
-            divider();
+            divider().color(WebStyles.Colors.SECTION_BORDER);
 
             checkbox(Core.bundle.get("feature.range-display.settings.filter-target-air"),
                     feature.filterTargetAirConfig.signal()).growX();
@@ -154,16 +116,8 @@ public class RangeDisplaySettingsView extends BaseComponent {
         });
     }
 
-    private Card rangeTypesCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.layers).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.range-display.settings.section.types", "Range Types"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
-
+    private Component rangeTypesCard() {
+        return SettingCard.section(Icon.layers, Core.bundle.get("feature.range-display.settings.section.types", "Range Types"), () -> {
             checkbox(Core.bundle.get("feature.range-display.settings.draw-player-unit"),
                     feature.drawUnitRangePlayerConfig.signal()).growX();
 
@@ -173,7 +127,7 @@ public class RangeDisplaySettingsView extends BaseComponent {
             checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-turrets"),
                     feature.drawTurretRangeEnemyConfig.signal()).growX();
 
-            divider();
+            divider().color(WebStyles.Colors.SECTION_BORDER);
 
             checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-units"),
                     feature.drawUnitRangeAllyConfig.signal()).growX();
@@ -181,7 +135,7 @@ public class RangeDisplaySettingsView extends BaseComponent {
             checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-units"),
                     feature.drawUnitRangeEnemyConfig.signal()).growX();
 
-            divider();
+            divider().color(WebStyles.Colors.SECTION_BORDER);
 
             checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-blocks"),
                     feature.drawBlockRangeAllyConfig.signal()).growX();
@@ -189,15 +143,15 @@ public class RangeDisplaySettingsView extends BaseComponent {
             checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-blocks"),
                     feature.drawBlockRangeEnemyConfig.signal()).growX();
 
-            divider();
+            divider().color(WebStyles.Colors.SECTION_BORDER);
 
             checkbox(Core.bundle.get("feature.range-display.settings.draw-spawners"),
                     feature.drawSpawnerRangeConfig.signal()).growX();
         });
     }
 
-    private Card turretsFilterCard() {
-        return sectionCard().children(() -> {
+    private Component turretsFilterCard() {
+        return SettingCard.card().children(() -> {
             row().growX().gap(unit(2)).center().children(() -> {
                 icon(Icon.turret).size(unit(5)).color(Pal.accent);
                 text(Core.bundle.get("feature.range-display.settings.section.turrets", "Turrets"))
@@ -251,8 +205,8 @@ public class RangeDisplaySettingsView extends BaseComponent {
         });
     }
 
-    private Card supportBlocksFilterCard() {
-        return sectionCard().children(() -> {
+    private Component supportBlocksFilterCard() {
+        return SettingCard.card().children(() -> {
             row().growX().gap(unit(2)).center().children(() -> {
                 icon(Icon.defense).size(unit(5)).color(Pal.accent);
                 text(Core.bundle.get("feature.range-display.settings.section.support-blocks", "Support Blocks"))
@@ -343,11 +297,12 @@ public class RangeDisplaySettingsView extends BaseComponent {
         return result;
     }
 
-    private Card actionsCard() {
-        return sectionCard().children(() -> {
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
             button(Core.bundle.get("feature.range-display.settings.reset", "Reset to Defaults"),
                     feature::resetToDefaults)
                     .style(WebStyles.outlineText())
+                    .height(unit(11))
                     .growX();
         });
     }

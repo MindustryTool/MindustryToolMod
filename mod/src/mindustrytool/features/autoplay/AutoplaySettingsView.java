@@ -9,6 +9,9 @@ import arc.scene.style.Drawable;
 import arc.struct.Seq;
 import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import solim.core.BaseComponent;
@@ -27,86 +30,84 @@ public class AutoplaySettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().grow().children(() -> {
-                column().growX().gap(unit(3)).padding(unit(2)).children(() -> {
-                    globalSection();
-                    divider();
-                    displaySection();
-                    divider();
-                    tasksSection();
-                });
-            });
-        }).element();
-    }
-
-    private Component globalSection() {
-        return column().growX().gap(unit(2)).children(() -> {
-            checkbox(Core.bundle.get("feature.autoplay.settings.follow-unit"), feature.followUnit.signal());
+        return SettingScaffold.build(() -> {
+            headerCard();
+            behaviorAndDisplayCard();
+            tasksCard();
         });
     }
 
-    private Component displaySection() {
-        return column().growX().gap(unit(2)).children(() -> {
+    private Component headerCard() {
+        return SettingCard.header(feature, "AUTOMATION");
+    }
+
+    private Component behaviorAndDisplayCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("team-resources.settings.section.layout", "Behavior & Display"), () -> {
+            checkbox(Core.bundle.get("feature.autoplay.settings.follow-unit"), feature.followUnit.signal()).growX();
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
             row().growX().gap(unit(2)).center().children(() -> {
                 text(Core.bundle.get("feature.autoplay.settings.display-mode")).left()
-                        .color(WebStyles.Colors.GHOST_FG);
+                        .color(Color.white);
 
                 spacer();
                 row().gap(unit(1.5f)).children(() -> {
-                    button(() -> feature.displayModeConfig.set(AutoplayFeature.DISPLAY_HUD))
-                            .style(WebStyles.filterChip())
+                    button(Core.bundle.get("feature.autoplay.settings.display-mode.hud"),
+                            () -> feature.displayModeConfig.set(AutoplayFeature.DISPLAY_HUD))
+                            .style(WebStyles.filterChipText())
                             .checked(feature.displayModeConfig.signal()
                                     .map(AutoplayFeature.DISPLAY_HUD::equals))
-                            .padding(unit(1.5f))
-                            .children(() -> text(
-                                    Core.bundle.get("feature.autoplay.settings.display-mode.hud")));
+                            .height(unit(8))
+                            .paddingX(unit(2.5f));
 
-                    button(() -> feature.displayModeConfig.set(AutoplayFeature.DISPLAY_POPUP))
-                            .style(WebStyles.filterChip())
+                    button(Core.bundle.get("feature.autoplay.settings.display-mode.popup"),
+                            () -> feature.displayModeConfig.set(AutoplayFeature.DISPLAY_POPUP))
+                            .style(WebStyles.filterChipText())
                             .checked(feature.displayModeConfig.signal()
                                     .map(AutoplayFeature.DISPLAY_POPUP::equals))
-                            .padding(unit(1.5f))
-                            .children(() -> text(
-                                    Core.bundle.get("feature.autoplay.settings.display-mode.popup")));
+                            .height(unit(8))
+                            .paddingX(unit(2.5f));
                 });
             });
 
             text(Core.bundle.get("feature.autoplay.hud.reorder-hint")).growX().left().wrap(true)
                     .color(WebStyles.Colors.GHOST_FG);
 
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.autoplay.settings.scale")).left()
-                        .color(WebStyles.Colors.GHOST_FG);
+            divider().color(WebStyles.Colors.SECTION_BORDER);
 
-                spacer();
-                slider(feature.scaleConfig.signal(), 0.5f, 1.5f, 0.1f);
+            SettingSlider.of(
+                    Core.bundle.get("feature.autoplay.settings.scale"),
+                    feature.scaleConfig.signal(),
+                    0.5f,
+                    1.5f,
+                    0.1f,
+                    feature.scaleConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100))
+            );
 
-                row().width(unit(14)).children(() -> {
-                    text(feature.scaleConfig.signal()
-                            .map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
-                });
-            });
+            divider().color(WebStyles.Colors.SECTION_BORDER);
 
             checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
                     feature.hideDragHandleConfig.signal()).growX();
 
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
             button(feature::resetPosition)
-                    .style(WebStyles.secondary())
+                    .style(WebStyles.outline())
                     .growX()
-                    .padding(unit(2))
-                    .children(() -> text(Core.bundle.get("feature.autoplay.settings.reset-position")));
+                    .height(unit(11))
+                    .gap(unit(2))
+                    .children(() -> {
+                        icon(Icon.refresh).size(unit(6));
+                        text(Core.bundle.get("feature.autoplay.settings.reset-position"));
+                    });
         });
     }
 
-    private Component tasksSection() {
-        return column().growX().gap(unit(2)).children(() -> {
-            column().growX().gap(unit(1)).children(() -> {
-                text(Core.bundle.get("feature.autoplay.settings.tasks"))
-                        .growX().left().color(WebStyles.Colors.GHOST_FG);
-                text(Core.bundle.get("feature.autoplay.settings.tasks.description"))
-                        .growX().left().color(WebStyles.Colors.GHOST_FG);
-            });
+    private Component tasksCard() {
+        return SettingCard.section(Icon.list, Core.bundle.get("feature.autoplay.settings.tasks"), () -> {
+            text(Core.bundle.get("feature.autoplay.settings.tasks.description"))
+                    .growX().left().color(WebStyles.Colors.GHOST_FG).wrap();
 
             reactiveGrid(feature.tasks()).key(AutoplayTask::getId).gap(unit(2)).growX()
                     .children(task -> new TaskRow(feature, task));

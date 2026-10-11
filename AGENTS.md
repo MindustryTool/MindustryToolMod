@@ -455,30 +455,70 @@ Mod code must use the public `solim.UI.*` declarative facades. Attempting to ref
 
 ## Dialogs, Buttons & Layout Conventions — Mandatory
 
-### Dialog Content: Centered & Width-Constrained
+### Settings Dialogs & Views Specification — Mandatory
 
-Every settings/HUD dialog must center its content and constrain its width:
+All feature settings dialogs and views must strictly follow the unified layout, exponential spacing system, and WebStyles tokens.
 
-1. Call `maxWidth(500f)` on the dialog so content columns never stretch full-width.
-2. The view's root must be `column().grow().center()` so content is centered both ways.
+#### 1. Dialog Viewport: Top-Aligned, Centered & Width-Constrained
+- Dialogs must call `maxWidth(500f)`.
+- The view's root must align to the top on the Y-axis and center on the X-axis (`top().center()`) so dialogs never float vertically when content is short.
+- Use `SettingScaffold.build(() -> { ... })` for the view root.
 
 ```java
 // Dialog
-name("musicSettingDialog");
+name("myFeatureSettingDialog");
 addCloseButton();
 closeOnBack();
 maxWidth(500f);
-children(() -> new MusicSettingsView(feature));
+children(() -> new MyFeatureSettingsView(feature));
 ```
 
 ```java
 // View root
 @Override
 protected Element build() {
-    return column().grow().center().children(() -> {
-        scroll().growY().children(() -> { /* sections */ });
-    }).element();
+    return SettingScaffold.build(() -> {
+        headerCard();
+        optionsCard();
+        actionsCard();
+    });
 }
+```
+
+#### 2. Compact Spacing System — Mandatory
+Spacing across setting views follows a clean, compact hierarchy based on multiples of `BASE_UNIT = 4f`:
+- **Micro-gap (`unit(1)` = 4px)**: Gap between a label and its secondary description text, or between tightly paired chips and labels.
+- **Card Padding & Inner Gap (`padding(unit(2.5f))` = 10px, `gap(unit(2))` = 8px)**: Internal padding of every section card (`padding(unit(2.5f))`) and vertical gap between control rows inside the card (`gap(unit(2))`).
+- **Inter-Card Spacing (`unit(3)` = 12px)**: Vertical gap between adjacent section cards in the viewport scroll column (`gap(unit(3))`).
+
+#### 3. Section Cards — Mandatory
+Every logical group of settings must be enclosed in a distinct card (`SettingCard.card()` or `card().padding(unit(2.5f)).gap(unit(2)).rounded(unit(2), WebStyles.Colors.SECTION_BG).border(1f, WebStyles.Colors.SECTION_BORDER)`).
+
+#### 4. Header Card Structure — Mandatory
+The first card in every setting view is the primary Feature Header Card:
+- **First line**: `[Pal.accent]` feature icon + feature name, with category badge (`badge("CATEGORY").color(WebStyles.Colors.PRIMARY)`) aligned to the far right.
+- **Second line**: Muted feature description (`color(WebStyles.Colors.GHOST_FG)`), wrapped and left-aligned.
+- Use `SettingCard.header(feature, categoryBadge)` helper.
+
+#### 5. Section Cards Structure — Mandatory
+Every subsequent card starts with an accent section header row:
+- `[Pal.accent]` section icon + section name (`icon(Icon.wrench).size(unit(5)).color(Pal.accent)` and `text(title).color(Pal.accent).growX().left()`).
+- Use `SettingCard.section(icon, title, () -> { ... })` helper.
+
+#### 6. Sliders: Above-Track & Background-less Value Readout — Mandatory
+- Sliders must **never** be placed inline with their title.
+- The title (left) and formatted value readout (right) must be placed in a row **above** the slider track.
+- The value readout must **not** have a background (do NOT wrap in a `badge(...)` pill). Use clean text (`color(WebStyles.Colors.GHOST_FG)` or `Pal.accent`).
+- The slider track must span full width (`.growX()`).
+- Use `SettingSlider.of(...)` helper.
+
+```java
+SettingSlider.of(
+        Core.bundle.get("my-feature.setting.opacity"),
+        feature.opacityConfig.signal(),
+        0.1f, 1.0f, 0.05f,
+        feature.opacityConfig.signal().map(v -> Math.round(v * 100) + "%")
+);
 ```
 
 ### Button Sizes — Mandatory

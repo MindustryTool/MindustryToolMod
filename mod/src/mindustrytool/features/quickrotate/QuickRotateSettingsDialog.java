@@ -1,7 +1,6 @@
 package mindustrytool.features.quickrotate;
 
 import arc.Core;
-import mindustry.gen.Icon;
 import solim.overlay.SolimDialog;
 
 /**
@@ -16,9 +15,6 @@ public class QuickRotateSettingsDialog extends SolimDialog {
         addCloseButton();
         closeOnBack();
         maxWidth(500f);
-
-        actionButton(Core.bundle.get("feature.quick-rotate.settings.reset"),
-                Icon.refresh, 250f, 64f, feature::resetToDefaults);
 
         children(() -> new QuickRotateSettingsView(feature));
     }
