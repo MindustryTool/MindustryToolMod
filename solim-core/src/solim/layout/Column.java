@@ -121,8 +121,23 @@ public final class Column
     }
 
     @Override
+    public Column align(int align) {
+        TableConfig.super.align(align);
+        cellConfig().align = align;
+        cellConfig().applyAlignToParentCell(element());
+        table.defaults().align(align);
+        for (Cell<?> c : table.getCells()) {
+            if (c != null)
+                c.align(align);
+        }
+        return this;
+    }
+
+    @Override
     public Column top() {
         TableConfig.super.top();
+        cellConfig().alignTop();
+        cellConfig().applyAlignToParentCell(element());
         table.defaults().top();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
@@ -134,6 +149,8 @@ public final class Column
     @Override
     public Column bottom() {
         TableConfig.super.bottom();
+        cellConfig().alignBottom();
+        cellConfig().applyAlignToParentCell(element());
         table.defaults().bottom();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
@@ -145,6 +162,8 @@ public final class Column
     @Override
     public Column left() {
         TableConfig.super.left();
+        cellConfig().alignLeft();
+        cellConfig().applyAlignToParentCell(element());
         table.defaults().left();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
@@ -156,6 +175,8 @@ public final class Column
     @Override
     public Column right() {
         TableConfig.super.right();
+        cellConfig().alignRight();
+        cellConfig().applyAlignToParentCell(element());
         table.defaults().right();
         for (Cell<?> c : table.getCells()) {
             if (c != null)

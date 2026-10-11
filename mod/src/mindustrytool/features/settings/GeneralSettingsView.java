@@ -10,7 +10,6 @@ import arc.util.Log;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
 import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
@@ -36,22 +35,11 @@ public class GeneralSettingsView extends BaseComponent {
     }
 
     private Component headerCard() {
-        return SettingCard.card().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.settings).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("dialog.general-settings.title"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge("PREFERENCES").color(WebStyles.Colors.PRIMARY);
-            });
-
-            text(Core.bundle.get("dialog.general-settings.description"))
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
-        });
+        return SettingCard.header(
+                Icon.settings,
+                Core.bundle.get("dialog.general-settings.title"),
+                "PREFERENCES",
+                Core.bundle.get("dialog.general-settings.description"));
     }
 
     private Component preferencesCard() {

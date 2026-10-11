@@ -67,33 +67,25 @@ public class PrettyChatSettingsView extends BaseComponent {
     @Override
     protected Element build() {
         return SettingScaffold.build(() -> {
+            headerCard();
             livePreviewCard();
             pipelineCard();
             availableTransformersPanel();
         });
     }
 
+    private Component headerCard() {
+        return SettingCard.header(feature, "COMMUNICATION");
+    }
+
     private Component livePreviewCard() {
         String previewLabel = Core.bundle.get("feature.pretty-chat.settings.preview-label");
-        String liveBadge = Core.bundle.get("feature.pretty-chat.settings.live-badge");
         String previewDesc = Core.bundle.get("feature.pretty-chat.settings.preview-desc");
         String previewPlaceholder = Core.bundle.get("feature.pretty-chat.settings.preview-placeholder");
         String simSender = Core.bundle.get("feature.pretty-chat.settings.sim-sender");
         String escapeHint = Core.bundle.get("feature.pretty-chat.settings.escape-hint");
 
-        return SettingCard.card().children(() -> {
-            // Header
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(feature.getMetadata() != null ? feature.getMetadata().getIcon() : Icon.chat)
-                        .size(unit(5)).color(Pal.accent);
-                text(previewLabel)
-                        .color(Pal.accent)
-                        .wrap()
-                        .growX()
-                        .left();
-                badge(liveBadge).color(WebStyles.Colors.PRIMARY);
-            });
-
+        return SettingCard.section(Icon.chat, previewLabel, () -> {
             text(previewDesc)
                     .color(WebStyles.Colors.GHOST_FG)
                     .left()
@@ -141,19 +133,7 @@ public class PrettyChatSettingsView extends BaseComponent {
         String clearText = Core.bundle.get("feature.pretty-chat.settings.clear-pipeline");
         String resetText = Core.bundle.get("feature.pretty-chat.settings.reset-default");
 
-        return SettingCard.card().children(() -> {
-            // Header
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.tree).size(unit(5)).color(Pal.accent);
-                text(pipelineTitle)
-                        .color(Pal.accent)
-                        .wrap()
-                        .growX()
-                        .left();
-                badge(feature.config().enabledIdsSignal.map(l -> Core.bundle.format("feature.pretty-chat.settings.pipeline-steps", l.size())))
-                        .color(WebStyles.Colors.PRIMARY);
-            });
-
+        return SettingCard.section(Icon.tree, pipelineTitle, () -> {
             text(pipelineDesc)
                     .color(WebStyles.Colors.GHOST_FG)
                     .left()
@@ -248,19 +228,7 @@ public class PrettyChatSettingsView extends BaseComponent {
     private Component availableTransformersPanel() {
         String availableTitle = Core.bundle.get("feature.pretty-chat.settings.available-transformers");
 
-        return SettingCard.card().children(() -> {
-            // Header
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.settings).size(unit(5)).color(Pal.accent);
-                text(availableTitle)
-                        .color(Pal.accent)
-                        .wrap()
-                        .growX()
-                        .left();
-                badge(selectedCategory.map(this::getCategoryName))
-                        .color(WebStyles.Colors.PRIMARY);
-            });
-
+        return SettingCard.section(Icon.settings, availableTitle, () -> {
             // Category Filter Chips
             wrap().growX().gap(unit(1)).children(() -> {
                 for (String cat : CATEGORIES) {

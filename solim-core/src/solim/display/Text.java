@@ -195,19 +195,48 @@ public final class Text implements Component, SpacingAware, ElementConfig<Text>,
 
     public Text align(int align) {
         label.setAlignment(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
         return this;
     }
 
     public Text left() {
-        return align(Align.left);
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
+        int cur = label.getLabelAlign();
+        label.setAlignment((cur | Align.left) & ~Align.right);
+        return this;
     }
 
     public Text center() {
-        return align(Align.center);
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
+        label.setAlignment(Align.center);
+        return this;
     }
 
     public Text right() {
-        return align(Align.right);
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
+        int cur = label.getLabelAlign();
+        label.setAlignment((cur | Align.right) & ~Align.left);
+        return this;
+    }
+
+    public Text top() {
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        int cur = label.getLabelAlign();
+        label.setAlignment((cur | Align.top) & ~Align.bottom);
+        return this;
+    }
+
+    public Text bottom() {
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        int cur = label.getLabelAlign();
+        label.setAlignment((cur | Align.bottom) & ~Align.top);
+        return this;
     }
 
     public Text padding(float pad) {

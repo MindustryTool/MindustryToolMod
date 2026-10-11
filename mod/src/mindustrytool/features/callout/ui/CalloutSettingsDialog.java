@@ -15,7 +15,7 @@ public class CalloutSettingsDialog extends SolimDialog {
         name("calloutSettingsDialog");
         addCloseButton();
         closeOnBack();
-        maxWidth(550f);
+        maxWidth(500f);
 
         children(() -> new CalloutSettingsView(feature));
     }

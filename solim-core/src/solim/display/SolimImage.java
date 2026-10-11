@@ -207,7 +207,20 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
         return element();
     }
 
+    public SolimImage align(int align) {
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
+            if (cell != null)
+                cell.align(align);
+        }
+        return this;
+    }
+
     public SolimImage top() {
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element);
         if (element.parent instanceof Table) {
             Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
@@ -216,7 +229,20 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
         return this;
     }
 
+    public SolimImage bottom() {
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
+            if (cell != null)
+                cell.bottom();
+        }
+        return this;
+    }
+
     public SolimImage left() {
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element);
         if (element.parent instanceof Table) {
             Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)
@@ -225,7 +251,20 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
         return this;
     }
 
+    public SolimImage right() {
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element);
+        if (element.parent instanceof Table) {
+            Cell<?> cell = ((Table) element.parent).getCell(element);
+            if (cell != null)
+                cell.right();
+        }
+        return this;
+    }
+
     public SolimImage center() {
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element);
         if (element.parent instanceof Table) {
             Cell<?> cell = ((Table) element.parent).getCell(element);
             if (cell != null)

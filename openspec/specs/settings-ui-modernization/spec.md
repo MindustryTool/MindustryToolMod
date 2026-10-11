@@ -7,11 +7,15 @@ Standardize and modernize all settings dialog views across MindustryTool mod wit
 ## Requirements
 
 ### Requirement: Setting Dialog Viewport Alignment and Constrained Width
-All feature setting dialogs SHALL align to the top on the Y-axis and center on the X-axis, with content width constrained to at most 500 units.
+All feature setting dialogs SHALL align to the top on the Y-axis and center on the X-axis, with content width constrained to at most 500 units by default. List-heavy settings views with dense reorderable grids (Music track lists, QuickAccess feature ordering) MAY use a documented wider viewport up to 750 units as a named exception.
 
 #### Scenario: Dialog alignment and max width
 - **WHEN** a feature settings dialog is constructed and displayed
 - **THEN** the dialog container constrains content to a maximum width of 500f and positions its content column with top Y-axis alignment and centered X-axis alignment.
+
+#### Scenario: Wider viewport exception for dense lists
+- **WHEN** a settings view displays a dense reorderable grid (Music tracks, QuickAccess feature list) where 500f forces unusable scrolling
+- **THEN** the view MAY use a wider viewport up to 750f, with the exception explicitly documented in code as granted by this change.
 
 ### Requirement: Section Card Layout and Compact Spacing
 All logical sections within a feature setting view SHALL be encapsulated inside cards with a compact spacing system.

@@ -166,6 +166,90 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
     }
 
     @Override
+    public Card align(int align) {
+        TableConfig.super.align(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
+        table.defaults().align(align);
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) {
+                c.align(align);
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Card center() {
+        TableConfig.super.center();
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
+        table.defaults().center();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) {
+                c.center();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Card top() {
+        TableConfig.super.top();
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        table.defaults().top();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) {
+                c.top();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Card bottom() {
+        TableConfig.super.bottom();
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        table.defaults().bottom();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) {
+                c.bottom();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Card left() {
+        TableConfig.super.left();
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
+        table.defaults().left();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) {
+                c.left();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Card right() {
+        TableConfig.super.right();
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
+        table.defaults().right();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null) {
+                c.right();
+            }
+        }
+        return this;
+    }
+
+    @Override
     public Card self() {
         return this;
     }

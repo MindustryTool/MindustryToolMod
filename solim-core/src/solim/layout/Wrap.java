@@ -109,8 +109,49 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
     }
 
     @Override
+    public Wrap align(int align) {
+        TableConfig.super.align(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
+        table.defaults().align(align);
+        for (Cell<?> c : table.getCells()) {
+            if (c != null)
+                c.align(align);
+        }
+        return this;
+    }
+
+    @Override
+    public Wrap top() {
+        TableConfig.super.top();
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        table.defaults().top();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null)
+                c.top();
+        }
+        return this;
+    }
+
+    @Override
+    public Wrap bottom() {
+        TableConfig.super.bottom();
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        table.defaults().bottom();
+        for (Cell<?> c : table.getCells()) {
+            if (c != null)
+                c.bottom();
+        }
+        return this;
+    }
+
+    @Override
     public Wrap left() {
         TableConfig.super.left();
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
         table.defaults().left();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
@@ -122,6 +163,8 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
     @Override
     public Wrap right() {
         TableConfig.super.right();
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
         table.defaults().right();
         for (Cell<?> c : table.getCells()) {
             if (c != null)
@@ -133,6 +176,8 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
     @Override
     public Wrap center() {
         TableConfig.super.center();
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
         table.defaults().center();
         for (Cell<?> c : table.getCells()) {
             if (c != null)

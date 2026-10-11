@@ -9,6 +9,7 @@ import arc.scene.Element;
 import arc.scene.style.Drawable;
 import mindustry.gen.Icon;
 import mindustry.ui.FileChooser;
+import mindustrytool.components.SettingCard;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -32,28 +33,29 @@ public class MusicSettingsView extends BaseComponent {
                 ? Core.bundle.get("feature.music.now-playing.none")
                 : Core.bundle.format("feature.music.now-playing", music.file.nameWithoutExtension()));
 
-        return column().grow().center().children(() -> {
-            scroll().grow().children(() -> {
-                column().growX().gap(unit(3)).padding(unit(2)).children(() -> {
+        // Granted wider-viewport exception (unify-remaining-settings-ui): dense track grids need up to 750f.
+        return column().grow().top().center().maxWidth(750f).children(() -> {
+            scroll().grow().scrollX(false).children(() -> {
+                column().growX().top().center().gap(unit(3)).padding(unit(2)).children(() -> {
+                    headerCard();
+
                     text(nowPlaying).growX().left().color(WebStyles.Colors.GHOST_FG);
 
-                    MusicType[] types = MusicType.values();
-                    for (int i = 0; i < types.length; i++) {
-                        if (i > 0) {
-                            divider();
-                        }
-                        section(types[i]);
+                    for (MusicType type : MusicType.values()) {
+                        section(type);
                     }
                 });
             });
         }).element();
     }
 
-    private Component section(MusicType type) {
-        return column().growX().gap(unit(1)).children(() -> {
-            row().growX().gap(unit(1)).center().children(() -> {
-                text(Core.bundle.get(type.labelKey())).growX().left().color(WebStyles.Colors.GHOST_FG);
+    private Component headerCard() {
+        return SettingCard.header(feature, "MEDIA");
+    }
 
+    private Component section(MusicType type) {
+        return SettingCard.section(Icon.play, Core.bundle.get(type.labelKey()), () -> {
+            row().growX().gap(unit(1)).center().children(() -> {
                 spacer();
 
                 button()

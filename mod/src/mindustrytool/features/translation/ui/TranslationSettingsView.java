@@ -19,7 +19,6 @@ import mindustrytool.features.translation.providers.GeminiTranslationProvider;
 import mindustrytool.features.translation.providers.GoogleWebTranslationProvider;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Card;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Subscription;
@@ -115,6 +114,7 @@ public class TranslationSettingsView extends BaseComponent {
 	@Override
 	protected Element build() {
 		return SettingScaffold.build(() -> {
+			headerCard();
 			livePreviewCard();
 			appearanceCard();
 			outgoingCard();
@@ -123,23 +123,13 @@ public class TranslationSettingsView extends BaseComponent {
 		});
 	}
 
-	private Card sectionCard() {
-		return SettingCard.card();
+	private Component headerCard() {
+		return SettingCard.header(feature, "COMMUNICATION");
 	}
 
 	private Component livePreviewCard() {
-		return sectionCard().children(() -> {
-			// Header
-			row().growX().gap(unit(2)).center().children(() -> {
-				icon(Icon.chat).size(unit(5)).color(Pal.accent);
-				text(Core.bundle.get("feature.translation.incoming.preview-title", "Live Message Preview"))
-						.color(Pal.accent)
-						.wrap()
-						.growX()
-						.left();
-				badge(Core.bundle.get("feature.pretty-chat.settings.live-badge", "LIVE")).color(WebStyles.Colors.PRIMARY);
-			});
-
+		return SettingCard.section(Icon.chat,
+				Core.bundle.get("feature.translation.incoming.preview-title", "Live Message Preview"), () -> {
 			text(Core.bundle.get("feature.translation.incoming.preview-desc",
 					"Shows how other players' messages appear in your chat."))
 					.color(WebStyles.Colors.GHOST_FG)
@@ -209,17 +199,8 @@ public class TranslationSettingsView extends BaseComponent {
 	}
 
 	private Component appearanceCard() {
-		return sectionCard().children(() -> {
-			// Section Header
-			row().growX().gap(unit(2)).center().children(() -> {
-				icon(Icon.spray).size(unit(5)).color(Pal.accent);
-				text(Core.bundle.get("feature.translation.appearance.title", "Appearance & Styling"))
-						.color(Pal.accent)
-						.wrap()
-						.growX()
-						.left();
-			});
-
+		return SettingCard.section(Icon.spray,
+				Core.bundle.get("feature.translation.appearance.title", "Appearance & Styling"), () -> {
 			// Highlight Color Palette
 			column().growX().gap(unit(1.5f)).left().children(() -> {
 				text(Core.bundle.get("feature.translation.appearance.color", "Translation Color"))
@@ -279,17 +260,8 @@ public class TranslationSettingsView extends BaseComponent {
 	}
 
 	private Component outgoingCard() {
-		return sectionCard().children(() -> {
-			// Section Header
-			row().growX().gap(unit(2)).center().children(() -> {
-				icon(Icon.upload).size(unit(5)).color(Pal.accent);
-				text(Core.bundle.get("feature.translation.outgoing.title", "Outgoing Chat"))
-						.color(Pal.accent)
-						.wrap()
-						.growX()
-						.left();
-			});
-
+		return SettingCard.section(Icon.upload,
+				Core.bundle.get("feature.translation.outgoing.title", "Outgoing Chat"), () -> {
 			// Toggle Outgoing translation
 			checkbox(
 					Core.bundle.get("feature.translation.outgoing.enable",
@@ -345,17 +317,8 @@ public class TranslationSettingsView extends BaseComponent {
 	}
 
 	private Component providerCard() {
-		return sectionCard().children(() -> {
-			// Section Header
-			row().growX().gap(unit(2)).center().children(() -> {
-				icon(Icon.settings).size(unit(5)).color(Pal.accent);
-				text(Core.bundle.get("feature.translation.settings.providers", "Translation Provider"))
-						.color(Pal.accent)
-						.wrap()
-						.growX()
-						.left();
-			});
-
+		return SettingCard.section(Icon.settings,
+				Core.bundle.get("feature.translation.settings.providers", "Translation Provider"), () -> {
 			// Provider chips wrap
 			wrap().growX().gap(unit(1.5f)).children(() -> {
 				for (TranslationProvider provider : feature.getProviders()) {

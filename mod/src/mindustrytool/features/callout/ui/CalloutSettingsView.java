@@ -6,12 +6,12 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.gen.Icon;
-import mindustry.graphics.Pal;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.callout.CalloutFeature;
 import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.layout.Card;
 
 /**
  * Modern declarative Solim settings view for Tactical Callouts.
@@ -26,55 +26,19 @@ public class CalloutSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().maxWidth(500f).children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(2)).center().children(() -> {
-                    headerCard();
-                    settingsCard();
-                    resetButton();
-                });
-            });
-        }).element();
-    }
-
-    private Card sectionCard() {
-        return card()
-                .growX()
-                .padding(unit(2.5f))
-                .rounded(8, WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.SECTION_BORDER)
-                .gap(unit(2));
-    }
-
-    private Component headerCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.chat).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.callout.name"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge("TACTICAL").color(WebStyles.Colors.PRIMARY);
-            });
-
-            text(Core.bundle.get("feature.callout.description"))
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            settingsCard();
+            resetButton();
         });
     }
 
-    private Component settingsCard() {
-        return sectionCard().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.settings).size(unit(5)).color(Pal.accent);
-                text(Core.bundle.get("feature.callout.settings.general"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-            });
+    private Component headerCard() {
+        return SettingCard.header(feature, "TACTICAL");
+    }
 
+    private Component settingsCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.callout.settings.general"), () -> {
             // Team Chat by default
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(0.5f)).left().children(() -> {

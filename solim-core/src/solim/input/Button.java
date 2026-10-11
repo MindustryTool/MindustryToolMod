@@ -551,6 +551,90 @@ public final class Button
     }
 
     @Override
+    public Button align(int align) {
+        TableConfig.super.align(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
+        button.defaults().align(align);
+        for (Cell<?> c : button.getCells()) {
+            if (c != null) {
+                c.align(align);
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Button center() {
+        TableConfig.super.center();
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
+        button.defaults().center();
+        for (Cell<?> c : button.getCells()) {
+            if (c != null) {
+                c.center();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Button top() {
+        TableConfig.super.top();
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        button.defaults().top();
+        for (Cell<?> c : button.getCells()) {
+            if (c != null) {
+                c.top();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Button bottom() {
+        TableConfig.super.bottom();
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        button.defaults().bottom();
+        for (Cell<?> c : button.getCells()) {
+            if (c != null) {
+                c.bottom();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Button left() {
+        TableConfig.super.left();
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
+        button.defaults().left();
+        for (Cell<?> c : button.getCells()) {
+            if (c != null) {
+                c.left();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Button right() {
+        TableConfig.super.right();
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
+        button.defaults().right();
+        for (Cell<?> c : button.getCells()) {
+            if (c != null) {
+                c.right();
+            }
+        }
+        return this;
+    }
+
+    @Override
     public Button self() {
         return this;
     }

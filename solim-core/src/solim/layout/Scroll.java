@@ -241,12 +241,57 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     }
 
     @Override
+    public Scroll align(int align) {
+        TableConfig.super.align(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
+        outer.align(align);
+        content.align(align);
+        content.defaults().align(align);
+        for (Cell<?> cell : content.getCells()) {
+            cell.align(align);
+        }
+        return this;
+    }
+
+    @Override
+    public Scroll top() {
+        TableConfig.super.top();
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        outer.top();
+        content.top();
+        content.defaults().top();
+        for (Cell<?> cell : content.getCells()) {
+            cell.top();
+        }
+        return this;
+    }
+
+    @Override
+    public Scroll bottom() {
+        TableConfig.super.bottom();
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        outer.bottom();
+        content.bottom();
+        content.defaults().bottom();
+        for (Cell<?> cell : content.getCells()) {
+            cell.bottom();
+        }
+        return this;
+    }
+
+    @Override
     public Scroll center() {
         this.centered = true;
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
         outer.center();
         content.center();
+        content.defaults().center();
         for (Cell<?> cell : content.getCells()) {
-            cell.center().top();
+            cell.center();
         }
         return this;
     }
@@ -254,10 +299,13 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     @Override
     public Scroll left() {
         this.centered = false;
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
         outer.left();
         content.left();
+        content.defaults().left();
         for (Cell<?> cell : content.getCells()) {
-            cell.left().top();
+            cell.left();
         }
         return this;
     }
@@ -265,10 +313,13 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     @Override
     public Scroll right() {
         this.centered = false;
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
         outer.right();
         content.right();
+        content.defaults().right();
         for (Cell<?> cell : content.getCells()) {
-            cell.right().top();
+            cell.right();
         }
         return this;
     }

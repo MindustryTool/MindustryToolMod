@@ -205,7 +205,12 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().padBottom = bottom;
         cellConfig().padRight = right;
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            Element el = ((Component) this).element();
+            cellConfig().applyMarginToParentCell(el);
+            if (el != null) {
+                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
+                OwnershipContext.register(e);
+            }
         }
         return self();
     }
@@ -221,7 +226,12 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF marginTop(Readable<Float> top) {
         cellConfig().padTop = top;
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            Element el = ((Component) this).element();
+            cellConfig().applyMarginToParentCell(el);
+            if (el != null && top != null) {
+                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
+                OwnershipContext.register(e);
+            }
         }
         return self();
     }
@@ -237,7 +247,12 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF marginBottom(Readable<Float> bottom) {
         cellConfig().padBottom = bottom;
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            Element el = ((Component) this).element();
+            cellConfig().applyMarginToParentCell(el);
+            if (el != null && bottom != null) {
+                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
+                OwnershipContext.register(e);
+            }
         }
         return self();
     }
@@ -253,7 +268,12 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF marginLeft(Readable<Float> left) {
         cellConfig().padLeft = left;
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            Element el = ((Component) this).element();
+            cellConfig().applyMarginToParentCell(el);
+            if (el != null && left != null) {
+                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
+                OwnershipContext.register(e);
+            }
         }
         return self();
     }
@@ -269,7 +289,12 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF marginRight(Readable<Float> right) {
         cellConfig().padRight = right;
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            Element el = ((Component) this).element();
+            cellConfig().applyMarginToParentCell(el);
+            if (el != null && right != null) {
+                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
+                OwnershipContext.register(e);
+            }
         }
         return self();
     }
@@ -287,7 +312,12 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().padLeft = x;
         cellConfig().padRight = x;
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            Element el = ((Component) this).element();
+            cellConfig().applyMarginToParentCell(el);
+            if (el != null && x != null) {
+                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
+                OwnershipContext.register(e);
+            }
         }
         return self();
     }
@@ -305,7 +335,12 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().padTop = y;
         cellConfig().padBottom = y;
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            Element el = ((Component) this).element();
+            cellConfig().applyMarginToParentCell(el);
+            if (el != null && y != null) {
+                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
+                OwnershipContext.register(e);
+            }
         }
         return self();
     }

@@ -196,6 +196,90 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
     }
 
     @Override
+    public SolimCollapser align(int align) {
+        TableConfig.super.align(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
+        content.defaults().align(align);
+        for (Cell<?> c : content.getCells()) {
+            if (c != null) {
+                c.align(align);
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public SolimCollapser center() {
+        TableConfig.super.center();
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
+        content.defaults().center();
+        for (Cell<?> c : content.getCells()) {
+            if (c != null) {
+                c.center();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public SolimCollapser top() {
+        TableConfig.super.top();
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        content.defaults().top();
+        for (Cell<?> c : content.getCells()) {
+            if (c != null) {
+                c.top();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public SolimCollapser bottom() {
+        TableConfig.super.bottom();
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        content.defaults().bottom();
+        for (Cell<?> c : content.getCells()) {
+            if (c != null) {
+                c.bottom();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public SolimCollapser left() {
+        TableConfig.super.left();
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
+        content.defaults().left();
+        for (Cell<?> c : content.getCells()) {
+            if (c != null) {
+                c.left();
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public SolimCollapser right() {
+        TableConfig.super.right();
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
+        content.defaults().right();
+        for (Cell<?> c : content.getCells()) {
+            if (c != null) {
+                c.right();
+            }
+        }
+        return this;
+    }
+
+    @Override
     public SolimCollapser self() {
         return this;
     }
