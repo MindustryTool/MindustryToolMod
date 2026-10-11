@@ -128,7 +128,7 @@ public class CalloutDialog extends SolimDialog {
                 for (int i = 0; i < items.size; i++) {
                     Item it = items.get(i);
                     button()
-                            .style(WebStyles.filterChip())
+                            .style(WebStyles.actionChip())
                             .paddingX(unit(2f))
                             .paddingY(unit(1.2f))
                             .onClick(() -> {
@@ -172,7 +172,7 @@ public class CalloutDialog extends SolimDialog {
                 for (ActionDef act : actions) {
                     String label = Core.bundle.get(act.bundleKey, act.fallbackText);
                     button()
-                            .style(WebStyles.filterChip())
+                            .style(WebStyles.actionChip())
                             .paddingX(unit(2f))
                             .paddingY(unit(1.2f))
                             .onClick(() -> feature.sendCallout(label, Boolean.TRUE.equals(teamChatSignal.peek())))
@@ -211,7 +211,7 @@ public class CalloutDialog extends SolimDialog {
                 for (ActionDef comm : comms) {
                     String label = Core.bundle.get(comm.bundleKey, comm.fallbackText);
                     button()
-                            .style(WebStyles.filterChip())
+                            .style(WebStyles.actionChip())
                             .paddingX(unit(2f))
                             .paddingY(unit(1.2f))
                             .onClick(() -> feature.sendCallout(label, Boolean.TRUE.equals(teamChatSignal.peek())))

@@ -10,6 +10,7 @@ import arc.scene.Element;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Time;
@@ -53,7 +54,17 @@ import solim.reactive.Readable;
  * usable.
  */
 public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T>> {
-    private final Table table = new Table();
+    /** Opt-in edge kept fixed when content size drifts. Null (default) keeps legacy fixed-corner behavior. */
+    public enum Edge {
+        TOP,
+        BOTTOM
+    }
+
+    /** Drift below this height delta is ignored, mirroring Hud size reconciliation. */
+    private static final float PIN_EPSILON = 1.0f;
+
+    private final Table table = new PopupTable();
+    private @Nullable Edge pinnedEdge;
     private @Nullable Func<T, Component> provider;
     private @Nullable Component currentContent;
     private @Nullable Element layerAnchor;
@@ -106,6 +117,38 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
 
     public Table table() {
         return table;
+    }
+
+    /**
+     * Opts into pinned-edge reconciliation: as content height drifts, the chosen
+     * edge stays fixed in stage coordinates. Null restores legacy behavior.
+     */
+    public Popup<T> pinnedEdge(@Nullable Edge edge) {
+        this.pinnedEdge = edge;
+        return this;
+    }
+
+    public @Nullable Edge pinnedEdge() {
+        return pinnedEdge;
+    }
+
+    /**
+     * Pure pinned-edge repositioning math: preserves the chosen edge across a
+     * content size change, then clamps into the stage (clamp wins over pin).
+     * Null edge returns the position unchanged.
+     */
+    public static Vec2 pinnedPosition(@Nullable Edge edge, float x, float y, float w, float h,
+            float newW, float newH, float stageW, float stageH) {
+        float nx = x;
+        float ny = y;
+        if (edge == Edge.TOP) {
+            ny = (y + h) - newH;
+        }
+        if (stageW > 0f && stageH > 0f) {
+            nx = Math.max(0f, Math.min(nx, Math.max(0f, stageW - newW)));
+            ny = Math.max(0f, Math.min(ny, Math.max(0f, stageH - newH)));
+        }
+        return new Vec2(nx, ny);
     }
 
     public Popup<T> rounded(int radius) {
@@ -348,5 +391,48 @@ public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T
     @Override
     public Popup<T> self() {
         return this;
+    }
+
+    /**
+     * Popup table that reconciles an opted-in pinned edge when content size
+     * drifts. Without pinning it behaves exactly like a plain Table.
+     */
+    private final class PopupTable extends Table {
+        @Override
+        public void validate() {
+            reconcilePinnedEdge();
+            super.validate();
+        }
+    }
+
+    private void reconcilePinnedEdge() {
+        Edge edge = pinnedEdge;
+        if (edge == null || !table.needsLayout()) {
+            return;
+        }
+        float w = table.getWidth();
+        float h = table.getHeight();
+        float pw = table.getPrefWidth();
+        float ph = table.getPrefHeight();
+        if (pw <= 0f || ph <= 0f || Math.abs(h - ph) <= PIN_EPSILON) {
+            return;
+        }
+        float stageW = stageWidth();
+        float stageH = stageHeight();
+        Vec2 pos = pinnedPosition(edge, table.x, table.y, w, h, pw, ph, stageW, stageH);
+        table.setSize(pw, ph);
+        table.setPosition(pos.x, pos.y);
+    }
+
+    private static float stageWidth() {
+        float scl = Scl.scl();
+        return Core.scene != null ? Core.scene.getWidth()
+                : (Core.graphics != null ? Core.graphics.getWidth() / (scl > 0f ? scl : 1f) : 0f);
+    }
+
+    private static float stageHeight() {
+        float scl = Scl.scl();
+        return Core.scene != null ? Core.scene.getHeight()
+                : (Core.graphics != null ? Core.graphics.getHeight() / (scl > 0f ? scl : 1f) : 0f);
     }
 }

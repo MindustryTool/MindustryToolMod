@@ -26,7 +26,7 @@ The system SHALL horizontally align QuickAccess popups to the HUD edge based on 
 
 ### Requirement: Vertical placement unchanged
 
-The system SHALL keep the existing vertical rule: popup above the HUD (`barY - menuH - gap`) when the HUD center is in the upper half, otherwise below (`barTop + gap`).
+The system SHALL keep the existing vertical rule: popup above the HUD (`barY - menuH - gap`) when the HUD center is in the upper half, otherwise below (`barTop + gap`). As popup content height changes after showing, the edge facing the HUD stays fixed (top edge when hanging below the HUD, bottom edge when sitting above it) instead of growing upward from a fixed bottom-left corner.
 
 #### Scenario: Upper-half HUD opens above
 - **WHEN** `barCenterY >= stageH / 2`
@@ -35,6 +35,14 @@ The system SHALL keep the existing vertical rule: popup above the HUD (`barY - m
 #### Scenario: Lower-half HUD opens below
 - **WHEN** `barCenterY < stageH / 2`
 - **THEN** the popup anchors below the HUD regardless of left/right alignment.
+
+#### Scenario: Growth below the HUD extends downward
+- **WHEN** the popup hangs below the HUD and its content height increases
+- **THEN** the top edge stays fixed and growth extends downward, never rising into the HUD.
+
+#### Scenario: Growth above the HUD extends upward
+- **WHEN** the popup sits above the HUD and its content height increases
+- **THEN** the bottom edge stays fixed and growth extends upward, away from the HUD.
 
 ### Requirement: Uniform helper behavior with stage safety
 

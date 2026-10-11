@@ -3,12 +3,14 @@ package mindustrytool.features.armycontrol;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import arc.Core;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
 import arc.scene.Group;
 import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.Label;
 import arc.scene.ui.layout.Table;
 import arc.struct.IntSeq;
 import arc.struct.Seq;
@@ -83,6 +85,7 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         assertEquals(1, countDividers(withSelection.element()));
         layoutTree(withSelection.element(), 260f);
         assertDividersFillWidth(withSelection.element(), 260f);
+        assertEquals(false, containsGhostHint(withSelection.element()));
         withSelection.dispose();
 
         feature.deselectAll();
@@ -90,6 +93,7 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         assertNotNull(empty.element());
         flushEffects();
         assertEquals(0, countDividers(empty.element()));
+        assertEquals(true, containsGhostHint(empty.element()));
         empty.dispose();
 
         Vars.control.input.selectedUnits.addAll(validUnit(typeA));
@@ -104,7 +108,16 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         assertEquals(2, countDividers(withGroups.element()));
         layoutTree(withGroups.element(), 260f);
         assertDividersFillWidth(withGroups.element(), 260f);
+        assertEquals(false, containsGhostHint(withGroups.element()));
         withGroups.dispose();
+
+        feature.deselectAll();
+        ArmyControlCompactContent groupsOnly = new ArmyControlCompactContent(feature, null);
+        assertNotNull(groupsOnly.element());
+        flushEffects();
+        assertEquals(1, countDividers(groupsOnly.element()));
+        assertEquals(false, containsGhostHint(groupsOnly.element()));
+        groupsOnly.dispose();
     }
 
     private static UnitEntity validUnit(UnitType type) {
@@ -165,6 +178,30 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         if (element instanceof Group) {
             for (Element child : ((Group) element).getChildren()) {
                 collectTables(child, out);
+            }
+        }
+    }
+
+    private static boolean containsGhostHint(Element root) {
+        String expected = Core.bundle.get("feature.army-control.empty.all", "Nothing selected yet");
+        Seq<String> texts = new Seq<>();
+        collectLabelTexts(root, texts);
+        for (int i = 0; i < texts.size; i++) {
+            if (expected.equals(texts.get(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void collectLabelTexts(Element element, Seq<String> out) {
+        if (element instanceof Label) {
+            CharSequence text = ((Label) element).getText();
+            out.add(text != null ? text.toString() : "");
+        }
+        if (element instanceof Group) {
+            for (Element child : ((Group) element).getChildren()) {
+                collectLabelTexts(child, out);
             }
         }
     }

@@ -2,6 +2,7 @@ package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
 
+import arc.Core;
 import arc.scene.Element;
 import arc.util.Nullable;
 import mindustrytool.components.WebStyles;
@@ -51,6 +52,14 @@ public class ArmyControlCompactContent extends BaseComponent {
                             .thenDo(() -> divider().color(WebStyles.Colors.SECTION_BORDER));
 
                     new ControlGroupList(feature);
+
+                    when(feature.contentEmptySignal())
+                            .growX()
+                            .thenDo(() -> row().growX().padding(unit(1)).children(() -> {
+                                text(Core.bundle.get("feature.army-control.empty.all", "Nothing selected yet"))
+                                        .color(WebStyles.Colors.DISABLED_FG)
+                                        .left();
+                            }));
                 }).element();
     }
 }

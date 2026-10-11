@@ -21,6 +21,15 @@ public final class QuickAccessPopupHelper {
         show(menu, data, quickAccessBar, DEFAULT_GAP);
     }
 
+    /**
+     * Half rule shared with popup pinning: a bar centered at or above stage
+     * midpoint counts as upper half (popup hangs below it).
+     */
+    public static boolean isUpperHalf(float barY, float barH, float stageH) {
+        float barCenterY = barY + barH / 2f;
+        return stageH > 0f && barCenterY >= stageH / 2f;
+    }
+
     public static <T> void show(Popup<T> menu, T data, @Nullable Element quickAccessBar, float gap) {
         float stageW = Core.scene != null ? Core.scene.getWidth() : 0f;
         float stageH = Core.scene != null ? Core.scene.getHeight() : 0f;
@@ -38,8 +47,7 @@ public final class QuickAccessPopupHelper {
         
         float barCenterX = barX + barW / 2f;
         float barTop = barY + barH;
-        float barCenterY = barY + barH / 2f;
-        boolean upperHalf = stageH > 0f ? barCenterY >= stageH / 2f : false;
+        boolean upperHalf = isUpperHalf(barY, barH, stageH);
         boolean leftHalf = quickAccessBar != null ? barCenterX < stageW / 2f : true;
         float anchorX = quickAccessBar != null ? (leftHalf ? barX : barX + barW) : stageW / 2f;
         float anchorY = quickAccessBar != null ? (upperHalf ? barY - gap : barTop + gap) : stageH / 2f;

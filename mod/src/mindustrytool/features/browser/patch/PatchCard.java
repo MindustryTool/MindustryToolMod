@@ -165,7 +165,7 @@ public class PatchCard extends BaseComponent {
                                 .enabled(busy.map(b -> !b));
 
                         button(onCopy)
-                                .style(WebStyles.cardActionText())
+                                .style(WebStyles.actionCardText())
                                 .growX()
                                 .height(unit(9))
                                 .enabled(busy.map(b -> !b))
@@ -177,7 +177,7 @@ public class PatchCard extends BaseComponent {
 
     private Button statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         return button(action)
-                .style(WebStyles.cardActionText())
+                .style(WebStyles.actionCardText())
                 .growX()
                 .height(unit(9))
                 .gap(unit(1))

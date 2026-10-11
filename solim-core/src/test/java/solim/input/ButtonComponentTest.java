@@ -9,6 +9,7 @@ import arc.scene.event.InputEvent;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
@@ -99,6 +100,65 @@ class ButtonComponentTest extends SolimEnv {
 
 		checked.set(false);
 		assertFalse(btn.button().isChecked());
+		btn.dispose();
+	}
+
+	/** Fires Arc's built-in click sequence (which auto-toggles checked) plus any Solim listeners. */
+	private static void fireClick(Button btn) {
+		InputEvent event = new InputEvent();
+		btn.button().getListeners().forEach(listener -> {
+			if (listener instanceof ClickListener) {
+				((ClickListener) listener).clicked(event, 0f, 0f);
+			}
+		});
+	}
+
+	@Test
+	void checkedBindingWinsOverArcClickAutoToggle() {
+		// Arc's Button toggles `checked` on every click. A signal-backed .checked()
+		// binding must re-assert its value so clicking an already-selected toggle does
+		// not visually deselect it.
+		Signal<Boolean> checked = Signal.of(true);
+		Button btn = new Button().checked(checked);
+
+		assertTrue(btn.button().isChecked());
+
+		fireClick(btn);
+		assertTrue(btn.button().isChecked(), "reactive binding must win over Arc's auto-toggle");
+
+		checked.set(false);
+		assertFalse(btn.button().isChecked());
+
+		fireClick(btn);
+		assertFalse(btn.button().isChecked(), "reactive binding must win over Arc's auto-toggle");
+		btn.dispose();
+	}
+
+	@Test
+	void constantCheckedReadableIsNotReassertedOnClick() {
+		// Readable.of(...) is not a ReactiveSource; such buttons rely on rebuild-on-toggle
+		// and must keep Arc's default per-click auto-toggle behavior.
+		Button btn = new Button().checked(Readable.of(false));
+
+		assertFalse(btn.button().isChecked());
+
+		fireClick(btn);
+		assertTrue(btn.button().isChecked(), "constant readables must not be pinned by the binding");
+		btn.dispose();
+	}
+
+	@Test
+	void checkedBindingTracksSignalAcrossClicks() {
+		// Clicking a toggle whose signal flips (e.g. select a different option) must land
+		// on the new signal value, not a stale re-assert.
+		Signal<Boolean> checked = Signal.of(false);
+		Button btn = new Button(() -> checked.set(!checked.peek())).checked(checked);
+
+		fireClick(btn);
+		assertTrue(btn.button().isChecked(), "binding must reflect the signal after the click");
+
+		fireClick(btn);
+		assertFalse(btn.button().isChecked(), "binding must reflect the signal after the click");
 		btn.dispose();
 	}
 

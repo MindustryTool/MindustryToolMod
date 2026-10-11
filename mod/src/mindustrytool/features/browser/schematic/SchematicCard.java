@@ -126,7 +126,7 @@ public class SchematicCard extends BaseComponent {
                                 Core.bundle.get("browser.schematic.save"));
 
                         button(onCopy)
-                                .style(WebStyles.cardActionText())
+                                .style(WebStyles.actionCardText())
                                 .growX()
                                 .height(unit(9))
                                 .tooltip(Core.bundle.get("browser.schematic.copy"))
@@ -137,7 +137,7 @@ public class SchematicCard extends BaseComponent {
 
     private void statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         button(action)
-                .style(WebStyles.cardActionText())
+                .style(WebStyles.actionCardText())
                 .growX()
                 .height(unit(9))
                 .gap(unit(1))

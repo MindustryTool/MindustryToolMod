@@ -26,6 +26,8 @@ import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 import solim.core.Units;
 import solim.overlay.SolimDialog;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
@@ -55,6 +57,11 @@ public class ArmyControlFeature extends Feature {
     // Active selection state
     private final Signal<ObjectIntMap<UnitType>> activeSelectionSignal = Signal.of(new ObjectIntMap<>());
     private final Signal<Seq<ControlGroup>> controlGroupsSignal = Signal.of(new Seq<>());
+    private final Computed<Boolean> contentEmpty = Signal.computed(() -> {
+        ObjectIntMap<UnitType> selection = activeSelectionSignal.get();
+        Seq<ControlGroup> groups = controlGroupsSignal.get();
+        return (selection == null || selection.size == 0) && (groups == null || groups.size == 0);
+    });
 
     private @Nullable ArmyControlHudView hudView;
     private @Nullable ArmyControlSettingsDialog settingsDialog;
@@ -125,6 +132,10 @@ public class ArmyControlFeature extends Feature {
 
     public Signal<Seq<ControlGroup>> controlGroupsSignal() {
         return controlGroupsSignal;
+    }
+
+    public Readable<Boolean> contentEmptySignal() {
+        return contentEmpty;
     }
 
     public boolean isPopupMode() {

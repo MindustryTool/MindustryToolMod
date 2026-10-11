@@ -13,6 +13,7 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.List;
 import arc.func.Cons;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.ReactiveSource;
 import solim.core.SolimToken;
 import solim.core.Units;
 import solim.display.SolimImage;
@@ -61,6 +63,9 @@ public final class Button
     private long pressTime = -1L;
     private boolean hasClickListener = false;
     private boolean hasLongClickListener = false;
+    private boolean hasCheckedReassertListener = false;
+    private @Nullable Readable<Boolean> checkedBinding;
+    private static boolean checkedWarningLogged = false;
 
     public Button() {
         this(new arc.scene.ui.Button(new ButtonStyle()));
@@ -240,8 +245,54 @@ public final class Button
             Effect e = Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get())));
             bindings.add(e);
             OwnershipContext.register(e);
+            // Arc's Button toggles its internal checked flag on every click. For a
+            // reactive (signal-backed) binding, re-assert the signal's value after each
+            // click so the declarative binding wins over Arc's auto-toggle. Constant
+            // readables (Readable.of(...)) are intentionally left alone — they have no
+            // signal to re-read and rely on rebuild-on-toggle.
+            if (signal instanceof ReactiveSource) {
+                checkedBinding = signal;
+                ensureCheckedReassertListener();
+            }
+            // Warn once if this button's style has no checked visual, so a bound
+            // selected state that silently fails to render is surfaced in development.
+            ButtonStyle current = button.getStyle();
+            if (current != null && current.checked == null) {
+                warnCheckedWithoutVisual();
+            }
         }
         return this;
+    }
+
+    /**
+     * Installs a click listener that re-asserts a reactive {@code checked} binding after
+     * Arc's built-in auto-toggle has flipped the flag. Runs on every click for
+     * signal-backed bindings only. Arc's public {@code setChecked} uses
+     * {@code programmaticChangeEvents == false} and fires no {@code ChangeEvent}, so this
+     * cannot loop.
+     */
+    private void ensureCheckedReassertListener() {
+        if (hasCheckedReassertListener) {
+            return;
+        }
+        hasCheckedReassertListener = true;
+        button.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Readable<Boolean> binding = checkedBinding;
+                if (binding != null) {
+                    Button.this.button.setChecked(Boolean.TRUE.equals(binding.peek()));
+                }
+            }
+        });
+    }
+
+    private static void warnCheckedWithoutVisual() {
+        if (checkedWarningLogged) {
+            return;
+        }
+        checkedWarningLogged = true;
+        Log.warn("[Solim] .checked(...) bound to a style with no checked visual — the selected state will not render. Use a style that declares a checked state; action-chip styles deliberately have none.");
     }
 
     public Button visible(@Nullable Readable<Boolean> signal) {

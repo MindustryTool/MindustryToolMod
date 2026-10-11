@@ -121,7 +121,7 @@ public class MapCard extends BaseComponent {
                                 Core.bundle.get("browser.map.download"));
 
                         button(onPlay)
-                                .style(WebStyles.cardActionText())
+                                .style(WebStyles.actionCardText())
                                 .growX()
                                 .height(unit(9))
                                 .tooltip(Core.bundle.get("browser.map.play"))
@@ -132,7 +132,7 @@ public class MapCard extends BaseComponent {
 
     private void statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         button(action)
-                .style(WebStyles.cardActionText())
+                .style(WebStyles.actionCardText())
                 .growX()
                 .height(unit(9))
                 .gap(unit(1))

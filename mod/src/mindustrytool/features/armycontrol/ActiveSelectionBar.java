@@ -54,7 +54,7 @@ public class ActiveSelectionBar extends BaseComponent {
                                         int count = map.get(type, 0);
                                         String hint = Core.bundle.get("feature.army-control.hint.deselect-chip", "Tap to exclude from selection");
                                         button()
-                                                .style(WebStyles.filterChip())
+                                                .style(WebStyles.actionChip())
                                                 .padding(unit(1))
                                                 .tooltip(type.localizedName + ": " + hint)
                                                 .onClick(() -> feature.deselectUnitType(type))

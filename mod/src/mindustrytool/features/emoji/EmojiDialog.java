@@ -65,7 +65,7 @@ public class EmojiDialog extends SolimDialog {
                             wrap().left().gap(unit(1.5f)).children(() -> {
                                 for (Entry entry : entries) {
                                     button()
-                                            .style(WebStyles.filterChip())
+                                            .style(WebStyles.actionChip())
                                             .onClick(() -> copyGlyph(entry))
                                             .padding(unit(1.5f))
                                             .tooltip(entry.name)

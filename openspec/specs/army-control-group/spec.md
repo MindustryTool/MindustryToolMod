@@ -46,7 +46,7 @@ The system SHALL allow players to create, save, recall, and delete unit control 
 - **THEN** the group is removed from the active control groups list
 
 #### Scenario: Empty groups collapse
-- **WHEN** no control groups are saved
+- **WHEN** no control groups are saved but units are selected
 - **THEN** the groups section renders nothing (no section label and no `No groups saved` placeholder)
 
 ### Requirement: Unit Type Deselection via Chips
@@ -63,11 +63,11 @@ The system SHALL display compact icon-plus-count chips representing each unit ty
 - **AND** the remaining unit types remain selected in `input.selectedUnits`
 
 #### Scenario: Empty selection collapses
-- **WHEN** no units are currently selected
+- **WHEN** no units are currently selected but control groups are saved
 - **THEN** the Active Selection section renders nothing (no section label and no `No units selected` placeholder)
 
 ### Requirement: UI Display Mode and Persistence
-The system SHALL provide Army Control as a compact QuickAccess popup or persistent HUD sharing one icon-toolbar layout with no title or section labels, and keep the menu open during unit micro until explicitly dismissed.
+The system SHALL provide Army Control as a compact QuickAccess popup or persistent HUD sharing one icon-toolbar layout with no title or section labels, keep the bar-facing popup edge fixed as content height changes, and keep the menu open during unit micro until explicitly dismissed.
 
 #### Scenario: Compact toolbar actions
 - **WHEN** the Army Control UI is shown in either popup or HUD mode
@@ -78,6 +78,15 @@ The system SHALL provide Army Control as a compact QuickAccess popup or persiste
 - **WHEN** the user activates select-map, select-screen, recalls a group, or taps a unit chip to exclude
 - **THEN** the popup remains open so the user can continue managing army selections and issuing orders
 - **AND** the popup only closes when the user activates the toolbar close icon or clicks outside
+
+#### Scenario: Popup keeps its bar-facing edge on content change
+- **WHEN** selection chips or control groups appear, collapse, or reflow while the popup is shown
+- **THEN** the popup edge facing the QuickAccess bar stays fixed (top edge when hanging below the bar, bottom edge when sitting above it)
+- **AND** growth never extends into the QuickAccess bar.
+
+#### Scenario: Doubly-empty state shows a ghost hint line
+- **WHEN** no units are selected and no control groups are saved
+- **THEN** the popup shows a single ghost hint line instead of dead gap space.
 
 #### Scenario: Configurable display mode
 - **WHEN** the user changes the display mode setting to HUD in feature settings

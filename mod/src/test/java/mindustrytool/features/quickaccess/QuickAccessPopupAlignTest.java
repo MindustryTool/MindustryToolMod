@@ -37,4 +37,20 @@ class QuickAccessPopupAlignTest {
         assertEquals(0f, desired, 0.001f);
         assertEquals(0f, QuickAccessPopupHelper.clampX(desired, 500f, 400f), 0.001f);
     }
+
+    @Test
+    void upperHalf_barCenterAtOrAboveMidpoint() {
+        assertEquals(true, QuickAccessPopupHelper.isUpperHalf(500f, 40f, 600f));
+        assertEquals(true, QuickAccessPopupHelper.isUpperHalf(280f, 40f, 600f));
+    }
+
+    @Test
+    void lowerHalf_barCenterBelowMidpoint() {
+        assertEquals(false, QuickAccessPopupHelper.isUpperHalf(100f, 40f, 600f));
+    }
+
+    @Test
+    void zeroStage_neverUpperHalf() {
+        assertEquals(false, QuickAccessPopupHelper.isUpperHalf(500f, 40f, 0f));
+    }
 }

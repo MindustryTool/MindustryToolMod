@@ -125,7 +125,7 @@ public class SchematicIconPickerDialog extends SolimDialog {
 
     private void glyphChip(Entry entry) {
         button()
-                .style(WebStyles.filterChip())
+                .style(WebStyles.actionChip())
                 .onClick(() -> select(String.valueOf(entry.glyph)))
                 .size(unit(11))
                 .padding(unit(1))
@@ -136,7 +136,7 @@ public class SchematicIconPickerDialog extends SolimDialog {
     private void contentChip(UnlockableContent content) {
         String emoji = content.emoji() + "";
         button()
-                .style(WebStyles.filterChip())
+                .style(WebStyles.actionChip())
                 .onClick(() -> select(emoji))
                 .size(unit(11))
                 .padding(unit(1))

@@ -2,6 +2,7 @@ package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
 
+import arc.Core;
 import arc.scene.Element;
 import arc.util.Nullable;
 import arc.util.Time;
@@ -44,12 +45,28 @@ public final class ArmyControlPopup {
         }
         feature.refreshActiveSelection();
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
+        menu.pinnedEdge(pinnedEdgeFor(quickAccessBar));
     }
 
     public static void hide() {
         if (menu != null) {
             menu.hide();
         }
+    }
+
+    /**
+     * Derives the pinned edge from the placement half: hanging below the bar
+     * pins TOP so growth extends downward, sitting above pins BOTTOM.
+     */
+    static Popup.Edge pinnedEdgeFor(@Nullable Element quickAccessBar) {
+        float stageH = Core.scene != null ? Core.scene.getHeight() : 0f;
+        float barY = 0f;
+        float barH = 0f;
+        if (quickAccessBar != null) {
+            barY = quickAccessBar.y;
+            barH = quickAccessBar.getHeight();
+        }
+        return QuickAccessPopupHelper.isUpperHalf(barY, barH, stageH) ? Popup.Edge.TOP : Popup.Edge.BOTTOM;
     }
 
     private static Component buildContent(@Nullable ArmyControlFeature feature) {
