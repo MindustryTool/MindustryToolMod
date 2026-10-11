@@ -10,6 +10,7 @@ import arc.struct.ObjectIntMap;
 import arc.struct.Seq;
 import arc.util.Nullable;
 import mindustry.Vars;
+import mindustry.game.EventType.Trigger;
 import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.game.EventType.ResetEvent;
 import mindustry.gen.Groups;
@@ -36,6 +37,7 @@ public class ArmyControlFeature extends Feature {
     public static final String DISPLAY_POPUP = "popup";
     public static final String DISPLAY_HUD = "hud";
     public static final int DEFAULT_MAX_GROUPS = 5;
+    private static final int SELECTION_POLL_INTERVAL = 15;
 
     public final ConfigGroup config;
     public final ConfigValue<String> displayModeConfig;
@@ -57,6 +59,7 @@ public class ArmyControlFeature extends Feature {
     private @Nullable ArmyControlHudView hudView;
     private @Nullable ArmyControlSettingsDialog settingsDialog;
     private boolean quickAccessHooked = false;
+    private int pollTicks = 0;
 
     public ArmyControlFeature() {
         super(FeatureMetadata.builder()
@@ -96,6 +99,18 @@ public class ArmyControlFeature extends Feature {
 
         Events.on(WorldLoadEvent.class, e -> onWorldReset());
         Events.on(ResetEvent.class, e -> onWorldReset());
+        // The game loop mutates selectedUnits behind our back (per-frame commandable
+        // validation, vanilla box-selects, unit deaths). Poll lightly so the chips
+        // never show a stale selection.
+        Events.run(Trigger.update, () -> {
+            if (++pollTicks < SELECTION_POLL_INTERVAL) {
+                return;
+            }
+            pollTicks = 0;
+            if (isEnabled()) {
+                refreshActiveSelection();
+            }
+        });
     }
 
     private void onWorldReset() {
@@ -231,7 +246,9 @@ public class ArmyControlFeature extends Feature {
         selected.clear();
         if (Groups.unit != null) {
             for (Unit u : Groups.unit) {
-                if (u.team == Vars.player.team() && u != Vars.player.unit() && u.isValid()) {
+                // Match vanilla select-all: only commandable units stick, the game loop
+                // prunes the rest every frame and stale chips would confuse deselection.
+                if (u.team == Vars.player.team() && u != Vars.player.unit() && u.isValid() && u.allowCommand()) {
                     selected.add(u);
                 }
             }
@@ -254,7 +271,7 @@ public class ArmyControlFeature extends Feature {
         Core.camera.bounds(bounds);
         if (Groups.unit != null) {
             for (Unit u : Groups.unit) {
-                if (u.team == Vars.player.team() && u != Vars.player.unit() && u.isValid()
+                if (u.team == Vars.player.team() && u != Vars.player.unit() && u.isValid() && u.allowCommand()
                         && bounds.contains(u.x, u.y)) {
                     selected.add(u);
                 }
@@ -277,6 +294,8 @@ public class ArmyControlFeature extends Feature {
 
     /**
      * Deselects / excludes all units of the given UnitType from the current selection.
+     * Keeps RTS Command Mode active so the remaining selection stays commanded,
+     * matching select/recall behavior.
      */
     public void deselectUnitType(UnitType type) {
         if (Vars.control == null || Vars.control.input == null || type == null) {
@@ -289,11 +308,14 @@ public class ArmyControlFeature extends Feature {
                 selected.remove(i);
             }
         }
+        Vars.control.input.commandMode = true;
         refreshActiveSelection();
     }
 
     /**
      * Updates the reactive summary of currently selected units.
+     * Skips the signal update when nothing changed so the periodic poll
+     * never rebuilds the selection UI for an identical selection.
      */
     public void refreshActiveSelection() {
         ObjectIntMap<UnitType> map = new ObjectIntMap<>();
@@ -306,7 +328,24 @@ public class ArmyControlFeature extends Feature {
                 }
             }
         }
-        activeSelectionSignal.set(map);
+        if (!sameSelection(activeSelectionSignal.peek(), map)) {
+            activeSelectionSignal.set(map);
+        }
+    }
+
+    private static boolean sameSelection(@Nullable ObjectIntMap<UnitType> a, @Nullable ObjectIntMap<UnitType> b) {
+        if (a == b) {
+            return true;
+        }
+        if (a == null || b == null || a.size != b.size) {
+            return false;
+        }
+        for (UnitType key : a.keys()) {
+            if (a.get(key, 0) != b.get(key, 0)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // --- Control Group Management ---
@@ -343,7 +382,7 @@ public class ArmyControlFeature extends Feature {
         IntSeq ids = group.getUnitIds();
         for (int i = 0; i < ids.size; i++) {
             Unit u = Groups.unit != null ? Groups.unit.getByID(ids.get(i)) : null;
-            if (u != null && u.isValid()) {
+            if (u != null && u.isValid() && u.allowCommand()) {
                 selected.add(u);
             }
         }

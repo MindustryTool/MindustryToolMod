@@ -196,6 +196,7 @@ public class FactorySupplyTask implements AutoplayTask {
         if (factory == null || !factory.isValid() || unit == null || Vars.content == null) {
             return result;
         }
+
         for (Item item : Vars.content.items()) {
             if (item == null) {
                 continue;
@@ -207,6 +208,7 @@ public class FactorySupplyTask implements AutoplayTask {
             } catch (Throwable ignored) {
             }
         }
+
         return result;
     }
 
@@ -215,6 +217,7 @@ public class FactorySupplyTask implements AutoplayTask {
         if (factory == null || !factory.isValid() || factory.items == null || factory.block == null) {
             return result;
         }
+
         Block block = factory.block;
         if (block instanceof GenericCrafter) {
             GenericCrafter crafter = (GenericCrafter) block;
@@ -475,6 +478,7 @@ public class FactorySupplyTask implements AutoplayTask {
         if (block == null || item == null) {
             return 1;
         }
+
         int min = Integer.MAX_VALUE;
         if (block.consumers != null) {
             for (Consume consume : block.consumers) {
@@ -603,22 +607,27 @@ public class FactorySupplyTask implements AutoplayTask {
         } else if (ai.tourItem() == null || ai.tourItem() != unit.stack.item) {
             ai.resetTour();
         }
+
         if (unit == null || !unit.isValid() || unit.type == null || unit.type.itemCapacity <= 0) {
             status.set(Core.bundle.get("feature.autoplay.status.cannot-carry"));
             return false;
         }
+
         Seq<Building> cores = new Seq<>();
         Seq<Building> containers = new Seq<>();
         collectStorages(unit, cores, containers);
+
         if (cores.isEmpty() && containers.isEmpty()) {
             status.set(Core.bundle.get("feature.autoplay.status.no-storage"));
             return false;
         }
+
         Seq<Building> factories = findFactories(unit, cores, containers);
         if (factories.isEmpty()) {
             status.set(Core.bundle.get("feature.autoplay.status.no-factories"));
             return false;
         }
+
         if (factoryCursor >= factories.size) {
             factoryCursor = 0;
         }
@@ -626,6 +635,7 @@ public class FactorySupplyTask implements AutoplayTask {
         if (unit.stack.amount > 0 && unit.stack.item != null) {
             return updateCarrying(unit, cores, containers, factories);
         }
+
         return updateEmpty(unit, cores, containers, factories);
     }
 
@@ -785,15 +795,18 @@ public class FactorySupplyTask implements AutoplayTask {
                 || !needsInput(ai.targetFactory(), ai.targetItem(), unit)) {
             return false;
         }
+
         Building source = findWithdrawStorage(ai.targetFactory(), ai.targetItem(), unit, cores, containers);
         if (source == null) {
             return false;
         }
+
         int take = planSupplyTake(unit, source, factories, factories.indexOf(ai.targetFactory(), true),
                 ai.targetFactory(), ai.targetItem());
         if (take <= 0) {
             return false;
         }
+
         ai.setJob(FactorySupplyAI.Job.SUPPLY, ai.targetFactory(), source, ai.targetItem(), take);
         status.set(Core.bundle.format("feature.autoplay.status.supplying", ai.targetItem().localizedName));
         return true;
@@ -810,12 +823,14 @@ public class FactorySupplyTask implements AutoplayTask {
                 || storedOf(ai.targetFactory(), ai.targetItem()) <= 0) {
             return false;
         }
+
         Building dest = findDepositStorage(ai.targetFactory(), ai.targetItem(),
                 Math.min(storedOf(ai.targetFactory(), ai.targetItem()), unit.type.itemCapacity),
                 unit, cores, containers);
         if (dest == null) {
             return false;
         }
+        
         ai.setJob(FactorySupplyAI.Job.COLLECT, ai.targetFactory(), dest, ai.targetItem(), 0);
         status.set(Core.bundle.format("feature.autoplay.status.collecting", ai.targetItem().localizedName));
         return true;

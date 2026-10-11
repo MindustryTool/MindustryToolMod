@@ -4,15 +4,10 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
-import arc.struct.IntSeq;
-import arc.struct.Seq;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.game.EventType.ResizeEvent;
-import mindustry.gen.Groups;
 import mindustry.gen.Icon;
-import mindustry.gen.Unit;
-import mindustry.graphics.Pal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
 import solim.core.BaseComponent;
@@ -48,53 +43,7 @@ public class ArmyControlHudView extends BaseComponent {
 
             // Content container
             column().width(unit(65)).gap(unit(1.5f)).children(() -> {
-                // Header with title
-                row().growX().center().children(() -> {
-                    icon(Icon.units).size(unit(4.5f)).color(Pal.accent);
-                    text(Core.bundle.get("feature.army-control.title", "Army Control"))
-                            .color(Pal.accent)
-                            .growX()
-                            .left();
-                });
-
-                // Scope actions
-                row().growX().gap(unit(1)).center().children(() -> {
-                    button(Core.bundle.get("feature.army-control.action.select-map", "Select Map"), feature::selectAllMap)
-                            .style(WebStyles.primaryText())
-                            .growX();
-
-                    button(Core.bundle.get("feature.army-control.action.select-screen", "Select Screen"), feature::selectScreen)
-                            .style(WebStyles.secondaryText())
-                            .growX();
-
-                    button(Core.bundle.get("feature.army-control.action.deselect-all", "Deselect All"), feature::deselectAll)
-                            .style(WebStyles.outlineText())
-                            .growX();
-                });
-
-                // Active selection chips
-                new ActiveSelectionBar(feature);
-
-                // Add group button
-                row().growX().children(() -> {
-                    button(Core.bundle.get("feature.army-control.action.add-group", "Add Group"), () -> {
-                        Seq<ControlGroup> groups = feature.controlGroupsSignal().peek();
-                        int nextNum = (groups != null ? groups.size : 0) + 1;
-                        String groupName = Core.bundle.format("feature.army-control.group.name-format", nextNum);
-                        IntSeq ids = feature.getSelectedUnitIds();
-                        if (ids.isEmpty() && Groups.unit != null && Vars.player != null) {
-                            for (Unit u : Groups.unit) {
-                                if (u.team == Vars.player.team() && u != Vars.player.unit() && u.isValid()) {
-                                    ids.add(u.id);
-                                }
-                            }
-                        }
-                        feature.createGroup(groupName, ids);
-                    }).style(WebStyles.secondaryText()).growX();
-                });
-
-                // Control group list
-                new ControlGroupList(feature);
+                new ArmyControlCompactContent(feature, null);
             });
         }).gap(unit(1));
 

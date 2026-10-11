@@ -15,7 +15,9 @@ import solim.core.BaseComponent;
 import solim.reactive.Readable;
 
 /**
- * Component rendering saved Control Groups list with recall, unit summary, and delete buttons.
+ * Component rendering saved Control Groups list with recall and delete buttons.
+ * Each row shows the group's living-unit icons plus count; group names are not shown.
+ * Renders nothing when no groups are saved.
  */
 public class ControlGroupList extends BaseComponent {
 
@@ -33,20 +35,8 @@ public class ControlGroupList extends BaseComponent {
                 .growX()
                 .gap(unit(1))
                 .children(() -> {
-                    row().growX().children(() -> {
-                        text(Core.bundle.get("feature.army-control.section.groups", "Control Groups"))
-                                .color(WebStyles.Colors.GHOST_FG)
-                                .growX()
-                                .left();
-                    });
-
                     dynamic(groupsSignal, groups -> {
                         if (groups == null || groups.size == 0) {
-                            row().growX().padding(unit(1)).children(() -> {
-                                text(Core.bundle.get("feature.army-control.empty.groups", "No groups saved"))
-                                        .color(WebStyles.Colors.DISABLED_FG)
-                                        .left();
-                            });
                             return;
                         }
 
@@ -64,7 +54,11 @@ public class ControlGroupList extends BaseComponent {
 
     private void buildGroupRow(ControlGroup group) {
         ObjectIntMap<UnitType> summary = group.summarizeUnits();
-        int totalUnits = group.getUnitIds().size;
+        int living = 0;
+        for (UnitType ut : summary.keys()) {
+            living += summary.get(ut, 0);
+        }
+        final int livingTotal = living;
 
         row()
                 .growX()
@@ -78,16 +72,16 @@ public class ControlGroupList extends BaseComponent {
                             .padding(unit(1.5f))
                             .onClick(() -> feature.recallGroup(group))
                             .children(() -> row().growX().gap(unit(1.5f)).center().children(() -> {
-                                text(group.getName() + " (" + totalUnits + ")")
-                                        .color(Pal.accent)
-                                        .left();
-
-                                // Icons of unit types in group
-                                row().gap(unit(1)).growX().right().children(() -> {
+                                // Icons of living unit types in group
+                                row().gap(unit(1)).growX().left().children(() -> {
                                     for (UnitType ut : summary.keys()) {
                                         image(new TextureRegionDrawable(ut.uiIcon)).size(unit(4));
                                     }
                                 });
+
+                                text(String.valueOf(livingTotal))
+                                        .color(Pal.accent)
+                                        .right();
                             }));
 
                     // Delete group button

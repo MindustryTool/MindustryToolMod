@@ -13,8 +13,10 @@ import solim.core.BaseComponent;
 import solim.reactive.Readable;
 
 /**
- * Renders the active unit selection bar. Displays chips for each selected unit type
- * with unit icon and count. Tapping a chip immediately deselects that unit type.
+ * Renders the active unit selection bar. Displays one compact chip per selected
+ * unit type with unit icon and count only (name moves to the tooltip).
+ * Tapping a chip immediately deselects that unit type.
+ * Renders nothing when nothing is selected.
  */
 public class ActiveSelectionBar extends BaseComponent {
 
@@ -32,20 +34,8 @@ public class ActiveSelectionBar extends BaseComponent {
                 .growX()
                 .gap(unit(1))
                 .children(() -> {
-                    row().growX().children(() -> {
-                        text(Core.bundle.get("feature.army-control.section.selection", "Active Selection"))
-                                .color(WebStyles.Colors.GHOST_FG)
-                                .growX()
-                                .left();
-                    });
-
                     dynamic(activeMap, map -> {
                         if (map == null || map.size == 0) {
-                            row().growX().padding(unit(1)).children(() -> {
-                                text(Core.bundle.get("feature.army-control.empty.selection", "No units selected"))
-                                        .color(WebStyles.Colors.DISABLED_FG)
-                                        .left();
-                            });
                             return;
                         }
 
@@ -58,17 +48,19 @@ public class ActiveSelectionBar extends BaseComponent {
                         wrap()
                                 .growX()
                                 .gap(unit(1.5f))
+                                .left()
                                 .children(() -> {
                                     for (UnitType type : types) {
                                         int count = map.get(type, 0);
+                                        String hint = Core.bundle.get("feature.army-control.hint.deselect-chip", "Tap to exclude from selection");
                                         button()
                                                 .style(WebStyles.filterChip())
                                                 .padding(unit(1))
-                                                .tooltip(Core.bundle.get("feature.army-control.hint.deselect-chip", "Tap to exclude from selection"))
+                                                .tooltip(type.localizedName + ": " + hint)
                                                 .onClick(() -> feature.deselectUnitType(type))
                                                 .children(() -> row().gap(unit(1)).center().children(() -> {
                                                     image(new TextureRegionDrawable(type.uiIcon)).size(unit(5));
-                                                    text(type.localizedName + " x" + count)
+                                                    text(String.valueOf(count))
                                                             .color(WebStyles.Colors.PRIMARY_FG);
                                                 }));
                                     }
