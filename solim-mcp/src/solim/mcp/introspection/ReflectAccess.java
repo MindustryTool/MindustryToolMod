@@ -89,23 +89,10 @@ public final class ReflectAccess {
 		return found;
 	}
 
-	/** Sets accessible on a field and returns it, or {@code null} if the field could not be made usable. */
-    public static @Nullable Field accessible(Field field) {
-		if (field == null) return null;
-		if (!field.isAccessible()) {
-			try {
-				field.setAccessible(true);
-			} catch (RuntimeException e) {
-				Log.warn("[solim-mcp] cannot access field {0}", field.getName());
-				return null;
-			}
-		}
-		return field;
-	}
 
 	/** Safely reads a field value, returning {@code null} on any reflective failure. Static fields accept a {@code null} target. */
 	public static Object read(Field field, Object target) {
-		if (field == null || accessible(field) == null || (target == null && !isStatic(field))) return null;
+		if (field == null || field.canAccess(target) || (target == null && !isStatic(field))) return null;
 		try {
 			return field.get(target);
 		} catch (IllegalAccessException e) {
@@ -116,25 +103,14 @@ public final class ReflectAccess {
 
 	/** Safely invokes a no-arg method, returning {@code null} on any reflective failure. */
 	public static Object invoke(Method method, Object target) {
-		if (method == null || target == null || !makeAccessible(method)) return null;
+		if (method == null || target == null) return null;
 		try {
+            method.trySetAccessible();
 			return method.invoke(target);
 		} catch (ReflectiveOperationException e) {
 			Log.warn("[solim-mcp] invoke of '{0}' failed: {1}", method.getName(), e.getMessage());
 			return null;
 		}
-	}
-
-    private static boolean makeAccessible(Method method) {
-		if (!method.isAccessible()) {
-			try {
-				method.setAccessible(true);
-			} catch (RuntimeException e) {
-				Log.warn("[solim-mcp] cannot access method {0}", method.getName());
-				return false;
-			}
-		}
-		return true;
 	}
 
 	/** Whether the cast to a type is possible; used to gate introspection on schema compatibility. */

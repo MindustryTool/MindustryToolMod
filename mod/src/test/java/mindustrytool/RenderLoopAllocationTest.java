@@ -24,7 +24,6 @@ import mindustry.core.GameState;
 import mindustry.core.GameState.State;
 import mindustry.core.UI;
 import mindustry.game.Rules;
-import mindustry.graphics.Pal;
 import mindustry.ui.fragments.HudFragment;
 import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.visualizer.VisualizerFeature.BridgeFlowState;

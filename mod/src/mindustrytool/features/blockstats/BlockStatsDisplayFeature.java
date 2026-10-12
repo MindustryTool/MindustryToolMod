@@ -18,7 +18,6 @@ import mindustry.Vars;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Building;
 import mindustry.graphics.Layer;
-import mindustry.graphics.Pal;
 import mindustry.ui.Fonts;
 import mindustry.world.Block;
 import mindustry.world.blocks.production.GenericCrafter;
