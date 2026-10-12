@@ -31,7 +31,7 @@ The video playback engine (`VideoPlayer`) SHALL decode MP4 (ISO BMFF container) 
 - **THEN** the decoder and audio playhead SHALL seek back to the beginning and continue playback continuously
 
 ### Requirement: Audio Decoding and Synchronization
-The video engine SHALL extract the AAC audio track from the MP4 container and decode it into 16-bit PCM WAV audio using pure Java (`net.sourceforge.jaad:jaad`) without `java.awt`. The decoded audio SHALL be persisted as `<hash>.wav` in the shared disk cache directory. Audio playback SHALL be driven by `arc.audio.Music`. When an audio track is present, `music.getPosition()` SHALL serve as the master clock for video frame presentation; if no audio track exists, the engine SHALL automatically fall back to game delta-time pacing. Audio volume SHALL be unmuted by default and scaled by Mindustry's SFX volume setting (`sfxvol`).
+The video engine SHALL extract the AAC audio track from the MP4 container and decode it into 16-bit PCM WAV audio using pure Java without `java.awt` (JCodec core's bundled AAC decoder). The decoded audio SHALL be persisted as `<hash>.wav` in the shared disk cache directory. Audio playback SHALL be driven by `arc.audio.Music`. When an audio track is present, `music.getPosition()` SHALL serve as the master clock for video frame presentation; if no audio track exists, the engine SHALL automatically fall back to game delta-time pacing. Audio volume SHALL be unmuted by default and scaled by Mindustry's SFX volume setting (`sfxvol`).
 
 #### Scenario: AAC audio is decoded and cached as WAV
 - **WHEN** an MP4 containing an AAC audio track is loaded for the first time

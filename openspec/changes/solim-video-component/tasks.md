@@ -1,6 +1,6 @@
 ## 1. Dependencies and Assets Setup
 
-- [ ] 1.1 Add `org.jcodec:jcodec:0.2.5` and `net.sourceforge.jaad:jaad:0.8.4` to `:solim-core` dependencies in `build.gradle.kts`
+- [ ] 1.1 Add `org.jcodec:jcodec:0.2.5` to `:solim-core` dependencies in `build.gradle.kts` (no separate JAAD dependency — jcodec ships JAAD shaded in)
 - [ ] 1.2 Download and place Lucide icons (`play.png`, `pause.png`, `volume-2.png`, `volume-x.png`) into `assets/icons/`
 - [ ] 1.3 Verify project builds and passes checkstyle with new dependencies and assets
 
@@ -14,7 +14,7 @@
 ## 3. Video and Audio Decoding Pipeline
 
 - [ ] 3.1 Implement `YuvToRgbaConverter` converting JCodec `Picture` YUV420p planes directly to direct `ByteBuffer` without AWT
-- [ ] 3.2 Implement pure Java AAC audio decoding via JAAD, saving 16-bit PCM WAV to `<hash>.wav` in the shared disk cache
+- [ ] 3.2 Implement pure Java AAC audio decoding via jcodec's `org.jcodec.codecs.aac.AACDecoder`, saving 16-bit PCM WAV to `<hash>.wav` in the shared disk cache
 - [ ] 3.3 Implement `VideoPlayer` managing asynchronous background frame decoding and thread-safe double buffering
 - [ ] 3.4 Implement presentation timestamp (PTS) pacing with `arc.audio.Music` master clock and delta-time fallback
 - [ ] 3.5 Implement seeking, volume scaling via `sfxvol`, and seamless stream looping in `VideoPlayer`

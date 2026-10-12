@@ -21,6 +21,7 @@ import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.godmode.GodModeFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
 import mindustrytool.features.joystick.JoystickFeature;
+import mindustrytool.features.logicvisualizer.LogicVisualizerFeature;
 import mindustrytool.features.music.MusicFeature;
 import mindustrytool.features.pathfinding.PathfindingFeature;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
@@ -87,6 +88,7 @@ public class Main extends Mod {
                 new MapBrowserFeature(),
                 new PatchBrowserFeature(),
                 new VisualizerFeature(),
+                new LogicVisualizerFeature(),
                 new PlayerConnectFeature(),
                 new HealthBarFeature(),
                 new DisplayGroupFeature(),

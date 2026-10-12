@@ -8,7 +8,7 @@ Adding video and audio capability requires addressing cross-platform container d
 
 **Goals:**
 - Provide a pure Java MP4 / H.264 baseline video decoder using `org.jcodec:jcodec` that functions identically on both Desktop and Android without `java.awt`.
-- Provide a pure Java AAC audio decoder using `net.sourceforge.jaad:jaad` to decode in-container audio tracks into 16-bit PCM WAV data.
+- Provide a pure Java AAC audio decoder via jcodec's bundled `org.jcodec.codecs.aac.AACDecoder` to decode in-container audio tracks into 16-bit PCM WAV data.
 - Ensure zero-allocation frame updates during playback to eliminate garbage collection hitching.
 - Synchronize video frame presentation to the audio playhead (`arc.audio.Music.getPosition()`), with automatic fallback to delta-time pacing for silent video clips.
 - Share the exact same disk cache directory as `NetworkImage` (`Vars.dataDirectory/solim/cache/networkImage`), caching both the downloaded `.mp4` and the pre-decoded `.wav` file by SHA-256 URL hash.
@@ -24,11 +24,14 @@ Adding video and audio capability requires addressing cross-platform container d
 
 ## Decisions
 
-### Decision 1: Pure Java JCodec Core and JAAD without AWT
-- **Choice**: Depend on `org.jcodec:jcodec:0.2.5` core directly in `:solim-core` (excluding `jcodec-javase`) and `net.sourceforge.jaad:jaad:0.8.4`.
-- **Rationale**: `jcodec-javase` depends on `java.awt.image.BufferedImage`, which does not exist on Android and causes immediate `NoClassDefFoundError` crashes. Core JCodec and JAAD are pure computational Java that compile cleanly to Java 8 bytecode and desugar smoothly via D8 for Android API 14+.
+### Decision 1: Pure Java JCodec Core Only, No AWT
+- **Choice**: Depend on `org.jcodec:jcodec:0.2.5` core directly in `:solim-core` (excluding `jcodec-javase`) and nothing else. AAC decoding uses jcodec's `org.jcodec.codecs.aac.AACDecoder`.
+- **Rationale**: `jcodec-javase` depends on `java.awt.image.BufferedImage`, which does not exist on Android and causes immediate `NoClassDefFoundError` crashes. JCodec core compiles to Java 8 bytecode, references no `java.awt`/`javax.media`/`java.util.function` types, and desugars smoothly via D8 for Android API 14+. It also has **zero transitive runtime dependencies** and already **shades JAAD in** under `net.sourceforge.jaad.aac.*` (wrapped by `org.jcodec.codecs.aac.AACDecoder`), so a separate JAAD artifact is redundant. Adding one would also put duplicate `net.sourceforge.jaad.aac.*` classes on the classpath.
 - **Alternatives Considered**:
+  - *Standalone JAAD fork (`com.tianscar.javasound:jaad:0.9.4`, `com.gitlab.9lukas5:jaad:0.8.8`, `de.sfuhrm:jaad:0.8.7`)*: Duplicate classes against jcodec's shaded copy, and the 0.9.x fork dropped the original high-level `Decoder`/`AudioFrame`/`MediaManager` wrappers. Rejected.
+  - *`net.sourceforge.jaadec:jaad`*: Not published to Maven Central — the coordinate only ever existed on JCenter, which shut down in 2021. Unresolvable.
   - *JavaCV / FFmpeg native binaries*: Exceeds 50MB, causes architecture fragmentation (x86_64, arm64-v8a, armeabi-v7a), and fails on Android under Mindustry's `ModClassLoader`.
+  - *Android `MediaExtractor`/`MediaCodec`*: Desktop/Android behavior diverges, defeating the identical-cross-platform goal.
   - *External sidecar audio files*: Requires hosting two separate files (`.mp4` and `.ogg`) instead of a self-contained MP4.
 
 ### Decision 2: Zero-Allocation YUV-to-RGBA Pipeline & In-Place Texture Uploads
@@ -36,7 +39,7 @@ Adding video and audio capability requires addressing cross-platform container d
 - **Rationale**: Reallocating GL textures or `Pixmap` instances at 24–30 FPS causes severe heap churn and GPU resource leaks. A double-buffered ping-pong pair of `Pixmap` instances decouples background decoding from main-thread rendering without allocations.
 
 ### Decision 3: Audio Transcoding to Disk-Cached WAV and Native SoLoud Playback
-- **Choice**: On initial video download, the AAC audio track is extracted and decoded to 16-bit PCM by JAAD on a background worker, prepended with a standard 44-byte WAV header, and saved to disk as `<hash>.wav` in the shared cache directory. Playback is driven natively by Arc's `arc.audio.Music` backed by SoLoud.
+- **Choice**: On initial video download, the AAC audio track is extracted and decoded to 16-bit PCM by `org.jcodec.codecs.aac.AACDecoder` on a background worker, prepended with a standard 44-byte WAV header, and saved to disk as `<hash>.wav` in the shared cache directory. Playback is driven natively by Arc's `arc.audio.Music` backed by SoLoud.
 - **Rationale**: Mindustry's audio engine (SoLoud) natively supports WAV with hardware mixing, pitch/volume scaling, and precise playhead reporting (`getPosition()`). Caching the decoded `.wav` on disk ensures repeat views never repeat the AAC decoding step.
 
 ### Decision 4: Master Audio Clock Synchronization with Silent Fallback
@@ -56,7 +59,7 @@ Adding video and audio capability requires addressing cross-platform container d
 - **[Risk] High resolution pure Java decoding CPU overhead**  
   → *Mitigation*: Run demuxing and decoding strictly on a daemon worker pool (`solim-video-decode`); document recommended clip specs (360p or 480p baseline H.264, 24–30 fps).
 - **[Risk] Audio decode latency on initial play**  
-  → *Mitigation*: For `< 1 min` clips, JAAD decodes the AAC track to WAV in ~50–150ms on a background thread; once saved as `<hash>.wav`, all future plays load instantly.
+  → *Mitigation*: For `< 1 min` clips, the AAC track decodes to WAV in ~50–150ms on a background thread; once saved as `<hash>.wav`, all future plays load instantly.
 - **[Risk] Volume spikes**  
   → *Mitigation*: Audio volume is clamped and scaled by Mindustry's SFX volume setting (`Core.settings.getInt("sfxvol") / 100f`).
 - **[Risk] Resource leaks on dialog closure**  

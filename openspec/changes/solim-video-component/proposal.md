@@ -5,7 +5,7 @@ Mindustry currently lacks built-in support for playing video and accompanying au
 ## What Changes
 
 - **Pure Java Video Decoder**: Add `org.jcodec:jcodec:0.2.5` to `:solim-core` to demux MP4 (ISO BMFF) and decode H.264 baseline video streams without `java.awt` dependencies.
-- **Pure Java Audio Decoder**: Add `net.sourceforge.jaad:jaad:0.8.4` to `:solim-core` to decode in-container AAC audio tracks into 16-bit PCM WAV data without `java.awt`.
+- **Pure Java Audio Decoder**: Decode in-container AAC audio tracks into 16-bit PCM WAV data using jcodec's bundled `org.jcodec.codecs.aac.AACDecoder` (JAAD ships shaded inside `org.jcodec:jcodec`) — pure Java, no `java.awt`.
 - **Shared Cache Directory**: Store downloaded `.mp4` files and pre-decoded `<hash>.wav` audio files in the exact same cache directory as `NetworkImage` (`Vars.dataDirectory/solim/cache/networkImage/`) keyed by SHA-256 URL hash.
 - **Lucide Icons**: Download and package Lucide icons (`play.png`, `pause.png`, `volume-2.png`, `volume-x.png`) into `assets/icons/` for the playback and audio controls, loaded via `FileIcon`.
 - **Pluggable VideoLoader**: Create `solim.display.video.VideoLoader` and `DefaultVideoLoader` with shared disk caching, with a `RequestVideoLoader` adapter registered in `:mod` routing downloads through `mindustrytool.services.Request`.
@@ -31,7 +31,7 @@ Mindustry currently lacks built-in support for playing video and accompanying au
 
 ## Impact
 
-- **Dependencies**: Adds `org.jcodec:jcodec:0.2.5` and `net.sourceforge.jaad:jaad:0.8.4` to `:solim-core` (pure Java, fully compatible with Java 8 and Android D8 desugaring).
+- **Dependencies**: Adds `org.jcodec:jcodec:0.2.5` to `:solim-core` (pure Java, zero transitive runtime deps, fully compatible with Java 8 and Android D8 desugaring). No separate JAAD dependency — jcodec bundles JAAD internally.
 - **Assets**: Adds Lucide icon assets (`play.png`, `pause.png`, `volume-2.png`, `volume-x.png`) to `assets/icons/`.
 - **APIs**: Introduces `solim.display.video.*` and adds `solim.UI.video(...)` facades.
 - **Cache Footprint**: Reuses `Vars.dataDirectory/solim/cache/networkImage/` alongside `NetworkImage` assets.
