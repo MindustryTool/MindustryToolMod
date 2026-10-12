@@ -24,6 +24,7 @@ import mindustry.gen.Groups;
 import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
+import mindustry.graphics.Pal;
 import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.defense.BuildTurret;
@@ -35,6 +36,7 @@ import mindustry.world.blocks.defense.OverdriveProjector.OverdriveBuild;
 import mindustry.world.blocks.defense.RegenProjector;
 import mindustry.world.blocks.defense.ShockwaveTower;
 import mindustry.world.blocks.defense.turrets.BaseTurret;
+import mindustry.world.blocks.defense.turrets.PointDefenseTurret;
 import mindustry.world.blocks.defense.turrets.Turret;
 import mindustry.world.blocks.defense.turrets.Turret.TurretBuild;
 import mindustry.world.blocks.distribution.MassDriver;
@@ -63,6 +65,8 @@ import solim.reactive.Signal;
  */
 public class RangeDisplayFeature extends Feature {
 
+    private static  final Color ORANGE = Color.valueOf("#FFA500");
+
     public final ConfigGroup config;
     public final ConfigValue<Float> opacityConfig;
     public final ConfigValue<Float> strokeWidthConfig;
@@ -80,7 +84,12 @@ public class RangeDisplayFeature extends Feature {
     public final ConfigValue<Boolean> drawBlockRangeAllyConfig;
     public final ConfigValue<Boolean> drawBlockRangeEnemyConfig;
     public final ConfigValue<Boolean> drawSpawnerRangeConfig;
+    public final ConfigValue<Boolean> drawOverdriveRangeConfig;
+    public final ConfigValue<Boolean> drawMenderRangeConfig;
+    public final ConfigValue<Boolean> drawPointDefenseRangeConfig;
+    public final ConfigValue<Boolean> useTeamColorForSpecialConfig;
     public final ConfigValue<Boolean> dashedConfig;
+    public final ConfigValue<Float> zoomThresholdConfig;
 
     private final Cons<Unit> unitDrawer = this::drawUnitRange;
     private final Cons<Building> buildingDrawer = this::drawBuildingRange;
@@ -107,11 +116,11 @@ public class RangeDisplayFeature extends Feature {
 
     private static final Boolf<Unit> ANY_UNIT = u -> true;
 
-    // Per-block enabled bitset indexed by block.id for zero-allocation O(1) checks during 60 FPS draw
+    
     private @Nullable BitSet blockEnabled;
     private final ObjectMap<String, Signal<Boolean>> blockSignals = new ObjectMap<>();
 
-    // Cached primitive configurations synchronized via signal subscriptions
+    
     private float cachedOpacity = 1.0f;
     private float cachedStrokeWidth = 1.0f;
     private boolean cachedHoverOnly = false;
@@ -128,9 +137,14 @@ public class RangeDisplayFeature extends Feature {
     private boolean cachedDrawBlockRangeAlly = true;
     private boolean cachedDrawBlockRangeEnemy = true;
     private boolean cachedDrawSpawnerRange = true;
+    private boolean cachedDrawOverdriveRange = true;
+    private boolean cachedDrawMenderRange = true;
+    private boolean cachedDrawPointDefenseRange = true;
+    private boolean cachedUseTeamColorForSpecial = false;
     private boolean cachedDashed = true;
+    private float cachedZoomThreshold = 0.5f;
 
-    // Per-frame scratch values read once per draw frame
+    
     private float frameOpacity = 1.0f;
     private float frameStrokeWidth = 1.0f;
     private boolean frameHoverOnly = false;
@@ -149,6 +163,10 @@ public class RangeDisplayFeature extends Feature {
     private boolean frameDrawBlockRangeAlly = true;
     private boolean frameDrawBlockRangeEnemy = true;
     private boolean frameDrawSpawnerRange = true;
+    private boolean frameDrawOverdriveRange = true;
+    private boolean frameDrawMenderRange = true;
+    private boolean frameDrawPointDefenseRange = true;
+    private boolean frameUseTeamColorForSpecial = false;
     private boolean frameDashed = true;
     private @Nullable Team framePlayerTeam;
 
@@ -179,9 +197,14 @@ public class RangeDisplayFeature extends Feature {
         drawBlockRangeAllyConfig = config.boolValue("draw-block-range-ally", true);
         drawBlockRangeEnemyConfig = config.boolValue("draw-block-range-enemy", true);
         drawSpawnerRangeConfig = config.boolValue("draw-spawner-range", true);
+        drawOverdriveRangeConfig = config.boolValue("draw-overdrive-range", true);
+        drawMenderRangeConfig = config.boolValue("draw-mender-range", true);
+        drawPointDefenseRangeConfig = config.boolValue("draw-point-defense-range", true);
+        useTeamColorForSpecialConfig = config.boolValue("use-team-color-for-special", false);
         dashedConfig = config.boolValue("dashed", true);
+        zoomThresholdConfig = config.floatValue("zoom-threshold", 0.5f);
 
-        // Synchronize primitive caches on reactive signal changes
+        
         opacityConfig.signal().subscribe(v -> cachedOpacity = v != null ? v : 1.0f);
         strokeWidthConfig.signal().subscribe(v -> cachedStrokeWidth = v != null ? v : 1.0f);
         hoverOnlyConfig.signal().subscribe(v -> cachedHoverOnly = v != null ? v : false);
@@ -198,7 +221,12 @@ public class RangeDisplayFeature extends Feature {
         drawBlockRangeAllyConfig.signal().subscribe(v -> cachedDrawBlockRangeAlly = v != null ? v : true);
         drawBlockRangeEnemyConfig.signal().subscribe(v -> cachedDrawBlockRangeEnemy = v != null ? v : true);
         drawSpawnerRangeConfig.signal().subscribe(v -> cachedDrawSpawnerRange = v != null ? v : true);
+        drawOverdriveRangeConfig.signal().subscribe(v -> cachedDrawOverdriveRange = v != null ? v : true);
+        drawMenderRangeConfig.signal().subscribe(v -> cachedDrawMenderRange = v != null ? v : true);
+        drawPointDefenseRangeConfig.signal().subscribe(v -> cachedDrawPointDefenseRange = v != null ? v : true);
+        useTeamColorForSpecialConfig.signal().subscribe(v -> cachedUseTeamColorForSpecial = v != null ? v : false);
         dashedConfig.signal().subscribe(v -> cachedDashed = v != null ? v : true);
+        zoomThresholdConfig.signal().subscribe(v -> cachedZoomThreshold = v != null ? v : 0.5f);
 
         syncConfigCache();
 
@@ -241,8 +269,18 @@ public class RangeDisplayFeature extends Feature {
         cachedDrawBlockRangeEnemy = dbe != null ? dbe : true;
         Boolean dsp = drawSpawnerRangeConfig.get();
         cachedDrawSpawnerRange = dsp != null ? dsp : true;
+        Boolean dor = drawOverdriveRangeConfig.get();
+        cachedDrawOverdriveRange = dor != null ? dor : true;
+        Boolean dmr = drawMenderRangeConfig.get();
+        cachedDrawMenderRange = dmr != null ? dmr : true;
+        Boolean dpr = drawPointDefenseRangeConfig.get();
+        cachedDrawPointDefenseRange = dpr != null ? dpr : true;
+        Boolean utc = useTeamColorForSpecialConfig.get();
+        cachedUseTeamColorForSpecial = utc != null ? utc : false;
         Boolean dsh = dashedConfig.get();
         cachedDashed = dsh != null ? dsh : true;
+        Float zt = zoomThresholdConfig.get();
+        cachedZoomThreshold = zt != null ? zt : 0.5f;
     }
 
     public static String blockSettingKey(Block block) {
@@ -267,6 +305,38 @@ public class RangeDisplayFeature extends Feature {
 
     public boolean isRangeBlock(Block block) {
         return isTurretBlock(block) || isSupportBlock(block);
+    }
+
+    /**
+     * Blocks whose range is rendered in the orange overdrive accent color.
+     */
+    public boolean isOverdriveBlock(Block block) {
+        return block instanceof OverdriveProjector;
+    }
+
+    /**
+     * Blocks whose range is rendered in the green healing color.
+     */
+    public boolean isMenderBlock(Block block) {
+        return block instanceof MendProjector
+                || block instanceof RegenProjector
+                || block instanceof RepairTower
+                || block instanceof RepairTurret;
+    }
+
+    /**
+     * Blocks whose range is rendered in white because they intercept projectiles.
+     */
+    public boolean isPointDefenseBlock(Block block) {
+        return block instanceof PointDefenseTurret
+                || block instanceof ShockwaveTower;
+    }
+
+    /**
+     * Whether the block falls into any semantic color category handled by the special color mapping.
+     */
+    public boolean isSpecialColorBlock(Block block) {
+        return isOverdriveBlock(block) || isMenderBlock(block) || isPointDefenseBlock(block);
     }
 
     public void rebuildBitSet() {
@@ -351,7 +421,12 @@ public class RangeDisplayFeature extends Feature {
         drawBlockRangeAllyConfig.reset();
         drawBlockRangeEnemyConfig.reset();
         drawSpawnerRangeConfig.reset();
+        drawOverdriveRangeConfig.reset();
+        drawMenderRangeConfig.reset();
+        drawPointDefenseRangeConfig.reset();
+        useTeamColorForSpecialConfig.reset();
         dashedConfig.reset();
+        zoomThresholdConfig.reset();
 
         for (Entry<String, Signal<Boolean>> entry : blockSignals.entries()) {
             entry.value.set(true);
@@ -387,6 +462,10 @@ public class RangeDisplayFeature extends Feature {
             return;
         }
 
+        if (cachedZoomThreshold > 0.01f && Vars.renderer != null && Vars.renderer.getScale() < cachedZoomThreshold) {
+            return;
+        }
+
         frameOpacity = cachedOpacity;
         frameStrokeWidth = cachedStrokeWidth;
         frameHoverOnly = cachedHoverOnly;
@@ -413,6 +492,10 @@ public class RangeDisplayFeature extends Feature {
         frameDrawBlockRangeAlly = cachedDrawBlockRangeAlly;
         frameDrawBlockRangeEnemy = cachedDrawBlockRangeEnemy;
         frameDrawSpawnerRange = cachedDrawSpawnerRange;
+        frameDrawOverdriveRange = cachedDrawOverdriveRange;
+        frameDrawMenderRange = cachedDrawMenderRange;
+        frameDrawPointDefenseRange = cachedDrawPointDefenseRange;
+        frameUseTeamColorForSpecial = cachedUseTeamColorForSpecial;
         frameDashed = cachedDashed;
         framePlayerTeam = Vars.player != null ? Vars.player.team() : null;
 
@@ -421,7 +504,7 @@ public class RangeDisplayFeature extends Feature {
         float z = Draw.z();
         Draw.z(Layer.overlayUI);
 
-        // 1. Spawner Drop Zones
+        
         if (frameDrawSpawnerRange && Vars.spawner != null && Vars.spawner.getSpawns() != null
                 && Vars.state.rules != null) {
             float dropRadius = Vars.state.rules.dropZoneRadius;
@@ -456,7 +539,7 @@ public class RangeDisplayFeature extends Feature {
                 drawUnitRange(hoveredUnit);
             }
         } else {
-            // 2. Unit Weapon Ranges
+            
             if (frameDrawUnitRangeAlly || frameDrawUnitRangeEnemy || frameDrawUnitRangePlayer) {
                 float margin = 1000f;
                 float cx = Core.camera.position.x;
@@ -467,7 +550,7 @@ public class RangeDisplayFeature extends Feature {
                         unitDrawer);
             }
 
-            // 3. Turret and Support Block Ranges
+            
             if (frameDrawTurretRangeAlly || frameDrawTurretRangeEnemy
                     || frameDrawBlockRangeAlly || frameDrawBlockRangeEnemy) {
                 float cx = Core.camera.position.x;
@@ -569,6 +652,13 @@ public class RangeDisplayFeature extends Feature {
             return;
         }
 
+        Block block = build.block;
+        if (isOverdriveBlock(block) && !frameDrawOverdriveRange
+                || isMenderBlock(block) && !frameDrawMenderRange
+                || isPointDefenseBlock(block) && !frameDrawPointDefenseRange) {
+            return;
+        }
+
         float maxRange = estimateMaxRange(build);
         if (build.x + maxRange < viewBounds.x || build.x - maxRange > viewBounds.x + viewBounds.width
                 || build.y + maxRange < viewBounds.y || build.y - maxRange > viewBounds.y + viewBounds.height) {
@@ -654,9 +744,13 @@ public class RangeDisplayFeature extends Feature {
         Color color;
         if (isTurret) {
             boolean canShoot = !(build instanceof TurretBuild) || ((TurretBuild) build).hasAmmo();
-            color = canShoot ? build.team.color : Color.gray;
+            if (!canShoot) {
+                color = Color.gray;
+            } else {
+                color = resolveSpecialColor(block, build.team.color);
+            }
         } else {
-            color = build.team.color;
+            color = resolveSpecialColor(block, build.team.color);
         }
 
         if (circle) {
@@ -671,6 +765,32 @@ public class RangeDisplayFeature extends Feature {
             Lines.stroke(frameStrokeWidth, colorScratch);
             Lines.dashCircle(x, y, minRange);
         }
+    }
+
+    /**
+     * Resolves the render color for a building block.
+     *
+     * <p>Semantic colors take precedence over team colors unless the team color override is enabled,
+     * in which case every block falls back to its team color.
+     */
+    private Color resolveSpecialColor(Block block, Color teamColor) {
+        if(frameUseTeamColorForSpecial){
+            return teamColor;
+        }
+
+        if(isOverdriveBlock(block)){
+            return ORANGE;
+        }
+
+        if(isMenderBlock(block)){
+            return Pal.heal;
+        }
+
+        if(isPointDefenseBlock(block)){
+            return Color.white;
+        }
+
+        return teamColor;
     }
 
     private void drawCircle(float x, float y, float range, Color color) {

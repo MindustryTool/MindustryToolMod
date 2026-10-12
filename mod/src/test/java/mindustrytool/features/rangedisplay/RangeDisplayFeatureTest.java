@@ -23,6 +23,7 @@ import mindustry.world.blocks.defense.RegenProjector;
 import mindustry.world.blocks.defense.ShockwaveTower;
 import mindustry.world.blocks.defense.Wall;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
+import mindustry.world.blocks.defense.turrets.PointDefenseTurret;
 import mindustry.world.blocks.distribution.MassDriver;
 import mindustry.world.blocks.units.RepairTower;
 import mindustry.world.blocks.units.RepairTurret;
@@ -56,7 +57,12 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         feature.drawBlockRangeAllyConfig.set(false);
         feature.drawBlockRangeEnemyConfig.set(false);
         feature.drawSpawnerRangeConfig.set(false);
+        feature.drawOverdriveRangeConfig.set(false);
+        feature.drawMenderRangeConfig.set(false);
+        feature.drawPointDefenseRangeConfig.set(false);
+        feature.useTeamColorForSpecialConfig.set(true);
         feature.dashedConfig.set(false);
+        feature.zoomThresholdConfig.set(1.5f);
 
         assertEquals(0.35f, feature.opacityConfig.get(), 0.001f);
         assertEquals(2.5f, feature.strokeWidthConfig.get(), 0.001f);
@@ -74,7 +80,12 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         assertFalse(feature.drawBlockRangeAllyConfig.get());
         assertFalse(feature.drawBlockRangeEnemyConfig.get());
         assertFalse(feature.drawSpawnerRangeConfig.get());
+        assertFalse(feature.drawOverdriveRangeConfig.get());
+        assertFalse(feature.drawMenderRangeConfig.get());
+        assertFalse(feature.drawPointDefenseRangeConfig.get());
+        assertTrue(feature.useTeamColorForSpecialConfig.get());
         assertFalse(feature.dashedConfig.get());
+        assertEquals(1.5f, feature.zoomThresholdConfig.get(), 0.001f);
 
         feature.resetToDefaults();
 
@@ -94,7 +105,12 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         assertTrue(feature.drawBlockRangeAllyConfig.get());
         assertTrue(feature.drawBlockRangeEnemyConfig.get());
         assertTrue(feature.drawSpawnerRangeConfig.get());
+        assertTrue(feature.drawOverdriveRangeConfig.get());
+        assertTrue(feature.drawMenderRangeConfig.get());
+        assertTrue(feature.drawPointDefenseRangeConfig.get());
+        assertFalse(feature.useTeamColorForSpecialConfig.get());
         assertTrue(feature.dashedConfig.get());
+        assertEquals(0.5f, feature.zoomThresholdConfig.get(), 0.001f);
     }
 
     @Test
@@ -157,6 +173,47 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
     }
 
     @Test
+    void testSemanticColorBlockClassification() {
+        RangeDisplayFeature feature = new RangeDisplayFeature();
+
+        OverdriveProjector overdrive = new OverdriveProjector("test-semantic-overdrive");
+        MendProjector mend = new MendProjector("test-semantic-mender");
+        RegenProjector regen = new RegenProjector("test-semantic-regen");
+        RepairTower repairTower = new RepairTower("test-semantic-repair-tower");
+        RepairTurret repairTurret = new RepairTurret("test-semantic-repair-turret");
+        PointDefenseTurret segment = new PointDefenseTurret("test-semantic-segment");
+        ShockwaveTower shockwave = new ShockwaveTower("test-semantic-shockwave");
+        ItemTurret turret = new ItemTurret("test-semantic-turret");
+        Wall wall = new Wall("test-semantic-wall");
+
+        assertTrue(feature.isOverdriveBlock(overdrive));
+        assertFalse(feature.isOverdriveBlock(mend));
+        assertFalse(feature.isOverdriveBlock(segment));
+        assertFalse(feature.isOverdriveBlock(turret));
+
+        assertTrue(feature.isMenderBlock(mend));
+        assertTrue(feature.isMenderBlock(regen));
+        assertTrue(feature.isMenderBlock(repairTower));
+        assertTrue(feature.isMenderBlock(repairTurret));
+        assertFalse(feature.isMenderBlock(overdrive));
+        assertFalse(feature.isMenderBlock(segment));
+        assertFalse(feature.isMenderBlock(turret));
+
+        assertTrue(feature.isPointDefenseBlock(segment));
+        assertTrue(feature.isPointDefenseBlock(shockwave));
+        assertFalse(feature.isPointDefenseBlock(overdrive));
+        assertFalse(feature.isPointDefenseBlock(mend));
+        assertFalse(feature.isPointDefenseBlock(turret));
+
+        assertTrue(feature.isSpecialColorBlock(overdrive));
+        assertTrue(feature.isSpecialColorBlock(mend));
+        assertTrue(feature.isSpecialColorBlock(segment));
+        assertTrue(feature.isSpecialColorBlock(shockwave));
+        assertFalse(feature.isSpecialColorBlock(turret));
+        assertFalse(feature.isSpecialColorBlock(wall));
+    }
+
+    @Test
     void testPerBlockTogglesAndSignals() {
         RangeDisplayFeature feature = new RangeDisplayFeature();
         ItemTurret turret = new ItemTurret("test-scatter");
@@ -210,10 +267,10 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void testAll17PrimitiveCachesSynchronizeOnSignalAndConfigChanges() throws Exception {
+    void testAllPrimitiveCachesSynchronizeOnSignalAndConfigChanges() throws Exception {
         RangeDisplayFeature feature = new RangeDisplayFeature();
 
-        // 1. Verify default values on all 17 cached primitive fields
+        // 1. Verify default values on all cached primitive fields
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertEquals(1.0f, getCachedFloat(feature, "cachedStrokeWidth"), 0.001f);
         assertFalse(getCachedBool(feature, "cachedHoverOnly"));
@@ -230,7 +287,12 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         assertTrue(getCachedBool(feature, "cachedDrawBlockRangeAlly"));
         assertTrue(getCachedBool(feature, "cachedDrawBlockRangeEnemy"));
         assertTrue(getCachedBool(feature, "cachedDrawSpawnerRange"));
+        assertTrue(getCachedBool(feature, "cachedDrawOverdriveRange"));
+        assertTrue(getCachedBool(feature, "cachedDrawMenderRange"));
+        assertTrue(getCachedBool(feature, "cachedDrawPointDefenseRange"));
+        assertFalse(getCachedBool(feature, "cachedUseTeamColorForSpecial"));
         assertTrue(getCachedBool(feature, "cachedDashed"));
+        assertEquals(0.5f, getCachedFloat(feature, "cachedZoomThreshold"), 0.001f);
 
         // 2. Mutate configs via ConfigValue.set()
         feature.opacityConfig.set(0.42f);
@@ -249,7 +311,12 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         feature.drawBlockRangeAllyConfig.set(false);
         feature.drawBlockRangeEnemyConfig.set(false);
         feature.drawSpawnerRangeConfig.set(false);
+        feature.drawOverdriveRangeConfig.set(false);
+        feature.drawMenderRangeConfig.set(false);
+        feature.drawPointDefenseRangeConfig.set(false);
+        feature.useTeamColorForSpecialConfig.set(true);
         feature.dashedConfig.set(false);
+        feature.zoomThresholdConfig.set(1.5f);
 
         // Verify that every single primitive field updated
         assertEquals(0.42f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
@@ -268,7 +335,12 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         assertFalse(getCachedBool(feature, "cachedDrawBlockRangeAlly"));
         assertFalse(getCachedBool(feature, "cachedDrawBlockRangeEnemy"));
         assertFalse(getCachedBool(feature, "cachedDrawSpawnerRange"));
+        assertFalse(getCachedBool(feature, "cachedDrawOverdriveRange"));
+        assertFalse(getCachedBool(feature, "cachedDrawMenderRange"));
+        assertFalse(getCachedBool(feature, "cachedDrawPointDefenseRange"));
+        assertTrue(getCachedBool(feature, "cachedUseTeamColorForSpecial"));
         assertFalse(getCachedBool(feature, "cachedDashed"));
+        assertEquals(1.5f, getCachedFloat(feature, "cachedZoomThreshold"), 0.001f);
 
         // 3. Mutate configs directly via signal().set()
         feature.opacityConfig.signal().set(0.88f);
@@ -287,7 +359,12 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         feature.drawBlockRangeAllyConfig.signal().set(true);
         feature.drawBlockRangeEnemyConfig.signal().set(true);
         feature.drawSpawnerRangeConfig.signal().set(true);
+        feature.drawOverdriveRangeConfig.signal().set(true);
+        feature.drawMenderRangeConfig.signal().set(true);
+        feature.drawPointDefenseRangeConfig.signal().set(true);
+        feature.useTeamColorForSpecialConfig.signal().set(false);
         feature.dashedConfig.signal().set(true);
+        feature.zoomThresholdConfig.signal().set(2.5f);
 
         assertEquals(0.88f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertEquals(3.5f, getCachedFloat(feature, "cachedStrokeWidth"), 0.001f);
@@ -305,22 +382,33 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         assertTrue(getCachedBool(feature, "cachedDrawBlockRangeAlly"));
         assertTrue(getCachedBool(feature, "cachedDrawBlockRangeEnemy"));
         assertTrue(getCachedBool(feature, "cachedDrawSpawnerRange"));
+        assertTrue(getCachedBool(feature, "cachedDrawOverdriveRange"));
+        assertTrue(getCachedBool(feature, "cachedDrawMenderRange"));
+        assertTrue(getCachedBool(feature, "cachedDrawPointDefenseRange"));
+        assertFalse(getCachedBool(feature, "cachedUseTeamColorForSpecial"));
         assertTrue(getCachedBool(feature, "cachedDashed"));
+        assertEquals(2.5f, getCachedFloat(feature, "cachedZoomThreshold"), 0.001f);
 
         // 4. Test null signal fallback
         feature.opacityConfig.signal().set(null);
         feature.hoverOnlyConfig.signal().set(null);
         feature.filterTargetAirConfig.signal().set(null);
+        feature.useTeamColorForSpecialConfig.signal().set(null);
+        feature.zoomThresholdConfig.signal().set(null);
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertFalse(getCachedBool(feature, "cachedHoverOnly"));
         assertTrue(getCachedBool(feature, "cachedFilterTargetAir"));
+        assertFalse(getCachedBool(feature, "cachedUseTeamColorForSpecial"));
+        assertEquals(0.5f, getCachedFloat(feature, "cachedZoomThreshold"), 0.001f);
 
         // 5. Reset to defaults
         feature.opacityConfig.set(0.1f);
+        feature.zoomThresholdConfig.set(3.0f);
         feature.resetToDefaults();
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertEquals(1.0f, getCachedFloat(feature, "cachedStrokeWidth"), 0.001f);
         assertFalse(getCachedBool(feature, "cachedHoverOnly"));
+        assertEquals(0.5f, getCachedFloat(feature, "cachedZoomThreshold"), 0.001f);
     }
 
     @Test

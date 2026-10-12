@@ -80,6 +80,23 @@ public class RangeDisplaySettingsView extends BaseComponent {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
+            // Min Zoom Slider
+            SettingSlider.of(
+                    Core.bundle.get("feature.range-display.settings.min-zoom"),
+                    feature.zoomThresholdConfig.signal(),
+                    0.0f,
+                    5.0f,
+                    0.1f,
+                    feature.zoomThresholdConfig.signal().map(v -> {
+                        float zoom = v != null ? v : 0.5f;
+                        return zoom <= 0.01f
+                                ? Core.bundle.get("feature.range-display.settings.off", "Off")
+                                : String.format(Locale.US, "%.1fx", zoom);
+                    })
+            );
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
             checkbox(Core.bundle.get("feature.range-display.settings.hover-only"),
                     feature.hoverOnlyConfig.signal()).growX();
 
@@ -147,6 +164,22 @@ public class RangeDisplaySettingsView extends BaseComponent {
 
             checkbox(Core.bundle.get("feature.range-display.settings.draw-spawners"),
                     feature.drawSpawnerRangeConfig.signal()).growX();
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            checkbox(Core.bundle.get("feature.range-display.settings.draw-overdrive-range"),
+                    feature.drawOverdriveRangeConfig.signal()).growX();
+
+            checkbox(Core.bundle.get("feature.range-display.settings.draw-mender-range"),
+                    feature.drawMenderRangeConfig.signal()).growX();
+
+            checkbox(Core.bundle.get("feature.range-display.settings.draw-point-defense-range"),
+                    feature.drawPointDefenseRangeConfig.signal()).growX();
+
+            divider().color(WebStyles.Colors.SECTION_BORDER);
+
+            checkbox(Core.bundle.get("feature.range-display.settings.use-team-color-for-special"),
+                    feature.useTeamColorForSpecialConfig.signal()).growX();
         });
     }
 

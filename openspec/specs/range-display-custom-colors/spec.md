@@ -1,4 +1,12 @@
-## ADDED Requirements
+# range-display-custom-colors Specification
+
+## Purpose
+
+Semantic range colors and independent per-category visibility controls for tactical support and defense buildings (overdrives, menders, point defense) in the range display feature, with an optional team-color override and preserved out-of-ammo dimming. Created by archiving change range-display-custom-colors.
+
+## Requirements
+
+**Source: range-display-custom-colors**
 
 ### Requirement: Semantic Range Colors for Support and Defense Blocks
 The range display feature SHALL render range indicators using semantic colors for designated tactical support and defense blocks when custom colors are active:

@@ -92,7 +92,7 @@ public final class ReflectAccess {
 
 	/** Safely reads a field value, returning {@code null} on any reflective failure. Static fields accept a {@code null} target. */
 	public static Object read(Field field, Object target) {
-		if (field == null || field.canAccess(target) || (target == null && !isStatic(field))) return null;
+		if (field == null || (target == null && !isStatic(field))) return null;
 		try {
 			return field.get(target);
 		} catch (IllegalAccessException e) {
@@ -105,7 +105,7 @@ public final class ReflectAccess {
 	public static Object invoke(Method method, Object target) {
 		if (method == null || target == null) return null;
 		try {
-            method.trySetAccessible();
+            method.setAccessible(true);
 			return method.invoke(target);
 		} catch (ReflectiveOperationException e) {
 			Log.warn("[solim-mcp] invoke of '{0}' failed: {1}", method.getName(), e.getMessage());
