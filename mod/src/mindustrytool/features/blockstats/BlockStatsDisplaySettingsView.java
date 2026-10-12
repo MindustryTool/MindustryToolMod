@@ -9,12 +9,19 @@ import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
+import arc.util.Nullable;
 import java.util.Locale;
-import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.world.Block;
+import mindustry.world.blocks.payloads.BlockProducer;
+import mindustry.world.blocks.payloads.PayloadDeconstructor;
+import mindustry.world.blocks.power.PowerGenerator;
+import mindustry.world.blocks.production.BeamDrill;
+import mindustry.world.blocks.production.Drill;
 import mindustry.world.blocks.production.GenericCrafter;
+import mindustry.world.blocks.production.Pump;
+import mindustry.world.blocks.production.Separator;
 import mindustry.world.blocks.units.Reconstructor;
 import mindustry.world.blocks.units.UnitAssembler;
 import mindustry.world.blocks.units.UnitFactory;
@@ -22,17 +29,20 @@ import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
+import solim.config.ConfigValue;
 import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Modern declarative Solim settings view for Block Stats Display options: grouped
- * per-block chip cards plus global zoom, opacity, and scale sliders.
- */
 public class BlockStatsDisplaySettingsView extends BaseComponent {
 
+    private static final int chipColumns = 8;
+
     private final BlockStatsDisplayFeature feature;
+    private final Signal<BlockGroup> progressFilter = Signal.of(BlockGroup.all);
+    private final Signal<BlockGroup> efficiencyFilter = Signal.of(BlockGroup.all);
 
     public BlockStatsDisplaySettingsView(BlockStatsDisplayFeature feature) {
         this.feature = feature;
@@ -44,25 +54,19 @@ public class BlockStatsDisplaySettingsView extends BaseComponent {
             headerCard();
             globalSettingsCard();
 
-            blockCategoryCard(
-                    Core.bundle.get("feature.blockstats-display.settings.section.unit-factories"),
-                    Icon.units,
-                    UnitFactory.class);
+            blockSelectionCard(
+                    Icon.production,
+                    Core.bundle.get("feature.blockstats-display.settings.section.progress"),
+                    BlockStatsDisplayFeature.progressBlocks(),
+                    progressFilter,
+                    true);
 
-            blockCategoryCard(
-                    Core.bundle.get("feature.blockstats-display.settings.section.reconstructors"),
-                    Icon.up,
-                    Reconstructor.class);
-
-            blockCategoryCard(
-                    Core.bundle.get("feature.blockstats-display.settings.section.unit-assemblers"),
-                    Icon.wrench,
-                    UnitAssembler.class);
-
-            blockCategoryCard(
-                    Core.bundle.get("feature.blockstats-display.settings.section.crafters"),
-                    Icon.crafting,
-                    GenericCrafter.class);
+            blockSelectionCard(
+                    Icon.power,
+                    Core.bundle.get("feature.blockstats-display.settings.section.efficiency"),
+                    BlockStatsDisplayFeature.efficiencyBlocks(),
+                    efficiencyFilter,
+                    false);
 
             actionsCard();
         });
@@ -74,7 +78,6 @@ public class BlockStatsDisplaySettingsView extends BaseComponent {
 
     private Component globalSettingsCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.blockstats-display.settings.section.global"), () -> {
-            // Zoom Threshold
             SettingSlider.of(
                     Core.bundle.get("feature.blockstats-display.settings.zoom-threshold"),
                     feature.zoomThresholdConfig.signal(),
@@ -89,7 +92,6 @@ public class BlockStatsDisplaySettingsView extends BaseComponent {
                     })
             );
 
-            // Opacity
             SettingSlider.of(
                     Core.bundle.get("feature.blockstats-display.settings.opacity"),
                     feature.opacityConfig.signal(),
@@ -100,7 +102,6 @@ public class BlockStatsDisplaySettingsView extends BaseComponent {
                             String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
             );
 
-            // Scale
             SettingSlider.of(
                     Core.bundle.get("feature.blockstats-display.settings.scale"),
                     feature.scaleConfig.signal(),
@@ -113,33 +114,59 @@ public class BlockStatsDisplaySettingsView extends BaseComponent {
         });
     }
 
-    private <T extends Block> void blockCategoryCard(String title, Drawable iconDrawable, Class<T> type) {
-        Seq<Block> blocks = Vars.content != null ? Vars.content.blocks() : null;
-        if (blocks == null) {
-            return;
-        }
+    private Component blockSelectionCard(
+            @Nullable Drawable iconDrawable,
+            String title,
+            Seq<Block> blocks,
+            Signal<BlockGroup> filter,
+            boolean progress) {
 
-        boolean present = false;
-        for (int i = 0; i < blocks.size; i++) {
-            if (type.isInstance(blocks.get(i))) {
-                present = true;
-                break;
+        Seq<BlockGroup> groups = groupsOf(blocks);
+        Computed<Seq<Block>> visibleBlocks = Signal.computed(() -> {
+            BlockGroup group = filter.get();
+            if (group == null || group == BlockGroup.all) {
+                return blocks;
             }
-        }
-        if (!present) {
-            return;
-        }
+            return blocks.select(block -> groupOf(block) == group);
+        });
 
-        SettingCard.section(iconDrawable, title, () -> {
+        return SettingCard.section(iconDrawable, title, () -> {
             wrap().growX().gap(unit(1.5f)).children(() -> {
-                for (int i = 0; i < blocks.size; i++) {
-                    Block block = blocks.get(i);
-                    if (type.isInstance(block)) {
-                        new BlockChip(feature, block);
-                    }
+                for (BlockGroup group : groups) {
+                    button(Core.bundle.get(group.bundleKey()), () -> filter.set(group))
+                            .style(WebStyles.filterChipText())
+                            .checked(filter.map(current -> current == group))
+                            .height(unit(8))
+                            .paddingX(unit(2.5f));
                 }
             });
+
+            row().growX().gap(unit(1.5f)).children(() -> {
+                bulkButton(Icon.add, Core.bundle.get("feature.blockstats-display.settings.select-all"),
+                        () -> setAllBlocksEnabled(progress, true));
+                bulkButton(Icon.cancel, Core.bundle.get("feature.blockstats-display.settings.deselect-all"),
+                        () -> setAllBlocksEnabled(progress, false));
+            });
+
+            reactiveGrid(visibleBlocks)
+                    .columns(chipColumns)
+                    .key(block -> block.name)
+                    .gap(unit(1.5f))
+                    .growX()
+                    .children(block -> new BlockChip(block, progress));
         });
+    }
+
+    private Component bulkButton(Drawable iconDrawable, String label, Runnable action) {
+        return button(action)
+                .style(WebStyles.outlineText())
+                .height(unit(11))
+                .growX()
+                .gap(unit(2))
+                .children(() -> {
+                    icon(iconDrawable).size(unit(6));
+                    text(label);
+                });
     }
 
     private Component actionsCard() {
@@ -156,16 +183,96 @@ public class BlockStatsDisplaySettingsView extends BaseComponent {
         });
     }
 
-    private static final class BlockChip extends BaseComponent {
+    private void setAllBlocksEnabled(boolean progress, boolean value) {
+        if (progress) {
+            feature.setAllProgressBlocksEnabled(value);
+        } else {
+            feature.setAllEfficiencyBlocksEnabled(value);
+        }
+    }
 
-        private final BlockStatsDisplayFeature feature;
+    private ConfigValue<Boolean> blockValue(Block block, boolean progress) {
+        return progress ? feature.progressBlockValue(block) : feature.efficiencyBlockValue(block);
+    }
+
+    private boolean isBlockEnabled(Block block, boolean progress) {
+        return Boolean.TRUE.equals(blockValue(block, progress).get());
+    }
+
+    private void setBlockEnabled(Block block, boolean progress, boolean value) {
+        blockValue(block, progress).set(value);
+    }
+
+    private static Seq<BlockGroup> groupsOf(Seq<Block> blocks) {
+        Seq<BlockGroup> groups = new Seq<>();
+        groups.add(BlockGroup.all);
+        for (BlockGroup group : BlockGroup.values()) {
+            if (group != BlockGroup.all && hasGroup(blocks, group)) {
+                groups.add(group);
+            }
+        }
+        return groups;
+    }
+
+    private static boolean hasGroup(Seq<Block> blocks, BlockGroup group) {
+        for (int i = 0; i < blocks.size; i++) {
+            if (groupOf(blocks.get(i)) == group) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static BlockGroup groupOf(Block block) {
+        if (block instanceof UnitFactory || block instanceof Reconstructor || block instanceof UnitAssembler) {
+            return BlockGroup.units;
+        }
+        if (block instanceof Separator || block instanceof BlockProducer || block instanceof PayloadDeconstructor) {
+            return BlockGroup.payload;
+        }
+        if (block instanceof GenericCrafter) {
+            return BlockGroup.crafters;
+        }
+        if (block instanceof Drill || block instanceof BeamDrill) {
+            return BlockGroup.drills;
+        }
+        if (block instanceof Pump) {
+            return BlockGroup.pumps;
+        }
+        if (block instanceof PowerGenerator) {
+            return BlockGroup.power;
+        }
+        return BlockGroup.all;
+    }
+
+    private enum BlockGroup {
+        all("feature.blockstats-display.settings.filter.all"),
+        crafters("feature.blockstats-display.settings.filter.crafters"),
+        units("feature.blockstats-display.settings.filter.units"),
+        payload("feature.blockstats-display.settings.filter.payload"),
+        drills("feature.blockstats-display.settings.filter.drills"),
+        pumps("feature.blockstats-display.settings.filter.pumps"),
+        power("feature.blockstats-display.settings.filter.power");
+
+        private final String bundleKey;
+
+        BlockGroup(String bundleKey) {
+            this.bundleKey = bundleKey;
+        }
+
+        String bundleKey() {
+            return bundleKey;
+        }
+    }
+
+    private final class BlockChip extends BaseComponent {
+
         private final Block block;
-        private final Signal<Boolean> enabled;
+        private final boolean progress;
 
-        BlockChip(BlockStatsDisplayFeature feature, Block block) {
-            this.feature = feature;
+        BlockChip(Block block, boolean progress) {
             this.block = block;
-            this.enabled = Signal.of(feature.isBlockEnabled(block));
+            this.progress = progress;
         }
 
         @Override
@@ -173,23 +280,20 @@ public class BlockStatsDisplaySettingsView extends BaseComponent {
             TextureRegion region = block.uiIcon != null ? block.uiIcon : block.fullIcon;
             Drawable drawable = region != null ? new TextureRegionDrawable(region) : Tex.clear;
 
+            Readable<Boolean> enabled = blockValue(block, progress).signal();
+
             return button()
                     .style(WebStyles.filterChip())
                     .size(unit(11))
                     .padding(unit(1))
                     .tooltip(block.localizedName)
                     .checked(enabled)
-                    .onClick(() -> {
-                        boolean next = !Boolean.TRUE.equals(enabled.peek());
-                        enabled.set(next);
-                        feature.setBlockEnabled(block, next);
-                    })
+                    .onClick(() -> setBlockEnabled(block, progress, !isBlockEnabled(block, progress)))
                     .children(() -> {
                         icon(drawable)
                                 .size(unit(6))
-                                .color(enabled.map(en ->
-                                        Boolean.TRUE.equals(en) ? Color.white : new Color(1f, 1f, 1f, 0.35f)
-                                       ));
+                                .color(enabled.map(on ->
+                                        Boolean.TRUE.equals(on) ? Color.white : new Color(1f, 1f, 1f, 0.35f)));
                     }).element();
         }
     }
