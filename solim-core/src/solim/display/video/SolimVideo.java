@@ -329,6 +329,10 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 		return this;
 	}
 
+	public Scaling getScaling() {
+		return scaling;
+	}
+
 	public SolimVideo controls(boolean controls) {
 		if (controlsBinding != null) {
 			controlsBinding.dispose();

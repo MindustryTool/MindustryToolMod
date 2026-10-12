@@ -105,6 +105,7 @@ public final class VideoPlayer implements Disposable {
 	private Fi wavFile;
 
 	private SeekableByteChannel channel;
+	private RandomAccessFile mediaRaf;
 	private MP4Demuxer demuxer;
 	private SeekableDemuxerTrack videoTrack;
 	private H264Decoder videoDecoder;
@@ -490,7 +491,7 @@ public final class VideoPlayer implements Disposable {
 	private void openInBackground() {
 		try {
 			File file = mp4File.file();
-			channel = new FileChannelWrapper(new RandomAccessFile(file, "r").getChannel());
+			openChannel(file);
 			demuxer = MP4Demuxer.createMP4Demuxer(channel);
 			DemuxerTrack track = demuxer.getVideoTrack();
 			if (!(track instanceof SeekableDemuxerTrack))
@@ -722,7 +723,7 @@ public final class VideoPlayer implements Disposable {
 		closeStream();
 		try {
 			File file = mp4File.file();
-			channel = new FileChannelWrapper(new RandomAccessFile(file, "r").getChannel());
+			openChannel(file);
 			demuxer = MP4Demuxer.createMP4Demuxer(channel);
 			DemuxerTrack track = demuxer.getVideoTrack();
 			if (track instanceof SeekableDemuxerTrack) {
@@ -768,14 +769,37 @@ public final class VideoPlayer implements Disposable {
 			} catch (Throwable ignored) {
 			}
 			demuxer = null;
-		} else if (channel != null) {
+		}
+		if (channel != null) {
 			try {
 				channel.close();
 			} catch (Throwable ignored) {
 			}
+			channel = null;
 		}
-		channel = null;
+		if (mediaRaf != null) {
+			try {
+				mediaRaf.close();
+			} catch (Throwable ignored) {
+			}
+			mediaRaf = null;
+		}
 		videoTrack = null;
+	}
+
+	/** Opens the media file, transferring RAF ownership to {@link #mediaRaf}. */
+	private void openChannel(File file) throws Exception {
+		RandomAccessFile raf = new RandomAccessFile(file, "r");
+		try {
+			channel = new FileChannelWrapper(raf.getChannel());
+			mediaRaf = raf;
+		} catch (Throwable t) {
+			try {
+				raf.close();
+			} catch (Throwable ignored) {
+			}
+			throw t;
+		}
 	}
 
 	private void fail(Throwable error) {

@@ -64,11 +64,9 @@ public final class AacToWav {
 	public static @Nullable AudioInfo decode(File mp4File, File wavOut) {
 		if (mp4File == null || wavOut == null)
 			return null;
-		SeekableByteChannel channel = null;
-		MP4Demuxer demuxer = null;
-		try {
-			channel = new FileChannelWrapper(new RandomAccessFile(mp4File, "r").getChannel());
-			demuxer = MP4Demuxer.createMP4Demuxer(channel);
+		try (RandomAccessFile raf = new RandomAccessFile(mp4File, "r");
+				SeekableByteChannel channel = new FileChannelWrapper(raf.getChannel());
+				MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(channel)) {
 			DemuxerTrack audio = findAacTrack(demuxer);
 			if (audio == null)
 				return null;
@@ -76,18 +74,6 @@ public final class AacToWav {
 		} catch (Throwable t) {
 			Log.debug("SolimVideo: AAC transcode failed: " + t.getMessage());
 			return null;
-		} finally {
-			if (demuxer != null) {
-				try {
-					demuxer.close();
-				} catch (Throwable ignored) {
-				}
-			} else if (channel != null) {
-				try {
-					channel.close();
-				} catch (Throwable ignored) {
-				}
-			}
 		}
 	}
 
@@ -156,12 +142,11 @@ public final class AacToWav {
 			parent.mkdirs();
 		File tmp = new File(parent, wavOut.getName() + ".part");
 		boolean done = false;
-		OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
-		try {
+		int sampleRate = 0;
+		int channels = 0;
+		long dataLen = 0;
+		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp))) {
 			writeWavHeader(out, 44100, 2, 0);
-			int sampleRate = 0;
-			int channels = 0;
-			long dataLen = 0;
 			byte[] copy = new byte[8192];
 			Packet packet;
 			while ((packet = audio.nextFrame()) != null) {
@@ -188,25 +173,20 @@ public final class AacToWav {
 					dataLen += n;
 				}
 			}
-			out.close();
-			if (dataLen == 0 || sampleRate <= 0 || channels <= 0)
-				return null;
-			rewriteWavHeader(tmp, sampleRate, channels, dataLen);
-			if (wavOut.exists() && !wavOut.delete())
-				return null;
-			if (!tmp.renameTo(wavOut))
-				return null;
-			done = true;
-			DemuxerTrackMeta meta = audio.getMeta();
-			return new AudioInfo(sampleRate, channels, meta != null ? meta.getTotalDuration() : 0);
 		} finally {
-			try {
-				out.close();
-			} catch (Throwable ignored) {
-			}
 			if (!done)
 				tmp.delete();
 		}
+		if (dataLen == 0 || sampleRate <= 0 || channels <= 0)
+			return null;
+		rewriteWavHeader(tmp, sampleRate, channels, dataLen);
+		if (wavOut.exists() && !wavOut.delete())
+			return null;
+		if (!tmp.renameTo(wavOut))
+			return null;
+		done = true;
+		DemuxerTrackMeta meta = audio.getMeta();
+		return new AudioInfo(sampleRate, channels, meta != null ? meta.getTotalDuration() : 0);
 	}
 
 	/**
@@ -246,15 +226,9 @@ public final class AacToWav {
 		ByteArrayOutputStream head = new ByteArrayOutputStream(44);
 		writeWavHeader(head, sampleRate, channels, dataLen);
 		byte[] bytes = head.toByteArray();
-		RandomAccessFile raf = new RandomAccessFile(wav, "rw");
-		try {
+		try (RandomAccessFile raf = new RandomAccessFile(wav, "rw")) {
 			raf.seek(0);
 			raf.write(bytes);
-		} finally {
-			try {
-				raf.close();
-			} catch (Throwable ignored) {
-			}
 		}
 	}
 
