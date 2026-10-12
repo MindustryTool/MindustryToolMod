@@ -1,6 +1,5 @@
 package solim.runtime;
 
-import arc.util.Log;
 import arc.util.Nullable;
 
 /**
@@ -9,7 +8,6 @@ import arc.util.Nullable;
  */
 public final class SolimAssert {
     private static volatile @Nullable Thread mainThread;
-    public static boolean throww = false;
 
     private SolimAssert() {
     }
@@ -25,13 +23,10 @@ public final class SolimAssert {
     public static void checkMainThread() {
         Thread main = mainThread;
         if (main != null && Thread.currentThread() != main) {
-            if (throww) {
-                throw new IllegalStateException(
-                        "[Solim] Must be called on main thread (" + main.getName()
-                                + "), but was called on: " + Thread.currentThread().getName());
-            }
-            Log.err("[Solim] Must be called on main thread (" + main.getName()
-                    + "), but was called on: " + Thread.currentThread().getName());
+            Thread.dumpStack();
+            throw new IllegalStateException(
+                    "[Solim] Must be called on main thread (" + main.getName()
+                            + "), but was called on: " + Thread.currentThread().getName());
         }
     }
 }
