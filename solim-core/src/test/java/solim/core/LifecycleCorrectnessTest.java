@@ -57,7 +57,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 		};
 
 		comp.element();
-		assertDoesNotThrow(comp::dispose, "Disposal should not throw even if a disposable fails");
+		assertThrows(RuntimeException.class, comp::dispose, "Disposal must fail loud when a disposable fails");
 		assertEquals(Arrays.asList("third", "failing", "first"), disposed,
 				"All disposables must be attempted even if one throws");
 	}

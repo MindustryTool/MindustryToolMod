@@ -35,23 +35,10 @@ import solim.performance.TraceSpan;
 public class AttachmentStack {
 
 	static {
-		AttachmentBridge.install(new AttachmentBridge.Hook() {
-			@Override
-			public void registerPending(Component component) {
-				Table parent = AttachmentStack.current();
-				if (parent != null) {
-					AttachmentStack.registerPendingComponent(component, parent);
-				}
-			}
-
-			@Override
-			public boolean isTracing() {
-				return AttachmentStack.isTracing();
-			}
-
-			@Override
-			public void traceLeaf(@Nullable String name, long startNanos, long endNanos) {
-				AttachmentStack.traceLeaf(name, "build", startNanos, endNanos);
+		AttachmentBridge.install(component -> {
+			Table parent = AttachmentStack.current();
+			if (parent != null) {
+				AttachmentStack.registerPendingComponent(component, parent);
 			}
 		});
 	}

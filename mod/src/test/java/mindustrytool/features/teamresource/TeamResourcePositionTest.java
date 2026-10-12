@@ -109,6 +109,7 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         TextButtonStyle textBtnStyle = new TextButtonStyle();
         textBtnStyle.font = font;
         Core.scene.addStyle(TextButtonStyle.class, textBtnStyle);
+        Core.scene.addStyle(arc.scene.ui.ScrollPane.ScrollPaneStyle.class, new arc.scene.ui.ScrollPane.ScrollPaneStyle());
 
         Drawable emptyDrawable = new TextureRegionDrawable(new TextureRegion());
         Styles.outlineLabel = labelStyle;

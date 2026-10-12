@@ -143,8 +143,6 @@ public abstract class Component implements Disposable, DisposableOwner {
 			return built;
 		}
 
-		boolean tracing = AttachmentBridge.isTracing();
-		long startNanos = tracing ? System.nanoTime() : 0L;
 		OwnershipContext.push(this);
 		try {
 			built = build();
@@ -153,9 +151,6 @@ public abstract class Component implements Disposable, DisposableOwner {
 			}
 			cached = built;
 			applyDefaultName(built);
-			if (tracing) {
-				AttachmentBridge.traceLeaf(traceName(built), startNanos, System.nanoTime());
-			}
 			return built;
 		} catch (Throwable throwable) {
 			if (Vars.ui != null) {
@@ -168,17 +163,6 @@ public abstract class Component implements Disposable, DisposableOwner {
 		} finally {
 			OwnershipContext.pop();
 		}
-	}
-
-	/** The name a build span is recorded under: explicit name, then element name, then class names. */
-	private String traceName(Element built) {
-		if (componentName != null) {
-			return componentName;
-		}
-		if (built.name != null) {
-			return built.name;
-		}
-		return getClass().getSimpleName() + "-" + built.getClass().getSimpleName();
 	}
 
 	/** Applies the spacing rules of a component that declares them, for example {@link Text}. */

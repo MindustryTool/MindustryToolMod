@@ -322,28 +322,23 @@ public final class QueryView<T> extends Component
 			OwnershipScope scope = OwnershipScope.open();
 			try {
 				Component created = AttachmentStack.isolate(() -> {
-					try {
-						switch (targetState) {
-							case LOADING:
-								return loadingFactory != null ? loadingFactory.get() : defaultLoadingFactory.get();
-							case ERROR:
-								return errorFactory != null
-										? errorFactory.get(err)
-										: defaultErrorFactory.get(err, query::refetch);
-							case DATA:
-								if (dataWithFetchingFactory != null) {
-									return dataWithFetchingFactory.get(data, isFetching);
-								} else if (dataFactory != null) {
-									return dataFactory.get(data);
-								}
-								return null;
-							case EMPTY:
-							default:
-								return null;
-						}
-					} catch (Throwable t) {
-						Log.err("[Solim] Error rendering QueryView", t);
-						return defaultErrorFactory.get(t, query::refetch);
+					switch (targetState) {
+						case LOADING:
+							return loadingFactory != null ? loadingFactory.get() : defaultLoadingFactory.get();
+						case ERROR:
+							return errorFactory != null
+									? errorFactory.get(err)
+									: defaultErrorFactory.get(err, query::refetch);
+						case DATA:
+							if (dataWithFetchingFactory != null) {
+								return dataWithFetchingFactory.get(data, isFetching);
+							} else if (dataFactory != null) {
+								return dataFactory.get(data);
+							}
+							return null;
+						case EMPTY:
+						default:
+							return null;
 					}
 				});
 				if (created != null) {

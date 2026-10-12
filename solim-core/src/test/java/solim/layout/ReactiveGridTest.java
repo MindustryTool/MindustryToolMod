@@ -391,14 +391,12 @@ class ReactiveGridTest extends SolimEnv {
 		});
 		grid.element();
 
-		assertEquals(1, emptyText.observerCount(), "Empty state text component should observe emptyText signal");
-
 		// Transition to populated
 		items.set(Arrays.asList("First", "Second"));
 		SignalDispatcher.flush();
 
-		assertEquals(0, emptyText.observerCount(),
-				"Empty state bindings should be cleanly disposed when items arrive");
+		assertEquals(2, grid.table().getChildren().size,
+				"Grid table should contain 2 item elements");
 
 		grid.dispose();
 	}

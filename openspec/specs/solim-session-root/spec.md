@@ -1,4 +1,9 @@
-## ADDED Requirements
+# solim-session-root Specification
+
+## Purpose
+Provides a permanent, memory-safe process-level `SessionRoot` as a fallback `DisposableOwner` for unparented components and establishes ownership resolution verification.
+
+## Requirements
 
 ### Requirement: SessionRoot provides top-level process ownership
 

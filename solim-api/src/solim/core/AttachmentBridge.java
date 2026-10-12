@@ -18,24 +18,14 @@ import arc.util.Nullable;
  */
 public final class AttachmentBridge {
 
-	/** The operations a component performs against the attachment engine. */
 	public interface Hook {
-
-		/** Announces a freshly constructed component to the innermost open parent scope. */
 		void registerPending(Component component);
-
-		/** Whether build tracing is on. Gates the timestamp reads taken around a build. */
-		boolean isTracing();
-
-		/** Records one {@code build} span covering {@code [startNanos, endNanos)}. */
-		void traceLeaf(@Nullable String name, long startNanos, long endNanos);
 	}
 
 	private static volatile @Nullable Hook hook;
 
 	private AttachmentBridge() {}
 
-	/** Installs the engine the runtime provides; {@code null} detaches it again. */
 	public static void install(@Nullable Hook hook) {
 		AttachmentBridge.hook = hook;
 	}
@@ -44,18 +34,6 @@ public final class AttachmentBridge {
 		Hook current = hook;
 		if (current != null) {
 			current.registerPending(component);
-		}
-	}
-
-	static boolean isTracing() {
-		Hook current = hook;
-		return current != null && current.isTracing();
-	}
-
-	static void traceLeaf(@Nullable String name, long startNanos, long endNanos) {
-		Hook current = hook;
-		if (current != null) {
-			current.traceLeaf(name, startNanos, endNanos);
 		}
 	}
 }

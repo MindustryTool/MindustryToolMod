@@ -102,7 +102,9 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
     }
 
     public Scroll style(ScrollPaneStyle style) {
-        this.pane.setStyle(style);
+        if (this.pane != null) {
+            this.pane.setStyle(style);
+        }
         return this;
     }
 

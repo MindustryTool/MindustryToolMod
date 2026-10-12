@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.scene.Element;
@@ -204,7 +205,7 @@ class OwnershipTreeTest extends SolimCoreEnv {
 		};
 
 		owner.element();
-		owner.dispose();
+		assertThrows(RuntimeException.class, owner::dispose, "Disposal must fail loud when a child fails");
 
 		assertTrue(log.contains("good-child"), "A throwing child must not stop the remaining children");
 		assertTrue(log.contains("own-leaf-2"));

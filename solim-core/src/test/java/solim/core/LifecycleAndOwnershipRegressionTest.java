@@ -148,7 +148,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 		};
 
 		comp.element();
-		comp.dispose();
+		assertThrows(RuntimeException.class, comp::dispose);
 
 		assertEquals(
 				Arrays.asList("res-3", "failing-res-2", "res-2", "failing-res-1", "res-1"),

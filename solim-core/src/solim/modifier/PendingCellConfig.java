@@ -200,6 +200,8 @@ public final class PendingCellConfig {
             cell.growX();
             if (minWidth == null) {
                 cell.minWidth(0f);
+            } else if (minWidth.get() != null) {
+                cell.minWidth(Math.max(0f, minWidth.get()));
             }
         }
         if (growY)

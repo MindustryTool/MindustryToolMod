@@ -14,14 +14,14 @@ import solim.config.ConfigValue;
 import solim.config.OrderedSeqPersister;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.test.SolimEnv;
+import mindustrytool.test.MindustryTestEnv;
 
 /**
  * Verifies the list-based disabled model: persistence across reloads, the
  * original/custom key format, reactive state derivation, and pruning of stale
  * custom entries.
  */
-class MusicDisabledPersistenceTest extends SolimEnv {
+class MusicDisabledPersistenceTest extends MindustryTestEnv {
 
     @BeforeAll
     static void initSettings() {

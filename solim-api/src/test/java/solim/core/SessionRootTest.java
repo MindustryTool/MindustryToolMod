@@ -65,16 +65,15 @@ class SessionRootTest {
 	}
 
 	@Test
-	void assertOwnedVerifiesOwnershipLineage() {
+	void verifiesOwnershipLineage() {
 		DummyComponent top = new DummyComponent();
-		SolimAssert.assertOwned(top);
+		assertTrue(SessionRoot.get().contains(top));
 
 		DummyComponent child = new DummyComponent();
 		top.adopt(child);
-		SolimAssert.assertOwned(child);
+		assertEquals(top, child.owner());
 
 		top.dispose();
-		// Once disposed and removed from SessionRoot without a parent, assertOwned fails
-		assertThrows(AssertionError.class, () -> SolimAssert.assertOwned(top));
+		assertFalse(SessionRoot.get().contains(top));
 	}
 }

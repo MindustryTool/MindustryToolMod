@@ -396,20 +396,17 @@ class QueryViewTest extends SolimEnv {
 	}
 
 	@Test
-	void callbackExceptionDoesNotCrash() {
+	void callbackExceptionFailsFast() {
 		Query<String> query = Query.noKey(() -> CompletableFuture.completedFuture("boom"));
 
 		QueryView<String> view = QueryView.of(query).data(data -> {
 			throw new RuntimeException("UI callback crash");
 		});
 
-		assertDoesNotThrow(() -> {
+		assertThrows(RuntimeException.class, () -> {
 			view.element();
 			SignalDispatcher.flush();
 		});
-
-		// View falls back to default error view containing error message
-		assertTrue(getText(view).contains("UI callback crash"));
 	}
 
 	@Test

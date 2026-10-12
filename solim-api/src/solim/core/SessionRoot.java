@@ -80,20 +80,36 @@ public final class SessionRoot implements DisposableOwner {
 			return;
 		}
 		disposed = true;
+		Throwable firstFailure = null;
 		for (int i = children.size() - 1; i >= 0; i--) {
 			try {
 				children.get(i).dispose();
-			} catch (Throwable ignored) {
+			} catch (Throwable t) {
+				if (firstFailure == null) {
+					firstFailure = t;
+				}
 			}
 		}
 		children.clear();
 		for (int i = disposables.size() - 1; i >= 0; i--) {
 			try {
 				disposables.get(i).dispose();
-			} catch (Throwable ignored) {
+			} catch (Throwable t) {
+				if (firstFailure == null) {
+					firstFailure = t;
+				}
 			}
 		}
 		disposables.clear();
+		if (firstFailure != null) {
+			if (firstFailure instanceof RuntimeException) {
+				throw (RuntimeException) firstFailure;
+			}
+			if (firstFailure instanceof Error) {
+				throw (Error) firstFailure;
+			}
+			throw new RuntimeException("Error disposing SessionRoot", firstFailure);
+		}
 	}
 
 	@Override
