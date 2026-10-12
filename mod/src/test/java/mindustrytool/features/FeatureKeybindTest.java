@@ -3,6 +3,7 @@ package mindustrytool.features;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -286,6 +287,69 @@ class FeatureKeybindTest extends MindustryTestEnv {
         assertEquals(!initial, feature.isEnabled());
 
         FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("wavePreviewSettings"));
+        assertNotNull(settingsBind);
+        assertFalse(settingsBind.isRequireEnabled());
+    }
+
+    @Test
+    void armyControlFeature_registersSettingsKeybindAndRtsSlots() {
+        mindustrytool.features.armycontrol.ArmyControlFeature feature = new mindustrytool.features.armycontrol.ArmyControlFeature();
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("armyControlSettings"));
+        assertNotNull(settingsBind);
+        assertFalse(settingsBind.isRequireEnabled());
+
+        // Test slot save & recall logic
+        feature.saveControlGroupSlot(1); // empty selection clears or does nothing
+        assertNull(feature.controlGroupsSignal().peek().find(g -> g.getId() == 1));
+
+        arc.struct.IntSeq mockIds = new arc.struct.IntSeq();
+        mockIds.add(101);
+        feature.createGroup("1", mockIds);
+        assertNotNull(feature.controlGroupsSignal().peek().find(g -> g.getId() == 1));
+    }
+
+    @Test
+    void calloutFeature_registersMenuAndSettingsKeybinds() {
+        mindustrytool.features.callout.CalloutFeature feature = new mindustrytool.features.callout.CalloutFeature();
+        assertEquals(2, feature.getKeybinds().size);
+
+        FeatureKeybind menuBind = feature.getKeybinds().find(k -> k.getBind().name.equals("calloutMenu"));
+        assertNotNull(menuBind);
+        assertTrue(menuBind.isRequireEnabled());
+
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("calloutSettings"));
+        assertNotNull(settingsBind);
+        assertFalse(settingsBind.isRequireEnabled());
+    }
+
+    @Test
+    void griefAlertFeature_registersJumpAndSettingsKeybinds() {
+        mindustrytool.features.griefalert.GriefAlertFeature feature = new mindustrytool.features.griefalert.GriefAlertFeature();
+        assertEquals(2, feature.getKeybinds().size);
+
+        FeatureKeybind jumpBind = feature.getKeybinds().find(k -> k.getBind().name.equals("griefAlertJump"));
+        assertNotNull(jumpBind);
+        assertTrue(jumpBind.isRequireEnabled());
+
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("griefAlertSettings"));
+        assertNotNull(settingsBind);
+        assertFalse(settingsBind.isRequireEnabled());
+    }
+
+    @Test
+    void blockStatsDisplayFeature_registersToggleAndSettingsKeybinds() {
+        mindustrytool.features.blockstats.BlockStatsDisplayFeature feature = new mindustrytool.features.blockstats.BlockStatsDisplayFeature();
+        assertEquals(2, feature.getKeybinds().size);
+
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("blockStatsToggle"));
+        assertNotNull(toggleBind);
+        assertFalse(toggleBind.isRequireEnabled());
+
+        boolean initial = feature.isEnabled();
+        toggleBind.getAction().run();
+        assertEquals(!initial, feature.isEnabled());
+
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("blockStatsSettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }

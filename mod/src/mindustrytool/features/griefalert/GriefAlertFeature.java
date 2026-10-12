@@ -3,6 +3,7 @@ package mindustrytool.features.griefalert;
 import arc.Core;
 import arc.Events;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
@@ -82,6 +83,14 @@ public class GriefAlertFeature extends Feature {
         config = configGroup();
         radiusConfig = config.floatValue("radius", DEFAULT_RADIUS);
         durationConfig = config.floatValue("duration", DEFAULT_DURATION);
+
+        bindAction("griefAlertJump", KeyCode.unset, () -> {
+            GriefAlertInfo info = activeAlert();
+            if (info != null) {
+                jumpToAlert(info);
+            }
+        }, true);
+        bindDialog("griefAlertSettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.on(BlockBuildBeginEvent.class, this::onBuildBegin);
         Events.on(WorldLoadEndEvent.class, event -> clearTransientState());

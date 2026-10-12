@@ -2,6 +2,7 @@ package mindustrytool.features.callout;
 
 import arc.Core;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.util.Nullable;
 import mindustry.gen.Call;
 import mindustry.gen.Icon;
@@ -39,6 +40,9 @@ public class CalloutFeature extends Feature {
         config = configGroup();
         teamChatConfig = config.boolValue("team-chat", true);
         closeOnSendConfig = config.boolValue("close-on-send", true);
+
+        bindDialog("calloutMenu", KeyCode.unset, this::showDialog, true);
+        bindDialog("calloutSettings", KeyCode.unset, getSettingDialog(), false);
     }
 
     public String formatMessage(String message, boolean toTeamChat) {

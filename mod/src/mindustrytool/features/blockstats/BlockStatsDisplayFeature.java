@@ -8,6 +8,7 @@ import arc.Events;
 import arc.func.Boolf;
 import arc.func.Cons;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.math.Mathf;
@@ -111,6 +112,9 @@ public class BlockStatsDisplayFeature extends Feature {
         zoomThresholdConfig = config.floatValue("zoom-threshold", 0.5f);
         opacityConfig = config.floatValue("opacity", 1f);
         scaleConfig = config.floatValue("scale", 1f);
+
+        bindToggle("blockStatsToggle", KeyCode.unset);
+        bindDialog("blockStatsSettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
     }

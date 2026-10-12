@@ -12,6 +12,7 @@ import mindustry.gen.Tex;
 import mindustry.world.Block;
 import mindustry.world.blocks.power.PowerGenerator;
 import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
@@ -31,7 +32,12 @@ public class GriefAlertSettingsView extends BaseComponent {
             headerCard();
             generalCard();
             monitoredBlocksCard();
+            keybindsCard();
         });
+    }
+
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
     }
 
     private Component headerCard() {

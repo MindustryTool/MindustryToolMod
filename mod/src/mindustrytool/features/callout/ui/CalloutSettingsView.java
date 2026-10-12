@@ -7,6 +7,7 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.gen.Icon;
 import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.callout.CalloutFeature;
@@ -29,8 +30,13 @@ public class CalloutSettingsView extends BaseComponent {
         return SettingScaffold.build(() -> {
             headerCard();
             settingsCard();
+            keybindsCard();
             resetButton();
         });
+    }
+
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
     }
 
     private Component headerCard() {

@@ -3,6 +3,7 @@ package mindustrytool.features.armycontrol;
 import arc.Core;
 import arc.Events;
 import arc.func.Prov;
+import arc.input.KeyCode;
 import arc.math.geom.Rect;
 import arc.scene.Element;
 import arc.struct.IntSeq;
@@ -17,6 +18,7 @@ import mindustry.gen.Groups;
 import mindustry.gen.Unit;
 import mindustry.type.UnitType;
 import mindustrytool.components.FileIcon;
+import mindustrytool.components.SettingKeybindRow;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
@@ -104,6 +106,8 @@ public class ArmyControlFeature extends Feature {
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
 
+        bindDialog("armyControlSettings", KeyCode.unset, getSettingDialog(), false);
+
         Events.on(WorldLoadEvent.class, e -> onWorldReset());
         Events.on(ResetEvent.class, e -> onWorldReset());
 
@@ -113,6 +117,9 @@ public class ArmyControlFeature extends Feature {
         });
 
         Events.run(Trigger.update, () -> {
+            if (isEnabled() && Vars.state != null && Vars.state.isGame() && !Vars.mobile) {
+                checkControlGroupShortcuts();
+            }
             if (++pollTicks < SELECTION_POLL_INTERVAL) {
                 return;
             }
@@ -121,6 +128,77 @@ public class ArmyControlFeature extends Feature {
                 refreshActiveSelection();
             }
         });
+    }
+
+    private void checkControlGroupShortcuts() {
+        if (Core.scene.hasField() || SettingKeybindRow.isAnyListening()) {
+            return;
+        }
+
+        boolean ctrl = Core.input.ctrl();
+        for (int i = 1; i <= 9; i++) {
+            KeyCode numKey = KeyCode.byOrdinal(KeyCode.num1.ordinal() + (i - 1));
+            if (Core.input.keyRelease(numKey)) {
+                if (ctrl) {
+                    saveControlGroupSlot(i);
+                } else {
+                    recallControlGroupSlot(i);
+                }
+                break;
+            }
+        }
+    }
+
+    /**
+     * Saves currently selected unit IDs to slot index 1..9 (creating or replacing the group).
+     */
+    public void saveControlGroupSlot(int slot) {
+        IntSeq selected = getSelectedUnitIds();
+        Seq<ControlGroup> groups = controlGroupsSignal.peek();
+        Seq<ControlGroup> next = groups != null ? new Seq<>(groups) : new Seq<>();
+
+        ControlGroup existing = null;
+        for (int i = 0; i < next.size; i++) {
+            if (next.get(i).getId() == slot) {
+                existing = next.get(i);
+                break;
+            }
+        }
+
+        if (selected.isEmpty()) {
+            if (existing != null) {
+                next.remove(existing);
+                controlGroupsSignal.set(next);
+            }
+            return;
+        }
+
+        if (existing != null) {
+            existing.setUnits(selected);
+            controlGroupsSignal.set(new Seq<>(next));
+        } else {
+            ControlGroup created = new ControlGroup(slot, String.valueOf(slot));
+            created.setUnits(selected);
+            next.add(created);
+            controlGroupsSignal.set(next);
+        }
+    }
+
+    /**
+     * Recalls group by slot index 1..9.
+     */
+    public void recallControlGroupSlot(int slot) {
+        Seq<ControlGroup> groups = controlGroupsSignal.peek();
+        if (groups == null) {
+            return;
+        }
+        for (int i = 0; i < groups.size; i++) {
+            ControlGroup g = groups.get(i);
+            if (g.getId() == slot) {
+                recallGroup(g);
+                return;
+            }
+        }
     }
 
     private void onWorldReset() {

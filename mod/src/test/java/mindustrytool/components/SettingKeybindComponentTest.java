@@ -98,12 +98,14 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
         // Rebind to H
         row.startListening();
         row.handleInput(KeyCode.h);
+        flushEffects();
         assertEquals(KeyCode.h, featureKeybind.getKeyCode());
         assertFalse(featureKeybind.isDefault());
 
         // Clear with Backspace
         row.startListening();
         row.handleInput(KeyCode.backspace);
+        flushEffects();
         assertEquals(KeyCode.unset, featureKeybind.getKeyCode());
 
         // Reset to default
