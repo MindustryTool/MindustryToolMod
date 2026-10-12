@@ -22,6 +22,7 @@ import solim.display.Badge;
 import solim.display.NetworkImage;
 import solim.display.SolimImage;
 import solim.display.Text;
+import solim.display.video.SolimVideo;
 import solim.input.Button;
 import solim.input.Checkbox;
 import solim.input.SolimSelect;
@@ -242,6 +243,24 @@ public final class UI {
         NetworkImage img = new NetworkImage(url);
         AttachmentStack.attachToParent(img.element());
         return img;
+    }
+
+    public static SolimVideo video() {
+        SolimVideo vid = new SolimVideo();
+        AttachmentStack.attachToParent(vid.element());
+        return vid;
+    }
+
+    public static SolimVideo video(@Nullable String url) {
+        SolimVideo vid = new SolimVideo(url);
+        AttachmentStack.attachToParent(vid.element());
+        return vid;
+    }
+
+    public static SolimVideo video(@Nullable Readable<String> url) {
+        SolimVideo vid = new SolimVideo(url);
+        AttachmentStack.attachToParent(vid.element());
+        return vid;
     }
 
     public static Text text(String s) {

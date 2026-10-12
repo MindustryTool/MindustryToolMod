@@ -21,7 +21,7 @@ Mindustry currently lacks built-in support for playing video and accompanying au
 - `solim-video`: Introduces video and audio downloading, shared Solim disk caching, pure Java H.264/AAC decoding, audio-mastered zero-allocation GPU texture streaming, and the `SolimVideo` declarative UI component with configurable auto-hide overlay controls and Lucide icons.
   - **Requirement: Video Loading and Disk Caching**: Fetching via pluggable `VideoLoader` and caching `.mp4` in `Vars.dataDirectory/solim/cache/networkImage/<hash>.mp4`.
   - **Requirement: Cross-Platform Video Decoding Engine**: Background JCodec H.264 decode to direct `ByteBuffer` with zero per-frame heap allocations and `glTexSubImage2D` texture updates.
-  - **Requirement: Audio Decoding and Synchronization**: JAAD AAC-to-WAV decode cached as `<hash>.wav`, played via `arc.audio.Music`, acting as master clock for video frame presentation, unmuted by default and scaled by `sfxvol`.
+  - **Requirement: Audio Decoding and Synchronization**: Bundled AAC-decoder AAC-to-WAV decode cached as `<hash>.wav`, played via `arc.audio.Music`, acting as master clock for video frame presentation, unmuted by default and scaled by `sfxvol`.
   - **Requirement: Declarative SolimVideo Component**: `solim.UI.video(...)` with reactive URLs, sizing, rounded masking, autoplay, loop, and automatic disposal.
   - **Requirement: Interactive Auto-Hide Overlay Controls with Lucide Icons**: Auto-hiding control overlay with Lucide icons (`play.png`, `pause.png`, `volume-2.png`, `volume-x.png`, `rotate-ccw.png`), scrub bar, and time display.
   - **Requirement: Configurable Controls Toggle**: Full toggle support (`.controls(boolean)` and `.controls(Readable<Boolean>)`) to suppress controls overlay entirely.
@@ -31,7 +31,7 @@ Mindustry currently lacks built-in support for playing video and accompanying au
 
 ## Impact
 
-- **Dependencies**: Adds `org.jcodec:jcodec:0.2.5` to `:solim-core` (pure Java, zero transitive runtime deps, fully compatible with Java 8 and Android D8 desugaring). No separate JAAD dependency — jcodec bundles JAAD internally.
+- **Dependencies**: Adds `org.jcodec:jcodec:0.2.5` to `:solim-core` (pure Java, zero transitive runtime deps, fully compatible with Java 8 and Android D8 desugaring). No separate JAAD dependency — the required AAC decoder ships shaded inside jcodec.
 - **Assets**: Adds Lucide icon assets (`play.png`, `pause.png`, `volume-2.png`, `volume-x.png`) to `assets/icons/`.
 - **APIs**: Introduces `solim.display.video.*` and adds `solim.UI.video(...)` facades.
 - **Cache Footprint**: Reuses `Vars.dataDirectory/solim/cache/networkImage/` alongside `NetworkImage` assets.

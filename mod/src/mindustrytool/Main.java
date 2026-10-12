@@ -8,6 +8,7 @@ import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.mod.Mod;
 import mindustry.mod.Mods.LoadedMod;
 import mindustrytool.components.FileIcon;
+import mindustrytool.components.RequestVideoLoader;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.armycontrol.ArmyControlFeature;
 import mindustrytool.features.autoplay.AutoplayFeature;
@@ -55,6 +56,7 @@ import mindustrytool.services.auth.AuthOverlay;
 import mindustrytool.services.auth.MindustryAuthProvider;
 import mindustrytool.services.crash.CrashReportService;
 import mindustrytool.services.update.UpdateService;
+import solim.display.video.SolimVideo;
 
 public class Main extends Mod {
     public static LoadedMod self;
@@ -76,6 +78,14 @@ public class Main extends Mod {
         }
 
         ModInputManager.init();
+
+        SolimVideo.setVideoLoader(new RequestVideoLoader());
+        SolimVideo.setDefaultIcons(
+                FileIcon.of("play.png"),
+                FileIcon.of("pause.png"),
+                FileIcon.of("rotate-ccw.png"),
+                FileIcon.of("volume-2.png"),
+                FileIcon.of("volume-x.png"));
 
         FeatureManager.register(
                 new BackgroundFeature(),
