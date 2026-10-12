@@ -884,13 +884,13 @@ public class ChatMessageListView extends BaseComponent {
                         button(() -> Vars.ui.schematics.showExport(schematic))
                                 .style(Styles.clearNonei)
                                 .size(unit(6), unit(6))
-                                .tooltip(Core.bundle.get("editor.export", "Export"))
+                                .tooltip(Core.bundle.get("editor.export"))
                                 .children(() -> icon(Icon.upload).size(unit(5), unit(5)));
 
                         button(() -> Vars.ui.schematics.showEdit(schematic))
                                 .style(Styles.clearNonei)
                                 .size(unit(6), unit(6))
-                                .tooltip(Core.bundle.get("schematic.edit", "Edit"))
+                                .tooltip(Core.bundle.get("schematic.edit"))
                                 .children(() -> icon(Icon.pencil).size(unit(5), unit(5)));
 
                         button(() -> useSchematic(schematic))
@@ -1020,20 +1020,20 @@ public class ChatMessageListView extends BaseComponent {
         }
 
         private void openLinkDialog(String url) {
-            SolimDialog dialog = new SolimDialog(Core.bundle.get("chat.link.dialog.title"));
+            SolimDialog dialog = new SolimDialog(Core.bundle.get("feature.chat.link.dialog.title"));
             dialog.addCloseButton();
             dialog.maxWidth(400f);
             dialog.children(() -> {
                 column().growX().padding(unit(3)).gap(unit(2)).children(() -> {
-                    text(Core.bundle.format("chat.link.dialog.prompt", url))
+                    text(Core.bundle.format("feature.chat.link.dialog.prompt", url))
                             .wrap()
                             .growX()
                             .left();
                     row().gap(unit(1)).children(() -> {
-                        button(Core.bundle.get("chat.link.dialog.cancel"), dialog::hide)
+                        button(Core.bundle.get("feature.chat.link.dialog.cancel"), dialog::hide)
                                 .style(Styles.defaultt)
                                 .height(unit(7));
-                        button(Core.bundle.get("chat.link.dialog.open"), () -> {
+                        button(Core.bundle.get("feature.chat.link.dialog.open"), () -> {
                             Core.app.openURI(url);
                             dialog.hide();
                         }).style(Styles.defaultb).height(unit(7));
@@ -1048,7 +1048,7 @@ public class ChatMessageListView extends BaseComponent {
                 Vars.ui.schematics.showInfo(schematic);
             } else {
                 if (!Vars.state.rules.schematicsAllowed) {
-                    Vars.ui.showInfo(Core.bundle.get("schematic.disabled", "Schematics are disabled."));
+                    Vars.ui.showInfo(Core.bundle.get("schematic.disabled"));
                 } else {
                     Vars.control.input.useSchematic(schematic);
                 }

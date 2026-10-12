@@ -114,7 +114,7 @@ public class PatchDetailDialog extends SolimDialog {
                     Color typeColor = isPack ? Color.royal : Color.coral;
 
                     row().growX().gap(unit(1)).children(() -> {
-                        text(Core.bundle.get("browser.detail.type", "Type:")).color(Color.lightGray);
+                        text(Core.bundle.get("browser.detail.type")).color(Color.lightGray);
                         text(typeLabel).color(typeColor);
                     });
                 });

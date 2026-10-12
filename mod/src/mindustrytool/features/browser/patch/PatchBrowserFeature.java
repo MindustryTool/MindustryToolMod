@@ -27,7 +27,7 @@ public class PatchBrowserFeature extends Feature {
                 .quickAccess(false)
                 .build());
 
-        bindDialog("patchBrowser", KeyCode.unset, this::showDialog);
+        bindDialog("patchbrowser", KeyCode.unset, this::showDialog);
     }
 
     @Override

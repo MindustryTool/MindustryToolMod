@@ -120,9 +120,9 @@ public class SmartUpgradeFeature extends Feature {
 
         syncConfigCache();
 
-        bindToggle("smartUpgradeToggle", KeyCode.unset);
-        bindAction("smartUpgradeTrigger", KeyCode.u, this::triggerHoveredUpgrade);
-        bindDialog("smartUpgradeSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("smartupgradetoggle", KeyCode.unset);
+        bindAction("smartupgradetrigger", KeyCode.u, this::triggerHoveredUpgrade);
+        bindDialog("smartupgradesettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.update, this::update);
         Events.run(Trigger.draw, this::draw);

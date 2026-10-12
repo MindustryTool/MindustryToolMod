@@ -41,8 +41,8 @@ public class CalloutFeature extends Feature {
         teamChatConfig = config.boolValue("team-chat", true);
         closeOnSendConfig = config.boolValue("close-on-send", true);
 
-        bindDialog("calloutMenu", KeyCode.unset, this::showDialog, true);
-        bindDialog("calloutSettings", KeyCode.unset, getSettingDialog(), false);
+        bindDialog("calloutmenu", KeyCode.unset, this::showDialog, true);
+        bindDialog("calloutsettings", KeyCode.unset, getSettingDialog(), false);
     }
 
     public String formatMessage(String message, boolean toTeamChat) {

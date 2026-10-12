@@ -214,12 +214,12 @@ class FeatureKeybindTest extends MindustryTestEnv {
         ScreenshotFeature feature = new ScreenshotFeature();
         assertEquals(2, feature.getKeybinds().size);
 
-        FeatureKeybind captureBind = feature.getKeybinds().find(k -> k.getBind().name.equals("screenshotCapture"));
+        FeatureKeybind captureBind = feature.getKeybinds().find(k -> k.getBind().name.equals("screenshotcapture"));
         assertNotNull(captureBind);
         assertFalse(captureBind.isRequireEnabled());
         assertTrue(FeatureKeybindManager.shouldTrigger(feature, captureBind, false, true));
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("screenshotSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("screenshotsettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }
@@ -229,7 +229,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         RangeDisplayFeature feature = new RangeDisplayFeature();
         assertEquals(2, feature.getKeybinds().size);
 
-        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("rangeDisplay"));
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("rangedisplay"));
         assertNotNull(toggleBind);
         assertFalse(toggleBind.isRequireEnabled());
 
@@ -237,7 +237,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         toggleBind.getAction().run();
         assertEquals(!initial, feature.isEnabled());
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("rangeDisplaySettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("rangedisplaysettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }
@@ -247,7 +247,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         HealthBarFeature feature = new HealthBarFeature();
         assertEquals(2, feature.getKeybinds().size);
 
-        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("healthBar"));
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("healthbar"));
         assertNotNull(toggleBind);
         assertFalse(toggleBind.isRequireEnabled());
 
@@ -255,7 +255,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         toggleBind.getAction().run();
         assertEquals(!initial, feature.isEnabled());
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("healthBarSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("healthbarsettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }
@@ -273,7 +273,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         toggleBind.getAction().run();
         assertEquals(!initial, feature.isEnabled());
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("visualizerSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("visualizersettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }
@@ -283,7 +283,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         WavePreviewFeature feature = new WavePreviewFeature();
         assertEquals(2, feature.getKeybinds().size);
 
-        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("wavePreview"));
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("wavepreview"));
         assertNotNull(toggleBind);
         assertFalse(toggleBind.isRequireEnabled());
 
@@ -291,7 +291,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         toggleBind.getAction().run();
         assertEquals(!initial, feature.isEnabled());
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("wavePreviewSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("wavepreviewsettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }
@@ -299,7 +299,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
     @Test
     void armyControlFeature_registersSettingsKeybindAndRtsSlots() {
         ArmyControlFeature feature = new ArmyControlFeature();
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("armyControlSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("armycontrolsettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
 
@@ -318,11 +318,11 @@ class FeatureKeybindTest extends MindustryTestEnv {
         CalloutFeature feature = new CalloutFeature();
         assertEquals(2, feature.getKeybinds().size);
 
-        FeatureKeybind menuBind = feature.getKeybinds().find(k -> k.getBind().name.equals("calloutMenu"));
+        FeatureKeybind menuBind = feature.getKeybinds().find(k -> k.getBind().name.equals("calloutmenu"));
         assertNotNull(menuBind);
         assertTrue(menuBind.isRequireEnabled());
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("calloutSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("calloutsettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }
@@ -332,11 +332,11 @@ class FeatureKeybindTest extends MindustryTestEnv {
         GriefAlertFeature feature = new GriefAlertFeature();
         assertEquals(2, feature.getKeybinds().size);
 
-        FeatureKeybind jumpBind = feature.getKeybinds().find(k -> k.getBind().name.equals("griefAlertJump"));
+        FeatureKeybind jumpBind = feature.getKeybinds().find(k -> k.getBind().name.equals("griefalertjump"));
         assertNotNull(jumpBind);
         assertTrue(jumpBind.isRequireEnabled());
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("griefAlertSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("griefalertsettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }
@@ -346,7 +346,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         BlockStatsDisplayFeature feature = new BlockStatsDisplayFeature();
         assertEquals(2, feature.getKeybinds().size);
 
-        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("blockStatsToggle"));
+        FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("blockstatstoggle"));
         assertNotNull(toggleBind);
         assertFalse(toggleBind.isRequireEnabled());
 
@@ -354,7 +354,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         toggleBind.getAction().run();
         assertEquals(!initial, feature.isEnabled());
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("blockStatsSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("blockstatssettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }

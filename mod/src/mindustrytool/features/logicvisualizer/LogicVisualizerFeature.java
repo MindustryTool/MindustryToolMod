@@ -64,8 +64,8 @@ public class LogicVisualizerFeature extends Feature {
 
         syncConfigCache();
 
-        bindToggle("logicVisualizer", KeyCode.unset);
-        bindDialog("logicVisualizerSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("logicvisualizer", KeyCode.unset);
+        bindDialog("logicvisualizersettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
     }

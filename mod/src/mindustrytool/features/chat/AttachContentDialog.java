@@ -168,7 +168,7 @@ public class AttachContentDialog extends SolimDialog {
             callback.get(content.trim());
             hide();
         } else {
-            Vars.ui.showInfoFade(Core.bundle.get("chat.clipboard-empty", "Clipboard is empty"));
+            Vars.ui.showInfoFade(Core.bundle.get("chat.clipboard-empty"));
         }
     }
 }

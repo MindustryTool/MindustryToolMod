@@ -126,9 +126,9 @@ public class TimeControlFeature extends Feature {
         modeConfig.signal().subscribe(mode -> resetSpeed());
         displayModeConfig.signal().subscribe(mode -> updateHud());
 
-        bindAction("timecontrolPause", KeyCode.unset, this::togglePause);
-        bindAction("timecontrolSpeedUp", KeyCode.unset, this::speedUp);
-        bindAction("timecontrolSpeedDown", KeyCode.unset, this::speedDown);
+        bindAction("timecontrolpause", KeyCode.unset, this::togglePause);
+        bindAction("timecontrolspeedup", KeyCode.unset, this::speedUp);
+        bindAction("timecontrolspeeddown", KeyCode.unset, this::speedDown);
     }
 
     /**

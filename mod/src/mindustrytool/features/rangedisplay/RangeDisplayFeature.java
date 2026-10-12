@@ -221,8 +221,8 @@ public class RangeDisplayFeature extends Feature {
 
         syncConfigCache();
 
-        bindToggle("rangeDisplay", KeyCode.unset);
-        bindDialog("rangeDisplaySettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("rangedisplay", KeyCode.unset);
+        bindDialog("rangedisplaysettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
     }

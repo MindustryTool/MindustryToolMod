@@ -108,9 +108,9 @@ public class MapRulesDialog extends SolimDialog {
             if (path != null) {
                 view.setLastSaved(path);
             }
-            Vars.ui.showInfoFade(Core.bundle.format("feature.map-rules.save_success", name.trim()));
+            Vars.ui.showInfoFade(Core.bundle.format("feature.map-rules.save-success", name.trim()));
         } else {
-            Vars.ui.showInfoFade(Core.bundle.format("feature.map-rules.save_error", name.trim()));
+            Vars.ui.showInfoFade(Core.bundle.format("feature.map-rules.save-error", name.trim()));
         }
         view.refresh();
     }
@@ -139,9 +139,9 @@ public class MapRulesDialog extends SolimDialog {
                                 if (path != null) {
                                     view.setLastSaved(path);
                                 }
-                                Vars.ui.showInfoFade(Core.bundle.format("feature.map-rules.save_success", name));
+                                Vars.ui.showInfoFade(Core.bundle.format("feature.map-rules.save-success", name));
                             } else {
-                                Vars.ui.showInfoFade(Core.bundle.format("feature.map-rules.save_error", name));
+                                Vars.ui.showInfoFade(Core.bundle.format("feature.map-rules.save-error", name));
                             }
                             view.refresh();
                         }).style(WebStyles.dangerText()).height(unit(10))

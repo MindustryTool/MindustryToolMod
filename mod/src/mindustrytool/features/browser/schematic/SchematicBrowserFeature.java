@@ -34,7 +34,7 @@ public class SchematicBrowserFeature extends Feature {
                 .quickAccess(false)
                 .build());
 
-        bindDialog("schematicBrowser", KeyCode.unset, this::showDialog);
+        bindDialog("schematicbrowser", KeyCode.unset, this::showDialog);
     }
 
     @Override

@@ -84,13 +84,13 @@ public class GriefAlertFeature extends Feature {
         radiusConfig = config.floatValue("radius", DEFAULT_RADIUS);
         durationConfig = config.floatValue("duration", DEFAULT_DURATION);
 
-        bindAction("griefAlertJump", KeyCode.unset, () -> {
+        bindAction("griefalertjump", KeyCode.unset, () -> {
             GriefAlertInfo info = activeAlert();
             if (info != null) {
                 jumpToAlert(info);
             }
         }, true);
-        bindDialog("griefAlertSettings", KeyCode.unset, getSettingDialog(), false);
+        bindDialog("griefalertsettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.on(BlockBuildBeginEvent.class, this::onBuildBegin);
         Events.on(WorldLoadEndEvent.class, event -> clearTransientState());

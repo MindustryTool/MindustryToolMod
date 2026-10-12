@@ -232,7 +232,7 @@ public class VisualizerFeature extends Feature {
         syncConfigCache();
 
         bindToggle("visualizer", KeyCode.unset);
-        bindDialog("visualizerSettings", KeyCode.unset, getSettingDialog(), false);
+        bindDialog("visualizersettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.on(ClientLoadEvent.class, e -> rebuildBitSet());
         Events.on(WorldLoadEvent.class, e -> clearFlowStates());

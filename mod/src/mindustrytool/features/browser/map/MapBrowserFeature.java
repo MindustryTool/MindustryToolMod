@@ -33,7 +33,7 @@ public class MapBrowserFeature extends Feature {
                 .quickAccess(false)
                 .build());
 
-        bindDialog("mapBrowser", KeyCode.unset, this::showDialog);
+        bindDialog("mapbrowser", KeyCode.unset, this::showDialog);
     }
 
     @Override

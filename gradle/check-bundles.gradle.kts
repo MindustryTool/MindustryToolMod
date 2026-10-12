@@ -27,6 +27,14 @@ tasks.register("checkBundles") {
         val numericPunctPattern = Pattern.compile("^[0-9\\s.,:%/\\-_()#\\[\\]+*!?@^<>=|\\\\~`'\"]+$")
         val formatTokenPattern = Pattern.compile("^(\\[#[0-9a-fA-F]{6,8}\\])?\\{[0-9]+\\}[a-zA-Z%]*$")
 
+        // Required format for every localization bundle key: lowercase alphanumeric segments
+        // joined by '.' or '-'. Underscores are rejected; digits are allowed.
+        //
+        // This match MUST remain case-sensitive. Do NOT add Pattern.CASE_INSENSITIVE.
+        // A case-insensitive variant silently accepts every uppercase key while reporting
+        // zero errors, which disables the rule while leaving the build green.
+        val keyFormatPattern = Pattern.compile("^[a-z0-9]+([.-][a-z0-9]+)*$")
+
         // English stop-words that indicate natural language prose/sentences.
         // A special term / acronym / proper noun should NEVER contain these words.
         val englishStopWords = setOf(
@@ -131,6 +139,14 @@ tasks.register("checkBundles") {
         baseData.lineNumbers.forEach { (key, lines) ->
             if (lines.size > 1) {
                 errors.add("Base bundle '${baseFile.name}' has duplicate key '$key' at lines $lines")
+            }
+        }
+
+        // Check key format. Deliberately does not consult the untranslated allowlist:
+        // no key is exempt from the character set requirement.
+        baseData.lineNumbers.forEach { (key, lines) ->
+            if (!keyFormatPattern.matcher(key).matches()) {
+                errors.add("[KEY-FORMAT] Key '$key' at line ${lines.first()} does not match the required format '^[a-z0-9]+([.-][a-z0-9]+)*$'")
             }
         }
 

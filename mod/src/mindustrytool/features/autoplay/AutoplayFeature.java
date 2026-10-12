@@ -145,7 +145,7 @@ public class AutoplayFeature extends Feature {
 
         syncOrderedTasks();
 
-        bindToggle("autoPlay", KeyCode.unset);
+        bindToggle("autoplay", KeyCode.unset);
 
         Events.run(Trigger.update, this::update);
         Events.run(Trigger.draw, this::draw);

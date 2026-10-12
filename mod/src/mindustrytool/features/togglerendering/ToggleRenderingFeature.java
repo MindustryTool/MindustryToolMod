@@ -69,8 +69,8 @@ public class ToggleRenderingFeature extends Feature {
             Log.err("ToggleRendering: Failed to access tileview", e);
         }
 
-        bindToggle("toggleRendering", KeyCode.unset);
-        bindDialog("toggleRenderingSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("togglerendering", KeyCode.unset);
+        bindDialog("togglerenderingsettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::updateVisibility);
         Events.on(WorldLoadEndEvent.class, e -> hiddenUnits.clear());

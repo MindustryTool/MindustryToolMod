@@ -42,8 +42,8 @@ public class MapRulesFeature extends Feature {
         showPermissionConfig = config.boolValue("show-permission", true);
         showDescriptionsConfig = config.boolValue("show-descriptions", true);
 
-        bindDialog("mapRules", KeyCode.unset, (Prov<SolimDialog>) this::getMainDialogInstance, false);
-        bindDialog("mapRulesSettings", KeyCode.unset, getSettingDialog(), false);
+        bindDialog("maprules", KeyCode.unset, (Prov<SolimDialog>) this::getMainDialogInstance, false);
+        bindDialog("maprulessettings", KeyCode.unset, getSettingDialog(), false);
     }
 
     private SolimDialog getMainDialogInstance() {

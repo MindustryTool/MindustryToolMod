@@ -14,7 +14,7 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public abstract class Feature {
-	private static final String KEYBIND_CATEGORY = "MindustryTool";
+	private static final String KEYBIND_CATEGORY = "mindustrytool";
 
 	private final FeatureMetadata metadata;
 	private @Nullable Signal<Boolean> enabled;

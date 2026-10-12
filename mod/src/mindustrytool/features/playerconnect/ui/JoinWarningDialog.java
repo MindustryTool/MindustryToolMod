@@ -93,7 +93,7 @@ public class JoinWarningDialog extends SolimDialog {
                                         .minWidth(unit(36));
                             }
 
-                            button(Core.bundle.get("feature.player-connect.join-anyway", "Join Anyway"), this::joinDirect)
+                            button(Core.bundle.get("feature.player-connect.join-anyway"), this::joinDirect)
                                     .style(WebStyles.danger())
                                     .height(unit(10))
                                     .paddingX(unit(5))

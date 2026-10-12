@@ -129,8 +129,8 @@ public class PathfindingFeature extends Feature {
 
         syncConfigCache();
 
-        bindToggle("pathfindingToggle", KeyCode.unset);
-        bindDialog("pathfindingSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("pathfindingtoggle", KeyCode.unset);
+        bindDialog("pathfindingsettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.update, this::update);
         Events.run(Trigger.draw, this::draw);

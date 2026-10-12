@@ -126,7 +126,7 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         toggleBind.getAction().run();
         assertEquals(!initial, feature.isEnabled());
 
-        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("visualizerSettings"));
+        FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("visualizersettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
     }

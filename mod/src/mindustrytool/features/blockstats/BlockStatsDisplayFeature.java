@@ -113,8 +113,8 @@ public class BlockStatsDisplayFeature extends Feature {
         opacityConfig = config.floatValue("opacity", 1f);
         scaleConfig = config.floatValue("scale", 1f);
 
-        bindToggle("blockStatsToggle", KeyCode.unset);
-        bindDialog("blockStatsSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("blockstatstoggle", KeyCode.unset);
+        bindDialog("blockstatssettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
     }

@@ -45,8 +45,8 @@ public class ScreenshotFeature extends Feature {
         config = configGroup();
         includeUiConfig = config.boolValue("include-ui", false);
 
-        bindAction("screenshotCapture", KeyCode.unset, this::capture, false);
-        bindDialog("screenshotSettings", KeyCode.unset, getSettingDialog(), false);
+        bindAction("screenshotcapture", KeyCode.unset, this::capture, false);
+        bindDialog("screenshotsettings", KeyCode.unset, getSettingDialog(), false);
     }
 
     public void resetToDefaults() {

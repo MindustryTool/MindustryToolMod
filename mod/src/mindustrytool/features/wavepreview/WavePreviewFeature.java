@@ -71,8 +71,8 @@ public class WavePreviewFeature extends Feature {
             }
         });
 
-        bindToggle("wavePreview", KeyCode.unset);
-        bindDialog("wavePreviewSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("wavepreview", KeyCode.unset);
+        bindDialog("wavepreviewsettings", KeyCode.unset, getSettingDialog(), false);
     }
 
     public WavePreviewState getState() {

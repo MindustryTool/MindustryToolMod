@@ -7,7 +7,7 @@
 # Format: <key> [optional comment]
 
 # Brand & Project Names
-section.MindustryTool.name
+category.mindustrytool.name
 web-feature.wiki.name
 web-feature.content-patches.name
 pretty-chat.prettier.uwu.name

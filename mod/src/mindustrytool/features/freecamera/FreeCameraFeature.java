@@ -50,8 +50,8 @@ public class FreeCameraFeature extends Feature {
                 .quickAccessByDefault(true)
                 .build());
 
-        bindToggle("freeCameraToggle", KeyCode.unset);
-        bindAction("freeCameraSnap", KeyCode.unset, this::snapToPlayer, true);
+        bindToggle("freecameratoggle", KeyCode.unset);
+        bindAction("freecamerasnap", KeyCode.unset, this::snapToPlayer, true);
 
         Events.run(Trigger.draw, this::draw);
     }

@@ -106,7 +106,7 @@ public class ArmyControlFeature extends Feature {
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
 
-        bindDialog("armyControlSettings", KeyCode.unset, getSettingDialog(), false);
+        bindDialog("armycontrolsettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.on(WorldLoadEvent.class, e -> onWorldReset());
         Events.on(ResetEvent.class, e -> onWorldReset());

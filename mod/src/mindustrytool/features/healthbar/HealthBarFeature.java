@@ -118,8 +118,8 @@ public class HealthBarFeature extends Feature {
 
         syncConfigCache();
 
-        bindToggle("healthBar", KeyCode.unset);
-        bindDialog("healthBarSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("healthbar", KeyCode.unset);
+        bindDialog("healthbarsettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
     }
