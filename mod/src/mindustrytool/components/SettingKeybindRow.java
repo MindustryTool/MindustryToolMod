@@ -7,6 +7,7 @@ import arc.Events;
 import arc.graphics.Color;
 import arc.input.KeyCode;
 import arc.scene.Element;
+import arc.util.Timer;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.features.FeatureKeybind;
@@ -14,24 +15,16 @@ import solim.core.BaseComponent;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Modern declarative Solim row component for an individual feature keybind.
- * Displays keybind name, interactive key chip for inline rebinding, and a reset button.
- */
+
 public class SettingKeybindRow extends BaseComponent {
     private static volatile boolean anyListening = false;
-    private static volatile long suppressUntilMillis = 0L;
 
     private final FeatureKeybind keybind;
     private final Signal<Boolean> listening = Signal.of(false);
     private boolean listeningActive = false;
 
     public static boolean isAnyListening() {
-        return anyListening || arc.util.Time.millis() < suppressUntilMillis;
-    }
-
-    public static void suppressDispatch(long durationMillis) {
-        suppressUntilMillis = Math.max(suppressUntilMillis, arc.util.Time.millis() + durationMillis);
+        return anyListening;
     }
 
     public SettingKeybindRow(FeatureKeybind keybind) {
@@ -76,7 +69,8 @@ public class SettingKeybindRow extends BaseComponent {
                                         .color(Color.white)
                                         .left();
 
-                                text(Core.bundle.get("keybind.listening.help", "Press Esc to cancel, Backspace to clear"))
+                                text(Core.bundle.get("keybind.listening.help",
+                                        "Press Esc to cancel, Backspace to clear"))
                                         .color(WebStyles.Colors.GHOST_FG)
                                         .left()
                                         .visible(listening);
@@ -102,8 +96,7 @@ public class SettingKeybindRow extends BaseComponent {
                             .tooltip(Core.bundle.get("keybind.button.reset", "Reset to default"))
                             .onClick(() -> {
                                 cancelListening();
-                                suppressDispatch(300L);
-                                keybind.resetToDefault();
+                                Core.app.post(keybind::resetToDefault);
                             })
                             .children(() -> icon(Icon.refresh)
                                     .size(unit(5))
@@ -147,18 +140,16 @@ public class SettingKeybindRow extends BaseComponent {
             return;
         }
         if (code == KeyCode.backspace) {
-            keybind.rebind(KeyCode.unset);
             cancelListening();
+            Timer.schedule(() -> keybind.rebind(KeyCode.unset), 0.1f);
             return;
         }
         if (code == KeyCode.mouseLeft) {
             // Ignore left mouse button to prevent conflict with standard UI interaction
             return;
         }
-        // Suppress FeatureKeybindManager for 300ms after key assignment so keyRelease doesn't trigger the action immediately
-        suppressDispatch(300L);
-        keybind.rebind(code);
         cancelListening();
+        Timer.schedule(() -> keybind.rebind(code), 0.1f);
     }
 
     private void onUpdate() {

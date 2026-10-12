@@ -139,7 +139,6 @@ public class WebStyles {
     private static final SolimButtonStyle DANGER_TEXT_STYLE = textOf(
             DANGER_STYLE, Colors.DANGER_FG, Colors.DANGER_FG, Color.lightGray, Colors.DISABLED_FG);
 
-
     private static final SolimButtonStyle CARD_ACTION_STYLE = new SolimButtonStyleBuilder()
             .rounded(unit(2))
             .border(1.0f, Colors.BORDER_INPUT)
@@ -238,12 +237,6 @@ public class WebStyles {
             .down(d -> d.background(Colors.PRIMARY_BG_DOWN).border(1.5f, Colors.PRIMARY_DOWN))
             .build();
 
-    private static final SolimButtonStyle KEYBIND_CHIP_TEXT_STYLE = textOf(
-            KEYBIND_CHIP_STYLE, Colors.SECONDARY_FG, Color.white, Color.lightGray, Colors.DISABLED_FG);
-
-    private static final SolimButtonStyle KEYBIND_LISTENING_TEXT_STYLE = textOf(
-            KEYBIND_LISTENING_STYLE, Colors.PRIMARY, Colors.PRIMARY_HOVER, Colors.PRIMARY_DOWN, Colors.DISABLED_FG);
-
     private static final InputStyle CLEAR_INPUT = InputStyle.builder()
             .background(Tex.clear)
             .focusedBackground(Tex.clear)
@@ -323,7 +316,6 @@ public class WebStyles {
         return FILTER_CHIP_STYLE;
     }
 
-
     public static SolimButtonStyle actionChip() {
         return ACTION_CHIP_STYLE;
     }
@@ -348,16 +340,8 @@ public class WebStyles {
         return KEYBIND_CHIP_STYLE;
     }
 
-    public static SolimButtonStyle keybindChipText() {
-        return KEYBIND_CHIP_TEXT_STYLE;
-    }
-
     public static SolimButtonStyle keybindListening() {
         return KEYBIND_LISTENING_STYLE;
-    }
-
-    public static SolimButtonStyle keybindListeningText() {
-        return KEYBIND_LISTENING_TEXT_STYLE;
     }
 
     private static SolimButtonStyle textOf(
