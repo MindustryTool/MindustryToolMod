@@ -8,11 +8,6 @@ import mindustrytool.services.Request;
 import solim.display.video.VideoCache;
 import solim.display.video.VideoLoader;
 
-/**
- * {@link VideoLoader} routing downloads through {@link Request}, the shared
- * HTTP facade. Behavior matches the default loader (shared disk cache with
- * {@code <hash>.mp4} entries); only the transport differs.
- */
 public final class RequestVideoLoader implements VideoLoader {
 
     private final Request api = Request.builder()

@@ -50,12 +50,26 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
 
     @Test
     void forFeature_returnsComponentWhenKeybindsExist() {
+        mindustry.Vars.mobile = false;
         DummyFeature feature = new DummyFeature();
         feature.addKey("testKey1", KeyCode.space);
 
         Component card = SettingKeybindCard.forFeature(feature);
         assertNotNull(card);
         assertNotNull(card.element());
+    }
+
+    @Test
+    void forFeature_returnsNullOnMobile() {
+        mindustry.Vars.mobile = true;
+        try {
+            DummyFeature feature = new DummyFeature();
+            feature.addKey("testKey1", KeyCode.space);
+            assertNull(SettingKeybindCard.forFeature(feature));
+            assertNull(SettingKeybindCard.of("Test", feature.getKeybinds()));
+        } finally {
+            mindustry.Vars.mobile = false;
+        }
     }
 
     @Test
@@ -71,9 +85,15 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
         // Start listening
         row.startListening();
 
+        // Reject mouseLeft (must remain listening, no change)
+        row.handleInput(KeyCode.mouseLeft);
+        assertEquals(KeyCode.g, featureKeybind.getKeyCode());
+        assertTrue(SettingKeybindRow.isAnyListening());
+
         // Cancel with Escape
         row.handleInput(KeyCode.escape);
         assertEquals(KeyCode.g, featureKeybind.getKeyCode());
+        assertFalse(SettingKeybindRow.isAnyListening());
 
         // Rebind to H
         row.startListening();

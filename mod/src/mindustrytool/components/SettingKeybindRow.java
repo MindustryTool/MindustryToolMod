@@ -20,13 +20,18 @@ import solim.reactive.Signal;
  */
 public class SettingKeybindRow extends BaseComponent {
     private static volatile boolean anyListening = false;
+    private static volatile long suppressUntilMillis = 0L;
 
     private final FeatureKeybind keybind;
     private final Signal<Boolean> listening = Signal.of(false);
     private boolean listeningActive = false;
 
     public static boolean isAnyListening() {
-        return anyListening;
+        return anyListening || arc.util.Time.millis() < suppressUntilMillis;
+    }
+
+    public static void suppressDispatch(long durationMillis) {
+        suppressUntilMillis = Math.max(suppressUntilMillis, arc.util.Time.millis() + durationMillis);
     }
 
     public SettingKeybindRow(FeatureKeybind keybind) {
@@ -97,6 +102,7 @@ public class SettingKeybindRow extends BaseComponent {
                             .tooltip(Core.bundle.get("keybind.button.reset", "Reset to default"))
                             .onClick(() -> {
                                 cancelListening();
+                                suppressDispatch(300L);
                                 keybind.resetToDefault();
                             })
                             .children(() -> icon(Icon.refresh)
@@ -145,6 +151,12 @@ public class SettingKeybindRow extends BaseComponent {
             cancelListening();
             return;
         }
+        if (code == KeyCode.mouseLeft) {
+            // Ignore left mouse button to prevent conflict with standard UI interaction
+            return;
+        }
+        // Suppress FeatureKeybindManager for 300ms after key assignment so keyRelease doesn't trigger the action immediately
+        suppressDispatch(300L);
         keybind.rebind(code);
         cancelListening();
     }
