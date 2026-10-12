@@ -6,12 +6,6 @@ import arc.util.Http;
 import arc.util.Log;
 import mindustry.core.Version;
 
-/**
- * Default {@link VideoLoader}: serves fresh {@code <hash>.mp4} entries from
- * the shared disk cache, otherwise fetches bytes over HTTP and persists them
- * before reporting the cached file. Disk-cache corruption fallback is handled
- * by {@link SolimVideo} so it applies to every loader.
- */
 final class DefaultVideoLoader implements VideoLoader {
 
 	@Override

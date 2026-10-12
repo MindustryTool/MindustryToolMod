@@ -5,6 +5,7 @@ import static solim.UI.*;
 import arc.Core;
 import arc.struct.Seq;
 import arc.util.Nullable;
+import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureKeybind;
@@ -13,6 +14,7 @@ import solim.core.Component;
 /**
  * Reusable settings card displaying feature keybinds.
  * Conforms to the project layout and spacing standards.
+ * Automatically hidden on mobile devices.
  */
 public final class SettingKeybindCard {
 
@@ -21,10 +23,10 @@ public final class SettingKeybindCard {
 
     /**
      * Creates a standardized Keybinds section card for a single feature.
-     * If the feature has no registered keybinds, returns an empty component.
+     * If on mobile or if the feature has no registered keybinds, returns null.
      */
     public static @Nullable Component forFeature(Feature feature) {
-        if (feature == null || feature.getKeybinds().isEmpty()) {
+        if (Vars.mobile || feature == null || feature.getKeybinds().isEmpty()) {
             return null;
         }
         return of(Core.bundle.get("setting.section.keybinds", "Keybinds"), feature.getKeybinds());
@@ -32,9 +34,10 @@ public final class SettingKeybindCard {
 
     /**
      * Creates a standardized Keybinds section card for a custom collection of keybinds.
+     * If on mobile or if the keybind collection is empty, returns null.
      */
     public static @Nullable Component of(String title, Seq<FeatureKeybind> keybinds) {
-        if (keybinds == null || keybinds.isEmpty()) {
+        if (Vars.mobile || keybinds == null || keybinds.isEmpty()) {
             return null;
         }
         return SettingCard.section(Icon.settings, title, () -> {

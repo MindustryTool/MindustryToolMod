@@ -31,15 +31,6 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 
-/**
- * Declarative video component: streams an MP4 clip (H.264 + AAC) with an
- * auto-hiding control overlay. Playback is driven by {@link VideoPlayer};
- * loading goes through an injectable {@link VideoLoader}.
- *
- * <p>Overlay icons default to Mindustry's built-in glyphs; the mod registers
- * its Lucide PNGs via {@link #setDefaultIcons} at init. Control buttons are
- * icon-only, so no translated strings are needed (the timestamp is numeric).
- */
 public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 
 	private static final long OVERLAY_HIDE_DELAY = 2500;
@@ -56,10 +47,6 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 		loader = customLoader != null ? customLoader : new DefaultVideoLoader();
 	}
 
-	/**
-	 * Overrides the overlay icons (e.g. with Lucide PNGs via FileIcon).
-	 * Null entries fall back to the built-in glyphs.
-	 */
 	public static void setDefaultIcons(@Nullable Drawable play, @Nullable Drawable pause,
 			@Nullable Drawable replay, @Nullable Drawable volume, @Nullable Drawable mute) {
 		defaultPlayIcon = play;
@@ -89,7 +76,6 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 		return defaultMuteIcon != null ? defaultMuteIcon : Icon.volumeOff;
 	}
 
-	/** mm:ss readout. Package-visible for tests. */
 	static String formatTime(double seconds) {
 		if (Double.isNaN(seconds) || Double.isInfinite(seconds) || seconds < 0)
 			seconds = 0;
@@ -498,7 +484,6 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 			overlayShown.set(true);
 	}
 
-	/** Seeks when the scrub signal jumps away from the playing position. */
 	private void onScrub() {
 		Float position = progress.get();
 		VideoPlayer active = player;
@@ -546,8 +531,6 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 		}
 		task.run();
 	}
-
-	// --- Test seams (same package) ---
 
 	@Nullable VideoPlayer player() {
 		return player;

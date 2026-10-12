@@ -6,28 +6,15 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import solim.graphics.RoundedGenerator;
 
-/**
- * Converts JCodec YUV420 planar frames to RGBA8888 bytes using integer
- * BT.601 math. Writes into a caller-owned direct buffer with absolute puts,
- * so conversion itself allocates nothing; callers are expected to reuse the
- * buffer across frames.
- */
 public final class YuvToRgbaConverter {
 
 	private YuvToRgbaConverter() {
 	}
 
-	/** Direct RGBA buffer sized for a frame. Reuse one per decode stream. */
 	public static ByteBuffer allocate(int width, int height) {
 		return ByteBuffer.allocateDirect(Math.max(1, width) * Math.max(1, height) * 4);
 	}
 
-	/**
-	 * Converts {@code picture} into {@code out} as RGBA bytes. Honors the
-	 * picture crop rect, so coded padding never reaches the screen.
-	 * {@code cornerRadius} fades the corners (frame pixels, 0 disables).
-	 * Leaves {@code out} positioned for reading (position 0, limit w*h*4).
-	 */
 	public static void convert(Picture picture, ByteBuffer out, int cornerRadius) {
 		if (picture == null || out == null)
 			return;

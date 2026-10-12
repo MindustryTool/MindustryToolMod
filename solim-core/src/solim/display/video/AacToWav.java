@@ -27,18 +27,6 @@ import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
-/**
- * Transcodes the first AAC audio track of an MP4 file to 16-bit PCM WAV.
- *
- * <p>Uses JCodec for demuxing ({@link MP4Demuxer}) plus the AAC decoder it
- * shades in ({@link AACDecoder}, JAAD core). Raw MP4 audio packets carry no
- * ADTS headers, so each packet is wrapped with a synthesized 7-byte ADTS
- * header ({@link AACUtils#streamInfoToADTS} + {@link ADTSParser#write})
- * before decoding. The decoder yields exact-size little-endian interleaved
- * PCM, which is written verbatim after a standard 44-byte WAV header.
- *
- * <p>One-shot batch work: runs on the decode worker, never per frame.
- */
 public final class AacToWav {
 
 	private AacToWav() {
@@ -56,11 +44,6 @@ public final class AacToWav {
 		}
 	}
 
-	/**
-	 * Decodes the first AAC track of {@code mp4File} into {@code wavOut}
-	 * (atomically via a {@code .part} file). Returns track info, or null when
-	 * the file has no decodable AAC track. Never throws; failures are logged.
-	 */
 	public static @Nullable AudioInfo decode(File mp4File, File wavOut) {
 		if (mp4File == null || wavOut == null)
 			return null;
@@ -77,7 +60,6 @@ public final class AacToWav {
 		}
 	}
 
-	/** First audio track whose esds box parses as a valid AAC stream config. */
 	private static @Nullable DemuxerTrack findAacTrack(MP4Demuxer demuxer) {
 		List<DemuxerTrack> tracks;
 		try {
@@ -189,11 +171,6 @@ public final class AacToWav {
 		return new AudioInfo(sampleRate, channels, meta != null ? meta.getTotalDuration() : 0);
 	}
 
-	/**
-	 * Wraps one raw MP4 AAC packet in a 7-byte ADTS header, which is what
-	 * {@link AACDecoder#decodeFrame} expects (it skips the header via
-	 * {@code ADTSParser.read} before decoding the raw payload).
-	 */
 	static ByteBuffer wrapAdts(byte[] asc, ByteBuffer raw) {
 		int frameSize = raw.remaining();
 		ADTSParser.Header header = AACUtils.streamInfoToADTS(ByteBuffer.wrap(asc), true, 1, frameSize);
@@ -204,7 +181,6 @@ public final class AacToWav {
 		return frame;
 	}
 
-	/** Standard 44-byte PCM WAV header, little-endian. */
 	static void writeWavHeader(OutputStream out, int sampleRate, int channels, long dataLen) throws Exception {
 		writeAscii(out, "RIFF");
 		writeIntLE(out, (int) Math.min(36 + dataLen, Integer.MAX_VALUE - 8));
@@ -221,7 +197,6 @@ public final class AacToWav {
 		writeIntLE(out, (int) Math.min(dataLen, Integer.MAX_VALUE));
 	}
 
-	/** Rewrites the header with final format and size values after the body is complete. */
 	private static void rewriteWavHeader(File wav, int sampleRate, int channels, long dataLen) throws Exception {
 		ByteArrayOutputStream head = new ByteArrayOutputStream(44);
 		writeWavHeader(head, sampleRate, channels, dataLen);

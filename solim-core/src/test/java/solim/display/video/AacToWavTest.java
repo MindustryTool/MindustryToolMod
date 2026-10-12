@@ -51,7 +51,6 @@ class AacToWavTest {
 
 		assertEquals(107, frame.remaining());
 		assertEquals((byte) 0xFF, frame.get(0));
-		// jcodec writes the MPEG-2 ID bit; decoders ignore it and key off the profile bits.
 		assertEquals((byte) 0xF9, frame.get(1));
 		int length = ((frame.get(3) & 0x03) << 11) | ((frame.get(4) & 0xFF) << 3) | ((frame.get(5) & 0xFF) >> 5);
 		assertEquals(107, length);

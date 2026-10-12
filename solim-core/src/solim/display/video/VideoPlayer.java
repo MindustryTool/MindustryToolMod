@@ -33,25 +33,6 @@ import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import solim.core.Disposable;
 
-/**
- * Pure-Java MP4/H.264 playback engine with AAC audio.
- *
- * <p>Demuxing, H.264 decode, and YUV-to-RGBA conversion run on a shared
- * background worker; the render thread ({@link #update(float)}) only uploads
- * ready frames into a reusable texture via {@code glTexSubImage2D}. Decoded
- * pixel data cycles through a small pool of direct buffers, so steady-state
- * playback allocates nothing per frame.
- *
- * <p>When an audio track is present it is transcoded once to a cached WAV and
- * played through {@link Music}, whose playhead is the master clock. Silent
- * clips fall back to delta-time pacing. Volume is scaled by Mindustry's
- * {@code sfxvol} setting.
- *
- * <p>All {@link Music} calls happen on the main thread; listener callbacks
- * also arrive on the main thread. Threading contract: {@link #open},
- * {@link #play}, {@link #pause}, {@link #seek} and setters are main-thread
- * only, {@link #update} runs on the render thread.
- */
 public final class VideoPlayer implements Disposable {
 
 	public enum State {
@@ -153,10 +134,6 @@ public final class VideoPlayer implements Disposable {
 		return height;
 	}
 
-	/**
-	 * The reusable frame texture. Main thread only; null until READY.
-	 * Owned by the player — callers must not dispose it.
-	 */
 	public @Nullable Texture texture() {
 		return texture;
 	}
@@ -200,10 +177,6 @@ public final class VideoPlayer implements Disposable {
 		this.cornerRadius = Math.max(0, radius);
 	}
 
-	/**
-	 * Opens a cached MP4 file. Only valid from IDLE; callers open a fresh
-	 * player per URL and dispose the previous one.
-	 */
 	public void open(Fi mp4File, @Nullable String audioUrl, boolean autoplay, Listener listener) {
 		if (disposed || state != State.IDLE)
 			return;
@@ -260,7 +233,6 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
-	/** Seeks to seconds, clamped to the stream duration. Resumes from ENDED. */
 	public void seek(double seconds) {
 		if (disposed)
 			return;
@@ -278,11 +250,6 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
-	/**
-	 * Reopens the stream after ENDED: the previous worker has exited and the
-	 * demuxer is closed, so replay goes through demux + READY again (audio
-	 * hits the instant WAV-cache path). Honors pendingPlay/pendingSeek.
-	 */
 	private void reopen() {
 		closeStream();
 		if (music != null) {
@@ -323,10 +290,6 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
-	/**
-	 * Advances presentation. Must be called on the render thread every frame.
-	 * Uploads newly due frames, transitions to ENDED, and applies volume.
-	 */
 	public void update(float delta) {
 		if (disposed)
 			return;
@@ -485,8 +448,6 @@ public final class VideoPlayer implements Disposable {
 		}
 		disposeQuietly();
 	}
-
-	// --- Background pipeline ---
 
 	private void openInBackground() {
 		try {
@@ -787,7 +748,6 @@ public final class VideoPlayer implements Disposable {
 		videoTrack = null;
 	}
 
-	/** Opens the media file, transferring RAF ownership to {@link #mediaRaf}. */
 	private void openChannel(File file) throws Exception {
 		RandomAccessFile raf = new RandomAccessFile(file, "r");
 		try {
