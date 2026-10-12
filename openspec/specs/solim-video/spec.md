@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Behavior contract for `solim.display.video.SolimVideo` — the declarative video component with pluggable loader, shared disk caching, pure-Java H.264/AAC decoding, audio-mastered texture streaming, and auto-hide overlay controls. Established as a behavior baseline by change `solim-video-component`.
+
+## Requirements
 
 ### Requirement: Video Loading and Disk Caching
 The video subsystem SHALL load MP4 video files through an injectable `VideoLoader` interface (`load(String url, Cons<Fi> onSuccess, Cons<Throwable> onError)`). The default loader SHALL download the file over HTTP and store it in the shared Solim disk cache directory at `Vars.dataDirectory/solim/cache/networkImage/` using SHA-256 URL hashing (`<hash>.mp4`). Subsequent loads of the same URL SHALL be served directly from disk. `SolimVideo.setVideoLoader(loader)` SHALL allow injecting a custom loader, and passing `null` SHALL reset to the default loader.
