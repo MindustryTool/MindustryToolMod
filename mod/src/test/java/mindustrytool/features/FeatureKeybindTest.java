@@ -65,6 +65,31 @@ class FeatureKeybindTest extends MindustryTestEnv {
     }
 
     @Test
+    void descriptor_rebindAndResetUpdatesSignalAndSettings() {
+        KeyBind bind = KeyBind.add("test.descriptor.rebind", KeyCode.g, "MindustryTool");
+        FeatureKeybind keybind = new FeatureKeybind(bind, () -> {}, false);
+
+        assertEquals(KeyCode.g, keybind.getKeyCode());
+        assertTrue(keybind.isDefault());
+
+        AtomicBoolean notified = new AtomicBoolean(false);
+        keybind.keySignal().subscribe(k -> {
+            if (k == KeyCode.h) {
+                notified.set(true);
+            }
+        });
+
+        keybind.rebind(KeyCode.h);
+        assertEquals(KeyCode.h, keybind.getKeyCode());
+        assertFalse(keybind.isDefault());
+        assertTrue(notified.get());
+
+        keybind.resetToDefault();
+        assertEquals(KeyCode.g, keybind.getKeyCode());
+        assertTrue(keybind.isDefault());
+    }
+
+    @Test
     void descriptor_rejectsNullBindOrAction() {
         KeyBind bind = KeyBind.add("test.descriptor.null", KeyCode.unset, "MindustryTool");
         assertThrows(IllegalArgumentException.class, () -> new FeatureKeybind(null, () -> {

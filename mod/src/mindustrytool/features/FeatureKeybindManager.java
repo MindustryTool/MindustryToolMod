@@ -3,11 +3,12 @@ package mindustrytool.features;
 import arc.Core;
 import arc.Events;
 import mindustry.game.EventType.Trigger;
+import mindustrytool.components.SettingKeybindRow;
 
 /**
  * Centralized dispatcher for all feature keybinds.
  * Polls registered {@link FeatureKeybind}s on {@link Trigger#update},
- * suppresses execution while any scene field holds focus,
+ * suppresses execution while any scene field holds focus or key listening is active,
  * enforces {@code requireEnabled} preconditions,
  * and runs actions on the application main thread.
  */
@@ -26,7 +27,7 @@ public final class FeatureKeybindManager {
     }
 
     static void update() {
-        if (Core.scene.hasField()) {
+        if (Core.scene.hasField() || SettingKeybindRow.isAnyListening()) {
             return;
         }
         for (Feature feature : FeatureManager.getFeatures()) {

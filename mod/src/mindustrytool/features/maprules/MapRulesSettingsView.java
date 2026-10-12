@@ -6,6 +6,7 @@ import arc.Core;
 import arc.scene.Element;
 import mindustry.gen.Icon;
 import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
@@ -27,7 +28,12 @@ public class MapRulesSettingsView extends BaseComponent {
         return SettingScaffold.build(() -> {
             headerCard();
             optionsCard();
+            keybindsCard();
         });
+    }
+
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
     }
 
     private Component headerCard() {

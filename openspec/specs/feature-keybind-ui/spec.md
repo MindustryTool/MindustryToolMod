@@ -1,4 +1,10 @@
-## ADDED Requirements
+# feature-keybind-ui Specification
+
+## Purpose
+
+Declarative Solim UI components and interactions for displaying, inline rebinding, and resetting feature keybindings both within individual feature settings dialogs and in the general settings view. Created by archiving change feature-keybind-improvements.
+
+## Requirements
 
 ### Requirement: Feature Keybind Inline Component
 The system SHALL provide a declarative Solim UI component `SettingKeybindCard` that displays a list of registered `FeatureKeybind` descriptors with their localized names, interactive keybind chips, and reset buttons.

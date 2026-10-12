@@ -8,6 +8,7 @@ import arc.scene.Element;
 import java.util.Locale;
 import mindustry.gen.Icon;
 import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
@@ -32,8 +33,13 @@ public class HealthBarSettingsView extends BaseComponent {
             headerCard();
             targetLayersCard();
             visualStylingCard();
+            keybindsCard();
             actionsCard();
         });
+    }
+
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
     }
 
     private Component headerCard() {

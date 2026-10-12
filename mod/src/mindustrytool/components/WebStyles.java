@@ -222,6 +222,28 @@ public class WebStyles {
     private static final SolimButtonStyle CLEAR_FILTERS_TEXT_STYLE = textOf(
             CLEAR_FILTERS_STYLE, Colors.CLEAR_FG, Colors.CHIP_CHECKED_FG, Color.lightGray, Colors.DISABLED_FG);
 
+    private static final SolimButtonStyle KEYBIND_CHIP_STYLE = new SolimButtonStyleBuilder()
+            .rounded(unit(1.5f))
+            .padding(unit(1.25f))
+            .up(u -> u.background(Colors.SECONDARY).border(1.0f, Colors.BORDER))
+            .over(o -> o.background(Colors.SECONDARY_HOVER).border(1.0f, Colors.BORDER))
+            .down(d -> d.background(Colors.SECONDARY_DOWN).border(1.0f, Colors.BORDER))
+            .build();
+
+    private static final SolimButtonStyle KEYBIND_LISTENING_STYLE = new SolimButtonStyleBuilder()
+            .rounded(unit(1.5f))
+            .padding(unit(1.25f))
+            .up(u -> u.background(Colors.PRIMARY_BG).border(1.5f, Colors.PRIMARY))
+            .over(o -> o.background(Colors.PRIMARY_BG_HOVER).border(1.5f, Colors.PRIMARY_HOVER))
+            .down(d -> d.background(Colors.PRIMARY_BG_DOWN).border(1.5f, Colors.PRIMARY_DOWN))
+            .build();
+
+    private static final SolimButtonStyle KEYBIND_CHIP_TEXT_STYLE = textOf(
+            KEYBIND_CHIP_STYLE, Colors.SECONDARY_FG, Color.white, Color.lightGray, Colors.DISABLED_FG);
+
+    private static final SolimButtonStyle KEYBIND_LISTENING_TEXT_STYLE = textOf(
+            KEYBIND_LISTENING_STYLE, Colors.PRIMARY, Colors.PRIMARY_HOVER, Colors.PRIMARY_DOWN, Colors.DISABLED_FG);
+
     private static final InputStyle CLEAR_INPUT = InputStyle.builder()
             .background(Tex.clear)
             .focusedBackground(Tex.clear)
@@ -320,6 +342,22 @@ public class WebStyles {
 
     public static SolimButtonStyle clearFiltersText() {
         return CLEAR_FILTERS_TEXT_STYLE;
+    }
+
+    public static SolimButtonStyle keybindChip() {
+        return KEYBIND_CHIP_STYLE;
+    }
+
+    public static SolimButtonStyle keybindChipText() {
+        return KEYBIND_CHIP_TEXT_STYLE;
+    }
+
+    public static SolimButtonStyle keybindListening() {
+        return KEYBIND_LISTENING_STYLE;
+    }
+
+    public static SolimButtonStyle keybindListeningText() {
+        return KEYBIND_LISTENING_TEXT_STYLE;
     }
 
     private static SolimButtonStyle textOf(

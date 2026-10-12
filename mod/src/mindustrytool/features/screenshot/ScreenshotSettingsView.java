@@ -10,6 +10,7 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
@@ -31,8 +32,13 @@ public class ScreenshotSettingsView extends BaseComponent {
         return SettingScaffold.build(() -> {
             headerCard();
             optionsCard();
+            keybindsCard();
             actionsCard();
         });
+    }
+
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
     }
 
     private Component headerCard() {

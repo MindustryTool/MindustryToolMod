@@ -10,6 +10,7 @@ import arc.struct.Seq;
 import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
@@ -34,7 +35,12 @@ public class AutoplaySettingsView extends BaseComponent {
             headerCard();
             behaviorAndDisplayCard();
             tasksCard();
+            keybindsCard();
         });
+    }
+
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
     }
 
     private Component headerCard() {

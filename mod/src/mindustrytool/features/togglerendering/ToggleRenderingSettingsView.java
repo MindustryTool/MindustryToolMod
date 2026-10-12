@@ -7,6 +7,7 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.gen.Icon;
 import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import solim.core.BaseComponent;
@@ -28,8 +29,13 @@ public class ToggleRenderingSettingsView extends BaseComponent {
         return SettingScaffold.build(() -> {
             headerCard();
             layersCard();
+            keybindsCard();
             resetButtonCard();
         });
+    }
+
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
     }
 
     private Component headerCard() {

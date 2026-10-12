@@ -17,6 +17,7 @@ import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.world.Block;
 import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
@@ -43,8 +44,13 @@ public class VisualizerSettingsView extends BaseComponent {
             bridgesCard();
             turretsCard();
             turretFilterCard();
+            keybindsCard();
             actionsCard();
         });
+    }
+
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
     }
 
     private Component headerCard() {

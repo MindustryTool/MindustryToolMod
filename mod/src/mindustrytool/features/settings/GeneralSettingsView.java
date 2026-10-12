@@ -8,12 +8,17 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Log;
 import arc.util.Nullable;
+import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
+import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureKeybind;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.services.crash.CrashTimestampParser;
 import solim.core.BaseComponent;
 import solim.core.Component;
@@ -30,8 +35,17 @@ public class GeneralSettingsView extends BaseComponent {
         return SettingScaffold.build(() -> {
             headerCard();
             preferencesCard();
+            keybindsCard();
             diagnosticsCard();
         });
+    }
+
+    private void keybindsCard() {
+        Seq<FeatureKeybind> allBinds = new Seq<>();
+        for (Feature f : FeatureManager.getFeatures()) {
+            allBinds.addAll(f.getKeybinds());
+        }
+        SettingKeybindCard.of(Core.bundle.get("setting.section.keybinds", "Keybinds"), allBinds);
     }
 
     private Component headerCard() {
