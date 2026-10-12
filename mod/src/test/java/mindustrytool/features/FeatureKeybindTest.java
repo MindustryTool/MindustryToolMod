@@ -15,7 +15,12 @@ import org.junit.jupiter.api.Test;
 import arc.input.KeyBind;
 import arc.input.KeyCode;
 import arc.scene.style.TextureRegionDrawable;
+import arc.struct.IntSeq;
 import mindustry.gen.Icon;
+import mindustrytool.features.armycontrol.ArmyControlFeature;
+import mindustrytool.features.blockstats.BlockStatsDisplayFeature;
+import mindustrytool.features.callout.CalloutFeature;
+import mindustrytool.features.griefalert.GriefAlertFeature;
 import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
@@ -293,7 +298,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
 
     @Test
     void armyControlFeature_registersSettingsKeybindAndRtsSlots() {
-        mindustrytool.features.armycontrol.ArmyControlFeature feature = new mindustrytool.features.armycontrol.ArmyControlFeature();
+        ArmyControlFeature feature = new ArmyControlFeature();
         FeatureKeybind settingsBind = feature.getKeybinds().find(k -> k.getBind().name.equals("armyControlSettings"));
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
@@ -302,7 +307,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         feature.saveControlGroupSlot(1); // empty selection clears or does nothing
         assertNull(feature.controlGroupsSignal().peek().find(g -> g.getId() == 1));
 
-        arc.struct.IntSeq mockIds = new arc.struct.IntSeq();
+        IntSeq mockIds = new IntSeq();
         mockIds.add(101);
         feature.createGroup("1", mockIds);
         assertNotNull(feature.controlGroupsSignal().peek().find(g -> g.getId() == 1));
@@ -310,7 +315,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
 
     @Test
     void calloutFeature_registersMenuAndSettingsKeybinds() {
-        mindustrytool.features.callout.CalloutFeature feature = new mindustrytool.features.callout.CalloutFeature();
+        CalloutFeature feature = new CalloutFeature();
         assertEquals(2, feature.getKeybinds().size);
 
         FeatureKeybind menuBind = feature.getKeybinds().find(k -> k.getBind().name.equals("calloutMenu"));
@@ -324,7 +329,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
 
     @Test
     void griefAlertFeature_registersJumpAndSettingsKeybinds() {
-        mindustrytool.features.griefalert.GriefAlertFeature feature = new mindustrytool.features.griefalert.GriefAlertFeature();
+        GriefAlertFeature feature = new GriefAlertFeature();
         assertEquals(2, feature.getKeybinds().size);
 
         FeatureKeybind jumpBind = feature.getKeybinds().find(k -> k.getBind().name.equals("griefAlertJump"));
@@ -338,7 +343,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
 
     @Test
     void blockStatsDisplayFeature_registersToggleAndSettingsKeybinds() {
-        mindustrytool.features.blockstats.BlockStatsDisplayFeature feature = new mindustrytool.features.blockstats.BlockStatsDisplayFeature();
+        BlockStatsDisplayFeature feature = new BlockStatsDisplayFeature();
         assertEquals(2, feature.getKeybinds().size);
 
         FeatureKeybind toggleBind = feature.getKeybinds().find(k -> k.getBind().name.equals("blockStatsToggle"));

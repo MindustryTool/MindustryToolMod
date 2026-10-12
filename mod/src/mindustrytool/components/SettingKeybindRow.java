@@ -7,7 +7,6 @@ import arc.Events;
 import arc.graphics.Color;
 import arc.input.KeyCode;
 import arc.scene.Element;
-import arc.util.Timer;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.features.FeatureKeybind;
@@ -141,7 +140,7 @@ public class SettingKeybindRow extends BaseComponent {
         }
         if (code == KeyCode.backspace) {
             cancelListening();
-            Timer.schedule(() -> keybind.rebind(KeyCode.unset), 0.1f);
+            keybind.rebind(KeyCode.unset);
             return;
         }
         if (code == KeyCode.mouseLeft) {
@@ -149,7 +148,7 @@ public class SettingKeybindRow extends BaseComponent {
             return;
         }
         cancelListening();
-        Timer.schedule(() -> keybind.rebind(code), 0.1f);
+        keybind.rebind(code);
     }
 
     private void onUpdate() {

@@ -4,8 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import arc.func.Prov;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.TextureRegion;
+import arc.mock.MockAudio;
 import arc.scene.Element;
+import arc.scene.Group;
+import arc.scene.ui.Button;
+import arc.scene.ui.Dialog;
+import arc.scene.ui.Label;
+import arc.scene.ui.TextButton;
 import arc.util.Nullable;
+import java.lang.reflect.Field;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import mindustry.Vars;
 import mindustry.gen.Player;
 import mindustry.gen.Unit;
@@ -13,6 +27,7 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import mindustrytool.test.MindustryTestEnv;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Readable;
 
@@ -186,17 +201,17 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
         }
     }
 
-    private static java.util.List<arc.scene.ui.Button> findAllButtons(Element root) {
-        java.util.List<arc.scene.ui.Button> list = new java.util.ArrayList<>();
-        java.util.Deque<Element> queue = new java.util.ArrayDeque<>();
+    private static List<Button> findAllButtons(Element root) {
+        List<Button> list = new ArrayList<>();
+        Deque<Element> queue = new ArrayDeque<>();
         queue.add(root);
         while (!queue.isEmpty()) {
             Element current = queue.poll();
-            if (current instanceof arc.scene.ui.Button) {
-                list.add((arc.scene.ui.Button) current);
+            if (current instanceof Button) {
+                list.add((Button) current);
             }
-            if (current instanceof arc.scene.Group) {
-                for (Element child : ((arc.scene.Group) current).getChildren()) {
+            if (current instanceof Group) {
+                for (Element child : ((Group) current).getChildren()) {
                     queue.add(child);
                 }
             }
@@ -204,36 +219,36 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
         return list;
     }
 
-    private static void fireLongClick(arc.scene.ui.Button button) throws Exception {
+    private static void fireLongClick(Button button) throws Exception {
         solim.core.Component comp = solim.core.SolimToken.getComponent(button);
         assertTrue(comp instanceof solim.input.Button, "Controls strip button must be Solim button");
-        java.lang.reflect.Field field = solim.input.Button.class.getDeclaredField("onLongClick");
+        Field field = solim.input.Button.class.getDeclaredField("onLongClick");
         field.setAccessible(true);
         Runnable action = (Runnable) field.get(comp);
-        org.junit.jupiter.api.Assertions.assertNotNull(action, "Button must have onLongClick handler");
+        Assertions.assertNotNull(action, "Button must have onLongClick handler");
         action.run();
     }
 
     private static void setupTestScene() {
         if (arc.Core.audio == null) {
-            arc.Core.audio = new arc.mock.MockAudio();
+            arc.Core.audio = new MockAudio();
         }
         newScene();
-        arc.graphics.g2d.Font.FontData fontData = new arc.graphics.g2d.Font.FontData() {
+        Font.FontData fontData = new Font.FontData() {
             @Override
             public boolean hasGlyph(char ch) {
                 return true;
             }
         };
-        arc.graphics.g2d.Font font = new arc.graphics.g2d.Font(fontData, new arc.graphics.g2d.TextureRegion(), false);
-        arc.Core.scene.addStyle(arc.scene.ui.Button.ButtonStyle.class, new arc.scene.ui.Button.ButtonStyle());
-        arc.scene.ui.Dialog.DialogStyle dialogStyle = new arc.scene.ui.Dialog.DialogStyle();
+        Font font = new Font(fontData, new TextureRegion(), false);
+        arc.Core.scene.addStyle(Button.ButtonStyle.class, new Button.ButtonStyle());
+        Dialog.DialogStyle dialogStyle = new Dialog.DialogStyle();
         dialogStyle.titleFont = font;
-        arc.Core.scene.addStyle(arc.scene.ui.Dialog.DialogStyle.class, dialogStyle);
-        arc.scene.ui.TextButton.TextButtonStyle textButtonStyle = new arc.scene.ui.TextButton.TextButtonStyle();
+        arc.Core.scene.addStyle(Dialog.DialogStyle.class, dialogStyle);
+        TextButton.TextButtonStyle textButtonStyle = new TextButton.TextButtonStyle();
         textButtonStyle.font = font;
-        arc.Core.scene.addStyle(arc.scene.ui.TextButton.TextButtonStyle.class, textButtonStyle);
-        arc.Core.scene.addStyle(arc.scene.ui.Label.LabelStyle.class, new arc.scene.ui.Label.LabelStyle(font, null));
+        arc.Core.scene.addStyle(TextButton.TextButtonStyle.class, textButtonStyle);
+        arc.Core.scene.addStyle(Label.LabelStyle.class, new Label.LabelStyle(font, null));
     }
 
     @Test
@@ -242,7 +257,7 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
         boolean[] settingsOpened = { false };
         AutoplayFeature feature = new AutoplayFeature() {
             @Override
-            public @Nullable arc.func.Prov<solim.overlay.SolimDialog> getSettingDialog() {
+            public @Nullable Prov<solim.overlay.SolimDialog> getSettingDialog() {
                 return () -> new solim.overlay.SolimDialog("") {
                     @Override
                     public solim.overlay.SolimDialog show() {
@@ -258,10 +273,10 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
             assertTrue(AutoplayPopup.isShowing());
 
             solim.core.Component controls = AutoplayHudView.buildControls(feature, null);
-            java.util.List<arc.scene.ui.Button> buttons = findAllButtons(controls.element());
+            List<Button> buttons = findAllButtons(controls.element());
             assertFalse(buttons.isEmpty());
 
-            arc.scene.ui.Button masterBtn = buttons.get(0);
+            Button masterBtn = buttons.get(0);
             fireLongClick(masterBtn);
 
             assertFalse(AutoplayPopup.isShowing(), "Popup must be hidden after long-click");
@@ -279,7 +294,7 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
         boolean[] settingsOpened = { false };
         AutoplayFeature feature = new AutoplayFeature() {
             @Override
-            public @Nullable arc.func.Prov<solim.overlay.SolimDialog> getSettingDialog() {
+            public @Nullable Prov<solim.overlay.SolimDialog> getSettingDialog() {
                 return () -> new solim.overlay.SolimDialog("") {
                     @Override
                     public solim.overlay.SolimDialog show() {
@@ -296,10 +311,10 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
 
             solim.core.Component controls = AutoplayHudView.buildControls(feature, null);
             flushEffects();
-            java.util.List<arc.scene.ui.Button> buttons = findAllButtons(controls.element());
+            List<Button> buttons = findAllButtons(controls.element());
             assertTrue(buttons.size() > 1, "Must have master button and at least one task button");
 
-            arc.scene.ui.Button taskBtn = buttons.get(1);
+            Button taskBtn = buttons.get(1);
             fireLongClick(taskBtn);
 
             assertFalse(AutoplayPopup.isShowing(), "Popup must be hidden after long-click");

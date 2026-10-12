@@ -9,9 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import arc.func.Boolf;
 import arc.input.KeyBind;
 import arc.input.KeyCode;
+import arc.scene.Element;
+import arc.scene.Group;
 import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.Label;
 import arc.struct.Seq;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
@@ -136,21 +140,21 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
 
         Component card = SettingKeybindCard.forFeature(feature);
         assertNotNull(card);
-        arc.scene.Element elem = card.element();
+        Element elem = card.element();
         assertNotNull(elem);
 
         // Find all SettingKeybindRow root tables by looking for children containing the bind name
-        arc.struct.Seq<arc.scene.Element> children = new arc.struct.Seq<>();
-        findMatchingElements(elem, e -> e instanceof arc.scene.ui.Label && "singleKey".equals(((arc.scene.ui.Label) e).getText().toString()), children);
+        Seq<Element> children = new Seq<>();
+        findMatchingElements(elem, e -> e instanceof Label && "singleKey".equals(((Label) e).getText().toString()), children);
         assertEquals(1, children.size, "Should render exactly 1 row for 1 keybind, no duplicates");
     }
 
-    private void findMatchingElements(arc.scene.Element root, arc.func.Boolf<arc.scene.Element> predicate, arc.struct.Seq<arc.scene.Element> out) {
+    private void findMatchingElements(Element root, Boolf<Element> predicate, Seq<Element> out) {
         if (predicate.get(root)) {
             out.add(root);
         }
-        if (root instanceof arc.scene.Group) {
-            for (arc.scene.Element child : ((arc.scene.Group) root).getChildren()) {
+        if (root instanceof Group) {
+            for (Element child : ((Group) root).getChildren()) {
                 findMatchingElements(child, predicate, out);
             }
         }

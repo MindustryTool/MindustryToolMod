@@ -90,14 +90,23 @@ public final class ReflectAccess {
 	}
 
 
-	/** Safely reads a field value, returning {@code null} on any reflective failure. Static fields accept a {@code null} target. */
+	/**
+	 * Safely reads a field value, returning {@code null} on any reflective failure. Static fields
+	 * accept a {@code null} target. Falls back to {@code setAccessible} for package-private fields
+	 * in other packages, which introspection must see through.
+	 */
 	public static Object read(Field field, Object target) {
 		if (field == null || (target == null && !isStatic(field))) return null;
 		try {
 			return field.get(target);
 		} catch (IllegalAccessException e) {
-			Log.warn("[solim-mcp] read of '{0}' failed", field.getName());
-			return null;
+			try {
+				field.setAccessible(true);
+				return field.get(target);
+			} catch (RuntimeException | IllegalAccessException retryFailed) {
+				Log.warn("[solim-mcp] read of '{0}' failed", field.getName());
+				return null;
+			}
 		}
 	}
 

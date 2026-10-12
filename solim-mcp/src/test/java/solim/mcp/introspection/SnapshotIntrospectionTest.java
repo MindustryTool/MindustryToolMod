@@ -86,17 +86,19 @@ class SnapshotIntrospectionTest {
 	}
 
 	@Test
-	void scansAmbientOwnershipContext() {
+	void signalsDiscoveredFromBoundComponentDuringBuild() {
 		class Probe extends BaseComponent {
 			@SuppressWarnings("unused")
 			final Signal<Integer> duringBuild = Signal.of(11);
 
 			@Override
 			protected Element build() {
-				UiSnapshot snapshot = UiSnapshot.capture(null);
+				Table table = new Table();
+				SolimToken.bind(table, this);
+				UiSnapshot snapshot = UiSnapshot.capture(table);
 				String signals = snapshot.signalsJson().toString();
 				assertTrue(signals.contains("duringBuild"), signals);
-				return new Table();
+				return table;
 			}
 		}
 		new Probe().element();
