@@ -53,16 +53,6 @@ import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 import solim.reactive.Signal;
 
-/**
- * Feature responsible for rendering real-time range visualizations for turrets,
- * units, support blocks (menders, overdrives, mass drivers, shields, repair towers), and enemy drop zones.
- *
- * Optimized for high performance and zero GC allocations during the frame render loop:
- * - Pre-allocated drawer delegates and predicates.
- * - Viewport frustum culling.
- * - Granular per-block range toggles backed by BitSet indexed by block.id.
- * - Frame-cached configuration snapshots to avoid reactive overhead in hot loops.
- */
 public class RangeDisplayFeature extends Feature {
 
     private static  final Color ORANGE = Color.valueOf("#FFA500");
@@ -178,6 +168,7 @@ public class RangeDisplayFeature extends Feature {
                 .quickAccess(false)
                 .enabledByDefault(true)
                 .development(false)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();
@@ -314,9 +305,6 @@ public class RangeDisplayFeature extends Feature {
         return block instanceof OverdriveProjector;
     }
 
-    /**
-     * Blocks whose range is rendered in the green healing color.
-     */
     public boolean isMenderBlock(Block block) {
         return block instanceof MendProjector
                 || block instanceof RegenProjector
@@ -324,17 +312,11 @@ public class RangeDisplayFeature extends Feature {
                 || block instanceof RepairTurret;
     }
 
-    /**
-     * Blocks whose range is rendered in white because they intercept projectiles.
-     */
     public boolean isPointDefenseBlock(Block block) {
         return block instanceof PointDefenseTurret
                 || block instanceof ShockwaveTower;
     }
 
-    /**
-     * Whether the block falls into any semantic color category handled by the special color mapping.
-     */
     public boolean isSpecialColorBlock(Block block) {
         return isOverdriveBlock(block) || isMenderBlock(block) || isPointDefenseBlock(block);
     }
@@ -767,12 +749,6 @@ public class RangeDisplayFeature extends Feature {
         }
     }
 
-    /**
-     * Resolves the render color for a building block.
-     *
-     * <p>Semantic colors take precedence over team colors unless the team color override is enabled,
-     * in which case every block falls back to its team color.
-     */
     private Color resolveSpecialColor(Block block, Color teamColor) {
         if(frameUseTeamColorForSpecial){
             return teamColor;

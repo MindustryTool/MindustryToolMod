@@ -3,6 +3,7 @@ package mindustrytool.features.autoplay;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.func.Prov;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
@@ -16,14 +17,10 @@ import solim.core.Component;
 import solim.input.Button;
 import solim.layout.Direction;
 import solim.overlay.Hud;
+import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Standalone reactive Autoplay HUD overlay. Shows the shared horizontal task
- * strip (master switch plus task icon toggles); all state flows through the
- * parent feature signals with automatic bindings.
- */
 public class AutoplayHudView extends BaseComponent {
 
     static final int STRIP_COLUMNS = 5;
@@ -108,6 +105,14 @@ public class AutoplayHudView extends BaseComponent {
                 });
     }
 
+    private static void openSettings(AutoplayFeature feature) {
+        AutoplayPopup.hide();
+        Prov<SolimDialog> dlg = feature.getSettingDialog();
+        if (dlg != null) {
+            dlg.get().show();
+        }
+    }
+
     private static Component masterButton(AutoplayFeature feature, Readable<Float> buttonSize,
             Readable<Float> iconSize, @Nullable Readable<Boolean> canEdit) {
 
@@ -120,6 +125,7 @@ public class AutoplayHudView extends BaseComponent {
                 .tooltip(Core.bundle.get("feature.autoplay.hud.master.tooltip"))
                 .checked(feature.enabled())
                 .onClick(() -> feature.setEnabled(!feature.isEnabled()))
+                .onLongClick(300L, () -> openSettings(feature))
                 .children(() -> icon(Icon.play).size(iconSize).color(color));
                 
         return canEdit != null ? btn.enabled(canEdit) : btn;
@@ -149,6 +155,7 @@ public class AutoplayHudView extends BaseComponent {
                 .size(buttonSize)
                 .tooltip(task.getName())
                 .onClick(() -> feature.setTaskEnabled(task.getId(), !feature.isTaskEnabled(task.getId())))
+                .onLongClick(300L, () -> openSettings(feature))
                 .children(() -> icon(task.getIcon()).size(iconSize).color(color));
 
         return canEdit != null ? btn.enabled(canEdit) : btn;

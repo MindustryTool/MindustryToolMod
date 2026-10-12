@@ -64,6 +64,7 @@ public class TeamResourceFeature extends Feature {
                 .order(0)
                 .enabledByDefault(true)
                 .quickAccess(false)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();

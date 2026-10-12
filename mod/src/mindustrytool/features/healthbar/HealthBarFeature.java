@@ -93,6 +93,7 @@ public class HealthBarFeature extends Feature {
                 .order(4)
                 .enabledByDefault(false)
                 .quickAccess(false)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();

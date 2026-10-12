@@ -276,6 +276,8 @@ The settings view MUST provide intuitive controls for configuring task prioritie
 ### Requirement: Shared task strip quick surface
 The system SHALL provide a shared horizontal task strip used by both the standalone HUD and the QuickAccess popup. The strip SHALL contain a master autoplay on/off cell at the far left followed by task icon toggles for all visible (non-hidden) tasks in priority order laid out in a grid with up to 5 columns per row, SHALL highlight the currently active task via icon color, SHALL keep default touch targets, and SHALL remain editable even while autoplay is disabled. The strip SHALL be toggle-only for task ordering; reprioritizing tasks SHALL remain available only through the settings dialog reorder controls. Tasks marked as hidden by the player SHALL be excluded from the strip while remaining accessible and manageable in the settings dialog.
 
+Long-pressing (>= 300ms) any button in the strip (the master autoplay button or any individual task button) SHALL close the QuickAccess popup if currently open and display the Autoplay settings dialog.
+
 #### Scenario: Toggle task from strip
 - **WHEN** the player taps a visible task icon in the HUD or popup strip
 - **THEN** that task's enabled state flips via `disabledTasks` and the strip icon color reflects the new state without rebuilding
@@ -295,6 +297,14 @@ The system SHALL provide a shared horizontal task strip used by both the standal
 #### Scenario: Hidden task excluded from strip
 - **WHEN** a player hides a task in the autoplay settings dialog
 - **THEN** that task's icon button is removed from the HUD and popup strips, and the remaining visible buttons adjust layout dynamically
+
+#### Scenario: Long-pressing master button opens settings dialog
+- **WHEN** the player long-presss the master autoplay button in the HUD or popup strip for >= 300ms
+- **THEN** the QuickAccess popup is closed if open and the Autoplay settings dialog is displayed
+
+#### Scenario: Long-pressing task button opens settings dialog
+- **WHEN** the player long-presses any task button in the HUD or popup strip for >= 300ms
+- **THEN** the QuickAccess popup is closed if open and the Autoplay settings dialog is displayed
 
 ### Requirement: Task Visibility Configuration
 The system SHALL allow players to individually toggle the visibility of each autoplay task from the settings dialog.

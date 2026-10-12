@@ -186,6 +186,7 @@ public class VisualizerFeature extends Feature {
                 .order(5)
                 .enabledByDefault(false)
                 .quickAccess(false)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();

@@ -14,6 +14,7 @@ public class FeatureMetadata {
     private final boolean enabledByDefault;
     private final boolean quickAccessByDefault;
     private final boolean development;
+    private final boolean displayGroup;
     private final Optional<KeyBind> keybind;
 
     private FeatureMetadata(
@@ -23,6 +24,7 @@ public class FeatureMetadata {
             boolean enabledByDefault,
             boolean quickAccessByDefault,
             boolean development,
+            boolean displayGroup,
             @Nullable KeyBind keybind) {
         this.id = id;
         this.icon = icon;
@@ -30,6 +32,7 @@ public class FeatureMetadata {
         this.enabledByDefault = enabledByDefault;
         this.quickAccessByDefault = quickAccessByDefault;
         this.development = development;
+        this.displayGroup = displayGroup;
         this.keybind = Optional.ofNullable(keybind);
     }
 
@@ -55,6 +58,7 @@ public class FeatureMetadata {
         private boolean enabledByDefault = true;
         private boolean quickAccessByDefault = false;
         private boolean development = false;
+        private boolean displayGroup = false;
         private @Nullable KeyBind keybind = null;
 
         public Builder id(String id) {
@@ -91,6 +95,11 @@ public class FeatureMetadata {
             return this;
         }
 
+        public Builder displayGroup(boolean displayGroup) {
+            this.displayGroup = displayGroup;
+            return this;
+        }
+
         public Builder keybind(KeyBind keybind) {
             this.keybind = keybind;
             return this;
@@ -104,7 +113,8 @@ public class FeatureMetadata {
                 throw new IllegalStateException("Icon is required");
             }
 
-            return new FeatureMetadata(id, icon, order, enabledByDefault, quickAccessByDefault, development, keybind);
+            return new FeatureMetadata(id, icon, order, enabledByDefault, quickAccessByDefault, development, displayGroup,
+                    keybind);
         }
     }
 }

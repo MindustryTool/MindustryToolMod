@@ -88,13 +88,17 @@ The system SHALL delegate Quick Access HUD button single-clicks directly to `Fea
 - **THEN** the anchor passed to `onQuickAccessClick(anchor)` is the non-null Quick Access HUD root element
 
 ### Requirement: Display overlay delegation to DisplayGroup
-The system SHALL configure `quickAccessByDefault=false` on `HealthBarFeature`, `RangeDisplayFeature`, `PathfindingFeature`, `ProgressDisplayFeature`, `TeamResourceFeature`, `VisualizerFeature`, `WavePreviewFeature`, and `ToggleRenderingFeature`, routing their default in-game quick access into `DisplayGroupFeature`. Users MAY still explicitly show any of these features directly on the QuickAccess HUD bar via `shownFeaturesConfig` in `QuickAccessFeature`.
+The system SHALL configure `quickAccessByDefault=false` on `HealthBarFeature`, `RangeDisplayFeature`, `PathfindingFeature`, `BlockStatsDisplayFeature`, `TeamResourceFeature`, `VisualizerFeature`, `WavePreviewFeature`, and `ToggleRenderingFeature`, routing their default in-game quick access into `DisplayGroupFeature`. Those same eight features SHALL declare `displayGroup(true)` on their `FeatureMetadata`, so that display group membership and QuickAccess HUD exclusion are both driven by feature metadata rather than by a shared hardcoded id list. Users MAY still explicitly show any of these features directly on the QuickAccess HUD bar via `shownFeaturesConfig` in `QuickAccessFeature`.
 
 #### Scenario: Display overlays hidden from default QuickAccess HUD
 - **WHEN** QuickAccess HUD initializes with default configuration
-- **THEN** individual display features (HealthBar, RangeDisplay, Pathfinding, ProgressDisplay, TeamResource, Visualizer, WavePreview, ToggleRendering) do not render separate buttons on the QuickAccess HUD bar
+- **THEN** individual display features (HealthBar, RangeDisplay, Pathfinding, BlockStatsDisplay, TeamResource, Visualizer, WavePreview, ToggleRendering) do not render separate buttons on the QuickAccess HUD bar
 
 #### Scenario: User explicitly pins a display feature to QuickAccess HUD
 - **WHEN** user enables a display feature in QuickAccess settings
 - **THEN** that feature id is added to `QuickAccessFeature.shownFeaturesConfig` and appears directly on the QuickAccess HUD bar
+
+#### Scenario: Display overlays are reachable through the display group
+- **WHEN** `DisplayGroupPopup` is opened with default configuration
+- **THEN** all eight display overlay features are present as buttons, because each declares `displayGroup(true)` and none is hidden
 

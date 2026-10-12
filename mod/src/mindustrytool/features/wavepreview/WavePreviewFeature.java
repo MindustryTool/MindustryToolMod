@@ -45,6 +45,7 @@ public class WavePreviewFeature extends Feature {
                 .order(1)
                 .quickAccess(false)
                 .enabledByDefault(true)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();

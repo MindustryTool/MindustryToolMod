@@ -101,6 +101,7 @@ public class PathfindingFeature extends Feature {
                 .order(12)
                 .enabledByDefault(false)
                 .quickAccess(false)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();

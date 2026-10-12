@@ -37,7 +37,7 @@ Each display feature button rendered inside `DisplayGroupPopup` SHALL display th
 - **THEN** that feature's setting dialog opens if non-null
 
 ### Requirement: Display group configuration and order persistence
-`DisplayGroupFeature` SHALL persist column count (`colsConfig`, default 4), custom display order (`displayOrderConfig`), and visibility sets (`hiddenFeaturesConfig`, `shownFeaturesConfig`). By default, the visible display items SHALL include `health-bar`, `range-display`, `pathfinding`, `progress-display`, `team-resource`, `visualizer`, `wave-preview`, and `toggle-rendering`.
+`DisplayGroupFeature` SHALL persist column count (`colsConfig`, default 4), custom display order (`displayOrderConfig`, key `display-order`), and visibility overrides (`hiddenFeaturesConfig`, key `hidden`, and `shownFeaturesConfig`, key `shown`). The system SHALL NOT persist any list of default display members. The set of features recognized as display group members SHALL be determined solely by the `displayGroup` flag on each feature's metadata, and the default visibility of a member SHALL be derived from that same flag.
 
 #### Scenario: Reordering items in settings dialog
 - **WHEN** user reorders display items in `DisplayGroupSettingsDialog`
@@ -46,4 +46,42 @@ Each display feature button rendered inside `DisplayGroupPopup` SHALL display th
 #### Scenario: Hiding a display item in settings dialog
 - **WHEN** user unchecks a display item in `DisplayGroupSettingsDialog`
 - **THEN** that item is added to `hiddenFeaturesConfig` and removed from `DisplayGroupPopup`
+
+#### Scenario: Members are visible in the popup by default
+- **WHEN** a player has no visibility overrides recorded for a display group member
+- **THEN** the item is visible in `DisplayGroupPopup`, because default visibility follows `isDisplayGroup()`
+
+### Requirement: Display group membership declared on feature metadata
+The system SHALL provide a `displayGroup` boolean on `FeatureMetadata`, defaulting to `false`, settable via the `displayGroup(boolean)` builder method and readable via `isDisplayGroup()`. `DisplayGroupFeature` SHALL derive its members by selecting every registered feature whose metadata reports `isDisplayGroup() == true`, and SHALL NOT resolve membership by comparing stored ids against a hardcoded list of feature ids. Features without the flag SHALL behave exactly as before.
+
+#### Scenario: Default is not a display group member
+- **WHEN** a feature builds metadata without setting the display group flag
+- **THEN** `isDisplayGroup()` returns `false` and the feature is never rendered inside `DisplayGroupPopup`
+
+#### Scenario: Overlay opts into the display group
+- **WHEN** a feature builds metadata with `displayGroup` set to `true`
+- **THEN** `isDisplayGroup()` returns `true` and the feature becomes a candidate for the popup and the group settings list
+
+#### Scenario: Renaming a member does not drop it from the group
+- **WHEN** a display group member changes its metadata id
+- **THEN** the feature remains a display group member, because membership is resolved through the metadata object rather than by id lookup
+
+#### Scenario: The eight display overlays are members
+- **WHEN** `displayCandidates()` is evaluated with all features registered
+- **THEN** it returns exactly `health-bar`, `range-display`, `pathfinding`, `blockstats-display`, `team-resources`, `visualizer`, `wave-preview`, and `toggle-rendering`
+
+### Requirement: Default display group ordering derives from feature metadata
+The system SHALL compute the default order of display group members by sorting members on `FeatureMetadata.getOrder()`, and SHALL NOT depend on the ordering of `FeatureManager.getFeatures()`. Reordering features in the main feature settings dialog SHALL NOT alter the display group ordering. A persisted `display-order` SHALL continue to take precedence over the derived default; entries that no longer resolve to a display group member SHALL be dropped, and members absent from the persisted order SHALL be appended at the end.
+
+#### Scenario: Default ordering on a fresh install
+- **WHEN** a player has no persisted `display-order` and opens the display group popup
+- **THEN** members are rendered in ascending `FeatureMetadata.order`
+
+#### Scenario: Reordering the main settings grid does not disturb the popup
+- **WHEN** a player reorders features in the main feature settings dialog and then opens the display group popup
+- **THEN** the popup renders members in the ordering established by `FeatureMetadata.order`, not the main grid ordering
+
+#### Scenario: Persisted order survives membership changes
+- **WHEN** a persisted `display-order` contains ids that are no longer display group members
+- **THEN** those ids are dropped, existing member ids keep their relative sequence, and members absent from the persisted order are appended at the end
 

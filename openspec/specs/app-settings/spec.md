@@ -323,3 +323,20 @@ The `GeneralSettingsDialog` SHALL provide two diagnostic action buttons styled w
 - **WHEN** the user activates the "Copy Last Crash" button and no crash reports exist in `Vars.dataDirectory.child("crashes")`
 - **THEN** a notification (`setting.crash.not-found`) is displayed and the clipboard remains unchanged
 
+### Requirement: Display group membership flag on feature metadata
+The system SHALL provide a `displayGroup` boolean on `FeatureMetadata`, defaulting to `false`, settable via the `displayGroup(boolean)` builder method and readable via `isDisplayGroup()`. Existing features that omit the flag SHALL behave exactly as before, remaining invisible to `DisplayGroupFeature`. The flag SHALL be independent of every other metadata axis, including `quickAccessByDefault`, `development`, and `order`, so that changing any of them cannot alter display group membership.
+
+#### Scenario: Default is not a display group member
+- **WHEN** metadata is built without setting the display group flag
+- **THEN** `isDisplayGroup()` returns `false` and the feature is never offered by `DisplayGroupFeature`
+
+#### Scenario: Flag is set independently of quick access visibility
+- **WHEN** a feature declares `displayGroup(true)` and `quickAccessByDefault(false)`
+- **THEN** it is a display group member and does not appear directly on the QuickAccess HUD bar
+
+#### Scenario: Membership is unaffected by feature ordering
+- **WHEN** a feature's `order` value changes while `displayGroup(true)` remains set
+- **THEN** the feature remains a display group member and only its ordering within the popup changes
+
+**Source: display-group-membership**
+

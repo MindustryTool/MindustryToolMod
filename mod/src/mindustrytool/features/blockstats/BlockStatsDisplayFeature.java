@@ -38,13 +38,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * Overlays countdown remaining production time and average efficiency percentage
- * above active unit factories, reconstructors, unit assemblers, and crafters.
- * Per-block opt-outs are stored in {@link Core#settings} and mirrored into a
- * {@link BitSet} for allocation-free lookups in the draw loop. Scalar configuration
- * is peeked once per frame into scratch fields.
- */
 public class BlockStatsDisplayFeature extends Feature {
 
     public static final String BLOCK_SETTING_PREFIX = "mindustrytool.features.blockstats-display.block.";
@@ -71,8 +64,6 @@ public class BlockStatsDisplayFeature extends Feature {
 
     private @Nullable BitSet blockEnabled;
     private @Nullable BlockStatsDisplaySettingsDialog settingsDialog;
-
-    // Per-frame scratch written once in draw(), read by the per-building loop.
     private float frameOpacity;
     private float frameScale;
 
@@ -83,6 +74,7 @@ public class BlockStatsDisplayFeature extends Feature {
                 .order(10)
                 .quickAccess(false)
                 .enabledByDefault(true)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();

@@ -19,22 +19,8 @@ import solim.config.OrderedSeqPersister;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 
-/**
- * Aggregates display overlay features into a single QuickAccess popup.
- * Tapping its QuickAccess button toggles {@link DisplayGroupPopup};
- * long-pressing opens the group settings dialog.
- */
-public class DisplayGroupFeature extends Feature {
 
-    public static final Seq<String> DEFAULT_ORDER = Seq.with(
-            "health-bar",
-            "range-display",
-            "pathfinding",
-            "progress-display",
-            "team-resource",
-            "visualizer",
-            "wave-preview",
-            "toggle-rendering");
+public class DisplayGroupFeature extends Feature {
 
     public final ConfigGroup config;
     public final ConfigValue<Integer> colsConfig;
@@ -61,18 +47,18 @@ public class DisplayGroupFeature extends Feature {
     }
 
     public Seq<Feature> displayCandidates() {
-        Seq<Feature> all = FeatureManager.getFeatures();
-        Seq<Feature> result = new Seq<>();
-        if (all == null) {
-            return result;
-        }
-        for (String id : DEFAULT_ORDER) {
-            Feature found = all.find(feat -> feat.getMetadata().getId().equals(id));
-            if (found != null) {
-                result.add(found);
-            }
-        }
+        Seq<Feature> result = FeatureManager.getFeatures().select(
+                f -> f.getMetadata().isDisplayGroup() && !f.getMetadata().isDevelopment());
+        result.sort((a, b) -> {
+            int cmp = Integer.compare(a.getMetadata().getOrder(), b.getMetadata().getOrder());
+            return cmp != 0 ? cmp : a.getMetadata().getId().compareTo(b.getMetadata().getId());
+        });
         return result;
+    }
+
+    private static boolean isDisplayGroup(String id) {
+        Feature f = FeatureManager.getFeatures().find(feat -> feat.getMetadata().getId().equals(id));
+        return f != null && f.getMetadata().isDisplayGroup();
     }
 
     public List<Feature> orderedFeatures(@Nullable Seq<String> order) {
@@ -117,7 +103,7 @@ public class DisplayGroupFeature extends Feature {
             String id = f.getMetadata().getId();
             boolean isHidden = hidden != null && hidden.contains(id);
             boolean isShown = shown != null && shown.contains(id);
-            boolean visible = isHidden ? false : (isShown ? true : DEFAULT_ORDER.contains(id));
+            boolean visible = isHidden ? false : (isShown ? true : isDisplayGroup(id));
             if (visible) {
                 list.add(f);
             }
@@ -134,11 +120,11 @@ public class DisplayGroupFeature extends Feature {
         if (shown != null && shown.contains(id)) {
             return true;
         }
-        return DEFAULT_ORDER.contains(id);
+        return isDisplayGroup(id);
     }
 
     public void setFeatureVisible(String id, boolean visible) {
-        boolean defaultOn = DEFAULT_ORDER.contains(id);
+        boolean defaultOn = isDisplayGroup(id);
 
         Set<String> currentHidden = hiddenFeaturesConfig.get();
         Set<String> hidden = currentHidden != null ? new HashSet<>(currentHidden) : new HashSet<>();
