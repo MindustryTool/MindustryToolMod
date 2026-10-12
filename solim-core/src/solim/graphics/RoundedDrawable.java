@@ -8,7 +8,7 @@ import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
@@ -34,8 +34,24 @@ public class RoundedDrawable implements Drawable, Disposable {
     private float minWidth;
     private float minHeight;
 
-    private final List<Disposable> bindings = new ArrayList<>();
     private boolean disposed = false;
+
+    /**
+     * Reactive bindings this drawable installed, kept so {@link #dispose()} can stop them.
+     *
+     * <p>A drawable is not a component and has no ownership tree of its own, so it cannot inherit
+     * one. {@link OwnershipContext} already hands each binding to whatever component is building;
+     * this list is the fallback for a drawable configured outside any build scope.
+     */
+    private final List<Disposable> bindings = new ArrayList<>();
+
+    /** Installs a binding and keeps it until this drawable is disposed. */
+    private <T extends Disposable> T own(T binding) {
+        if (binding != null && !disposed) {
+            bindings.add(binding);
+        }
+        return binding;
+    }
 
     public RoundedDrawable(int radius) {
         this(radius, Color.clear);
@@ -86,14 +102,12 @@ public class RoundedDrawable implements Drawable, Disposable {
 
     public RoundedDrawable radius(Readable<Integer> radiusSignal) {
         if (radiusSignal != null) {
-            Effect e = Effect.of(() -> {
+            own(OwnershipContext.register(Effect.of(() -> {
                 Integer r = radiusSignal.get();
                 if (r != null) {
                     radius(r);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            })));
         }
         return this;
     }
@@ -111,14 +125,12 @@ public class RoundedDrawable implements Drawable, Disposable {
 
     public RoundedDrawable fillColor(Readable<Color> colorSignal) {
         if (colorSignal != null) {
-            Effect e = Effect.of(() -> {
+            own(OwnershipContext.register(Effect.of(() -> {
                 Color c = colorSignal.get();
                 if (c != null) {
                     fillColor(c);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            })));
         }
         return this;
     }
@@ -144,39 +156,33 @@ public class RoundedDrawable implements Drawable, Disposable {
         this.stroke = Math.max(0f, stroke);
         updatePatches();
         if (colorSignal != null) {
-            Effect e = Effect.of(() -> {
+            own(OwnershipContext.register(Effect.of(() -> {
                 Color c = colorSignal.get();
                 if (c != null) {
                     this.borderColor.set(c);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            })));
         }
         return this;
     }
 
     public RoundedDrawable border(Readable<Float> strokeSignal, Readable<Color> colorSignal) {
         if (strokeSignal != null) {
-            Effect e = Effect.of(() -> {
+            own(OwnershipContext.register(Effect.of(() -> {
                 Float s = strokeSignal.get();
                 if (s != null) {
                     this.stroke = Math.max(0f, s);
                     updatePatches();
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            })));
         }
         if (colorSignal != null) {
-            Effect e = Effect.of(() -> {
+            own(OwnershipContext.register(Effect.of(() -> {
                 Color c = colorSignal.get();
                 if (c != null) {
                     this.borderColor.set(c);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            })));
         }
         return this;
     }
@@ -334,8 +340,8 @@ public class RoundedDrawable implements Drawable, Disposable {
             return;
         }
         disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
+        for (int i = bindings.size() - 1; i >= 0; i--) {
+            bindings.get(i).dispose();
         }
         bindings.clear();
     }

@@ -10,7 +10,7 @@ import arc.scene.Element;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;

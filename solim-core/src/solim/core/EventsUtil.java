@@ -17,21 +17,21 @@ public final class EventsUtil {
 
 	/**
 	 * Creates a reactive signal initialized from the Prov that recalculates whenever the
-	 * specified Arc event fires.
+	 * specified Arc event fires. The listener is owned by {@code owner} and dies with it.
 	 */
-	public static <E, T> Signal<T> createSignal(Class<E> eventType, Prov<T> Prov) {
+	public static <E, T> Signal<T> createSignal(Component owner, Class<E> eventType, Prov<T> Prov) {
 		Signal<T> signal = Signal.of(Prov.get());
-		Events.on(eventType, e -> signal.set(Prov.get()));
+		owner.listen(eventType, e -> signal.set(Prov.get()));
 		return signal;
 	}
 
 	/**
 	 * Creates a reactive signal that updates with mapped event data whenever the specified Arc event
-	 * fires.
+	 * fires. The listener is owned by {@code owner} and dies with it.
 	 */
-	public static <E, T> Signal<T> createSignal(Class<E> eventType, Func<E, T> mapper, T initial) {
+	public static <E, T> Signal<T> createSignal(Component owner, Class<E> eventType, Func<E, T> mapper, T initial) {
 		Signal<T> signal = Signal.of(initial);
-		Events.on(eventType, e -> signal.set(mapper.get(e)));
+		owner.listen(eventType, e -> signal.set(mapper.get(e)));
 		return signal;
 	}
 

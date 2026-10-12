@@ -5,7 +5,7 @@ import arc.scene.Element;
 import arc.scene.ui.Button;
 import arc.scene.ui.Label;
 import arc.func.Cons;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 
 /**
  * Reactive property binding utilities for Arc Scene2D elements. Automatically registered with the

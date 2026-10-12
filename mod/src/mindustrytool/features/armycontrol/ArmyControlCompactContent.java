@@ -5,11 +5,11 @@ import static solim.UI.*;
 import arc.Core;
 import arc.scene.Element;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
 
-public class ArmyControlCompactContent extends BaseComponent {
+public class ArmyControlCompactContent extends Component {
 
     private final ArmyControlFeature feature;
     private final Readable<Float> scale;

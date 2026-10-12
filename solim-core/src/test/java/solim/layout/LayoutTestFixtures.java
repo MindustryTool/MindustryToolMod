@@ -1,5 +1,6 @@
 package solim.layout;
 
+import solim.test.FixedComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -93,10 +94,10 @@ public final class LayoutTestFixtures {
                 new ComponentAdapter("Dynamic", () -> Dynamic.of(Signal.of("item"), val -> new Element())),
                 new ComponentAdapter("ForEach", () -> {
                     ForEach<String> fe = ForEach.of(Signal.of(Arrays.asList("a", "b")));
-                    fe.children(item -> () -> new Element());
+                    fe.children(item -> new FixedComponent());
                     return fe;
                 }),
-                new ComponentAdapter("QueryView", () -> QueryView.of(solim.reactive.Query.noKey(() -> CompletableFuture.completedFuture("data"))).data(data -> () -> new Element()))
+                new ComponentAdapter("QueryView", () -> QueryView.of(solim.reactive.Query.noKey(() -> CompletableFuture.completedFuture("data"))).data(data -> new FixedComponent()))
         );
     }
 

@@ -12,27 +12,12 @@ import solim.core.Component;
 
 class StructuralReconcilerDisposalTest {
 
-	static final class TestComponent implements Component {
+	static final class TestComponent extends Component {
 		final String id;
-		boolean disposed;
 
 		TestComponent(String id) {
+			super(new Element());
 			this.id = id;
-		}
-
-		@Override
-		public Element element() {
-			return new Element();
-		}
-
-		@Override
-		public void dispose() {
-			disposed = true;
-		}
-
-		@Override
-		public boolean isDisposed() {
-			return disposed;
 		}
 	}
 

@@ -11,7 +11,7 @@ import arc.func.Prov;
 import solim.core.Disposable;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.ReactiveContext;
 
 /** Lazy computed value with dynamic dependency tracking. */
@@ -24,6 +24,8 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 	private boolean computing = false;
 
 	private final Set<ReactiveSource> dependencies = new LinkedHashSet<>();
+	/** Staging buffer for dependency collection, cleared and refilled on every recomputation. */
+	private final Set<ReactiveSource> staging = new LinkedHashSet<>();
 	private Set<ReactiveSource> collecting = null;
 	private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
 	private final List<Cons<T>> listeners = new ArrayList<>();
@@ -59,7 +61,8 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 			throw new IllegalStateException("Cycle detected in Computed");
 		}
 		computing = true;
-		Set<ReactiveSource> newDeps = new LinkedHashSet<>();
+		Set<ReactiveSource> newDeps = staging;
+		newDeps.clear();
 		collecting = newDeps;
 		ReactiveContext.push(this);
 		T newValue = null;
@@ -102,18 +105,24 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		}
 	}
 
+	/**
+	 * Diffs the staging buffer against the recorded dependency set and reconciles subscriptions.
+	 *
+	 * <p>Allocation-free when nothing changed, which is the common case for a stable binding:
+	 * the membership tests below never reach {@code removeObserver}/{@code addObserver}.
+	 */
 	private void updateDependencies(Set<ReactiveSource> newDeps) {
 		// remove old not in new
-		Set<ReactiveSource> toRemove = new LinkedHashSet<>(dependencies);
-		toRemove.removeAll(newDeps);
-		for (ReactiveSource dep : toRemove) {
-			dep.removeObserver(this);
+		for (ReactiveSource dep : dependencies) {
+			if (!newDeps.contains(dep)) {
+				dep.removeObserver(this);
+			}
 		}
 		// add new not in old
-		Set<ReactiveSource> toAdd = new LinkedHashSet<>(newDeps);
-		toAdd.removeAll(dependencies);
-		for (ReactiveSource dep : toAdd) {
-			dep.addObserver(this);
+		for (ReactiveSource dep : newDeps) {
+			if (!dependencies.contains(dep)) {
+				dep.addObserver(this);
+			}
 		}
 		dependencies.clear();
 		dependencies.addAll(newDeps);

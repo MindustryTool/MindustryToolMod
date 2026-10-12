@@ -65,7 +65,7 @@ class SolimVideoTest extends SolimEnv {
 		video.url((String) null);
 		flushEffects();
 
-		assertSame(fallback, ((Image) video.element().getChildren().first()).getDrawable());
+		assertSame(fallback, ((Image) video.stack().getChildren().first()).getDrawable());
 	}
 
 	@Test
@@ -76,7 +76,7 @@ class SolimVideoTest extends SolimEnv {
 		SolimVideo video = track(new SolimVideo("https://example.com/missing.mp4").fallback(fallback));
 		flushEffects();
 
-		assertSame(fallback, ((Image) video.element().getChildren().first()).getDrawable());
+		assertSame(fallback, ((Image) video.stack().getChildren().first()).getDrawable());
 		assertNull(video.player());
 	}
 

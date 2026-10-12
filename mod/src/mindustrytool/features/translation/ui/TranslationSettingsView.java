@@ -17,7 +17,7 @@ import mindustrytool.features.translation.providers.DeepLTranslationProvider;
 import mindustrytool.features.translation.providers.DevXTranslationProvider;
 import mindustrytool.features.translation.providers.GeminiTranslationProvider;
 import mindustrytool.features.translation.providers.GoogleWebTranslationProvider;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -29,7 +29,7 @@ import solim.reactive.Subscription;
  * - Tab 1: Outgoing Chat Translation
  * - Tab 2: Translation Engine & Providers
  */
-public class TranslationSettingsView extends BaseComponent {
+public class TranslationSettingsView extends Component {
 
 	public static final String[] COLOR_PRESETS = {
 		"#84f491",

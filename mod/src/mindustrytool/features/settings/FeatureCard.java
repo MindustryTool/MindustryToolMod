@@ -18,7 +18,7 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
@@ -30,7 +30,7 @@ import solim.reactive.Signal;
  * dialog), and state toggling with direct property reactivity using pure Solim
  * components.
  */
-public class FeatureCard extends BaseComponent {
+public class FeatureCard extends Component {
 
     private final Feature feature;
     private final Readable<Boolean> reorderAllowed;

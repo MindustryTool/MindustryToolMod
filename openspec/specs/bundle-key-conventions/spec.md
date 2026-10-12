@@ -1,4 +1,10 @@
-## ADDED Requirements
+# bundle-key-conventions Specification
+
+## Purpose
+
+Enforced character-set and naming rules for localization bundle keys, verified by the `checkBundles` Gradle task.
+
+## Requirements
 
 ### Requirement: Bundle Key Character Set
 The verification task SHALL require every key defined in the base bundle (`assets/bundles/bundle.properties`) to match the pattern `^[a-z0-9]+([.-][a-z0-9]+)*$`, where `.` and `-` separate and join lowercase alphanumeric segments. Matching SHALL be case-sensitive: a key containing any uppercase letter SHALL be a violation.

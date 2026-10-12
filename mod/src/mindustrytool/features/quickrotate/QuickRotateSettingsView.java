@@ -8,13 +8,13 @@ import mindustry.gen.Icon;
 import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for quick rotate options.
  */
-public class QuickRotateSettingsView extends BaseComponent {
+public class QuickRotateSettingsView extends Component {
 
     private final QuickRotateFeature feature;
 

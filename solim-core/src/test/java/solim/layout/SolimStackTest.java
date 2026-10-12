@@ -18,18 +18,17 @@ import solim.test.SolimEnv;
 
 class SolimStackTest extends SolimEnv {
 
-	private static final class TestComponent implements Component {
-		private final Element element = new Element();
+	private static final class TestComponent extends Component {
 		private int disposeCount;
 
-		@Override
-		public Element element() {
-			return element;
+		TestComponent() {
+			super(new Element());
 		}
 
 		@Override
 		public void dispose() {
 			disposeCount++;
+			super.dispose();
 		}
 	}
 
@@ -131,8 +130,12 @@ class SolimStackTest extends SolimEnv {
 		for (Method method : SolimStack.class.getMethods()) {
 			assertNotEquals("childrenComponent", method.getName(),
 					"childrenComponent must be removed");
-			assertNotEquals("children", method.getName(),
-					"SolimStack must not expose children(...)");
+			if ("children".equals(method.getName()) && method.getParameterTypes().length > 0) {
+				// children() is now the inherited no-arg ownership query; the removed API was
+				// the children(Runnable) builder overload.
+				assertNotEquals(Runnable.class, method.getParameterTypes()[0],
+						"SolimStack must not expose children(Runnable)");
+			}
 			if ("layer".equals(method.getName())) {
 				for (Class<?> param : method.getParameterTypes()) {
 					assertNotEquals(Runnable.class, param, "layer(Runnable) must be removed");

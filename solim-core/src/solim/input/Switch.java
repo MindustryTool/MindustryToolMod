@@ -3,38 +3,37 @@ import solim.reactive.TwoWayBinding;
 
 import arc.scene.ui.TextButton;
 import solim.core.Component;
-import solim.core.Disposable;
 import solim.core.DisposableAction;
 import solim.reactive.Signal;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
 
 /**
  * Switch widget bound to Signal&lt;Boolean&gt;. Uses TextButton as a visual toggle; state held in
  * signal.
  */
-public final class Switch implements Component, ElementConfig<Switch>, CellConfig<Switch> {
-	private final TextButton button = new TextButton("");
+public final class Switch extends Component implements ElementConfig<Switch>, CellConfig<Switch> {
+	private final TextButton button;
 	private final PendingCellConfig constraints = new PendingCellConfig();
 	private boolean state;
-	private Disposable binding;
-	private boolean disposed = false;
 
 	@Override
 	public PendingCellConfig cellConfig() {
 		return constraints;
 	}
 
-	{
-		button.name = "solim-switch-switchBox";
+	public Switch(Signal<Boolean> signal) {
+		this(new TextButton(""), signal);
 	}
 
-	public Switch(Signal<Boolean> signal) {
-		this.state = Boolean.TRUE.equals(signal.peek());
+	private Switch(TextButton button, Signal<Boolean> signal) {
+		super(button);
+		this.button = button;
+		button.name = "solim-switch-switchBox";
+		state = Boolean.TRUE.equals(signal.peek());
 		button.setText(state ? "ON" : "OFF");
-		this.binding = new TwoWayBinding<>(
+		own(new TwoWayBinding<>(
 			signal,
 			() -> state,
 			val -> {
@@ -48,8 +47,7 @@ public final class Switch implements Component, ElementConfig<Switch>, CellConfi
 				});
 				return DisposableAction.empty();
 			}
-		);
-		OwnershipContext.register(this);
+		));
 	}
 
 	public static Switch of(Signal<Boolean> signal) {
@@ -60,31 +58,9 @@ public final class Switch implements Component, ElementConfig<Switch>, CellConfi
 		return button;
 	}
 
-	@Override
-	public TextButton element() {
-		return button;
-	}
-
 	public Switch name(String name) {
-		button.name = name;
+		setName(name);
 		return this;
-	}
-
-	@Override
-	public void dispose() {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-		if (binding != null) {
-			binding.dispose();
-			binding = null;
-		}
-	}
-
-	@Override
-	public boolean isDisposed() {
-		return disposed;
 	}
 
     @Override

@@ -10,6 +10,13 @@ import solim.core.Component;
 
 class AttachmentStackTest {
 
+	/** A component with a fixed element and nothing of its own to own. */
+	private static final class Fixed extends Component {
+		Fixed(Element element) {
+			super(element);
+		}
+	}
+
 	@AfterEach
 	void clear() {
 		AttachmentStack.clear();
@@ -191,7 +198,7 @@ class AttachmentStackTest {
 		Table root = new Table();
 		AttachmentStack.push(root);
 		Element e = new Element();
-		Component comp = () -> e;
+		Component comp = new Fixed(e);
 		AttachmentStack.add(comp);
 		AttachmentStack.add(new Element());
 		AttachmentStack.pop();
@@ -207,7 +214,7 @@ class AttachmentStackTest {
 		Element element = new Element();
 		assertNull(element.userObject);
 
-		Component comp = () -> element;
+		Component comp = new Fixed(element);
 		AttachmentStack.registerPendingComponent(comp, root);
 
 		final Component[] receivedComp = new Component[1];
@@ -250,7 +257,7 @@ class AttachmentStackTest {
 	void isolateCompleteContextIsolation() {
 		Table outer = new Table();
 		Element outerEl = new Element();
-		Component outerComp = () -> outerEl;
+		Component outerComp = new Fixed(outerEl);
 
 		boolean[] outerAttacherCalled = new boolean[1];
 		AttachmentStack.push(outer, (table, child) -> {

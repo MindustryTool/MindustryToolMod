@@ -3,9 +3,11 @@ package solim.display;
 import arc.graphics.Color;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
+import solim.core.Component;
 import solim.core.Disposable;
-import solim.core.LeafComponent;
 import solim.graphics.RoundedDrawable;
+import solim.modifier.CellConfig;
+import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -14,8 +16,10 @@ import solim.reactive.Readable;
  * Compact pill-shaped badge component for notification counters and tag
  * indicators.
  */
-public final class Badge extends LeafComponent<Table, Badge> implements TableConfig<Badge> {
+public final class Badge extends Component implements CellConfig<Badge>, TableConfig<Badge> {
 
+    private final Table element;
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private final Text label;
     private boolean hideOnZero = false;
     private @Nullable Effect visibilityEffect;
@@ -26,7 +30,12 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
     }
 
     public Badge(Readable<String> text) {
-        super(new Table());
+        this(new Table(), text);
+    }
+
+    private Badge(Table element, Readable<String> text) {
+        super(element);
+        this.element = element;
         this.element.name = "solim-badge-table";
         this.element.center();
 
@@ -35,6 +44,7 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
         element.margin(2f, 8f, 2f, 8f);
 
         this.label = Text.of(text);
+        own(label);
         element.add(label.label()).center();
     }
 
@@ -54,7 +64,7 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
         Readable<String> text = count.map(c -> c != null ? String.valueOf(c) : "0");
         Badge badge = new Badge(text);
         if (text instanceof Disposable) {
-            badge.disposables.add((Disposable) text);
+            badge.own((Disposable) text);
         }
         badge.countSignal = count;
         badge.hideOnZero(true);
@@ -71,22 +81,21 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
         return hideOnZero(true);
     }
 
+    /** Rebuilds the visibility effect. The superseded one is disposed here; disposal is idempotent. */
     private void updateVisibilityBinding() {
         if (visibilityEffect != null) {
             visibilityEffect.dispose();
-            disposables.remove(visibilityEffect);
             visibilityEffect = null;
         }
         if (countSignal != null) {
-            visibilityEffect = Effect.of(() -> {
+            visibilityEffect = own(Effect.of(() -> {
                 Integer c = countSignal.get();
                 if (hideOnZero) {
                     element.visible = (c != null && c > 0);
                 } else {
                     element.visible = true;
                 }
-            });
-            disposables.add(visibilityEffect);
+            }));
         }
     }
 
@@ -112,21 +121,23 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
         return label;
     }
 
+    public Badge name(@Nullable String name) {
+        setName(name);
+        return this;
+    }
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
+    }
+
     @Override
     public Table table() {
         return element;
     }
 
     @Override
-    public void dispose() {
-        if (isDisposed()) {
-            return;
-        }
-        if (visibilityEffect != null) {
-            visibilityEffect.dispose();
-            visibilityEffect = null;
-        }
-        label.dispose();
-        super.dispose();
+    public Badge self() {
+        return this;
     }
 }

@@ -6,14 +6,14 @@ import arc.scene.Element;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class VirtualListTest extends SolimEnv {
 
-    static class TestItemComponent extends BaseComponent {
+    static class TestItemComponent extends Component {
         final String id;
         boolean wasDisposed = false;
 
@@ -165,7 +165,7 @@ class VirtualListTest extends SolimEnv {
         Signal<String> childSignal = Signal.of("initial");
         AtomicInteger childBuildCount = new AtomicInteger(0);
 
-        class ReactiveChild extends BaseComponent {
+        class ReactiveChild extends Component {
             @Override
             protected Element build() {
                 childBuildCount.incrementAndGet();

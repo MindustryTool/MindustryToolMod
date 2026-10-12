@@ -7,7 +7,7 @@ import arc.scene.Scene;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
 public class PopupDebug {
     public static void main(String[] args) throws Exception {
@@ -16,7 +16,7 @@ public class PopupDebug {
         Scene scene = new Scene();
         Core.scene = scene;
         Popup<String> menu = new Popup<>();
-        menu.children(data -> new BaseComponent() {
+        menu.children(data -> new Component() {
             @Override
             protected Element build() {
                 Table content = new Table();

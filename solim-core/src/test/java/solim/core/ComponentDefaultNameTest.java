@@ -31,7 +31,7 @@ import solim.test.SolimEnv;
 class ComponentDefaultNameTest extends SolimEnv {
 
 
-	static class CustomTestCard extends BaseComponent {
+	static class CustomTestCard extends Component {
 		@Override
 		protected Element build() {
 			return new Table();
@@ -87,11 +87,11 @@ class ComponentDefaultNameTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentFallbackDefaultName() {
+	void lazyComponentFallbackDefaultName() {
 		CustomTestCard customComp = new CustomTestCard();
 		assertEquals("solim-customtestcard-table", customComp.element().name);
 
-		BaseComponent anonComp = new BaseComponent() {
+		Component anonComp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -144,7 +144,7 @@ class ComponentDefaultNameTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentExplicitNameOverwritesDefaultBeforeAndAfterBuild() {
+	void lazyComponentExplicitNameOverwritesDefaultBeforeAndAfterBuild() {
 		CustomTestCard beforeBuild = new CustomTestCard();
 		beforeBuild.name("custom-before");
 		assertEquals("custom-before", beforeBuild.element().name);

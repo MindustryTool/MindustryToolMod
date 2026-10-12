@@ -2,7 +2,6 @@ package solim.modifier;
 
 import solim.reactive.Readable;
 import solim.reactive.Effect;
-import solim.runtime.OwnershipContext;
 import arc.scene.Element;
 import solim.core.Component;
 import solim.core.SolimToken;
@@ -33,6 +32,11 @@ import solim.core.SolimToken;
  * Table-targeted operations (alignment, margin, padding, gap) come from
  * {@link solim.modifier.TableConfig}.
  *
+ * <p>
+ * Every reactive sizing and margin method installs an {@code Effect} that calls
+ * <b>only its own</b> {@code PendingCellConfig} applier, so each binding tracks
+ * exactly one {@link Readable} instead of every constraint at once.
+ *
  * @param <SELF> the concrete component type, enabling fluent chaining
  */
 public interface CellConfig<SELF extends CellConfig<SELF>> {
@@ -49,7 +53,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF minWidth(float v) {
         cellConfig().minWidth = Readable.of(v);
         if (this instanceof Component) {
-            cellConfig().applySizeToParentCell(((Component) this).element());
+            cellConfig().applyMinWidth(((Component) this).element());
         }
         return self();
     }
@@ -59,10 +63,10 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().minWidth = v;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
-            cellConfig().applySizeToParentCell(el);
+            cellConfig().applyMinWidth(el);
             if (el != null && v != null) {
-                Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
-                OwnershipContext.register(e);
+                Effect e = Effect.of(() -> cellConfig().applyMinWidth(el));
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -72,7 +76,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF minHeight(float v) {
         cellConfig().minHeight = Readable.of(v);
         if (this instanceof Component) {
-            cellConfig().applySizeToParentCell(((Component) this).element());
+            cellConfig().applyMinHeight(((Component) this).element());
         }
         return self();
     }
@@ -82,10 +86,10 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().minHeight = v;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
-            cellConfig().applySizeToParentCell(el);
+            cellConfig().applyMinHeight(el);
             if (el != null && v != null) {
-                Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
-                OwnershipContext.register(e);
+                Effect e = Effect.of(() -> cellConfig().applyMinHeight(el));
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -97,7 +101,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF maxWidth(float v) {
         cellConfig().maxWidth = Readable.of(v);
         if (this instanceof Component) {
-            cellConfig().applySizeToParentCell(((Component) this).element());
+            cellConfig().applyMaxWidth(((Component) this).element());
         }
         return self();
     }
@@ -107,10 +111,10 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().maxWidth = v;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
-            cellConfig().applySizeToParentCell(el);
+            cellConfig().applyMaxWidth(el);
             if (el != null && v != null) {
-                Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
-                OwnershipContext.register(e);
+                Effect e = Effect.of(() -> cellConfig().applyMaxWidth(el));
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -120,7 +124,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF maxHeight(float v) {
         cellConfig().maxHeight = Readable.of(v);
         if (this instanceof Component) {
-            cellConfig().applySizeToParentCell(((Component) this).element());
+            cellConfig().applyMaxHeight(((Component) this).element());
         }
         return self();
     }
@@ -130,10 +134,10 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().maxHeight = v;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
-            cellConfig().applySizeToParentCell(el);
+            cellConfig().applyMaxHeight(el);
             if (el != null && v != null) {
-                Effect e = Effect.of(() -> cellConfig().applySizeToParentCell(el));
-                OwnershipContext.register(e);
+                Effect e = Effect.of(() -> cellConfig().applyMaxHeight(el));
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -199,7 +203,8 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return margin(m, m, m, m);
     }
 
-    default SELF margin(Readable<Float> top, Readable<Float> left, Readable<Float> bottom, Readable<Float> right) {
+    default SELF margin(Readable<Float> top, Readable<Float> left, Readable<Float> bottom,
+            Readable<Float> right) {
         cellConfig().padTop = top;
         cellConfig().padLeft = left;
         cellConfig().padBottom = bottom;
@@ -209,7 +214,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMarginToParentCell(el);
             if (el != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                OwnershipContext.register(e);
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -218,7 +223,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF marginTop(float top) {
         cellConfig().padTop = Readable.of(top);
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyPadTop(((Component) this).element());
         }
         return self();
     }
@@ -227,10 +232,10 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().padTop = top;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
-            cellConfig().applyMarginToParentCell(el);
+            cellConfig().applyPadTop(el);
             if (el != null && top != null) {
-                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                OwnershipContext.register(e);
+                Effect e = Effect.of(() -> cellConfig().applyPadTop(el));
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -239,7 +244,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF marginBottom(float bottom) {
         cellConfig().padBottom = Readable.of(bottom);
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyPadBottom(((Component) this).element());
         }
         return self();
     }
@@ -248,10 +253,10 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().padBottom = bottom;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
-            cellConfig().applyMarginToParentCell(el);
+            cellConfig().applyPadBottom(el);
             if (el != null && bottom != null) {
-                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                OwnershipContext.register(e);
+                Effect e = Effect.of(() -> cellConfig().applyPadBottom(el));
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -260,7 +265,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF marginLeft(float left) {
         cellConfig().padLeft = Readable.of(left);
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyPadLeft(((Component) this).element());
         }
         return self();
     }
@@ -269,10 +274,10 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().padLeft = left;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
-            cellConfig().applyMarginToParentCell(el);
+            cellConfig().applyPadLeft(el);
             if (el != null && left != null) {
-                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                OwnershipContext.register(e);
+                Effect e = Effect.of(() -> cellConfig().applyPadLeft(el));
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -281,7 +286,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF marginRight(float right) {
         cellConfig().padRight = Readable.of(right);
         if (this instanceof Component) {
-            cellConfig().applyMarginToParentCell(((Component) this).element());
+            cellConfig().applyPadRight(((Component) this).element());
         }
         return self();
     }
@@ -290,10 +295,10 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         cellConfig().padRight = right;
         if (this instanceof Component) {
             Element el = ((Component) this).element();
-            cellConfig().applyMarginToParentCell(el);
+            cellConfig().applyPadRight(el);
             if (el != null && right != null) {
-                Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                OwnershipContext.register(e);
+                Effect e = Effect.of(() -> cellConfig().applyPadRight(el));
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -316,7 +321,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMarginToParentCell(el);
             if (el != null && x != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                OwnershipContext.register(e);
+                ModifierOwnership.own(this, e);
             }
         }
         return self();
@@ -339,7 +344,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMarginToParentCell(el);
             if (el != null && y != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                OwnershipContext.register(e);
+                ModifierOwnership.own(this, e);
             }
         }
         return self();

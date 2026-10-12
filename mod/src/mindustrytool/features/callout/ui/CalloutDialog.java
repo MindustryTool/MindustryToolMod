@@ -15,7 +15,7 @@ import mindustry.graphics.Pal;
 import mindustry.type.Item;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.callout.CalloutFeature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.layout.Card;
 import solim.overlay.SolimDialog;
@@ -57,7 +57,7 @@ public class CalloutDialog extends SolimDialog {
         Readable<Boolean> isAllChat = teamChatSignal.map(v -> !Boolean.TRUE.equals(v));
 
         children(() -> {
-            new BaseComponent() {
+            new Component() {
                 @Override
                 protected Element build() {
                     return column().grow().center().padding(unit(2f)).gap(unit(2f)).children(() -> {

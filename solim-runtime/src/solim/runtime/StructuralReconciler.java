@@ -62,31 +62,21 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 		List<C> newlyCreated = new ArrayList<>();
 
 		try {
-			OwnershipContext.withoutAutoOwnership(() -> {
-				for (int i = 0; i < itemList.size(); i++) {
-					T item = itemList.get(i);
-					K key = keyList.get(i);
+			for (int i = 0; i < itemList.size(); i++) {
+				T item = itemList.get(i);
+				K key = keyList.get(i);
 
-					C comp = activeComponents.get(key);
-					if (comp == null) {
-						comp = ReactiveContext.untracked(() ->
-							AttachmentStack.isolate(() -> {
-								C c = factory.get(item);
-								if (c != null) {
-									c.element();
-								}
-								return c;
-							})
-						);
-						if (comp != null) {
-							newlyCreated.add(comp);
-						}
-					}
+				C comp = activeComponents.get(key);
+				if (comp == null) {
+					comp = create(item, factory);
 					if (comp != null) {
-						nextComponents.put(key, comp);
+						newlyCreated.add(comp);
 					}
 				}
-			});
+				if (comp != null) {
+					nextComponents.put(key, comp);
+				}
+			}
 		} catch (Throwable t) {
 			// Rollback: dispose only newly created components; preserve activeComponents
 			for (C c : newlyCreated) {
@@ -128,6 +118,33 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 		lastReuseCount = Math.max(0, lastTotalCount - lastNewCount);
 
 		return activeComponents;
+	}
+
+	/**
+	 * Builds one item in an isolated, untracked context.
+	 *
+	 * <p>Everything the factory registers — the component itself plus any Computed, Effect, Query
+	 * or Binding it constructs — is collected by the scope. On success the whole set is adopted by
+	 * the component the factory returned, so it is disposed with that component rather than
+	 * dropped on the floor. If the factory throws, the scope destroys whatever it had created.
+	 */
+	private <T> C create(T item, Func<T, C> factory) {
+		OwnershipScope scope = OwnershipScope.open();
+		try {
+			C created = ReactiveContext.untracked(() ->
+				AttachmentStack.isolate(() -> {
+					C c = factory.get(item);
+					if (c != null) {
+						c.element();
+					}
+					return c;
+				})
+			);
+			scope.adoptInto(created);
+			return created;
+		} finally {
+			scope.close();
+		}
 	}
 
 	/** Returns the currently active components map. */

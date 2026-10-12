@@ -17,7 +17,7 @@ import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.ContentPatchData;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.input.Button;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -26,7 +26,7 @@ import solim.reactive.Signal;
  * Text and metadata focused card layout for content patches.
  * Displays title, type badge, description snippet, and action buttons.
  */
-public class PatchCard extends BaseComponent {
+public class PatchCard extends Component {
 
     public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;
 

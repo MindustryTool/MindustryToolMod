@@ -16,11 +16,11 @@ import solim.modifier.TableConfig;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.reactive.Effect;
 
 /** Row layout — horizontal Table wrapper. */
-public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {
+public final class Row extends Component implements CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -37,31 +37,25 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 0f;
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private boolean attached = false;
 
     public Row() {
-        this.table = new Table();
+        this(new Table());
+    }
+
+    private Row(Table table) {
+        super(table);
+        this.table = table;
         SolimToken.bind(this.table, this, constraints);
         this.table.name = "solim-row-table";
         this.table.top().left();
         this.table.defaults().top().left();
-        OwnershipContext.register(this);
-        Table parent = AttachmentStack.current();
-        if (parent != null) {
-            AttachmentStack.registerPendingComponent(this, parent);
-        }
     }
 
     public Table table() {
         return table;
     }
 
-    @Override
-    public Element element() {
-        return table;
-    }
 
     @Override
     public PendingCellConfig cellConfig() {
@@ -90,14 +84,12 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
 
     public Row gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
-            Effect e = Effect.of(() -> {
+        own(Effect.of(() -> {
                 Float g = gapSignal.get();
                 if (g != null) {
                     gap(g);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
@@ -211,6 +203,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
     }
 
     public Row children(@Nullable Runnable r) {
+        OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
@@ -218,6 +211,7 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         attachSelf();
         respace();
@@ -237,21 +231,12 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
         return cell;
     }
 
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
+
 
     @Override
-    public boolean isDisposed() {
-        return disposed;
+    public Row name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override

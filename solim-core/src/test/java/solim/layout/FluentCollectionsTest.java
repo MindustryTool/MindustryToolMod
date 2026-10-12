@@ -20,7 +20,7 @@ import arc.func.Func;
 import arc.func.Func2;
 import arc.func.Prov;
 import arc.scene.Element;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.ForEach;
 import solim.reactive.Readable;
@@ -31,7 +31,7 @@ import solim.test.SolimEnv;
 
 class FluentCollectionsTest extends SolimEnv {
 
-    static class ItemComp extends BaseComponent {
+    static class ItemComp extends Component {
         final String id;
         boolean disposed = false;
 

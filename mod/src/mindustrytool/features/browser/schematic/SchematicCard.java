@@ -16,14 +16,14 @@ import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.SchematicData;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
 /**
  * Image-first card layout showing a dedicated preview card with a centered
  * title strip and a compact row of interactive stat action buttons.
  */
-public class SchematicCard extends BaseComponent {
+public class SchematicCard extends Component {
 
     public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;
 

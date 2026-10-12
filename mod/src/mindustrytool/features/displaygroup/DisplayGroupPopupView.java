@@ -10,7 +10,7 @@ import java.util.Set;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -20,7 +20,7 @@ import solim.reactive.Signal;
  * {@link DisplayGroupPopup}. Each button toggles its feature on tap and opens
  * that feature's settings on long-press, without closing the popup.
  */
-public class DisplayGroupPopupView extends BaseComponent {
+public class DisplayGroupPopupView extends Component {
 
     private final DisplayGroupFeature feature;
 

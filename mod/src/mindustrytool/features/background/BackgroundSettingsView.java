@@ -13,14 +13,14 @@ import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Readable;
 
 /**
  * Modern declarative Solim settings view for main menu background customization.
  */
-public class BackgroundSettingsView extends BaseComponent {
+public class BackgroundSettingsView extends Component {
 
     private final BackgroundFeature feature;
 

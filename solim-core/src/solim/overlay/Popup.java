@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import arc.func.Func;
 import mindustry.game.EventType.ResizeEvent;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.graphics.RoundedDrawable;
@@ -26,7 +26,7 @@ import solim.layout.Spacer;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.RoundedHelper;
 import solim.modifier.TableConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
 import solim.reactive.Effect;
@@ -53,7 +53,7 @@ import solim.reactive.Readable;
  * dismiss the menu without consuming the touch, so underlying UI stays
  * usable.
  */
-public final class Popup<T> extends BaseComponent implements TableConfig<Popup<T>> {
+public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
     /** Opt-in edge kept fixed when content size drifts. Null (default) keeps legacy fixed-corner behavior. */
     public enum Edge {
         TOP,

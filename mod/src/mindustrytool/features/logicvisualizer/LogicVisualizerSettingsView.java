@@ -9,14 +9,14 @@ import mindustry.gen.Icon;
 import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Signal;
 
 /**
  * Modern declarative Solim settings view for Logic Visualizer options.
  */
-public class LogicVisualizerSettingsView extends BaseComponent {
+public class LogicVisualizerSettingsView extends Component {
 
     private final LogicVisualizerFeature feature;
 

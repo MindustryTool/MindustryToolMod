@@ -14,12 +14,14 @@ import solim.performance.PerfSpan;
 class AttachmentStackPerfTest {
 
     static Component elementComponent() {
-        return new Component() {
-            @Override
-            public Element element() {
-                return new Element();
-            }
-        };
+        return new StubComponent();
+    }
+
+    /** A component with a fixed element and nothing to own. */
+    static class StubComponent extends Component {
+        StubComponent() {
+            super(new Element());
+        }
     }
 
     @AfterEach
@@ -84,8 +86,9 @@ class AttachmentStackPerfTest {
         Table root = new Table();
         root.name = "test-parent";
         AttachmentStack.push(root);
-        AttachmentStack.registerPendingComponent(elementComponent(), root);
-        AttachmentStack.registerPendingComponent(elementComponent(), root);
+        // Constructing inside the open scope is all it takes: every component announces itself.
+        elementComponent();
+        elementComponent();
         AttachmentStack.pop();
 
         assertEquals(2, root.getChildren().size);

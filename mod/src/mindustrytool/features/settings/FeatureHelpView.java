@@ -10,10 +10,10 @@ import lombok.AllArgsConstructor;
 import mindustry.Vars;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
 @AllArgsConstructor
-public class FeatureHelpView extends BaseComponent {
+public class FeatureHelpView extends Component {
 
     private final Feature feature;
 

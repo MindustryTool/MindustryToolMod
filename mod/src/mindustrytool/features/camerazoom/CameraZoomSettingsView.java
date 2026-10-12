@@ -10,13 +10,13 @@ import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for camera zoom limits.
  */
-public class CameraZoomSettingsView extends BaseComponent {
+public class CameraZoomSettingsView extends Component {
 
     private final CameraZoomFeature feature;
 

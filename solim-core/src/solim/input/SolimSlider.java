@@ -3,36 +3,35 @@ import solim.reactive.TwoWayBinding;
 
 import arc.scene.ui.Slider;
 import solim.core.Component;
-import solim.core.Disposable;
 import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
 import solim.reactive.Signal;
 import java.util.Objects;
 
 /** Slider widget bound to Signal&lt;Float&gt;. */
-public final class SolimSlider implements Component, ElementConfig<SolimSlider>, CellConfig<SolimSlider> {
-	private final Slider slider = new Slider(0f, 1f, 0.1f, false);
+public final class SolimSlider extends Component implements ElementConfig<SolimSlider>, CellConfig<SolimSlider> {
+	private final Slider slider;
 	private final PendingCellConfig constraints = new PendingCellConfig();
-	private Disposable binding;
-	private boolean disposed = false;
 
 	@Override
 	public PendingCellConfig cellConfig() {
 		return constraints;
 	}
 
-	{
-		slider.name = "solim-slider-slider";
+	public SolimSlider(Signal<Float> signal, float min, float max, float step) {
+		this(new Slider(0f, 1f, 0.1f, false), signal, min, max, step);
 	}
 
-	public SolimSlider(Signal<Float> signal, float min, float max, float step) {
+	private SolimSlider(Slider slider, Signal<Float> signal, float min, float max, float step) {
+		super(slider);
+		this.slider = slider;
+		slider.name = "solim-slider-slider";
 		slider.setRange(min, max);
 		slider.setStepSize(step);
 		slider.setValue(signal.peek());
-		this.binding = new TwoWayBinding<>(
+		own(new TwoWayBinding<>(
 			signal,
 			slider::getValue,
 			slider::setValue,
@@ -41,15 +40,21 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 				return DisposableAction.empty();
 			},
 			(a, b) -> a != null && b != null && Math.abs(a - b) <= 0.0001f
-		);
-		OwnershipContext.register(this);
+		));
 	}
 
 	public SolimSlider(Signal<Integer> signal, int min, int max, int step) {
+		this(new Slider(0f, 1f, 0.1f, false), signal, min, max, step);
+	}
+
+	private SolimSlider(Slider slider, Signal<Integer> signal, int min, int max, int step) {
+		super(slider);
+		this.slider = slider;
+		slider.name = "solim-slider-slider";
 		slider.setRange(min, max);
 		slider.setStepSize(step);
 		slider.setValue(signal.peek());
-		this.binding = new TwoWayBinding<>(
+		own(new TwoWayBinding<>(
 			signal,
 			() -> Math.round(slider.getValue()),
 			val -> slider.setValue(val != null ? val : 0),
@@ -58,8 +63,7 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 				return DisposableAction.empty();
 			},
 			Objects::equals
-		);
-		OwnershipContext.register(this);
+		));
 	}
 
 	public static SolimSlider of(Signal<Float> signal, float min, float max, float step) {
@@ -74,31 +78,9 @@ public final class SolimSlider implements Component, ElementConfig<SolimSlider>,
 		return slider;
 	}
 
-	@Override
-	public Slider element() {
-		return slider;
-	}
-
 	public SolimSlider name(String name) {
-		slider.name = name;
+		setName(name);
 		return this;
-	}
-
-	@Override
-	public void dispose() {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-		if (binding != null) {
-			binding.dispose();
-			binding = null;
-		}
-	}
-
-	@Override
-	public boolean isDisposed() {
-		return disposed;
 	}
 
     @Override

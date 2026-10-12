@@ -17,12 +17,12 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.components.Loader;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ChannelDto;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.graphics.RoundedDrawable;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 
-public class ChatChannelListView extends BaseComponent {
+public class ChatChannelListView extends Component {
     private final ChatStore store;
     private final @Nullable ChatService service;
 
@@ -84,25 +84,39 @@ public class ChatChannelListView extends BaseComponent {
         }).element();
     }
 
-    private static class ChannelItem extends BaseComponent {
+    private static class ChannelItem extends Component {
         private static final Color SELECTED_BG = new Color(0.45f, 0.35f, 0.9f, 0.8f);
-        private static final TextButtonStyle selectedStyle = new TextButtonStyle() {
-            {
-                down = new RoundedDrawable(unit(2), SELECTED_BG);
-                up = new RoundedDrawable(unit(2), SELECTED_BG);
-                over = new RoundedDrawable(unit(2), SELECTED_BG);
-                font = Fonts.def;
-                fontColor = Color.white;
-                disabledFontColor = Color.gray;
-            }
-        };
+        private static @Nullable TextButtonStyle selectedStyle;
+        private static @Nullable TextButtonStyle defaultStyle;
 
-        private static final TextButtonStyle defaultStyle = new TextButtonStyle(Styles.cleart) {
-            {
-                down = new RoundedDrawable(unit(2), Color.gray);
-                over = new RoundedDrawable(unit(2), Color.gray);
+        private static TextButtonStyle getSelectedStyle() {
+            if (selectedStyle == null) {
+                selectedStyle = new TextButtonStyle() {
+                    {
+                        down = new RoundedDrawable(unit(2), SELECTED_BG);
+                        up = new RoundedDrawable(unit(2), SELECTED_BG);
+                        over = new RoundedDrawable(unit(2), SELECTED_BG);
+                        font = Fonts.def;
+                        fontColor = Color.white;
+                        disabledFontColor = Color.gray;
+                    }
+                };
             }
-        };
+            return selectedStyle;
+        }
+
+        private static TextButtonStyle getDefaultStyle() {
+            if (defaultStyle == null) {
+                TextButtonStyle base = Styles.cleart != null ? Styles.cleart : new TextButtonStyle();
+                defaultStyle = new TextButtonStyle(base) {
+                    {
+                        down = new RoundedDrawable(unit(2), Color.gray);
+                        over = new RoundedDrawable(unit(2), Color.gray);
+                    }
+                };
+            }
+            return defaultStyle;
+        }
 
         private final ChannelDto channel;
         private final ChatStore store;
@@ -136,7 +150,7 @@ public class ChatChannelListView extends BaseComponent {
                     ? Core.bundle.get("feature.chat.channel.notifications.unmute", "Unmute notifications")
                     : Core.bundle.get("feature.chat.channel.notifications.mute", "Mute notifications"));
 
-            Computed<ButtonStyle> style = isSelected.map(s -> s ? selectedStyle : defaultStyle);
+            Computed<ButtonStyle> style = isSelected.map(s -> s ? getSelectedStyle() : getDefaultStyle());
 
             return row()
                     .growX()

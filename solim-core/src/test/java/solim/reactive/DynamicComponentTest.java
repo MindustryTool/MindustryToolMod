@@ -22,7 +22,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Row;
@@ -32,7 +32,7 @@ import solim.test.SolimCoreEnv;
 
 class DynamicComponentTest extends SolimCoreEnv {
 
-    static class TestComponent extends BaseComponent {
+    static class TestComponent extends Component {
         final String id;
         boolean wasDisposed = false;
 
@@ -684,7 +684,10 @@ class DynamicComponentTest extends SolimCoreEnv {
 
         boomPhase[0] = 1;
         source.set("next");
-        SignalDispatcher.flush();
+        // Fail-fast: a throwing factory must not be swallowed by the hosting effect.
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, SignalDispatcher::flush);
+        assertEquals("boom", thrown.getMessage());
+        assertFalse(SignalDispatcher.isFlushing(), "Dispatcher must not stay marked as flushing");
 
         assertTrue(created.get(1).wasDisposed,
                 "Root created before the exception must be disposed");

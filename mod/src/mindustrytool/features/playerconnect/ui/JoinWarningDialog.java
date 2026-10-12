@@ -12,7 +12,7 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.models.response.PlayerConnectRoom;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.SolimDialog;
 
 public class JoinWarningDialog extends SolimDialog {
@@ -32,7 +32,7 @@ public class JoinWarningDialog extends SolimDialog {
         children(() -> new JoinWarningView(this, room, missingMods, unneededMods, password));
     }
 
-    private static class JoinWarningView extends BaseComponent {
+    private static class JoinWarningView extends Component {
         private final JoinWarningDialog dialog;
         private final PlayerConnectRoom room;
         private final List<String> missingMods;

@@ -31,13 +31,13 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.config.ConfigValue;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-public class BlockStatsDisplaySettingsView extends BaseComponent {
+public class BlockStatsDisplaySettingsView extends Component {
 
     private static final int chipColumns = 8;
 
@@ -271,7 +271,7 @@ public class BlockStatsDisplaySettingsView extends BaseComponent {
         }
     }
 
-    private final class BlockChip extends BaseComponent {
+    private final class BlockChip extends Component {
 
         private final Block block;
         private final boolean progress;

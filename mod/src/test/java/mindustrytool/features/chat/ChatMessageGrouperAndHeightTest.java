@@ -128,10 +128,13 @@ class ChatMessageGrouperAndHeightTest extends MindustryTestEnv {
 
     @AfterEach
     void drainPendingEffects() {
+        // Drain first, while the views are still alive: a queued effect rebuilds UI from the
+        // components it owns, so running one after those are disposed is a genuine fault
+        // rather than a teardown artefact.
+        flushEffects();
         // Stores own effects outside any component scope and views own their
-        // bindings, so they are caller-managed: dispose unsubscribes them,
-        // flush drains anything already queued so the env teardown sees an
-        // empty dispatcher and later tests are not polluted.
+        // bindings, so they are caller-managed: dispose unsubscribes them so
+        // later tests are not polluted.
         for (Disposable view : ownedViews) {
             try {
                 view.dispose();

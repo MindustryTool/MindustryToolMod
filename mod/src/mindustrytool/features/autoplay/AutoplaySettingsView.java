@@ -15,13 +15,13 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.layout.Direction;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-public class AutoplaySettingsView extends BaseComponent {
+public class AutoplaySettingsView extends Component {
 
     private final AutoplayFeature feature;
 
@@ -120,7 +120,7 @@ public class AutoplaySettingsView extends BaseComponent {
         });
     }
 
-    public static class TaskRow extends BaseComponent {
+    public static class TaskRow extends Component {
         private final AutoplayFeature feature;
         private final AutoplayTask task;
         private final Signal<Boolean> expanded = Signal.of(false);

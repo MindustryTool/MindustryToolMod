@@ -14,36 +14,34 @@ import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 
 /** Simple grid with fixed or reactive column count and customizable gap. */
-public final class Grid implements Component, CellConfig<Grid>, GapContainer, ElementConfig<Grid>, TableConfig<Grid> {
+public final class Grid extends Component implements CellConfig<Grid>, GapContainer, ElementConfig<Grid>, TableConfig<Grid> {
 
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private int columns = 1;
     private float gap = 4f;
     private int currentCell = 0;
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private boolean attached = false;
 
     public Grid() {
-        this.table = new Table();
+        this(new Table());
+    }
+
+    private Grid(Table table) {
+        super(table);
+        this.table = table;
         SolimToken.bind(this.table, this, constraints);
         this.table.name = "solim-grid-table";
         this.table.top().left();
         this.table.defaults().top().left();
         respace();
-        OwnershipContext.register(this);
-        Table parent = AttachmentStack.current();
-        if (parent != null) {
-            AttachmentStack.registerPendingComponent(this, parent);
-        }
     }
 
     public Grid(int columns) {
@@ -55,10 +53,6 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         return table;
     }
 
-    @Override
-    public Element element() {
-        return table;
-    }
 
     @Override
     public PendingCellConfig cellConfig() {
@@ -73,15 +67,13 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
 
     public Grid columns(@Nullable Readable<Integer> c) {
         if (c != null) {
-            Effect e = Effect.of(() -> {
+        own(Effect.of(() -> {
                 Integer cols = c.get();
                 if (cols != null) {
                     this.columns = Math.max(1, cols);
                     reflow();
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
@@ -94,14 +86,12 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
 
     public Grid gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
-            Effect e = Effect.of(() -> {
+        own(Effect.of(() -> {
                 Float g = gapSignal.get();
                 if (g != null) {
                     gap(g);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
@@ -128,6 +118,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
 
     public Grid children(@Nullable Runnable r) {
         int[] count = new int[] { 0 };
+        OwnershipContext.push(this);
         AttachmentStack.push(table, (tbl, child) -> {
             Cell<?> cell = tbl.add(child);
             cell.top().left();
@@ -147,6 +138,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         attachSelf();
         respace();
@@ -198,22 +190,7 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
         return this;
     }
 
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
 
-    @Override
-    public boolean isDisposed() {
-        return disposed;
-    }
 
     @Override
     public Grid align(int align) {
@@ -296,6 +273,12 @@ public final class Grid implements Component, CellConfig<Grid>, GapContainer, El
                 c.right();
             }
         }
+        return this;
+    }
+
+    @Override
+    public Grid name(@Nullable String name) {
+        setName(name);
         return this;
     }
 

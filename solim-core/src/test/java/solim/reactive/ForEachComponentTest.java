@@ -18,7 +18,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.CellConfig;
 import solim.runtime.SignalDispatcher;
@@ -27,7 +27,7 @@ import solim.test.SolimCoreEnv;
 class ForEachComponentTest extends SolimCoreEnv {
 
 
-    static class TestComponent extends BaseComponent {
+    static class TestComponent extends Component {
         final String id;
         boolean wasDisposed = false;
 

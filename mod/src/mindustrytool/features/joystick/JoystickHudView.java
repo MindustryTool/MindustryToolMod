@@ -8,14 +8,14 @@ import arc.util.Nullable;
 import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.Hud;
 
 /**
  * Floating HUD surface hosting the joystick widget and its optional reposition drag handle.
  * Position persists via the feature's posX/posY config values.
  */
-public class JoystickHudView extends BaseComponent {
+public class JoystickHudView extends Component {
 
     private final JoystickFeature feature;
     private @Nullable Hud hud;

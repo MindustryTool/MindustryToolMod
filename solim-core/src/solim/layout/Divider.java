@@ -13,28 +13,33 @@ import solim.display.SolimImage;
 import solim.modifier.ElementConfig;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 
 /**
  * Divider line supporting horizontal (X) and vertical (Y) directions. Uses an
  * Image instead of a Table for lightweight rendering.
  */
-public final class Divider implements Component, CellConfig<Divider>, ElementConfig<Divider> {
+public final class Divider extends Component implements CellConfig<Divider>, ElementConfig<Divider> {
     private final SolimImage image;
     private final Direction direction;
-    private boolean disposed = false;
 
     public Divider() {
         this(Direction.X);
     }
 
     public Divider(Direction direction) {
-        this.direction = direction != null ? direction : Direction.X;
-        Drawable white = (Core.atlas != null && Core.atlas.has("whiteui"))
-                ? Core.atlas.drawable("whiteui")
-                : null;
+        this(whitePixel(), direction);
+    }
 
-        this.image = new SolimImage(white);
+    private Divider(@Nullable Drawable white, Direction direction) {
+        this(new SolimImage(white), direction);
+    }
+
+    private Divider(SolimImage image, Direction direction) {
+        super(image.element());
+        this.image = image;
+        this.direction = direction != null ? direction : Direction.X;
+        own(image);
         this.image.element().name = "solim-divider";
         this.image.color(Color.darkGray);
         // Stretch (not fit): the source is a square pixel, and fit would shrink it
@@ -52,7 +57,10 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
             minHeight(1.5f);
             marginRight(1);
         }
-        OwnershipContext.register(this);
+    }
+
+    private static @Nullable Drawable whitePixel() {
+        return Core.atlas != null && Core.atlas.has("whiteui") ? Core.atlas.drawable("whiteui") : null;
     }
 
     public Direction direction() {
@@ -101,10 +109,6 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
         return this;
     }
 
-    @Override
-    public Element element() {
-        return image.element();
-    }
 
     @Override
     public PendingCellConfig cellConfig() {
@@ -115,20 +119,6 @@ public final class Divider implements Component, CellConfig<Divider>, ElementCon
     public Divider name(String name) {
         image.name(name);
         return this;
-    }
-
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        image.dispose();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
     }
 
     @Override

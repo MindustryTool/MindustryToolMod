@@ -7,7 +7,7 @@ import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
@@ -34,7 +34,7 @@ import solim.runtime.ReactiveContext;
  * but may also be updated after mounting: a post-mount update remounts the
  * current condition value immediately.</p>
  */
-public final class When extends BaseComponent
+public final class When extends Component
         implements CellConfig<When>, TableConfig<When>, ElementConfig<When> {
     private static final Object SENTINEL = new Object();
     private final Table container = new Table();
@@ -92,7 +92,7 @@ public final class When extends BaseComponent
 
     @Override
     public When name(@Nullable String name) {
-        super.name(name);
+        setName(name);
         return this;
     }
 

@@ -19,11 +19,11 @@ import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData;
 import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomPlayer;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Signal;
 import mindustrytool.components.WebStyles;
 
-public class RoomCard extends BaseComponent {
+public class RoomCard extends Component {
 
     private final PlayerConnectRoom room;
     private final boolean displayPlayerList;

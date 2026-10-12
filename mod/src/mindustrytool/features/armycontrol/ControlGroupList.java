@@ -11,7 +11,7 @@ import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustry.type.UnitType;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
 /**
@@ -19,7 +19,7 @@ import solim.reactive.Readable;
  * Each row shows the group's living-unit icons plus count; group names are not shown.
  * Renders nothing when no groups are saved.
  */
-public class ControlGroupList extends BaseComponent {
+public class ControlGroupList extends Component {
 
     private final ArmyControlFeature feature;
 

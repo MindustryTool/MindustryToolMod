@@ -15,7 +15,7 @@ import solim.core.SolimToken;
 import solim.core.Units;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -28,7 +28,7 @@ import solim.modifier.TableConfig;
  * Tabs layout component: provides a tab header button bar and switches between
  * tab content panels reactively.
  */
-public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Tabs>, TableConfig<Tabs> {
+public final class Tabs extends Component implements CellConfig<Tabs>, ElementConfig<Tabs>, TableConfig<Tabs> {
 
     private final Table root;
     private final Row headerBar;
@@ -37,27 +37,30 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
     private @Nullable ButtonStyle tabButtonStyle;
     private final List<Button> tabButtons = new ArrayList<>();
     private final List<Table> tabContents = new ArrayList<>();
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private final PendingCellConfig constraints = new PendingCellConfig();
 
     public Tabs(Signal<Integer> activeTab) {
+        this(activeTab, new Table());
+    }
+
+    private Tabs(Signal<Integer> activeTab, Table root) {
+        super(root);
         this.activeTab = activeTab;
-        this.root = new Table();
+        this.root = root;
         SolimToken.bind(this.root, this, constraints);
         this.root.name = "solim-tabs-root";
         this.root.top().left();
 
         this.headerBar = new Row().gap(4f);
+        own(this.headerBar);
         this.headerBar.name("solim-tabs-headerBar");
         this.headerBar.top().left();
         this.headerBar.height(Units.unit(14));
         this.root.add(headerBar.element()).growX().row();
 
         this.contentStack = new SolimStack();
+        own(this.contentStack);
         this.root.add(contentStack.element()).grow();
-
-        OwnershipContext.register(this);
     }
 
     public static Tabs of(Signal<Integer> activeTab) {
@@ -111,6 +114,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
             btn.icon(icon).text(title);
         });
         tabButtons.add(btn);
+        own(btn);
         headerBar.table().add(btn.element()).growX();
         headerBar.respace();
 
@@ -135,7 +139,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
             }
         };
 
-        Effect eff = Effect.of(() -> {
+        own(Effect.of(() -> {
             Integer cur = activeTab.get();
             boolean isActive = (cur != null && cur == index);
             if (isActive) {
@@ -143,9 +147,7 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
             }
             contentContainer.visible = isActive;
             contentContainer.setLayoutEnabled(isActive);
-        });
-        bindings.add(eff);
-        OwnershipContext.register(eff);
+        }));
 
         return this;
     }
@@ -166,10 +168,6 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
         return headerBar.table();
     }
 
-    @Override
-    public Element element() {
-        return root;
-    }
 
     @Override
     public Table table() {
@@ -182,24 +180,9 @@ public final class Tabs implements Component, CellConfig<Tabs>, ElementConfig<Ta
     }
 
     @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-        for (Button b : tabButtons) {
-            b.dispose();
-        }
-        headerBar.dispose();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
+    public Tabs name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override

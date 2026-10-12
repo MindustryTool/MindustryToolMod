@@ -20,7 +20,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureKeybind;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.services.crash.CrashTimestampParser;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
 /**
@@ -28,7 +28,7 @@ import solim.core.Component;
  * Includes toggles for beta updates and game presence sharing,
  * as well as one-tap buttons to copy recent logs and crash reports.
  */
-public class GeneralSettingsView extends BaseComponent {
+public class GeneralSettingsView extends Component {
 
     @Override
     protected Element build() {

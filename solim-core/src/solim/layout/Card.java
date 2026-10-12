@@ -14,7 +14,7 @@ import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -24,7 +24,7 @@ import solim.modifier.PendingCellConfig;
  * Clickable card container built on a single Arc Table with lazy click
  * handling borrowed from Arc Button semantics.
  */
-public final class Card implements Component, CellConfig<Card>, ElementConfig<Card>, TableConfig<Card>, GapContainer {
+public final class Card extends Component implements CellConfig<Card>, ElementConfig<Card>, TableConfig<Card>, GapContainer {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -40,23 +40,22 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         return cell;
     };
 
-    private final Table table = new Table();
+    private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private float gap = 0f;
     private boolean attached = false;
 
     public Card() {
+        this(new Table());
+    }
+
+    private Card(Table table) {
+        super(table);
+        this.table = table;
         SolimToken.bind(this.table, this, constraints);
         this.table.name = "solim-card-table";
         this.table.top().left();
         this.table.defaults().top().left();
-        OwnershipContext.register(this);
-        Table parent = AttachmentStack.current();
-        if (parent != null) {
-            AttachmentStack.registerPendingComponent(this, parent);
-        }
     }
 
     public Card(@Nullable Drawable background) {
@@ -75,10 +74,6 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         return table;
     }
 
-    @Override
-    public Element element() {
-        return table;
-    }
 
     @Override
     public PendingCellConfig cellConfig() {
@@ -94,19 +89,18 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
 
     public Card color(@Nullable Readable<Color> color) {
         if (color != null) {
-            Effect e = Effect.of(() -> {
+        own(Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
                     table.setColor(c);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
 
     public Card children(@Nullable Runnable r) {
+        OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
@@ -114,6 +108,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         attachSelf();
         respace();
@@ -148,22 +143,7 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
         GapContainer.applySpacing(table, Direction.VERTICAL, gap);
     }
 
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
 
-    @Override
-    public boolean isDisposed() {
-        return disposed;
-    }
 
     @Override
     public Card align(int align) {
@@ -246,6 +226,12 @@ public final class Card implements Component, CellConfig<Card>, ElementConfig<Ca
                 c.right();
             }
         }
+        return this;
+    }
+
+    @Override
+    public Card name(@Nullable String name) {
+        setName(name);
         return this;
     }
 

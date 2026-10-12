@@ -12,7 +12,7 @@ import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import mindustrytool.features.settings.ModSettings;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.input.Button;
 import solim.layout.Direction;
@@ -21,7 +21,7 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-public class AutoplayHudView extends BaseComponent {
+public class AutoplayHudView extends Component {
 
     static final int STRIP_COLUMNS = 5;
 

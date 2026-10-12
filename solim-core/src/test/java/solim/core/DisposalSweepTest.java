@@ -60,7 +60,7 @@ import solim.reactive.Computed;
 import solim.reactive.Dynamic;
 import solim.reactive.ForEach;
 import solim.reactive.Signal;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -173,7 +173,7 @@ class DisposalSweepTest extends SolimEnv {
 		NetworkImage.setImageLoader(null);
 	}
 
-	static final class Nest extends BaseComponent {
+	static final class Nest extends Component {
 		private final Runnable body;
 		private final Table root = new Table();
 
@@ -204,7 +204,7 @@ class DisposalSweepTest extends SolimEnv {
 		assertTrue(disposable.isDisposed());
 	}
 
-	static class Owner extends BaseComponent {
+	static class Owner extends Component {
 		Computed<String> computed;
 		final Signal<Integer> source = Signal.of(1);
 
@@ -218,7 +218,7 @@ class DisposalSweepTest extends SolimEnv {
 	}
 
 	@Test
-	void ownedComputedDisposesWithBaseComponent() {
+	void ownedComputedDisposesWithLazyComponent() {
 		Owner owner = new Owner();
 		owner.element();
 		assertFalse(owner.computed.isDisposed());
@@ -268,14 +268,14 @@ class DisposalSweepTest extends SolimEnv {
 
 		checked.set(true);
 		SignalDispatcher.flush();
-		assertTrue(button.element().isChecked());
+		assertTrue(button.button().isChecked());
 
 		button.dispose();
 		assertContract(button);
 
 		checked.set(false);
 		SignalDispatcher.flush();
-		assertTrue(button.element().isChecked(), "Disposed Button must stop reacting");
+		assertTrue(button.button().isChecked(), "Disposed Button must stop reacting");
 	}
 
 	@Test
@@ -616,7 +616,7 @@ Dynamic<Boolean> dynamic = Dynamic.of(toggle, active -> {
 		assertFalse(panel.isDisposed());
 
 		panel.dispose();
-		assertTrue(panel.isDisposed(), "SettingsPanel must dispose BaseComponent resources");
+		assertTrue(panel.isDisposed(), "SettingsPanel must dispose its owned resources");
 
 		assertDoesNotThrow(panel::dispose, "Double dispose must be safe");
 		assertTrue(panel.isDisposed());

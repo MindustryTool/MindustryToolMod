@@ -38,14 +38,14 @@ import mindustry.gen.Icon;
 import mindustry.type.UnitType;
 import mindustry.world.Block;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 /**
  * Declarative rules inspector with search, category filters, and role-based editing.
  */
-public class MapRulesView extends BaseComponent {
+public class MapRulesView extends Component {
 
     private static final String CAT_ALL = RuleDescriptor.CAT_ALL;
     private static final String CAT_MODIFIED = RuleDescriptor.CAT_MODIFIED;

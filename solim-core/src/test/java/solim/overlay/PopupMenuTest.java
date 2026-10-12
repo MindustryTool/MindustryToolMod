@@ -21,7 +21,7 @@ import arc.struct.Seq;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.layout.Card;
 import solim.test.SolimEnv;
 
@@ -296,12 +296,12 @@ class PopupMenuTest extends SolimEnv {
         }
     }
 
-    private static BaseComponent emptyContent() {
+    private static Component emptyContent() {
         return trackedContent(new AtomicBoolean(false));
     }
 
-    private static BaseComponent trackedContent(AtomicBoolean disposed) {
-        return new BaseComponent() {
+    private static Component trackedContent(AtomicBoolean disposed) {
+        return new Component() {
             @Override
             protected Element build() {
                 return new Table();
@@ -315,8 +315,8 @@ class PopupMenuTest extends SolimEnv {
         };
     }
 
-    private static BaseComponent fixedContent(float width, float height) {
-        return new BaseComponent() {
+    private static Component fixedContent(float width, float height) {
+        return new Component() {
             @Override
             protected Element build() {
                 Table content = new Table();

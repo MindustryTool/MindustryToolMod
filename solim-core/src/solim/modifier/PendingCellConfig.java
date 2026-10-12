@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -215,53 +215,80 @@ public final class PendingCellConfig {
     /**
      * Immediately applies size constraints to the element's parent cell if the
      * element is already attached to a parent Table.
+     *
+     * <p>Prefer the per-property appliers: this aggregate reads every constraint, so a reactive
+     * caller using it would track all of them and re-run on any change.
      */
     public void applySizeToParentCell(@Nullable Element element) {
-        if (element != null && element.parent instanceof Table) {
-            Table parentTable = (Table) element.parent;
-            Cell<?> cell = parentTable.getCell(element);
-            if (cell != null) {
-                if (prefWidth != null && prefWidth.get() != null)
-                    cell.width(Math.max(0f, prefWidth.get()));
-                if (prefHeight != null && prefHeight.get() != null)
-                    cell.height(Math.max(0f, prefHeight.get()));
-                if (minWidth != null && minWidth.get() != null)
-                    cell.minWidth(Math.max(0f, minWidth.get()));
-                if (minHeight != null && minHeight.get() != null)
-                    cell.minHeight(Math.max(0f, minHeight.get()));
-                if (maxWidth != null && maxWidth.get() != null)
-                    cell.maxWidth(Math.max(0f, maxWidth.get()));
-                if (maxHeight != null && maxHeight.get() != null)
-                    cell.maxHeight(Math.max(0f, maxHeight.get()));
-                parentTable.invalidateHierarchy();
-            }
-        }
+        applyPrefWidth(element);
+        applyPrefHeight(element);
+        applyMinWidth(element);
+        applyMinHeight(element);
+        applyMaxWidth(element);
+        applyMaxHeight(element);
+    }
+
+    /** Applies only {@link #prefWidth}; tracks only {@code prefWidth}. */
+    public void applyPrefWidth(@Nullable Element element) {
+        applySize(element, prefWidth, Cell::width);
+    }
+
+    /** Applies only {@link #prefHeight}; tracks only {@code prefHeight}. */
+    public void applyPrefHeight(@Nullable Element element) {
+        applySize(element, prefHeight, Cell::height);
+    }
+
+    /** Applies only {@link #minWidth}; tracks only {@code minWidth}. */
+    public void applyMinWidth(@Nullable Element element) {
+        applySize(element, minWidth, Cell::minWidth);
+    }
+
+    /** Applies only {@link #minHeight}; tracks only {@code minHeight}. */
+    public void applyMinHeight(@Nullable Element element) {
+        applySize(element, minHeight, Cell::minHeight);
+    }
+
+    /** Applies only {@link #maxWidth}; tracks only {@code maxWidth}. */
+    public void applyMaxWidth(@Nullable Element element) {
+        applySize(element, maxWidth, Cell::maxWidth);
+    }
+
+    /** Applies only {@link #maxHeight}; tracks only {@code maxHeight}. */
+    public void applyMaxHeight(@Nullable Element element) {
+        applySize(element, maxHeight, Cell::maxHeight);
     }
 
     /**
      * Immediately applies margin constraints to the element's parent cell if the
      * element is already attached to a parent Table.
+     *
+     * <p>Prefer the per-edge appliers for the same reason as {@link #applySizeToParentCell}.
      */
     public void applyMarginToParentCell(@Nullable Element element) {
-        if (element != null && element.parent instanceof Table) {
-            Table parentTable = (Table) element.parent;
-            if (GapContainer.isGapContainer(parentTable)) {
-                GapContainer.respace(parentTable);
-                return;
-            }
-            Cell<?> cell = parentTable.getCell(element);
-            if (cell != null) {
-                if (padTop != null && padTop.get() != null)
-                    cell.padTop(Math.max(0f, padTop.get()));
-                if (padLeft != null && padLeft.get() != null)
-                    cell.padLeft(Math.max(0f, padLeft.get()));
-                if (padBottom != null && padBottom.get() != null)
-                    cell.padBottom(Math.max(0f, padBottom.get()));
-                if (padRight != null && padRight.get() != null)
-                    cell.padRight(Math.max(0f, padRight.get()));
-                parentTable.invalidate();
-            }
-        }
+        applyPadTop(element);
+        applyPadLeft(element);
+        applyPadBottom(element);
+        applyPadRight(element);
+    }
+
+    /** Applies only {@link #padTop}; tracks only {@code padTop}. */
+    public void applyPadTop(@Nullable Element element) {
+        applyMargin(element, padTop, Cell::padTop);
+    }
+
+    /** Applies only {@link #padLeft}; tracks only {@code padLeft}. */
+    public void applyPadLeft(@Nullable Element element) {
+        applyMargin(element, padLeft, Cell::padLeft);
+    }
+
+    /** Applies only {@link #padBottom}; tracks only {@code padBottom}. */
+    public void applyPadBottom(@Nullable Element element) {
+        applyMargin(element, padBottom, Cell::padBottom);
+    }
+
+    /** Applies only {@link #padRight}; tracks only {@code padRight}. */
+    public void applyPadRight(@Nullable Element element) {
+        applyMargin(element, padRight, Cell::padRight);
     }
 
     /**
@@ -298,6 +325,66 @@ public final class PendingCellConfig {
     }
 
     // ---------- private helpers ----------
+
+    /**
+     * Applies one size constraint read from {@code source}, then invalidates the parent
+     * hierarchy exactly once. Reads {@code source} and nothing else, so an {@code Effect}
+     * wrapping this tracks a single constraint.
+     */
+    private static void applySize(@Nullable Element element, @Nullable Readable<Float> source,
+            SizeApplier applier) {
+        if (source == null) {
+            return;
+        }
+        Cell<?> cell = parentCell(element);
+        if (cell == null) {
+            return;
+        }
+        Float value = source.get();
+        if (value == null) {
+            return;
+        }
+        applier.apply(cell, Math.max(0f, value));
+        cell.getTable().invalidateHierarchy();
+    }
+
+    /**
+     * Applies one margin constraint read from {@code source}, then invalidates the parent
+     * exactly once. Gap containers re-space instead of padding, matching the aggregate applier.
+     */
+    private static void applyMargin(@Nullable Element element, @Nullable Readable<Float> source,
+            EdgeApplier applier) {
+        if (source == null) {
+            return;
+        }
+        Table parentTable = parentTable(element);
+        if (parentTable == null) {
+            return;
+        }
+        if (GapContainer.isGapContainer(parentTable)) {
+            GapContainer.respace(parentTable);
+            return;
+        }
+        Cell<?> cell = parentTable.getCell(element);
+        if (cell == null) {
+            return;
+        }
+        Float value = source.get();
+        if (value == null) {
+            return;
+        }
+        applier.apply(cell, Math.max(0f, value));
+        parentTable.invalidate();
+    }
+
+    private static @Nullable Table parentTable(@Nullable Element element) {
+        return element != null && element.parent instanceof Table ? (Table) element.parent : null;
+    }
+
+    private static @Nullable Cell<?> parentCell(@Nullable Element element) {
+        Table parentTable = parentTable(element);
+        return parentTable != null ? parentTable.getCell(element) : null;
+    }
 
     private static List<Disposable> bind(Cell<?> cell, @Nullable Readable<Float> source, FloatApplier applier) {
         List<Disposable> result = new ArrayList<>();
@@ -346,5 +433,15 @@ public final class PendingCellConfig {
     @FunctionalInterface
     private interface FloatApplier {
         void apply(float value);
+    }
+
+    @FunctionalInterface
+    private interface SizeApplier {
+        void apply(Cell<?> cell, float value);
+    }
+
+    @FunctionalInterface
+    private interface EdgeApplier {
+        void apply(Cell<?> cell, float value);
     }
 }

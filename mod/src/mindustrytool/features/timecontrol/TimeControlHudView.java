@@ -13,7 +13,7 @@ import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.input.Button;
 import solim.input.SolimSlider;
@@ -27,7 +27,7 @@ import solim.reactive.Readable;
  * signals with automatic bindings. Compact footprint at scale 1.0: ~320x40px
  * presets, ~280x40px slider; button, icon, and font sizes scale proportionally.
  */
-public class TimeControlHudView extends BaseComponent {
+public class TimeControlHudView extends Component {
 
     private final TimeControlFeature feature;
     private @Nullable Hud hud;

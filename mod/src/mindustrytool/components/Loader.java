@@ -9,14 +9,13 @@ import arc.util.Align;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import arc.util.Time;
-import solim.core.BaseComponent;
 import solim.core.Component;
 
 /**
  * Animated circular loading spinner utilizing {@code loader-circle.png}.
  * Continuously spins around its center point at ~360 deg/sec.
  */
-public class Loader extends BaseComponent {
+public class Loader extends Component {
     private final float size;
     private final @Nullable Color color;
     private final float speed;

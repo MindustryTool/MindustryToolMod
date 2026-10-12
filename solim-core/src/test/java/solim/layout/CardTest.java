@@ -431,6 +431,60 @@ class CardTest extends SolimEnv {
     }
 
     @Test
+    void reactiveSizeBindingsTrackOnlyTheirOwnConstraint() {
+        Signal<Float> minWidthSig = Signal.of(120f);
+        Signal<Float> maxHeightSig = Signal.of(60f);
+
+        Row parent = new Row();
+        Card card = new Card().minWidth(minWidthSig).maxHeight(maxHeightSig);
+        parent.children(() -> card.children(() -> AttachmentStack.add(fixedSize(20f, 20f))));
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(120f, CellAccess.minWidth(cell), 0.01f);
+        assertEquals(60f, CellAccess.maxHeight(cell), 0.01f);
+
+        // Changing maxHeight must not disturb the minWidth binding's own effect.
+        maxHeightSig.set(90f);
+        SignalDispatcher.flush();
+
+        assertEquals(90f, CellAccess.maxHeight(cell), 0.01f);
+        assertEquals(120f, CellAccess.minWidth(cell), 0.01f);
+
+        minWidthSig.set(200f);
+        SignalDispatcher.flush();
+        assertEquals(200f, CellAccess.minWidth(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
+    void reactiveMarginBindingsTrackOnlyTheirOwnEdge() {
+        Signal<Float> padTopSig = Signal.of(4f);
+        Signal<Float> padLeftSig = Signal.of(8f);
+
+        Row parent = new Row();
+        Card card = new Card().marginTop(padTopSig).marginLeft(padLeftSig);
+        parent.children(() -> card.children(() -> AttachmentStack.add(fixedSize(20f, 20f))));
+
+        Cell<?> cell = parent.table().getCell(card.table());
+        assertNotNull(cell);
+        assertEquals(4f, CellAccess.padTop(cell), 0.01f);
+        assertEquals(8f, CellAccess.padLeft(cell), 0.01f);
+
+        padTopSig.set(12f);
+        SignalDispatcher.flush();
+
+        assertEquals(12f, CellAccess.padTop(cell), 0.01f);
+        assertEquals(8f, CellAccess.padLeft(cell), 0.01f,
+                "Changing padTop must not disturb the padLeft binding");
+
+        padLeftSig.set(16f);
+        SignalDispatcher.flush();
+        assertEquals(16f, CellAccess.padLeft(cell), 0.01f);
+        card.dispose();
+    }
+
+    @Test
     void minWidthWidensNarrowContent() {
         Row parent = new Row();
         Card card = new Card().minWidth(120f);

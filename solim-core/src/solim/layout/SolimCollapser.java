@@ -16,14 +16,14 @@ import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 
 /**
  * Animated collapsible container wrapping an Arc {@link Collapser} around a content {@link Table}.
  * When collapsed, its preferred and minimum heights become zero, preventing empty whitespace allocation.
  */
-public final class SolimCollapser implements Component, CellConfig<SolimCollapser>, ElementConfig<SolimCollapser>, TableConfig<SolimCollapser>, GapContainer {
+public final class SolimCollapser extends Component implements CellConfig<SolimCollapser>, ElementConfig<SolimCollapser>, TableConfig<SolimCollapser>, GapContainer {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -39,11 +39,9 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
         return cell;
     };
 
-    private final Table content = new Table();
+    private final Table content;
     private final Collapser collapser;
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private boolean animated = true;
     private boolean initialized = false;
     private float gap = 0f;
@@ -53,6 +51,12 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
     }
 
     public SolimCollapser(boolean collapsed) {
+        this(new Table(), collapsed);
+    }
+
+    private SolimCollapser(Table content, boolean collapsed) {
+        super(content);
+        this.content = content;
         SolimToken.bind(this.content, this, constraints);
         this.content.name = "solim-collapser-content";
         this.content.top().left();
@@ -61,7 +65,6 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
         this.collapser = new Collapser(content, collapsed);
         this.collapser.name = "solim-collapser";
         this.collapser.setDuration(0.2f);
-        OwnershipContext.register(this);
     }
 
     public Collapser collapser() {
@@ -77,10 +80,6 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
         return content;
     }
 
-    @Override
-    public Element element() {
-        return collapser;
-    }
 
     @Override
     public PendingCellConfig cellConfig() {
@@ -109,16 +108,14 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
 
     public SolimCollapser collapsed(@Nullable Readable<Boolean> collapsed) {
         if (collapsed != null) {
-            Effect e = Effect.of(() -> {
+        own(Effect.of(() -> {
                 Boolean col = collapsed.get();
                 if (col != null) {
                     boolean anim = initialized && animated;
                     collapser.setCollapsed(col, anim);
                     initialized = true;
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
@@ -129,21 +126,20 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
 
     public SolimCollapser expanded(@Nullable Readable<Boolean> expanded) {
         if (expanded != null) {
-            Effect e = Effect.of(() -> {
+        own(Effect.of(() -> {
                 Boolean exp = expanded.get();
                 if (exp != null) {
                     boolean anim = initialized && animated;
                     collapser.setCollapsed(!exp, anim);
                     initialized = true;
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
 
     public SolimCollapser children(@Nullable Runnable r) {
+        OwnershipContext.push(this);
         AttachmentStack.push(content, ATTACHER);
         try {
             if (r != null) {
@@ -151,6 +147,7 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         AttachmentStack.attachToParent(collapser);
         respace();
@@ -178,22 +175,7 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
         GapContainer.applySpacing(content, Direction.VERTICAL, gap);
     }
 
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
 
-    @Override
-    public boolean isDisposed() {
-        return disposed;
-    }
 
     @Override
     public SolimCollapser align(int align) {
@@ -276,6 +258,12 @@ public final class SolimCollapser implements Component, CellConfig<SolimCollapse
                 c.right();
             }
         }
+        return this;
+    }
+
+    @Override
+    public SolimCollapser name(@Nullable String name) {
+        setName(name);
         return this;
     }
 

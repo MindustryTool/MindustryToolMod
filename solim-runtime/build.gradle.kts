@@ -1,4 +1,4 @@
-// solim-runtime — Internal engine mechanics (AttachmentStack, OwnershipContext, ReactiveContext)
+// solim-runtime — Internal engine mechanics (AttachmentStack, ReactiveContext, StructuralReconciler)
 // Shared java/repositories/dependencies are configured in root build.gradle.kts via subprojects.
 plugins {
     `java-library`

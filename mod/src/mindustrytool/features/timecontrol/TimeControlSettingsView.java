@@ -11,10 +11,10 @@ import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
-public class TimeControlSettingsView extends BaseComponent {
+public class TimeControlSettingsView extends Component {
 
     private final TimeControlFeature feature;
 

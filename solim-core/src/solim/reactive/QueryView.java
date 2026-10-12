@@ -13,7 +13,7 @@ import java.util.Objects;
 import arc.func.Func2;
 import arc.func.Func;
 import arc.func.Prov;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
@@ -33,7 +33,7 @@ import solim.runtime.ReactiveContext;
  *
  * @param <T> query data type
  */
-public final class QueryView<T> extends BaseComponent
+public final class QueryView<T> extends Component
 		implements CellConfig<QueryView<T>>, TableConfig<QueryView<T>>, ElementConfig<QueryView<T>> {
 
 	private enum ViewState {
@@ -52,7 +52,7 @@ public final class QueryView<T> extends BaseComponent
 		String text = Core.bundle != null ? Core.bundle.get("loading", "Loading...") : "Loading...";
 		Text label = new Text(text).color(Color.lightGray);
 		table.add(label.element());
-		return () -> table;
+		return wrap(table);
 	};
 
 	private static Func2<Throwable, Runnable, Component> defaultErrorFactory = (throwable, retry) -> {
@@ -68,8 +68,18 @@ public final class QueryView<T> extends BaseComponent
 		Button btn = new Button(retry);
 		btn.table().add(new Text(btnText).element());
 		table.add(btn.element());
-		return () -> table;
+		return wrap(table);
 	};
+
+	/** Presents an already-built table as a component, so the view can own and dispose it. */
+	private static Component wrap(Table table) {
+		return new Component() {
+			@Override
+			protected Element build() {
+				return table;
+			}
+		};
+	}
 
 	private final Query<T> query;
 	private final Table container = new Table();
@@ -166,7 +176,7 @@ public final class QueryView<T> extends BaseComponent
 
 	@Override
 	public QueryView<T> name(@Nullable String name) {
-		super.name(name);
+		setName(name);
 		return this;
 	}
 

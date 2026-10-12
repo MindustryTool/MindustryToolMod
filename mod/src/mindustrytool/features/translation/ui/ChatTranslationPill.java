@@ -14,7 +14,7 @@ import mindustry.Vars;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.translation.TranslationFeature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -23,7 +23,7 @@ import solim.reactive.Signal;
  * Compact in-chat HUD pill attached above Mindustry's chat field.
  * Allows quick 1-tap toggle of outgoing translation and target language switching in-game.
  */
-public class ChatTranslationPill extends BaseComponent {
+public class ChatTranslationPill extends Component {
 
     private final TranslationFeature feature;
     private final Signal<Boolean> isChatShown = signal(false);

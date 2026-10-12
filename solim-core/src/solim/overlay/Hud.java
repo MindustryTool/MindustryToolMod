@@ -17,13 +17,15 @@ import java.util.List;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.DisposableAction;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.modifier.CellConfig;
 import solim.layout.Row;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -39,23 +41,17 @@ import arc.scene.ui.layout.Scl;
  * children are nested within an inner enabled container. Automatically adapts
  * to screen resize events via {@link #keepInScreen()}.
  */
-public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, TableConfig<Hud> {
+public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud>, TableConfig<Hud> {
 
     private final Table root;
     private final Table container;
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private final List<Disposable> bindings = new ArrayList<>();
-    private final Cons<ResizeEvent> resizeListener;
     private @Nullable Signal<Float> boundXSignal;
     private @Nullable Signal<Float> boundYSignal;
-    private boolean disposed = false;
 
     public static class HudRootTable extends Table {
-        private final Hud hud;
-
-        public HudRootTable(Hud hud) {
-            this.hud = hud;
-        }
+        /** Assigned by the owning {@link Hud} once it is constructed; validation cannot need it earlier. */
+        private @Nullable Hud hud;
 
         @Override
         public void validate() {
@@ -74,7 +70,13 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     }
 
     public Hud() {
-        this.root = new HudRootTable(this);
+        this(new HudRootTable());
+    }
+
+    private Hud(HudRootTable root) {
+        super(root);
+        this.root = root;
+        root.hud = this;
         this.root.name = "solim-hud-root";
         this.root.touchable = Touchable.childrenOnly;
         this.root.toFront();
@@ -88,22 +90,26 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
 
         this.root.add(container).pad(0).margin(0);
 
-        this.resizeListener = e -> {
-            keepInScreen();
-            Core.app.post(() -> {
-                if (!isDisposed()) {
-                    keepInScreen();
-                }
-            });
+        Cons<ResizeEvent> resizeListener = e -> {
+            keepInScreen(); 
+            Core.app.post(this::keepInScreenIfLive);
         };
         Events.on(ResizeEvent.class, resizeListener);
+        own(DisposableAction.of(() -> Events.remove(ResizeEvent.class, resizeListener)));
+    }
 
-        OwnershipContext.register(this);
+    /** Keeps the HUD inside the viewport, unless it has been disposed in the meantime. */
+    private void keepInScreenIfLive() {
+        if (!isDisposed()) {
+            keepInScreen();
+        }
     }
 
     @Override
-    public Element element() {
-        return root;
+    protected void onDispose() {
+        if (Core.scene != null) {
+            Core.scene.unfocus(root);
+        }
     }
 
     public Table root() {
@@ -184,14 +190,13 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
 
     public Hud background(@Nullable Readable<Drawable> bg) {
         if (bg != null) {
-            Effect e = Effect.of(() -> container.background(bg.get()));
-            bindings.add(e);
-            OwnershipContext.register(e);
+        own(Effect.of(() -> container.background(bg.get())));
         }
         return this;
     }
 
     public Hud children(@Nullable Runnable r) {
+        OwnershipContext.push(this);
         AttachmentStack.push(container, Row.ATTACHER);
         try {
             if (r != null) {
@@ -199,6 +204,7 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         root.pack();
         return this;
@@ -240,13 +246,11 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     public Hud opacity(@Nullable Readable<Float> opacity) {
         if (opacity == null)
             return this;
-        Effect e = Effect.of(() -> {
+        own(Effect.of(() -> {
             Float v = opacity.get();
             if (v != null)
                 opacity(v);
-        });
-        bindings.add(e);
-        OwnershipContext.register(e);
+        }));
         return this;
     }
 
@@ -257,15 +261,13 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
 
     public Hud scale(Readable<Float> s) {
         if (s != null) {
-            Effect e = Effect.of(() -> {
+        own(Effect.of(() -> {
                 Float v = s.get();
                 if (v != null) {
                     container.setScale(v);
                     root.pack();
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
@@ -455,23 +457,9 @@ public class Hud implements Component, CellConfig<Hud>, ElementConfig<Hud>, Tabl
     }
 
     @Override
-    public void dispose() {
-        if (disposed)
-            return;
-        disposed = true;
-        if (Core.scene != null) {
-            Core.scene.unfocus(root);
-        }
-        Events.remove(ResizeEvent.class, resizeListener);
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
+    public Hud name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override

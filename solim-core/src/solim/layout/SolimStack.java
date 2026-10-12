@@ -10,33 +10,28 @@ import solim.modifier.ElementConfig;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.runtime.ReactiveContext;
-import java.util.ArrayList;
-import java.util.List;
 import arc.func.Func;
 import arc.func.Prov;
 
 /** Stack container: overlays children on top of each other. */
-public final class SolimStack implements Component, CellConfig<SolimStack>, ElementConfig<SolimStack> {
-    private final Stack stack = new Stack();
+public final class SolimStack extends Component implements CellConfig<SolimStack>, ElementConfig<SolimStack> {
+    private final Stack stack;
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private final List<Component> ownedLayers = new ArrayList<>();
-    private boolean disposed = false;
 
     public SolimStack() {
-        SolimToken.bind(this.stack, this, constraints);
-        this.stack.name = "solim-stack-stack";
-        OwnershipContext.register(this);
+        this(new Stack());
+    }
+
+    private SolimStack(Stack stack) {
+        super(stack);
+        this.stack = stack;
+        SolimToken.bind(stack, this, constraints);
+        stack.name = "solim-stack-stack";
     }
 
     public Stack stack() {
-        return stack;
-    }
-
-    @Override
-    public Element element() {
         return stack;
     }
 
@@ -64,7 +59,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     }
 
     public SolimStack layer(@Nullable Prov<Component> Prov) {
-        if (disposed || Prov == null) {
+        if (isDisposed() || Prov == null) {
             return this;
         }
         @Nullable Component component = ReactiveContext.untracked(() -> AttachmentStack.isolate(Prov));
@@ -73,7 +68,7 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     }
 
     public SolimStack layer(@Nullable Func<Element, Component> factory) {
-        if (disposed || factory == null) {
+        if (isDisposed() || factory == null) {
             return this;
         }
         @Nullable Component component = ReactiveContext
@@ -82,15 +77,19 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
         return this;
     }
 
+    /**
+     * Mounts a layer and hands it to this component. A layer that mounts but turns out to be
+     * unusable is disposed here rather than adopted, so ownership only ever holds what is live.
+     */
     private void attachLayer(@Nullable Component component) {
         if (component == null) {
             return;
         }
         try {
             Element child = component.element();
-            if (child != null && !disposed) {
+            if (child != null && !isDisposed()) {
                 stack.add(child);
-                ownedLayers.add(component);
+                own(component);
             } else {
                 component.dispose();
             }
@@ -109,20 +108,9 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     }
 
     @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (int i = ownedLayers.size() - 1; i >= 0; i--) {
-            ownedLayers.get(i).dispose();
-        }
-        ownedLayers.clear();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
+    public SolimStack name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override

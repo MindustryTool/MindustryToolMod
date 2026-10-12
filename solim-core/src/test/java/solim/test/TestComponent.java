@@ -3,15 +3,15 @@ package solim.test;
 import arc.scene.Element;
 import java.util.ArrayList;
 import java.util.List;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Disposable;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 
 /**
- * Standard test double for BaseComponent verifying build count, single materialization,
+ * Standard test double for Component verifying build count, single materialization,
  * owned resource registration, and failure injection.
  */
-public class TestComponent extends BaseComponent {
+public class TestComponent extends Component {
 	private final String id;
 	private final boolean throwOnBuild;
 	private final boolean throwOnDispose;

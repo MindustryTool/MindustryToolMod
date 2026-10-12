@@ -16,11 +16,8 @@ import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Scaling;
-import java.util.ArrayList;
-import java.util.List;
 import arc.func.Cons;
 import solim.core.Component;
-import solim.core.Disposable;
 import solim.core.ReactiveSource;
 import solim.core.SolimToken;
 import solim.core.Units;
@@ -32,7 +29,7 @@ import solim.layout.GapContainer;
 import solim.layout.Row;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -48,12 +45,10 @@ import arc.util.Time;
  * width/height sizing, and reactive state.
  */
 public final class Button
-        implements Component, GapContainer, ElementConfig<Button>, TableConfig<Button>, CellConfig<Button> {
+        extends Component implements GapContainer, ElementConfig<Button>, TableConfig<Button>, CellConfig<Button> {
 
     private final arc.scene.ui.Button button;
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private float gap = 0f;
     private boolean stopClickPropagation = true;
     private @Nullable Runnable onClick;
@@ -86,14 +81,15 @@ public final class Button
     }
 
     public Button(arc.scene.ui.Button button) {
+        super(button);
         this.button = button;
         SolimToken.bind(this.button, this, constraints);
         this.button.name = "solim-button-sizedButton";
         this.button.center();
-        OwnershipContext.register(this);
     }
 
     public Button children(@Nullable Runnable r) {
+        OwnershipContext.push(this);
         AttachmentStack.push(button, Row.ATTACHER);
         try {
             if (r != null) {
@@ -101,6 +97,7 @@ public final class Button
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         respace();
         return this;
@@ -110,7 +107,6 @@ public final class Button
         children(() -> {
             if (s != null) {
                 Text text = Text.of(s);
-                bindings.add(text);
                 AttachmentStack.attachToParent(text.label());
             }
         });
@@ -121,7 +117,6 @@ public final class Button
         children(() -> {
             if (s != null) {
                 Text text = Text.of(s);
-                bindings.add(text);
                 AttachmentStack.attachToParent(text.label());
             }
         });
@@ -133,7 +128,6 @@ public final class Button
             if (drawable != null) {
                 SolimImage img = new SolimImage(Drawables.scalable(drawable));
                 img.scaling(Scaling.fit).size(Units.unit(6));
-                bindings.add(img);
                 AttachmentStack.attachToParent(img.element());
             }
         });
@@ -146,7 +140,6 @@ public final class Button
                 SolimImage img = new SolimImage();
                 img.drawable(drawable.map(Drawables::scalable));
                 img.scaling(Scaling.fit).size(Units.unit(6));
-                bindings.add(img);
                 AttachmentStack.attachToParent(img.element());
             }
         });
@@ -233,19 +226,13 @@ public final class Button
 
     public Button enabled(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
-            Effect e = Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get())));
-            bindings.add(e);
-            OwnershipContext.register(e);
-        }
+            own(Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get()))));        }
         return this;
     }
 
     public Button checked(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
-            Effect e = Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get())));
-            bindings.add(e);
-            OwnershipContext.register(e);
-            // Arc's Button toggles its internal checked flag on every click. For a
+            own(Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get()))));            // Arc's Button toggles its internal checked flag on every click. For a
             // reactive (signal-backed) binding, re-assert the signal's value after each
             // click so the declarative binding wins over Arc's auto-toggle. Constant
             // readables (Readable.of(...)) are intentionally left alone — they have no
@@ -297,10 +284,7 @@ public final class Button
 
     public Button visible(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
-            Effect e = Effect.of(() -> button.visible = Boolean.TRUE.equals(signal.get()));
-            bindings.add(e);
-            OwnershipContext.register(e);
-        }
+            own(Effect.of(() -> button.visible = Boolean.TRUE.equals(signal.get())));        }
         return this;
     }
 
@@ -313,14 +297,12 @@ public final class Button
 
     public Button style(@Nullable Readable<? extends ButtonStyle> style) {
         if (style != null) {
-            Effect e = Effect.of(() -> {
+            own(Effect.of(() -> {
                 ButtonStyle s = style.get();
                 if (s != null) {
                     button.setStyle(s);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
@@ -335,10 +317,7 @@ public final class Button
             applyResolvedStyle(builder.build());
         } else {
             applyResolvedStyle(builder.build());
-            Effect e = Effect.of(() -> applyResolvedStyle(builder.build()));
-            bindings.add(e);
-            OwnershipContext.register(e);
-        }
+            own(Effect.of(() -> applyResolvedStyle(builder.build())));        }
         return this;
     }
 
@@ -408,14 +387,12 @@ public final class Button
 
     public Button gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
-            Effect e = Effect.of(() -> {
+            own(Effect.of(() -> {
                 Float g = gapSignal.get();
                 if (g != null) {
                     gap(g);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
@@ -446,14 +423,12 @@ public final class Button
 
     public Button color(Readable<Color> color) {
         if (color != null) {
-            Effect e = Effect.of(() -> {
+            own(Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
                     button.setColor(c);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
@@ -575,30 +550,8 @@ public final class Button
     }
 
     @Override
-    public arc.scene.ui.Button element() {
-        return button;
-    }
-
-    @Override
     public Table table() {
         return button;
-    }
-
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
     }
 
     @Override
@@ -682,6 +635,12 @@ public final class Button
                 c.right();
             }
         }
+        return this;
+    }
+
+    @Override
+    public Button name(@Nullable String name) {
+        setName(name);
         return this;
     }
 

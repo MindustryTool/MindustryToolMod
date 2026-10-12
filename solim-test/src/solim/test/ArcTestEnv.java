@@ -12,8 +12,10 @@ import arc.scene.Scene;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
 import arc.util.Timer;
+import arc.graphics.Texture;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.TextureAtlas;
 import arc.graphics.g2d.TextureRegion;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -43,6 +45,7 @@ public class ArcTestEnv {
 	private static GL20 classGl20;
 	private static Scene classScene;
 	private static Settings classSettings;
+	private static TextureAtlas classAtlas;
 
 	// Per-test snapshot, restored in @AfterEach.
 	private Application testApp;
@@ -60,6 +63,7 @@ public class ArcTestEnv {
 		classGl20 = Core.gl20;
 		classScene = Core.scene;
 		classSettings = Core.settings;
+		classAtlas = Core.atlas;
 
 		if (Core.app == null) {
 			Core.app = new MockApplication();
@@ -71,6 +75,29 @@ public class ArcTestEnv {
 			Core.gl = new MockGL20();
 			Core.gl20 = (MockGL20) Core.gl;
 		}
+		if (Core.atlas == null) {
+			// Minimal atlas: widgets resolve a default region by name in their constructor
+			// (Image, Checkbox, …). Without it those constructors throw, which reactive
+			// components under test would otherwise surface as failures.
+			Core.atlas = minimalAtlas();
+		}
+	}
+
+	/** An atlas carrying only the default regions Arc widgets look up during construction. */
+	public static TextureAtlas minimalAtlas() {
+		TextureAtlas atlas = new TextureAtlas();
+		// The mocking-only Texture constructor takes no GL call, so this stays headless-safe.
+		Texture placeholder = new MockTexture();
+		atlas.addRegion("white", placeholder, 0, 0, 1, 1);
+		atlas.addRegion("whiteui", placeholder, 0, 0, 1, 1);
+		return atlas;
+	}
+
+	/** 0x0 texture that never touches GL; only its existence matters for widget construction. */
+	private static final class MockTexture extends Texture {
+		MockTexture() {
+			super();
+		}
 	}
 
 	@AfterAll
@@ -81,12 +108,14 @@ public class ArcTestEnv {
 		Core.gl20 = classGl20;
 		Core.scene = classScene;
 		Core.settings = classSettings;
+		Core.atlas = classAtlas;
 		classApp = null;
 		classGraphics = null;
 		classGl = null;
 		classGl20 = null;
 		classScene = null;
 		classSettings = null;
+		classAtlas = null;
 	}
 
 	@BeforeEach

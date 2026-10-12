@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.DisposableAction;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +56,7 @@ class SolimDialogComponentTest extends SolimEnv {
 		AtomicBoolean disposed = new AtomicBoolean(false);
 
 		SolimDialog d = new SolimDialog("Lifecycle Test");
-		d.children(() -> new BaseComponent() {
+		d.children(() -> new Component() {
 			@Override
 			protected Element build() {
 				return new Table();

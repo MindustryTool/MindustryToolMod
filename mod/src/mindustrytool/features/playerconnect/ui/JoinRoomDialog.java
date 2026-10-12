@@ -10,7 +10,7 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
@@ -56,7 +56,7 @@ public class JoinRoomDialog extends SolimDialog {
         }
     }
 
-    private class JoinRoomView extends BaseComponent {
+    private class JoinRoomView extends Component {
         @Override
         protected Element build() {
 

@@ -9,13 +9,13 @@ import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for Team Resource Tracker.
  */
-public class TeamResourceSettingsView extends BaseComponent {
+public class TeamResourceSettingsView extends Component {
 
     private final TeamResourceFeature feature;
 

@@ -26,7 +26,7 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.SchematicDetailData;
 import mindustrytool.models.response.SchematicDetailData.SchematicRequirement;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Query;
@@ -50,7 +50,7 @@ public class SchematicDetailDialog extends SolimDialog {
                 () -> Core.app.openURI(Config.WEB_URL + "/schematics/" + itemId));
     }
 
-    private static class DetailContent extends BaseComponent {
+    private static class DetailContent extends Component {
         private final SchematicDetailData detail;
         private final String itemId;
         private final @Nullable String authorId;

@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.layout.ReactiveGrid;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
@@ -24,7 +24,7 @@ import solim.test.SolimEnv;
 class StructuralReactivityTest extends SolimEnv {
 
 
-	static class TestComponent extends BaseComponent {
+	static class TestComponent extends Component {
 		final String id;
 		boolean wasDisposed = false;
 
@@ -184,7 +184,7 @@ class StructuralReactivityTest extends SolimEnv {
 
 	@Test
 	void testConstrainedChildGrowsInForEachAndDynamic() {
-		class ConstrainedComp extends BaseComponent {
+		class ConstrainedComp extends Component {
 			@Override
 			protected Element build() {
 				return new Card().growX().element();

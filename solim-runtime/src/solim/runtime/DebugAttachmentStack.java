@@ -11,6 +11,7 @@ import java.util.Deque;
 import java.util.List;
 import arc.func.Prov;
 import solim.core.Component;
+import solim.core.DisposableOwner;
 import solim.performance.PerfSpan;
 import solim.performance.TraceSpan;
 
@@ -186,7 +187,7 @@ public class DebugAttachmentStack extends AttachmentStack {
     }
 
     @Override
-    protected void doCapture(Runnable runnable, List<Component> captured) {
+    protected void doCapture(Runnable runnable, List<Component> captured, @Nullable DisposableOwner sink) {
         Deque<OpenSpan> savedOpen = tracingEnabled && !openStack.isEmpty()
                 ? new ArrayDeque<>(openStack)
                 : null;
@@ -194,7 +195,7 @@ public class DebugAttachmentStack extends AttachmentStack {
             openStack.clear();
         }
         try {
-            super.doCapture(runnable, captured);
+            super.doCapture(runnable, captured, sink);
         } finally {
             if (tracingEnabled) {
                 openStack.clear();

@@ -8,7 +8,7 @@ import arc.util.Nullable;
 import arc.util.Scaling;
 import mindustry.game.Schematic;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.PendingCellConfig;
 import solim.reactive.Readable;
@@ -21,7 +21,7 @@ import solim.reactive.Readable;
  * lazy build before the image has a parent.) Centering travels on the element
  * as a pending cell config, applied by the framework at attach time.
  */
-final class BoundedSchematicImage extends BaseComponent {
+final class BoundedSchematicImage extends Component {
 
     private final Schematic schematic;
     private final @Nullable Readable<Float> size;

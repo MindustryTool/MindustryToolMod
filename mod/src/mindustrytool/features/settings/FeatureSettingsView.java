@@ -15,61 +15,65 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.web.WebFeature;
 import mindustrytool.features.web.WebFeatureCard;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 
-public final class FeatureSettingsView extends BaseComponent {
+public final class FeatureSettingsView extends Component {
     private final Signal<String> filter = Signal.of("");
-    private final Computed<Float> contentWidth = dvw(90f).map(w -> w - unit(10));
-    private final Computed<Integer> columnCount = contentWidth.map(w -> Math.max(1, (int) (w / 400f)));
-
-    private final Computed<Seq<Feature>> filteredFeatures = Signal.computed(() -> {
-        String q = filter.get();
-        String query = q != null ? q.trim().toLowerCase() : "";
-        return FeatureManager.features().get().select(f -> matchesFilter(f, query));
-    });
-
-    private final Computed<Seq<Feature>> favoritedFeatures = Signal.computed(() -> {
-        Seq<Feature> all = filteredFeatures.get();
-        Set<String> favs = ModSettings.favoriteFeatures.signal().get();
-        if (all == null || favs == null || favs.isEmpty()) {
-            return new Seq<>();
-        }
-        return all.select(f -> favs.contains(f.getMetadata().getId()));
-    });
-
-    private final Computed<Seq<Feature>> standardFeatures = Signal.computed(() -> {
-        Seq<Feature> all = filteredFeatures.get();
-        Set<String> favs = ModSettings.favoriteFeatures.signal().get();
-        if (all == null) {
-            return new Seq<>();
-        }
-        if (favs == null || favs.isEmpty()) {
-            return all;
-        }
-        return all.select(f -> !favs.contains(f.getMetadata().getId()));
-    });
-
-    private final Computed<Boolean> reorderAllowed = filter.map(q -> q == null || q.trim().isEmpty());
-
-    private final Computed<Seq<WebFeature>> filteredWebFeatures = filter.map(
-            q -> WebFeature.defaults.select(w -> matchesWebFilter(w, q != null ? q.trim().toLowerCase() : "")));
-
-    private final Computed<Boolean> hasFavorites = favoritedFeatures.map(seq -> seq != null && !seq.isEmpty());
-    private final Computed<Boolean> hasStandardFeatures = standardFeatures.map(seq -> seq != null && !seq.isEmpty());
-    private final Computed<Boolean> hasFeatures = Signal.computed(() ->
-            Boolean.TRUE.equals(hasFavorites.get()) || Boolean.TRUE.equals(hasStandardFeatures.get()));
-    private final Computed<Boolean> hasWebFeatures = filteredWebFeatures.map(seq -> seq != null && !seq.isEmpty());
-
-    private final Computed<Boolean> isEmpty = Signal.computed(() -> {
-        Boolean hf = hasFeatures.get();
-        Seq<WebFeature> w = filteredWebFeatures.get();
-        return !Boolean.TRUE.equals(hf) && (w == null || w.isEmpty());
-    });
 
     @Override
     protected Element build() {
+        // Derived values are declared here, not in a field initialiser: inside build() the
+        // component is the active ownership scope, so these live and die with the view instead
+        // of with whichever component happened to construct it.
+        Computed<Float> contentWidth = dvw(90f).map(w -> w - unit(10));
+        Computed<Integer> columnCount = contentWidth.map(w -> Math.max(1, (int) (w / 400f)));
+
+        Computed<Seq<Feature>> filteredFeatures = Signal.computed(() -> {
+            String q = filter.get();
+            String query = q != null ? q.trim().toLowerCase() : "";
+            return FeatureManager.features().get().select(f -> matchesFilter(f, query));
+        });
+
+        Computed<Seq<Feature>> favoritedFeatures = Signal.computed(() -> {
+            Seq<Feature> all = filteredFeatures.get();
+            Set<String> favs = ModSettings.favoriteFeatures.signal().get();
+            if (all == null || favs == null || favs.isEmpty()) {
+                return new Seq<>();
+            }
+            return all.select(f -> favs.contains(f.getMetadata().getId()));
+        });
+
+        Computed<Seq<Feature>> standardFeatures = Signal.computed(() -> {
+            Seq<Feature> all = filteredFeatures.get();
+            Set<String> favs = ModSettings.favoriteFeatures.signal().get();
+            if (all == null) {
+                return new Seq<>();
+            }
+            if (favs == null || favs.isEmpty()) {
+                return all;
+            }
+            return all.select(f -> !favs.contains(f.getMetadata().getId()));
+        });
+
+        Computed<Boolean> reorderAllowed = filter.map(q -> q == null || q.trim().isEmpty());
+
+        Computed<Seq<WebFeature>> filteredWebFeatures = filter.map(
+                q -> WebFeature.defaults.select(w -> matchesWebFilter(w, q != null ? q.trim().toLowerCase() : "")));
+
+        Computed<Boolean> hasFavorites = favoritedFeatures.map(seq -> seq != null && !seq.isEmpty());
+        Computed<Boolean> hasStandardFeatures = standardFeatures.map(seq -> seq != null && !seq.isEmpty());
+        Computed<Boolean> hasFeatures = Signal.computed(() ->
+                Boolean.TRUE.equals(hasFavorites.get()) || Boolean.TRUE.equals(hasStandardFeatures.get()));
+        Computed<Boolean> hasWebFeatures = filteredWebFeatures.map(seq -> seq != null && !seq.isEmpty());
+
+        Computed<Boolean> isEmpty = Signal.computed(() -> {
+            Boolean hf = hasFeatures.get();
+            Seq<WebFeature> w = filteredWebFeatures.get();
+            return !Boolean.TRUE.equals(hf) && (w == null || w.isEmpty());
+        });
+
         return column().grow().gap(unit(2)).children(() -> {
             toolbar();
             scroll().grow().scrollX(false).children(() -> {

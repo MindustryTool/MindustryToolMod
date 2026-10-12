@@ -4,41 +4,30 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 
 /** Spacer that consumes remaining space in a row/column. */
-public final class Spacer implements Component {
-	private final Table table = new Table();
-	private boolean disposed = false;
+public final class Spacer extends Component {
+	private final Table table;
 
 	public Spacer() {
+		this(new Table());
+	}
+
+	private Spacer(Table table) {
+		super(table);
+		this.table = table;
 		table.name = "solim-spacer-table";
 		SolimToken.bind(table, this);
 		SolimToken.setExpanding(table, true);
 		table.add().growX().growY();
-		OwnershipContext.register(this);
 	}
 
-	@Override
-	public Element element() {
-		return table;
-	}
 
 	public Spacer name(String name) {
 		table.name = name;
 		return this;
 	}
 
-	@Override
-	public void dispose() {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-	}
 
-	@Override
-	public boolean isDisposed() {
-		return disposed;
-	}
 }

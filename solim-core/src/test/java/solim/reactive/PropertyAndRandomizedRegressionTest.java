@@ -18,12 +18,12 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.display.Text;
 import solim.layout.Row;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 import solim.test.SolimEnv;
@@ -96,29 +96,15 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 		}
 	}
 
-	private static final class TestRowComponent implements Component {
-		private final Element element;
-		private boolean disposed = false;
-
+	private static final class TestRowComponent extends Component {
 		TestRowComponent(String key) {
-			this.element = new Element();
-			this.element.name = "Row " + key;
-			OwnershipContext.register(this);
+			super(named(key));
 		}
 
-		@Override
-		public Element element() {
+		private static Element named(String key) {
+			Element element = new Element();
+			element.name = "Row " + key;
 			return element;
-		}
-
-		@Override
-		public void dispose() {
-			disposed = true;
-		}
-
-		@Override
-		public boolean isDisposed() {
-			return disposed;
 		}
 	}
 
@@ -252,7 +238,7 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 	@Test
 	void regressionComponentSingleMaterializationAndCaching() {
 		AtomicInteger buildRuns = new AtomicInteger(0);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				buildRuns.incrementAndGet();

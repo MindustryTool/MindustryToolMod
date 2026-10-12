@@ -15,7 +15,7 @@ import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.MapData;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 import mindustrytool.components.WebStyles;
 
@@ -23,7 +23,7 @@ import mindustrytool.components.WebStyles;
  * Image-first card layout showing a dedicated preview card with a centered
  * title strip and a compact row of interactive stat action buttons.
  */
-public class MapCard extends BaseComponent {
+public class MapCard extends Component {
 
     public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;
 

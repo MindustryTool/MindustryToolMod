@@ -11,13 +11,13 @@ import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for Smart Upgrade.
  */
-public class SmartUpgradeSettingsView extends BaseComponent {
+public class SmartUpgradeSettingsView extends Component {
 
     private final SmartUpgradeFeature feature;
 

@@ -5,13 +5,13 @@ import static solim.UI.*;
 import arc.scene.Element;
 import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
 /**
  * Compact badge row showing formatted likes, comments, and downloads counts
  * with vanilla stat icons.
  */
-public class BrowserStatsBadge extends BaseComponent {
+public class BrowserStatsBadge extends Component {
 
     private final long likes;
     private final long comments;

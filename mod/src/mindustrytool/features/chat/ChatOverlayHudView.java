@@ -16,7 +16,7 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import mindustrytool.components.FileIcon;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.layout.Direction;
 import solim.overlay.Hud;
@@ -24,7 +24,7 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.core.Units;
 
-public class ChatOverlayHudView extends BaseComponent {
+public class ChatOverlayHudView extends Component {
 
     private final ChatFeature feature;
     private final ChatStore store;

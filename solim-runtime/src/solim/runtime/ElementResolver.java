@@ -2,6 +2,7 @@ package solim.runtime;
 
 import arc.scene.Element;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 
 /** Resolves children that may be Element or Component. */
 public final class ElementResolver {

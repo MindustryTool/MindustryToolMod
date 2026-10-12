@@ -10,7 +10,7 @@ import arc.scene.ui.layout.Table;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.prettychat.Prettier;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.SolimDialog;
 
 /**
@@ -47,7 +47,7 @@ public class PrettyChatEditDialog extends SolimDialog {
                         .wrap()
                         .growX();
 
-                new BaseComponent() {
+                new Component() {
                     @Override
                     protected Element build() {
                         Table table = new Table(Styles.black6);

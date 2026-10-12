@@ -9,12 +9,12 @@ import arc.util.Nullable;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
 
-public class GodModeHudView extends BaseComponent {
+public class GodModeHudView extends Component {
 
     private final GodModeFeature feature;
     private @Nullable Hud hud;

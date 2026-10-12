@@ -1,5 +1,6 @@
 package solim.core;
 
+import solim.test.FixedComponent;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.scene.Element;
@@ -13,7 +14,7 @@ class ComponentTest extends SolimEnv {
 	void buildsOnlyOnceAndCachesElement() {
 		AtomicInteger buildCount = new AtomicInteger();
 
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				buildCount.incrementAndGet();
@@ -30,7 +31,7 @@ class ComponentTest extends SolimEnv {
 
 	@Test
 	void appliesNameBeforeBuild() {
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -43,7 +44,7 @@ class ComponentTest extends SolimEnv {
 
 	@Test
 	void appliesNameAfterBuild() {
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -59,7 +60,7 @@ class ComponentTest extends SolimEnv {
 	void disposesOwnedResourcesInReverseOrder() {
 		StringBuilder order = new StringBuilder();
 
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> order.append("first")));
@@ -79,7 +80,7 @@ class ComponentTest extends SolimEnv {
 	void disposeIsIdempotent() {
 		AtomicInteger disposeCount = new AtomicInteger();
 
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> disposeCount.incrementAndGet()));
@@ -96,7 +97,7 @@ class ComponentTest extends SolimEnv {
 
 	@Test
 	void markedAsDisposedAfterDispose() {
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -111,7 +112,7 @@ class ComponentTest extends SolimEnv {
 
 	@Test
 	void elementThrowsAfterDispose() {
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -128,7 +129,7 @@ class ComponentTest extends SolimEnv {
 	void buildNullThrowsAndDisposesResources() {
 		AtomicInteger disposeCount = new AtomicInteger();
 
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> disposeCount.incrementAndGet()));
@@ -144,7 +145,7 @@ class ComponentTest extends SolimEnv {
 	void onDisposeHookRunsDuringDispose() {
 		AtomicInteger hookRuns = new AtomicInteger();
 
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -163,16 +164,17 @@ class ComponentTest extends SolimEnv {
 	}
 
 	@Test
-	void interfaceDefaultDisposeIsNoOpAndPreservesElement() {
+	void disposeIsIdempotentAndReportsItsRealState() {
 		Element element = new Element();
 		element.name = "original";
-		Component comp = () -> element;
+		Component comp = new FixedComponent(element);
 
+		assertFalse(comp.isDisposed());
 		comp.dispose();
 		comp.dispose();
 
-		assertSame(element, comp.element());
-		assertEquals("original", comp.element().name);
+		assertTrue(comp.isDisposed());
+		assertThrows(IllegalStateException.class, comp::element);
 	}
 
 

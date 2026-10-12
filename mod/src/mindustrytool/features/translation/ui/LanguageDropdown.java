@@ -25,7 +25,7 @@ import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.features.translation.TranslationFeature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.input.Button;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -35,7 +35,7 @@ import solim.reactive.Signal;
  * Displays current language with dropdown arrow indicator, and opens
  * a native Mindustry scrollable popup menu on click.
  */
-public class LanguageDropdown extends BaseComponent {
+public class LanguageDropdown extends Component {
 
 	private final TranslationFeature feature;
 	private final Signal<Boolean> isOpen = signal(false);

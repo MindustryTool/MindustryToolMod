@@ -16,7 +16,6 @@ import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
-import solim.runtime.OwnershipContext;
 import solim.runtime.StructuralReconciler;
 import solim.test.SolimEnv;
 import solim.test.TestComponent;
@@ -27,7 +26,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 	@Test
 	void lazyBuildExecutesOnlyOnFirstElementCall() {
 		AtomicInteger builds = new AtomicInteger(0);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				builds.incrementAndGet();
@@ -50,7 +49,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 
 	@Test
 	void elementAccessAfterDisposalThrowsDescriptiveException() {
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -66,10 +65,10 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 	}
 
 	@Test
-	void lifoDisposalOrderWithDeepNesting() {
+	void childrenDisposeBeforeOwnResources() {
 		List<String> disposalLog = new ArrayList<>();
 
-		BaseComponent parent = new BaseComponent() {
+		Component parent = new Component() {
 			@Override
 			protected Element build() {
 				own(new TestDisposable("parent-res-1") {
@@ -80,7 +79,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 					}
 				});
 
-				new BaseComponent() {
+				new Component() {
 					@Override
 					protected Element build() {
 						own(new TestDisposable("child-res-1") {
@@ -116,10 +115,12 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 		parent.element();
 		parent.dispose();
 
+		// The child is a separate node from the parent's own leaves, and the whole child subtree
+		// is disposed first. Within each group the order is still reverse registration.
 		assertEquals(
-				Arrays.asList("parent-res-2", "child-res-2", "child-res-1", "parent-res-1"),
+				Arrays.asList("child-res-2", "child-res-1", "parent-res-2", "parent-res-1"),
 				disposalLog,
-				"Nested owned components and resources must be disposed in strict reverse registration order (LIFO)"
+				"Child components dispose before the owning component's own resources, each group LIFO"
 		);
 	}
 
@@ -128,7 +129,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 		List<String> disposed = new ArrayList<>();
 		TestDisposable.resetSequence();
 
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> disposed.add("res-1")));
@@ -162,7 +163,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 		List<String> cleanupLog = new ArrayList<>();
 
 		assertThrows(RuntimeException.class, () -> {
-			new BaseComponent() {
+			new Component() {
 				@Override
 				protected Element build() {
 					own(DisposableAction.of(() -> cleanupLog.add("first")));

@@ -9,7 +9,7 @@ import arc.struct.ObjectIntMap;
 import arc.struct.Seq;
 import mindustry.type.UnitType;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
 /**
@@ -18,7 +18,7 @@ import solim.reactive.Readable;
  * Tapping a chip immediately deselects that unit type.
  * Renders nothing when nothing is selected.
  */
-public class ActiveSelectionBar extends BaseComponent {
+public class ActiveSelectionBar extends Component {
 
     private final ArmyControlFeature feature;
 

@@ -1,14 +1,17 @@
 package solim.reactive;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import arc.Application;
 import arc.Core;
 import arc.mock.MockApplication;
+import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class ReactivityFailFastTest extends SolimEnv {
@@ -129,5 +132,118 @@ class ReactivityFailFastTest extends SolimEnv {
 		} finally {
 			Core.app = originalApp;
 		}
+	}
+
+	// ==========================================
+	// Effect: the one primitive that used to swallow
+	// ==========================================
+
+	@Test
+	void effectBodyErrorPropagatesOutOfTheSynchronousInitialRun() {
+		assertThrows(IllegalStateException.class, () -> Effect.of(() -> {
+			throw new IllegalStateException("effect init failed");
+		}), "Effect.of must propagate a body exception from its initial synchronous run");
+	}
+
+	@Test
+	void effectBodyErrorPropagatesOutOfRunPending() {
+		Signal<Integer> trigger = Signal.of(0);
+		Effect.of(() -> {
+			int v = trigger.get();
+			if (v > 0) {
+				throw new IllegalStateException("effect run failed: " + v);
+			}
+		});
+
+		trigger.set(1);
+		IllegalStateException thrown = assertThrows(IllegalStateException.class, SignalDispatcher::flush);
+		assertEquals("effect run failed: 1", thrown.getMessage());
+	}
+
+	@Test
+	void effectOwningAComponentBodyPropagatesComponentFailure() {
+		Signal<Integer> trigger = Signal.of(0);
+		Effect.of(() -> {
+			if (trigger.get() > 0) {
+				// Mimics a body that rebuilds UI and hits a build-time failure.
+				throw new IllegalStateException("component build failed");
+			}
+		});
+
+		trigger.set(1);
+		assertThrows(IllegalStateException.class, SignalDispatcher::flush);
+	}
+
+	@Test
+	void unprocessedEffectsSurviveAnAbortedFlush() {
+		Signal<Integer> trigger = Signal.of(0);
+		AtomicInteger firstRuns = new AtomicInteger();
+		AtomicInteger secondRuns = new AtomicInteger();
+		AtomicInteger thirdRuns = new AtomicInteger();
+
+		Effect first = Effect.of(() -> {
+			int v = trigger.get();
+			firstRuns.incrementAndGet();
+			if (v == 1) {
+				throw new IllegalStateException("first effect fails");
+			}
+		});
+		Effect second = Effect.of(() -> {
+			trigger.get();
+			secondRuns.incrementAndGet();
+		});
+		Effect third = Effect.of(() -> {
+			trigger.get();
+			thirdRuns.incrementAndGet();
+		});
+		// Each effect already ran once at creation; only flush-time runs are of interest here.
+		firstRuns.set(0);
+		secondRuns.set(0);
+		thirdRuns.set(0);
+
+		trigger.set(1);
+		assertThrows(IllegalStateException.class, SignalDispatcher::flush);
+
+		assertFalse(SignalDispatcher.isFlushing(), "Dispatcher must be reusable after an aborted flush");
+		assertEquals(1, firstRuns.get(), "The throwing effect did run");
+		assertEquals(0, secondRuns.get(), "Effects after the throwing one must not have run");
+		assertEquals(0, thirdRuns.get());
+		assertEquals(2, SignalDispatcher.size(), "Unprocessed effects must stay queued with pending set");
+
+		SignalDispatcher.flush();
+		assertEquals(1, secondRuns.get(), "Surviving effects must execute on the next flush");
+		assertEquals(1, thirdRuns.get());
+		assertEquals(0, SignalDispatcher.size());
+
+		first.dispose();
+		second.dispose();
+		third.dispose();
+	}
+
+	@Test
+	void throwingEffectRetainsItsPreviousDependencySet() {
+		Signal<Integer> kept = Signal.of(0);
+		AtomicInteger runs = new AtomicInteger();
+
+		Effect effect = Effect.of(() -> {
+			runs.incrementAndGet();
+			int v = kept.get();
+			if (v > 0) {
+				throw new IllegalStateException("boom " + v);
+			}
+		});
+		runs.set(0);
+
+		kept.set(1);
+		assertThrows(IllegalStateException.class, SignalDispatcher::flush);
+		assertEquals(1, kept.observerCount(),
+				"A throwing run must not unsubscribe: the effect stays live and fails again");
+
+		kept.set(2);
+		assertThrows(IllegalStateException.class, SignalDispatcher::flush);
+		assertEquals(2, runs.get(), "Effect must still be subscribed after a failed run");
+
+		effect.dispose();
+		assertEquals(0, kept.observerCount());
 	}
 }

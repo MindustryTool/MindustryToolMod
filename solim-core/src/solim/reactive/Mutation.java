@@ -9,7 +9,7 @@ import arc.func.Cons;
 import arc.func.Func;
 import arc.func.Prov;
 import solim.core.Disposable;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 
 /**
  * Asynchronous reactive action primitive for write operations, with pending/error/result

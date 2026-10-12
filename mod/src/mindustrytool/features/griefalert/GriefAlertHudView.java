@@ -10,7 +10,7 @@ import arc.scene.ui.layout.Table;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.layout.Row;
 import solim.reactive.Readable;
 
@@ -19,7 +19,7 @@ import solim.reactive.Readable;
  * transparent table attached to {@code Vars.ui.hudGroup}. Clicking the banner jumps the
  * camera onto the offending placement; the trailing button closes it without moving the camera.
  */
-public class GriefAlertHudView extends BaseComponent {
+public class GriefAlertHudView extends Component {
 
     private static final float TOP_INSET = 16f;
 

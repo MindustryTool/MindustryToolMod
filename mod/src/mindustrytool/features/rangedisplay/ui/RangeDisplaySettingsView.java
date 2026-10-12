@@ -23,14 +23,14 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Signal;
 
 /**
  * Modern declarative Solim settings view for Range Display options.
  */
-public class RangeDisplaySettingsView extends BaseComponent {
+public class RangeDisplaySettingsView extends Component {
 
     private final RangeDisplayFeature feature;
     private final Signal<Boolean> turretActiveOnMapOnly = Signal.of(false);

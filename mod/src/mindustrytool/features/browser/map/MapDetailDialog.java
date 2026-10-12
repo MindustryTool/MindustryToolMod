@@ -18,7 +18,7 @@ import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.MapDetailData;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Query;
@@ -42,7 +42,7 @@ public class MapDetailDialog extends SolimDialog {
                 () -> Core.app.openURI(Config.WEB_URL + "/maps/" + itemId));
     }
 
-    private static class DetailContent extends BaseComponent {
+    private static class DetailContent extends Component {
         private final MapDetailData detail;
         private final String itemId;
         private final @Nullable String authorId;

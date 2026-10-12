@@ -18,7 +18,7 @@ import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.ContentPatchDetailData;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Query;
@@ -43,7 +43,7 @@ public class PatchDetailDialog extends SolimDialog {
                 () -> Core.app.openURI(Config.WEB_URL + "/content-patches/" + itemId));
     }
 
-    private static class DetailContent extends BaseComponent {
+    private static class DetailContent extends Component {
         private final ContentPatchDetailData detail;
         private final @Nullable String authorId;
         private final @Nullable Query<String> authorQuery;

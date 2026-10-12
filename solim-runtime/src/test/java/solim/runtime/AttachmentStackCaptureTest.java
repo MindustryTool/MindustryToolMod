@@ -13,59 +13,29 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 
 class AttachmentStackCaptureTest {
 
-	/** Mimics BaseComponent's ambient registration: OwnershipContext + AttachmentStack pending. */
-	static final class RecordingComponent implements Component {
+	/** A component that announces itself to the ambient scope, the way every real component does. */
+	static class RecordingComponent extends Component {
 		final String id;
-		final Element element = new Element();
-		boolean wasDisposed = false;
 
 		RecordingComponent(String id) {
+			super(new Element());
 			this.id = id;
-			OwnershipContext.registerChild(this);
-			AttachmentStack.registerPendingComponent(this, AttachmentStack.current());
-		}
-
-		@Override
-		public Element element() {
-			return element;
-		}
-
-		@Override
-		public void dispose() {
-			wasDisposed = true;
-		}
-
-		@Override
-		public boolean isDisposed() {
-			return wasDisposed;
 		}
 	}
 
-	/** Mimics plain components (Row/Column): registers only via OwnershipContext.register. */
-	static final class ContextOnlyComponent implements Component {
-		final Element element = new Element();
-		boolean wasDisposed = false;
-
+	/** A component that is not attachable, standing in for one that only joins the ownership scope. */
+	static final class ContextOnlyComponent extends Component {
 		ContextOnlyComponent() {
-			OwnershipContext.register(this);
+			super(new Element());
 		}
 
 		@Override
-		public Element element() {
-			return element;
-		}
-
-		@Override
-		public void dispose() {
-			wasDisposed = true;
-		}
-
-		@Override
-		public boolean isDisposed() {
-			return wasDisposed;
+		protected boolean attachesToParent() {
+			return false;
 		}
 	}
 
@@ -168,7 +138,7 @@ class AttachmentStackCaptureTest {
 		assertEquals(1, AttachmentStack.size(), "Stack must be restored to pre-capture depth after failure");
 		assertSame(outer, AttachmentStack.current(), "Outer entry must survive capture failure");
 		assertEquals(0, outer.getChildren().size, "Partial root must not attach to outer parent");
-		assertTrue(partiallyCreated.get(0).wasDisposed, "Partially created root must be disposed on failure");
+		assertTrue(partiallyCreated.get(0).isDisposed(), "Partially created root must be disposed on failure");
 		AttachmentStack.pop();
 	}
 }

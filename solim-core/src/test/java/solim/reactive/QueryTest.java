@@ -1,5 +1,6 @@
 package solim.reactive;
 
+import solim.test.CollectingOwner;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.core.Disposable;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.SignalDispatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -207,8 +208,8 @@ class QueryTest extends SolimEnv {
     @Test
     void queryRegistersWithAmbientOwnershipContext() {
         QueryKey key = QueryKey.of("ambient-owned");
-        List<Disposable> owned = new ArrayList<>();
-        OwnershipContext.push(owned::add);
+        CollectingOwner owner = new CollectingOwner();
+        OwnershipContext.push(owner);
         Query<String> query;
         try {
             query = Query.of(key, () -> CompletableFuture.completedFuture("x"));
@@ -216,12 +217,11 @@ class QueryTest extends SolimEnv {
             OwnershipContext.pop();
         }
 
-        assertTrue(owned.contains(query), "Query created in component scope must register for disposal");
+        assertTrue(owner.collected().contains(query),
+                "Query created in component scope must register for disposal");
         assertEquals(1, cache.observerCount(key));
 
-        for (Disposable d : owned) {
-            d.dispose();
-        }
+        owner.dispose();
         assertTrue(query.isDisposed(), "Disposing the owner must dispose the query");
         assertEquals(0, cache.observerCount(key));
     }

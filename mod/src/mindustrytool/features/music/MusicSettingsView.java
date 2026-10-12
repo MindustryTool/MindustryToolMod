@@ -11,7 +11,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.FileChooser;
 import mindustrytool.components.SettingCard;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Readable;
 
@@ -19,7 +19,7 @@ import solim.reactive.Readable;
  * Settings view for the Custom Music feature: Ambient, Dark, and Boss sections,
  * each listing tracks with reactive play and disable toggles.
  */
-public class MusicSettingsView extends BaseComponent {
+public class MusicSettingsView extends Component {
 
     private final MusicFeature feature;
 
@@ -104,7 +104,7 @@ public class MusicSettingsView extends BaseComponent {
      * buttons. All buttons bind to the row's {@link TrackState} signals and update
      * reactively.
      */
-    private static class TrackRow extends BaseComponent {
+    private static class TrackRow extends Component {
 
         private final MusicFeature feature;
         private final TrackState state;

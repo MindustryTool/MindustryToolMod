@@ -16,7 +16,8 @@ import org.junit.jupiter.api.Test;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import solim.core.BaseComponent;
+import arc.scene.ui.layout.Table;
+import solim.core.Component;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
@@ -25,7 +26,7 @@ import solim.test.SolimEnv;
 class ReactiveGridTest extends SolimEnv {
 
 
-	static class ItemComp extends BaseComponent {
+	static class ItemComp extends Component {
 		final String text;
 		boolean disposed = false;
 
@@ -271,7 +272,39 @@ class ReactiveGridTest extends SolimEnv {
 		grid.dispose();
 	}
 
-	static class CardWrapperProbe extends BaseComponent {
+	@Test
+	void disposedGridMountsNothingWhenItsReconciliationFinallyRuns() {
+		Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("a", "b")));
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.columns(2).key(s -> s);
+		grid.children(ItemComp::new);
+
+		grid.element();
+		assertTrue(countFilled(grid.table()) > 0, "Grid must mount before disposal to make this meaningful");
+
+		// Disposed after invalidation, before the flush that would reconcile it.
+		items.set(new ArrayList<>(Arrays.asList("a", "b", "c")));
+		grid.dispose();
+		SignalDispatcher.flush();
+
+		assertEquals(0, countFilled(grid.table()),
+				"A grid disposed before its reconciliation runs must mount and reflow nothing");
+		assertTrue(grid.isDisposed());
+	}
+
+	/** Counts cells that hold an element, ignoring the empty cells reflow pads a last row with. */
+	private static int countFilled(Table table) {
+		int filled = 0;
+		for (int i = 0; i < table.getCells().size; i++) {
+			Cell<?> cell = table.getCells().get(i);
+			if (cell != null && cell.get() != null) {
+				filled++;
+			}
+		}
+		return filled;
+	}
+
+	static class CardWrapperProbe extends Component {
 		final float contentHeight;
 
 		CardWrapperProbe(float contentHeight) {
@@ -304,7 +337,7 @@ class ReactiveGridTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentChildInReactiveGridAppliesCellConstraints() {
+	void lazyComponentChildInReactiveGridAppliesCellConstraints() {
 		Signal<Integer> cols = Signal.of(2);
 		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B"));
 		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
@@ -323,7 +356,7 @@ class ReactiveGridTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentChildInReactiveGridGrowsToMatchTallSibling() {
+	void lazyComponentChildInReactiveGridGrowsToMatchTallSibling() {
 		Signal<Integer> cols = Signal.of(2);
 		Signal<List<String>> items = Signal.of(Arrays.asList("short", "tall"));
 		ReactiveGrid<String> grid = new ReactiveGrid<>(items);

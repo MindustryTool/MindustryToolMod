@@ -22,17 +22,22 @@ The system SHALL provide `solim.runtime.AttachmentStack` as the single ambient s
 
 ### Requirement: OwnershipContext is the canonical lifecycle-ownership scope
 
-The system SHALL provide `solim.runtime.OwnershipContext` as the single ambient scope answering WHO disposes a `Disposable`, with `push/pop/current/register/registerChild/withoutAutoOwnership` semantics identical to the former `ComponentContext`, including capture filtering to `Component` roots only.
+The system SHALL provide `solim.runtime.OwnershipContext` as the single ambient scope answering WHO disposes a `Disposable`, with `push/pop/current/register/registerChild` semantics identical to the former `ComponentContext`. `OwnershipContext` SHALL NOT filter registrations by type: every registered `Disposable` is collected by the active scope, and capture filtering to `Component` roots only is removed. Suspension of ambient collection SHALL be expressed by `OwnershipScope`, not by clearing the `OwnershipContext` stack.
 
 #### Scenario: Build-time resources are owned automatically
 
-- **WHEN** an `Effect`, `Binding`, or child `Component` is created inside `BaseComponent.element()`
-- **THEN** it is registered with the active `OwnershipContext` owner and disposed LIFO with that owner
+- **WHEN** an `Effect`, `Binding`, `Computed`, or child `Component` is created inside `BaseComponent.element()`
+- **THEN** it is registered with the active `OwnershipContext` owner and disposed with that owner
 
-#### Scenario: Reconciler orphans are independent of the ambient owner
+#### Scenario: Non-Component resources are no longer filtered out of captures
 
-- **WHEN** `StructuralReconciler` creates a new keyed component inside `OwnershipContext.withoutAutoOwnership` + `AttachmentStack.isolate`
-- **THEN** the new component is neither attached to the ambient parent nor owned by the ambient component
+- **WHEN** a capture or factory scope collects resources
+- **THEN** `Computed`, `Effect`, `Query`, and `Subscription` instances are collected alongside `Component` instances, rather than being dropped
+
+#### Scenario: Reconciler output is owned by the reconciled component
+
+- **WHEN** `StructuralReconciler` creates a new keyed component through a factory that also constructs a `Computed`
+- **THEN** both the component and the `Computed` are owned by the reconciled component's ownership node, and neither is attached to the ambient component whose collection triggered reconciliation
 
 ### Requirement: DebugAttachmentStack owns all attachment profiling state
 

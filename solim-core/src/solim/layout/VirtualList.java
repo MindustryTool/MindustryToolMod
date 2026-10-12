@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import arc.func.Cons;
 import arc.func.Func;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.reactive.Effect;
@@ -34,7 +34,7 @@ import solim.modifier.TableConfig;
  * @param <T> the item type
  * @param <K> the item key type
  */
-public final class VirtualList<T> extends BaseComponent
+public final class VirtualList<T> extends Component
         implements CellConfig<VirtualList<T>>, ElementConfig<VirtualList<T>>, TableConfig<VirtualList<T>> {
 
     private final Table outer;
@@ -227,7 +227,7 @@ public final class VirtualList<T> extends BaseComponent
 
     @Override
     public VirtualList<T> name(@Nullable String name) {
-        super.name(name);
+        setName(name);
         return this;
     }
 

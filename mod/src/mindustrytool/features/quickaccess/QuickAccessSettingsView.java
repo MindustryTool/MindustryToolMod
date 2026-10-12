@@ -11,11 +11,11 @@ import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Readable;
 
-public class QuickAccessSettingsView extends BaseComponent {
+public class QuickAccessSettingsView extends Component {
 
     private final QuickAccessFeature feature;
 
@@ -91,7 +91,7 @@ public class QuickAccessSettingsView extends BaseComponent {
         });
     }
 
-    private static final class FeatureOrderRow extends BaseComponent {
+    private static final class FeatureOrderRow extends Component {
         private final QuickAccessFeature feature;
         private final Feature f;
 

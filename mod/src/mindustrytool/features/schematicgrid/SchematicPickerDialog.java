@@ -14,7 +14,7 @@ import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.layout.Scroll;
@@ -58,10 +58,8 @@ public class SchematicPickerDialog extends SolimDialog {
             return Math.max(0, total - shownCount);
         });
 
-        Disposable searchSub = searchQuery.subscribe(query -> resetBatch());
-        Disposable tagSub = selectedTag.subscribe(tag -> resetBatch());
-        registerDisposable(searchSub);
-        registerDisposable(tagSub);
+        Disposable searchSub = registerDisposable(searchQuery.subscribe(query -> resetBatch()));
+        Disposable tagSub = registerDisposable(selectedTag.subscribe(tag -> resetBatch()));
 
         Computed<Float> viewportWidth = dvw(100f);
         Readable<Boolean> portrait = isPortrait();
@@ -264,7 +262,7 @@ public class SchematicPickerDialog extends SolimDialog {
      * Shows a lightweight placeholder while the preview texture is generated through
      * a throttled queue (at most 2 FrameBuffers per frame) to keep 60 FPS.
      */
-    public static class SchematicPickerCard extends BaseComponent {
+    public static class SchematicPickerCard extends Component {
 
         private final Schematic schematic;
         private final Runnable onClick;
@@ -351,7 +349,7 @@ public class SchematicPickerDialog extends SolimDialog {
         private PreviewQueue() {
         }
 
-        static void enqueue(Schematic schematic, Signal<Boolean> ready, BaseComponent owner) {
+        static void enqueue(Schematic schematic, Signal<Boolean> ready, Component owner) {
             if (schematic == null || ready == null) {
                 return;
             }
@@ -361,7 +359,7 @@ public class SchematicPickerDialog extends SolimDialog {
             INSTANCE.enqueueInternal(schematic, ready, owner);
         }
 
-        private synchronized void enqueueInternal(Schematic schematic, Signal<Boolean> ready, BaseComponent owner) {
+        private synchronized void enqueueInternal(Schematic schematic, Signal<Boolean> ready, Component owner) {
             for (PreviewTask existing : queue) {
                 if (existing != null && existing.schematic == schematic && existing.ready == ready) {
                     return;
@@ -459,9 +457,9 @@ public class SchematicPickerDialog extends SolimDialog {
         private static final class PreviewTask {
             final Schematic schematic;
             final Signal<Boolean> ready;
-            final @Nullable BaseComponent owner;
+            final @Nullable Component owner;
 
-            PreviewTask(Schematic schematic, Signal<Boolean> ready, @Nullable BaseComponent owner) {
+            PreviewTask(Schematic schematic, Signal<Boolean> ready, @Nullable Component owner) {
                 this.schematic = schematic;
                 this.ready = ready;
                 this.owner = owner;

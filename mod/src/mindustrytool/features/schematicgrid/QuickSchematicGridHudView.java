@@ -12,7 +12,7 @@ import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
@@ -23,7 +23,7 @@ import solim.reactive.Signal;
  * a dedicated page tab column, subtle empty slot tiles, and screen clamping.
  */
  //TODO Fix background
-public class QuickSchematicGridHudView extends BaseComponent {
+public class QuickSchematicGridHudView extends Component {
     // TODO: Right click to open edit UI
     // TODO: Hover over button show a shadow of schematic
     public static final class SlotModel {

@@ -7,8 +7,6 @@ Mechanical merge of 12 specs per change `spec-domain-merge` (stage 4 framework-u
 
 **Source: solim-widgets**
 
-TBD - created by archiving change create-solim-core. Update Purpose after archive.
-
 ### Requirement: Text widget with static and reactive content
 `Text` SHALL display string content via `text(String)` and `text(Readable<String>)` (reactive). It SHALL wrap `arc.scene.ui.Label` and provide fluent chained property modifiers including `.color(Color)`, `.color(Readable<Color>)`, `.style(LabelStyle)`, `.wrap(boolean)`, `.ellipsis(boolean)`, `.fontScale(float)`, text alignment (`.left()`, `.center()`, `.right()`), and padding/margin modifiers (`.padding(float)`, `.padding(float, float, float, float)`, `.paddingTop(float)`, `.paddingBottom(float)`, `.paddingLeft(float)`, `.paddingRight(float)`, `.margin(float)`, `.margin(float, float, float, float)`, `.marginTop(float)`, `.marginBottom(float)`, `.marginLeft(float)`, `.marginRight(float)`). Separate `text(Signal<String>)` and `text(Computed<String>)` overloads SHALL NOT exist; reactive sources bind through `Readable<String>` because `Signal` and `Computed` implement it. Reactive bindings SHALL be managed internally by the component lifecycle.
 
@@ -221,8 +219,6 @@ The system SHALL display the animated circular loader instead of static loading 
 
 **Source: solim-declarative-ui**
 
-TBD - created by archiving change create-solim-core. Update Purpose after archive.
-
 ### Requirement: Implicit parent stack with lambda scopes
 The framework SHALL provide `AttachmentStack` with static helpers `column()`, `row()`, `stack()`, `grid(int columns)`, `wrap()`, `scroll()`, `card()`, `collapser()`, and `dialog(String title)` returning fluent builder instances supporting `.children(Runnable)`. A `container()` alias SHALL NOT exist; `column()` is the canonical vertical layout. Calling `.children(Runnable)` pushes the layout Element onto `AttachmentStack`, executes the lambda, pops with try/finally, attaches the layout to the outer active parent container, and returns the container instance. Every child created inside the `.children(Runnable)` lambda SHALL auto-attach to current parent, including `BaseComponent` subclasses. The `stack()` helper SHALL create a `solim.layout.SolimStack` overlay container attached to `AttachmentStack`. SolimStack SHALL expose Component-returning `layer(Supplier<Component>)` and `layer(Function<Element, Component>)` methods that attach directly to the underlying Stack with no intermediate Row, own each returned layer component, and dispose owned layers exactly once on stack disposal; SolimStack SHALL NOT declare a `children(...)` overload, and a `stack(Runnable)` facade SHALL NOT exist.
 
@@ -357,8 +353,6 @@ The `SolimDialog` component SHALL enable `fillParent(true)` by default to fill t
 - **THEN** `isFillParent()` returns `false` and the dialog sizes according to its packed bounds
 
 **Source: solim-hud**
-
-TBD - created by archiving change solim-hud-components. Update Purpose after archive.
 
 ### Requirement: Floating Hud container
 The Solim framework SHALL provide a `Hud` container (`hud()`, `hud(Runnable children)`) in `solim.overlay` representing a floating, non-modal screen overlay. The `Hud` root element SHALL default to `touchable = childrenOnly` so unconsumed touches pass through to underlying game elements.
@@ -777,4 +771,29 @@ Input widgets and event bindings (`Button`, `ElementClickBinding`) SHALL NOT swa
 - **WHEN** an element click handler bound via `ElementClickBinding` throws an unhandled exception
 - **THEN** `ElementClickBinding` does NOT swallow the exception in `catch (Exception e)` and the exception propagates
 
+### Requirement: ReactiveGrid reconciles synchronously on every path
+`ReactiveGrid` SHALL perform item reconciliation and reflow synchronously when its item collection or column count changes, on both its first build and every subsequent invalidation. It SHALL NOT defer reconciliation to a posted callback or otherwise branch its timing on whether the underlying table is currently attached to a scene.
+
+#### Scenario: First build reconciles synchronously
+- **WHEN** a `ReactiveGrid` is built with a non-empty item collection
+- **THEN** one cell per item is present immediately after `element()` returns, without waiting for a later frame
+
+#### Scenario: Subsequent invalidation also reconciles synchronously
+- **WHEN** the item collection signal changes after the grid is attached to a scene
+- **THEN** reconciliation and reflow complete within the same flush in which the signal changed, rather than being deferred to end of frame
+
+#### Scenario: Column changes reflow in the same flush
+- **WHEN** the column count source changes
+- **THEN** cells are reflowed for the new column count within that flush, matching `VirtualList` behaviour
+
+#### Scenario: Timing no longer depends on scene attachment
+- **WHEN** the same invalidation occurs once before the grid is attached and once after
+- **THEN** both follow identical synchronous code paths
+
+### Requirement: Disposed ReactiveGrid does not mutate the tree
+A `ReactiveGrid` that is disposed before its pending reconciliation runs SHALL not mount, reflow, or attach anything.
+
+#### Scenario: Disposal between invalidation and execution
+- **WHEN** a `ReactiveGrid` is invalidated and then disposed before its reconciliation runs
+- **THEN** no cells are added to its table and no reconciler state is mutated
 

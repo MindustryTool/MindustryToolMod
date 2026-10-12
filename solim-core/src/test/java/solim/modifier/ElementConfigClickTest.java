@@ -1,5 +1,7 @@
 package solim.modifier;
 
+
+import solim.core.Component;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -105,12 +107,16 @@ class ElementConfigClickTest extends SolimEnv {
         return count;
     }
 
-    private static final class Clickable implements ElementConfig<Clickable> {
-        private final Element element = new Table();
+    private static final class Clickable extends Component implements ElementConfig<Clickable> {
+
+        Clickable() {
+            super(new Table());
+        }
 
         @Override
-        public Element element() {
-            return element;
+        public Clickable name(String name) {
+            setName(name);
+            return this;
         }
 
         @Override

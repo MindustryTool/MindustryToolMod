@@ -15,7 +15,7 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.prettychat.Prettier;
 import mindustrytool.features.prettychat.PrettyChatFeature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
@@ -28,29 +28,33 @@ import java.util.Locale;
 /**
  * Modern declarative Solim settings view for Pretty Chat.
  */
-public class PrettyChatSettingsView extends BaseComponent {
+public class PrettyChatSettingsView extends Component {
 
     private static final String[] CATEGORIES = {"all", "color", "font", "effect", "case", "fun", "custom"};
 
     private final PrettyChatFeature feature;
     private final Signal<String> previewSignal;
-    private final Computed<String> resultComputed;
     private final Signal<String> selectedCategory;
-    private final Computed<Seq<Prettier>> filteredPrettiers;
 
     public PrettyChatSettingsView(PrettyChatFeature feature) {
         this.feature = feature;
         String initialSample = Core.bundle.get("feature.pretty-chat.settings.preview-sample");
         this.previewSignal = Signal.of(initialSample);
         this.selectedCategory = Signal.of("all");
-        this.resultComputed = new Computed<>(() -> {
+    }
+
+    @Override
+    protected Element build() {
+        // Declared here rather than in field initialisers: inside build() this component is the
+        // active ownership scope, so the derived values live and die with the view.
+        Computed<String> resultComputed = new Computed<>(() -> {
             String input = previewSignal.get();
             List<String> enabled = feature.config().enabledIdsSignal.get();
             return !enabled.isEmpty() && input != null && !input.isEmpty()
                     ? feature.transform(input)
                     : (input != null ? input : "");
         });
-        this.filteredPrettiers = new Computed<>(() -> {
+        Computed<Seq<Prettier>> filteredPrettiers = new Computed<>(() -> {
             String cat = selectedCategory.get();
             Seq<Prettier> all = feature.prettiers();
             Seq<Prettier> list = new Seq<>();
@@ -62,15 +66,12 @@ public class PrettyChatSettingsView extends BaseComponent {
             }
             return list;
         });
-    }
 
-    @Override
-    protected Element build() {
         return SettingScaffold.build(() -> {
             headerCard();
-            livePreviewCard();
+            livePreviewCard(resultComputed);
             pipelineCard();
-            availableTransformersPanel();
+            availableTransformersPanel(filteredPrettiers);
         });
     }
 
@@ -78,7 +79,7 @@ public class PrettyChatSettingsView extends BaseComponent {
         return SettingCard.header(feature, "COMMUNICATION");
     }
 
-    private Component livePreviewCard() {
+    private Component livePreviewCard(Computed<String> resultComputed) {
         String previewLabel = Core.bundle.get("feature.pretty-chat.settings.preview-label");
         String previewDesc = Core.bundle.get("feature.pretty-chat.settings.preview-desc");
         String previewPlaceholder = Core.bundle.get("feature.pretty-chat.settings.preview-placeholder");
@@ -225,7 +226,7 @@ public class PrettyChatSettingsView extends BaseComponent {
         });
     }
 
-    private Component availableTransformersPanel() {
+    private Component availableTransformersPanel(Computed<Seq<Prettier>> filteredPrettiers) {
         String availableTitle = Core.bundle.get("feature.pretty-chat.settings.available-transformers");
 
         return SettingCard.section(Icon.settings, availableTitle, () -> {

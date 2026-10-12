@@ -1,6 +1,5 @@
 package solim.core;
 
-import solim.runtime.OwnershipContext;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,7 +15,7 @@ import solim.test.SolimEnv;
 
 class AmbientOwnershipTest extends SolimEnv {
 
-	static class ChildComponent extends BaseComponent {
+	static class ChildComponent extends Component {
 		final AtomicBoolean disposedFlag;
 
 		ChildComponent(AtomicBoolean disposedFlag) {
@@ -52,7 +51,7 @@ class AmbientOwnershipTest extends SolimEnv {
 		}
 	}
 
-	static class ParentComponent extends BaseComponent {
+	static class ParentComponent extends Component {
 		ChildComponent child;
 		CustomDisposable customDisposable;
 		SolimTextField textField;
@@ -103,7 +102,7 @@ class AmbientOwnershipTest extends SolimEnv {
 	@Test
 	void cleanStackUnwindingOnBuildFailure() {
 		assertEquals(0, OwnershipContext.size());
-		BaseComponent failingComponent = new BaseComponent() {
+		Component failingComponent = new Component() {
 			@Override
 			protected Element build() {
 				throw new IllegalStateException("Simulated build error");

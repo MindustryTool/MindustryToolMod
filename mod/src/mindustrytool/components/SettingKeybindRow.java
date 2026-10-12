@@ -10,12 +10,12 @@ import arc.scene.Element;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.features.FeatureKeybind;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 
-public class SettingKeybindRow extends BaseComponent {
+public class SettingKeybindRow extends Component {
     private static volatile boolean anyListening = false;
 
     private final FeatureKeybind keybind;

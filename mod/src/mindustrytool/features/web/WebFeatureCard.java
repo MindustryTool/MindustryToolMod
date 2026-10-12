@@ -10,10 +10,10 @@ import lombok.AllArgsConstructor;
 import mindustry.Vars;
 import mindustry.ui.Styles;
 import mindustrytool.components.FileIcon;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
 @AllArgsConstructor
-public class WebFeatureCard extends BaseComponent {
+public class WebFeatureCard extends Component {
 
     private final WebFeature webFeature;
 

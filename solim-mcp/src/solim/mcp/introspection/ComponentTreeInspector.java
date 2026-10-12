@@ -53,6 +53,14 @@ public final class ComponentTreeInspector {
 		return node;
 	}
 
+	/**
+	 * The name a node is reported under.
+	 *
+	 * <p>Every Solim {@code Component} names its own element, so the class-name fallback below
+	 * only applies to raw Arc elements the toolkit never saw. A node that used to report
+	 * {@code "Table"} now reports {@code "solim-column-table"}, which is what makes a snapshot
+	 * readable.
+	 */
 	private static String name(Element element) {
 		return element.name != null && !element.name.isEmpty() ? element.name : element.getClass().getSimpleName();
 	}

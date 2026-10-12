@@ -9,7 +9,7 @@ import arc.util.Nullable;
 import arc.util.Timer;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Signal;
 
 import mindustrytool.components.WebStyles;
@@ -18,7 +18,7 @@ import mindustrytool.components.WebStyles;
  * Search header with debounced text input, filter trigger button, refresh
  * button, and reactive active filter chips.
  */
-public class BrowserSearchHeader extends BaseComponent {
+public class BrowserSearchHeader extends Component {
 
     private static final float DEBOUNCE_SECONDS = 0.5f;
 

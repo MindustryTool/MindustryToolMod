@@ -3,7 +3,6 @@ package solim.runtime;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Log;
 import arc.util.Nullable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -13,7 +12,10 @@ import java.util.List;
 import arc.func.Cons2;
 import arc.func.Boolf;
 import arc.func.Prov;
+import solim.core.AttachmentBridge;
 import solim.core.Component;
+import solim.core.DisposableOwner;
+import solim.core.SolimAssert;
 import solim.core.SpacingAware;
 import solim.performance.PerfSpan;
 import solim.performance.TraceSpan;
@@ -25,8 +27,34 @@ import solim.performance.TraceSpan;
  * <p>The base class holds only structural state and declares empty profiling hooks. All static
  * entry points delegate to a singleton instance, allowing a profiling-enabled subclass to be
  * installed without the base class carrying any monitoring logic.
+ *
+ * <p>Loading this class also publishes {@link AttachmentBridge}, the narrow seam through which
+ * {@link Component} — one module below — announces itself to the open parent scope from its own
+ * constructor and reports its build span to the tracer.
  */
 public class AttachmentStack {
+
+	static {
+		AttachmentBridge.install(new AttachmentBridge.Hook() {
+			@Override
+			public void registerPending(Component component) {
+				Table parent = AttachmentStack.current();
+				if (parent != null) {
+					AttachmentStack.registerPendingComponent(component, parent);
+				}
+			}
+
+			@Override
+			public boolean isTracing() {
+				return AttachmentStack.isTracing();
+			}
+
+			@Override
+			public void traceLeaf(@Nullable String name, long startNanos, long endNanos) {
+				AttachmentStack.traceLeaf(name, "build", startNanos, endNanos);
+			}
+		});
+	}
 
 	@FunctionalInterface
 	public interface Attacher {
@@ -139,7 +167,11 @@ public class AttachmentStack {
 	 * components to adopt void factories: the captured components become owned by the caller,
 	 * which is responsible for mounting and disposing them.
 	 *
-	 * <p>If the block throws, all partially created components are disposed, ambient state is
+	 * <p>Non-component resources created inside the block (Computed, Effect, Query, Binding) are
+	 * collected too, but have no owner to hand them to through this entry point, so they are
+	 * destroyed when the capture completes. Use {@link Fragment#capture(Runnable)} to keep them.
+	 *
+	 * <p>If the block throws, all partially created resources are disposed, ambient state is
 	 * restored, and the exception propagates.
 	 */
 	public static List<Component> capture(Runnable runnable) {
@@ -147,14 +179,13 @@ public class AttachmentStack {
 			return Collections.emptyList();
 		}
 		List<Component> captured = new ArrayList<>();
-		INSTANCE.doCapture(runnable, captured);
+		INSTANCE.doCapture(runnable, captured, null);
 		return captured;
 	}
 
 	/** Internal capture using a pre-allocated list to reduce allocation pressure. */
-	static List<Component> capture(Runnable runnable, List<Component> captured) {
-		INSTANCE.doCapture(runnable, captured);
-		return captured;
+	static void capture(Runnable runnable, List<Component> captured, @Nullable DisposableOwner sink) {
+		INSTANCE.doCapture(runnable, captured, sink);
 	}
 
 	/**
@@ -311,49 +342,38 @@ public class AttachmentStack {
 		}
 	}
 
-	protected void doCapture(Runnable runnable, List<Component> captured) {
+	protected void doCapture(Runnable runnable, List<Component> captured, @Nullable DisposableOwner sink) {
 		SolimAssert.checkMainThread();
+		captured.clear();
 		if (runnable == null) {
-			captured.clear();
 			return;
 		}
-		// Save ambient stack; skip copy when already empty.
-		Deque<Entry> saved = stack.isEmpty() ? null : new ArrayDeque<>(stack);
-		stack.clear();
-		captured.clear();
-		// Capture through OwnershipContext: components register there in creation order
-		// (BaseComponent via registerChild, plain components like Row/Column via register),
-		// while plain disposables (bindings) belong to their owning component and are ignored.
-		OwnershipContext.pushCapture(captured);
+		// Run the block with an open ownership scope: components register here in creation order
+		// (Component via registerChild, plain components like Row/Column via register), and so
+		// does every non-component resource (Computed, Effect, Query, Binding). Components become
+		// roots; the rest are handed to the sink that owns the capture.
+		OwnershipScope scope = OwnershipScope.open();
 		// Runnable.run() cannot throw checked exceptions, so RuntimeException/Error is exhaustive.
 		RuntimeException runtimeFailure = null;
 		Error errorFailure = null;
 		try {
-			runnable.run();
+			doIsolate(runnable);
+			scope.extractComponents(captured);
+			scope.adoptInto(sink);
 		} catch (RuntimeException t) {
 			runtimeFailure = t;
 		} catch (Error t) {
 			errorFailure = t;
 		} finally {
-			stack.clear();
-			if (saved != null) {
-				stack.addAll(saved);
-			}
-			OwnershipContext.pop();
-		}
-		if (runtimeFailure != null || errorFailure != null) {
-			for (Component c : captured) {
-				try {
-					c.dispose();
-				} catch (Throwable ex) {
-					Log.err("Error disposing partially captured component", ex);
-				}
-			}
+			// Nothing was adopted on the failure path, so close() destroys every partial resource.
+			scope.close();
 		}
 		if (runtimeFailure != null) {
+			captured.clear();
 			throw runtimeFailure;
 		}
 		if (errorFailure != null) {
+			captured.clear();
 			throw errorFailure;
 		}
 	}

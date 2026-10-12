@@ -14,12 +14,12 @@ import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-public class QuickSchematicGridSettingsView extends BaseComponent {
+public class QuickSchematicGridSettingsView extends Component {
     private final QuickSchematicGridFeature feature;
 
     public QuickSchematicGridSettingsView(QuickSchematicGridFeature feature) {

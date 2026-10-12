@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import arc.scene.Element;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.test.SolimEnv;
 
 class SignalReactivityWarningTest extends SolimEnv {
@@ -26,7 +26,7 @@ class SignalReactivityWarningTest extends SolimEnv {
 		Signal<String> testSignal = Signal.of("initial");
 		boolean[] getCalledInsideBuild = {false};
 
-		class SampleComponent extends BaseComponent {
+		class SampleComponent extends Component {
 			@Override
 			protected Element build() {
 				// Calling get() inside build()

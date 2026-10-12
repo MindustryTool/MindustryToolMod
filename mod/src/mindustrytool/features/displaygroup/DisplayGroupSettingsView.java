@@ -12,11 +12,10 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
-import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.reactive.Readable;
 
-public class DisplayGroupSettingsView extends BaseComponent {
+public class DisplayGroupSettingsView extends Component {
 
     private final DisplayGroupFeature feature;
 
@@ -69,7 +68,7 @@ public class DisplayGroupSettingsView extends BaseComponent {
         });
     }
 
-    private static final class FeatureOrderRow extends BaseComponent {
+    private static final class FeatureOrderRow extends Component {
         private final DisplayGroupFeature feature;
         private final Feature f;
 

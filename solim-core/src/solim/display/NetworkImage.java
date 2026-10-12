@@ -22,13 +22,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import mindustry.Vars;
+import solim.core.Component;
 import solim.core.Disposable;
-import solim.core.LeafComponent;
+import solim.core.SolimToken;
 import solim.graphics.RoundedGenerator;
+import solim.modifier.CellConfig;
+import solim.modifier.ElementConfig;
+import solim.modifier.PendingCellConfig;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
+public final class NetworkImage extends Component implements CellConfig<NetworkImage>, ElementConfig<NetworkImage> {
 
 	private static final Map<String, TextureRegionDrawable> cache = new ConcurrentHashMap<>();
 
@@ -185,16 +189,39 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 
 	private @Nullable Drawable placeholder;
 	private @Nullable Drawable fallback;
-	private @Nullable Disposable binding;
-	private @Nullable String currentUrl;
+	private final Image element;
+	private final PendingCellConfig constraints = new PendingCellConfig();
+	private @Nullable Disposable binding;	private @Nullable String currentUrl;
 	private boolean failed = false;
 	private Scaling scaling = Scaling.fit;
 	private int cornerRadius = 0;
 	private long loadGeneration = 0L;
 
 	public NetworkImage() {
-		super(new Image((Drawable) null));
+		this(new Image((Drawable) null));
+	}
+
+	private NetworkImage(Image element) {
+		super(element);
+		this.element = element;
+		SolimToken.bind(element, this, constraints);
 		this.element.setScaling(Scaling.fit);
+	}
+
+	@Override
+	public PendingCellConfig cellConfig() {
+		return constraints;
+	}
+
+    @Override
+    public NetworkImage name(@Nullable String name) {
+        setName(name);
+        return this;
+    }
+
+	@Override
+	public NetworkImage self() {
+		return this;
 	}
 
 	public NetworkImage(String url) {
@@ -295,7 +322,7 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 			binding = null;
 		}
 		if (url != null) {
-			binding = Effect.of(() -> loadUrl(url.get()));
+			binding = own(Effect.of(() -> loadUrl(url.get())));
 		}
 		return this;
 	}
@@ -535,11 +562,11 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 
 	public NetworkImage color(Readable<Color> color) {
 		if (color != null) {
-			Effect.of(() -> {
+			own(Effect.of(() -> {
 				Color c = color.get();
 				if (c != null)
 					element.setColor(c);
-			});
+			}));
 		}
 		return this;
 	}
@@ -596,17 +623,5 @@ public final class NetworkImage extends LeafComponent<Image, NetworkImage> {
 				cell.center();
 		}
 		return this;
-	}
-
-	@Override
-	public void dispose() {
-		if (isDisposed()) {
-			return;
-		}
-		if (binding != null) {
-			binding.dispose();
-			binding = null;
-		}
-		super.dispose();
 	}
 }

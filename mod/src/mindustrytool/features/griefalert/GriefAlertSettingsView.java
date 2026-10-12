@@ -16,10 +16,10 @@ import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
-public class GriefAlertSettingsView extends BaseComponent {
+public class GriefAlertSettingsView extends Component {
     private final GriefAlertFeature feature;
 
     public GriefAlertSettingsView(GriefAlertFeature feature) {

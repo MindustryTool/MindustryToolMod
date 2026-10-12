@@ -19,19 +19,23 @@ import arc.util.Time;
 import java.util.ArrayList;
 import java.util.List;
 import mindustry.gen.Icon;
+import solim.core.Component;
 import solim.core.Disposable;
-import solim.core.LeafComponent;
+import solim.core.SolimToken;
 import solim.core.Units;
 import solim.display.Text;
 import solim.input.Button;
 import solim.input.SolimSlider;
+import solim.modifier.CellConfig;
+import solim.modifier.ElementConfig;
+import solim.modifier.PendingCellConfig;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 
-public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
+public final class SolimVideo extends Component implements CellConfig<SolimVideo>, ElementConfig<SolimVideo> {
 
 	private static final long OVERLAY_HIDE_DELAY = 2500;
 
@@ -87,7 +91,8 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 
 	private final Image videoImage;
 	private final Table overlay;
-	private final List<Disposable> owned = new ArrayList<>();
+	private final Stack element;
+	private final PendingCellConfig constraints = new PendingCellConfig();
 
 	private final Signal<Boolean> playing = Signal.of(false);
 	private final Signal<Boolean> mutedState = Signal.of(false);
@@ -122,7 +127,13 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 	private boolean scrubbing = false;
 
 	public SolimVideo() {
-		super(new VideoStage());
+		this(new VideoStage());
+	}
+
+	private SolimVideo(Stack element) {
+		super(element);
+		this.element = element;
+		SolimToken.bind(element, this, constraints);
 		((VideoStage) element).owner = this;
 
 		videoImage = new Image((Drawable) null);
@@ -157,8 +168,8 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 			}
 		});
 
-		owned.add(Effect.of(() -> overlay.visible = controlsEnabled.get() && overlayShown.get()));
-		owned.add(Effect.of(this::onScrub));
+		Effect.of(() -> overlay.visible = controlsEnabled.get() && overlayShown.get());
+		Effect.of(this::onScrub);
 	}
 
 	public SolimVideo(String url) {
@@ -175,10 +186,10 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 		Button playButton = new Button(this::togglePlay);
 		playButton.icon(playing.map(active -> active ? pauseIconOrDefault() : playIconOrDefault()));
 		playButton.size(Units.unit(11));
-		owned.add(playButton);
+		own(playButton);
 
 		SolimSlider scrub = SolimSlider.of(progress, 0f, 1f, 0.001f);
-		owned.add(scrub);
+		own(scrub);
 		scrub.element().addListener(new InputListener() {
 			@Override
 			public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
@@ -195,17 +206,17 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 		});
 
 		Text time = Text.of(new Computed<>(() -> formatTime(positionSig.get()) + " / " + formatTime(durationSig.get())));
-		owned.add(time);
+		own(time);
 
 		Button replayButton = new Button(this::replay);
 		replayButton.icon(replayIconOrDefault());
 		replayButton.size(Units.unit(11));
-		owned.add(replayButton);
+		own(replayButton);
 
 		Button muteButton = new Button(this::toggleMute);
 		muteButton.icon(mutedState.map(muted -> muted ? muteIconOrDefault() : volumeIconOrDefault()));
 		muteButton.size(Units.unit(11));
-		owned.add(muteButton);
+		own(muteButton);
 
 		overlay.add(playButton.element()).size(Units.unit(11)).pad(Units.unit(1));
 		overlay.add(scrub.element()).growX().pad(Units.unit(1));
@@ -334,7 +345,7 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 			controlsBinding = null;
 		}
 		if (controls != null) {
-			controlsBinding = Effect.of(() -> controlsEnabled.set(controls.get()));
+			controlsBinding = own(Effect.of(() -> controlsEnabled.set(controls.get())));
 		}
 		return this;
 	}
@@ -354,7 +365,7 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 			urlBinding = null;
 		}
 		if (url != null) {
-			urlBinding = Effect.of(() -> loadUrl(url.get()));
+			urlBinding = own(Effect.of(() -> loadUrl(url.get())));
 		}
 		return this;
 	}
@@ -540,14 +551,17 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 		return overlay;
 	}
 
+	/** The stage this video renders into. */
+	public Stack stack() {
+		return element;
+	}
+
 	Signal<Float> progressSignal() {
 		return progress;
 	}
 
 	@Override
-	public void dispose() {
-		if (isDisposed())
-			return;
+	protected void onDispose() {
 		loadGeneration++;
 		stopPlayer();
 		if (urlBinding != null) {
@@ -558,13 +572,22 @@ public final class SolimVideo extends LeafComponent<Stack, SolimVideo> {
 			controlsBinding.dispose();
 			controlsBinding = null;
 		}
-		for (int i = owned.size() - 1; i >= 0; i--) {
-			Disposable disposable = owned.get(i);
-			if (disposable != null)
-				disposable.dispose();
-		}
-		owned.clear();
-		super.dispose();
+	}
+
+	@Override
+	public PendingCellConfig cellConfig() {
+		return constraints;
+	}
+
+    @Override
+    public SolimVideo name(@Nullable String name) {
+        setName(name);
+        return this;
+    }
+
+	@Override
+	public SolimVideo self() {
+		return this;
 	}
 
 	private static final class VideoStage extends Stack {

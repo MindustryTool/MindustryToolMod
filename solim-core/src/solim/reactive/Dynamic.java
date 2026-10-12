@@ -6,7 +6,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.Objects;
 import arc.func.Cons;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.CellConfig;
@@ -31,7 +31,7 @@ import solim.core.Disposable;
  *
  * <p>Use {@link #of} to create a Dynamic with a void factory.</p>
  */
-public final class Dynamic<T> extends BaseComponent
+public final class Dynamic<T> extends Component
          implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>>, ElementConfig<Dynamic<T>> {
      private static final Object SENTINEL = new Object();
      private final Table container = new Table();
@@ -66,7 +66,7 @@ public final class Dynamic<T> extends BaseComponent
 
     @Override
     public Dynamic<T> name(@Nullable String name) {
-        super.name(name);
+        setName(name);
         return this;
     }
 

@@ -12,7 +12,7 @@ import java.util.Set;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.runtime.ReactiveContext;
-import solim.runtime.SolimAssert;
+import solim.core.SolimAssert;
 
 /**
  * Reactive map primitive with fine-grained key-level observation.

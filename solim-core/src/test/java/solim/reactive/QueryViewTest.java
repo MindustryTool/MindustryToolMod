@@ -1,5 +1,6 @@
 package solim.reactive;
 
+import solim.test.FixedComponent;
 import arc.scene.Element;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Cell;
@@ -171,7 +172,7 @@ class QueryViewTest extends SolimEnv {
 					Button btn = new Button(query::refetch);
 					btn.table().add(new Text("Retry").element());
 					table.add(btn.element());
-					return () -> table;
+					return new FixedComponent(table);
 				})
 				.data(QueryViewTest::label);
 
@@ -322,14 +323,14 @@ class QueryViewTest extends SolimEnv {
 		Query<List<String>> query = Query.noKey(() -> CompletableFuture.completedFuture(itemsSignal.get()));
 
 		List<Element> mountedElements = new ArrayList<>();
-		QueryView<List<String>> view = QueryView.of(query).data(items -> () -> {
+		QueryView<List<String>> view = QueryView.of(query).data(items -> {
 			Table t = new Table();
 			for (String item : items) {
 				Text txt = new Text(item);
 				mountedElements.add(txt.element());
-				t.add(txt.element());
+				t.add(txt.label());
 			}
-			return t;
+			return new FixedComponent(t);
 		});
 
 		view.element();
@@ -479,18 +480,13 @@ class QueryViewTest extends SolimEnv {
 		AtomicBoolean childDisposed = new AtomicBoolean(false);
 		QueryView<String> view = QueryView.of(query).data(data -> new Component() {
 			@Override
-			public Element element() {
-				return new Text(data).element();
+			protected Element build() {
+				return own(new Text(data)).element();
 			}
 
 			@Override
-			public void dispose() {
+			protected void onDispose() {
 				childDisposed.set(true);
-			}
-
-			@Override
-			public boolean isDisposed() {
-				return childDisposed.get();
 			}
 		});
 

@@ -7,8 +7,6 @@ Mechanical merge of 12 specs per change `spec-domain-merge` (stage 3 core, conca
 
 **Source: solim-component**
 
-TBD - created by archiving change create-solim-core. Update Purpose after archive.
-
 ### Requirement: Component interface
 The framework SHALL provide `solim.core.Component` with `arc.scene.Element element()`, `default void dispose()`, and `default Component name(String name)` to rename the component's underlying Arc `Element`.
 
@@ -103,8 +101,6 @@ Every concrete Solim component SHALL automatically assign a default name to its 
 
 **Source: basecomponent-ui-separation**
 
-TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
-
 ### Requirement: BaseComponent has no UI attachment logic
 `BaseComponent` SHALL NOT import or reference `AttachmentStack`, `Table`, or any Arc layout type for the purpose of UI placement. It SHALL NOT call `AttachmentStack.registerPendingComponent(...)` or any equivalent in its constructor.
 
@@ -129,14 +125,20 @@ All UI attachment (adding an Element to a Table/parent) SHALL happen through `Ui
 
 **Source: lifecycle-correctness**
 
-TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
-
 ### Requirement: Disposal order is reversed
-Resources owned by a `BaseComponent` SHALL be disposed in reverse registration order (LIFO). Each resource SHALL be attempted independently so that a failure in one does not prevent others from being disposed.
+Resources owned by a `BaseComponent` SHALL be disposed in the order: the `onDispose()` hook first, then child components, then the component's own non-component resources. Child components SHALL be disposed before the component's own resources so that a reactive resource cannot recompute against an element its child has already disposed. Within each of those groups, resources SHALL be disposed in reverse registration order. Each disposal SHALL be attempted independently so that a failure in one does not prevent others from being disposed.
 
-#### Scenario: LIFO disposal order
-- **WHEN** a component owns resources A, B, C in that order
+#### Scenario: onDispose runs while the tree is intact
+- **WHEN** a component with children is disposed
+- **THEN** the `onDispose()` hook executes before any child is disposed
+
+#### Scenario: LIFO disposal order within a group
+- **WHEN** a component owns resources A, B, C in that order and no children
 - **THEN** on `dispose()`, C is disposed first, then B, then A
+
+#### Scenario: Children dispose before own resources
+- **WHEN** a component owns a child component and a `Computed` that reads from that child
+- **THEN** the child is disposed first and the `Computed` is disposed afterwards
 
 #### Scenario: Error isolation during disposal
 - **WHEN** one disposable throws during `dispose()`
@@ -205,38 +207,6 @@ Application components SHALL have no callable manual ownership method. `Ownershi
 - **THEN** zero references to `own(` or `ownChild(` exist outside comments, and the test fails otherwise
 
 **Source: scoped-context-api**
-
-TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
-
-### Requirement: withoutAutoOwnership replaces pause/resume
-`OwnershipContext` SHALL provide a `withoutAutoOwnership(Runnable)` method that temporarily suspends auto-registration for the duration of the runnable using save, clear, and restore stack semantics. Nested component scopes instantiated within the runnable SHALL be able to push and manage their own local `OwnershipContext` scopes. The outer stack context SHALL always be restored after the runnable completes, even if it throws.
-
-#### Scenario: Auto-ownership is suspended inside withoutAutoOwnership
-- **WHEN** `OwnershipContext.withoutAutoOwnership(() -> Effect.of(...))` is called
-- **THEN** the Effect is NOT registered with the active component's ownership list
-
-#### Scenario: Nested component build in withoutAutoOwnership manages own ownership
-- **WHEN** a component is constructed and built inside `OwnershipContext.withoutAutoOwnership(...)`
-- **THEN** resources created during its `build()` are owned by that component itself without attaching to the outer suspended scope
-
-#### Scenario: Auto-ownership is restored after the runnable throws
-- **WHEN** the runnable passed to `withoutAutoOwnership` throws an exception
-- **THEN** the original `OwnershipContext` stack is restored for subsequent calls
-
-#### Scenario: Auto-ownership is restored after normal completion
-- **WHEN** the runnable passed to `withoutAutoOwnership` completes normally
-- **THEN** subsequent `Effect.of(...)` calls inside the same component scope are again auto-registered
-
-### Requirement: Raw pause/resume is not part of the public API
-`OwnershipContext.pause()` and `OwnershipContext.resume()` SHALL be package-private or removed. External callers SHALL use `withoutAutoOwnership(Runnable)` instead.
-
-#### Scenario: pause() is not accessible to application code
-- **WHEN** application code attempts to call `OwnershipContext.pause()`
-- **THEN** a compile-time access error is raised
-
-**Source: solim-automatic-ownership**
-
-TBD - created by archiving change clean-up-solim-refactor. Update Purpose after archive.
 
 ### Requirement: Ambient Lifecycle Ownership in Component Build
 The Solim framework SHALL automatically track child components, disposables, and Solim controls instantiated or attached during a component's `build()` execution without requiring explicit `own()` or `ownChild()` invocations. Ambient ownership SHALL be the sole ownership path for application code; manual ownership calls in application modules SHALL be rejected by the compiler.
@@ -445,10 +415,8 @@ Application components extending `BaseComponent` SHALL retain automatic UI mount
 
 **Source: structural-reconciler**
 
-TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
-
 ### Requirement: Shared structural reconciler
-A shared reconciler utility SHALL exist (e.g., `StructuralReconciler`) that implements the keyed child lifecycle: create new keys, preserve existing keys (reuse component), remove missing keys (dispose component), and mount/unmount elements in the container.
+A shared reconciler utility SHALL exist (e.g., `StructuralReconciler`) that implements the keyed child lifecycle: create new keys, preserve existing keys (reuse component), remove missing keys (dispose component), and mount/unmount elements in the container. The reconciler SHALL execute each factory invocation inside an `OwnershipScope` and adopt every resource the factory registers into the component the factory returns.
 
 #### Scenario: New key creates a new component
 - **WHEN** reconciliation runs and a new key is present that was not in the previous set
@@ -465,6 +433,14 @@ A shared reconciler utility SHALL exist (e.g., `StructuralReconciler`) that impl
 #### Scenario: Order changes move elements without rebuilding
 - **WHEN** reconciliation runs and the order of existing keys changes
 - **THEN** existing components are not rebuilt; only their elements are reordered in the container
+
+#### Scenario: Resources created by a factory are disposed with its component
+- **WHEN** an item factory constructs a `Computed` and returns a component, and the key is later removed
+- **THEN** both the component and the `Computed` are disposed, and the `Computed` is detached from its sources
+
+#### Scenario: Factory failure disposes partially created resources
+- **WHEN** a factory registers resources and then throws during reconciliation
+- **THEN** the resources registered by that invocation are disposed and the previously active components are preserved
 
 ### Requirement: Dynamic, ForEach, and ReactiveGrid delegate to StructuralReconciler
 `Dynamic`, `ForEach`, and `ReactiveGrid` SHALL share the same child-lifecycle implementation provided by `StructuralReconciler`. They SHALL NOT independently duplicate create/preserve/remove/dispose logic.
@@ -485,8 +461,6 @@ The `StructuralReconciler` SHALL instantiate new components and build their init
 - **THEN** those signal reads are not recorded as dependencies of the collection observer effect
 
 **Source: unified-ownership-api**
-
-TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
 
 ### Requirement: Component extends Disposable
 The `Component` interface SHALL extend `Disposable` so that components can be passed directly to `own()` and similar ownership APIs.
@@ -535,4 +509,15 @@ The `Component` interface SHALL extend `Disposable` so that components can be pa
 #### Scenario: Child component inside When enclosed by Column attaches to When container
 - **WHEN** a component with children (such as `Card` or `Row`) is created within `when(...).thenDo(...)` or `elseDo(...)` enclosed inside an outer `column(...)`
 - **THEN** the child component's element parent is the `When` container table, NOT the outer column table
+
+### Requirement: BaseComponent is an ownership node
+`BaseComponent` SHALL participate in the ownership tree: it SHALL record the node that adopted it, expose its child nodes, and register children adopted during its own build against itself rather than against whichever component happened to construct it.
+
+#### Scenario: A component's children are its own
+- **WHEN** a component constructs and builds children inside its own `build()`
+- **THEN** those children are recorded as its children, not as children of the enclosing component
+
+#### Scenario: Owner is queryable
+- **WHEN** a component or resource is asked for its owning node
+- **THEN** the owning node is returned, and a component can report whether it is an ancestor of another component
 

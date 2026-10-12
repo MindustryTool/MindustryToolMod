@@ -13,11 +13,11 @@ import mindustry.gen.Icon;
 import mindustry.gen.Unit;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
 
-public class ArmyControlToolbar extends BaseComponent {
+public class ArmyControlToolbar extends Component {
 
     private final ArmyControlFeature feature;
     private final Readable<Float> scale;

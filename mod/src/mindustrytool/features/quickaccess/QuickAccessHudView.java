@@ -16,7 +16,7 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.settings.FeatureSettingDialog;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.layout.Direction;
 import solim.overlay.Hud;
@@ -30,7 +30,7 @@ import mindustrytool.features.settings.ModSettings;
  * Fully reactive and declarative QuickAccess HUD overlay. Uses reactive
  * bindings for opacity, scale, position, column reflow, and feature state.
  */
-public class QuickAccessHudView extends BaseComponent {
+public class QuickAccessHudView extends Component {
 
     private static class HudItem {
         final String id;

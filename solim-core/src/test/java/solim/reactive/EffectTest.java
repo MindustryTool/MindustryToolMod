@@ -187,22 +187,25 @@ class EffectTest extends SolimEnv {
 	}
 
 	@Test
-	void errorsLoggedSafely() {
+	void bodyErrorPropagatesAndLeavesDispatcherUsable() {
 		Signal<Integer> s = Signal.of(1);
 		AtomicInteger runs = new AtomicInteger(0);
 		Effect e = Effect.of(() -> {
 			runs.incrementAndGet();
 			s.get();
-			if (runs.get() == 2) throw new RuntimeException("test error");
+			if (runs.get() >= 2) throw new RuntimeException("test error");
 		});
 		assertEquals(1, runs.get());
-		// second run throws but should not break
+
 		s.set(2);
-		SignalDispatcher.flush();
+		RuntimeException thrown = assertThrows(RuntimeException.class, SignalDispatcher::flush);
+		assertEquals("test error", thrown.getMessage(), "Effect must not swallow its body's exception");
+		assertFalse(SignalDispatcher.isFlushing(), "Dispatcher must not stay marked as flushing");
+
 		assertEquals(2, runs.get());
 		s.set(3);
-		SignalDispatcher.flush();
-		assertEquals(3, runs.get(), "Effect should continue after error");
+		assertThrows(RuntimeException.class, SignalDispatcher::flush,
+				"The effect stays subscribed and fails again rather than going silently dead");
 		e.dispose();
 	}
 

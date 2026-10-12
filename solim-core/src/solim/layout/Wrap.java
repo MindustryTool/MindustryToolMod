@@ -11,7 +11,7 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
@@ -20,7 +20,7 @@ import solim.modifier.PendingCellConfig;
  * Children receive growX() by default so WrapTable receives the full available
  * width.
  */
-public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wrap>, TableConfig<Wrap>,
+public final class Wrap extends Component implements CellConfig<Wrap>, ElementConfig<Wrap>, TableConfig<Wrap>,
         GapContainer {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
@@ -31,32 +31,28 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
         return cell;
     };
 
-    private final WrapTable table = new WrapTable();
+    private final WrapTable table;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 4f;
-    private boolean disposed = false;
     private boolean attached = false;
 
     public Wrap() {
+        this(new WrapTable());
+    }
+
+    private Wrap(WrapTable table) {
+        super(table);
+        this.table = table;
         this.table.name = "solim-wrap-table";
         SolimToken.bind(this.table, this, constraints);
         this.table.top().left();
         this.table.defaults().top().left();
-        OwnershipContext.register(this);
-        Table parent = AttachmentStack.current();
-        if (parent != null) {
-            AttachmentStack.registerPendingComponent(this, parent);
-        }
     }
 
     public Table table() {
         return table;
     }
 
-    @Override
-    public Element element() {
-        return table;
-    }
 
     @Override
     public PendingCellConfig cellConfig() {
@@ -187,6 +183,7 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
     }
 
     public Wrap children(@Nullable Runnable r) {
+        OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
@@ -194,6 +191,7 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         attachSelf();
         respace();
@@ -213,17 +211,12 @@ public final class Wrap implements Component, CellConfig<Wrap>, ElementConfig<Wr
         return this;
     }
 
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-    }
+
 
     @Override
-    public boolean isDisposed() {
-        return disposed;
+    public Wrap name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override

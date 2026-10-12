@@ -10,7 +10,7 @@ import mindustry.graphics.Pal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
@@ -28,7 +28,7 @@ public class ManageRoomDialog extends SolimDialog {
         children(() -> new ManageRoomView(feature, this));
     }
 
-    private static class ManageRoomView extends BaseComponent {
+    private static class ManageRoomView extends Component {
         private final PlayerConnectFeature feature;
         private final ManageRoomDialog dialog;
 

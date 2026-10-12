@@ -10,13 +10,13 @@ import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for Toggle Rendering.
  */
-public class ToggleRenderingSettingsView extends BaseComponent {
+public class ToggleRenderingSettingsView extends Component {
 
     private final ToggleRenderingFeature feature;
 

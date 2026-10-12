@@ -13,7 +13,7 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.models.response.PlayerConnectProvider;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
@@ -31,7 +31,7 @@ public class HostRoomDialog extends SolimDialog {
         children(() -> new HostRoomView(feature, this));
     }
 
-    private static class HostRoomView extends BaseComponent {
+    private static class HostRoomView extends Component {
         private static enum Step {
             CONFIG, PROVIDER
         }

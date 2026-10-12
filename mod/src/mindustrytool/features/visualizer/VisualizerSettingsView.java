@@ -21,14 +21,14 @@ import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.reactive.Signal;
 
 /**
  * Modern declarative Solim settings view for unified Visualizer options.
  */
-public class VisualizerSettingsView extends BaseComponent {
+public class VisualizerSettingsView extends Component {
 
     private final VisualizerFeature feature;
     private final Signal<Boolean> turretActiveOnMapOnly = Signal.of(false);

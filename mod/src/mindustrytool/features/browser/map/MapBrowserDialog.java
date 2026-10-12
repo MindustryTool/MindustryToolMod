@@ -20,7 +20,7 @@ import mindustrytool.features.browser.common.BrowserSearchHeader;
 import mindustrytool.features.browser.common.BrowserState;
 import mindustrytool.models.response.MapData;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
@@ -64,41 +64,46 @@ public class MapBrowserDialog extends SolimDialog {
                 state.verification().peek());
     }
 
-    private static class BrowserContent extends BaseComponent {
+    private static class BrowserContent extends Component {
         private final BrowserState<MapData> state;
         private final BrowserFilterDialog filterDialog;
         private final Runnable onClose;
-        private final Computed<Float> viewportWidth = dvw(100f);
-        private final Computed<Float> viewportHeight = dvh(100f);
-        private final Computed<Integer> columnCount = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            return BrowserLayout.calculateColumns(width != null ? width : 800f);
-        });
-        private final Computed<Float> cardsWidth = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
-        });
-        private final Computed<Float> contentWidth = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            return BrowserLayout.calculateContentWidth(width != null ? width : 800f);
-        });
-        private final Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
-        private final Computed<Integer> calculatedPageSize = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            Float height = viewportHeight.get();
-            return BrowserLayout.calculatePageSize(
-                    width != null ? width : 800f,
-                    height != null ? height : 600f);
-        });
-        private final Signal<Integer> visibleCount;
-        private final Computed<Seq<MapData>> visibleItems;
 
         BrowserContent(BrowserState<MapData> state, BrowserFilterDialog filterDialog, Runnable onClose) {
             this.state = state;
             this.filterDialog = filterDialog;
             this.onClose = onClose;
-            this.visibleCount = Signal.of(BrowserLayout.RENDER_CHUNK_SIZE);
-            this.visibleItems = new Computed<>(() -> {
+        }
+
+        @Override
+        protected Element build() {
+            // Declared here rather than in field initialisers: inside build() this component is
+            // the active ownership scope, so the derived values live and die with the view.
+            Computed<Float> viewportWidth = dvw(100f);
+            Computed<Float> viewportHeight = dvh(100f);
+            Computed<Integer> columnCount = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                return BrowserLayout.calculateColumns(width != null ? width : 800f);
+            });
+            Computed<Float> cardsWidth = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
+            });
+            Computed<Float> contentWidth = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                return BrowserLayout.calculateContentWidth(width != null ? width : 800f);
+            });
+            Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
+            Computed<Integer> calculatedPageSize = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                Float height = viewportHeight.get();
+                return BrowserLayout.calculatePageSize(
+                        width != null ? width : 800f,
+                        height != null ? height : 600f);
+            });
+
+            Signal<Integer> visibleCount = Signal.of(BrowserLayout.RENDER_CHUNK_SIZE);
+            Computed<Seq<MapData>> visibleItems = new Computed<>(() -> {
                 Seq<MapData> all = state.items().get();
                 Integer limit = visibleCount.get();
                 return BrowserState.firstItems(all, limit != null ? limit : 0);
@@ -116,32 +121,9 @@ public class MapBrowserDialog extends SolimDialog {
                 int total = all != null ? all.size : 0;
                 Integer page = state.page().get();
                 visibleCount.set(Math.min(BrowserLayout.RENDER_CHUNK_SIZE, total));
-                expandVisible(total, page != null ? page : 0);
+                expandVisible(visibleCount, total, page != null ? page : 0);
             });
-        }
 
-        private void expandVisible(int total, int page) {
-            Integer current = visibleCount.peek();
-            if (current == null || current >= total) {
-                return;
-            }
-            Core.app.post(() -> {
-                if (isDisposed()) {
-                    return;
-                }
-                Integer currentPage = state.page().peek();
-                if (currentPage == null || currentPage != page) {
-                    return;
-                }
-                Integer shown = visibleCount.peek();
-                int next = Math.min(total, (shown != null ? shown : 0) + BrowserLayout.RENDER_CHUNK_SIZE);
-                visibleCount.set(next);
-                expandVisible(total, page);
-            });
-        }
-
-        @Override
-        protected Element build() {
             return column().grow().center().paddingX(BrowserLayout.HORIZONTAL_PADDING).paddingY(unit(2))
                     .children(() -> {
                         column().width(contentWidth).growY().gap(unit(2)).children(() -> {
@@ -185,6 +167,26 @@ public class MapBrowserDialog extends SolimDialog {
                             new BrowserFooter(state, Config.UPLOAD_MAP_URL, onClose);
                         });
                     }).element();
+        }
+
+        private void expandVisible(Signal<Integer> visibleCount, int total, int page) {
+            Integer current = visibleCount.peek();
+            if (current == null || current >= total) {
+                return;
+            }
+            Core.app.post(() -> {
+                if (isDisposed()) {
+                    return;
+                }
+                Integer currentPage = state.page().peek();
+                if (currentPage == null || currentPage != page) {
+                    return;
+                }
+                Integer shown = visibleCount.peek();
+                int next = Math.min(total, (shown != null ? shown : 0) + BrowserLayout.RENDER_CHUNK_SIZE);
+                visibleCount.set(next);
+                expandVisible(visibleCount, total, page);
+            });
         }
 
         private void showDetails(MapData item) {

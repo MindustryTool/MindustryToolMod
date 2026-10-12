@@ -1,5 +1,6 @@
 package solim.core;
 
+import solim.test.FixedComponent;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.scene.Element;
@@ -17,22 +18,24 @@ import solim.test.SolimEnv;
 class ComponentContractTest extends SolimEnv {
 
 	@Test
-	void componentInterfaceDisposeIsNoOpAndPreservesElement() {
+	void disposeIsIdempotentAndSealsTheComponent() {
 		Element element = new Element();
 		element.name = "contract-element";
-		Component comp = () -> element;
+		Component comp = new FixedComponent(element);
 
 		comp.dispose();
 		comp.dispose();
 
-		assertSame(element, comp.element());
-		assertEquals("contract-element", comp.element().name);
+		assertTrue(comp.isDisposed());
+		// The old contract reported a permanent false here; a disposed component must not
+		// keep serving its element, because everything it owned is already torn down.
+		assertThrows(IllegalStateException.class, comp::element);
 	}
 
 
 	@Test
-	void baseComponentElementCachesResult() {
-		BaseComponent comp = new BaseComponent() {
+	void lazyComponentElementCachesResult() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -44,9 +47,9 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentBuildRunsOnce() {
+	void lazyComponentBuildRunsOnce() {
 		AtomicInteger buildCount = new AtomicInteger(0);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				buildCount.incrementAndGet();
@@ -59,8 +62,8 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentDisposeMarksDisposed() {
-		BaseComponent comp = new BaseComponent() {
+	void lazyComponentDisposeMarksDisposed() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -72,8 +75,8 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentCannotUseAfterDispose() {
-		BaseComponent comp = new BaseComponent() {
+	void lazyComponentCannotUseAfterDispose() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -84,9 +87,9 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentDoubleDisposeIsSafe() {
+	void lazyComponentDoubleDisposeIsSafe() {
 		AtomicInteger disposeCount = new AtomicInteger(0);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(disposeCount::incrementAndGet));
@@ -100,9 +103,9 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentOwnAddsDisposable() {
+	void lazyComponentOwnAddsDisposable() {
 		AtomicBoolean disposed = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> disposed.set(true)));
@@ -116,9 +119,9 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentDisposalOrderIsLIFO() {
+	void lazyComponentDisposalOrderIsLIFO() {
 		List<String> order = new ArrayList<>();
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> order.add("first")));
@@ -133,9 +136,9 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentFailedBuildDisposesPartialResources() {
+	void lazyComponentFailedBuildDisposesPartialResources() {
 		AtomicBoolean disposed = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> disposed.set(true)));
@@ -148,9 +151,9 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentNullBuildThrowsAndDisposes() {
+	void lazyComponentNullBuildThrowsAndDisposes() {
 		AtomicBoolean disposed = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> disposed.set(true)));
@@ -163,8 +166,8 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentNameBeforeBuild() {
-		BaseComponent comp = new BaseComponent() {
+	void lazyComponentNameBeforeBuild() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -175,8 +178,8 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentNameAfterBuild() {
-		BaseComponent comp = new BaseComponent() {
+	void lazyComponentNameAfterBuild() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -188,10 +191,10 @@ class ComponentContractTest extends SolimEnv {
 	}
 
 	@Test
-	void baseComponentEffectAutoRegisteredInsideBuild() {
+	void lazyComponentEffectAutoRegisteredInsideBuild() {
 		Signal<Integer> sig = Signal.of(0);
 		AtomicInteger runs = new AtomicInteger(0);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				Effect.of(() -> {

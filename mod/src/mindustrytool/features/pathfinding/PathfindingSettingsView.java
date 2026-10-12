@@ -10,13 +10,13 @@ import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for unit pathfinding visualization.
  */
-public class PathfindingSettingsView extends BaseComponent {
+public class PathfindingSettingsView extends Component {
 
     private final PathfindingFeature feature;
 

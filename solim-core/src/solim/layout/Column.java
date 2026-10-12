@@ -18,11 +18,11 @@ import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 
 /** Column layout — vertical Table wrapper. */
 public final class Column
-        implements Component, CellConfig<Column>, ElementConfig<Column>, TableConfig<Column>, GapContainer {
+        extends Component implements CellConfig<Column>, ElementConfig<Column>, TableConfig<Column>, GapContainer {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -40,31 +40,25 @@ public final class Column
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 0f;
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
     private boolean attached = false;
 
     public Column() {
-        this.table = new Table();
+        this(new Table());
+    }
+
+    private Column(Table table) {
+        super(table);
+        this.table = table;
         SolimToken.bind(this.table, this, constraints);
         this.table.name = "solim-column-table";
         this.table.top().left();
         this.table.defaults().top().left();
-        OwnershipContext.register(this);
-        Table parent = AttachmentStack.current();
-        if (parent != null) {
-            AttachmentStack.registerPendingComponent(this, parent);
-        }
     }
 
     public Table table() {
         return table;
     }
 
-    @Override
-    public Element element() {
-        return table;
-    }
 
     @Override
     public PendingCellConfig cellConfig() {
@@ -93,14 +87,12 @@ public final class Column
 
     public Column gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
-            Effect e = Effect.of(() -> {
+        own(Effect.of(() -> {
                 Float g = gapSignal.get();
                 if (g != null) {
                     gap(g);
                 }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
+            }));
         }
         return this;
     }
@@ -214,6 +206,7 @@ public final class Column
     }
 
     public Column children(@Nullable Runnable r) {
+        OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
@@ -221,6 +214,7 @@ public final class Column
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         attachSelf();
         respace();
@@ -228,6 +222,7 @@ public final class Column
     }
   
     public Column children(@Nullable Cons<Element> r) {
+        OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
@@ -235,6 +230,7 @@ public final class Column
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         attachSelf();
         respace();
@@ -254,21 +250,12 @@ public final class Column
         return cell;
     }
 
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
-    }
+
 
     @Override
-    public boolean isDisposed() {
-        return disposed;
+    public Column name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override

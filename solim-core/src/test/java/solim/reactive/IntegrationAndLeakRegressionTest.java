@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.display.Badge;
 import solim.display.Text;
 import solim.input.Button;
@@ -36,7 +36,7 @@ public class IntegrationAndLeakRegressionTest extends SolimEnv {
 		Signal<String> data = Signal.of("initial");
 		AtomicBoolean uiMutated = new AtomicBoolean(false);
 
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				Effect.of(() -> {
@@ -71,7 +71,7 @@ public class IntegrationAndLeakRegressionTest extends SolimEnv {
 	// Phase 20: Multi-Subsystem Integration Tree
 	// ==========================================
 
-	static class ItemRow extends BaseComponent {
+	static class ItemRow extends Component {
 		final String id;
 		final Signal<String> labelText;
 		final Runnable onDelete;
@@ -103,7 +103,7 @@ public class IntegrationAndLeakRegressionTest extends SolimEnv {
 		List<String> deleted = new ArrayList<>();
 
 		// 1. Build app tree
-		BaseComponent app = new BaseComponent() {
+		Component app = new Component() {
 			@Override
 			protected Element build() {
 				Column col = new Column().gap(16f);
@@ -195,7 +195,7 @@ public class IntegrationAndLeakRegressionTest extends SolimEnv {
 
 		for (int i = 0; i < 100; i++) {
 			final int index = i;
-			BaseComponent comp = new BaseComponent() {
+			Component comp = new Component() {
 				@Override
 				protected Element build() {
 					Effect.of(() -> {

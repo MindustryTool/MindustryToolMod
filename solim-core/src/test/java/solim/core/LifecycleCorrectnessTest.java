@@ -1,6 +1,6 @@
 package solim.core;
 
-import solim.runtime.OwnershipContext;
+import solim.runtime.OwnershipScope;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,7 +23,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 	@Test
 	void disposalOrderIsLIFO() {
 		List<String> order = new ArrayList<>();
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> order.add("first")));
@@ -43,7 +43,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 	@Test
 	void errorIsolationDuringDisposal() {
 		List<String> disposed = new ArrayList<>();
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> disposed.add("first")));
@@ -64,7 +64,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 
 	@Test
 	void cannotBuildDisposedComponent() {
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				return new Element();
@@ -79,7 +79,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 	@Test
 	void doubleDisposalIsSafe() {
 		AtomicInteger count = new AtomicInteger(0);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(count::incrementAndGet));
@@ -97,7 +97,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 	@Test
 	void failedBuildDisposesPartialResources() {
 		AtomicBoolean resourceDisposed = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> resourceDisposed.set(true)));
@@ -114,7 +114,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 	@Test
 	void nullBuildReturnsThrowsAndDisposes() {
 		AtomicBoolean resourceDisposed = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> resourceDisposed.set(true)));
@@ -133,7 +133,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 		Signal<Integer> sig = Signal.of(0);
 		AtomicInteger runs = new AtomicInteger(0);
 
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				Effect.of(() -> {
@@ -179,13 +179,14 @@ class LifecycleCorrectnessTest extends SolimEnv {
 	}
 
 	@Test
-	void withoutAutoOwnershipSuppressesRegistration() {
+	void unadoptedScopeResourcesAreDestroyedNotGivenToTheAmbientComponent() {
 		AtomicBoolean childDisposed = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
-				OwnershipContext.withoutAutoOwnership(() -> {
-					new BaseComponent() {
+				OwnershipScope scope = OwnershipScope.open();
+				try {
+					new Component() {
 						@Override
 						protected Element build() {
 							return new Element();
@@ -196,26 +197,33 @@ class LifecycleCorrectnessTest extends SolimEnv {
 							childDisposed.set(true);
 						}
 					};
-				});
+				} finally {
+					scope.close();
+				}
 				return new Element();
 			}
 		};
 
 		comp.element();
+		assertTrue(childDisposed.get(), "A scope destroys what it collected but never adopted");
+
 		comp.dispose();
-		assertFalse(childDisposed.get(), "Component created inside withoutAutoOwnership must not be owned");
+		assertTrue(childDisposed.get(), "The ambient component must not silently inherit the resource");
 	}
 
 	@Test
-	void withoutAutoOwnershipRestoresOnException() {
+	void scopeRestoresAmbientAutoOwnershipOnException() {
 		assertThrows(RuntimeException.class, () -> {
-			OwnershipContext.withoutAutoOwnership(() -> {
+			OwnershipScope scope = OwnershipScope.open();
+			try {
 				throw new RuntimeException("boom");
-			});
+			} finally {
+				scope.close();
+			}
 		});
 
 		AtomicBoolean owned = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
+		Component comp = new Component() {
 			@Override
 			protected Element build() {
 				own(DisposableAction.of(() -> owned.set(true)));
@@ -224,7 +232,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 		};
 		comp.element();
 		comp.dispose();
-		assertTrue(owned.get(), "Auto-ownership must be restored even if withoutAutoOwnership lambda throws");
+		assertTrue(owned.get(), "Auto-ownership must be restored even if the scope block throws");
 	}
 
 	@Test
@@ -263,13 +271,14 @@ class LifecycleCorrectnessTest extends SolimEnv {
 	}
 
 	@Test
-	void nestedComponentBuildInsideWithoutAutoOwnershipManagesOwnOwnership() {
+	void componentBuiltInsideScopeManagesItsOwnResources() {
 		AtomicBoolean effectRan = new AtomicBoolean(false);
 		AtomicBoolean effectDisposed = new AtomicBoolean(false);
-		final BaseComponent[] innerComp = new BaseComponent[1];
+		final Component[] innerComp = new Component[1];
 
-		OwnershipContext.withoutAutoOwnership(() -> {
-			BaseComponent comp = new BaseComponent() {
+		OwnershipScope scope = OwnershipScope.open();
+		try {
+			Component comp = new Component() {
 				@Override
 				protected Element build() {
 					Effect.of(() -> {
@@ -280,8 +289,11 @@ class LifecycleCorrectnessTest extends SolimEnv {
 				}
 			};
 			innerComp[0] = comp;
-			comp.element(); // build occurs inside withoutAutoOwnership
-		});
+			comp.element(); // build occurs inside the open scope
+			scope.adoptInto(comp); // hand the component to itself, as the reconciler does
+		} finally {
+			scope.close();
+		}
 
 		assertTrue(effectRan.get(), "Effect inside nested component build must run");
 		assertFalse(effectDisposed.get(), "Effect should not be disposed yet");
@@ -290,7 +302,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
 		assertTrue(effectDisposed.get(), "Effect should be disposed when component is disposed");
 	}
 
-	static class TestComp extends BaseComponent {
+	static class TestComp extends Component {
 		final String id;
 		final Runnable onDisposed;
 

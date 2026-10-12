@@ -10,10 +10,10 @@ import mindustry.gen.Icon;
 import mindustrytool.components.Loader;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ChatUser;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
-public class ChatUserListView extends BaseComponent {
+public class ChatUserListView extends Component {
 
     private final ChatStore store;
     private final @Nullable ChatService service;
@@ -121,7 +121,7 @@ public class ChatUserListView extends BaseComponent {
         }).element();
     }
 
-    private static class UserItem extends BaseComponent {
+    private static class UserItem extends Component {
         private final ChatUser user;
 
         public UserItem(ChatUser user) {

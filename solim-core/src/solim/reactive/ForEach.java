@@ -6,7 +6,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.*;
 import arc.func.Func;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.SolimToken;
 
@@ -20,7 +20,7 @@ import solim.runtime.StructuralReconciler;
  * Keyed reactive list component that efficiently manages child components
  * without rebuilding unchanged items.
  */
-public final class ForEach<T> extends BaseComponent
+public final class ForEach<T> extends Component
         implements CellConfig<ForEach<T>>, ElementConfig<ForEach<T>>, TableConfig<ForEach<T>> {
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -64,7 +64,7 @@ public final class ForEach<T> extends BaseComponent
 
     @Override
     public ForEach<T> name(@Nullable String name) {
-        super.name(name);
+        setName(name);
         return this;
     }
 

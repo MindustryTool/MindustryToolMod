@@ -1,4 +1,4 @@
-package solim.runtime;
+package solim.core;
 
 import arc.util.Nullable;
 

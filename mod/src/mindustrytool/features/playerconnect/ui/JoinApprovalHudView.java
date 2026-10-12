@@ -10,12 +10,12 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.models.JoinRequest;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.overlay.Hud;
 import solim.core.Units;
 
-public class JoinApprovalHudView extends BaseComponent {
+public class JoinApprovalHudView extends Component {
 
     private final PlayerConnectFeature feature;
     private @Nullable Hud hud;

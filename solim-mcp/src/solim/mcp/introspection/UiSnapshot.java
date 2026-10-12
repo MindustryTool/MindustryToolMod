@@ -157,7 +157,7 @@ public final class UiSnapshot {
 
 	/** Scans ambient static context stacks for in-flight components, computeds, and effects. */
 	private static void scanAmbientContexts(List<ReactiveRef> refs) {
-		scanDeque("solim.runtime.OwnershipContext", "stack", refs);
+		scanDeque("solim.core.OwnershipContext", "stack", refs);
 		scanDeque("solim.runtime.ReactiveContext", "stack", refs);
 		scanPendingComponents(refs);
 	}

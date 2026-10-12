@@ -1,5 +1,7 @@
 package solim;
 
+import arc.Events;
+
 import arc.graphics.Color;
 import arc.func.Cons;
 import solim.graphics.CircleDrawable;
@@ -420,11 +422,15 @@ public final class UI {
     }
 
     public static <E, T> Signal<T> createSignal(Class<E> eventType, Prov<T> Prov) {
-        return EventsUtil.createSignal(eventType, Prov);
+        Signal<T> signal = Signal.of(Prov.get());
+        Events.on(eventType, e -> signal.set(Prov.get()));
+        return signal;
     }
 
     public static <E, T> Signal<T> createSignal(Class<E> eventType, Func<E, T> mapper, T initial) {
-        return EventsUtil.createSignal(eventType, mapper, initial);
+        Signal<T> signal = Signal.of(initial);
+        Events.on(eventType, e -> signal.set(mapper.get(e)));
+        return signal;
     }
 
     public static <T> Signal<T> createSignal(Func<Runnable, Disposable> callbackRegistrar, Prov<T> Prov) {

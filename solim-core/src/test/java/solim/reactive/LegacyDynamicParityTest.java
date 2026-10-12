@@ -16,7 +16,7 @@ import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Nullable;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
@@ -52,7 +52,7 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
     // (Func<T, Component> factory, AttachmentStack.isolate, single cell).
     // ------------------------------------------------------------------
 
-    static final class LegacyDynamic<T> extends BaseComponent
+    static final class LegacyDynamic<T> extends Component
             implements CellConfig<LegacyDynamic<T>>, TableConfig<LegacyDynamic<T>>, ElementConfig<LegacyDynamic<T>> {
         private static final Object SENTINEL = new Object();
         private final Table container = new Table();
@@ -190,7 +190,7 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
     // Harness: stubs, structure signatures and parity assertions.
     // ------------------------------------------------------------------
 
-    static final class Leaf extends BaseComponent {
+    static final class Leaf extends Component {
         Leaf(String name) {
             name(name);
         }

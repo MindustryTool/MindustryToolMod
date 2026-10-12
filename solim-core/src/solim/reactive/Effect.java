@@ -8,15 +8,22 @@ import java.util.Set;
 import arc.func.Cons;
 import arc.func.Prov;
 import solim.core.Disposable;
+import solim.core.DisposableOwner;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.core.SchedulableEffect;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
+import solim.runtime.OwnershipScope;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
-/** Reactive effect with auto-tracking and cleanup. */
-public final class Effect implements ReactiveObserver, Disposable, SchedulableEffect {
+/** Reactive effect with auto-tracking and cleanup.
+ *
+ * <p>Fail-fast by design: an exception thrown by the body is <b>not</b> caught or logged here.
+ * It propagates to whoever triggered the run (the caller of {@code Effect.of}, or the
+ * dispatcher flush) so a broken binding fails loudly instead of silently going dead.
+ */
+public final class Effect implements ReactiveObserver, DisposableOwner, SchedulableEffect {
 
 	public interface Cleanup {
 		void add(Runnable runnable);
@@ -27,8 +34,12 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 	private final Cons<Cleanup> cleanupConsumer;
 
 	private final Set<ReactiveSource> dependencies = new LinkedHashSet<>();
+	/** Staging buffer for dependency collection, cleared and refilled on every run. */
+	private final Set<ReactiveSource> staging = new LinkedHashSet<>();
 	private Set<ReactiveSource> collecting = null;
 	private final List<Runnable> cleanups = new ArrayList<>();
+	/** Resources created by the most recent body run; released before the next one. */
+	private final List<Disposable> owned = new ArrayList<>();
 
 	private boolean disposed = false;
 	private boolean running = false;
@@ -97,9 +108,15 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 		// run previous cleanups before re-running
 		runCleanups();
 
-		Set<ReactiveSource> newDeps = new LinkedHashSet<>();
+		Set<ReactiveSource> newDeps = staging;
+		newDeps.clear();
 		collecting = newDeps;
 		ReactiveContext.push(this);
+		// The effect body runs at flush time when no component owns it, so resources it
+		// creates would otherwise leak. The scope adopts them into this effect; they are
+		// released with the effect, not before the next run — a re-running effect may own
+		// live UI that must survive until the effect itself dies.
+		OwnershipScope scope = OwnershipScope.open();
 		Runnable returned = null;
 		try {
 			if (runnable != null) {
@@ -110,17 +127,36 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 				CleanupImpl ci = new CleanupImpl();
 				cleanupConsumer.get(ci);
 			}
-		} catch (Throwable e) {
-			Log.err("[Effect] error", e);
+			scope.adoptInto(this);
 		} finally {
 			ReactiveContext.pop();
 			collecting = null;
 			running = false;
+			scope.close();
 		}
 		if (returned != null) {
 			cleanups.add(returned);
 		}
 		updateDependencies(newDeps);
+	}
+
+	/** Takes responsibility for a resource created by the effect body. */
+	@Override
+	public void adopt(Disposable resource) {
+		if (resource != null && !disposed) {
+			owned.add(resource);
+		}
+	}
+
+	private void disposeOwned() {
+		for (int i = owned.size() - 1; i >= 0; i--) {
+			try {
+				owned.get(i).dispose();
+			} catch (Throwable t) {
+				Log.err("[Effect] error disposing body resource", t);
+			}
+		}
+		owned.clear();
 	}
 
 	private void runCleanups() {
@@ -135,16 +171,22 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 		}
 	}
 
+	/**
+	 * Diffs the staging buffer against the recorded dependency set and reconciles subscriptions.
+	 *
+	 * <p>Allocation-free when nothing changed, which is the common case for a stable binding:
+	 * the membership tests below never reach {@code removeObserver}/{@code addObserver}.
+	 */
 	private void updateDependencies(Set<ReactiveSource> newDeps) {
-		Set<ReactiveSource> toRemove = new LinkedHashSet<>(dependencies);
-		toRemove.removeAll(newDeps);
-		for (ReactiveSource dep : toRemove) {
-			dep.removeObserver(this);
+		for (ReactiveSource dep : dependencies) {
+			if (!newDeps.contains(dep)) {
+				dep.removeObserver(this);
+			}
 		}
-		Set<ReactiveSource> toAdd = new LinkedHashSet<>(newDeps);
-		toAdd.removeAll(dependencies);
-		for (ReactiveSource dep : toAdd) {
-			dep.addObserver(this);
+		for (ReactiveSource dep : newDeps) {
+			if (!dependencies.contains(dep)) {
+				dep.addObserver(this);
+			}
 		}
 		dependencies.clear();
 		dependencies.addAll(newDeps);
@@ -194,6 +236,7 @@ public final class Effect implements ReactiveObserver, Disposable, SchedulableEf
 		}
 		dependencies.clear();
 		runCleanups();
+		disposeOwned();
 	}
 
 	public boolean isDisposed() {

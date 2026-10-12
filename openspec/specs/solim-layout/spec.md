@@ -7,8 +7,6 @@ Mechanical merge of 9 specs per change `spec-domain-merge` (stage 4 framework-ui
 
 **Source: solim-layout**
 
-TBD - created by archiving change create-solim-core. Update Purpose after archive.
-
 ### Requirement: Column and Row with flex-like modifiers
 `Column` and `Row` SHALL be vertical/horizontal layout containers supporting fluent configuration modifiers `gap(int/float)`, `gap(Readable<Float>)`, `align(Align)` (START/CENTER/END/STRETCH), `padding(int)`, and `grow()`, followed by `.children(Runnable)` for declaring children. `Row` and `Column` SHALL apply gap as directional sibling padding along their primary axis (horizontal `padLeft` for `Row`, vertical `padTop` for `Column`) strictly to subsequent visible siblings, with zero gap padding on the leading child, zero gap padding on trailing edges, and zero gap padding on the cross-axis. `Row` and `Column` SHALL default children to top-left alignment (see Top-left default child alignment).
 
@@ -227,8 +225,6 @@ Exposes contextual metrics from `ReactiveGrid` to child item component factories
 
 **Source: modifier-clarity**
 
-TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
-
 ### Requirement: Modifier categories are non-overlapping and clearly defined
 Every fluent modifier SHALL target exactly one of: (A) the component's own Arc Element via `ElementConfig`, (B) the component's Table container via `TableConfig`, or (C) the component's cell in its parent layout via `CellConfig`. Each mixin SHALL provide only methods for its domain. `CellConfig` SHALL provide only parent-cell methods (`grow*`, `min/max*`, `margin*`). `TableConfig` SHALL provide inner container insets via `padding*`. `cellPadding` and `TableConfig.margin` SHALL NOT exist. Element-targeted margin/padding overloads that dispatch via `instanceof Table` SHALL NOT exist.
 
@@ -274,8 +270,6 @@ Element-targeted overloads of `margin`/`padding` that check `instanceof Table` t
 
 **Source: pending-cell-config**
 
-TBD - created by archiving change refactor-element-config-mixins. Update Purpose after archive.
-
 ### Requirement: PendingCellConfig stores pending parent-cell values
 `PendingCellConfig` SHALL store pending values for: `prefWidth`, `prefHeight`, `minWidth`, `minHeight`, `maxWidth`, `maxHeight` (all `Readable<Float>`), `growX`, `growY` (boolean), `padTop`, `padLeft`, `padBottom`, `padRight` (all `Readable<Float>`), and `align` (Integer).
 
@@ -291,7 +285,7 @@ TBD - created by archiving change refactor-element-config-mixins. Update Purpose
 - **THEN** `cell.width(100f)` and `cell.growX()` are called
 
 ### Requirement: PendingCellConfig provides apply helpers for immediate application
-`PendingCellConfig` SHALL provide `applyGrowToParentCell(Element)`, `applyMarginToParentCell(Element)`, `applyAlignToParentCell(Element)`, and `applySizeToParentCell(Element)` for immediate application when the element is already attached to a parent Table. `CellConfig` sizing methods (`minWidth`, `minHeight`, `maxWidth`, `maxHeight`) SHALL immediately invoke `applySizeToParentCell` so constraints take effect on the live Arc `Cell` when invoked on an already-attached component.
+`PendingCellConfig` SHALL provide `applyGrowToParentCell(Element)`, `applyMarginToParentCell(Element)`, `applyAlignToParentCell(Element)`, and per-property size appliers (`applyPrefWidth`, `applyPrefHeight`, `applyMinWidth`, `applyMinHeight`, `applyMaxWidth`, `applyMaxHeight`) for immediate application when the element is already attached to a parent Table. Each per-property applier SHALL read exactly one constraint `Readable`, so that an `Effect` created by a reactive `CellConfig` sizing method tracks only that constraint. `CellConfig` sizing methods (`minWidth`, `minHeight`, `maxWidth`, `maxHeight`) SHALL immediately apply their own constraint to the live Arc `Cell` when invoked on an already-attached component.
 
 #### Scenario: Applying grow to attached element
 - **WHEN** `applyGrowToParentCell(element)` is called and element's parent is a Table
@@ -304,6 +298,14 @@ TBD - created by archiving change refactor-element-config-mixins. Update Purpose
 #### Scenario: Reactive sizing modifier applied to attached element
 - **WHEN** `minWidth(Readable<Float>)` is called on an already-attached component
 - **THEN** the initial minimum width is applied immediately to the parent Cell, and an Effect is registered to keep the parent Cell in sync whenever the readable value changes
+
+#### Scenario: Reactive sizing tracks only its own constraint
+- **WHEN** `minWidth(Readable<Float>)` and `maxHeight(Readable<Float>)` are both bound reactively and only the `maxHeight` source changes
+- **THEN** the `minWidth` Effect does not re-run, and the parent Cell's layout hierarchy is invalidated once rather than once per registered binding
+
+#### Scenario: Reactive margin tracks only its own edge
+- **WHEN** `paddingLeft(Readable<Float>)` is bound reactively and only the `paddingTop` source changes
+- **THEN** the `paddingLeft` Effect does not re-run
 
 ### Requirement: PendingCellConfig provides find helper
 `PendingCellConfig` SHALL provide a static `find(Object)` method that resolves a `PendingCellConfig` from an object chain: returns the object if it's a `PendingCellConfig`, calls `cellConfig()` if it's a `CellConfig`, or inspects `SolimToken` if it's an `Element`. Untyped legacy `userObject` recursion SHALL NOT be performed.
@@ -470,8 +472,6 @@ The `Units` class SHALL provide access to full viewport dimensions in scene coor
 - **THEN** `Units.width()` and `Units.height()` return computed signals equal to 100% of dynamic viewport width and height
 
 **Source: table-config-mixin**
-
-TBD - created by archiving change refactor-element-config-mixins. Update Purpose after archive.
 
 ### Requirement: TableConfig is a mixin interface with default methods
 `TableConfig<SELF>` SHALL be a public interface in `solim.modifier` with generic parameter `<SELF extends TableConfig<SELF>>`. Implementing components SHALL provide `Table table()` to supply their underlying Arc Table.

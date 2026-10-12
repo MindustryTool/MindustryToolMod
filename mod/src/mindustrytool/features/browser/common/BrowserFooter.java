@@ -7,14 +7,14 @@ import arc.scene.Element;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.gen.Icon;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
 import mindustrytool.components.WebStyles;
 /**
  * Footer with Previous/Next buttons, direct page jump, and external upload
  * shortcut. Pages are zero-based internally and displayed one-based.
  */
-public class BrowserFooter extends BaseComponent {
+public class BrowserFooter extends Component {
 
     private final BrowserState<?> state;
     private final String uploadUrl;

@@ -15,14 +15,13 @@ import solim.layout.Divider;
 import solim.layout.Row;
 import solim.layout.Spacer;
 import solim.layout.Direction;
-import solim.runtime.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
-class BaseComponentAutoAttachTest extends SolimEnv {
+class lazyComponentAutoAttachTest extends SolimEnv {
 
 
-    static class Probe extends BaseComponent {
+    static class Probe extends Component {
         @Override
         protected Element build() {
             return new Element();

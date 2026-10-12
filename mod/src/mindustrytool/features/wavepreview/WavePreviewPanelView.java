@@ -12,13 +12,13 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
 /**
  * Solim HUD panel view injected into the vanilla waves table.
  */
-public class WavePreviewPanelView extends BaseComponent {
+public class WavePreviewPanelView extends Component {
 
     private final WavePreviewFeature feature;
 

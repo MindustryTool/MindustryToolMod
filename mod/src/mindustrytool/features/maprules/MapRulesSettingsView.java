@@ -9,13 +9,13 @@ import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
 /**
  * Settings view for Map Rules feature.
  */
-public class MapRulesSettingsView extends BaseComponent {
+public class MapRulesSettingsView extends Component {
 
     private final MapRulesFeature feature;
 

@@ -1,5 +1,6 @@
 package solim.reactive;
 
+import solim.test.CollectingOwner;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -13,7 +14,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
@@ -272,14 +273,14 @@ class MapSignalTest extends SolimEnv {
 
     @Test
     void doesNotRegisterWithOwnershipContext() {
-        List<Object> registered = new ArrayList<>();
-        OwnershipContext.push(registered::add);
+        CollectingOwner registered = new CollectingOwner();
+        OwnershipContext.push(registered);
         try {
             int before = OwnershipContext.size();
             MapSignal<String, Integer> map = MapSignal.of();
             map.readable("k");
             map.readable("k").peek();
-            assertTrue(registered.isEmpty(), "MapSignal must not auto-register with OwnershipContext");
+            assertTrue(registered.collected().isEmpty(), "MapSignal must not auto-register with OwnershipContext");
             assertEquals(before, OwnershipContext.size());
         } finally {
             OwnershipContext.pop();
@@ -292,8 +293,8 @@ class MapSignalTest extends SolimEnv {
         MapSignal<String, String> map = MapSignal.of();
         map.put("user1", "Alice");
 
-        List<Object> registered = new ArrayList<>();
-        OwnershipContext.push(registered::add);
+        CollectingOwner registered = new CollectingOwner();
+        OwnershipContext.push(registered);
         Effect transientEffect;
         try {
             transientEffect = Effect.of(() -> map.readable("user1").get());

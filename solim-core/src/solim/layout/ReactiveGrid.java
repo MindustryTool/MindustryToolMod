@@ -1,7 +1,6 @@
 package solim.layout;
 import solim.modifier.CellConfig;
 
-import arc.Core;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -10,11 +9,11 @@ import java.util.*;
 import arc.func.Func2;
 import arc.func.Func;
 import arc.func.Prov;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 import solim.reactive.Computed;
@@ -30,7 +29,7 @@ import solim.modifier.TableConfig;
  * Keyed reactive grid that reflows existing component cells when column count
  * changes and structurally reconciles items when the item collection changes.
  */
-public final class ReactiveGrid<T> extends BaseComponent
+public final class ReactiveGrid<T> extends Component
         implements CellConfig<ReactiveGrid<T>>, ElementConfig<ReactiveGrid<T>>, TableConfig<ReactiveGrid<T>>,
         GapContainer {
     private final Signal<Float> tableWidth = Signal.of(0f);
@@ -219,7 +218,7 @@ public final class ReactiveGrid<T> extends BaseComponent
 
     @Override
     public ReactiveGrid<T> name(@Nullable String name) {
-        super.name(name);
+        setName(name);
         return this;
     }
 
@@ -232,6 +231,9 @@ public final class ReactiveGrid<T> extends BaseComponent
     protected Element build() {
         table.top().left();
 
+        // Reconcile synchronously on every path, matching VirtualList. Branching on whether the
+        // table is already attached to a scene made the first render and later updates behave
+        // differently for no reason a caller could observe or rely on.
         Effect.of(() -> {
             Iterable<T> itemList = items.get();
             int cols = resolvedColumnCount.get();
@@ -239,21 +241,20 @@ public final class ReactiveGrid<T> extends BaseComponent
             if (factory == null) {
                 return;
             }
-            if (table.getScene() != null && Core.app != null) {
-                Core.app.post(() -> {
-                    if (!isDisposed()) {
-                        updateItemsAndReflow(itemList, cols, factory);
-                    }
-                });
-            } else {
-                updateItemsAndReflow(itemList, cols, factory);
+            if (isDisposed()) {
+                return;
             }
+            updateItemsAndReflow(itemList, cols, factory);
         });
 
         return table;
     }
 
     private void updateItemsAndReflow(Iterable<T> itemList, int cols, Func2<T, GridItemContext, Component> factory) {
+        if (isDisposed()) {
+            // Disposed between invalidation and execution: mount nothing and mutate nothing.
+            return;
+        }
         reconciler.reconcile(itemList, this::extractKey, item -> factory.get(item, context));
         reflow(cols);
     }

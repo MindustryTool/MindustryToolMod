@@ -7,6 +7,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import mindustry.game.EventType.Trigger;
 import solim.core.SchedulableEffect;
+import solim.core.SolimAssert;
 
 /**
  * Internal single-threaded dispatcher that batches and deduplicates reactive effect

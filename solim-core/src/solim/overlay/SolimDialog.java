@@ -18,7 +18,7 @@ import mindustry.ui.dialogs.BaseDialog;
 import java.util.ArrayList;
 import java.util.List;
 import arc.func.Prov;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.DisposableAction;
@@ -33,12 +33,10 @@ import solim.reactive.Signal;
  * providing full declarative configuration, reactive signal creation, and clean
  * lifecycle management.
  */
-public class SolimDialog implements Component {
+public class SolimDialog extends Component {
 
     private final BaseDialog wrapped;
-    private final List<Disposable> disposables = new ArrayList<>();
     private boolean isShown = false;
-    private boolean isDisposed = false;
     private @Nullable Runnable contentBuilder;
     private boolean contentBuilt = false;
 
@@ -53,7 +51,12 @@ public class SolimDialog implements Component {
     }
 
     public SolimDialog(String title) {
-        wrapped = new BaseDialog(title != null ? title : "");
+        this(new BaseDialog(title != null ? title : ""));
+    }
+
+    private SolimDialog(BaseDialog wrapped) {
+        super(wrapped);
+        this.wrapped = wrapped;
         wrapped.name = name;
         wrapped.setFillParent(true);
     }
@@ -81,7 +84,7 @@ public class SolimDialog implements Component {
     public void ensureContentBuilt() {
         if (!contentBuilt && contentBuilder != null) {
             contentBuilt = true;
-            BaseComponent comp = new BaseComponent() {
+            Component comp = new Component() {
                 @Override
                 protected Element build() {
                     AttachmentStack.push(wrapped.cont);
@@ -93,7 +96,7 @@ public class SolimDialog implements Component {
                     return wrapped.cont;
                 }
             };
-            registerDisposable(comp);
+            own(comp);
             comp.element();
         }
     }
@@ -135,12 +138,15 @@ public class SolimDialog implements Component {
         return this;
     }
 
-    /** Registers a disposable resource with this dialog's lifecycle. */
+    /**
+     * Registers a resource with this dialog's lifecycle.
+     *
+     * <p>The dialog inherits ownership from {@link Component}; this stays as the public entry
+     * point because application code is not permitted to call {@code own(...)} directly, and a
+     * subscription a dialog created is the dialog's to dispose.
+     */
     public <T extends Disposable> T registerDisposable(T disposable) {
-        if (disposable != null) {
-            disposables.add(disposable);
-        }
-        return disposable;
+        return own(disposable);
     }
 
     /**
@@ -148,10 +154,7 @@ public class SolimDialog implements Component {
      * dialog is disposed.
      */
     public <T> Disposable listen(Class<T> eventType, Cons<T> listener) {
-        Events.on(eventType, listener);
-        Disposable d = DisposableAction.of(() -> Events.remove(eventType, listener));
-        disposables.add(d);
-        return d;
+        return super.listen(eventType, listener);
     }
 
     /**
@@ -162,8 +165,7 @@ public class SolimDialog implements Component {
     public <T> Signal<T> createSignal(Func<Runnable, Disposable> registrar, Prov<T> Prov) {
         Signal<T> signal = Signal.of(Prov.get());
         if (registrar != null) {
-            Disposable d = registrar.get(() -> signal.set(Prov.get()));
-            registerDisposable(d);
+            own(registrar.get(() -> signal.set(Prov.get())));
         }
         return signal;
     }
@@ -207,10 +209,6 @@ public class SolimDialog implements Component {
         return wrapped.buttons;
     }
 
-    @Override
-    public Element element() {
-        return wrapped;
-    }
 
     public SolimDialog name(String name) {
         this.name = name;
@@ -285,12 +283,6 @@ public class SolimDialog implements Component {
         return isShown;
     }
 
-    public boolean isDisposed() {
-        return isDisposed;
-    }
-
-    protected void onDispose() {
-    }
 
     public SolimDialog rounded(int radius) {
         RoundedHelper.getOrCreateRounded(wrapped.cont, radius);
@@ -308,12 +300,11 @@ public class SolimDialog implements Component {
     public SolimDialog rounded(int radius, @Nullable Readable<Color> color) {
         RoundedDrawable rd = RoundedHelper.getOrCreateRounded(wrapped.cont, radius);
         if (color != null) {
-            Effect e = Effect.of(() -> {
+            Effect.of(() -> {
                 Color c = color.get();
                 if (c != null)
                     rd.fillColor(c);
             });
-            registerDisposable(e);
         }
         return this;
     }
@@ -327,11 +318,10 @@ public class SolimDialog implements Component {
     public SolimDialog border(float stroke, @Nullable Readable<Color> color) {
         RoundedDrawable rd = RoundedHelper.getOrCreateRounded(wrapped.cont, 8);
         if (color != null) {
-            Effect e = Effect.of(() -> {
+            Effect.of(() -> {
                 Color c = color.get();
                 rd.border(stroke, c != null ? c : Color.white);
             });
-            registerDisposable(e);
         } else {
             rd.border(stroke, Color.white);
         }
@@ -339,20 +329,7 @@ public class SolimDialog implements Component {
     }
 
     @Override
-    public void dispose() {
-        if (isDisposed) {
-            return;
-        }
-        isDisposed = true;
+    protected void onDispose() {
         hide();
-        onDispose();
-        for (Disposable d : disposables) {
-            try {
-                d.dispose();
-            } catch (Throwable t) {
-                Log.err("Error disposing resource in SolimDialog", t);
-            }
-        }
-        disposables.clear();
     }
 }

@@ -168,11 +168,11 @@ class HudComponentTest extends SolimEnv {
 		hud.dispose();
 		x.set(150f);
 
-		assertEquals(40f, hud.element().x, 0.01f);
+		assertEquals(40f, hud.root().x, 0.01f);
 
 		// Idempotent: second dispose is safe.
 		hud.dispose();
-		assertEquals(40f, hud.element().x, 0.01f);
+		assertEquals(40f, hud.root().x, 0.01f);
 
 		// Drain any effect queued while the hud was alive; all effects are
 		// disposed now, so a flush runs nothing and leaves the queue empty.

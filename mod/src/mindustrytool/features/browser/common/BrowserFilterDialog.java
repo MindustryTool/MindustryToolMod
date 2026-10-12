@@ -27,7 +27,7 @@ import mindustrytool.models.response.Sort;
 import mindustrytool.models.response.TagCategory;
 import mindustrytool.models.response.TagData;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.layout.Direction;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
@@ -53,7 +53,7 @@ public class BrowserFilterDialog extends SolimDialog {
         dialog().background(colored(Color.black, Tex.whiteui));
     }
 
-    private class FilterContent extends BaseComponent {
+    private class FilterContent extends Component {
         private final BrowserState<?> state;
         private final boolean useBlocks;
         private final boolean usePlanets;

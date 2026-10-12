@@ -11,16 +11,13 @@ import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
 import solim.reactive.Signal;
 
 /** Checkbox widget bound to Signal&lt;Boolean&gt;. */
-public final class Checkbox implements Component, ElementConfig<Checkbox>, CellConfig<Checkbox> {
+public final class Checkbox extends Component implements ElementConfig<Checkbox>, CellConfig<Checkbox> {
 
 	private final CheckBox checkBox;
 	private final PendingCellConfig constraints = new PendingCellConfig();
-	private @Nullable TwoWayBinding<Boolean> binding;
-	private boolean disposed = false;
 
 	@Override
 	public PendingCellConfig cellConfig() {
@@ -32,13 +29,16 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 	}
 
 	public Checkbox(String label, Signal<Boolean> signal, @Nullable CheckBoxStyle style) {
-		this.checkBox = style != null
-				? new CheckBox(label != null ? label : "", style)
-				: new CheckBox(label != null ? label : "");
+		this(create(label, style), signal);
+	}
+
+	private Checkbox(CheckBox checkBox, Signal<Boolean> signal) {
+		super(checkBox);
+		this.checkBox = checkBox;
 		checkBox.top().left();
 		checkBox.name = "solim-checkbox-checkBox";
 		checkBox.setChecked(signal.peek());
-		this.binding = new TwoWayBinding<>(
+		own(new TwoWayBinding<>(
 			signal,
 			checkBox::isChecked,
 			checkBox::setChecked,
@@ -47,8 +47,13 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 				// Arc CheckBox.changed() does not return a cleanup handle; cannot unregister
 				return DisposableAction.empty();
 			}
-		);
-		OwnershipContext.register(this);
+		));
+	}
+
+	private static CheckBox create(String label, @Nullable CheckBoxStyle style) {
+		return style != null
+				? new CheckBox(label != null ? label : "", style)
+				: new CheckBox(label != null ? label : "");
 	}
 
 	public Checkbox(String label, boolean initial, Cons<Boolean> onChanged) {
@@ -56,18 +61,18 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 	}
 
 	public Checkbox(String label, boolean initial, @Nullable CheckBoxStyle style, Cons<Boolean> onChanged) {
-		this.checkBox = style != null
-				? new CheckBox(label != null ? label : "", style)
-				: new CheckBox(label != null ? label : "");
+		this(create(label, style), initial, onChanged);
+	}
+
+	private Checkbox(CheckBox checkBox, boolean initial, @Nullable Cons<Boolean> onChanged) {
+		super(checkBox);
+		this.checkBox = checkBox;
 		checkBox.top().left();
 		checkBox.name = "solim-checkbox-checkBox";
 		checkBox.setChecked(initial);
-		checkBox.changed(() -> {
-			if (onChanged != null) {
-				onChanged.get(checkBox.isChecked());
-			}
-		});
-		OwnershipContext.register(this);
+		if (onChanged != null) {
+			checkBox.changed(() -> onChanged.get(checkBox.isChecked()));
+		}
 	}
 
 	public static Checkbox of(String label, Signal<Boolean> signal) {
@@ -82,13 +87,8 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 		return checkBox;
 	}
 
-	@Override
-	public CheckBox element() {
-		return checkBox;
-	}
-
 	public Checkbox name(String name) {
-		checkBox.name = name;
+		setName(name);
 		return this;
 	}
 
@@ -104,23 +104,6 @@ public final class Checkbox implements Component, ElementConfig<Checkbox>, CellC
 			checkBox.getLabelCell().growX().minWidth(0f);
 		}
 		return this;
-	}
-
-	@Override
-	public void dispose() {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-		if (binding != null) {
-			binding.dispose();
-			binding = null;
-		}
-	}
-
-	@Override
-	public boolean isDisposed() {
-		return disposed;
 	}
 
     @Override

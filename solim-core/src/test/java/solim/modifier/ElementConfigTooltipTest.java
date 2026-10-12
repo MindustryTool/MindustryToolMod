@@ -1,5 +1,7 @@
 package solim.modifier;
 
+
+import solim.core.Component;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -118,12 +120,16 @@ class ElementConfigTooltipTest extends SolimEnv {
         return null;
     }
 
-    private static final class TestTarget implements ElementConfig<TestTarget> {
-        private final Element element = new Table();
+    private static final class TestTarget extends Component implements ElementConfig<TestTarget> {
+
+        TestTarget() {
+            super(new Table());
+        }
 
         @Override
-        public Element element() {
-            return element;
+        public TestTarget name(String name) {
+            setName(name);
+            return this;
         }
 
         @Override

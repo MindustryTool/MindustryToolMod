@@ -16,34 +16,20 @@ import solim.core.Component;
 
 public class StructuralReconcilerRegressionTest {
 
-	static class ReconcilerTestComponent implements Component {
+	static class ReconcilerTestComponent extends Component {
 		final String key;
-		boolean disposed = false;
 		int buildCount = 0;
-		Element element;
 
 		ReconcilerTestComponent(String key) {
 			this.key = key;
 		}
 
 		@Override
-		public Element element() {
-			if (element == null) {
-				buildCount++;
-				element = new Element();
-				element.name = key;
-			}
+		protected Element build() {
+			buildCount++;
+			Element element = new Element();
+			element.name = key;
 			return element;
-		}
-
-		@Override
-		public void dispose() {
-			disposed = true;
-		}
-
-		@Override
-		public boolean isDisposed() {
-			return disposed;
 		}
 	}
 

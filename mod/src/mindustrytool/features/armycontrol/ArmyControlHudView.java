@@ -8,14 +8,14 @@ import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
 
 /**
  * Standalone persistent draggable HUD view for ArmyControl when display mode is set to HUD.
  */
-public class ArmyControlHudView extends BaseComponent {
+public class ArmyControlHudView extends Component {
 
     private final ArmyControlFeature feature;
     private @Nullable Hud hud;

@@ -83,7 +83,7 @@ class HudDisposalTest extends SolimEnv {
 	@Test
 	void resizeListenerUnregisteredOnDispose() {
 		Hud hud = new Hud();
-		hud.element().setSize(200f, 100f);
+		hud.root().setSize(200f, 100f);
 		hud.position(800f, 600f);
 		hud.keepInScreen();
 		assertFalse(hud.isDisposed());
@@ -91,18 +91,17 @@ class HudDisposalTest extends SolimEnv {
 		mockGraphics.width = 800;
 		mockGraphics.height = 600;
 		Events.fire(new ResizeEvent());
-		assertEquals(600f, hud.element().x, 0.01f, "Resize must clamp while alive");
-		assertEquals(500f, hud.element().y, 0.01f);
+		assertEquals(600f, hud.root().x, 0.01f, "Resize must clamp while alive");
+		assertEquals(500f, hud.root().y, 0.01f);
 
 		hud.dispose();
 		assertTrue(hud.isDisposed());
 
-		hud.position(700f, 550f);
 		mockGraphics.width = 640;
 		mockGraphics.height = 480;
 		Events.fire(new ResizeEvent());
-		assertEquals(700f, hud.element().x, 0.01f, "Resize must not react after dispose");
-		assertEquals(550f, hud.element().y, 0.01f);
+		assertEquals(600f, hud.root().x, 0.01f, "Resize must not react after dispose");
+		assertEquals(500f, hud.root().y, 0.01f);
 
 		assertDoesNotThrow(hud::dispose, "Double dispose must be safe");
 		assertTrue(hud.isDisposed());

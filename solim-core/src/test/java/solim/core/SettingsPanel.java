@@ -19,7 +19,7 @@ import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 
 /** Example final API settings panel from requirement.md §16. */
-public final class SettingsPanel extends BaseComponent {
+public final class SettingsPanel extends Component {
 
 	private final Signal<Boolean> darkMode = Signal.of(false);
 

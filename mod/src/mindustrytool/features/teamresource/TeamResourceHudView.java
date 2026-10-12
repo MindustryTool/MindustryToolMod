@@ -21,8 +21,10 @@ import mindustry.type.UnitType;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
-import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.core.EventsUtil;
+import solim.core.Component;
+import solim.core.EventsUtil;
 import solim.layout.Card;
 import solim.overlay.Hud;
 import solim.reactive.Computed;
@@ -33,7 +35,7 @@ import solim.reactive.Signal;
  * Fully reactive and declarative Team Resource HUD overlay. Uses Solim HUD,
  * reactive bindings for scale, opacity, dimensions, position, and core stats.
  */
-public class TeamResourceHudView extends BaseComponent {
+public class TeamResourceHudView extends Component {
 
     private final TeamResourceFeature feature;
     private final TeamResourceState state;
@@ -51,7 +53,7 @@ public class TeamResourceHudView extends BaseComponent {
         Readable<Float> iconSize = scale.map(s -> unit(6) * (s != null ? s : 1f));
         Readable<Boolean> expanded = feature.expandedConfig.signal();
 
-        Signal<Float> screenWidth = createSignal(ResizeEvent.class, TeamResourceFeature::getSceneWidth);
+        Signal<Float> screenWidth = EventsUtil.createSignal(this, ResizeEvent.class, TeamResourceFeature::getSceneWidth);
 
         Readable<Float> hudWidth = new Computed<>(() -> {
             Float sw = screenWidth.get();

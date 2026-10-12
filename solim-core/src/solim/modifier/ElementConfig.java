@@ -9,8 +9,8 @@ import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
+import solim.core.Component;
 import solim.overlay.Hud;
-import solim.runtime.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -80,7 +80,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (w != null)
                     width(w);
             });
-            OwnershipContext.register(e);
+            ModifierOwnership.own(this, e);
         }
         return self();
     }
@@ -119,7 +119,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (h != null)
                     height(h);
             });
-            OwnershipContext.register(e);
+            ModifierOwnership.own(this, e);
         }
         return self();
     }
@@ -171,7 +171,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (v != null)
                     x(v);
             });
-            OwnershipContext.register(e);
+            ModifierOwnership.own(this, e);
         }
         return self();
     }
@@ -195,7 +195,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (v != null)
                     y(v);
             });
-            OwnershipContext.register(e);
+            ModifierOwnership.own(this, e);
         }
         return self();
     }
@@ -238,7 +238,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 Boolean v = visible.get();
                 visible(Boolean.TRUE.equals(v));
             });
-            OwnershipContext.register(e);
+            ModifierOwnership.own(this, e);
         }
         return self();
     }
@@ -265,7 +265,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (v != null)
                     opacity(v);
             });
-            OwnershipContext.register(e);
+            ModifierOwnership.own(this, e);
         }
         return self();
     }
@@ -361,7 +361,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return tooltip(t -> {
             Label label = new Label("");
             Effect e = Effect.of(() -> label.setText(tip.get() != null ? tip.get() : ""));
-            OwnershipContext.register(e);
+            ModifierOwnership.own(this, e);
             t.add(label);
         });
     }

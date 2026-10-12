@@ -47,7 +47,7 @@ import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.UserData;
 import mindustrytool.models.response.ChatUser.SimpleRole;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 import solim.layout.Card;
 import solim.layout.Direction;
@@ -63,7 +63,7 @@ import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.ScrollPane;
 
-public class ChatMessageListView extends BaseComponent {
+public class ChatMessageListView extends Component {
 
     private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s<>\"'{}|\\\\^`]+");
 
@@ -342,7 +342,7 @@ public class ChatMessageListView extends BaseComponent {
         });
     }
 
-    static class MessageGroupView extends BaseComponent {
+    static class MessageGroupView extends Component {
         private final MessageGroup group;
         private final ChatStore store;
         private final @Nullable ChatService service;
@@ -781,7 +781,13 @@ public class ChatMessageListView extends BaseComponent {
 
                         // Fixed Row 5: Action buttons row
                         row().gap(unit(1)).growX().height(unit(11)).children(() -> {
-                            when(FeatureManager.get(PlayerConnectFeature.class).enabled())
+                            // The feature is optional: its absence means Player Connect is not
+                            // installed, which is the "enable it" case, not an error.
+                            PlayerConnectFeature connect = FeatureManager.getFeature(PlayerConnectFeature.class);
+                            Readable<Boolean> connectEnabled = connect != null
+                                    ? connect.enabled()
+                                    : Readable.of(false);
+                            when(connectEnabled)
                                     .thenDo(() -> button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
                                             () -> promptDirectJoin(link))
                                             .style(WebStyles.secondary())

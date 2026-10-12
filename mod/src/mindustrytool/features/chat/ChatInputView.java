@@ -17,14 +17,14 @@ import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
 import mindustrytool.services.auth.AuthOverlay;
 import mindustrytool.services.auth.MindustryAuthProvider;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.input.SolimTextField;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import mindustrytool.components.FileIcon;
 
-public class ChatInputView extends BaseComponent {
+public class ChatInputView extends Component {
 
     private final ChatStore store;
     private final ChatService service;

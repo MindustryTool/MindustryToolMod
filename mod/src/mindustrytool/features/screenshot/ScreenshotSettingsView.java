@@ -13,13 +13,13 @@ import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for screenshot capture options.
  */
-public class ScreenshotSettingsView extends BaseComponent {
+public class ScreenshotSettingsView extends Component {
 
     private final ScreenshotFeature feature;
 

@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import mindustrytool.models.response.ChatMessage;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.test.SolimEnv;
@@ -180,7 +180,7 @@ class ChatMessagesTest extends SolimEnv {
         ChatMessages chatMessages = new ChatMessages(activeId);
 
         // Component 1 binds to forChannel("ch1") and is then disposed
-        BaseComponent comp1 = new BaseComponent() {
+        Component comp1 = new Component() {
             @Override
             protected Element build() {
                 Readable<List<ChatMessage>> binding = chatMessages.forChannel("ch1");
@@ -192,7 +192,7 @@ class ChatMessagesTest extends SolimEnv {
         comp1.dispose();
 
         // Component 2 mounts later and binds to forChannel("ch1")
-        BaseComponent comp2 = new BaseComponent() {
+        Component comp2 = new Component() {
             @Override
             protected Element build() {
                 Readable<List<ChatMessage>> binding = chatMessages.forChannel("ch1");

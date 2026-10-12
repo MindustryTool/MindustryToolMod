@@ -15,7 +15,7 @@ import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import arc.struct.Seq;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Row;
@@ -25,7 +25,7 @@ import solim.test.SolimCoreEnv;
 
 class WhenComponentTest extends SolimCoreEnv {
 
-    static class Probe extends BaseComponent {
+    static class Probe extends Component {
         boolean wasDisposed = false;
 
         @Override

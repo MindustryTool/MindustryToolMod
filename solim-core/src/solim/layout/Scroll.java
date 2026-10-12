@@ -20,12 +20,12 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.ElementConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
 /** Scroll container wrapping a Table in a ScrollPane. */
-public final class Scroll implements Component, CellConfig<Scroll>, ElementConfig<Scroll>, TableConfig<Scroll> {
+public final class Scroll extends Component implements CellConfig<Scroll>, ElementConfig<Scroll>, TableConfig<Scroll> {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -51,10 +51,14 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     private boolean inTopZone = false;
     private boolean inBottomZone = false;
     private boolean updateHooked = false;
-    private boolean disposed = false;
 
     public Scroll() {
-        this.outer = new Table();
+        this(new Table());
+    }
+
+    private Scroll(Table outer) {
+        super(outer);
+        this.outer = outer;
         SolimToken.bind(this.outer, this, constraints);
         this.outer.name = "solim-scroll-pane-outer";
         this.outer.top().left();
@@ -91,7 +95,6 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             this.pane = null;
             outer.add(content).grow();
         }
-        OwnershipContext.register(this);
     }
 
     public Table outer() {
@@ -324,10 +327,6 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return this;
     }
 
-    @Override
-    public Element element() {
-        return outer;
-    }
 
     @Override
     public Table table() {
@@ -389,6 +388,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             cell.row();
             return cell;
         };
+        OwnershipContext.push(this);
         AttachmentStack.push(content, attacher);
         try {
             if (r != null) {
@@ -396,6 +396,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         AttachmentStack.attachToParent(outer);
         return this;
@@ -413,18 +414,15 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     }
 
     @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
+    protected void onDispose() {
         reachTopListeners.clear();
         reachBottomListeners.clear();
     }
 
     @Override
-    public boolean isDisposed() {
-        return disposed;
+    public Scroll name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override

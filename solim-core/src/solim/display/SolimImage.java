@@ -5,16 +5,23 @@ import arc.scene.style.Drawable;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
 import arc.util.Scaling;
-import solim.core.LeafComponent;
+import solim.core.Component;
+import solim.core.SolimToken;
 import solim.core.SpacingAware;
+import solim.modifier.CellConfig;
+import solim.modifier.ElementConfig;
+import solim.modifier.PendingCellConfig;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 /** Display widget for drawable content. */
-public final class SolimImage extends LeafComponent<Image, SolimImage> implements SpacingAware {
+public final class SolimImage extends Component implements SpacingAware, CellConfig<SolimImage>, ElementConfig<SolimImage> {
 
+    private final Image element;
+    private final PendingCellConfig constraints = new PendingCellConfig();
     private Scaling scaling = Scaling.fit;
 
     private float padTop;
@@ -36,8 +43,30 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
     }
 
     public SolimImage(Drawable d, Scaling scaling) {
-        super(new Image(d, scaling));
+        this(new Image(d, scaling), scaling);
+    }
+
+    private SolimImage(Image element, Scaling scaling) {
+        super(element);
+        this.element = element;
         this.scaling = scaling;
+        SolimToken.bind(element, this, constraints);
+    }
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
+    }
+
+    @Override
+    public SolimImage name(@Nullable String name) {
+        setName(name);
+        return this;
+    }
+
+    @Override
+    public SolimImage self() {
+        return this;
     }
 
     public static SolimImage of(Drawable d) {
@@ -46,7 +75,7 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
 
     public static SolimImage of(Signal<Drawable> s) {
         SolimImage img = new SolimImage();
-        Effect.of(() -> img.element.setDrawable(s.get()));
+        img.drawable(s);
         return img;
     }
 
@@ -57,7 +86,7 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
 
     public SolimImage drawable(Readable<Drawable> d) {
         if (d != null) {
-            Effect.of(() -> element.setDrawable(d.get()));
+            own(Effect.of(() -> element.setDrawable(d.get())));
         }
         return this;
     }
@@ -81,12 +110,12 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
 
     public SolimImage color(Readable<Color> color) {
         if (color != null) {
-            Effect.of(() -> {
+            own(Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
                     element.setColor(c);
                 }
-            });
+            }));
         }
         return this;
     }
@@ -204,7 +233,7 @@ public final class SolimImage extends LeafComponent<Image, SolimImage> implement
     }
 
     public Image image() {
-        return element();
+        return element;
     }
 
     public SolimImage align(int align) {

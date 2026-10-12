@@ -11,7 +11,7 @@ import arc.func.Prov;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.runtime.ReactiveContext;
-import solim.runtime.SolimAssert;
+import solim.core.SolimAssert;
 
 /** Mutable reactive value. */
 public final class Signal<T> implements Readable<T>, ReactiveSource {

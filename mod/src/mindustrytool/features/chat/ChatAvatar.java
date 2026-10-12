@@ -5,7 +5,7 @@ import static solim.UI.*;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.display.NetworkImage;
 import solim.layout.Column;
 import solim.layout.SolimStack;
@@ -17,7 +17,7 @@ import solim.reactive.Readable;
  * superellipse) rounded corners on both the fallback badge and the network
  * image layer.
  */
-public class ChatAvatar extends BaseComponent {
+public class ChatAvatar extends Component {
 
     private static final Color[] PALETTE = {
             Color.valueOf("ef5350"),

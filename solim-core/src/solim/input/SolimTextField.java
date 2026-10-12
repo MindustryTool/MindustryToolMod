@@ -16,7 +16,7 @@ import solim.core.DisposableAction;
 import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -28,13 +28,11 @@ import solim.reactive.Binding;
  * guard prevents feedback loop. Automatically registers with the active
  * OwnershipContext if created during a component build.
  */
-public final class SolimTextField implements Component, ElementConfig<SolimTextField>, CellConfig<SolimTextField> {
+public final class SolimTextField extends Component implements ElementConfig<SolimTextField>, CellConfig<SolimTextField> {
 
     private final TextField field;
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private @Nullable TwoWayBinding<String> binding;
     private Effect disabledEffect;
-    private boolean disposed = false;
     private Boolf<String> validator;
     private final Signal<Boolean> valid = Signal.of(true);
 
@@ -51,11 +49,16 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
     }
 
     public SolimTextField(Signal<String> signal, TextField.TextFieldStyle style) {
-        this.field = style != null ? new TextField("", style) : new TextField("");
+        this(style != null ? new TextField("", style) : new TextField(""), signal);
+    }
+
+    private SolimTextField(TextField field, Signal<String> signal) {
+        super(field);
+        this.field = field;
         this.field.name = "solim-textfield-textField";
         field.setText(signal.peek() != null ? signal.peek() : "");
 
-        this.binding = new TwoWayBinding<>(
+        own(new TwoWayBinding<>(
                 signal,
                 field::getText,
                 val -> {
@@ -74,9 +77,7 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
                     });
 
                     return DisposableAction.empty();
-                });
-
-        OwnershipContext.register(this);
+                }));
     }
 
     public static SolimTextField of(Signal<String> signal) {
@@ -119,7 +120,7 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
         if (disabledEffect != null) {
             disabledEffect.dispose();
         }
-        disabledEffect = Binding.bind(disabled, d -> field.setDisabled(Boolean.TRUE.equals(d)));
+        disabledEffect = own(Binding.bind(disabled, d -> field.setDisabled(Boolean.TRUE.equals(d))));
         return this;
     }
 
@@ -145,10 +146,6 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
         return field;
     }
 
-    @Override
-    public Element element() {
-        return field;
-    }
 
     public SolimTextField rounded(int radius) {
         return rounded(radius, (Color) null);
@@ -224,24 +221,9 @@ public final class SolimTextField implements Component, ElementConfig<SolimTextF
     }
 
     @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        if (binding != null) {
-            binding.dispose();
-            binding = null;
-        }
-        if (disabledEffect != null) {
-            disabledEffect.dispose();
-            disabledEffect = null;
-        }
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
+    public SolimTextField name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override

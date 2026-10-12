@@ -8,7 +8,7 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 import solim.test.SolimEnv;
 
@@ -160,7 +160,7 @@ class ChatUnreadTest extends SolimEnv {
         ChatUnread unread = new ChatUnread();
 
         // Simulate component 1 building and obtaining a reactive binding
-        BaseComponent comp1 = new BaseComponent() {
+        Component comp1 = new Component() {
             @Override
             protected Element build() {
                 Readable<Integer> binding = unread.forChannel("ch1");
@@ -173,7 +173,7 @@ class ChatUnreadTest extends SolimEnv {
         comp1.dispose();
 
         // Simulate component 2 building for the same channel
-        BaseComponent comp2 = new BaseComponent() {
+        Component comp2 = new Component() {
             @Override
             protected Element build() {
                 Readable<Integer> binding = unread.forChannel("ch1");

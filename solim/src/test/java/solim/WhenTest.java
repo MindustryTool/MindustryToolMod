@@ -7,7 +7,7 @@ import arc.scene.Element;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.layout.Column;
 import solim.reactive.Signal;
 import solim.reactive.When;
@@ -17,7 +17,7 @@ import solim.test.SolimEnv;
 
 class WhenTest extends SolimEnv {
 
-    static class Probe extends BaseComponent {
+    static class Probe extends Component {
         boolean disposed = false;
 
         @Override

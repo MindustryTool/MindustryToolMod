@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.feedback.Alert;
 import solim.feedback.Avatar;
@@ -48,7 +48,7 @@ class OverlayFeedbackTest extends SolimEnv {
 		AtomicBoolean disposed = new AtomicBoolean(false);
 
 		SolimDialog d = new SolimDialog("Lifecycle Test");
-		d.children(() -> new BaseComponent() {
+		d.children(() -> new Component() {
 			@Override
 			protected Element build() {
 				return new Table();

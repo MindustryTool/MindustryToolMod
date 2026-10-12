@@ -17,6 +17,7 @@ import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
+import arc.scene.Scene;
 import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
@@ -437,6 +438,42 @@ class LayoutTest extends SolimEnv {
         Table gridTable = (Table) content.getChildren().first();
         assertSame(gridTable, content.getCells().first().get(),
                 "First and only cell in scroll content must be the grid table");
+
+        // The same reconciliation must happen identically once the tree is attached to a scene:
+        // previously the attached path deferred to a posted callback, so the cells only appeared
+        // after the posted runnable drained.
+        Scene scene = newScene();
+        Table attachedRoot = new Table();
+        scene.add(attachedRoot);
+        attachedRoot.add(gridTable).grow().expand();
+        attachedRoot.validate();
+
+        ReactiveGrid<String> grid2 = new ReactiveGrid<>(items);
+        grid2.columns(Signal.of(2)).key(x -> x);
+        grid2.children(x -> new Card().height(160).width(300));
+        attachedRoot.add(grid2.element()).row();
+
+        assertEquals(2, filledCells(grid2.table()),
+                "An attached grid must reconcile synchronously during its first build");
+
+        items.set(Seq.with("feat1"));
+        SignalDispatcher.flush();
+
+        assertEquals(1, filledCells(grid2.table()),
+                "An attached grid must reconcile within the same flush, not a posted callback");
+        grid2.dispose();
+    }
+
+    /** Counts cells that hold an element, ignoring the empty cells reflow pads a last row with. */
+    private static int filledCells(Table table) {
+        int filled = 0;
+        for (int i = 0; i < table.getCells().size; i++) {
+            Cell<?> cell = table.getCells().get(i);
+            if (cell != null && cell.get() != null) {
+                filled++;
+            }
+        }
+        return filled;
     }
 
     @Test
